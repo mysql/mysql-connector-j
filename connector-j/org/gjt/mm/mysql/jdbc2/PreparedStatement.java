@@ -376,8 +376,11 @@ public class PreparedStatement
 		setTimestamp(parameterIndex, X);
 	}
 
+	private byte[] resultSetByteValues;
+		
 	 byte[] getBytes(int parameterIndex) throws SQLException {
 		if (_IsStream[parameterIndex]) {
+			
 			return streamToBytes(_ParameterStreams[parameterIndex], false);
 		}
 		else {
