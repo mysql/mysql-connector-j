@@ -113,8 +113,10 @@ public class ResultSetMetaData
                           throws java.sql.SQLException {
 
         Field f = getField(column);
-
-        return "";
+        
+        String database = f.getDatabaseName();
+        
+        return (database == null) ? null : database;
     }
 
     //--------------------------JDBC 2.0-----------------------------------
@@ -575,13 +577,7 @@ public class ResultSetMetaData
     public boolean isWritable(int column)
                        throws java.sql.SQLException {
 
-        if (isReadOnly(column)) {
-
-            return false;
-        } else {
-
-            return true;
-        }
+        return isReadOnly(column);
     }
 
     // *********************************************************************
