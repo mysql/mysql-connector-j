@@ -477,7 +477,7 @@ public class DatabaseMetaData
 
                 StringBuffer fullUser = new StringBuffer(user);
 
-                if (host != null) {
+                if (host != null && this.conn.useHostsInPrivileges()) {
                     fullUser.append("@");
                     fullUser.append(host);
                 }
@@ -1378,7 +1378,7 @@ public class DatabaseMetaData
     public String getDriverVersion()
                             throws java.sql.SQLException {
 
-        return "3.0.1-beta";
+        return "3.0.2-beta";
     }
 
     /**
@@ -2845,7 +2845,7 @@ public class DatabaseMetaData
 
                 StringBuffer fullUser = new StringBuffer(user);
 
-                if (host != null) {
+                if (host != null && this.conn.useHostsInPrivileges()) {
                     fullUser.append("@");
                     fullUser.append(host);
                 }
