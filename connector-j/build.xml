@@ -36,6 +36,18 @@ Copyright (C) 2002 MySQL AB
 		<pathelement location="/src/checkstyle-2.3/checkstyle-all-2.3.jar" />
 	</path>
 	
+	<path id="project.build.classpath">
+    	<fileset dir="lib-nodist">
+        	<include name="**/*.jar"/>
+      	</fileset>
+      	
+      	<fileset dir="lib">
+        	<include name="**/*.jar"/>
+      	</fileset>
+      	
+      	<pathelement location="${buildDir}/${prodName}" />
+  	</path>
+	
 <!--	
 	<taskdef name="checkstyle"
            classname="com.puppycrawl.tools.checkstyle.CheckStyleTask"
@@ -169,7 +181,7 @@ Copyright (C) 2002 MySQL AB
 		
 	</target>
 	
-	<target name="test" depends="compile-testsuite">
+	<target name="test" depends="compile">
 	  <mkdir dir="${junit.results}"/>
 	  
 	  <junit printSummary="yes" fork="yes">
@@ -216,7 +228,7 @@ Copyright (C) 2002 MySQL AB
       </junit>
 	</target>
 
-	<target name="compile" depends="init, compile-core, compile-testsuite">
+	<target name="compile" depends="init, compile-core">
 	</target>
 
 	<!-- Compiles the driver itself -->
@@ -225,24 +237,13 @@ Copyright (C) 2002 MySQL AB
 		<javac srcdir="${buildDir}/${prodName}"
 			   destdir="${buildDir}/${prodName}"
 	        deprecation="off"
-			classpath="${buildDir}/${prodName};lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar;lib-nodist/junit.jar"
 			debug="on"
-		/>
+		>
+			<classpath refid="project.build.classpath"/>
+		</javac>
 
 	</target>
 
-
-	<!-- Compiles the JUnit-based testsuite -->
-	
-	<target name="compile-testsuite">
-		<!--
-		<javac srcdir="${buildDir}/${prodName}"
-			destdir="${buildDir}/${prodName}"
-			excludes="com/mysql/jdbc/**"
-			classpath="lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar;lib-nodist/junit.jar"
-		/>-->
-
-	</target>
 
 	<target name="clean">
 		<!--
