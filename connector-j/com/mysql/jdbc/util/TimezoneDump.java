@@ -42,6 +42,12 @@ public class TimezoneDump {
 		super();
 	}
 
+    /**
+     * Entry point for program when called from the command line.
+     * 
+     * @param args command-line args. Arg 1 is JDBC URL.
+     * @throws Exception if any errors occur
+     */
 	public static void main(String[] args) throws Exception {
         String jdbcUrl = DEFAULT_URL;
         
