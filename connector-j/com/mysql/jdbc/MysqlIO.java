@@ -1543,11 +1543,12 @@ public class MysqlIO {
 					
 					clearReceive();
 
-					StringBuffer errorBuf = new StringBuffer("Received error from mysql server: ");
+					StringBuffer errorBuf = new StringBuffer(" message from server: \"");
 					errorBuf.append(serverErrorMessage);
+					errorBuf.append("\"");
 					
 					String xOpen = SQLError.mysqlToXOpen(errno);
-					throw new java.sql.SQLException(SQLError.get(xOpen) + ": "
+					throw new java.sql.SQLException(SQLError.get(xOpen) + ", "
 													+ errorBuf.toString(), xOpen, 
 													errno);
 				} else {
@@ -1556,14 +1557,15 @@ public class MysqlIO {
 
 					if (serverErrorMessage.indexOf("Unknown column") != -1) {
 						throw new java.sql.SQLException(SQLError.get("S0022")
-														+ ": " + serverErrorMessage, 
+														+ ", " + serverErrorMessage, 
 														"S0022", -1);
 					} else {
-						StringBuffer errorBuf = new StringBuffer("Received error from mysql server: ");
+						StringBuffer errorBuf = new StringBuffer(" message from server: \"");
 						errorBuf.append(serverErrorMessage);
+						errorBuf.append("\"");
 						
 						throw new java.sql.SQLException(SQLError.get("S1000")
-														+ ": " + errorBuf.toString(), 
+														+ ", " + errorBuf.toString(), 
 														"S1000", -1);
 					}
 				}
@@ -1597,8 +1599,16 @@ public class MysqlIO {
 
 			return resultPacket;
 		} catch (IOException ioEx) {
+			String errorMessage = null;
+			
+			if (this.connection.useParanoidErrorMessages()) {
+				errorMessage = Util.stackTraceToString(ioEx);
+			} else {
+				errorMessage = ioEx.getClass().getName();
+			}
+			
 			throw new java.sql.SQLException(SQLError.get("08S01") + ": "
-											+ ioEx.getClass().getName(), 
+											+ errorMessage, 
 											"08S01", 0);
 		}
 	}
