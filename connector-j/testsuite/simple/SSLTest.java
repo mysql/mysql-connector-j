@@ -29,7 +29,7 @@ public class SSLTest extends BaseTestCase {
 
 	/**
 	 * Constructor for SSLTest.
-	 * @param name
+	 * @param name the name of the test to run.
 	 */
 	public SSLTest(String name) {
         super(name);
@@ -49,10 +49,20 @@ public class SSLTest extends BaseTestCase {
 		
 	}
 
+    /**
+     * Runs all test cases
+     * 
+     * @param args ignored
+     */
 	public static void main(String[] args) {
         new SSLTest("testConnect").run();
 	}
     
+    /**
+     * Tests SSL Connection
+     * 
+     * @throws Exception if an error occurs
+     */
     public void testConnect() throws Exception {
         
         System.out.println("<<<<<<<<<<< Look for SSL debug output >>>>>>>>>>>");

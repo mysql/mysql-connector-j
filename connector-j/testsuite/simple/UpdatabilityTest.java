@@ -73,6 +73,8 @@ public class UpdatabilityTest
      * Tests that the driver does not let you update
      * result sets that come from tables that don't
      * have primary keys
+     * 
+     * @throws SQLException if an error occurs
      */
     public void testBogusTable()
                         throws SQLException {
@@ -113,6 +115,8 @@ public class UpdatabilityTest
      * Tests that the driver does not let you update
      * result sets that come from queries that haven't selected
      * all primary keys
+     * 
+     * @throws SQLException if an error occurs
      */
     public void testMultiKeyTable()
                            throws SQLException {

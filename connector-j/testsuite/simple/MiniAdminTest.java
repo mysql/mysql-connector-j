@@ -34,15 +34,23 @@ public class MiniAdminTest extends BaseTestCase {
      * test
      */
     
-    private final static String SHUTDOWN_PROP = 
+    private static final String SHUTDOWN_PROP = 
         "com.mysql.jdbc.testsuite.MiniAdminTest.runShutdown";
         
+    /**
+     * Creates a new test case
+     * 
+     * @param name the test to run
+     */
     public MiniAdminTest(String name) {
         super(name);
     }
     
     /**
      * Runs tests for this testsuite.
+     * 
+     * @param args ignored
+     * @throws Exception if an error occurs.
      */
 	public static void main(String[] args) throws Exception {
         new MiniAdminTest("testUrlConstructor").run();
@@ -52,6 +60,8 @@ public class MiniAdminTest extends BaseTestCase {
     /**
      * Tests whether or not you can construct a MiniAdmin
      * with a JDBC URL.
+     * 
+     * @throws Exception if an error occurs
      */
     public void testUrlConstructor() throws Exception {
         new MiniAdmin(dbUrl);
@@ -62,6 +72,8 @@ public class MiniAdminTest extends BaseTestCase {
      * MiniAdmin.
      * 
      * Only runs if SHUTDOWN_PROP is defined.
+     * 
+     * @throws Exception if an error occurs
      */
     public void testShutdown() throws Exception {
        if (runTestIfSysPropDefined(SHUTDOWN_PROP)) {

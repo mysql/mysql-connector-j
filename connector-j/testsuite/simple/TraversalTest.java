@@ -26,7 +26,8 @@ import testsuite.BaseTestCase;
 
 
 /** 
- *
+ * Tests result set traversal methods.
+ * 
  * @author  Mark Matthews
  * @version $Id$
  */
@@ -121,7 +122,8 @@ public class TraversalTest
                     forwardOk = false;
                 }
                 
-                assertTrue("ResultSet.getRow() failed.", pos == (rs.getRow() -1));
+                assertTrue("ResultSet.getRow() failed.", 
+                    pos == (rs.getRow() - 1));
 
                 count++;
                 
