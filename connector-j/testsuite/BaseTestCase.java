@@ -26,7 +26,7 @@ public abstract class BaseTestCase extends TestCase
 	protected Statement stmt = null;
 	protected PreparedStatement pstmt = null;
 
-	static String dbUrl = "jdbc:mysql:///test";
+	protected static String dbUrl = "jdbc:mysql:///test";
 
 	public BaseTestCase(String name)
 	{
