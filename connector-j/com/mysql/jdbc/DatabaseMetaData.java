@@ -854,7 +854,6 @@ public class DatabaseMetaData
                                   + databasePart + " like '"
                                   + columnNamePattern + "'");
 
-                ResultSetMetaData resultsMD = results.getMetaData();
                 int ordPos = 1;
 
                 while (results.next()) {
@@ -2703,7 +2702,7 @@ public class DatabaseMetaData
 
             ArrayList tuples = new ArrayList();
             TreeMap sortMap = new TreeMap();
-            int rowNumber = 1;
+            
 
             while (rs.next()) {
 
@@ -3280,7 +3279,7 @@ public class DatabaseMetaData
 
                             while (columnResults.next()) {
 
-                                String columnName = columnResults.getString(4);
+                                
                                 byte[][] tuple = new byte[8][];
                                 tuple[0] = s2b(database);
                                 tuple[1] = null;
@@ -3454,7 +3453,7 @@ public class DatabaseMetaData
                               "show tables " + databasePart + " like '"
                               + tableNamePattern + "'");
 
-            java.sql.ResultSetMetaData rsmd = results.getMetaData();
+            
             Field[] fields = new Field[5];
             fields[0] = new Field("", "TABLE_CAT", java.sql.Types.VARCHAR, 
                                   (catalog == null) ? 0 : catalog.length());
@@ -5458,25 +5457,7 @@ public class DatabaseMetaData
                                                throws java.sql.SQLException {
 
         // Servers before 3.22 could not do this
-        if (this.conn.getServerMajorVersion() >= 3) { // newer than version 3?
-
-            if (this.conn.getServerMajorVersion() == 3) {
-
-                if (this.conn.getServerMinorVersion() >= 22) { // minor 22?
-
-                    return true;
-                } else {
-
-                    return false;
-                }
-            } else {
-
-                return true;
-            }
-        } else {
-
-            return false;
-        }
+        return this.conn.getIO().versionMeetsMinimum(3, 3, 22);
     }
 
     /**
