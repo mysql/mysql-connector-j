@@ -52,11 +52,23 @@ public class Statement
     protected ArrayList batchedArgs;
 
     /**
-     * The connection who created us
+     * The connection that created us
      */
     protected Connection connection = null;
+    
+    /**
+     * The concurrency for this result set (updatable or not)
+     */
     protected int resultSetConcurrency = 0;
+    
+    /**
+     * The type of this result set (scroll sensitive or in-sensitive)
+     */
     protected int resultSetType = 0;
+    
+    /**
+     * The catalog in use
+     */
     protected String currentCatalog = null;
 
     /**
@@ -68,8 +80,21 @@ public class Statement
      * Processes JDBC escape codes
      */
     protected EscapeProcessor escaper = null;
+    
+    /**
+     * The auto_increment value for the last insert
+     */
     protected long lastInsertId = -1;
+    
+    /**
+     * The max field size for this statement
+     */
     protected int maxFieldSize = MysqlIO.getMaxBuf();
+    
+    /**
+     * The maximum number of rows to return for this
+     * statement (-1 means _all_ rows)
+     */
     protected int maxRows = -1;
 
     /**
@@ -86,13 +111,25 @@ public class Statement
      * The timeout for a query
      */
     protected int timeout = 0;
+    
+    /**
+     * The update count for this statement
+     */
     protected long updateCount = -1;
 
     /**
      * The warnings chain.
      */
     protected SQLWarning warningChain = null;
+    
+    /**
+     * The number of rows to fetch at a time (currently ignored)
+     */
     private int fetchSize = 0;
+    
+    /**
+     * Has this statement been closed?
+     */
     protected boolean isClosed = false;
     
     /**
@@ -110,10 +147,12 @@ public class Statement
     //~ Constructors ..........................................................
 
     /**
-     * Constructor for a Statement.  It simply sets the connection
-     * that created us.
+     * Constructor for a Statement.
      *
      * @param c the Connection instantation that creates us
+     * @param catalog the database name in use when we were created
+     * 
+     * @throws SQLException if an error occurs.
      */
     public Statement(Connection c, String catalog)
               throws SQLException {
@@ -147,6 +186,9 @@ public class Statement
      * JDBC 2.0
      * 
      * Return the Connection that produced the Statement.
+     * 
+     * @return the Connection that produced the Statement
+     * @throws SQLException if an error occurs
      */
     public java.sql.Connection getConnection()
                                       throws SQLException {
@@ -274,6 +316,9 @@ public class Statement
      * JDBC 2.0
      *
      * Determine the default fetch size.
+     * 
+     * @return the number of rows to fetch at a time
+     * @throws SQLException if an error occurs
      */
     public int getFetchSize()
                      throws SQLException {
@@ -335,8 +380,7 @@ public class Statement
      * This method returns longs as MySQL server versions newer than 
      * 3.22.4 return 64-bit values for update counts
      *
-     * @return the current result as an update count.
-     * @exception java.sql.SQLException if a database access error occurs
+     * @return the current update count.
      */
     public long getLongUpdateCount() {
 
@@ -598,6 +642,9 @@ public class Statement
      * JDBC 2.0
      *
      * Determine the result set concurrency.
+     * 
+     * @return CONCUR_UPDATABLE or CONCUR_READONLY
+     * @throws SQLException if an error occurs
      */
     public int getResultSetConcurrency()
                                 throws SQLException {
@@ -618,6 +665,10 @@ public class Statement
      * JDBC 2.0
      *
      * Determine the result set type.
+     * 
+     * @return the ResultSet type (SCROLL_SENSITIVE or SCROLL_INSENSITIVE)
+     * 
+     * @throws SQLException if an error occurs.
      */
     public int getResultSetType()
                          throws SQLException {
@@ -1040,7 +1091,7 @@ public class Statement
     /**
      * Execute a SQL statement that retruns a single ResultSet
      *
-     * @param Sql typically a static SQL SELECT statement
+     * @param sql typically a static SQL SELECT statement
      * @return a ResulSet that contains the data produced by the query
      * @exception java.sql.SQLException if a database access error occurs
      */
@@ -1150,7 +1201,7 @@ public class Statement
      * by casting this Statement to org.gjt.mm.mysql.Statement and
      * calling the getLastInsertID() method.
      *
-     * @param Sql a SQL statement
+     * @param sql a SQL statement
      * @return either a row count, or 0 for SQL commands
      * @exception java.sql.SQLException if a database access error occurs
      */
@@ -1270,6 +1321,12 @@ public class Statement
         return executeUpdate(arg0);
     }
 
+    /**
+     * Checks if closed() has been called, and throws an
+     * exception if so
+     * 
+     * @throws SQLException if this statement has been closed
+     */
     protected void checkClosed()
                         throws SQLException {
 
@@ -1295,6 +1352,9 @@ public class Statement
     /**
      * We only stream result sets when they are forward-only, read-only,
      * and the fetch size has been set to Integer.MIN_VALUE
+     * 
+     * @return true if this result set should be streamed row at-a-time,
+     * rather than read all at once.
      */
     protected boolean createStreamingResultSet() {
 
