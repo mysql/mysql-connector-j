@@ -1,6 +1,6 @@
-MySQL Connector/J 3.0.1 Beta (formerly MM.MySQL)
-MySQL's JDBC Driver for MySQL
-Copyright (c) 2002 MySQL-AB
+MySQL Connector/J 3.0.2 Beta (formerly MM.MySQL)
+MySQL AB's JDBC Driver for MySQL
+Copyright (c) 2002 MySQL AB
 
 CONTENTS
 
@@ -41,7 +41,7 @@ USAGE AND INSTALLATION
 
 MySQL Connector/J is distributed as a .zip or .tar.gz archive containing 
 the sources and class files as well as a class-file only "binary" .jar 
-archive named "mysql-connector-java-3.0.0-beta-bin.jar".
+archive named "mysql-connector-java-3.0.2-beta-bin.jar".
 
 You will need to use the appropriate gui or command-line utility to un-archive 
 the distribution (for example, WinZip for the .zip archive, and "tar" for 
@@ -54,7 +54,7 @@ Either copy the "com" and "org" subdirectories and all of their contents
 to anywhere you like, and put the directory holding the "com" and "org"
 subdirectories in your classpath, or...
 
-Put mysql-connector-java-3.0.0-beta-bin.jar in your classpath, either by adding the 
+Put mysql-connector-java-3.0.2-beta-bin.jar in your classpath, either by adding the 
 FULL path to it to your CLASSPATH enviornment variable, or putting it
 in $JAVA_HOME/jre/lib/ext.
 
@@ -260,13 +260,13 @@ MySQL Connector/J. Multi-byte character sets use your JVM's built
 in character translation support, and on average this is 5-10%
 slower than single-byte character support.
 
-If you have a character set that was not created by MySQL-AB, a
+If you have a character set that was not created by MySQL AB, a
 driver version older than the version of MySQL server you are using,
 or for some reason can not get the mapping to work, you can force
 the character set using the "useUnicode=true" and 
 "characterEncoding=some_charset" parameters in your URL to tell
 the driver which character set to use, where "some_charset" is
-an character set that your JVM supports.
+a character set that your JVM supports.
 
 TROUBLESHOOTING
 
@@ -310,6 +310,15 @@ further issues, see the "SUPPORT" section below.
   [hostname] value in this case.
 
   Follow this by issuing the "FLUSH PRIVILEGES" command.
+  
+  NOTE:
+  
+  Testing your connectivity with the "mysql" command-line client will not
+  work unless you add the "--host" flag, and use something other than 
+  "localhost" for the host. The "mysql" command-line client will use Unix
+  domain sockets if you use the special hostname "localhost". If you are
+  testing connectivity to "localhost", use "127.0.0.1" as the hostname
+  instead.
 
   I suggest you read the permissions/security section of your MySQL server 
   manual for a much more detailed explanation of how this works.
