@@ -72,10 +72,31 @@ class EscapeProcessor {
 
             if (token.startsWith("{")) { // It's an escape code
 
+               
+                
+                
                 if (!token.endsWith("}")) {
                     throw new java.sql.SQLException("Not a valid escape sequence: "
                                                     + token);
                 }
+                
+                if (token.length() > 2) {
+                    int nestedBrace = token.indexOf("{", 2);
+                    
+                    if (nestedBrace != -1) {
+                        StringBuffer buf = new StringBuffer(token.substring(0, 1));
+                        
+                        String remaining = escapeSQL(token.substring(1, token.length() - 1));
+                        
+                        buf.append(remaining);
+                        
+                        buf.append("}");
+                        
+                        token = buf.toString();
+                    }
+                        
+                } // nested escape code
+            
 
                 /*
                  * Process the escape code

@@ -39,6 +39,8 @@ public class EscapeTokenizer {
     private char quoteChar = 0;
     private String source = null;
     private int sourceLength = 0;
+    private int bracesLevel = 0;
+    private boolean inComment = false;
 
     //~ Constructors ..........................................................
 
@@ -82,7 +84,7 @@ public class EscapeTokenizer {
         for (; pos < sourceLength; pos++) {
 
             char c = source.charAt(pos);
-
+            
             if (c == '\'') {
 
                 if (lastChar != '\\') {
@@ -137,24 +139,49 @@ public class EscapeTokenizer {
                 }
 
                 tokenBuf.append(c);
+            } else if (c == '-') {
+                if (lastChar == '-' && lastLastChar != '\\' & !inQuotes) {
+                    inComment = true;
+                }
+                
+                tokenBuf.append(c);
+                
+            } else if (c == '\n' || c == '\r') {
+                
+                inComment = false;
+                
+                tokenBuf.append(c);
+                
             } else if (c == '{') {
 
-                if (inQuotes) {
+                if (inQuotes || inComment) {
                     tokenBuf.append(c);
                 } else {
-                    pos++;
-                    emittingEscapeCode = true;
+                    bracesLevel++;
+                                      
+                    if (bracesLevel == 1) {
+                        pos++;
+                        emittingEscapeCode = true;
 
-                    return tokenBuf.toString();
+                        return tokenBuf.toString();
+                    } else {
+                        tokenBuf.append(c);
+                    }
+                    
                 }
             } else if (c == '}') {
                 tokenBuf.append(c);
 
-                if (!inQuotes) {
+                if (!inQuotes && !inComment) {
                     lastChar = c;
-                    pos++;
+                    
 
-                    return tokenBuf.toString();
+                    bracesLevel--;
+                            
+                    if (bracesLevel == 0) {
+                        pos++;
+                        return tokenBuf.toString();
+                    }
                 }
             } else {
                 tokenBuf.append(c);
