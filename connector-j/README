@@ -157,7 +157,7 @@ autoReconnect       | should the driver attempt to              | false
                     | (true/false)                              | 		
 --------------------+-------------------------------------------+-------------
 maxReconnects       | if autoReconnect is enabled, how many     | 3
-                    | times should the driver attemt to         |
+                    | times should the driver attempt to        |
                     | reconnect?                                |
 --------------------+-------------------------------------------+-------------
 initialTimeout      | if autoReconnect is enabled, the          | 2
@@ -269,9 +269,7 @@ socketFactory       | The name of the class that the driver     | com.mysql.\
                     | 'com.mysql.jdbc.SocketFactory' and have   | Factory
                     | a public no-args constructor.             |
 ------------------------------------------------------------------------------
-  	
-  	
-  	allowLoadLocalInfile				
+  				
 A simple connection example looks like:
 
 	Class.forName("com.mysql.jdbc.Driver").newInstance();

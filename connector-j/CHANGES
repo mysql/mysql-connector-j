@@ -1,7 +1,7 @@
 # Changelog
 # $Id$
 
-xx-xx-xx - Version 3.0.3-dev
+12-17-02 - Version 3.0.3-dev
 	- Changed charsToByte in SingleByteCharConverter to be non-static
 	- Changed SingleByteCharConverter to use lazy initialization of each
 	  converter.
