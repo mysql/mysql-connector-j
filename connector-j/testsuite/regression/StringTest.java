@@ -18,6 +18,9 @@
  */
 package testsuite.regression;
 
+import java.sql.DriverManager;
+import java.util.Properties;
+
 import com.mysql.jdbc.StringUtils;
 
 import testsuite.BaseTestCase;
@@ -28,7 +31,7 @@ import testsuite.BaseTestCase;
  * in the driver.
  * 
  * @author  Mark Matthews
- * @version StringTest.java,v 1.4 2002/09/25 14:56:06 mark_matthews Exp
+ * @version StringTest.java,v 1.5 2002/10/11 03:49:42 mark_matthews Exp
  */
 public class StringTest
     extends BaseTestCase {
@@ -84,5 +87,16 @@ public class StringTest
 
         assertTrue("Converted string != test string", 
                    testString.equals(convertedString));
+    }
+    
+    /**
+     * Tests for regression of encoding forced by user, reported
+     * by Jive Software
+     */
+    public void testEncodingRegression() throws Exception {
+    	Properties props = new Properties();
+		props.put("characterEncoding", "UTF-8");
+		props.put("useUnicode", "true");
+		DriverManager.getConnection(dbUrl, props).close();
     }
 }
