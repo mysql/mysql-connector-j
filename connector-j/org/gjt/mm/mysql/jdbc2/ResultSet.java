@@ -164,7 +164,7 @@ public class ResultSet
 	 */
 
 	public java.sql.ResultSetMetaData getMetaData() throws java.sql.SQLException {
-		return new org.gjt.mm.mysql.jdbc2.ResultSetMetaData(Rows, Fields);
+		return new org.gjt.mm.mysql.jdbc2.ResultSetMetaData(_rows, _fields);
 	}
 
 	//--------------------------JDBC 2.0-----------------------------------
@@ -228,7 +228,7 @@ public class ResultSet
 						+ "' in column "
 						+ columnIndex
 						+ "("
-						+ Fields[columnIndex
+						+ _fields[columnIndex
 						- 1]
 						+ ").",
 					"S1009");
@@ -312,11 +312,11 @@ public class ResultSet
 		
 		boolean b = false;
 		
-		if (Rows.size() == 0) {
+		if (_rows.size() == 0) {
 			b = false;
 		}
 		else {
-			b = (currentRow == -1);
+			b = (_currentRow == -1);
 		}
 		
 		if (Driver.trace) {
@@ -346,11 +346,11 @@ public class ResultSet
 		
 		boolean b = false;
 		
-		if (Rows.size() == 0) {
+		if (_rows.size() == 0) {
 			b =  false;
 		}
 		else {
-			b = (currentRow >= Rows.size());
+			b = (_currentRow >= _rows.size());
 		}
 		
 		if (Driver.trace) {
@@ -378,11 +378,11 @@ public class ResultSet
 		
 		boolean b = false;
 		
-		if (Rows.size() == 0) {
+		if (_rows.size() == 0) {
 			b = false;
 		}
 		else {
-			b = (currentRow == 0);
+			b = (_currentRow == 0);
 		}
 		
 		if (Driver.trace) {
@@ -413,11 +413,11 @@ public class ResultSet
 		
 		boolean b = false;
 		
-		if (Rows.size() == 0) {
+		if (_rows.size() == 0) {
 			b = false;
 		}
 		else {
-			b = (currentRow == Rows.size() - 1);
+			b = (_currentRow == _rows.size() - 1);
 		}
 		
 		if (Driver.trace) {
@@ -452,12 +452,12 @@ public class ResultSet
 			
 		}
 
-		if (Rows.size() == 0) {
+		if (_rows.size() == 0) {
 			return;
 		}
 		else {
-			currentRow = -1;
-			This_Row = null;
+			_currentRow = -1;
+			_thisRow = null;
 		}
 	}
 
@@ -486,9 +486,9 @@ public class ResultSet
 			
 		}
 
-		if (Rows.size() != 0) {
-			currentRow = Rows.size();
-			This_Row = null;
+		if (_rows.size() != 0) {
+			_currentRow = _rows.size();
+			_thisRow = null;
 		}
 	}
 
@@ -512,7 +512,7 @@ public class ResultSet
 			_on_insert_row = false;
 		}
 
-		if (Rows.size() == 0) {
+		if (_rows.size() == 0) {
 			return false;
 		}
 		else {
@@ -521,8 +521,8 @@ public class ResultSet
 				
 			}
 
-			currentRow = 0;
-			This_Row = (byte[][]) Rows.elementAt(currentRow);
+			_currentRow = 0;
+			_thisRow = (byte[][]) _rows.elementAt(_currentRow);
 
 			return true;
 		}
@@ -545,7 +545,7 @@ public class ResultSet
 			Debug.methodCall(this, "last", args);
 		}
 
-		if (Rows.size() == 0) {
+		if (_rows.size() == 0) {
 			return false;
 		}
 		else {
@@ -558,8 +558,8 @@ public class ResultSet
 				
 			}
 
-			currentRow = Rows.size() - 1;
-			This_Row = (byte[][]) Rows.elementAt(currentRow);
+			_currentRow = _rows.size() - 1;
+			_thisRow = (byte[][]) _rows.elementAt(_currentRow);
 
 			return true;
 		}
@@ -585,11 +585,11 @@ public class ResultSet
 
 		int row = 0;
 		
-		if (currentRow < 0 || currentRow >= Rows.size() || Rows.size() == 0) {
+		if (_currentRow < 0 || _currentRow >= _rows.size() || _rows.size() == 0) {
 			row = 0;
 		}
 		else {
-			row = currentRow + 1;
+			row = _currentRow + 1;
 		}
 		
 		if (Driver.trace) {
@@ -634,7 +634,7 @@ public class ResultSet
 		
 		boolean b;
 		
-		if (Rows.size() == 0) {
+		if (_rows.size() == 0) {
 			b = false;
 		}
 		else
@@ -660,7 +660,7 @@ public class ResultSet
 			b = last();
 			
 		}
-		else if (row > Rows.size()) {
+		else if (row > _rows.size()) {
 			afterLast();
 
 			b = false;
@@ -669,7 +669,7 @@ public class ResultSet
 			if (row < 0) {
 
 				// adjust to reflect after end of result set
-				int new_row_position = Rows.size() + row + 1;
+				int new_row_position = _rows.size() + row + 1;
 
 				if (new_row_position <= 0) {
 					beforeFirst();
@@ -682,8 +682,8 @@ public class ResultSet
 			}
 			else {
 				row--; // adjust for index difference
-				currentRow = row;
-				This_Row = (byte[][]) Rows.elementAt(currentRow);
+				_currentRow = row;
+				_thisRow = (byte[][]) _rows.elementAt(_currentRow);
 
 				b = true;
 			}
@@ -721,11 +721,11 @@ public class ResultSet
 			Object[] args = { new Integer(rows)};
 			Debug.methodCall(this, "relative", args);
 		}
-		if (Rows.size() == 0) {
+		if (_rows.size() == 0) {
 			return false;
 		}
 
-		int new_row_position = currentRow + rows + 1;
+		int new_row_position = _currentRow + rows + 1;
 
 		boolean b = absolute(new_row_position);
 		
@@ -859,7 +859,7 @@ public class ResultSet
 	 */
 
 	public int getType() throws SQLException {
-		return resultSetType;
+		return _resultSetType;
 	}
 
 	/**
@@ -1932,7 +1932,7 @@ public class ResultSet
 			
 			long autoIncrementId = _Inserter.getLastInsertID();
 
-			int num_fields = Fields.length;
+			int num_fields = _fields.length;
 
 			byte[][] NewRow = new byte[num_fields][];
 
@@ -1945,13 +1945,13 @@ public class ResultSet
 				}
 
 				if (numPrimaryKeys == 1 && 
-				    Fields[i].isPrimaryKey() &&
+				    _fields[i].isPrimaryKey() &&
 				    autoIncrementId > 0) {
 					NewRow[i] = String.valueOf(autoIncrementId).getBytes();
 				}
 			}
 
-			Rows.addElement(NewRow);
+			_rows.addElement(NewRow);
 
 			resetInserter();
 		}
@@ -2020,7 +2020,7 @@ public class ResultSet
 			throw new SQLException("Can not call deleteRow() when on insert row");
 		}
 		else
-			if (Rows.size() == 0) {
+			if (_rows.size() == 0) {
 				throw new SQLException("Can't deleteRow() on empty result set");
 			}
 			else
@@ -2038,15 +2038,15 @@ public class ResultSet
 			}
 
 			_Deleter =
-				(org.gjt.mm.mysql.jdbc2.PreparedStatement) Conn.prepareStatement(_DeleteSQL);
+				(org.gjt.mm.mysql.jdbc2.PreparedStatement) _connection.prepareStatement(_DeleteSQL);
 		}
 
 		_Deleter.clearParameters();
 
 		String Encoding = null;
 
-		if (Conn.useUnicode()) {
-			Encoding = Conn.getEncoding();
+		if (_connection.useUnicode()) {
+			Encoding = _connection.getEncoding();
 		}
 
 		try {
@@ -2056,8 +2056,8 @@ public class ResultSet
 				int index = ((Integer) _PrimaryKeyIndicies.elementAt(0)).intValue();
 				String CurrentVal =
 					(Encoding == null
-						? new String(This_Row[index])
-						: new String(This_Row[index], Encoding));
+						? new String(_thisRow[index])
+						: new String(_thisRow[index], Encoding));
 				_Deleter.setString(1, CurrentVal);
 			}
 			else {
@@ -2065,19 +2065,19 @@ public class ResultSet
 					int index = ((Integer) _PrimaryKeyIndicies.elementAt(i)).intValue();
 					String CurrentVal =
 						(Encoding == null
-							? new String(This_Row[index])
-							: new String(This_Row[index], Encoding));
+							? new String(_thisRow[index])
+							: new String(_thisRow[index], Encoding));
 					_Deleter.setString(i + 1, CurrentVal);
 				}
 			}
 
 			_Deleter.executeUpdate();
 
-			Rows.removeElementAt(currentRow);
+			_rows.removeElementAt(_currentRow);
 		}
 		catch (java.io.UnsupportedEncodingException UE) {
 			throw new SQLException(
-				"Unsupported character encoding '" + Conn.getEncoding() + "'");
+				"Unsupported character encoding '" + _connection.getEncoding() + "'");
 		}
 
 	}
@@ -2115,7 +2115,7 @@ public class ResultSet
 			throw new SQLException("Can not call refreshRow() when on insert row");
 		}
 		else
-			if (Rows.size() == 0) {
+			if (_rows.size() == 0) {
 				throw new SQLException("Can't refreshRow() on empty result set");
 			}
 			else
@@ -2133,15 +2133,15 @@ public class ResultSet
 			}
 
 			_Refresher =
-				(org.gjt.mm.mysql.jdbc2.PreparedStatement) Conn.prepareStatement(_RefreshSQL);
+				(org.gjt.mm.mysql.jdbc2.PreparedStatement) _connection.prepareStatement(_RefreshSQL);
 		}
 
 		_Refresher.clearParameters();
 
 		String Encoding = null;
 
-		if (Conn.useUnicode()) {
-			Encoding = Conn.getEncoding();
+		if (_connection.useUnicode()) {
+			Encoding = _connection.getEncoding();
 		}
 
 		try {
@@ -2151,8 +2151,8 @@ public class ResultSet
 				int index = ((Integer) _PrimaryKeyIndicies.elementAt(0)).intValue();
 				String CurrentVal =
 					(Encoding == null
-						? new String(This_Row[index])
-						: new String(This_Row[index], Encoding));
+						? new String(_thisRow[index])
+						: new String(_thisRow[index], Encoding));
 				_Refresher.setString(1, CurrentVal);
 			}
 			else {
@@ -2160,8 +2160,8 @@ public class ResultSet
 					int index = ((Integer) _PrimaryKeyIndicies.elementAt(i)).intValue();
 					String CurrentVal =
 						(Encoding == null
-							? new String(This_Row[index])
-							: new String(This_Row[index], Encoding));
+							? new String(_thisRow[index])
+							: new String(_thisRow[index], Encoding));
 					_Refresher.setString(i + 1, CurrentVal);
 				}
 			}
@@ -2182,11 +2182,11 @@ public class ResultSet
 						
 						if (val == null || rs.wasNull())
 						{
-							This_Row[i] = null;
+							_thisRow[i] = null;
 						}
 						else
 						{
-							This_Row[i] = rs.getBytes(i + 1);
+							_thisRow[i] = rs.getBytes(i + 1);
 						}
 					}
 				}
@@ -2210,7 +2210,7 @@ public class ResultSet
 		}
 		catch (java.io.UnsupportedEncodingException UE) {
 			throw new SQLException(
-				"Unsupported character encoding '" + Conn.getEncoding() + "'");
+				"Unsupported character encoding '" + _connection.getEncoding() + "'");
 		}
 
 	}
@@ -2267,7 +2267,7 @@ public class ResultSet
 			generateStatements();
 
 			_Inserter =
-				(org.gjt.mm.mysql.jdbc2.PreparedStatement) Conn.prepareStatement(_InsertSQL);
+				(org.gjt.mm.mysql.jdbc2.PreparedStatement) _connection.prepareStatement(_InsertSQL);
 
 			resetInserter();
 		}
@@ -2309,7 +2309,7 @@ public class ResultSet
 	 */
 
 	public java.sql.Statement getStatement() throws SQLException {
-		return (java.sql.Statement) owningStatement;
+		return (java.sql.Statement) _owningStatement;
 	}
 
 	/**
@@ -2353,29 +2353,29 @@ public class ResultSet
 	public  java.sql.Blob getBlob(int columnIndex) throws SQLException {
 		checkRowPos();
 
-		if (columnIndex < 1 || columnIndex > Fields.length) {
+		if (columnIndex < 1 || columnIndex > _fields.length) {
 			throw new java.sql.SQLException(
-				"Column Index out of range ( " + columnIndex + " > " + Fields.length + ").",
+				"Column Index out of range ( " + columnIndex + " > " + _fields.length + ").",
 				"S1002");
 		}
 
 		try {
-			if (This_Row[columnIndex - 1] == null) {
-				wasNullFlag = true;
+			if (_thisRow[columnIndex - 1] == null) {
+				_wasNullFlag = true;
 			}
 			else {
-				wasNullFlag = false;
+				_wasNullFlag = false;
 			}
 		}
 		catch (NullPointerException E) {
-			wasNullFlag = true;
+			_wasNullFlag = true;
 		}
 
-		if (wasNullFlag) {
+		if (_wasNullFlag) {
 			return null;
 		}
 
-		return new Blob(This_Row[columnIndex - 1]);
+		return new Blob(_thisRow[columnIndex - 1]);
 	}
 
 	/**
@@ -2624,9 +2624,9 @@ public class ResultSet
 			throw new SQLException("ResultSet not updatable");
 		}
 
-		boolean useQuotedIdentifiers = Conn.supportsQuotedIdentifiers();
+		boolean useQuotedIdentifiers = _connection.supportsQuotedIdentifiers();
 		
-		String TableName = Fields[0].getTableName();
+		String TableName = _fields[0].getTableName();
 
 		_PrimaryKeyIndicies = new Vector();
 
@@ -2639,8 +2639,8 @@ public class ResultSet
 
 		boolean keys_first_time = true;
 
-		for (int i = 0; i < Fields.length; i++) {
-			if (Fields[i].isPrimaryKey()) {
+		for (int i = 0; i < _fields.length; i++) {
+			if (_fields[i].isPrimaryKey()) {
 				_PrimaryKeyIndicies.addElement(new Integer(i));
 
 				if (!keys_first_time) {
@@ -2655,7 +2655,7 @@ public class ResultSet
 					KeyValues.append("`");
 				}
 				
-				KeyValues.append(Fields[i].getName());
+				KeyValues.append(_fields[i].getName());
 				
 				if (useQuotedIdentifiers)
 				{
@@ -2682,7 +2682,7 @@ public class ResultSet
 				ColumnNames.append("`");
 			}
 			
-			ColumnNames.append(Fields[i].getName());
+			ColumnNames.append(_fields[i].getName());
 			
 			if (useQuotedIdentifiers)
 			{
@@ -2694,7 +2694,7 @@ public class ResultSet
 				FieldValues.append("`");
 			}
 			
-			FieldValues.append(Fields[i].getName());
+			FieldValues.append(_fields[i].getName());
 			
 			if (useQuotedIdentifiers)
 			{
@@ -2746,19 +2746,19 @@ public class ResultSet
 			}
 
 			_Updater =
-				(org.gjt.mm.mysql.jdbc2.PreparedStatement) Conn.prepareStatement(_UpdateSQL);
+				(org.gjt.mm.mysql.jdbc2.PreparedStatement) _connection.prepareStatement(_UpdateSQL);
 		}
 
 		
-		int num_fields = Fields.length;
+		int num_fields = _fields.length;
 
 		_Updater.clearParameters();
 
 		for (int i = 0; i < num_fields; i++) {
-			if (This_Row[i] != null) {
+			if (_thisRow[i] != null) {
 				
 				
-				_Updater.setBytes(i + 1, This_Row[i]);
+				_Updater.setBytes(i + 1, _thisRow[i]);
 			}
 			else {
 				_Updater.setNull(i + 1, 0);
@@ -2772,12 +2772,12 @@ public class ResultSet
 
 			_Updater.setBytes(
 				num_fields + 1,
-				This_Row[((Integer) _PrimaryKeyIndicies.elementAt(0)).intValue()]);
+				_thisRow[((Integer) _PrimaryKeyIndicies.elementAt(0)).intValue()]);
 		}
 		else {
 			for (int i = 0; i < num_keys; i++) {
 				byte[] currentVal =
-					This_Row[((Integer) _PrimaryKeyIndicies.elementAt(i)).intValue()];
+					_thisRow[((Integer) _PrimaryKeyIndicies.elementAt(i)).intValue()];
 
 				if (currentVal != null) {
 					_Updater.setBytes(num_fields + i + 1, currentVal);
@@ -2796,15 +2796,15 @@ public class ResultSet
 	 */
 
 	boolean isUpdateable() {
-		if (Fields.length > 0) {
-			String TableName = Fields[0].getTableName();
+		if (_fields.length > 0) {
+			String TableName = _fields[0].getTableName();
 
 			//
 			// References only one table?
 			//
 
-			for (int i = 1; i < Fields.length; i++) {
-				if (TableName == null || !Fields[i].getTableName().equals(TableName)) {
+			for (int i = 1; i < _fields.length; i++) {
+				if (TableName == null || !_fields[i].getTableName().equals(TableName)) {
 					return false;
 				}
 			}
@@ -2823,8 +2823,8 @@ public class ResultSet
 
 		boolean has_primary_key = false;
 
-		for (int i = 0; i < Fields.length; i++) {
-			if (Fields[i].isPrimaryKey()) {
+		for (int i = 0; i < _fields.length; i++) {
+			if (_fields[i].isPrimaryKey()) {
 				has_primary_key = true;
 
 				break;
@@ -2850,7 +2850,7 @@ public class ResultSet
 	private  void resetUpdater() throws SQLException {
 		_Updater.clearParameters();
 
-		for (int i = 0; i < Fields.length; i++) {
+		for (int i = 0; i < _fields.length; i++) {
 			_Updater.setNull(i + 1, 0);
 		}
 	}
@@ -2858,7 +2858,7 @@ public class ResultSet
 	private  void resetInserter() throws SQLException {
 		_Inserter.clearParameters();
 
-		for (int i = 0; i < Fields.length; i++) {
+		for (int i = 0; i < _fields.length; i++) {
 			_Inserter.setNull(i + 1, 0);
 		}
 	}

@@ -95,7 +95,7 @@ public class ResultSet extends org.gjt.mm.mysql.ResultSet
   
     public java.sql.ResultSetMetaData getMetaData() throws java.sql.SQLException
     {
-	return new org.gjt.mm.mysql.jdbc1.ResultSetMetaData(Rows, Fields);
+	return new org.gjt.mm.mysql.jdbc1.ResultSetMetaData(_rows, _fields);
     }
   
     // ****************************************************************

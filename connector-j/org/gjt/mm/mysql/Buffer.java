@@ -42,9 +42,9 @@ import java.util.*;
  */
 class Buffer
 {
-    byte[] _buf;
+    public byte[] _buf;
     int _bufLength = 0;
-    int _pos = 0;
+    public int _pos = 0;
     int _sendLength = 0;
     final static int NO_LENGTH_LIMIT = -1;
     int _maxLength = NO_LENGTH_LIMIT;

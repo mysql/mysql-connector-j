@@ -2,6 +2,7 @@
 # $Id$
 
 04-24-02 - Version 2.0.13
+
 	- More code cleanup.
 	- Fixed unicode chars being read incorrectly (SF bug 541088)
 	- Faster blob escaping for PrepStmt code contributed by 
