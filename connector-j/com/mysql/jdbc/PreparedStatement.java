@@ -232,6 +232,8 @@ public class PreparedStatement
      *
      * @param i the first parameter is 1, the second is 2, ...
      * @param x an object representing an SQL array
+     * 
+     * @throws SQLException because this method is not implemented.
      */
     public void setArray(int i, Array x)
                   throws SQLException {
@@ -1712,6 +1714,7 @@ public class PreparedStatement
      * @param batchedParameterStreams stream values used in single statement
      * @param batchedIsStream flags for streams used in single statement
      * @param batchedIsNull flags for parameters that are null
+     * @param batchedStreamLengths lengths of streams to be read.
      * 
      * @return the update count
      * 

@@ -171,7 +171,13 @@ public class MysqlIO {
      *
      * @param host the hostname to connect to
      * @param port the port number that the server is listening on
-     * @exception IOException if an IOException occurs during connect.
+     * @param socketFactoryClassName the socket factory to use
+     * @param props the Properties from DriverManager.getConnection()
+     * @param conn the Connection that is creating us
+     * @param socketTimeout the timeout to set for the socket (0 means no timeout)
+     * 
+     * @throws IOException if an IOException occurs during connect.
+     * @throws java.sql.SQLException if a database access error occurs.
      */
     public MysqlIO(String host, int port, String socketFactoryClassName, 
                    Properties props, com.mysql.jdbc.Connection conn, 
@@ -209,7 +215,7 @@ public class MysqlIO {
     /**
      * Should the driver generate SQL statement profiles?
      * 
-     * @param profileSql The _profileSql to set
+     * @param flag should the driver enable profiling?
      */
     public void setProfileSql(boolean flag) {
         this.profileSql = flag;
@@ -219,8 +225,17 @@ public class MysqlIO {
      * Build a result set. Delegates to buildResultSetWithRows() to
      * build a JDBC-version-specific ResultSet, given rows as byte
      * data, and field information.
+     * 
+     * @param columnCount the number of columns in the result set
+     * @param maxRows the maximum number of rows to read (-1 means all rows)
+     * @param resultSetType the type of result set (CONCUR_UPDATABLE or READ_ONLY)
+     * @param streamResults should the result set be read all at once, or streamed?
+     * @param catalog the database name in use when the result set was created
+     * 
+     * @return a result set
+     * @throws Exception if a database access error occurs
      */
-    protected ResultSet getResultSet(Connection conn, long columnCount, int maxRows, 
+    protected ResultSet getResultSet(long columnCount, int maxRows, 
                                      int resultSetType, boolean streamResults,
                                      String catalog)
                               throws Exception {
@@ -276,7 +291,7 @@ public class MysqlIO {
             this.streamingData = rowData;
         }
 
-        return buildResultSetWithRows(catalog, fields, rowData, conn, resultSetType);
+        return buildResultSetWithRows(catalog, fields, rowData, resultSetType);
     }
 
     /**
@@ -401,27 +416,25 @@ public class MysqlIO {
     }
 
     private com.mysql.jdbc.ResultSet buildResultSetWithRows(String catalog, com.mysql.jdbc.Field[] fields, 
-                                                            RowData rows, 
-                                                            com.mysql.jdbc.Connection conn, 
+                                                            RowData rows,
                                                             int resultSetConcurrency)
                                                      throws SQLException {
 
         switch (resultSetConcurrency) {
 
             case java.sql.ResultSet.CONCUR_READ_ONLY:
-                return new com.mysql.jdbc.ResultSet(catalog, fields, rows, conn);
+                return new com.mysql.jdbc.ResultSet(catalog, fields, rows, this.connection);
 
             case java.sql.ResultSet.CONCUR_UPDATABLE:
                 return new com.mysql.jdbc.UpdatableResultSet(catalog, fields, rows, 
-                                                             conn);
+                                                             this.connection);
 
             default:
-                return new com.mysql.jdbc.ResultSet(catalog, fields, rows, conn);
+                return new com.mysql.jdbc.ResultSet(catalog, fields, rows, this.connection);
         }
     }
 
-    private com.mysql.jdbc.ResultSet buildResultSetWithUpdates(Buffer resultPacket,
-                                                               com.mysql.jdbc.Connection conn) 
+    private com.mysql.jdbc.ResultSet buildResultSetWithUpdates(Buffer resultPacket) 
         throws SQLException {
 
         long updateCount = -1;
@@ -1010,7 +1023,7 @@ public class MysqlIO {
 
         if (columnCount != 0) {
 
-            com.mysql.jdbc.ResultSet results = getResultSet(null, columnCount, -1, 
+            com.mysql.jdbc.ResultSet results = getResultSet(columnCount, -1, 
                                                             java.sql.ResultSet.CONCUR_READ_ONLY, 
                                                             false, null);
 
@@ -1066,7 +1079,7 @@ public class MysqlIO {
                 System.err.println(profileMsgBuf.toString());
             }
 
-            return buildResultSetWithUpdates(resultPacket, conn);
+            return buildResultSetWithUpdates(resultPacket);
         } else {
 
             long fetchStartTime = 0;
@@ -1075,7 +1088,7 @@ public class MysqlIO {
                 fetchStartTime = System.currentTimeMillis();
             }
 
-            com.mysql.jdbc.ResultSet results = getResultSet(null, columnCount, 
+            com.mysql.jdbc.ResultSet results = getResultSet(columnCount, 
                                                             maxRows, 
                                                             resultSetType, 
                                                             streamResults, null);
@@ -1180,7 +1193,7 @@ public class MysqlIO {
                 System.err.println(profileMsgBuf.toString());
             }
 
-            return buildResultSetWithUpdates(resultPacket, this.connection);
+            return buildResultSetWithUpdates(resultPacket);
         } else if (columnCount == Buffer.NULL_LENGTH) {
             System.out.println("LOAD DATA LOCAL");
             
@@ -1199,7 +1212,7 @@ public class MysqlIO {
                 fetchStartTime = System.currentTimeMillis();
             }
 
-            com.mysql.jdbc.ResultSet results = getResultSet(conn, columnCount, 
+            com.mysql.jdbc.ResultSet results = getResultSet(columnCount, 
                                                             maxRows, 
                                                             resultSetType, 
                                                             streamResults,
@@ -1662,7 +1675,7 @@ public class MysqlIO {
         Buffer resultPacket = checkErrorPacket();
         
        
-        return buildResultSetWithUpdates(resultPacket, this.connection);
+        return buildResultSetWithUpdates(resultPacket);
     }
 
     /** 
