@@ -405,6 +405,32 @@ class Buffer
     }
 
 
+  final String fastReadLenString() 
+  {
+    // this has been folded in from readFieldLength()
+    
+    int len = byteBuffer[this.position++];
+    String result = StringUtils.toAsciiString3(byteBuffer,
+					       position,
+					       len);
+    position += len; // update cursor
+    return result;
+  }
+
+  public int fastSkipLenString() 
+  {
+    int len = (int) byteBuffer[position++];
+    position += len;
+    return len;
+  }
+
+  protected final byte[] getBufferSource() 
+  {
+    return byteBuffer;
+  }
+  
+  
+
     //
     // Read given-length string
     //
@@ -669,10 +695,15 @@ class Buffer
         int len = s.length();
         ensureCapacity(len);
 
-        for (int i = 0; i < len; i++)
-        {
-            this.byteBuffer[this.position++] = (byte)s.charAt(i);
-        }
+	System.arraycopy(s.getBytes(), 0,
+			 byteBuffer, position,
+			 len);
+	position += len;
+
+//         for (int i = 0; i < len; i++)
+//         {
+//             this.byteBuffer[this.position++] = (byte)s.charAt(i);
+//         }
     }
 
     // Write a String using the specified character
