@@ -217,6 +217,7 @@ public class StatementsTest
             int fetchSize = stmt.getFetchSize();
 
             try {
+                accessorStmt.setMaxRows(4);
                 accessorStmt.setFetchSize(Integer.MAX_VALUE);
                 fail("Should not be able to set FetchSize > max rows");
             } /* ignore */ catch (SQLException sqlEx) {
