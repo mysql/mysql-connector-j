@@ -21,6 +21,7 @@ package com.mysql.jdbc;
 import java.io.UnsupportedEncodingException;
 
 import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -45,7 +46,7 @@ public class SingleByteCharsetConverter {
     private byte[] charToByteMap = new byte[65535];
     private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE)
                                           - Byte.MIN_VALUE;
-    private static final HashMap CONVERTER_MAP = new HashMap();
+    private static final Map CONVERTER_MAP = new HashMap();
     private static byte[] allBytes = new byte[BYTE_RANGE];
     private char[] byteToChars = new char[BYTE_RANGE];
 

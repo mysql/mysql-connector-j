@@ -390,13 +390,7 @@ public class Field {
      */
     public boolean isPrimaryKey() {
 
-        if ((colFlag & 2) > 0) {
-
-            return true;
-        } else {
-
-            return false;
-        }
+        return ((colFlag & 2) > 0);
     }
 
     /**
@@ -510,13 +504,7 @@ public class Field {
      */
     public boolean isUniqueKey() {
 
-        if ((colFlag & 4) > 0) {
-
-            return true;
-        } else {
-
-            return false;
-        }
+        return ((colFlag & 4) > 0);
     }
 
     /**
@@ -526,13 +514,7 @@ public class Field {
      */
     public boolean isUnsigned() {
 
-        if ((colFlag & 32) > 0) {
-
-            return true;
-        } else {
-
-            return false;
-        }
+        return ((colFlag & 32) > 0);
     }
 
     /**
@@ -542,13 +524,7 @@ public class Field {
      */
     public boolean isZeroFill() {
 
-        if ((colFlag & 64) > 0) {
-
-            return true;
-        } else {
-
-            return false;
-        }
+        return ((colFlag & 64) > 0);
     }
 
     /**

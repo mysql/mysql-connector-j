@@ -26,6 +26,7 @@ import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A Statement object is used for executing a static SQL statement and
@@ -50,7 +51,7 @@ public class Statement
     /**
      * Holds batched commands
      */
-    protected ArrayList batchedArgs;
+    protected List batchedArgs;
 
     /**
      * The connection that created us
@@ -143,7 +144,7 @@ public class Statement
      * List of currently-open ResultSets
      */
     
-    protected ArrayList openResults = new ArrayList();
+    protected List openResults = new ArrayList();
     
     /**
      * The character converter to use (if available)

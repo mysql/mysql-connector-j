@@ -70,7 +70,6 @@ public class StringUtils {
     public static final byte[] getBytes(String s, String encoding)
                                  throws UnsupportedEncodingException {
 
-        byte[] b = null;
         SingleByteCharsetConverter converter = SingleByteCharsetConverter.getInstance(
                                                        encoding);
 

@@ -19,6 +19,7 @@
 package com.mysql.jdbc;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents an in-memory result set
@@ -31,7 +32,7 @@ public class RowDataStatic
 
     //~ Instance/static variables .............................................
 
-    private ArrayList rows;
+    private List rows;
     private int index;
 
     //~ Constructors ..........................................................
