@@ -132,7 +132,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized boolean next() throws java.sql.SQLException {
+	public  boolean next() throws java.sql.SQLException {
 		
 		if (Driver.trace) {
 			Object[] args = {
@@ -189,7 +189,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized boolean prev() throws java.sql.SQLException {
+	public  boolean prev() throws java.sql.SQLException {
 		if (currentRow - 1 >= 0) {
 			currentRow--;
 			This_Row = (byte[][]) Rows.elementAt(currentRow);
@@ -215,7 +215,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void close() throws java.sql.SQLException {
+	public  void close() throws java.sql.SQLException {
 		if (Rows != null) {
 			Rows.removeAllElements();
 		}
@@ -245,7 +245,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized String getString(int columnIndex) throws java.sql.SQLException {
+	public  String getString(int columnIndex) throws java.sql.SQLException {
 		checkRowPos();
 
 		if (Fields == null) {
@@ -292,7 +292,7 @@ public abstract class ResultSet {
 			}
 		}
 		else {
-			return new String(This_Row[columnIndex - 1]);
+			return Util.bytesToString(This_Row[columnIndex - 1]);
 		}
 	}
 
@@ -304,7 +304,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized boolean getBoolean(int columnIndex) throws java.sql.SQLException {
+	public  boolean getBoolean(int columnIndex) throws java.sql.SQLException {
 		String S = getString(columnIndex);
 
 		if (S != null && S.length() > 0) {
@@ -322,7 +322,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized byte getByte(int columnIndex) throws java.sql.SQLException {
+	public  byte getByte(int columnIndex) throws java.sql.SQLException {
 		checkRowPos();
 
 		if (columnIndex < 1 || columnIndex > Fields.length)
@@ -384,7 +384,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized short getShort(int columnIndex) throws java.sql.SQLException {
+	public  short getShort(int columnIndex) throws java.sql.SQLException {
 		return (short) getLong(columnIndex);
 	}
 
@@ -396,7 +396,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized int getInt(int columnIndex) throws java.sql.SQLException {
+	public  int getInt(int columnIndex) throws java.sql.SQLException {
 		return (int) getLong(columnIndex);
 	}
 
@@ -408,7 +408,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized long getLong(int columnIndex) throws java.sql.SQLException {
+	public  long getLong(int columnIndex) throws java.sql.SQLException {
 		checkRowPos();
 
 		if (Fields == null) {
@@ -463,7 +463,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized float getFloat(int columnIndex) throws java.sql.SQLException {
+	public  float getFloat(int columnIndex) throws java.sql.SQLException {
 		return (float) getDouble(columnIndex);
 	}
 
@@ -475,7 +475,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized double getDouble(int columnIndex) throws java.sql.SQLException {
+	public  double getDouble(int columnIndex) throws java.sql.SQLException {
 		checkRowPos();
 
 		if (Fields == null) {
@@ -532,7 +532,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized BigDecimal getBigDecimal(int columnIndex, int scale)
+	public  BigDecimal getBigDecimal(int columnIndex, int scale)
 		throws java.sql.SQLException {
 		String S = getString(columnIndex);
 		BigDecimal Val;
@@ -588,7 +588,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized byte[] getBytes(int columnIndex) throws java.sql.SQLException {
+	public  byte[] getBytes(int columnIndex) throws java.sql.SQLException {
 		checkRowPos();
 
 		if (columnIndex < 1 || columnIndex > Fields.length)
@@ -625,7 +625,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized java.sql.Date getDate(int columnIndex) throws java.sql.SQLException {
+	public  java.sql.Date getDate(int columnIndex) throws java.sql.SQLException {
 		Integer Y = null, M = null, D = null;
 		String S = "";
 
@@ -741,7 +741,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized Time getTime(int columnIndex) throws java.sql.SQLException {
+	public  Time getTime(int columnIndex) throws java.sql.SQLException {
 		int hr = 0, min = 0, sec = 0;
 
 		try {
@@ -863,7 +863,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized Timestamp getTimestamp(int columnIndex) throws java.sql.SQLException {
+	public  Timestamp getTimestamp(int columnIndex) throws java.sql.SQLException {
 		String S = getString(columnIndex);
 
 		if (S == null) {
@@ -880,34 +880,21 @@ public abstract class ResultSet {
 			switch (S.length()) {
 				case 19 :
 					{
+						int year = Integer.parseInt(S.substring(0, 4));
+						int month = Integer.parseInt(S.substring(5, 7));
+						int day = Integer.parseInt(S.substring(8, 10));
+						int hour = Integer.parseInt(S.substring(11, 13));
+						int minutes = Integer.parseInt(S.substring(14, 16));
+						int seconds = Integer.parseInt(S.substring(17, 19));
 
-						synchronized (this) { // SimpleDateFormat not
-							// thread-safe :(
-							// Thanks to John Zollinger, we fixed
-							// this.
-							if (_TSDF == null) {
-								_TSDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-							}
-
-							try {
-								java.util.Date D = _TSDF.parse(S);
-
-								return new java.sql.Timestamp(D.getTime());
-							}
-							catch (ParseException E) {
-								throw new java.sql.SQLException(
-									"Bad format for Timestamp '"
-										+ S
-										+ "' in column "
-										+ columnIndex
-										+ "("
-										+ Fields[columnIndex
-										- 1]
-										+ ").",
-									"S1009");
-							}
-						}
-
+						return new java.sql.Timestamp(
+							year - 1900,
+							month - 1,
+							day,
+							hour,
+							minutes,
+							seconds,
+							0);
 					}
 				case 14 :
 					{
@@ -1025,7 +1012,7 @@ public abstract class ResultSet {
 	 * @see getBinaryStream
 	 */
 
-	public synchronized InputStream getAsciiStream(int columnIndex)
+	public  InputStream getAsciiStream(int columnIndex)
 		throws java.sql.SQLException {
 		checkRowPos();
 
@@ -1045,7 +1032,7 @@ public abstract class ResultSet {
 	 * @see getBinaryStream
 	 */
 
-	public synchronized InputStream getUnicodeStream(int columnIndex)
+	public  InputStream getUnicodeStream(int columnIndex)
 		throws java.sql.SQLException {
 		checkRowPos();
 
@@ -1065,7 +1052,7 @@ public abstract class ResultSet {
 	 * @see getUnicodeStream
 	 */
 
-	public synchronized InputStream getBinaryStream(int columnIndex)
+	public  InputStream getBinaryStream(int columnIndex)
 		throws java.sql.SQLException {
 		checkRowPos();
 
@@ -1086,70 +1073,70 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized String getString(String ColumnName) throws java.sql.SQLException {
+	public  String getString(String ColumnName) throws java.sql.SQLException {
 		return getString(findColumn(ColumnName));
 	}
 
-	public synchronized boolean getBoolean(String ColumnName) throws java.sql.SQLException {
+	public  boolean getBoolean(String ColumnName) throws java.sql.SQLException {
 		return getBoolean(findColumn(ColumnName));
 	}
 
-	public synchronized byte getByte(String ColumnName) throws java.sql.SQLException {
+	public  byte getByte(String ColumnName) throws java.sql.SQLException {
 		return getByte(findColumn(ColumnName));
 	}
 
-	public synchronized short getShort(String ColumnName) throws java.sql.SQLException {
+	public  short getShort(String ColumnName) throws java.sql.SQLException {
 		return getShort(findColumn(ColumnName));
 	}
 
-	public synchronized int getInt(String ColumnName) throws java.sql.SQLException {
+	public  int getInt(String ColumnName) throws java.sql.SQLException {
 		return getInt(findColumn(ColumnName));
 	}
 
-	public synchronized long getLong(String ColumnName) throws java.sql.SQLException {
+	public  long getLong(String ColumnName) throws java.sql.SQLException {
 		return getLong(findColumn(ColumnName));
 	}
 
-	public synchronized float getFloat(String ColumnName) throws java.sql.SQLException {
+	public  float getFloat(String ColumnName) throws java.sql.SQLException {
 		return getFloat(findColumn(ColumnName));
 	}
 
-	public synchronized double getDouble(String ColumnName) throws java.sql.SQLException {
+	public  double getDouble(String ColumnName) throws java.sql.SQLException {
 		return getDouble(findColumn(ColumnName));
 	}
 
-	public synchronized BigDecimal getBigDecimal(String ColumnName, int scale)
+	public  BigDecimal getBigDecimal(String ColumnName, int scale)
 		throws java.sql.SQLException {
 		return getBigDecimal(findColumn(ColumnName), scale);
 	}
 
-	public synchronized byte[] getBytes(String ColumnName) throws java.sql.SQLException {
+	public  byte[] getBytes(String ColumnName) throws java.sql.SQLException {
 		return getBytes(findColumn(ColumnName));
 	}
 
-	public synchronized java.sql.Date getDate(String ColumnName) throws java.sql.SQLException {
+	public  java.sql.Date getDate(String ColumnName) throws java.sql.SQLException {
 		return getDate(findColumn(ColumnName));
 	}
 
-	public synchronized Time getTime(String ColumnName) throws java.sql.SQLException {
+	public  Time getTime(String ColumnName) throws java.sql.SQLException {
 		return getTime(findColumn(ColumnName));
 	}
 
-	public synchronized Timestamp getTimestamp(String ColumnName) throws java.sql.SQLException {
+	public  Timestamp getTimestamp(String ColumnName) throws java.sql.SQLException {
 		return getTimestamp(findColumn(ColumnName));
 	}
 
-	public synchronized InputStream getAsciiStream(String ColumnName)
+	public  InputStream getAsciiStream(String ColumnName)
 		throws java.sql.SQLException {
 		return getAsciiStream(findColumn(ColumnName));
 	}
 
-	public synchronized InputStream getUnicodeStream(String ColumnName)
+	public  InputStream getUnicodeStream(String ColumnName)
 		throws java.sql.SQLException {
 		return getUnicodeStream(findColumn(ColumnName));
 	}
 
-	public synchronized InputStream getBinaryStream(String ColumnName)
+	public  InputStream getBinaryStream(String ColumnName)
 		throws java.sql.SQLException {
 		return getBinaryStream(findColumn(ColumnName));
 	}
@@ -1171,7 +1158,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs.
 	 */
 
-	public synchronized java.sql.SQLWarning getWarnings() throws java.sql.SQLException {
+	public  java.sql.SQLWarning getWarnings() throws java.sql.SQLException {
 		return Warnings;
 	}
 
@@ -1182,7 +1169,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void clearWarnings() throws java.sql.SQLException {
+	public  void clearWarnings() throws java.sql.SQLException {
 		Warnings = null;
 	}
 
@@ -1205,7 +1192,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized String getCursorName() throws java.sql.SQLException {
+	public  String getCursorName() throws java.sql.SQLException {
 		throw new java.sql.SQLException("Positioned Update not supported.", "S1C00");
 	}
 
@@ -1236,7 +1223,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized Object getObject(int columnIndex) throws java.sql.SQLException {
+	public  Object getObject(int columnIndex) throws java.sql.SQLException {
 		checkRowPos();
 
 		if (Driver.trace) {
@@ -1400,7 +1387,7 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized Object getObject(String ColumnName) throws java.sql.SQLException {
+	public  Object getObject(String ColumnName) throws java.sql.SQLException {
 		return getObject(findColumn(ColumnName));
 	}
 
@@ -1566,7 +1553,7 @@ public abstract class ResultSet {
 		return updateID;
 	}
 
-	protected synchronized void checkRowPos() throws SQLException {
+	protected  void checkRowPos() throws SQLException {
 		
 		if (closed) {
 			throw new SQLException("Operation not allowed after ResultSet closed");
