@@ -316,10 +316,11 @@ public abstract class ResultSet
 					"0S100");
 			}
 		}
-		else
+		else 
 		{
-			return Util.bytesToString(This_Row[columnIndex - 1]);
+			return new String(This_Row[columnIndex - 1]);
 		}
+
 	}
 
 	/**
