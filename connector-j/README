@@ -1,4 +1,4 @@
-MM.MySQL 2.0.11
+MM.MySQL 2.0.13
 Mark Matthews JDBC Driver for MySQL
 Copyright (c) 1998-2002 Mark Matthews
 
@@ -53,7 +53,7 @@ USAGE AND INSTALLATION
 
 MM.MySQL is distributed as a .jar archive containing the sources 
 and class files as well as a class-file only "binary" .jar archive 
-named "mysql-2.0.11-bin.jar".
+named "mysql-2.0.13-bin.jar".
 
 You will need to use the "jar" command-line utility that comes with your JDK 
 to un-archive the distribution.
@@ -65,7 +65,7 @@ Either copy the org subdirectory and all of it's contents
 to anywhere you like, and put the directory holding the org subdirectory
 in your classpath, or...
 
-Put mysql-2.0.11-bin.jar in your classpath, either by adding the 
+Put mysql-2.0.13-bin.jar in your classpath, either by adding the 
 FULL path to it to your CLASSPATH enviornment variable, or putting it
 in $JAVA_HOME/jre/lib/ext.
 
@@ -91,7 +91,9 @@ following parameters (through standard "set" mutators):
 If you are going to use the driver with the JDBC DriverManager, you would use
 "org.gjt.mm.mysql.Driver" as the class that implements java.sql.Driver.
 
-You might use this name in the Class.forName() call, for example.
+You might use this name in a Class.forName() call to load the driver:
+
+	Class.forName("org.gjt.mm.mysql.Driver").newInstance();
 
 To connect to the database, you need to use a JDBC url with the following 
 format ([xxx] denotes optional url components):
@@ -199,7 +201,7 @@ further issues, see the "SUPPORT" section below.
 
   From the mysql command-line client, issue the following command
 
-  "GRANT ALL PRIVILEGES ON [dbname].* to [user]@[hostname] identified by 
+  "GRANT ALL PRIVILEGES ON [dbname].* to '[user]'@'[hostname]' identified by 
   '[password]'"
 
   replacing [dbname] with the name of your database, [user] with the username,
