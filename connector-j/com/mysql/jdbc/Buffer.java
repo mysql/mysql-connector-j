@@ -137,14 +137,6 @@ class Buffer {
         return byteBuffer;
     }
 
-    final void setBytes(byte[] buf) {
-        setSendLength(getBufLength());
-        System.arraycopy(buf, 0, this.byteBuffer, 0, getBufLength());
-    }
-
-    //
-    // Read a given-length array of bytes
-    //
     final byte[] getBytes(int len) {
 
         byte[] b = new byte[len];
@@ -158,26 +150,6 @@ class Buffer {
     final boolean isLastDataPacket() {
 
         return ((getBufLength() < 9) && ((this.byteBuffer[0] & 0xff) == 254));
-    }
-
-    //
-    // Read a null-terminated array of bytes
-    //
-    final byte[] getNullTerminatedBytes() {
-
-        int i = this.position;
-        int len = 0;
-
-        while ((this.byteBuffer[i] != 0) && (i < getBufLength())) {
-            len++;
-            i++;
-        }
-
-        byte[] b = new byte[len];
-        System.arraycopy(this.byteBuffer, this.position, b, 0, len);
-        this.position += (len + 1); // update cursor
-
-        return b;
     }
 
     final void clear() {
@@ -278,17 +250,6 @@ class Buffer {
         }
     }
 
-    final String fastReadLenString() {
-
-        // this has been folded in from readFieldLength()
-        int len = byteBuffer[this.position++];
-        String result = StringUtils.toAsciiString3(byteBuffer, position, len);
-        position += len; // update cursor
-
-        return result;
-    }
-
-    // For MySQL servers > 3.22.5
     final long newReadLength() {
 
         int sw = this.byteBuffer[this.position++] & 0xff;
@@ -315,12 +276,6 @@ class Buffer {
     final byte readByte() {
 
         return this.byteBuffer[this.position++];
-    }
-
-    // Read null-terminated string (native)
-    final byte[] readByteArray() {
-
-        return getNullTerminatedBytes();
     }
 
     final long readFieldLength() {
@@ -355,25 +310,6 @@ class Buffer {
                | ((b[this.position++] & 0xff) << 8);
     }
 
-    // Read given-length string (native)
-    final byte[] readLenByteArray() {
-
-        long len = this.readFieldLength();
-
-        if (len == NULL_LENGTH) {
-
-            return null;
-        }
-
-        if (len == 0) {
-
-            return new byte[0];
-        }
-
-        return getBytes((int) len);
-    }
-
-    // Read given-length string (native)
     final byte[] readLenByteArray(int offset) {
 
         long len = this.readFieldLength();
@@ -391,34 +327,6 @@ class Buffer {
         this.position += offset;
 
         return getBytes((int) len);
-    }
-
-    //
-    // Read given-length string
-    //
-    // To avoid alloc'ing a byte array that will
-    // quickly be thrown away, we do this by
-    // hand instead of calling getBytes()
-    //
-    final String readLenString() {
-
-        long len = this.readFieldLength();
-
-        if (len == NULL_LENGTH) {
-
-            return null;
-        }
-
-        if (len == 0) {
-
-            return "";
-        }
-
-        String readString = new String(this.byteBuffer, 
-        	this.position, (int) len);
-        this.position += len; // update cursor
-
-        return readString;
     }
 
     final long readLength() {
@@ -502,24 +410,6 @@ class Buffer {
         return s;
     }
 
-    //
-    // Read a null-terminated string, but don't actually do anything with it
-    // (avoiding allocation, but needed for protocol support
-    //
-    final void readStringNoop() {
-
-        int i = this.position;
-        int len = 0;
-
-        while ((this.byteBuffer[i] != 0) && (i < getBufLength())) {
-            len++;
-            i++;
-        }
-
-        this.position += (len + 1); // update cursor
-    }
-
-    // Read n bytes depending
     final int readnBytes() {
 
         int sw = this.byteBuffer[this.position++] & 0xff;
@@ -649,15 +539,13 @@ class Buffer {
                           throws UnsupportedEncodingException, SQLException {
 
         byte[] b = null;
-        
-        SingleByteCharsetConverter converter = 
-        	SingleByteCharsetConverter.getInstance(encoding);
+        SingleByteCharsetConverter converter = SingleByteCharsetConverter.getInstance(
+                                                       encoding);
 
         if (converter != null) {
             b = converter.toBytes(s);
         } else {
             b = StringUtils.getBytes(s, encoding);
-            
         }
 
         int len = b.length;
@@ -686,10 +574,5 @@ class Buffer {
 
     void setSendLength(int sendLength) {
         this.sendLength = sendLength;
-    }
-
-    int getSendLength() {
-
-        return this.sendLength;
     }
 }
