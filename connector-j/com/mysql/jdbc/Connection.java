@@ -335,6 +335,12 @@ public class Connection
     
     private boolean useStreamLengthsInPrepStmts = true;
     
+    /** 
+     * Should we do 'extra' sanity checks?
+     */
+    
+    private boolean pedantic = false;
+    
 
     /**
      * Default socket factory classname
@@ -1151,6 +1157,11 @@ public class Connection
                 
         }
 
+        
+        if (info.getProperty("pedantic") != null) {
+            this.pedantic = info.getProperty("pedantic").equalsIgnoreCase("TRUE");
+        }
+        
         if (info.getProperty("useStreamLengthsInPrepStmts") != null) {
             this.useStreamLengthsInPrepStmts = info.getProperty("useStreamLengthsInPrepStmts").equalsIgnoreCase("TRUE");
         }
@@ -1396,7 +1407,9 @@ public class Connection
             Debug.returnValue(this, "nativeSQL", sql);
         }
 
-        return sql;
+        EscapeProcessor escaper = new EscapeProcessor();
+        
+        return escaper.escapeSQL(sql);
     }
 
     /**
@@ -1946,6 +1959,10 @@ public class Connection
 
         return this.user;
     }
+    
+    boolean isPedantic() {
+        return this.pedantic;
+    }
 
     /**
      * Send a query to the server.  Returns one of the ResultSet
@@ -2259,18 +2276,6 @@ public class Connection
                                              mysqlCharsetName).toString().trim();
             charsetMap.put(mysqlCharsetName.toUpperCase(), javaCharsetName);
             charsetMap.put(mysqlCharsetName, javaCharsetName);
-
-            if (multibyteCharsetsMap.get(mysqlCharsetName.toUpperCase()) == null) {
-
-                try {
-                    SingleByteCharsetConverter.initCharset(javaCharsetName);
-                } catch (UnsupportedEncodingException uee) {
-
-                    // ignore, guarded by checkServerEncoding, don't want
-                    // to throw exception out of something
-                    // called in static initializer if possible.
-                }
-            }
         }
     }
 

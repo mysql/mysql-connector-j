@@ -578,7 +578,7 @@ public class ResultSet
 
         if (stringVal != null && stringVal.length() > 0) {
 
-            int c = stringVal.toLowerCase().charAt(0);
+            int c = Character.toLowerCase(stringVal.charAt(0));
 
             return ((c == 't') || (c == 'y') || (c == '1') || stringVal.equals("-1"));
         }

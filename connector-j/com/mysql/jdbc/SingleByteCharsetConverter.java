@@ -34,7 +34,8 @@ public class SingleByteCharsetConverter {
 
     //~ Instance/static variables .............................................
 
-    protected static byte[] charToByteMap = new byte[65535];
+    // 
+    protected byte[] charToByteMap = new byte[65535];
     private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE)
                                           - Byte.MIN_VALUE;
     private static final HashMap CONVERTER_MAP = new HashMap();
@@ -81,11 +82,15 @@ public class SingleByteCharsetConverter {
     /**
      * Get a converter for the given encoding name
      */
-    public static SingleByteCharsetConverter getInstance(String encodingName)
+    public static synchronized SingleByteCharsetConverter getInstance(String encodingName)
         throws UnsupportedEncodingException {
 
         SingleByteCharsetConverter instance = (SingleByteCharsetConverter) CONVERTER_MAP.get(
                                                       encodingName);
+        
+        if (instance == null) {
+            instance = initCharset(encodingName);
+        }
                                                       
         return instance;
     }
@@ -94,10 +99,25 @@ public class SingleByteCharsetConverter {
      * Initialize the shared instance of a converter for the given
      * character encoding.
      */
-    public static void initCharset(String encodingName)
+    public static SingleByteCharsetConverter initCharset(String javaEncodingName)
                             throws UnsupportedEncodingException {
-        CONVERTER_MAP.put(encodingName, 
-                         new SingleByteCharsetConverter(encodingName));
+                      
+        String mysqlEncodingName = (String) CharsetMapping.JAVA_TO_MYSQL_CHARSET_MAP.get(javaEncodingName);
+        
+        if (mysqlEncodingName == null) {
+            return null;
+        }
+                  
+        if (CharsetMapping.MULTIBYTE_CHARSETS.get(mysqlEncodingName) == null) {
+            return null;
+        }
+        
+        SingleByteCharsetConverter converter = 
+            new SingleByteCharsetConverter(javaEncodingName);
+            
+        CONVERTER_MAP.put(javaEncodingName, converter);
+        
+        return converter;
     }
 
     /**

@@ -93,6 +93,12 @@ public class Statement
     protected SQLWarning warningChain = null;
     private int fetchSize = 0;
     protected boolean isClosed = false;
+    
+    /**
+     * Are we in pedantic mode?
+     */
+    
+    protected boolean pedantic = false;
 
     //~ Constructors ..........................................................
 
@@ -115,9 +121,10 @@ public class Statement
             throw new SQLException("Connection is closed.", "08003");
         }
 
-        connection = c;
-        escaper = new EscapeProcessor();
-        currentCatalog = catalog;
+        this.connection = c;
+        this.escaper = new EscapeProcessor();
+        this.currentCatalog = catalog;
+        this.pedantic = this.connection.isPedantic();
 
         //
         // Adjust, if we know it
@@ -1129,6 +1136,12 @@ public class Statement
                                    + "Queries leading to data modification are not allowed", 
                                    "S1009");
         }
+        
+        if (this.pedantic 
+            && StringUtils.startsWithIgnoreCaseAndWs(sql, "select")) {
+            throw new SQLException("Can not issue SELECT via executeUpdate()", 
+                "S1009");
+        }
 
         checkClosed();
 
@@ -1168,10 +1181,10 @@ public class Statement
 
         if (rs.reallyResult()) {
 
-            if (!connection.getAutoCommit()) {
+            if (!this.connection.getAutoCommit()) {
 
                 try {
-                    connection.rollback();
+                    this.connection.rollback();
                 } catch (SQLException sqlEx) {
 
                     // FIXME: Log later?

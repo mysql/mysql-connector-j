@@ -20,7 +20,9 @@ package com.mysql.jdbc;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -33,6 +35,12 @@ public class CharsetMapping {
 
     //~ Instance/static variables .............................................
 
+    /**
+     * Mapping of Java charset names to MySQL charset names
+     */
+    
+    public static final Map JAVA_TO_MYSQL_CHARSET_MAP;
+    
 	/**
 	 * Mapping of MySQL charset names to Java charset names
 	 */
@@ -88,7 +96,22 @@ public class CharsetMapping {
         tempMap.put("ucs2", "UnicodeBig");
         
         CHARSETMAP = Collections.unmodifiableMap(tempMap);
-
+        
+        HashMap javaToMysqlMap = new HashMap();
+        
+        Set keySet = CHARSETMAP.keySet();
+        
+        Iterator keys = keySet.iterator();
+        
+        while (keys.hasNext()) {
+            Object mysqlEncodingName = keys.next();
+            Object javaEncodingName = CHARSETMAP.get(mysqlEncodingName);
+            
+            javaToMysqlMap.put(javaEncodingName, mysqlEncodingName);
+        }
+        
+        JAVA_TO_MYSQL_CHARSET_MAP = Collections.unmodifiableMap(javaToMysqlMap);
+        
         //
         // Character sets that we can't convert
         // ourselves.

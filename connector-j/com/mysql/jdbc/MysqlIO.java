@@ -295,7 +295,7 @@ public class MysqlIO {
             //else
             //   field->def=0;
             //field->max_length= 0;
-            Field field = new Field(packet.getBufferSource(), nameStart, 
+            Field field = new Field(this.connection, packet.getBufferSource(), nameStart, 
                                     nameLength, tableNameStart, 
                                     tableNameLength, colLength, colType, 
                                     colFlag, colDecimals);
@@ -319,7 +319,7 @@ public class MysqlIO {
                 colDecimals++;
             }
 
-            Field field = new Field(packet.getBufferSource(), nameStart, 
+            Field field = new Field(this.connection, packet.getBufferSource(), nameStart, 
                                     nameLength, tableNameStart, 
                                     tableNameLength, colLength, colType, 
                                     colFlag, colDecimals);

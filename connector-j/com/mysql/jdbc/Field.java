@@ -62,9 +62,10 @@ public class Field {
         colDecimals = 0;
     }
 
-    Field(byte[] buffer, int nameStart, int nameLength, int tableNameStart, 
+    Field(Connection conn, byte[] buffer, int nameStart, int nameLength, int tableNameStart, 
           int tableNameLength, int length, int mysqlType, short colFlag, 
           int colDecimals) {
+        this.connection = conn;
         this.buffer = buffer;
         this.nameStart = nameStart;
         this.nameLength = nameLength;
@@ -294,10 +295,22 @@ public class Field {
                         stringVal = converter.toString(buffer, stringStart, 
                                                        stringLength);
                     } else {
-                        // we have no converter, use JVM standard charset 
-                        stringVal = StringUtils.toAsciiString3(buffer, 
-                                                               stringStart, 
-                                                               stringLength);
+                        // we have no converter, use JVM converter 
+                        byte[] stringBytes = new byte[stringLength];
+                        
+                        int endIndex = stringStart + stringLength;
+                        int pos = 0;
+                        
+                        for (int i = stringStart; i < endIndex; i++) {
+                            stringBytes[pos++] = buffer[i];
+                        }
+                        
+                        try {
+                            stringVal = new String(stringBytes, encoding);
+                        } catch (UnsupportedEncodingException ue) {
+                            throw new RuntimeException("Unsupported character encoding '" + encoding + "'");
+                        }
+                        
                     }
                 } else {
                      // we have no encoding, use JVM standard charset
