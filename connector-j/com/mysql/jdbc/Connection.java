@@ -396,6 +396,13 @@ public class Connection implements java.sql.Connection {
      * reached.
      */
     private long secondsBeforeRetryMaster = 30L;
+    
+    /**
+     * The type map for UDTs (not implemented, but used by
+     * some third-party vendors, most notably IBM WebSphere)
+     */
+    
+    private Map typeMap;
 
     /**
      * Creates a connection to a MySQL Server.
@@ -853,27 +860,31 @@ public class Connection implements java.sql.Connection {
     /**
      * JDBC 2.0
      *
-    �* Install a type-map object as the default type-map for
-    �* this connection
+     * Install a type-map object as the default type-map for
+     * this connection
      *
      * @param map the type mapping
      * @throws SQLException if a database error occurs.
-    �*/
+     */
     public void setTypeMap(java.util.Map map) throws SQLException {
-        throw new NotImplemented();
+        this.typeMap = map;
     }
 
     /**
      * JDBC 2.0
      *
-    �* Get the type-map object associated with this connection.
-    �* By default, the map returned is empty.
+     * Get the type-map object associated with this connection.
+     * By default, the map returned is empty.
      *
      * @return the type map
      * @throws SQLException if a database error occurs
-    �*/
-    public java.util.Map getTypeMap() throws SQLException {
-        throw new NotImplemented();
+     */
+    public synchronized java.util.Map getTypeMap() throws SQLException {
+        if (this.typeMap == null) {
+            this.typeMap = new HashMap();
+        }
+        
+        return this.typeMap;
     }
 
     /**

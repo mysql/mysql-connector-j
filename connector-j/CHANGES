@@ -4,6 +4,9 @@
 xx-xx-03 - Version 3.0.5-gamma
     - Fixed Buffer.fastSkipLenString() causing ArrayIndexOutOfBounds
       exceptions with some queries when unpacking fields.
+    - Implemented an empty TypeMap for Connection.getTypeMap() so that
+      some third-party apps work with MySQL (IBM WebSphere 5.0 Connection
+      pool).
       
 01-06-03 - Version 3.0.4-gamma
 	- Added quoted identifiers to database names for 
