@@ -18,11 +18,16 @@ Copyright (C) 2002 MySQL AB
 
 <project name="MySQL Connector/J" default="dist" basedir=".">
 
-	<property name="version" value="3.0.0-dev"/>
+	<property name="cvs.repository" value=":ext:mark_matthews@cvs.mmmysql.sourceforge.net:/cvsroot/mmmysql"/>
+	<property name="cvs.package" value="mm.mysql-2"/>
+    <property name="ccdir" value="/usr/java/cruisecontrol-1.2.1"/>
+
+	<property name="version" value="3.0.0"/>
 	<property name="prodName" value="mysql.connector.j-${version}"/>
 	
 	<property name="buildDir" value="../build-mysql-jdbc"/>
 	<property name="distDir" value="../dist-mysql-jdbc"/>
+	<property name="junit.results" value="${buildDir}/junit"/>
 	
 	<!-- Begin: Checkstyle coding style conformance tool -->
 	
@@ -30,6 +35,7 @@ Copyright (C) 2002 MySQL AB
 		<pathelement location="/src/checkstyle-2.3/checkstyle-all-2.3.jar" />
 	</path>
 	
+<!--	
 	<taskdef name="checkstyle"
            classname="com.puppycrawl.tools.checkstyle.CheckStyleTask"
            classpathref="checkstyle.classpath" />
@@ -41,7 +47,7 @@ Copyright (C) 2002 MySQL AB
       		<fileset dir="${buildDir}/${prodName}" includes="**/*.java"/>
 		</checkstyle>
 	</target>
-	
+-->	
 	<!-- End: Checkstyle -->
 	
 	
@@ -93,6 +99,7 @@ Copyright (C) 2002 MySQL AB
 	
 	
 	<target name="init">
+		<tstamp/>
 		<filter token="VERSION" value="${version}"/>
 		<delete dir="${buildDir}"/>
 
@@ -162,7 +169,7 @@ Copyright (C) 2002 MySQL AB
 	</target>
 	
 	<target name="test" depends="compile-testsuite">
-	  <mkdir dir="${buildDir}/junit"/>
+	  <mkdir dir="${junit.results}"/>
 	  
 	  <junit printSummary="yes" fork="yes">
 		<jvmarg value="-Xmx256m"/>
@@ -176,8 +183,9 @@ Copyright (C) 2002 MySQL AB
   	  	</classpath>
 
       	<formatter type="plain" />
+	<formatter type="xml"/>
       
-      	<batchtest fork="no" todir="${buildDir}/junit">
+      	<batchtest fork="no" todir="${junit.results}">
     			<fileset dir="${buildDir}/${prodName}">
       	   		<include name="**/*Test.java" />
     			</fileset>
@@ -186,7 +194,7 @@ Copyright (C) 2002 MySQL AB
 	</target>
 	
 	<target name="test.with.clover">
-	  <mkdir dir="${buildDir}/junit"/>
+	  <mkdir dir="${junit.results}"/>
 	  <junit printSummary="yes">
 	  <sysproperty key="com.mysql.jdbc.testsuite.url" value="jdbc:mysql:///test"/>
 	  <classpath>
@@ -199,7 +207,7 @@ Copyright (C) 2002 MySQL AB
 
       <formatter type="plain" />
       
-      <batchtest fork="no" todir="${buildDir}/junit">
+      <batchtest fork="no" todir="${junit.results}">
     	<fileset dir="${buildDir}/${prodName}">
       	   <include name="**/*Test.java" />
     	</fileset>
@@ -242,5 +250,30 @@ Copyright (C) 2002 MySQL AB
 		</delete>
 		-->
 	</target>
+
+	<!-- Cruise Control Targets -->
+
+	<target name="checkout" description="Update package from CVS">
+        	<cvs cvsroot="${cvs.repository}" package="${cvs.package}" dest=".."/>
+    	</target>
+
+    <target name="modificationcheck" depends="init" description="Check modificat
+ions since last build">
+        <taskdef name="modificationset"
+                classname="net.sourceforge.cruisecontrol.ModificationSet"/>
+        <echo message="Checking for modifications..."/>
+        <modificationset lastbuild="${lastBuildAttemptTime}" quietperiod="30"
+         dateformat="yyyy-MMM-dd HH:mm:ss">
+            <cvselement cvsroot="${cvs.repository}"/>
+        </modificationset>
+    </target>
+
+    <target name="masterbuild"
+        depends="modificationcheck,checkout,compile,test"
+     description="Cruise control master build"/>
+
+    <target name="cleanbuild" depends="clean,masterbuild" description="Cruise co
+ntrol clean build"/>
+
 
 </project>
