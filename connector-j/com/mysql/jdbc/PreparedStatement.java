@@ -2310,8 +2310,13 @@ public class PreparedStatement
                          throws java.sql.SQLException {
 
         try {
+            int lengthToRead = length;
+            
+            if (lengthToRead > b.length) {
+                lengthToRead = b.length;
+            }
 
-            return i.read(b, 0, length);
+            return i.read(b, 0, lengthToRead);
         } catch (Throwable E) {
             throw new java.sql.SQLException("Error reading from InputStream "
                                             + E.getClass().getName(), "S1000");
