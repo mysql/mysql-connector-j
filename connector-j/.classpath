@@ -3,5 +3,7 @@
     <classpathentry kind="src" path=""/>
     <classpathentry kind="var" path="JRE_LIB" rootpath="JRE_SRCROOT" sourcepath="JRE_SRC"/>
     <classpathentry kind="lib" path="lib-nodist/junit.jar"/>
+    <classpathentry kind="lib" path="lib-nodist/fscontext.jar"/>
+    <classpathentry kind="lib" path="lib-nodist/providerutil.jar"/>
     <classpathentry kind="output" path=""/>
 </classpath>
