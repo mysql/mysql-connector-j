@@ -1648,7 +1648,7 @@ public class DatabaseMetaData
     public String getExtraNameCharacters()
                                   throws java.sql.SQLException {
 
-        return "";
+        return "#@";
     }
 
     /**
