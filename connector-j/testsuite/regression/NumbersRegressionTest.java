@@ -63,10 +63,11 @@ public class NumbersRegressionTest
             while (rs.next()) {
 
                 String retrieveAsString = rs.getString(1);
-                System.out.println("As String: " + retrieveAsString);
-
+               
+                // check retrieval
                 long retrieveAsLong = rs.getLong(1);
-                System.out.println("As Long: " + retrieveAsLong);
+                assertTrue(retrieveAsLong == 6692730313872877584L);
+               
             }
 
             rs.close();
@@ -75,6 +76,7 @@ public class NumbersRegressionTest
             String bigIntAsString = "6692730313872877584";
             long bigIntAsLong = 6692730313872877584L;
             long parsedBigIntAsLong = Long.parseLong(bigIntAsString);
+            // check JDK parsing
             assertTrue(bigIntAsString.equals(String.valueOf(parsedBigIntAsLong)));
         } finally {
             stmt.executeUpdate("DROP TABLE IF EXISTS bigIntRegression");

@@ -34,7 +34,7 @@ import testsuite.BaseTestCase;
  * @author  Mark Matthews
  * @version StringRegressionTest.java,v 1.1 2002/11/04 14:58:25 mark_matthews Exp
  */
-public class StringTest
+public class StringRegressionTest
     extends BaseTestCase {
 
     //~ Constructors ..........................................................
@@ -44,7 +44,7 @@ public class StringTest
      * 
      * @param name DOCUMENT ME!
      */
-    public StringTest(String name) {
+    public StringRegressionTest(String name) {
         super(name);
     }
 
@@ -56,8 +56,8 @@ public class StringTest
      * @param args command-line arguments (not used)
      */
     public static void main(String[] args) {
-        new StringTest("testAsciiCharConversion").run();
-        new StringTest("testEncodingRegression").run();
+        new StringRegressionTest("testAsciiCharConversion").run();
+        new StringRegressionTest("testEncodingRegression").run();
     }
 
     /**
