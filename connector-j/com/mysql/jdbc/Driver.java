@@ -311,13 +311,20 @@ public class Driver
         continueBatchOnError.required = false;
         continueBatchOnError.description = "Should the driver continue processing batch commands if " +
          "one statement fails. The JDBC spec allows either way (defaults to 'true').";
-         
+        
+        DriverPropertyInfo allowLoadLocalInfile = new DriverPropertyInfo("allowLoadLocalInfile", 
+                                                             info.getProperty(
+                                                             "allowLoadLocalInfile", 
+                                                             "true"));
+        allowLoadLocalInfile.required = false;
+        allowLoadLocalInfile.description = "Should the driver allow use of 'LOAD DATA LOCAL INFILE...' (defaults to 'true').";
+        
         DriverPropertyInfo[] dpi = {
             hostProp, portProp, dbProp, userProp, passwordProp, autoReconnect, 
             maxReconnects, initialTimeout, profileSql, socketTimeout, useSSL, 
             paranoid, useHostsInPrivileges, interactiveClient, useCompression,
             useTimezone, serverTimezone, connectTimeout, queriesBeforeRetryMaster,
-            useStreamLengthsInPrepStmts, continueBatchOnError
+            useStreamLengthsInPrepStmts, continueBatchOnError, allowLoadLocalInfile
         };
 
         return dpi;
