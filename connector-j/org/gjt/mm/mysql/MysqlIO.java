@@ -1292,7 +1292,7 @@ public abstract class MysqlIO {
 	 * @param _profileSql The _profileSql to set
 	 */
 	
-	public void set_profileSql(boolean flag) 
+	public void setProfileSql(boolean flag) 
 	{
 		this._profileSql = flag;
 	}
