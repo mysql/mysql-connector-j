@@ -861,10 +861,7 @@ public class DatabaseMetaData
                                                                  MysqlIO.getMaxBuf()));
                             } else if (typeInfo.toLowerCase().equals(
                                                "longblob")) {
-                                size = (MysqlIO.getMaxBuf() < Integer.MAX_VALUE)
-                                           ? Integer.toString(MysqlIO.getMaxBuf())
-                                           : Integer.toString(
-                                                     Integer.MAX_VALUE);
+                               size = Integer.toString(Integer.MAX_VALUE);
                             } else if (typeInfo.toLowerCase().equals(
                                                "tinytext")) {
                                 size = "255";

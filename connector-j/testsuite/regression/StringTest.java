@@ -28,7 +28,7 @@ import testsuite.BaseTestCase;
  * in the driver.
  * 
  * @author  Mark Matthews
- * @version StringTest.java,v 1.3 2002/09/24 19:57:06 mark_matthews Exp
+ * @version StringTest.java,v 1.4 2002/09/25 14:56:06 mark_matthews Exp
  */
 public class StringTest
     extends BaseTestCase {
