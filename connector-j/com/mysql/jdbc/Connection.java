@@ -402,6 +402,19 @@ public class Connection
         return this.database;
     }
 
+	public boolean isClosedNoPing()
+	{
+		if (Driver.trace)
+        {
+
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "isClosedNoPing", args);
+            Debug.returnValue(this, "isClosedNoPing", new Boolean(this.isClosed));
+        }
+        
+        return this.isClosed;
+	}
+	
     /**
      * Tests to see if a Connection is closed
      *
