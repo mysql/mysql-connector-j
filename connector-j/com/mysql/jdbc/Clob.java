@@ -35,7 +35,7 @@ import java.sql.SQLException;
  * @author Mark Matthews
  */
 public class Clob
-    implements java.sql.Clob {
+    implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 
     //~ Instance/static variables .............................................
 
@@ -52,9 +52,21 @@ public class Clob
     /**
      * @see java.sql.Clob#setAsciiStream(long)
      */
-    public OutputStream setAsciiStream(long arg0)
+    public OutputStream setAsciiStream(long indexToWriteAt)
                                 throws SQLException {
-        throw new NotImplemented();
+        
+        if (indexToWriteAt < 1) {
+            throw new SQLException("indexToWriteAt must be >= 1", "S1009");
+        }
+        
+        WatchableOutputStream bytesOut = new WatchableOutputStream();
+        bytesOut.setWatcher(this);
+        
+        if (indexToWriteAt > 0) {
+            bytesOut.write(this.charData.getBytes(), 0, (int) (indexToWriteAt - 1));
+        }
+        
+        return bytesOut;
     }
 
     /**
@@ -75,9 +87,20 @@ public class Clob
     /**
      * @see java.sql.Clob#setCharacterStream(long)
      */
-    public Writer setCharacterStream(long arg0)
+    public Writer setCharacterStream(long indexToWriteAt)
                               throws SQLException {
-        throw new NotImplemented();
+        if (indexToWriteAt < 1) {
+            throw new SQLException("indexToWriteAt must be >= 1", "S1009");
+        }
+        
+        WatchableWriter writer = new WatchableWriter();
+        writer.setWatcher(this);
+        
+        if (indexToWriteAt > 0) {
+            writer.write(this.charData, 0, (int) (indexToWriteAt - 1));
+        }
+        
+        return writer;
     }
 
     /**
@@ -98,28 +121,77 @@ public class Clob
     /**
      * @see java.sql.Clob#setString(long, String)
      */
-    public int setString(long arg0, String arg1)
+    public int setString(long pos, String str)
                   throws SQLException {
-        throw new NotImplemented();
+        
+        if (pos < 1) {
+            throw new SQLException("Starting position can not be < 1", "S1009");
+        }
+        
+        if (str == null) {
+            throw new SQLException("String to set can not be NULL", "S1009");
+        }
+       
+        
+        StringBuffer charBuf = new StringBuffer(this.charData);
+        
+        pos--;
+        
+        int strLength = str.length();
+        
+        charBuf.replace((int) pos, (int) (pos +  strLength), str);
+        
+        this.charData = charBuf.toString();
+        
+        return strLength;
     }
 
     /**
      * @see java.sql.Clob#setString(long, String, int, int)
      */
-    public int setString(long arg0, String arg1, int arg2, int arg3)
+    public int setString(long pos, String str, int offset, int len)
                   throws SQLException {
-        throw new NotImplemented();
+                    
+        if (pos < 1) {
+            throw new SQLException("Starting position can not be < 1", "S1009");
+        }
+        
+        if (str == null) {
+            throw new SQLException("String to set can not be NULL", "S1009");
+        }
+       
+        
+        StringBuffer charBuf = new StringBuffer(this.charData);
+        
+        pos--;
+        
+        String replaceString = str.substring(offset, len);
+        
+        charBuf.replace((int) pos, (int) (pos +  replaceString.length()), replaceString);
+        
+        this.charData = charBuf.toString();
+        
+        return len;
     }
 
     /**
      * @see java.sql.Clob#getSubString(long, int)
      */
-    public String getSubString(long arg0, int arg1)
+    public String getSubString(long startPos, int length)
                         throws SQLException {
 
+        if (startPos < 1) {
+            throw new SQLException("CLOB start position can not be < 1", "S1009");
+        }
+        
         if (this.charData != null) {
 
-            return this.charData.substring((int) arg0, arg1);
+            
+            if ((startPos - 1) + length > charData.length()) {
+                throw new SQLException("CLOB start position + length can not be > length of CLOB", "S1009");
+            }
+                
+            return this.charData.substring((int) (startPos - 1), length);
         } else {
 
             return null;
@@ -144,12 +216,21 @@ public class Clob
     /**
      * @see java.sql.Clob#position(String, long)
      */
-    public long position(String arg0, long arg1)
+    public long position(String stringToFind, long startPos)
                   throws SQLException {
 
+        if (startPos < 1) {
+                throw new SQLException("Illegal starting position for search, '" + startPos + "'", "S1009");
+        }
+            
         if (this.charData != null) {
-
-            return this.charData.indexOf(arg0, (int) arg1);
+            if ((startPos - 1) > this.charData.length()) {
+                throw new SQLException("Starting position for search is past end of CLOB", "S1009");
+            }
+            
+            int pos = this.charData.indexOf(stringToFind, (int) (startPos - 1));
+            
+            return (pos == -1) ? -1 : pos + 1;
         } else {
 
             return -1;
@@ -168,8 +249,22 @@ public class Clob
     /**
      * @see java.sql.Clob#truncate(long)
      */
-    public void truncate(long arg0)
+    public void truncate(long length)
                   throws SQLException {
-        throw new NotImplemented();
+        this.charData = this.charData.substring((int) length);
     }
+	/**
+	 * @see com.mysql.jdbc.OutputStreamWatcher#streamClosed(byte[])
+	 */
+	public void streamClosed(byte[] byteData) {
+        this.charData = StringUtils.toAsciiString(byteData);
+	}
+
+	/**
+	 * @see com.mysql.jdbc.WriterWatcher#writerClosed(char[])
+	 */
+	public void writerClosed(char[] charData) {
+        this.charData = new String(charData);
+	}
+
 }
