@@ -83,13 +83,29 @@ public class TraversalTest
             rs = scrollableStmt.executeQuery(
                          "SELECT * FROM TRAVERSAL ORDER BY pos");
 
+           
+            
+            // Test isFirst()
+            if (rs.first()) {
+                    assertTrue("ResultSet.isFirst() failed", rs.isFirst());
+                    rs.relative(-1);
+                    assertTrue("ResultSet.isBeforeFirst() failed", rs.isBeforeFirst());
+            }
+            
+            // Test isLast()
+            if (rs.last()) {
+                assertTrue("ResultSet.isLast() failed", rs.isLast());
+                rs.relative(1);
+                assertTrue("ResultSet.isAfterLast() failed", rs.isAfterLast());
+            }
+                
             int count = 0;
             rs.beforeFirst();
 
             boolean forwardOk = true;
 
             while (rs.next()) {
-
+                
                 int pos = rs.getInt("POS");
 
                 // test case-sensitive column names
@@ -104,8 +120,13 @@ public class TraversalTest
                 if (pos != count) {
                     forwardOk = false;
                 }
+                
+                assertTrue("ResultSet.getRow() failed.", pos == (rs.getRow() -1));
 
                 count++;
+                
+               
+                    
             }
 
             assertTrue("Only traversed " + count + " / 100 rows", forwardOk);
@@ -134,17 +155,25 @@ public class TraversalTest
 
             boolean isFirst = rs.isFirst();
             assertTrue("ResultSet.isFirst() failed", isFirst);
+            
+            // Test absolute positioning
             rs.absolute(50);
-
             int pos = rs.getInt("pos");
             assertTrue("ResultSet.absolute() failed", pos == 49);
+            
+            // Test relative positioning
+            rs.relative(-1);
+            pos = rs.getInt("pos");
+            assertTrue("ResultSet.relative(-1) failed", pos == 48);
 
+            // Test bogus absolute index
             boolean onResultSet = rs.absolute(200);
             assertTrue("ResultSet.absolute() to point off result set failed", 
                        onResultSet == false);
             onResultSet = rs.absolute(100);
             assertTrue("ResultSet.absolute() from off rs to on rs failed", 
                        onResultSet);
+            
             onResultSet = rs.absolute(-99);
             assertTrue("ResultSet.absolute(-99) failed", onResultSet);
             assertTrue("ResultSet absolute(-99) failed", rs.getInt(1) == 1);

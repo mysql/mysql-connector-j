@@ -18,6 +18,8 @@
  */
 package testsuite.simple;
 
+import com.mysql.jdbc.NotUpdatable;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -26,7 +28,8 @@ import testsuite.BaseTestCase;
 
 
 /** 
- *
+ * Tests for updatable result sets
+ * 
  * @author  Mark Matthews
  * @version $Id$
  */
@@ -67,6 +70,89 @@ public class UpdatabilityTest
     }
 
     /**
+     * Tests that the driver does not let you update
+     * result sets that come from tables that don't
+     * have primary keys
+     */
+    public void testBogusTable()
+                        throws SQLException {
+        stmt.executeUpdate("DROP TABLE IF EXISTS BOGUS_UPDATABLE");
+        stmt.executeUpdate("CREATE TABLE BOGUS_UPDATABLE (field1 int)");
+
+        Statement scrollableStmt = null;
+
+        try {
+            scrollableStmt = conn.createStatement(
+                                     ResultSet.TYPE_SCROLL_INSENSITIVE, 
+                                     ResultSet.CONCUR_UPDATABLE);
+            rs = scrollableStmt.executeQuery("SELECT * FROM BOGUS_UPDATABLE");
+
+            try {
+                rs.moveToInsertRow();
+                fail("ResultSet.moveToInsertRow() should not succeed on non-updatable table");
+            } catch (NotUpdatable noUpdate) {
+
+                // ignore
+            }
+        } finally {
+
+            if (scrollableStmt != null) {
+
+                try {
+                    scrollableStmt.close();
+                } catch (SQLException sqlEx) {
+                    ;
+                }
+            }
+
+            stmt.executeUpdate("DROP TABLE IF EXISTS BOGUS_UPDATABLE");
+        }
+    }
+
+    /**
+     * Tests that the driver does not let you update
+     * result sets that come from queries that haven't selected
+     * all primary keys
+     */
+    public void testMultiKeyTable()
+                           throws SQLException {
+        stmt.executeUpdate("DROP TABLE IF EXISTS MULTI_UPDATABLE");
+        stmt.executeUpdate(
+                "CREATE TABLE MULTI_UPDATABLE (field1 int NOT NULL, field2 int NOT NULL, PRIMARY KEY (field1, field2))");
+
+        Statement scrollableStmt = null;
+
+        try {
+            scrollableStmt = conn.createStatement(
+                                     ResultSet.TYPE_SCROLL_INSENSITIVE, 
+                                     ResultSet.CONCUR_UPDATABLE);
+            rs = scrollableStmt.executeQuery(
+                         "SELECT field1 FROM MULTI_UPDATABLE");
+
+            try {
+                rs.moveToInsertRow();
+                fail("ResultSet.moveToInsertRow() should not succeed on query that does not select all primary keys");
+            } catch (NotUpdatable noUpdate) {
+
+                // ignore
+            }
+        } finally {
+
+            if (scrollableStmt != null) {
+
+                try {
+                    scrollableStmt.close();
+                } catch (SQLException sqlEx) {
+
+                    // ignore
+                }
+            }
+
+            stmt.executeUpdate("DROP TABLE IF EXISTS MULTI_UPDATABLE");
+        }
+    }
+
+    /**
      * DOCUMENT ME!
      * 
      * @throws SQLException DOCUMENT ME!
@@ -100,6 +186,13 @@ public class UpdatabilityTest
             rs.updateInt(2, 400);
             rs.updateString(3, "New Data" + (100 - 400));
             rs.insertRow();
+
+            // Test moveToCurrentRow
+            int rememberedPosition = rs.getRow();
+            rs.moveToInsertRow();
+            rs.moveToCurrentRow();
+            assertTrue("ResultSet.moveToCurrentRow() failed", 
+                       rs.getRow() == rememberedPosition);
             rs.close();
             rs = scrollableStmt.executeQuery(
                          "SELECT * FROM UPDATABLE ORDER BY pos1");
@@ -127,34 +220,66 @@ public class UpdatabilityTest
             int savedPrimaryKeyId = rs.getInt(1);
             assertTrue("Updated primary key does not match", 
                        (newPrimaryKeyId == savedPrimaryKeyId));
+
+            // Check cancelRowUpdates()
+            rs.absolute(1);
+
+            int primaryKey = rs.getInt(1);
+            int originalValue = rs.getInt(2);
+            rs.updateInt(2, -3);
+            rs.cancelRowUpdates();
+
+            int newValue = rs.getInt(2);
+            assertTrue("ResultSet.cancelRowUpdates() failed", 
+                       newValue == originalValue);
+
+            // Now check refreshRow()
+            // Check cancelRowUpdates()
+            rs.absolute(1);
+            primaryKey = rs.getInt(1);
+            scrollableStmt.executeUpdate(
+                    "UPDATE UPDATABLE SET char_field='foo' WHERE pos1="
+                    + primaryKey);
+            rs.refreshRow();
+            assertTrue("ResultSet.refreshRow failed", 
+                       rs.getString("char_field").equals("foo"));
+
+            // Now check deleteRow()
+            rs.last();
+
+            int oldLastRow = rs.getRow();
+            rs.deleteRow();
+            rs.last();
+            assertTrue("ResultSet.deleteRow() failed", 
+                       rs.getRow() == (oldLastRow - 1));
             rs.close();
 
             /*
                FIXME: Move to regression
-               
+                           
                 scrollableStmt.executeUpdate("DROP TABLE IF EXISTS test");
                 scrollableStmt.executeUpdate("CREATE TABLE test (ident INTEGER PRIMARY KEY, name TINYTEXT, expiry DATETIME default null)");
                 scrollableStmt.executeUpdate("INSERT INTO test SET ident=1, name='original'");
-               
+                           
                            //Select to get a resultset to work on
                            ResultSet rs = stmt.executeQuery("SELECT ident, name, expiry FROM test");
-               
+                           
                            //Check that the expiry field was null before we did our update
                            rs.first();
-               
+                           
                            java.sql.Date before = rs.getDate("expiry");
-               
+                           
                            if (rs.wasNull()) {
                                System.out.println("Expiry was correctly SQL null before update");
                            }
-               
+                           
                            //Update a different field
                            rs.updateString("name", "Updated");
                            rs.updateRow();
-               
+                           
                            //Test to see if field has been altered
                            java.sql.Date after = rs.getDate(3);
-               
+                           
                            if (rs.wasNull())
                                System.out.println("Bug disproved - expiry SQL null after update");
                            else
