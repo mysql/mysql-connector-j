@@ -9,9 +9,12 @@ xx-xx-xx - Version 3.0.3-dev
 	- Implemented Connection.nativeSQL()
 	- More robust escape tokenizer -- recognize '--' comments, and allow
 	  nested escape sequences (see testsuite.EscapeProcessingTest)
-	- DBMD.getImported/ExportedKeys() now handles multiple foreign keys per table.
-	- Fixed ResultSetMetaData.getPrecision() returning incorrect values for some
-	  floating point types.
+	- DBMD.getImported/ExportedKeys() now handles multiple foreign keys 
+	  per table.
+	- Fixed ResultSetMetaData.getPrecision() returning incorrect values 
+	  for some floating point types.
+	- Fixed ResultSetMetaData.getColumnTypeName() returning BLOB for 
+	  TEXT and TEXT for BLOB types.
 	  
 11-08-02 - Version 3.0.2-dev
 

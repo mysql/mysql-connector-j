@@ -364,10 +364,10 @@ public class ResultSetMetaData
 
                 if (getField(column).isBinary()) {
 
-                    return "TEXT";
+                    return "BLOB";
                 } else {
 
-                    return "BLOB";
+                    return "TEXT";
                 }
 
             case MysqlDefs.FIELD_TYPE_VAR_STRING:
