@@ -42,6 +42,7 @@ import java.text.SimpleDateFormat;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 
 
@@ -98,13 +99,13 @@ public class ResultSet implements java.sql.ResultSet {
      * Map column names (and all of their permutations)
      * to column indices
      */
-    protected HashMap columnNameToIndex = null;
+    protected Map columnNameToIndex = null;
 
     /**
      * Map of fully-specified column names to column
      * indices
      */
-    protected HashMap fullColumnNameToIndex = null;
+    protected Map fullColumnNameToIndex = null;
 
     /**
      * The actual rows
@@ -205,10 +206,6 @@ public class ResultSet implements java.sql.ResultSet {
      */
     protected long updateId = -1;
 
-    /**
-     * Formatter for getTimestamp()
-     */
-    private SimpleDateFormat timestampFormatter = null;
     private boolean hasBuiltIndexMapping = false;
     private boolean useStrictFloatingPoint = false;
 

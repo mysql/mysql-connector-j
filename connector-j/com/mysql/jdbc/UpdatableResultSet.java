@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 
 /**
@@ -37,7 +38,7 @@ public class UpdatableResultSet
     private static String quotedIdChar = null;
 
     /** List of primary keys */
-    private ArrayList primaryKeyIndicies = null;
+    private List primaryKeyIndicies = null;
 
     /** PreparedStatement used to delete data */
     private com.mysql.jdbc.PreparedStatement deleter = null;

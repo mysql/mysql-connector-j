@@ -364,13 +364,7 @@ public class Driver
     public synchronized boolean acceptsURL(String url)
                                     throws java.sql.SQLException {
 
-        if (parseURL(url, null) == null) {
-
-            return false;
-        } else {
-
-            return true;
-        }
+        return (parseURL(url, null) != null);
     }
 
     /**
@@ -416,8 +410,7 @@ public class Driver
 
             try {
 
-                Connection newConn = new com.mysql.jdbc.Connection();
-                newConn.connectionInit(host(props), port(props), props, 
+                Connection newConn = new com.mysql.jdbc.Connection(host(props), port(props), props, 
                                        database(props), url, this);
 
                 return (java.sql.Connection) newConn;
