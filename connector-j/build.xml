@@ -147,12 +147,12 @@ Copyright (C) 2002 MySQL AB
 		
 		<mkdir dir="${distDir}" />
 
-		<jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar">
-			<fileset dir="${buildDir}/${fullProdName}"
-				includes="**/*.class"/>
-			<fileset dir="${buildDir}/${fullProdName}"
-				includes="COPYING, README"/>
-		</jar>
+		<jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar"
+			basedir="${buildDir}/${fullProdName}"
+			includes="**/*.class,COPYING,README"
+			excludes="testsuite/**"
+			index="true"
+		/>
  
 		<tar destfile="${distDir}/${fullProdName}.tar.gz"
 			compression="gzip" longfile="gnu">
