@@ -1271,7 +1271,7 @@ public class PreparedStatement
 
                     if (hasLimitClause) {
                         rs = connection.execSQL((String) null, maxRows, 
-                                                sendPacket, resultSetType, 
+                                                sendPacket, resultSetConcurrency, 
                                                 createStreamingResultSet());
                     } else {
 
@@ -1290,10 +1290,10 @@ public class PreparedStatement
                 }
 
                 // Finally, execute the query
-                rs = connection.execSQL(null, -1, sendPacket, resultSetType, 
+                rs = connection.execSQL(null, -1, sendPacket, resultSetConcurrency, 
                                         createStreamingResultSet());
             } else {
-                rs = connection.execSQL(null, -1, sendPacket, resultSetType, 
+                rs = connection.execSQL(null, -1, sendPacket, resultSetConcurrency, 
                                         createStreamingResultSet());
             }
 
@@ -1473,7 +1473,7 @@ public class PreparedStatement
                 // a query, and network traffic).
                 if (hasLimitClause) {
                     results = connection.execSQL((String) null, maxRows, 
-                                                 sendPacket, resultSetType, 
+                                                 sendPacket, resultSetConcurrency, 
                                                  createStreamingResultSet());
                 } else {
 
@@ -1486,7 +1486,7 @@ public class PreparedStatement
                     }
 
                     results = connection.execSQL(null, -1, sendPacket, 
-                                                 resultSetType, 
+                                                 resultSetConcurrency, 
                                                  createStreamingResultSet());
 
                     if (oldCatalog != null) {
@@ -1495,7 +1495,7 @@ public class PreparedStatement
                 }
             } else {
                 results = connection.execSQL(null, -1, sendPacket, 
-                                             resultSetType, 
+                                             resultSetConcurrency, 
                                              createStreamingResultSet());
             }
 
@@ -1720,7 +1720,7 @@ public class PreparedStatement
                 connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
             }
 
-            rs = connection.execSQL(null, -1, sendPacket, resultSetType, false);
+            rs = connection.execSQL(null, -1, sendPacket, resultSetConcurrency, false);
 
             if (oldCatalog != null) {
                 connection.setCatalog(oldCatalog);
