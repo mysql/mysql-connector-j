@@ -211,8 +211,9 @@ public class MysqlIO {
      * build a JDBC-version-specific ResultSet, given rows as byte
      * data, and field information.
      */
-    protected ResultSet getResultSet(long columnCount, int maxRows, 
-                                     int resultSetType, boolean streamResults)
+    protected ResultSet getResultSet(Connection conn, long columnCount, int maxRows, 
+                                     int resultSetType, boolean streamResults,
+                                     String catalog)
                               throws Exception {
 
         Buffer packet; // The packet from the server
@@ -266,7 +267,7 @@ public class MysqlIO {
             this.streamingData = rowData;
         }
 
-        return buildResultSetWithRows(fields, rowData, null, resultSetType);
+        return buildResultSetWithRows(catalog, fields, rowData, conn, resultSetType);
     }
 
     /**
@@ -390,7 +391,7 @@ public class MysqlIO {
         this.mysqlConnection.close();
     }
 
-    private com.mysql.jdbc.ResultSet buildResultSetWithRows(com.mysql.jdbc.Field[] fields, 
+    private com.mysql.jdbc.ResultSet buildResultSetWithRows(String catalog, com.mysql.jdbc.Field[] fields, 
                                                             RowData rows, 
                                                             com.mysql.jdbc.Connection conn, 
                                                             int resultSetConcurrency)
@@ -399,14 +400,14 @@ public class MysqlIO {
         switch (resultSetConcurrency) {
 
             case java.sql.ResultSet.CONCUR_READ_ONLY:
-                return new com.mysql.jdbc.ResultSet(fields, rows, conn);
+                return new com.mysql.jdbc.ResultSet(catalog, fields, rows, conn);
 
             case java.sql.ResultSet.CONCUR_UPDATABLE:
-                return new com.mysql.jdbc.UpdatableResultSet(fields, rows, 
+                return new com.mysql.jdbc.UpdatableResultSet(catalog, fields, rows, 
                                                              conn);
 
             default:
-                return new com.mysql.jdbc.ResultSet(fields, rows, conn);
+                return new com.mysql.jdbc.ResultSet(catalog, fields, rows, conn);
         }
     }
 
@@ -972,9 +973,9 @@ public class MysqlIO {
 
         if (columnCount != 0) {
 
-            com.mysql.jdbc.ResultSet results = getResultSet(columnCount, -1, 
+            com.mysql.jdbc.ResultSet results = getResultSet(null, columnCount, -1, 
                                                             java.sql.ResultSet.CONCUR_READ_ONLY, 
-                                                            false);
+                                                            false, null);
 
             return results;
         } else {
@@ -1057,10 +1058,10 @@ public class MysqlIO {
                 fetchStartTime = System.currentTimeMillis();
             }
 
-            com.mysql.jdbc.ResultSet results = getResultSet(columnCount, 
+            com.mysql.jdbc.ResultSet results = getResultSet(null, columnCount, 
                                                             maxRows, 
                                                             resultSetType, 
-                                                            streamResults);
+                                                            streamResults, null);
 
             if (this.profileSql) {
 
@@ -1084,7 +1085,7 @@ public class MysqlIO {
      */
     final ResultSet sqlQuery(String query, int maxRows, 
                              String characterEncoding, Connection conn, 
-                             int resultSetType, boolean streamResults)
+                             int resultSetType, boolean streamResults, String catalog)
                       throws Exception {
 
         // We don't know exactly how many bytes we're going to get
@@ -1108,19 +1109,19 @@ public class MysqlIO {
         }
 
         return sqlQueryDirect(this.sendPacket, maxRows, conn, resultSetType, 
-                              streamResults);
+                              streamResults, catalog);
     }
 
     final ResultSet sqlQuery(String query, int maxRows, String encoding, 
-                             int resultSetType, boolean streamResults)
+                             int resultSetType, boolean streamResults, String catalog)
                       throws Exception {
 
         return sqlQuery(query, maxRows, encoding, null, resultSetType, 
-                        streamResults);
+                        streamResults, catalog);
     }
 
-    final ResultSet sqlQuery(String query, int maxRows, int resultSetType, 
-                             boolean streamResults)
+    final ResultSet sqlQuery(Connection conn, String query, int maxRows, int resultSetType, 
+                             boolean streamResults, String catalog)
                       throws Exception {
 
         StringBuffer profileMsgBuf = null; // used if profiling
@@ -1191,10 +1192,11 @@ public class MysqlIO {
                 fetchStartTime = System.currentTimeMillis();
             }
 
-            com.mysql.jdbc.ResultSet results = getResultSet(columnCount, 
+            com.mysql.jdbc.ResultSet results = getResultSet(conn, columnCount, 
                                                             maxRows, 
                                                             resultSetType, 
-                                                            streamResults);
+                                                            streamResults,
+                                                            catalog);
 
             if (this.profileSql) {
 
@@ -1214,7 +1216,7 @@ public class MysqlIO {
      */
     final ResultSet sqlQueryDirect(Buffer queryPacket, int maxRows, 
                                    Connection conn, int resultSetType, 
-                                   boolean streamResults)
+                                   boolean streamResults, String catalog)
                             throws Exception {
 
         long updateCount = -1;
@@ -1295,10 +1297,11 @@ public class MysqlIO {
                 fetchStartTime = System.currentTimeMillis();
             }
 
-            com.mysql.jdbc.ResultSet results = getResultSet(columnCount, 
+            com.mysql.jdbc.ResultSet results = getResultSet(conn, columnCount, 
                                                             maxRows, 
                                                             resultSetType, 
-                                                            streamResults);
+                                                            streamResults,
+                                                            catalog);
 
             if (this.profileSql) {
 

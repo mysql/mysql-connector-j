@@ -411,6 +411,8 @@ public class Connection
             Debug.methodCall(this, "setAutoCommit", args);
         }
 
+        checkClosed();
+        
         if (this.transactionsSupported) {
             // this internal value must be set first as failover depends on it
             // being set to true to fail over (which is done by most
@@ -421,7 +423,7 @@ public class Connection
             
             this.autoCommit = autoCommit; 
             String sql = "SET autocommit=" + (autoCommit ? "1" : "0");
-            execSQL(sql, -1);
+            execSQL(sql, -1, this.database);
             
         } else {
 
@@ -477,7 +479,9 @@ public class Connection
             Debug.methodCall(this, "setCatalog", args);
         }
 
-        execSQL("USE " + catalog, -1);
+        checkClosed();
+        
+        execSQL("USE " + catalog, -1, catalog);
         this.database = catalog;
     }
 
@@ -584,6 +588,8 @@ public class Connection
     public java.sql.DatabaseMetaData getMetaData()
                                           throws java.sql.SQLException {
 
+        checkClosed();
+        
         return new DatabaseMetaData(this, this.database);
     }
 
@@ -607,6 +613,8 @@ public class Connection
             Debug.returnValue(this, "setReadOnly", new Boolean(readOnly));
         }
 
+        checkClosed();
+        
         this.readOnly = readOnly;
     }
 
@@ -662,6 +670,8 @@ public class Connection
             Debug.methodCall(this, "setTransactionIsolation", args);
         }
 
+        checkClosed();
+        
         if (this.hasIsolationLevels) {
 
             StringBuffer sql = new StringBuffer(
@@ -699,7 +709,7 @@ public class Connection
                                            "S1C00");
             }
 
-            execSQL(sql.toString(), -1);
+            execSQL(sql.toString(), -1, this.database);
             isolationLevel = level;
         } else {
             throw new java.sql.SQLException("Transaction Isolation Levels are "
@@ -877,16 +887,13 @@ public class Connection
             Debug.methodCall(this, "commit", args);
         }
 
-        if (this.isClosed) {
-            throw new java.sql.SQLException("Commit attempt on closed "
-                                            + "connection.", "08003");
-        }
+        checkClosed();
 
         // no-op if _relaxAutoCommit == true
         if (this.autoCommit && !this.relaxAutoCommit) {
             throw new SQLException("Can't call commit when autocommit=true");
         } else if (this.transactionsSupported) {
-            execSQL("commit", -1);
+            execSQL("commit", -1, this.database);
         }
 
         return;
@@ -1346,7 +1353,8 @@ public class Connection
     public java.sql.Statement createStatement(int resultSetType, 
                                               int resultSetConcurrency)
                                        throws SQLException {
-
+        checkClosed();
+        
         Statement stmt = new com.mysql.jdbc.Statement(this, this.database);
         stmt.setResultSetType(resultSetType);
         stmt.setResultSetConcurrency(resultSetConcurrency);
@@ -1377,6 +1385,13 @@ public class Connection
                                               int resultSetHoldability)
                                        throws SQLException {
 
+        if (this.pedantic) {
+            if (resultSetHoldability != ResultSet.HOLD_CURSORS_OVER_COMMIT) {
+                throw new SQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level", 
+                    "S1009");
+            }
+        }
+        
         return createStatement(resultSetType, resultSetConcurrency);
     }
 
@@ -1479,9 +1494,17 @@ public class Connection
     /**
      * @see Connection#prepareCall(String, int, int, int)
      */
-    public java.sql.CallableStatement prepareCall(String arg0, int arg1, 
-                                                  int arg2, int arg3)
-                                           throws SQLException {
+    public java.sql.CallableStatement prepareCall(String sql, int resultSetType,
+                                                  int resultSetConcurrency, int resultSetHoldability)
+                                             throws SQLException {
+                                                
+        if (this.pedantic) {
+            if (resultSetHoldability != ResultSet.HOLD_CURSORS_OVER_COMMIT) {
+                throw new SQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level", 
+                    "S1009");
+            }
+        }
+        
         throw new NotImplemented();
     }
 
@@ -1534,7 +1557,8 @@ public class Connection
                                                        int resultSetType, 
                                                        int resultSetConcurrency)
                                                 throws SQLException {
-
+        checkClosed();
+        
         //
         // FIXME: Create warnings if can't create results of the given
         //        type or concurrency
@@ -1557,6 +1581,13 @@ public class Connection
                                                        int resultSetHoldability)
                                                 throws SQLException {
 
+        if (this.pedantic) {
+            if (resultSetHoldability != ResultSet.HOLD_CURSORS_OVER_COMMIT) {
+                throw new SQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level", 
+                    "S1009");
+            }
+        }
+        
         return prepareStatement(sql, resultSetType, resultSetConcurrency);
     }
 
@@ -1615,17 +1646,14 @@ public class Connection
             Debug.methodCall(this, "rollback", args);
         }
 
-        if (this.isClosed) {
-            throw new java.sql.SQLException("Rollback attempt on closed connection.", 
-                                            "08003");
-        }
+        checkClosed();
 
         // no-op if _relaxAutoCommit == true
         if (this.autoCommit && !this.relaxAutoCommit) {
             throw new SQLException("Can't call commit when autocommit=true", 
                                    "08003");
         } else if (this.transactionsSupported) {
-            execSQL("rollback", -1);
+            execSQL("rollback", -1, null);
         }
     }
 
@@ -2003,7 +2031,7 @@ public class Connection
      * @return a ResultSet holding the results
      * @exception java.sql.SQLException if a database error occurs
      */
-    ResultSet execSQL(String sql, int maxRowsToRetreive)
+    ResultSet execSQL(String sql, int maxRowsToRetreive, String catalog)
                throws java.sql.SQLException {
 
         if (Driver.TRACE) {
@@ -2013,34 +2041,34 @@ public class Connection
         }
 
         return execSQL(sql, maxRowsToRetreive, null, 
-                       java.sql.ResultSet.CONCUR_READ_ONLY);
+                       java.sql.ResultSet.CONCUR_READ_ONLY, catalog);
     }
 
     ResultSet execSQL(String sql, int maxRows, int resultSetType, 
-                      boolean streamResults, boolean queryIsSelectOnly)
+                      boolean streamResults, boolean queryIsSelectOnly, String catalog)
                throws SQLException {
 
         return execSQL(sql, maxRows, null, resultSetType, streamResults, 
-                       queryIsSelectOnly);
+                       queryIsSelectOnly, catalog);
     }
 
-    ResultSet execSQL(String sql, int maxRows, Buffer packet)
+    ResultSet execSQL(String sql, int maxRows, Buffer packet, String catalog)
                throws java.sql.SQLException {
 
         return execSQL(sql, maxRows, packet, 
-                       java.sql.ResultSet.CONCUR_READ_ONLY);
+                       java.sql.ResultSet.CONCUR_READ_ONLY, catalog);
     }
 
     ResultSet execSQL(String sql, int maxRows, Buffer packet, 
-                      int resultSetType)
+                      int resultSetType, String catalog)
                throws java.sql.SQLException {
 
-        return execSQL(sql, maxRows, packet, resultSetType, true, false);
+        return execSQL(sql, maxRows, packet, resultSetType, true, false, catalog);
     }
 
     ResultSet execSQL(String sql, int maxRows, Buffer packet, 
                       int resultSetType, boolean streamResults, 
-                      boolean queryIsSelectOnly)
+                      boolean queryIsSelectOnly, String catalog)
                throws java.sql.SQLException {
 
         if (Driver.TRACE) {
@@ -2103,11 +2131,11 @@ public class Connection
                     }
 
                     return this.io.sqlQuery(sql, realMaxRows, encoding, this, 
-                                            resultSetType, streamResults);
+                                            resultSetType, streamResults, catalog);
                 } else {
 
                     return this.io.sqlQueryDirect(packet, realMaxRows, this, 
-                                                  resultSetType, streamResults);
+                                                  resultSetType, streamResults, catalog);
                 }
             } catch (java.io.EOFException eofE) {
                 throw new java.sql.SQLException("Lost connection to server during query", 
@@ -2269,8 +2297,8 @@ public class Connection
         if (this.useFastPing) {
             this.io.sendCommand(MysqlDefs.PING, null, null);
         } else {
-            this.io.sqlQuery(PING_COMMAND, MysqlDefs.MAX_ROWS, 
-                             java.sql.ResultSet.CONCUR_READ_ONLY, false);
+            this.io.sqlQuery(this, PING_COMMAND, MysqlDefs.MAX_ROWS, 
+                             java.sql.ResultSet.CONCUR_READ_ONLY, false, this.database);
         }
     }
 
@@ -2369,6 +2397,14 @@ public class Connection
         }
     }
 
+    private void checkClosed()
+                        throws SQLException {
+
+        if (this.isClosed) {
+            throw new SQLException("No operations allowed after connection closed", "08003");
+        }
+    }
+    
     private void setUseUltraDevWorkAround(boolean useUltraDevWorkAround) {
         this.useUltraDevWorkAround = useUltraDevWorkAround;
     }
@@ -2384,7 +2420,7 @@ public class Connection
      * Wrapper class for UltraDev CallableStatements that 
      * are really PreparedStatments.
      *
-     * Nice going, macromedia!
+     * Nice going, UltraDev developers.
      */
     class UltraDevWorkAround
         implements java.sql.CallableStatement {

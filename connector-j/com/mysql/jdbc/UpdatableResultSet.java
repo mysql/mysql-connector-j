@@ -21,6 +21,7 @@ package com.mysql.jdbc;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 
 /**
@@ -93,11 +94,11 @@ public class UpdatableResultSet
      * @param conn the status string returned from the back end
      * @throws SQLException DOCUMENT ME!
      */
-    public UpdatableResultSet(Field[] fields, RowData rows, 
+    public UpdatableResultSet(String catalog, Field[] fields, RowData rows, 
                               com.mysql.jdbc.Connection conn)
                        throws SQLException {
-        super(fields, rows, conn);
-        isUpdatable = isUpdateable();
+        super(catalog, fields, rows, conn);
+        isUpdatable = checkUpdatability();
     }
 
     /**
@@ -111,7 +112,7 @@ public class UpdatableResultSet
     public UpdatableResultSet(Field[] fields, RowData rows)
                        throws SQLException {
         super(fields, rows);
-        isUpdatable = isUpdateable();
+        isUpdatable = checkUpdatability();
     }
 
     //~ Methods ...............................................................
@@ -1784,7 +1785,7 @@ public class UpdatableResultSet
         // FIXME: Issue warning when asked for updateable result set, but result set is not
         // updatable
         //
-        if ((concurrencyFlag == CONCUR_UPDATABLE) && !isUpdateable()) {
+        if ((concurrencyFlag == CONCUR_UPDATABLE) && !isUpdatable()) {
 
             java.sql.SQLWarning warning = new java.sql.SQLWarning(
                                                   NotUpdatable.NOT_UPDATEABLE_MESSAGE);
@@ -1922,15 +1923,20 @@ public class UpdatableResultSet
                     + " WHERE " + keyValues.toString();
     }
 
+    boolean isUpdatable() {
+        return this.isUpdatable;
+    }
+    
     /**
      * Is this ResultSet updateable?
      * @return DOCUMENT ME!
      */
-    boolean isUpdateable() {
-
+    private boolean checkUpdatability() throws SQLException {
+        String tableName = null;
+        
         if (fields.length > 0) {
 
-            String tableName = fields[0].getTableName();
+            tableName = fields[0].getTableName();
 
             //
             // References only one table?
@@ -1953,26 +1959,76 @@ public class UpdatableResultSet
             return false;
         }
 
+        // We can only do this if we know that there is a currently
+        // selected database, or if we're talking to a > 4.1 version
+        // of MySQL server (as it returns database names in field
+        // info)
         //
-        // Contains the primary key?
+        
+        if (this.catalog == null || this.catalog.length() == 0) {
+            this.catalog = fields[0].getDatabaseName();
+            
+            if (this.catalog == null || this.catalog.length() == 0) {
+                throw new SQLException("Can not create updatable result sets when there is no currently selected database"
+                 + " and MySQL server version < 4.1", "S1009");
+            }
+        }
+        
+        java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
+        
+        java.sql.ResultSet rs = null;
+        HashMap primaryKeyNames = new HashMap();
+        
+        try {
+            rs = dbmd.getPrimaryKeys(this.catalog, null, tableName);
+            
+            while (rs.next()) {
+                String keyName = rs.getString(4);
+                keyName = keyName.toUpperCase();
+                primaryKeyNames.put(keyName, keyName);
+            }
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (Exception ex) {
+                    // ignore
+                }
+                
+                rs = null;
+            }
+        }
+              
+        if (primaryKeyNames.size() == 0) {
+            return false; // we can't update tables w/o keys
+        }
+              
         //
-        boolean hasPrimaryKey = false;
+        // Contains all primary keys?
+        //
 
         for (int i = 0; i < fields.length; i++) {
 
             if (fields[i].isPrimaryKey()) {
-                hasPrimaryKey = true;
-
-                break;
+                String columnNameUC = fields[i].getName().toUpperCase();
+                
+                if (primaryKeyNames.remove(columnNameUC) == null) {
+                    // try original name
+                    
+                    String originalName = fields[i].getOriginalName();
+                    
+                    if (originalName != null) {
+                        if (primaryKeyNames.remove(originalName.toUpperCase()) == null) {
+                            // we don't know about this key, so give up :(
+                            
+                            return false;
+                        }
+                    }
+                }
             }
         }
 
-        if (!hasPrimaryKey) {
-
-            return false;
-        }
-
-        return true;
+        return primaryKeyNames.isEmpty();
     }
 
     /**

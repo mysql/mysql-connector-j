@@ -130,6 +130,8 @@ public class ResultSet
     private SimpleDateFormat timestampFormatter = null;
     private boolean useStrictFloatingPoint = false;
     private boolean hasBuiltIndexMapping = false;
+    protected String catalog = null; // the catalog that was in use when we were created
+    
 
     //~ Constructors ..........................................................
 
@@ -144,11 +146,12 @@ public class ResultSet
      * @param updateCount the number of rows affected by the operation
      * @param cursor the positioned update/delete cursor name
      */
-    public ResultSet(Field[] fields, RowData tuples, 
+    public ResultSet(String catalog, Field[] fields, RowData tuples, 
                      com.mysql.jdbc.Connection conn)
               throws SQLException {
         this(fields, tuples);
         setConnection(conn);
+        this.catalog = catalog;
     }
 
     /**
@@ -449,29 +452,7 @@ public class ResultSet
     public BigDecimal getBigDecimal(String columnName)
                              throws SQLException {
 
-        String stringVal = getString(columnName);
-        BigDecimal val;
-
-        if (stringVal != null) {
-
-            if (stringVal.length() == 0) {
-                val = new BigDecimal(0);
-
-                return val;
-            }
-
-            try {
-                val = new BigDecimal(stringVal);
-
-                return val;
-            } catch (NumberFormatException ex) {
-                throw new java.sql.SQLException("Bad format for BigDecimal '"
-                                                + stringVal + "' in column "
-                                                + columnName + ".", "S1009");
-            }
-        }
-
-        return null;
+        return getBigDecimal(findColumn(columnName));
     }
 
     /**
@@ -2169,7 +2150,7 @@ public class ResultSet
     public java.sql.Time getTime(String columnName, Calendar cal)
                           throws SQLException {
 
-        return getTime(columnName);
+        return getTime(findColumn(columnName), cal);
     }
 
     /**
@@ -2473,7 +2454,7 @@ public class ResultSet
     public java.sql.Timestamp getTimestamp(String columnName, Calendar cal)
                                     throws SQLException {
 
-        return getTimestamp(columnName);
+        return getTimestamp(findColumn(columnName), cal);
     }
 
     /**

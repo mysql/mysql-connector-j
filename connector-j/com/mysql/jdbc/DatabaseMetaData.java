@@ -5771,7 +5771,7 @@ public class DatabaseMetaData
             fields[i].setConnection(this.conn);
         }
 
-        return new com.mysql.jdbc.ResultSet(fields, new RowDataStatic(rows), 
+        return new com.mysql.jdbc.ResultSet(this.conn.getCatalog(), fields, new RowDataStatic(rows), 
                                             this.conn);
     }
 

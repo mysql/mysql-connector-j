@@ -24,6 +24,7 @@ import java.sql.SQLWarning;
 import java.sql.Types;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * A Statement object is used for executing a static SQL statement and
@@ -99,6 +100,12 @@ public class Statement
      */
     
     protected boolean pedantic = false;
+    
+    /**
+     * List of currently-open ResultSets
+     */
+    
+    protected ArrayList openResults = new ArrayList();
 
     //~ Constructors ..........................................................
 
@@ -291,7 +298,7 @@ public class Statement
         row[0] = Long.toString(getLastInsertID()).getBytes();
         rowSet.add(row);
 
-        return new com.mysql.jdbc.ResultSet(fields, new RowDataStatic(rowSet), 
+        return new com.mysql.jdbc.ResultSet(currentCatalog, fields, new RowDataStatic(rowSet), 
                                             connection);
     }
 
@@ -489,31 +496,40 @@ public class Statement
     /**
      * @see Statement#getMoreResults(int)
      */
-    public boolean getMoreResults(int current)
+    public synchronized boolean getMoreResults(int current)
                            throws SQLException {
 
         switch (current) {
 
             case Statement.CLOSE_CURRENT_RESULT:
-            case Statement.CLOSE_ALL_RESULTS:
-            case Statement.KEEP_CURRENT_RESULT:
-
-                if (results != null
-                    && (current == CLOSE_ALL_RESULTS
-                        || current == CLOSE_CURRENT_RESULT)) {
+                if (results != null) {
                     results.close();
                 }
-
-                results = nextResults;
-                nextResults = null;
-
-                return (results != null && results.reallyResult()) ? true : false;
-
+                break;
+            case Statement.CLOSE_ALL_RESULTS:
+                if (results != null) {
+                    results.close();
+                }
+                closeAllOpenResults();
+                break;
+            case Statement.KEEP_CURRENT_RESULT:
+                openResults.add(results);
+                break;
             default:
                 throw new SQLException("Illegal flag for getMoreResults(int)", 
                                        "S1009");
         }
+        
+        results = nextResults;
+        
+        nextResults = null;
+
+        return (results != null && results.reallyResult()) ? true : false;
+
     }
+
+	
+
 
     /**
      * Sets the queryTimeout limit
@@ -784,6 +800,8 @@ public class Statement
         warningChain = null;
         escaper = null;
         isClosed = true;
+        closeAllOpenResults();
+        this.openResults = null;
     }
 
     /**
@@ -875,29 +893,29 @@ public class Statement
                     if (sql.toUpperCase().indexOf("LIMIT") != -1) {
                         rs = connection.execSQL(sql, maxRows, 
                                                 resultSetConcurrency, 
-                                                createStreamingResultSet(), true);
+                                                createStreamingResultSet(), true, this.currentCatalog);
                     } else {
 
                         if (maxRows <= 0) {
                             connection.execSQL(
-                                    "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+                                    "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, this.currentCatalog);
                         } else {
                             connection.execSQL(
                                     "SET OPTION SQL_SELECT_LIMIT=" + maxRows, 
-                                    -1);
+                                    -1, this.currentCatalog);
                         }
                     }
                 } else {
                     connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", 
-                                       -1);
+                                       -1, this.currentCatalog);
                 }
 
                 // Finally, execute the query
                 rs = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                        createStreamingResultSet(), isSelect);
+                                        createStreamingResultSet(), isSelect, this.currentCatalog);
             } else {
                 rs = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                        createStreamingResultSet(), isSelect);
+                                        createStreamingResultSet(), isSelect, this.currentCatalog);
             }
 
             if (oldCatalog != null) {
@@ -1069,19 +1087,19 @@ public class Statement
                 if (sql.toUpperCase().indexOf("LIMIT") != -1) {
                     results = connection.execSQL(sql, maxRows, 
                                                  resultSetConcurrency, 
-                                                 createStreamingResultSet(), true);
+                                                 createStreamingResultSet(), true, this.currentCatalog);
                 } else {
 
                     if (maxRows <= 0) {
                         connection.execSQL(
-                                "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+                                "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, this.currentCatalog);
                     } else {
                         connection.execSQL(
-                                "SET OPTION SQL_SELECT_LIMIT=" + maxRows, -1);
+                                "SET OPTION SQL_SELECT_LIMIT=" + maxRows, -1, this.currentCatalog);
                     }
 
                     results = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                                 createStreamingResultSet(), true);
+                                                 createStreamingResultSet(), true, this.currentCatalog);
 
                     if (oldCatalog != null) {
                         connection.setCatalog(oldCatalog);
@@ -1089,7 +1107,7 @@ public class Statement
                 }
             } else {
                 results = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                             createStreamingResultSet(), true);
+                                             createStreamingResultSet(), true, this.currentCatalog);
             }
 
             if (oldCatalog != null) {
@@ -1181,11 +1199,11 @@ public class Statement
             // Only apply max_rows to selects
             //
             if (connection.useMaxRows()) {
-                connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+                connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, this.currentCatalog);
             }
 
             rs = connection.execSQL(sql, -1, 
-                                    java.sql.ResultSet.CONCUR_READ_ONLY, false, false);
+                                    java.sql.ResultSet.CONCUR_READ_ONLY, false, false, this.currentCatalog);
             rs.setConnection(connection);
 
             if (oldCatalog != null) {
@@ -1255,8 +1273,8 @@ public class Statement
     protected void checkClosed()
                         throws SQLException {
 
-        if (isClosed) {
-            throw new SQLException("No operations allowed after statement closed");
+        if (this.isClosed) {
+            throw new SQLException("No operations allowed after statement closed", "08003");
         }
     }
 
@@ -1289,6 +1307,22 @@ public class Statement
 
             return true;
         }
+    }
+    
+    /**
+     * Close any open result sets that have been 'held open'
+     */
+    protected void closeAllOpenResults() {
+        for (Iterator iter = this.openResults.iterator(); iter.hasNext();) {
+			ResultSet element = (ResultSet) iter.next();
+			try {
+                element.close();
+            } catch (SQLException sqlEx) {
+                // ignore
+            }
+		}
+        
+        this.openResults.clear();
     }
     
     
