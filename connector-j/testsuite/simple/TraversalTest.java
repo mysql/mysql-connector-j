@@ -115,7 +115,7 @@ public class TraversalTest
                 if (pos != count) {
                     reverseOk = false;
                 }
-
+			
                 count--;
             }
 

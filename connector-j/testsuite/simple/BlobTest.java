@@ -35,7 +35,7 @@ import testsuite.BaseTestCase;
  */
 public class BlobTest extends BaseTestCase {
 
-	static byte[] testBlob = new byte[128 * 1024]; // 128k blob
+	static byte[] testBlob = new byte[18 * 1024 * 1024]; // 18 meg blob
 
 	static {
 		int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
@@ -59,6 +59,17 @@ public class BlobTest extends BaseTestCase {
 	public void setUp() throws Exception {
 		super.setUp();
 		createTestTable();		
+	}
+	
+	public void tearDown() throws Exception {
+		try
+		{
+			stmt.executeUpdate("DROP TABLE IF EXISTS BLOBTEST");
+		}
+		finally 
+		{
+			super.tearDown();
+		}
 	}
 
 	
@@ -117,6 +128,8 @@ public class BlobTest extends BaseTestCase {
 
 		passed = false;
 
+		String message = "";
+		
 		try {
 			ResultSet rs =
 				stmt.executeQuery("SELECT blobdata from BLOBTEST LIMIT 1");
@@ -127,17 +140,48 @@ public class BlobTest extends BaseTestCase {
 
 			if (retrBytes.length == testBlob.length) {
 				
+				/*
+				for (int i = 0; i < 20; i++) {
+					System.out.print(retrBytes[i] + " ");
+				}
+				System.out.println();
+				
+				for (int i = 0; i < 20; i++) {
+					System.out.print(testBlob[i] + " ");
+				}
+				System.out.println();
+				*/
+				
 				for (int i = 0; i < testBlob.length; i++) {
 					if (retrBytes[i] != testBlob[i]) {
+						
+						for (int j = i-10; j < i + 10; j++)
+						{
+							System.out.print(retrBytes[j] + " ");
+						}
+						System.out.println();
+						
+						for (int j = i-10; j < i + 10; j++)
+						{
+							System.out.print(testBlob[j] + " ");
+						}
+						System.out.println();
+							
 						passed = false;
+						message = "Byte pattern differed at position " + i + " , " + retrBytes[i] + " != " + testBlob[i];
 						break;
 					}
 
 					passed = true;
 				}
 			}
+			else
+			{
+				passed = false;
+				message = "retrBytes.length(" + retrBytes.length + ") != testBlob.length(" + testBlob.length + ")";
+			}
 			
-			assertTrue("Inserted BLOB data did not match retrieved BLOB data", passed);
+			assertTrue("Inserted BLOB data did not match retrieved BLOB data." + message, passed);
 			
 		} catch (SQLException sqlEx) {
 			sqlEx.printStackTrace();

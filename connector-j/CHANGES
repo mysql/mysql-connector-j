@@ -1,6 +1,35 @@
 # Changelog
 # $Id$
 
+07-31-02 - Version 3.0.0-dev
+
+	- !!! LICENSE CHANGE !!! The driver is now GPL. If you need
+	  non-GPL licenses, please contact me <mark@mysql.com>
+	- JDBC-3.0 functionality including 
+	  Statement/PreparedStatement.getGeneratedKeys() and
+	  ResultSet.getURL()
+	- Performance enchancements - driver is now 50-100% faster
+	  in most situations, and creates fewer temporary objects
+	- Repackaging...new driver name is "com.mysql.jdbc.Driver",
+	  old name still works, though (the driver is now provided 
+	  by MySQL-AB)
+    - Better checking for closed connections in Statement
+      and PreparedStatement.
+    - Support for streaming (row-by-row) result sets (see README)
+      Thanks to Doron.
+    - Support for large packets (new addition to MySQL-4.0 protocol),
+      see README for more information.
+    - JDBC Compliance -- Passes all tests besides stored procedure tests
+    - Fix and sort primary key names in DBMetaData (SF bugs 582086 and 582086)
+    - Float types now reported as java.sql.Types.FLOAT (SF bug 579573)
+    - ResultSet.getTimestamp() now works for DATE types (SF bug 559134)
+    - ResultSet.getDate/Time/Timestamp now recognizes all forms of invalid
+      values that have been set to all zeroes by MySQL (SF bug 586058)
+    - Testsuite now uses Junit (which you can get from www.junit.org)
+    - The driver now only works with JDK-1.2 or newer.
+    - Added multi-host failover support (see README)
+    - General source-code cleanup.
+    
 05-16-02 - Version 2.0.14
 
 	- More code cleanup

@@ -16,10 +16,10 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
    
  */
- 
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
+
 
 /** Allows streaming of MySQL data.*/
 public class RowDataDynamic
@@ -33,6 +33,13 @@ public class RowDataDynamic
     private boolean isAtEnd = false;
     private boolean isAfterEnd = false;
 
+    /**
+     * Creates a new RowDataDynamic object.
+     * 
+     * @param io DOCUMENT ME!
+     * @param colCount DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
     public RowDataDynamic(MysqlIO io, int colCount)
                    throws SQLException
     {
@@ -63,7 +70,7 @@ public class RowDataDynamic
         catch (Exception e)
         {
             throw new SQLException("Error trying to fetch row:" + 
-                                       e.getMessage(), "S1000");
+                                   e.getMessage(), "S1000");
         }
     }
 
@@ -74,10 +81,11 @@ public class RowDataDynamic
 
         boolean hasNext = (nextRow != null);
 
-		if (!hasNext) {
-			io.closeStreamer(this);
-		}
-			
+        if (!hasNext)
+        {
+            io.closeStreamer(this);
+        }
+
         return hasNext;
     }
 
@@ -136,6 +144,12 @@ public class RowDataDynamic
         notSupported();
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public boolean isFirst()
                     throws SQLException
     {
@@ -144,6 +158,12 @@ public class RowDataDynamic
         return false;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public boolean isLast()
                    throws SQLException
     {
@@ -158,14 +178,20 @@ public class RowDataDynamic
     {
 
         //drain the rest of the records.
-        while (this.hasNext()) 
+        while (this.hasNext())
         {
             this.next();
         }
-        
+
         io.closeStreamer(this);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public int getCurrentRowNumber()
                             throws SQLException
     {
@@ -174,12 +200,24 @@ public class RowDataDynamic
         return -1;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param index DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
     public void setCurrentRow(int index)
                        throws SQLException
     {
         notSupported();
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param rows DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
     public void moveRowRelative(int rows)
                          throws SQLException
     {
@@ -222,12 +260,24 @@ public class RowDataDynamic
         return null;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param row DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
     public void addRow(byte[][] row)
                 throws SQLException
     {
         notSupported();
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param index DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
     public void removeRow(int index)
                    throws SQLException
     {

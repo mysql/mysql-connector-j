@@ -38,7 +38,8 @@ class SQLError
 
     //~ Initializers ..........................................................
 
-    static {
+    static
+    {
         Msg = new Hashtable();
         Msg.put("01002", "Disconnect error");
         Msg.put("01004", "Data truncated");
@@ -246,11 +247,13 @@ class SQLError
 
         Integer Err = new Integer(errno);
 
-        if (Map.containsKey(Err)) {
+        if (Map.containsKey(Err))
+        {
 
             return (String)Map.get(Err);
         }
-         else {
+        else
+        {
 
             return "S1000";
         }

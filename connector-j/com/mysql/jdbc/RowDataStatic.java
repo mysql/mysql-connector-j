@@ -28,19 +28,35 @@ public class RowDataStatic
     private ArrayList rows;
     private int index;
 
+    /**
+     * Creates a new RowDataStatic object.
+     * 
+     * @param rows DOCUMENT ME!
+     */
     public RowDataStatic(ArrayList rows)
     {
-    	this.index = -1;
+        this.index = -1;
         this.rows = rows;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean hasNext()
     {
-		boolean hasMore = (this.index + 1) < rows.size();
-		
+
+        boolean hasMore = (this.index + 1) < rows.size();
+
         return hasMore;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public byte[][] next()
     {
         this.index++;
@@ -57,6 +73,9 @@ public class RowDataStatic
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     */
     public void close()
     {
     }
@@ -81,6 +100,9 @@ public class RowDataStatic
         this.index = -1;
     }
 
+    /**
+     * DOCUMENT ME!
+     */
     public void beforeLast()
     {
         this.index = rows.size() - 2;
@@ -92,69 +114,127 @@ public class RowDataStatic
         this.index = rows.size();
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isFirst()
     {
 
         return this.index == 0;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isLast()
     {
 
         return (this.index == rows.size() - 1);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param atIndex DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     */
     public byte[][] getAt(int atIndex)
     {
 
-		if (atIndex < 0 || atIndex > rows.size())
-		{
-			return null;
-		}
-		else
-		{
-        	return (byte[][])rows.get(atIndex);
-		}
+        if (atIndex < 0 || atIndex > rows.size())
+        {
+
+            return null;
+        }
+        else
+        {
+
+            return (byte[][])rows.get(atIndex);
+        }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public int getCurrentRowNumber()
     {
 
         return this.index;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param newIndex DOCUMENT ME!
+     */
     public void setCurrentRow(int newIndex)
     {
         this.index = newIndex;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param rows DOCUMENT ME!
+     */
     public void moveRowRelative(int rows)
     {
         this.index += rows;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param row DOCUMENT ME!
+     */
     public void addRow(byte[][] row)
     {
         rows.add(row);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param atIndex DOCUMENT ME!
+     */
     public void removeRow(int atIndex)
     {
         rows.remove(atIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isEmpty()
     {
 
         return rows.size() == 0;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public int size()
     {
 
         return rows.size();
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isDynamic()
     {
 

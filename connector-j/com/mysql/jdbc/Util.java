@@ -42,7 +42,7 @@ public class Util
 
         ObjectInputStream ObjIn = new ObjectInputStream(RS.getBinaryStream(
                                                                 index));
-        Object            O = ObjIn.readObject();
+        Object O = ObjIn.readObject();
         ObjIn.close();
 
         return O;
@@ -52,33 +52,35 @@ public class Util
     static String newCrypt(String Passwd, String Seed)
     {
 
-        byte   b;
+        byte b;
         double d;
 
-        if (Passwd == null || Passwd.length() == 0) {
+        if (Passwd == null || Passwd.length() == 0)
+        {
 
             return Passwd;
         }
 
-        long[] pw    = newHash(Seed);
-        long[] msg   = newHash(Passwd);
-        long   max   = 0x3fffffffL;
-        long   seed1 = (pw[0] ^ msg[0]) % max;
-        long   seed2 = (pw[1] ^ msg[1]) % max;
+        long[] pw = newHash(Seed);
+        long[] msg = newHash(Passwd);
+        long max = 0x3fffffffL;
+        long seed1 = (pw[0] ^ msg[0]) % max;
+        long seed2 = (pw[1] ^ msg[1]) % max;
         char[] chars = new char[Seed.length()];
 
-        for (int i = 0; i < Seed.length(); i++) {
-            seed1    = (seed1 * 3 + seed2) % max;
-            seed2    = (seed1 + seed2 + 33) % max;
-            d        = (double)seed1 / (double)max;
-            b        = (byte)java.lang.Math.floor((d * 31) + 64);
+        for (int i = 0; i < Seed.length(); i++)
+        {
+            seed1 = (seed1 * 3 + seed2) % max;
+            seed2 = (seed1 + seed2 + 33) % max;
+            d = (double)seed1 / (double)max;
+            b = (byte)java.lang.Math.floor((d * 31) + 64);
             chars[i] = (char)b;
         }
 
         seed1 = (seed1 * 3 + seed2) % max;
         seed2 = (seed1 + seed2 + 33) % max;
-        d     = (double)seed1 / (double)max;
-        b     = (byte)java.lang.Math.floor(d * 31);
+        d = (double)seed1 / (double)max;
+        b = (byte)java.lang.Math.floor(d * 31);
 
         for (int i = 0; i < Seed.length(); i++)
             chars[i] ^= (char)b;
@@ -89,14 +91,16 @@ public class Util
     static long[] newHash(String P)
     {
 
-        long nr  = 1345345333L;
+        long nr = 1345345333L;
         long add = 7;
         long nr2 = 0x12345671L;
         long tmp;
 
-        for (int i = 0; i < P.length(); ++i) {
+        for (int i = 0; i < P.length(); ++i)
+        {
 
-            if (P.charAt(i) == ' ' || P.charAt(i) == '\t') {
+            if (P.charAt(i) == ' ' || P.charAt(i) == '\t')
+            {
 
                 continue; // skip spaces
             }
@@ -117,15 +121,16 @@ public class Util
     static String oldCrypt(String Passwd, String Seed)
     {
 
-        long   hp;
-        long   hm;
-        long   s1;
-        long   s2;
-        long   max = 0x01FFFFFF;
+        long hp;
+        long hm;
+        long s1;
+        long s2;
+        long max = 0x01FFFFFF;
         double d;
-        byte   b;
+        byte b;
 
-        if (Passwd == null || Passwd.length() == 0) {
+        if (Passwd == null || Passwd.length() == 0)
+        {
 
             return Passwd;
         }
@@ -140,11 +145,12 @@ public class Util
 
         char[] chars = new char[Seed.length()];
 
-        for (int i = 0; i < Seed.length(); i++) {
-            s1       = (s1 * 3 + s2) % max;
-            s2       = (s1 + s2 + 33) % max;
-            d        = (double)s1 / max;
-            b        = (byte)java.lang.Math.floor((d * 31) + 64);
+        for (int i = 0; i < Seed.length(); i++)
+        {
+            s1 = (s1 * 3 + s2) % max;
+            s2 = (s1 + s2 + 33) % max;
+            d = (double)s1 / max;
+            b = (byte)java.lang.Math.floor((d * 31) + 64);
             chars[i] = (char)b;
         }
 
@@ -154,13 +160,15 @@ public class Util
     static long oldHash(String P)
     {
 
-        long nr  = 1345345333;
+        long nr = 1345345333;
         long nr2 = 7;
         long tmp;
 
-        for (int i = 0; i < P.length(); i++) {
+        for (int i = 0; i < P.length(); i++)
+        {
 
-            if ((P.charAt(i) == ' ') || (P.charAt(i) == '\t')) {
+            if ((P.charAt(i) == ' ') || (P.charAt(i) == '\t'))
+            {
 
                 continue;
             }

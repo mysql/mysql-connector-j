@@ -1,5 +1,5 @@
-MySQL-JDBC 2.0.15
-MySQL's (formerly Mark Matthews) JDBC Driver for MySQL
+MySQL-JDBC 3.0.0-dev
+MySQL's (formerly Mark Matthews') JDBC Driver for MySQL
 Copyright (c) 2002 MySQL-AB
 
 CONTENTS
@@ -14,10 +14,15 @@ CONTENTS
 
 LICENSE
 
+MySQL-JDBC is licensed under the GPL. Please see the COPYING
+file for more information. If you need non-GPL licenses for
+commercial distribution please contact me <mark@mysql.com> or
+sales@mysql.com.
+
 
 SYSTEM REQUIREMENTS
  
-* Any Java virtual machine supporting JDBC-1.2 or JDBC-2.0 (JDK-1.1 or higher)
+* Any Java virtual machine supporting JDBC-2.0 or newer (JDK-1.2 or newer)
 * Any MySQL server supporting version 9 or 10 of the MySQL protocol
 
 Because MySQL is not fully ANSI SQL-92 compliant, it is not possible to 
@@ -30,25 +35,26 @@ MySQL-JDBC is an implemntation of the JDBC API for the MySQL relational
 database server. It strives to conform as much as possible to the API
 as specified by JavaSoft. It is known to work with many third-party 
 products, including Borland JBuilder, IBM Visual Age for Java, SQL/J,
-the Locomotive and Symantec Visual Cafe.
+JBoss, Weblogic, IBM WebSphere, Cocobase, ObjectRelationalBridge, etc.
 
 USAGE AND INSTALLATION
 
-MySQL-JDBC is distributed as a .jar archive containing the sources 
+MySQL-JDBC is distributed as a .zip or .tar.gz archive containing the sources 
 and class files as well as a class-file only "binary" .jar archive 
-named "mysql-jdbc-2.0.15-bin.jar".
+named "mysql-jdbc-3.0.0-dev-bin.jar".
 
-You will need to use the "jar" command-line utility that comes with your JDK 
-to un-archive the distribution.
+You will need to use the appropriate gui or command-line utility that comes with your JDK 
+to un-archive the distribution (for example, WinZip for the .zip archive, and "tar" for 
+the .tar.gz archive).
 
-Once you have un-archived the distribution .jar archive,
+Once you have un-archived the distribution archive,
 you can install the driver in one of two ways:
 
 Either copy the org subdirectory and all of it's contents
 to anywhere you like, and put the directory holding the org subdirectory
 in your classpath, or...
 
-Put mysql-jdbc-2.0.15-bin.jar in your classpath, either by adding the 
+Put mysql-jdbc-3.0.0-dev-bin.jar in your classpath, either by adding the 
 FULL path to it to your CLASSPATH enviornment variable, or putting it
 in $JAVA_HOME/jre/lib/ext.
 
@@ -67,7 +73,7 @@ following parameters (through standard "set" mutators):
 
 	user
 	password
-	serverName
+	serverName (see the next section about fail-over hosts)
 	databaseName
 	port
 
@@ -81,7 +87,27 @@ You might use this name in a Class.forName() call to load the driver:
 To connect to the database, you need to use a JDBC url with the following 
 format ([xxx] denotes optional url components):
 
-  jdbc:mysql://[hostname][:port]/[dbname][?param1=value1][&param2=value2].....
+  jdbc:mysql://[hostname][,failoverhost...][:port]/[dbname][?param1=value1][&param2=value2].....
+
+The driver now has fail-over support. This allows the driver to fail-over to any number
+of "slave" hosts and still perform read-only queries.
+
+The fail-over functionality has the following behavior:
+
+If the URL parameter "autoReconnect" is false:
+	
+	Failover only happens at connection initialization, and failback occurs 
+	when the driver determines that the first host has become available again
+	
+If the URL parameter "autoReconnect" is true:
+
+	Failover happens when the driver determines that the connection has failed
+	(before _every_ query), and falls back to the first host when it determines
+	that the host has become available again.
+	
+In either case, whenever you are connected to a "failed-over" server, the connection
+will be set to read-only status, so queries that would modify data will have exceptions
+thrown (the query will _never_ be seen by the MySQL server).
 
 URL Parameters (can be passed as properties in 
 DriverManager.getConnection() as well):
@@ -163,6 +189,32 @@ com.mysql.jdbc.jdbc2.optional package. They are "MysqlDataSource",
 application server documentation for information on how to use these classes.
 An example of using the standard DataSource ("MysqlDataSource") can be found
 in the "testsuite" directory.
+
+If you need to "stream" result sets, row-by-row, the driver
+now supports this. What you need to do is create a statement in the
+following manner:
+
+  stmt = conn.createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY, 
+                            java.sql.ResultSet.CONCUR_READ_ONLY);
+                            
+  stmt.setFetchSize(Integer.MIN_VALUE);
+  
+This serves as a signal to the driver to "stream" result sets
+row-by-row. After this any result sets created with the statement
+will be retrieved row-by-row.
+
+There are some caveats with this approach. You will have
+to read all of the rows in the result set (or close it)
+before you can issue any other queries on the connection,
+or an exception will be thrown.
+
+This version of the driver also supports large packet sizes
+(up to the limits of your server) when you're using MySQL-4.0
+or newer. Your JVM will need to be able to allocate enough
+memory to store the entire large packet, as well as an overhead
+of 16 megabytes or so. Usually, you can control this by passing
+the "-XmxNNNm" flag to your JVM, where NNN is the number of 
+megabytes of memory that the JVM should be allowed to allocate.
 
 TROUBLESHOOTING
 
@@ -280,17 +332,64 @@ further issues, see the "SUPPORT" section below.
 
 KNOWN BUGS
 
-There are some parts of the JDBC-2.0 spec that are not implemented (yet). 
+There are some parts of the JDBC-3.0 spec that are not implemented (mostly 
+because they can't be until MySQL supports the underlying features required
+to implement them). 
+
+The following methods are not implemented:
+
+	Blob.setBinaryStream()
+	Blob.setBytes()
+	Blob.truncate()
+
+	Connection.setSavePoint()
+	Connection.setTypeMap(Map)
+	Connection.getTypeMap()
+	Connection.prepareCall(String)
+	Connection.releaseSavepoint(Savepoint)
+	Connection.rollback(Savepoint)
+
+	PreparedStatement.setArray(int, Array)
+	PreparedStatement.setBlob(int, Clob)
+	PreparedStatement.getMetaData()
+	PreparedStatement.setRef()
+	PreparedStatement.getParameterMetaData()
+
+	ResultSet.getArray(int)
+	ResultSet.getArray(colName)
+	ResultSet.getCharacterStream(int)
+	ResultSet.getCharacterStream(String)
+	ResultSet.getClob(int)
+	ResultSet.getClob(String)
+	ResultSet.getObject(int, Map)
+	ResultSet.getObject(String, Map)
+	ResultSet.getRef(int)
+	ResultSet.getRef(String)
+	ResultSet.rowDeleted()
+	ResultSet.rowInserted()
+	ResultSet.rowUpdated()
+	ResultSet.updateArray(int, Array)
+	ResultSet.updateArray(String, Array)
+	ResultSet.updateBlob(int, Blob)
+	ResultSet.updateBlob(String, Blob)
+	ResultSet.updateClob(int, Clob)
+	ResultSet.updateClob(String, Clob)
+	ResultSet.updateRef(int, Ref)
+	ResultSet.updateRef(String, Ref)
 
 If you see something that is not implemented, and you have an idea on how to
 do it, go ahead and let me know. I'm always looking for help and/or feedback
 about the driver.
 
+
 SUPPORT
 
-
 Community-based support is available on the mysql-java mailing list 
-available from www.mysql.com, or through e-mail to me <mmatthew@thematthews.org>. 
+available from http://www.mysql.com/documentation/lists.html 
+
+MySQL-AB offers commercial support, and non-GPL commercial licenses of
+this software. Contact me <mark@mysql.com> or sales@mysql.com for more 
+information.
 
 --
 This software is OSI Certified Open Source Software.

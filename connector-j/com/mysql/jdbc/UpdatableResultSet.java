@@ -51,13 +51,13 @@ public class UpdatableResultSet
     //~ Instance/static variables .............................................
 
     static private String quotedIdChar = null;
-    protected String      deleteSQL = null;
+    protected String deleteSQL = null;
 
     /**
      * PreparedStatement used to delete data
      */
-    protected com.mysql.jdbc.PreparedStatement deleter   = null;
-    protected String                           insertSQL = null;
+    protected com.mysql.jdbc.PreparedStatement deleter = null;
+    protected String insertSQL = null;
 
     /**
      * PreparedStatement used to insert data
@@ -68,7 +68,7 @@ public class UpdatableResultSet
      * List of primary keys
      */
     protected ArrayList primaryKeyIndicies = null;
-    protected String    refreshSQL = null;
+    protected String refreshSQL = null;
 
     /**
      * PreparedStatement used to refresh data
@@ -120,18 +120,33 @@ public class UpdatableResultSet
      * @param cursor the positioned update/delete cursor name
      */
     public UpdatableResultSet(Field[] fields, RowData rows, 
-                              com.mysql.jdbc.Connection conn) throws SQLException
+                              com.mysql.jdbc.Connection conn)
+                       throws SQLException
     {
         super(fields, rows, conn);
         isUpdatable = isUpdateable();
     }
 
-    public UpdatableResultSet(Field[] fields, RowData rows) throws SQLException
+    /**
+     * Creates a new UpdatableResultSet object.
+     * 
+     * @param fields DOCUMENT ME!
+     * @param rows DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
+    public UpdatableResultSet(Field[] fields, RowData rows)
+                       throws SQLException
     {
         super(fields, rows);
         isUpdatable = isUpdateable();
     }
 
+    /**
+     * Creates a new UpdatableResultSet object.
+     * 
+     * @param updateCount DOCUMENT ME!
+     * @param updateID DOCUMENT ME!
+     */
     public UpdatableResultSet(long updateCount, long updateID)
     {
         super(updateCount, updateID);
@@ -183,6 +198,13 @@ public class UpdatableResultSet
         return super.getAsciiStream(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param columnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized InputStream getAsciiStream(String columnName)
                                             throws java.sql.SQLException
     {
@@ -227,6 +249,14 @@ public class UpdatableResultSet
         return super.getBigDecimal(columnIndex, scale);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @param scale DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized BigDecimal getBigDecimal(String ColumnName, int scale)
                                           throws java.sql.SQLException
     {
@@ -253,6 +283,13 @@ public class UpdatableResultSet
         return super.getBinaryStream(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param columnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized InputStream getBinaryStream(String columnName)
                                              throws java.sql.SQLException
     {
@@ -274,6 +311,13 @@ public class UpdatableResultSet
         return super.getBoolean(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized boolean getBoolean(String ColumnName)
                                     throws java.sql.SQLException
     {
@@ -295,6 +339,13 @@ public class UpdatableResultSet
         return super.getByte(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized byte getByte(String ColumnName)
                               throws java.sql.SQLException
     {
@@ -320,6 +371,13 @@ public class UpdatableResultSet
         return super.getBytes(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized byte[] getBytes(String ColumnName)
                                  throws java.sql.SQLException
     {
@@ -383,6 +441,13 @@ public class UpdatableResultSet
         return super.getDate(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized java.sql.Date getDate(String ColumnName)
                                        throws java.sql.SQLException
     {
@@ -404,6 +469,13 @@ public class UpdatableResultSet
         return super.getDouble(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized double getDouble(String ColumnName)
                                   throws java.sql.SQLException
     {
@@ -440,6 +512,13 @@ public class UpdatableResultSet
         return super.getFloat(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized float getFloat(String ColumnName)
                                 throws java.sql.SQLException
     {
@@ -461,6 +540,13 @@ public class UpdatableResultSet
         return super.getInt(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized int getInt(String ColumnName)
                             throws java.sql.SQLException
     {
@@ -500,6 +586,13 @@ public class UpdatableResultSet
         return super.getLong(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized long getLong(String ColumnName)
                               throws java.sql.SQLException
     {
@@ -582,6 +675,13 @@ public class UpdatableResultSet
         return super.getShort(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized short getShort(String ColumnName)
                                 throws java.sql.SQLException
     {
@@ -633,6 +733,13 @@ public class UpdatableResultSet
         return super.getTime(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized Time getTime(String ColumnName)
                               throws java.sql.SQLException
     {
@@ -655,6 +762,13 @@ public class UpdatableResultSet
         return super.getTimestamp(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized Timestamp getTimestamp(String ColumnName)
                                         throws java.sql.SQLException
     {
@@ -681,6 +795,13 @@ public class UpdatableResultSet
         return super.getUnicodeStream(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param columnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public synchronized InputStream getUnicodeStream(String columnName)
                                               throws java.sql.SQLException
     {
@@ -767,7 +888,8 @@ public class UpdatableResultSet
                                        throws SQLException
     {
 
-        if (doingUpdates) {
+        if (doingUpdates)
+        {
             doingUpdates = false;
             updater.clearParameters();
         }
@@ -818,55 +940,70 @@ public class UpdatableResultSet
                                 throws SQLException
     {
 
-        if (!isUpdatable) {
+        if (!isUpdatable)
+        {
             throw new NotUpdatable();
         }
 
-        if (onInsertRow) {
+        if (onInsertRow)
+        {
             throw new SQLException("Can not call deleteRow() when on insert row");
-        } else if (rowData.size() == 0) {
+        }
+        else if (rowData.size() == 0)
+        {
             throw new SQLException("Can't deleteRow() on empty result set");
-        } else if (isBeforeFirst()) {
+        }
+        else if (isBeforeFirst())
+        {
             throw new SQLException("Before start of result set. Can not call deleteRow().");
-        } else if (isAfterLast()) {
+        }
+        else if (isAfterLast())
+        {
             throw new SQLException("After end of result set. Can not call deleteRow().");
         }
 
-        if (deleter == null) {
+        if (deleter == null)
+        {
 
-            if (deleteSQL == null) {
+            if (deleteSQL == null)
+            {
                 generateStatements();
             }
 
             deleter = (com.mysql.jdbc.PreparedStatement)connection.prepareStatement(
-                               deleteSQL);
+                              deleteSQL);
         }
 
         deleter.clearParameters();
 
         String Encoding = null;
 
-        if (connection.useUnicode()) {
+        if (connection.useUnicode())
+        {
             Encoding = connection.getEncoding();
         }
 
-        try {
+        try
+        {
 
             int num_keys = primaryKeyIndicies.size();
 
-            if (num_keys == 1) {
+            if (num_keys == 1)
+            {
 
-                int    index      = ((Integer)primaryKeyIndicies.get(0)).intValue();
+                int index = ((Integer)primaryKeyIndicies.get(0)).intValue();
                 String CurrentVal = (Encoding == null
                                          ? new String(thisRow[index])
-                                         : new String(thisRow[index], 
-                                                      Encoding));
+                                         : new String(thisRow[index], Encoding));
                 deleter.setString(1, CurrentVal);
-            } else {
+            }
+            else
+            {
 
-                for (int i = 0; i < num_keys; i++) {
+                for (int i = 0; i < num_keys; i++)
+                {
 
-                    int    index      = ((Integer)primaryKeyIndicies.get(i)).intValue();
+                    int index = ((Integer)primaryKeyIndicies.get(i)).intValue();
                     String CurrentVal = (Encoding == null
                                              ? new String(thisRow[index])
                                              : new String(thisRow[index], 
@@ -877,7 +1014,9 @@ public class UpdatableResultSet
 
             deleter.executeUpdate();
             rowData.removeRow(rowData.getCurrentRowNumber());
-        } catch (java.io.UnsupportedEncodingException UE) {
+        }
+        catch (java.io.UnsupportedEncodingException UE)
+        {
             throw new SQLException("Unsupported character encoding '" + 
                                    connection.getEncoding() + "'");
         }
@@ -913,31 +1052,40 @@ public class UpdatableResultSet
                                 throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
             throw new SQLException("Not on insert row");
-        } else {
+        }
+        else
+        {
             inserter.executeUpdate();
 
             int numPrimaryKeys = 0;
 
-            if (primaryKeyIndicies != null) {
+            if (primaryKeyIndicies != null)
+            {
                 numPrimaryKeys = primaryKeyIndicies.size();
             }
 
-            long     autoIncrementId = inserter.getLastInsertID();
-            int      num_fields = fields.length;
-            byte[][] NewRow     = new byte[num_fields][];
+            long autoIncrementId = inserter.getLastInsertID();
+            int num_fields = fields.length;
+            byte[][] NewRow = new byte[num_fields][];
 
-            for (int i = 0; i < num_fields; i++) {
+            for (int i = 0; i < num_fields; i++)
+            {
 
-                if (inserter.isNull(i)) {
+                if (inserter.isNull(i))
+                {
                     NewRow[i] = null;
-                } else {
+                }
+                else
+                {
                     NewRow[i] = inserter.getBytes(i);
                 }
 
                 if (numPrimaryKeys == 1 && fields[i].isPrimaryKey() && 
-                    autoIncrementId > 0) {
+                    autoIncrementId > 0)
+                {
                     NewRow[i] = String.valueOf(autoIncrementId).getBytes();
                 }
             }
@@ -977,7 +1125,8 @@ public class UpdatableResultSet
                                        throws SQLException
     {
 
-        if (!isUpdatable) {
+        if (!isUpdatable)
+        {
             throw new NotUpdatable();
         }
 
@@ -1008,16 +1157,20 @@ public class UpdatableResultSet
                                       throws SQLException
     {
 
-        if (!isUpdatable) {
+        if (!isUpdatable)
+        {
             throw new NotUpdatable();
         }
 
-        if (inserter == null) {
+        if (inserter == null)
+        {
             generateStatements();
             inserter = (com.mysql.jdbc.PreparedStatement)connection.prepareStatement(
-                                insertSQL);
+                               insertSQL);
             resetInserter();
-        } else {
+        }
+        else
+        {
             resetInserter();
         }
 
@@ -1111,55 +1264,70 @@ public class UpdatableResultSet
                                  throws SQLException
     {
 
-        if (!isUpdatable) {
+        if (!isUpdatable)
+        {
             throw new NotUpdatable();
         }
 
-        if (onInsertRow) {
+        if (onInsertRow)
+        {
             throw new SQLException("Can not call refreshRow() when on insert row");
-        } else if (rowData.size() == 0) {
+        }
+        else if (rowData.size() == 0)
+        {
             throw new SQLException("Can't refreshRow() on empty result set");
-        } else if (isBeforeFirst()) {
+        }
+        else if (isBeforeFirst())
+        {
             throw new SQLException("Before start of result set. Can not call refreshRow().");
-        } else if (isAfterLast()) {
+        }
+        else if (isAfterLast())
+        {
             throw new SQLException("After end of result set. Can not call refreshRow().");
         }
 
-        if (refresher == null) {
+        if (refresher == null)
+        {
 
-            if (refreshSQL == null) {
+            if (refreshSQL == null)
+            {
                 generateStatements();
             }
 
             refresher = (com.mysql.jdbc.PreparedStatement)connection.prepareStatement(
-                                 refreshSQL);
+                                refreshSQL);
         }
 
         refresher.clearParameters();
 
         String Encoding = null;
 
-        if (connection.useUnicode()) {
+        if (connection.useUnicode())
+        {
             Encoding = connection.getEncoding();
         }
 
-        try {
+        try
+        {
 
             int num_keys = primaryKeyIndicies.size();
 
-            if (num_keys == 1) {
+            if (num_keys == 1)
+            {
 
-                int    index      = ((Integer)primaryKeyIndicies.get(0)).intValue();
+                int index = ((Integer)primaryKeyIndicies.get(0)).intValue();
                 String CurrentVal = (Encoding == null
                                          ? new String(thisRow[index])
-                                         : new String(thisRow[index], 
-                                                      Encoding));
+                                         : new String(thisRow[index], Encoding));
                 refresher.setString(1, CurrentVal);
-            } else {
+            }
+            else
+            {
 
-                for (int i = 0; i < num_keys; i++) {
+                for (int i = 0; i < num_keys; i++)
+                {
 
-                    int    index      = ((Integer)primaryKeyIndicies.get(i)).intValue();
+                    int index = ((Integer)primaryKeyIndicies.get(i)).intValue();
                     String CurrentVal = (Encoding == null
                                              ? new String(thisRow[index])
                                              : new String(thisRow[index], 
@@ -1170,38 +1338,54 @@ public class UpdatableResultSet
 
             java.sql.ResultSet rs = null;
 
-            try {
+            try
+            {
                 rs = refresher.executeQuery();
 
                 int numCols = rs.getMetaData().getColumnCount();
 
-                if (rs.next()) {
+                if (rs.next())
+                {
 
-                    for (int i = 0; i < numCols; i++) {
+                    for (int i = 0; i < numCols; i++)
+                    {
 
                         byte[] val = rs.getBytes(i + 1);
 
-                        if (val == null || rs.wasNull()) {
+                        if (val == null || rs.wasNull())
+                        {
                             thisRow[i] = null;
-                        } else {
+                        }
+                        else
+                        {
                             thisRow[i] = rs.getBytes(i + 1);
                         }
                     }
-                } else {
+                }
+                else
+                {
                     throw new SQLException("refreshRow() called on row that has been deleted or had primary key changed", 
                                            "S1000");
                 }
-            } finally {
+            }
+            finally
+            {
 
-                if (rs != null) {
+                if (rs != null)
+                {
 
-                    try {
+                    try
+                    {
                         rs.close();
-                    } catch (Exception ex) {
+                    }
+                    catch (Exception ex)
+                    {
                     }
                 }
             }
-        } catch (java.io.UnsupportedEncodingException UE) {
+        }
+        catch (java.io.UnsupportedEncodingException UE)
+        {
             throw new SQLException("Unsupported character encoding '" + 
                                    connection.getEncoding() + "'");
         }
@@ -1311,15 +1495,19 @@ public class UpdatableResultSet
                                         throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setAsciiStream(columnIndex, x, length);
-        } else {
+        }
+        else
+        {
             inserter.setAsciiStream(columnIndex, x, length);
         }
     }
@@ -1365,15 +1553,19 @@ public class UpdatableResultSet
                                        throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setBigDecimal(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setBigDecimal(columnIndex, x);
         }
     }
@@ -1419,15 +1611,19 @@ public class UpdatableResultSet
                                          throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setBinaryStream(columnIndex, x, length);
-        } else {
+        }
+        else
+        {
             inserter.setBinaryStream(columnIndex, x, length);
         }
     }
@@ -1454,8 +1650,8 @@ public class UpdatableResultSet
     {
         updateBinaryStream(findColumn(columnName), x, length);
     }
-    
-     /**
+
+    /**
      * @see ResultSet#updateBlob(int, Blob)
      */
     public void updateBlob(int arg0, java.sql.Blob arg1)
@@ -1491,15 +1687,19 @@ public class UpdatableResultSet
                                     throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setBoolean(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setBoolean(columnIndex, x);
         }
     }
@@ -1542,15 +1742,19 @@ public class UpdatableResultSet
                                  throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setByte(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setByte(columnIndex, x);
         }
     }
@@ -1593,15 +1797,19 @@ public class UpdatableResultSet
                                   throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setBytes(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setBytes(columnIndex, x);
         }
     }
@@ -1647,15 +1855,19 @@ public class UpdatableResultSet
                                             throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setCharacterStream(columnIndex, x, length);
-        } else {
+        }
+        else
+        {
             inserter.setCharacterStream(columnIndex, x, length);
         }
     }
@@ -1701,15 +1913,19 @@ public class UpdatableResultSet
                                  throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setDate(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setDate(columnIndex, x);
         }
     }
@@ -1752,15 +1968,19 @@ public class UpdatableResultSet
                                    throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setDouble(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setDouble(columnIndex, x);
         }
     }
@@ -1803,15 +2023,19 @@ public class UpdatableResultSet
                                   throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setFloat(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setFloat(columnIndex, x);
         }
     }
@@ -1854,15 +2078,19 @@ public class UpdatableResultSet
                                 throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setInt(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setInt(columnIndex, x);
         }
     }
@@ -1905,15 +2133,19 @@ public class UpdatableResultSet
                                  throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setLong(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setLong(columnIndex, x);
         }
     }
@@ -1955,15 +2187,19 @@ public class UpdatableResultSet
                                  throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setNull(columnIndex, 0);
-        } else {
+        }
+        else
+        {
             inserter.setNull(columnIndex, 0);
         }
     }
@@ -2008,15 +2244,19 @@ public class UpdatableResultSet
                                    throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setObject(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setObject(columnIndex, x);
         }
     }
@@ -2039,15 +2279,19 @@ public class UpdatableResultSet
                                    throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setObject(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setObject(columnIndex, x);
         }
     }
@@ -2109,11 +2353,13 @@ public class UpdatableResultSet
                                 throws SQLException
     {
 
-        if (!isUpdatable) {
+        if (!isUpdatable)
+        {
             throw new NotUpdatable();
         }
 
-        if (doingUpdates) {
+        if (doingUpdates)
+        {
             updater.executeUpdate();
 
             //int num_fields = Fields.length;
@@ -2156,15 +2402,19 @@ public class UpdatableResultSet
                                   throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setShort(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setShort(columnIndex, x);
         }
     }
@@ -2207,15 +2457,19 @@ public class UpdatableResultSet
                                    throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setString(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setString(columnIndex, x);
         }
     }
@@ -2258,15 +2512,19 @@ public class UpdatableResultSet
                                  throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setTime(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setTime(columnIndex, x);
         }
     }
@@ -2310,15 +2568,19 @@ public class UpdatableResultSet
                                       throws SQLException
     {
 
-        if (!onInsertRow) {
+        if (!onInsertRow)
+        {
 
-            if (!doingUpdates) {
+            if (!doingUpdates)
+            {
                 doingUpdates = true;
                 syncUpdate();
             }
 
             updater.setTimestamp(columnIndex, x);
-        } else {
+        }
+        else
+        {
             inserter.setTimestamp(columnIndex, x);
         }
     }
@@ -2368,7 +2630,8 @@ public class UpdatableResultSet
         // FIXME: Issue warning when asked for updateable result set, but result set is not
         // updatable
         //
-        if (concurrencyFlag == CONCUR_UPDATABLE && !isUpdateable()) {
+        if (concurrencyFlag == CONCUR_UPDATABLE && !isUpdateable())
+        {
 
             java.sql.SQLWarning warning = new java.sql.SQLWarning(
                                                   NotUpdatable.NOT_UPDATEABLE_MESSAGE);
@@ -2383,50 +2646,61 @@ public class UpdatableResultSet
                                throws SQLException
     {
 
-        if (!isUpdatable) {
+        if (!isUpdatable)
+        {
             throw new NotUpdatable();
         }
 
         boolean useQuotedIdentifiers = connection.supportsQuotedIdentifiers();
-        String  quotedId           = getQuotedIdChar();
-        String  TableName          = fields[0].getTableName();
+        String quotedId = getQuotedIdChar();
+        String TableName = fields[0].getTableName();
         primaryKeyIndicies = new ArrayList();
 
-        StringBuffer FieldValues        = new StringBuffer();
-        StringBuffer KeyValues          = new StringBuffer();
-        StringBuffer ColumnNames        = new StringBuffer();
+        StringBuffer FieldValues = new StringBuffer();
+        StringBuffer KeyValues = new StringBuffer();
+        StringBuffer ColumnNames = new StringBuffer();
         StringBuffer InsertPlaceHolders = new StringBuffer();
-        boolean      first_time         = true;
-        boolean      keys_first_time    = true;
+        boolean first_time = true;
+        boolean keys_first_time = true;
 
-        for (int i = 0; i < fields.length; i++) {
+        for (int i = 0; i < fields.length; i++)
+        {
 
-            if (fields[i].isPrimaryKey()) {
+            if (fields[i].isPrimaryKey())
+            {
                 primaryKeyIndicies.add(new Integer(i));
 
-                if (!keys_first_time) {
+                if (!keys_first_time)
+                {
                     KeyValues.append(" AND ");
-                } else {
+                }
+                else
+                {
                     keys_first_time = false;
                 }
 
-                if (useQuotedIdentifiers) {
+                if (useQuotedIdentifiers)
+                {
                     KeyValues.append(quotedId);
                 }
 
                 KeyValues.append(fields[i].getName());
 
-                if (useQuotedIdentifiers) {
+                if (useQuotedIdentifiers)
+                {
                     KeyValues.append(quotedId);
                 }
 
                 KeyValues.append("=?");
             }
 
-            if (first_time) {
+            if (first_time)
+            {
                 first_time = false;
                 FieldValues.append("SET ");
-            } else {
+            }
+            else
+            {
                 FieldValues.append(",");
                 ColumnNames.append(",");
                 InsertPlaceHolders.append(",");
@@ -2434,23 +2708,27 @@ public class UpdatableResultSet
 
             InsertPlaceHolders.append("?");
 
-            if (useQuotedIdentifiers) {
+            if (useQuotedIdentifiers)
+            {
                 ColumnNames.append(quotedId);
             }
 
             ColumnNames.append(fields[i].getName());
 
-            if (useQuotedIdentifiers) {
+            if (useQuotedIdentifiers)
+            {
                 ColumnNames.append(quotedId);
             }
 
-            if (useQuotedIdentifiers) {
+            if (useQuotedIdentifiers)
+            {
                 FieldValues.append(quotedId);
             }
 
             FieldValues.append(fields[i].getName());
 
-            if (useQuotedIdentifiers) {
+            if (useQuotedIdentifiers)
+            {
                 FieldValues.append(quotedId);
             }
 
@@ -2458,17 +2736,17 @@ public class UpdatableResultSet
         }
 
         String quotedIdStr = useQuotedIdentifiers ? quotedId : "";
-        updateSQL  = "UPDATE " + quotedIdStr + TableName + quotedIdStr + 
-                      " " + FieldValues.toString() + " WHERE " + 
-                      KeyValues.toString();
-        insertSQL  = "INSERT INTO " + quotedIdStr + TableName + 
-                      quotedIdStr + " (" + ColumnNames.toString() + 
-                      ") VALUES (" + InsertPlaceHolders.toString() + ")";
+        updateSQL = "UPDATE " + quotedIdStr + TableName + quotedIdStr + " " + 
+                    FieldValues.toString() + " WHERE " + 
+                    KeyValues.toString();
+        insertSQL = "INSERT INTO " + quotedIdStr + TableName + quotedIdStr + 
+                    " (" + ColumnNames.toString() + ") VALUES (" + 
+                    InsertPlaceHolders.toString() + ")";
         refreshSQL = "SELECT " + ColumnNames.toString() + " FROM " + 
-                      quotedIdStr + TableName + quotedIdStr + " WHERE " + 
-                      KeyValues.toString();
-        deleteSQL  = "DELETE FROM " + quotedIdStr + TableName + 
-                      quotedIdStr + " WHERE " + KeyValues.toString();
+                     quotedIdStr + TableName + quotedIdStr + " WHERE " + 
+                     KeyValues.toString();
+        deleteSQL = "DELETE FROM " + quotedIdStr + TableName + quotedIdStr + 
+                    " WHERE " + KeyValues.toString();
     }
 
     /**
@@ -2487,27 +2765,33 @@ public class UpdatableResultSet
     boolean isUpdateable()
     {
 
-        if (fields.length > 0) {
+        if (fields.length > 0)
+        {
 
             String TableName = fields[0].getTableName();
 
             //
             // References only one table?
             //
-            for (int i = 1; i < fields.length; i++) {
+            for (int i = 1; i < fields.length; i++)
+            {
 
                 if (TableName == null || 
-                    !fields[i].getTableName().equals(TableName)) {
+                    !fields[i].getTableName().equals(TableName))
+                {
 
                     return false;
                 }
             }
 
-            if (TableName == null || TableName.length() == 0) {
+            if (TableName == null || TableName.length() == 0)
+            {
 
                 return false;
             }
-        } else {
+        }
+        else
+        {
 
             return false;
         }
@@ -2517,16 +2801,19 @@ public class UpdatableResultSet
         //
         boolean has_primary_key = false;
 
-        for (int i = 0; i < fields.length; i++) {
+        for (int i = 0; i < fields.length; i++)
+        {
 
-            if (fields[i].isPrimaryKey()) {
+            if (fields[i].isPrimaryKey())
+            {
                 has_primary_key = true;
 
                 break;
             }
         }
 
-        if (!has_primary_key) {
+        if (!has_primary_key)
+        {
 
             return false;
         }
@@ -2543,45 +2830,57 @@ public class UpdatableResultSet
              throws SQLException
     {
 
-        if (updater == null) {
+        if (updater == null)
+        {
 
-            if (updateSQL == null) {
+            if (updateSQL == null)
+            {
                 generateStatements();
             }
 
             updater = (com.mysql.jdbc.PreparedStatement)connection.prepareStatement(
-                               updateSQL);
+                              updateSQL);
         }
 
         int num_fields = fields.length;
         updater.clearParameters();
 
-        for (int i = 0; i < num_fields; i++) {
+        for (int i = 0; i < num_fields; i++)
+        {
 
-            if (thisRow[i] != null) {
+            if (thisRow[i] != null)
+            {
                 updater.setBytes(i + 1, thisRow[i]);
-            } else {
+            }
+            else
+            {
                 updater.setNull(i + 1, 0);
             }
         }
 
         int num_keys = primaryKeyIndicies.size();
 
-        if (num_keys == 1) {
+        if (num_keys == 1)
+        {
 
             int index = ((Integer)primaryKeyIndicies.get(0)).intValue();
             updater.setBytes(num_fields + 1, 
-                              thisRow[((Integer)primaryKeyIndicies.get(0)).intValue()]);
-        } else {
+                             thisRow[((Integer)primaryKeyIndicies.get(0)).intValue()]);
+        }
+        else
+        {
 
-            for (int i = 0; i < num_keys; i++) {
+            for (int i = 0; i < num_keys; i++)
+            {
 
-                byte[] currentVal = thisRow[((Integer)primaryKeyIndicies.get(
-                                                      i)).intValue()];
+                byte[] currentVal = thisRow[((Integer)primaryKeyIndicies.get(i)).intValue()];
 
-                if (currentVal != null) {
+                if (currentVal != null)
+                {
                     updater.setBytes(num_fields + i + 1, currentVal);
-                } else {
+                }
+                else
+                {
                     updater.setNull(num_fields + i + 1, 0);
                 }
             }
@@ -2592,7 +2891,8 @@ public class UpdatableResultSet
                                          throws SQLException
     {
 
-        if (quotedIdChar == null) {
+        if (quotedIdChar == null)
+        {
 
             java.sql.DatabaseMetaData dbmd = connection.getMetaData();
             quotedIdChar = dbmd.getIdentifierQuoteString();
@@ -2606,7 +2906,8 @@ public class UpdatableResultSet
     {
         inserter.clearParameters();
 
-        for (int i = 0; i < fields.length; i++) {
+        for (int i = 0; i < fields.length; i++)
+        {
             inserter.setNull(i + 1, 0);
         }
     }
@@ -2616,7 +2917,8 @@ public class UpdatableResultSet
     {
         updater.clearParameters();
 
-        for (int i = 0; i < fields.length; i++) {
+        for (int i = 0; i < fields.length; i++)
+        {
             updater.setNull(i + 1, 0);
         }
     }

@@ -109,17 +109,17 @@ public class Blob
 
     /**
      * Returns as an array of bytes, part or all of the BLOB
-   	 * value that this Blob object designates.
-   	 * 
-   	 * @param pos where to start the part of the BLOB
-   	 * @param length the length of the part of the BLOB you want
-   	 *                returned. 
-   	 * 
-   	 * @return the bytes stored in the blob starting at position <code>pos</code>
-   	 * and having a length of <code>length</code>.
-   	 * 
-   	 * @throws SQLException if a database error occurs
-   	 */
+        * value that this Blob object designates.
+        * 
+        * @param pos where to start the part of the BLOB
+        * @param length the length of the part of the BLOB you want
+        *                returned. 
+        * 
+        * @return the bytes stored in the blob starting at position <code>pos</code>
+        * and having a length of <code>length</code>.
+        * 
+        * @throws SQLException if a database error occurs
+        */
     public byte[] getBytes(long pos, int length)
                     throws SQLException
     {
@@ -131,12 +131,12 @@ public class Blob
     }
 
     /**
-   	 * Returns the number of bytes in the BLOB value designated
-   	 * by this Blob object.
-   	 * 
-   	 * @return the length of this blob
-   	 * @throws SQLException if a database error occurs
-   	 */
+        * Returns the number of bytes in the BLOB value designated
+        * by this Blob object.
+        * 
+        * @return the length of this blob
+        * @throws SQLException if a database error occurs
+        */
     public long length()
                 throws SQLException
     {

@@ -104,7 +104,7 @@ public class Statement
      *
      * @param c the Connection instantation that creates us
      */
-    public Statement(Connection c, String catalog)
+    public Statement(Connection c, String catalog) throws SQLException
     {
 
         if (Driver.trace)
@@ -114,6 +114,11 @@ public class Statement
             Debug.methodCall(this, "constructor", Args);
         }
 
+		if (c == null || c.isClosed())
+		{
+			throw new SQLException("Connection is closed.", "08003");
+		}
+		
         connection = c;
         escaper = new EscapeProcessor();
         currentCatalog = catalog;
@@ -276,6 +281,12 @@ public class Statement
         return fetchSize;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public java.sql.ResultSet getGeneratedKeys()
                                         throws SQLException
     {
@@ -505,24 +516,36 @@ public class Statement
             Debug.methodCall(this, "getMoreResults", Args);
         }
 
-        if (results != null)
-        {
-            results.close();
-        }
-
-        results = nextResults;
-        nextResults = null;
-
-        return (results != null && results.reallyResult()) ? true : false;
+       
+		return getMoreResults(CLOSE_CURRENT_RESULT);
     }
 
     /**
      * @see Statement#getMoreResults(int)
      */
-    public boolean getMoreResults(int arg0)
+    public boolean getMoreResults(int current)
                            throws SQLException
     {
-        throw new NotImplemented();
+        switch (current) {
+        	case Statement.CLOSE_CURRENT_RESULT:
+        	case Statement.CLOSE_ALL_RESULTS:
+        	case Statement.KEEP_CURRENT_RESULT:
+        	
+        		if (results != null && 
+        			(current == CLOSE_ALL_RESULTS || 
+        			 current == CLOSE_CURRENT_RESULT))
+        		{	
+            		results.close();
+        		}
+
+		        results = nextResults;
+        		nextResults = null;
+
+		        return (results != null && results.reallyResult()) ? true : false;
+		        
+        	default:
+        		throw new SQLException("Illegal flag for getMoreResults(int)", "S1009");
+        }
     }
 
     /**
@@ -613,7 +636,7 @@ public class Statement
     public int getResultSetHoldability()
                                 throws SQLException
     {
-        throw new NotImplemented();
+       return ResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
 
     /**
@@ -703,6 +726,12 @@ public class Statement
         return warningChain;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param sql DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
     public synchronized void addBatch(String sql)
                                throws SQLException
     {
@@ -844,6 +873,35 @@ public class Statement
             Debug.methodCall(this, "execute", Args);
         }
 
+		if (connection.isReadOnly())
+		{
+			if (sql != null)
+			{
+				int length = sql.length();
+				
+				char firstNonWsChar = 0;
+				
+				for (int i = 0; i < length; i++)
+				{
+					char c = sql.charAt(i);
+					
+					if (!Character.isWhitespace(c))
+					{
+						firstNonWsChar = c;
+						
+						break;
+					}
+				}
+					
+				if (firstNonWsChar != 'S' &&
+				    firstNonWsChar != 's')
+				{
+					throw new SQLException("Connection is read-only. " + 
+						"Queries leading to data modification are not allowed", "S1009");
+				}
+			}
+		}
+		
         checkClosed();
 
         if (doEscapeProcessing)
@@ -889,8 +947,8 @@ public class Statement
                     if (sql.toUpperCase().indexOf("LIMIT") != -1)
                     {
                         rs = connection.execSQL(sql, maxRows, 
-                                           resultSetConcurrency, 
-                                           createStreamingResultSet());
+                                                resultSetConcurrency, 
+                                                createStreamingResultSet());
                     }
                     else
                     {
@@ -910,17 +968,18 @@ public class Statement
                 }
                 else
                 {
-                    connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+                    connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", 
+                                       -1);
                 }
 
                 // Finally, execute the query
                 rs = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                   createStreamingResultSet());
+                                        createStreamingResultSet());
             }
             else
             {
                 rs = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                   createStreamingResultSet());
+                                        createStreamingResultSet());
             }
 
             if (oldCatalog != null)
@@ -949,7 +1008,7 @@ public class Statement
     public boolean execute(String arg0, int arg1)
                     throws SQLException
     {
-        throw new NotImplemented();
+        return execute(arg0);
     }
 
     /**
@@ -958,7 +1017,7 @@ public class Statement
     public boolean execute(String arg0, int[] arg1)
                     throws SQLException
     {
-        throw new NotImplemented();
+        return execute(arg0);
     }
 
     /**
@@ -967,7 +1026,7 @@ public class Statement
     public boolean execute(String arg0, String[] arg1)
                     throws SQLException
     {
-        throw new NotImplemented();
+        return execute(arg0);
     }
 
     /**
@@ -986,6 +1045,12 @@ public class Statement
                                     throws SQLException
     {
 
+		if (connection.isReadOnly())
+		{
+			throw new SQLException("Connection is read-only. " + 
+				"Queries leading to data modification are not allowed", "S1009");
+		}
+		
         try
         {
 
@@ -1092,16 +1157,16 @@ public class Statement
                 if (sql.toUpperCase().indexOf("LIMIT") != -1)
                 {
                     results = connection.execSQL(sql, maxRows, 
-                                             resultSetConcurrency, 
-                                             createStreamingResultSet());
+                                                 resultSetConcurrency, 
+                                                 createStreamingResultSet());
                 }
                 else
                 {
 
                     if (maxRows <= 0)
                     {
-                        connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", 
-                                      -1);
+                        connection.execSQL(
+                                "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
                     }
                     else
                     {
@@ -1110,7 +1175,7 @@ public class Statement
                     }
 
                     results = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                             createStreamingResultSet());
+                                                 createStreamingResultSet());
 
                     if (oldCatalog != null)
                     {
@@ -1121,7 +1186,7 @@ public class Statement
             else
             {
                 results = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                         createStreamingResultSet());
+                                             createStreamingResultSet());
             }
 
             if (oldCatalog != null)
@@ -1185,6 +1250,12 @@ public class Statement
             Debug.methodCall(this, "executeUpdate", Args);
         }
 
+		if (connection.isReadOnly())
+		{
+			throw new SQLException("Connection is read-only. " + 
+				"Queries leading to data modification are not allowed", "S1009");
+		}
+		
         checkClosed();
 
         if (doEscapeProcessing)
@@ -1216,8 +1287,8 @@ public class Statement
                 connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
             }
 
-            rs = connection.execSQL(sql, -1, java.sql.ResultSet.CONCUR_READ_ONLY, 
-                               false);
+            rs = connection.execSQL(sql, -1, 
+                                    java.sql.ResultSet.CONCUR_READ_ONLY, false);
             rs.setConnection(connection);
 
             if (oldCatalog != null)
@@ -1274,7 +1345,7 @@ public class Statement
     public int executeUpdate(String arg0, int arg1)
                       throws SQLException
     {
-        throw new NotImplemented();
+        return executeUpdate(arg0);
     }
 
     /**
@@ -1283,7 +1354,7 @@ public class Statement
     public int executeUpdate(String arg0, int[] arg1)
                       throws SQLException
     {
-        throw new NotImplemented();
+        return executeUpdate(arg0);
     }
 
     /**
@@ -1292,7 +1363,7 @@ public class Statement
     public int executeUpdate(String arg0, String[] arg1)
                       throws SQLException
     {
-        throw new NotImplemented();
+        return executeUpdate(arg0);
     }
 
     protected void checkClosed()

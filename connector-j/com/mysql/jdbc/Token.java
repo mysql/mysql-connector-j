@@ -27,14 +27,20 @@ class Token
 
     //~ Instance/static variables .............................................
 
-    String  Value  = "";
+    String Value = "";
     boolean quoted = false;
 
     //~ Constructors ..........................................................
 
+    /**
+     * Creates a new Token object.
+     * 
+     * @param Value DOCUMENT ME!
+     * @param quoted DOCUMENT ME!
+     */
     public Token(String Value, boolean quoted)
     {
-        this.Value  = Value;
+        this.Value = Value;
         this.quoted = quoted;
     }
 }

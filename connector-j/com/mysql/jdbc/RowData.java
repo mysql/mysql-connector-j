@@ -16,10 +16,10 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
    
  */
- 
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
+
 
 /** 
  * This interface abstracts away how row data is accessed by
@@ -57,9 +57,21 @@ public interface RowData
     public void beforeLast()
                     throws SQLException;
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public boolean isFirst()
                     throws SQLException;
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public boolean isLast()
                    throws SQLException;
 
@@ -67,19 +79,37 @@ public interface RowData
     public void close()
                throws SQLException;
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public int getCurrentRowNumber()
                             throws SQLException;
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param index DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
     public void setCurrentRow(int index)
                        throws SQLException;
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param rows DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
     public void moveRowRelative(int rows)
                          throws SQLException;
 
     /** 
      * Returns true if the result set is dynamic.
-   	 *  
-   	 * This means that move back and move forward won't work
+        *  
+        * This means that move back and move forward won't work
      * because we do not hold on to the records.
      */
     public boolean isDynamic()
@@ -97,9 +127,21 @@ public interface RowData
     public byte[][] getAt(int index)
                    throws SQLException;
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param row DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
     public void addRow(byte[][] row)
                 throws SQLException;
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param index DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
     public void removeRow(int index)
                    throws SQLException;
 }
