@@ -39,9 +39,9 @@ public class Debug
 
     //~ Instance/static variables .............................................
 
-    private static Hashtable _Classes   = new Hashtable();
-    private static Object    _Mutex     = new Object();
-    private static boolean   _watch_all = false;
+    private static Hashtable _Classes = new Hashtable();
+    private static Object _Mutex = new Object();
+    private static boolean _watch_all = false;
 
     //~ Methods ...............................................................
 
@@ -59,10 +59,12 @@ public class Debug
     public static void methodCall(Object Source, String Method, Object[] Args)
     {
 
-        synchronized (_Mutex) {
+        synchronized (_Mutex)
+        {
 
             if (_watch_all || 
-                _Classes.contains(Source.getClass().getName())) {
+                _Classes.contains(Source.getClass().getName()))
+            {
 
                 // Print the message
                 StringBuffer Mesg = new StringBuffer("\nTRACE: ");
@@ -72,19 +74,25 @@ public class Debug
                 Mesg.append("( ");
 
                 // Print the argument list
-                for (int i = 0; i < Args.length - 1; i++) {
+                for (int i = 0; i < Args.length - 1; i++)
+                {
 
-                    if (Args[i] == null) {
+                    if (Args[i] == null)
+                    {
                         Mesg.append("null");
-                    } else {
+                    }
+                    else
+                    {
 
-                        if (Args[i] instanceof String) {
+                        if (Args[i] instanceof String)
+                        {
                             Mesg.append("\"");
                         }
 
                         Mesg.append(Args[i].toString());
 
-                        if (Args[i] instanceof String) {
+                        if (Args[i] instanceof String)
+                        {
                             Mesg.append("\"");
                         }
                     }
@@ -92,24 +100,30 @@ public class Debug
                     Mesg.append(", ");
                 }
 
-                if (Args.length > 0) {
+                if (Args.length > 0)
+                {
 
-                    if (Args[Args.length - 1] instanceof String) {
+                    if (Args[Args.length - 1] instanceof String)
+                    {
                         Mesg.append("\"");
                     }
 
                     Mesg.append(Args[Args.length - 1]);
 
-                    if (Args[Args.length - 1] instanceof String) {
+                    if (Args[Args.length - 1] instanceof String)
+                    {
                         Mesg.append("\"");
                     }
                 }
 
                 Mesg.append(" )\n");
 
-                if (DriverManager.getLogStream() == null) {
+                if (DriverManager.getLogStream() == null)
+                {
                     System.out.println(Mesg.toString());
-                } else {
+                }
+                else
+                {
                     DriverManager.println(Mesg.toString());
                 }
             }
@@ -130,10 +144,12 @@ public class Debug
     public static void msg(Object Source, String Message)
     {
 
-        synchronized (_Mutex) {
+        synchronized (_Mutex)
+        {
 
             if (_watch_all || 
-                _Classes.contains(Source.getClass().getName())) {
+                _Classes.contains(Source.getClass().getName()))
+            {
 
                 // Print the message
                 StringBuffer Mesg = new StringBuffer("\nTRACE: ");
@@ -142,9 +158,12 @@ public class Debug
                 Mesg.append(Message);
                 Mesg.append("\n");
 
-                if (DriverManager.getLogStream() == null) {
+                if (DriverManager.getLogStream() == null)
+                {
                     System.out.println(Mesg.toString());
-                } else {
+                }
+                else
+                {
                     DriverManager.println(Mesg.toString());
                 }
             }
@@ -165,10 +184,12 @@ public class Debug
     public static void returnValue(Object Source, String Method, Object Value)
     {
 
-        synchronized (_Mutex) {
+        synchronized (_Mutex)
+        {
 
             if (_watch_all || 
-                _Classes.contains(Source.getClass().getName())) {
+                _Classes.contains(Source.getClass().getName()))
+            {
 
                 // Print the message
                 StringBuffer Mesg = new StringBuffer("\nTRACE: ");
@@ -177,17 +198,23 @@ public class Debug
                 Mesg.append(Method);
                 Mesg.append(": Returning -> ");
 
-                if (Value == null) {
+                if (Value == null)
+                {
                     Mesg.append("null");
-                } else {
+                }
+                else
+                {
                     Mesg.append(Value.toString());
                 }
 
                 Mesg.append("\n");
 
-                if (DriverManager.getLogStream() == null) {
+                if (DriverManager.getLogStream() == null)
+                {
                     System.out.println(Mesg.toString());
-                } else {
+                }
+                else
+                {
                     DriverManager.println(Mesg.toString());
                 }
             }
@@ -206,19 +233,25 @@ public class Debug
 
         StringTokenizer ST = new StringTokenizer(ClassList, ":");
 
-        synchronized (_Mutex) {
+        synchronized (_Mutex)
+        {
             _watch_all = false;
 
-            if (ClassList.equals("ALL")) {
+            if (ClassList.equals("ALL"))
+            {
                 _watch_all = true;
-            } else {
+            }
+            else
+            {
                 _Classes = new Hashtable();
 
-                while (ST.hasMoreTokens()) {
+                while (ST.hasMoreTokens())
+                {
 
                     String ClassName = ST.nextToken();
 
-                    if (!_Classes.contains(ClassName)) {
+                    if (!_Classes.contains(ClassName))
+                    {
                         _Classes.put(ClassName, ClassName);
                     }
                 }

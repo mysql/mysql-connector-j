@@ -316,6 +316,13 @@ public class Driver
     //
     // return the database name property
     //
+
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param props DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     */
     public String database(Properties props)
     {
 
@@ -358,6 +365,14 @@ public class Driver
     //
     // return the value of any property this driver knows about
     //
+
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param Name DOCUMENT ME!
+     * @param props DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     */
     public String property(String Name, Properties props)
     {
 

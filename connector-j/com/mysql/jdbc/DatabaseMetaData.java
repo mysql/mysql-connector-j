@@ -62,6 +62,12 @@ public class DatabaseMetaData
 
     //~ Constructors ..........................................................
 
+    /**
+     * Creates a new DatabaseMetaData object.
+     * 
+     * @param Conn DOCUMENT ME!
+     * @param Database DOCUMENT ME!
+     */
     public DatabaseMetaData(Connection Conn, String Database)
     {
         this.conn = Conn;
@@ -1095,7 +1101,7 @@ public class DatabaseMetaData
                         // ignore
                     }
                 }
-                
+
                 results = null;
             }
         }
@@ -4839,6 +4845,13 @@ public class DatabaseMetaData
         return !nullsAreSortedHigh();
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param type DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public boolean othersDeletesAreVisible(int type)
                                     throws SQLException
     {
@@ -4846,6 +4859,13 @@ public class DatabaseMetaData
         return false;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param type DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public boolean othersInsertsAreVisible(int type)
                                     throws SQLException
     {
@@ -4869,6 +4889,13 @@ public class DatabaseMetaData
         return false;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param type DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public boolean ownDeletesAreVisible(int type)
                                  throws SQLException
     {
@@ -4876,6 +4903,13 @@ public class DatabaseMetaData
         return false;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param type DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public boolean ownInsertsAreVisible(int type)
                                  throws SQLException
     {

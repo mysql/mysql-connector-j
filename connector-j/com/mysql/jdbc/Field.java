@@ -32,14 +32,14 @@ public class Field
     //~ Instance/static variables .............................................
 
     private final static int AUTO_INCREMENT_FLAG = 512;
-    int                      colDecimals;
-    short                    colFlag;
-    int                      length; // Internal length of the field;
-    int                      mysqlType = -1; // the MySQL type
-    String                   name; // The Field name
-    int                      sqlType   = -1; // the java.sql.Type
-    String                   tableName; // The Name of the Table
-    private String           fullName;
+    int colDecimals;
+    short colFlag;
+    int length; // Internal length of the field;
+    int mysqlType = -1; // the MySQL type
+    String name; // The Field name
+    int sqlType = -1; // the java.sql.Type
+    String tableName; // The Name of the Table
+    private String fullName;
 
     //~ Constructors ..........................................................
 
@@ -49,21 +49,21 @@ public class Field
     public Field(String tableName, String columnName, int jdbcType, int length)
     {
         this.tableName = tableName;
-        this.name      = columnName;
-        this.length    = length;
-        sqlType        = jdbcType;
-        colFlag        = 0;
-        colDecimals    = 0;
+        this.name = columnName;
+        this.length = length;
+        sqlType = jdbcType;
+        colFlag = 0;
+        colDecimals = 0;
     }
 
     Field(String tableName, String columnName, int length, int mysqlType, 
           short colFlag, int colDecimals)
     {
         this.tableName = tableName;
-        this.name      = columnName;
-        this.length    = length;
-        this.colFlag        = colFlag;
-        this.colDecimals    = colDecimals;
+        this.name = columnName;
+        this.length = length;
+        this.colFlag = colFlag;
+        this.colDecimals = colDecimals;
         this.mysqlType = mysqlType;
 
         // Map MySqlTypes to java.sql Types
@@ -75,7 +75,7 @@ public class Field
         fullNameBuf.append(tableName);
         fullNameBuf.append(".");
         fullNameBuf.append(name);
-        fullName   = fullNameBuf.toString();
+        fullName = fullNameBuf.toString();
         fullNameBuf = null;
 
         boolean isBinary = isBinary();
@@ -83,174 +83,278 @@ public class Field
         //
         // Handle TEXT type (special case), Fix proposed by Peter McKeown
         //
-        if (sqlType == java.sql.Types.LONGVARBINARY && !isBinary) {
+        if (sqlType == java.sql.Types.LONGVARBINARY && !isBinary)
+        {
             sqlType = java.sql.Types.LONGVARCHAR;
-        } else if (sqlType == java.sql.Types.VARBINARY && !isBinary) {
+        }
+        else if (sqlType == java.sql.Types.VARBINARY && !isBinary)
+        {
             sqlType = java.sql.Types.VARCHAR;
         }
     }
 
     //~ Methods ...............................................................
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isAutoIncrement()
     {
 
-        if ((colFlag & AUTO_INCREMENT_FLAG) > 0) {
+        if ((colFlag & AUTO_INCREMENT_FLAG) > 0)
+        {
 
             return true;
-        } else {
+        }
+        else
+        {
 
             return false;
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isBinary()
     {
 
-        if ((colFlag & 128) > 0) {
+        if ((colFlag & 128) > 0)
+        {
 
             return true;
         }
-         else {
+        else
+        {
 
             return false;
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isBlob()
     {
 
-        if ((colFlag & 16) > 0) {
+        if ((colFlag & 16) > 0)
+        {
 
             return true;
         }
-         else {
+        else
+        {
 
             return false;
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public String getFullName()
     {
 
         return fullName;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public int getLength()
     {
 
         return length;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isMultipleKey()
     {
 
-        if ((colFlag & 8) > 0) {
+        if ((colFlag & 8) > 0)
+        {
 
             return true;
         }
-         else {
+        else
+        {
 
             return false;
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public int getMysqlType()
     {
 
         return mysqlType;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public String getName()
     {
 
-        if (name != null) {
+        if (name != null)
+        {
 
             return name;
         }
-         else {
+        else
+        {
 
             return null;
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isPrimaryKey()
     {
 
-        if ((colFlag & 2) > 0) {
+        if ((colFlag & 2) > 0)
+        {
 
             return true;
         }
-         else {
+        else
+        {
 
             return false;
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public int getSQLType()
     {
 
         return sqlType;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public String getTable()
     {
 
-        if (tableName != null) {
+        if (tableName != null)
+        {
 
             return tableName;
         }
-         else {
+        else
+        {
 
             return null;
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public String getTableName()
     {
 
         return tableName;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isUniqueKey()
     {
 
-        if ((colFlag & 4) > 0) {
+        if ((colFlag & 4) > 0)
+        {
 
             return true;
         }
-         else {
+        else
+        {
 
             return false;
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isUnsigned()
     {
 
-        if ((colFlag & 32) > 0) {
+        if ((colFlag & 32) > 0)
+        {
 
             return true;
         }
-         else {
+        else
+        {
 
             return false;
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean isZeroFill()
     {
 
-        if ((colFlag & 64) > 0) {
+        if ((colFlag & 64) > 0)
+        {
 
             return true;
         }
-         else {
+        else
+        {
 
             return false;
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public String toString()
     {
 
@@ -266,11 +370,13 @@ public class Field
     boolean isNotNull()
     {
 
-        if ((colFlag & 1) > 0) {
+        if ((colFlag & 1) > 0)
+        {
 
             return true;
         }
-         else {
+        else
+        {
 
             return false;
         }

@@ -31,125 +31,177 @@ public class EscapeTokenizer
     //~ Instance/static variables .............................................
 
     protected boolean emittingEscapeCode = false;
-    protected boolean inBraces     = false;
-    protected boolean inQuotes     = false;
-    protected char    lastChar     = 0;
-    protected char    lastLastChar = 0;
-    protected int     pos          = 0;
-    protected char    quoteChar    = 0;
-    protected String  source       = null;
-    protected int     sourceLength = 0;
+    protected boolean inBraces = false;
+    protected boolean inQuotes = false;
+    protected char lastChar = 0;
+    protected char lastLastChar = 0;
+    protected int pos = 0;
+    protected char quoteChar = 0;
+    protected String source = null;
+    protected int sourceLength = 0;
 
     //~ Constructors ..........................................................
 
+    /**
+     * Creates a new EscapeTokenizer object.
+     * 
+     * @param s DOCUMENT ME!
+     */
     public EscapeTokenizer(String s)
     {
-        source       = s;
+        source = s;
         sourceLength = s.length();
-        pos          = 0;
+        pos = 0;
     }
 
     //~ Methods ...............................................................
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public synchronized boolean hasMoreTokens()
     {
 
         return (pos < sourceLength);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public synchronized String nextToken()
     {
 
         StringBuffer tokenBuf = new StringBuffer();
 
-        if (emittingEscapeCode) {
+        if (emittingEscapeCode)
+        {
             tokenBuf.append("{");
             emittingEscapeCode = false;
         }
 
-        for (; pos < sourceLength; pos++) {
+        for (; pos < sourceLength; pos++)
+        {
 
             char c = source.charAt(pos);
 
-            if (c == '\'') {
+            if (c == '\'')
+            {
 
-                if (lastChar != '\\') {
+                if (lastChar != '\\')
+                {
 
-                    if (inQuotes) {
+                    if (inQuotes)
+                    {
 
-                        if (quoteChar == c) {
+                        if (quoteChar == c)
+                        {
                             inQuotes = false;
                         }
-                    } else {
-                        inQuotes  = true;
+                    }
+                    else
+                    {
+                        inQuotes = true;
                         quoteChar = c;
                     }
-                } else if (lastLastChar == '\\') {
+                }
+                else if (lastLastChar == '\\')
+                {
 
-                    if (inQuotes) {
+                    if (inQuotes)
+                    {
 
-                        if (quoteChar == c) {
+                        if (quoteChar == c)
+                        {
                             inQuotes = false;
                         }
-                    } else {
-                        inQuotes  = true;
+                    }
+                    else
+                    {
+                        inQuotes = true;
                         quoteChar = c;
                     }
                 }
 
                 tokenBuf.append(c);
-            } else if (c == '"') {
+            }
+            else if (c == '"')
+            {
 
-                if (lastChar != '\\' && lastChar != '"') {
+                if (lastChar != '\\' && lastChar != '"')
+                {
 
-                    if (inQuotes) {
+                    if (inQuotes)
+                    {
 
-                        if (quoteChar == c) {
+                        if (quoteChar == c)
+                        {
                             inQuotes = false;
                         }
-                    } else {
-                        inQuotes  = true;
+                    }
+                    else
+                    {
+                        inQuotes = true;
                         quoteChar = c;
                     }
-                } else if (lastLastChar == '\\') {
+                }
+                else if (lastLastChar == '\\')
+                {
 
-                    if (inQuotes) {
+                    if (inQuotes)
+                    {
 
-                        if (quoteChar == c) {
+                        if (quoteChar == c)
+                        {
                             inQuotes = false;
                         }
-                    } else {
-                        inQuotes  = true;
+                    }
+                    else
+                    {
+                        inQuotes = true;
                         quoteChar = c;
                     }
                 }
 
                 tokenBuf.append(c);
-            } else if (c == '{') {
+            }
+            else if (c == '{')
+            {
 
-                if (inQuotes) {
+                if (inQuotes)
+                {
                     tokenBuf.append(c);
-                } else {
+                }
+                else
+                {
                     pos++;
                     emittingEscapeCode = true;
 
                     return tokenBuf.toString();
                 }
-            } else if (c == '}') {
+            }
+            else if (c == '}')
+            {
                 tokenBuf.append(c);
 
-                if (!inQuotes) {
+                if (!inQuotes)
+                {
                     lastChar = c;
                     pos++;
 
                     return tokenBuf.toString();
                 }
-            } else {
+            }
+            else
+            {
                 tokenBuf.append(c);
             }
 
             lastLastChar = lastChar;
-            lastChar     = c;
+            lastChar = c;
         }
 
         return tokenBuf.toString();

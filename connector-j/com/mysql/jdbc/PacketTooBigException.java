@@ -20,15 +20,23 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 
+
 /**
  * @author Mark Matthews
  */
-public class PacketTooBigException extends SQLException 
+public class PacketTooBigException
+    extends SQLException
 {
-	public PacketTooBigException(long packetSize, long maximumPacketSize)
-	{
-		super("Packet for query is too large (" + packetSize + " > " 
-		 	+ maximumPacketSize + ")", "S1000");
-	}
 
+    /**
+     * Creates a new PacketTooBigException object.
+     * 
+     * @param packetSize DOCUMENT ME!
+     * @param maximumPacketSize DOCUMENT ME!
+     */
+    public PacketTooBigException(long packetSize, long maximumPacketSize)
+    {
+        super("Packet for query is too large (" + packetSize + " > " + 
+              maximumPacketSize + ")", "S1000");
+    }
 }

@@ -16,7 +16,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
    
  */
-
 package com.mysql.jdbc;
 
 import java.io.ByteArrayInputStream;
@@ -27,6 +26,7 @@ import java.io.ObjectOutputStream;
 import java.io.StringReader;
 
 import java.math.BigDecimal;
+
 import java.net.URL;
 
 import java.sql.Array;
@@ -67,7 +67,6 @@ import sun.io.CharToByteConverter;
  * @author Mark Matthews <mmatthew@worldserver.com>
  * @version $Id$
  */
-
 public class PreparedStatement
     extends com.mysql.jdbc.Statement
     implements java.sql.PreparedStatement
@@ -75,35 +74,35 @@ public class PreparedStatement
 
     //~ Instance/static variables .............................................
 
-    protected static SimpleDateFormat TSDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-         
-    static boolean                    timezoneSet = false;
-    static final Object               tzMutex     = new Object();
+    protected static SimpleDateFormat TSDF = new SimpleDateFormat(
+                                                     "yyyy-MM-dd HH:mm:ss");
+    static boolean timezoneSet = false;
+    static final Object tzMutex = new Object();
     protected static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
 
     /**
      * Formatter for double - Steve Ferguson
      */
-    private static NumberFormat        doubleFormatter;
-    private static java.util.Hashtable templateCache       = 
-            new java.util.Hashtable();
-    protected boolean[]                isNull             = null;
-    protected boolean[]                isStream           = null;
-    protected InputStream[]            parameterStreams   = null;
-    protected String[]                 parameterValues    = null;
-    private String                     originalSql                = null;
-    private byte[]                     streamConvertBuf                 = new byte[4096];
-    private char                       firstCharOfStmt;
-    private boolean                    hasLimitClause     = false;
-    private Buffer                     sendPacket         = null;
-    private byte[][]                   staticSqlStrings   = null;
-    private boolean                    useTrueBoolean     = false;
-    private byte[]                     resultSetByteValues;
+    private static NumberFormat doubleFormatter;
+    private static java.util.Hashtable templateCache = new java.util.Hashtable();
+    protected boolean[] isNull = null;
+    protected boolean[] isStream = null;
+    protected InputStream[] parameterStreams = null;
+    protected String[] parameterValues = null;
+    private String originalSql = null;
+    private byte[] streamConvertBuf = new byte[4096];
+    private char firstCharOfStmt;
+    private boolean hasLimitClause = false;
+    private Buffer sendPacket = null;
+    private byte[][] staticSqlStrings = null;
+    private boolean useTrueBoolean = false;
+    private byte[] resultSetByteValues;
 
     //~ Initializers ..........................................................
 
     // Class Initializer
-    static {
+    static
+    {
         doubleFormatter = NumberFormat.getNumberInstance(java.util.Locale.US);
         doubleFormatter.setGroupingUsed(false);
 
@@ -120,56 +119,61 @@ public class PreparedStatement
                       throws java.sql.SQLException
     {
         super(conn, catalog);
-        
-        
-        
+
         //if (_conn.useTimezone())
         //{
-        	//_TSDF.setTimeZone(_conn.getServerTimezone());
-        //	_TSDF.setTimeZone(TimeZone.getTimeZone("GMT"));
+        //_TSDF.setTimeZone(_conn.getServerTimezone());
+        //   _TSDF.setTimeZone(TimeZone.getTimeZone("GMT"));
         //}
-        
         useTrueBoolean = connection.getIO().versionMeetsMinimum(3, 21, 23);
-                 
         hasLimitClause = (sql.toUpperCase().indexOf("LIMIT") != -1);
 
         char[] statementAsChars = sql.toCharArray();
-        int    statementLength  = statementAsChars.length;
-        int    placeHolderCount = 0;
-        
-        for (int i = 0; i < statementLength; i++) {
+        int statementLength = statementAsChars.length;
+        int placeHolderCount = 0;
 
-            if (statementAsChars[i] == '?') {
+        for (int i = 0; i < statementLength; i++)
+        {
+
+            if (statementAsChars[i] == '?')
+            {
                 placeHolderCount++;
             }
-            
-            if (!Character.isWhitespace(statementAsChars[i])) {
-            	// Determine what kind of statement we're doing (_S_elect, _I_nsert, etc.)
-        		firstCharOfStmt = Character.toUpperCase(statementAsChars[i]);
-        	}
+
+            if (!Character.isWhitespace(statementAsChars[i]))
+            {
+
+                // Determine what kind of statement we're doing (_S_elect, _I_nsert, etc.)
+                firstCharOfStmt = Character.toUpperCase(statementAsChars[i]);
+            }
         }
 
-        ArrayList endpointList           = new ArrayList(placeHolderCount + 1);
-        boolean   inQuotes    = false;
-        int       lastParmEnd = 0;
-        int       i;
-        originalSql  = sql;
+        ArrayList endpointList = new ArrayList(placeHolderCount + 1);
+        boolean inQuotes = false;
+        int lastParmEnd = 0;
+        int i;
+        originalSql = sql;
         connection = conn;
 
         int pre1 = 0;
         int pre2 = 0;
 
-        for (i = 0; i < statementLength; ++i) {
+        for (i = 0; i < statementLength; ++i)
+        {
 
             int c = statementAsChars[i];
 
-            if (c == '\'' && pre1 == '\\' && pre2 == '\\') {
+            if (c == '\'' && pre1 == '\\' && pre2 == '\\')
+            {
                 inQuotes = !inQuotes;
-            } else if (c == '\'' && pre1 != '\\') {
+            }
+            else if (c == '\'' && pre1 != '\\')
+            {
                 inQuotes = !inQuotes;
             }
 
-            if (c == '?' && !inQuotes) {
+            if (c == '?' && !inQuotes)
+            {
                 endpointList.add(new EndPoint(lastParmEnd, i));
                 lastParmEnd = i + 1;
             }
@@ -183,49 +187,58 @@ public class PreparedStatement
 
         String characterEncoding = null;
 
-        if (connection.useUnicode()) {
+        if (connection.useUnicode())
+        {
             characterEncoding = connection.getEncoding();
         }
 
-        for (i = 0; i < staticSqlStrings.length; i++) {
+        for (i = 0; i < staticSqlStrings.length; i++)
+        {
 
-            if (characterEncoding == null) {
+            if (characterEncoding == null)
+            {
 
-                EndPoint ep    = (EndPoint)endpointList.get(i);
-                int      end   = ep.end;
-                int      begin = ep.begin;
-                int      len   = end - begin;
-                byte[]   buf   = new byte[len];
+                EndPoint ep = (EndPoint)endpointList.get(i);
+                int end = ep.end;
+                int begin = ep.begin;
+                int len = end - begin;
+                byte[] buf = new byte[len];
 
-                for (int j = 0; j < len; j++) {
+                for (int j = 0; j < len; j++)
+                {
                     buf[j] = (byte)statementAsChars[begin + j];
                 }
 
                 staticSqlStrings[i] = buf;
-            } else {
+            }
+            else
+            {
 
-                try {
+                try
+                {
 
-                    EndPoint ep          = (EndPoint)endpointList.get(i);
-                    int      end         = ep.end;
-                    int      begin       = ep.begin;
-                    int      len         = end - begin;
-                    String   temp        = new String(statementAsChars, begin, 
-                                                      len);
+                    EndPoint ep = (EndPoint)endpointList.get(i);
+                    int end = ep.end;
+                    int begin = ep.begin;
+                    int len = end - begin;
+                    String temp = new String(statementAsChars, begin, len);
                     staticSqlStrings[i] = temp.getBytes(characterEncoding);
-                } catch (java.io.UnsupportedEncodingException ue) {
+                }
+                catch (java.io.UnsupportedEncodingException ue)
+                {
                     throw new SQLException(ue.toString());
                 }
             }
         }
 
-        parameterValues  = new String[staticSqlStrings.length - 1];
+        parameterValues = new String[staticSqlStrings.length - 1];
         parameterStreams = new InputStream[staticSqlStrings.length - 1];
-        isStream         = new boolean[staticSqlStrings.length - 1];
-        isNull           = new boolean[staticSqlStrings.length - 1];
+        isStream = new boolean[staticSqlStrings.length - 1];
+        isNull = new boolean[staticSqlStrings.length - 1];
         clearParameters();
 
-        for (int j = 0; j < parameterValues.length; j++) {
+        for (int j = 0; j < parameterValues.length; j++)
+        {
             isStream[j] = false;
         }
     }
@@ -267,9 +280,12 @@ public class PreparedStatement
                                      throws java.sql.SQLException
     {
 
-        if (X == null) {
+        if (X == null)
+        {
             setNull(parameterIndex, java.sql.Types.VARCHAR);
-        } else {
+        }
+        else
+        {
             setBinaryStream(parameterIndex, X, length);
         }
     }
@@ -287,9 +303,12 @@ public class PreparedStatement
                        throws java.sql.SQLException
     {
 
-        if (X == null) {
+        if (X == null)
+        {
             setNull(parameterIndex, java.sql.Types.DECIMAL);
-        } else {
+        }
+        else
+        {
             setInternal(parameterIndex, fixDecimalExponent(X.toString()));
         }
     }
@@ -312,12 +331,16 @@ public class PreparedStatement
                          throws java.sql.SQLException
     {
 
-        if (X == null) {
+        if (X == null)
+        {
             setNull(parameterIndex, java.sql.Types.BINARY);
-        } else {
+        }
+        else
+        {
 
             if (parameterIndex < 1 || 
-                parameterIndex > staticSqlStrings.length) {
+                parameterIndex > staticSqlStrings.length)
+            {
                 throw new java.sql.SQLException("Parameter index out of range (" + 
                                                 parameterIndex + " > " + 
                                                 staticSqlStrings.length + 
@@ -325,8 +348,8 @@ public class PreparedStatement
             }
 
             parameterStreams[parameterIndex - 1] = X;
-            isStream[parameterIndex - 1]         = true;
-            isNull[parameterIndex - 1]           = false;
+            isStream[parameterIndex - 1] = true;
+            isNull[parameterIndex - 1] = false;
         }
     }
 
@@ -356,9 +379,12 @@ public class PreparedStatement
                     throws java.sql.SQLException
     {
 
-        if (useTrueBoolean) {
+        if (useTrueBoolean)
+        {
             setInternal(parameterIndex, x ? "'1'" : "'0'");
-        } else {
+        }
+        else
+        {
             setInternal(parameterIndex, x ? "'t'" : "'f'");
         }
     }
@@ -392,9 +418,12 @@ public class PreparedStatement
                   throws java.sql.SQLException
     {
 
-        if (x == null) {
+        if (x == null)
+        {
             setNull(parameterIndex, java.sql.Types.BINARY);
-        } else {
+        }
+        else
+        {
 
             ByteArrayInputStream BIn = new ByteArrayInputStream(x);
             setBinaryStream(parameterIndex, BIn, x.length);
@@ -424,25 +453,30 @@ public class PreparedStatement
                             throws SQLException
     {
 
-        try {
+        try
+        {
 
-            if (reader == null) {
+            if (reader == null)
+            {
                 setNull(parameterIndex, Types.LONGVARCHAR);
-            } else {	
-            	StringBuffer buf = new StringBuffer(length);
-            	
-                char[]               c   = new char[4096];
-                
+            }
+            else
+            {
+
+                StringBuffer buf = new StringBuffer(length);
+                char[] c = new char[4096];
                 int len = 0;
-                
+
                 while ((len = reader.read(c)) != -1)
                 {
-                	buf.append(c, 0, len);
+                    buf.append(c, 0, len);
                 }
-                
+
                 setString(parameterIndex, buf.toString());
             }
-        } catch (java.io.IOException ioEx) {
+        }
+        catch (java.io.IOException ioEx)
+        {
             throw new SQLException(ioEx.toString(), "S1000");
         }
     }
@@ -473,9 +507,12 @@ public class PreparedStatement
                  throws java.sql.SQLException
     {
 
-        if (X == null) {
+        if (X == null)
+        {
             setNull(parameterIndex, java.sql.Types.DATE);
-        } else {
+        }
+        else
+        {
 
             SimpleDateFormat DF = new SimpleDateFormat("''yyyy-MM-dd''");
             setInternal(parameterIndex, DF.format(X));
@@ -637,13 +674,18 @@ public class PreparedStatement
                    throws java.sql.SQLException
     {
 
-        if (X == null) {
+        if (X == null)
+        {
             setNull(parameterIndex, java.sql.Types.OTHER);
-        } else {
+        }
+        else
+        {
 
-            try {
+            try
+            {
 
-                switch (targetSqlType) {
+                switch (targetSqlType)
+                {
 
                     case Types.BIT:
                     case Types.TINYINT:
@@ -658,12 +700,16 @@ public class PreparedStatement
 
                         Number X_as_number;
 
-                        if (X instanceof Boolean) {
+                        if (X instanceof Boolean)
+                        {
                             X_as_number = ((Boolean)X).booleanValue()
                                               ? new Integer(1) : new Integer(0);
-                        } else if (X instanceof String) {
+                        }
+                        else if (X instanceof String)
+                        {
 
-                            switch (targetSqlType) {
+                            switch (targetSqlType)
+                            {
 
                                 case Types.BIT:
                                     X_as_number = (Boolean.getBoolean(
@@ -702,11 +748,14 @@ public class PreparedStatement
                                     X_as_number = new java.math.BigDecimal(
                                                           (String)X);
                             }
-                        } else {
+                        }
+                        else
+                        {
                             X_as_number = (Number)X;
                         }
 
-                        switch (targetSqlType) {
+                        switch (targetSqlType)
+                        {
 
                             case Types.BIT:
                             case Types.TINYINT:
@@ -739,15 +788,20 @@ public class PreparedStatement
                             case Types.NUMERIC:
                             default:
 
-                                if (X_as_number instanceof java.math.BigDecimal) {
+                                if (X_as_number instanceof java.math.BigDecimal)
+                                {
                                     setBigDecimal(parameterIndex, 
                                                   (java.math.BigDecimal)X_as_number);
-                                } else if (X_as_number instanceof java.math.BigInteger) {
+                                }
+                                else if (X_as_number instanceof java.math.BigInteger)
+                                {
                                     setBigDecimal(parameterIndex, 
                                                   new java.math.BigDecimal(
                                                           (java.math.BigInteger)X_as_number, 
                                                           scale));
-                                } else {
+                                }
+                                else
+                                {
                                     setBigDecimal(parameterIndex, 
                                                   new java.math.BigDecimal(X_as_number.doubleValue()));
                                 }
@@ -768,9 +822,12 @@ public class PreparedStatement
                     case Types.VARBINARY:
                     case Types.LONGVARBINARY:
 
-                        if (X instanceof String) {
+                        if (X instanceof String)
+                        {
                             setBytes(parameterIndex, ((String)X).getBytes());
-                        } else {
+                        }
+                        else
+                        {
                             setBytes(parameterIndex, (byte[])X);
                         }
 
@@ -781,25 +838,32 @@ public class PreparedStatement
 
                         java.util.Date X_as_date;
 
-                        if (X instanceof String) {
+                        if (X instanceof String)
+                        {
 
-                            ParsePosition        pp  = new ParsePosition(0);
+                            ParsePosition pp = new ParsePosition(0);
                             java.text.DateFormat sdf = new java.text.SimpleDateFormat(getDateTimePattern(
                                                                                               (String)X, 
                                                                                               false));
                             X_as_date = sdf.parse((String)X, pp);
-                        } else {
+                        }
+                        else
+                        {
                             X_as_date = (java.util.Date)X;
                         }
 
-                        switch (targetSqlType) {
+                        switch (targetSqlType)
+                        {
 
                             case Types.DATE:
 
-                                if (X_as_date instanceof java.sql.Date) {
+                                if (X_as_date instanceof java.sql.Date)
+                                {
                                     setDate(parameterIndex, 
                                             (java.sql.Date)X_as_date);
-                                } else {
+                                }
+                                else
+                                {
                                     setDate(parameterIndex, 
                                             new java.sql.Date(X_as_date.getTime()));
                                 }
@@ -808,10 +872,13 @@ public class PreparedStatement
 
                             case Types.TIMESTAMP:
 
-                                if (X_as_date instanceof java.sql.Timestamp) {
+                                if (X_as_date instanceof java.sql.Timestamp)
+                                {
                                     setTimestamp(parameterIndex, 
                                                  (java.sql.Timestamp)X_as_date);
-                                } else {
+                                }
+                                else
+                                {
                                     setTimestamp(parameterIndex, 
                                                  new java.sql.Timestamp(X_as_date.getTime()));
                                 }
@@ -823,21 +890,26 @@ public class PreparedStatement
 
                     case Types.TIME:
 
-                        if (X instanceof String) {
+                        if (X instanceof String)
+                        {
 
                             java.text.DateFormat sdf = new java.text.SimpleDateFormat(getDateTimePattern(
                                                                                               (String)X, 
                                                                                               true));
                             setTime(parameterIndex, 
                                     new java.sql.Time(sdf.parse((String)X).getTime()));
-                        } else if (X instanceof Timestamp) {
+                        }
+                        else if (X instanceof Timestamp)
+                        {
 
                             Timestamp xT = (Timestamp)X;
                             setTime(parameterIndex, 
                                     new java.sql.Time(xT.getHours(), 
                                                       xT.getMinutes(), 
                                                       xT.getSeconds()));
-                        } else {
+                        }
+                        else
+                        {
                             setTime(parameterIndex, (java.sql.Time)X);
                         }
 
@@ -845,23 +917,26 @@ public class PreparedStatement
 
                     case Types.OTHER:
 
-                        try {
+                        try
+                        {
 
-                            ByteArrayOutputStream BytesOut  = 
+                            ByteArrayOutputStream BytesOut = 
                                     new ByteArrayOutputStream();
-                            ObjectOutputStream    ObjectOut = 
-                                    new ObjectOutputStream(BytesOut);
+                            ObjectOutputStream ObjectOut = new ObjectOutputStream(
+                                                                   BytesOut);
                             ObjectOut.writeObject(X);
                             ObjectOut.flush();
                             ObjectOut.close();
                             BytesOut.flush();
                             BytesOut.close();
 
-                            byte[]               buf     = BytesOut.toByteArray();
+                            byte[] buf = BytesOut.toByteArray();
                             ByteArrayInputStream BytesIn = new ByteArrayInputStream(
                                                                    buf);
                             setBinaryStream(parameterIndex, BytesIn, -1);
-                        } catch (Exception E) {
+                        }
+                        catch (Exception E)
+                        {
                             throw new java.sql.SQLException("Invalid argument value: " + 
                                                             E.getClass().getName(), 
                                                             "S1009");
@@ -873,11 +948,16 @@ public class PreparedStatement
                         throw new java.sql.SQLException("Unknown Types value", 
                                                         "S1000");
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
 
-                if (ex instanceof java.sql.SQLException) {
+                if (ex instanceof java.sql.SQLException)
+                {
                     throw (java.sql.SQLException)ex;
-                } else {
+                }
+                else
+                {
                     throw new java.sql.SQLException("Cannot convert " + 
                                                     X.getClass().toString() + 
                                                     " to SQL type requested due to " + 
@@ -889,66 +969,116 @@ public class PreparedStatement
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param parameterIndex DOCUMENT ME!
+     * @param X DOCUMENT ME!
+     * @param targetSqlType DOCUMENT ME!
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public void setObject(int parameterIndex, Object X, int targetSqlType)
                    throws java.sql.SQLException
     {
         setObject(parameterIndex, X, targetSqlType, 0);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param parameterIndex DOCUMENT ME!
+     * @param X DOCUMENT ME!
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public void setObject(int parameterIndex, Object X)
                    throws java.sql.SQLException
     {
 
-        if (X == null) {
+        if (X == null)
+        {
             setNull(parameterIndex, java.sql.Types.OTHER);
-        } else {
+        }
+        else
+        {
 
-            if (X instanceof Byte) {
+            if (X instanceof Byte)
+            {
                 setInt(parameterIndex, ((Byte)X).intValue());
-            } else if (X instanceof String) {
+            }
+            else if (X instanceof String)
+            {
                 setString(parameterIndex, (String)X);
-            } else if (X instanceof BigDecimal) {
+            }
+            else if (X instanceof BigDecimal)
+            {
                 setBigDecimal(parameterIndex, (BigDecimal)X);
-            } else if (X instanceof Short) {
+            }
+            else if (X instanceof Short)
+            {
                 setShort(parameterIndex, ((Short)X).shortValue());
-            } else if (X instanceof Integer) {
+            }
+            else if (X instanceof Integer)
+            {
                 setInt(parameterIndex, ((Integer)X).intValue());
-            } else if (X instanceof Long) {
+            }
+            else if (X instanceof Long)
+            {
                 setLong(parameterIndex, ((Long)X).longValue());
-            } else if (X instanceof Float) {
+            }
+            else if (X instanceof Float)
+            {
                 setFloat(parameterIndex, ((Float)X).floatValue());
-            } else if (X instanceof Double) {
+            }
+            else if (X instanceof Double)
+            {
                 setDouble(parameterIndex, ((Double)X).doubleValue());
-            } else if (X instanceof byte[]) {
+            }
+            else if (X instanceof byte[])
+            {
                 setBytes(parameterIndex, (byte[])X);
-            } else if (X instanceof java.sql.Date) {
+            }
+            else if (X instanceof java.sql.Date)
+            {
                 setDate(parameterIndex, (java.sql.Date)X);
-            } else if (X instanceof Time) {
+            }
+            else if (X instanceof Time)
+            {
                 setTime(parameterIndex, (Time)X);
-            } else if (X instanceof Timestamp) {
+            }
+            else if (X instanceof Timestamp)
+            {
                 setTimestamp(parameterIndex, (Timestamp)X);
-            } else if (X instanceof Boolean) {
+            }
+            else if (X instanceof Boolean)
+            {
                 setBoolean(parameterIndex, ((Boolean)X).booleanValue());
-            } else if (X instanceof InputStream) {
+            }
+            else if (X instanceof InputStream)
+            {
                 setBinaryStream(parameterIndex, (InputStream)X, -1);
-            } else {
+            }
+            else
+            {
 
-                try {
+                try
+                {
 
-                    ByteArrayOutputStream BytesOut  = new ByteArrayOutputStream();
-                    ObjectOutputStream    ObjectOut = new ObjectOutputStream(
-                                                              BytesOut);
+                    ByteArrayOutputStream BytesOut = new ByteArrayOutputStream();
+                    ObjectOutputStream ObjectOut = new ObjectOutputStream(
+                                                           BytesOut);
                     ObjectOut.writeObject(X);
                     ObjectOut.flush();
                     ObjectOut.close();
                     BytesOut.flush();
                     BytesOut.close();
 
-                    byte[]               buf     = BytesOut.toByteArray();
+                    byte[] buf = BytesOut.toByteArray();
                     ByteArrayInputStream BytesIn = new ByteArrayInputStream(
                                                            buf);
                     setBinaryStream(parameterIndex, BytesIn, -1);
-                } catch (Exception E) {
+                }
+                catch (Exception E)
+                {
                     throw new java.sql.SQLException("Invalid argument value: " + 
                                                     E.getClass().getName(), 
                                                     "S1009");
@@ -1000,18 +1130,23 @@ public class PreparedStatement
     {
 
         // if the passed string is null, then set this column to null
-        if (x == null) {
+        if (x == null)
+        {
             setInternal(parameterIndex, "null");
-        } else {
+        }
+        else
+        {
 
             StringBuffer B = new StringBuffer((int)(x.length() * 1.1));
             B.append('\'');
 
-            for (int i = 0; i < x.length(); ++i) {
+            for (int i = 0; i < x.length(); ++i)
+            {
 
                 char c = x.charAt(i);
 
-                switch (c) {
+                switch (c)
+                {
 
                     case 0: /* Must be escaped for 'mysql' */
                         B.append('\\');
@@ -1077,16 +1212,18 @@ public class PreparedStatement
                  throws java.sql.SQLException
     {
 
-        if (X == null) {
+        if (X == null)
+        {
             setNull(parameterIndex, java.sql.Types.TIME);
-        } else {
-        	
-        	//if (_conn.useTimezone())
-           	//{
-        	//	
-        	//	X = TimeUtil.changeTimezone(X, TimeUtil.GMT_TIMEZONE, _conn.getServerTimezone());       		
-           	//}
-           	
+        }
+        else
+        {
+
+            //if (_conn.useTimezone())
+            //{
+            //
+            //   X = TimeUtil.changeTimezone(X, TimeUtil.GMT_TIMEZONE, _conn.getServerTimezone());
+            //}
             setInternal(parameterIndex, "'" + X.toString() + "'");
         }
     }
@@ -1117,21 +1254,22 @@ public class PreparedStatement
                       throws java.sql.SQLException
     {
 
-        if (X == null) {
+        if (X == null)
+        {
             setNull(parameterIndex, java.sql.Types.TIMESTAMP);
-        } else {
+        }
+        else
+        {
 
             String TimestampString = null;
-            
-            
-           	//if (_conn.useTimezone())
-           	//{
-        	//	
-        	//	X = TimeUtil.changeTimezone(X, TimeUtil.GMT_TIMEZONE, _conn.getServerTimezone());       		
-           	//}
-           	
 
-            synchronized (TSDF) {
+            //if (_conn.useTimezone())
+            //{
+            //
+            //   X = TimeUtil.changeTimezone(X, TimeUtil.GMT_TIMEZONE, _conn.getServerTimezone());
+            //}
+            synchronized (TSDF)
+            {
                 TimestampString = "'" + TSDF.format(X) + "'";
             }
 
@@ -1174,9 +1312,12 @@ public class PreparedStatement
                           throws java.sql.SQLException
     {
 
-        if (X == null) {
+        if (X == null)
+        {
             setNull(parameterIndex, java.sql.Types.VARCHAR);
-        } else {
+        }
+        else
+        {
             setBinaryStream(parameterIndex, X, length);
         }
     }
@@ -1193,12 +1334,13 @@ public class PreparedStatement
                   throws SQLException
     {
 
-        if (batchedArgs == null) {
+        if (batchedArgs == null)
+        {
             batchedArgs = new ArrayList();
         }
 
         batchedArgs.add(new BatchParams(parameterValues, parameterStreams, 
-                                         isStream, isNull));
+                                        isStream, isNull));
     }
 
     /**
@@ -1214,11 +1356,12 @@ public class PreparedStatement
                          throws java.sql.SQLException
     {
 
-        for (int i = 0; i < parameterValues.length; i++) {
-            parameterValues[i]  = null;
+        for (int i = 0; i < parameterValues.length; i++)
+        {
+            parameterValues[i] = null;
             parameterStreams[i] = null;
-            isStream[i]         = false;
-            isNull[i]           = false;
+            isStream[i] = false;
+            isNull[i] = false;
         }
     }
 
@@ -1230,15 +1373,15 @@ public class PreparedStatement
                throws SQLException
     {
         super.close();
-        originalSql              = null;
+        originalSql = null;
         staticSqlStrings = null;
-        parameterValues  = null;
+        parameterValues = null;
         parameterStreams = null;
-        isStream         = null;
-        isNull           = null;
-        streamConvertBuf               = null;
-        sendPacket       = null;
-        templateCache     = null;
+        isStream = null;
+        isNull = null;
+        streamConvertBuf = null;
+        sendPacket = null;
+        templateCache = null;
     }
 
     /**
@@ -1253,12 +1396,21 @@ public class PreparedStatement
     public boolean execute()
                     throws java.sql.SQLException
     {
+    	if (connection.isReadOnly() && firstCharOfStmt != 'S')
+		{
+			throw new SQLException("Connection is read-only. " + 
+				"Queries leading to data modification are not allowed", "S1009");
+		}
+		
         checkClosed();
 
-        if (sendPacket == null) {
+        if (sendPacket == null)
+        {
             sendPacket = new Buffer(connection.getNetBufferLength(), 
-                                     connection.getMaxAllowedPacket());
-        } else {
+                                    connection.getMaxAllowedPacket());
+        }
+        else
+        {
             sendPacket.clear();
         }
 
@@ -1266,16 +1418,20 @@ public class PreparedStatement
 
         String Encoding = null;
 
-        if (connection.useUnicode()) {
+        if (connection.useUnicode())
+        {
             Encoding = connection.getEncoding();
         }
 
-        try {
+        try
+        {
 
-            for (int i = 0; i < parameterValues.length; i++) {
+            for (int i = 0; i < parameterValues.length; i++)
+            {
 
                 if (parameterValues[i] == null && 
-                    parameterStreams[i] == null) {
+                    parameterStreams[i] == null)
+                {
                     throw new java.sql.SQLException("No value specified for parameter " + 
                                                     (i + 1));
                 }
@@ -1287,15 +1443,21 @@ public class PreparedStatement
                 //else {
                 //    _SendPacket.writeStringNoNull(_TemplateStrings[i]);
                 //}
-                if (isStream[i]) {
+                if (isStream[i])
+                {
                     sendPacket.writeBytesNoNull(streamToBytes(
-                                                         parameterStreams[i]));
-                } else {
+                                                        parameterStreams[i]));
+                }
+                else
+                {
 
-                    if (Encoding != null) {
+                    if (Encoding != null)
+                    {
                         sendPacket.writeStringNoNull(parameterValues[i], 
-                                                      Encoding);
-                    } else {
+                                                     Encoding);
+                    }
+                    else
+                    {
                         sendPacket.writeStringNoNull(parameterValues[i]);
                     }
                 }
@@ -1309,18 +1471,22 @@ public class PreparedStatement
             // else {
             //   _SendPacket.writeStringNoNull(_TemplateStrings[_ParameterStrings.length]);
             // }
-        } catch (java.io.UnsupportedEncodingException UE) {
+        }
+        catch (java.io.UnsupportedEncodingException UE)
+        {
             throw new SQLException("Unsupported character encoding '" + 
                                    Encoding + "'");
         }
 
         ResultSet RS = null;
 
-        synchronized (connection.getMutex()) {
+        synchronized (connection.getMutex())
+        {
 
             String OldCatalog = null;
 
-            if (!connection.getCatalog().equals(currentCatalog)) {
+            if (!connection.getCatalog().equals(currentCatalog))
+            {
                 OldCatalog = connection.getCatalog();
                 connection.setCatalog(currentCatalog);
             }
@@ -1334,41 +1500,60 @@ public class PreparedStatement
             //
             // Only apply max_rows to selects
             //
-            if (connection.useMaxRows()) {
+            if (connection.useMaxRows())
+            {
 
-                if (firstCharOfStmt == 'S') {
+                if (firstCharOfStmt == 'S')
+                {
 
-                    if (hasLimitClause) {
-                        RS = connection.execSQL((String)null, maxRows, sendPacket, resultSetType, createStreamingResultSet());
-                    } else {
+                    if (hasLimitClause)
+                    {
+                        RS = connection.execSQL((String)null, maxRows, 
+                                                sendPacket, resultSetType, 
+                                                createStreamingResultSet());
+                    }
+                    else
+                    {
 
-                        if (maxRows <= 0) {
+                        if (maxRows <= 0)
+                        {
                             connection.execSQL(
                                     "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
-                        } else {
+                        }
+                        else
+                        {
                             connection.execSQL(
                                     "SET OPTION SQL_SELECT_LIMIT=" + 
                                     maxRows, -1);
                         }
                     }
-                } else {
-                    connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+                }
+                else
+                {
+                    connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", 
+                                       -1);
                 }
 
                 // Finally, execute the query
-                RS = connection.execSQL(null, -1, sendPacket, resultSetType, createStreamingResultSet());
-            } else {
-                RS = connection.execSQL(null, -1, sendPacket, resultSetType, createStreamingResultSet());
+                RS = connection.execSQL(null, -1, sendPacket, resultSetType, 
+                                        createStreamingResultSet());
+            }
+            else
+            {
+                RS = connection.execSQL(null, -1, sendPacket, resultSetType, 
+                                        createStreamingResultSet());
             }
 
-            if (OldCatalog != null) {
+            if (OldCatalog != null)
+            {
                 connection.setCatalog(OldCatalog);
             }
         }
 
         lastInsertId = RS.getUpdateID();
 
-        if (RS != null) {
+        if (RS != null)
+        {
             results = RS;
         }
 
@@ -1395,45 +1580,61 @@ public class PreparedStatement
     public int[] executeBatch()
                        throws SQLException
     {
+    	if (connection.isReadOnly())
+		{
+			throw new SQLException("Connection is read-only. " + 
+				"Queries leading to data modification are not allowed", "S1009");
+		}
 
-        try {
+        try
+        {
 
             int[] updateCounts = null;
 
-            if (batchedArgs != null) {
+            if (batchedArgs != null)
+            {
 
                 int nbrCommands = batchedArgs.size();
                 updateCounts = new int[nbrCommands];
 
-                for (int i = 0; i < nbrCommands; i++) {
+                for (int i = 0; i < nbrCommands; i++)
+                {
                     updateCounts[i] = -3;
                 }
 
                 SQLException sqlEx = null;
 
-                for (int i = 0; i < nbrCommands; i++) {
+                for (int i = 0; i < nbrCommands; i++)
+                {
 
                     Object arg = batchedArgs.get(i);
 
-                    if (arg instanceof String) {
+                    if (arg instanceof String)
+                    {
                         updateCounts[i] = executeUpdate((String)arg);
-                    } else {
+                    }
+                    else
+                    {
 
                         BatchParams paramArg = (BatchParams)arg;
 
-                        try {
+                        try
+                        {
                             updateCounts[i] = executeUpdate(
                                                       paramArg.parameterStrings, 
                                                       paramArg.parameterStreams, 
                                                       paramArg.isStream, 
                                                       paramArg.isNull);
-                        } catch (SQLException ex) {
+                        }
+                        catch (SQLException ex)
+                        {
                             sqlEx = ex;
                         }
                     }
                 }
 
-                if (sqlEx != null) {
+                if (sqlEx != null)
+                {
                     throw new java.sql.BatchUpdateException(sqlEx.getMessage(), 
                                                             sqlEx.getSQLState(), 
                                                             sqlEx.getErrorCode(), 
@@ -1442,7 +1643,9 @@ public class PreparedStatement
             }
 
             return updateCounts != null ? updateCounts : new int[0];
-        } finally {
+        }
+        finally
+        {
             clearBatch();
         }
     }
@@ -1459,10 +1662,13 @@ public class PreparedStatement
     {
         checkClosed();
 
-        if (sendPacket == null) {
+        if (sendPacket == null)
+        {
             sendPacket = new Buffer(connection.getNetBufferLength(), 
-                                     connection.getMaxAllowedPacket());
-        } else {
+                                    connection.getMaxAllowedPacket());
+        }
+        else
+        {
             sendPacket.clear();
         }
 
@@ -1470,31 +1676,41 @@ public class PreparedStatement
 
         String Encoding = null;
 
-        if (connection.useUnicode()) {
+        if (connection.useUnicode())
+        {
             Encoding = connection.getEncoding();
         }
 
-        try {
+        try
+        {
 
-            for (int i = 0; i < parameterValues.length; i++) {
+            for (int i = 0; i < parameterValues.length; i++)
+            {
 
                 if (parameterValues[i] == null && 
-                    parameterStreams[i] == null) {
+                    parameterStreams[i] == null)
+                {
                     throw new java.sql.SQLException("No value specified for parameter " + 
                                                     (i + 1), "07001");
                 }
 
                 sendPacket.writeBytesNoNull(staticSqlStrings[i]);
 
-                if (isStream[i]) {
+                if (isStream[i])
+                {
                     sendPacket.writeBytesNoNull(streamToBytes(
-                                                         parameterStreams[i]));
-                } else {
+                                                        parameterStreams[i]));
+                }
+                else
+                {
 
-                    if (Encoding != null) {
+                    if (Encoding != null)
+                    {
                         sendPacket.writeStringNoNull(parameterValues[i], 
-                                                      Encoding);
-                    } else {
+                                                     Encoding);
+                    }
+                    else
+                    {
                         sendPacket.writeStringNoNull(parameterValues[i]);
                     }
                 }
@@ -1502,12 +1718,15 @@ public class PreparedStatement
 
             sendPacket.writeBytesNoNull(
                     staticSqlStrings[parameterValues.length]);
-        } catch (java.io.UnsupportedEncodingException UE) {
+        }
+        catch (java.io.UnsupportedEncodingException UE)
+        {
             throw new SQLException("Unsupported character encoding '" + 
                                    Encoding + "'");
         }
 
-        if (results != null) {
+        if (results != null)
+        {
             results.close();
         }
 
@@ -1515,16 +1734,19 @@ public class PreparedStatement
         // So synchronize on the Connection's mutex (because
         // even queries going through there synchronize
         // on the same mutex.
-        synchronized (connection.getMutex()) {
+        synchronized (connection.getMutex())
+        {
 
             String OldCatalog = null;
 
-            if (!connection.getCatalog().equals(currentCatalog)) {
+            if (!connection.getCatalog().equals(currentCatalog))
+            {
                 OldCatalog = connection.getCatalog();
                 connection.setCatalog(currentCatalog);
             }
 
-            if (connection.useMaxRows()) {
+            if (connection.useMaxRows())
+            {
 
                 // If there isn't a limit clause in the SQL
                 // then limit the number of rows to return in
@@ -1532,48 +1754,68 @@ public class PreparedStatement
                 // setMaxRows() hasn't been used on any Statements
                 // generated from the current Connection (saves
                 // a query, and network traffic).
-                if (hasLimitClause) {
-                    results = connection.execSQL((String)null, maxRows, sendPacket, resultSetType, createStreamingResultSet());
-                } else {
+                if (hasLimitClause)
+                {
+                    results = connection.execSQL((String)null, maxRows, 
+                                                 sendPacket, resultSetType, 
+                                                 createStreamingResultSet());
+                }
+                else
+                {
 
-                    if (maxRows <= 0) {
-                        connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", 
-                                      -1);
-                    } else {
+                    if (maxRows <= 0)
+                    {
+                        connection.execSQL(
+                                "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+                    }
+                    else
+                    {
                         connection.execSQL(
                                 "SET OPTION SQL_SELECT_LIMIT=" + maxRows, -1);
                     }
 
                     results = connection.execSQL(null, -1, sendPacket, 
-                                             resultSetType, createStreamingResultSet());
+                                                 resultSetType, 
+                                                 createStreamingResultSet());
 
-                    if (OldCatalog != null) {
+                    if (OldCatalog != null)
+                    {
                         connection.setCatalog(OldCatalog);
                     }
                 }
-            } else {
-                results = connection.execSQL(null, -1, sendPacket, resultSetType, createStreamingResultSet());
+            }
+            else
+            {
+                results = connection.execSQL(null, -1, sendPacket, 
+                                             resultSetType, 
+                                             createStreamingResultSet());
             }
 
-            if (OldCatalog != null) {
+            if (OldCatalog != null)
+            {
                 connection.setCatalog(OldCatalog);
             }
         }
 
         lastInsertId = results.getUpdateID();
-        nextResults  = results;
+        nextResults = results;
         results.setConnection(connection);
         results.setResultSetType(resultSetType);
         results.setResultSetConcurrency(resultSetConcurrency);
         results.setStatement(this);
 
-        if (!results.reallyResult()) {
+        if (!results.reallyResult())
+        {
 
-            if (!connection.getAutoCommit()) {
+            if (!connection.getAutoCommit())
+            {
 
-                try {
+                try
+                {
                     connection.rollback();
-                } catch (SQLException sqlEx) {
+                }
+                catch (SQLException sqlEx)
+                {
 
                     // FIXME: Log later?
                 }
@@ -1603,12 +1845,18 @@ public class PreparedStatement
                              isNull);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public String toString()
     {
 
         String Encoding = null;
 
-        if (connection != null && connection.useUnicode()) {
+        if (connection != null && connection.useUnicode())
+        {
             Encoding = connection.getEncoding();
         }
 
@@ -1616,47 +1864,69 @@ public class PreparedStatement
         SB.append(super.toString());
         SB.append(": ");
 
-        try {
+        try
+        {
 
-            for (int i = 0; i < parameterValues.length; ++i) {
+            for (int i = 0; i < parameterValues.length; ++i)
+            {
 
-                if (Encoding != null) {
+                if (Encoding != null)
+                {
                     SB.append(new String(staticSqlStrings[i], Encoding));
-                } else {
+                }
+                else
+                {
                     SB.append(new String(staticSqlStrings[i]));
                 }
 
-                if (parameterValues[i] == null && !isStream[i]) {
+                if (parameterValues[i] == null && !isStream[i])
+                {
                     SB.append("** NOT SPECIFIED **");
-                } else if (isStream[i]) {
+                }
+                else if (isStream[i])
+                {
                     SB.append("** STREAM DATA **");
-                } else {
+                }
+                else
+                {
 
-                    if (doEscapeProcessing) {
+                    if (doEscapeProcessing)
+                    {
 
-                        try {
+                        try
+                        {
                             parameterValues[i] = escaper.escapeSQL(
-                                                          parameterValues[i]);
-                        } catch (SQLException SQE) {
+                                                         parameterValues[i]);
+                        }
+                        catch (SQLException SQE)
+                        {
                         }
                     }
 
-                    if (Encoding != null) {
+                    if (Encoding != null)
+                    {
                         SB.append(new String(parameterValues[i].getBytes(), 
                                              Encoding));
-                    } else {
+                    }
+                    else
+                    {
                         SB.append(new String(parameterValues[i].getBytes()));
                     }
                 }
             }
 
-            if (Encoding != null) {
+            if (Encoding != null)
+            {
                 SB.append(new String(staticSqlStrings[parameterValues.length], 
                                      Encoding));
-            } else {
+            }
+            else
+            {
                 SB.append(staticSqlStrings[parameterValues.length]);
             }
-        } catch (java.io.UnsupportedEncodingException UE) {
+        }
+        catch (java.io.UnsupportedEncodingException UE)
+        {
             SB.append("\n\n** WARNING **\n\n Unsupported character encoding '");
             SB.append(Encoding);
             SB.append("'");
@@ -1674,12 +1944,21 @@ public class PreparedStatement
                                              boolean[] batchedIsNull)
                                       throws java.sql.SQLException
     {
+    	if (connection.isReadOnly())
+		{
+			throw new SQLException("Connection is read-only. " + 
+				"Queries leading to data modification are not allowed", "S1009");
+		}
+		
         checkClosed();
 
-        if (sendPacket == null) {
+        if (sendPacket == null)
+        {
             sendPacket = new Buffer(connection.getNetBufferLength(), 
-                                     connection.getMaxAllowedPacket());
-        } else {
+                                    connection.getMaxAllowedPacket());
+        }
+        else
+        {
             sendPacket.clear();
         }
 
@@ -1687,16 +1966,20 @@ public class PreparedStatement
 
         String Encoding = null;
 
-        if (connection.useUnicode()) {
+        if (connection.useUnicode())
+        {
             Encoding = connection.getEncoding();
         }
 
-        try {
+        try
+        {
 
-            for (int i = 0; i < batchedParameterStrings.length; i++) {
+            for (int i = 0; i < batchedParameterStrings.length; i++)
+            {
 
                 if (batchedParameterStrings[i] == null && 
-                    batchedParameterStreams[i] == null) {
+                    batchedParameterStreams[i] == null)
+                {
                     throw new java.sql.SQLException("No value specified for parameter " + 
                                                     (i + 1), "07001");
                 }
@@ -1708,16 +1991,23 @@ public class PreparedStatement
                 //else {
                 //   _SendPacket.writeStringNoNull(_TemplateStrings[i]);
                 //}
-                if (batchedIsStream[i]) {
+                if (batchedIsStream[i])
+                {
                     sendPacket.writeBytesNoNull(streamToBytes(
-                                                         batchedParameterStreams[i]));
-                } else {
+                                                        batchedParameterStreams[i]));
+                }
+                else
+                {
 
-                    if (Encoding != null) {
-                        sendPacket.writeStringNoNull(batchedParameterStrings[i], 
-                                                      Encoding);
-                    } else {
-                        sendPacket.writeStringNoNull(batchedParameterStrings[i]);
+                    if (Encoding != null)
+                    {
+                        sendPacket.writeStringNoNull(
+                                batchedParameterStrings[i], Encoding);
+                    }
+                    else
+                    {
+                        sendPacket.writeStringNoNull(
+                                batchedParameterStrings[i]);
                     }
                 }
             }
@@ -1730,7 +2020,9 @@ public class PreparedStatement
             // else {
             //   _SendPacket.writeStringNoNull(_TemplateStrings[_ParameterStrings.length]);
             //}
-        } catch (java.io.UnsupportedEncodingException UE) {
+        }
+        catch (java.io.UnsupportedEncodingException UE)
+        {
             throw new SQLException("Unsupported character encoding '" + 
                                    Encoding + "'");
         }
@@ -1740,11 +2032,13 @@ public class PreparedStatement
         // on the same mutex that _conn is using
         ResultSet rs = null;
 
-        synchronized (connection.getMutex()) {
+        synchronized (connection.getMutex())
+        {
 
             String oldCatalog = null;
 
-            if (!connection.getCatalog().equals(currentCatalog)) {
+            if (!connection.getCatalog().equals(currentCatalog))
+            {
                 oldCatalog = connection.getCatalog();
                 connection.setCatalog(currentCatalog);
             }
@@ -1752,29 +2046,38 @@ public class PreparedStatement
             //
             // Only apply max_rows to selects
             //
-            if (connection.useMaxRows()) {
+            if (connection.useMaxRows())
+            {
                 connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
             }
 
             rs = connection.execSQL(null, -1, sendPacket, resultSetType, false);
 
-            if (oldCatalog != null) {
+            if (oldCatalog != null)
+            {
                 connection.setCatalog(oldCatalog);
             }
         }
 
-        if (rs.reallyResult()) {
-        	// FIXME: Rollback?
+        if (rs.reallyResult())
+        {
+
+            // FIXME: Rollback?
             throw new java.sql.SQLException("Results returned for UPDATE ONLY.", 
                                             "01S03");
-        } else {
+        }
+        else
+        {
             updateCount = rs.getUpdateCount();
 
             int truncatedUpdateCount = 0;
 
-            if (updateCount > Integer.MAX_VALUE) {
+            if (updateCount > Integer.MAX_VALUE)
+            {
                 truncatedUpdateCount = Integer.MAX_VALUE;
-            } else {
+            }
+            else
+            {
                 truncatedUpdateCount = (int)updateCount;
             }
 
@@ -1793,17 +2096,21 @@ public class PreparedStatement
 
         int ePos = dString.indexOf("E");
 
-        if (ePos == -1) {
+        if (ePos == -1)
+        {
             ePos = dString.indexOf("e");
         }
 
-        if (ePos != -1) {
+        if (ePos != -1)
+        {
 
-            if (dString.length() > ePos + 1) {
+            if (dString.length() > ePos + 1)
+            {
 
                 char maybeMinusChar = dString.charAt(ePos + 1);
 
-                if (maybeMinusChar != '-') {
+                if (maybeMinusChar != '-')
+                {
 
                     StringBuffer buf = new StringBuffer(dString.length() + 1);
                     buf.append(dString.substring(0, ePos + 1));
@@ -1834,36 +2141,48 @@ public class PreparedStatement
                                   throws java.sql.SQLException
     {
 
-        try {
+        try
+        {
 
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-            int                   bc = readblock(in, streamConvertBuf);
+            int bc = readblock(in, streamConvertBuf);
 
-            if (escape) {
+            if (escape)
+            {
                 bytesOut.write('\'');
             }
 
-            while (bc > 0) {
+            while (bc > 0)
+            {
 
-                if (escape) {
+                if (escape)
+                {
                     escapeblock(streamConvertBuf, bytesOut, bc);
-                } else {
+                }
+                else
+                {
                     bytesOut.write(streamConvertBuf, 0, bc);
                 }
 
                 bc = readblock(in, streamConvertBuf);
             }
 
-            if (escape) {
+            if (escape)
+            {
                 bytesOut.write('\'');
             }
 
             return bytesOut.toByteArray();
-        } finally {
+        }
+        finally
+        {
 
-            try {
+            try
+            {
                 in.close();
-            } catch (IOException ioEx) {
+            }
+            catch (IOException ioEx)
+            {
             }
 
             in = null;
@@ -1874,39 +2193,51 @@ public class PreparedStatement
              throws SQLException
     {
 
-        if (isStream[parameterIndex]) {
+        if (isStream[parameterIndex])
+        {
 
             return streamToBytes(parameterStreams[parameterIndex], false);
-        } else {
+        }
+        else
+        {
 
             String encoding = null;
 
-            if (connection.useUnicode()) {
+            if (connection.useUnicode())
+            {
                 encoding = connection.getEncoding();
             }
 
-            if (encoding != null) {
+            if (encoding != null)
+            {
 
-                try {
+                try
+                {
 
                     String stringVal = parameterValues[parameterIndex];
 
                     if (stringVal.startsWith("'") && 
-                        stringVal.endsWith("'")) {
+                        stringVal.endsWith("'"))
+                    {
                         stringVal = stringVal.substring(1, 
                                                         stringVal.length() - 1);
                     }
 
                     return stringVal.getBytes(encoding);
-                } catch (java.io.UnsupportedEncodingException uee) {
+                }
+                catch (java.io.UnsupportedEncodingException uee)
+                {
                     throw new SQLException("Unsupported character encoding '" + 
                                            encoding + "'");
                 }
-            } else {
+            }
+            else
+            {
 
                 String stringVal = parameterValues[parameterIndex];
 
-                if (stringVal.startsWith("'") && stringVal.endsWith("'")) {
+                if (stringVal.startsWith("'") && stringVal.endsWith("'"))
+                {
                     stringVal = stringVal.substring(1, stringVal.length() - 1);
                 }
 
@@ -1946,27 +2277,32 @@ public class PreparedStatement
         //
         int dtLength = dt != null ? dt.length() : 0;
 
-        if (dtLength >= 8 && dtLength <= 10) {
+        if (dtLength >= 8 && dtLength <= 10)
+        {
 
-            int     dashCount  = 0;
+            int dashCount = 0;
             boolean isDateOnly = true;
 
-            for (int i = 0; i < dtLength; i++) {
+            for (int i = 0; i < dtLength; i++)
+            {
 
                 char c = dt.charAt(i);
 
-                if (!Character.isDigit(c) && c != '-') {
+                if (!Character.isDigit(c) && c != '-')
+                {
                     isDateOnly = false;
 
                     break;
                 }
 
-                if (c == '-') {
+                if (c == '-')
+                {
                     dashCount++;
                 }
             }
 
-            if (isDateOnly && dashCount == 2) {
+            if (isDateOnly && dashCount == 2)
+            {
 
                 return "yyyy-MM-dd";
             }
@@ -1977,79 +2313,95 @@ public class PreparedStatement
         //
         boolean colonsOnly = true;
 
-        for (int i = 0; i < dtLength; i++) {
+        for (int i = 0; i < dtLength; i++)
+        {
 
             char c = dt.charAt(i);
 
-            if (!Character.isDigit(c) && c != ':') {
+            if (!Character.isDigit(c) && c != ':')
+            {
                 colonsOnly = false;
 
                 break;
             }
         }
 
-        if (colonsOnly) {
+        if (colonsOnly)
+        {
 
             return "HH:mm:ss";
         }
 
-        int          n;
-        int          z;
-        int          count;
-        int          maxvecs;
-        char         c;
-        char         separator;
-        StringReader reader         = new StringReader(dt + " ");
-        ArrayList    vec            = new ArrayList();
-        ArrayList    vec_removelist = new ArrayList();
-        Object[]     nv             = new Object[3];
-        Object[]     v;
+        int n;
+        int z;
+        int count;
+        int maxvecs;
+        char c;
+        char separator;
+        StringReader reader = new StringReader(dt + " ");
+        ArrayList vec = new ArrayList();
+        ArrayList vec_removelist = new ArrayList();
+        Object[] nv = new Object[3];
+        Object[] v;
         nv[0] = new Character('y');
         nv[1] = new StringBuffer();
         nv[2] = new Integer(0);
         vec.add(nv);
 
-        if (toTime) {
-            nv    = new Object[3];
+        if (toTime)
+        {
+            nv = new Object[3];
             nv[0] = new Character('h');
             nv[1] = new StringBuffer();
             nv[2] = new Integer(0);
             vec.add(nv);
         }
 
-        while ((z = reader.read()) != -1) {
+        while ((z = reader.read()) != -1)
+        {
             separator = (char)z;
-            maxvecs   = vec.size();
+            maxvecs = vec.size();
 
-            for (count = 0; count < maxvecs; count++) {
+            for (count = 0; count < maxvecs; count++)
+            {
                 v = (Object[])vec.get(count);
                 n = ((Integer)v[2]).intValue();
                 c = getSuccessor(((Character)v[0]).charValue(), n);
 
-                if (!Character.isLetterOrDigit(separator)) {
+                if (!Character.isLetterOrDigit(separator))
+                {
 
-                    if ((c == ((Character)v[0]).charValue()) && (c != 'S')) {
+                    if ((c == ((Character)v[0]).charValue()) && (c != 'S'))
+                    {
                         vec_removelist.add(v);
-                    } else {
+                    }
+                    else
+                    {
                         ((StringBuffer)v[1]).append(separator);
 
-                        if (c == 'X' || c == 'Y') {
+                        if (c == 'X' || c == 'Y')
+                        {
                             v[2] = new Integer(4);
                         }
                     }
-                } else {
+                }
+                else
+                {
 
-                    if (c == 'X') {
-                        c     = 'y';
-                        nv    = new Object[3];
+                    if (c == 'X')
+                    {
+                        c = 'y';
+                        nv = new Object[3];
                         nv[1] = (new StringBuffer(((StringBuffer)v[1]).toString())).append(
                                         'M');
                         nv[0] = new Character('M');
                         nv[2] = new Integer(1);
                         vec.add(nv);
-                    } else if (c == 'Y') {
-                        c     = 'M';
-                        nv    = new Object[3];
+                    }
+                    else if (c == 'Y')
+                    {
+                        c = 'M';
+                        nv = new Object[3];
                         nv[1] = (new StringBuffer(((StringBuffer)v[1]).toString())).append(
                                         'd');
                         nv[0] = new Character('d');
@@ -2059,9 +2411,12 @@ public class PreparedStatement
 
                     ((StringBuffer)v[1]).append(c);
 
-                    if (c == ((Character)v[0]).charValue()) {
+                    if (c == ((Character)v[0]).charValue())
+                    {
                         v[2] = new Integer(n + 1);
-                    } else {
+                    }
+                    else
+                    {
                         v[0] = new Character(c);
                         v[2] = new Integer(1);
                     }
@@ -2070,7 +2425,8 @@ public class PreparedStatement
 
             int size = vec_removelist.size();
 
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < size; i++)
+            {
                 v = (Object[])vec_removelist.get(i);
                 vec.remove(v);
             }
@@ -2080,19 +2436,19 @@ public class PreparedStatement
 
         int size = vec.size();
 
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++)
+        {
             v = (Object[])vec.get(i);
             c = ((Character)v[0]).charValue();
             n = ((Integer)v[2]).intValue();
 
             boolean bk = getSuccessor(c, n) != c;
-            boolean atEnd          = ((c == 's' || c == 'm' || 
-                                         (c == 'h' && toTime)) && bk);
+            boolean atEnd = ((c == 's' || c == 'm' || (c == 'h' && toTime)) && bk);
             boolean finishesAtDate = (bk && (c == 'd') && !toTime);
-            boolean containsEnd    = (((StringBuffer)v[1]).toString().indexOf(
-                                              'W') != -1);
+            boolean containsEnd = (((StringBuffer)v[1]).toString().indexOf('W') != -1);
 
-            if ((!atEnd && !finishesAtDate) || (containsEnd)) {
+            if ((!atEnd && !finishesAtDate) || (containsEnd))
+            {
                 vec_removelist.add(v);
             }
         }
@@ -2115,17 +2471,18 @@ public class PreparedStatement
                             throws java.sql.SQLException
     {
 
-        if (paramIndex < 1 || paramIndex > staticSqlStrings.length) {
+        if (paramIndex < 1 || paramIndex > staticSqlStrings.length)
+        {
             throw new java.sql.SQLException("Parameter index out of range (" + 
                                             paramIndex + " > " + 
                                             staticSqlStrings.length + ").", 
                                             "S1009");
         }
 
-        isStream[paramIndex - 1]         = false;
-        isNull[paramIndex - 1]           = false;
+        isStream[paramIndex - 1] = false;
+        isNull[paramIndex - 1] = false;
         parameterStreams[paramIndex - 1] = null;
-        parameterValues[paramIndex - 1]  = val;
+        parameterValues[paramIndex - 1] = val;
     }
 
     private final char getSuccessor(char c, int n)
@@ -2133,7 +2490,7 @@ public class PreparedStatement
 
         return (c == 'y' && n == 2)
                    ? 'X'
-                   : ((c == 'y' && n < 4) //Md
+                   : ((c == 'y' && n < 4)
                           ? 'y'
                           : ((c == 'y')
                                  ? 'M'
@@ -2168,14 +2525,16 @@ public class PreparedStatement
                                    int size)
     {
 
-        byte[] out    = new byte[buf.length * 2];
-        int    iIndex = 0;
+        byte[] out = new byte[buf.length * 2];
+        int iIndex = 0;
 
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++)
+        {
 
             byte b = buf[i];
 
-            switch (b) {
+            switch (b)
+            {
 
                 case 0: /* Must be escaped for 'mysql' */
                     out[iIndex++] = (byte)'\\';
@@ -2231,10 +2590,13 @@ public class PreparedStatement
                          throws java.sql.SQLException
     {
 
-        try {
+        try
+        {
 
             return i.read(b);
-        } catch (Throwable E) {
+        }
+        catch (Throwable E)
+        {
             throw new java.sql.SQLException("Error reading from InputStream " + 
                                             E.getClass().getName(), "S1000");
         }
@@ -2245,10 +2607,10 @@ public class PreparedStatement
     class BatchParams
     {
 
-        boolean[]     isNull           = null;
-        boolean[]     isStream         = null;
+        boolean[] isNull = null;
+        boolean[] isStream = null;
         InputStream[] parameterStreams = null;
-        String[]      parameterStrings = null;
+        String[] parameterStrings = null;
 
         BatchParams(String[] strings, InputStream[] streams, 
                     boolean[] isStreamFlags, boolean[] isNullFlags)
@@ -2259,8 +2621,8 @@ public class PreparedStatement
             //
             parameterStrings = new String[strings.length];
             parameterStreams = new InputStream[streams.length];
-            isStream         = new boolean[isStreamFlags.length];
-            isNull           = new boolean[isNullFlags.length];
+            isStream = new boolean[isStreamFlags.length];
+            isNull = new boolean[isNullFlags.length];
             System.arraycopy(strings, 0, parameterStrings, 0, strings.length);
             System.arraycopy(streams, 0, parameterStreams, 0, streams.length);
             System.arraycopy(isStreamFlags, 0, isStream, 0, 
@@ -2278,28 +2640,33 @@ public class PreparedStatement
         EndPoint(int b, int e)
         {
             begin = b;
-            end   = e;
+            end = e;
         }
     }
-	/**
-	 * @see PreparedStatement#getParameterMetaData()
-	 */
-	public ParameterMetaData getParameterMetaData() throws SQLException {
-		throw new NotImplemented();
-	}
 
-	/**
-	 * @see PreparedStatement#setURL(int, URL)
-	 */
-	
-	public void setURL(int parameterIndex, URL arg) throws SQLException {
-		if (arg != null)
-		{
-			setString(parameterIndex, arg.toString());
-		}
-		else
-		{
-			setNull(parameterIndex, Types.CHAR);
-		}
-	}
+    /**
+     * @see PreparedStatement#getParameterMetaData()
+     */
+    public ParameterMetaData getParameterMetaData()
+                                           throws SQLException
+    {
+        throw new NotImplemented();
+    }
+
+    /**
+     * @see PreparedStatement#setURL(int, URL)
+     */
+    public void setURL(int parameterIndex, URL arg)
+                throws SQLException
+    {
+
+        if (arg != null)
+        {
+            setString(parameterIndex, arg.toString());
+        }
+        else
+        {
+            setNull(parameterIndex, Types.CHAR);
+        }
+    }
 }

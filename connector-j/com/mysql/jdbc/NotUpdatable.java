@@ -35,6 +35,9 @@ public class NotUpdatable
 
     //~ Constructors ..........................................................
 
+    /**
+     * Creates a new NotUpdatable object.
+     */
     public NotUpdatable()
     {
         super(NOT_UPDATEABLE_MESSAGE, "S1000");

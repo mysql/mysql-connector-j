@@ -24,6 +24,9 @@ public class NotImplemented
 
     //~ Constructors ..........................................................
 
+    /**
+     * Creates a new NotImplemented object.
+     */
     public NotImplemented()
     {
         super("Feature not implemented");
