@@ -142,7 +142,7 @@ public class BlobTest
                                                    TESTBLOB);
         pstmt = conn.prepareStatement(
                         "INSERT INTO BLOBTEST(blobdata) VALUES (?)");
-        pstmt.setBinaryStream(1, bIn, 0);
+        pstmt.setBinaryStream(1, bIn, TESTBLOB.length);
         pstmt.execute();
 
         int rowsUpdated = pstmt.getUpdateCount();
