@@ -37,6 +37,8 @@ xx-xx-xx - Version 3.0.3-dev
 	- 'LOAD DATA LOCAL INFILE ...' now works, if your server is configured
 	  to allow it. Can be turned off with the 'allowLoadLocalInfile' 
 	  property (see the README).
+	- Substitute '?' for unknown character conversions in single-byte
+	  character sets instead of '\0'.
 	  
 11-08-02 - Version 3.0.2-dev
 

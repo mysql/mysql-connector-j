@@ -27,20 +27,27 @@ import java.util.HashMap;
  * Converter for char[]->byte[] and byte[]->char[]
  * for single-byte character sets.
  * 
- * Much faster than the built-in solution that ships
- * with the JVM.
+ * Much faster (5-6x) than the built-in solution that ships
+ * with the JVM, even with JDK-1.4.x and NewIo.
+ * 
+ * @author Mark Matthews
  */
 public class SingleByteCharsetConverter {
 
     //~ Instance/static variables .............................................
 
-    // 
-    protected byte[] charToByteMap = new byte[65535];
+    // The initial charToByteMap, with all char mappings mapped 
+    // to (byte) '?', so that unknown characters are mapped to '?'
+    // instead of '\0' (which means end-of-string to MySQL).
+    
+    private static byte[] unknownCharsMap = new byte[65535];
+    
+    private byte[] charToByteMap = new byte[65535];
     private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE)
                                           - Byte.MIN_VALUE;
     private static final HashMap CONVERTER_MAP = new HashMap();
-    public static byte[] allBytes = new byte[BYTE_RANGE];
-    char[] byteToChars = new char[BYTE_RANGE];
+    private static byte[] allBytes = new byte[BYTE_RANGE];
+    private char[] byteToChars = new char[BYTE_RANGE];
 
     //~ Initializers ..........................................................
 
@@ -49,6 +56,11 @@ public class SingleByteCharsetConverter {
         for (int i = Byte.MIN_VALUE; i <= Byte.MAX_VALUE; i++) {
             allBytes[i - Byte.MIN_VALUE] = (byte) i;
         }
+        
+        for (int i = 0; i < unknownCharsMap.length; i++) {
+            unknownCharsMap[i] = (byte) '?'; // use something 'sane' for unknown chars
+        }
+        
     }
 
     //~ Constructors ..........................................................
@@ -67,6 +79,8 @@ public class SingleByteCharsetConverter {
                                            encodingName);
         int allBytesLen = allBytesString.length();
 
+        System.arraycopy(unknownCharsMap, 0, charToByteMap, 0, charToByteMap.length);
+        
         for (int i = 0;
              (i < (Byte.MAX_VALUE - Byte.MIN_VALUE)) && (i < allBytesLen);
              i++) {
