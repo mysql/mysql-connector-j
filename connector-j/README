@@ -1,4 +1,4 @@
-MM.MySQL 2.0.13
+MM.MySQL 2.0.14
 Mark Matthews JDBC Driver for MySQL
 Copyright (c) 1998-2002 Mark Matthews
 
@@ -127,7 +127,11 @@ maxRows             | The maximum number of rows to return      | 0
 --------------------+-------------------------------------------+-------------
 useUnicode          | should the driver use Unicode character   | false 
                     | encodings when handling                   | 
-                    | strings? (true/false)                     | 	
+                    | strings? If not used with                 |
+                    | characterEncoding, the driver will        |
+                    | attempt to determine the character set    |
+                    | in use on the server, and adjust          |
+                    | accordingly (true/false)                  | 	
 --------------------+-------------------------------------------+-------------			
 characterEncoding   | if useUnicode is true, what character     | none
                     | encoding should the driver use when       |
@@ -145,6 +149,11 @@ ultraDevHack	    | Create PreparedStatements for             | false
 capitalizeTypeNames | Capitalize type names in                  | false
                     | DatabaseMetaData? (usually only           |
                     | usefull when using WebObjects)            |
+--------------------+-------------------------------------------+-------------
+profileSql          | Dump queries and execution/fetch times    | false
+                    | to STDERR. Useful for optimizing queries  |
+                    | that are auto-generated as in CMP EJBs    |   
+                    | (true/false)                              |
 ------------------------------------------------------------------------------
 			
 A simple connection example looks like:
