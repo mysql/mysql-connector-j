@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
- <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-                    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 <book>
 	<bookinfo>
 		<title>MySQL Connector/J 3.0 Documentation</title>
@@ -13,7 +13,6 @@
 			<holder>MySQL AB</holder>
 		</copyright>
 	</bookinfo>
-	
 	<chapter>
 		<title>Release Notes</title>
 		<para>...</para>
@@ -22,16 +21,84 @@
 			<para>...</para>
 		</sect1>
 	</chapter>
-	
 	<chapter>
 		<title>Installation</title>
-		<para>...</para>
+		<para>This chapter contains instructions for installing the MySQL
+			Connector/J drivers on Microsoft Windows and UNIX platforms. If you
+			are on another platform that supports Java and the JDBC API then
+			substitute commands appropriate for your system.</para>
 		<sect1>
-			<title>First Section</title>
-			<para>...</para>
+			<title>System Requirements</title>
+			<sect2>
+				<title>Java Versions Supported</title>
+				<para>MySQL Connector/J supports Java-2 JVMs, including
+					JDK-1.2.x, JDK-1.3.x and JDK-1.4.x. MySQL Connector/J does
+					not support JDK-1.1.x or JDK-1.0.x</para>
+			</sect2>
+			<sect2>
+				<title>MySQL Server versions supported</title>
+				<para>MySQL Connector/J supports all known MySQL server
+					versions. Some features (foreign keys, updatable result
+					sets) require more recent versions of MySQL to operate.</para>
+			</sect2>
 		</sect1>
+		<!--
+			
+			Installing MM.MySQL
+There are two steps to installing MM.MySQL. First, you need to unpack the files you downloaded, and second you need to add MM.MySQL to your CLASSPATH.
+
+Unpacking MM.MySQL
+Use the appropriate tool to unpack the MM.MySQL distribution (tar -xzf filename.tar.gz for Unix, winzip for Windows).
+
+You will end up with the following directory structure:
+
+mm.mysql.jdbc-[version]
+    COPYING
+    README
+    doc
+        ...
+    mysql_comp.jar
+    mysql_uncomp.jar
+    org
+        gjt
+            mm
+                mysql
+                     ...
+
+Setting the CLASSPATH
+Note: If you are using a virtual machine other than the JDK like the JRE or Microsoft's Jview consult the appropriate documentation for details on how to set the CLASSPATH variable.
+
+The CLASSPATH tells the Java runtime and compiler where to find the classes it needs to run. To allow the Java Virtual Machine to find MM.MySQL and use it, the CLASSPATH needs to be modified.
+
+Note: On Windows systems make sure that either file and directory names in the CLASSPATH are no longer than 8.3 or that they use the mangled names, or that the entire CLASSPATH is surrounded by quotes. Otherwise, the Java runtime will not be able to find the classes.
+
+You will need to either set the CLASSPATH to include the mm.mysql.jdbc-[version] directory you created when you unarchived the MM.MySQL files, or include the full path to the mysql_comp.jar or mysql_uncomp.jar (compressed, and uncompressed, respectively) file. Note: Some JVM's cannot load compressed JAR files, so make sure if you are using JAR files that you are using one appropriate for your JVM.
+
+Setting the CLASSPATH under UNIX
+The following is an example of setting the CLASSPATH under UNIX (using csh).
+
+Example 2-1. Setting the CLASSPATH under UNIX
+
+         $ setenv CLASSPATH /path/to/mm.mysql.jdbc-[version]:$CLASSPATH
+         
+The above command can be added to the appropriate startup file for the login shell to make MM.MySQL available to all Java applications.
+
+Setting the CLASSPATH under Microsoft Windows
+The following is an example of setting the CLASSPATH under Microsoft Windows:
+
+Example 2-2. Setting the CLASSPATH under Microsoft Windows
+
+          C:\> set CLASSPATH=\path\to\mm.mysql.jdbc-[version];%CLASSPATH%
+          
+This command can be added as the last line in AUTOEXEC.BAT. If this is done the MM.MySQL driver will be available to all Java applications run on the Windows system. This setting will require the computer to be rebooted before the changes will take effect.
+
+What's Next?
+Once the CLASSPATH is set, the driver is ready for use! Taking a look at the next chapter containing programming information might be a good idea, however.
+
+
+ 
+		-->
 	</chapter>
-	
 	<chapter>
 		<title>Developing Applications with JDBC</title>
 		<para>...</para>
@@ -40,7 +107,6 @@
 			<para>...</para>
 		</sect1>
 	</chapter>
-	
 	<chapter>
 		<title>Troubleshooting</title>
 		<para>...</para>
@@ -50,7 +116,3 @@
 		</sect1>
 	</chapter>
 </book>
-
-
-
-
