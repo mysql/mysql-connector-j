@@ -20,7 +20,9 @@ package testsuite.regression;
 
 import com.mysql.jdbc.StringUtils;
 
+import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 
 import java.util.Properties;
 
@@ -169,5 +171,61 @@ public class StringRegressionTest
         } finally {
             stmt.executeUpdate("DROP TABLE IF EXISTS sjisTest");
         }
+    }
+    
+    public void testSingleByteConversion() throws Exception {
+         testConversionForString("æøå èéòù");
+         testConversionForString("Kaarle Äänis Ilmari");
+    }
+    
+    public void testUtf8Encoding() throws Exception {
+        Properties props = new Properties();
+        props.put("characterEncoding", "UTF-8");
+        props.put("useUnicode", "true");
+        Connection utfConn = DriverManager.getConnection(dbUrl, props);
+        
+        testConversionForString(utfConn, "\u043c\u0438\u0445\u0438");  
+    }
+    
+    private void testConversionForString(Connection convConn, String charsToTest)
+        throws Exception {
+    
+        PreparedStatement pStmt = null;
+        
+        try {
+            stmt = convConn.createStatement();
+            
+            stmt.executeUpdate("DROP TABLE IF EXISTS charConvTest");
+            stmt.executeUpdate("CREATE TABLE charConvTest (field1 char(50))");
+            stmt.executeUpdate(
+                    "INSERT INTO charConvTest VALUES ('" + charsToTest + "')");
+           
+            pStmt = convConn.prepareStatement("INSERT INTO charConvTest VALUES (?)");
+            pStmt.setString(1, charsToTest);
+            pStmt.executeUpdate();
+            
+            rs = stmt.executeQuery("SELECT * FROM charConvTest");
+            
+            boolean hadRows = false;
+            
+            while (rs.next()) {
+                hadRows = true;
+                String testValue = rs.getString(1);
+                System.out.println(testValue);
+                assertTrue(testValue.equals(charsToTest));
+            }
+            
+            assertTrue(hadRows);
+            
+        } finally {
+            stmt.executeUpdate("DROP TABLE IF EXISTS charConvTest");
+        }
+        
+    }
+        
+    private void testConversionForString(String charsToTest) 
+        throws Exception {
+           
+        testConversionForString(this.conn, charsToTest);
     }
 }
