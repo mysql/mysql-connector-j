@@ -113,22 +113,7 @@ public class PreparedStatement
 
 		super(Conn, Sql, Catalog);
 
-		//
-		// This only works on Java2+
-		//
-
-		synchronized (tzMutex) {
-			if (!timezoneSet) {
-				//TimeZone defaultTimeZone = TimeZone.getDefault();
-				//SimpleTimeZone tz = new SimpleTimeZone(
-				//defaultTimeZone.getRawOffset(), defaultTimeZone.getID() );
-				//tz.setDSTSavings(1);
-
-				//_TSDF.setTimeZone( tz );
-
-				timezoneSet = true;
-			}
-		}
+		
 	}
 
 	//--------------------------JDBC 2.0-----------------------------
@@ -143,7 +128,7 @@ public class PreparedStatement
 	 * @exception SQLException if a database-access error occurs.
 	 */
 
-	public synchronized void setNull(int parameterIndex, int sqlType, String Arg)
+	public  void setNull(int parameterIndex, int sqlType, String Arg)
 		throws SQLException {
 		super.setNull(parameterIndex, sqlType);
 	}
@@ -157,7 +142,7 @@ public class PreparedStatement
 	 * @see Statement#addBatch
 	 */
 
-	public synchronized void addBatch() throws SQLException {
+	public  void addBatch() throws SQLException {
 		if (_batchedArgs == null) {
 			_batchedArgs = new Vector();
 		}
@@ -179,7 +164,7 @@ public class PreparedStatement
 	 * driver does not support batch statements
 	 */
 
-	public synchronized int[] executeBatch() throws SQLException {
+	public  int[] executeBatch() throws SQLException {
 
 		try {
 			int[] updateCounts = null;
@@ -254,7 +239,7 @@ public class PreparedStatement
 	 * @exception SQLException if a database-access error occurs.
 	 */
 
-	public synchronized void setCharacterStream(
+	public  void setCharacterStream(
 		int parameterIndex,
 		java.io.Reader reader,
 		int length)
@@ -290,7 +275,7 @@ public class PreparedStatement
 	 * @param x an object representing data of an SQL REF Type
 	 */
 
-	public synchronized void setRef(int i, Ref x) throws SQLException {
+	public  void setRef(int i, Ref x) throws SQLException {
 		throw new NotImplemented();
 	}
 
@@ -303,7 +288,7 @@ public class PreparedStatement
 	 * @param x an object representing a BLOB
 	 */
 
-	public synchronized void setBlob(int i, Blob x) throws SQLException {
+	public  void setBlob(int i, Blob x) throws SQLException {
 		setBinaryStream(i, x.getBinaryStream(), Integer.MAX_VALUE);
 	}
 
@@ -316,7 +301,7 @@ public class PreparedStatement
 	 * @param x an object representing a CLOB
 	 */
 
-	public synchronized void setClob(int i, Clob x) throws SQLException {
+	public  void setClob(int i, Clob x) throws SQLException {
 		throw new NotImplemented();
 	}
 
@@ -329,7 +314,7 @@ public class PreparedStatement
 	 * @param x an object representing an SQL array
 	 */
 
-	public synchronized void setArray(int i, Array x) throws SQLException {
+	public  void setArray(int i, Array x) throws SQLException {
 		throw new NotImplemented();
 	}
 
@@ -341,7 +326,7 @@ public class PreparedStatement
 	 * @exception SQLException if a database-access error occurs.
 	 */
 
-	public synchronized java.sql.ResultSetMetaData getMetaData() throws SQLException {
+	public  java.sql.ResultSetMetaData getMetaData() throws SQLException {
 		throw new NotImplemented();
 	}
 
@@ -354,7 +339,7 @@ public class PreparedStatement
 	 * @exception SQLException if a database-access error occurs.
 	 */
 
-	public synchronized void setDate(int parameterIndex, java.sql.Date X, Calendar Cal)
+	public  void setDate(int parameterIndex, java.sql.Date X, Calendar Cal)
 		throws SQLException {
 		setDate(parameterIndex, X);
 	}
@@ -368,7 +353,7 @@ public class PreparedStatement
 	 * @exception SQLException if a database-access error occurs.
 	 */
 
-	public synchronized void setTime(int parameterIndex, java.sql.Time X, Calendar Cal)
+	public  void setTime(int parameterIndex, java.sql.Time X, Calendar Cal)
 		throws SQLException {
 		setTime(parameterIndex, X);
 	}
@@ -383,7 +368,7 @@ public class PreparedStatement
 	 * @exception SQLException if a database-access error occurs.
 	 */
 
-	public synchronized void setTimestamp(
+	public  void setTimestamp(
 		int parameterIndex,
 		java.sql.Timestamp X,
 		Calendar Cal)
@@ -391,7 +376,7 @@ public class PreparedStatement
 		setTimestamp(parameterIndex, X);
 	}
 
-	synchronized byte[] getBytes(int parameterIndex) throws SQLException {
+	 byte[] getBytes(int parameterIndex) throws SQLException {
 		if (_IsStream[parameterIndex]) {
 			return streamToBytes(_ParameterStreams[parameterIndex], false);
 		}
@@ -436,7 +421,7 @@ public class PreparedStatement
 		_resultSetType = typeFlag;
 	}
 
-	synchronized boolean isNull(int paramIndex) {
+	 boolean isNull(int paramIndex) {
 		return _IsNull[paramIndex];
 	}
 
