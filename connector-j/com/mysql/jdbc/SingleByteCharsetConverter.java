@@ -95,6 +95,11 @@ public class SingleByteCharsetConverter {
 
     /**
      * Get a converter for the given encoding name
+     * 
+     * @param encodingName the Java character encoding name
+     * 
+     * @return a converter for the given encoding name
+     * @throws UnsupportedEncodingException if the character encoding is not supported
      */
     public static synchronized SingleByteCharsetConverter getInstance(String encodingName)
         throws UnsupportedEncodingException {
@@ -112,6 +117,10 @@ public class SingleByteCharsetConverter {
     /**
      * Initialize the shared instance of a converter for the given
      * character encoding.
+     * 
+     * @param javaEncodingName the Java name for the character set to initialize
+     * @return a converter for the given character set
+     * @throws UnsupportedEncodingException if the character encoding is not supported
      */
     public static SingleByteCharsetConverter initCharset(String javaEncodingName)
                             throws UnsupportedEncodingException {
@@ -136,7 +145,12 @@ public class SingleByteCharsetConverter {
 
     /**
      * Convert the byte buffer from startPos to a length of length
-     * to a string with no encoding.
+     * to a string using the default platform encoding.
+     * 
+     * @param buffer the bytes to convert
+     * @param startPos the index to start at
+     * @param length the number of bytes to convert
+     * @return the String representation of the given bytes
      */
     public static String toStringDefaultEncoding(byte[] buffer, int startPos, 
                                                  int length) {
@@ -146,6 +160,9 @@ public class SingleByteCharsetConverter {
 
     /**
      * Convert the given string to an array of bytes.
+     * 
+     * @param s the String to convert
+     * @return the bytes that make up the String
      */
     public final byte[] toBytes(String s) {
 
@@ -169,6 +186,9 @@ public class SingleByteCharsetConverter {
     /**
      * Convert the byte buffer to a string using this instance's 
      * character encoding.
+     * 
+     * @param buffer the bytes to convert to a String
+     * @return the converted String
      */
     public final String toString(byte[] buffer) {
 
@@ -178,6 +198,11 @@ public class SingleByteCharsetConverter {
     /**
      * Convert the byte buffer from startPos to a length of length
      * to a string using this instance's character encoding.
+     *  
+     * @param buffer the bytes to convert
+     * @param startPos the index to start at
+     * @param length the number of bytes to convert
+     * @return the String representation of the given bytes
      */
     public final String toString(byte[] buffer, int startPos, int length) {
 
