@@ -1,6 +1,33 @@
 # Changelog
 # $Id$
 
+04-07-02 - Version 2.0.12
+
+	- General code cleanup. 
+	- Added getIdleFor() method to Connection and 
+	  MysqlLogicalHandle.
+	- Relaxed synchronization in all classes, should fix 520615 and 520393.
+	- Added getTable/ColumnPrivileges() to DBMD (fixes 484502).
+	- Added new types to getTypeInfo(), fixed existing types thanks to
+	  Al Davis and Kid Kalanon.
+	- Added support for BIT types (51870) to PreparedStatement.
+	- Fixed getRow() bug (527165) in ResultSet
+	- Fixes for ResultSet updatability in PreparedStatement.
+	- Fixed timezone off by 1-hour bug in PreparedStatement (538286, 528785).
+	- ResultSet: Fixed updatability (values being set to null 
+	  if not updated).
+	- DataSources - fixed setUrl bug (511614, 525565), 
+	  wrong datasource class name (532816, 528767)
+	- Added identifier quoting to all DatabaseMetaData methods
+	  that need them (should fix 518108)
+	- Added support for YEAR type (533556)
+	- ResultSet.insertRow() should now detect auto_increment fields
+	  in most cases and use that value in the new row. This detection
+	  will not work in multi-valued keys, however, due to the fact that
+	  the MySQL protocol does not return this information.
+	- ResultSet.refreshRow() implemented.
+	- Fixed testsuite.Traversal afterLast() bug, thanks to Igor Lastric.
+	
 01-27-02 - Version 2.0.11
 
 	 - Fixed missing DELETE_RULE value in 
