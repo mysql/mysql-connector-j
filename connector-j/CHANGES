@@ -18,6 +18,10 @@ xx-xx-xx - Version 3.0.3-dev
 	- Fixed Buffer.isLastDataPacket() for 4.1 and newer servers.
 	- Added CLIENT_LONG_FLAG to be able to get more column flags 
 	  (isAutoIncrement() being the most important)
+	- Because of above, implemented ResultSetMetaData.isAutoIncrement()
+	  to use Field.isAutoIncrement().
+	- Honor 'lower_case_table_names' when enabled in the server when
+	  doing table name comparisons in DatabaseMetaData methods.
 	  
 11-08-02 - Version 3.0.2-dev
 
