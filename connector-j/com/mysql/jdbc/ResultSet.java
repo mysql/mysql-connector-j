@@ -40,7 +40,7 @@ import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Hashtable;
+import java.util.HashMap;
 
 
 /**
@@ -92,76 +92,31 @@ public class ResultSet
 
     //~ Instance/static variables .............................................
 
-    //
-    // Following adopted from Sun class libraries
-    //
-
-    /**
-     * All possible chars for representing a number as a String
-     */
-    private final static char[] digits = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 
-        'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 
-        's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
-    };
-
-    /**
-     * Array of chars to lookup the char for the digit in the tenth's
-     * place for a two digit, base ten number.  The char can be got by
-     * using the number as the index.
-     */
-    private final static char[] radixTenTenths = {
-        '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '1', '1', '1', '1', 
-        '1', '1', '1', '1', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', 
-        '2', '2', '3', '3', '3', '3', '3', '3', '3', '3', '3', '3', '4', '4', 
-        '4', '4', '4', '4', '4', '4', '4', '4', '5', '5', '5', '5', '5', '5', 
-        '5', '5', '5', '5', '6', '6', '6', '6', '6', '6', '6', '6', '6', '6', 
-        '7', '7', '7', '7', '7', '7', '7', '7', '7', '7', '8', '8', '8', '8', 
-        '8', '8', '8', '8', '8', '8', '9', '9', '9', '9', '9', '9', '9', '9', 
-        '9', '9'
-    };
-
-    /**
-     * Array of chars to lookup the char for the digit in the unit's
-     * place for a two digit, base ten number.  The char can be got by
-     * using the number as the index.
-     */
-    private final static char[]         radixTenUnits      = 
-            {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', 
-        '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', 
-        '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', 
-        '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', 
-        '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', 
-        '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', 
-        '8', '9'
-    };
-    protected boolean                   _closed            = false;
-    protected Hashtable                 _columnNameToIndex = null;
-    protected com.mysql.jdbc.Connection _connection; // The connection that created us
-    protected int                       _currentRow        = -1; // Cursor to current row;
+    protected boolean isClosed = false;
+    protected HashMap columnNameToIndex = null;
+    protected com.mysql.jdbc.Connection connection; // The connection that created us
+    protected int currentRow = -1; // Cursor to current row;
 
     /**
      * Are we in the middle of doing updates to the current row?
      */
-    protected boolean   _doing_updates         = false;
-    protected int       _fetch_direction       = FETCH_FORWARD;
-    protected int       _fetch_size            = 0;
-    protected Field[]   _fields; // The fields
-    protected Hashtable _fullColumnNameToIndex = null;
+    protected boolean doingUpdates = false;
+    protected int fetchDirection = FETCH_FORWARD;
+    protected int fetchSize = 0;
+    protected Field[] fields; // The fields
+    protected HashMap fullColumnNameToIndex = null;
 
     /**
      * Are we on the insert row?
      */
-    protected boolean                  _on_insert_row        = false;
-    protected com.mysql.jdbc.Statement _owningStatement;
-    protected boolean                  _reallyResult         = false; // for executeUpdate vs. execute
-    protected int                      _resultSetConcurrency = 0;
-    protected int                      _resultSetType        = 0;
-    protected ArrayList                _rows; // The results
-    protected byte[][]                 _thisRow; // Values for current row
-    protected long                     _updateCount; // How many rows did we update?
+    protected boolean onInsertRow = false;
+    protected com.mysql.jdbc.Statement owningStatement;
+    protected boolean reallyResult = false; // for executeUpdate vs. execute
+    protected int resultSetConcurrency = 0;
+    protected int resultSetType = 0;
+    protected RowData rowData; // The results
+    protected byte[][] thisRow; // Values for current row
+    protected long updateCount; // How many rows did we update?
 
     // These are longs for
     // recent versions of the MySQL server.
@@ -170,21 +125,15 @@ public class ResultSet
     // but can be retrieved through a MySQLStatement
     // in their entirety.
     //
-    protected long                _updateID    = -1; // for AUTO_INCREMENT
-    protected java.sql.SQLWarning _warnings    = null; // The warning chain
-    protected boolean             _wasNullFlag = false; // for wasNull()
+    protected long updateId = -1; // for AUTO_INCREMENT
+    protected java.sql.SQLWarning warningChain = null; // The warning chain
+    protected boolean wasNullFlag = false; // for wasNull()
 
     // For getTimestamp()
-    private SimpleDateFormat _TSDF                   = null;
-    private boolean          _useStrictFloatingPoint = false;
+    private SimpleDateFormat timestampFormatter = null;
+    private boolean useStrictFloatingPoint = false;
 
     //~ Constructors ..........................................................
-
-    // ****************************************************************
-    //
-    //                       END OF PUBLIC INTERFACE
-    //
-    // ****************************************************************
 
     /**
      * Create a new ResultSet - Note that we create ResultSets to
@@ -197,40 +146,57 @@ public class ResultSet
      * @param updateCount the number of rows affected by the operation
      * @param cursor the positioned update/delete cursor name
      */
-    public ResultSet(Field[] Fields, ArrayList Tuples, 
+    public ResultSet(Field[] Fields, RowData Tuples, 
                      com.mysql.jdbc.Connection Conn)
+              throws SQLException
     {
         this(Fields, Tuples);
         setConnection(Conn);
     }
 
-    public ResultSet(Field[] Fields, ArrayList Tuples)
+    /**
+     * Creates a new ResultSet object.
+     * 
+     * @param Fields DOCUMENT ME!
+     * @param Tuples DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
+    public ResultSet(Field[] Fields, RowData Tuples)
+              throws SQLException
     {
-        _currentRow   = -1;
-        this._fields  = Fields;
-        _rows         = Tuples;
-        _updateCount = (long)_rows.size();
 
-        if (Driver.debug) {
-            System.out.println("Retrieved " + _updateCount + " rows");
+        //_currentRow   = -1;
+        this.fields = Fields;
+        rowData = Tuples;
+        updateCount = (long)rowData.size();
+
+        if (Driver.debug)
+        {
+            System.out.println("Retrieved " + updateCount + " rows");
         }
 
-        _reallyResult = true;
+        reallyResult = true;
 
         // Check for no results
-        if (_rows.size() > 0) {
-            _thisRow = (byte[][])_rows.get(0);
+        if (rowData.size() > 0)
+        {
 
-            if (_updateCount == 1) {
+            //_thisRow = _rows.next();
+            if (updateCount == 1)
+            {
 
-                if (_thisRow == null) {
-                    _currentRow = -1;
-                    _rows.clear(); // empty result set
-                    _updateCount = -1;
+                if (thisRow == null)
+                {
+
+                    //_currentRow = -1;
+                    rowData.close(); // empty result set
+                    updateCount = -1;
                 }
             }
-        } else {
-            _thisRow = null;
+        }
+        else
+        {
+            thisRow = null;
         }
 
         buildIndexMapping();
@@ -243,10 +209,10 @@ public class ResultSet
      */
     public ResultSet(long updateCount, long updateID)
     {
-        this._updateCount = updateCount;
-        this._updateID    = updateID;
-        _reallyResult     = false;
-        _fields           = new Field[0];
+        this.updateCount = updateCount;
+        this.updateId = updateID;
+        reallyResult = false;
+        fields = new Field[0];
     }
 
     //~ Methods ...............................................................
@@ -265,21 +231,17 @@ public class ResultSet
                         throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = {  };
             Debug.methodCall(this, "isAfterLast", args);
         }
 
-        boolean b = false;
+        boolean b = rowData.isAfterLast();
 
-        if (_rows.size() == 0) {
-            b = false;
-        } else {
-            b = (_currentRow >= _rows.size());
-        }
-
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
             Debug.returnValue(this, "isAfterLast", new Boolean(b));
         }
 
@@ -342,6 +304,13 @@ public class ResultSet
         return getBinaryStream(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public InputStream getAsciiStream(String ColumnName)
                                throws java.sql.SQLException
     {
@@ -367,21 +336,17 @@ public class ResultSet
                           throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = {  };
             Debug.methodCall(this, "isBeforeFirst", args);
         }
 
-        boolean b = false;
+        boolean b = rowData.isBeforeFirst();
 
-        if (_rows.size() == 0) {
-            b = false;
-        } else {
-            b = (_currentRow == -1);
-        }
-
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
             Debug.returnValue(this, "isBeforeFirst", new Boolean(b));
         }
 
@@ -401,35 +366,43 @@ public class ResultSet
                              throws java.sql.SQLException
     {
 
-        String     S   = getString(columnIndex);
+        String S = getString(columnIndex);
         BigDecimal Val;
 
-        if (S != null) {
+        if (S != null)
+        {
 
-            if (S.length() == 0) {
+            if (S.length() == 0)
+            {
                 Val = new BigDecimal(0);
 
                 return Val.setScale(scale);
             }
 
-            try {
+            try
+            {
                 Val = new BigDecimal(S);
-            } catch (NumberFormatException E) {
+            }
+            catch (NumberFormatException E)
+            {
                 throw new java.sql.SQLException("Bad format for BigDecimal '" + S + 
                                                 "' in column " + 
                                                 columnIndex + "(" + 
-                                                _fields[columnIndex - 1] + 
+                                                fields[columnIndex - 1] + 
                                                 ").", "S1009");
             }
 
-            try {
+            try
+            {
 
                 return Val.setScale(scale);
-            } catch (ArithmeticException E) {
+            }
+            catch (ArithmeticException E)
+            {
                 throw new java.sql.SQLException("Bad format for BigDecimal '" + S + 
                                                 "' in column " + 
                                                 columnIndex + "(" + 
-                                                _fields[columnIndex - 1] + 
+                                                fields[columnIndex - 1] + 
                                                 ").", "S1009");
             }
         }
@@ -437,6 +410,14 @@ public class ResultSet
         return null;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @param scale DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public BigDecimal getBigDecimal(String ColumnName, int scale)
                              throws java.sql.SQLException
     {
@@ -459,26 +440,31 @@ public class ResultSet
                              throws SQLException
     {
 
-        String     S   = getString(columnIndex);
+        String S = getString(columnIndex);
         BigDecimal Val;
 
-        if (S != null) {
+        if (S != null)
+        {
 
-            if (S.length() == 0) {
+            if (S.length() == 0)
+            {
                 Val = new BigDecimal(0);
 
                 return Val;
             }
 
-            try {
+            try
+            {
                 Val = new BigDecimal(S);
 
                 return Val;
-            } catch (NumberFormatException E) {
+            }
+            catch (NumberFormatException E)
+            {
                 throw new java.sql.SQLException("Bad format for BigDecimal '" + S + 
                                                 "' in column " + 
                                                 columnIndex + "(" + 
-                                                _fields[columnIndex - 1] + 
+                                                fields[columnIndex - 1] + 
                                                 ").", "S1009");
             }
         }
@@ -497,22 +483,27 @@ public class ResultSet
                              throws SQLException
     {
 
-        String     S   = getString(columnName);
+        String S = getString(columnName);
         BigDecimal Val;
 
-        if (S != null) {
+        if (S != null)
+        {
 
-            if (S.length() == 0) {
+            if (S.length() == 0)
+            {
                 Val = new BigDecimal(0);
 
                 return Val;
             }
 
-            try {
+            try
+            {
                 Val = new BigDecimal(S);
 
                 return Val;
-            } catch (NumberFormatException E) {
+            }
+            catch (NumberFormatException E)
+            {
                 throw new java.sql.SQLException("Bad format for BigDecimal '" + S + 
                                                 "' in column " + columnName + 
                                                 ".", "S1009");
@@ -541,7 +532,8 @@ public class ResultSet
 
         byte[] b = getBytes(columnIndex);
 
-        if (b != null) {
+        if (b != null)
+        {
 
             return new ByteArrayInputStream(b);
         }
@@ -549,6 +541,13 @@ public class ResultSet
         return null;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public InputStream getBinaryStream(String ColumnName)
                                 throws java.sql.SQLException
     {
@@ -569,29 +568,37 @@ public class ResultSet
     {
         checkRowPos();
 
-        if (columnIndex < 1 || columnIndex > _fields.length) {
+        if (columnIndex < 1 || columnIndex > fields.length)
+        {
             throw new java.sql.SQLException("Column Index out of range ( " + 
                                             columnIndex + " > " + 
-                                            _fields.length + ").", "S1002");
+                                            fields.length + ").", "S1002");
         }
 
-        try {
+        try
+        {
 
-            if (_thisRow[columnIndex - 1] == null) {
-                _wasNullFlag = true;
-            } else {
-                _wasNullFlag = false;
+            if (thisRow[columnIndex - 1] == null)
+            {
+                wasNullFlag = true;
             }
-        } catch (NullPointerException E) {
-            _wasNullFlag = true;
+            else
+            {
+                wasNullFlag = false;
+            }
+        }
+        catch (NullPointerException E)
+        {
+            wasNullFlag = true;
         }
 
-        if (_wasNullFlag) {
+        if (wasNullFlag)
+        {
 
             return null;
         }
 
-        return new Blob(_thisRow[columnIndex - 1]);
+        return new Blob(thisRow[columnIndex - 1]);
     }
 
     /**
@@ -622,7 +629,8 @@ public class ResultSet
 
         String S = getString(columnIndex);
 
-        if (S != null && S.length() > 0) {
+        if (S != null && S.length() > 0)
+        {
 
             int c = S.toLowerCase().charAt(0);
 
@@ -633,6 +641,13 @@ public class ResultSet
         return false;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public boolean getBoolean(String ColumnName)
                        throws java.sql.SQLException
     {
@@ -652,31 +667,40 @@ public class ResultSet
     {
         checkRowPos();
 
-        if (columnIndex < 1 || columnIndex > _fields.length) {
+        if (columnIndex < 1 || columnIndex > fields.length)
+        {
             throw new java.sql.SQLException("Column Index out of range ( " + 
                                             columnIndex + " > " + 
-                                            _fields.length + ").", "S1002");
+                                            fields.length + ").", "S1002");
         }
 
-        try {
+        try
+        {
 
-            if (_thisRow[columnIndex - 1] == null) {
-                _wasNullFlag = true;
-            } else {
-                _wasNullFlag = false;
+            if (thisRow[columnIndex - 1] == null)
+            {
+                wasNullFlag = true;
             }
-        } catch (NullPointerException E) {
-            _wasNullFlag = true;
+            else
+            {
+                wasNullFlag = false;
+            }
+        }
+        catch (NullPointerException E)
+        {
+            wasNullFlag = true;
         }
 
-        if (_wasNullFlag) {
+        if (wasNullFlag)
+        {
 
             return 0;
         }
 
-        Field F = _fields[columnIndex - 1];
+        Field F = fields[columnIndex - 1];
 
-        switch (F.getMysqlType()) {
+        switch (F.getMysqlType())
+        {
 
             case MysqlDefs.FIELD_TYPE_DECIMAL:
             case MysqlDefs.FIELD_TYPE_TINY:
@@ -687,17 +711,21 @@ public class ResultSet
             case MysqlDefs.FIELD_TYPE_LONGLONG:
             case MysqlDefs.FIELD_TYPE_INT24:
 
-                try {
+                try
+                {
 
                     String S = getString(columnIndex);
 
                     // Strip off the decimals
-                    if (S.indexOf(".") != -1) {
+                    if (S.indexOf(".") != -1)
+                    {
                         S = S.substring(0, S.indexOf("."));
                     }
 
                     return Byte.parseByte(S);
-                } catch (NumberFormatException NFE) {
+                }
+                catch (NumberFormatException NFE)
+                {
                     throw new SQLException("Value '" + 
                                            getString(columnIndex) + 
                                            "' is out of range [-127,127]", 
@@ -706,17 +734,21 @@ public class ResultSet
 
             default:
 
-                try {
+                try
+                {
 
                     String S = getString(columnIndex);
 
                     // Strip off the decimals
-                    if (S.indexOf(".") != -1) {
+                    if (S.indexOf(".") != -1)
+                    {
                         S = S.substring(0, S.indexOf("."));
                     }
 
                     return Byte.parseByte(S);
-                } catch (NumberFormatException NFE) {
+                }
+                catch (NumberFormatException NFE)
+                {
                     throw new SQLException("Value '" + 
                                            getString(columnIndex) + 
                                            "' is out of range [-127,127]", 
@@ -728,6 +760,13 @@ public class ResultSet
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public byte getByte(String ColumnName)
                  throws java.sql.SQLException
     {
@@ -751,32 +790,49 @@ public class ResultSet
     {
         checkRowPos();
 
-        if (columnIndex < 1 || columnIndex > _fields.length) {
+        if (columnIndex < 1 || columnIndex > fields.length)
+        {
             throw new java.sql.SQLException("Column Index out of range ( " + 
                                             columnIndex + " > " + 
-                                            _fields.length + ").", "S1002");
+                                            fields.length + ").", "S1002");
         }
 
-        try {
+        try
+        {
 
-            if (_thisRow[columnIndex - 1] == null) {
-                _wasNullFlag = true;
-            } else {
-                _wasNullFlag = false;
+            if (thisRow[columnIndex - 1] == null)
+            {
+                wasNullFlag = true;
             }
-        } catch (NullPointerException E) {
-            _wasNullFlag = true;
+            else
+            {
+                wasNullFlag = false;
+            }
+        }
+        catch (NullPointerException E)
+        {
+            wasNullFlag = true;
         }
 
-        if (_wasNullFlag) {
+        if (wasNullFlag)
+        {
 
             return null;
-        } else {
+        }
+        else
+        {
 
-            return _thisRow[columnIndex - 1];
+            return thisRow[columnIndex - 1];
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public byte[] getBytes(String ColumnName)
                     throws java.sql.SQLException
     {
@@ -855,12 +911,18 @@ public class ResultSet
         return (CONCUR_READ_ONLY);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param Conn DOCUMENT ME!
+     */
     public void setConnection(com.mysql.jdbc.Connection Conn)
     {
-        this._connection = Conn;
+        this.connection = Conn;
 
-        if (_connection != null) {
-            _useStrictFloatingPoint = _connection.useStrictFloatingPoint();
+        if (connection != null)
+        {
+            useStrictFloatingPoint = connection.useStrictFloatingPoint();
         }
     }
 
@@ -904,26 +966,32 @@ public class ResultSet
         Integer Y = null;
         Integer M = null;
         Integer D = null;
-        String  S = "";
+        String S = "";
 
-        try {
+        try
+        {
             S = getString(columnIndex);
 
-            if (S == null) {
+            if (S == null)
+            {
 
                 return null;
-            } else if (S.equals("0000-00-00")) {
-                _wasNullFlag = true;
+            }
+            else if (S.equals("0000-00-00"))
+            {
+                wasNullFlag = true;
 
                 return null;
-            } else if (_fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
+            }
+            else if (fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP)
+            {
 
                 // Convert from TIMESTAMP
-                switch (S.length()) {
+                switch (S.length())
+                {
 
                     case 14:
                     case 8:
-
                     {
                         Y = new Integer(S.substring(0, 4));
                         M = new Integer(S.substring(4, 6));
@@ -937,11 +1005,11 @@ public class ResultSet
                     case 12:
                     case 10:
                     case 6:
-
                     {
                         Y = new Integer(S.substring(0, 2));
 
-                        if (Y.intValue() <= 69) {
+                        if (Y.intValue() <= 69)
+                        {
                             Y = new Integer(Y.intValue() + 100);
                         }
 
@@ -954,11 +1022,11 @@ public class ResultSet
                     }
 
                     case 4:
-
                     {
                         Y = new Integer(S.substring(0, 4));
 
-                        if (Y.intValue() <= 69) {
+                        if (Y.intValue() <= 69)
+                        {
                             Y = new Integer(Y.intValue() + 100);
                         }
 
@@ -969,11 +1037,11 @@ public class ResultSet
                     }
 
                     case 2:
-
                     {
                         Y = new Integer(S.substring(0, 2));
 
-                        if (Y.intValue() <= 69) {
+                        if (Y.intValue() <= 69)
+                        {
                             Y = new Integer(Y.intValue() + 100);
                         }
 
@@ -984,19 +1052,24 @@ public class ResultSet
                         throw new SQLException("Bad format for Date '" + S + 
                                                "' in column " + columnIndex + 
                                                "(" + 
-                                               _fields[columnIndex - 1] + 
+                                               fields[columnIndex - 1] + 
                                                ").", "S1009");
                 } /* endswitch */
-            } else if (_fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
+            }
+            else if (fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR)
+            {
                 Y = new Integer(S.substring(0, 4));
 
                 return new java.sql.Date(Y.intValue() - 1900, 0, 1);
-            } else {
+            }
+            else
+            {
 
-                if (S.length() < 10) {
+                if (S.length() < 10)
+                {
                     throw new SQLException("Bad format for Date '" + S + 
                                            "' in column " + columnIndex + 
-                                           "(" + _fields[columnIndex - 1] + 
+                                           "(" + fields[columnIndex - 1] + 
                                            ").", "S1009");
                 }
 
@@ -1007,13 +1080,22 @@ public class ResultSet
 
             return new java.sql.Date(Y.intValue() - 1900, M.intValue() - 1, 
                                      D.intValue());
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             throw new java.sql.SQLException("Cannot convert value '" + S + 
                                             "' from column " + columnIndex + 
                                             "(" + S + " ) to DATE.", "S1009");
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public java.sql.Date getDate(String ColumnName)
                           throws java.sql.SQLException
     {
@@ -1071,45 +1153,64 @@ public class ResultSet
     {
         checkRowPos();
 
-        if (_fields == null) {
+        if (fields == null)
+        {
             throw new java.sql.SQLException("Query generated no fields for ResultSet", 
                                             "S1002");
         }
 
-        if (columnIndex < 1 || columnIndex > _fields.length) {
+        if (columnIndex < 1 || columnIndex > fields.length)
+        {
             throw new java.sql.SQLException("Column Index out of range ( " + 
                                             columnIndex + " > " + 
-                                            _fields.length + ").", "S1002");
+                                            fields.length + ").", "S1002");
         }
 
-        try {
+        try
+        {
 
-            if (_thisRow[columnIndex - 1] == null) {
-                _wasNullFlag = true;
-            } else {
-                _wasNullFlag = false;
+            if (thisRow[columnIndex - 1] == null)
+            {
+                wasNullFlag = true;
             }
-        } catch (NullPointerException E) {
-            _wasNullFlag = true;
+            else
+            {
+                wasNullFlag = false;
+            }
+        }
+        catch (NullPointerException E)
+        {
+            wasNullFlag = true;
         }
 
-        if (_wasNullFlag) {
+        if (wasNullFlag)
+        {
 
             return 0;
         }
 
-        try {
+        try
+        {
 
-            return getDouble(_thisRow[columnIndex - 1]);
-        } catch (NumberFormatException E) {
+            return getDouble(thisRow[columnIndex - 1]);
+        }
+        catch (NumberFormatException E)
+        {
             throw new java.sql.SQLException("Bad format for number '" + 
-                                            new String(_thisRow[columnIndex - 1]) + 
+                                            new String(thisRow[columnIndex - 1]) + 
                                             "' in column " + columnIndex + 
-                                            "(" + _fields[columnIndex - 1] + 
+                                            "(" + fields[columnIndex - 1] + 
                                             ").", "S1009");
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public double getDouble(String ColumnName)
                      throws java.sql.SQLException
     {
@@ -1136,11 +1237,14 @@ public class ResultSet
                            throws SQLException
     {
 
-        if (direction != FETCH_FORWARD && direction != FETCH_REVERSE) {
+        if (direction != FETCH_FORWARD && direction != FETCH_REVERSE)
+        {
             throw new SQLException("Illegal value for fetch direction", 
                                    "S1009");
-        } else {
-            _fetch_direction = direction;
+        }
+        else
+        {
+            fetchDirection = direction;
         }
     }
 
@@ -1155,7 +1259,7 @@ public class ResultSet
                           throws SQLException
     {
 
-        return _fetch_direction;
+        return fetchDirection;
     }
 
     /**
@@ -1179,12 +1283,13 @@ public class ResultSet
                       throws SQLException
     {
 
-        if (rows < 0) { /* || rows > getMaxRows()*/
+        if (rows < 0) /* || rows > getMaxRows()*/
+        {
             throw new SQLException("Value must be between 0 and getMaxRows()", 
                                    "S1009");
         }
 
-        _fetch_size = rows;
+        fetchSize = rows;
     }
 
     /**
@@ -1198,7 +1303,7 @@ public class ResultSet
                      throws SQLException
     {
 
-        return _fetch_size;
+        return fetchSize;
     }
 
     /**
@@ -1213,21 +1318,17 @@ public class ResultSet
                     throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = {  };
             Debug.methodCall(this, "isFirst", args);
         }
 
-        boolean b = false;
+        boolean b = rowData.isFirst();
 
-        if (_rows.size() == 0) {
-            b = false;
-        } else {
-            b = (_currentRow == 0);
-        }
-
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
             Debug.returnValue(this, "isFirst", new Boolean(b));
         }
 
@@ -1248,52 +1349,83 @@ public class ResultSet
 
         String val = null;
 
-        try {
+        try
+        {
             val = getString(columnIndex);
 
-            if (val != null && val.length() != 0) {
+            if (val != null && val.length() != 0)
+            {
 
                 float f = Float.parseFloat(val);
 
-                if (_useStrictFloatingPoint) {
+                if (useStrictFloatingPoint)
+                {
 
                     // Fix endpoint rounding precision loss in MySQL server
-                    if (f == 2.147483648E9F) {
+                    if (f == 2.147483648E9F)
+                    {
 
                         // Fix Odd end-point rounding on MySQL
                         f = 2.147483647E9F;
-                    } else if (f == 1.0000000036275E-15F) {
+                    }
+                    else if (f == 1.0000000036275E-15F)
+                    {
 
                         // Fix odd end-point rounding on MySQL
                         f = 1.0E-15F;
-                    } else if (f == 9.999999869911E14F) {
+                    }
+                    else if (f == 9.999999869911E14F)
+                    {
                         f = 9.99999999999999E14F;
-                    } else if (f == 1.4012984643248E-45F) {
+                    }
+                    else if (f == 1.4012984643248E-45F)
+                    {
                         f = 1.4E-45F;
-                    } else if (f == 1.4013E-45) {
+                    }
+                    else if (f == 1.4013E-45)
+                    {
                         f = 1.4E-45F;
-                    } else if (f == 3.4028234663853E37F) {
+                    }
+                    else if (f == 3.4028234663853E37F)
+                    {
                         f = 3.4028235E37F;
-                    } else if (f == -2.14748E9F) {
+                    }
+                    else if (f == -2.14748E9F)
+                    {
                         f = -2.147483648E9F;
-                    } else if (f == 3.40282E37F) {
+                    }
+                    else if (f == 3.40282E37F)
+                    {
                         f = 3.4028235E37F;
-                    } else if (f == 1.4012984643248E-45F) {
+                    }
+                    else if (f == 1.4012984643248E-45F)
+                    {
                         f = 1.4E-45F;
                     }
                 }
 
                 return f;
-            } else {
+            }
+            else
+            {
 
                 return 0;
             }
-        } catch (NumberFormatException nfe) {
+        }
+        catch (NumberFormatException nfe)
+        {
             throw new SQLException("Invalid value for getFloat() - '" + val + 
                                    "'", "S1009");
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public float getFloat(String ColumnName)
                    throws java.sql.SQLException
     {
@@ -1315,38 +1447,57 @@ public class ResultSet
 
         String val = null;
 
-        try {
+        try
+        {
             val = getString(columnIndex);
 
-            if (val != null && val.length() != 0) {
+            if (val != null && val.length() != 0)
+            {
 
-                if (_useStrictFloatingPoint && val.equals("-2147480000")) {
+                if (useStrictFloatingPoint && val.equals("-2147480000"))
+                {
 
                     return -2147483648;
-                } else if (_useStrictFloatingPoint && 
-                           val.equals("2147480000")) {
+                }
+                else if (useStrictFloatingPoint && 
+                         val.equals("2147480000"))
+                {
 
                     return 2147483647;
                 }
 
-                if (val.indexOf("e") != -1 && val.indexOf("E") != -1) {
+                if (val.indexOf("e") != -1 && val.indexOf("E") != -1)
+                {
 
                     return Integer.parseInt(val);
-                } else {
+                }
+                else
+                {
 
                     // Convert floating point
                     return (int)(Double.parseDouble(val));
                 }
-            } else {
+            }
+            else
+            {
 
                 return 0;
             }
-        } catch (NumberFormatException nfe) {
+        }
+        catch (NumberFormatException nfe)
+        {
             throw new SQLException("Invalid value for getInt() - '" + val + 
                                    "'", "S1009");
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public int getInt(String ColumnName)
                throws java.sql.SQLException
     {
@@ -1369,21 +1520,17 @@ public class ResultSet
                    throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = {  };
             Debug.methodCall(this, "isLast", args);
         }
 
-        boolean b = false;
+        boolean b = rowData.isLast();
 
-        if (_rows.size() == 0) {
-            b = false;
-        } else {
-            b = (_currentRow == _rows.size() - 1);
-        }
-
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
             Debug.returnValue(this, "relative", new Boolean(b));
         }
 
@@ -1404,29 +1551,45 @@ public class ResultSet
 
         String val = null;
 
-        try {
+        try
+        {
             val = getString(columnIndex);
 
-            if (val != null && val.length() != 0) {
+            if (val != null && val.length() != 0)
+            {
 
-                if (val.indexOf("e") != -1 && val.indexOf("E") != -1) {
+                if (val.indexOf("e") != -1 && val.indexOf("E") != -1)
+                {
 
                     return Long.parseLong(val);
-                } else {
+                }
+                else
+                {
 
                     // Convert floating point
                     return (long)(Double.parseDouble(val));
                 }
-            } else {
+            }
+            else
+            {
 
                 return 0;
             }
-        } catch (NumberFormatException nfe) {
+        }
+        catch (NumberFormatException nfe)
+        {
             throw new SQLException("Invalid value for getLong() - '" + val + 
                                    "'", "S1009");
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public long getLong(String ColumnName)
                  throws java.sql.SQLException
     {
@@ -1442,72 +1605,91 @@ public class ResultSet
                  throws NumberFormatException
     {
 
-        long    result   = 0;
+        long result = 0;
         boolean negative = false;
-        int     i        = 0;
-        int     max      = buf.length;
-        long    limit;
-        long    multmin;
-        int     digit;
-        int     radix    = 10;
+        int i = 0;
+        int max = buf.length;
+        long limit;
+        long multmin;
+        int digit;
+        int radix = 10;
 
-        if (max > 0) {
+        if (max > 0)
+        {
 
-            if ((char)buf[0] == '-') {
+            if ((char)buf[0] == '-')
+            {
                 negative = true;
-                limit    = Long.MIN_VALUE;
+                limit = Long.MIN_VALUE;
                 i++;
-            } else {
+            }
+            else
+            {
                 limit = -Long.MAX_VALUE;
             }
 
             multmin = limit / radix;
 
-            if (i < max) {
+            if (i < max)
+            {
                 digit = Character.digit((char)buf[i++], radix);
 
-                if (digit < 0) {
+                if (digit < 0)
+                {
                     throw new NumberFormatException(new String(buf));
-                } else {
+                }
+                else
+                {
                     result = -digit;
                 }
             }
 
-            while (i < max) {
+            while (i < max)
+            {
 
                 // Accumulating negatively avoids surprises near MAX_VALUE
                 digit = Character.digit((char)buf[i++], radix);
 
-                if (digit < 0) {
+                if (digit < 0)
+                {
                     throw new NumberFormatException(new String(buf));
                 }
 
-                if (result < multmin) {
+                if (result < multmin)
+                {
                     throw new NumberFormatException(new String(buf));
                 }
 
                 result *= radix;
 
-                if (result < limit + digit) {
+                if (result < limit + digit)
+                {
                     throw new NumberFormatException(new String(buf));
                 }
 
                 result -= digit;
             }
-        } else {
+        }
+        else
+        {
             throw new NumberFormatException(new String(buf));
         }
 
-        if (negative) {
+        if (negative)
+        {
 
-            if (i > 1) {
+            if (i > 1)
+            {
 
                 return result;
-            } /* Only got "-" */ 
-            else {
+            } /* Only got "-" */
+            else
+            {
                 throw new NumberFormatException(new String(buf));
             }
-        } else {
+        }
+        else
+        {
 
             return -result;
         }
@@ -1524,7 +1706,7 @@ public class ResultSet
                                            throws java.sql.SQLException
     {
 
-        return new com.mysql.jdbc.ResultSetMetaData(_rows, _fields);
+        return new com.mysql.jdbc.ResultSetMetaData(fields);
     }
 
     /**
@@ -1547,7 +1729,8 @@ public class ResultSet
     {
         checkRowPos();
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = { new Integer(columnIndex) };
             Debug.methodCall(this, "getObject", args);
@@ -1555,53 +1738,65 @@ public class ResultSet
 
         Field F;
 
-        if (columnIndex < 1 || columnIndex > _fields.length) {
+        if (columnIndex < 1 || columnIndex > fields.length)
+        {
             throw new java.sql.SQLException("Column index out of range (" + 
                                             columnIndex + " > " + 
-                                            _fields.length + ").", "S1002");
+                                            fields.length + ").", "S1002");
         }
 
-        F = _fields[columnIndex - 1];
+        F = fields[columnIndex - 1];
 
-        if (_thisRow[columnIndex - 1] == null) {
-            _wasNullFlag = true;
+        if (thisRow[columnIndex - 1] == null)
+        {
+            wasNullFlag = true;
 
             return null;
         }
 
-        _wasNullFlag = false;
+        wasNullFlag = false;
 
-        switch (F.getSQLType()) {
+        switch (F.getSQLType())
+        {
 
             case Types.BIT:
                 return new Boolean(getBoolean(columnIndex));
 
             case Types.TINYINT:
 
-                if (F.isUnsigned()) {
+                if (F.isUnsigned())
+                {
 
                     return new Short(getShort(columnIndex));
-                } else {
+                }
+                else
+                {
 
                     return new Byte(getByte(columnIndex));
                 }
 
             case Types.SMALLINT:
 
-                if (F.isUnsigned()) {
+                if (F.isUnsigned())
+                {
 
                     return new Integer(getInt(columnIndex));
-                } else {
+                }
+                else
+                {
 
                     return new Short(getShort(columnIndex));
                 }
 
             case Types.INTEGER:
 
-                if (F.isUnsigned()) {
+                if (F.isUnsigned())
+                {
 
                     return new Long(getLong(columnIndex));
-                } else {
+                }
+                else
+                {
 
                     return new Integer(getInt(columnIndex));
                 }
@@ -1612,29 +1807,36 @@ public class ResultSet
             case Types.DECIMAL:
             case Types.NUMERIC:
 
-                String     S   = getString(columnIndex);
+                String S = getString(columnIndex);
                 BigDecimal Val;
 
-                if (S != null) {
+                if (S != null)
+                {
 
-                    if (S.length() == 0) {
+                    if (S.length() == 0)
+                    {
                         Val = new BigDecimal(0);
 
                         return Val;
                     }
 
-                    try {
+                    try
+                    {
                         Val = new BigDecimal(S);
-                    } catch (NumberFormatException E) {
+                    }
+                    catch (NumberFormatException E)
+                    {
                         throw new java.sql.SQLException("Bad format for BigDecimal '" + S + 
                                                         "' in column " + 
                                                         columnIndex + "(" + 
-                                                        _fields[columnIndex - 1] + 
+                                                        fields[columnIndex - 1] + 
                                                         ").", "S1009");
                     }
 
                     return Val;
-                } else {
+                }
+                else
+                {
 
                     return null;
                 }
@@ -1655,37 +1857,48 @@ public class ResultSet
             case Types.VARBINARY:
             case Types.LONGVARBINARY:
 
-                if (!F.isBlob()) {
+                if (!F.isBlob())
+                {
 
                     return getString(columnIndex);
-                } else if (!F.isBinary()) {
+                }
+                else if (!F.isBinary())
+                {
 
                     return getString(columnIndex);
-                } else {
+                }
+                else
+                {
 
                     byte[] Data = getBytes(columnIndex);
                     Object Obj = Data;
 
-                    if (Data != null && Data.length >= 2) {
+                    if (Data != null && Data.length >= 2)
+                    {
 
-                        if (Data[0] == -84 && Data[1] == -19) {
+                        if (Data[0] == -84 && Data[1] == -19)
+                        {
 
                             // Serialized object?
-                            try {
+                            try
+                            {
 
-                                ByteArrayInputStream BIn   = 
-                                        new ByteArrayInputStream(Data);
-                                ObjectInputStream    ObjIn = 
-                                        new ObjectInputStream(BIn);
+                                ByteArrayInputStream BIn = new ByteArrayInputStream(
+                                                                   Data);
+                                ObjectInputStream ObjIn = new ObjectInputStream(
+                                                                  BIn);
                                 Obj = ObjIn.readObject();
                                 ObjIn.close();
                                 BIn.close();
-                            } catch (ClassNotFoundException CnFe) {
+                            }
+                            catch (ClassNotFoundException CnFe)
+                            {
                                 throw new SQLException("Class not found: " + 
                                                        CnFe.toString() + 
                                                        " while reading serialized object");
                             }
-                             catch (IOException Ex) {
+                            catch (IOException Ex)
+                            {
                                 Obj = Data; // not serialized?
                             }
                         }
@@ -1806,22 +2019,17 @@ public class ResultSet
                throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = {  };
             Debug.methodCall(this, "getRow", args);
         }
 
-        int row = 0;
+        int row = rowData.getCurrentRowNumber();
 
-        if (_currentRow < 0 || _currentRow >= _rows.size() || 
-            _rows.size() == 0) {
-            row = 0;
-        } else {
-            row = _currentRow + 1;
-        }
-
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
             Debug.returnValue(this, "getRow", new Integer(row));
         }
 
@@ -1842,29 +2050,45 @@ public class ResultSet
 
         String val = null;
 
-        try {
+        try
+        {
             val = getString(columnIndex);
 
-            if (val != null && val.length() != 0) {
+            if (val != null && val.length() != 0)
+            {
 
-                if (val.indexOf("e") != -1 && val.indexOf("E") != -1) {
+                if (val.indexOf("e") != -1 && val.indexOf("E") != -1)
+                {
 
                     return Short.parseShort(val);
-                } else {
+                }
+                else
+                {
 
                     // Convert floating point
                     return (short)(Double.parseDouble(val));
                 }
-            } else {
+            }
+            else
+            {
 
                 return 0;
             }
-        } catch (NumberFormatException nfe) {
+        }
+        catch (NumberFormatException nfe)
+        {
             throw new SQLException("Invalid value for getShort() - '" + val + 
                                    "'", "S1009");
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public short getShort(String ColumnName)
                    throws java.sql.SQLException
     {
@@ -1885,7 +2109,7 @@ public class ResultSet
                                     throws SQLException
     {
 
-        return (java.sql.Statement)_owningStatement;
+        return (java.sql.Statement)owningStatement;
     }
 
     /**
@@ -1900,82 +2124,117 @@ public class ResultSet
     {
         checkRowPos();
 
-        if (_fields == null) {
+        if (fields == null)
+        {
             throw new java.sql.SQLException("Query generated no fields for ResultSet", 
                                             "S1002");
         }
 
-        if (columnIndex < 1 || columnIndex > _fields.length) {
+        if (columnIndex < 1 || columnIndex > fields.length)
+        {
             throw new java.sql.SQLException("Column Index out of range ( " + 
                                             columnIndex + " > " + 
-                                            _fields.length + ").", "S1002");
+                                            fields.length + ").", "S1002");
         }
 
-        try {
+        try
+        {
 
-            if (_thisRow[columnIndex - 1] == null) {
-                _wasNullFlag = true;
-            } else {
-                _wasNullFlag = false;
+            if (thisRow[columnIndex - 1] == null)
+            {
+                wasNullFlag = true;
             }
-        } catch (NullPointerException E) {
-            _wasNullFlag = true;
+            else
+            {
+                wasNullFlag = false;
+            }
+        }
+        catch (NullPointerException E)
+        {
+            wasNullFlag = true;
         }
 
-        if (_wasNullFlag) {
+        if (wasNullFlag)
+        {
 
             return null;
         }
 
-        if (_connection != null && _connection.useUnicode()) {
+        if (connection != null && connection.useUnicode())
+        {
 
-            try {
+            try
+            {
 
-                String Encoding = _connection.getEncoding();
+                String Encoding = connection.getEncoding();
 
-                if (Encoding == null) {
+                if (Encoding == null)
+                {
 
-                    return new String(_thisRow[columnIndex - 1]);
-                } else {
-
-                    return new String(_thisRow[columnIndex - 1], 
-                                      _connection.getEncoding());
+                    return new String(thisRow[columnIndex - 1]);
                 }
-            } catch (java.io.UnsupportedEncodingException E) {
+                else
+                {
+
+                    return new String(thisRow[columnIndex - 1], 
+                                      connection.getEncoding());
+                }
+            }
+            catch (java.io.UnsupportedEncodingException E)
+            {
                 throw new SQLException("Unsupported character encoding '" + 
-                                       _connection.getEncoding() + "'.", 
+                                       connection.getEncoding() + "'.", 
                                        "0S100");
             }
-        } else {
+        }
+        else
+        {
 
-            String val = new String(_thisRow[columnIndex - 1]);
+            String val = new String(thisRow[columnIndex - 1]);
 
-            if (_useStrictFloatingPoint) {
+            if (useStrictFloatingPoint)
+            {
 
-				
                 // Fix endpoint rounding precision loss in MySQL server
-                if (val.equalsIgnoreCase("2.147483648E9")) {
+                if (val.equalsIgnoreCase("2.147483648E9"))
+                {
 
                     // Fix Odd end-point rounding on MySQL
                     val = "2.147483647E9";
-                } else if (val.equalsIgnoreCase("1.0000000036275E-15")) {
+                }
+                else if (val.equalsIgnoreCase("1.0000000036275E-15"))
+                {
 
                     // Fix odd end-point rounding on MySQL
                     val = "1.0E-15";
-                } else if (val.equalsIgnoreCase("9.999999869911E14")) {
+                }
+                else if (val.equalsIgnoreCase("9.999999869911E14"))
+                {
                     val = "9.99999999999999E14";
-                } else if (val.equalsIgnoreCase("1.4012984643248E-45")) {
+                }
+                else if (val.equalsIgnoreCase("1.4012984643248E-45"))
+                {
                     val = "1.4E-45";
-                } else if (val.equalsIgnoreCase("1.4013E-45")) {
+                }
+                else if (val.equalsIgnoreCase("1.4013E-45"))
+                {
                     val = "1.4E-45";
-                } else if (val.equalsIgnoreCase("3.4028234663853E37")) {
+                }
+                else if (val.equalsIgnoreCase("3.4028234663853E37"))
+                {
                     val = "3.4028235E37";
-                } else if (val.equalsIgnoreCase("-2.14748E9")) {
+                }
+                else if (val.equalsIgnoreCase("-2.14748E9"))
+                {
                     val = "-2.147483648E9";
-                } else if (val.equalsIgnoreCase("3.40282E37")) {
+                }
+                else if (val.equalsIgnoreCase("3.40282E37"))
+                {
                     val = "3.4028235E37";
-                } else if (val.equalsIgnoreCase("1.4012984643248E-45")) {
-                	val = "1.4E-45";
+                }
+                else if (val.equalsIgnoreCase("1.4012984643248E-45"))
+                {
+                    val = "1.4E-45";
                 }
             }
 
@@ -2010,38 +2269,43 @@ public class ResultSet
                  throws java.sql.SQLException
     {
 
-        int hr  = 0;
+        int hr = 0;
         int min = 0;
         int sec = 0;
 
-        try {
+        try
+        {
 
             String S = getString(columnIndex);
 
-            if (S == null) {
+            if (S == null)
+            {
 
                 return null;
-            } else if (S.equals("0000-00-00")) {
-                _wasNullFlag = true;
+            }
+            else if (S.equals("0000-00-00"))
+            {
+                wasNullFlag = true;
 
                 return null;
             }
 
-            Field F = _fields[columnIndex - 1];
+            Field F = fields[columnIndex - 1];
 
-            if (F.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
+            if (F.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP)
+            {
 
                 // It's a timestamp
                 int length = S.length();
 
-                switch (length) {
+                switch (length)
+                {
 
                     case 14:
                     case 12:
-
                     {
-                        hr  = Integer.parseInt(S.substring(length - 6, 
-                                                           length - 4));
+                        hr = Integer.parseInt(S.substring(length - 6, 
+                                                          length - 4));
                         min = Integer.parseInt(S.substring(length - 4, 
                                                            length - 2));
                         sec = Integer.parseInt(S.substring(length - 2, length));
@@ -2050,9 +2314,8 @@ public class ResultSet
                     break;
 
                     case 10:
-
                     {
-                        hr  = Integer.parseInt(S.substring(6, 8));
+                        hr = Integer.parseInt(S.substring(6, 8));
                         min = Integer.parseInt(S.substring(8, 10));
                         sec = 0;
                     }
@@ -2062,58 +2325,78 @@ public class ResultSet
                     default:
                         throw new SQLException("Timestamp too small to convert to Time value in column " + 
                                                columnIndex + "(" + 
-                                               _fields[columnIndex - 1] + 
+                                               fields[columnIndex - 1] + 
                                                ").", "S1009");
                 } /* endswitch */
 
                 SQLWarning W = new SQLWarning(
                                        "Precision lost converting TIMESTAMP to Time with getTime() on column " + 
                                        columnIndex + "(" + 
-                                       _fields[columnIndex - 1] + ").");
+                                       fields[columnIndex - 1] + ").");
 
-                if (_warnings == null) {
-                    _warnings = W;
-                } else {
-                    _warnings.setNextWarning(W);
+                if (warningChain == null)
+                {
+                    warningChain = W;
                 }
-            } else if (F.getMysqlType() == MysqlDefs.FIELD_TYPE_DATETIME) {
-                hr  = Integer.parseInt(S.substring(11, 13));
+                else
+                {
+                    warningChain.setNextWarning(W);
+                }
+            }
+            else if (F.getMysqlType() == MysqlDefs.FIELD_TYPE_DATETIME)
+            {
+                hr = Integer.parseInt(S.substring(11, 13));
                 min = Integer.parseInt(S.substring(14, 16));
                 sec = Integer.parseInt(S.substring(17, 19));
 
                 SQLWarning W = new SQLWarning(
                                        "Precision lost converting DATETIME to Time with getTime() on column " + 
                                        columnIndex + "(" + 
-                                       _fields[columnIndex - 1] + ").");
+                                       fields[columnIndex - 1] + ").");
 
-                if (_warnings == null) {
-                    _warnings = W;
-                } else {
-                    _warnings.setNextWarning(W);
+                if (warningChain == null)
+                {
+                    warningChain = W;
                 }
-            } else {
+                else
+                {
+                    warningChain.setNextWarning(W);
+                }
+            }
+            else
+            {
 
                 // convert a String to a Time
-                if (S.length() != 5 && S.length() != 8) {
+                if (S.length() != 5 && S.length() != 8)
+                {
                     throw new SQLException("Bad format for Time '" + S + 
                                            "' in column " + columnIndex + 
-                                           "(" + _fields[columnIndex - 1] + 
+                                           "(" + fields[columnIndex - 1] + 
                                            ").", "S1009");
                 }
 
-                hr  = Integer.parseInt(S.substring(0, 2));
+                hr = Integer.parseInt(S.substring(0, 2));
                 min = Integer.parseInt(S.substring(3, 5));
                 sec = (S.length() == 5) ? 0 : Integer.parseInt(S.substring(6));
             }
 
             return TimeUtil.changeTimezone(new Time(hr, min, sec), 
-                                           _connection.getServerTimezone(), 
+                                           connection.getServerTimezone(), 
                                            TimeUtil.GMT_TIMEZONE);
-        } catch (Exception E) {
+        }
+        catch (Exception E)
+        {
             throw new java.sql.SQLException(E.getClass().getName(), "S1009");
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public Time getTime(String ColumnName)
                  throws java.sql.SQLException
     {
@@ -2171,37 +2454,45 @@ public class ResultSet
 
         String S = getString(columnIndex);
 
-        try {
+        try
+        {
 
-            if (S == null) {
-
-                return null;
-            } else if (S.equals("0000-00-00")) {
-                _wasNullFlag = true;
+            if (S == null)
+            {
 
                 return null;
-            } else if (_fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
+            }
+            else if (S.equals("0000-00-00"))
+            {
+                wasNullFlag = true;
+
+                return null;
+            }
+            else if (fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR)
+            {
 
                 return TimeUtil.changeTimezone(new java.sql.Timestamp(
                                                        Integer.parseInt(S.substring(
                                                                                 0, 
                                                                                 4)) - 1900, 
                                                        0, 1, 0, 0, 0, 0), 
-                                               _connection.getServerTimezone(), 
+                                               connection.getServerTimezone(), 
                                                TimeUtil.GMT_TIMEZONE);
-            } else {
+            }
+            else
+            {
 
                 // Convert from TIMESTAMP or DATE
-                switch (S.length()) {
+                switch (S.length())
+                {
 
                     case 19:
-
                     {
 
-                        int year    = Integer.parseInt(S.substring(0, 4));
-                        int month   = Integer.parseInt(S.substring(5, 7));
-                        int day     = Integer.parseInt(S.substring(8, 10));
-                        int hour    = Integer.parseInt(S.substring(11, 13));
+                        int year = Integer.parseInt(S.substring(0, 4));
+                        int month = Integer.parseInt(S.substring(5, 7));
+                        int day = Integer.parseInt(S.substring(8, 10));
+                        int hour = Integer.parseInt(S.substring(11, 13));
                         int minutes = Integer.parseInt(S.substring(14, 16));
                         int seconds = Integer.parseInt(S.substring(17, 19));
 
@@ -2210,18 +2501,17 @@ public class ResultSet
                                                                month - 1, day, 
                                                                hour, minutes, 
                                                                seconds, 0), 
-                                                       _connection.getServerTimezone(), 
+                                                       connection.getServerTimezone(), 
                                                        TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 14:
-
                     {
 
-                        int year    = Integer.parseInt(S.substring(0, 4));
-                        int month   = Integer.parseInt(S.substring(4, 6));
-                        int day     = Integer.parseInt(S.substring(6, 8));
-                        int hour    = Integer.parseInt(S.substring(8, 10));
+                        int year = Integer.parseInt(S.substring(0, 4));
+                        int month = Integer.parseInt(S.substring(4, 6));
+                        int day = Integer.parseInt(S.substring(6, 8));
+                        int hour = Integer.parseInt(S.substring(8, 10));
                         int minutes = Integer.parseInt(S.substring(10, 12));
                         int seconds = Integer.parseInt(S.substring(12, 14));
 
@@ -2230,23 +2520,23 @@ public class ResultSet
                                                                month - 1, day, 
                                                                hour, minutes, 
                                                                seconds, 0), 
-                                                       _connection.getServerTimezone(), 
+                                                       connection.getServerTimezone(), 
                                                        TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 12:
-
                     {
 
                         int year = Integer.parseInt(S.substring(0, 2));
 
-                        if (year <= 69) {
+                        if (year <= 69)
+                        {
                             year = (year + 100);
                         }
 
-                        int month   = Integer.parseInt(S.substring(2, 4));
-                        int day     = Integer.parseInt(S.substring(4, 6));
-                        int hour    = Integer.parseInt(S.substring(6, 8));
+                        int month = Integer.parseInt(S.substring(2, 4));
+                        int day = Integer.parseInt(S.substring(4, 6));
+                        int hour = Integer.parseInt(S.substring(6, 8));
                         int minutes = Integer.parseInt(S.substring(8, 10));
                         int seconds = Integer.parseInt(S.substring(10, 12));
 
@@ -2255,58 +2545,56 @@ public class ResultSet
                                                                day, hour, 
                                                                minutes, 
                                                                seconds, 0), 
-                                                       _connection.getServerTimezone(), 
+                                                       connection.getServerTimezone(), 
                                                        TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 10:
-
                     {
 
-						// FIXME: SourceForge bug 559134 
-						
+                        // FIXME: SourceForge bug 559134
                         int year = Integer.parseInt(S.substring(0, 2));
 
-                        if (year <= 69) {
+                        if (year <= 69)
+                        {
                             year = (year + 100);
                         }
 
-                        int month   = Integer.parseInt(S.substring(2, 4));
-                        int day     = Integer.parseInt(S.substring(4, 6));
-                        int hour    = Integer.parseInt(S.substring(6, 8));
+                        int month = Integer.parseInt(S.substring(2, 4));
+                        int day = Integer.parseInt(S.substring(4, 6));
+                        int hour = Integer.parseInt(S.substring(6, 8));
                         int minutes = Integer.parseInt(S.substring(8, 10));
 
                         return TimeUtil.changeTimezone(new java.sql.Timestamp(
                                                                year, month - 1, 
                                                                day, hour, 
                                                                minutes, 0, 0), 
-                                                       _connection.getServerTimezone(), 
+                                                       connection.getServerTimezone(), 
                                                        TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 8:
-
                     {
 
-                        int year  = Integer.parseInt(S.substring(0, 4));
+                        int year = Integer.parseInt(S.substring(0, 4));
                         int month = Integer.parseInt(S.substring(4, 6));
-                        int day   = Integer.parseInt(S.substring(6, 8));
+                        int day = Integer.parseInt(S.substring(6, 8));
 
                         return TimeUtil.changeTimezone(new java.sql.Timestamp(
                                                                year - 1900, 
                                                                month - 1, day, 
                                                                0, 0, 0, 0), 
-                                                       _connection.getServerTimezone(), 
+                                                       connection.getServerTimezone(), 
                                                        TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 6:
-
                     {
 
                         int year = Integer.parseInt(S.substring(0, 2));
 
-                        if (year <= 69) {
+                        if (year <= 69)
+                        {
                             year = (year + 100);
                         }
 
@@ -2316,17 +2604,17 @@ public class ResultSet
                         return TimeUtil.changeTimezone(new java.sql.Timestamp(
                                                                year, month - 1, 
                                                                day, 0, 0, 0, 0), 
-                                                       _connection.getServerTimezone(), 
+                                                       connection.getServerTimezone(), 
                                                        TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 4:
-
                     {
 
                         int year = Integer.parseInt(S.substring(0, 2));
 
-                        if (year <= 69) {
+                        if (year <= 69)
+                        {
                             year = (year + 100);
                         }
 
@@ -2335,24 +2623,24 @@ public class ResultSet
                         return TimeUtil.changeTimezone(new java.sql.Timestamp(
                                                                year, month - 1, 
                                                                1, 0, 0, 0, 0), 
-                                                       _connection.getServerTimezone(), 
+                                                       connection.getServerTimezone(), 
                                                        TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 2:
-
                     {
 
                         int year = Integer.parseInt(S.substring(0, 2));
 
-                        if (year <= 69) {
+                        if (year <= 69)
+                        {
                             year = (year + 100);
                         }
 
                         return TimeUtil.changeTimezone(new java.sql.Timestamp(
                                                                year, 0, 1, 0, 
                                                                0, 0, 0), 
-                                                       _connection.getServerTimezone(), 
+                                                       connection.getServerTimezone(), 
                                                        TimeUtil.GMT_TIMEZONE);
                     }
 
@@ -2360,11 +2648,13 @@ public class ResultSet
                         throw new java.sql.SQLException("Bad format for Timestamp '" + S + 
                                                         "' in column " + 
                                                         columnIndex + "(" + 
-                                                        _fields[columnIndex - 1] + 
+                                                        fields[columnIndex - 1] + 
                                                         ").", "S1009");
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             throw new java.sql.SQLException("Cannot convert value '" + S + 
                                             "' from column " + columnIndex + 
                                             "(" + S + " ) to TIMESTAMP.", 
@@ -2372,6 +2662,13 @@ public class ResultSet
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public Timestamp getTimestamp(String ColumnName)
                            throws java.sql.SQLException
     {
@@ -2429,7 +2726,7 @@ public class ResultSet
                 throws SQLException
     {
 
-        return _resultSetType;
+        return resultSetType;
     }
 
     /**
@@ -2470,6 +2767,13 @@ public class ResultSet
         return getBinaryStream(columnIndex);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param ColumnName DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public InputStream getUnicodeStream(String ColumnName)
                                  throws java.sql.SQLException
     {
@@ -2497,7 +2801,7 @@ public class ResultSet
                                     throws java.sql.SQLException
     {
 
-        return _warnings;
+        return warningChain;
     }
 
     /**
@@ -2529,7 +2833,8 @@ public class ResultSet
                      throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = { new Integer(row) };
             Debug.methodCall(this, "absolute", args);
@@ -2537,53 +2842,73 @@ public class ResultSet
 
         boolean b;
 
-        if (_rows.size() == 0) {
+        if (rowData.size() == 0)
+        {
             b = false;
-        } else {
+        }
+        else
+        {
 
-            if (row == 0) {
+            if (row == 0)
+            {
                 throw new SQLException("Cannot absolute position to row 0", 
                                        "S1009");
             }
 
-            if (_on_insert_row) {
-                _on_insert_row = false;
+            if (onInsertRow)
+            {
+                onInsertRow = false;
             }
 
-            if (_doing_updates) {
-                _doing_updates = false;
+            if (doingUpdates)
+            {
+                doingUpdates = false;
             }
 
-            if (row == 1) {
+            if (row == 1)
+            {
                 b = first();
-            } else if (row == -1) {
+            }
+            else if (row == -1)
+            {
                 b = last();
-            } else if (row > _rows.size()) {
+            }
+            else if (row > rowData.size())
+            {
                 afterLast();
                 b = false;
-            } else {
+            }
+            else
+            {
 
-                if (row < 0) {
+                if (row < 0)
+                {
 
                     // adjust to reflect after end of result set
-                    int new_row_position = _rows.size() + row + 1;
+                    int new_row_position = rowData.size() + row + 1;
 
-                    if (new_row_position <= 0) {
+                    if (new_row_position <= 0)
+                    {
                         beforeFirst();
                         b = false;
-                    } else {
+                    }
+                    else
+                    {
                         b = absolute(new_row_position);
                     }
-                } else {
+                }
+                else
+                {
                     row--; // adjust for index difference
-                    _currentRow = row;
-                    _thisRow    = (byte[][])_rows.get(_currentRow);
-                    b           = true;
+                    rowData.setCurrentRow(row);
+                    thisRow = (byte[][])rowData.getAt(row);
+                    b = true;
                 }
             }
         }
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
             Debug.returnValue(this, "absolute", new Boolean(b));
         }
 
@@ -2603,23 +2928,27 @@ public class ResultSet
                    throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = {  };
             Debug.methodCall(this, "afterLast", args);
         }
 
-        if (_on_insert_row) {
-            _on_insert_row = false;
+        if (onInsertRow)
+        {
+            onInsertRow = false;
         }
 
-        if (_doing_updates) {
-            _doing_updates = false;
+        if (doingUpdates)
+        {
+            doingUpdates = false;
         }
 
-        if (_rows.size() != 0) {
-            _currentRow = _rows.size();
-            _thisRow    = null;
+        if (rowData.size() != 0)
+        {
+            rowData.afterLast();
+            thisRow = null;
         }
     }
 
@@ -2636,26 +2965,32 @@ public class ResultSet
                      throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = {  };
             Debug.methodCall(this, "beforeFirst", args);
         }
 
-        if (_on_insert_row) {
-            _on_insert_row = false;
+        if (onInsertRow)
+        {
+            onInsertRow = false;
         }
 
-        if (_doing_updates) {
-            _doing_updates = false;
+        if (doingUpdates)
+        {
+            doingUpdates = false;
         }
 
-        if (_rows.size() == 0) {
+        if (rowData.size() == 0)
+        {
 
             return;
-        } else {
-            _currentRow = -1;
-            _thisRow    = null;
+        }
+        else
+        {
+            rowData.beforeFirst();
+            thisRow = null;
         }
     }
 
@@ -2687,7 +3022,7 @@ public class ResultSet
     public void clearWarnings()
                        throws java.sql.SQLException
     {
-        _warnings = null;
+        warningChain = null;
     }
 
     /**
@@ -2708,11 +3043,13 @@ public class ResultSet
                throws java.sql.SQLException
     {
 
-        if (_rows != null) {
-            _rows.clear();
+        if (rowData != null)
+        {
+            rowData.close();
         }
 
-        _closed = true;
+        rowData = null;
+        isClosed = true;
     }
 
     /**
@@ -2742,27 +3079,35 @@ public class ResultSet
     {
 
         Integer index;
-        index = (Integer)_columnNameToIndex.get(ColumnName);
+        index = (Integer)columnNameToIndex.get(ColumnName);
 
-        if (index == null) {
-            index = (Integer)_fullColumnNameToIndex.get(ColumnName);
+        if (index == null)
+        {
+            index = (Integer)fullColumnNameToIndex.get(ColumnName);
         }
 
-        if (index != null) {
+        if (index != null)
+        {
 
             return index.intValue() + 1;
-        } else {
+        }
+        else
+        {
 
             // Try this inefficient way, now
             String columnNameUC = ColumnName.toUpperCase();
 
-            for (int i = 0; i < _fields.length; i++) {
+            for (int i = 0; i < fields.length; i++)
+            {
 
-                if (_fields[i].getName().toUpperCase().equals(columnNameUC)) {
+                if (fields[i].getName().toUpperCase().equals(columnNameUC))
+                {
 
                     return i + 1;
-                } else if (_fields[i].getFullName().toUpperCase().equals(
-                                   columnNameUC)) {
+                }
+                else if (fields[i].getFullName().toUpperCase().equals(
+                                 columnNameUC))
+                {
 
                     return i + 1;
                 }
@@ -2786,27 +3131,33 @@ public class ResultSet
                   throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = {  };
             Debug.methodCall(this, "first", args);
         }
 
-        if (_on_insert_row) {
-            _on_insert_row = false;
+        if (onInsertRow)
+        {
+            onInsertRow = false;
         }
 
-        if (_rows.size() == 0) {
+        if (rowData.isEmpty())
+        {
 
             return false;
-        } else {
+        }
+        else
+        {
 
-            if (_doing_updates) {
-                _doing_updates = false;
+            if (doingUpdates)
+            {
+                doingUpdates = false;
             }
 
-            _currentRow = 0;
-            _thisRow    = (byte[][])_rows.get(_currentRow);
+            rowData.beforeFirst();
+            thisRow = rowData.next();
 
             return true;
         }
@@ -2841,27 +3192,33 @@ public class ResultSet
                  throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = {  };
             Debug.methodCall(this, "last", args);
         }
 
-        if (_rows.size() == 0) {
+        if (rowData.size() == 0)
+        {
 
             return false;
-        } else {
+        }
+        else
+        {
 
-            if (_on_insert_row) {
-                _on_insert_row = false;
+            if (onInsertRow)
+            {
+                onInsertRow = false;
             }
 
-            if (_doing_updates) {
-                _doing_updates = false;
+            if (doingUpdates)
+            {
+                doingUpdates = false;
             }
 
-            _currentRow = _rows.size() - 1;
-            _thisRow    = (byte[][])_rows.get(_currentRow);
+            rowData.beforeLast();
+            thisRow = rowData.next();
 
             return true;
         }
@@ -2926,45 +3283,55 @@ public class ResultSet
                  throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = {  };
             Debug.methodCall(this, "next", args);
         }
 
-        if (_on_insert_row) {
-            _on_insert_row = false;
+        if (onInsertRow)
+        {
+            onInsertRow = false;
         }
 
-        if (_doing_updates) {
-            _doing_updates = false;
+        if (doingUpdates)
+        {
+            doingUpdates = false;
         }
 
         boolean b;
 
-        if (!reallyResult()) {
+        if (!reallyResult())
+        {
             throw new java.sql.SQLException("ResultSet is from UPDATE. No Data", 
                                             "S1000");
         }
 
-        if (_rows.size() == 0) {
+        if (rowData.size() == 0)
+        {
             b = false;
-        } else {
+        }
+        else
+        {
 
-            if (_currentRow + 1 >= _rows.size()) {
+            if (!rowData.hasNext())
+            {
 
                 // force scroll past end
-                _currentRow = _rows.size();
-                b           = false;
-            } else {
+                rowData.next();
+                b = false;
+            }
+            else
+            {
                 clearWarnings();
-                _currentRow = _currentRow + 1;
-                _thisRow    = (byte[][])_rows.get(_currentRow);
-                b           = true;
+                thisRow = rowData.next();
+                b = true;
             }
         }
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
             Debug.returnValue(this, "next", new Boolean(b));
         }
 
@@ -2988,12 +3355,18 @@ public class ResultSet
                  throws java.sql.SQLException
     {
 
-        if (_currentRow - 1 >= 0) {
-            _currentRow--;
-            _thisRow = (byte[][])_rows.get(_currentRow);
+        int rowIndex = rowData.getCurrentRowNumber();
+
+        if (rowIndex - 1 >= 0)
+        {
+            rowIndex--;
+            rowData.setCurrentRow(rowIndex);
+            thisRow = (byte[][])rowData.getAt(rowIndex);
 
             return true;
-        } else {
+        }
+        else
+        {
 
             return false;
         }
@@ -3015,18 +3388,21 @@ public class ResultSet
                      throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = {  };
             Debug.methodCall(this, "previous", args);
         }
 
-        if (_on_insert_row) {
-            _on_insert_row = false;
+        if (onInsertRow)
+        {
+            onInsertRow = false;
         }
 
-        if (_doing_updates) {
-            _doing_updates = false;
+        if (doingUpdates)
+        {
+            doingUpdates = false;
         }
 
         return prev();
@@ -3083,21 +3459,26 @@ public class ResultSet
                      throws SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = { new Integer(rows) };
             Debug.methodCall(this, "relative", args);
         }
 
-        if (_rows.size() == 0) {
+        if (rowData.size() == 0)
+        {
 
             return false;
         }
 
-        int     new_row_position = _currentRow + rows + 1;
-        boolean b = absolute(new_row_position);
+        rowData.moveRowRelative(rows);
+        thisRow = rowData.getAt(rowData.getCurrentRowNumber());
 
-        if (Driver.trace) {
+        boolean b = (!rowData.isAfterLast() && !rowData.isBeforeFirst());
+
+        if (Driver.trace)
+        {
             Debug.returnValue(this, "relative", new Boolean(b));
         }
 
@@ -4038,7 +4419,7 @@ public class ResultSet
                     throws java.sql.SQLException
     {
 
-        return _wasNullFlag;
+        return wasNullFlag;
     }
 
     ///////////////////////////////////////////
@@ -4057,44 +4438,64 @@ public class ResultSet
                         throws SQLException
     {
 
-        if (buf.length == 0) {
+        if (buf.length == 0)
+        {
 
             return 0;
         }
 
-        try {
+        try
+        {
 
             String s = new String(buf);
             double d = Double.parseDouble(s);
 
-            if (_useStrictFloatingPoint) {
+            if (useStrictFloatingPoint)
+            {
 
                 // Fix endpoint rounding precision loss in MySQL server
-                if (d == 2.147483648E9) {
+                if (d == 2.147483648E9)
+                {
 
                     // Fix Odd end-point rounding on MySQL
                     d = 2.147483647E9;
-                } else if (d == 1.0000000036275E-15) {
+                }
+                else if (d == 1.0000000036275E-15)
+                {
 
                     // Fix odd end-point rounding on MySQL
                     d = 1.0E-15;
-                } else if (d == 9.999999869911E14) {
+                }
+                else if (d == 9.999999869911E14)
+                {
                     d = 9.99999999999999E14;
-                } else if (d == 1.4012984643248E-45) {
+                }
+                else if (d == 1.4012984643248E-45)
+                {
                     d = 1.4E-45;
-                } else if (d == 1.4013E-45) {
+                }
+                else if (d == 1.4013E-45)
+                {
                     d = 1.4E-45;
-                } else if (d == 3.4028234663853E37) {
+                }
+                else if (d == 3.4028234663853E37)
+                {
                     d = 3.4028235E37;
-                } else if (d == -2.14748E9) {
+                }
+                else if (d == -2.14748E9)
+                {
                     d = -2.147483648E9;
-                } else if (d == 3.40282E37) {
+                }
+                else if (d == 3.40282E37)
+                {
                     d = 3.4028235E37;
                 }
             }
 
             return d;
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e)
+        {
             throw new SQLException("Bad format for number '" + 
                                    new String(buf) + "'");
         }
@@ -4105,7 +4506,7 @@ public class ResultSet
      */
     protected void setResultSetConcurrency(int concurrencyFlag)
     {
-        _resultSetConcurrency = concurrencyFlag;
+        resultSetConcurrency = concurrencyFlag;
     }
 
     /**
@@ -4113,7 +4514,7 @@ public class ResultSet
      */
     protected void setResultSetType(int typeFlag)
     {
-        _resultSetType = typeFlag;
+        resultSetType = typeFlag;
     }
 
     /** 
@@ -4123,26 +4524,29 @@ public class ResultSet
     protected void buildIndexMapping()
     {
 
-        int numFields = _fields.length;
-        _columnNameToIndex     = new Hashtable();
-        _fullColumnNameToIndex = new Hashtable();
+        int numFields = fields.length;
+        columnNameToIndex = new HashMap();
+        fullColumnNameToIndex = new HashMap();
 
-        for (int i = 0; i < numFields; i++) {
+        for (int i = 0; i < numFields; i++)
+        {
 
-            Integer index          = new Integer(i);
-            String  columnName     = _fields[i].getName();
-            String  fullColumnName = _fields[i].getFullName();
+            Integer index = new Integer(i);
+            String columnName = fields[i].getName();
+            String fullColumnName = fields[i].getFullName();
 
-            if (columnName != null) {
-                _columnNameToIndex.put(columnName, index);
-                _columnNameToIndex.put(columnName.toUpperCase(), index);
-                _columnNameToIndex.put(columnName.toLowerCase(), index);
+            if (columnName != null)
+            {
+                columnNameToIndex.put(columnName, index);
+                columnNameToIndex.put(columnName.toUpperCase(), index);
+                columnNameToIndex.put(columnName.toLowerCase(), index);
             }
 
-            if (fullColumnName != null) {
-                _fullColumnNameToIndex.put(fullColumnName, index);
-                _fullColumnNameToIndex.put(fullColumnName.toUpperCase(), index);
-                _fullColumnNameToIndex.put(fullColumnName.toLowerCase(), index);
+            if (fullColumnName != null)
+            {
+                fullColumnNameToIndex.put(fullColumnName, index);
+                fullColumnNameToIndex.put(fullColumnName.toUpperCase(), index);
+                fullColumnNameToIndex.put(fullColumnName.toLowerCase(), index);
             }
         }
     }
@@ -4151,15 +4555,18 @@ public class ResultSet
                         throws SQLException
     {
 
-        if (_closed) {
+        if (isClosed)
+        {
             throw new SQLException("Operation not allowed after ResultSet closed");
         }
 
-        if (_currentRow < 0) {
+        if (rowData.isBeforeFirst())
+        {
             throw new SQLException("Before start of result set");
         }
 
-        if (_currentRow == _rows.size()) {
+        if (rowData.isAfterLast())
+        {
             throw new SQLException("After end of result set");
         }
     }
@@ -4182,24 +4589,24 @@ public class ResultSet
 
     void setStatement(com.mysql.jdbc.Statement stmt)
     {
-        _owningStatement = stmt;
+        owningStatement = stmt;
     }
 
     long getUpdateCount()
     {
 
-        return _updateCount;
+        return updateCount;
     }
 
     long getUpdateID()
     {
 
-        return _updateID;
+        return updateId;
     }
 
     boolean reallyResult()
     {
 
-        return _reallyResult;
+        return reallyResult;
     }
 }
