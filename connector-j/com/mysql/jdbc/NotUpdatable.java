@@ -35,8 +35,10 @@ public class NotUpdatable
 	 * Updatabale result set.
 	 */
     public static final String NOT_UPDATEABLE_MESSAGE = 
-        "Result Set not updatable. The "
-         + "query that generated this result set must select only one table, and must "
+        "Result Set not updatable."
+         + "This result set must come from a statement "
+         + "that was created with a result set type of ResultSet.CONCUR_UPDATABLE, "
+         + "the query must select only one table, and must "
          + "select all primary keys from that table. See the JDBC 2.1 API Specification, "
          + "section 5.6 for more details.";
 
