@@ -2067,7 +2067,7 @@ public class UpdatableResultSet
         if (numKeys == 1) {
 
             int index = ((Integer) primaryKeyIndicies.get(0)).intValue();
-            byte[] keyData = thisRow[((Integer) primaryKeyIndicies.get(0)).intValue()];
+            byte[] keyData = thisRow[index];
             updater.setBytes(numFields + 1, keyData);
         } else {
 
@@ -2106,12 +2106,4 @@ public class UpdatableResultSet
         }
     }
 
-    private void resetUpdater()
-                       throws SQLException {
-        updater.clearParameters();
-
-        for (int i = 0; i < fields.length; i++) {
-            updater.setNull(i + 1, 0);
-        }
-    }
 }
