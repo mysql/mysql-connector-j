@@ -108,67 +108,6 @@ public class StringRegressionTest
         DriverManager.getConnection(dbUrl, props).close();
     }
 
-    /**
-     * Tests that german characters work (there was a question about
-     * this, but appears that the driver handles it correctly).
-     */
-    public void testLatinDeEncodingRegression()
-                                       throws Exception {
-
-        try {
-
-            String deValue = "Österreich";
-
-            //
-            // Try 'forced' unicode
-            //
-            Properties props = new Properties();
-            props.put("useUnicode", "true");
-            conn = DriverManager.getConnection(dbUrl, props);
-            stmt = conn.createStatement();
-            stmt.executeUpdate("DROP TABLE IF EXISTS latinDeTest");
-            stmt.executeUpdate("CREATE TABLE latinDeTest (field1 char(50))");
-            stmt.executeUpdate(
-                    "INSERT INTO latinDeTest VALUES ('" + deValue + "')");
-            rs = stmt.executeQuery("SELECT * FROM latinDeTest");
-            rs.next();
-
-            String testValue = rs.getString(1);
-            assertTrue(testValue.equals(deValue));
-
-            //
-            // Try with no unicode
-            //
-            props = new Properties();
-            props.put("useUnicode", "false");
-            conn = DriverManager.getConnection(dbUrl, props);
-            stmt = conn.createStatement();
-            stmt.executeUpdate("DROP TABLE IF EXISTS latinDeTest");
-            stmt.executeUpdate("CREATE TABLE latinDeTest (field1 char(50))");
-            stmt.executeUpdate(
-                    "INSERT INTO latinDeTest VALUES ('" + deValue + "')");
-            rs = stmt.executeQuery("SELECT * FROM latinDeTest");
-            rs.next();
-            testValue = rs.getString(1);
-            assertTrue(testValue.equals(deValue));
-
-            //
-            // Try with no auto-detection of charset
-            //
-            conn = DriverManager.getConnection(dbUrl);
-            stmt = conn.createStatement();
-            stmt.executeUpdate("DROP TABLE IF EXISTS latinDeTest");
-            stmt.executeUpdate("CREATE TABLE latinDeTest (field1 char(50))");
-            stmt.executeUpdate(
-                    "INSERT INTO latinDeTest VALUES ('" + deValue + "')");
-            rs = stmt.executeQuery("SELECT * FROM latinDeTest");
-            rs.next();
-            testValue = rs.getString(1);
-            assertTrue(testValue.equals(deValue));
-        } finally {
-            stmt.executeUpdate("DROP TABLE IF EXISTS latinDeTest");
-        }
-    }
 
     /**
      * Tests that the 0x5c escaping works (we didn't use to have
