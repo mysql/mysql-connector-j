@@ -18,6 +18,9 @@
  */
 package testsuite.simple;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -98,7 +101,7 @@ public class BlobTest
     }
 
     private void createTestTable()
-                          throws SQLException {
+                          throws Exception {
 
         //
         // Catch the error, the table might exist
@@ -120,7 +123,7 @@ public class BlobTest
      * @throws SQLException DOCUMENT ME!
      */
     public void testBytesInsert()
-                         throws SQLException {
+                         throws Exception {
         pstmt = conn.prepareStatement(
                         "INSERT INTO BLOBTEST(blobdata) VALUES (?)");
         pstmt.setBytes(1, TESTBLOB);
@@ -137,7 +140,7 @@ public class BlobTest
      * @throws SQLException DOCUMENT ME!
      */
     public void testByteStreamInsert()
-                              throws SQLException {
+                              throws Exception {
 
         java.io.ByteArrayInputStream bIn = new java.io.ByteArrayInputStream(
                                                    TESTBLOB);
@@ -152,69 +155,96 @@ public class BlobTest
     }
 
     private void doRetrieval()
-                      throws SQLException {
+                      throws Exception {
 
         boolean passed = false;
-        passed = false;
+        ResultSet rs = stmt.executeQuery(
+                               "SELECT blobdata from BLOBTEST LIMIT 1");
+        rs.next();
 
-        String message = "";
+        byte[] retrBytes = rs.getBytes(1);
+        passed = checkBlob(retrBytes);
+        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getBytes().", 
+                   passed);
+        retrBytes = rs.getBlob(1).getBytes(1L, (int) rs.getBlob(1).length());
+        passed = checkBlob(retrBytes);
+        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getBlob().", 
+                   passed);
 
-        try {
+        InputStream inStr = rs.getBinaryStream(1);
+        ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+        int b;
 
-            ResultSet rs = stmt.executeQuery(
-                                   "SELECT blobdata from BLOBTEST LIMIT 1");
-            rs.next();
+        while ((b = inStr.read()) != -1) {
+            bOut.write((byte) b);
+        }
 
-            byte[] retrBytes = rs.getBytes(1);
+        retrBytes = bOut.toByteArray();
+        passed = checkBlob(retrBytes);
+        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getBinaryStream().", 
+                   passed);
+        inStr = rs.getAsciiStream(1);
+        bOut = new ByteArrayOutputStream();
 
-            if (retrBytes.length == TESTBLOB.length) {
+        while ((b = inStr.read()) != -1) {
+            bOut.write((byte) b);
+        }
 
-                /*
-                   for (int i = 0; i < 20; i++) {
-                       System.out.print(retrBytes[i] + " ");
-                   }
-                   System.out.println();
-                   
-                   for (int i = 0; i < 20; i++) {
-                       System.out.print(testBlob[i] + " ");
-                   }
-                   System.out.println();
-                 */
-                for (int i = 0; i < TESTBLOB.length; i++) {
+        retrBytes = bOut.toByteArray();
+        passed = checkBlob(retrBytes);
+        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getAsciiStream().", 
+                   passed);
+        inStr = rs.getUnicodeStream(1);
+        bOut = new ByteArrayOutputStream();
 
-                    if (retrBytes[i] != TESTBLOB[i]) {
+        while ((b = inStr.read()) != -1) {
+            bOut.write((byte) b);
+        }
 
-                        for (int j = i - 10; j < i + 10; j++) {
-                            System.out.print(retrBytes[j] + " ");
-                        }
+        retrBytes = bOut.toByteArray();
+        passed = checkBlob(retrBytes);
+        assertTrue("Inserted BLOB data did not match retrieved BLOB data for getUnicodeStream().", 
+                   passed);
+    }
 
-                        System.out.println();
+    private boolean checkBlob(byte[] retrBytes) {
 
-                        for (int j = i - 10; j < i + 10; j++) {
-                            System.out.print(TESTBLOB[j] + " ");
-                        }
+        boolean passed = false;
 
-                        System.out.println();
-                        passed = false;
-                        message = "Byte pattern differed at position " + i
-                                  + " , " + retrBytes[i] + " != "
-                                  + TESTBLOB[i];
+        if (retrBytes.length == TESTBLOB.length) {
 
-                        break;
+            for (int i = 0; i < TESTBLOB.length; i++) {
+
+                if (retrBytes[i] != TESTBLOB[i]) {
+
+                    for (int j = i - 10; j < i + 10; j++) {
+                        System.out.print(retrBytes[j] + " ");
                     }
 
-                    passed = true;
-                }
-            } else {
-                passed = false;
-                message = "retrBytes.length(" + retrBytes.length
-                          + ") != testBlob.length(" + TESTBLOB.length + ")";
-            }
+                    System.out.println();
 
-            assertTrue("Inserted BLOB data did not match retrieved BLOB data."
-                       + message, passed);
-        } catch (SQLException sqlEx) {
-            sqlEx.printStackTrace();
+                    for (int j = i - 10; j < i + 10; j++) {
+                        System.out.print(TESTBLOB[j] + " ");
+                    }
+
+                    System.out.println();
+                    passed = false;
+                    System.out.println(
+                            "Byte pattern differed at position " + i + " , "
+                            + retrBytes[i] + " != " + TESTBLOB[i]);
+
+                    break;
+                }
+
+                passed = true;
+            }
+        } else {
+            passed = false;
+            System.out.println(
+                    "retrBytes.length(" + retrBytes.length
+                    + ") != testBlob.length(" + TESTBLOB.length + ")");
         }
+
+        return passed;
     }
 }
