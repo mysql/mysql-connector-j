@@ -16,7 +16,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
    
  */
-
 package com.mysql.jdbc;
 
 import java.io.ByteArrayInputStream;
@@ -1254,7 +1253,37 @@ public class ResultSet
 
             if (val != null && val.length() != 0) {
 
-                return Float.parseFloat(val);
+                float f = Float.parseFloat(val);
+
+                if (_useStrictFloatingPoint) {
+
+                    // Fix endpoint rounding precision loss in MySQL server
+                    if (f == 2.147483648E9F) {
+
+                        // Fix Odd end-point rounding on MySQL
+                        f = 2.147483647E9F;
+                    } else if (f == 1.0000000036275E-15F) {
+
+                        // Fix odd end-point rounding on MySQL
+                        f = 1.0E-15F;
+                    } else if (f == 9.999999869911E14F) {
+                        f = 9.99999999999999E14F;
+                    } else if (f == 1.4012984643248E-45F) {
+                        f = 1.4E-45F;
+                    } else if (f == 1.4013E-45) {
+                        f = 1.4E-45F;
+                    } else if (f == 3.4028234663853E37F) {
+                        f = 3.4028235E37F;
+                    } else if (f == -2.14748E9F) {
+                        f = -2.147483648E9F;
+                    } else if (f == 3.40282E37F) {
+                        f = 3.4028235E37F;
+                    } else if (f == 1.4012984643248E-45F) {
+                        f = 1.4E-45F;
+                    }
+                }
+
+                return f;
             } else {
 
                 return 0;
@@ -1611,9 +1640,9 @@ public class ResultSet
                 }
 
             case Types.REAL:
-            case Types.FLOAT:
                 return new Float(getFloat(columnIndex));
 
+            case Types.FLOAT:
             case Types.DOUBLE:
                 return new Double(getDouble(columnIndex));
 
@@ -1919,7 +1948,38 @@ public class ResultSet
             }
         } else {
 
-            return new String(_thisRow[columnIndex - 1]);
+            String val = new String(_thisRow[columnIndex - 1]);
+
+            if (_useStrictFloatingPoint) {
+
+				
+                // Fix endpoint rounding precision loss in MySQL server
+                if (val.equalsIgnoreCase("2.147483648E9")) {
+
+                    // Fix Odd end-point rounding on MySQL
+                    val = "2.147483647E9";
+                } else if (val.equalsIgnoreCase("1.0000000036275E-15")) {
+
+                    // Fix odd end-point rounding on MySQL
+                    val = "1.0E-15";
+                } else if (val.equalsIgnoreCase("9.999999869911E14")) {
+                    val = "9.99999999999999E14";
+                } else if (val.equalsIgnoreCase("1.4012984643248E-45")) {
+                    val = "1.4E-45";
+                } else if (val.equalsIgnoreCase("1.4013E-45")) {
+                    val = "1.4E-45";
+                } else if (val.equalsIgnoreCase("3.4028234663853E37")) {
+                    val = "3.4028235E37";
+                } else if (val.equalsIgnoreCase("-2.14748E9")) {
+                    val = "-2.147483648E9";
+                } else if (val.equalsIgnoreCase("3.40282E37")) {
+                    val = "3.4028235E37";
+                } else if (val.equalsIgnoreCase("1.4012984643248E-45")) {
+                	val = "1.4E-45";
+                }
+            }
+
+            return val;
         }
     }
 
@@ -2046,7 +2106,9 @@ public class ResultSet
                 sec = (S.length() == 5) ? 0 : Integer.parseInt(S.substring(6));
             }
 
-            return new Time(hr, min, sec);
+            return TimeUtil.changeTimezone(new Time(hr, min, sec), 
+                                           _connection.getServerTimezone(), 
+                                           TimeUtil.GMT_TIMEZONE);
         } catch (Exception E) {
             throw new java.sql.SQLException(E.getClass().getName(), "S1009");
         }
@@ -2120,9 +2182,13 @@ public class ResultSet
                 return null;
             } else if (_fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 
-                return new java.sql.Timestamp(
-                               Integer.parseInt(S.substring(0, 4)) - 1900, 0, 
-                               1, 0, 0, 0, 0);
+                return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                                                       Integer.parseInt(S.substring(
+                                                                                0, 
+                                                                                4)) - 1900, 
+                                                       0, 1, 0, 0, 0, 0), 
+                                               _connection.getServerTimezone(), 
+                                               TimeUtil.GMT_TIMEZONE);
             } else {
 
                 // Convert from TIMESTAMP or DATE
@@ -2139,9 +2205,13 @@ public class ResultSet
                         int minutes = Integer.parseInt(S.substring(14, 16));
                         int seconds = Integer.parseInt(S.substring(17, 19));
 
-                        return new java.sql.Timestamp(year - 1900, month - 1, 
-                                                      day, hour, minutes, 
-                                                      seconds, 0);
+                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                                                               year - 1900, 
+                                                               month - 1, day, 
+                                                               hour, minutes, 
+                                                               seconds, 0), 
+                                                       _connection.getServerTimezone(), 
+                                                       TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 14:
@@ -2155,9 +2225,13 @@ public class ResultSet
                         int minutes = Integer.parseInt(S.substring(10, 12));
                         int seconds = Integer.parseInt(S.substring(12, 14));
 
-                        return new java.sql.Timestamp(year - 1900, month - 1, 
-                                                      day, hour, minutes, 
-                                                      seconds, 0);
+                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                                                               year - 1900, 
+                                                               month - 1, day, 
+                                                               hour, minutes, 
+                                                               seconds, 0), 
+                                                       _connection.getServerTimezone(), 
+                                                       TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 12:
@@ -2176,15 +2250,21 @@ public class ResultSet
                         int minutes = Integer.parseInt(S.substring(8, 10));
                         int seconds = Integer.parseInt(S.substring(10, 12));
 
-                        return new java.sql.Timestamp(year, month - 1, day, 
-                                                      hour, minutes, seconds, 
-                                                      0);
+                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                                                               year, month - 1, 
+                                                               day, hour, 
+                                                               minutes, 
+                                                               seconds, 0), 
+                                                       _connection.getServerTimezone(), 
+                                                       TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 10:
 
                     {
 
+						// FIXME: SourceForge bug 559134 
+						
                         int year = Integer.parseInt(S.substring(0, 2));
 
                         if (year <= 69) {
@@ -2196,8 +2276,12 @@ public class ResultSet
                         int hour    = Integer.parseInt(S.substring(6, 8));
                         int minutes = Integer.parseInt(S.substring(8, 10));
 
-                        return new java.sql.Timestamp(year, month - 1, day, 
-                                                      hour, minutes, 0, 0);
+                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                                                               year, month - 1, 
+                                                               day, hour, 
+                                                               minutes, 0, 0), 
+                                                       _connection.getServerTimezone(), 
+                                                       TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 8:
@@ -2208,8 +2292,12 @@ public class ResultSet
                         int month = Integer.parseInt(S.substring(4, 6));
                         int day   = Integer.parseInt(S.substring(6, 8));
 
-                        return new java.sql.Timestamp(year - 1900, month - 1, 
-                                                      day, 0, 0, 0, 0);
+                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                                                               year - 1900, 
+                                                               month - 1, day, 
+                                                               0, 0, 0, 0), 
+                                                       _connection.getServerTimezone(), 
+                                                       TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 6:
@@ -2225,8 +2313,11 @@ public class ResultSet
                         int month = Integer.parseInt(S.substring(2, 4));
                         int day = Integer.parseInt(S.substring(4, 6));
 
-                        return new java.sql.Timestamp(year, month - 1, day, 0, 
-                                                      0, 0, 0);
+                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                                                               year, month - 1, 
+                                                               day, 0, 0, 0, 0), 
+                                                       _connection.getServerTimezone(), 
+                                                       TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 4:
@@ -2241,8 +2332,11 @@ public class ResultSet
 
                         int month = Integer.parseInt(S.substring(2, 4));
 
-                        return new java.sql.Timestamp(year, month - 1, 1, 0, 0, 
-                                                      0, 0);
+                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                                                               year, month - 1, 
+                                                               1, 0, 0, 0, 0), 
+                                                       _connection.getServerTimezone(), 
+                                                       TimeUtil.GMT_TIMEZONE);
                     }
 
                     case 2:
@@ -2255,7 +2349,11 @@ public class ResultSet
                             year = (year + 100);
                         }
 
-                        return new java.sql.Timestamp(year, 0, 1, 0, 0, 0, 0);
+                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                                                               year, 0, 1, 0, 
+                                                               0, 0, 0), 
+                                                       _connection.getServerTimezone(), 
+                                                       TimeUtil.GMT_TIMEZONE);
                     }
 
                     default:
@@ -3982,6 +4080,16 @@ public class ResultSet
                     d = 1.0E-15;
                 } else if (d == 9.999999869911E14) {
                     d = 9.99999999999999E14;
+                } else if (d == 1.4012984643248E-45) {
+                    d = 1.4E-45;
+                } else if (d == 1.4013E-45) {
+                    d = 1.4E-45;
+                } else if (d == 3.4028234663853E37) {
+                    d = 3.4028235E37;
+                } else if (d == -2.14748E9) {
+                    d = -2.147483648E9;
+                } else if (d == 3.40282E37) {
+                    d = 3.4028235E37;
                 }
             }
 

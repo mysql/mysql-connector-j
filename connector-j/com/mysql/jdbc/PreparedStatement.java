@@ -44,6 +44,7 @@ import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 import sun.io.CharToByteConverter;
 
@@ -74,10 +75,10 @@ public class PreparedStatement
 
     //~ Instance/static variables .............................................
 
-    protected static SimpleDateFormat _TSDF       = new SimpleDateFormat(
-                                                            "yyyy-MM-dd HH:mm:ss");
+    protected static SimpleDateFormat _TSDF;      
     static boolean                    timezoneSet = false;
     static final Object               tzMutex     = new Object();
+    protected static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
 
     /**
      * Formatter for double - Steve Ferguson
@@ -118,6 +119,15 @@ public class PreparedStatement
                       throws java.sql.SQLException
     {
         super(Conn, Catalog);
+        
+        _TSDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        
+        //if (_conn.useTimezone())
+        //{
+        	//_TSDF.setTimeZone(_conn.getServerTimezone());
+        //	_TSDF.setTimeZone(TimeZone.getTimeZone("GMT"));
+        //}
+        
         _useTrueBoolean = _conn.getIO().versionMeetsMinimum(3, 21, 23);
         _firstChar      = Character.toUpperCase(Sql.charAt(0));
         _hasLimitClause = (Sql.toUpperCase().indexOf("LIMIT") != -1);
@@ -412,14 +422,19 @@ public class PreparedStatement
 
             if (reader == null) {
                 setNull(parameterIndex, Types.LONGVARCHAR);
-            } else {
-
-                char[]               c   = new char[length];
-                ByteArrayInputStream bos;
-                reader.read(c);
-                bos = new ByteArrayInputStream(CharToByteConverter.getConverter(
-                                                       "UTF-8").convertAll(c));
-                setAsciiStream(parameterIndex, bos, bos.available());
+            } else {	
+            	StringBuffer buf = new StringBuffer(length);
+            	
+                char[]               c   = new char[4096];
+                
+                int len = 0;
+                
+                while ((len = reader.read(c)) != -1)
+                {
+                	buf.append(c, 0, len);
+                }
+                
+                setString(parameterIndex, buf.toString());
             }
         } catch (java.io.IOException ioEx) {
             throw new SQLException(ioEx.toString(), "S1000");
@@ -1059,6 +1074,13 @@ public class PreparedStatement
         if (X == null) {
             setNull(parameterIndex, java.sql.Types.TIME);
         } else {
+        	
+        	//if (_conn.useTimezone())
+           	//{
+        	//	
+        	//	X = TimeUtil.changeTimezone(X, TimeUtil.GMT_TIMEZONE, _conn.getServerTimezone());       		
+           	//}
+           	
             setInternal(parameterIndex, "'" + X.toString() + "'");
         }
     }
@@ -1094,6 +1116,14 @@ public class PreparedStatement
         } else {
 
             String TimestampString = null;
+            
+            
+           	//if (_conn.useTimezone())
+           	//{
+        	//	
+        	//	X = TimeUtil.changeTimezone(X, TimeUtil.GMT_TIMEZONE, _conn.getServerTimezone());       		
+           	//}
+           	
 
             synchronized (_TSDF) {
                 TimestampString = "'" + _TSDF.format(X) + "'";

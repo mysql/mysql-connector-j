@@ -41,6 +41,7 @@ import java.util.Calendar;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 
 /**
  * A Connection represents a session with a specific database.  Within the
@@ -223,6 +224,18 @@ public class Connection
      * The user we're connected as
      */
     private String _user = null;
+    
+    /**
+     * Should we use timezone information?
+     */
+    
+    private boolean _useTimezone = false;
+    
+    /**
+     * The timezone of the server
+     */
+    
+    private TimeZone _serverTimezone = null;
 
     /**
      * You can call this method to try to change the transaction
@@ -981,6 +994,28 @@ public class Connection
                                                (String)_serverVariables.get(
                                                        "net_buffer_length"));
                 }
+               
+               /*
+                String serverTimezoneStr = (String)_serverVariables.get("timezone");
+                
+                if (serverTimezoneStr != null && serverTimezoneStr.trim().length() > 0)
+                {
+                	try
+                	{
+                		serverTimezoneStr = TimeUtil.getCanoncialTimezone(serverTimezoneStr);
+                				
+                		if (serverTimezoneStr != null)
+                		{
+                			_serverTimezone = TimeZone.getTimeZone(serverTimezoneStr);
+                		
+                			_useTimezone = true;
+                		}
+                	}
+                	catch (Exception ex) { // Bail-out, we can't use the timezone 
+                	}
+                }
+                */
+                	
 
                 checkTransactionIsolationLevel();
                 checkServerEncoding();
@@ -2838,6 +2873,16 @@ public class Connection
                         throws java.sql.SQLException
         {
             throw new SQLException("Not supported");
-        }
+        } 
+    }
+    
+    public boolean useTimezone()
+    {
+    	return _useTimezone;
+    }
+    
+    public TimeZone getServerTimezone()
+    {
+    	return _serverTimezone;
     }
 }
