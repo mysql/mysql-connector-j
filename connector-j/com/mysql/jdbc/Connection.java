@@ -2297,8 +2297,8 @@ public class Connection
         if (this.useFastPing) {
             this.io.sendCommand(MysqlDefs.PING, null, null);
         } else {
-            this.io.sqlQuery(this, PING_COMMAND, MysqlDefs.MAX_ROWS, 
-                             java.sql.ResultSet.CONCUR_READ_ONLY, false, this.database);
+            this.io.sqlQuery(PING_COMMAND, MysqlDefs.MAX_ROWS, 
+                             this.encoding, this, java.sql.ResultSet.CONCUR_READ_ONLY, false, this.database);
         }
     }
 

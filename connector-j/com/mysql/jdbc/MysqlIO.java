@@ -958,9 +958,6 @@ public class MysqlIO {
             this.sendPacket.writeStringNoNull(query);
         }
 
-        // Send query command and sql query string
-        clearAllReceive();
-
         Buffer resultPacket = sendCommand(MysqlDefs.COM_PREPARE, null, 
                                           this.sendPacket);
         resultPacket.setPosition(resultPacket.getPosition() - 1);
@@ -1004,8 +1001,7 @@ public class MysqlIO {
         }
 
         // Send query command and sql query string
-        clearAllReceive();
-
+        
         Buffer resultPacket = sendCommand(MysqlDefs.COM_EXECUTE, null, 
                                           paramPacket);
 
@@ -1112,105 +1108,6 @@ public class MysqlIO {
                               streamResults, catalog);
     }
 
-    final ResultSet sqlQuery(String query, int maxRows, String encoding, 
-                             int resultSetType, boolean streamResults, String catalog)
-                      throws Exception {
-
-        return sqlQuery(query, maxRows, encoding, null, resultSetType, 
-                        streamResults, catalog);
-    }
-
-    final ResultSet sqlQuery(Connection conn, String query, int maxRows, int resultSetType, 
-                             boolean streamResults, String catalog)
-                      throws Exception {
-
-        StringBuffer profileMsgBuf = null; // used if profiling
-        long queryStartTime = 0;
-
-        if (this.profileSql) {
-            profileMsgBuf = new StringBuffer();
-            queryStartTime = System.currentTimeMillis();
-            profileMsgBuf.append("Query\t\"");
-            profileMsgBuf.append(query);
-            profileMsgBuf.append("\"\texecution time:\t");
-        }
-
-        // Send query command and sql query string
-        clearAllReceive();
-
-        Buffer packet = sendCommand(MysqlDefs.QUERY, query, null); //, (byte)0);
-
-        if (this.profileSql) {
-
-            long executionTime = System.currentTimeMillis() - queryStartTime;
-            profileMsgBuf.append(executionTime);
-            profileMsgBuf.append("\t");
-        }
-
-        packet.setPosition(packet.getPosition() - 1);
-
-        long columnCount = packet.readLength();
-
-        if (Driver.TRACE) {
-            Debug.msg(this, "Column count: " + columnCount);
-        }
-
-        if (columnCount == 0) {
-
-            long updateCount = -1;
-            long updateID = -1;
-
-            try {
-
-                if (this.useNewUpdateCounts) {
-                    updateCount = packet.newReadLength();
-                    updateID = packet.newReadLength();
-                } else {
-                    updateCount = (long) packet.readLength();
-                    updateID = (long) packet.readLength();
-                }
-            } catch (Exception ex) {
-                throw new java.sql.SQLException(SQLError.get("S1000") + ": "
-                                                + ex.getClass().getName(), 
-                                                "S1000", -1);
-            }
-
-            if (Driver.TRACE) {
-                Debug.msg(this, "Update Count = " + updateCount);
-            }
-
-            if (this.profileSql) {
-                System.err.println(profileMsgBuf.toString());
-            }
-
-            return buildResultSetWithUpdates(updateCount, updateID, null);
-        } else {
-
-            long fetchStartTime = 0;
-
-            if (this.profileSql) {
-                fetchStartTime = System.currentTimeMillis();
-            }
-
-            com.mysql.jdbc.ResultSet results = getResultSet(conn, columnCount, 
-                                                            maxRows, 
-                                                            resultSetType, 
-                                                            streamResults,
-                                                            catalog);
-
-            if (this.profileSql) {
-
-                long fetchElapsedTime = System.currentTimeMillis()
-                                        - fetchStartTime;
-                profileMsgBuf.append("result set fetch time:\t");
-                profileMsgBuf.append(fetchElapsedTime);
-                System.err.println(profileMsgBuf.toString());
-            }
-
-            return results;
-        }
-    }
-
     /**
      * Send a query stored in a packet directly to the server.
      */
@@ -1239,8 +1136,7 @@ public class MysqlIO {
         }
 
         // Send query command and sql query string
-        clearAllReceive();
-
+       
         Buffer resultPacket = sendCommand(MysqlDefs.QUERY, null, queryPacket);
 
         if (this.profileSql) {
