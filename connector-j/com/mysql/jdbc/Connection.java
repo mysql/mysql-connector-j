@@ -1505,7 +1505,8 @@ public class Connection implements java.sql.Connection {
                             try {
                                 this.io.forceClose();
                             } catch (Exception ex) {
-                                // do nothing
+                                // do nothing, can't recover that i/o
+                                
                             }
                         }
 

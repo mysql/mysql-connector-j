@@ -1871,8 +1871,5 @@ public class MysqlIO {
     
     private int alignPacketSize(int a, int l) {
         return    (((a) + (l) - 1) & ~((l) - 1));
-    }
-    
-    private static final String FALSE_SCRAMBLE = "xxxxxxxx";
-    
+    } 
 }
