@@ -289,7 +289,7 @@ public class ForeignKeyUtil {
                 rs = stmt.executeQuery(query);
 
                 while (rs.next()) {
-                    extractForeignKeyForTable(rows, rs);
+                    extractForeignKeyForTable(rows, rs, catalog);
                 }
             }
         } finally {
@@ -314,7 +314,8 @@ public class ForeignKeyUtil {
      * Extracts foreign key info for one table.
      */
     public static List extractForeignKeyForTable(ArrayList rows, 
-                                                 java.sql.ResultSet rs)
+                                                 java.sql.ResultSet rs,
+                                                 String catalog)
                                           throws SQLException {
 
         byte[][] row = new byte[3][];
@@ -363,8 +364,21 @@ public class ForeignKeyUtil {
                 String referColumnNamesString = keyTokens.nextToken();
                 referSchemaTable.nextToken(); //discard the REFERENCES token
 
-                String referCatalog = referSchemaTable.nextToken();
-                String referTable = referSchemaTable.nextToken();
+                int numTokensLeft = referSchemaTable.countTokens();
+                
+                String referCatalog = null;
+                String referTable = null;
+                
+                
+                if (numTokensLeft == 2) {
+                    // some versions of MySQL don't report the database name
+                    referCatalog = referSchemaTable.nextToken();
+                    referTable = referSchemaTable.nextToken();
+                } else {
+                    referTable = referSchemaTable.nextToken();
+                    referCatalog = catalog;
+                }
+                
 
                 if (!firstTime) {
                     commentBuf.append("; ");
