@@ -84,25 +84,25 @@ import java.sql.*;
 
 public abstract class ResultSet
 {
-	protected Vector Rows; // The results
-	protected Field[] Fields; // The fields
+	protected Vector _rows; // The results
+	protected Field[] _fields; // The fields
 
-	protected int currentRow = -1; // Cursor to current row;
-	protected byte[][] This_Row; // Values for current row
-	protected org.gjt.mm.mysql.Connection Conn; // The connection that created us
-	protected java.sql.SQLWarning Warnings = null; // The warning chain
-	protected boolean wasNullFlag = false; // for wasNull()
-	protected boolean reallyResult = false; // for executeUpdate vs. execute
+	protected int _currentRow = -1; // Cursor to current row;
+	protected byte[][] _thisRow; // Values for current row
+	protected org.gjt.mm.mysql.Connection _connection; // The connection that created us
+	protected java.sql.SQLWarning _warnings = null; // The warning chain
+	protected boolean _wasNullFlag = false; // for wasNull()
+	protected boolean _reallyResult = false; // for executeUpdate vs. execute
 
-	protected Hashtable columnNameToIndex = null;
-	protected Hashtable fullColumnNameToIndex = null;
+	protected Hashtable _columnNameToIndex = null;
+	protected Hashtable _fullColumnNameToIndex = null;
 
-	protected int resultSetType = 0;
-	protected int resultSetConcurrency = 0;
+	protected int _resultSetType = 0;
+	protected int _resultSetConcurrency = 0;
 
-	protected org.gjt.mm.mysql.Statement owningStatement;
+	protected org.gjt.mm.mysql.Statement _owningStatement;
 
-	protected boolean closed = false;
+	protected boolean _closed = false;
 
 	// These are longs for 
 	// recent versions of the MySQL server.
@@ -112,8 +112,8 @@ public abstract class ResultSet
 	// in their entirety.
 	//
 
-	protected long updateID = -1; // for AUTO_INCREMENT
-	protected long updateCount; // How many rows did we update? 
+	protected long _updateID = -1; // for AUTO_INCREMENT
+	protected long _updateCount; // How many rows did we update? 
 
 	// For getTimestamp()
 
@@ -148,18 +148,18 @@ public abstract class ResultSet
 		if (!reallyResult())
 			throw new java.sql.SQLException("ResultSet is from UPDATE. No Data", "S1000");
 
-		if (Rows.size() == 0)
+		if (_rows.size() == 0)
 		{
 			b = false;
 		}
 		else
 		{
-			if (currentRow + 1 >= Rows.size())
+			if (_currentRow + 1 >= _rows.size())
 			{
 
 				// force scroll past end
 
-				currentRow = Rows.size();
+				_currentRow = _rows.size();
 
 				b = false;
 
@@ -167,8 +167,8 @@ public abstract class ResultSet
 			else
 			{
 				clearWarnings();
-				currentRow = currentRow + 1;
-				This_Row = (byte[][]) Rows.elementAt(currentRow);
+				_currentRow = _currentRow + 1;
+				_thisRow = (byte[][]) _rows.elementAt(_currentRow);
 				b = true;
 			}
 		}
@@ -199,10 +199,10 @@ public abstract class ResultSet
 
 	public boolean prev() throws java.sql.SQLException
 	{
-		if (currentRow - 1 >= 0)
+		if (_currentRow - 1 >= 0)
 		{
-			currentRow--;
-			This_Row = (byte[][]) Rows.elementAt(currentRow);
+			_currentRow--;
+			_thisRow = (byte[][]) _rows.elementAt(_currentRow);
 			return true;
 		}
 		else
@@ -228,12 +228,12 @@ public abstract class ResultSet
 
 	public void close() throws java.sql.SQLException
 	{
-		if (Rows != null)
+		if (_rows != null)
 		{
-			Rows.removeAllElements();
+			_rows.removeAllElements();
 		}
 
-		closed = true;
+		_closed = true;
 	}
 
 	/**
@@ -248,7 +248,7 @@ public abstract class ResultSet
 
 	public boolean wasNull() throws java.sql.SQLException
 	{
-		return wasNullFlag;
+		return _wasNullFlag;
 	}
 
 	/**
@@ -263,62 +263,62 @@ public abstract class ResultSet
 	{
 		checkRowPos();
 
-		if (Fields == null)
+		if (_fields == null)
 		{
 			throw new java.sql.SQLException(
 				"Query generated no fields for ResultSet",
 				"S1002");
 		}
 
-		if (columnIndex < 1 || columnIndex > Fields.length)
+		if (columnIndex < 1 || columnIndex > _fields.length)
 			throw new java.sql.SQLException(
-				"Column Index out of range ( " + columnIndex + " > " + Fields.length + ").",
+				"Column Index out of range ( " + columnIndex + " > " + _fields.length + ").",
 				"S1002");
 
 		try
 		{
-			if (This_Row[columnIndex - 1] == null)
+			if (_thisRow[columnIndex - 1] == null)
 			{
-				wasNullFlag = true;
+				_wasNullFlag = true;
 			}
 			else
 			{
-				wasNullFlag = false;
+				_wasNullFlag = false;
 			}
 		}
 		catch (NullPointerException E)
 		{
-			wasNullFlag = true;
+			_wasNullFlag = true;
 		}
 
-		if (wasNullFlag)
+		if (_wasNullFlag)
 			return null;
 
-		if (Conn != null && Conn.useUnicode())
+		if (_connection != null && _connection.useUnicode())
 		{
 			try
 			{
-				String Encoding = Conn.getEncoding();
+				String Encoding = _connection.getEncoding();
 
 				if (Encoding == null)
 				{
-					return new String(This_Row[columnIndex - 1]);
+					return new String(_thisRow[columnIndex - 1]);
 				}
 				else
 				{
-					return new String(This_Row[columnIndex - 1], Conn.getEncoding());
+					return new String(_thisRow[columnIndex - 1], _connection.getEncoding());
 				}
 			}
 			catch (java.io.UnsupportedEncodingException E)
 			{
 				throw new SQLException(
-					"Unsupported character encoding '" + Conn.getEncoding() + "'.",
+					"Unsupported character encoding '" + _connection.getEncoding() + "'.",
 					"0S100");
 			}
 		}
 		else 
 		{
-			return new String(This_Row[columnIndex - 1]);
+			return new String(_thisRow[columnIndex - 1]);
 		}
 
 	}
@@ -355,33 +355,33 @@ public abstract class ResultSet
 	{
 		checkRowPos();
 
-		if (columnIndex < 1 || columnIndex > Fields.length)
+		if (columnIndex < 1 || columnIndex > _fields.length)
 			throw new java.sql.SQLException(
-				"Column Index out of range ( " + columnIndex + " > " + Fields.length + ").",
+				"Column Index out of range ( " + columnIndex + " > " + _fields.length + ").",
 				"S1002");
 
 		try
 		{
-			if (This_Row[columnIndex - 1] == null)
+			if (_thisRow[columnIndex - 1] == null)
 			{
-				wasNullFlag = true;
+				_wasNullFlag = true;
 			}
 			else
 			{
-				wasNullFlag = false;
+				_wasNullFlag = false;
 			}
 		}
 		catch (NullPointerException E)
 		{
-			wasNullFlag = true;
+			_wasNullFlag = true;
 		}
 
-		if (wasNullFlag)
+		if (_wasNullFlag)
 		{
 			return 0;
 		}
 
-		Field F = Fields[columnIndex - 1];
+		Field F = _fields[columnIndex - 1];
 
 		switch (F.getMysqlType())
 		{
@@ -411,7 +411,7 @@ public abstract class ResultSet
 						"S1009");
 				}
 			default :
-				return This_Row[columnIndex - 1][0];
+				return _thisRow[columnIndex - 1][0];
 		}
 	}
 
@@ -453,52 +453,52 @@ public abstract class ResultSet
 	{
 		checkRowPos();
 
-		if (Fields == null)
+		if (_fields == null)
 		{
 			throw new java.sql.SQLException(
 				"Query generated no fields for ResultSet",
 				"S1002");
 		}
 
-		if (columnIndex < 1 || columnIndex > Fields.length)
+		if (columnIndex < 1 || columnIndex > _fields.length)
 			throw new java.sql.SQLException(
-				"Column Index out of range ( " + columnIndex + " > " + Fields.length + ").",
+				"Column Index out of range ( " + columnIndex + " > " + _fields.length + ").",
 				"S1002");
 
 		try
 		{
-			if (This_Row[columnIndex - 1] == null)
+			if (_thisRow[columnIndex - 1] == null)
 			{
-				wasNullFlag = true;
+				_wasNullFlag = true;
 			}
 			else
 			{
-				wasNullFlag = false;
+				_wasNullFlag = false;
 			}
 		}
 		catch (NullPointerException E)
 		{
-			wasNullFlag = true;
+			_wasNullFlag = true;
 		}
 
-		if (wasNullFlag)
+		if (_wasNullFlag)
 		{
 			return 0;
 		}
 
 		try
 		{
-			return getLong(This_Row[columnIndex - 1]);
+			return getLong(_thisRow[columnIndex - 1]);
 		}
 		catch (NumberFormatException E)
 		{
 			throw new java.sql.SQLException(
 				"Bad format for number '"
-					+ new String(This_Row[columnIndex - 1])
+					+ new String(_thisRow[columnIndex - 1])
 					+ "' in column "
 					+ columnIndex
 					+ "("
-					+ Fields[columnIndex
+					+ _fields[columnIndex
 					- 1]
 					+ ").",
 				"S1009");
@@ -530,52 +530,52 @@ public abstract class ResultSet
 	{
 		checkRowPos();
 
-		if (Fields == null)
+		if (_fields == null)
 		{
 			throw new java.sql.SQLException(
 				"Query generated no fields for ResultSet",
 				"S1002");
 		}
 
-		if (columnIndex < 1 || columnIndex > Fields.length)
+		if (columnIndex < 1 || columnIndex > _fields.length)
 			throw new java.sql.SQLException(
-				"Column Index out of range ( " + columnIndex + " > " + Fields.length + ").",
+				"Column Index out of range ( " + columnIndex + " > " + _fields.length + ").",
 				"S1002");
 
 		try
 		{
-			if (This_Row[columnIndex - 1] == null)
+			if (_thisRow[columnIndex - 1] == null)
 			{
-				wasNullFlag = true;
+				_wasNullFlag = true;
 			}
 			else
 			{
-				wasNullFlag = false;
+				_wasNullFlag = false;
 			}
 		}
 		catch (NullPointerException E)
 		{
-			wasNullFlag = true;
+			_wasNullFlag = true;
 		}
 
-		if (wasNullFlag)
+		if (_wasNullFlag)
 		{
 			return 0;
 		}
 
 		try
 		{
-			return getDouble(This_Row[columnIndex - 1]);
+			return getDouble(_thisRow[columnIndex - 1]);
 		}
 		catch (NumberFormatException E)
 		{
 			throw new java.sql.SQLException(
 				"Bad format for number '"
-					+ new String(This_Row[columnIndex - 1])
+					+ new String(_thisRow[columnIndex - 1])
 					+ "' in column "
 					+ columnIndex
 					+ "("
-					+ Fields[columnIndex
+					+ _fields[columnIndex
 					- 1]
 					+ ").",
 				"S1009");
@@ -617,7 +617,7 @@ public abstract class ResultSet
 						+ "' in column "
 						+ columnIndex
 						+ "("
-						+ Fields[columnIndex
+						+ _fields[columnIndex
 						- 1]
 						+ ").",
 					"S1009");
@@ -634,7 +634,7 @@ public abstract class ResultSet
 						+ "' in column "
 						+ columnIndex
 						+ "("
-						+ Fields[columnIndex
+						+ _fields[columnIndex
 						- 1]
 						+ ").",
 					"S1009");
@@ -659,34 +659,34 @@ public abstract class ResultSet
 	{
 		checkRowPos();
 
-		if (columnIndex < 1 || columnIndex > Fields.length)
+		if (columnIndex < 1 || columnIndex > _fields.length)
 			throw new java.sql.SQLException(
-				"Column Index out of range ( " + columnIndex + " > " + Fields.length + ").",
+				"Column Index out of range ( " + columnIndex + " > " + _fields.length + ").",
 				"S1002");
 
 		try
 		{
-			if (This_Row[columnIndex - 1] == null)
+			if (_thisRow[columnIndex - 1] == null)
 			{
-				wasNullFlag = true;
+				_wasNullFlag = true;
 			}
 			else
 			{
-				wasNullFlag = false;
+				_wasNullFlag = false;
 			}
 		}
 		catch (NullPointerException E)
 		{
-			wasNullFlag = true;
+			_wasNullFlag = true;
 		}
 
-		if (wasNullFlag)
+		if (_wasNullFlag)
 		{
 			return null;
 		}
 		else
 		{
-			return This_Row[columnIndex - 1];
+			return _thisRow[columnIndex - 1];
 		}
 	}
 
@@ -714,12 +714,12 @@ public abstract class ResultSet
 			}
 			else if (S.equals("0000-00-00"))
 			{
-				wasNullFlag = true;
+				_wasNullFlag = true;
 
 				return null;
 			}
 			else if (
-				Fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP)
+				_fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP)
 			{
 				// Convert from TIMESTAMP
 				switch (S.length())
@@ -774,13 +774,13 @@ public abstract class ResultSet
 								+ "' in column "
 								+ columnIndex
 								+ "("
-								+ Fields[columnIndex
+								+ _fields[columnIndex
 								- 1]
 								+ ").",
 							"S1009");
 				} /* endswitch */
 			}
-			else if (Fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR)
+			else if (_fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR)
 			{
 				Y = new Integer(S.substring(0, 4));
 
@@ -796,7 +796,7 @@ public abstract class ResultSet
 							+ "' in column "
 							+ columnIndex
 							+ "("
-							+ Fields[columnIndex
+							+ _fields[columnIndex
 							- 1]
 							+ ").",
 						"S1009");
@@ -845,12 +845,12 @@ public abstract class ResultSet
 			}
 			else if (S.equals("0000-00-00"))
 			{
-				wasNullFlag = true;
+				_wasNullFlag = true;
 
 				return null;
 			}
 
-			Field F = Fields[columnIndex - 1];
+			Field F = _fields[columnIndex - 1];
 
 			if (F.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP)
 			{
@@ -878,7 +878,7 @@ public abstract class ResultSet
 							"Timestamp too small to convert to Time value in column "
 								+ columnIndex
 								+ "("
-								+ Fields[columnIndex
+								+ _fields[columnIndex
 								- 1]
 								+ ").",
 							"S1009");
@@ -889,17 +889,17 @@ public abstract class ResultSet
 						"Precision lost converting TIMESTAMP to Time with getTime() on column "
 							+ columnIndex
 							+ "("
-							+ Fields[columnIndex
+							+ _fields[columnIndex
 							- 1]
 							+ ").");
 
-				if (Warnings == null)
+				if (_warnings == null)
 				{
-					Warnings = W;
+					_warnings = W;
 				}
 				else
 				{
-					Warnings.setNextWarning(W);
+					_warnings.setNextWarning(W);
 				}
 			}
 			else if (F.getMysqlType() == MysqlDefs.FIELD_TYPE_DATETIME)
@@ -914,17 +914,17 @@ public abstract class ResultSet
 						"Precision lost converting DATETIME to Time with getTime() on column "
 							+ columnIndex
 							+ "("
-							+ Fields[columnIndex
+							+ _fields[columnIndex
 							- 1]
 							+ ").");
 
-				if (Warnings == null)
+				if (_warnings == null)
 				{
-					Warnings = W;
+					_warnings = W;
 				}
 				else
 				{
-					Warnings.setNextWarning(W);
+					_warnings.setNextWarning(W);
 				}
 			}
 			else
@@ -939,7 +939,7 @@ public abstract class ResultSet
 							+ "' in column "
 							+ columnIndex
 							+ "("
-							+ Fields[columnIndex
+							+ _fields[columnIndex
 							- 1]
 							+ ").",
 						"S1009");
@@ -978,11 +978,11 @@ public abstract class ResultSet
 			}
 			else if (S.equals("0000-00-00"))
 			{
-				wasNullFlag = true;
+				_wasNullFlag = true;
 
 				return null;
 			}
-			else if (Fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR)
+			else if (_fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR)
 			{
 				return new java.sql.Timestamp(Integer.parseInt(S.substring(0, 4)) - 1900, 0, 1, 0, 0, 0, 0);
 			}
@@ -1099,7 +1099,7 @@ public abstract class ResultSet
 								+ "' in column "
 								+ columnIndex
 								+ "("
-								+ Fields[columnIndex
+								+ _fields[columnIndex
 								- 1]
 								+ ").",
 							"S1009");
@@ -1309,7 +1309,7 @@ public abstract class ResultSet
 
 	public java.sql.SQLWarning getWarnings() throws java.sql.SQLException
 	{
-		return Warnings;
+		return _warnings;
 	}
 
 	/**
@@ -1321,7 +1321,7 @@ public abstract class ResultSet
 
 	public void clearWarnings() throws java.sql.SQLException
 	{
-		Warnings = null;
+		_warnings = null;
 	}
 
 	/**
@@ -1387,21 +1387,21 @@ public abstract class ResultSet
 
 		Field F;
 
-		if (columnIndex < 1 || columnIndex > Fields.length)
+		if (columnIndex < 1 || columnIndex > _fields.length)
 		{
 			throw new java.sql.SQLException(
-				"Column index out of range (" + columnIndex + " > " + Fields.length + ").",
+				"Column index out of range (" + columnIndex + " > " + _fields.length + ").",
 				"S1002");
 		}
-		F = Fields[columnIndex - 1];
+		F = _fields[columnIndex - 1];
 
-		if (This_Row[columnIndex - 1] == null)
+		if (_thisRow[columnIndex - 1] == null)
 		{
-			wasNullFlag = true;
+			_wasNullFlag = true;
 			return null;
 		}
 
-		wasNullFlag = false;
+		_wasNullFlag = false;
 
 		switch (F.getSQLType())
 		{
@@ -1461,7 +1461,7 @@ public abstract class ResultSet
 								+ "' in column "
 								+ columnIndex
 								+ "("
-								+ Fields[columnIndex
+								+ _fields[columnIndex
 								- 1]
 								+ ").",
 							"S1009");
@@ -1581,11 +1581,11 @@ public abstract class ResultSet
 	{
 		Integer index;
 
-		index = (Integer) columnNameToIndex.get(ColumnName);
+		index = (Integer) _columnNameToIndex.get(ColumnName);
 
 		if (index == null)
 		{
-			index = (Integer) fullColumnNameToIndex.get(ColumnName);
+			index = (Integer) _fullColumnNameToIndex.get(ColumnName);
 		}
 
 		if (index != null)
@@ -1599,13 +1599,13 @@ public abstract class ResultSet
 
 			String columnNameUC = ColumnName.toUpperCase();
 
-			for (int i = 0; i < Fields.length; i++)
+			for (int i = 0; i < _fields.length; i++)
 			{
-				if (Fields[i].getName().toUpperCase().equals(columnNameUC))
+				if (_fields[i].getName().toUpperCase().equals(columnNameUC))
 				{
 					return i + 1;
 				}
-				else if (Fields[i].getFullName().toUpperCase().equals(columnNameUC))
+				else if (_fields[i].getFullName().toUpperCase().equals(columnNameUC))
 				{
 					return i + 1;
 				}
@@ -1646,33 +1646,33 @@ public abstract class ResultSet
 
 	public ResultSet(Field[] Fields, Vector Tuples)
 	{
-		currentRow = -1;
-		this.Fields = Fields;
-		Rows = Tuples;
-		updateCount = (long) Rows.size();
+		_currentRow = -1;
+		this._fields = Fields;
+		_rows = Tuples;
+		_updateCount = (long) _rows.size();
 		if (Driver.debug)
-			System.out.println("Retrieved " + updateCount + " rows");
-		reallyResult = true;
+			System.out.println("Retrieved " + _updateCount + " rows");
+		_reallyResult = true;
 
 		// Check for no results
 
-		if (Rows.size() > 0)
+		if (_rows.size() > 0)
 		{
-			This_Row = (byte[][]) Rows.elementAt(0);
+			_thisRow = (byte[][]) _rows.elementAt(0);
 
-			if (updateCount == 1)
+			if (_updateCount == 1)
 			{
-				if (This_Row == null)
+				if (_thisRow == null)
 				{
-					currentRow = -1;
-					Rows.removeAllElements(); // empty result set
-					updateCount = -1;
+					_currentRow = -1;
+					_rows.removeAllElements(); // empty result set
+					_updateCount = -1;
 				}
 			}
 		}
 		else
 		{
-			This_Row = null;
+			_thisRow = null;
 		}
 
 		buildIndexMapping();
@@ -1681,7 +1681,7 @@ public abstract class ResultSet
 
 	void setStatement(org.gjt.mm.mysql.Statement stmt)
 	{
-		owningStatement = stmt;
+		_owningStatement = stmt;
 	}
 
 	/** 
@@ -1691,30 +1691,30 @@ public abstract class ResultSet
 
 	protected void buildIndexMapping()
 	{
-		int numFields = Fields.length;
+		int numFields = _fields.length;
 
-		columnNameToIndex = new Hashtable();
-		fullColumnNameToIndex = new Hashtable();
+		_columnNameToIndex = new Hashtable();
+		_fullColumnNameToIndex = new Hashtable();
 
 		for (int i = 0; i < numFields; i++)
 		{
 			Integer index = new Integer(i);
 
-			String columnName = Fields[i].getName();
-			String fullColumnName = Fields[i].getFullName();
+			String columnName = _fields[i].getName();
+			String fullColumnName = _fields[i].getFullName();
 
 			if (columnName != null)
 			{
-				columnNameToIndex.put(Fields[i].getName(), index);
-				columnNameToIndex.put(Fields[i].getName().toUpperCase(), index);
-				columnNameToIndex.put(Fields[i].getName().toLowerCase(), index);
+				_columnNameToIndex.put(columnName, index);
+				_columnNameToIndex.put(columnName.toUpperCase(), index);
+				_columnNameToIndex.put(columnName.toLowerCase(), index);
 			}
 
 			if (fullColumnName != null)
 			{
-				fullColumnNameToIndex.put(Fields[i].getFullName(), index);
-				fullColumnNameToIndex.put(Fields[i].getFullName().toUpperCase(), index);
-				fullColumnNameToIndex.put(Fields[i].getFullName().toLowerCase(), index);
+				_fullColumnNameToIndex.put(fullColumnName, index);
+				_fullColumnNameToIndex.put(fullColumnName.toUpperCase(), index);
+				_fullColumnNameToIndex.put(fullColumnName.toLowerCase(), index);
 			}
 		}
 	}
@@ -1727,46 +1727,46 @@ public abstract class ResultSet
 
 	public ResultSet(long updateCount, long updateID)
 	{
-		this.updateCount = updateCount;
-		this.updateID = updateID;
-		reallyResult = false;
-		Fields = new Field[0];
+		this._updateCount = updateCount;
+		this._updateID = updateID;
+		_reallyResult = false;
+		_fields = new Field[0];
 	}
 
 	public void setConnection(org.gjt.mm.mysql.Connection Conn)
 	{
-		this.Conn = Conn;
+		this._connection = Conn;
 	}
 
 	boolean reallyResult()
 	{
-		return reallyResult;
+		return _reallyResult;
 	}
 
 	long getUpdateCount()
 	{
-		return updateCount;
+		return _updateCount;
 	}
 
 	long getUpdateID()
 	{
-		return updateID;
+		return _updateID;
 	}
 
 	protected void checkRowPos() throws SQLException
 	{
 
-		if (closed)
+		if (_closed)
 		{
 			throw new SQLException("Operation not allowed after ResultSet closed");
 		}
 
-		if (currentRow < 0)
+		if (_currentRow < 0)
 		{
 			throw new SQLException("Before start of result set");
 		}
 
-		if (currentRow == Rows.size())
+		if (_currentRow == _rows.size())
 		{
 			throw new SQLException("After end of result set");
 		}
@@ -2161,7 +2161,7 @@ public abstract class ResultSet
 
 	protected void setResultSetType(int typeFlag)
 	{
-		resultSetType = typeFlag;
+		_resultSetType = typeFlag;
 	}
 
 	/**
@@ -2170,6 +2170,6 @@ public abstract class ResultSet
 
 	protected void setResultSetConcurrency(int concurrencyFlag)
 	{
-		resultSetConcurrency = concurrencyFlag;
+		_resultSetConcurrency = concurrencyFlag;
 	}
 }
