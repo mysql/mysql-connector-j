@@ -209,13 +209,7 @@ public class Field {
      */
     public boolean isAutoIncrement() {
 
-        if ((colFlag & AUTO_INCREMENT_FLAG) > 0) {
-
-            return true;
-        } else {
-
-            return false;
-        }
+        return ((colFlag & AUTO_INCREMENT_FLAG) > 0);
     }
 
     /**
@@ -225,13 +219,7 @@ public class Field {
      */
     public boolean isBinary() {
 
-        if ((colFlag & 128) > 0) {
-
-            return true;
-        } else {
-
-            return false;
-        }
+        return ((colFlag & 128) > 0);
     }
 
     /**
@@ -241,13 +229,7 @@ public class Field {
      */
     public boolean isBlob() {
 
-        if ((colFlag & 16) > 0) {
-
-            return true;
-        } else {
-
-            return false;
-        }
+        return ((colFlag & 16) > 0);
     }
 
     /**
@@ -322,13 +304,7 @@ public class Field {
      */
     public boolean isMultipleKey() {
 
-        if ((colFlag & 8) > 0) {
-
-            return true;
-        } else {
-
-            return false;
-        }
+        return ((colFlag & 8) > 0);
     }
 
     /**
@@ -601,12 +577,6 @@ public class Field {
 
     boolean isNotNull() {
 
-        if ((colFlag & 1) > 0) {
-
-            return true;
-        } else {
-
-            return false;
-        }
+        return ((colFlag & 1) > 0);
     }
 }
