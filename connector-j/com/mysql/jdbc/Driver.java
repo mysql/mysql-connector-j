@@ -232,11 +232,28 @@ public class Driver
         paranoid.description = "Expose sensitive information in error messages and clear "
                                + "data structures holding sensitiven data when possible?";
         ;
+        
+        DriverPropertyInfo useHostsInPrivileges = new DriverPropertyInfo("useHostsInPrivileges", 
+                                                             info.getProperty(
+                                                                     "useHostsInPrivileges", 
+                                                                     "true"));
+        useHostsInPrivileges.required = false;
+        useHostsInPrivileges.description = "Add '@hostname' to users in DatabaseMetaData.getColumn/TablePrivileges()";
+        ;
+        
+        DriverPropertyInfo interactiveClient = new DriverPropertyInfo("interactiveClient", 
+                                                             info.getProperty(
+                                                                     "interactiveClient", 
+                                                                     "false"));
+        interactiveClient.required = false;
+        interactiveClient.description = "Set the CLIENT_INTERACTIVE flag, which tells MySQL "
+            + "to timeout connections based on INTERACTIVE_TIMEOUT instead of WAIT_TIMEOUT";
+        ;
 
         DriverPropertyInfo[] dpi = {
             hostProp, portProp, dbProp, userProp, passwordProp, autoReconnect, 
             maxReconnects, initialTimeout, profileSql, socketTimeout, useSSL, 
-            paranoid
+            paranoid, useHostsInPrivileges, interactiveClient
         };
 
         return dpi;
