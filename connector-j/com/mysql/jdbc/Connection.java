@@ -1272,14 +1272,9 @@ public class Connection
         }
 
         if (info.getProperty("useUnicode") != null) {
-
-            String useUnicode = info.getProperty("useUnicode");
-
-            if (useUnicode.equalsIgnoreCase("TRUE")) {
-                this.doUnicode = true;
-            }
+            this.doUnicode = info.getProperty("useUnicode").equalsIgnoreCase("TRUE");
         }
-
+        
         if (this.doUnicode) {
 
             if (info.getProperty("characterEncoding") != null) {
