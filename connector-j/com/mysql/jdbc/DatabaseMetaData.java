@@ -1569,7 +1569,7 @@ public class DatabaseMetaData
     public String getDriverVersion()
                             throws java.sql.SQLException {
 
-        return "3.0.2-beta";
+        return "3.0.4-gamma";
     }
 
     /**
