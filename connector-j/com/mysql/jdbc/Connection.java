@@ -1151,6 +1151,9 @@ public class Connection
         if (info.getProperty("relaxAutoCommit") != null) {
             this.relaxAutoCommit = info.getProperty("relaxAutoCommit").toUpperCase()
                 .equals("TRUE");
+        } else if (info.getProperty("relaxAutocommit") != null) {
+            this.relaxAutoCommit = info.getProperty("relaxAutocommit").toUpperCase()
+                .equals("TRUE");
         }
 
         if (info.getProperty("paranoid") != null) {
