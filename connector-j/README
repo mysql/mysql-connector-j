@@ -1,6 +1,6 @@
-MM.MySQL 2.0.14
-Mark Matthews JDBC Driver for MySQL
-Copyright (c) 1998-2002 Mark Matthews
+MySQL-JDBC 2.0.15
+MySQL's (formerly Mark Matthews) JDBC Driver for MySQL
+Copyright (c) 2002 MySQL-AB
 
 CONTENTS
 
@@ -14,23 +14,6 @@ CONTENTS
 
 LICENSE
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Library General Public
-License as published by the Free Software Foundation; either
-version 2 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Library General Public License for more details.
- 
-You should have received a copy of the GNU Library General Public
-License along with this library; if not, write to the
-Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA  02111-1307, USA.
-
-See the COPYING file located in the top-level-directory of
-the archive of this library for complete text of license.
 
 SYSTEM REQUIREMENTS
  
@@ -43,7 +26,7 @@ strives to implement as much of the JDBC API as is feasible.
 
 INTRODUCTION
 
-MM.MySQL is an implemntation of the JDBC API for the MySQL relational
+MySQL-JDBC is an implemntation of the JDBC API for the MySQL relational
 database server. It strives to conform as much as possible to the API
 as specified by JavaSoft. It is known to work with many third-party 
 products, including Borland JBuilder, IBM Visual Age for Java, SQL/J,
@@ -51,9 +34,9 @@ the Locomotive and Symantec Visual Cafe.
 
 USAGE AND INSTALLATION
 
-MM.MySQL is distributed as a .jar archive containing the sources 
+MySQL-JDBC is distributed as a .jar archive containing the sources 
 and class files as well as a class-file only "binary" .jar archive 
-named "mysql-2.0.13-bin.jar".
+named "mysql-jdbc-2.0.15-bin.jar".
 
 You will need to use the "jar" command-line utility that comes with your JDK 
 to un-archive the distribution.
@@ -65,7 +48,7 @@ Either copy the org subdirectory and all of it's contents
 to anywhere you like, and put the directory holding the org subdirectory
 in your classpath, or...
 
-Put mysql-2.0.13-bin.jar in your classpath, either by adding the 
+Put mysql-jdbc-2.0.15-bin.jar in your classpath, either by adding the 
 FULL path to it to your CLASSPATH enviornment variable, or putting it
 in $JAVA_HOME/jre/lib/ext.
 
@@ -78,7 +61,7 @@ you should put the driver's .jar file in the WEB-INF/lib subdirectory
 of your webapp, as this is the standard location for third party 
 class libraries in J2EE web applications. You can also use the
 MysqlDataSource, MysqlConnectionPoolDataSource or MysqlXADataSource 
-classes in the org.gjt.mm.mysql.jdbc2.optional package, if your J2EE 
+classes in the com.mysql.jdbc.jdbc2.optional package, if your J2EE 
 application server supports/requires them. MysqlDataSource supports the 
 following parameters (through standard "set" mutators):
 
@@ -89,11 +72,11 @@ following parameters (through standard "set" mutators):
 	port
 
 If you are going to use the driver with the JDBC DriverManager, you would use
-"org.gjt.mm.mysql.Driver" as the class that implements java.sql.Driver.
+"com.mysql.jdbc.Driver" as the class that implements java.sql.Driver.
 
 You might use this name in a Class.forName() call to load the driver:
 
-	Class.forName("org.gjt.mm.mysql.Driver").newInstance();
+	Class.forName("com.mysql.jdbc.Driver").newInstance();
 
 To connect to the database, you need to use a JDBC url with the following 
 format ([xxx] denotes optional url components):
@@ -158,7 +141,7 @@ profileSql          | Dump queries and execution/fetch times    | false
 			
 A simple connection example looks like:
 
-	Class.forName("org.gjt.mm.mysql.Driver").newInstance();
+	Class.forName("com.mysql.jdbc.Driver").newInstance();
 	
 	java.sql.Connection conn;
 	
@@ -175,7 +158,7 @@ have been processed, with update count values of '-3' for any statements that
 were not completed (see section 6.1 in the JDBC-2.1 API spec for more details).
 
 Various DataSource implementations exist, all under the 
-org.gjt.mm.mysql.jdbc2.optional package. They are "MysqlDataSource",
+com.mysql.jdbc.jdbc2.optional package. They are "MysqlDataSource",
 "MysqlConnectionPoolDataSource" and "MysqlXaDataSource". Refer to your 
 application server documentation for information on how to use these classes.
 An example of using the standard DataSource ("MysqlDataSource") can be found
@@ -183,13 +166,13 @@ in the "testsuite" directory.
 
 TROUBLESHOOTING
 
-There are a few issues that seem to be encountered often by users of MM.MySQL. 
+There are a few issues that seem to be encountered often by users of MySQL-JDBC. 
 This section deals with their symptoms, and their resolutions. If you have
 further issues, see the "SUPPORT" section below.
 
   Issue: 
 
-  "When I try to connect to the database with MM.MySQL, I get the
+  "When I try to connect to the database with MySQL-JDBC, I get the
   following exception:
 
   SQLException: Server configuration denies access to data source
@@ -200,8 +183,8 @@ further issues, see the "SUPPORT" section below.
 
   Resolution: 
 
-  MM.MySQL must use TCP/IP sockets to connect to MySQL, as 
-  Java does not support Unix Domain Sockets. Therefore, when MM.MySQL
+  MySQL-JDBC must use TCP/IP sockets to connect to MySQL, as 
+  Java does not support Unix Domain Sockets. Therefore, when MySQL-JDBC
   connects to MySQL, the security manager in MySQL server will use the
   HOSTS table to determine whether or not the connection should be allowed.
 
@@ -214,7 +197,7 @@ further issues, see the "SUPPORT" section below.
   '[password]'"
 
   replacing [dbname] with the name of your database, [user] with the username,
-  [hostname] with the host that MM.MySQL will be connecting from, and [password]
+  [hostname] with the host that MySQL-JDBC will be connecting from, and [password]
   with the password you want to use. Be aware that RedHat linux is broken with
   respect to the hostname portion for the case when you are connecting from 
   localhost. You need to use "localhost.localdomain" for the [hostname] value 
@@ -241,7 +224,7 @@ further issues, see the "SUPPORT" section below.
 
   Issue: 
 
-  "I'm trying to use MM.MySQL in an applet and I get the following
+  "I'm trying to use MySQL-JDBC in an applet and I get the following
   exception: 
   
   SQLException: Cannot connect to MySQL server on host:3306. Is there 
@@ -275,7 +258,7 @@ further issues, see the "SUPPORT" section below.
   "autoReconnect" parameter (see "USAGE AND INSTALLATION"). Also, you should
   be catching SQLExceptions in your application and dealing with them, rather
   than propagating them all the way until your application exits, this is just
-  good software development. MM.MySQL will set the SQLState (see 
+  good software development. MySQL-JDBC will set the SQLState (see 
   java.sql.SQLException.getSQLState() in your APIDOCS) to "08S01" when it 
   encounters network-connectivity issues during the processing of a query. 
   Your application code should then attempt to re-connect to MySQL at this 
@@ -290,7 +273,7 @@ further issues, see the "SUPPORT" section below.
 
   Resolution:
 
-  Because MySQL does not have row identifiers, MM.MySQL can only update
+  Because MySQL does not have row identifiers, MySQL-JDBC can only update
   result sets that have come from queries that select the primary key(s) and
   only span one table (i.e. no joins). This is outlined in the JDBC specification.
 
@@ -305,10 +288,6 @@ about the driver.
 
 SUPPORT
 
-Commercial support (with various levels of guaranteed service) is available 
-from my employer, The Net Squad. Contact sales@thenetsquad.com for more 
-information or see http://www.thenetsquad.com/services/jdbcsupport.html 
-for further information.
 
 Otherwise community-based support is available on the mysql-java mailing list 
 available from www.mysql.com, or through e-mail to me <mmatthew@thematthews.org>. 
