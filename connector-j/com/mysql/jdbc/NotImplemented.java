@@ -29,6 +29,6 @@ public class NotImplemented
      */
     public NotImplemented()
     {
-        super("Feature not implemented");
+        super("Feature not implemented", "S1C00");
     }
 }
