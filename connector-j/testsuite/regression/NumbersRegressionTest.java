@@ -18,6 +18,8 @@
  */
 package testsuite.regression;
 
+import java.sql.ResultSetMetaData;
+
 import testsuite.BaseTestCase;
 
 
@@ -80,6 +82,79 @@ public class NumbersRegressionTest
             assertTrue(bigIntAsString.equals(String.valueOf(parsedBigIntAsLong)));
         } finally {
             stmt.executeUpdate("DROP TABLE IF EXISTS bigIntRegression");
+        }
+    }
+    
+    public void testPrecisionAndScale() throws Exception {
+        testPrecisionForType("TINYINT", 8, -1, false);
+        testPrecisionForType("TINYINT", 8, -1, true);
+        testPrecisionForType("SMALLINT", 8, -1, false);
+        testPrecisionForType("SMALLINT", 8, -1, true);
+        testPrecisionForType("MEDIUMINT", 8, -1, false);
+        testPrecisionForType("MEDIUMINT", 8, -1, true);
+        testPrecisionForType("INT", 8, -1, false);
+        testPrecisionForType("INT", 8, -1, true);
+        testPrecisionForType("BIGINT", 8, -1, false);
+        testPrecisionForType("BIGINT", 8, -1, true);
+        
+        testPrecisionForType("FLOAT", 8, 4, false);
+        testPrecisionForType("FLOAT", 8, 4, true);
+        testPrecisionForType("DOUBLE", 8, 4, false);
+        testPrecisionForType("DOUBLE", 8, 4, true);
+        
+        testPrecisionForType("DECIMAL", 8, 4, false);
+        testPrecisionForType("DECIMAL", 8, 4, true);
+        
+        testPrecisionForType("DECIMAL", 9, 0, false);
+        testPrecisionForType("DECIMAL", 9, 0, true);
+        
+    }
+        
+       
+    
+    private void testPrecisionForType(String typeName, int m, int d, boolean unsigned) throws Exception {
+         try {
+            stmt.executeUpdate("DROP TABLE IF EXISTS precisionAndScaleRegression");
+            StringBuffer createStatement = new StringBuffer("CREATE TABLE precisionAndScaleRegression ( val ");
+            createStatement.append(typeName);
+            createStatement.append("(");
+            createStatement.append(m);
+            
+            if (d != -1) {
+                createStatement.append(",");
+                createStatement.append(d);
+            }
+            
+            createStatement.append(")");
+            
+            if (unsigned) {
+                createStatement.append(" UNSIGNED ");
+            }
+            
+            createStatement.append(" NOT NULL)");
+            
+            stmt.executeUpdate(createStatement.toString());
+                    
+            rs = stmt.executeQuery("SELECT val FROM precisionAndScaleRegression");
+            
+            ResultSetMetaData rsmd = rs.getMetaData();
+            assertTrue("Precision returned incorrectly for type " + typeName + ", " + m + " != rsmd.getPrecision() = " + rsmd.getPrecision(1), rsmd.getPrecision(1) == m);
+            
+            if (d != -1) {
+                assertTrue("Scale returned incorrectly for type " + typeName +", d  != rsmd.getScale() = " + rsmd.getScale(1), rsmd.getScale(1) == d);
+            }
+            
+                    
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (Exception ex) {
+                    // ignore
+                }
+            }
+            
+            stmt.executeUpdate("DROP TABLE IF EXISTS precisionAndScaleRegression");
         }
     }
 }
