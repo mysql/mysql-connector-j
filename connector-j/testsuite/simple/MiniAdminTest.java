@@ -29,6 +29,14 @@ import testsuite.BaseTestCase;
  */
 public class MiniAdminTest extends BaseTestCase {
 
+    /** 
+     * The system property that must exist to run the shutdown
+     * test
+     */
+    
+    private final static String SHUTDOWN_PROP = 
+        "com.mysql.jdbc.testsuite.MiniAdminTest.runShutdown";
+        
     public MiniAdminTest(String name) {
         super(name);
     }
@@ -51,9 +59,13 @@ public class MiniAdminTest extends BaseTestCase {
     
     /**
      * Tests whether or not you can shutdown the server with
-     * MiniAdmin
+     * MiniAdmin.
+     * 
+     * Only runs if SHUTDOWN_PROP is defined.
      */
     public void testShutdown() throws Exception {
-        new MiniAdmin(conn).shutdown();
+       if (runTestIfSysPropDefined(SHUTDOWN_PROP)) {
+            new MiniAdmin(conn).shutdown();
+        }
     }
 }
