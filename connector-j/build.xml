@@ -165,23 +165,24 @@ Copyright (C) 2002 MySQL AB
 	  <mkdir dir="${buildDir}/junit"/>
 	  
 	  <junit printSummary="yes" fork="yes">
-	  <sysproperty key="com.mysql.jdbc.testsuite.url" value="jdbc:mysql:///test"/>
-	  <classpath>
-      	 <pathelement location="${buildDir}/${prodName}" />
-      	 <pathelement location="./lib-nodist/providerutil.jar" />
-      	 <pathelement location="./lib-nodist/fscontext.jar" />
-    	 <pathelement path="${java.class.path}" />
-    	 <pathelement path="/src/clover-0.6b/lib/clover.jar"/>  
-  	  </classpath>
+		<jvmarg value="-Xmx256m"/>
+	  	<sysproperty key="com.mysql.jdbc.testsuite.url" value="jdbc:mysql:///test"/>
+	  	<classpath>
+      	 	<pathelement location="${buildDir}/${prodName}" />
+      	 	<pathelement location="./lib-nodist/providerutil.jar" />
+      	 	<pathelement location="./lib-nodist/fscontext.jar" />
+    	 		<pathelement path="${java.class.path}" />
+    	 		<pathelement path="/src/clover-0.6b/lib/clover.jar"/>  
+  	  	</classpath>
 
-      <formatter type="plain" />
+      	<formatter type="plain" />
       
-      <batchtest fork="no" todir="${buildDir}/junit">
-    	<fileset dir="${buildDir}/${prodName}">
-      	   <include name="**/*Test.java" />
-    	</fileset>
-      </batchtest>
-      </junit>
+      	<batchtest fork="no" todir="${buildDir}/junit">
+    			<fileset dir="${buildDir}/${prodName}">
+      	   		<include name="**/*Test.java" />
+    			</fileset>
+      	</batchtest>
+        </junit>
 	</target>
 	
 	<target name="test.with.clover">
