@@ -51,6 +51,8 @@
 	  <sysproperty key="com.mysql.jdbc.testsuite.url" value="jdbc:mysql:///test"/>
 	  <classpath>
       	 <pathelement location="./build/mysql-jdbc-${version}" />
+      	 <pathelement location="./lib-nodist/providerutil.jar" />
+      	 <pathelement location="./lib-nodist/fscontext.jar" />
     	 <pathelement path="${java.class.path}" />
   	  </classpath>
 

@@ -49,6 +49,8 @@ public class DataSourceTest
     //~ Instance/static variables .............................................
 
     private File tempDir;
+    
+    private Context ctx;
 
     //~ Constructors ..........................................................
 
@@ -81,12 +83,6 @@ public class DataSourceTest
     public void tearDown()
                   throws Exception
     {
-
-        Context   ctx;
-        Hashtable env = new Hashtable();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, 
-                "com.sun.jndi.fscontext.RefFSContextFactory");
-        ctx = new InitialContext(env);
         ctx.unbind(tempDir.getAbsolutePath() + "/test");
         ctx.close();
         tempDir.delete();
@@ -100,11 +96,6 @@ public class DataSourceTest
     public void testDataSource()
                         throws Exception
     {
-
-        Context ctx = new InitialContext();
-        ctx.addToEnvironment(Context.INITIAL_CONTEXT_FACTORY, 
-                             "com.sun.jndi.fscontext.RefFSContextFactory");
-
         DataSource ds = (DataSource)ctx.lookup(
                                 tempDir.getAbsolutePath() + "/test");
         assertTrue("Datasource not bound", ds != null);
@@ -131,7 +122,7 @@ public class DataSourceTest
         tempDir.deleteOnExit();
 
         com.mysql.jdbc.jdbc2.optional.MysqlDataSource ds;
-        Context                                       ctx;
+        
         Hashtable                                     env = new Hashtable();
         env.put(Context.INITIAL_CONTEXT_FACTORY, 
                 "com.sun.jndi.fscontext.RefFSContextFactory");
@@ -143,6 +134,6 @@ public class DataSourceTest
         
         ds.setUrl(dbUrl); // from BaseTestCase
         ctx.bind(tempDir.getAbsolutePath() + "/test", ds);
-        ctx.close();
+      
     }
 }
