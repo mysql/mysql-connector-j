@@ -224,6 +224,14 @@ public class Driver
         useSSL.description = "Use SSL when communicating with the server?";
         ;
 
+        DriverPropertyInfo useCompression = new DriverPropertyInfo("useCompression", 
+                                                           info.getProperty(
+                                                                   "useCompression", 
+                                                                   "false"));
+        useCompression.required = false;
+        useCompression.description = "Use zlib compression when communicating with the server?";
+        ;
+        
         DriverPropertyInfo paranoid = new DriverPropertyInfo("paranoid", 
                                                              info.getProperty(
                                                                      "paranoid", 
@@ -249,11 +257,28 @@ public class Driver
         interactiveClient.description = "Set the CLIENT_INTERACTIVE flag, which tells MySQL "
             + "to timeout connections based on INTERACTIVE_TIMEOUT instead of WAIT_TIMEOUT";
         ;
+        
+        DriverPropertyInfo useTimezone = new DriverPropertyInfo("useTimezone", 
+                                                             info.getProperty(
+                                                                     "useTimezone", 
+                                                                     "false"));
+        useTimezone.required = false;
+        useTimezone.description = "Convert time/date types between client and server timezones"
+        ;
+        
+        DriverPropertyInfo serverTimezone = new DriverPropertyInfo("serverTimezone", 
+                                                             info.getProperty(
+                                                                     "serverTimezone", 
+                                                                     ""));
+        serverTimezone.required = false;
+        serverTimezone.description = "Override detection/mapping of timezone. Used when timezone from server doesn't map to Java timezone"
+        ;
 
         DriverPropertyInfo[] dpi = {
             hostProp, portProp, dbProp, userProp, passwordProp, autoReconnect, 
             maxReconnects, initialTimeout, profileSql, socketTimeout, useSSL, 
-            paranoid, useHostsInPrivileges, interactiveClient
+            paranoid, useHostsInPrivileges, interactiveClient, useCompression,
+            useTimezone, serverTimezone
         };
 
         return dpi;
@@ -329,13 +354,11 @@ public class Driver
                                        database(props), url, this);
 
                 return (java.sql.Connection) newConn;
-            } // Don't wrap SQLExceptions, throw 
-            catch (SQLException sqlEx) {
-
+            } catch (SQLException sqlEx) {
+                // Don't wrap SQLExceptions, throw 
                 // them un-changed.
                 throw sqlEx;
-            }
-             catch (Exception ex) {
+            } catch (Exception ex) {
                 throw new SQLException("Cannot load connection class because of underlying exception: '"
                                        + ex.toString() + "'.", "08001");
             }

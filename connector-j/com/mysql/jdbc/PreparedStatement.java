@@ -71,10 +71,9 @@ public class PreparedStatement
     //~ Instance/static variables .............................................
 
     private static final SimpleDateFormat TSDF = new SimpleDateFormat(
-                                                   "yyyy-MM-dd HH:mm:ss");
+                                                         "yyyy-MM-dd HH:mm:ss");
     private static boolean timezoneSet = false;
     private static final Object TZ_MUTEX = new Object();
-    private static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
     private boolean[] isNull = null;
     private boolean[] isStream = null;
     private InputStream[] parameterStreams = null;
@@ -108,11 +107,15 @@ public class PreparedStatement
             throw new SQLException("SQL String can not be NULL", "S1009");
         }
 
-        //if (_conn.useTimezone())
-        //{
-        //_TSDF.setTimeZone(_conn.getServerTimezone());
-        //   _TSDF.setTimeZone(TimeZone.getTimeZone("GMT"));
-        //}
+        //
+        // If we're using timezone support (and we should be
+        // to be correct), then make sure that dates are
+        // issued in the Server's timezone, and not the client's
+        //
+        if (this.connection.useTimezone()) {
+            TSDF.setTimeZone(this.connection.getServerTimezone());
+        }
+
         useTrueBoolean = connection.getIO().versionMeetsMinimum(3, 21, 23);
         hasLimitClause = (sql.toUpperCase().indexOf("LIMIT") != -1);
 
@@ -287,7 +290,9 @@ public class PreparedStatement
      *
      * @param parameterIndex the first parameter is 1...
      * @param x the parameter value
-     * @exception java.sql.SQLException if a database access error occurs
+     * @param length the number of bytes to read from the stream (ignored)
+     * 
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public void setBinaryStream(int parameterIndex, InputStream x, int length)
                          throws java.sql.SQLException {
@@ -316,6 +321,8 @@ public class PreparedStatement
      *
      * @param i the first parameter is 1, the second is 2, ...
      * @param x an object representing a BLOB
+     * 
+     * @throws SQLException if a database error occurs
      */
     public void setBlob(int i, java.sql.Blob x)
                  throws SQLException {
@@ -328,7 +335,8 @@ public class PreparedStatement
      *
      * @param parameterIndex the first parameter is 1...
      * @param x the parameter value
-     * @exception java.sql.SQLException if a database access error occurs
+     * 
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public void setBoolean(int parameterIndex, boolean x)
                     throws java.sql.SQLException {
@@ -371,8 +379,8 @@ public class PreparedStatement
             setNull(parameterIndex, java.sql.Types.BINARY);
         } else {
 
-            ByteArrayInputStream BIn = new ByteArrayInputStream(x);
-            setBinaryStream(parameterIndex, BIn, x.length);
+            ByteArrayInputStream bIn = new ByteArrayInputStream(x);
+            setBinaryStream(parameterIndex, bIn, x.length);
         }
     }
 
@@ -390,7 +398,7 @@ public class PreparedStatement
      * standard interface.
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
-     * @param x the java reader which contains the UNICODE data
+     * @param reader the java reader which contains the UNICODE data
      * @param length the number of characters in the stream 
      * @exception SQLException if a database-access error occurs.
      */
@@ -426,6 +434,8 @@ public class PreparedStatement
      *
      * @param i the first parameter is 1, the second is 2, ...
      * @param x an object representing a CLOB
+     * 
+     * @throws SQLException if a database error occurs
      */
     public void setClob(int i, Clob x)
                  throws SQLException {
@@ -447,8 +457,11 @@ public class PreparedStatement
             setNull(parameterIndex, java.sql.Types.DATE);
         } else {
 
-            SimpleDateFormat DF = new SimpleDateFormat("''yyyy-MM-dd''");
-            setInternal(parameterIndex, DF.format(x));
+            // FIXME: Have instance version of this, problem as it's
+            //        not thread-safe :(
+            SimpleDateFormat dateFormatter = new SimpleDateFormat(
+                                                     "''yyyy-MM-dd''");
+            setInternal(parameterIndex, dateFormatter.format(x));
         }
     }
 
@@ -458,11 +471,12 @@ public class PreparedStatement
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
+     * @param cal the calendar to interpret the date with
      * @exception SQLException if a database-access error occurs.
      */
-    public void setDate(int parameterIndex, java.sql.Date X, Calendar Cal)
+    public void setDate(int parameterIndex, java.sql.Date x, Calendar cal)
                  throws SQLException {
-        setDate(parameterIndex, X);
+        setDate(parameterIndex, x);
     }
 
     /**
@@ -475,7 +489,6 @@ public class PreparedStatement
      */
     public void setDouble(int parameterIndex, double x)
                    throws java.sql.SQLException {
-
         setInternal(parameterIndex, fixDecimalExponent(String.valueOf(x)));
     }
 
@@ -901,6 +914,8 @@ public class PreparedStatement
      *
      * @param i the first parameter is 1, the second is 2, ...
      * @param x an object representing data of an SQL REF Type
+     * 
+     * @throws SQLException if a database error occurs
      */
     public void setRef(int i, Ref x)
                 throws SQLException {
@@ -1009,16 +1024,27 @@ public class PreparedStatement
      */
     public void setTime(int parameterIndex, Time x)
                  throws java.sql.SQLException {
+        setTimeInternal(parameterIndex, x, TimeZone.getDefault());
+    }
+
+    /**
+      * Set a parameter to a java.sql.Time value.  The driver converts
+      * this to a SQL TIME value when it sends it to the database, using 
+      * the given timezone.
+      *
+      * @param parameterIndex the first parameter is 1...));
+      * @param x the parameter value
+      * @param tz the timezone to use
+      * @throws java.sql.SQLException if a database access error occurs
+      */
+    private void setTimeInternal(int parameterIndex, Time x, TimeZone tz)
+                          throws java.sql.SQLException {
 
         if (x == null) {
             setNull(parameterIndex, java.sql.Types.TIME);
         } else {
-
-            //if (_conn.useTimezone())
-            //{
-            //
-            //   X = TimeUtil.changeTimezone(X, TimeUtil.GMT_TIMEZONE, _conn.getServerTimezone());
-            //}
+            x = TimeUtil.changeTimezone(this.connection, x, tz, 
+                                        this.connection.getServerTimezone());
             setInternal(parameterIndex, "'" + x.toString() + "'");
         }
     }
@@ -1034,7 +1060,7 @@ public class PreparedStatement
      */
     public void setTime(int parameterIndex, java.sql.Time x, Calendar cal)
                  throws SQLException {
-        setTime(parameterIndex, x);
+        setTimeInternal(parameterIndex, x, cal.getTimeZone());
     }
 
     /**
@@ -1047,18 +1073,31 @@ public class PreparedStatement
      */
     public void setTimestamp(int parameterIndex, Timestamp x)
                       throws java.sql.SQLException {
+        setTimestampInternal(parameterIndex, x, TimeZone.getDefault());
+    }
+
+    /**
+     * Set a parameter to a java.sql.Timestamp value.  The driver
+     * converts this to a SQL TIMESTAMP value when it sends it to the
+     * database.
+     *
+     * @param parameterIndex the first parameter is 1, the second is 2, ...
+     * @param x the parameter value 
+     * @param tz the timezone to use
+     * @throws SQLException if a database-access error occurs.
+     */
+    private void setTimestampInternal(int parameterIndex, Timestamp x, 
+                                      TimeZone tz)
+                               throws SQLException {
 
         if (x == null) {
             setNull(parameterIndex, java.sql.Types.TIMESTAMP);
         } else {
 
             String timestampString = null;
+            x = TimeUtil.changeTimezone(this.connection, x, tz, 
+                                        this.connection.getServerTimezone());
 
-            //if (_conn.useTimezone())
-            //{
-            //
-            //   X = TimeUtil.changeTimezone(X, TimeUtil.GMT_TIMEZONE, _conn.getServerTimezone());
-            //}
             synchronized (TSDF) {
                 timestampString = "'" + TSDF.format(x) + "'";
             }
@@ -1080,7 +1119,7 @@ public class PreparedStatement
     public void setTimestamp(int parameterIndex, java.sql.Timestamp x, 
                              Calendar cal)
                       throws SQLException {
-        setTimestamp(parameterIndex, x);
+        setTimestampInternal(parameterIndex, x, cal.getTimeZone());
     }
 
     /**
@@ -1271,8 +1310,10 @@ public class PreparedStatement
 
                     if (hasLimitClause) {
                         rs = connection.execSQL((String) null, maxRows, 
-                                                sendPacket, resultSetConcurrency, 
-                                                createStreamingResultSet());
+                                                sendPacket, 
+                                                resultSetConcurrency, 
+                                                createStreamingResultSet(), 
+                                                true);
                     } else {
 
                         if (maxRows <= 0) {
@@ -1290,11 +1331,15 @@ public class PreparedStatement
                 }
 
                 // Finally, execute the query
-                rs = connection.execSQL(null, -1, sendPacket, resultSetConcurrency, 
-                                        createStreamingResultSet());
+                rs = connection.execSQL(null, -1, sendPacket, 
+                                        resultSetConcurrency, 
+                                        createStreamingResultSet(), 
+                                        (firstCharOfStmt == 'S'));
             } else {
-                rs = connection.execSQL(null, -1, sendPacket, resultSetConcurrency, 
-                                        createStreamingResultSet());
+                rs = connection.execSQL(null, -1, sendPacket, 
+                                        resultSetConcurrency, 
+                                        createStreamingResultSet(), 
+                                        (firstCharOfStmt == 'S'));
             }
 
             if (oldCatalog != null) {
@@ -1473,8 +1518,10 @@ public class PreparedStatement
                 // a query, and network traffic).
                 if (hasLimitClause) {
                     results = connection.execSQL((String) null, maxRows, 
-                                                 sendPacket, resultSetConcurrency, 
-                                                 createStreamingResultSet());
+                                                 sendPacket, 
+                                                 resultSetConcurrency, 
+                                                 createStreamingResultSet(), 
+                                                 true);
                 } else {
 
                     if (maxRows <= 0) {
@@ -1487,7 +1534,8 @@ public class PreparedStatement
 
                     results = connection.execSQL(null, -1, sendPacket, 
                                                  resultSetConcurrency, 
-                                                 createStreamingResultSet());
+                                                 createStreamingResultSet(), 
+                                                 true);
 
                     if (oldCatalog != null) {
                         connection.setCatalog(oldCatalog);
@@ -1496,7 +1544,7 @@ public class PreparedStatement
             } else {
                 results = connection.execSQL(null, -1, sendPacket, 
                                              resultSetConcurrency, 
-                                             createStreamingResultSet());
+                                             createStreamingResultSet(), true);
             }
 
             if (oldCatalog != null) {
@@ -1591,7 +1639,7 @@ public class PreparedStatement
 
                     if (charEncoding != null) {
                         buf.append(new String(parameterValues[i].getBytes(), 
-                                             charEncoding));
+                                              charEncoding));
                     } else {
                         buf.append(new String(parameterValues[i].getBytes()));
                     }
@@ -1600,7 +1648,7 @@ public class PreparedStatement
 
             if (charEncoding != null) {
                 buf.append(new String(staticSqlStrings[parameterValues.length], 
-                                     charEncoding));
+                                      charEncoding));
             } else {
                 buf.append(staticSqlStrings[parameterValues.length]);
             }
@@ -1720,7 +1768,8 @@ public class PreparedStatement
                 connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
             }
 
-            rs = connection.execSQL(null, -1, sendPacket, resultSetConcurrency, false);
+            rs = connection.execSQL(null, -1, sendPacket, resultSetConcurrency, 
+                                    false, false);
 
             if (oldCatalog != null) {
                 connection.setCatalog(oldCatalog);
@@ -1788,13 +1837,13 @@ public class PreparedStatement
      *
      */
     private final byte[] streamToBytes(InputStream in)
-                                  throws java.sql.SQLException {
+                                throws java.sql.SQLException {
 
         return streamToBytes(in, true);
     }
 
     private final byte[] streamToBytes(InputStream in, boolean escape)
-                                  throws java.sql.SQLException {
+                                throws java.sql.SQLException {
 
         try {
 
@@ -2072,10 +2121,14 @@ public class PreparedStatement
                             throws java.sql.SQLException {
 
         if (paramIndex < 1 || paramIndex > staticSqlStrings.length) {
-            throw new java.sql.SQLException("Parameter index out of range ("
+            throw new SQLException("Parameter index out of range ("
                                             + paramIndex + " > "
                                             + staticSqlStrings.length + ").", 
                                             "S1009");
+        }
+        
+        if (this.isClosed) {
+            throw new SQLException("PreparedStatement has been closed. No further operations allowed.", "S1009");
         }
 
         isStream[paramIndex - 1] = false;

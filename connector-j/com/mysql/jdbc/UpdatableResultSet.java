@@ -1,40 +1,32 @@
 /*
    Copyright (C) 2002 MySQL AB
-     This program is free software; you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation; either version 2 of the License, or
-     (at your option) any later version.
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
-     You should have received a copy of the GNU General Public License
-     along with this program; if not, write to the Free Software
-     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-     
+   
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+   
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+   
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, write to the Free Software
+      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+      
  */
 package com.mysql.jdbc;
 
-import java.io.InputStream;
-
 import java.math.BigDecimal;
-
-import java.net.URL;
-
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.Ref;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
-
 import java.util.ArrayList;
 
 
 /**
  * A result set that is updatable.
+ * 
+ * @author Mark Matthews
  */
 public class UpdatableResultSet
     extends ResultSet {
@@ -44,34 +36,34 @@ public class UpdatableResultSet
     private static String quotedIdChar = null;
 
     /** List of primary keys */
-    protected ArrayList primaryKeyIndicies = null;
+    private ArrayList primaryKeyIndicies = null;
 
     /** PreparedStatement used to delete data */
-    protected com.mysql.jdbc.PreparedStatement deleter = null;
+    private com.mysql.jdbc.PreparedStatement deleter = null;
 
     /** PreparedStatement used to insert data */
-    protected com.mysql.jdbc.PreparedStatement inserter = null;
+    private com.mysql.jdbc.PreparedStatement inserter = null;
 
     /** PreparedStatement used to refresh data */
-    protected com.mysql.jdbc.PreparedStatement refresher;
+    private com.mysql.jdbc.PreparedStatement refresher;
 
     /** PreparedStatement used to delete data */
-    protected com.mysql.jdbc.PreparedStatement updater = null;
-    protected String deleteSQL = null;
-    protected String insertSQL = null;
-    protected String refreshSQL = null;
+    private com.mysql.jdbc.PreparedStatement updater = null;
+    private String deleteSQL = null;
+    private String insertSQL = null;
+    private String refreshSQL = null;
 
     /** SQL for in-place modifcation */
-    protected String updateSQL = null;
+    private String updateSQL = null;
 
     /** Are we in the middle of doing updates to the current row? */
-    protected boolean doingUpdates = false;
+    private boolean doingUpdates = false;
 
     /** Is this result set updateable? */
-    protected boolean isUpdatable = false;
+    private boolean isUpdatable = false;
 
     /** Are we on the insert row? */
-    protected boolean onInsertRow = false;
+    private boolean onInsertRow = false;
 
     //~ Constructors ..........................................................
 
@@ -343,7 +335,9 @@ public class UpdatableResultSet
      * 
      * @exception SQLException if a database-access error occurs, or if called
      *            when on the insert row.
-     * @throws NotUpdatable DOCUMENT ME!
+     * @throws SQLException if the ResultSet is not updatable or some other error
+     *                       occurs
+     * 
      */
     public synchronized void deleteRow()
                                 throws SQLException {
@@ -386,9 +380,9 @@ public class UpdatableResultSet
 		
         try {
 
-            int num_keys = primaryKeyIndicies.size();
+            int numKeys = primaryKeyIndicies.size();
 
-            if (num_keys == 1) {
+            if (numKeys == 1) {
 
                 int index = ((Integer) primaryKeyIndicies.get(0)).intValue();
                 String currentVal = ((characterEncoding == null)
@@ -397,7 +391,7 @@ public class UpdatableResultSet
                 deleter.setString(1, currentVal);
             } else {
 
-                for (int i = 0; i < num_keys; i++) {
+                for (int i = 0; i < numKeys; i++) {
 
                     int index = ((Integer) primaryKeyIndicies.get(i)).intValue();
                     String currentVal = ((characterEncoding == null)
@@ -503,7 +497,9 @@ public class UpdatableResultSet
      * 
      * @exception SQLException if a database-access error occurs, or the result
      *            set is not updatable
-     * @throws NotUpdatable DOCUMENT ME!
+     * 
+     * @throws SQLException if the ResultSet is not updatable or some other error
+     *                       occurs
      */
     public synchronized void moveToCurrentRow()
                                        throws SQLException {
@@ -529,7 +525,7 @@ public class UpdatableResultSet
      * 
      * @exception SQLException if a database-access error occurs, or the result
      *            set is not updatable
-     * @throws NotUpdatable DOCUMENT ME!
+     *                      
      */
     public synchronized void moveToInsertRow()
                                       throws SQLException {
@@ -634,7 +630,6 @@ public class UpdatableResultSet
      * 
      * @exception SQLException if a database-access error occurs, or if called
      *            when on the insert row.
-     * @throws NotUpdatable DOCUMENT ME!
      */
     public synchronized void refreshRow()
                                  throws SQLException {
@@ -799,7 +794,6 @@ public class UpdatableResultSet
      * @return true if deleted and deletes are detected
      * 
      * @exception SQLException if a database-access error occurs
-     * @throws NotImplemented DOCUMENT ME!
      * 
      * @see DatabaseMetaData#deletesAreDetected
      */
@@ -816,7 +810,6 @@ public class UpdatableResultSet
      * @return true if inserted and inserts are detected
      * 
      * @exception SQLException if a database-access error occurs
-     * @throws NotImplemented DOCUMENT ME!
      * 
      * @see DatabaseMetaData#insertsAreDetected
      */
@@ -837,7 +830,6 @@ public class UpdatableResultSet
      *         another, and updates are detected
      * 
      * @exception SQLException if a database-access error occurs
-     * @throws NotImplemented DOCUMENT ME!
      * 
      * @see DatabaseMetaData#updatesAreDetected
      */
@@ -1577,7 +1569,6 @@ public class UpdatableResultSet
      * 
      * @exception SQLException if a database-access error occurs, or if called
      *            when on the insert row
-     * @throws NotUpdatable DOCUMENT ME!
      */
     public synchronized void updateRow()
                                 throws SQLException {
@@ -1780,6 +1771,12 @@ public class UpdatableResultSet
         updateTimestamp(findColumn(columnName), x);
     }
 
+    /**
+     * Sets the concurrency type of this result set
+     * 
+     * @param concurrencyFlag the type of concurrency that
+     *         this ResultSet should support.
+     */
     protected void setResultSetConcurrency(int concurrencyFlag) {
         super.setResultSetConcurrency(concurrencyFlag);
 
@@ -1798,7 +1795,6 @@ public class UpdatableResultSet
      * Figure out whether or not this ResultSet is updateable, and if so,
      * generate the PreparedStatements to support updates.
      * @throws SQLException DOCUMENT ME!
-     * @throws NotUpdatable DOCUMENT ME!
      */
     protected void generateStatements()
                                throws SQLException {

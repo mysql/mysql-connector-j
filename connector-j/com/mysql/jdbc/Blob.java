@@ -1,21 +1,26 @@
 /*
    Copyright (C) 2002 MySQL AB
-     This program is free software; you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation; either version 2 of the License, or
-     (at your option) any later version.
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
-     You should have received a copy of the GNU General Public License
-     along with this program; if not, write to the Free Software
-     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-     
+   
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+   
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+   
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, write to the Free Software
+      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+      
  */
 package com.mysql.jdbc;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
 import java.sql.SQLException;
@@ -39,7 +44,7 @@ import java.sql.SQLException;
  * @author Mark Matthews
  */
 public class Blob
-    implements java.sql.Blob {
+    implements java.sql.Blob, OutputStreamWatcher {
 
     //~ Instance/static variables .............................................
 
@@ -51,11 +56,34 @@ public class Blob
 
     /** The binary data that makes up this BLOB */
     private byte[] binaryData = null;
+    
+    /** The ResultSet that created this BLOB */
+    
+    private ResultSet creatorResultSet;
+    
+    /** The column that this BLOB came from */
+    
+    private int columnIndex;
 
     //~ Constructors ..........................................................
 
+    /**
+     * Creates a BLOB encapsulating the given binary data
+     */
     Blob(byte[] data) {
         setBinaryData(data);
+        this.creatorResultSet = null;
+        this.columnIndex = 0;
+    }
+    
+    /**
+     * Creates an updatable BLOB that can update in-place 
+     * (not implemented yet).
+     */
+    Blob(byte[] data, ResultSet creatorResultSet, int columnIndex) {
+        setBinaryData(data);
+        this.creatorResultSet = creatorResultSet;
+        this.columnIndex = columnIndex;
     }
 
     //~ Methods ...............................................................
@@ -63,9 +91,20 @@ public class Blob
     /**
      * @see Blob#setBinaryStream(long)
      */
-    public OutputStream setBinaryStream(long arg0)
+    public OutputStream setBinaryStream(long indexToWriteAt)
                                  throws SQLException {
-        throw new NotImplemented();
+        if (indexToWriteAt < 1) {
+            throw new SQLException("indexToWriteAt must be >= 1", "S1009");
+        }
+        
+        WatchableOutputStream bytesOut = new WatchableOutputStream();
+        bytesOut.setWatcher(this);
+        
+        if (indexToWriteAt > 0) {
+            bytesOut.write(this.binaryData, 0, (int) (indexToWriteAt - 1));
+        }
+        
+        return bytesOut;
     }
 
     /**
@@ -180,4 +219,12 @@ public class Blob
 
         return binaryData;
     }
+    
+	/**
+	 * @see com.mysql.jdbc.OutputStreamWatcher#streamClosed(byte[])
+	 */
+	public void streamClosed(byte[] byteData) {
+        this.binaryData = byteData;
+	}
+
 }

@@ -293,24 +293,24 @@ public class Field {
                     if (converter != null) { // we have a converter
                         stringVal = converter.toString(buffer, stringStart, 
                                                        stringLength);
-                    } // we have no converter, use JVM standard charset 
-                    else {
+                    } else {
+                        // we have no converter, use JVM standard charset 
                         stringVal = StringUtils.toAsciiString3(buffer, 
                                                                stringStart, 
                                                                stringLength);
                     }
-                } // we have no encoding, use JVM standard charset 
-                else {
+                } else {
+                     // we have no encoding, use JVM standard charset
                     stringVal = StringUtils.toAsciiString3(buffer, stringStart, 
                                                            stringLength);
                 }
-            } // we are not using unicode, so use JVM standard charset 
-            else {
+            }  else {
+                // we are not using unicode, so use JVM standard charset 
                 stringVal = StringUtils.toAsciiString3(buffer, stringStart, 
                                                        stringLength);
             }
-        } // we don't have a connection, so punt 
-        else {
+        } else {
+            // we don't have a connection, so punt 
             stringVal = StringUtils.toAsciiString3(buffer, stringStart, 
                                                    stringLength);
         }

@@ -23,12 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.StringReader;
-
 import java.math.BigDecimal;
-
 import java.net.MalformedURLException;
 import java.net.URL;
-
 import java.sql.Array;
 import java.sql.Clob;
 import java.sql.Ref;
@@ -37,12 +34,11 @@ import java.sql.SQLWarning;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
-
 import java.text.SimpleDateFormat;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.TimeZone;
 
 
 /**
@@ -578,13 +574,13 @@ public class ResultSet
     public boolean getBoolean(int columnIndex)
                        throws java.sql.SQLException {
 
-        String S = getString(columnIndex);
+        String stringVal = getString(columnIndex);
 
-        if (S != null && S.length() > 0) {
+        if (stringVal != null && stringVal.length() > 0) {
 
-            int c = S.toLowerCase().charAt(0);
+            int c = stringVal.toLowerCase().charAt(0);
 
-            return ((c == 't') || (c == 'y') || (c == '1') || S.equals("-1"));
+            return ((c == 't') || (c == 'y') || (c == '1') || stringVal.equals("-1"));
         }
 
         return false;
@@ -630,9 +626,9 @@ public class ResultSet
             return 0;
         }
 
-        Field F = fields[columnIndex - 1];
+        Field field = fields[columnIndex - 1];
 
-        switch (F.getMysqlType()) {
+        switch (field.getMysqlType()) {
 
             case MysqlDefs.FIELD_TYPE_DECIMAL:
             case MysqlDefs.FIELD_TYPE_TINY:
@@ -645,14 +641,14 @@ public class ResultSet
 
                 try {
 
-                    String S = getString(columnIndex);
-
+                    String stringVal = getString(columnIndex);
+                    int decimalIndex = stringVal.indexOf(".");
                     // Strip off the decimals
-                    if (S.indexOf(".") != -1) {
-                        S = S.substring(0, S.indexOf("."));
+                    if (decimalIndex != -1) {
+                        stringVal = stringVal.substring(0, decimalIndex);
                     }
 
-                    return Byte.parseByte(S);
+                    return Byte.parseByte(stringVal);
                 } catch (NumberFormatException NFE) {
                     throw new SQLException("Value '" + getString(columnIndex)
                                            + "' is out of range [-127,127]", 
@@ -663,14 +659,15 @@ public class ResultSet
 
                 try {
 
-                    String S = getString(columnIndex);
+                    String stringVal = getString(columnIndex);
 
+                    int decimalIndex = stringVal.indexOf(".");
                     // Strip off the decimals
-                    if (S.indexOf(".") != -1) {
-                        S = S.substring(0, S.indexOf("."));
+                    if (decimalIndex != -1) {
+                        stringVal = stringVal.substring(0, decimalIndex);
                     }
 
-                    return Byte.parseByte(S);
+                    return Byte.parseByte(stringVal);
                 } catch (NumberFormatException NFE) {
                     throw new SQLException("Value '" + getString(columnIndex)
                                            + "' is out of range [-127,127]", 
@@ -719,8 +716,7 @@ public class ResultSet
             }
         } catch (NullPointerException E) {
             wasNullFlag = true;
-        }
-         catch (ArrayIndexOutOfBoundsException aioobEx) {
+        } catch (ArrayIndexOutOfBoundsException aioobEx) {
             throw new java.sql.SQLException("Column Index out of range ( "
                                             + columnIndex + " > "
                                             + fields.length + ").", "S1002");
@@ -831,8 +827,8 @@ public class ResultSet
      * 
      * @param Conn DOCUMENT ME!
      */
-    public void setConnection(com.mysql.jdbc.Connection Conn) {
-        this.connection = Conn;
+    public void setConnection(com.mysql.jdbc.Connection conn) {
+        this.connection = conn;
 
         if (connection != null) {
             useStrictFloatingPoint = connection.useStrictFloatingPoint();
@@ -874,113 +870,114 @@ public class ResultSet
     public java.sql.Date getDate(int columnIndex)
                           throws java.sql.SQLException {
 
-        Integer Y = null;
-        Integer M = null;
-        Integer D = null;
-        String S = "";
+        Integer year = null;
+        Integer month = null;
+        Integer day = null;
+        String stringVal = "";
 
         try {
-            S = getString(columnIndex);
+            stringVal = getString(columnIndex);
 
-            if (S == null) {
+            if (stringVal == null) {
 
                 return null;
-            } else if (S.equals("0000-00-00")
-                       || S.equals("0000-00-00 00:00:00")
-                       || S.equals("00000000000000")) {
+            } else if (stringVal.equals("0000-00-00")
+                       || stringVal.equals("0000-00-00 00:00:00")
+                       || stringVal.equals("00000000000000")
+                       || stringVal.equals("0")) {
                 wasNullFlag = true;
 
                 return null;
             } else if (fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
 
                 // Convert from TIMESTAMP
-                switch (S.length()) {
+                switch (stringVal.length()) {
 
                     case 14:
                     case 8:
                      {
-                        Y = new Integer(S.substring(0, 4));
-                        M = new Integer(S.substring(4, 6));
-                        D = new Integer(S.substring(6, 8));
+                        year = new Integer(stringVal.substring(0, 4));
+                        month = new Integer(stringVal.substring(4, 6));
+                        day = new Integer(stringVal.substring(6, 8));
 
-                        return new java.sql.Date(Y.intValue() - 1900, 
-                                                 M.intValue() - 1, 
-                                                 D.intValue());
+                        return new java.sql.Date(year.intValue() - 1900, 
+                                                 month.intValue() - 1, 
+                                                 day.intValue());
                     }
 
                     case 12:
                     case 10:
                     case 6:
                      {
-                        Y = new Integer(S.substring(0, 2));
+                        year = new Integer(stringVal.substring(0, 2));
 
-                        if (Y.intValue() <= 69) {
-                            Y = new Integer(Y.intValue() + 100);
+                        if (year.intValue() <= 69) {
+                            year = new Integer(year.intValue() + 100);
                         }
 
-                        M = new Integer(S.substring(2, 4));
-                        D = new Integer(S.substring(4, 6));
+                        month = new Integer(stringVal.substring(2, 4));
+                        day = new Integer(stringVal.substring(4, 6));
 
-                        return new java.sql.Date(Y.intValue(), 
-                                                 M.intValue() - 1, 
-                                                 D.intValue());
+                        return new java.sql.Date(year.intValue(), 
+                                                 month.intValue() - 1, 
+                                                 day.intValue());
                     }
 
                     case 4:
                      {
-                        Y = new Integer(S.substring(0, 4));
+                        year = new Integer(stringVal.substring(0, 4));
 
-                        if (Y.intValue() <= 69) {
-                            Y = new Integer(Y.intValue() + 100);
+                        if (year.intValue() <= 69) {
+                            year = new Integer(year.intValue() + 100);
                         }
 
-                        M = new Integer(S.substring(2, 4));
+                        month = new Integer(stringVal.substring(2, 4));
 
-                        return new java.sql.Date(Y.intValue(), 
-                                                 M.intValue() - 1, 1);
+                        return new java.sql.Date(year.intValue(), 
+                                                 month.intValue() - 1, 1);
                     }
 
                     case 2:
                      {
-                        Y = new Integer(S.substring(0, 2));
+                        year = new Integer(stringVal.substring(0, 2));
 
-                        if (Y.intValue() <= 69) {
-                            Y = new Integer(Y.intValue() + 100);
+                        if (year.intValue() <= 69) {
+                            year = new Integer(year.intValue() + 100);
                         }
 
-                        return new java.sql.Date(Y.intValue(), 0, 1);
+                        return new java.sql.Date(year.intValue(), 0, 1);
                     }
 
                     default:
-                        throw new SQLException("Bad format for Date '" + S
+                        throw new SQLException("Bad format for Date '" + stringVal
                                                + "' in column " + columnIndex
                                                + "(" + fields[columnIndex - 1]
                                                + ").", "S1009");
                 } /* endswitch */
             } else if (fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
-                Y = new Integer(S.substring(0, 4));
+                year = new Integer(stringVal.substring(0, 4));
 
-                return new java.sql.Date(Y.intValue() - 1900, 0, 1);
+                return new java.sql.Date(year.intValue() - 1900, 0, 1);
             } else {
 
-                if (S.length() < 10) {
-                    throw new SQLException("Bad format for Date '" + S
+                if (stringVal.length() < 10) {
+                    throw new SQLException("Bad format for Date '" + stringVal
                                            + "' in column " + columnIndex
                                            + "(" + fields[columnIndex - 1]
                                            + ").", "S1009");
                 }
 
-                Y = new Integer(S.substring(0, 4));
-                M = new Integer(S.substring(5, 7));
-                D = new Integer(S.substring(8, 10));
+                year = new Integer(stringVal.substring(0, 4));
+                month = new Integer(stringVal.substring(5, 7));
+                day = new Integer(stringVal.substring(8, 10));
             }
 
-            return new java.sql.Date(Y.intValue() - 1900, M.intValue() - 1, 
-                                     D.intValue());
+            return new java.sql.Date(year.intValue() - 1900, month.intValue() - 1, 
+                                     day.intValue());
         } catch (Exception e) {
-            throw new java.sql.SQLException("Cannot convert value '" + S
+            throw new java.sql.SQLException("Cannot convert value '" + stringVal
                                             + "' from column " + columnIndex
-                                            + "(" + S + " ) to DATE.", "S1009");
+                                            + "(" + stringVal + " ) to DATE.", "S1009");
         }
     }
 
@@ -1058,8 +1055,7 @@ public class ResultSet
             }
         } catch (NullPointerException E) {
             wasNullFlag = true;
-        }
-         catch (ArrayIndexOutOfBoundsException aioobEx) {
+        } catch (ArrayIndexOutOfBoundsException aioobEx) {
             throw new java.sql.SQLException("Column Index out of range ( "
                                             + columnIndex + " > "
                                             + fields.length + ").", "S1002");
@@ -1488,8 +1484,7 @@ public class ResultSet
             if (i > 1) {
 
                 return result;
-            } /* Only got "-" */ 
-            else {
+            } else {
                 throw new NumberFormatException(new String(buf));
             }
         } else {
@@ -1668,8 +1663,7 @@ public class ResultSet
                                 throw new SQLException("Class not found: "
                                                        + cnfe.toString()
                                                        + " while reading serialized object");
-                            }
-                             catch (IOException ex) {
+                            } catch (IOException ex) {
                                 obj = data; // not serialized?
                             }
                         }
@@ -1913,8 +1907,7 @@ public class ResultSet
             wasNullFlag = true;
 
             return null;
-        }
-         catch (ArrayIndexOutOfBoundsException aioobEx) {
+        } catch (ArrayIndexOutOfBoundsException aioobEx) {
             throw new java.sql.SQLException("Column Index out of range ( "
                                             + columnIndex + " > "
                                             + fields.length + ").", "S1002");
@@ -2007,7 +2000,21 @@ public class ResultSet
      */
     public Time getTime(int columnIndex)
                  throws java.sql.SQLException {
-
+        return getTimeInternal(columnIndex, TimeZone.getDefault());
+    }
+    
+    /**
+     * Get the value of a column in the current row as a java.sql.Time
+     * object in the given timezone
+     *
+     * @param columnIndex the first column is 1, the second is 2...
+     * @param tz the Timezone to use
+     * 
+     * @return the column value; null if SQL NULL
+     * @exception java.sql.SQLException if a database access error occurs
+     */
+    private Time getTimeInternal(int columnIndex, TimeZone tz)
+                 throws java.sql.SQLException {
         int hr = 0;
         int min = 0;
         int sec = 0;
@@ -2109,9 +2116,9 @@ public class ResultSet
                           ? 0 : Integer.parseInt(timeAsString.substring(6));
             }
 
-            return TimeUtil.changeTimezone(new Time(hr, min, sec), 
+            return TimeUtil.changeTimezone(this.connection, new Time(hr, min, sec), 
                                            connection.getServerTimezone(), 
-                                           TimeUtil.GMT_TIMEZONE);
+                                           tz);
         } catch (Exception ex) {
             throw new java.sql.SQLException(ex.getClass().getName(), "S1009");
         }
@@ -2145,7 +2152,7 @@ public class ResultSet
     public java.sql.Time getTime(int columnIndex, Calendar cal)
                           throws SQLException {
 
-        return getTime(columnIndex);
+        return getTimeInternal(columnIndex, cal.getTimeZone());
     }
 
     /**
@@ -2175,6 +2182,21 @@ public class ResultSet
      */
     public Timestamp getTimestamp(int columnIndex)
                            throws java.sql.SQLException {
+        return getTimestampInternal(columnIndex, TimeZone.getDefault());
+    }
+      
+    /**
+     * Get the value of a column in the current row as a
+     * java.sql.Timestamp object in the given timezone
+     *
+     * @param columnIndex the first column is 1, the second is 2...
+     * @param tz the timezone to use
+     * 
+     * @return the column value; null if SQL NULL
+     * @exception java.sql.SQLException if a database access error occurs
+     */                      
+    private Timestamp getTimestampInternal(int columnIndex, TimeZone tz)
+                           throws java.sql.SQLException {
 
         String timestampValue = getString(columnIndex);
 
@@ -2185,19 +2207,20 @@ public class ResultSet
                 return null;
             } else if (timestampValue.equals("0000-00-00")
                        || timestampValue.equals("0000-00-00 00:00:00")
-                       || timestampValue.equals("00000000000000")) {
+                       || timestampValue.equals("00000000000000")
+                       || timestampValue.equals("0")) {
                 wasNullFlag = true;
 
                 return null;
             } else if (fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 
-                return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
                                                        Integer.parseInt(timestampValue.substring(
                                                                                 0, 
                                                                                 4)) - 1900, 
                                                        0, 1, 0, 0, 0, 0), 
                                                connection.getServerTimezone(), 
-                                               TimeUtil.GMT_TIMEZONE);
+                                               tz);
             } else {
 
                 // Convert from TIMESTAMP or DATE
@@ -2219,13 +2242,13 @@ public class ResultSet
                         int seconds = Integer.parseInt(timestampValue.substring(
                                                                17, 19));
 
-                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
                                                                year - 1900, 
                                                                month - 1, day, 
                                                                hour, minutes, 
                                                                seconds, 0), 
                                                        connection.getServerTimezone(), 
-                                                       TimeUtil.GMT_TIMEZONE);
+                                                       tz);
                     }
 
                     case 14:
@@ -2244,13 +2267,13 @@ public class ResultSet
                         int seconds = Integer.parseInt(timestampValue.substring(
                                                                12, 14));
 
-                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
                                                                year - 1900, 
                                                                month - 1, day, 
                                                                hour, minutes, 
                                                                seconds, 0), 
                                                        connection.getServerTimezone(), 
-                                                       TimeUtil.GMT_TIMEZONE);
+                                                       tz);
                     }
 
                     case 12:
@@ -2274,13 +2297,13 @@ public class ResultSet
                         int seconds = Integer.parseInt(timestampValue.substring(
                                                                10, 12));
 
-                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
                                                                year, month - 1, 
                                                                day, hour, 
                                                                minutes, 
                                                                seconds, 0), 
                                                        connection.getServerTimezone(), 
-                                                       TimeUtil.GMT_TIMEZONE);
+                                                       tz);
                     }
 
                     case 10:
@@ -2303,12 +2326,12 @@ public class ResultSet
                         int minutes = Integer.parseInt(timestampValue.substring(
                                                                8, 10));
 
-                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
                                                                year, month - 1, 
                                                                day, hour, 
                                                                minutes, 0, 0), 
                                                        connection.getServerTimezone(), 
-                                                       TimeUtil.GMT_TIMEZONE);
+                                                       tz);
                     }
 
                     case 8:
@@ -2321,12 +2344,12 @@ public class ResultSet
                         int day = Integer.parseInt(timestampValue.substring(6, 
                                                                             8));
 
-                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
                                                                year - 1900, 
                                                                month - 1, day, 
                                                                0, 0, 0, 0), 
                                                        connection.getServerTimezone(), 
-                                                       TimeUtil.GMT_TIMEZONE);
+                                                       tz);
                     }
 
                     case 6:
@@ -2344,11 +2367,11 @@ public class ResultSet
                         int day = Integer.parseInt(timestampValue.substring(4, 
                                                                             6));
 
-                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
                                                                year, month - 1, 
                                                                day, 0, 0, 0, 0), 
                                                        connection.getServerTimezone(), 
-                                                       TimeUtil.GMT_TIMEZONE);
+                                                       tz);
                     }
 
                     case 4:
@@ -2364,11 +2387,11 @@ public class ResultSet
                         int month = Integer.parseInt(timestampValue.substring(
                                                              2, 4));
 
-                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
                                                                year, month - 1, 
                                                                1, 0, 0, 0, 0), 
                                                        connection.getServerTimezone(), 
-                                                       TimeUtil.GMT_TIMEZONE);
+                                                       tz);
                     }
 
                     case 2:
@@ -2381,11 +2404,11 @@ public class ResultSet
                             year = (year + 100);
                         }
 
-                        return TimeUtil.changeTimezone(new java.sql.Timestamp(
+                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
                                                                year, 0, 1, 0, 
                                                                0, 0, 0), 
                                                        connection.getServerTimezone(), 
-                                                       TimeUtil.GMT_TIMEZONE);
+                                                       tz);
                     }
 
                     default:
@@ -2433,7 +2456,7 @@ public class ResultSet
     public java.sql.Timestamp getTimestamp(int columnIndex, Calendar cal)
                                     throws SQLException {
 
-        return getTimestamp(columnIndex);
+        return getTimestampInternal(columnIndex, cal.getTimeZone());
     }
 
     /**

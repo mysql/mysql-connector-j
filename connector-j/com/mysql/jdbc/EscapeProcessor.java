@@ -55,11 +55,11 @@ class EscapeProcessor {
          * Short circuit this code if we don't have a matching pair of
          * "{}". - Suggested by Ryan Gustafason
          */
-        int begin_brace = sql.indexOf("{");
-        int next_end_brace = (begin_brace == -1)
-                                 ? -1 : sql.indexOf("}", begin_brace);
+        int beginBrace = sql.indexOf("{");
+        int nextEndBrace = (beginBrace == -1)
+                                 ? -1 : sql.indexOf("}", beginBrace);
 
-        if (next_end_brace == -1) {
+        if (nextEndBrace == -1) {
 
             return sql;
         }

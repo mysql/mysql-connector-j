@@ -28,14 +28,24 @@ import java.util.Properties;
 
 /**
  * Socket factory for vanilla TCP/IP sockets (the standard)
+ * 
+ * @author Mark Matthews
  */
 public class StandardSocketFactory
     implements SocketFactory {
 
     //~ Instance/static variables .............................................
 
+    /** The underlying TCP/IP socket to use */
+    
     protected Socket rawSocket = null;
+    
+    /** The hostname to connect to */
+    
     protected String host = null;
+    
+    /** The port number to connect to */
+    
     protected int port = 3306;
 
     //~ Methods ...............................................................
@@ -76,6 +86,11 @@ public class StandardSocketFactory
      * Called by the driver before issuing the MySQL protocol handshake.
      * Should return the socket instance that should be used during
      * the handshake.
+     * 
+     * @throws SocketException if a socket error occurs
+     * @throws IOException if an I/O error occurs
+     * 
+     * @return the socket to use before the handshake
      */
     public Socket beforeHandshake()
                            throws SocketException, IOException {
@@ -86,6 +101,11 @@ public class StandardSocketFactory
     /**
      * Called by the driver after issuing the MySQL protocol handshake and
      * reading the results of the handshake.
+     * 
+     * @throws SocketException if a socket error occurs
+     * @throws IOException if an I/O error occurs
+     * 
+     * @return The socket to use after the handshake
      */
     public Socket afterHandshake()
                           throws SocketException, IOException {

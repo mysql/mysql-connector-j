@@ -92,7 +92,7 @@ public class Statement
      */
     protected SQLWarning warningChain = null;
     private int fetchSize = 0;
-    private boolean isClosed = false;
+    protected boolean isClosed = false;
 
     //~ Constructors ..........................................................
 
@@ -246,8 +246,10 @@ public class Statement
     public void setFetchSize(int rows)
                       throws SQLException {
 
-        if (maxRows != 0 && maxRows != -1 && (rows > this.getMaxRows()
-            || (rows < 0 && rows != Integer.MIN_VALUE))) {
+        if ((rows < 0 && rows != Integer.MIN_VALUE)
+            || (maxRows != 0 
+            && maxRows != -1 
+            && rows > this.getMaxRows())) {
             throw new SQLException("Illegal value for setFetchSize()", "S1009");
         }
 
@@ -850,19 +852,23 @@ public class Statement
                 connection.setCatalog(currentCatalog);
             }
 
+            char firstChar = Character.toUpperCase(sql.charAt(0));
+                
+            boolean isSelect = (firstChar == 'S');
+            
             //
             // Only apply max_rows to selects
             //
             if (connection.useMaxRows()) {
 
-                char firstChar = Character.toUpperCase(sql.charAt(0));
-
-                if (firstChar == 'S') {
+               
+                
+                if (isSelect) {
 
                     if (sql.toUpperCase().indexOf("LIMIT") != -1) {
                         rs = connection.execSQL(sql, maxRows, 
                                                 resultSetConcurrency, 
-                                                createStreamingResultSet());
+                                                createStreamingResultSet(), true);
                     } else {
 
                         if (maxRows <= 0) {
@@ -881,10 +887,10 @@ public class Statement
 
                 // Finally, execute the query
                 rs = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                        createStreamingResultSet());
+                                        createStreamingResultSet(), isSelect);
             } else {
                 rs = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                        createStreamingResultSet());
+                                        createStreamingResultSet(), isSelect);
             }
 
             if (oldCatalog != null) {
@@ -1042,7 +1048,7 @@ public class Statement
                 if (sql.toUpperCase().indexOf("LIMIT") != -1) {
                     results = connection.execSQL(sql, maxRows, 
                                                  resultSetConcurrency, 
-                                                 createStreamingResultSet());
+                                                 createStreamingResultSet(), true);
                 } else {
 
                     if (maxRows <= 0) {
@@ -1054,7 +1060,7 @@ public class Statement
                     }
 
                     results = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                                 createStreamingResultSet());
+                                                 createStreamingResultSet(), true);
 
                     if (oldCatalog != null) {
                         connection.setCatalog(oldCatalog);
@@ -1062,7 +1068,7 @@ public class Statement
                 }
             } else {
                 results = connection.execSQL(sql, -1, resultSetConcurrency, 
-                                             createStreamingResultSet());
+                                             createStreamingResultSet(), true);
             }
 
             if (oldCatalog != null) {
@@ -1152,7 +1158,7 @@ public class Statement
             }
 
             rs = connection.execSQL(sql, -1, 
-                                    java.sql.ResultSet.CONCUR_READ_ONLY, false);
+                                    java.sql.ResultSet.CONCUR_READ_ONLY, false, false);
             rs.setConnection(connection);
 
             if (oldCatalog != null) {
@@ -1257,4 +1263,6 @@ public class Statement
             return true;
         }
     }
+    
+    
 }

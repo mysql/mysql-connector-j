@@ -656,7 +656,8 @@ class Buffer {
         if (converter != null) {
             b = converter.toBytes(s);
         } else {
-            b = s.getBytes(encoding);
+            b = StringUtils.getBytes(s, encoding);
+            
         }
 
         int len = b.length;

@@ -28,6 +28,8 @@ import java.util.Properties;
 
 /**
  * Interface to allow pluggable socket creation in the driver
+ * 
+ * @author Mark Matthews
  */
 public interface SocketFactory {
 
@@ -42,27 +44,43 @@ public interface SocketFactory {
      * <code>com.mysql.jdbc.StandardSocketFactory</code>  Implementing classes
      * are responsible for handling synchronization of this method (if
      * needed).
-     * @param props DOCUMENT ME!
      * 
-     * @return DOCUMENT ME!
-     * @throws SocketException DOCUMENT ME!
-     * @throws IOException DOCUMENT ME!
+     * @param host the hostname passed in the JDBC URL. It will be a single
+     * hostname, as the driver parses multi-hosts (for failover) and calls this
+     * method for each host connection attempt.
+     * 
+     * @param props properties passed to the driver via the URL and/or properties
+     *               instance.
+     * 
+     * @return a socket connected to the given host
+     * @throws SocketException if a socket error occurs
+     * @throws IOException if an I/O error occurs
      */
-    public Socket connect(String host, Properties props)
+     Socket connect(String host, Properties props)
                    throws SocketException, IOException;
 
     /**
      * Called by the driver before issuing the MySQL protocol handshake.
      * Should return the socket instance that should be used during
      * the handshake.
+     * 
+     * @throws SocketException if a socket error occurs
+     * @throws IOException if an I/O error occurs
+     * 
+     * @return the socket to use before the handshake
      */
-    public Socket beforeHandshake()
+    Socket beforeHandshake()
                            throws SocketException, IOException;
 
     /**
      * Called by the driver after issuing the MySQL protocol handshake and
      * reading the results of the handshake.
+     * 
+     * @throws SocketException if a socket error occurs
+     * @throws IOException if an I/O error occurs
+     * 
+     * @return the socket to use after the handshake
      */
-    public Socket afterHandshake()
+    Socket afterHandshake()
                           throws SocketException, IOException;
 }
