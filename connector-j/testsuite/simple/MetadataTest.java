@@ -122,6 +122,8 @@ public class MetadataTest
         }
         
         rs.close();
+        
+        rs = dbmd.getImportedKeys(null, null, "fktable2");
     }
 
     /**
@@ -177,6 +179,9 @@ public class MetadataTest
         stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_2");
         stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_3");
         stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_4");
+        stmt.executeUpdate("DROP TABLE IF EXISTS fktable1");
+        stmt.executeUpdate("DROP TABLE IF EXISTS fktable2");
+        
         stmt.executeUpdate(
                 "CREATE TABLE parent(parent_id INT NOT NULL, PRIMARY KEY (parent_id)) TYPE=INNODB");
         stmt.executeUpdate(
@@ -211,5 +216,10 @@ public class MetadataTest
                 + "primary key (cpd_foreign_1_id, cpd_foreign_2_id),"
                 + "foreign key (cpd_foreign_1_id, cpd_foreign_2_id) references cpd_foreign_3(cpd_foreign_1_id, cpd_foreign_2_id)"
                 + ") type=InnoDB");
+                
+ 
+        stmt.executeUpdate("create table fktable1 (TYPE_ID int not null, TYPE_DESC varchar(32), primary key(TYPE_ID)) TYPE=InnoDB");
+        stmt.executeUpdate("create table fktable2 (KEY_ID int not null, COF_NAME varchar(32), PRICE float, TYPE_ID int, primary key(KEY_ID), index(TYPE_ID), foreign key(TYPE_ID) references fktable1(TYPE_ID)) TYPE=InnoDB");
+                       
     }
 }
