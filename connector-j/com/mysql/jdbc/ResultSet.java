@@ -4173,22 +4173,7 @@ public class ResultSet
         }
     }
 
-    // ****************************************************************
-    //
-    //                       END OF PUBLIC INTERFACE
-    //
-    // ****************************************************************
-
-    /**
-     * Allows Statements to determine the type of result set they ended
-     * up building.
-     */
-    int getResultSetType() {
-
-        return 0;
-    }
-
-    void setStatement(com.mysql.jdbc.Statement stmt) {
+        void setStatement(com.mysql.jdbc.Statement stmt) {
         owningStatement = stmt;
     }
 
