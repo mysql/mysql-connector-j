@@ -22,6 +22,9 @@ xx-xx-xx - Version 3.0.3-dev
 	  to use Field.isAutoIncrement().
 	- Honor 'lower_case_table_names' when enabled in the server when
 	  doing table name comparisons in DatabaseMetaData methods.
+	- Use non-aliased table/column names and database names to fullly 
+	  qualify tables and columns in UpdatableResultSet (requires 
+	  MySQL-4.1 or newer)
 	  
 11-08-02 - Version 3.0.2-dev
 

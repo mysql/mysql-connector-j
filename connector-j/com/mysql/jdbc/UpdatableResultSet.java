@@ -1805,6 +1805,7 @@ public class UpdatableResultSet
 
         boolean useQuotedIdentifiers = connection.supportsQuotedIdentifiers();
         String quotedId = getQuotedIdChar();
+        
         String tableName = fields[0].getTableName();
         primaryKeyIndicies = new ArrayList();
 
@@ -1817,6 +1818,17 @@ public class UpdatableResultSet
 
         for (int i = 0; i < fields.length; i++) {
 
+            String originalColumnName = fields[i].getOriginalName();
+            String columnName = null;
+            
+            if (this.connection.getIO().hasLongColumnInfo()
+                && originalColumnName != null 
+                && originalColumnName.length() > 0) {
+                columnName = originalColumnName;
+            } else {
+                columnName = fields[i].getName();
+            }
+            
             if (fields[i].isPrimaryKey()) {
                 primaryKeyIndicies.add(new Integer(i));
 
@@ -1830,8 +1842,8 @@ public class UpdatableResultSet
                     keyValues.append(quotedId);
                 }
 
-                keyValues.append(fields[i].getName());
-
+                keyValues.append(columnName);
+                
                 if (useQuotedIdentifiers) {
                     keyValues.append(quotedId);
                 }
@@ -1853,9 +1865,9 @@ public class UpdatableResultSet
             if (useQuotedIdentifiers) {
                 columnNames.append(quotedId);
             }
-
-            columnNames.append(fields[i].getName());
-
+    
+            columnNames.append(columnName);
+            
             if (useQuotedIdentifiers) {
                 columnNames.append(quotedId);
             }
@@ -1863,8 +1875,8 @@ public class UpdatableResultSet
             if (useQuotedIdentifiers) {
                 fieldValues.append(quotedId);
             }
-
-            fieldValues.append(fields[i].getName());
+            
+            fieldValues.append(columnName);
 
             if (useQuotedIdentifiers) {
                 fieldValues.append(quotedId);
@@ -1874,6 +1886,29 @@ public class UpdatableResultSet
         }
 
         String quotedIdStr = useQuotedIdentifiers ? quotedId : "";
+        
+        // adjust table name (if needed)
+              
+        if (this.connection.getIO().hasLongColumnInfo()) {
+            String originalTableName = this.fields[0].getOriginalTableName();
+            String databaseName = this.fields[0].getDatabaseName();
+            
+            if (originalTableName != null 
+                && originalTableName.length() > 0) {
+                    tableName = originalTableName;
+            }
+            
+            if (databaseName != null && databaseName.length() > 0) {
+                StringBuffer newTableBuf = new StringBuffer(databaseName);
+                newTableBuf.append(quotedIdStr);
+                newTableBuf.append('.');
+                newTableBuf.append(quotedIdStr);
+                newTableBuf.append(tableName);
+                
+                tableName = newTableBuf.toString();
+            }
+        }
+                    
         updateSQL = "UPDATE " + quotedIdStr + tableName + quotedIdStr + " "
                     + fieldValues.toString() + " WHERE "
                     + keyValues.toString();
