@@ -2624,6 +2624,8 @@ public class ResultSet
 			throw new SQLException("ResultSet not updatable");
 		}
 
+		boolean useQuotedIdentifiers = Conn.supportsQuotedIdentifiers();
+		
 		String TableName = Fields[0].getTableName();
 
 		_PrimaryKeyIndicies = new Vector();
@@ -2648,9 +2650,19 @@ public class ResultSet
 					keys_first_time = false;
 				}
 
-				KeyValues.append("`");
+				if (useQuotedIdentifiers)
+				{
+					KeyValues.append("`");
+				}
+				
 				KeyValues.append(Fields[i].getName());
-				KeyValues.append("`=?");
+				
+				if (useQuotedIdentifiers)
+				{
+					KeyValues.append("`");
+				}
+				
+				KeyValues.append("=?");
 			}
 
 			if (first_time) {
@@ -2664,39 +2676,60 @@ public class ResultSet
 			}
 
 			InsertPlaceHolders.append("?");
-			ColumnNames.append("`");
-			ColumnNames.append(Fields[i].getName());
-			ColumnNames.append("`");
 			
-			FieldValues.append("`");
+			if (useQuotedIdentifiers)
+			{
+				ColumnNames.append("`");
+			}
+			
+			ColumnNames.append(Fields[i].getName());
+			
+			if (useQuotedIdentifiers)
+			{
+				ColumnNames.append("`");
+			}
+			
+			if (useQuotedIdentifiers)
+			{
+				FieldValues.append("`");
+			}
+			
 			FieldValues.append(Fields[i].getName());
-			FieldValues.append("`=?");
+			
+			if (useQuotedIdentifiers)
+			{
+				FieldValues.append("`");
+			}
+			
+			FieldValues.append("=?");
 		}
 
+		String quotedId = useQuotedIdentifiers ? "`" : "";
+		
 		_UpdateSQL =
-			"UPDATE `"
+			"UPDATE " + quotedId
 				+ TableName
-				+ "` "
+				+ quotedId + " "
 				+ FieldValues.toString()
 				+ " WHERE "
 				+ KeyValues.toString();
 
 		_InsertSQL =
-			"INSERT INTO `"
+			"INSERT INTO " + quotedId
 				+ TableName
-				+ "` ("
+				+ quotedId + " ("
 				+ ColumnNames.toString()
 				+ ") VALUES ("
 				+ InsertPlaceHolders.toString()
 				+ ")";
 				
 		_RefreshSQL =
-			"SELECT " + ColumnNames.toString() + " FROM `"
+			"SELECT " + ColumnNames.toString() + " FROM " + quotedId
 				+ TableName
-				+ "` WHERE " + KeyValues.toString();
+				+ quotedId + " WHERE " + KeyValues.toString();
 
 
-		_DeleteSQL = "DELETE FROM `" + TableName + "` WHERE " + KeyValues.toString();
+		_DeleteSQL = "DELETE FROM " + quotedId + TableName + quotedId + " WHERE " + KeyValues.toString();
 	}
 
 	/**
