@@ -31,7 +31,6 @@ public class EscapeTokenizer {
     //~ Instance/static variables .............................................
 
     private boolean emittingEscapeCode = false;
-    private boolean inBraces = false;
     private boolean inQuotes = false;
     private char lastChar = 0;
     private char lastLastChar = 0;
