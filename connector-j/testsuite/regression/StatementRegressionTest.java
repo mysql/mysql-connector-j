@@ -18,6 +18,7 @@
  */
 package testsuite.regression;
 
+import java.io.CharArrayReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
@@ -116,7 +117,94 @@ public class StatementRegressionTest
             assertTrue(updateCount == rowCount);
         } finally {
 
-            stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");
+           stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");
         }
     }
+    
+    /**
+     * Tests PreparedStatement.setCharacterStream() to ensure
+     * it accepts > 4K streams
+     */
+    
+    public void testSetCharacterStream() throws Exception {
+        try {
+            stmt.executeUpdate("DROP TABLE IF EXISTS charStreamRegressTest");
+            stmt.executeUpdate("CREATE TABLE charStreamRegressTest(field1 text)");
+            
+            pstmt = conn.prepareStatement("INSERT INTO charStreamRegressTest VALUES (?)");
+            
+            char[] charBuf = new char[16384];
+            
+            for (int i = 0; i < charBuf.length; i++) {
+                charBuf[i] = 'A';
+            }
+            
+            CharArrayReader reader = new CharArrayReader(charBuf);
+            
+            pstmt.setCharacterStream(1, reader, charBuf.length);
+            pstmt.executeUpdate();
+            
+            rs = stmt.executeQuery("SELECT field1 FROM charStreamRegressTest");
+            
+            rs.next();
+            
+            String result = rs.getString(1);
+            
+            assertTrue(result.length() == charBuf.length);
+            
+            stmt.execute("TRUNCATE TABLE charStreamRegressTest");
+            
+            // Test that EOF is not thrown
+            
+            reader = new CharArrayReader(charBuf);
+            pstmt.setCharacterStream(1, reader, (charBuf.length * 2));
+            pstmt.executeUpdate();
+            
+            rs = stmt.executeQuery("SELECT field1 FROM charStreamRegressTest");
+            
+            rs.next();
+            
+            result = rs.getString(1);
+            
+            assertTrue("Retrieved value of length " + result.length() + " != length of inserted value " + charBuf.length, result.length() == charBuf.length);
+            
+            // Test single quotes inside identifers
+            stmt.executeUpdate("DROP TABLE IF EXISTS `charStream'RegressTest`");
+            stmt.executeUpdate("CREATE TABLE `charStream'RegressTest`(field1 text)");
+            
+            pstmt = conn.prepareStatement("INSERT INTO `charStream'RegressTest` VALUES (?)");
+            
+            reader = new CharArrayReader(charBuf);
+            pstmt.setCharacterStream(1, reader, (charBuf.length * 2));
+            pstmt.executeUpdate();
+            
+            rs = stmt.executeQuery("SELECT field1 FROM `charStream'RegressTest`");
+            
+            rs.next();
+            
+            result = rs.getString(1);
+            
+            assertTrue("Retrieved value of length " + result.length() + " != length of inserted value " + charBuf.length, result.length() == charBuf.length);
+            
+            
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (Exception ex) {
+                    // ignore
+                }
+                
+                 rs = null;
+            }
+             stmt.executeUpdate("DROP TABLE IF EXISTS `charStream'RegressTest`");
+            stmt.executeUpdate("DROP TABLE IF EXISTS charStreamRegressTest");
+        }
+    }
+            
+            
+           
+            
+            
+    
 }
