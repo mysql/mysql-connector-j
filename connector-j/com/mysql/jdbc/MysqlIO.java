@@ -780,15 +780,18 @@ public class MysqlIO {
                 throw new java.sql.SQLException("Unknown Status code from server", 
                                                 "08007", status);
             }
-
-            //if ((clientParam & CLIENT_COMPRESS) != 0) {
-            //use_compression = true;
-            //}
         } catch (IOException ioEx) {
-            throw new java.sql.SQLException(SQLError.get("08S01") + ": "
-                                            + ioEx.getClass().getName()
-                                            + ", underlying cause: "
-                                            + ioEx.getMessage(), "08S01", 0);
+            StringBuffer message = new StringBuffer(SQLError.get("08S01"));
+            message.append(": ");
+            message.append(ioEx.getClass().getName());
+            message.append(", underlying cause: ");
+            message.append(ioEx.getMessage());
+            
+            if (!this.connection.useParanoidErrorMessages()) {
+                message.append(Util.stackTraceToString(ioEx));
+            }
+            
+            throw new java.sql.SQLException(message.toString(), "08S01", 0);
         }
     }
 
@@ -1616,6 +1619,25 @@ public class MysqlIO {
             }
         
             
+        } catch (IOException ioEx) {
+            StringBuffer messageBuf = new StringBuffer("Unable to open file ");
+            
+            if (!this.connection.useParanoidErrorMessages()) {
+                messageBuf.append("'");
+                if (fileName != null) {
+                    messageBuf.append(fileName);
+                }
+                messageBuf.append("'");
+            }
+            
+            messageBuf.append("for 'LOAD DATA LOCAL INFILE' command.");
+            
+            if (!this.connection.useParanoidErrorMessages()) {
+                messageBuf.append("Due to underlying IOException: ");
+                messageBuf.append(Util.stackTraceToString(ioEx));
+            }
+            
+            throw new SQLException(messageBuf.toString(), "S1009");
         } finally {
             
             if (fileIn != null) {

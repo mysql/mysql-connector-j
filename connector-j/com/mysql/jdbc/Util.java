@@ -20,6 +20,8 @@
 package com.mysql.jdbc;
 
 import java.io.ObjectInputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 /**
  * Various utility methods for the driver.
@@ -172,4 +174,43 @@ public class Util {
 
         return nr & (((long) 1L << 31) - 1L);
     }
+    
+    /** 
+     * Converts a nested exception into a nicer message
+     * 
+     * @param ex the exception to expand into a message.
+     * 
+     * @returns a message containing the exception, the
+     * message (if any), and a stacktrace.
+     */
+    
+    public static String stackTraceToString(Exception ex) {
+        StringBuffer traceBuf = new StringBuffer();
+        traceBuf.append("\n\n** BEGIN NESTED EXCEPTION ** \n\n");
+        if (ex != null) {
+            traceBuf.append(ex.getClass().getName());
+            
+            String message = ex.getMessage();
+            
+            if (message != null) {
+                traceBuf.append("\nMESSAGE: ");
+                traceBuf.append(message);
+            }
+            
+            StringWriter out = new StringWriter();
+            
+            PrintWriter printOut = new PrintWriter(out);
+            
+            ex.printStackTrace(printOut);
+            
+            traceBuf.append("\n\nSTACKTRACE:\n\n");
+            traceBuf.append(out.toString());
+        }
+        
+        traceBuf.append("\n\n** END NESTED EXCEPTION **\n\n");
+        
+        return traceBuf.toString();
+    }
+                    
+            
 }
