@@ -932,7 +932,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                             } else if (typeInfo.equalsIgnoreCase("mediumtext")) {
                                 size = Integer.toString(Math.min(16277215,
                                             MysqlIO.getMaxBuf()));
-                            } else if (typeInfo.equalsIgnoreCase("enum")) {
+                            } else if (typeInfo.equalsIgnoreCase("longtext")) {
+	   							size = Integer.toString(Integer.MAX_VALUE);
+							} else if (typeInfo.equalsIgnoreCase("enum")) {
                                 size = "255";
                             } else if (typeInfo.equalsIgnoreCase("set")) {
                                 size = "255";
