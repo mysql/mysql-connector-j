@@ -14,10 +14,18 @@ CONTENTS
 
 LICENSE
 
-MySQL Connector/J is licensed under the GPL. Please see the COPYING
-file for more information. If you need non-GPL licenses for
-commercial distribution please contact me <mark@mysql.com> or
-sales@mysql.com.
+MySQL Connector/J is licensed under the GPL or a commercial license
+from MySQL AB. 
+
+If you have licensed this product under the GPL, please see the COPYING
+file for more information. 
+
+If you have licensed this product under a commercial license from
+MySQL AB, please see the file "MySQLEULA.txt" that comes with this 
+distribution for the terms of the license.
+
+If you need non-GPL licenses for commercial distribution please contact 
+me <mark@mysql.com> or <sales@mysql.com>.
 
 
 SYSTEM REQUIREMENTS
@@ -90,7 +98,10 @@ format ([xxx] denotes optional url components):
   jdbc:mysql://[hostname][,failoverhost...][:port]/[dbname][?param1=value1][&param2=value2].....
 
 The driver now has fail-over support. This allows the driver to fail-over to any number
-of "slave" hosts and still perform read-only queries.
+of "slave" hosts and still perform read-only queries. Fail-over only happens when the
+connection is in a autoCommit(true) state, because fail-over can not happen reliably
+when a transaction is in progress. Most good application servers and connection pools
+set autoCommit to 'true' at the end of every transaction/connection use.
 
 The fail-over functionality has the following behavior:
 
@@ -103,7 +114,8 @@ If the URL parameter "autoReconnect" is true:
 
 	Failover happens when the driver determines that the connection has failed
 	(before _every_ query), and falls back to the first host when it determines
-	that the host has become available again.
+	that the host has become available again (after queriesBeforeRetryMaster 
+	queries have been issued).
 	
 In either case, whenever you are connected to a "failed-over" server, the connection
 will be set to read-only status, so queries that would modify data will have exceptions
@@ -130,6 +142,10 @@ maxReconnects       | if autoReconnect is enabled, how many     | 3
 initialTimeout      | if autoReconnect is enabled, the          | 2
                     | initial time to wait between              |
                     | re-connect attempts (seconds)             |
+--------------------+-------------------------------------------+-------------
+queriesBeforeRetry  | Specifies how many queries to issue when  | 50
+Master              | failed over before attempting to          |
+                    | reconnect to the master                   |
 --------------------+-------------------------------------------+-------------
 maxRows             | The maximum number of rows to return      | 0
                     | (0 means return all rows)                 |
@@ -170,6 +186,11 @@ profileSql          | Dump queries and execution/fetch times    | false
                     | that are auto-generated as in CMP EJBs    |   
                     | (true/false)                              |
 --------------------+-------------------------------------------+-------------
+connectTimeout      | Timeout for socket connect (in            | 0
+                    | milliseconds), with 0 being no timeout.   |
+                    | Only works on JDK-1.4 or newer. Defaults  |
+                    | to '0'.                                   |
+--------------------+-------------------------------------------+-------------
 socketTimeout       | When set to something other than '0', the | 0
                     | driver will throw a SQLException when     |   
                     | this timeout (in ms) has expired, and     |
@@ -187,7 +208,25 @@ paranoid            | Don't show "sensitive" information in     | false
                     | "sensitive" information from internal     |   
                     | data structures when possible             | 
                     | (true/false)                              |
+--------------------+-------------------------------------------+-------------
+useHostsInPrivileges| Add '@hostname' to users in               | true 
+                    | DatabaseMetaData.getColumn/               |
+                    | TablePrivileges()                         |
+--------------------+-------------------------------------------+-------------
+useTimezone         | Convert time/date values between server   | false 
+                    | and client timezones?                     |
+--------------------+-------------------------------------------+-------------
+serverTimezone      | Use when there is no mapping between your | null 
+                    | server timezone and Java timezone. Must   |
+                    | use timezone ID supported by your JVM.    |
+--------------------+-------------------------------------------+-------------
+useSSL              | Should Connector/J use SSL when           | false 
+                    | communicating with the server, if the     |
+                    | server supports it? (see the SSL SUPPORT  |
+                    | section of this document for important    |
+                    | information for making this work.         |
 ------------------------------------------------------------------------------
+			
 			
 A simple connection example looks like:
 
@@ -267,6 +306,162 @@ the character set using the "useUnicode=true" and
 "characterEncoding=some_charset" parameters in your URL to tell
 the driver which character set to use, where "some_charset" is
 a character set that your JVM supports.
+
+SSL SUPPORT
+
+SSL in MySQL Connector/J encrypts all data (other than the initial
+handshake) between the JDBC driver and the server. The performance 
+penalty for enabling SSL is an increase in query  processing time 
+between 35% and 50%, depending on the size of the query, and the 
+amount of data it returns.
+
+For SSL Support to work, you must have the following:
+
+ * A JDK that includes JSSE (Java Secure Sockets Extension), 
+   like JDK-1.4.1 or newer, or a JDK that you can add JSSE
+   to, like JDK-1.2.x or JDK-1.3.x by following the instructions
+   at http://java.sun.com/products/jsse/index-103.html
+   
+ * A MySQL server that supports SSL and has been compiled 
+   and configured to do so, which is MySQL-4.0.4 or later,
+   see:
+   
+   http://www.mysql.com/doc/en/Secure_connections.html
+   
+ * A client certificate (covered later in this section)
+ 
+ You will first need to import the MySQL server CA Certificate into
+ a Java truststore. A sample MySQL server CA Certificate is located
+ in the 'SSL' subdirectory of the MySQL source distribution. This is 
+ what SSL will use to determine if you are communicating with a secure
+ MySQL server.
+ 
+ To use Java's 'keytool' to create a truststore in the current directory
+ , and import the server's CA certificate ('cacert.pem'), you can do the 
+ following (assuming that'keytool' is in your path. It's located in the 
+ 'bin' subdirectory of your JDK or JRE):
+ 
+shell> keytool -import -alias mysqlServerCACert -file cacert.pem \
+        -keystore truststore
+        
+Keytool will respond with the following information:
+
+------------------------------------------------------
+Enter keystore password:  *********
+Owner: EMAILADDRESS=walrus@mysql.com, CN=Walrus, O=MySQL AB, L=Orenburg, ST=Some
+-State, C=RU
+Issuer: EMAILADDRESS=walrus@mysql.com, CN=Walrus, O=MySQL AB, L=Orenburg, ST=Som
+e-State, C=RU
+Serial number: 0
+Valid from: Fri Aug 02 16:55:53 CDT 2002 until: Sat Aug 02 16:55:53 CDT 2003
+Certificate fingerprints:
+         MD5:  61:91:A0:F2:03:07:61:7A:81:38:66:DA:19:C4:8D:AB
+         SHA1: 25:77:41:05:D5:AD:99:8C:14:8C:CA:68:9C:2F:B8:89:C3:34:4D:6C
+Trust this certificate? [no]:  yes
+Certificate was added to keystore
+------------------------------------------------------
+        
+You will then need to generate a client certificate, so that the MySQL 
+server knows that it is talking to a secure client:
+
+shell> keytool -genkey -keyalg rsa -alias mysqlClientCertificate \
+      -keystore keystore
+
+Keytool will prompt you for the following information, and create a keystore
+named 'keystore' in the current directory. You should respond with 
+information that is appropriate for your situation:
+
+------------------------------------------------------
+Enter keystore password:  *********
+What is your first and last name?
+  [Unknown]:  Matthews
+What is the name of your organizational unit?
+  [Unknown]:  Software Development
+What is the name of your organization?
+  [Unknown]:  MySQL AB
+What is the name of your City or Locality?
+  [Unknown]:  Flossmoor
+What is the name of your State or Province?
+  [Unknown]:  IL
+What is the two-letter country code for this unit?
+  [Unknown]:  US
+Is <CN=Matthews, OU=Software Development, O=MySQL AB,
+ L=Flossmoor, ST=IL, C=US> correct?
+  [no]:  y
+
+Enter key password for <mysqlClientCertificate>
+        (RETURN if same as keystore password):
+------------------------------------------------------
+
+Finally, to get JSSE to use the keystore and truststore that you
+have generated, you need to set the following system properties
+when you start your JVM, replacing 'path_to_keystore_file' with
+the full path to the keystore file you created, 
+'path_to_truststore_file' with the path to the truststore file
+you created, and using the appropriate password values for each
+property.
+
+ -Djavax.net.ssl.keyStore=path_to_keystore_file
+ -Djavax.net.ssl.keyStorePassword=********* 
+ -Djavax.net.ssl.trustStore=path_to_truststore_file 
+ -Djavax.net.ssl.trustStorePassword=********* 
+ 
+You will also need to set 'useSSL' to 'true' in your connection
+parameters for MySQL Connector/J, either by adding 'useSSL=true'
+to your URL, or by setting the property 'useSSL' to 'true' in 
+the java.util.Properties instance you pass to 
+DriverManager.getConnection().
+ 
+Testing the SSL Layer:
+
+You can test that SSL is working by turning on JSSE debugging 
+(as detailed below), and look for the following key events:
+
+------------------------------------------------------
+ ...
+ *** ClientHello, v3.1
+ RandomCookie:  GMT: 1018531834 bytes = { 199, 148, 180, 215, 74, 12, 54, 244, 0, 168, 55, 103, 215, 64, 16, 138, 225, 190, 132, 153, 2, 217, 219, 239, 202, 19, 121, 78 }
+ Session ID:  {}
+ Cipher Suites:  { 0, 5, 0, 4, 0, 9, 0, 10, 0, 18, 0, 19, 0, 3, 0, 17 }
+ Compression Methods:  { 0 }
+ ***
+ [write] MD5 and SHA1 hashes:  len = 59
+ 0000: 01 00 00 37 03 01 3D B6   90 FA C7 94 B4 D7 4A 0C  ...7..=.......J.
+ 0010: 36 F4 00 A8 37 67 D7 40   10 8A E1 BE 84 99 02 D9  6...7g.@........
+ 0020: DB EF CA 13 79 4E 00 00   10 00 05 00 04 00 09 00  ....yN..........
+ 0030: 0A 00 12 00 13 00 03 00   11 01 00                 ...........
+ main, WRITE:  SSL v3.1 Handshake, length = 59
+ main, READ:  SSL v3.1 Handshake, length = 74
+ *** ServerHello, v3.1
+ RandomCookie:  GMT: 1018577560 bytes = { 116, 50, 4, 103, 25, 100, 58, 202, 79, 185, 178, 100, 215, 66, 254, 21, 83, 187, 190, 42, 170, 3, 132, 110, 82, 148, 160, 92 }
+ Session ID:  {163, 227, 84, 53, 81, 127, 252, 254, 178, 179, 68, 63, 182, 158, 30, 11, 150, 79, 170, 76, 255, 92, 15, 226, 24, 17, 177, 219, 158, 177, 187, 143}
+ Cipher Suite:  { 0, 5 }
+ Compression Method: 0
+ ***
+ %% Created:  [Session-1, SSL_RSA_WITH_RC4_128_SHA]
+ ** SSL_RSA_WITH_RC4_128_SHA
+ [read] MD5 and SHA1 hashes:  len = 74
+ 0000: 02 00 00 46 03 01 3D B6   43 98 74 32 04 67 19 64  ...F..=.C.t2.g.d
+ 0010: 3A CA 4F B9 B2 64 D7 42   FE 15 53 BB BE 2A AA 03  :.O..d.B..S..*..
+ 0020: 84 6E 52 94 A0 5C 20 A3   E3 54 35 51 7F FC FE B2  .nR..\ ..T5Q....
+ 0030: B3 44 3F B6 9E 1E 0B 96   4F AA 4C FF 5C 0F E2 18  .D?.....O.L.\...
+ 0040: 11 B1 DB 9E B1 BB 8F 00   05 00                    ..........
+ main, READ:  SSL v3.1 Handshake, length = 1712
+ ...
+------------------------------------------------------
+
+Debugging the SSL Layer:
+ 
+ JSSE provides debugging (to STDOUT) when you set the following system property:
+ 
+ 	-Djavax.net.debug=all
+ 	
+ This will tell you what keystores and truststores are being used, as well as
+ what is going on during the SSL handshake and certificate exchange. It will be
+ helpful when trying to determine what is not working when trying to get an
+ SSL connection to happen.
+ 
+
 
 TROUBLESHOOTING
 
@@ -436,17 +631,13 @@ The following methods are not implemented:
 	Connection.rollback(Savepoint)
 
 	PreparedStatement.setArray(int, Array)
-	PreparedStatement.setBlob(int, Clob)
+	PreparedStatement.setClob(int, Clob)
 	PreparedStatement.getMetaData()
 	PreparedStatement.setRef()
 	PreparedStatement.getParameterMetaData()
 
 	ResultSet.getArray(int)
 	ResultSet.getArray(colName)
-	ResultSet.getCharacterStream(int)
-	ResultSet.getCharacterStream(String)
-	ResultSet.getClob(int)
-	ResultSet.getClob(String)
 	ResultSet.getObject(int, Map)
 	ResultSet.getObject(String, Map)
 	ResultSet.getRef(int)
@@ -456,10 +647,6 @@ The following methods are not implemented:
 	ResultSet.rowUpdated()
 	ResultSet.updateArray(int, Array)
 	ResultSet.updateArray(String, Array)
-	ResultSet.updateBlob(int, Blob)
-	ResultSet.updateBlob(String, Blob)
-	ResultSet.updateClob(int, Clob)
-	ResultSet.updateClob(String, Clob)
 	ResultSet.updateRef(int, Ref)
 	ResultSet.updateRef(String, Ref)
 

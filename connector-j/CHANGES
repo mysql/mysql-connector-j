@@ -1,13 +1,53 @@
 # Changelog
 # $Id$
 
-xx-xx-xx - Version 3.0.2-dev
+11-08-02 - Version 3.0.2-dev
 
-	- Fixed issue with updatable result sets and PreparedStatements not working
+	- Fixed issue with updatable result sets and PreparedStatements not 
+	  working
 	- Fixed ResultSet.setFetchDirection(FETCH_UNKNOWN)
-	- Fixed issue when calling Statement.setFetchSize() when using arbitrary values
+	- Fixed issue when calling Statement.setFetchSize() when using 
+	  arbitrary values
 	- Fixed incorrect conversion in ResultSet.getLong()
-	
+	- Implemented ResultSet.updateBlob().
+    - Removed duplicate code from UpdatableResultSet (it can be inherited 
+      from ResultSet, the extra code for each method to handle updatability
+      I thought might someday be necessary has not been needed).
+    - Fixed "UnsupportedEncodingException" thrown when "forcing" a 
+      character encoding via properties.
+    - Fixed various non-ASCII character encoding issues.
+    - Added driver property 'useHostsInPrivileges'. Defaults to true. 
+      Affects whether or not '@hostname' will be used in 
+      DBMD.getColumn/TablePrivileges.
+    - All DBMD result set columns describing schemas now return NULL
+      to be more compliant with the behavior of other JDBC drivers
+      for other databases (MySQL does not support schemas).
+    - Added SSL support. See README for information on how to use it.
+    - Properly restore connection properties when autoReconnecting
+      or failing-over, including autoCommit state, and isolation level.
+    - Use 'SHOW CREATE TABLE' when possible for determining foreign key
+      information for DatabaseMetaData...also allows cascade options for
+      DELETE information to be returned
+    - Escape 0x5c character in strings for the SJIS charset.
+    - Fixed start position off-by-1 error in Clob.getSubString()
+    - Implemented Clob.truncate()
+    - Implemented Clob.setString()
+    - Implemented Clob.setAsciiStream()
+    - Implemented Clob.setCharacterStream()
+    - Added com.mysql.jdbc.MiniAdmin class, which allows you to send
+      'shutdown' command to MySQL server...Intended to be used when 'embedding'
+      Java and MySQL server together in an end-user application.
+    - Added 'connectTimeout' parameter that allows users of JDK-1.4 and newer
+      to specify a maxium time to wait to establish a connection.
+    - Failover and autoReconnect only work when the connection is in a 
+      autoCommit(false) state, in order to stay transaction safe
+    - Added 'queriesBeforeRetryMaster' property that specifies how many
+      queries to issue when failed over before attempting to reconnect 
+      to the master (defaults to 50)
+    - Fixed DBMD.supportsResultSetConcurrency() so that it returns true
+      for ResultSet.TYPE_SCROLL_INSENSITIVE and ResultSet.CONCUR_READ_ONLY or
+      ResultSet.CONCUR_UPDATABLE
+             	
 09-21-02 - Version 3.0.1-dev
 	
     - Fixed ResultSet.getRow() off-by-one bug.
@@ -28,6 +68,7 @@ xx-xx-xx - Version 3.0.2-dev
     - Implemented ResultSet.getCharacterStream()
     - Added "LOCAL TEMPORARY" to table types in DatabaseMetaData.getTableTypes()
     - Massive code clean-up to follow Java coding conventions (the time had come)
+  
 	
 07-31-02 - Version 3.0.0-dev
 

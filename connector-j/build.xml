@@ -26,7 +26,8 @@ Copyright (C) 2002 MySQL AB
     <property name="ccdir" value="/usr/java/cruisecontrol-1.2.1"/>
 
 	<property name="version" value="3.0.2-beta"/>
-	<property name="prodName" value="mysql-connector-java-${version}"/>
+	<property name="prodName" value="mysql-connector-java"/>
+	<property name="fullProdName" value="${prodName}-${version}"/>
 	
 	<property name="buildDir" value="../build-mysql-jdbc"/>
 	<property name="distDir" value="../dist-mysql-jdbc"/>
@@ -47,7 +48,7 @@ Copyright (C) 2002 MySQL AB
         	<include name="**/*.jar"/>
       	</fileset>
       	
-      	<pathelement location="${buildDir}/${prodName}" />
+      	<pathelement location="${buildDir}/${fullProdName}" />
   	</path>
 	
 <!--	
@@ -59,7 +60,7 @@ Copyright (C) 2002 MySQL AB
 		<mkdir dir="${buildDir}/checkstyle"/>
 		<checkstyle failOnViolation="false">
 			<formatter type="plain" tofile="${buildDir}/checkstyle/checkstyle_report.xml"/>
-      		<fileset dir="${buildDir}/${prodName}" includes="**/*.java"/>
+      		<fileset dir="${buildDir}/${fullProdName}" includes="**/*.java"/>
 		</checkstyle>
 	</target>
 -->	
@@ -113,12 +114,12 @@ Copyright (C) 2002 MySQL AB
 	<!-- End: Clover coverage tool -->
 	
 	
-	<target name="init">
+	<target name="init" depends="clean">
 		<tstamp/>
 		<filter token="VERSION" value="${version}"/>
 		<delete dir="${buildDir}"/>
 
-		<copy todir="${buildDir}/${prodName}" filtering="true">
+		<copy todir="${buildDir}/${fullProdName}" filtering="true">
 			<fileset dir="." excludes="**/CVS">
 				<patternset id="classjar" >
     					<exclude name="**/*.class*"/>
@@ -126,7 +127,7 @@ Copyright (C) 2002 MySQL AB
   				</patternset>
 			</fileset>
 		</copy>
-		<copy todir="${buildDir}/${prodName}" filtering="false">
+		<copy todir="${buildDir}/${fullProdName}" filtering="false">
 			<fileset dir="." excludes="**/CVS">
 				<patternset id="dojar" >
     					<include name="**/*.jar*"/>
@@ -141,19 +142,19 @@ Copyright (C) 2002 MySQL AB
 
 	<target name="dist" depends="init, compile">
 		
-		<delete file="${buildDir}/${prodName}-bin.jar"/>
-		<delete file="${distDir}/${prodName}.jar"/>
+		<delete file="${buildDir}/${fullProdName}-bin.jar"/>
+		<delete file="${distDir}/${fullProdName}.jar"/>
 		
 		<mkdir dir="${distDir}" />
 
-		<jar jarfile="${buildDir}/${prodName}/${prodName}-bin.jar">
-			<fileset dir="${buildDir}/${prodName}"
+		<jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar">
+			<fileset dir="${buildDir}/${fullProdName}"
 				includes="**/*.class"/>
-			<fileset dir="${buildDir}/${prodName}"
+			<fileset dir="${buildDir}/${fullProdName}"
 				includes="COPYING, README"/>
 		</jar>
  
-		<tar destfile="${distDir}/${prodName}.tar.gz"
+		<tar destfile="${distDir}/${fullProdName}.tar.gz"
 			compression="gzip" longfile="gnu">
 			<tarfileset dir="${buildDir}">
 				<patternset id="non.test.sources" >
@@ -168,7 +169,7 @@ Copyright (C) 2002 MySQL AB
 		</tar>
 		
 		
-		<jar jarfile="${distDir}/${prodName}.zip">
+		<jar jarfile="${distDir}/${fullProdName}.zip">
 			<fileset dir="${buildDir}">
 				<patternset id="non.test.sources" >
     					<exclude name="**/*.nb*"/>
@@ -190,7 +191,7 @@ Copyright (C) 2002 MySQL AB
 		<jvmarg value="-Xmx256m"/>
 	  	<sysproperty key="com.mysql.jdbc.testsuite.url" value="jdbc:mysql:///test"/>
 	  	<classpath>
-      	 	<pathelement location="${buildDir}/${prodName}" />
+      	 	<pathelement location="${buildDir}/${fullProdName}" />
       	 	<pathelement location="./lib-nodist/providerutil.jar" />
       	 	<pathelement location="./lib-nodist/fscontext.jar" />
     	 		<pathelement path="${java.class.path}" />
@@ -201,7 +202,7 @@ Copyright (C) 2002 MySQL AB
 	<formatter type="xml"/>
       
       	<batchtest fork="no" todir="${junit.results}">
-    			<fileset dir="${buildDir}/${prodName}">
+    			<fileset dir="${buildDir}/${fullProdName}">
       	   		<include name="**/*Test.java" />
     			</fileset>
       	</batchtest>
@@ -213,7 +214,7 @@ Copyright (C) 2002 MySQL AB
 	  <junit printSummary="yes">
 	  <sysproperty key="com.mysql.jdbc.testsuite.url" value="jdbc:mysql:///test"/>
 	  <classpath>
-      	 <pathelement location="${buildDir}/${prodName}" />
+      	 <pathelement location="${buildDir}/${fullProdName}" />
       	 <pathelement location="./lib-nodist/providerutil.jar" />
       	 <pathelement location="./lib-nodist/fscontext.jar" />
     	 <pathelement path="${java.class.path}" />
@@ -223,7 +224,7 @@ Copyright (C) 2002 MySQL AB
       <formatter type="plain" />
       
       <batchtest fork="no" todir="${junit.results}">
-    	<fileset dir="${buildDir}/${prodName}">
+    	<fileset dir="${buildDir}/${fullProdName}">
       	   <include name="**/*Test.java" />
     	</fileset>
       </batchtest>
@@ -236,8 +237,8 @@ Copyright (C) 2002 MySQL AB
 	<!-- Compiles the driver itself -->
 		
 	<target name="compile-core" depends="init">
-		<javac srcdir="${buildDir}/${prodName}"
-			   destdir="${buildDir}/${prodName}"
+		<javac srcdir="${buildDir}/${fullProdName}"
+			   destdir="${buildDir}/${fullProdName}"
 	        deprecation="off"
 			debug="on"
 		>
@@ -248,11 +249,12 @@ Copyright (C) 2002 MySQL AB
 
 
 	<target name="clean">
-		<!--
+		
+		<delete dir="${buildDir}"/>
 		<delete>
-			<fileset dir="." includes="**/*.class"/>
+			<fileset dir="${distDir}" 
+				includes="${fullProdName}.zip,${fullProdName}.tar.gz"/>
 		</delete>
-		-->
 	</target>
 
 	<!-- Cruise Control Targets -->
