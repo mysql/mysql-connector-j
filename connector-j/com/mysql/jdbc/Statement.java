@@ -19,6 +19,7 @@
 
 package com.mysql.jdbc;
 
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Types;
@@ -143,6 +144,16 @@ public class Statement
      */
     
     protected ArrayList openResults = new ArrayList();
+    
+    /**
+     * The character converter to use (if available)
+     */
+    protected SingleByteCharsetConverter charConverter = null;
+    
+    /**
+     * The character encoding to use (if available)
+     */
+    protected String charEncoding = null;
 
     //~ Constructors ..........................................................
 
@@ -178,6 +189,18 @@ public class Statement
         if (connection != null) {
             maxFieldSize = connection.getMaxAllowedPacket();
         }
+        
+        if (this.connection.useUnicode()) {
+            this.charEncoding = connection.getEncoding();
+
+            try {
+                charConverter = SingleByteCharsetConverter.getInstance(this.charEncoding);
+            } catch (UnsupportedEncodingException uEE) {
+                throw new SQLException("Unsupported character encoding '"
+                    + this.charEncoding + "'", "S1009");
+            }
+        }
+        
     }
 
     //~ Methods ...............................................................
@@ -846,12 +869,12 @@ public class Statement
             }
         }
 
-        results = null;
-        connection = null;
-        warningChain = null;
-        escaper = null;
-        isClosed = true;
-        closeAllOpenResults();
+        this.results = null;
+        this.connection = null;
+        this.warningChain = null;
+        this.escaper = null;
+        this.isClosed = true;
+        this.closeAllOpenResults();
         this.openResults = null;
     }
 
@@ -1358,15 +1381,9 @@ public class Statement
      */
     protected boolean createStreamingResultSet() {
 
-        if (!(resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY
+        return (resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY
                 && resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY
-                && fetchSize == Integer.MIN_VALUE)) {
-
-            return false;
-        } else {
-
-            return true;
-        }
+                && fetchSize == Integer.MIN_VALUE);
     }
     
     /**
