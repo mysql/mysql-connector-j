@@ -76,6 +76,8 @@ public class MysqlIO {
     db.table.column */
     private static final int CLIENT_ODBC = 64; /* Odbc client */
     private static final int CLIENT_PROTOCOL_41 = 16384;
+    private static final int CLIENT_SECURE_CONNECTION = 32768;   /* New 4.1 authentication */
+
     private static final int CLIENT_INTERACTIVE = 1024;
     private static final int CLIENT_SSL = 2048;
 
@@ -138,6 +140,7 @@ public class MysqlIO {
     //
     private Buffer reusablePacket = null;
     private Buffer sendPacket = null;
+    private Buffer sharedSendPacket = null;
     private int serverMajorVersion = 0;
     private int serverMinorVersion = 0;
     private int serverSubMinorVersion = 0;
@@ -607,11 +610,14 @@ public class MysqlIO {
                 Debug.msg(this, "Crypt Seed: " + seed);
             }
 
+            int serverCapabilities = 0;
+            
             if (buf.getPosition() < buf.getBufLength()) {
 
-                int serverCapabilities = buf.readInt();
+                serverCapabilities = buf.readInt();
+            }
 
-                if ((serverCapabilities & CLIENT_COMPRESS) != 0
+            if ((serverCapabilities & CLIENT_COMPRESS) != 0
                     && this.connection.useCompression()) {
 
                     // The following match with ZLIB's
@@ -620,19 +626,18 @@ public class MysqlIO {
                     this.inflater = new Inflater();
                     clientParam |= CLIENT_COMPRESS;
                     useCompression = true;
-                }
+            }
 
-                if ((serverCapabilities & CLIENT_SSL) == 0
+            if ((serverCapabilities & CLIENT_SSL) == 0
                     && this.connection.useSSL()) {
                     this.connection.setUseSSL(false);
-                }
+            }
                 
-                if ((serverCapabilities & CLIENT_LONG_FLAG) != 0) {
+            if ((serverCapabilities & CLIENT_LONG_FLAG) != 0) {
                     // We understand other column flags, as well
                 
                     clientParam |= CLIENT_LONG_FLAG;
                     this.hasLongColumnInfo = true;
-                }
             }
 
             // return FOUND rows
@@ -673,21 +678,25 @@ public class MysqlIO {
 
             if (!connection.useSSL()) {
 
-                // Passwords can be 16 chars long
-                packet = new Buffer(packLength);
-                packet.writeInt(clientParam);
-                packet.writeLongInt(packLength);
-
-                // User/Password data
-                packet.writeString(user);
-
-                if (this.protocolVersion > 9) {
-                    packet.writeString(Util.newCrypt(password, seed));
+                if ((serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
                 } else {
-                    packet.writeString(Util.oldCrypt(password, seed));
-                }
+                
+                    // Passwords can be 16 chars long
+                    packet = new Buffer(packLength);
+                    packet.writeInt(clientParam);
+                    packet.writeLongInt(packLength);
 
-                send(packet);
+                    // User/Password data
+                    packet.writeString(user);
+
+                    if (this.protocolVersion > 9) {
+                        packet.writeString(Util.newCrypt(password, seed));
+                    } else {
+                        packet.writeString(Util.oldCrypt(password, seed));
+                    }
+
+                    send(packet);
+                }
             } else {
                 clientParam |= CLIENT_SSL;
                 packet = new Buffer(packLength);
@@ -1913,13 +1922,13 @@ public class MysqlIO {
      * @return A packet to send data with
      */
     
-    Buffer getSendPacket() {
-        if (this.sendPacket == null) {
-                    this.sendPacket = new Buffer(this.connection.getNetBufferLength(), 
+    Buffer getSharedSendPacket() {
+        if (this.sharedSendPacket == null) {
+                    this.sharedSendPacket = new Buffer(this.connection.getNetBufferLength(), 
                                                  this.connection.getMaxAllowedPacket());
         }
         
-        return this.sendPacket;
+        return this.sharedSendPacket;
     }
         
        
@@ -1964,5 +1973,31 @@ public class MysqlIO {
     
     private int alignPacketSize(int a, int l) {
         return    (((a) + (l) - 1) & ~((l) - 1));
+    }
+    
+    private final static String FALSE_SCRAMBLE = "xxxxxxxx";
+    
+    private void secureAuth(int packLength, 
+                             int clientParam, 
+                             String user,
+                             String password) throws SQLException {
+        // Passwords can be 16 chars long
+         Buffer packet = new Buffer(packLength);
+         packet.writeInt(clientParam);
+         packet.writeLongInt(packLength);
+
+         // User/Password data
+         packet.writeString(user);
+
+                    
+        if (password.length() != 0) {
+            /* Prepare false scramble  */
+            packet.writeString(FALSE_SCRAMBLE);
+        } else {
+            /* For empty password*/
+            packet.writeString("");
+        }
+        
+        //send(packet);
     }
 }

@@ -71,7 +71,6 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
     implements java.sql.PreparedStatement {
     private static final SimpleDateFormat TSDF = new SimpleDateFormat(
             "yyyy-MM-dd HH:mm:ss");
-    private Buffer sendPacket = null;
     private java.sql.DatabaseMetaData dbmd = null;
     
     private String originalSql = null;
@@ -1205,7 +1204,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
         this.streamLengths = null;
         this.isNull = null;
         this.streamConvertBuf = null;
-        this.sendPacket = null;
+        
     }
 
     /**
@@ -1229,7 +1228,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
         ResultSet rs = null;
         
         synchronized (connection.getMutex()) {
-            fillSendPacket();
+            Buffer sendPacket = fillSendPacket();
 
             String oldCatalog = null;
 
@@ -1391,7 +1390,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
         // even queries going through there synchronize
         // on the same mutex.
         synchronized (connection.getMutex()) {
-            fillSendPacket();
+            Buffer sendPacket = fillSendPacket();
 
             if (this.results != null) {
                 this.results.close();
@@ -1471,8 +1470,8 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
      * Creates the packet that contains the query to be sent
      * to the server.
      */
-	private void fillSendPacket() throws SQLException {
-		fillSendPacket(this.parameterValues,
+	private Buffer fillSendPacket() throws SQLException {
+		return fillSendPacket(this.parameterValues,
             this.parameterStreams, 
             this.isStream,
             this.streamLengths);
@@ -1576,7 +1575,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
         // must happen in sequence, so synchronize
         // on the same mutex that _conn is using
         synchronized (connection.getMutex()) {
-            fillSendPacket(
+            Buffer sendPacket = fillSendPacket(
 				batchedParameterStrings,
 				batchedParameterStreams,
 				batchedIsStream,
@@ -1631,19 +1630,18 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
      * Creates the packet that contains the query to be sent
      * to the server.
      */
-	private void fillSendPacket(
+	private Buffer fillSendPacket(
 		byte[][] batchedParameterStrings,
 		InputStream[] batchedParameterStreams,
 		boolean[] batchedIsStream,
 		int[] batchedStreamLengths)
 		throws SQLException {
-		if (this.sendPacket == null) {
-		    this.sendPacket = this.connection.getIO().getSendPacket();
-		}
+        
+        Buffer sendPacket = this.connection.getIO().getSharedSendPacket();
 		
-		this.sendPacket.clear();
+		sendPacket.clear();
 		
-		this.sendPacket.writeByte((byte) MysqlDefs.QUERY);
+		sendPacket.writeByte((byte) MysqlDefs.QUERY);
 		
 		boolean useStreamLengths = this.connection.useStreamLengthsInPrepStmts();
 		
@@ -1654,18 +1652,20 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
 		        "No value specified for parameter " + (i + 1), "07001");
 		    }
 		
-		    this.sendPacket.writeBytesNoNull(staticSqlStrings[i]);
+		    sendPacket.writeBytesNoNull(staticSqlStrings[i]);
 		
 		    if (batchedIsStream[i]) {
-		        this.sendPacket.writeBytesNoNull(streamToBytes(
+		        sendPacket.writeBytesNoNull(streamToBytes(
 		            batchedParameterStreams[i], batchedStreamLengths[i],
 		            useStreamLengths));
 		    } else {
-		        this.sendPacket.writeBytesNoNull(parameterValues[i]);
+		        sendPacket.writeBytesNoNull(parameterValues[i]);
 		    }
 		}
 		
-		this.sendPacket.writeBytesNoNull(staticSqlStrings[batchedParameterStrings.length]);
+		sendPacket.writeBytesNoNull(staticSqlStrings[batchedParameterStrings.length]);
+        
+        return sendPacket;
 	}
 
     byte[] getBytes(int parameterIndex) throws SQLException {
