@@ -16,9 +16,10 @@ Copyright (C) 2002 MySQL AB
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -->
 
-<project name="MySQL-JDBC" default="dist" basedir=".">
+<project name="MySQL Connector/J" default="dist" basedir=".">
 
 	<property name="version" value="3.0.0-dev"/>
+	<property name="prodName" value="mysql.connector.j-${version}"/>
 	
 	<property name="buildDir" value="../build-mysql-jdbc"/>
 	<property name="distDir" value="../dist-mysql-jdbc"/>
@@ -37,7 +38,7 @@ Copyright (C) 2002 MySQL AB
 		<mkdir dir="${buildDir}/checkstyle"/>
 		<checkstyle failOnViolation="false">
 			<formatter type="plain" tofile="${buildDir}/checkstyle/checkstyle_report.xml"/>
-      		<fileset dir="${buildDir}/mysql-jdbc-${version}" includes="**/*.java"/>
+      		<fileset dir="${buildDir}/${prodName}" includes="**/*.java"/>
 		</checkstyle>
 	</target>
 	
@@ -95,7 +96,7 @@ Copyright (C) 2002 MySQL AB
 		<filter token="VERSION" value="${version}"/>
 		<delete dir="${buildDir}"/>
 
-		<copy todir="${buildDir}/mysql-jdbc-${version}" filtering="true">
+		<copy todir="${buildDir}/${prodName}" filtering="true">
 			<fileset dir="." excludes="**/CVS">
 				<patternset id="classjar" >
     					<exclude name="**/*.class*"/>
@@ -103,7 +104,7 @@ Copyright (C) 2002 MySQL AB
   				</patternset>
 			</fileset>
 		</copy>
-		<copy todir="${buildDir}/mysql-jdbc-${version}" filtering="false">
+		<copy todir="${buildDir}/${prodName}" filtering="false">
 			<fileset dir="." excludes="**/CVS">
 				<patternset id="dojar" >
     					<include name="**/*.jar*"/>
@@ -118,19 +119,19 @@ Copyright (C) 2002 MySQL AB
 
 	<target name="dist" depends="init, compile">
 		
-		<delete file="${buildDir}/mysql-jdbc-${version}-bin.jar"/>
-		<delete file="${distDir}/mysql-jdbc-${version}.jar"/>
+		<delete file="${buildDir}/${prodName}-bin.jar"/>
+		<delete file="${distDir}/${prodName}.jar"/>
 		
 		<mkdir dir="${distDir}" />
 
-		<jar jarfile="${buildDir}/mysql-jdbc-${version}/mysql-jdbc-${version}-bin.jar">
-			<fileset dir="${buildDir}/mysql-jdbc-${version}"
+		<jar jarfile="${buildDir}/${prodName}/${prodName}-bin.jar">
+			<fileset dir="${buildDir}/${prodName}"
 				includes="**/*.class"/>
-			<fileset dir="${buildDir}/mysql-jdbc-${version}"
+			<fileset dir="${buildDir}/${prodName}"
 				includes="COPYING, README"/>
 		</jar>
 
-		<tar destfile="${distDir}/mysql-jdbc-${version}.tar.gz"
+		<tar destfile="${distDir}/${prodName}.tar.gz"
 			compression="gzip" longfile="gnu">
 			<tarfileset dir="${buildDir}">
 				<patternset id="non.test.sources" >
@@ -145,7 +146,7 @@ Copyright (C) 2002 MySQL AB
 		</tar>
 		
 		
-		<jar jarfile="${distDir}/mysql-jdbc-${version}.zip">
+		<jar jarfile="${distDir}/${prodName}.zip">
 			<fileset dir="${buildDir}">
 				<patternset id="non.test.sources" >
     					<exclude name="**/*.nb*"/>
@@ -166,7 +167,7 @@ Copyright (C) 2002 MySQL AB
 	  <junit printSummary="yes" fork="yes">
 	  <sysproperty key="com.mysql.jdbc.testsuite.url" value="jdbc:mysql:///test"/>
 	  <classpath>
-      	 <pathelement location="${buildDir}/mysql-jdbc-${version}" />
+      	 <pathelement location="${buildDir}/${prodName}" />
       	 <pathelement location="./lib-nodist/providerutil.jar" />
       	 <pathelement location="./lib-nodist/fscontext.jar" />
     	 <pathelement path="${java.class.path}" />
@@ -176,7 +177,7 @@ Copyright (C) 2002 MySQL AB
       <formatter type="plain" />
       
       <batchtest fork="no" todir="${buildDir}/junit">
-    	<fileset dir="${buildDir}/mysql-jdbc-${version}">
+    	<fileset dir="${buildDir}/${prodName}">
       	   <include name="**/*Test.java" />
     	</fileset>
       </batchtest>
@@ -188,7 +189,7 @@ Copyright (C) 2002 MySQL AB
 	  <junit printSummary="yes">
 	  <sysproperty key="com.mysql.jdbc.testsuite.url" value="jdbc:mysql:///test"/>
 	  <classpath>
-      	 <pathelement location="${buildDir}/mysql-jdbc-${version}" />
+      	 <pathelement location="${buildDir}/${prodName}" />
       	 <pathelement location="./lib-nodist/providerutil.jar" />
       	 <pathelement location="./lib-nodist/fscontext.jar" />
     	 <pathelement path="${java.class.path}" />
@@ -198,7 +199,7 @@ Copyright (C) 2002 MySQL AB
       <formatter type="plain" />
       
       <batchtest fork="no" todir="${buildDir}/junit">
-    	<fileset dir="${buildDir}/mysql-jdbc-${version}">
+    	<fileset dir="${buildDir}/${prodName}">
       	   <include name="**/*Test.java" />
     	</fileset>
       </batchtest>
@@ -211,10 +212,10 @@ Copyright (C) 2002 MySQL AB
 	<!-- Compiles the driver itself -->
 		
 	<target name="compile-core" depends="init">
-		<javac srcdir="${buildDir}/mysql-jdbc-${version}"
-			   destdir="${buildDir}/mysql-jdbc-${version}"
+		<javac srcdir="${buildDir}/${prodName}"
+			   destdir="${buildDir}/${prodName}"
 	        deprecation="off"
-			classpath="${buildDir}/mysql-jdbc-${version};lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar;lib-nodist/junit.jar"
+			classpath="${buildDir}/${prodName};lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar;lib-nodist/junit.jar"
 			debug="on"
 		/>
 
@@ -225,8 +226,8 @@ Copyright (C) 2002 MySQL AB
 	
 	<target name="compile-testsuite">
 		<!--
-		<javac srcdir="${buildDir}/mysql-jdbc-${version}"
-			destdir="${buildDir}/mysql-jdbc-${version}"
+		<javac srcdir="${buildDir}/${prodName}"
+			destdir="${buildDir}/${prodName}"
 			excludes="com/mysql/jdbc/**"
 			classpath="lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar;lib-nodist/junit.jar"
 		/>-->
