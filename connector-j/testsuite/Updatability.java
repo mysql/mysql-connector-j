@@ -13,7 +13,7 @@ public class Updatability
     static Connection Conn = null;
     static ResultSet RS = null;
     static Statement Stmt = null;
-    static String DBUrl = "jdbc:mysql:///test";
+    static String DBUrl = "jdbc:mysql:///test?profileSql=true";
 
     //~ Methods ...............................................................
 

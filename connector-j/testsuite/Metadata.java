@@ -25,7 +25,7 @@ public class Metadata
     {
         Connection conn = null;
         Statement stmt = null;
-
+ 
         try {
             Class.forName("org.gjt.mm.mysql.Driver").newInstance();
             conn = DriverManager.getConnection(DBUrl);
