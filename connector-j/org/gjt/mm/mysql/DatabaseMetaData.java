@@ -62,16 +62,16 @@ import java.util.Vector;
 
 public abstract class DatabaseMetaData
 {
-	protected Connection _Conn;
+	protected Connection _conn;
 
-	protected String _Database = null;
+	protected String _database = null;
 
-	private static byte[] _Table_As_Bytes = "TABLE".getBytes();
+	private static final byte[] _TABLE_AS_BYTES = "TABLE".getBytes();
 
 	public DatabaseMetaData(Connection Conn, String Database)
 	{
-		_Conn = Conn;
-		_Database = Database;
+		_conn = Conn;
+		_database = Database;
 	}
 
 	/**
@@ -106,7 +106,7 @@ public abstract class DatabaseMetaData
 
 	public String getURL() throws java.sql.SQLException
 	{
-		return new String(_Conn.getURL());
+		return new String(_conn.getURL());
 	}
 
 	/**
@@ -117,7 +117,7 @@ public abstract class DatabaseMetaData
 
 	public String getUserName() throws java.sql.SQLException
 	{
-		return new String(_Conn.getUser());
+		return new String(_conn.getUser());
 	}
 
 	/**
@@ -195,7 +195,7 @@ public abstract class DatabaseMetaData
 
 	public String getDatabaseProductVersion() throws java.sql.SQLException
 	{
-		return new String(_Conn.getServerVersion());
+		return new String(_conn.getServerVersion());
 	}
 
 	/**
@@ -1073,11 +1073,11 @@ public abstract class DatabaseMetaData
 		throws java.sql.SQLException
 	{
 		// Servers before 3.22 could not do this
-		if (_Conn.getServerMajorVersion() >= 3)
+		if (_conn.getServerMajorVersion() >= 3)
 		{ // newer than version 3?
-			if (_Conn.getServerMajorVersion() == 3)
+			if (_conn.getServerMajorVersion() == 3)
 			{
-				if (_Conn.getServerMinorVersion() >= 22)
+				if (_conn.getServerMinorVersion() >= 22)
 				{ // minor 22?
 					return true;
 				}
@@ -1580,7 +1580,7 @@ public abstract class DatabaseMetaData
 
 	public int getDefaultTransactionIsolation() throws java.sql.SQLException
 	{
-		if (_Conn.supportsIsolationLevel())
+		if (_conn.supportsIsolationLevel())
 		{
 			return java.sql.Connection.TRANSACTION_READ_COMMITTED;
 		}
@@ -1599,7 +1599,7 @@ public abstract class DatabaseMetaData
 
 	public boolean supportsTransactions() throws java.sql.SQLException
 	{
-		return _Conn.supportsTransactions();
+		return _conn.supportsTransactions();
 	}
 
 	/**
@@ -1613,7 +1613,7 @@ public abstract class DatabaseMetaData
 	public boolean supportsTransactionIsolationLevel(int level)
 		throws java.sql.SQLException
 	{
-		if (_Conn.supportsIsolationLevel())
+		if (_conn.supportsIsolationLevel())
 		{
 			switch (level)
 			{
@@ -1733,7 +1733,7 @@ public abstract class DatabaseMetaData
 		Fields[6] = new Field("", "REMARKS", Types.CHAR, 0);
 		Fields[7] = new Field("", "PROCEDURE_TYPE", Types.SMALLINT, 0);
 
-		return buildResultSet(Fields, new Vector(), _Conn);
+		return buildResultSet(Fields, new Vector(), _conn);
 	}
 
 	/**
@@ -1815,7 +1815,7 @@ public abstract class DatabaseMetaData
 		Fields[12] = new Field("", "NULLABLE", Types.SMALLINT, 0);
 		Fields[13] = new Field("", "REMARKS", Types.CHAR, 0);
 
-		return buildResultSet(Fields, new Vector(), _Conn);
+		return buildResultSet(Fields, new Vector(), _conn);
 	}
 
 	/**
@@ -1867,7 +1867,7 @@ public abstract class DatabaseMetaData
 		}
 		else
 		{
-			DB_Sub = " FROM " + _Database;
+			DB_Sub = " FROM " + _database;
 		}
 
 		if (TableNamePattern == null)
@@ -1876,7 +1876,7 @@ public abstract class DatabaseMetaData
 		}
 
 		java.sql.ResultSet RS =
-			_Conn.createStatement().executeQuery(
+			_conn.createStatement().executeQuery(
 				"show tables " + DB_Sub + " like '" + TableNamePattern + "'");
 
 		java.sql.ResultSetMetaData RsMd = RS.getMetaData();
@@ -1907,12 +1907,12 @@ public abstract class DatabaseMetaData
 			Row[0] = (Catalog == null) ? new byte[0] : Catalog.getBytes();
 			Row[1] = new byte[0];
 			Row[2] = Name.getBytes();
-			Row[3] = _Table_As_Bytes;
+			Row[3] = _TABLE_AS_BYTES;
 			Row[4] = new byte[0];
 			Tuples.addElement(Row);
 		}
 
-		java.sql.ResultSet Results = buildResultSet(Fields, Tuples, _Conn);
+		java.sql.ResultSet Results = buildResultSet(Fields, Tuples, _conn);
 
 		return Results;
 	}
@@ -1936,7 +1936,7 @@ public abstract class DatabaseMetaData
 		Fields[0] = new Field("", "TABLE_SCHEM", java.sql.Types.CHAR, 0);
 
 		Vector Tuples = new Vector();
-		java.sql.ResultSet RS = buildResultSet(Fields, Tuples, _Conn);
+		java.sql.ResultSet RS = buildResultSet(Fields, Tuples, _conn);
 
 		return RS;
 	}
@@ -1956,7 +1956,7 @@ public abstract class DatabaseMetaData
 
 	public java.sql.ResultSet getCatalogs() throws java.sql.SQLException
 	{
-		java.sql.ResultSet RS = _Conn.createStatement().executeQuery("SHOW DATABASES");
+		java.sql.ResultSet RS = _conn.createStatement().executeQuery("SHOW DATABASES");
 		java.sql.ResultSetMetaData RSMD = RS.getMetaData();
 
 		Field[] Fields = new Field[1];
@@ -1972,7 +1972,7 @@ public abstract class DatabaseMetaData
 			Tuples.addElement(RowVal);
 		}
 
-		return buildResultSet(Fields, Tuples, _Conn);
+		return buildResultSet(Fields, Tuples, _conn);
 	}
 
 	/**
@@ -1996,10 +1996,10 @@ public abstract class DatabaseMetaData
 		Field[] Fields = new Field[1];
 		Fields[0] = new Field("", "TABLE_TYPE", Types.VARCHAR, 5);
 		byte[][] TType = new byte[1][];
-		TType[0] = _Table_As_Bytes;
+		TType[0] = _TABLE_AS_BYTES;
 		Tuples.addElement(TType);
 
-		return buildResultSet(Fields, Tuples, _Conn);
+		return buildResultSet(Fields, Tuples, _conn);
 	}
 
 	/**
@@ -2074,7 +2074,7 @@ public abstract class DatabaseMetaData
 		}
 		else
 		{
-			DB_Sub = " FROM " + _Database;
+			DB_Sub = " FROM " + _database;
 		}
 
 		Vector TableNameList = new Vector();
@@ -2172,7 +2172,7 @@ public abstract class DatabaseMetaData
 			String TableNamePattern = (String) TableNames.nextElement();
 
 			org.gjt.mm.mysql.ResultSet RS =
-				_Conn.execSQL(
+				_conn.execSQL(
 					"show columns from "
 						+ TableNamePattern
 						+ DB_Sub
@@ -2180,7 +2180,7 @@ public abstract class DatabaseMetaData
 						+ ColumnNamePattern
 						+ "'",
 					-1);
-			RS.setConnection(_Conn);
+			RS.setConnection(_conn);
 
 			java.sql.ResultSetMetaData RSMD = RS.getMetaData();
 
@@ -2212,7 +2212,7 @@ public abstract class DatabaseMetaData
 					MysqlType = TypeInfo;
 				}
 
-				if (_Conn.capitalizeDBMDTypes())
+				if (_conn.capitalizeDBMDTypes())
 				{
 					MysqlType = MysqlType.toUpperCase();
 				}
@@ -2458,7 +2458,7 @@ public abstract class DatabaseMetaData
 			RS.close();
 		}
 
-		java.sql.ResultSet Results = buildResultSet(Fields, Tuples, _Conn);
+		java.sql.ResultSet Results = buildResultSet(Fields, Tuples, _conn);
 		return Results;
 	}
 
@@ -2531,9 +2531,9 @@ public abstract class DatabaseMetaData
 
 		try
 		{
-			results = _Conn.execSQL(grantQuery.toString(), -1);
+			results = _conn.execSQL(grantQuery.toString(), -1);
 
-			results.setConnection(_Conn);
+			results.setConnection(_conn);
 
 			while (results.next())
 			{
@@ -2608,7 +2608,7 @@ public abstract class DatabaseMetaData
 			}
 		}
 
-		return buildResultSet(fields, grantRows, _Conn);
+		return buildResultSet(fields, grantRows, _conn);
 	}
 
 	/**
@@ -2647,16 +2647,15 @@ public abstract class DatabaseMetaData
 		String tableNamePattern)
 		throws java.sql.SQLException
 	{
-		Field[] fields = new Field[8];
+		Field[] fields = new Field[7];
 
 		fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 64);
 		fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 1);
 		fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 64);
-		fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 64);
-		fields[4] = new Field("", "GRANTOR", Types.CHAR, 77);
-		fields[5] = new Field("", "GRANTEE", Types.CHAR, 77);
-		fields[6] = new Field("", "PRIVILEGE", Types.CHAR, 64);
-		fields[7] = new Field("", "IS_GRANTABLE", Types.CHAR, 3);
+		fields[3] = new Field("", "GRANTOR", Types.CHAR, 77);
+		fields[4] = new Field("", "GRANTEE", Types.CHAR, 77);
+		fields[5] = new Field("", "PRIVILEGE", Types.CHAR, 64);
+		fields[6] = new Field("", "IS_GRANTABLE", Types.CHAR, 3);
 
 		StringBuffer grantQuery =
 			new StringBuffer("SELECT host,db,table_name,grantor,user,table_priv from mysql.tables_priv ");
@@ -2680,9 +2679,9 @@ public abstract class DatabaseMetaData
 
 		try
 		{
-			results = _Conn.execSQL(grantQuery.toString(), -1);
+			results = _conn.execSQL(grantQuery.toString(), -1);
 
-			results.setConnection(_Conn);
+			results.setConnection(_conn);
 
 			while (results.next())
 			{
@@ -2735,20 +2734,20 @@ public abstract class DatabaseMetaData
 								tuple[0] = s2b(database);
 								tuple[1] = null;
 								tuple[2] = s2b(table);
-								tuple[3] = s2b(columnName);
+								
 
 								if (grantor != null)
 								{
-									tuple[4] = s2b(grantor);
+									tuple[3] = s2b(grantor);
 								}
 								else
 								{
-									tuple[4] = null;
+									tuple[3] = null;
 								}
 
-								tuple[5] = s2b(fullUser.toString());
-								tuple[6] = s2b(privilege);
-								tuple[7] = null;
+								tuple[4] = s2b(fullUser.toString());
+								tuple[5] = s2b(privilege);
+								tuple[6] = null;
 
 								grantRows.addElement(tuple);
 							}
@@ -2785,7 +2784,7 @@ public abstract class DatabaseMetaData
 			}
 		}
 
-		return buildResultSet(fields, grantRows, _Conn);
+		return buildResultSet(fields, grantRows, _conn);
 	}
 
 	/**
@@ -2853,7 +2852,7 @@ public abstract class DatabaseMetaData
 		}
 		else
 		{
-			DB_Sub = " FROM " + _Database;
+			DB_Sub = " FROM " + _database;
 		}
 
 		if (Table == null)
@@ -2862,9 +2861,9 @@ public abstract class DatabaseMetaData
 		}
 
 		org.gjt.mm.mysql.ResultSet RS =
-			_Conn.execSQL("show columns from " + Table + DB_Sub, -1);
+			_conn.execSQL("show columns from " + Table + DB_Sub, -1);
 
-		RS.setConnection(_Conn);
+		RS.setConnection(_conn);
 
 		Vector Tuples = new Vector();
 
@@ -2937,7 +2936,7 @@ public abstract class DatabaseMetaData
 			}
 		}
 
-		return buildResultSet(Fields, Tuples, _Conn);
+		return buildResultSet(Fields, Tuples, _conn);
 	}
 
 	/**
@@ -2986,7 +2985,7 @@ public abstract class DatabaseMetaData
 		Fields[6] = new Field("", "DECIMAL_DIGITS", Types.CHAR, 16);
 		Fields[7] = new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5);
 
-		return buildResultSet(Fields, new Vector(), _Conn);
+		return buildResultSet(Fields, new Vector(), _conn);
 		// do TIMESTAMP columns count?
 	}
 
@@ -3038,7 +3037,7 @@ public abstract class DatabaseMetaData
 		}
 		else
 		{
-			DB_Sub = " FROM " + _Database;
+			DB_Sub = " FROM " + _database;
 		}
 
 		if (Table == null)
@@ -3047,9 +3046,9 @@ public abstract class DatabaseMetaData
 		}
 
 		org.gjt.mm.mysql.ResultSet RS =
-			_Conn.execSQL("show keys from " + Table + DB_Sub, -1);
+			_conn.execSQL("show keys from " + Table + DB_Sub, -1);
 
-		RS.setConnection(_Conn);
+		RS.setConnection(_conn);
 
 		Vector Tuples = new Vector();
 
@@ -3073,7 +3072,7 @@ public abstract class DatabaseMetaData
 				}
 			}
 		}
-		return buildResultSet(Fields, Tuples, _Conn);
+		return buildResultSet(Fields, Tuples, _conn);
 	}
 
 	/**
@@ -3158,7 +3157,7 @@ public abstract class DatabaseMetaData
 		fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
 		fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
 
-		if (_Conn.getIO().versionMeetsMinimum(3, 23, 0))
+		if (_conn.getIO().versionMeetsMinimum(3, 23, 0))
 		{
 			/*
 			 * Get foreign key information for table
@@ -3175,7 +3174,7 @@ public abstract class DatabaseMetaData
 			}
 			else
 			{
-				DB_Sub = " from " + _Database;
+				DB_Sub = " from " + _database;
 			}
 
 			if (table == null)
@@ -3184,9 +3183,9 @@ public abstract class DatabaseMetaData
 			}
 
 			org.gjt.mm.mysql.ResultSet fkRS =
-				_Conn.execSQL("show table status " + DB_Sub + " like '" + table + "'", -1);
+				_conn.execSQL("show table status " + DB_Sub + " like '" + table + "'", -1);
 
-			fkRS.setConnection(_Conn);
+			fkRS.setConnection(_conn);
 
 			/*
 			 * Parse imported foreign key information
@@ -3287,11 +3286,11 @@ public abstract class DatabaseMetaData
 				Debug.returnValue(this, "getImportedKeys", rows.toString());
 			}
 
-			return buildResultSet(fields, tuples, _Conn);
+			return buildResultSet(fields, tuples, _conn);
 		}
 		else
 		{
-			return buildResultSet(fields, new Vector(), _Conn);
+			return buildResultSet(fields, new Vector(), _conn);
 		}
 	}
 
@@ -3377,7 +3376,7 @@ public abstract class DatabaseMetaData
 		fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
 		fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
 
-		if (_Conn.getIO().versionMeetsMinimum(3, 23, 0))
+		if (_conn.getIO().versionMeetsMinimum(3, 23, 0))
 		{
 			/*
 			 * Get foreign key information for table
@@ -3394,7 +3393,7 @@ public abstract class DatabaseMetaData
 			}
 			else
 			{
-				DB_Sub = " FROM " + _Database;
+				DB_Sub = " FROM " + _database;
 			}
 
 			if (table == null)
@@ -3403,9 +3402,9 @@ public abstract class DatabaseMetaData
 			}
 
 			org.gjt.mm.mysql.ResultSet fkRS =
-				_Conn.execSQL("show table status " + DB_Sub, -1);
+				_conn.execSQL("show table status " + DB_Sub, -1);
 
-			fkRS.setConnection(_Conn);
+			fkRS.setConnection(_conn);
 
 			/*
 			 * Parse imported foreign key information
@@ -3513,11 +3512,11 @@ public abstract class DatabaseMetaData
 				Debug.returnValue(this, "getImportedKeys", rows.toString());
 			}
 
-			return buildResultSet(fields, tuples, _Conn);
+			return buildResultSet(fields, tuples, _conn);
 		}
 		else
 		{
-			return buildResultSet(fields, new Vector(), _Conn);
+			return buildResultSet(fields, new Vector(), _conn);
 		}
 
 	}
@@ -3617,7 +3616,7 @@ public abstract class DatabaseMetaData
 		fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
 		fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
 
-		if (_Conn.getIO().versionMeetsMinimum(3, 23, 0))
+		if (_conn.getIO().versionMeetsMinimum(3, 23, 0))
 		{
 			/*
 			 * Get foreign key information for table
@@ -3634,7 +3633,7 @@ public abstract class DatabaseMetaData
 			}
 			else
 			{
-				DB_Sub = " FROM " + _Database;
+				DB_Sub = " FROM " + _database;
 			}
 
 			if (primaryTable == null)
@@ -3643,9 +3642,9 @@ public abstract class DatabaseMetaData
 			}
 
 			org.gjt.mm.mysql.ResultSet fkRS =
-				_Conn.execSQL("show table status " + DB_Sub, -1);
+				_conn.execSQL("show table status " + DB_Sub, -1);
 
-			fkRS.setConnection(_Conn);
+			fkRS.setConnection(_conn);
 
 			/*
 			 * Parse imported foreign key information
@@ -3765,11 +3764,11 @@ public abstract class DatabaseMetaData
 				Debug.returnValue(this, "getImportedKeys", rows.toString());
 			}
 
-			return buildResultSet(fields, tuples, _Conn);
+			return buildResultSet(fields, tuples, _conn);
 		}
 		else
 		{
-			return buildResultSet(fields, new Vector(), _Conn);
+			return buildResultSet(fields, new Vector(), _conn);
 		}
 	}
 
@@ -4977,7 +4976,7 @@ public abstract class DatabaseMetaData
 
 		Tuples.addElement(RowVal);
 
-		return buildResultSet(Fields, Tuples, _Conn);
+		return buildResultSet(Fields, Tuples, _conn);
 	}
 
 	/**
@@ -5063,13 +5062,13 @@ public abstract class DatabaseMetaData
 		}
 		else
 		{
-			DB_Sub = " FROM " + _Database;
+			DB_Sub = " FROM " + _database;
 		}
 
 		org.gjt.mm.mysql.ResultSet RS =
-			_Conn.execSQL("SHOW INDEX FROM " + Table + DB_Sub, -1);
+			_conn.execSQL("SHOW INDEX FROM " + Table + DB_Sub, -1);
 
-		RS.setConnection(_Conn);
+		RS.setConnection(_conn);
 
 		Field[] Fields = new Field[13];
 
@@ -5111,7 +5110,7 @@ public abstract class DatabaseMetaData
 			Tuples.addElement(Tuple);
 		}
 
-		java.sql.ResultSet Results = buildResultSet(Fields, Tuples, _Conn);
+		java.sql.ResultSet Results = buildResultSet(Fields, Tuples, _conn);
 
 		return Results;
 	}

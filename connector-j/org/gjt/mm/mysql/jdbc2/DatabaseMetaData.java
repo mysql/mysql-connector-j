@@ -33,6 +33,15 @@ public class DatabaseMetaData
 	}
 
 	/**
+	 * JDBC 3.0
+	 */
+	
+	public boolean supportsGetGeneratedKeys()
+	{
+		return true;
+	}
+	
+	/**
 	 * JDBC 2.0
 	 *
 	 * Does the database support the given result set type?
@@ -222,7 +231,7 @@ public class DatabaseMetaData
 	 */
 
 	public java.sql.Connection getConnection() throws SQLException {
-		return (java.sql.Connection) _Conn;
+		return (java.sql.Connection) _conn;
 	}
 
 	protected java.sql.ResultSet buildResultSet(
