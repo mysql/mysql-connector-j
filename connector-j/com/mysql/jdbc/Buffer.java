@@ -116,10 +116,13 @@ class Buffer {
      */
     public int fastSkipLenString() {
 
-        int len = (int) byteBuffer[position++];
+        long len = this.readFieldLength();
+        
         position += len;
 
-        return len;
+        return (int)len; // this is safe, as this is only
+                          // used when unpacking fields, and
+                          // field names can't be > Integer.MAX_VALUE
     }
 
     /**
