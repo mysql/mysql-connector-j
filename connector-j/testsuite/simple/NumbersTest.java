@@ -33,7 +33,7 @@ public class NumbersTest
 
     //~ Instance/static variables .............................................
 
-    private static long TEST_BIGINT_VALUE = 6147483647L;
+    private static final long TEST_BIGINT_VALUE = 6147483647L;
 
     //~ Constructors ..........................................................
 
