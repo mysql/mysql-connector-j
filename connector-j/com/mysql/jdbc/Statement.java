@@ -114,7 +114,7 @@ public class Statement
             Debug.methodCall(this, "constructor", Args);
         }
 
-		if (c == null || ((com.mysql.jdbc.Connection)c).isClosedNoPing())
+		if (c == null || ((com.mysql.jdbc.Connection)c).isClosed())
 		{
 			throw new SQLException("Connection is closed.", "08003");
 		}
