@@ -277,6 +277,12 @@ public class Driver implements java.sql.Driver {
 		InitialTimeout.description =
 			"Initial timeout (seconds) to wait between failed connections";
 
+		DriverPropertyInfo profileSql =
+			new DriverPropertyInfo("profileSql", info.getProperty("profileSql", "false"));
+		profileSql.required = false;
+		profileSql.description =
+			"Trace queries and their execution/fetch times on STDERR (true/false) defaults to false";
+		;
 		DriverPropertyInfo Dpi[] =
 			{
 				HostProp,
@@ -286,7 +292,8 @@ public class Driver implements java.sql.Driver {
 				PasswordProp,
 				AutoReconnect,
 				MaxReconnects,
-				InitialTimeout };
+				InitialTimeout,
+				profileSql};
 		return Dpi;
 	}
 
