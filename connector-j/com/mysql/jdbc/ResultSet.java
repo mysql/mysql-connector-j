@@ -366,9 +366,9 @@ public class ResultSet
             try {
                 val = new BigDecimal(stringVal);
             } catch (NumberFormatException ex) {
-                throw new java.sql.SQLException("Bad format for BigDecimal '" + stringVal
-                                                + "' in column " + columnIndex
-                                                + "("
+                throw new java.sql.SQLException("Bad format for BigDecimal '"
+                                                + stringVal + "' in column "
+                                                + columnIndex + "("
                                                 + fields[columnIndex - 1]
                                                 + ").", "S1009");
             }
@@ -377,9 +377,9 @@ public class ResultSet
 
                 return val.setScale(scale);
             } catch (ArithmeticException ex) {
-                throw new java.sql.SQLException("Bad format for BigDecimal '" + stringVal
-                                                + "' in column " + columnIndex
-                                                + "("
+                throw new java.sql.SQLException("Bad format for BigDecimal '"
+                                                + stringVal + "' in column "
+                                                + columnIndex + "("
                                                 + fields[columnIndex - 1]
                                                 + ").", "S1009");
             }
@@ -432,9 +432,9 @@ public class ResultSet
 
                 return val;
             } catch (NumberFormatException ex) {
-                throw new java.sql.SQLException("Bad format for BigDecimal '" + stringVal
-                                                + "' in column " + columnIndex
-                                                + "("
+                throw new java.sql.SQLException("Bad format for BigDecimal '"
+                                                + stringVal + "' in column "
+                                                + columnIndex + "("
                                                 + fields[columnIndex - 1]
                                                 + ").", "S1009");
             }
@@ -469,9 +469,9 @@ public class ResultSet
 
                 return val;
             } catch (NumberFormatException ex) {
-                throw new java.sql.SQLException("Bad format for BigDecimal '" + stringVal
-                                                + "' in column " + columnName
-                                                + ".", "S1009");
+                throw new java.sql.SQLException("Bad format for BigDecimal '"
+                                                + stringVal + "' in column "
+                                                + columnName + ".", "S1009");
             }
         }
 
@@ -760,15 +760,16 @@ public class ResultSet
      */
     public java.io.Reader getCharacterStream(int columnIndex)
                                       throws SQLException {
+
         String stringVal = getString(columnIndex);
-        
+
         if (stringVal != null) {
-        	return new StringReader(stringVal);
+
+            return new StringReader(stringVal);
+        } else {
+
+            return null;
         }
-        else {
-        	return null;
-        }
-        
     }
 
     /**
@@ -778,6 +779,7 @@ public class ResultSet
      */
     public java.io.Reader getCharacterStream(String columnName)
                                       throws SQLException {
+
         return getCharacterStream(findColumn(columnName));
     }
 
@@ -1112,7 +1114,8 @@ public class ResultSet
     public void setFetchDirection(int direction)
                            throws SQLException {
 
-        if (direction != FETCH_FORWARD && direction != FETCH_REVERSE) {
+        if (direction != FETCH_FORWARD && direction != FETCH_REVERSE
+            && direction != FETCH_UNKNOWN) {
             throw new SQLException("Illegal value for fetch direction", 
                                    "S1009");
         } else {
@@ -1386,13 +1389,13 @@ public class ResultSet
 
             if (val != null && val.length() != 0) {
 
-                if (val.indexOf("e") != -1 && val.indexOf("E") != -1) {
+                if (val.indexOf("e") == -1 && val.indexOf("E") == -1) {
 
                     return Long.parseLong(val);
                 } else {
 
                     // Convert floating point
-                    return (long) (Double.parseDouble(val));
+                    return Double.doubleToLongBits(Double.parseDouble(val));
                 }
             } else {
 
@@ -1606,7 +1609,8 @@ public class ResultSet
                     try {
                         val = new BigDecimal(stringVal);
                     } catch (NumberFormatException ex) {
-                        throw new java.sql.SQLException("Bad format for BigDecimal '" + stringVal
+                        throw new java.sql.SQLException("Bad format for BigDecimal '"
+                                                        + stringVal
                                                         + "' in column "
                                                         + columnIndex + "("
                                                         + fields[columnIndex - 1]
@@ -1653,8 +1657,8 @@ public class ResultSet
                             // Serialized object?
                             try {
 
-                                ByteArrayInputStream bytesIn = new ByteArrayInputStream(
-                                                                   data);
+                                ByteArrayInputStream bytesIn = 
+                                        new ByteArrayInputStream(data);
                                 ObjectInputStream objIn = new ObjectInputStream(
                                                                   bytesIn);
                                 obj = objIn.readObject();
