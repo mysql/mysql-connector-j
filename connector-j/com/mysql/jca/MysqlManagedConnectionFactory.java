@@ -40,8 +40,7 @@ import javax.security.auth.Subject;
  * required to be a JavaBean. 
  */
 public class MysqlManagedConnectionFactory
-    implements ManagedConnectionFactory
-{
+    implements ManagedConnectionFactory {
 
     /**
      * Creates a Connection Factory instance. The Connection Factory 
@@ -61,8 +60,7 @@ public class MysqlManagedConnectionFactory
      *                                           error condition
      */
     public Object createConnectionFactory(ConnectionManager arg0)
-                                   throws ResourceException
-    {
+                                   throws ResourceException {
 
         return null;
     }
@@ -79,8 +77,7 @@ public class MysqlManagedConnectionFactory
      * @throws ResourceAdapterInternalException Resource adapter related error condition
      */
     public Object createConnectionFactory()
-                                   throws ResourceException
-    {
+                                   throws ResourceException {
 
         return null;
     }
@@ -108,8 +105,7 @@ public class MysqlManagedConnectionFactory
      */
     public ManagedConnection createManagedConnection(Subject subject, 
                                                      ConnectionRequestInfo cxRequestInfo)
-                                              throws ResourceException
-    {
+                                              throws ResourceException {
 
         return null;
     }
@@ -141,8 +137,7 @@ public class MysqlManagedConnectionFactory
     public ManagedConnection matchManagedConnections(Set connectionSet, 
                                                      Subject subject, 
                                                      ConnectionRequestInfo cxRequestInfo)
-                                              throws ResourceException
-    {
+                                              throws ResourceException {
 
         return null;
     }
@@ -171,8 +166,7 @@ public class MysqlManagedConnectionFactory
      * @throws ResourceAdapterInternalException resource adapter related error condition
      */
     public void setLogWriter(PrintWriter out)
-                      throws ResourceException
-    {
+                      throws ResourceException {
     }
 
     /**
@@ -188,8 +182,7 @@ public class MysqlManagedConnectionFactory
      * is disabled. 
      */
     public PrintWriter getLogWriter()
-                             throws ResourceException
-    {
+                             throws ResourceException {
 
         return null;
     }
@@ -199,8 +192,7 @@ public class MysqlManagedConnectionFactory
      *
      * @return ResourceAdapter JavaBean.
      */
-    public ResourceAdapter getResourceAdapter()
-    {
+    public ResourceAdapter getResourceAdapter() {
 
         return null;
     }
@@ -221,7 +213,6 @@ public class MysqlManagedConnectionFactory
      * @throws ResourceException
      */
     public void setResourceAdapter(ResourceAdapter arg0)
-                            throws ResourceException
-    {
+                            throws ResourceException {
     }
 }
