@@ -1,4 +1,4 @@
-MySQL Connector/J 3.0.2 Beta (formerly MM.MySQL)
+MySQL Connector/J 3.0.3 Beta (formerly MM.MySQL)
 MySQL AB's JDBC Driver for MySQL
 Copyright (c) 2002 MySQL AB
 
@@ -49,7 +49,7 @@ USAGE AND INSTALLATION
 
 MySQL Connector/J is distributed as a .zip or .tar.gz archive containing 
 the sources and class files as well as a class-file only "binary" .jar 
-archive named "mysql-connector-java-3.0.2-beta-bin.jar".
+archive named "mysql-connector-java-3.0.3-beta-bin.jar".
 
 You will need to use the appropriate gui or command-line utility to un-archive 
 the distribution (for example, WinZip for the .zip archive, and "tar" for 
@@ -62,7 +62,7 @@ Either copy the "com" and "org" subdirectories and all of their contents
 to anywhere you like, and put the directory holding the "com" and "org"
 subdirectories in your classpath, or...
 
-Put mysql-connector-java-3.0.2-beta-bin.jar in your classpath, either by adding the 
+Put mysql-connector-java-3.0.3-beta-bin.jar in your classpath, either by adding the 
 FULL path to it to your CLASSPATH enviornment variable, or putting it
 in $JAVA_HOME/jre/lib/ext.
 

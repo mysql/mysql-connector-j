@@ -25,7 +25,7 @@ Copyright (C) 2002 MySQL AB
 	<property name="cvs.package" value="mm.mysql-2"/>
     <property name="ccdir" value="/usr/java/cruisecontrol-1.2.1"/>
 
-	<property name="version" value="3.0.2-beta"/>
+	<property name="version" value="3.0.3-beta"/>
 	<property name="prodName" value="mysql-connector-java"/>
 	<property name="fullProdName" value="${prodName}-${version}"/>
 	

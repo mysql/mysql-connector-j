@@ -1,6 +1,15 @@
 # Changelog
 # $Id$
 
+xx-xx-xx - Version 3.0.3-dev
+	- Changed charsToByte in SingleByteCharConverter to be non-static
+	- Changed SingleByteCharConverter to use lazy initialization of each
+	  converter.
+	- Fixed charset handling in Fields.java
+	- Implemented Connection.nativeSQL()
+	- More robust escape tokenizer -- recognize '--' comments, and allow
+	  nested escape sequences (see testsuite.EscapeProcessingTest)
+	  
 11-08-02 - Version 3.0.2-dev
 
 	- Fixed issue with updatable result sets and PreparedStatements not 
