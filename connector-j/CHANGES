@@ -1,7 +1,7 @@
 # Changelog
 # $Id$
 
-xx-xx-xx - Version 3.0.4-gamma
+01-06-03 - Version 3.0.4-gamma
 	- Added quoted identifiers to database names for 
 	  Connection.setCatalog.
 	- Added support for quoted identifiers in PreparedStatement
@@ -11,7 +11,11 @@ xx-xx-xx - Version 3.0.4-gamma
 	- Reduce memory footprint of PreparedStatements by sharing 
 	  outbound packet with MysqlIO.
 	- Added 'strictUpdates' property to allow control of amount
-	  of checking for 'correctness' of updatable result sets.
+	  of checking for 'correctness' of updatable result sets. Set this
+	  to 'false' if you want faster updatable result sets and you know
+	  that you create them from SELECTs on tables with primary keys and
+	  that you have selected all primary keys in your query.
+	- Added support for 4.0.8-style large packets. 
 	  
 12-17-02 - Version 3.0.3-dev
 	- Changed charsToByte in SingleByteCharConverter to be non-static
