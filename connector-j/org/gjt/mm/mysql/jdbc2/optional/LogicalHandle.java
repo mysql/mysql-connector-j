@@ -43,6 +43,16 @@ public class LogicalHandle implements Connection
     }
     
     /**
+     * Allows clients to determine how long this connection
+     * has been idle.
+     */
+    
+    public long getIdleFor()
+    {
+    	return ((org.gjt.mm.mysql.Connection)mc).getIdleFor();
+    }
+    
+    /**
     * Passes call to method on physical connection instance.  Notifies listeners of
     * any caught exceptions before re-throwing to client.
     * 
