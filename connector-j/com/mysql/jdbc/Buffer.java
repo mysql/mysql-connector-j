@@ -34,13 +34,15 @@ class Buffer
 
     //~ Instance/static variables .............................................
 
-    final static int 	NO_LENGTH_LIMIT 	= -1;
-    static long 		NULL_LENGTH 		= -1;
-    private int 		bufLength 			= 0;
-    private byte[] 	byteBuffer;
-    private int 		position 			= 0;
-    private int 		sendLength 			= 0;
-    private int 		maxLength 			= NO_LENGTH_LIMIT;
+    final static int NO_LENGTH_LIMIT = -1;
+    static long NULL_LENGTH = -1;
+    private int bufLength = 0;
+    private byte[] byteBuffer;
+    private int position = 0;
+    private int sendLength = 0;
+    private int maxLength = NO_LENGTH_LIMIT;
+    private boolean wasMultiPacket = false;
+    
 
     //~ Constructors ..........................................................
 
@@ -65,6 +67,16 @@ class Buffer
 
     //~ Methods ...............................................................
 
+	public void setWasMultiPacket(boolean flag)
+	{
+		wasMultiPacket = flag;
+	}
+	
+	public boolean wasMultiPacket()
+	{
+		return wasMultiPacket;
+	}
+	
     /**
      * Sets the array of bytes to use as a buffer to read from.
      * 
@@ -368,6 +380,30 @@ class Buffer
 
         return getBytes((int)len);
     }
+    
+     // Read given-length string (native)
+    final byte[] readLenByteArray(int offset)
+    {
+
+        long len = this.readFieldLength();
+
+        if (len == NULL_LENGTH)
+        {
+
+            return null;
+        }
+
+        if (len == 0)
+        {
+
+            return new byte[0];
+        }
+
+		this.position += offset;
+		
+        return getBytes((int)len);
+    }
+
 
     //
     // Read given-length string
@@ -547,6 +583,15 @@ class Buffer
         System.arraycopy(Bytes, 0, this.byteBuffer, this.position, len);
         this.position += len;
     }
+    
+    // Write a byte array with the given offset and length
+    final void writeBytesNoNull(byte[] Bytes, int offset, int length)
+                         throws SQLException
+    {
+        ensureCapacity(length);
+        System.arraycopy(Bytes, offset, this.byteBuffer, this.position, length);
+        this.position += length;
+    }
 
     // 2000-06-05 Changed
     final void writeInt(int i)
@@ -577,7 +622,37 @@ class Buffer
         b[this.position++] = (byte)(i >>> 8);
         b[this.position++] = (byte)(i >>> 16);
     }
-
+    
+    final void writeLongLong(long i)
+    {
+    	byte[] b= this.byteBuffer;
+    	b[this.position++] = (byte)(i & 0xff);
+    	b[this.position++] = (byte)(i >>> 8);
+    	b[this.position++] = (byte)(i >>> 16);
+    	b[this.position++] = (byte)(i >>> 24);
+    	b[this.position++] = (byte)(i >>> 32);
+    	b[this.position++] = (byte)(i >>> 40);
+    	b[this.position++] = (byte)(i >>> 48);
+    	b[this.position++] = (byte)(i >>> 56);
+    }
+    
+    final void writeDouble(double d)
+    {
+    	long l = Double.doubleToLongBits(d);
+    	writeLongLong(l);
+    }
+    
+    final void writeFloat(float f)
+    {
+    	int i = Float.floatToIntBits(f);
+    	
+		byte[] b = this.byteBuffer;
+        b[this.position++] = (byte)(i & 0xff);
+        b[this.position++] = (byte)(i >>> 8);
+        b[this.position++] = (byte)(i >>> 16);
+        b[this.position++] = (byte)(i >>> 24);
+    }
+    	
     // Write null-terminated string
     final void writeString(String s)
                     throws SQLException
