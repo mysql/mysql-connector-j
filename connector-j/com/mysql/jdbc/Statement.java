@@ -252,12 +252,7 @@ public class Statement
             && rows > this.getMaxRows())) {
             throw new SQLException("Illegal value for setFetchSize()", "S1009");
         }
-        
-        if (rows > this.getMaxRows()) {
-            throw new SQLException("Illegal value for setFetchSize()", "S1009");
-        }
-            
-
+       
         fetchSize = rows;
     }
 
