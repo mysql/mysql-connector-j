@@ -1559,7 +1559,7 @@ public class DatabaseMetaData
                             if (commentTokens.hasMoreTokens()) {
                                 dummy = commentTokens.nextToken(); // Skip InnoDB comment
 
-                                if (commentTokens.hasMoreTokens()) {
+                                while (commentTokens.hasMoreTokens()) {
 
                                     String keys = commentTokens.nextToken();
                                     ForeignKeyUtil.getExportKeyResults(catalog, 
@@ -1833,7 +1833,7 @@ public class DatabaseMetaData
                             if (commentTokens.hasMoreTokens()) {
                                 dummy = commentTokens.nextToken(); // Skip InnoDB comment
 
-                                if (commentTokens.hasMoreTokens()) {
+                                while (commentTokens.hasMoreTokens()) {
 
                                     String keys = commentTokens.nextToken();
                                     ForeignKeyUtil.getImportKeyResults(catalog, 
