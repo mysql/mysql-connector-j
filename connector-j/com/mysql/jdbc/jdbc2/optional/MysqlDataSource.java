@@ -67,7 +67,7 @@ public class MysqlDataSource implements DataSource, Referenceable, Serializable
 	 * Port number
 	 */
 
-	protected int _port = 1306;
+	protected int _port = 3306;
 
 	/**
 	 * Database Name
