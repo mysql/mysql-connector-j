@@ -22,9 +22,7 @@ import java.io.IOException;
 
 import java.lang.reflect.Method;
 
-import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.SocketException;
 
 import java.util.Properties;
@@ -72,7 +70,11 @@ public class StandardSocketFactory
             boolean hasConnectTimeoutMethod = false;
             
             try {
-                Method m = Socket.class.getDeclaredMethod("connect", new Class[]{SocketAddress.class, Integer.class});
+                // Have to do this with reflection, otherwise older JVMs croak
+                Class socketAddressClass = Class.forName("java.net.SocketAddress");
+                
+                Method m = Socket.class.getMethod("connect", new Class[]{socketAddressClass, Integer.TYPE});
+                hasConnectTimeoutMethod = true;
             } catch (NoSuchMethodException noSuchMethodEx) {
                 hasConnectTimeoutMethod = false;
             } catch (Throwable catchAll) {
@@ -97,10 +99,12 @@ public class StandardSocketFactory
                 if (!hasConnectTimeoutMethod || connectTimeout == 0) {
                     rawSocket = new Socket(this.host, port);
                 } else {
-                    InetSocketAddress sockAddr = new InetSocketAddress(this.host, port);
+                    // must explicitly state this due to classloader issues
+                    // when running on older JVMs :(
+                    java.net.InetSocketAddress sockAddr = new java.net.InetSocketAddress(this.host, port);
                     
                     rawSocket = new Socket();
-                    rawSocket.connect(sockAddr);
+                    rawSocket.connect(sockAddr, connectTimeout);
                 }
 
                 try {
