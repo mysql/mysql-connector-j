@@ -38,7 +38,7 @@ public class BlobTest
 
     //~ Instance/static variables .............................................
 
-    private static final byte[] TESTBLOB = new byte[512 * 1024];
+    private static final byte[] TESTBLOB = new byte[1024 * 1024];
 
     //~ Initializers ..........................................................
 
@@ -47,8 +47,8 @@ public class BlobTest
         int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
 
         for (int i = 0; i < TESTBLOB.length; i++) {
-            TESTBLOB[i] = (byte) ((Math.random() * dataRange) + Byte.MIN_VALUE);
-        }
+            TESTBLOB[i] = (byte)((Math.random() * dataRange) + Byte.MIN_VALUE);
+        }  
     }
 
     //~ Constructors ..........................................................
@@ -217,21 +217,21 @@ public class BlobTest
 
                 if (retrBytes[i] != TESTBLOB[i]) {
 
-                    for (int j = i - 10; j < i + 10; j++) {
-                        System.out.print(retrBytes[j] + " ");
-                    }
-
-                    System.out.println();
-
-                    for (int j = i - 10; j < i + 10; j++) {
-                        System.out.print(TESTBLOB[j] + " ");
-                    }
-
-                    System.out.println();
+                    
                     passed = false;
                     System.out.println(
                             "Byte pattern differed at position " + i + " , "
                             + retrBytes[i] + " != " + TESTBLOB[i]);
+                            
+                    for (int j = 0; j < i + 10 && j < i; j++) {
+                        System.out.print(Integer.toHexString(retrBytes[j]) + " ");
+                        
+                    }
+                    
+                    for (int j = 0; j < i + 10 && j < i; j++) {
+                        System.out.print(Integer.toHexString(TESTBLOB[j]) + " ");
+                        
+                    }
 
                     break;
                 }
