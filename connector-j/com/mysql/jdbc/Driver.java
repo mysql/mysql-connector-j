@@ -301,7 +301,8 @@ public class Driver
                                                                      "useStreamLengthsInPrepStmts", 
                                                                      "true"));
         useStreamLengthsInPrepStmts.required = false;
-        useStreamLengthsInPrepStmts.description = "Honor stream length parameter in PreparedStatement/ResultSet.setXXXStream() method calls (defaults to 'true')"
+        useStreamLengthsInPrepStmts.description = "Honor stream length parameter in "
+            + "PreparedStatement/ResultSet.setXXXStream() method calls (defaults to 'true')"
         ;
         
         DriverPropertyInfo continueBatchOnError = new DriverPropertyInfo("continueBatchOnError", 
@@ -309,8 +310,8 @@ public class Driver
                                                              "continueBatchOnError", 
                                                              "true"));
         continueBatchOnError.required = false;
-        continueBatchOnError.description = "Should the driver continue processing batch commands if " +
-         "one statement fails. The JDBC spec allows either way (defaults to 'true').";
+        continueBatchOnError.description = "Should the driver continue processing batch commands if "
+         + "one statement fails. The JDBC spec allows either way (defaults to 'true').";
         
         DriverPropertyInfo allowLoadLocalInfile = new DriverPropertyInfo("allowLoadLocalInfile", 
                                                              info.getProperty(
@@ -428,6 +429,11 @@ public class Driver
 
     /**
      * Returns the hostname property
+     * 
+     * @param props the java.util.Properties instance to
+     * retrieve the hostname from.
+     * 
+     * @return the hostname
      */
     public String host(Properties props) {
 

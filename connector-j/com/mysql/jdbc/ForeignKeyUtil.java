@@ -31,29 +31,48 @@ import java.util.StringTokenizer;
  * of 'show table status'. It is used by DatabaseMetaData.getImportedKeys
  * and DatabaseMetaData.getExportedKeys.
  * 
+ * @author Mark Matthews
  */
 public class ForeignKeyUtil {
 
+    /**
+     * The table type for generic tables that support foreign
+     * keys.
+     */
+    
     public static final String SUPPORTS_FK = "SUPPORTS_FK";
-    public static final int PKTABLE_CAT = 0;
-    public static final int PKTABLE_SCHEM = 1;
-    public static final int PKTABLE_NAME = 2;
-    public static final int PKCOLUMN_NAME = 3;
-    public static final int FKTABLE_CAT = 4;
-    public static final int FKTABLE_SCHEM = 5;
-    public static final int FKTABLE_NAME = 6;
-    public static final int FKCOLUMN_NAME = 7;
-    public static final int KEY_SEQ = 8;
-    public static final int UPDATE_RULE = 9;
-    public static final int DELETE_RULE = 10;
-    public static final int FK_NAME = 11;
-    public static final int PK_NAME = 12;
-    public static final int DEFERRABILITY = 13;
+    
+    //
+    // Column indexes used by all DBMD foreign key
+    // ResultSets
+    //
+    
+    private static final int PKTABLE_CAT = 0;
+    private static final int PKTABLE_SCHEM = 1;
+    private static final int PKTABLE_NAME = 2;
+    private static final int PKCOLUMN_NAME = 3;
+    private static final int FKTABLE_CAT = 4;
+    private static final int FKTABLE_SCHEM = 5;
+    private static final int FKTABLE_NAME = 6;
+    private static final int FKCOLUMN_NAME = 7;
+    private static final int KEY_SEQ = 8;
+    private static final int UPDATE_RULE = 9;
+    private static final int DELETE_RULE = 10;
+    private static final int FK_NAME = 11;
+    private static final int PK_NAME = 12;
+    private static final int DEFERRABILITY = 13;
 
     /**
      * Populates the tuples list with the imported keys of importingTable based on the
      * keysComment from the 'show table status' sql command. KeysComment is that part of
      * the comment field that follows the "InnoDB free ...;" prefix.
+     * 
+     * @param catalog the database to use
+     * @param importingTable the table keys are being imported to
+     * @param keysComment the comment from 'show table status'
+     * @param tuples the rows to add results to
+     * 
+     * @throws SQLException if a database access error occurs
      */
     public static void getImportKeyResults(String catalog, 
                                            String importingTable, 
@@ -67,6 +86,14 @@ public class ForeignKeyUtil {
      * Adds to the tuples list the exported keys of exportingTable based on the
      * keysComment from the 'show table status' sql command. KeysComment is that part of
      * the comment field that follows the "InnoDB free ...;" prefix.
+     * 
+     * @param catalog the database to use
+     * @param exportingTable the table keys are being exported from
+     * @param keysComment the comment from 'show table status'
+     * @param fkTableName the foreign key table name
+     * @param tuples the rows to add results to
+     * 
+     * @throws SQLException if a database access error occurs
      */
     public static void getExportKeyResults(String catalog, 
                                            String exportingTable, 
@@ -236,6 +263,14 @@ public class ForeignKeyUtil {
     /**
      * Creates a result set similar enough to 'SHOW TABLE STATUS' to allow the
      * same code to work on extracting the foreign key data
+     * 
+     * @param conn the database connection to use
+     * @param metadata the DatabaseMetaData instance calling this method
+     * @param catalog the database name to extract foreign key info for
+     * @param tableName the table to extract foreign key info for
+     * 
+     * @throws SQLException if a database access error occurs.
+     * @return A result set that has the structure of 'show table status'
      */
     public static ResultSet extractForeignKeyFromCreateTable(java.sql.Connection conn, 
                                                              java.sql.DatabaseMetaData metadata, 
@@ -312,6 +347,13 @@ public class ForeignKeyUtil {
 
     /** 
      * Extracts foreign key info for one table.
+     * 
+     * @param rows the list of rows to add to
+     * @param rs the result set from 'SHOW CREATE TABLE'
+     * @param catalog the database name
+     * 
+     * @throws SQLException if a database access error occurs
+     * @return the list of rows with new rows added
      */
     public static List extractForeignKeyForTable(ArrayList rows, 
                                                  java.sql.ResultSet rs,
@@ -417,6 +459,9 @@ public class ForeignKeyUtil {
     /**
      * Parses the cascade option string and returns the DBMD constant
      * that represents it
+     * 
+     * @param commentString the comment from 'SHOW TABLE STATUS'
+     * @return the DBMD constant that represents the cascade option
      */
     public static int getCascadeDeleteOption(String commentString) {
 

@@ -189,6 +189,15 @@ public class Field {
 
     //~ Methods ...............................................................
 
+    /**
+     * Returns amount of correction that
+     * should be applied to the precision value.
+     * 
+     * Different versions of MySQL report different
+     * precision values.
+     * 
+     * @return the amount to adjust precision value by.
+     */
     public int getPrecisionAdjustFactor() {
         return this.precisionAdjustFactor;
     }
