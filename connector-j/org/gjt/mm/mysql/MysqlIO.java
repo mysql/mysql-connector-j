@@ -165,7 +165,7 @@ public abstract class MysqlIO {
 			/* Ignore */
 		}
 
-		_mysqlInput = _mysqlConnection.getInputStream();
+		_mysqlInput = new BufferedInputStream(_mysqlConnection.getInputStream(), 16384);
 		_mysqlOutput = new BufferedOutputStream(_mysqlConnection.getOutputStream());
 
 		//_Mysql_Input  = new DataInputStream(_Mysql_Buf_Input);
