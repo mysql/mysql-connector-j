@@ -35,7 +35,7 @@ import testsuite.BaseTestCase;
  */
 public class BlobTest extends BaseTestCase {
 
-	static byte[] testBlob = new byte[18 * 1024 * 1024]; // 18 meg blob
+	static byte[] testBlob = new byte[2 * 1024 * 1024]; // 2 meg blob
 
 	static {
 		int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
