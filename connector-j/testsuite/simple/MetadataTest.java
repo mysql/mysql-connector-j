@@ -109,7 +109,19 @@ public class MetadataTest
         }
 
         rs.close();
-        rs = dbmd.getCrossReference(null, null, "parent", null, null, "child");
+        
+        rs = dbmd.getCrossReference(null, null, "cpd_foreign_3", null, null, "cpd_foreign_4");
+        
+        while (rs.next()) {
+            String pkColumnName = rs.getString("PKCOLUMN_NAME");
+            String pkTableName = rs.getString("PKTABLE_NAME");
+            String fkColumnName = rs.getString("FKCOLUMN_NAME");
+            String fkTableName = rs.getString("FKTABLE_NAME");
+            
+            System.out.println(pkTableName + "(" + pkColumnName + ") -> " + fkTableName + "(" + fkColumnName + ")");
+        }
+        
+        rs.close();
     }
 
     /**
@@ -158,20 +170,46 @@ public class MetadataTest
 
     private void createTestTable()
                           throws SQLException {
-
-        try {
-            stmt.executeUpdate("DROP TABLE parent");
-            stmt.executeUpdate("DROP TABLE child");
-            stmt.executeUpdate("DROP TABLE multikey");
-        } catch (SQLException sqlEx) {
-            ;
-        }
-
+        stmt.executeUpdate("DROP TABLE IF EXISTS parent");
+        stmt.executeUpdate("DROP TABLE IF EXISTS child");
+        stmt.executeUpdate("DROP TABLE IF EXISTS multikey");
+        stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_1");
+        stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_2");
+        stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_3");
+        stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_4");
         stmt.executeUpdate(
                 "CREATE TABLE parent(parent_id INT NOT NULL, PRIMARY KEY (parent_id)) TYPE=INNODB");
         stmt.executeUpdate(
                 "CREATE TABLE child(child_id INT, parent_id_fk INT, INDEX par_ind (parent_id_fk), FOREIGN KEY (parent_id_fk) REFERENCES parent(parent_id)) TYPE=INNODB");
         stmt.executeUpdate(
                 "CREATE TABLE multikey(d INT NOT NULL, b INT NOT NULL, a INT NOT NULL, c INT NOT NULL, PRIMARY KEY (d, b, a, c))");
+
+        // Test compound foreign keys
+        stmt.executeUpdate(
+                "create table cpd_foreign_1("
+                + "id int(8) not null auto_increment primary key,"
+                + "name varchar(255) not null unique," + "key (id)"
+                + ") type=InnoDB");
+        stmt.executeUpdate(
+                "create table cpd_foreign_2("
+                + "id int(8) not null auto_increment primary key,"
+                + "key (id)," + "name varchar(255)" + ") type=InnoDB");
+        stmt.executeUpdate(
+                "create table cpd_foreign_3("
+                + "cpd_foreign_1_id int(8) not null,"
+                + "cpd_foreign_2_id int(8) not null,"
+                + "key(cpd_foreign_1_id)," + "key(cpd_foreign_2_id),"
+                + "primary key (cpd_foreign_1_id, cpd_foreign_2_id),"
+                + "foreign key (cpd_foreign_1_id) references cpd_foreign_1(id),"
+                + "foreign key (cpd_foreign_2_id) references cpd_foreign_2(id)"
+                + ") type=InnoDB");
+        stmt.executeUpdate(
+                "create table cpd_foreign_4("
+                + "cpd_foreign_1_id int(8) not null,"
+                + "cpd_foreign_2_id int(8) not null,"
+                + "key(cpd_foreign_1_id)," + "key(cpd_foreign_2_id),"
+                + "primary key (cpd_foreign_1_id, cpd_foreign_2_id),"
+                + "foreign key (cpd_foreign_1_id, cpd_foreign_2_id) references cpd_foreign_3(cpd_foreign_1_id, cpd_foreign_2_id)"
+                + ") type=InnoDB");
     }
 }
