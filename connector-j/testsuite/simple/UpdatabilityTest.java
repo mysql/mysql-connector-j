@@ -104,9 +104,25 @@ public class UpdatabilityTest
                 }
             }
 
-            rs.close();
+			assertTrue("Updates failed", dataGood);
+			
+            
 
-            assertTrue("Updates failed", dataGood);
+			// move back, and change the primary key
+			// This should work
+			
+			int newPrimaryKeyId = 99999;
+			
+            rs.absolute(1);
+            rs.updateInt(1, newPrimaryKeyId);
+            rs.updateRow();
+            
+            int savedPrimaryKeyId = rs.getInt(1);
+            
+            assertTrue("Updated primary key does not match", (newPrimaryKeyId == savedPrimaryKeyId));
+            
+            rs.close();
+            
           
 /*
            FIXME: Move to regression
