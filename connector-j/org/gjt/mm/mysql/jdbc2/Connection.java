@@ -78,23 +78,23 @@ public class Connection extends org.gjt.mm.mysql.Connection implements java.sql.
      * @exception java.sql.SQLException if a database access error occurs
      */
 
-    public void connectionInit(String Host, 
+    public void connectionInit(String host, 
 			       int port, 
-			       Properties Info, 
-			       String Database, 
-			       String Url, 
-			       org.gjt.mm.mysql.Driver D) 
+			       Properties info, 
+			       String database, 
+			       String url, 
+			       org.gjt.mm.mysql.Driver d) 
 	throws java.sql.SQLException
     {
-	super.connectionInit(Host, port, Info, Database, Url, D);
+	super.connectionInit(host, port, info, database, url, d);
     }
   
   
-	public java.sql.CallableStatement prepareCall(String Sql) throws java.sql.SQLException
+	public java.sql.CallableStatement prepareCall(String sql) throws java.sql.SQLException
   	{
       
-      if (useUltraDevWorkAround) {
-          return new UltraDevWorkAround(prepareStatement(Sql));
+      if (_useUltraDevWorkAround) {
+          return new UltraDevWorkAround(prepareStatement(sql));
       }
       else {
           throw new java.sql.SQLException("Callable statments not supported.", "S1C00"); 
@@ -114,13 +114,13 @@ public class Connection extends org.gjt.mm.mysql.Connection implements java.sql.
     
     public java.sql.DatabaseMetaData getMetaData() throws java.sql.SQLException
     {
-	return new DatabaseMetaData(this, _Database);
+	return new DatabaseMetaData(this, _database);
     }
 
 
-    protected org.gjt.mm.mysql.MysqlIO createNewIO(String Host, int port) throws Exception
+    protected org.gjt.mm.mysql.MysqlIO createNewIO(String host, int port) throws Exception
     {
-	return new IO(Host, port, this);
+	return new IO(host, port, this);
     }
     
      //--------------------------JDBC 2.0-----------------------------
@@ -140,12 +140,12 @@ public class Connection extends org.gjt.mm.mysql.Connection implements java.sql.
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency)
       throws SQLException
     {
-        Statement Stmt = new org.gjt.mm.mysql.jdbc2.Statement(this, _Database);
+        Statement stmt = new org.gjt.mm.mysql.jdbc2.Statement(this, _database);
         
-        Stmt.setResultSetType(resultSetType);
-        Stmt.setResultSetConcurrency(resultSetConcurrency);
+        stmt.setResultSetType(resultSetType);
+        stmt.setResultSetConcurrency(resultSetConcurrency);
         
-	return Stmt;
+	return stmt;
     }
 
 
@@ -190,10 +190,10 @@ public class Connection extends org.gjt.mm.mysql.Connection implements java.sql.
      * @exception java.sql.SQLException if a database access error occurs.
      */
     
-    public java.sql.PreparedStatement prepareStatement(String Sql) 
+    public java.sql.PreparedStatement prepareStatement(String sql) 
 	throws java.sql.SQLException
     {
-	return prepareStatement(Sql, java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE, 
+	return prepareStatement(sql, java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE, 
             java.sql.ResultSet.CONCUR_READ_ONLY);
     }
     
@@ -210,7 +210,7 @@ public class Connection extends org.gjt.mm.mysql.Connection implements java.sql.
      * @exception SQLException if a database-access error occurs.
      */
 
-     public java.sql.PreparedStatement prepareStatement(String Sql, 
+     public java.sql.PreparedStatement prepareStatement(String sql, 
 							int resultSetType,
 							int resultSetConcurrency)
        throws SQLException
@@ -220,14 +220,14 @@ public class Connection extends org.gjt.mm.mysql.Connection implements java.sql.
 	//        type or concurrency
 	//
         
-        PreparedStatement PStmt = new org.gjt.mm.mysql.jdbc2.PreparedStatement(this, 
-						    Sql, 
-						    _Database);
+        PreparedStatement pStmt = new org.gjt.mm.mysql.jdbc2.PreparedStatement(this, 
+						    sql, 
+						    _database);
 
-        PStmt.setResultSetType(resultSetType);
-        PStmt.setResultSetConcurrency(resultSetConcurrency);
+        pStmt.setResultSetType(resultSetType);
+        pStmt.setResultSetConcurrency(resultSetConcurrency);
         
-	return PStmt;
+	return pStmt;
     }
 
     /**

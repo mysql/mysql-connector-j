@@ -82,7 +82,8 @@ import java.text.*;
 import java.util.*;
 import java.sql.*;
 
-public abstract class ResultSet {
+public abstract class ResultSet
+{
 	protected Vector Rows; // The results
 	protected Field[] Fields; // The fields
 
@@ -100,7 +101,7 @@ public abstract class ResultSet {
 	protected int resultSetConcurrency = 0;
 
 	protected org.gjt.mm.mysql.Statement owningStatement;
-	
+
 	protected boolean closed = false;
 
 	// These are longs for 
@@ -132,24 +133,29 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  boolean next() throws java.sql.SQLException {
-		
-		if (Driver.trace) {
+	public boolean next() throws java.sql.SQLException
+	{
+
+		if (Driver.trace)
+		{
 			Object[] args = {
 			};
 			Debug.methodCall(this, "next", args);
 		}
-		
+
 		boolean b;
-		
+
 		if (!reallyResult())
 			throw new java.sql.SQLException("ResultSet is from UPDATE. No Data", "S1000");
 
-		if (Rows.size() == 0) {
+		if (Rows.size() == 0)
+		{
 			b = false;
 		}
-		else {
-			if (currentRow + 1 >= Rows.size()) {
+		else
+		{
+			if (currentRow + 1 >= Rows.size())
+			{
 
 				// force scroll past end
 
@@ -158,20 +164,22 @@ public abstract class ResultSet {
 				b = false;
 
 			}
-			else {
+			else
+			{
 				clearWarnings();
 				currentRow = currentRow + 1;
 				This_Row = (byte[][]) Rows.elementAt(currentRow);
 				b = true;
 			}
 		}
-		
-		if (Driver.trace) {
-			
+
+		if (Driver.trace)
+		{
+
 			Debug.returnValue(this, "next", new Boolean(b));
-			
+
 		}
-		
+
 		return b;
 	}
 
@@ -189,13 +197,16 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  boolean prev() throws java.sql.SQLException {
-		if (currentRow - 1 >= 0) {
+	public boolean prev() throws java.sql.SQLException
+	{
+		if (currentRow - 1 >= 0)
+		{
 			currentRow--;
 			This_Row = (byte[][]) Rows.elementAt(currentRow);
 			return true;
 		}
-		else {
+		else
+		{
 			return false;
 		}
 	}
@@ -215,11 +226,13 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  void close() throws java.sql.SQLException {
-		if (Rows != null) {
+	public void close() throws java.sql.SQLException
+	{
+		if (Rows != null)
+		{
 			Rows.removeAllElements();
 		}
-		
+
 		closed = true;
 	}
 
@@ -233,7 +246,8 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurred
 	 */
 
-	public boolean wasNull() throws java.sql.SQLException {
+	public boolean wasNull() throws java.sql.SQLException
+	{
 		return wasNullFlag;
 	}
 
@@ -245,10 +259,12 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  String getString(int columnIndex) throws java.sql.SQLException {
+	public String getString(int columnIndex) throws java.sql.SQLException
+	{
 		checkRowPos();
 
-		if (Fields == null) {
+		if (Fields == null)
+		{
 			throw new java.sql.SQLException(
 				"Query generated no fields for ResultSet",
 				"S1002");
@@ -259,39 +275,49 @@ public abstract class ResultSet {
 				"Column Index out of range ( " + columnIndex + " > " + Fields.length + ").",
 				"S1002");
 
-		try {
-			if (This_Row[columnIndex - 1] == null) {
+		try
+		{
+			if (This_Row[columnIndex - 1] == null)
+			{
 				wasNullFlag = true;
 			}
-			else {
+			else
+			{
 				wasNullFlag = false;
 			}
 		}
-		catch (NullPointerException E) {
+		catch (NullPointerException E)
+		{
 			wasNullFlag = true;
 		}
 
 		if (wasNullFlag)
 			return null;
 
-		if (Conn != null && Conn.useUnicode()) {
-			try {
+		if (Conn != null && Conn.useUnicode())
+		{
+			try
+			{
 				String Encoding = Conn.getEncoding();
 
-				if (Encoding == null) {
+				if (Encoding == null)
+				{
 					return new String(This_Row[columnIndex - 1]);
 				}
-				else {
+				else
+				{
 					return new String(This_Row[columnIndex - 1], Conn.getEncoding());
 				}
 			}
-			catch (java.io.UnsupportedEncodingException E) {
+			catch (java.io.UnsupportedEncodingException E)
+			{
 				throw new SQLException(
 					"Unsupported character encoding '" + Conn.getEncoding() + "'.",
 					"0S100");
 			}
 		}
-		else {
+		else
+		{
 			return Util.bytesToString(This_Row[columnIndex - 1]);
 		}
 	}
@@ -304,10 +330,12 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  boolean getBoolean(int columnIndex) throws java.sql.SQLException {
+	public boolean getBoolean(int columnIndex) throws java.sql.SQLException
+	{
 		String S = getString(columnIndex);
 
-		if (S != null && S.length() > 0) {
+		if (S != null && S.length() > 0)
+		{
 			int c = S.toLowerCase().charAt(0);
 			return ((c == 't') || (c == 'y') || (c == '1') || S.equals("-1"));
 		}
@@ -322,7 +350,8 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  byte getByte(int columnIndex) throws java.sql.SQLException {
+	public byte getByte(int columnIndex) throws java.sql.SQLException
+	{
 		checkRowPos();
 
 		if (columnIndex < 1 || columnIndex > Fields.length)
@@ -330,25 +359,31 @@ public abstract class ResultSet {
 				"Column Index out of range ( " + columnIndex + " > " + Fields.length + ").",
 				"S1002");
 
-		try {
-			if (This_Row[columnIndex - 1] == null) {
+		try
+		{
+			if (This_Row[columnIndex - 1] == null)
+			{
 				wasNullFlag = true;
 			}
-			else {
+			else
+			{
 				wasNullFlag = false;
 			}
 		}
-		catch (NullPointerException E) {
+		catch (NullPointerException E)
+		{
 			wasNullFlag = true;
 		}
 
-		if (wasNullFlag) {
+		if (wasNullFlag)
+		{
 			return 0;
 		}
 
 		Field F = Fields[columnIndex - 1];
 
-		switch (F.getMysqlType()) {
+		switch (F.getMysqlType())
+		{
 			case MysqlDefs.FIELD_TYPE_DECIMAL :
 			case MysqlDefs.FIELD_TYPE_TINY :
 			case MysqlDefs.FIELD_TYPE_SHORT :
@@ -357,16 +392,19 @@ public abstract class ResultSet {
 			case MysqlDefs.FIELD_TYPE_DOUBLE :
 			case MysqlDefs.FIELD_TYPE_LONGLONG :
 			case MysqlDefs.FIELD_TYPE_INT24 :
-				try {
+				try
+				{
 					String S = getString(columnIndex);
 
 					// Strip off the decimals
-					if (S.indexOf(".") != -1) {
+					if (S.indexOf(".") != -1)
+					{
 						S = S.substring(0, S.indexOf("."));
 					}
 					return Byte.parseByte(S);
 				}
-				catch (NumberFormatException NFE) {
+				catch (NumberFormatException NFE)
+				{
 					throw new SQLException(
 						"Value '" + getString(columnIndex) + "' is out of range [-127,127]",
 						"S1009");
@@ -384,7 +422,8 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  short getShort(int columnIndex) throws java.sql.SQLException {
+	public short getShort(int columnIndex) throws java.sql.SQLException
+	{
 		return (short) getLong(columnIndex);
 	}
 
@@ -396,7 +435,8 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  int getInt(int columnIndex) throws java.sql.SQLException {
+	public int getInt(int columnIndex) throws java.sql.SQLException
+	{
 		return (int) getLong(columnIndex);
 	}
 
@@ -408,10 +448,12 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  long getLong(int columnIndex) throws java.sql.SQLException {
+	public long getLong(int columnIndex) throws java.sql.SQLException
+	{
 		checkRowPos();
 
-		if (Fields == null) {
+		if (Fields == null)
+		{
 			throw new java.sql.SQLException(
 				"Query generated no fields for ResultSet",
 				"S1002");
@@ -422,26 +464,33 @@ public abstract class ResultSet {
 				"Column Index out of range ( " + columnIndex + " > " + Fields.length + ").",
 				"S1002");
 
-		try {
-			if (This_Row[columnIndex - 1] == null) {
+		try
+		{
+			if (This_Row[columnIndex - 1] == null)
+			{
 				wasNullFlag = true;
 			}
-			else {
+			else
+			{
 				wasNullFlag = false;
 			}
 		}
-		catch (NullPointerException E) {
+		catch (NullPointerException E)
+		{
 			wasNullFlag = true;
 		}
 
-		if (wasNullFlag) {
+		if (wasNullFlag)
+		{
 			return 0;
 		}
 
-		try {
+		try
+		{
 			return getLong(This_Row[columnIndex - 1]);
 		}
-		catch (NumberFormatException E) {
+		catch (NumberFormatException E)
+		{
 			throw new java.sql.SQLException(
 				"Bad format for number '"
 					+ new String(This_Row[columnIndex - 1])
@@ -463,7 +512,8 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  float getFloat(int columnIndex) throws java.sql.SQLException {
+	public float getFloat(int columnIndex) throws java.sql.SQLException
+	{
 		return (float) getDouble(columnIndex);
 	}
 
@@ -475,10 +525,12 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  double getDouble(int columnIndex) throws java.sql.SQLException {
+	public double getDouble(int columnIndex) throws java.sql.SQLException
+	{
 		checkRowPos();
 
-		if (Fields == null) {
+		if (Fields == null)
+		{
 			throw new java.sql.SQLException(
 				"Query generated no fields for ResultSet",
 				"S1002");
@@ -489,26 +541,33 @@ public abstract class ResultSet {
 				"Column Index out of range ( " + columnIndex + " > " + Fields.length + ").",
 				"S1002");
 
-		try {
-			if (This_Row[columnIndex - 1] == null) {
+		try
+		{
+			if (This_Row[columnIndex - 1] == null)
+			{
 				wasNullFlag = true;
 			}
-			else {
+			else
+			{
 				wasNullFlag = false;
 			}
 		}
-		catch (NullPointerException E) {
+		catch (NullPointerException E)
+		{
 			wasNullFlag = true;
 		}
 
-		if (wasNullFlag) {
+		if (wasNullFlag)
+		{
 			return 0;
 		}
 
-		try {
+		try
+		{
 			return getDouble(This_Row[columnIndex - 1]);
 		}
-		catch (NumberFormatException E) {
+		catch (NumberFormatException E)
+		{
 			throw new java.sql.SQLException(
 				"Bad format for number '"
 					+ new String(This_Row[columnIndex - 1])
@@ -532,20 +591,25 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  BigDecimal getBigDecimal(int columnIndex, int scale)
-		throws java.sql.SQLException {
+	public BigDecimal getBigDecimal(int columnIndex, int scale)
+		throws java.sql.SQLException
+	{
 		String S = getString(columnIndex);
 		BigDecimal Val;
 
-		if (S != null) {
-			if (S.length() == 0) {
+		if (S != null)
+		{
+			if (S.length() == 0)
+			{
 				Val = new BigDecimal(0);
 				return Val.setScale(scale);
 			}
-			try {
+			try
+			{
 				Val = new BigDecimal(S);
 			}
-			catch (NumberFormatException E) {
+			catch (NumberFormatException E)
+			{
 				throw new java.sql.SQLException(
 					"Bad format for BigDecimal '"
 						+ S
@@ -557,10 +621,12 @@ public abstract class ResultSet {
 						+ ").",
 					"S1009");
 			}
-			try {
+			try
+			{
 				return Val.setScale(scale);
 			}
-			catch (ArithmeticException E) {
+			catch (ArithmeticException E)
+			{
 				throw new java.sql.SQLException(
 					"Bad format for BigDecimal '"
 						+ S
@@ -588,7 +654,8 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  byte[] getBytes(int columnIndex) throws java.sql.SQLException {
+	public byte[] getBytes(int columnIndex) throws java.sql.SQLException
+	{
 		checkRowPos();
 
 		if (columnIndex < 1 || columnIndex > Fields.length)
@@ -596,22 +663,28 @@ public abstract class ResultSet {
 				"Column Index out of range ( " + columnIndex + " > " + Fields.length + ").",
 				"S1002");
 
-		try {
-			if (This_Row[columnIndex - 1] == null) {
+		try
+		{
+			if (This_Row[columnIndex - 1] == null)
+			{
 				wasNullFlag = true;
 			}
-			else {
+			else
+			{
 				wasNullFlag = false;
 			}
 		}
-		catch (NullPointerException E) {
+		catch (NullPointerException E)
+		{
 			wasNullFlag = true;
 		}
 
-		if (wasNullFlag) {
+		if (wasNullFlag)
+		{
 			return null;
 		}
-		else {
+		else
+		{
 			return This_Row[columnIndex - 1];
 		}
 	}
@@ -625,101 +698,118 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  java.sql.Date getDate(int columnIndex) throws java.sql.SQLException {
+	public java.sql.Date getDate(int columnIndex) throws java.sql.SQLException
+	{
 		Integer Y = null, M = null, D = null;
 		String S = "";
 
-		try {
+		try
+		{
 			S = getString(columnIndex);
-
-			if (S == null) {
+		
+			if (S == null)
+			{
 				return null;
 			}
-			else
-				if (S.equals("0000-00-00")) {
-					wasNullFlag = true;
+			else if (S.equals("0000-00-00"))
+			{
+				wasNullFlag = true;
 
-					return null;
-				}
-				else
-					if (Fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
-						// Convert from TIMESTAMP
-						switch (S.length()) {
-							case 14 :
-							case 8 :
-								{
-									Y = new Integer(S.substring(0, 4));
-									M = new Integer(S.substring(4, 6));
-									D = new Integer(S.substring(6, 8));
-									return new java.sql.Date(Y.intValue() - 1900, M.intValue() - 1, D.intValue());
-								}
-							case 12 :
-							case 10 :
-							case 6 :
-								{
-									Y = new Integer(S.substring(0, 2));
-
-									if (Y.intValue() <= 69) {
-										Y = new Integer(Y.intValue() + 100);
-									}
-									M = new Integer(S.substring(2, 4));
-									D = new Integer(S.substring(4, 6));
-									return new java.sql.Date(Y.intValue(), M.intValue() - 1, D.intValue());
-								}
-							case 4 :
-								{
-									Y = new Integer(S.substring(0, 2));
-
-									if (Y.intValue() <= 69) {
-										Y = new Integer(Y.intValue() + 100);
-									}
-									M = new Integer(S.substring(2, 4));
-									return new java.sql.Date(Y.intValue(), M.intValue() - 1, 1);
-								}
-							case 2 :
-								{
-									Y = new Integer(S.substring(0, 2));
-
-									if (Y.intValue() <= 69) {
-										Y = new Integer(Y.intValue() + 100);
-									}
-									return new java.sql.Date(Y.intValue(), 0, 1);
-								}
-							default :
-								throw new SQLException(
-									"Bad format for Date '"
-										+ S
-										+ "' in column "
-										+ columnIndex
-										+ "("
-										+ Fields[columnIndex
-										- 1]
-										+ ").",
-									"S1009");
-						} /* endswitch */
-					}
-					else {
-						if (S.length() < 10) {
-							throw new SQLException(
-								"Bad format for Date '"
-									+ S
-									+ "' in column "
-									+ columnIndex
-									+ "("
-									+ Fields[columnIndex
-									- 1]
-									+ ").",
-								"S1009");
+				return null;
+			}
+			else if (
+				Fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP)
+			{
+				// Convert from TIMESTAMP
+				switch (S.length())
+				{
+					case 14 :
+					case 8 :
+						{
+							Y = new Integer(S.substring(0, 4));
+							M = new Integer(S.substring(4, 6));
+							D = new Integer(S.substring(6, 8));
+							return new java.sql.Date(Y.intValue() - 1900, M.intValue() - 1, D.intValue());
 						}
+					case 12 :
+					case 10 :
+					case 6 :
+						{
+							Y = new Integer(S.substring(0, 2));
 
-						Y = new Integer(S.substring(0, 4));
-						M = new Integer(S.substring(5, 7));
-						D = new Integer(S.substring(8, 10));
-					}
+							if (Y.intValue() <= 69)
+							{
+								Y = new Integer(Y.intValue() + 100);
+							}
+							M = new Integer(S.substring(2, 4));
+							D = new Integer(S.substring(4, 6));
+							return new java.sql.Date(Y.intValue(), M.intValue() - 1, D.intValue());
+						}
+					case 4 :
+						{
+							Y = new Integer(S.substring(0, 4));
+
+							if (Y.intValue() <= 69)
+							{
+								Y = new Integer(Y.intValue() + 100);
+							}
+							M = new Integer(S.substring(2, 4));
+							return new java.sql.Date(Y.intValue(), M.intValue() - 1, 1);
+						}
+					case 2 :
+						{
+							Y = new Integer(S.substring(0, 2));
+
+							if (Y.intValue() <= 69)
+							{
+								Y = new Integer(Y.intValue() + 100);
+							}
+							return new java.sql.Date(Y.intValue(), 0, 1);
+						}
+					default :
+						throw new SQLException(
+							"Bad format for Date '"
+								+ S
+								+ "' in column "
+								+ columnIndex
+								+ "("
+								+ Fields[columnIndex
+								- 1]
+								+ ").",
+							"S1009");
+				} /* endswitch */
+			}
+			else if (Fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR)
+			{
+				Y = new Integer(S.substring(0, 4));
+
+				return new java.sql.Date(Y.intValue() - 1900, 0, 1);
+			}
+			else
+			{
+				if (S.length() < 10)
+				{
+					throw new SQLException(
+						"Bad format for Date '"
+							+ S
+							+ "' in column "
+							+ columnIndex
+							+ "("
+							+ Fields[columnIndex
+							- 1]
+							+ ").",
+						"S1009");
+				}
+
+				Y = new Integer(S.substring(0, 4));
+				M = new Integer(S.substring(5, 7));
+				D = new Integer(S.substring(8, 10));
+			}
 
 			return new java.sql.Date(Y.intValue() - 1900, M.intValue() - 1, D.intValue());
 		}
-		catch (Exception e) {
+		catch (Exception e)
+		{
 			throw new java.sql.SQLException(
 				"Cannot convert value '"
 					+ S
@@ -741,27 +831,32 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  Time getTime(int columnIndex) throws java.sql.SQLException {
+	public Time getTime(int columnIndex) throws java.sql.SQLException
+	{
 		int hr = 0, min = 0, sec = 0;
 
-		try {
+		try
+		{
 			String S = getString(columnIndex);
-			if (S == null) {
+			if (S == null)
+			{
 				return null;
 			}
-			else
-				if (S.equals("0000-00-00")) {
-					wasNullFlag = true;
+			else if (S.equals("0000-00-00"))
+			{
+				wasNullFlag = true;
 
-					return null;
-				}
+				return null;
+			}
 
 			Field F = Fields[columnIndex - 1];
 
-			if (F.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
+			if (F.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP)
+			{
 				// It's a timestamp
 				int length = S.length();
-				switch (length) {
+				switch (length)
+				{
 					case 14 :
 					case 12 :
 						{
@@ -797,59 +892,66 @@ public abstract class ResultSet {
 							- 1]
 							+ ").");
 
-				if (Warnings == null) {
+				if (Warnings == null)
+				{
 					Warnings = W;
 				}
-				else {
+				else
+				{
+					Warnings.setNextWarning(W);
+				}
+			}
+			else if (F.getMysqlType() == MysqlDefs.FIELD_TYPE_DATETIME)
+			{
+
+				hr = Integer.parseInt(S.substring(11, 13));
+				min = Integer.parseInt(S.substring(14, 16));
+				sec = Integer.parseInt(S.substring(17, 19));
+
+				SQLWarning W =
+					new SQLWarning(
+						"Precision lost converting DATETIME to Time with getTime() on column "
+							+ columnIndex
+							+ "("
+							+ Fields[columnIndex
+							- 1]
+							+ ").");
+
+				if (Warnings == null)
+				{
+					Warnings = W;
+				}
+				else
+				{
 					Warnings.setNextWarning(W);
 				}
 			}
 			else
-				if (F.getMysqlType() == MysqlDefs.FIELD_TYPE_DATETIME) {
+			{
+				// convert a String to a Time
 
-					hr = Integer.parseInt(S.substring(11, 13));
-					min = Integer.parseInt(S.substring(14, 16));
-					sec = Integer.parseInt(S.substring(17, 19));
-
-					SQLWarning W =
-						new SQLWarning(
-							"Precision lost converting DATETIME to Time with getTime() on column "
-								+ columnIndex
-								+ "("
-								+ Fields[columnIndex
-								- 1]
-								+ ").");
-
-					if (Warnings == null) {
-						Warnings = W;
-					}
-					else {
-						Warnings.setNextWarning(W);
-					}
+				if (S.length() != 5 && S.length() != 8)
+				{
+					throw new SQLException(
+						"Bad format for Time '"
+							+ S
+							+ "' in column "
+							+ columnIndex
+							+ "("
+							+ Fields[columnIndex
+							- 1]
+							+ ").",
+						"S1009");
 				}
-				else {
-					// convert a String to a Time
 
-					if (S.length() != 5 && S.length() != 8) {
-						throw new SQLException(
-							"Bad format for Time '"
-								+ S
-								+ "' in column "
-								+ columnIndex
-								+ "("
-								+ Fields[columnIndex
-								- 1]
-								+ ").",
-							"S1009");
-					}
-
-					hr = Integer.parseInt(S.substring(0, 2));
-					min = Integer.parseInt(S.substring(3, 5));
-					sec = (S.length() == 5) ? 0 : Integer.parseInt(S.substring(6));
-				}
+				hr = Integer.parseInt(S.substring(0, 2));
+				min = Integer.parseInt(S.substring(3, 5));
+				sec = (S.length() == 5) ? 0 : Integer.parseInt(S.substring(6));
+			}
 			return new Time(hr, min, sec);
 		}
-		catch (Exception E) {
+		catch (Exception E)
+		{
 			throw new java.sql.SQLException(E.getClass().getName(), "S1009");
 		}
 	}
@@ -863,131 +965,158 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  Timestamp getTimestamp(int columnIndex) throws java.sql.SQLException {
+	public Timestamp getTimestamp(int columnIndex) throws java.sql.SQLException
+	{
 		String S = getString(columnIndex);
 
-		if (S == null) {
-			return null;
-		}
-		else
-			if (S.equals("0000-00-00")) {
+		try
+		{
+			if (S == null)
+			{
+				return null;
+			}
+			else if (S.equals("0000-00-00"))
+			{
 				wasNullFlag = true;
 
 				return null;
 			}
-
-		try {
-			switch (S.length()) {
-				case 19 :
-					{
-						int year = Integer.parseInt(S.substring(0, 4));
-						int month = Integer.parseInt(S.substring(5, 7));
-						int day = Integer.parseInt(S.substring(8, 10));
-						int hour = Integer.parseInt(S.substring(11, 13));
-						int minutes = Integer.parseInt(S.substring(14, 16));
-						int seconds = Integer.parseInt(S.substring(17, 19));
-
-						return new java.sql.Timestamp(
-							year - 1900,
-							month - 1,
-							day,
-							hour,
-							minutes,
-							seconds,
-							0);
-					}
-				case 14 :
-					{
-						int year = Integer.parseInt(S.substring(0, 4));
-						int month = Integer.parseInt(S.substring(4, 6));
-						int day = Integer.parseInt(S.substring(6, 8));
-						int hour = Integer.parseInt(S.substring(8, 10));
-						int minutes = Integer.parseInt(S.substring(10, 12));
-						int seconds = Integer.parseInt(S.substring(12, 14));
-						return new java.sql.Timestamp(
-							year - 1900,
-							month - 1,
-							day,
-							hour,
-							minutes,
-							seconds,
-							0);
-					}
-				case 12 :
-					{
-						int year = Integer.parseInt(S.substring(0, 2));
-
-						if (year <= 69) {
-							year = (year + 100);
-						}
-						int month = Integer.parseInt(S.substring(2, 4));
-						int day = Integer.parseInt(S.substring(4, 6));
-						int hour = Integer.parseInt(S.substring(6, 8));
-						int minutes = Integer.parseInt(S.substring(8, 10));
-						int seconds = Integer.parseInt(S.substring(10, 12));
-						return new java.sql.Timestamp(year, month - 1, day, hour, minutes, seconds, 0);
-					}
-				case 10 :
-					{
-						int year = Integer.parseInt(S.substring(0, 2));
-						if (year <= 69) {
-							year = (year + 100);
-						}
-						int month = Integer.parseInt(S.substring(2, 4));
-						int day = Integer.parseInt(S.substring(4, 6));
-						int hour = Integer.parseInt(S.substring(6, 8));
-						int minutes = Integer.parseInt(S.substring(8, 10));
-						return new java.sql.Timestamp(year, month - 1, day, hour, minutes, 0, 0);
-					}
-				case 8 :
-					{
-						int year = Integer.parseInt(S.substring(0, 4));
-						int month = Integer.parseInt(S.substring(4, 6));
-						int day = Integer.parseInt(S.substring(6, 8));
-						return new java.sql.Timestamp(year - 1900, month - 1, day, 0, 0, 0, 0);
-					}
-				case 6 :
-					{
-						int year = Integer.parseInt(S.substring(0, 2));
-						if (year <= 69) {
-							year = (year + 100);
-						}
-						int month = Integer.parseInt(S.substring(2, 4));
-						int day = Integer.parseInt(S.substring(4, 6));
-						return new java.sql.Timestamp(year, month - 1, day, 0, 0, 0, 0);
-					}
-				case 4 :
-					{
-						int year = Integer.parseInt(S.substring(0, 2));
-						if (year <= 69) {
-							year = (year + 100);
-						}
-						int month = Integer.parseInt(S.substring(2, 4));
-						return new java.sql.Timestamp(year, month - 1, 1, 0, 0, 0, 0);
-					}
-				case 2 :
-					{
-						int year = Integer.parseInt(S.substring(0, 2));
-						if (year <= 69) {
-							year = (year + 100);
-						}
-						return new java.sql.Timestamp(year, 0, 1, 0, 0, 0, 0);
-					}
-				default :
-					throw new java.sql.SQLException(
-						"Bad format for Timestamp '"
-							+ S
-							+ "' in column "
-							+ columnIndex
-							+ "("
-							+ Fields[columnIndex
-							- 1]
-							+ ").",
-						"S1009");
+			else if (Fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR)
+			{
+				return new java.sql.Timestamp(Integer.parseInt(S.substring(0, 4)) - 1900, 0, 1, 0, 0, 0, 0);
 			}
+			else
+			{
+				// Convert from TIMESTAMP or DATE
+			
+				switch (S.length())
+				{
+					case 19 :
+						{
+							int year = Integer.parseInt(S.substring(0, 4));
+							int month = Integer.parseInt(S.substring(5, 7));
+							int day = Integer.parseInt(S.substring(8, 10));
+							int hour = Integer.parseInt(S.substring(11, 13));
+							int minutes = Integer.parseInt(S.substring(14, 16));
+							int seconds = Integer.parseInt(S.substring(17, 19));
+	
+							return new java.sql.Timestamp(
+								year - 1900,
+								month - 1,
+								day,
+								hour,
+								minutes,
+								seconds,
+								0);
+						}
+					case 14 :
+						{
+							int year = Integer.parseInt(S.substring(0, 4));
+							int month = Integer.parseInt(S.substring(4, 6));
+							int day = Integer.parseInt(S.substring(6, 8));
+							int hour = Integer.parseInt(S.substring(8, 10));
+							int minutes = Integer.parseInt(S.substring(10, 12));
+							int seconds = Integer.parseInt(S.substring(12, 14));
+							return new java.sql.Timestamp(
+								year - 1900,
+								month - 1,
+								day,
+								hour,
+								minutes,
+								seconds,
+								0);
+						}
+					case 12 :
+						{
+							int year = Integer.parseInt(S.substring(0, 2));
+	
+							if (year <= 69)
+							{
+								year = (year + 100);
+							}
+							int month = Integer.parseInt(S.substring(2, 4));
+							int day = Integer.parseInt(S.substring(4, 6));
+							int hour = Integer.parseInt(S.substring(6, 8));
+							int minutes = Integer.parseInt(S.substring(8, 10));
+							int seconds = Integer.parseInt(S.substring(10, 12));
+							return new java.sql.Timestamp(year, month - 1, day, hour, minutes, seconds, 0);
+						}
+					case 10 :
+						{
+							int year = Integer.parseInt(S.substring(0, 2));
+							if (year <= 69)
+							{
+								year = (year + 100);
+							}
+							int month = Integer.parseInt(S.substring(2, 4));
+							int day = Integer.parseInt(S.substring(4, 6));
+							int hour = Integer.parseInt(S.substring(6, 8));
+							int minutes = Integer.parseInt(S.substring(8, 10));
+							return new java.sql.Timestamp(year, month - 1, day, hour, minutes, 0, 0);
+						}
+					case 8 :
+						{
+							int year = Integer.parseInt(S.substring(0, 4));
+							int month = Integer.parseInt(S.substring(4, 6));
+							int day = Integer.parseInt(S.substring(6, 8));
+							return new java.sql.Timestamp(year - 1900, month - 1, day, 0, 0, 0, 0);
+						}
+					case 6 :
+						{
+							int year = Integer.parseInt(S.substring(0, 2));
+							if (year <= 69)
+							{
+								year = (year + 100);
+							}
+							int month = Integer.parseInt(S.substring(2, 4));
+							int day = Integer.parseInt(S.substring(4, 6));
+							return new java.sql.Timestamp(year, month - 1, day, 0, 0, 0, 0);
+						}
+					case 4 :
+						{
+							int year = Integer.parseInt(S.substring(0, 2));
+							if (year <= 69)
+							{
+								year = (year + 100);
+							}
+							int month = Integer.parseInt(S.substring(2, 4));
+							return new java.sql.Timestamp(year, month - 1, 1, 0, 0, 0, 0);
+						}
+					case 2 :
+						{
+							int year = Integer.parseInt(S.substring(0, 2));
+							if (year <= 69)
+							{
+								year = (year + 100);
+							}
+							return new java.sql.Timestamp(year, 0, 1, 0, 0, 0, 0);
+						}
+					default :
+						throw new java.sql.SQLException(
+							"Bad format for Timestamp '"
+								+ S
+								+ "' in column "
+								+ columnIndex
+								+ "("
+								+ Fields[columnIndex
+								- 1]
+								+ ").",
+							"S1009");
+				}
+			}
+			
 		}
-		catch (Exception e) {
-			throw new java.sql.SQLException(e.getClass().getName(), "S1009");
+		catch (Exception e)
+		{
+			throw new java.sql.SQLException(
+				"Cannot convert value '"
+					+ S
+					+ "' from column "
+					+ columnIndex
+					+ "("
+					+ S
+					+ " ) to TIMESTAMP.",
+				"S1009");
 		}
 	}
 
@@ -1012,8 +1141,8 @@ public abstract class ResultSet {
 	 * @see getBinaryStream
 	 */
 
-	public  InputStream getAsciiStream(int columnIndex)
-		throws java.sql.SQLException {
+	public InputStream getAsciiStream(int columnIndex) throws java.sql.SQLException
+	{
 		checkRowPos();
 
 		return getBinaryStream(columnIndex);
@@ -1032,8 +1161,9 @@ public abstract class ResultSet {
 	 * @see getBinaryStream
 	 */
 
-	public  InputStream getUnicodeStream(int columnIndex)
-		throws java.sql.SQLException {
+	public InputStream getUnicodeStream(int columnIndex)
+		throws java.sql.SQLException
+	{
 		checkRowPos();
 
 		return getBinaryStream(columnIndex);
@@ -1052,13 +1182,15 @@ public abstract class ResultSet {
 	 * @see getUnicodeStream
 	 */
 
-	public  InputStream getBinaryStream(int columnIndex)
-		throws java.sql.SQLException {
+	public InputStream getBinaryStream(int columnIndex)
+		throws java.sql.SQLException
+	{
 		checkRowPos();
 
 		byte b[] = getBytes(columnIndex);
 
-		if (b != null) {
+		if (b != null)
+		{
 			return new ByteArrayInputStream(b);
 		}
 		return null; // SQL NULL
@@ -1073,71 +1205,87 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  String getString(String ColumnName) throws java.sql.SQLException {
+	public String getString(String ColumnName) throws java.sql.SQLException
+	{
 		return getString(findColumn(ColumnName));
 	}
 
-	public  boolean getBoolean(String ColumnName) throws java.sql.SQLException {
+	public boolean getBoolean(String ColumnName) throws java.sql.SQLException
+	{
 		return getBoolean(findColumn(ColumnName));
 	}
 
-	public  byte getByte(String ColumnName) throws java.sql.SQLException {
+	public byte getByte(String ColumnName) throws java.sql.SQLException
+	{
 		return getByte(findColumn(ColumnName));
 	}
 
-	public  short getShort(String ColumnName) throws java.sql.SQLException {
+	public short getShort(String ColumnName) throws java.sql.SQLException
+	{
 		return getShort(findColumn(ColumnName));
 	}
 
-	public  int getInt(String ColumnName) throws java.sql.SQLException {
+	public int getInt(String ColumnName) throws java.sql.SQLException
+	{
 		return getInt(findColumn(ColumnName));
 	}
 
-	public  long getLong(String ColumnName) throws java.sql.SQLException {
+	public long getLong(String ColumnName) throws java.sql.SQLException
+	{
 		return getLong(findColumn(ColumnName));
 	}
 
-	public  float getFloat(String ColumnName) throws java.sql.SQLException {
+	public float getFloat(String ColumnName) throws java.sql.SQLException
+	{
 		return getFloat(findColumn(ColumnName));
 	}
 
-	public  double getDouble(String ColumnName) throws java.sql.SQLException {
+	public double getDouble(String ColumnName) throws java.sql.SQLException
+	{
 		return getDouble(findColumn(ColumnName));
 	}
 
-	public  BigDecimal getBigDecimal(String ColumnName, int scale)
-		throws java.sql.SQLException {
+	public BigDecimal getBigDecimal(String ColumnName, int scale)
+		throws java.sql.SQLException
+	{
 		return getBigDecimal(findColumn(ColumnName), scale);
 	}
 
-	public  byte[] getBytes(String ColumnName) throws java.sql.SQLException {
+	public byte[] getBytes(String ColumnName) throws java.sql.SQLException
+	{
 		return getBytes(findColumn(ColumnName));
 	}
 
-	public  java.sql.Date getDate(String ColumnName) throws java.sql.SQLException {
+	public java.sql.Date getDate(String ColumnName) throws java.sql.SQLException
+	{
 		return getDate(findColumn(ColumnName));
 	}
 
-	public  Time getTime(String ColumnName) throws java.sql.SQLException {
+	public Time getTime(String ColumnName) throws java.sql.SQLException
+	{
 		return getTime(findColumn(ColumnName));
 	}
 
-	public  Timestamp getTimestamp(String ColumnName) throws java.sql.SQLException {
+	public Timestamp getTimestamp(String ColumnName) throws java.sql.SQLException
+	{
 		return getTimestamp(findColumn(ColumnName));
 	}
 
-	public  InputStream getAsciiStream(String ColumnName)
-		throws java.sql.SQLException {
+	public InputStream getAsciiStream(String ColumnName)
+		throws java.sql.SQLException
+	{
 		return getAsciiStream(findColumn(ColumnName));
 	}
 
-	public  InputStream getUnicodeStream(String ColumnName)
-		throws java.sql.SQLException {
+	public InputStream getUnicodeStream(String ColumnName)
+		throws java.sql.SQLException
+	{
 		return getUnicodeStream(findColumn(ColumnName));
 	}
 
-	public  InputStream getBinaryStream(String ColumnName)
-		throws java.sql.SQLException {
+	public InputStream getBinaryStream(String ColumnName)
+		throws java.sql.SQLException
+	{
 		return getBinaryStream(findColumn(ColumnName));
 	}
 
@@ -1158,7 +1306,8 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs.
 	 */
 
-	public  java.sql.SQLWarning getWarnings() throws java.sql.SQLException {
+	public java.sql.SQLWarning getWarnings() throws java.sql.SQLException
+	{
 		return Warnings;
 	}
 
@@ -1169,7 +1318,8 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  void clearWarnings() throws java.sql.SQLException {
+	public void clearWarnings() throws java.sql.SQLException
+	{
 		Warnings = null;
 	}
 
@@ -1192,7 +1342,8 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  String getCursorName() throws java.sql.SQLException {
+	public String getCursorName() throws java.sql.SQLException
+	{
 		throw new java.sql.SQLException("Positioned Update not supported.", "S1C00");
 	}
 
@@ -1223,52 +1374,63 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  Object getObject(int columnIndex) throws java.sql.SQLException {
+	public Object getObject(int columnIndex) throws java.sql.SQLException
+	{
 		checkRowPos();
 
-		if (Driver.trace) {
-			Object[] args = {new Integer(columnIndex)};
+		if (Driver.trace)
+		{
+			Object[] args = { new Integer(columnIndex)};
 			Debug.methodCall(this, "getObject", args);
 		}
-		
+
 		Field F;
 
-		if (columnIndex < 1 || columnIndex > Fields.length) {
+		if (columnIndex < 1 || columnIndex > Fields.length)
+		{
 			throw new java.sql.SQLException(
 				"Column index out of range (" + columnIndex + " > " + Fields.length + ").",
 				"S1002");
 		}
 		F = Fields[columnIndex - 1];
 
-		if (This_Row[columnIndex - 1] == null) {
+		if (This_Row[columnIndex - 1] == null)
+		{
 			wasNullFlag = true;
 			return null;
 		}
 
 		wasNullFlag = false;
 
-		switch (F.getSQLType()) {
+		switch (F.getSQLType())
+		{
 			case Types.BIT :
 				return new Boolean(getBoolean(columnIndex));
 			case Types.TINYINT :
-				if (F.isUnsigned()) {
+				if (F.isUnsigned())
+				{
 					return new Integer(getInt(columnIndex));
 				}
-				else {
+				else
+				{
 					return new Byte(getByte(columnIndex));
 				}
 			case Types.SMALLINT :
-				if (F.isUnsigned()) {
+				if (F.isUnsigned())
+				{
 					return new Integer(getInt(columnIndex));
 				}
-				else {
+				else
+				{
 					return new Short(getShort(columnIndex));
 				}
 			case Types.INTEGER :
-				if (F.isUnsigned()) {
+				if (F.isUnsigned())
+				{
 					return new Long(getLong(columnIndex));
 				}
-				else {
+				else
+				{
 					return new Integer(getInt(columnIndex));
 				}
 			case Types.BIGINT :
@@ -1278,16 +1440,20 @@ public abstract class ResultSet {
 				String S = getString(columnIndex);
 				BigDecimal Val;
 
-				if (S != null) {
-					if (S.length() == 0) {
+				if (S != null)
+				{
+					if (S.length() == 0)
+					{
 						Val = new BigDecimal(0);
 
 						return Val;
 					}
-					try {
+					try
+					{
 						Val = new BigDecimal(S);
 					}
-					catch (NumberFormatException E) {
+					catch (NumberFormatException E)
+					{
 						throw new java.sql.SQLException(
 							"Bad format for BigDecimal '"
 								+ S
@@ -1302,7 +1468,8 @@ public abstract class ResultSet {
 					return Val;
 
 				}
-				else {
+				else
+				{
 					return null;
 				}
 			case Types.REAL :
@@ -1313,52 +1480,61 @@ public abstract class ResultSet {
 			case Types.CHAR :
 			case Types.VARCHAR :
 			case Types.LONGVARCHAR :
-				if (F.isBinary()) {
+				if (F.isBinary())
+				{
 					return getBytes(columnIndex);
 				}
-				else {
+				else
+				{
 					return getString(columnIndex);
 				}
 			case Types.BINARY :
 			case Types.VARBINARY :
 			case Types.LONGVARBINARY :
-				if (!F.isBlob()) {
+				if (!F.isBlob())
+				{
+					return getString(columnIndex);
+				}
+				else if (!F.isBinary())
+				{
 					return getString(columnIndex);
 				}
 				else
-					if (!F.isBinary()) {
-						return getString(columnIndex);
-					}
-					else {
+				{
 
-						byte[] Data = getBytes(columnIndex);
+					byte[] Data = getBytes(columnIndex);
 
-						Object Obj = Data;
+					Object Obj = Data;
 
-						if (Data != null && Data.length >= 2) {
-							if (Data[0] == -84 && Data[1] == -19) {
-								// Serialized object?
-								try {
-									ByteArrayInputStream BIn = new ByteArrayInputStream(Data);
-									ObjectInputStream ObjIn = new ObjectInputStream(BIn);
+					if (Data != null && Data.length >= 2)
+					{
+						if (Data[0] == -84 && Data[1] == -19)
+						{
+							// Serialized object?
+							try
+							{
+								ByteArrayInputStream BIn = new ByteArrayInputStream(Data);
+								ObjectInputStream ObjIn = new ObjectInputStream(BIn);
 
-									Obj = ObjIn.readObject();
-									ObjIn.close();
-									BIn.close();
-								}
-								catch (ClassNotFoundException CnFe) {
-									throw new SQLException(
-										"Class not found: " + CnFe.toString() + " while reading serialized object");
-								}
-								catch (IOException Ex) {
-									Obj = Data; // not serialized?
-								}
+								Obj = ObjIn.readObject();
+								ObjIn.close();
+								BIn.close();
 							}
-
+							catch (ClassNotFoundException CnFe)
+							{
+								throw new SQLException(
+									"Class not found: " + CnFe.toString() + " while reading serialized object");
+							}
+							catch (IOException Ex)
+							{
+								Obj = Data; // not serialized?
+							}
 						}
 
-						return Obj;
 					}
+
+					return Obj;
+				}
 
 			case Types.DATE :
 				return getDate(columnIndex);
@@ -1387,7 +1563,8 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public  Object getObject(String ColumnName) throws java.sql.SQLException {
+	public Object getObject(String ColumnName) throws java.sql.SQLException
+	{
 		return getObject(findColumn(ColumnName));
 	}
 
@@ -1399,32 +1576,38 @@ public abstract class ResultSet {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public int findColumn(String ColumnName) throws java.sql.SQLException {
+	public int findColumn(String ColumnName) throws java.sql.SQLException
+	{
 		Integer index;
 
 		index = (Integer) columnNameToIndex.get(ColumnName);
 
-		if (index == null) {
+		if (index == null)
+		{
 			index = (Integer) fullColumnNameToIndex.get(ColumnName);
 		}
 
-		if (index != null) {
+		if (index != null)
+		{
 			return index.intValue() + 1;
 		}
-		else {
+		else
+		{
 
 			// Try this inefficient way, now
 
 			String columnNameUC = ColumnName.toUpperCase();
 
-			for (int i = 0; i < Fields.length; i++) {
-				if (Fields[i].getName().toUpperCase().equals(columnNameUC)) {
+			for (int i = 0; i < Fields.length; i++)
+			{
+				if (Fields[i].getName().toUpperCase().equals(columnNameUC))
+				{
 					return i + 1;
 				}
-				else
-					if (Fields[i].getFullName().toUpperCase().equals(columnNameUC)) {
-						return i + 1;
-					}
+				else if (Fields[i].getFullName().toUpperCase().equals(columnNameUC))
+				{
+					return i + 1;
+				}
 			}
 
 			throw new java.sql.SQLException(
@@ -1454,12 +1637,14 @@ public abstract class ResultSet {
 	public ResultSet(
 		Field[] Fields,
 		Vector Tuples,
-		org.gjt.mm.mysql.Connection Conn) {
+		org.gjt.mm.mysql.Connection Conn)
+	{
 		this(Fields, Tuples);
 		setConnection(Conn);
 	}
 
-	public ResultSet(Field[] Fields, Vector Tuples) {
+	public ResultSet(Field[] Fields, Vector Tuples)
+	{
 		currentRow = -1;
 		this.Fields = Fields;
 		Rows = Tuples;
@@ -1470,18 +1655,22 @@ public abstract class ResultSet {
 
 		// Check for no results
 
-		if (Rows.size() > 0) {
+		if (Rows.size() > 0)
+		{
 			This_Row = (byte[][]) Rows.elementAt(0);
 
-			if (updateCount == 1) {
-				if (This_Row == null) {
+			if (updateCount == 1)
+			{
+				if (This_Row == null)
+				{
 					currentRow = -1;
 					Rows.removeAllElements(); // empty result set
 					updateCount = -1;
 				}
 			}
 		}
-		else {
+		else
+		{
 			This_Row = null;
 		}
 
@@ -1489,7 +1678,8 @@ public abstract class ResultSet {
 
 	}
 
-	void setStatement(org.gjt.mm.mysql.Statement stmt) {
+	void setStatement(org.gjt.mm.mysql.Statement stmt)
+	{
 		owningStatement = stmt;
 	}
 
@@ -1498,25 +1688,29 @@ public abstract class ResultSet {
 	 * retrieval.
 	 */
 
-	protected void buildIndexMapping() {
+	protected void buildIndexMapping()
+	{
 		int numFields = Fields.length;
 
 		columnNameToIndex = new Hashtable();
 		fullColumnNameToIndex = new Hashtable();
 
-		for (int i = 0; i < numFields; i++) {
+		for (int i = 0; i < numFields; i++)
+		{
 			Integer index = new Integer(i);
 
 			String columnName = Fields[i].getName();
 			String fullColumnName = Fields[i].getFullName();
 
-			if (columnName != null) {
+			if (columnName != null)
+			{
 				columnNameToIndex.put(Fields[i].getName(), index);
 				columnNameToIndex.put(Fields[i].getName().toUpperCase(), index);
 				columnNameToIndex.put(Fields[i].getName().toLowerCase(), index);
 			}
 
-			if (fullColumnName != null) {
+			if (fullColumnName != null)
+			{
 				fullColumnNameToIndex.put(Fields[i].getFullName(), index);
 				fullColumnNameToIndex.put(Fields[i].getFullName().toUpperCase(), index);
 				fullColumnNameToIndex.put(Fields[i].getFullName().toLowerCase(), index);
@@ -1530,40 +1724,49 @@ public abstract class ResultSet {
 	 * @param updateCount the number of rows affected by the update
 	 */
 
-	public ResultSet(long updateCount, long updateID) {
+	public ResultSet(long updateCount, long updateID)
+	{
 		this.updateCount = updateCount;
 		this.updateID = updateID;
 		reallyResult = false;
 		Fields = new Field[0];
 	}
 
-	public void setConnection(org.gjt.mm.mysql.Connection Conn) {
+	public void setConnection(org.gjt.mm.mysql.Connection Conn)
+	{
 		this.Conn = Conn;
 	}
 
-	boolean reallyResult() {
+	boolean reallyResult()
+	{
 		return reallyResult;
 	}
 
-	long getUpdateCount() {
+	long getUpdateCount()
+	{
 		return updateCount;
 	}
 
-	long getUpdateID() {
+	long getUpdateID()
+	{
 		return updateID;
 	}
 
-	protected  void checkRowPos() throws SQLException {
-		
-		if (closed) {
+	protected void checkRowPos() throws SQLException
+	{
+
+		if (closed)
+		{
 			throw new SQLException("Operation not allowed after ResultSet closed");
 		}
-		
-		if (currentRow < 0) {
+
+		if (currentRow < 0)
+		{
 			throw new SQLException("Before start of result set");
 		}
 
-		if (currentRow == Rows.size()) {
+		if (currentRow == Rows.size())
+		{
 			throw new SQLException("After end of result set");
 		}
 	}
@@ -1575,7 +1778,7 @@ public abstract class ResultSet {
 	// used getInt() and getDouble() methods
 	//
 	///////////////////////////////////////////
-	
+
 	/**
 	 * Converts a string representation of a number
 	 * to a double.
@@ -1583,7 +1786,8 @@ public abstract class ResultSet {
 	 * Thanks to Steve Ferguson at Caucho.com
 	 */
 
-	public static double getDouble(byte[] buf) {
+	public static double getDouble(byte[] buf)
+	{
 
 		double value = 0;
 		int exp = 0;
@@ -1598,98 +1802,119 @@ public abstract class ResultSet {
 		for (; pos < len && (char) buf[pos] == ' ';)
 			pos++;
 
-		if (pos + 3 == len) {
+		if (pos + 3 == len)
+		{
 			if ((char) buf[pos] == 'N'
 				&& (char) buf[pos + 1] == 'a'
-				&& (char) buf[pos + 2] == 'N') {
+				&& (char) buf[pos + 2] == 'N')
+			{
 				return Double.NaN;
 			}
 		}
 
-		if (pos < len) {
-			if ((char) buf[pos] == '-') {
+		if (pos < len)
+		{
+			if ((char) buf[pos] == '-')
+			{
 				sign = -1;
 				pos++;
 			}
 		}
 
-		for (; pos < len; pos++) {
+		for (; pos < len; pos++)
+		{
 			char ch = (char) buf[pos];
 
-			if (ch >= '0' && ch <= '9') {
+			if (ch >= '0' && ch <= '9')
+			{
 				value = 10 * value + ch - '0';
 			}
-			else
-				if (pos + 3 == len) {
-					if (((char) buf[pos] == 'I' || (char) buf[pos] == 'i')
-						&& (char) buf[pos + 1] == 'n'
-						&& (char) buf[pos + 2] == 'f') {
-						if (sign > 0) {
-							return Double.POSITIVE_INFINITY;
-						}
-						else {
-							return Double.NEGATIVE_INFINITY;
-						}
+			else if (pos + 3 == len)
+			{
+				if (((char) buf[pos] == 'I' || (char) buf[pos] == 'i')
+					&& (char) buf[pos + 1] == 'n'
+					&& (char) buf[pos + 2] == 'f')
+				{
+					if (sign > 0)
+					{
+						return Double.POSITIVE_INFINITY;
 					}
+					else
+					{
+						return Double.NEGATIVE_INFINITY;
+					}
+				}
 
-					// MAG MAG MAG
-					// BREAK STATEMENT MISSING.
-					// If code executes, the current byte is not a
-					// value between 0-9 and execute of this loop needs
-					// to cease!
-					// ADD A BREAK STATEMENT HERE!
-					// MAG MAG MAG
-					break;
-				}
-				else {
-					break;
-				}
+				// MAG MAG MAG
+				// BREAK STATEMENT MISSING.
+				// If code executes, the current byte is not a
+				// value between 0-9 and execute of this loop needs
+				// to cease!
+				// ADD A BREAK STATEMENT HERE!
+				// MAG MAG MAG
+				break;
+			}
+			else
+			{
+				break;
+			}
 		}
 
-		if (pos == len) {
+		if (pos == len)
+		{
 			return sign * value;
 		}
 
-		if ((char) buf[pos] == '.') {
+		if ((char) buf[pos] == '.')
+		{
 			pos++;
 
-			for (; pos < len; pos++) {
+			for (; pos < len; pos++)
+			{
 				char ch = (char) buf[pos];
 
-				if (ch >= '0' && ch <= '9') {
+				if (ch >= '0' && ch <= '9')
+				{
 					value = 10 * value + ch - '0';
 					exp--;
 				}
-				else {
+				else
+				{
 					break;
 				}
 			}
 		}
 
-		if (pos < len && ((char) buf[pos] == 'e' || (char) buf[pos] == 'E')) {
+		if (pos < len && ((char) buf[pos] == 'e' || (char) buf[pos] == 'E'))
+		{
 			pos++;
 
 			int eSign = 1;
 
-			if (pos < len && (char) buf[pos] == '-') {
+			if (pos < len && (char) buf[pos] == '-')
+			{
 				pos++;
 
 				eSign = -1;
 			}
 
-			if (pos < len && (char) buf[pos] == '+') {
+			if (pos < len && (char) buf[pos] == '+')
+			{
 				pos++;
 			}
 
 			int expt = 0;
 
-			for (; pos < len; pos++) {
+			for (; pos < len; pos++)
+			{
 				char ch = (char) buf[pos];
 
-				if (ch >= '0' && ch <= '9') {
+				if (ch >= '0' && ch <= '9')
+				{
 					expt = 10 * expt + ch - '0';
 				}
-				else {
+				else
+				{
 					break;
 				}
 			}
@@ -1697,14 +1922,17 @@ public abstract class ResultSet {
 
 		}
 
-		if (pos < len) {
+		if (pos < len)
+		{
 			return 0.0;
 		}
 
-		if (exp >= 0) {
+		if (exp >= 0)
+		{
 			return sign * value * Math.pow(10, exp);
 		}
-		else {
+		else
+		{
 			return sign * value / Math.pow(10, -exp);
 		}
 	}
@@ -1979,7 +2207,8 @@ public abstract class ResultSet {
 	 * into an long
 	 */
 
-	public long getLong(byte[] buf) throws NumberFormatException {
+	public long getLong(byte[] buf) throws NumberFormatException
+	{
 
 		long result = 0;
 		boolean negative = false;
@@ -1990,57 +2219,72 @@ public abstract class ResultSet {
 
 		int radix = 10;
 
-		if (max > 0) {
-			if ((char) buf[0] == '-') {
+		if (max > 0)
+		{
+			if ((char) buf[0] == '-')
+			{
 				negative = true;
 				limit = Long.MIN_VALUE;
 				i++;
 			}
-			else {
+			else
+			{
 				limit = -Long.MAX_VALUE;
 			}
 
 			multmin = limit / radix;
 
-			if (i < max) {
+			if (i < max)
+			{
 				digit = Character.digit((char) buf[i++], radix);
 
-				if (digit < 0) {
+				if (digit < 0)
+				{
 					throw new NumberFormatException(new String(buf));
 				}
-				else {
+				else
+				{
 					result = -digit;
 				}
 			}
 
-			while (i < max) {
+			while (i < max)
+			{
 				// Accumulating negatively avoids surprises near MAX_VALUE
 				digit = Character.digit((char) buf[i++], radix);
-				if (digit < 0) {
+				if (digit < 0)
+				{
 					throw new NumberFormatException(new String(buf));
 				}
-				if (result < multmin) {
+				if (result < multmin)
+				{
 					throw new NumberFormatException(new String(buf));
 				}
 				result *= radix;
-				if (result < limit + digit) {
+				if (result < limit + digit)
+				{
 					throw new NumberFormatException(new String(buf));
 				}
 				result -= digit;
 			}
 		}
-		else {
+		else
+		{
 			throw new NumberFormatException(new String(buf));
 		}
-		if (negative) {
-			if (i > 1) {
+		if (negative)
+		{
+			if (i > 1)
+			{
 				return result;
 			}
-			else { /* Only got "-" */
+			else
+			{ /* Only got "-" */
 				throw new NumberFormatException(new String(buf));
 			}
 		}
-		else {
+		else
+		{
 			return -result;
 		}
 	}
@@ -2049,7 +2293,8 @@ public abstract class ResultSet {
 	 * Sets the result set type for (JDBC2)
 	 */
 
-	protected void setResultSetType(int typeFlag) {
+	protected void setResultSetType(int typeFlag)
+	{
 		resultSetType = typeFlag;
 	}
 
@@ -2057,7 +2302,8 @@ public abstract class ResultSet {
 	 * Sets the concurrency (JDBC2)
 	 */
 
-	protected void setResultSetConcurrency(int concurrencyFlag) {
+	protected void setResultSetConcurrency(int concurrencyFlag)
+	{
 		resultSetConcurrency = concurrencyFlag;
 	}
 }
