@@ -1,6 +1,6 @@
 <project name="MM.MySQL" default="dist" basedir=".">
 	<property name="version" value="2.0.14"/>
-	<property name="java1.1.home" value="f:/jdk1.1.8"/>
+	<property name="java1.1.home" value="c:/jdk1.1.8"/>
 	<property name="javac.1.1" value="${java1.1.home}/bin/javac"/>
 	
 	<target name="init">
