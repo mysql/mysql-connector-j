@@ -197,6 +197,12 @@ public abstract class Connection
      * Should we capitalize mysql types
      */
     private boolean _capitalizeDBMDTypes = false;
+    
+    /**
+     * Does this version of MySQL support quoted identifiers?
+     */
+    
+    private boolean _hasQuotedIdentifiers = false;
 
 
     /**
@@ -234,7 +240,7 @@ public abstract class Connection
         }
         else
         {
-            _host = new String(host);
+            _host = host;
         }
 
         _port = port;
@@ -245,8 +251,8 @@ public abstract class Connection
                                    "'.", "S1000");
         }
 
-        _database = new String(database);
-        _myURL = new String(url);
+        _database = database;
+        _myURL = url;
         _myDriver = d;
         _user = info.getProperty("user");
         _password = info.getProperty("password");
@@ -476,6 +482,8 @@ public abstract class Connection
                 _hasIsolationLevels = false;
             }
 
+			_hasQuotedIdentifiers = _io.versionMeetsMinimum(3, 23, 6);
+			
             _io.resetMaxBuf();
         }
         catch (java.sql.SQLException ex)
@@ -506,6 +514,11 @@ public abstract class Connection
     public boolean supportsIsolationLevel()
     {
         return _hasIsolationLevels;
+    }
+    
+    public boolean supportsQuotedIdentifiers()
+    {
+    	return _hasQuotedIdentifiers;
     }
 
 
