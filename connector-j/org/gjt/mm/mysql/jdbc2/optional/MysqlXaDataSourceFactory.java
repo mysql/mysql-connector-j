@@ -32,38 +32,43 @@ import javax.naming.spi.ObjectFactory;
  * Factory class for MysqlDataSource objects
  */
 
-public class MysqlXaDataSourceFactory implements ObjectFactory 
+public class MysqlXaDataSourceFactory implements ObjectFactory
 {
-    /**
-     * The class name for a standard Mysql DataSource.
-     */
+	/**
+	 * The class name for a standard Mysql DataSource.
+	 */
 
-    protected final String DataSourceClassName = 
-	"org.gjt.mm.mysql.MysqlXaDataSource";
+	protected final String DataSourceClassName =
+		"org.gjt.mm.mysql.jdbc2.optional.MysqlXaDataSource";
 
-  
-    public Object getObjectInstance(Object RefObj, Name Nm, Context Ctx,
-				    Hashtable Env) throws Exception 
-    {
-	Reference Ref = (Reference)RefObj;
-	
-	if (Ref.getClassName().equals(DataSourceClassName)) {
-	    MysqlXaDataSource MDS = new MysqlXaDataSource();
+	public Object getObjectInstance(
+		Object RefObj,
+		Name Nm,
+		Context Ctx,
+		Hashtable Env)
+		throws Exception
+	{
+		Reference Ref = (Reference) RefObj;
 
-	    int port_no = 3306;
-	    
-	    port_no = Integer.parseInt((String)Ref.get("port").getContent());
-	    MDS.setPort(port_no);
+		if (Ref.getClassName().equals(DataSourceClassName))
+		{
+			MysqlXaDataSource MDS = new MysqlXaDataSource();
 
-	    MDS.setUser((String)Ref.get("user").getContent());
-	    MDS.setPassword((String)Ref.get("password").getContent());
-	    MDS.setServerName((String)Ref.get("serverName").getContent());
-	    MDS.setDatabaseName((String)Ref.get("databaseName").getContent());
-	 
-	    return MDS;
+			int port_no = 3306;
+
+			port_no = Integer.parseInt((String) Ref.get("port").getContent());
+			MDS.setPort(port_no);
+
+			MDS.setUser((String) Ref.get("user").getContent());
+			MDS.setPassword((String) Ref.get("password").getContent());
+			MDS.setServerName((String) Ref.get("serverName").getContent());
+			MDS.setDatabaseName((String) Ref.get("databaseName").getContent());
+
+			return MDS;
+		}
+		else
+		{ // We can't create an instance of the reference
+			return null;
+		}
 	}
-	else { // We can't create an instance of the reference
-	    return null;
-	}
-    }
 }

@@ -32,38 +32,64 @@ import javax.naming.spi.ObjectFactory;
  * Factory class for MysqlDataSource objects
  */
 
-public class MysqlDataSourceFactory implements ObjectFactory 
+public class MysqlDataSourceFactory implements ObjectFactory
 {
-    /**
-     * The class name for a standard Mysql DataSource.
-     */
+	/**
+	 * The class name for a standard Mysql DataSource.
+	 */
 
-    protected final String DataSourceClassName = 
-	"org.gjt.mm.mysql.MysqlDataSource";
-
-  
-    public Object getObjectInstance(Object RefObj, Name Nm, Context Ctx,
-				    Hashtable Env) throws Exception 
-    {
-	Reference Ref = (Reference)RefObj;
+	protected final String dataSourceClassName =
+		"org.gjt.mm.mysql.jdbc2.optional.MysqlDataSource";
 	
-	if (Ref.getClassName().equals(DataSourceClassName)) {
-	    MysqlDataSource MDS = new MysqlDataSource();
+	protected final String poolDataSourceName =
+		"org.gjt.mm.mysql.jdbc2.optional.MysqlConnectionPoolDataSource";
+		
 
-	    int port_no = 1306;
-	    
-	    port_no = Integer.parseInt((String)Ref.get("port").getContent());
-	    MDS.setPort(port_no);
+	public Object getObjectInstance(
+		Object refObj,
+		Name nm,
+		Context ctx,
+		Hashtable env)
+		throws Exception
+	{
+		Reference ref = (Reference) refObj;
 
-	    MDS.setUser((String)Ref.get("user").getContent());
-	    MDS.setPassword((String)Ref.get("password").getContent());
-	    MDS.setServerName((String)Ref.get("serverName").getContent());
-	    MDS.setDatabaseName((String)Ref.get("databaseName").getContent());
-	 
-	    return MDS;
+		String className = ref.getClassName();
+		
+		if (className != null && 
+		      (
+				className.equals(dataSourceClassName) ||
+			 	className.equals(poolDataSourceName)
+			  )
+			)
+		{
+			MysqlDataSource dataSource = null;
+			
+			try
+			{
+				dataSource = (MysqlDataSource)Class.forName(className).newInstance();
+			}
+			catch (Exception ex)
+			{
+				throw new RuntimeException("Unable to create DataSource of " +
+					"class '" + className + "', reason: " + ex.toString());
+			}
+				
+			int port_no = 1306;
+
+			port_no = Integer.parseInt((String) ref.get("port").getContent());
+			dataSource.setPort(port_no);
+
+			dataSource.setUser((String) ref.get("user").getContent());
+			dataSource.setPassword((String) ref.get("password").getContent());
+			dataSource.setServerName((String) ref.get("serverName").getContent());
+			dataSource.setDatabaseName((String) ref.get("databaseName").getContent());
+
+			return dataSource;
+		}
+		else
+		{ // We can't create an instance of the reference
+			return null;
+		}
 	}
-	else { // We can't create an instance of the reference
-	    return null;
-	}
-    }
 }

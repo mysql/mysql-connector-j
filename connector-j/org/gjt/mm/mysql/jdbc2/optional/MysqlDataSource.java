@@ -30,305 +30,329 @@ import java.util.Properties;
 import javax.naming.*;
 import javax.sql.DataSource;
 
-import org.gjt.mm.mysql.xa.XADataSourceImpl;
-
 /**
  * A JNDI DataSource for a Mysql JDBC connection
  */
 
-public class MysqlDataSource
-    implements DataSource, 
-  	       Referenceable, 
-	       Serializable 
+public class MysqlDataSource implements DataSource, Referenceable, Serializable
 {
-    /**
-     * The driver to create connections with
-     */
+	/**
+	 * The driver to create connections with
+	 */
 
-    protected static org.gjt.mm.mysql.Driver _MysqlDriver = null;
+	protected static org.gjt.mm.mysql.Driver _MysqlDriver = null;
 
-    static {
-	try {
-	    _MysqlDriver = (org.gjt.mm.mysql.Driver)Class.forName("org.gjt.mm.mysql.Driver").newInstance();
-	}
-	catch (Exception E) {
-	    throw new RuntimeException("Can not load Driver class org.gjt.mm.mysql.Driver");
-	}
-    }
-
-    /** Should we construct the URL, or has it been set explicitly */
-
-    protected boolean explicitUrl = false;
-
-    protected String url = null;
-	
-    /**
-     * Hostname
-     */
-
-    protected String _HostName = null;
-
-    /**
-     * Port number
-     */
-
-    protected int _port = 1306;
-
-    /**
-     * Database Name
-     */
-
-    protected String _DatabaseName = null;
-
-    /**
-     * Character Encoding
-     */
-
-    protected String _Encoding = null;
-
-    /**
-     * User name
-     */
-
-    protected String _User = null;
-
-    /**
-     * Password
-     */
-
-    protected String _Password = null;
-
-    /**
-     * Log stream
-     */
-
-    protected PrintWriter _LogWriter = null;
-
-    /**
-     * Default no-arg constructor for Serialization
-     */
-
-    public MysqlDataSource() 
-    {
-    }
-
-    /**
-     * Creates a new connection using the already configured
-     * username and password.
-     */
-
-    public java.sql.Connection getConnection() throws SQLException 
-    {
-	return getConnection(_User, _Password);
-    }
-
-    /**
-     * Creates a new connection with the given username and password
-     */
-
-    public java.sql.Connection getConnection(String UserID, String Password)
-	throws SQLException 
-    {
-	Properties Props = new Properties();
-	
-	
-	if (UserID == null) {
-		UserID = "";
+	static {
+		try
+		{
+			_MysqlDriver =
+				(org.gjt.mm.mysql.Driver) Class
+					.forName("org.gjt.mm.mysql.Driver")
+					.newInstance();
+		}
+		catch (Exception E)
+		{
+			throw new RuntimeException("Can not load Driver class org.gjt.mm.mysql.Driver");
+		}
 	}
 
+	/** Should we construct the URL, or has it been set explicitly */
 
-	if (Password == null) {
-	    Password = "";
-	}
+	protected boolean explicitUrl = false;
 
-	Props.put("user", UserID);
-	Props.put("password", Password);
+	protected String url = null;
 
-	return getConnection(Props);
-    }
+	/**
+	 * Hostname
+	 */
 
-    /**
-     * Creates a connection using the specified properties.
-     */
+	protected String _HostName = null;
 
-    protected java.sql.Connection getConnection(Properties Props)
-	throws SQLException 
-    {
-	String jdbcUrlToUse = null;
+	/**
+	 * Port number
+	 */
 
-	if (!explicitUrl)
+	protected int _port = 1306;
+
+	/**
+	 * Database Name
+	 */
+
+	protected String _DatabaseName = null;
+
+	/**
+	 * Character Encoding
+	 */
+
+	protected String _Encoding = null;
+
+	/**
+	 * User name
+	 */
+
+	protected String _User = null;
+
+	/**
+	 * Password
+	 */
+
+	protected String _Password = null;
+
+	/**
+	 * Log stream
+	 */
+
+	protected PrintWriter _LogWriter = null;
+
+	/**
+	 * Default no-arg constructor for Serialization
+	 */
+
+	public MysqlDataSource()
 	{
-		StringBuffer JDBCUrl = new StringBuffer("jdbc:mysql://");
-		if (_HostName != null) {
-	    	JDBCUrl.append(_HostName);
-		}
-
-		JDBCUrl.append(":");
-		JDBCUrl.append(_port);
-		JDBCUrl.append("/");
-
-		if (_DatabaseName != null) {
-	    		JDBCUrl.append(_DatabaseName);
-		}
-		
-		jdbcUrlToUse = JDBCUrl.toString();
-	}
-	else {
-		jdbcUrlToUse = this.url;
 	}
 
-	return _MysqlDriver.connect(jdbcUrlToUse, Props);
-    }
+	/**
+	 * Creates a new connection using the already configured
+	 * username and password.
+	 */
 
-    /**
-     * Gets the name of the database
-     */
-    
-    public String getDatabaseName() 
-    {
-	return _DatabaseName;
-    }
-    
-    public java.io.PrintWriter getLogWriter() 
-    {
-	return _LogWriter;
-    }
+	public java.sql.Connection getConnection() throws SQLException
+	{
+		return getConnection(_User, _Password);
+	}
 
+	/**
+	 * Creates a new connection with the given username and password
+	 */
 
-    public int getLoginTimeout() throws SQLException 
-    {
-	return 0;
-    }
+	public java.sql.Connection getConnection(String UserID, String Password)
+		throws SQLException
+	{
+		Properties Props = new Properties();
 
-    public int getPort() 
-    {
-	return _port;
-    }
+		if (UserID == null)
+		{
+			UserID = "";
+		}
 
-    /**
-     * Required method to support this class as a <CODE>Referenceable</CODE>.
-     */
+		if (Password == null)
+		{
+			Password = "";
+		}
 
-    public Reference getReference() throws NamingException 
-    {
-	String FactoryName = "org.gjt.mm.mysql.MysqlDataSourceFactory";
+		Props.put("user", UserID);
+		Props.put("password", Password);
 
-	Reference Ref = new Reference(getClass().getName(), FactoryName, null);
+		return getConnection(Props);
+	}
 
-	Ref.add(new StringRefAddr("user", getUser()));
-	Ref.add(new StringRefAddr("password", _Password));
-	Ref.add(new StringRefAddr("serverName", getServerName()));
-	Ref.add(new StringRefAddr("port", "" + getPort()));
-	Ref.add(new StringRefAddr("databaseName", getDatabaseName()));
+	/**
+	 * Creates a connection using the specified properties.
+	 */
 
-	return Ref;
-    }
+	protected java.sql.Connection getConnection(Properties Props)
+		throws SQLException
+	{
+		String jdbcUrlToUse = null;
 
-    /**
-     * Gets the name of the database server
-     */
+		if (!explicitUrl)
+		{
+			StringBuffer JDBCUrl = new StringBuffer("jdbc:mysql://");
+			if (_HostName != null)
+			{
+				JDBCUrl.append(_HostName);
+			}
 
-    public String getServerName() 
-    {
-	return _HostName;
-    }
+			JDBCUrl.append(":");
+			JDBCUrl.append(_port);
+			JDBCUrl.append("/");
 
-  /**
-    * This method is used by the app server to set the url string specified  
-    * within the datasource deployment descriptor.  It is discovered using
-    * introspection and matches if property name in descriptor is "url".
-    *
-    * @param url url to be used within driver.connect
-    * @exception java.sql.SQLException
-    */
-    
-    public void setUrl(String url) {
-        this.url = url; 
-	  explicitUrl = true;
-    }
+			if (_DatabaseName != null)
+			{
+				JDBCUrl.append(_DatabaseName);
+			}
 
-    /**
-     * Gets the JDBC URL that will be used to create the
-     * database connection.
-     */
+			jdbcUrlToUse = JDBCUrl.toString();
+		}
+		else
+		{
+			jdbcUrlToUse = this.url;
+		}
 
-    public String getUrl() {
-    	if (!explicitUrl) {
+		return _MysqlDriver.connect(jdbcUrlToUse, Props);
+	}
+
+	/**
+	 * Gets the name of the database
+	 */
+
+	public String getDatabaseName()
+	{
+		return _DatabaseName;
+	}
+
+	public java.io.PrintWriter getLogWriter()
+	{
+		return _LogWriter;
+	}
+
+	public int getLoginTimeout() throws SQLException
+	{
+		return 0;
+	}
+
+	public int getPort()
+	{
+		return _port;
+	}
+
+	/**
+	 * Required method to support this class as a <CODE>Referenceable</CODE>.
+	 */
+
+	public Reference getReference() throws NamingException
+	{
+		String FactoryName = "org.gjt.mm.mysql.jdbc2.optional.MysqlDataSourceFactory";
+
+		Reference Ref = new Reference(getClass().getName(), FactoryName, null);
+
+		Ref.add(new StringRefAddr("user", getUser()));
+		Ref.add(new StringRefAddr("password", _Password));
+		Ref.add(new StringRefAddr("serverName", getServerName()));
+		Ref.add(new StringRefAddr("port", "" + getPort()));
+		Ref.add(new StringRefAddr("databaseName", getDatabaseName()));
+
+		return Ref;
+	}
+
+	/**
+	 * Gets the name of the database server
+	 */
+
+	public String getServerName()
+	{
+		return _HostName;
+	}
+
+	/**
+	  * This method is used by the app server to set the url string specified  
+	  * within the datasource deployment descriptor.  It is discovered using
+	  * introspection and matches if property name in descriptor is "url".
+	  *
+	  * @param url url to be used within driver.connect
+	  * @exception java.sql.SQLException
+	  */
+
+	public void setUrl(String url)
+	{
+		this.url = url;
+		explicitUrl = true;
+	}
+
+	
+	/**
+	 * Gets the JDBC URL that will be used to create the
+	 * database connection.
+	 */
+
+	public String getUrl()
+	{
+		if (!explicitUrl)
+		{
 			String Url = "jdbc:mysql://";
 
-			Url = Url + getServerName() + ":" + getPort()+ "/"+ getDatabaseName();
+			Url = Url + getServerName() + ":" + getPort() + "/" + getDatabaseName();
 
 			return Url;
-    	}
-    	else {
-    		return this.url;
-    	}
-    }
+		}
+		else
+		{
+			return this.url;
+		}
+	}
+	
+	//
+	// I've seen application servers use both formats
+	// URL or url (doh)
+	//
+	
+	public void setURL(String url)
+	{
+		setUrl(url);
+	}
+	
+	public String getURL()
+	{
+		return getUrl();
+	}
+	
 
-    /**
-     * Gets the configured user for this connection
-     */
+	/**
+	 * Gets the configured user for this connection
+	 */
 
-    public String getUser() 
-    {
-	return _User;
-    }
-    
-    /**
-     * Sets the database name.
-     * @param nom the name of the database
-     */
+	public String getUser()
+	{
+		return _User;
+	}
 
-    public void setDatabaseName(String DBName) 
-    {
-	_DatabaseName = DBName;
-    }
-    
-    /**
-     * Sets the log writer for this data source.
-     */
+	/**
+	 * Sets the database name.
+	 * @param nom the name of the database
+	 */
 
-    public void setLogWriter(PrintWriter Output) throws SQLException 
-    {
-	_LogWriter = Output;
-    }
+	public void setDatabaseName(String DBName)
+	{
+		_DatabaseName = DBName;
+	}
 
-    public void setLoginTimeout(int seconds) throws SQLException 
-    {
-    }
+	/**
+	 * Sets the log writer for this data source.
+	 */
 
-    /**
-     * Sets the password
-     */
+	public void setLogWriter(PrintWriter Output) throws SQLException
+	{
+		_LogWriter = Output;
+	}
 
-    public void setPassword(String Pass) 
-    {
-	_Password = Pass;
-    }
+	public void setLoginTimeout(int seconds) throws SQLException
+	{
+	}
 
-    /**
-     * Sets the database port.
-     */
+	/**
+	 * Sets the password
+	 */
 
-    public void setPort(int p) 
-    {
-	_port = p;
-    }
+	public void setPassword(String Pass)
+	{
+		_Password = Pass;
+	}
 
-    /**
-     * Sets the server name.
-     */
+	/**
+	 * Sets the database port.
+	 */
 
-    public void setServerName(String ServerName) 
-    {
-	_HostName = ServerName;
-    }
+	public void setPort(int p)
+	{
+		_port = p;
+	}
 
-    /**
-     * Sets the user ID.
-     */
+	/**
+	 * Sets the server name.
+	 */
 
-    public void setUser(String UserID) {
-	_User = UserID;
-    }
+	public void setServerName(String ServerName)
+	{
+		_HostName = ServerName;
+	}
+
+	/**
+	 * Sets the user ID.
+	 */
+
+	public void setUser(String UserID)
+	{
+		_User = UserID;
+	}
 }
