@@ -76,9 +76,12 @@ public class Blob
     }
 
     /**
-   * Retrieves the BLOB designated by this Blob instance
-   * as a stream.
-   */
+     * Retrieves the BLOB designated by this Blob instance
+     * as a stream.
+     * 
+     * @return this BLOB represented as a binary stream of bytes.
+     * @throws SQLException if a database error occurs
+     */
     public java.io.InputStream getBinaryStream()
                                         throws SQLException
     {
@@ -105,9 +108,18 @@ public class Blob
     }
 
     /**
-   * Returns as an array of bytes, part or all of the BLOB
-   * value that this Blob object designates.
-   */
+     * Returns as an array of bytes, part or all of the BLOB
+   	 * value that this Blob object designates.
+   	 * 
+   	 * @param pos where to start the part of the BLOB
+   	 * @param length the length of the part of the BLOB you want
+   	 *                returned. 
+   	 * 
+   	 * @return the bytes stored in the blob starting at position <code>pos</code>
+   	 * and having a length of <code>length</code>.
+   	 * 
+   	 * @throws SQLException if a database error occurs
+   	 */
     public byte[] getBytes(long pos, int length)
                     throws SQLException
     {
@@ -119,9 +131,12 @@ public class Blob
     }
 
     /**
-   * Returns the number of bytes in the BLOB value designated
-   * by this Blob object.
-   */
+   	 * Returns the number of bytes in the BLOB value designated
+   	 * by this Blob object.
+   	 * 
+   	 * @return the length of this blob
+   	 * @throws SQLException if a database error occurs
+   	 */
     public long length()
                 throws SQLException
     {
@@ -129,6 +144,14 @@ public class Blob
         return binaryData.length;
     }
 
+    /**
+     * Finds the position of the given pattern in this BLOB.
+     * 
+     * @param pattern the pattern to find
+     * @param start where to start finding the pattern
+     * @return the position where the pattern is found in the BLOB, -1 if not found
+     * @throws SQLException if a database error occurs
+     */
     public long position(java.sql.Blob pattern, long start)
                   throws SQLException
     {
@@ -136,6 +159,14 @@ public class Blob
         return position(pattern.getBytes(0, (int)pattern.length()), start);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param pattern DOCUMENT ME!
+     * @param start DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws SQLException DOCUMENT ME!
+     */
     public long position(byte[] pattern, long start)
                   throws SQLException
     {
