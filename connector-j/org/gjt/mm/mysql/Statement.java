@@ -146,7 +146,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized java.sql.ResultSet executeQuery(String sql)
+	public  java.sql.ResultSet executeQuery(String sql)
 		throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { sql };
@@ -169,7 +169,7 @@ public class Statement {
 		// generated from the current Connection (saves
 		// a query, and network traffic).
 
-		synchronized (_conn.getMutex()) {
+		 synchronized (_conn.getMutex()) {
 			String oldCatalog = null;
 
 			if (!_conn.getCatalog().equals(_catalog)) {
@@ -236,7 +236,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized int executeUpdate(String sql) throws java.sql.SQLException {
+	public  int executeUpdate(String sql) throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { sql };
 			Debug.methodCall(this, "executeUpdate", Args);
@@ -313,7 +313,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void close() throws java.sql.SQLException {
+	public  void close() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "close", Args);
@@ -345,7 +345,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized int getMaxFieldSize() throws java.sql.SQLException {
+	public  int getMaxFieldSize() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getMaxFieldSize", Args);
@@ -361,7 +361,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if size exceeds buffer size
 	 */
 
-	public synchronized void setMaxFieldSize(int max) throws java.sql.SQLException {
+	public  void setMaxFieldSize(int max) throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { new Integer(max)};
 			Debug.methodCall(this, "setMaxFieldSize", Args);
@@ -388,7 +388,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized int getMaxRows() throws java.sql.SQLException {
+	public  int getMaxRows() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getMaxRows", Args);
@@ -410,7 +410,7 @@ public class Statement {
 	 * @see getMaxRows
 	 */
 
-	public synchronized void setMaxRows(int max) throws java.sql.SQLException {
+	public  void setMaxRows(int max) throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { new Integer(max)};
 			Debug.methodCall(this, "setMaxRows", Args);
@@ -445,7 +445,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setEscapeProcessing(boolean enable) throws java.sql.SQLException {
+	public  void setEscapeProcessing(boolean enable) throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { new Boolean(enable)};
 			Debug.methodCall(this, "setEscapeProcessing", Args);
@@ -463,7 +463,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized int getQueryTimeout() throws java.sql.SQLException {
+	public  int getQueryTimeout() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getQueryTimeout", Args);
@@ -479,7 +479,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setQueryTimeout(int seconds) throws java.sql.SQLException {
+	public  void setQueryTimeout(int seconds) throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { new Integer(seconds)};
 			Debug.methodCall(this, "setQueryTimeout", Args);
@@ -498,7 +498,7 @@ public class Statement {
 	 * @exception java.sql.SQLException only because thats the spec.
 	 */
 
-	public synchronized void cancel() throws java.sql.SQLException {
+	public  void cancel() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "cancel", Args);
@@ -524,7 +524,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized java.sql.SQLWarning getWarnings() throws java.sql.SQLException {
+	public  java.sql.SQLWarning getWarnings() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getWarnings", Args);
@@ -540,7 +540,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs (why?)
 	 */
 
-	public synchronized void clearWarnings() throws java.sql.SQLException {
+	public  void clearWarnings() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "clearWarnings", Args);
@@ -564,7 +564,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setCursorName(String name) throws java.sql.SQLException {
+	public  void setCursorName(String name) throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { name };
 			Debug.methodCall(this, "setCursorName", Args);
@@ -585,7 +585,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized boolean execute(String sql) throws java.sql.SQLException {
+	public  boolean execute(String sql) throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { sql };
 			Debug.methodCall(this, "execute", Args);
@@ -609,7 +609,7 @@ public class Statement {
 		// generated from the current Connection (saves
 		// a query, and network traffic).
 
-		synchronized (_conn.getMutex()) {
+		 synchronized (_conn.getMutex()) {
 			String oldCatalog = null;
 
 			if (!_conn.getCatalog().equals(_catalog)) {
@@ -677,7 +677,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs (why?)
 	 */
 
-	public synchronized java.sql.ResultSet getResultSet() throws java.sql.SQLException {
+	public  java.sql.ResultSet getResultSet() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getResultSet", Args);
@@ -697,7 +697,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized int getUpdateCount() throws java.sql.SQLException {
+	public  int getUpdateCount() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getUpdateCount", Args);
@@ -735,7 +735,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized long getLongUpdateCount() {
+	public  long getLongUpdateCount() {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getLongUpdateCount", Args);
@@ -766,7 +766,7 @@ public class Statement {
 	 * @return the last update ID.
 	 */
 
-	public synchronized long getLastInsertID() {
+	public  long getLastInsertID() {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getLastInsertID", Args);
@@ -783,7 +783,7 @@ public class Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized boolean getMoreResults() throws java.sql.SQLException {
+	public  boolean getMoreResults() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getMoreResults", Args);
@@ -814,7 +814,7 @@ public class Statement {
 	 * ResultSet.FETCH_UNKNOWN
 	 */
 
-	public synchronized void setFetchDirection(int direction) throws SQLException {
+	public  void setFetchDirection(int direction) throws SQLException {
 
 	}
 
@@ -827,7 +827,7 @@ public class Statement {
 	 * @exception SQLException if a database-access error occurs
 	 */
 
-	public synchronized int getFetchDirection() throws SQLException {
+	public  int getFetchDirection() throws SQLException {
 		return 0;
 	}
 
@@ -845,7 +845,7 @@ public class Statement {
 	 * condition 0 <= rows <= this.getMaxRows() is not satisfied.
 	 */
 
-	public synchronized void setFetchSize(int rows) throws SQLException {
+	public  void setFetchSize(int rows) throws SQLException {
 	}
 
 	/**
@@ -854,7 +854,7 @@ public class Statement {
 	 * Determine the default fetch size.
 	 */
 
-	public synchronized int getFetchSize() throws SQLException {
+	public  int getFetchSize() throws SQLException {
 		return 0;
 	}
 
@@ -864,7 +864,7 @@ public class Statement {
 	 * Determine the result set concurrency.
 	 */
 
-	public synchronized int getResultSetConcurrency() throws SQLException {
+	public  int getResultSetConcurrency() throws SQLException {
 
 		return _resultSetConcurrency;
 	}
@@ -879,7 +879,7 @@ public class Statement {
 		return _resultSetType;
 	}
 
-	public synchronized void addBatch(String sql) throws SQLException {
+	public  void addBatch(String sql) throws SQLException {
 
 		if (_batchedArgs == null) {
 
@@ -903,7 +903,7 @@ public class Statement {
 	 * driver does not support batch statements
 	 */
 
-	public synchronized void clearBatch() throws SQLException {
+	public  void clearBatch() throws SQLException {
 		if (_batchedArgs != null) {
 			_batchedArgs.setSize(0);
 		}
