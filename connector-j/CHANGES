@@ -10,6 +10,12 @@
       PreparedStatement.setObject(Clob).
     - Added socketTimeout parameter to URL.
     - Connection.isClosed() no longer "pings" the server.
+    - Connection.close() issues rollback() when getAutoCommit() == false
+    - Added "paranoid" parameter...sanitizes error messages removing
+      "sensitive" information from them (i.e. hostnames, ports,
+      usernames, etc.), as well as clearing "sensitive" data structures
+      when possible.
+    - Fixed ResultSetMetaData.isSigned() for TINYINT and BIGINT.
 	
 07-31-02 - Version 3.0.0-dev
 

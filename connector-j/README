@@ -1,4 +1,4 @@
-MySQL Connector/J 3.0.0 Beta (formerly MM.MySQL)
+MySQL Connector/J 3.0.1 Beta (formerly MM.MySQL)
 MySQL's JDBC Driver for MySQL
 Copyright (c) 2002 MySQL-AB
 
@@ -134,17 +134,23 @@ initialTimeout      | if autoReconnect is enabled, the          | 2
 maxRows             | The maximum number of rows to return      | 0
                     | (0 means return all rows)                 |
 --------------------+-------------------------------------------+-------------
-useUnicode          | should the driver use Unicode character   | false 
+useUnicode          | should the driver use Unicode character   | true 
                     | encodings when handling                   | 
                     | strings? If not used with                 |
                     | characterEncoding, the driver will        |
                     | attempt to determine the character set    |
                     | in use on the server, and adjust          |
-                    | accordingly (true/false)                  | 	
+                    | accordingly (true/false)                  |
+                    |                                           |
+                    | See the CHARACTER SETS section for more   |
+                    | information.                              | 	
 --------------------+-------------------------------------------+-------------			
 characterEncoding   | if useUnicode is true, what character     | none
                     | encoding should the driver use when       |
-                    | dealing with strings?                     | 				
+                    | dealing with strings?                     | 
+                    |                                           |
+                    | See the CHARACTER SETS section for more   |
+                    | information.                              | 				
 --------------------+-------------------------------------------+-------------
 relaxAutoCommit	    | if the version of MySQL the driver        | false
                     | connects to does not support              |
@@ -175,6 +181,12 @@ socketTimeout       | When set to something other than '0', the | 0
                     | Your application should have code to      |
                     | recover from this event (by creating a    |
                     | new connection, for example)              |
+--------------------+-------------------------------------------+-------------
+paranoid            | Don't show "sensitive" information in     | false
+                    | exceptions and error messages, and clear  |
+                    | "sensitive" information from internal     |   
+                    | data structures when possible             | 
+                    | (true/false)                              |
 ------------------------------------------------------------------------------
 			
 A simple connection example looks like:
@@ -227,6 +239,34 @@ memory to store the entire large packet, as well as an overhead
 of 16 megabytes or so. Usually, you can control this by passing
 the "-XmxNNNm" flag to your JVM, where NNN is the number of 
 megabytes of memory that the JVM should be allowed to allocate.
+
+CHARACTER SETS
+
+MySQL Connector/J now handles character sets in a more transparent way
+than MM.MySQL did. The driver attempts to determine the character
+set of the MySQL server you are connecting to, and map it to the
+Java character set that is appropriate. This mapping is kept up to
+date with new server releases. In almost all cases you will not
+need to set the "useUnicode" or "characterEncoding" parameters,
+as the driver will do this for you. Because of this the "useUnicode"
+parameter has the default value of "true". If you need to force
+the old behavior of the driver, you need to add "useUnicode=false"
+to your URL.
+
+For single-byte character sets, the driver uses an optimized 
+character translation scheme that yields performance that is as
+good or better than MM.MySQL or the first 3.0 version of 
+MySQL Connector/J. Multi-byte character sets use your JVM's built
+in character translation support, and on average this is 5-10%
+slower than single-byte character support.
+
+If you have a character set that was not created by MySQL-AB, a
+driver version older than the version of MySQL server you are using,
+or for some reason can not get the mapping to work, you can force
+the character set using the "useUnicode=true" and 
+"characterEncoding=some_charset" parameters in your URL to tell
+the driver which character set to use, where "some_charset" is
+an character set that your JVM supports.
 
 TROUBLESHOOTING
 
