@@ -53,8 +53,8 @@ public class Field
   Field(String Table, String Name, int length, int mysql_type, 
                short col_flag, int col_decimals)
   {
-    this._tableName = new String(Table);
-    this._name = new String(Name);
+    this._tableName = Table;
+    this._name = Name;
     this._length = length;
     _colFlag = col_flag;
     _colDecimals = col_decimals;
@@ -84,8 +84,8 @@ public class Field
    
   public Field(String Table, String Name, int jdbc_type, int length)
   { 
-    this._tableName = new String(Table);
-    this._name = new String(Name);
+    this._tableName = Table;
+    this._name = Name;
     this._length = length;
     _sqlType = jdbc_type;
     _colFlag = 0;
@@ -103,7 +103,7 @@ public class Field
   public String getName() 
   {
     if (_name != null)
-      return new String(_name);
+      return _name;
     else
       return null;
   }      
