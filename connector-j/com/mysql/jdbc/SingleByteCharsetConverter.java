@@ -108,7 +108,7 @@ public class SingleByteCharsetConverter {
             return null;
         }
                   
-        if (CharsetMapping.MULTIBYTE_CHARSETS.get(mysqlEncodingName) == null) {
+        if (CharsetMapping.MULTIBYTE_CHARSETS.containsKey(mysqlEncodingName)) {
             return null;
         }
         
