@@ -375,22 +375,7 @@ public class StatementsTest
      */
     public void testStubbed()
                      throws SQLException {
-
-        try {
-            stmt.executeUpdate("", 1);
-        } catch (NotImplemented notImplEx) { /* ignore */
-        }
-
-        try {
-            stmt.executeUpdate("", new int[0]);
-        } catch (NotImplemented notImplEx) { /* ignore */
-        }
-
-        try {
-            stmt.executeUpdate("", new String[0]);
-        } catch (NotImplemented notImplEx) { /* ignore */
-        }
-        
+   
         try {
             stmt.getResultSetHoldability();
         } catch (NotImplemented notImplEx) { /* ignore */
