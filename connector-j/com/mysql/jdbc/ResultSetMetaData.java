@@ -40,12 +40,11 @@ public class ResultSetMetaData
     //~ Constructors ..........................................................
 
     /**
-   	 *    Initialise for a result with a tuple set and
-     *    a field descriptor set
+   	 * Initialise for a result with a tuple set and
+     * a field descriptor set
      *
      * @param fields the array of field descriptors
-     * 
-     * @author Mark Matthews
+
      */
     public ResultSetMetaData(Field[] fields) {
         this.fields = fields;
@@ -62,8 +61,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2...
      * @return true if so
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews 
      */
     public boolean isAutoIncrement(int column)
                             throws java.sql.SQLException {
@@ -80,8 +77,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2...
      * @return true if so
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public boolean isCaseSensitive(int column)
                             throws java.sql.SQLException {
@@ -113,8 +108,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2...
      * @return catalog name, or "" if not applicable
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public String getCatalogName(int column)
                           throws java.sql.SQLException {
@@ -133,6 +126,13 @@ public class ResultSetMetaData
      * are manufactured if ResultSet.getObject() is called to retrieve a value 
      * from the column.  ResultSet.getObject() may return a subClass of the
      * class returned by this method.
+     * 
+     * @param column the column number to retrieve information for
+     * @return the fully qualified name of the Java class whose instances 
+     * are manufactured if ResultSet.getObject() is called to retrieve a value 
+     * from the column.
+     * 
+     * @throws SQLException if an error occurs 
      */
     public String getColumnClassName(int column)
                               throws SQLException {
@@ -227,8 +227,6 @@ public class ResultSetMetaData
      *
      * @return the number
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public int getColumnCount()
                        throws java.sql.SQLException {
@@ -242,8 +240,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2, etc.
      * @return the maximum width
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public int getColumnDisplaySize(int column)
                              throws java.sql.SQLException {
@@ -258,8 +254,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2, etc.
      * @return the column label
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public String getColumnLabel(int column)
                           throws java.sql.SQLException {
@@ -273,8 +267,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2, etc.
      * @return the column name
      * @throws java.sql.SQLException if a databvase access error occurs
-     *
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public String getColumnName(int column)
                          throws java.sql.SQLException {
@@ -289,8 +281,6 @@ public class ResultSetMetaData
      * @return the java.sql.Type value
      * @throws java.sql.SQLException if a database access error occurs
      * @see java.sql.Types
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public int getColumnType(int column)
                       throws java.sql.SQLException {
@@ -304,8 +294,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2, etc.
      * @return the type name
      * @throws java.sql.SQLException if a database access error occurs
-     *   
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public String getColumnTypeName(int column)
                              throws java.sql.SQLException {
@@ -395,8 +383,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2...
      * @return true if its a cash column
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public boolean isCurrency(int column)
                        throws java.sql.SQLException {
@@ -410,8 +396,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2, etc..
      * @return true if so
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public boolean isDefinitelyWritable(int column)
                                  throws java.sql.SQLException {
@@ -425,8 +409,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2...
      * @return one of the columnNullable values
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public int isNullable(int column)
                    throws java.sql.SQLException {
@@ -446,8 +428,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2...
      * @return the precision
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author James Klicman <james@klicman.com>
      */
     public int getPrecision(int column)
                      throws java.sql.SQLException {
@@ -473,8 +453,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2, etc.
      * @return true if so
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public boolean isReadOnly(int column)
                        throws java.sql.SQLException {
@@ -489,8 +467,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2...
      * @return the scale
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author James Klicman <james_at_klicman.com>
      */
     public int getScale(int column)
                  throws java.sql.SQLException {
@@ -515,8 +491,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2...
      * @return the Schema
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public String getSchemaName(int column)
                          throws java.sql.SQLException {
@@ -535,8 +509,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2...
      * @return true if they can be used in a WHERE clause
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public boolean isSearchable(int column)
                          throws java.sql.SQLException {
@@ -550,8 +522,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2...
      * @return true if so
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public boolean isSigned(int column)
                      throws java.sql.SQLException {
@@ -588,8 +558,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2...
      * @return column name, or "" if not applicable
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public String getTableName(int column)
                         throws java.sql.SQLException {
@@ -603,8 +571,6 @@ public class ResultSetMetaData
      * @param column the first column is 1, the second is 2, etc.
      * @return true if so
      * @throws java.sql.SQLException if a database access error occurs
-     * 
-     * @author Mark Matthews <mark_at_mysql.com>
      */
     public boolean isWritable(int column)
                        throws java.sql.SQLException {
@@ -623,6 +589,15 @@ public class ResultSetMetaData
     //                END OF PUBLIC INTERFACE
     //
     // *********************************************************************
+    
+    /**
+     * Returns the field instance for the given column index
+     * 
+     * @param columnIndex the column number to retrieve a field instance for
+     * @return the field instance for the given column index
+     * 
+     * @throws java.sql.SQLException if an error occurs
+     */
     protected Field getField(int columnIndex)
                       throws java.sql.SQLException {
 
@@ -637,8 +612,6 @@ public class ResultSetMetaData
     /**
      * Checks if the SQL Type is a Decimal/Number Type
      * @param type SQL Type
-     * 
-     * @author James Klicman <james_at_klicman.com>
      */
     private static final boolean isDecimalType(int type) {
 
