@@ -18,6 +18,9 @@
  */
 package com.mysql.jdbc;
 
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -194,13 +197,16 @@ public class DatabaseMetaData
             throw new java.sql.SQLException("Table not specified.", "S1009");
         }
 
-        com.mysql.jdbc.ResultSet results = null;
-
+        ResultSet results = null;
+		Statement stmt = null;
+		
         try
         {
-            results = this.conn.execSQL(
-                              "show columns from " + table + databasePart, -1);
-            results.setConnection(this.conn);
+        	stmt = this.conn.createStatement();
+        	
+            results = stmt.executeQuery(
+                              "show columns from " + table + databasePart);
+            
 
             ArrayList tuples = new ArrayList();
 
@@ -300,14 +306,25 @@ public class DatabaseMetaData
                 {
                     results.close();
                 }
-                catch (SQLException sqlEx)
+                catch (Exception ex)
                 {
-
-                    // ignore
                 }
+                
+                results = null;
             }
-
-            results = null;
+            
+            if (stmt != null)
+            {
+            	try
+            	{
+            		stmt.close();
+            	}
+            	catch (Exception ex)
+            	{
+            	}
+            	
+            	stmt = null;
+            }
         }
     }
 
@@ -486,14 +503,15 @@ public class DatabaseMetaData
         grantQuery.append(columnNamePattern);
         grantQuery.append("'");
 
-        com.mysql.jdbc.ResultSet results = null;
+		Statement stmt = null;
+        ResultSet results = null;
         ArrayList grantRows = new ArrayList();
 
         try
         {
-            results = this.conn.execSQL(grantQuery.toString(), -1);
-            results.setConnection(this.conn);
-
+        	stmt = this.conn.createStatement();
+            results = stmt.executeQuery(grantQuery.toString());
+            
             while (results.next())
             {
 
@@ -554,8 +572,7 @@ public class DatabaseMetaData
         }
         finally
         {
-
-            if (results != null)
+			if (results != null)
             {
 
                 try
@@ -565,6 +582,21 @@ public class DatabaseMetaData
                 catch (Exception ex)
                 {
                 }
+                
+                results = null;
+            }
+            
+            if (stmt != null)
+            {
+            	try
+            	{
+            		stmt.close();
+            	}
+            	catch (Exception ex)
+            	{
+            	}
+            	
+            	stmt = null;
             }
         }
 
@@ -776,17 +808,19 @@ public class DatabaseMetaData
         {
 
             String tableNamePattern = (String)tableNames.next();
-            com.mysql.jdbc.ResultSet results = null;
+            Statement stmt = null;
+            ResultSet results = null;
 
             try
             {
-                results = this.conn.execSQL(
+            	stmt = this.conn.createStatement();
+            	
+                results = stmt.executeQuery(
                                   "show columns from " + tableNamePattern + 
                                   databasePart + " like '" + 
-                                  columnNamePattern + "'", -1);
-                results.setConnection(this.conn);
-
-                java.sql.ResultSetMetaData resultsMD = results.getMetaData();
+                                  columnNamePattern + "'");
+                
+                ResultSetMetaData resultsMD = results.getMetaData();
                 int ordPos = 1;
 
                 while (results.next())
@@ -974,10 +1008,7 @@ public class DatabaseMetaData
                             }
                             else if (typeInfo.toLowerCase().equals("longblob"))
                             {
-                                size = (Integer.toString(MysqlIO.getMaxBuf()).compareTo(
-                                                "2147483657") < 0
-                                            ? Integer.toString(MysqlIO.getMaxBuf())
-                                            : "2147483657");
+                                size = ( MysqlIO.getMaxBuf() < Integer.MAX_VALUE ) ? Integer.toString(MysqlIO.getMaxBuf()) : Integer.toString(Integer.MAX_VALUE ); 
                             }
                             else if (typeInfo.toLowerCase().equals("tinytext"))
                             {
@@ -1087,22 +1118,32 @@ public class DatabaseMetaData
             }
             finally
             {
+				if (results != null)
+            	{
 
-                if (results != null)
-                {
-
-                    try
-                    {
-                        results.close();
-                    }
-                    catch (SQLException sqlEx)
-                    {
-
-                        // ignore
-                    }
-                }
-
-                results = null;
+                	try
+                	{
+                    	results.close();
+                	}
+                	catch (Exception ex)
+                	{
+                	}
+                
+                	results = null;
+            	}
+            
+            	if (stmt != null)
+            	{
+            		try
+            		{
+            			stmt.close();
+            		}
+            		catch (Exception ex)
+            		{
+            		}
+            	
+            		stmt = null;
+            	}
             }
         }
 
@@ -1239,14 +1280,17 @@ public class DatabaseMetaData
                 throw new java.sql.SQLException("Table not specified.", 
                                                 "S1009");
             }
-
-            com.mysql.jdbc.ResultSet fkresults = null;
+			
+			Statement stmt = null;
+            ResultSet fkresults = null;
 
             try
             {
-                fkresults = this.conn.execSQL(
-                                    "show table status " + databasePart, -1);
-                fkresults.setConnection(this.conn);
+            	stmt = this.conn.createStatement();
+            	
+                fkresults = stmt.executeQuery(
+                                    "show table status " + databasePart);
+                
 
                 /*
                 * Parse imported foreign key information
@@ -1421,6 +1465,21 @@ public class DatabaseMetaData
 
                     fkresults = null;
                 }
+                
+     
+            
+     	       if (stmt != null)
+        	    {
+            		try
+            		{
+            			stmt.close();
+            		}
+            		catch (Exception ex)
+            		{
+            		}
+            	
+            		stmt = null;
+            	}
             }
         }
         else
@@ -1542,7 +1601,7 @@ public class DatabaseMetaData
                             throws java.sql.SQLException
     {
 
-        return "3.0.0-beta";
+        return "3.0.1-beta";
     }
 
     /**
@@ -1651,13 +1710,16 @@ public class DatabaseMetaData
                                                 "S1009");
             }
 
-            com.mysql.jdbc.ResultSet fkresults = null;
+			Statement stmt = null;
+            ResultSet fkresults = null;
 
             try
             {
-                fkresults = this.conn.execSQL(
-                                    "show table status " + databasePart, -1);
-                fkresults.setConnection(this.conn);
+            	stmt = this.conn.createStatement();
+            	
+                fkresults = stmt.executeQuery(
+                                    "show table status " + databasePart);
+               
 
                 /*
                 * Parse imported foreign key information
@@ -1813,9 +1875,22 @@ public class DatabaseMetaData
 
                         // ignore
                     }
+                    
+                    fkresults = null;
                 }
-
-                fkresults = null;
+                
+                if (stmt != null)
+                {
+                	try
+                	{
+                		stmt.close();
+                	}
+                	catch (Exception ex) 
+                	{
+                	}
+                	
+                	stmt = null;
+                }                
             }
         }
         else
@@ -1977,14 +2052,17 @@ public class DatabaseMetaData
                                                 "S1009");
             }
 
-            com.mysql.jdbc.ResultSet fkresults = null;
+			Statement stmt = null;
+            ResultSet fkresults = null;
 
             try
             {
-                fkresults = this.conn.execSQL(
+            	stmt = this.conn.createStatement();
+            	
+                fkresults = stmt.executeQuery(
                                     "show table status " + databasePart + 
-                                    " like '" + table + "'", -1);
-                fkresults.setConnection(this.conn);
+                                    " like '" + table + "'");
+                
 
                 /*
                 * Parse imported foreign key information
@@ -2130,9 +2208,22 @@ public class DatabaseMetaData
 
                         // ignore
                     }
+                    
+                    fkresults = null;
                 }
 
-                fkresults = null;
+            	if (stmt != null)
+            	{
+            		try
+            		{
+            			stmt.close();
+            		}
+            		catch (Exception ex)
+            		{
+            		}
+            	
+            		stmt = null;
+            	}
             }
         }
         else
@@ -2227,13 +2318,14 @@ public class DatabaseMetaData
                            this.quotedId;
         }
 
-        com.mysql.jdbc.ResultSet results = null;
+		Statement stmt = null;
+        ResultSet results = null;
 
         try
         {
-            results = this.conn.execSQL(
-                              "SHOW INDEX FROM " + Table + databasePart, -1);
-            results.setConnection(this.conn);
+        	stmt = this.conn.createStatement();
+            results = stmt.executeQuery(
+                              "SHOW INDEX FROM " + Table + databasePart);
 
             Field[] fields = new Field[13];
             fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
@@ -2246,7 +2338,7 @@ public class DatabaseMetaData
             fields[7] = new Field("", "ORDINAL_POSITION", Types.SMALLINT, 5);
             fields[8] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
             fields[9] = new Field("", "ASC_OR_DESC", Types.CHAR, 1);
-            fields[10] = new Field("", "CARDINALITY", Types.CHAR, 32);
+            fields[10] = new Field("", "CARDINALITY", Types.INTEGER, 10);
             fields[11] = new Field("", "PAGES", Types.INTEGER, 10);
             fields[12] = new Field("", "FILTER_CONDITION", Types.CHAR, 32);
 
@@ -2282,21 +2374,32 @@ public class DatabaseMetaData
         finally
         {
 
-            if (results != null)
+           if (results != null)
             {
 
                 try
                 {
                     results.close();
                 }
-                catch (SQLException sqlEx)
+                catch (Exception ex)
                 {
-
-                    // ignore
                 }
+                
+                results = null;
             }
-
-            results = null;
+            
+            if (stmt != null)
+            {
+            	try
+            	{
+            		stmt.close();
+            	}
+            	catch (Exception ex)
+            	{
+            	}
+            	
+            	stmt = null;
+            }
         }
     }
 
@@ -2633,13 +2736,14 @@ public class DatabaseMetaData
             throw new java.sql.SQLException("Table not specified.", "S1009");
         }
 
-        com.mysql.jdbc.ResultSet rs = null;
+		Statement stmt = null;
+        ResultSet rs = null;
 
         try
         {
-            rs = this.conn.execSQL("show keys from " + table + dbSub, -1);
-            rs.setConnection(this.conn);
-
+        	stmt = this.conn.createStatement();
+            rs = stmt.executeQuery("show keys from " + table + dbSub);
+          
             ArrayList tuples = new ArrayList();
             TreeMap sortMap = new TreeMap();
             int row_number = 1;
@@ -2681,22 +2785,32 @@ public class DatabaseMetaData
         }
         finally
         {
-
-            if (rs != null)
+			if (rs != null)
             {
 
                 try
                 {
                     rs.close();
                 }
-                catch (SQLException sqlEx)
+                catch (Exception ex)
                 {
-
-                    // ignore
                 }
+                
+                rs = null;
             }
-
-            rs = null;
+            
+            if (stmt != null)
+            {
+            	try
+            	{
+            		stmt.close();
+            	}
+            	catch (Exception ex)
+            	{
+            	}
+            	
+            	stmt = null;
+            }
         }
     }
 
@@ -3060,14 +3174,16 @@ public class DatabaseMetaData
         grantQuery.append(tableNamePattern);
         grantQuery.append("'");
 
-        com.mysql.jdbc.ResultSet results = null;
+        ResultSet results = null;
         ArrayList grantRows = new ArrayList();
-
+		Statement stmt = null;
+		
         try
         {
-            results = this.conn.execSQL(grantQuery.toString(), -1);
-            results.setConnection(this.conn);
-
+        	stmt = this.conn.createStatement();
+        	
+            results = stmt.executeQuery(grantQuery.toString());
+          
             while (results.next())
             {
 
@@ -3168,6 +3284,21 @@ public class DatabaseMetaData
                 catch (Exception ex)
                 {
                 }
+                
+                results = null;
+            }
+            
+            if (stmt != null)
+            {
+            	try
+            	{
+            		stmt.close();
+            	}
+            	catch (Exception ex)
+            	{
+            	}
+            	
+            	stmt = null;
             }
         }
 
@@ -3260,13 +3391,15 @@ public class DatabaseMetaData
             tableNamePattern = "%";
         }
 
-        java.sql.ResultSet results = null;
+		Statement stmt = null;
+        ResultSet results = null;
 
         try
         {
-            results = this.conn.execSQL(
+        	stmt = this.conn.createStatement();
+            results = stmt.executeQuery(
                               "show tables " + databasePart + " like '" + 
-                              tableNamePattern + "'", -1);
+                              tableNamePattern + "'");
 
             java.sql.ResultSetMetaData RsMd = results.getMetaData();
             Field[] fields = new Field[5];
@@ -3301,22 +3434,32 @@ public class DatabaseMetaData
         }
         finally
         {
-
-            if (results != null)
+			if (results != null)
             {
 
                 try
                 {
                     results.close();
                 }
-                catch (SQLException sqlEx)
+                catch (Exception ex)
                 {
-
-                    // ignore
                 }
+                
+                results = null;
             }
-
-            results = null;
+            
+            if (stmt != null)
+            {
+            	try
+            	{
+            		stmt.close();
+            	}
+            	catch (Exception ex)
+            	{
+            	}
+            	
+            	stmt = null;
+            }
         }
     }
 
@@ -4780,7 +4923,7 @@ public class DatabaseMetaData
                                throws SQLException
     {
 
-        return false;
+        return true; // for now
     }
 
     /**
