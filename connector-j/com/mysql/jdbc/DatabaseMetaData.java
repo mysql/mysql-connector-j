@@ -32,24 +32,28 @@ import java.util.TreeMap;
 
 /**
  * JDBC Interface to Mysql functions
- *
+ * 
  * <p>
  * This class provides information about the database as a whole.
- *
+ * </p>
+ * 
  * <p>
- * Many of the methods here return lists of information in ResultSets.
- * You can use the normal ResultSet methods such as getString and getInt
- * to retrieve the data from these ResultSets.  If a given form of
- * metadata is not available, these methods show throw a java.sql.SQLException.
+ * Many of the methods here return lists of information in ResultSets. You can
+ * use the normal ResultSet methods such as getString and getInt to retrieve
+ * the data from these ResultSets.  If a given form of metadata is not
+ * available, these methods show throw a java.sql.SQLException.
+ * </p>
  * 
  * <p>
  * Some of these methods take arguments that are String patterns.  These
  * methods all have names such as fooPattern.  Within a pattern String "%"
- * means match any substring of 0 or more characters and "_" means match
- * any one character.
- *
+ * means match any substring of 0 or more characters and "_" means match any
+ * one character.
+ * </p>
+ * 
+ * @version $Id: DatabaseMetaData.java,v 1.20 2002/12/06 21:27:07 mmatthew Exp
+ *          $
  * @author Mark Matthews
- * @version $Id$
  */
 public class DatabaseMetaData
     implements java.sql.DatabaseMetaData {
@@ -57,8 +61,20 @@ public class DatabaseMetaData
     //~ Instance/static variables .............................................
 
     private static final byte[] TABLE_AS_BYTES = "TABLE".getBytes();
+    
+    /** 
+     * The connection to the database
+     */
     protected Connection conn;
+    
+    /**
+     * The 'current' database name being used
+     */
     protected String database = null;
+    
+    /**
+     * What character to use when quoting identifiers
+     */
     protected String quotedId = null;
 
     //~ Constructors ..........................................................
@@ -66,8 +82,8 @@ public class DatabaseMetaData
     /**
      * Creates a new DatabaseMetaData object.
      * 
-     * @param Conn DOCUMENT ME!
-     * @param Database DOCUMENT ME!
+     * @param conn DOCUMENT ME!
+     * @param database DOCUMENT ME!
      */
     public DatabaseMetaData(Connection conn, String database) {
         this.conn = conn;
@@ -119,38 +135,72 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get a description of a table's optimal set of columns that
-     * uniquely identifies a row. They are ordered by SCOPE.
-     *
-     * <P>Each column description has the following columns:
-     *  <OL>
-     *    <LI><B>SCOPE</B> short => actual scope of result
-     *      <UL>
-     *      <LI> bestRowTemporary - very temporary, while using row
-     *      <LI> bestRowTransaction - valid for remainder of current transaction
-     *      <LI> bestRowSession - valid for remainder of current session
-     *      </UL>
-     *    <LI><B>COLUMN_NAME</B> String => column name
-     *    <LI><B>DATA_TYPE</B> short => SQL data type from java.sql.Types
-     *    <LI><B>TYPE_NAME</B> String => Data source dependent type name
-     *    <LI><B>COLUMN_SIZE</B> int => precision
-     *    <LI><B>BUFFER_LENGTH</B> int => not used
-     *    <LI><B>DECIMAL_DIGITS</B> short  => scale
-     *    <LI><B>PSEUDO_COLUMN</B> short => is this a pseudo column
-     *      like an Oracle ROWID
-     *      <UL>
-     *      <LI> bestRowUnknown - may or may not be pseudo column
-     *      <LI> bestRowNotPseudo - is NOT a pseudo column
-     *      <LI> bestRowPseudo - is a pseudo column
-     *      </UL>
-     *  </OL>
-     *
+     * Get a description of a table's optimal set of columns that uniquely
+     * identifies a row. They are ordered by SCOPE.
+     * 
+     * <P>
+     * Each column description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>SCOPE</B> short => actual scope of result
+     * 
+     * <UL>
+     * <li>
+     * bestRowTemporary - very temporary, while using row
+     * </li>
+     * <li>
+     * bestRowTransaction - valid for remainder of current transaction
+     * </li>
+     * <li>
+     * bestRowSession - valid for remainder of current session
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>COLUMN_NAME</B> String => column name
+     * </li>
+     * <li>
+     * <B>DATA_TYPE</B> short => SQL data type from java.sql.Types
+     * </li>
+     * <li>
+     * <B>TYPE_NAME</B> String => Data source dependent type name
+     * </li>
+     * <li>
+     * <B>COLUMN_SIZE</B> int => precision
+     * </li>
+     * <li>
+     * <B>BUFFER_LENGTH</B> int => not used
+     * </li>
+     * <li>
+     * <B>DECIMAL_DIGITS</B> short  => scale
+     * </li>
+     * <li>
+     * <B>PSEUDO_COLUMN</B> short => is this a pseudo column like an Oracle
+     * ROWID
+     * 
+     * <UL>
+     * <li>
+     * bestRowUnknown - may or may not be pseudo column
+     * </li>
+     * <li>
+     * bestRowNotPseudo - is NOT a pseudo column
+     * </li>
+     * <li>
+     * bestRowPseudo - is a pseudo column
+     * </li>
+     * </ul>
+     * </li>
+     * </ol>
+     * </p>
+     * 
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schema a schema name; "" retrieves those without a schema
      * @param table a table name
      * @param scope the scope of interest; use same values as SCOPE
      * @param nullable include columns that are nullable?
      * @return ResultSet each row is a column description
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public java.sql.ResultSet getBestRowIdentifier(String catalog, 
                                                    String schema, String table, 
@@ -298,8 +348,9 @@ public class DatabaseMetaData
     /**
      * Does a catalog appear at the start of a qualified table name?
      * (Otherwise it appears at the end)
-     *
+     * 
      * @return true if it appears at the start
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean isCatalogAtStart()
                              throws java.sql.SQLException {
@@ -309,8 +360,9 @@ public class DatabaseMetaData
 
     /**
      * What's the separator between catalog and table name?
-     *
+     * 
      * @return the separator string
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getCatalogSeparator()
                                throws java.sql.SQLException {
@@ -320,8 +372,9 @@ public class DatabaseMetaData
 
     /**
      * What's the database vendor's preferred term for "catalog"?
-     *
+     * 
      * @return the vendor term
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getCatalogTerm()
                           throws java.sql.SQLException {
@@ -330,16 +383,22 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get the catalog names available in this database.  The results
-     * are ordered by catalog name.
-     *
-     * <P>The catalog column is:
-     *  <OL>
-     *    <LI><B>TABLE_CAT</B> String => catalog name
-     *  </OL>
-     *
-     * @return ResultSet each row has a single String column that is a
-     * catalog name
+     * Get the catalog names available in this database.  The results are
+     * ordered by catalog name.
+     * 
+     * <P>
+     * The catalog column is:
+     * 
+     * <OL>
+     * <li>
+     * <B>TABLE_CAT</B> String => catalog name
+     * </li>
+     * </ol>
+     * </p>
+     * 
+     * @return ResultSet each row has a single String column that is a catalog
+     *         name
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public java.sql.ResultSet getCatalogs()
                                    throws java.sql.SQLException {
@@ -396,30 +455,52 @@ public class DatabaseMetaData
 
     /**
      * Get a description of the access rights for a table's columns.
-     *
-     * <P>Only privileges matching the column name criteria are
-     * returned.  They are ordered by COLUMN_NAME and PRIVILEGE.
-     *
-     * <P>Each privilige description has the following columns:
-     *  <OL>
-     *    <LI><B>TABLE_CAT</B> String => table catalog (may be null)
-     *    <LI><B>TABLE_SCHEM</B> String => table schema (may be null)
-     *    <LI><B>TABLE_NAME</B> String => table name
-     *    <LI><B>COLUMN_NAME</B> String => column name
-     *    <LI><B>GRANTOR</B> => grantor of access (may be null)
-     *    <LI><B>GRANTEE</B> String => grantee of access
-     *    <LI><B>PRIVILEGE</B> String => name of access (SELECT,
-     *      INSERT, UPDATE, REFRENCES, ...)
-     *    <LI><B>IS_GRANTABLE</B> String => "YES" if grantee is permitted
-     *      to grant to others; "NO" if not; null if unknown
-     *  </OL>
-     *
+     * 
+     * <P>
+     * Only privileges matching the column name criteria are returned.  They
+     * are ordered by COLUMN_NAME and PRIVILEGE.
+     * </p>
+     * 
+     * <P>
+     * Each privilige description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>TABLE_CAT</B> String => table catalog (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_SCHEM</B> String => table schema (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_NAME</B> String => table name
+     * </li>
+     * <li>
+     * <B>COLUMN_NAME</B> String => column name
+     * </li>
+     * <li>
+     * <B>GRANTOR</B> => grantor of access (may be null)
+     * </li>
+     * <li>
+     * <B>GRANTEE</B> String => grantee of access
+     * </li>
+     * <li>
+     * <B>PRIVILEGE</B> String => name of access (SELECT, INSERT, UPDATE,
+     * REFRENCES, ...)
+     * </li>
+     * <li>
+     * <B>IS_GRANTABLE</B> String => "YES" if grantee is permitted to grant to
+     * others; "NO" if not; null if unknown
+     * </li>
+     * </ol>
+     * </p>
+     * 
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schema a schema name; "" retrieves those without a schema
      * @param table a table name
      * @param columnNamePattern a column name pattern
      * @return ResultSet each row is a column privilege description
      * @see #getSearchStringEscape
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public java.sql.ResultSet getColumnPrivileges(String catalog, 
                                                   String schema, String table, 
@@ -543,51 +624,99 @@ public class DatabaseMetaData
 
     /**
      * Get a description of table columns available in a catalog.
-     *
-     * <P>Only column descriptions matching the catalog, schema, table
-     * and column name criteria are returned.  They are ordered by
-     * TABLE_SCHEM, TABLE_NAME and ORDINAL_POSITION.
-     *
-     * <P>Each column description has the following columns:
-     *  <OL>
-     *    <LI><B>TABLE_CAT</B> String => table catalog (may be null)
-     *    <LI><B>TABLE_SCHEM</B> String => table schema (may be null)
-     *    <LI><B>TABLE_NAME</B> String => table name
-     *    <LI><B>COLUMN_NAME</B> String => column name
-     *    <LI><B>DATA_TYPE</B> short => SQL type from java.sql.Types
-     *    <LI><B>TYPE_NAME</B> String => Data source dependent type name
-     *    <LI><B>COLUMN_SIZE</B> int => column size.  For char or date
-     *        types this is the maximum number of characters, for numeric or
-     *        decimal types this is precision.
-     *    <LI><B>BUFFER_LENGTH</B> is not used.
-     *    <LI><B>DECIMAL_DIGITS</B> int => the number of fractional digits
-     *    <LI><B>NUM_PREC_RADIX</B> int => Radix (typically either 10 or 2)
-     *    <LI><B>NULLABLE</B> int => is NULL allowed?
-     *      <UL>
-     *      <LI> columnNoNulls - might not allow NULL values
-     *      <LI> columnNullable - definitely allows NULL values
-     *      <LI> columnNullableUnknown - nullability unknown
-     *      </UL>
-     *    <LI><B>REMARKS</B> String => comment describing column (may be null)
-     *    <LI><B>COLUMN_DEF</B> String => default value (may be null)
-     *    <LI><B>SQL_DATA_TYPE</B> int => unused
-     *    <LI><B>SQL_DATETIME_SUB</B> int => unused
-     *    <LI><B>CHAR_OCTET_LENGTH</B> int => for char types the
-     *       maximum number of bytes in the column
-     *    <LI><B>ORDINAL_POSITION</B> int => index of column in table
-     *      (starting at 1)
-     *    <LI><B>IS_NULLABLE</B> String => "NO" means column definitely
-     *      does not allow NULL values; "YES" means the column might
-     *      allow NULL values.  An empty string means nobody knows.
-     *  </OL>
-     *
+     * 
+     * <P>
+     * Only column descriptions matching the catalog, schema, table and column
+     * name criteria are returned.  They are ordered by TABLE_SCHEM,
+     * TABLE_NAME and ORDINAL_POSITION.
+     * </p>
+     * 
+     * <P>
+     * Each column description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>TABLE_CAT</B> String => table catalog (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_SCHEM</B> String => table schema (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_NAME</B> String => table name
+     * </li>
+     * <li>
+     * <B>COLUMN_NAME</B> String => column name
+     * </li>
+     * <li>
+     * <B>DATA_TYPE</B> short => SQL type from java.sql.Types
+     * </li>
+     * <li>
+     * <B>TYPE_NAME</B> String => Data source dependent type name
+     * </li>
+     * <li>
+     * <B>COLUMN_SIZE</B> int => column size.  For char or date types this is
+     * the maximum number of characters, for numeric or decimal types this is
+     * precision.
+     * </li>
+     * <li>
+     * <B>BUFFER_LENGTH</B> is not used.
+     * </li>
+     * <li>
+     * <B>DECIMAL_DIGITS</B> int => the number of fractional digits
+     * </li>
+     * <li>
+     * <B>NUM_PREC_RADIX</B> int => Radix (typically either 10 or 2)
+     * </li>
+     * <li>
+     * <B>NULLABLE</B> int => is NULL allowed?
+     * 
+     * <UL>
+     * <li>
+     * columnNoNulls - might not allow NULL values
+     * </li>
+     * <li>
+     * columnNullable - definitely allows NULL values
+     * </li>
+     * <li>
+     * columnNullableUnknown - nullability unknown
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>REMARKS</B> String => comment describing column (may be null)
+     * </li>
+     * <li>
+     * <B>COLUMN_DEF</B> String => default value (may be null)
+     * </li>
+     * <li>
+     * <B>SQL_DATA_TYPE</B> int => unused
+     * </li>
+     * <li>
+     * <B>SQL_DATETIME_SUB</B> int => unused
+     * </li>
+     * <li>
+     * <B>CHAR_OCTET_LENGTH</B> int => for char types the maximum number of
+     * bytes in the column
+     * </li>
+     * <li>
+     * <B>ORDINAL_POSITION</B> int => index of column in table (starting at 1)
+     * </li>
+     * <li>
+     * <B>IS_NULLABLE</B> String => "NO" means column definitely does not
+     * allow NULL values; "YES" means the column might allow NULL values.  An
+     * empty string means nobody knows.
+     * </li>
+     * </ol>
+     * </p>
+     * 
      * @param catalog a catalog name; "" retrieves those without a catalog
-     * @param schemaPattern a schema name pattern; "" retrieves those
-     * without a schema
+     * @param schemaPattern a schema name pattern; "" retrieves those without
+     *        a schema
      * @param tableName a table name pattern
      * @param columnNamePattern a column name pattern
      * @return ResultSet each row is a column description
      * @see #getSearchStringEscape
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public java.sql.ResultSet getColumns(String catalog, String schemaPattern, 
                                          String tableName, 
@@ -809,11 +938,9 @@ public class DatabaseMetaData
                                                (typeInfo.indexOf(")")));
                             } else if (typeInfo.equalsIgnoreCase("tinyint")) {
                                 size = "1";
-                            } else if (typeInfo.equalsIgnoreCase(
-                                               "smallint")) {
+                            } else if (typeInfo.equalsIgnoreCase("smallint")) {
                                 size = "6";
-                            } else if (typeInfo.equalsIgnoreCase(
-                                               "mediumint")) {
+                            } else if (typeInfo.equalsIgnoreCase("mediumint")) {
                                 size = "6";
                             } else if (typeInfo.equalsIgnoreCase("int")) {
                                 size = "11";
@@ -841,32 +968,25 @@ public class DatabaseMetaData
                                 size = "10";
                             } else if (typeInfo.equalsIgnoreCase("time")) {
                                 size = "8";
-                            } else if (typeInfo.equalsIgnoreCase(
-                                               "timestamp")) {
+                            } else if (typeInfo.equalsIgnoreCase("timestamp")) {
                                 size = "19";
-                            } else if (typeInfo.equalsIgnoreCase(
-                                               "datetime")) {
+                            } else if (typeInfo.equalsIgnoreCase("datetime")) {
                                 size = "19";
-                            } else if (typeInfo.equalsIgnoreCase(
-                                               "tinyblob")) {
+                            } else if (typeInfo.equalsIgnoreCase("tinyblob")) {
                                 size = "255";
                             } else if (typeInfo.equalsIgnoreCase("blob")) {
                                 size = Integer.toString(Math.min(65535, 
                                                                  MysqlIO.getMaxBuf()));
-                            } else if (typeInfo.equalsIgnoreCase(
-                                               "mediumblob")) {
+                            } else if (typeInfo.equalsIgnoreCase("mediumblob")) {
                                 size = Integer.toString(Math.min(16277215, 
                                                                  MysqlIO.getMaxBuf()));
-                            } else if (typeInfo.equalsIgnoreCase(
-                                               "longblob")) {
+                            } else if (typeInfo.equalsIgnoreCase("longblob")) {
                                 size = Integer.toString(Integer.MAX_VALUE);
-                            } else if (typeInfo.equalsIgnoreCase(
-                                               "tinytext")) {
+                            } else if (typeInfo.equalsIgnoreCase("tinytext")) {
                                 size = "255";
                             } else if (typeInfo.equalsIgnoreCase("text")) {
                                 size = "65535";
-                            } else if (typeInfo.equalsIgnoreCase(
-                                               "mediumtext")) {
+                            } else if (typeInfo.equalsIgnoreCase("mediumtext")) {
                                 size = Integer.toString(Math.min(16277215, 
                                                                  MysqlIO.getMaxBuf()));
                             } else if (typeInfo.equalsIgnoreCase("enum")) {
@@ -975,12 +1095,9 @@ public class DatabaseMetaData
     }
 
     /**
-     * JDBC 2.0
-     *
-     * Return the connection that produced this metadata object.
+     * JDBC 2.0 Return the connection that produced this metadata object.
      * 
      * @return the connection that produced this metadata object.
-     * 
      * @throws SQLException if a database error occurs
      */
     public java.sql.Connection getConnection()
@@ -990,489 +1107,120 @@ public class DatabaseMetaData
     }
 
     /**
-	 * Get a description of the foreign key columns in the foreign key
-	 * table that reference the primary key columns of the primary key
-	 * table (describe how one table imports another's key.) This
-	 * should normally return a single foreign key/primary key pair
-	 * (most tables only import a foreign key from a table once.)  They
-	 * are ordered by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and
-	 * KEY_SEQ.
-	 *
-	 * <P>Each foreign key column description has the following columns:
-	 *  <OL>
-	 *    <LI><B>PKTABLE_CAT</B> String => primary key table catalog (may be null)
-	 *    <LI><B>PKTABLE_SCHEM</B> String => primary key table schema (may be null)
-	 *    <LI><B>PKTABLE_NAME</B> String => primary key table name
-	 *    <LI><B>PKCOLUMN_NAME</B> String => primary key column name
-	 *    <LI><B>FKTABLE_CAT</B> String => foreign key table catalog (may be null)
-	 *      being exported (may be null)
-	 *    <LI><B>FKTABLE_SCHEM</B> String => foreign key table schema (may be null)
-	 *      being exported (may be null)
-	 *    <LI><B>FKTABLE_NAME</B> String => foreign key table name
-	 *      being exported
-	 *    <LI><B>FKCOLUMN_NAME</B> String => foreign key column name
-	 *      being exported
-	 *    <LI><B>KEY_SEQ</B> short => sequence number within foreign key
-	 *    <LI><B>UPDATE_RULE</B> short => What happens to
-	 *       foreign key when primary is updated:
-	 *      <UL>
-	 *      <LI> importedKeyCascade - change imported key to agree
-	 *               with primary key update
-	 *      <LI> importedKeyRestrict - do not allow update of primary
-	 *               key if it has been imported
-	 *      <LI> importedKeySetNull - change imported key to NULL if
-	 *               its primary key has been updated
-	 *      </UL>
-	 *    <LI><B>DELETE_RULE</B> short => What happens to
-	 *      the foreign key when primary is deleted.
-	 *      <UL>
-	 *      <LI> importedKeyCascade - delete rows that import a deleted key
-	 *      <LI> importedKeyRestrict - do not allow delete of primary
-	 *               key if it has been imported
-	 *      <LI> importedKeySetNull - change imported key to NULL if
-	 *               its primary key has been deleted
-	 *      </UL>
-	 *    <LI><B>FK_NAME</B> String => foreign key identifier (may be null)
-	 *    <LI><B>PK_NAME</B> String => primary key identifier (may be null)
-	 *  </OL>
-	 *
-	 * @param catalog a catalog name; "" retrieves those without a catalog
-	 * @param schema a schema name pattern; "" retrieves those
-	 * without a schema
-	 * @param table a table name
-	 * @return ResultSet each row is a foreign key column description
-	 * @see #getImportedKeys
-	 */
-	public java.sql.ResultSet getCrossReference(String primaryCatalog, 
-	                                            String primarySchema, 
-	                                            String primaryTable, 
-	                                            String foreignCatalog, 
-	                                            String foreignSchema, 
-	                                            String foreignTable)
-	                                     throws java.sql.SQLException {
-	
-	    if (Driver.TRACE) {
-	
-	        Object[] args = {
-	            primaryCatalog, primarySchema, primaryTable, foreignCatalog, 
-	            foreignSchema, foreignTable
-	        };
-	        Debug.methodCall(this, "getCrossReference", args);
-	    }
-        
-        if (primaryTable == null) {
-                throw new java.sql.SQLException("Table not specified.", 
-                                                "S1009");
-        }
-	
-        
-	    Field[] fields = new Field[14];
-	    fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
-	    fields[1] = new Field("", "PKTABLE_SCHEM", Types.CHAR, 0);
-	    fields[2] = new Field("", "PKTABLE_NAME", Types.CHAR, 255);
-	    fields[3] = new Field("", "PKCOLUMN_NAME", Types.CHAR, 32);
-	    fields[4] = new Field("", "FKTABLE_CAT", Types.CHAR, 255);
-	    fields[5] = new Field("", "FKTABLE_SCHEM", Types.CHAR, 0);
-	    fields[6] = new Field("", "FKTABLE_NAME", Types.CHAR, 255);
-	    fields[7] = new Field("", "FKCOLUMN_NAME", Types.CHAR, 32);
-	    fields[8] = new Field("", "KEY_SEQ", Types.SMALLINT, 2);
-	    fields[9] = new Field("", "UPDATE_RULE", Types.SMALLINT, 2);
-	    fields[10] = new Field("", "DELETE_RULE", Types.SMALLINT, 2);
-	    fields[11] = new Field("", "FK_NAME", Types.CHAR, 0);
-	    fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
-	    fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
-	
-        if (this.conn.getIO().versionMeetsMinimum(3, 23, 0)) {
-
-            Statement stmt = null;
-            ResultSet fkresults = null;
-            
-            try {
-                /*
-                 * Get foreign key information for table
-                 */
-                 
-            if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
-                // we can use 'SHOW CREATE TABLE'
-                String database = this.database;
-                
-                if (foreignCatalog  != null) {
-
-                    if (!foreignCatalog.equals("")) {
-                        database = foreignCatalog ;
-                    }
-                }
-                
-                fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(this.conn, this, database, null);
-            } else {
-           
-                String databasePart = "";
-
-                if (foreignCatalog  != null) {
-
-                    if (!foreignCatalog.equals("")) {
-                        databasePart = " FROM " + foreignCatalog ;
-                    }
-                } else {
-                    databasePart = " FROM " + this.database;
-                }
-
-           
-            
-                stmt = this.conn.createStatement();
-                fkresults = stmt.executeQuery(
-                                    "show table status " + databasePart);
-            }
-	    
-                   
-                String foreignTableWithCase = getTableNameWithCase(foreignTable);
-                String primaryTableWithCase = getTableNameWithCase(primaryTable);
-                
-	            /*
-	             * Parse imported foreign key information
-	             */
-	            ArrayList tuples = new ArrayList();
-	            String dummy;
-	
-	            while (fkresults.next()) {
-	
-	                String tableType = fkresults.getString("Type");
-	
-	                if (tableType != null
-	                    && (tableType.equalsIgnoreCase("innodb")
-                            || tableType.equalsIgnoreCase(ForeignKeyUtil.SUPPORTS_FK))) {
-	
-	                    String comment = fkresults.getString("Comment").trim();
-	
-	                    if (comment != null) {
-	
-	                        StringTokenizer commentTokens = 
-	                                new StringTokenizer(comment, ";", false);
-	
-	                        if (commentTokens.hasMoreTokens()) {
-	                            dummy = commentTokens.nextToken();
-	
-	                            // Skip InnoDB comment
-	                        }
-	
-	                        while (commentTokens.hasMoreTokens()) {
-	
-	                            String keys = commentTokens.nextToken();
-	
-	                            // simple-columned keys: (m) REFER airline/tt(a)
-	                            // multi-columned keys : (m n) REFER airline/vv(a b)
-	                            int firstLeftParenIndex = keys.indexOf('(');
-	                            int firstRightParenIndex = keys.indexOf(')');
-	                            String referencingColumns = 
-	                                    keys.substring(firstLeftParenIndex + 1, 
-	                                                   firstRightParenIndex);
-	                            StringTokenizer referencingColumnsTokenizer = 
-	                                    new StringTokenizer(referencingColumns, ", ");
-	                            int secondLeftParenIndex = keys.indexOf('(', 
-	                                                                    firstRightParenIndex + 1);
-	                            int secondRightParenIndex = 
-	                                    keys.indexOf(')', 
-	                                                 firstRightParenIndex + 1);
-	                            String referencedColumns = keys.substring(
-	                                                               secondLeftParenIndex + 1, 
-	                                                               secondRightParenIndex);
-	                            StringTokenizer referencedColumnsTokenizer = 
-	                                    new StringTokenizer(referencedColumns, ", ");
-	                            int slashIndex = keys.indexOf('/');
-	                            String referencedTable = keys.substring(
-	                                                             slashIndex + 1, 
-	                                                             secondLeftParenIndex);
-	                            int keySeq = 0;
-	
-	                            while (referencingColumnsTokenizer.hasMoreTokens()) {
-	                               
-	                                String referencingColumn = referencingColumnsTokenizer.nextToken();
-	                                // one tuple for each table between parenthesis
-	                                byte[][] tuple = new byte[14][];
-	                                tuple[4] = (foreignCatalog == null
-	                                                ? null : s2b(foreignCatalog));
-	                                tuple[5] = (foreignSchema == null
-	                                                ? null : s2b(foreignSchema));
-	                                dummy = fkresults.getString("Name"); // FKTABLE_NAME
-	
-                                    
-                                    
-	                                if (dummy.compareTo(foreignTableWithCase) != 0) {
-	
-	                                    continue;
-	                                } else {
-	                                    tuple[6] = s2b(dummy);
-	                                }
-	
-	                                tuple[7] = s2b(referencingColumn); // FKCOLUMN_NAME
-	                                tuple[0] = (primaryCatalog == null
-	                                                ? null : s2b(primaryCatalog));
-	                                tuple[1] = (primarySchema == null
-	                                                ? null : s2b(primarySchema));
-	
-                                    
-                                    
-	                                // Skip foreign key if it doesn't refer to the right table
-	                                if (referencedTable.compareTo(primaryTableWithCase) != 0) {
-	
-	                                    continue;
-	                                }
-	
-	                                tuple[2] = s2b(referencedTable); // PKTABLE_NAME
-	                                tuple[3] = s2b(referencedColumnsTokenizer.nextToken()); // PKCOLUMN_NAME
-	                                tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
-	                                tuple[9] = Integer.toString(
-	                                                   java.sql.DatabaseMetaData.importedKeySetDefault)
-	                                       .getBytes();
-	                                tuple[10] = Integer.toString(
-	                                                    ForeignKeyUtil.getCascadeDeleteOption(keys))
-	                                       .getBytes();
-	                                tuple[11] = null; // FK_NAME
-	                                tuple[12] = null; // PK_NAME
-	                                tuple[13] = Integer.toString(
-	                                                    java.sql.DatabaseMetaData.importedKeyNotDeferrable)
-	                                       .getBytes();
-	                                tuples.add(tuple);
-	                                keySeq++;
-	                            }
-	                        }
-	                    }
-	                }
-	            }
-	
-	            if (Driver.TRACE) {
-	
-	                StringBuffer rows = new StringBuffer();
-	                rows.append("\n");
-	
-	                for (int i = 0; i < tuples.size(); i++) {
-	
-	                    byte[][] b = (byte[][]) tuples.get(i);
-	                    rows.append("[Row] ");
-	
-	                    boolean firstTime = true;
-	
-	                    for (int j = 0; j < b.length; j++) {
-	
-	                        if (!firstTime) {
-	                            rows.append(", ");
-	                        } else {
-	                            firstTime = false;
-	                        }
-	
-	                        if (b[j] == null) {
-	                            rows.append("null");
-	                        } else {
-	                            rows.append(new String(b[j]));
-	                        }
-	                    }
-	
-	                    rows.append("\n");
-	                }
-	               
-    
-	                Debug.returnValue(this, "getCrossReference", rows.toString());
-	            }
-	
-	            return buildResultSet(fields, tuples);
-	        } finally {
-	
-	            if (fkresults != null) {
-	
-	                try {
-	                    fkresults.close();
-	                } catch (Exception sqlEx) {
-	
-	                    // ignore
-	                }
-	
-	                fkresults = null;
-	            }
-	
-	            if (stmt != null) {
-	
-	                try {
-	                    stmt.close();
-	                } catch (Exception ex) {
-	                    ;
-	                }
-	
-	                stmt = null;
-	            }
-	        }
-	    } else {
-	
-	        return buildResultSet(fields, new ArrayList());
-	    }
-	}
-
-    /**
-     * @see DatabaseMetaData#getDatabaseMajorVersion()
-     */
-    public int getDatabaseMajorVersion()
-                                throws SQLException {
-
-        return this.conn.getServerMajorVersion();
-    }
-
-    /**
-     * @see DatabaseMetaData#getDatabaseMinorVersion()
-     */
-    public int getDatabaseMinorVersion()
-                                throws SQLException {
-
-        return this.conn.getServerMinorVersion();
-    }
-
-    /**
-     * What's the name of this database product?
-     *
-     * @return database product name
-     */
-    public String getDatabaseProductName()
-                                  throws java.sql.SQLException {
-
-        return "MySQL";
-    }
-
-    /**
-     * What's the version of this database product?
-     *
-     * @return database version
-     */
-    public String getDatabaseProductVersion()
-                                     throws java.sql.SQLException {
-
-        return this.conn.getServerVersion();
-    }
-
-    //----------------------------------------------------------------------
-
-    /**
-     * What's the database's default transaction isolation level?  The
-     * values are defined in java.sql.Connection.
-     *
-     * @return the default isolation level
-     * @see Connection
-     */
-    public int getDefaultTransactionIsolation()
-                                       throws java.sql.SQLException {
-
-        if (this.conn.supportsIsolationLevel()) {
-
-            return java.sql.Connection.TRANSACTION_READ_COMMITTED;
-        } else {
-
-            return java.sql.Connection.TRANSACTION_NONE;
-        }
-    }
-
-    /**
-     * What's this JDBC driver's major version number?
-     *
-     * @return JDBC driver major version
-     */
-    public int getDriverMajorVersion() {
-
-        return Driver.MAJORVERSION;
-    }
-
-    /**
-     * What's this JDBC driver's minor version number?
-     *
-     * @return JDBC driver minor version number
-     */
-    public int getDriverMinorVersion() {
-
-        return Driver.MINORVERSION;
-    }
-
-    /**
-     * What's the name of this JDBC driver?
-     *
-     * @return JDBC driver name
-     */
-    public String getDriverName()
-                         throws java.sql.SQLException {
-
-        return "MySQL-AB JDBC Driver";
-    }
-
-    /**
-     * What's the version of this JDBC driver?
-     *
-     * @return JDBC driver version
-     */
-    public String getDriverVersion()
-                            throws java.sql.SQLException {
-
-        return "3.0.2-beta";
-    }
-
-    /**
-     * Get a description of a foreign key columns that reference a
-     * table's primary key columns (the foreign keys exported by a
-     * table).  They are ordered by FKTABLE_CAT, FKTABLE_SCHEM,
-     * FKTABLE_NAME, and KEY_SEQ.
-     *
-     * <P>Each foreign key column description has the following columns:
-     *  <OL>
-     *    <LI><B>PKTABLE_CAT</B> String => primary key table catalog (may be null)
-     *    <LI><B>PKTABLE_SCHEM</B> String => primary key table schema (may be null)
-     *    <LI><B>PKTABLE_NAME</B> String => primary key table name
-     *    <LI><B>PKCOLUMN_NAME</B> String => primary key column name
-     *    <LI><B>FKTABLE_CAT</B> String => foreign key table catalog (may be null)
-     *      being exported (may be null)
-     *    <LI><B>FKTABLE_SCHEM</B> String => foreign key table schema (may be null)
-     *      being exported (may be null)
-     *    <LI><B>FKTABLE_NAME</B> String => foreign key table name
-     *      being exported
-     *    <LI><B>FKCOLUMN_NAME</B> String => foreign key column name
-     *      being exported
-     *    <LI><B>KEY_SEQ</B> short => sequence number within foreign key
-     *    <LI><B>UPDATE_RULE</B> short => What happens to
-     *       foreign key when primary is updated:
-     *      <UL>
-     *      <LI> importedKeyCascade - change imported key to agree
-     *               with primary key update
-     *      <LI> importedKeyRestrict - do not allow update of primary
-     *               key if it has been imported
-     *      <LI> importedKeySetNull - change imported key to NULL if
-     *               its primary key has been updated
-     *      </UL>
-     *    <LI><B>DELETE_RULE</B> short => What happens to
-     *      the foreign key when primary is deleted.
-     *      <UL>
-     *      <LI> importedKeyCascade - delete rows that import a deleted key
-     *      <LI> importedKeyRestrict - do not allow delete of primary
-     *               key if it has been imported
-     *      <LI> importedKeySetNull - change imported key to NULL if
-     *               its primary key has been deleted
-     *      </UL>
-     *    <LI><B>FK_NAME</B> String => foreign key identifier (may be null)
-     *    <LI><B>PK_NAME</B> String => primary key identifier (may be null)
-     *  </OL>
-     *
-     * @param catalog a catalog name; "" retrieves those without a catalog
-     * @param schema a schema name pattern; "" retrieves those
-     * without a schema
-     * @param table a table name
+     * Get a description of the foreign key columns in the foreign key table
+     * that reference the primary key columns of the primary key table
+     * (describe how one table imports another's key.) This should normally
+     * return a single foreign key/primary key pair (most tables only import
+     * a foreign key from a table once.)  They are ordered by FKTABLE_CAT,
+     * FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ.
+     * 
+     * <P>
+     * Each foreign key column description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>PKTABLE_CAT</B> String => primary key table catalog (may be null)
+     * </li>
+     * <li>
+     * <B>PKTABLE_SCHEM</B> String => primary key table schema (may be null)
+     * </li>
+     * <li>
+     * <B>PKTABLE_NAME</B> String => primary key table name
+     * </li>
+     * <li>
+     * <B>PKCOLUMN_NAME</B> String => primary key column name
+     * </li>
+     * <li>
+     * <B>FKTABLE_CAT</B> String => foreign key table catalog (may be null)
+     * being exported (may be null)
+     * </li>
+     * <li>
+     * <B>FKTABLE_SCHEM</B> String => foreign key table schema (may be null)
+     * being exported (may be null)
+     * </li>
+     * <li>
+     * <B>FKTABLE_NAME</B> String => foreign key table name being exported
+     * </li>
+     * <li>
+     * <B>FKCOLUMN_NAME</B> String => foreign key column name being exported
+     * </li>
+     * <li>
+     * <B>KEY_SEQ</B> short => sequence number within foreign key
+     * </li>
+     * <li>
+     * <B>UPDATE_RULE</B> short => What happens to foreign key when primary is
+     * updated:
+     * 
+     * <UL>
+     * <li>
+     * importedKeyCascade - change imported key to agree with primary key
+     * update
+     * </li>
+     * <li>
+     * importedKeyRestrict - do not allow update of primary key if it has been
+     * imported
+     * </li>
+     * <li>
+     * importedKeySetNull - change imported key to NULL if its primary key has
+     * been updated
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>DELETE_RULE</B> short => What happens to the foreign key when
+     * primary is deleted.
+     * 
+     * <UL>
+     * <li>
+     * importedKeyCascade - delete rows that import a deleted key
+     * </li>
+     * <li>
+     * importedKeyRestrict - do not allow delete of primary key if it has been
+     * imported
+     * </li>
+     * <li>
+     * importedKeySetNull - change imported key to NULL if its primary key has
+     * been deleted
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>FK_NAME</B> String => foreign key identifier (may be null)
+     * </li>
+     * <li>
+     * <B>PK_NAME</B> String => primary key identifier (may be null)
+     * </li>
+     * </ol>
+     * </p>
+     * 
+     * @param primaryCatalog a catalog name; "" retrieves those without a catalog
+     * @param primarySchema a schema name pattern; "" retrieves those without a schema
+     * @param primaryTable a table name
+     * @param foreignCatalog a catalog name; "" retrieves those without a catalog
+     * @param foreignSchema a schema name pattern; "" retrieves those without a schema
+     * @param foreignTable a table name
      * @return ResultSet each row is a foreign key column description
-     * @see #getImportedKeys
+     * @throws java.sql.SQLException if a database access error occurs
      */
-    public java.sql.ResultSet getExportedKeys(String catalog, String schema, 
-                                              String table)
-                                       throws java.sql.SQLException {
+    public java.sql.ResultSet getCrossReference(String primaryCatalog, 
+                                                String primarySchema, 
+                                                String primaryTable, 
+                                                String foreignCatalog, 
+                                                String foreignSchema, 
+                                                String foreignTable)
+                                         throws java.sql.SQLException {
 
         if (Driver.TRACE) {
 
-            Object[] args = { catalog, schema, table };
-            Debug.methodCall(this, "getExportedKeys", args);
+            Object[] args = {
+                primaryCatalog, primarySchema, primaryTable, foreignCatalog, 
+                foreignSchema, foreignTable
+            };
+            Debug.methodCall(this, "getCrossReference", args);
         }
-        
-         if (table == null) {
-                throw new java.sql.SQLException("Table not specified.", 
-                                                "S1009");
+
+        if (primaryTable == null) {
+            throw new java.sql.SQLException("Table not specified.", "S1009");
         }
 
         Field[] fields = new Field[14];
@@ -1495,45 +1243,498 @@ public class DatabaseMetaData
 
             Statement stmt = null;
             ResultSet fkresults = null;
-            
+
             try {
+
                 /*
                  * Get foreign key information for table
                  */
-                 
-            if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
-                // we can use 'SHOW CREATE TABLE'
-                String database = this.database;
-                
-                if (catalog != null) {
+                if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
 
-                    if (!catalog.equals("")) {
-                        database = catalog;
+                    // we can use 'SHOW CREATE TABLE'
+                    String database = this.database;
+
+                    if (foreignCatalog != null) {
+
+                        if (!foreignCatalog.equals("")) {
+                            database = foreignCatalog;
+                        }
                     }
-                }
-                
-                fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(this.conn, this, database, null);
-            } else {
-           
-                String databasePart = "";
 
-                if (catalog != null) {
-
-                    if (!catalog.equals("")) {
-                        databasePart = " FROM " + catalog;
-                    }
+                    fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(
+                                        this.conn, this, database, null);
                 } else {
-                    databasePart = " FROM " + this.database;
+
+                    String databasePart = "";
+
+                    if (foreignCatalog != null) {
+
+                        if (!foreignCatalog.equals("")) {
+                            databasePart = " FROM " + foreignCatalog;
+                        }
+                    } else {
+                        databasePart = " FROM " + this.database;
+                    }
+
+                    stmt = this.conn.createStatement();
+                    fkresults = stmt.executeQuery(
+                                        "show table status " + databasePart);
                 }
 
-           
-            
-                stmt = this.conn.createStatement();
-                fkresults = stmt.executeQuery(
-                                    "show table status " + databasePart);
-            }
+                String foreignTableWithCase = getTableNameWithCase(
+                                                      foreignTable);
+                String primaryTableWithCase = getTableNameWithCase(
+                                                      primaryTable);
 
-           
+                /*
+                * Parse imported foreign key information
+                */
+                ArrayList tuples = new ArrayList();
+                String dummy;
+
+                while (fkresults.next()) {
+
+                    String tableType = fkresults.getString("Type");
+
+                    if (tableType != null
+                        && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(
+                                                                            ForeignKeyUtil.SUPPORTS_FK))) {
+
+                        String comment = fkresults.getString("Comment").trim();
+
+                        if (comment != null) {
+
+                            StringTokenizer commentTokens = 
+                                    new StringTokenizer(comment, ";", false);
+
+                            if (commentTokens.hasMoreTokens()) {
+                                dummy = commentTokens.nextToken();
+
+                                // Skip InnoDB comment
+                            }
+
+                            while (commentTokens.hasMoreTokens()) {
+
+                                String keys = commentTokens.nextToken();
+
+                                // simple-columned keys: (m) REFER airline/tt(a)
+                                // multi-columned keys : (m n) REFER airline/vv(a b)
+                                int firstLeftParenIndex = keys.indexOf('(');
+                                int firstRightParenIndex = keys.indexOf(')');
+                                String referencingColumns = 
+                                        keys.substring(firstLeftParenIndex + 1, 
+                                                       firstRightParenIndex);
+                                StringTokenizer referencingColumnsTokenizer = 
+                                        new StringTokenizer(referencingColumns, 
+                                                            ", ");
+                                int secondLeftParenIndex = keys.indexOf('(', 
+                                                                        firstRightParenIndex + 1);
+                                int secondRightParenIndex = 
+                                        keys.indexOf(')', 
+                                                     firstRightParenIndex + 1);
+                                String referencedColumns = keys.substring(
+                                                                   secondLeftParenIndex + 1, 
+                                                                   secondRightParenIndex);
+                                StringTokenizer referencedColumnsTokenizer = 
+                                        new StringTokenizer(referencedColumns, 
+                                                            ", ");
+                                int slashIndex = keys.indexOf('/');
+                                String referencedTable = keys.substring(
+                                                                 slashIndex + 1, 
+                                                                 secondLeftParenIndex);
+                                int keySeq = 0;
+
+                                while (referencingColumnsTokenizer.hasMoreTokens()) {
+
+                                    String referencingColumn = 
+                                            referencingColumnsTokenizer.nextToken();
+
+                                    // one tuple for each table between parenthesis
+                                    byte[][] tuple = new byte[14][];
+                                    tuple[4] = (foreignCatalog == null
+                                                    ? null : s2b(foreignCatalog));
+                                    tuple[5] = (foreignSchema == null
+                                                    ? null : s2b(foreignSchema));
+                                    dummy = fkresults.getString("Name"); // FKTABLE_NAME
+
+                                    if (dummy.compareTo(foreignTableWithCase) != 0) {
+
+                                        continue;
+                                    } else {
+                                        tuple[6] = s2b(dummy);
+                                    }
+
+                                    tuple[7] = s2b(referencingColumn); // FKCOLUMN_NAME
+                                    tuple[0] = (primaryCatalog == null
+                                                    ? null : s2b(primaryCatalog));
+                                    tuple[1] = (primarySchema == null
+                                                    ? null : s2b(primarySchema));
+
+                                    // Skip foreign key if it doesn't refer to the right table
+                                    if (referencedTable.compareTo(
+                                                primaryTableWithCase) != 0) {
+
+                                        continue;
+                                    }
+
+                                    tuple[2] = s2b(referencedTable); // PKTABLE_NAME
+                                    tuple[3] = s2b(referencedColumnsTokenizer.nextToken()); // PKCOLUMN_NAME
+                                    tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
+                                    tuple[9] = Integer.toString(
+                                                       java.sql.DatabaseMetaData.importedKeySetDefault)
+                                           .getBytes();
+                                    tuple[10] = Integer.toString(ForeignKeyUtil.getCascadeDeleteOption(
+                                                                         keys))
+                                           .getBytes();
+                                    tuple[11] = null; // FK_NAME
+                                    tuple[12] = null; // PK_NAME
+                                    tuple[13] = Integer.toString(
+                                                        java.sql.DatabaseMetaData.importedKeyNotDeferrable)
+                                           .getBytes();
+                                    tuples.add(tuple);
+                                    keySeq++;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (Driver.TRACE) {
+
+                    StringBuffer rows = new StringBuffer();
+                    rows.append("\n");
+
+                    for (int i = 0; i < tuples.size(); i++) {
+
+                        byte[][] b = (byte[][]) tuples.get(i);
+                        rows.append("[Row] ");
+
+                        boolean firstTime = true;
+
+                        for (int j = 0; j < b.length; j++) {
+
+                            if (!firstTime) {
+                                rows.append(", ");
+                            } else {
+                                firstTime = false;
+                            }
+
+                            if (b[j] == null) {
+                                rows.append("null");
+                            } else {
+                                rows.append(new String(b[j]));
+                            }
+                        }
+
+                        rows.append("\n");
+                    }
+
+                    Debug.returnValue(this, "getCrossReference", 
+                                      rows.toString());
+                }
+
+                return buildResultSet(fields, tuples);
+            } finally {
+
+                if (fkresults != null) {
+
+                    try {
+                        fkresults.close();
+                    } catch (Exception sqlEx) {
+
+                        // ignore
+                    }
+
+                    fkresults = null;
+                }
+
+                if (stmt != null) {
+
+                    try {
+                        stmt.close();
+                    } catch (Exception ex) {
+                        ;
+                    }
+
+                    stmt = null;
+                }
+            }
+        } else {
+
+            return buildResultSet(fields, new ArrayList());
+        }
+    }
+
+    /**
+     * @see DatabaseMetaData#getDatabaseMajorVersion()
+     */
+    public int getDatabaseMajorVersion()
+                                throws SQLException {
+
+        return this.conn.getServerMajorVersion();
+    }
+
+    /**
+     * @see DatabaseMetaData#getDatabaseMinorVersion()
+     */
+    public int getDatabaseMinorVersion()
+                                throws SQLException {
+
+        return this.conn.getServerMinorVersion();
+    }
+
+    /**
+     * What's the name of this database product?
+     * 
+     * @return database product name
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
+    public String getDatabaseProductName()
+                                  throws java.sql.SQLException {
+
+        return "MySQL";
+    }
+
+    /**
+     * What's the version of this database product?
+     * 
+     * @return database version
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
+    public String getDatabaseProductVersion()
+                                     throws java.sql.SQLException {
+
+        return this.conn.getServerVersion();
+    }
+
+    //----------------------------------------------------------------------
+
+    /**
+     * What's the database's default transaction isolation level?  The values
+     * are defined in java.sql.Connection.
+     * 
+     * @return the default isolation level
+     * @see Connection
+     * @throws java.sql.SQLException if a database access error occurs
+     */
+    public int getDefaultTransactionIsolation()
+                                       throws java.sql.SQLException {
+
+        if (this.conn.supportsIsolationLevel()) {
+
+            return java.sql.Connection.TRANSACTION_READ_COMMITTED;
+        } else {
+
+            return java.sql.Connection.TRANSACTION_NONE;
+        }
+    }
+
+    /**
+     * What's this JDBC driver's major version number?
+     * 
+     * @return JDBC driver major version
+     */
+    public int getDriverMajorVersion() {
+
+        return Driver.MAJORVERSION;
+    }
+
+    /**
+     * What's this JDBC driver's minor version number?
+     * 
+     * @return JDBC driver minor version number
+     */
+    public int getDriverMinorVersion() {
+
+        return Driver.MINORVERSION;
+    }
+
+    /**
+     * What's the name of this JDBC driver?
+     * 
+     * @return JDBC driver name
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
+    public String getDriverName()
+                         throws java.sql.SQLException {
+
+        return "MySQL-AB JDBC Driver";
+    }
+
+    /**
+     * What's the version of this JDBC driver?
+     * 
+     * @return JDBC driver version
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
+    public String getDriverVersion()
+                            throws java.sql.SQLException {
+
+        return "3.0.2-beta";
+    }
+
+    /**
+     * Get a description of a foreign key columns that reference a table's
+     * primary key columns (the foreign keys exported by a table).  They are
+     * ordered by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ.
+     * 
+     * <P>
+     * Each foreign key column description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>PKTABLE_CAT</B> String => primary key table catalog (may be null)
+     * </li>
+     * <li>
+     * <B>PKTABLE_SCHEM</B> String => primary key table schema (may be null)
+     * </li>
+     * <li>
+     * <B>PKTABLE_NAME</B> String => primary key table name
+     * </li>
+     * <li>
+     * <B>PKCOLUMN_NAME</B> String => primary key column name
+     * </li>
+     * <li>
+     * <B>FKTABLE_CAT</B> String => foreign key table catalog (may be null)
+     * being exported (may be null)
+     * </li>
+     * <li>
+     * <B>FKTABLE_SCHEM</B> String => foreign key table schema (may be null)
+     * being exported (may be null)
+     * </li>
+     * <li>
+     * <B>FKTABLE_NAME</B> String => foreign key table name being exported
+     * </li>
+     * <li>
+     * <B>FKCOLUMN_NAME</B> String => foreign key column name being exported
+     * </li>
+     * <li>
+     * <B>KEY_SEQ</B> short => sequence number within foreign key
+     * </li>
+     * <li>
+     * <B>UPDATE_RULE</B> short => What happens to foreign key when primary is
+     * updated:
+     * 
+     * <UL>
+     * <li>
+     * importedKeyCascade - change imported key to agree with primary key
+     * update
+     * </li>
+     * <li>
+     * importedKeyRestrict - do not allow update of primary key if it has been
+     * imported
+     * </li>
+     * <li>
+     * importedKeySetNull - change imported key to NULL if its primary key has
+     * been updated
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>DELETE_RULE</B> short => What happens to the foreign key when
+     * primary is deleted.
+     * 
+     * <UL>
+     * <li>
+     * importedKeyCascade - delete rows that import a deleted key
+     * </li>
+     * <li>
+     * importedKeyRestrict - do not allow delete of primary key if it has been
+     * imported
+     * </li>
+     * <li>
+     * importedKeySetNull - change imported key to NULL if its primary key has
+     * been deleted
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>FK_NAME</B> String => foreign key identifier (may be null)
+     * </li>
+     * <li>
+     * <B>PK_NAME</B> String => primary key identifier (may be null)
+     * </li>
+     * </ol>
+     * </p>
+     * 
+     * @param catalog a catalog name; "" retrieves those without a catalog
+     * @param schema a schema name pattern; "" retrieves those without a schema
+     * @param table a table name
+     * @return ResultSet each row is a foreign key column description
+     * @see #getImportedKeys
+     * @throws java.sql.SQLException if a database access error occurs
+     */
+    public java.sql.ResultSet getExportedKeys(String catalog, String schema, 
+                                              String table)
+                                       throws java.sql.SQLException {
+
+        if (Driver.TRACE) {
+
+            Object[] args = { catalog, schema, table };
+            Debug.methodCall(this, "getExportedKeys", args);
+        }
+
+        if (table == null) {
+            throw new java.sql.SQLException("Table not specified.", "S1009");
+        }
+
+        Field[] fields = new Field[14];
+        fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
+        fields[1] = new Field("", "PKTABLE_SCHEM", Types.CHAR, 0);
+        fields[2] = new Field("", "PKTABLE_NAME", Types.CHAR, 255);
+        fields[3] = new Field("", "PKCOLUMN_NAME", Types.CHAR, 32);
+        fields[4] = new Field("", "FKTABLE_CAT", Types.CHAR, 255);
+        fields[5] = new Field("", "FKTABLE_SCHEM", Types.CHAR, 0);
+        fields[6] = new Field("", "FKTABLE_NAME", Types.CHAR, 255);
+        fields[7] = new Field("", "FKCOLUMN_NAME", Types.CHAR, 32);
+        fields[8] = new Field("", "KEY_SEQ", Types.SMALLINT, 2);
+        fields[9] = new Field("", "UPDATE_RULE", Types.SMALLINT, 2);
+        fields[10] = new Field("", "DELETE_RULE", Types.SMALLINT, 2);
+        fields[11] = new Field("", "FK_NAME", Types.CHAR, 0);
+        fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
+        fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
+
+        if (this.conn.getIO().versionMeetsMinimum(3, 23, 0)) {
+
+            Statement stmt = null;
+            ResultSet fkresults = null;
+
+            try {
+
+                /*
+                 * Get foreign key information for table
+                 */
+                if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
+
+                    // we can use 'SHOW CREATE TABLE'
+                    String database = this.database;
+
+                    if (catalog != null) {
+
+                        if (!catalog.equals("")) {
+                            database = catalog;
+                        }
+                    }
+
+                    fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(
+                                        this.conn, this, database, null);
+                } else {
+
+                    String databasePart = "";
+
+                    if (catalog != null) {
+
+                        if (!catalog.equals("")) {
+                            databasePart = " FROM " + catalog;
+                        }
+                    } else {
+                        databasePart = " FROM " + this.database;
+                    }
+
+                    stmt = this.conn.createStatement();
+                    fkresults = stmt.executeQuery(
+                                        "show table status " + databasePart);
+                }
 
                 // lower-case table name might be turned on
                 String tableNameWithCase = getTableNameWithCase(table);
@@ -1549,8 +1750,8 @@ public class DatabaseMetaData
                     String tableType = fkresults.getString("Type");
 
                     if (tableType != null
-                        && (tableType.equalsIgnoreCase("innodb")
-                            || tableType.equalsIgnoreCase(ForeignKeyUtil.SUPPORTS_FK))) {
+                        && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(
+                                                                            ForeignKeyUtil.SUPPORTS_FK))) {
 
                         String comment = fkresults.getString("Comment").trim();
 
@@ -1630,6 +1831,7 @@ public class DatabaseMetaData
                     try {
                         stmt.close();
                     } catch (Exception ex) {
+
                         // ignore
                     }
 
@@ -1642,17 +1844,20 @@ public class DatabaseMetaData
         }
     }
 
-	private String getTableNameWithCase(String table) {
-		String tableNameWithCase = 
-		    (this.conn.lowerCaseTableNames() ? table.toLowerCase() : table);
-		return tableNameWithCase;
-	}
+    private String getTableNameWithCase(String table) {
+
+        String tableNameWithCase = (this.conn.lowerCaseTableNames()
+                                        ? table.toLowerCase() : table);
+
+        return tableNameWithCase;
+    }
 
     /**
-     * Get all the "extra" characters that can be used in unquoted
-     * identifier names (those beyond a-z, 0-9 and _).
-     *
+     * Get all the "extra" characters that can be used in unquoted identifier
+     * names (those beyond a-z, 0-9 and _).
+     * 
      * @return the string containing the extra characters
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getExtraNameCharacters()
                                   throws java.sql.SQLException {
@@ -1661,12 +1866,12 @@ public class DatabaseMetaData
     }
 
     /**
-     * What's the string used to quote SQL identifiers?
-     * This returns a space " " if identifier quoting isn't supported.
-     *
-     * A JDBC compliant driver always uses a double quote character.
-     *
+     * What's the string used to quote SQL identifiers? This returns a space "
+     * " if identifier quoting isn't supported. A JDBC compliant driver
+     * always uses a double quote character.
+     * 
      * @return the quoting string
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getIdentifierQuoteString()
                                     throws java.sql.SQLException {
@@ -1687,55 +1892,96 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get a description of the primary key columns that are
-     * referenced by a table's foreign key columns (the primary keys
-     * imported by a table).  They are ordered by PKTABLE_CAT,
-     * PKTABLE_SCHEM, PKTABLE_NAME, and KEY_SEQ.
-     *
-     * <P>Each primary key column description has the following columns:
-     *  <OL>
-     *    <LI><B>PKTABLE_CAT</B> String => primary key table catalog
-     *      being imported (may be null)
-     *    <LI><B>PKTABLE_SCHEM</B> String => primary key table schema
-     *      being imported (may be null)
-     *    <LI><B>PKTABLE_NAME</B> String => primary key table name
-     *      being imported
-     *    <LI><B>PKCOLUMN_NAME</B> String => primary key column name
-     *      being imported
-     *    <LI><B>FKTABLE_CAT</B> String => foreign key table catalog (may be null)
-     *    <LI><B>FKTABLE_SCHEM</B> String => foreign key table schema (may be null)
-     *    <LI><B>FKTABLE_NAME</B> String => foreign key table name
-     *    <LI><B>FKCOLUMN_NAME</B> String => foreign key column name
-     *    <LI><B>KEY_SEQ</B> short => sequence number within foreign key
-     *    <LI><B>UPDATE_RULE</B> short => What happens to
-     *       foreign key when primary is updated:
-     *      <UL>
-     *      <LI> importedKeyCascade - change imported key to agree
-     *               with primary key update
-     *      <LI> importedKeyRestrict - do not allow update of primary
-     *               key if it has been imported
-     *      <LI> importedKeySetNull - change imported key to NULL if
-     *               its primary key has been updated
-     *      </UL>
-     *    <LI><B>DELETE_RULE</B> short => What happens to
-     *      the foreign key when primary is deleted.
-     *      <UL>
-     *      <LI> importedKeyCascade - delete rows that import a deleted key
-     *      <LI> importedKeyRestrict - do not allow delete of primary
-     *               key if it has been imported
-     *      <LI> importedKeySetNull - change imported key to NULL if
-     *               its primary key has been deleted
-     *      </UL>
-     *    <LI><B>FK_NAME</B> String => foreign key name (may be null)
-     *    <LI><B>PK_NAME</B> String => primary key name (may be null)
-     *  </OL>
-     *
+     * Get a description of the primary key columns that are referenced by a
+     * table's foreign key columns (the primary keys imported by a table).
+     * They are ordered by PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, and
+     * KEY_SEQ.
+     * 
+     * <P>
+     * Each primary key column description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>PKTABLE_CAT</B> String => primary key table catalog being imported
+     * (may be null)
+     * </li>
+     * <li>
+     * <B>PKTABLE_SCHEM</B> String => primary key table schema being imported
+     * (may be null)
+     * </li>
+     * <li>
+     * <B>PKTABLE_NAME</B> String => primary key table name being imported
+     * </li>
+     * <li>
+     * <B>PKCOLUMN_NAME</B> String => primary key column name being imported
+     * </li>
+     * <li>
+     * <B>FKTABLE_CAT</B> String => foreign key table catalog (may be null)
+     * </li>
+     * <li>
+     * <B>FKTABLE_SCHEM</B> String => foreign key table schema (may be null)
+     * </li>
+     * <li>
+     * <B>FKTABLE_NAME</B> String => foreign key table name
+     * </li>
+     * <li>
+     * <B>FKCOLUMN_NAME</B> String => foreign key column name
+     * </li>
+     * <li>
+     * <B>KEY_SEQ</B> short => sequence number within foreign key
+     * </li>
+     * <li>
+     * <B>UPDATE_RULE</B> short => What happens to foreign key when primary is
+     * updated:
+     * 
+     * <UL>
+     * <li>
+     * importedKeyCascade - change imported key to agree with primary key
+     * update
+     * </li>
+     * <li>
+     * importedKeyRestrict - do not allow update of primary key if it has been
+     * imported
+     * </li>
+     * <li>
+     * importedKeySetNull - change imported key to NULL if its primary key has
+     * been updated
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>DELETE_RULE</B> short => What happens to the foreign key when
+     * primary is deleted.
+     * 
+     * <UL>
+     * <li>
+     * importedKeyCascade - delete rows that import a deleted key
+     * </li>
+     * <li>
+     * importedKeyRestrict - do not allow delete of primary key if it has been
+     * imported
+     * </li>
+     * <li>
+     * importedKeySetNull - change imported key to NULL if its primary key has
+     * been deleted
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>FK_NAME</B> String => foreign key name (may be null)
+     * </li>
+     * <li>
+     * <B>PK_NAME</B> String => primary key name (may be null)
+     * </li>
+     * </ol>
+     * </p>
+     * 
      * @param catalog a catalog name; "" retrieves those without a catalog
-     * @param schema a schema name pattern; "" retrieves those
-     * without a schema
+     * @param schema a schema name pattern; "" retrieves those without a schema
      * @param table a table name
      * @return ResultSet each row is a primary key column description
      * @see #getExportedKeys
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public java.sql.ResultSet getImportedKeys(String catalog, String schema, 
                                               String table)
@@ -1746,10 +1992,9 @@ public class DatabaseMetaData
             Object[] args = { catalog, schema, table };
             Debug.methodCall(this, "getImportedKeys", args);
         }
-        
+
         if (table == null) {
-                throw new java.sql.SQLException("Table not specified.", 
-                                                "S1009");
+            throw new java.sql.SQLException("Table not specified.", "S1009");
         }
 
         Field[] fields = new Field[14];
@@ -1767,57 +2012,50 @@ public class DatabaseMetaData
         fields[11] = new Field("", "FK_NAME", Types.CHAR, 0);
         fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
         fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
-        
-        
-
 
         if (this.conn.getIO().versionMeetsMinimum(3, 23, 0)) {
 
             Statement stmt = null;
             ResultSet fkresults = null;
-            
+
             try {
+
                 /*
                  * Get foreign key information for table
                  */
-                 
-            if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
-                // we can use 'SHOW CREATE TABLE'
-                String database = this.database;
-                
-                if (catalog != null) {
+                if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
 
-                    if (!catalog.equals("")) {
-                        database = catalog;
+                    // we can use 'SHOW CREATE TABLE'
+                    String database = this.database;
+
+                    if (catalog != null) {
+
+                        if (!catalog.equals("")) {
+                            database = catalog;
+                        }
                     }
-                }
-                
-                fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(this.conn, this, database, table);
-            } else {
-           
-                String databasePart = "";
 
-                if (catalog != null) {
-
-                    if (!catalog.equals("")) {
-                        databasePart = " FROM " + catalog;
-                    }
+                    fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(
+                                        this.conn, this, database, table);
                 } else {
-                    databasePart = " FROM " + this.database;
+
+                    String databasePart = "";
+
+                    if (catalog != null) {
+
+                        if (!catalog.equals("")) {
+                            databasePart = " FROM " + catalog;
+                        }
+                    } else {
+                        databasePart = " FROM " + this.database;
+                    }
+
+                    stmt = this.conn.createStatement();
+                    fkresults = stmt.executeQuery(
+                                        "show table status " + databasePart
+                                        + " like '" + table + "'");
                 }
 
-           
-            
-                stmt = this.conn.createStatement();
-                
-                fkresults = stmt.executeQuery(
-                                    "show table status " + databasePart
-                                    + " like '" + table + "'");
-
-            }
-
-       
-                
                 /*
                 * Parse imported foreign key information
                 */
@@ -1829,8 +2067,8 @@ public class DatabaseMetaData
                     String tableType = fkresults.getString("Type");
 
                     if (tableType != null
-                        && (tableType.equalsIgnoreCase("innodb")
-                            || tableType.equalsIgnoreCase(ForeignKeyUtil.SUPPORTS_FK))) {
+                        && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(
+                                                                            ForeignKeyUtil.SUPPORTS_FK))) {
 
                         String comment = fkresults.getString("Comment").trim();
 
@@ -1908,6 +2146,7 @@ public class DatabaseMetaData
                     try {
                         stmt.close();
                     } catch (Exception ex) {
+
                         // ignore
                     }
 
@@ -1921,54 +2160,93 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get a description of a table's indices and statistics. They are
-     * ordered by NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
-     *
-     * <P>Each index column description has the following columns:
-     *  <OL>
-     *    <LI><B>TABLE_CAT</B> String => table catalog (may be null)
-     *    <LI><B>TABLE_SCHEM</B> String => table schema (may be null)
-     *    <LI><B>TABLE_NAME</B> String => table name
-     *    <LI><B>NON_UNIQUE</B> boolean => Can index values be non-unique?
-     *      false when TYPE is tableIndexStatistic
-     *    <LI><B>INDEX_QUALIFIER</B> String => index catalog (may be null);
-     *      null when TYPE is tableIndexStatistic
-     *    <LI><B>INDEX_NAME</B> String => index name; null when TYPE is
-     *      tableIndexStatistic
-     *    <LI><B>TYPE</B> short => index type:
-     *      <UL>
-     *      <LI> tableIndexStatistic - this identifies table statistics that are
-     *           returned in conjuction with a table's index descriptions
-     *      <LI> tableIndexClustered - this is a clustered index
-     *      <LI> tableIndexHashed - this is a hashed index
-     *      <LI> tableIndexOther - this is some other style of index
-     *      </UL>
-     *    <LI><B>ORDINAL_POSITION</B> short => column sequence number
-     *      within index; zero when TYPE is tableIndexStatistic
-     *    <LI><B>COLUMN_NAME</B> String => column name; null when TYPE is
-     *      tableIndexStatistic
-     *    <LI><B>ASC_OR_DESC</B> String => column sort sequence, "A" => ascending,
-     *      "D" => descending, may be null if sort sequence is not supported;
-     *      null when TYPE is tableIndexStatistic
-     *    <LI><B>CARDINALITY</B> int => When TYPE is tableIndexStatisic then
-     *      this is the number of rows in the table; otherwise it is the
-     *      number of unique values in the index.
-     *    <LI><B>PAGES</B> int => When TYPE is  tableIndexStatisic then
-     *      this is the number of pages used for the table, otherwise it
-     *      is the number of pages used for the current index.
-     *    <LI><B>FILTER_CONDITION</B> String => Filter condition, if any.
-     *      (may be null)
-     *  </OL>
-     *
+     * Get a description of a table's indices and statistics. They are ordered
+     * by NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
+     * 
+     * <P>
+     * Each index column description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>TABLE_CAT</B> String => table catalog (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_SCHEM</B> String => table schema (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_NAME</B> String => table name
+     * </li>
+     * <li>
+     * <B>NON_UNIQUE</B> boolean => Can index values be non-unique? false when
+     * TYPE is tableIndexStatistic
+     * </li>
+     * <li>
+     * <B>INDEX_QUALIFIER</B> String => index catalog (may be null); null when
+     * TYPE is tableIndexStatistic
+     * </li>
+     * <li>
+     * <B>INDEX_NAME</B> String => index name; null when TYPE is
+     * tableIndexStatistic
+     * </li>
+     * <li>
+     * <B>TYPE</B> short => index type:
+     * 
+     * <UL>
+     * <li>
+     * tableIndexStatistic - this identifies table statistics that are
+     * returned in conjuction with a table's index descriptions
+     * </li>
+     * <li>
+     * tableIndexClustered - this is a clustered index
+     * </li>
+     * <li>
+     * tableIndexHashed - this is a hashed index
+     * </li>
+     * <li>
+     * tableIndexOther - this is some other style of index
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>ORDINAL_POSITION</B> short => column sequence number within index;
+     * zero when TYPE is tableIndexStatistic
+     * </li>
+     * <li>
+     * <B>COLUMN_NAME</B> String => column name; null when TYPE is
+     * tableIndexStatistic
+     * </li>
+     * <li>
+     * <B>ASC_OR_DESC</B> String => column sort sequence, "A" => ascending,
+     * "D" => descending, may be null if sort sequence is not supported; null
+     * when TYPE is tableIndexStatistic
+     * </li>
+     * <li>
+     * <B>CARDINALITY</B> int => When TYPE is tableIndexStatisic then this is
+     * the number of rows in the table; otherwise it is the number of unique
+     * values in the index.
+     * </li>
+     * <li>
+     * <B>PAGES</B> int => When TYPE is  tableIndexStatisic then this is the
+     * number of pages used for the table, otherwise it is the number of
+     * pages used for the current index.
+     * </li>
+     * <li>
+     * <B>FILTER_CONDITION</B> String => Filter condition, if any. (may be
+     * null)
+     * </li>
+     * </ol>
+     * </p>
+     * 
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schema a schema name pattern; "" retrieves those without a schema
      * @param table a table name
-     * @param unique when true, return only indices for unique values;
-     *     when false, return indices regardless of whether unique or not
+     * @param unique when true, return only indices for unique values; when
+     *        false, return indices regardless of whether unique or not
      * @param approximate when true, result is allowed to reflect approximate
-     *     or out of data values; when false, results are requested to be
-     *     accurate
+     *        or out of data values; when false, results are requested to be
+     *        accurate
      * @return ResultSet each row is an index column description
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public java.sql.ResultSet getIndexInfo(String catalog, String schema, 
                                            String table, boolean unique, 
@@ -2101,8 +2379,9 @@ public class DatabaseMetaData
 
     /**
      * How many hex characters can you have in an inline binary literal?
-     *
+     * 
      * @return max literal length
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxBinaryLiteralLength()
                                   throws java.sql.SQLException {
@@ -2112,8 +2391,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum length of a catalog name?
-     *
+     * 
      * @return max name length in bytes
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxCatalogNameLength()
                                 throws java.sql.SQLException {
@@ -2123,8 +2403,9 @@ public class DatabaseMetaData
 
     /**
      * What's the max length for a character literal?
-     *
+     * 
      * @return max literal length
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxCharLiteralLength()
                                 throws java.sql.SQLException {
@@ -2134,8 +2415,9 @@ public class DatabaseMetaData
 
     /**
      * What's the limit on column name length?
-     *
+     * 
      * @return max literal length
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxColumnNameLength()
                                throws java.sql.SQLException {
@@ -2145,8 +2427,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum number of columns in a "GROUP BY" clause?
-     *
+     * 
      * @return max number of columns
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxColumnsInGroupBy()
                                throws java.sql.SQLException {
@@ -2156,8 +2439,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum number of columns allowed in an index?
-     *
+     * 
      * @return max columns
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxColumnsInIndex()
                              throws java.sql.SQLException {
@@ -2167,8 +2451,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum number of columns in an "ORDER BY" clause?
-     *
+     * 
      * @return max columns
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxColumnsInOrderBy()
                                throws java.sql.SQLException {
@@ -2178,8 +2463,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum number of columns in a "SELECT" list?
-     *
+     * 
      * @return max columns
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxColumnsInSelect()
                               throws java.sql.SQLException {
@@ -2189,8 +2475,9 @@ public class DatabaseMetaData
 
     /**
      * What's maximum number of columns in a table?
-     *
+     * 
      * @return max columns
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxColumnsInTable()
                              throws java.sql.SQLException {
@@ -2200,8 +2487,9 @@ public class DatabaseMetaData
 
     /**
      * How many active connections can we have at a time to this database?
-     *
+     * 
      * @return max connections
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxConnections()
                           throws java.sql.SQLException {
@@ -2211,8 +2499,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum cursor name length?
-     *
+     * 
      * @return max cursor name length in bytes
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxCursorNameLength()
                                throws java.sql.SQLException {
@@ -2222,8 +2511,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum length of an index (in bytes)?
-     *
+     * 
      * @return max index length in bytes
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxIndexLength()
                           throws java.sql.SQLException {
@@ -2233,8 +2523,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum length of a procedure name?
-     *
+     * 
      * @return max name length in bytes
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxProcedureNameLength()
                                   throws java.sql.SQLException {
@@ -2244,8 +2535,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum length of a single row?
-     *
+     * 
      * @return max row size in bytes
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxRowSize()
                       throws java.sql.SQLException {
@@ -2255,8 +2547,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum length allowed for a schema name?
-     *
+     * 
      * @return max name length in bytes
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxSchemaNameLength()
                                throws java.sql.SQLException {
@@ -2266,8 +2559,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum length of a SQL statement?
-     *
+     * 
      * @return max length in bytes
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxStatementLength()
                               throws java.sql.SQLException {
@@ -2278,8 +2572,9 @@ public class DatabaseMetaData
     /**
      * How many active statements can we have open at one time to this
      * database?
-     *
+     * 
      * @return the maximum
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxStatements()
                          throws java.sql.SQLException {
@@ -2289,8 +2584,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum length of a table name?
-     *
+     * 
      * @return max name length in bytes
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxTableNameLength()
                               throws java.sql.SQLException {
@@ -2300,8 +2596,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum number of tables in a SELECT?
-     *
+     * 
      * @return the maximum
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxTablesInSelect()
                              throws java.sql.SQLException {
@@ -2311,8 +2608,9 @@ public class DatabaseMetaData
 
     /**
      * What's the maximum length of a user name?
-     *
+     * 
      * @return max name length  in bytes
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public int getMaxUserNameLength()
                              throws java.sql.SQLException {
@@ -2322,34 +2620,52 @@ public class DatabaseMetaData
 
     /**
      * Get a comma separated list of math functions.
-     *
+     * 
      * @return the list
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getNumericFunctions()
                                throws java.sql.SQLException {
 
-        return "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE";
+        return "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,"
+            + "COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,"
+            + "POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE";
     }
 
     /**
-     * Get a description of a table's primary key columns.  They
-     * are ordered by COLUMN_NAME.
-     *
-     * <P>Each column description has the following columns:
-     *  <OL>
-     *    <LI><B>TABLE_CAT</B> String => table catalog (may be null)
-     *    <LI><B>TABLE_SCHEM</B> String => table schema (may be null)
-     *    <LI><B>TABLE_NAME</B> String => table name
-     *    <LI><B>COLUMN_NAME</B> String => column name
-     *    <LI><B>KEY_SEQ</B> short => sequence number within primary key
-     *    <LI><B>PK_NAME</B> String => primary key name (may be null)
-     *  </OL>
-     *
+     * Get a description of a table's primary key columns.  They are ordered
+     * by COLUMN_NAME.
+     * 
+     * <P>
+     * Each column description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>TABLE_CAT</B> String => table catalog (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_SCHEM</B> String => table schema (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_NAME</B> String => table name
+     * </li>
+     * <li>
+     * <B>COLUMN_NAME</B> String => column name
+     * </li>
+     * <li>
+     * <B>KEY_SEQ</B> short => sequence number within primary key
+     * </li>
+     * <li>
+     * <B>PK_NAME</B> String => primary key name (may be null)
+     * </li>
+     * </ol>
+     * </p>
+     * 
      * @param catalog a catalog name; "" retrieves those without a catalog
-     * @param schema a schema name pattern; "" retrieves those
-     * without a schema
+     * @param schema a schema name pattern; "" retrieves those without a schema
      * @param table a table name
      * @return ResultSet each row is a primary key column description
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, 
                                              String table)
@@ -2446,58 +2762,112 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get a description of a catalog's stored procedure parameters
-     * and result columns.
-     *
-     * <P>Only descriptions matching the schema, procedure and
-     * parameter name criteria are returned.  They are ordered by
-     * PROCEDURE_SCHEM and PROCEDURE_NAME. Within this, the return value,
-     * if any, is first. Next are the parameter descriptions in call
-     * order. The column descriptions follow in column number order.
-     *
-     * <P>Each row in the ResultSet is a parameter desription or
-     * column description with the following fields:
-     *  <OL>
-     *    <LI><B>PROCEDURE_CAT</B> String => procedure catalog (may be null)
-     *    <LI><B>PROCEDURE_SCHEM</B> String => procedure schema (may be null)
-     *    <LI><B>PROCEDURE_NAME</B> String => procedure name
-     *    <LI><B>COLUMN_NAME</B> String => column/parameter name
-     *    <LI><B>COLUMN_TYPE</B> Short => kind of column/parameter:
-     *      <UL>
-     *      <LI> procedureColumnUnknown - nobody knows
-     *      <LI> procedureColumnIn - IN parameter
-     *      <LI> procedureColumnInOut - INOUT parameter
-     *      <LI> procedureColumnOut - OUT parameter
-     *      <LI> procedureColumnReturn - procedure return value
-     *      <LI> procedureColumnResult - result column in ResultSet
-     *      </UL>
-     *  <LI><B>DATA_TYPE</B> short => SQL type from java.sql.Types
-     *    <LI><B>TYPE_NAME</B> String => SQL type name
-     *    <LI><B>PRECISION</B> int => precision
-     *    <LI><B>LENGTH</B> int => length in bytes of data
-     *    <LI><B>SCALE</B> short => scale
-     *    <LI><B>RADIX</B> short => radix
-     *    <LI><B>NULLABLE</B> short => can it contain NULL?
-     *      <UL>
-     *      <LI> procedureNoNulls - does not allow NULL values
-     *      <LI> procedureNullable - allows NULL values
-     *      <LI> procedureNullableUnknown - nullability unknown
-     *      </UL>
-     *    <LI><B>REMARKS</B> String => comment describing parameter/column
-     *  </OL>
-     *
-     * <P><B>Note:</B> Some databases may not return the column
-     * descriptions for a procedure. Additional columns beyond
-     * REMARKS can be defined by the database.
-     *
+     * Get a description of a catalog's stored procedure parameters and result
+     * columns.
+     * 
+     * <P>
+     * Only descriptions matching the schema, procedure and parameter name
+     * criteria are returned.  They are ordered by PROCEDURE_SCHEM and
+     * PROCEDURE_NAME. Within this, the return value, if any, is first. Next
+     * are the parameter descriptions in call order. The column descriptions
+     * follow in column number order.
+     * </p>
+     * 
+     * <P>
+     * Each row in the ResultSet is a parameter desription or column
+     * description with the following fields:
+     * 
+     * <OL>
+     * <li>
+     * <B>PROCEDURE_CAT</B> String => procedure catalog (may be null)
+     * </li>
+     * <li>
+     * <B>PROCEDURE_SCHEM</B> String => procedure schema (may be null)
+     * </li>
+     * <li>
+     * <B>PROCEDURE_NAME</B> String => procedure name
+     * </li>
+     * <li>
+     * <B>COLUMN_NAME</B> String => column/parameter name
+     * </li>
+     * <li>
+     * <B>COLUMN_TYPE</B> Short => kind of column/parameter:
+     * 
+     * <UL>
+     * <li>
+     * procedureColumnUnknown - nobody knows
+     * </li>
+     * <li>
+     * procedureColumnIn - IN parameter
+     * </li>
+     * <li>
+     * procedureColumnInOut - INOUT parameter
+     * </li>
+     * <li>
+     * procedureColumnOut - OUT parameter
+     * </li>
+     * <li>
+     * procedureColumnReturn - procedure return value
+     * </li>
+     * <li>
+     * procedureColumnResult - result column in ResultSet
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>DATA_TYPE</B> short => SQL type from java.sql.Types
+     * </li>
+     * <li>
+     * <B>TYPE_NAME</B> String => SQL type name
+     * </li>
+     * <li>
+     * <B>PRECISION</B> int => precision
+     * </li>
+     * <li>
+     * <B>LENGTH</B> int => length in bytes of data
+     * </li>
+     * <li>
+     * <B>SCALE</B> short => scale
+     * </li>
+     * <li>
+     * <B>RADIX</B> short => radix
+     * </li>
+     * <li>
+     * <B>NULLABLE</B> short => can it contain NULL?
+     * 
+     * <UL>
+     * <li>
+     * procedureNoNulls - does not allow NULL values
+     * </li>
+     * <li>
+     * procedureNullable - allows NULL values
+     * </li>
+     * <li>
+     * procedureNullableUnknown - nullability unknown
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>REMARKS</B> String => comment describing parameter/column
+     * </li>
+     * </ol>
+     * </p>
+     * 
+     * <P>
+     * <B>Note:</B> Some databases may not return the column descriptions for
+     * a procedure. Additional columns beyond REMARKS can be defined by the
+     * database.
+     * </p>
+     * 
      * @param catalog a catalog name; "" retrieves those without a catalog
-     * @param schemaPattern a schema name pattern; "" retrieves those
-     * without a schema
+     * @param schemaPattern a schema name pattern; "" retrieves those without
+     *        a schema
      * @param procedureNamePattern a procedure name pattern
      * @param columnNamePattern a column name pattern
-     * @return ResultSet each row is a stored procedure parameter or
-     *      column description
+     * @return ResultSet each row is a stored procedure parameter or column
+     *         description
      * @see #getSearchStringEscape
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public java.sql.ResultSet getProcedureColumns(String catalog, 
                                                   String schemaPattern, 
@@ -2526,8 +2896,9 @@ public class DatabaseMetaData
 
     /**
      * What's the database vendor's preferred term for "procedure"?
-     *
+     * 
      * @return the vendor term
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getProcedureTerm()
                             throws java.sql.SQLException {
@@ -2536,36 +2907,64 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get a description of stored procedures available in a
-     * catalog.
-     *
-     * <P>Only procedure descriptions matching the schema and
-     * procedure name criteria are returned.  They are ordered by
-     * PROCEDURE_SCHEM, and PROCEDURE_NAME.
-     *
-     * <P>Each procedure description has the the following columns:
-     *  <OL>
-     *    <LI><B>PROCEDURE_CAT</B> String => procedure catalog (may be null)
-     *    <LI><B>PROCEDURE_SCHEM</B> String => procedure schema (may be null)
-     *    <LI><B>PROCEDURE_NAME</B> String => procedure name
-     *  <LI> reserved for future use
-     *  <LI> reserved for future use
-     *  <LI> reserved for future use
-     *    <LI><B>REMARKS</B> String => explanatory comment on the procedure
-     *    <LI><B>PROCEDURE_TYPE</B> short => kind of procedure:
-     *      <UL>
-     *      <LI> procedureResultUnknown - May return a result
-     *      <LI> procedureNoResult - Does not return a result
-     *      <LI> procedureReturnsResult - Returns a result
-     *      </UL>
-     *  </OL>
-     *
+     * Get a description of stored procedures available in a catalog.
+     * 
+     * <P>
+     * Only procedure descriptions matching the schema and procedure name
+     * criteria are returned.  They are ordered by PROCEDURE_SCHEM, and
+     * PROCEDURE_NAME.
+     * </p>
+     * 
+     * <P>
+     * Each procedure description has the the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>PROCEDURE_CAT</B> String => procedure catalog (may be null)
+     * </li>
+     * <li>
+     * <B>PROCEDURE_SCHEM</B> String => procedure schema (may be null)
+     * </li>
+     * <li>
+     * <B>PROCEDURE_NAME</B> String => procedure name
+     * </li>
+     * <li>
+     * reserved for future use
+     * </li>
+     * <li>
+     * reserved for future use
+     * </li>
+     * <li>
+     * reserved for future use
+     * </li>
+     * <li>
+     * <B>REMARKS</B> String => explanatory comment on the procedure
+     * </li>
+     * <li>
+     * <B>PROCEDURE_TYPE</B> short => kind of procedure:
+     * 
+     * <UL>
+     * <li>
+     * procedureResultUnknown - May return a result
+     * </li>
+     * <li>
+     * procedureNoResult - Does not return a result
+     * </li>
+     * <li>
+     * procedureReturnsResult - Returns a result
+     * </li>
+     * </ul>
+     * </li>
+     * </ol>
+     * </p>
+     * 
      * @param catalog a catalog name; "" retrieves those without a catalog
-     * @param schemaPattern a schema name pattern; "" retrieves those
-     * without a schema
+     * @param schemaPattern a schema name pattern; "" retrieves those without
+     *        a schema
      * @param procedureNamePattern a procedure name pattern
      * @return ResultSet each row is a procedure description
      * @see #getSearchStringEscape
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public java.sql.ResultSet getProcedures(String catalog, 
                                             String schemaPattern, 
@@ -2587,8 +2986,9 @@ public class DatabaseMetaData
 
     /**
      * Is the database in read-only mode?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean isReadOnly()
                        throws java.sql.SQLException {
@@ -2606,10 +3006,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get a comma separated list of all a database's SQL keywords
-     * that are NOT also SQL92 keywords.
-     *
+     * Get a comma separated list of all a database's SQL keywords that are
+     * NOT also SQL92 keywords.
+     * 
      * @return the list
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getSQLKeywords()
                           throws java.sql.SQLException {
@@ -2628,8 +3029,9 @@ public class DatabaseMetaData
 
     /**
      * What's the database vendor's preferred term for "schema"?
-     *
+     * 
      * @return the vendor term
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getSchemaTerm()
                          throws java.sql.SQLException {
@@ -2638,16 +3040,22 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get the schema names available in this database.  The results
-     * are ordered by schema name.
-     *
-     * <P>The schema column is:
-     *  <OL>
-     *    <LI><B>TABLE_SCHEM</B> String => schema name
-     *  </OL>
-     *
-     * @return ResultSet each row has a single String column that is a
-     * schema name
+     * Get the schema names available in this database.  The results are
+     * ordered by schema name.
+     * 
+     * <P>
+     * The schema column is:
+     * 
+     * <OL>
+     * <li>
+     * <B>TABLE_SCHEM</B> String => schema name
+     * </li>
+     * </ol>
+     * </p>
+     * 
+     * @return ResultSet each row has a single String column that is a schema
+     *         name
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public java.sql.ResultSet getSchemas()
                                   throws java.sql.SQLException {
@@ -2662,13 +3070,19 @@ public class DatabaseMetaData
     }
 
     /**
-     * This is the string that can be used to escape '_' or '%' in
-     * the string pattern style catalog search parameters.
-     *
-     * <P>The '_' character represents any single character.
-     * <P>The '%' character represents any sequence of zero or
-     * more characters.
+     * This is the string that can be used to escape '_' or '%' in the string
+     * pattern style catalog search parameters.
+     * 
+     * <P>
+     * The '_' character represents any single character.
+     * </p>
+     * 
+     * <P>
+     * The '%' character represents any sequence of zero or more characters.
+     * </p>
+     * 
      * @return the string used to escape wildcard characters
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getSearchStringEscape()
                                  throws java.sql.SQLException {
@@ -2678,13 +3092,20 @@ public class DatabaseMetaData
 
     /**
      * Get a comma separated list of string functions.
-     *
+     * 
      * @return the list
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getStringFunctions()
                               throws java.sql.SQLException {
 
-        return "ACII,CHAR,CHAR_LENGTH,CHARACTER_LENGTH,CONCAT,ELT,FIELD,FIND_IN_SET,INSERT,INSTR,INTERVAL,LCASE,LEFT,LENGTH,LOCATE,LOWER,LTRIM,MID,POSITION,OCTET_LENGTH,REPEAT,REPLACE,REVEresultsE,RIGHT,RTRIM,SPACE,SOUNDEX,SUBSTRING,SUBSTRING_INDEX,TRIM,UCASE,UPPER";
+        return "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,"
+            + "CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
+            + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,"
+            + "LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
+            + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,"
+            + "SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
+            + "SUBSTRING_INDEX,TRIM,UCASE,UPPER";
     }
 
     /**
@@ -2723,8 +3144,9 @@ public class DatabaseMetaData
 
     /**
      * Get a comma separated list of system functions.
-     *
+     * 
      * @return the list
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getSystemFunctions()
                               throws java.sql.SQLException {
@@ -2733,33 +3155,54 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get a description of the access rights for each table available
-     * in a catalog.
-     *
-     * <P>Only privileges matching the schema and table name
-     * criteria are returned.  They are ordered by TABLE_SCHEM,
-     * TABLE_NAME, and PRIVILEGE.
-     *
-     * <P>Each privilige description has the following columns:
-     *  <OL>
-     *    <LI><B>TABLE_CAT</B> String => table catalog (may be null)
-     *    <LI><B>TABLE_SCHEM</B> String => table schema (may be null)
-     *    <LI><B>TABLE_NAME</B> String => table name
-     *    <LI><B>COLUMN_NAME</B> String => column name
-     *    <LI><B>GRANTOR</B> => grantor of access (may be null)
-     *    <LI><B>GRANTEE</B> String => grantee of access
-     *    <LI><B>PRIVILEGE</B> String => name of access (SELECT,
-     *      INSERT, UPDATE, REFRENCES, ...)
-     *    <LI><B>IS_GRANTABLE</B> String => "YES" if grantee is permitted
-     *      to grant to others; "NO" if not; null if unknown
-     *  </OL>
-     *
+     * Get a description of the access rights for each table available in a
+     * catalog.
+     * 
+     * <P>
+     * Only privileges matching the schema and table name criteria are
+     * returned.  They are ordered by TABLE_SCHEM, TABLE_NAME, and PRIVILEGE.
+     * </p>
+     * 
+     * <P>
+     * Each privilige description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>TABLE_CAT</B> String => table catalog (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_SCHEM</B> String => table schema (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_NAME</B> String => table name
+     * </li>
+     * <li>
+     * <B>COLUMN_NAME</B> String => column name
+     * </li>
+     * <li>
+     * <B>GRANTOR</B> => grantor of access (may be null)
+     * </li>
+     * <li>
+     * <B>GRANTEE</B> String => grantee of access
+     * </li>
+     * <li>
+     * <B>PRIVILEGE</B> String => name of access (SELECT, INSERT, UPDATE,
+     * REFRENCES, ...)
+     * </li>
+     * <li>
+     * <B>IS_GRANTABLE</B> String => "YES" if grantee is permitted to grant to
+     * others; "NO" if not; null if unknown
+     * </li>
+     * </ol>
+     * </p>
+     * 
      * @param catalog a catalog name; "" retrieves those without a catalog
-     * @param schemaPattern a schema name pattern; "" retrieves those
-     * without a schema
+     * @param schemaPattern a schema name pattern; "" retrieves those without
+     *        a schema
      * @param tableNamePattern a table name pattern
      * @return ResultSet each row is a table privilege description
      * @see #getSearchStringEscape
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public java.sql.ResultSet getTablePrivileges(String catalog, 
                                                  String schemaPattern, 
@@ -2897,18 +3340,24 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get the table types available in this database.  The results
-     * are ordered by table type.
-     *
-     * <P>The table type is:
-     *  <OL>
-     *    <LI><B>TABLE_TYPE</B> String => table type.  Typical types are "TABLE",
-     *                    "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY",
-     *                    "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
-     *  </OL>
-     *
-     * @return ResultSet each row has a single String column that is a
-     * table type
+     * Get the table types available in this database.  The results are
+     * ordered by table type.
+     * 
+     * <P>
+     * The table type is:
+     * 
+     * <OL>
+     * <li>
+     * <B>TABLE_TYPE</B> String => table type.  Typical types are "TABLE",
+     * "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY",
+     * "ALIAS", "SYNONYM".
+     * </li>
+     * </ol>
+     * </p>
+     * 
+     * @return ResultSet each row has a single String column that is a table
+     *         type
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public java.sql.ResultSet getTableTypes()
                                      throws java.sql.SQLException {
@@ -2930,31 +3379,48 @@ public class DatabaseMetaData
 
     /**
      * Get a description of tables available in a catalog.
-     *
-     * <P>Only table descriptions matching the catalog, schema, table
-     * name and type criteria are returned.  They are ordered by
-     * TABLE_TYPE, TABLE_SCHEM and TABLE_NAME.
-     *
-     * <P>Each table description has the following columns:
-     *  <OL>
-     *    <LI><B>TABLE_CAT</B> String => table catalog (may be null)
-     *    <LI><B>TABLE_SCHEM</B> String => table schema (may be null)
-     *    <LI><B>TABLE_NAME</B> String => table name
-     *    <LI><B>TABLE_TYPE</B> String => table type.  Typical types are "TABLE",
-     *                    "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY",
-     *                    "LOCAL TEMPORARY", "ALIAS", "SYNONYM".
-     *    <LI><B>REMARKS</B> String => explanatory comment on the table
-     *  </OL>
-     *
-     * <P><B>Note:</B> Some databases may not return information for
-     * all tables.
-     *
+     * 
+     * <P>
+     * Only table descriptions matching the catalog, schema, table name and
+     * type criteria are returned.  They are ordered by TABLE_TYPE,
+     * TABLE_SCHEM and TABLE_NAME.
+     * </p>
+     * 
+     * <P>
+     * Each table description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>TABLE_CAT</B> String => table catalog (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_SCHEM</B> String => table schema (may be null)
+     * </li>
+     * <li>
+     * <B>TABLE_NAME</B> String => table name
+     * </li>
+     * <li>
+     * <B>TABLE_TYPE</B> String => table type.  Typical types are "TABLE",
+     * "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY",
+     * "ALIAS", "SYNONYM".
+     * </li>
+     * <li>
+     * <B>REMARKS</B> String => explanatory comment on the table
+     * </li>
+     * </ol>
+     * </p>
+     * 
+     * <P>
+     * <B>Note:</B> Some databases may not return information for all tables.
+     * </p>
+     * 
      * @param catalog a catalog name; "" retrieves those without a catalog
-     * @param schemaPattern a schema name pattern; "" retrieves those
-     * without a schema
+     * @param schemaPattern a schema name pattern; "" retrieves those without
+     *        a schema
      * @param tableNamePattern a table name pattern
      * @param types a list of table types to include; null returns all types
      * @return ResultSet each row is a table description
+     * @throws java.sql.SQLException DOCUMENT ME!
      * @see #getSearchStringEscape
      */
     public java.sql.ResultSet getTables(String catalog, String schemaPattern, 
@@ -3044,105 +3510,223 @@ public class DatabaseMetaData
 
     /**
      * Get a comma separated list of time and date functions.
-     *
+     * 
      * @return the list
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getTimeDateFunctions()
                                 throws java.sql.SQLException {
 
-        return "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,SEC_TO_TIME,TIME_TO_SEC";
+        return "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,"
+        +       "MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD," 
+        +       "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,"
+        +       "CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
+        +       "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,"
+        +       "SEC_TO_TIME,TIME_TO_SEC";
     }
 
     /**
-     * Get a description of all the standard SQL types supported by
-     * this database. They are ordered by DATA_TYPE and then by how
-     * closely the data type maps to the corresponding JDBC SQL type.
-     *
-     * <P>Each type description has the following columns:
-     *  <OL>
-     *    <LI><B>TYPE_NAME</B> String => Type name
-     *    <LI><B>DATA_TYPE</B> short => SQL data type from java.sql.Types
-     *    <LI><B>PRECISION</B> int => maximum precision
-     *    <LI><B>LITERAL_PREFIX</B> String => prefix used to quote a literal
-     *      (may be null)
-     *    <LI><B>LITERAL_SUFFIX</B> String => suffix used to quote a literal
-     (may be null)
-     *    <LI><B>CREATE_PARAMS</B> String => parameters used in creating
-     *      the type (may be null)
-     *    <LI><B>NULLABLE</B> short => can you use NULL for this type?
-     *      <UL>
-     *      <LI> typeNoNulls - does not allow NULL values
-     *      <LI> typeNullable - allows NULL values
-     *      <LI> typeNullableUnknown - nullability unknown
-     *      </UL>
-     *    <LI><B>CASE_SENSITIVE</B> boolean=> is it case sensitive?
-     *    <LI><B>SEARCHABLE</B> short => can you use "WHERE" based on this type:
-     *      <UL>
-     *      <LI> typePredNone - No support
-     *      <LI> typePredChar - Only supported with WHERE .. LIKE
-     *      <LI> typePredBasic - Supported except for WHERE .. LIKE
-     *      <LI> typeSearchable - Supported for all WHERE ..
-     *      </UL>
-     *    <LI><B>UNSIGNED_ATTRIBUTE</B> boolean => is it unsigned?
-     *    <LI><B>FIXED_PREC_SCALE</B> boolean => can it be a money value?
-     *    <LI><B>AUTO_INCREMENT</B> boolean => can it be used for an
-     *      auto-increment value?
-     *    <LI><B>LOCAL_TYPE_NAME</B> String => localized version of type name
-     *      (may be null)
-     *    <LI><B>MINIMUM_SCALE</B> short => minimum scale supported
-     *    <LI><B>MAXIMUM_SCALE</B> short => maximum scale supported
-     *    <LI><B>SQL_DATA_TYPE</B> int => unused
-     *    <LI><B>SQL_DATETIME_SUB</B> int => unused
-     *    <LI><B>NUM_PREC_RADIX</B> int => usually 2 or 10
-     *  </OL>
-     *
+     * Get a description of all the standard SQL types supported by this
+     * database. They are ordered by DATA_TYPE and then by how closely the
+     * data type maps to the corresponding JDBC SQL type.
+     * 
+     * <P>
+     * Each type description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>TYPE_NAME</B> String => Type name
+     * </li>
+     * <li>
+     * <B>DATA_TYPE</B> short => SQL data type from java.sql.Types
+     * </li>
+     * <li>
+     * <B>PRECISION</B> int => maximum precision
+     * </li>
+     * <li>
+     * <B>LITERAL_PREFIX</B> String => prefix used to quote a literal (may be
+     * null)
+     * </li>
+     * <li>
+     * <B>LITERAL_SUFFIX</B> String => suffix used to quote a literal (may be
+     * null)
+     * </li>
+     * <li>
+     * <B>CREATE_PARAMS</B> String => parameters used in creating the type
+     * (may be null)
+     * </li>
+     * <li>
+     * <B>NULLABLE</B> short => can you use NULL for this type?
+     * 
+     * <UL>
+     * <li>
+     * typeNoNulls - does not allow NULL values
+     * </li>
+     * <li>
+     * typeNullable - allows NULL values
+     * </li>
+     * <li>
+     * typeNullableUnknown - nullability unknown
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>CASE_SENSITIVE</B> boolean=> is it case sensitive?
+     * </li>
+     * <li>
+     * <B>SEARCHABLE</B> short => can you use "WHERE" based on this type:
+     * 
+     * <UL>
+     * <li>
+     * typePredNone - No support
+     * </li>
+     * <li>
+     * typePredChar - Only supported with WHERE .. LIKE
+     * </li>
+     * <li>
+     * typePredBasic - Supported except for WHERE .. LIKE
+     * </li>
+     * <li>
+     * typeSearchable - Supported for all WHERE ..
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>UNSIGNED_ATTRIBUTE</B> boolean => is it unsigned?
+     * </li>
+     * <li>
+     * <B>FIXED_PREC_SCALE</B> boolean => can it be a money value?
+     * </li>
+     * <li>
+     * <B>AUTO_INCREMENT</B> boolean => can it be used for an auto-increment
+     * value?
+     * </li>
+     * <li>
+     * <B>LOCAL_TYPE_NAME</B> String => localized version of type name (may be
+     * null)
+     * </li>
+     * <li>
+     * <B>MINIMUM_SCALE</B> short => minimum scale supported
+     * </li>
+     * <li>
+     * <B>MAXIMUM_SCALE</B> short => maximum scale supported
+     * </li>
+     * <li>
+     * <B>SQL_DATA_TYPE</B> int => unused
+     * </li>
+     * <li>
+     * <B>SQL_DATETIME_SUB</B> int => unused
+     * </li>
+     * <li>
+     * <B>NUM_PREC_RADIX</B> int => usually 2 or 10
+     * </li>
+     * </ol>
+     * </p>
+     * 
      * @return ResultSet each row is a SQL type description
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     /**
-    * Get a description of all the standard SQL types supported by
-    * this database. They are ordered by DATA_TYPE and then by how
-    * closely the data type maps to the corresponding JDBC SQL type.
-    *
-    * <P>Each type description has the following columns:
-    *  <OL>
-    *    <LI><B>TYPE_NAME</B> String => Type name
-    *    <LI><B>DATA_TYPE</B> short => SQL data type from java.sql.Types
-    *    <LI><B>PRECISION</B> int => maximum precision
-    *    <LI><B>LITERAL_PREFIX</B> String => prefix used to quote a literal
-    *      (may be null)
-    *    <LI><B>LITERAL_SUFFIX</B> String => suffix used to quote a literal
-    (may be null)
-    *    <LI><B>CREATE_PARAMS</B> String => parameters used in creating
-    *      the type (may be null)
-    *    <LI><B>NULLABLE</B> short => can you use NULL for this type?
-    *      <UL>
-    *      <LI> typeNoNulls - does not allow NULL values
-    *      <LI> typeNullable - allows NULL values
-    *      <LI> typeNullableUnknown - nullability unknown
-    *      </UL>
-    *    <LI><B>CASE_SENSITIVE</B> boolean=> is it case sensitive?
-    *    <LI><B>SEARCHABLE</B> short => can you use "WHERE" based on this type:
-    *      <UL>
-    *      <LI> typePredNone - No support
-    *      <LI> typePredChar - Only supported with WHERE .. LIKE
-    *      <LI> typePredBasic - Supported except for WHERE .. LIKE
-    *      <LI> typeSearchable - Supported for all WHERE ..
-    *      </UL>
-    *    <LI><B>UNSIGNED_ATTRIBUTE</B> boolean => is it unsigned?
-    *    <LI><B>FIXED_PREC_SCALE</B> boolean => can it be a money value?
-    *    <LI><B>AUTO_INCREMENT</B> boolean => can it be used for an
-    *      auto-increment value?
-    *    <LI><B>LOCAL_TYPE_NAME</B> String => localized version of type name
-    *      (may be null)
-    *    <LI><B>MINIMUM_SCALE</B> short => minimum scale supported
-    *    <LI><B>MAXIMUM_SCALE</B> short => maximum scale supported
-    *    <LI><B>SQL_DATA_TYPE</B> int => unused
-    *    <LI><B>SQL_DATETIME_SUB</B> int => unused
-    *    <LI><B>NUM_PREC_RADIX</B> int => usually 2 or 10
-    *  </OL>
-    *
-    * @return ResultSet each row is a SQL type description
-    */
+     * Get a description of all the standard SQL types supported by this
+     * database. They are ordered by DATA_TYPE and then by how closely the
+     * data type maps to the corresponding JDBC SQL type.
+     * 
+     * <P>
+     * Each type description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>TYPE_NAME</B> String => Type name
+     * </li>
+     * <li>
+     * <B>DATA_TYPE</B> short => SQL data type from java.sql.Types
+     * </li>
+     * <li>
+     * <B>PRECISION</B> int => maximum precision
+     * </li>
+     * <li>
+     * <B>LITERAL_PREFIX</B> String => prefix used to quote a literal (may be
+     * null)
+     * </li>
+     * <li>
+     * <B>LITERAL_SUFFIX</B> String => suffix used to quote a literal (may be
+     * null)
+     * </li>
+     * <li>
+     * <B>CREATE_PARAMS</B> String => parameters used in creating the type
+     * (may be null)
+     * </li>
+     * <li>
+     * <B>NULLABLE</B> short => can you use NULL for this type?
+     * 
+     * <UL>
+     * <li>
+     * typeNoNulls - does not allow NULL values
+     * </li>
+     * <li>
+     * typeNullable - allows NULL values
+     * </li>
+     * <li>
+     * typeNullableUnknown - nullability unknown
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>CASE_SENSITIVE</B> boolean=> is it case sensitive?
+     * </li>
+     * <li>
+     * <B>SEARCHABLE</B> short => can you use "WHERE" based on this type:
+     * 
+     * <UL>
+     * <li>
+     * typePredNone - No support
+     * </li>
+     * <li>
+     * typePredChar - Only supported with WHERE .. LIKE
+     * </li>
+     * <li>
+     * typePredBasic - Supported except for WHERE .. LIKE
+     * </li>
+     * <li>
+     * typeSearchable - Supported for all WHERE ..
+     * </li>
+     * </ul>
+     * </li>
+     * <li>
+     * <B>UNSIGNED_ATTRIBUTE</B> boolean => is it unsigned?
+     * </li>
+     * <li>
+     * <B>FIXED_PREC_SCALE</B> boolean => can it be a money value?
+     * </li>
+     * <li>
+     * <B>AUTO_INCREMENT</B> boolean => can it be used for an auto-increment
+     * value?
+     * </li>
+     * <li>
+     * <B>LOCAL_TYPE_NAME</B> String => localized version of type name (may be
+     * null)
+     * </li>
+     * <li>
+     * <B>MINIMUM_SCALE</B> short => minimum scale supported
+     * </li>
+     * <li>
+     * <B>MAXIMUM_SCALE</B> short => maximum scale supported
+     * </li>
+     * <li>
+     * <B>SQL_DATA_TYPE</B> int => unused
+     * </li>
+     * <li>
+     * <B>SQL_DATETIME_SUB</B> int => unused
+     * </li>
+     * <li>
+     * <B>NUM_PREC_RADIX</B> int => usually 2 or 10
+     * </li>
+     * </ol>
+     * </p>
+     * 
+     * @return ResultSet each row is a SQL type description
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public java.sql.ResultSet getTypeInfo()
                                    throws java.sql.SQLException {
 
@@ -4267,40 +4851,56 @@ public class DatabaseMetaData
     }
 
     /**
-     * JDBC 2.0
-     *
-     * Get a description of the user-defined types defined in a particular
-     * schema.  Schema specific UDTs may have type JAVA_OBJECT, STRUCT, 
-     * or DISTINCT.
-     *
-     * <P>Only types matching the catalog, schema, type name and type  
-     * criteria are returned.  They are ordered by DATA_TYPE, TYPE_SCHEM 
-     * and TYPE_NAME.  The type name parameter may be a fully qualified 
-     * name.  In this case, the catalog and schemaPattern parameters are
-     * ignored.
-     *
-     * <P>Each type description has the following columns:
-     *  <OL>
-     *    <LI><B>TYPE_CAT</B> String => the type's catalog (may be null)
-     *    <LI><B>TYPE_SCHEM</B> String => type's schema (may be null)
-     *    <LI><B>TYPE_NAME</B> String => type name
-     *  <LI><B>CLASS_NAME</B> String => Java class name
-     *    <LI><B>DATA_TYPE</B> String => type value defined in java.sql.Types.  
-     *  One of JAVA_OBJECT, STRUCT, or DISTINCT
-     *    <LI><B>REMARKS</B> String => explanatory comment on the type
-     *  </OL>
-     *
-     * <P><B>Note:</B> If the driver does not support UDTs then an empty
-     * result set is returned.
-     *
-     * @param catalog a catalog name; "" retrieves those without a
-     * catalog; null means drop catalog name from the selection criteria
-     * @param schemaPattern a schema name pattern; "" retrieves those
-     * without a schema
+     * JDBC 2.0 Get a description of the user-defined types defined in a
+     * particular schema.  Schema specific UDTs may have type JAVA_OBJECT,
+     * STRUCT,  or DISTINCT.
+     * 
+     * <P>
+     * Only types matching the catalog, schema, type name and type   criteria
+     * are returned.  They are ordered by DATA_TYPE, TYPE_SCHEM  and
+     * TYPE_NAME.  The type name parameter may be a fully qualified  name.
+     * In this case, the catalog and schemaPattern parameters are ignored.
+     * </p>
+     * 
+     * <P>
+     * Each type description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>TYPE_CAT</B> String => the type's catalog (may be null)
+     * </li>
+     * <li>
+     * <B>TYPE_SCHEM</B> String => type's schema (may be null)
+     * </li>
+     * <li>
+     * <B>TYPE_NAME</B> String => type name
+     * </li>
+     * <li>
+     * <B>CLASS_NAME</B> String => Java class name
+     * </li>
+     * <li>
+     * <B>DATA_TYPE</B> String => type value defined in java.sql.Types.   One
+     * of JAVA_OBJECT, STRUCT, or DISTINCT
+     * </li>
+     * <li>
+     * <B>REMARKS</B> String => explanatory comment on the type
+     * </li>
+     * </ol>
+     * </p>
+     * 
+     * <P>
+     * <B>Note:</B> If the driver does not support UDTs then an empty result
+     * set is returned.
+     * </p>
+     * 
+     * @param catalog a catalog name; "" retrieves those without a catalog;
+     *        null means drop catalog name from the selection criteria
+     * @param schemaPattern a schema name pattern; "" retrieves those without
+     *        a schema
      * @param typeNamePattern a type name pattern; may be a fully qualified
-     * name
-     * @param types a list of user-named types to include (JAVA_OBJECT, 
-     * STRUCT, or DISTINCT); null returns all types 
+     *        name
+     * @param types a list of user-named types to include (JAVA_OBJECT,
+     *        STRUCT, or DISTINCT); null returns all types
      * @return ResultSet - each row is a type description
      * @exception SQLException if a database-access error occurs.
      */
@@ -4323,8 +4923,9 @@ public class DatabaseMetaData
 
     /**
      * What's the url for this database?
-     *
+     * 
      * @return the url or null if it can't be generated
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getURL()
                   throws java.sql.SQLException {
@@ -4334,8 +4935,9 @@ public class DatabaseMetaData
 
     /**
      * What's our user name as known to the database?
-     *
+     * 
      * @return our database user name
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public String getUserName()
                        throws java.sql.SQLException {
@@ -4384,32 +4986,58 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get a description of a table's columns that are automatically
-     * updated when any value in a row is updated.  They are
-     * unordered.
-     *
-     * <P>Each column description has the following columns:
-     *  <OL>
-     *    <LI><B>SCOPE</B> short => is not used
-     *    <LI><B>COLUMN_NAME</B> String => column name
-     *    <LI><B>DATA_TYPE</B> short => SQL data type from java.sql.Types
-     *    <LI><B>TYPE_NAME</B> String => Data source dependent type name
-     *    <LI><B>COLUMN_SIZE</B> int => precision
-     *    <LI><B>BUFFER_LENGTH</B> int => length of column value in bytes
-     *    <LI><B>DECIMAL_DIGITS</B> short  => scale
-     *    <LI><B>PSEUDO_COLUMN</B> short => is this a pseudo column
-     *      like an Oracle ROWID
-     *      <UL>
-     *      <LI> versionColumnUnknown - may or may not be pseudo column
-     *      <LI> versionColumnNotPseudo - is NOT a pseudo column
-     *      <LI> versionColumnPseudo - is a pseudo column
-     *      </UL>
-     *  </OL>
-     *
+     * Get a description of a table's columns that are automatically updated
+     * when any value in a row is updated.  They are unordered.
+     * 
+     * <P>
+     * Each column description has the following columns:
+     * 
+     * <OL>
+     * <li>
+     * <B>SCOPE</B> short => is not used
+     * </li>
+     * <li>
+     * <B>COLUMN_NAME</B> String => column name
+     * </li>
+     * <li>
+     * <B>DATA_TYPE</B> short => SQL data type from java.sql.Types
+     * </li>
+     * <li>
+     * <B>TYPE_NAME</B> String => Data source dependent type name
+     * </li>
+     * <li>
+     * <B>COLUMN_SIZE</B> int => precision
+     * </li>
+     * <li>
+     * <B>BUFFER_LENGTH</B> int => length of column value in bytes
+     * </li>
+     * <li>
+     * <B>DECIMAL_DIGITS</B> short  => scale
+     * </li>
+     * <li>
+     * <B>PSEUDO_COLUMN</B> short => is this a pseudo column like an Oracle
+     * ROWID
+     * 
+     * <UL>
+     * <li>
+     * versionColumnUnknown - may or may not be pseudo column
+     * </li>
+     * <li>
+     * versionColumnNotPseudo - is NOT a pseudo column
+     * </li>
+     * <li>
+     * versionColumnPseudo - is a pseudo column
+     * </li>
+     * </ul>
+     * </li>
+     * </ol>
+     * </p>
+     * 
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schema a schema name; "" retrieves those without a schema
      * @param table a table name
      * @return ResultSet each row is a column description
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public java.sql.ResultSet getVersionColumns(String catalog, String schema, 
                                                 String table)
@@ -4433,8 +5061,9 @@ public class DatabaseMetaData
     /**
      * Can all the procedures returned by getProcedures be called by the
      * current user?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean allProceduresAreCallable()
                                      throws java.sql.SQLException {
@@ -4443,10 +5072,10 @@ public class DatabaseMetaData
     }
 
     /**
-     * Can all the tables returned by getTable be SELECTed by the
-     * current user?
-     *
+     * Can all the tables returned by getTable be SELECTed by the current user?
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean allTablesAreSelectable()
                                    throws java.sql.SQLException {
@@ -4457,8 +5086,9 @@ public class DatabaseMetaData
     /**
      * Does a data definition statement within a transaction force the
      * transaction to commit?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean dataDefinitionCausesTransactionCommit()
                                                   throws java.sql.SQLException {
@@ -4468,8 +5098,9 @@ public class DatabaseMetaData
 
     /**
      * Is a data definition statement within a transaction ignored?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean dataDefinitionIgnoredInTransactions()
                                                 throws java.sql.SQLException {
@@ -4478,13 +5109,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * JDBC 2.0
-     *
-     * Determine whether or not a visible row delete can be detected by 
-     * calling ResultSet.rowDeleted().  If deletesAreDetected()
-     * returns false, then deleted rows are removed from the result set.
-     *
-     * @param result set type, i.e. ResultSet.TYPE_XXX
+     * JDBC 2.0 Determine whether or not a visible row delete can be detected
+     * by  calling ResultSet.rowDeleted().  If deletesAreDetected() returns
+     * false, then deleted rows are removed from the result set.
+     * 
+     * @param type set type, i.e. ResultSet.TYPE_XXX
      * @return true if changes are detected by the resultset type
      * @exception SQLException if a database-access error occurs.
      */
@@ -4495,10 +5124,10 @@ public class DatabaseMetaData
     }
 
     /**
-     * Did getMaxRowSize() include LONGVARCHAR and LONGVARBINARY
-     * blobs?
-     *
+     * Did getMaxRowSize() include LONGVARCHAR and LONGVARBINARY blobs?
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean doesMaxRowSizeIncludeBlobs()
                                        throws java.sql.SQLException {
@@ -4507,12 +5136,10 @@ public class DatabaseMetaData
     }
 
     /**
-     * JDBC 2.0
-     *
-     * Determine whether or not a visible row insert can be detected
+     * JDBC 2.0 Determine whether or not a visible row insert can be detected
      * by calling ResultSet.rowInserted().
-     *
-     * @param result set type, i.e. ResultSet.TYPE_XXX
+     * 
+     * @param type set type, i.e. ResultSet.TYPE_XXX
      * @return true if changes are detected by the resultset type
      * @exception SQLException if a database-access error occurs.
      */
@@ -4532,11 +5159,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Are concatenations between NULL and non-NULL values NULL?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * Are concatenations between NULL and non-NULL values NULL? A JDBC
+     * compliant driver always returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean nullPlusNonNullIsNull()
                                   throws java.sql.SQLException {
@@ -4546,8 +5173,9 @@ public class DatabaseMetaData
 
     /**
      * Are NULL values sorted at the end regardless of sort order?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean nullsAreSortedAtEnd()
                                 throws java.sql.SQLException {
@@ -4557,8 +5185,9 @@ public class DatabaseMetaData
 
     /**
      * Are NULL values sorted at the start regardless of sort order?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean nullsAreSortedAtStart()
                                   throws java.sql.SQLException {
@@ -4568,8 +5197,9 @@ public class DatabaseMetaData
 
     /**
      * Are NULL values sorted high?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean nullsAreSortedHigh()
                                throws java.sql.SQLException {
@@ -4579,8 +5209,9 @@ public class DatabaseMetaData
 
     /**
      * Are NULL values sorted low?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean nullsAreSortedLow()
                               throws java.sql.SQLException {
@@ -4592,7 +5223,7 @@ public class DatabaseMetaData
      * DOCUMENT ME!
      * 
      * @param type DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
     public boolean othersDeletesAreVisible(int type)
@@ -4605,7 +5236,7 @@ public class DatabaseMetaData
      * DOCUMENT ME!
      * 
      * @param type DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
     public boolean othersInsertsAreVisible(int type)
@@ -4615,11 +5246,9 @@ public class DatabaseMetaData
     }
 
     /**
-     * JDBC 2.0
-     *
-     * Determine whether changes made by others are visible.
-     *
-     * @param result set type, i.e. ResultSet.TYPE_XXX
+     * JDBC 2.0 Determine whether changes made by others are visible.
+     * 
+     * @param type set type, i.e. ResultSet.TYPE_XXX
      * @return true if changes are visible for the result set type
      * @exception SQLException if a database-access error occurs.
      */
@@ -4633,7 +5262,7 @@ public class DatabaseMetaData
      * DOCUMENT ME!
      * 
      * @param type DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
     public boolean ownDeletesAreVisible(int type)
@@ -4646,7 +5275,7 @@ public class DatabaseMetaData
      * DOCUMENT ME!
      * 
      * @param type DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
     public boolean ownInsertsAreVisible(int type)
@@ -4656,11 +5285,9 @@ public class DatabaseMetaData
     }
 
     /**
-     * JDBC 2.0
-     *
-     * Determine whether a result set's own changes visible.
-     *
-     * @param result set type, i.e. ResultSet.TYPE_XXX
+     * JDBC 2.0 Determine whether a result set's own changes visible.
+     * 
+     * @param type set type, i.e. ResultSet.TYPE_XXX
      * @return true if changes are visible for the result set type
      * @exception SQLException if a database-access error occurs.
      */
@@ -4671,10 +5298,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Does the database store mixed case unquoted SQL identifiers in
-     * lower case?
-     *
+     * Does the database store mixed case unquoted SQL identifiers in lower
+     * case?
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean storesLowerCaseIdentifiers()
                                        throws java.sql.SQLException {
@@ -4683,12 +5311,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Does the database store mixed case quoted SQL identifiers in
-     * lower case?
-     *
-     * A JDBC compliant driver will always return false.
-     *
+     * Does the database store mixed case quoted SQL identifiers in lower
+     * case? A JDBC compliant driver will always return false.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean storesLowerCaseQuotedIdentifiers()
                                              throws java.sql.SQLException {
@@ -4697,10 +5324,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Does the database store mixed case unquoted SQL identifiers in
-     * mixed case?
-     *
+     * Does the database store mixed case unquoted SQL identifiers in mixed
+     * case?
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean storesMixedCaseIdentifiers()
                                        throws java.sql.SQLException {
@@ -4709,12 +5337,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Does the database store mixed case quoted SQL identifiers in
-     * mixed case?
-     *
-     * A JDBC compliant driver will always return false.
-     *
+     * Does the database store mixed case quoted SQL identifiers in mixed
+     * case? A JDBC compliant driver will always return false.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean storesMixedCaseQuotedIdentifiers()
                                              throws java.sql.SQLException {
@@ -4723,10 +5350,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Does the database store mixed case unquoted SQL identifiers in
-     * upper case?
-     *
+     * Does the database store mixed case unquoted SQL identifiers in upper
+     * case?
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean storesUpperCaseIdentifiers()
                                        throws java.sql.SQLException {
@@ -4735,12 +5363,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Does the database store mixed case quoted SQL identifiers in
-     * upper case?
-     *
-     * A JDBC compliant driver will always return true.
-     *
+     * Does the database store mixed case quoted SQL identifiers in upper
+     * case? A JDBC compliant driver will always return true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean storesUpperCaseQuotedIdentifiers()
                                              throws java.sql.SQLException {
@@ -4749,11 +5376,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Is the ANSI92 entry level SQL grammar supported?
-     *
-     * All JDBC compliant drivers must return true.
-     *
+     * Is the ANSI92 entry level SQL grammar supported? All JDBC compliant
+     * drivers must return true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsANSI92EntryLevelSQL()
                                         throws java.sql.SQLException {
@@ -4763,8 +5390,9 @@ public class DatabaseMetaData
 
     /**
      * Is the ANSI92 full SQL grammar supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsANSI92FullSQL()
                                   throws java.sql.SQLException {
@@ -4774,8 +5402,9 @@ public class DatabaseMetaData
 
     /**
      * Is the ANSI92 intermediate SQL grammar supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsANSI92IntermediateSQL()
                                           throws java.sql.SQLException {
@@ -4785,8 +5414,9 @@ public class DatabaseMetaData
 
     /**
      * Is "ALTER TABLE" with add column supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsAlterTableWithAddColumn()
                                             throws java.sql.SQLException {
@@ -4796,8 +5426,9 @@ public class DatabaseMetaData
 
     /**
      * Is "ALTER TABLE" with drop column supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsAlterTableWithDropColumn()
                                              throws java.sql.SQLException {
@@ -4806,9 +5437,10 @@ public class DatabaseMetaData
     }
 
     /**
-     * JDBC 2.0
-     *
-     * Return true if the driver supports batch updates, else return false.
+     * JDBC 2.0 Return true if the driver supports batch updates, else return
+     * false.
+     * @return DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
      */
     public boolean supportsBatchUpdates()
                                  throws SQLException {
@@ -4818,8 +5450,9 @@ public class DatabaseMetaData
 
     /**
      * Can a catalog name be used in a data manipulation statement?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCatalogsInDataManipulation()
                                                throws java.sql.SQLException {
@@ -4848,8 +5481,9 @@ public class DatabaseMetaData
 
     /**
      * Can a catalog name be used in a index definition statement?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCatalogsInIndexDefinitions()
                                                throws java.sql.SQLException {
@@ -4859,8 +5493,9 @@ public class DatabaseMetaData
 
     /**
      * Can a catalog name be used in a privilege definition statement?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCatalogsInPrivilegeDefinitions()
         throws java.sql.SQLException {
@@ -4870,8 +5505,9 @@ public class DatabaseMetaData
 
     /**
      * Can a catalog name be used in a procedure call statement?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCatalogsInProcedureCalls()
                                              throws java.sql.SQLException {
@@ -4881,8 +5517,9 @@ public class DatabaseMetaData
 
     /**
      * Can a catalog name be used in a table definition statement?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCatalogsInTableDefinitions()
                                                throws java.sql.SQLException {
@@ -4892,14 +5529,15 @@ public class DatabaseMetaData
 
     /**
      * Is column aliasing supported?
-     *
-     * <P>If so, the SQL AS clause can be used to provide names for
-     * computed columns or to provide alias names for columns as
-     * required.
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * 
+     * <P>
+     * If so, the SQL AS clause can be used to provide names for computed
+     * columns or to provide alias names for columns as required. A JDBC
+     * compliant driver always returns true.
+     * </p>
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsColumnAliasing()
                                    throws java.sql.SQLException {
@@ -4909,8 +5547,9 @@ public class DatabaseMetaData
 
     /**
      * Is the CONVERT function between SQL types supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsConvert()
                             throws java.sql.SQLException {
@@ -4920,11 +5559,12 @@ public class DatabaseMetaData
 
     /**
      * Is CONVERT between the given SQL types supported?
-     *
+     * 
      * @param fromType the type to convert from
      * @param toType the type to convert to
      * @return true if so
      * @see Types
+     * @throws java.sql.SQLException if an error occurs
      */
     public boolean supportsConvert(int fromType, int toType)
                             throws java.sql.SQLException {
@@ -5096,8 +5736,9 @@ public class DatabaseMetaData
 
     /**
      * Is the ODBC Core SQL grammar supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCoreSQLGrammar()
                                    throws java.sql.SQLException {
@@ -5106,11 +5747,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Are correlated subqueries supported?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * Are correlated subqueries supported? A JDBC compliant driver always
+     * returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCorrelatedSubqueries()
                                          throws java.sql.SQLException {
@@ -5119,10 +5760,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Are both data definition and data manipulation statements
-     * within a transaction supported?
-     *
+     * Are both data definition and data manipulation statements within a
+     * transaction supported?
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsDataDefinitionAndDataManipulationTransactions()
         throws java.sql.SQLException {
@@ -5131,10 +5773,10 @@ public class DatabaseMetaData
     }
 
     /**
-     * Are only data manipulation statements within a transaction
-     * supported?
-     *
+     * Are only data manipulation statements within a transaction supported?
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsDataManipulationTransactionsOnly()
         throws java.sql.SQLException {
@@ -5143,12 +5785,12 @@ public class DatabaseMetaData
     }
 
     /**
-     * If table correlation names are supported, are they restricted
-     * to be different from the names of the tables?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * If table correlation names are supported, are they restricted to be
+     * different from the names of the tables? A JDBC compliant driver always
+     * returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsDifferentTableCorrelationNames()
         throws java.sql.SQLException {
@@ -5158,8 +5800,9 @@ public class DatabaseMetaData
 
     /**
      * Are expressions in "ORDER BY" lists supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsExpressionsInOrderBy()
                                          throws java.sql.SQLException {
@@ -5169,8 +5812,9 @@ public class DatabaseMetaData
 
     /**
      * Is the ODBC Extended SQL grammar supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsExtendedSQLGrammar()
                                        throws java.sql.SQLException {
@@ -5180,8 +5824,9 @@ public class DatabaseMetaData
 
     /**
      * Are full nested outer joins supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsFullOuterJoins()
                                    throws java.sql.SQLException {
@@ -5191,6 +5836,7 @@ public class DatabaseMetaData
 
     /**
      * JDBC 3.0
+     * @return DOCUMENT ME!
      */
     public boolean supportsGetGeneratedKeys() {
 
@@ -5199,8 +5845,9 @@ public class DatabaseMetaData
 
     /**
      * Is some form of "GROUP BY" clause supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsGroupBy()
                             throws java.sql.SQLException {
@@ -5209,10 +5856,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Can a "GROUP BY" clause add columns not in the SELECT
-     * provided it specifies all the columns in the SELECT?
-     *
+     * Can a "GROUP BY" clause add columns not in the SELECT provided it
+     * specifies all the columns in the SELECT?
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsGroupByBeyondSelect()
                                         throws java.sql.SQLException {
@@ -5222,8 +5870,9 @@ public class DatabaseMetaData
 
     /**
      * Can a "GROUP BY" clause use columns not in the SELECT?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsGroupByUnrelated()
                                      throws java.sql.SQLException {
@@ -5233,8 +5882,9 @@ public class DatabaseMetaData
 
     /**
      * Is the SQL Integrity Enhancement Facility supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsIntegrityEnhancementFacility()
                                                  throws java.sql.SQLException {
@@ -5243,11 +5893,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Is the escape character in "LIKE" clauses supported?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * Is the escape character in "LIKE" clauses supported? A JDBC compliant
+     * driver always returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsLikeEscapeClause()
                                      throws java.sql.SQLException {
@@ -5256,10 +5906,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Is there limited support for outer joins?  (This will be true
-     * if supportFullOuterJoins is true.)
-     *
+     * Is there limited support for outer joins?  (This will be true if
+     * supportFullOuterJoins is true.)
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsLimitedOuterJoins()
                                       throws java.sql.SQLException {
@@ -5268,11 +5919,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Is the ODBC Minimum SQL grammar supported?
-     *
-     * All JDBC compliant drivers must return true.
-     *
+     * Is the ODBC Minimum SQL grammar supported? All JDBC compliant drivers
+     * must return true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsMinimumSQLGrammar()
                                       throws java.sql.SQLException {
@@ -5282,8 +5933,9 @@ public class DatabaseMetaData
 
     /**
      * Does the database support mixed case unquoted SQL identifiers?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsMixedCaseIdentifiers()
                                          throws java.sql.SQLException {
@@ -5292,11 +5944,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Does the database support mixed case quoted SQL identifiers?
-     *
-     * A JDBC compliant driver will always return true.
-     *
+     * Does the database support mixed case quoted SQL identifiers? A JDBC
+     * compliant driver will always return true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsMixedCaseQuotedIdentifiers()
                                                throws java.sql.SQLException {
@@ -5315,8 +5967,9 @@ public class DatabaseMetaData
 
     /**
      * Are multiple ResultSets from a single execute supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsMultipleResultSets()
                                        throws java.sql.SQLException {
@@ -5327,8 +5980,9 @@ public class DatabaseMetaData
     /**
      * Can we have multiple transactions open at once (on different
      * connections)?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsMultipleTransactions()
                                          throws java.sql.SQLException {
@@ -5346,11 +6000,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Can columns be defined as non-nullable?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * Can columns be defined as non-nullable? A JDBC compliant driver always
+     * returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsNonNullableColumns()
                                        throws java.sql.SQLException {
@@ -5360,9 +6014,10 @@ public class DatabaseMetaData
 
     /**
      * Can cursors remain open across commits?
-     *
+     * 
      * @return true if so
      * @see Connection#disableAutoClose
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public boolean supportsOpenCursorsAcrossCommit()
                                             throws java.sql.SQLException {
@@ -5372,9 +6027,10 @@ public class DatabaseMetaData
 
     /**
      * Can cursors remain open across rollbacks?
-     *
+     * 
      * @return true if so
      * @see Connection#disableAutoClose
+     * @throws java.sql.SQLException if an error occurs
      */
     public boolean supportsOpenCursorsAcrossRollback()
                                               throws java.sql.SQLException {
@@ -5384,9 +6040,10 @@ public class DatabaseMetaData
 
     /**
      * Can statements remain open across commits?
-     *
+     * 
      * @return true if so
      * @see Connection#disableAutoClose
+     * @throws java.sql.SQLException if an error occurs
      */
     public boolean supportsOpenStatementsAcrossCommit()
                                                throws java.sql.SQLException {
@@ -5396,9 +6053,10 @@ public class DatabaseMetaData
 
     /**
      * Can statements remain open across rollbacks?
-     *
+     * 
      * @return true if so
      * @see Connection#disableAutoClose
+     * @throws java.sql.SQLException if an error occurs
      */
     public boolean supportsOpenStatementsAcrossRollback()
                                                  throws java.sql.SQLException {
@@ -5408,8 +6066,9 @@ public class DatabaseMetaData
 
     /**
      * Can an "ORDER BY" clause use columns not in the SELECT?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsOrderByUnrelated()
                                      throws java.sql.SQLException {
@@ -5419,8 +6078,9 @@ public class DatabaseMetaData
 
     /**
      * Is some form of outer join supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsOuterJoins()
                                throws java.sql.SQLException {
@@ -5430,8 +6090,9 @@ public class DatabaseMetaData
 
     /**
      * Is positioned DELETE supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsPositionedDelete()
                                      throws java.sql.SQLException {
@@ -5441,8 +6102,9 @@ public class DatabaseMetaData
 
     /**
      * Is positioned UPDATE supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsPositionedUpdate()
                                      throws java.sql.SQLException {
@@ -5451,14 +6113,12 @@ public class DatabaseMetaData
     }
 
     /**
-     * JDBC 2.0
-     *
-     * Does the database support the concurrency type in combination
+     * JDBC 2.0 Does the database support the concurrency type in combination
      * with the given result set type?
-     *
+     * 
      * @param type defined in java.sql.ResultSet
      * @param concurrency type defined in java.sql.ResultSet
-     * @return true if so 
+     * @return true if so
      * @exception SQLException if a database-access error occurs.
      * @see Connection
      */
@@ -5466,8 +6126,8 @@ public class DatabaseMetaData
                                          throws SQLException {
 
         return (type == ResultSet.TYPE_SCROLL_INSENSITIVE
-               && (concurrency == ResultSet.CONCUR_READ_ONLY 
-                    || concurrency == ResultSet.CONCUR_UPDATABLE));
+               && (concurrency == ResultSet.CONCUR_READ_ONLY
+                   || concurrency == ResultSet.CONCUR_UPDATABLE));
     }
 
     /**
@@ -5480,12 +6140,10 @@ public class DatabaseMetaData
     }
 
     /**
-     * JDBC 2.0
-     *
-     * Does the database support the given result set type?
-     *
+     * JDBC 2.0 Does the database support the given result set type?
+     * 
      * @param type defined in java.sql.ResultSet
-     * @return true if so 
+     * @return true if so
      * @exception SQLException if a database-access error occurs.
      * @see Connection
      */
@@ -5506,8 +6164,9 @@ public class DatabaseMetaData
 
     /**
      * Can a schema name be used in a data manipulation statement?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSchemasInDataManipulation()
                                               throws java.sql.SQLException {
@@ -5517,8 +6176,9 @@ public class DatabaseMetaData
 
     /**
      * Can a schema name be used in an index definition statement?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSchemasInIndexDefinitions()
                                               throws java.sql.SQLException {
@@ -5528,8 +6188,9 @@ public class DatabaseMetaData
 
     /**
      * Can a schema name be used in a privilege definition statement?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSchemasInPrivilegeDefinitions()
                                                   throws java.sql.SQLException {
@@ -5539,8 +6200,9 @@ public class DatabaseMetaData
 
     /**
      * Can a schema name be used in a procedure call statement?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSchemasInProcedureCalls()
                                             throws java.sql.SQLException {
@@ -5550,8 +6212,9 @@ public class DatabaseMetaData
 
     /**
      * Can a schema name be used in a table definition statement?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSchemasInTableDefinitions()
                                               throws java.sql.SQLException {
@@ -5561,8 +6224,9 @@ public class DatabaseMetaData
 
     /**
      * Is SELECT for UPDATE supported?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSelectForUpdate()
                                     throws java.sql.SQLException {
@@ -5580,10 +6244,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Are stored procedure calls using the stored procedure escape
-     * syntax supported?
-     *
+     * Are stored procedure calls using the stored procedure escape syntax
+     * supported?
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsStoredProcedures()
                                      throws java.sql.SQLException {
@@ -5592,24 +6257,24 @@ public class DatabaseMetaData
     }
 
     /**
-     * Are subqueries in comparison expressions supported?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * Are subqueries in comparison expressions supported? A JDBC compliant
+     * driver always returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSubqueriesInComparisons()
                                             throws java.sql.SQLException {
 
-         return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
+        return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
     }
 
     /**
-     * Are subqueries in exists expressions supported?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * Are subqueries in exists expressions supported? A JDBC compliant driver
+     * always returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSubqueriesInExists()
                                        throws java.sql.SQLException {
@@ -5618,37 +6283,37 @@ public class DatabaseMetaData
     }
 
     /**
-     * Are subqueries in "in" statements supported?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * Are subqueries in "in" statements supported? A JDBC compliant driver
+     * always returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSubqueriesInIns()
                                     throws java.sql.SQLException {
 
-         return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
+        return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
     }
 
     /**
-     * Are subqueries in quantified expressions supported?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * Are subqueries in quantified expressions supported? A JDBC compliant
+     * driver always returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSubqueriesInQuantifieds()
                                             throws java.sql.SQLException {
 
-         return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
+        return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
     }
 
     /**
-     * Are table correlation names supported?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * Are table correlation names supported? A JDBC compliant driver always
+     * returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsTableCorrelationNames()
                                           throws java.sql.SQLException {
@@ -5658,10 +6323,11 @@ public class DatabaseMetaData
 
     /**
      * Does the database support the given transaction isolation level?
-     *
+     * 
      * @param level the values are defined in java.sql.Connection
      * @return true if so
      * @see Connection
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public boolean supportsTransactionIsolationLevel(int level)
                                               throws java.sql.SQLException {
@@ -5686,10 +6352,11 @@ public class DatabaseMetaData
     }
 
     /**
-     * Are transactions supported? If not, commit is a noop and the
-     * isolation level is TRANSACTION_NONE.
-     *
+     * Are transactions supported? If not, commit is a noop and the isolation
+     * level is TRANSACTION_NONE.
+     * 
      * @return true if transactions are supported
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsTransactions()
                                  throws java.sql.SQLException {
@@ -5698,11 +6365,10 @@ public class DatabaseMetaData
     }
 
     /**
-     * Is SQL UNION supported?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * Is SQL UNION supported? A JDBC compliant driver always returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsUnion()
                           throws java.sql.SQLException {
@@ -5711,11 +6377,10 @@ public class DatabaseMetaData
     }
 
     /**
-     * Is SQL UNION ALL supported?
-     *
-     * A JDBC compliant driver always returns true.
-     *
+     * Is SQL UNION ALL supported? A JDBC compliant driver always returns true.
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsUnionAll()
                              throws java.sql.SQLException {
@@ -5724,12 +6389,10 @@ public class DatabaseMetaData
     }
 
     /**
-     * JDBC 2.0
-     *
-     * Determine whether or not a visible row update can be detected by 
-     * calling ResultSet.rowUpdated().
-     *
-     * @param result set type, i.e. ResultSet.TYPE_XXX
+     * JDBC 2.0 Determine whether or not a visible row update can be detected
+     * by  calling ResultSet.rowUpdated().
+     * 
+     * @param type set type, i.e. ResultSet.TYPE_XXX
      * @return true if changes are detected by the resultset type
      * @exception SQLException if a database-access error occurs.
      */
@@ -5741,8 +6404,9 @@ public class DatabaseMetaData
 
     /**
      * Does the database use a file for each table?
-     *
+     * 
      * @return true if the database uses a local file for each table
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean usesLocalFilePerTable()
                                   throws java.sql.SQLException {
@@ -5752,8 +6416,9 @@ public class DatabaseMetaData
 
     /**
      * Does the database store tables in a local file?
-     *
+     * 
      * @return true if so
+     * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean usesLocalFiles()
                            throws java.sql.SQLException {
@@ -5761,7 +6426,7 @@ public class DatabaseMetaData
         return false;
     }
 
-    protected java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields, 
+    private java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields, 
                                                 java.util.ArrayList rows)
                                          throws SQLException {
 
@@ -5771,13 +6436,15 @@ public class DatabaseMetaData
             fields[i].setConnection(this.conn);
         }
 
-        return new com.mysql.jdbc.ResultSet(this.conn.getCatalog(), fields, new RowDataStatic(rows), 
-                                            this.conn);
+        return new com.mysql.jdbc.ResultSet(this.conn.getCatalog(), fields, 
+                                            new RowDataStatic(rows), this.conn);
     }
 
     /**
      * Converts the given string to bytes, using the connection's character
      * encoding, or if not available, the JVM default encoding.
+     * @param s DOCUMENT ME!
+     * @return DOCUMENT ME!
      */
     private byte[] s2b(String s) {
 
