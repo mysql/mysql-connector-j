@@ -35,10 +35,11 @@ import java.sql.SQLException;
  * Object) value,  for materializing a BLOB value on the client, and for
  * determining  the position of a pattern of bytes within a BLOB value.   This
  * class is new in the JDBC 2.0 API.
+ * 
+ * @author Mark Matthews
  */
 public class Blob
-    implements java.sql.Blob
-{
+    implements java.sql.Blob {
 
     //~ Instance/static variables .............................................
 
@@ -49,13 +50,12 @@ public class Blob
     //
 
     /** The binary data that makes up this BLOB */
-    byte[] binaryData = null;
+    private byte[] binaryData = null;
 
     //~ Constructors ..........................................................
 
-    Blob(byte[] data)
-    {
-        binaryData = data;
+    Blob(byte[] data) {
+        setBinaryData(data);
     }
 
     //~ Methods ...............................................................
@@ -64,8 +64,7 @@ public class Blob
      * @see Blob#setBinaryStream(long)
      */
     public OutputStream setBinaryStream(long arg0)
-                                 throws SQLException
-    {
+                                 throws SQLException {
         throw new NotImplemented();
     }
 
@@ -77,18 +76,16 @@ public class Blob
      * @throws SQLException if a database error occurs
      */
     public java.io.InputStream getBinaryStream()
-                                        throws SQLException
-    {
+                                        throws SQLException {
 
-        return new ByteArrayInputStream(binaryData);
+        return new ByteArrayInputStream(getBinaryData());
     }
 
     /**
      * @see Blob#setBytes(long, byte[], int, int)
      */
     public int setBytes(long arg0, byte[] arg1, int arg2, int arg3)
-                 throws SQLException
-    {
+                 throws SQLException {
         throw new NotImplemented();
     }
 
@@ -96,8 +93,7 @@ public class Blob
      * @see Blob#setBytes(long, byte[])
      */
     public int setBytes(long arg0, byte[] arg1)
-                 throws SQLException
-    {
+                 throws SQLException {
         throw new NotImplemented();
     }
 
@@ -114,11 +110,10 @@ public class Blob
      * @throws SQLException if a database error occurs
      */
     public byte[] getBytes(long pos, int length)
-                    throws SQLException
-    {
+                    throws SQLException {
 
         byte[] newData = new byte[length];
-        System.arraycopy(binaryData, (int)(pos - 1), newData, 0, length);
+        System.arraycopy(getBinaryData(), (int) (pos - 1), newData, 0, length);
 
         return newData;
     }
@@ -132,10 +127,9 @@ public class Blob
      * @throws SQLException if a database error occurs
      */
     public long length()
-                throws SQLException
-    {
+                throws SQLException {
 
-        return binaryData.length;
+        return getBinaryData().length;
     }
 
     /**
@@ -150,10 +144,9 @@ public class Blob
      * @throws SQLException if a database error occurs
      */
     public long position(java.sql.Blob pattern, long start)
-                  throws SQLException
-    {
+                  throws SQLException {
 
-        return position(pattern.getBytes(0, (int)pattern.length()), start);
+        return position(pattern.getBytes(0, (int) pattern.length()), start);
     }
 
     /**
@@ -167,8 +160,7 @@ public class Blob
      * @throws SQLException DOCUMENT ME!
      */
     public long position(byte[] pattern, long start)
-                  throws SQLException
-    {
+                  throws SQLException {
         throw new SQLException("Not implemented");
     }
 
@@ -176,8 +168,16 @@ public class Blob
      * @see Blob#truncate(long)
      */
     public void truncate(long arg0)
-                  throws SQLException
-    {
+                  throws SQLException {
         throw new NotImplemented();
+    }
+
+    private void setBinaryData(byte[] binaryData) {
+        this.binaryData = binaryData;
+    }
+
+    private byte[] getBinaryData() {
+
+        return binaryData;
     }
 }

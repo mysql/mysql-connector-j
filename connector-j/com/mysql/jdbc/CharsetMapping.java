@@ -21,66 +21,76 @@ import java.util.HashMap;
 /**
  * Mapping between MySQL charset names
  * and Java charset names.
+ * 
+ * @author Mark Matthews
  */
-public class CharsetMapping
-{
+public class CharsetMapping {
 
     //~ Instance/static variables .............................................
 
-    public static HashMap charsetMapping = new HashMap();
-    public static HashMap multibyteCharsets = new HashMap();
+	/**
+	 * Mapping of MySQL charset names to Java charset names
+	 */
+	
+    public static final HashMap CHARSETMAP = new HashMap();
+    
+    /**
+     * Map/List of multibyte character sets (using MySQL names)
+     */
+    
+    public static final HashMap MULTIBYTE_CHARSETS = new HashMap();
 
     //~ Initializers ..........................................................
 
     static {
-        charsetMapping.put("usa7", "US-ASCII");
-        charsetMapping.put("big5", "Big5");
-        charsetMapping.put("gbk", "GBK");
-        charsetMapping.put("sjis", "SJIS");
-        charsetMapping.put("gb2312", "EUC_CN");
-        charsetMapping.put("ujis", "EUC_JP");
-        charsetMapping.put("euc_kr", "EUC_KR");
-        charsetMapping.put("latin1", "ISO8859_1");
-        charsetMapping.put("latin1_de", "ISO8859_1");
-        charsetMapping.put("german1", "ISO8859_1");
-        charsetMapping.put("danish", "ISO8859_1");
-        charsetMapping.put("latin2", "ISO8859_2");
-        charsetMapping.put("czech", "ISO8859_2");
-        charsetMapping.put("hungarian", "ISO8859_2");
-        charsetMapping.put("croat", "ISO8859_2");
-        charsetMapping.put("greek", "ISO8859_7");
-        charsetMapping.put("hebrew", "ISO8859_8");
-        charsetMapping.put("latin5", "ISO8859_9");
-        charsetMapping.put("latvian", "ISO8859_13");
-        charsetMapping.put("latvian1", "ISO8859_13");
-        charsetMapping.put("estonia", "ISO8859_13");
-        charsetMapping.put("dos", "Cp437");
-        charsetMapping.put("pclatin2", "Cp852");
-        charsetMapping.put("cp866", "Cp866");
-        charsetMapping.put("koi8_ru", "KOI8_R");
-        charsetMapping.put("tis620", "TIS620");
-        charsetMapping.put("win1250", "Cp1250");
-        charsetMapping.put("win1250ch", "Cp1250");
-        charsetMapping.put("win1251", "Cp1251");
-        charsetMapping.put("cp1251", "Cp1251");
-        charsetMapping.put("win1251ukr", "Cp1251");
-        charsetMapping.put("cp1257", "Cp1257");
-        charsetMapping.put("macroman", "MacRoman");
-        charsetMapping.put("macce", "MacCentralEurope");
-        charsetMapping.put("utf8", "UTF-8");
-        charsetMapping.put("ucs2", "UnicodeBig");
+        CHARSETMAP.put("usa7", "US-ASCII");
+        CHARSETMAP.put("big5", "Big5");
+        CHARSETMAP.put("gbk", "GBK");
+        CHARSETMAP.put("sjis", "SJIS");
+        CHARSETMAP.put("gb2312", "EUC_CN");
+        CHARSETMAP.put("ujis", "EUC_JP");
+        CHARSETMAP.put("euc_kr", "EUC_KR");
+        CHARSETMAP.put("latin1", "ISO8859_1");
+        CHARSETMAP.put("latin1_de", "ISO8859_1");
+        CHARSETMAP.put("german1", "ISO8859_1");
+        CHARSETMAP.put("danish", "ISO8859_1");
+        CHARSETMAP.put("latin2", "ISO8859_2");
+        CHARSETMAP.put("czech", "ISO8859_2");
+        CHARSETMAP.put("hungarian", "ISO8859_2");
+        CHARSETMAP.put("croat", "ISO8859_2");
+        CHARSETMAP.put("greek", "ISO8859_7");
+        CHARSETMAP.put("hebrew", "ISO8859_8");
+        CHARSETMAP.put("latin5", "ISO8859_9");
+        CHARSETMAP.put("latvian", "ISO8859_13");
+        CHARSETMAP.put("latvian1", "ISO8859_13");
+        CHARSETMAP.put("estonia", "ISO8859_13");
+        CHARSETMAP.put("dos", "Cp437");
+        CHARSETMAP.put("pclatin2", "Cp852");
+        CHARSETMAP.put("cp866", "Cp866");
+        CHARSETMAP.put("koi8_ru", "KOI8_R");
+        CHARSETMAP.put("tis620", "TIS620");
+        CHARSETMAP.put("win1250", "Cp1250");
+        CHARSETMAP.put("win1250ch", "Cp1250");
+        CHARSETMAP.put("win1251", "Cp1251");
+        CHARSETMAP.put("cp1251", "Cp1251");
+        CHARSETMAP.put("win1251ukr", "Cp1251");
+        CHARSETMAP.put("cp1257", "Cp1257");
+        CHARSETMAP.put("macroman", "MacRoman");
+        CHARSETMAP.put("macce", "MacCentralEurope");
+        CHARSETMAP.put("utf8", "UTF-8");
+        CHARSETMAP.put("ucs2", "UnicodeBig");
 
         //
         // Character sets that we can't convert
         // ourselves.
         //
-        multibyteCharsets.put("big5", "big5");
-        multibyteCharsets.put("euc_kr", "euc_kr");
-        multibyteCharsets.put("gb2312", "gb2312");
-        multibyteCharsets.put("gbk", "gbk");
-        multibyteCharsets.put("sjis", "sjis");
-        multibyteCharsets.put("ujis", "ujist");
-        multibyteCharsets.put("utf8", "utf8");
-        multibyteCharsets.put("ucs2", "UnicodeBig");
+        MULTIBYTE_CHARSETS.put("big5", "big5");
+        MULTIBYTE_CHARSETS.put("euc_kr", "euc_kr");
+        MULTIBYTE_CHARSETS.put("gb2312", "gb2312");
+        MULTIBYTE_CHARSETS.put("gbk", "gbk");
+        MULTIBYTE_CHARSETS.put("sjis", "sjis");
+        MULTIBYTE_CHARSETS.put("ujis", "ujist");
+        MULTIBYTE_CHARSETS.put("utf8", "utf8");
+        MULTIBYTE_CHARSETS.put("ucs2", "UnicodeBig");
     }
 }

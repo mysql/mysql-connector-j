@@ -19,8 +19,7 @@
 package com.mysql.jdbc;
 
 
-/**
- */
+
 import java.sql.Time;
 import java.sql.Timestamp;
 
@@ -29,7 +28,11 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.TimeZone;
 
-
+/**
+ * Timezone conversion routines
+ * 
+ * @author Mark Matthews
+ */
 public class TimeUtil
 {
 

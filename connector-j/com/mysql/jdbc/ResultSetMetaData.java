@@ -16,6 +16,11 @@
       Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
       
  */
+package com.mysql.jdbc;
+
+import java.sql.SQLException;
+import java.sql.Types;
+
 
 /**
  * A ResultSetMetaData object can be used to find out about the types and
@@ -25,77 +30,68 @@
  * @author Mark Matthews
  * @version $Id$
  */
-package com.mysql.jdbc;
-
-import java.sql.SQLException;
-import java.sql.Types;
-
-
 public class ResultSetMetaData
-    implements java.sql.ResultSetMetaData
-{
+    implements java.sql.ResultSetMetaData {
 
     //~ Instance/static variables .............................................
 
-    Field[] Fields;
+    Field[] fields;
 
     //~ Constructors ..........................................................
 
     /**
-   *    Initialise for a result with a tuple set and
-   *    a field descriptor set
-   *
-   * @param rows the Vector of rows returned by the ResultSet
-   * @param fields the array of field descriptors
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
-    public ResultSetMetaData(Field[] Fields)
-    {
-        this.Fields = Fields;
+   	 *    Initialise for a result with a tuple set and
+     *    a field descriptor set
+     *
+     * @param fields the array of field descriptors
+     * 
+     * @author Mark Matthews
+     */
+    public ResultSetMetaData(Field[] fields) {
+        this.fields = fields;
     }
 
     //~ Methods ...............................................................
 
     /**
-   * Is the column automatically numbered (and thus read-only)
-   *
-   * MySQL Auto-increment columns are not read only,
-   * so to conform to the spec, this method returns false.
-   *
-   * @param column the first column is 1, the second is 2...
-   * @return true if so
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Is the column automatically numbered (and thus read-only)
+     *
+     * MySQL Auto-increment columns are not read only,
+     * so to conform to the spec, this method returns false.
+     *
+     * @param column the first column is 1, the second is 2...
+     * @return true if so
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews 
+     */
     public boolean isAutoIncrement(int column)
-                            throws java.sql.SQLException
-    {
+                            throws java.sql.SQLException {
 
         return false;
     }
 
     /**
-   * Does a column's case matter? ASSUMPTION: Any field that is
-   * not obviously case insensitive is assumed to be case sensitive
-   *
-   * @param column the first column is 1, the second is 2...
-   * @return true if so
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Does a column's case matter? ASSUMPTION: Any field that is
+     * not obviously case insensitive is assumed to be case sensitive
+     *
+     * @param column the first column is 1, the second is 2...
+     * @return true if so
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public boolean isCaseSensitive(int column)
-                            throws java.sql.SQLException
-    {
+                            throws java.sql.SQLException {
 
-        int sql_type = getField(column).getSQLType();
+        int sqlType = getField(column).getSQLType();
 
-        switch (sql_type) {
-
+        switch (sqlType) {
+			case Types.BIT:
+			case Types.TINYINT:
             case Types.SMALLINT:
             case Types.INTEGER:
+            case Types.BIGINT:
             case Types.FLOAT:
             case Types.REAL:
             case Types.DOUBLE:
@@ -110,19 +106,18 @@ public class ResultSetMetaData
     }
 
     /**
-   * What's a column's table's catalog name?
-   *
-   * @param column the first column is 1, the second is 2...
-   * @return catalog name, or "" if not applicable
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * What's a column's table's catalog name?
+     *
+     * @param column the first column is 1, the second is 2...
+     * @return catalog name, or "" if not applicable
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public String getCatalogName(int column)
-                          throws java.sql.SQLException
-    {
+                          throws java.sql.SQLException {
 
-        Field F = getField(column);
+        Field f = getField(column);
 
         return "";
     }
@@ -138,8 +133,7 @@ public class ResultSetMetaData
      * class returned by this method.
      */
     public String getColumnClassName(int column)
-                              throws SQLException
-    {
+                              throws SQLException {
 
         Field f = getField(column);
 
@@ -227,102 +221,96 @@ public class ResultSetMetaData
     }
 
     /**
-   * Whats the number of columns in the ResultSet?
-   *
-   * @return the number
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Whats the number of columns in the ResultSet?
+     *
+     * @return the number
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public int getColumnCount()
-                       throws java.sql.SQLException
-    {
+                       throws java.sql.SQLException {
 
-        return Fields.length;
+        return fields.length;
     }
 
     /**
-   * What is the column's normal maximum width in characters?
-   *
-   * @param column the first column is 1, the second is 2, etc.
-   * @return the maximum width
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * What is the column's normal maximum width in characters?
+     *
+     * @param column the first column is 1, the second is 2, etc.
+     * @return the maximum width
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public int getColumnDisplaySize(int column)
-                             throws java.sql.SQLException
-    {
+                             throws java.sql.SQLException {
 
         return getField(column).getLength();
     }
 
     /**
-   * What is the suggested column title for use in printouts and
-   * displays?
-   *
-   * @param column the first column is 1, the second is 2, etc.
-   * @return the column label
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * What is the suggested column title for use in printouts and
+     * displays?
+     *
+     * @param column the first column is 1, the second is 2, etc.
+     * @return the column label
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public String getColumnLabel(int column)
-                          throws java.sql.SQLException
-    {
+                          throws java.sql.SQLException {
 
         return getColumnName(column);
     }
 
     /**
-   * What's a column's name?
-   *
-   * @param column the first column is 1, the second is 2, etc.
-   * @return the column name
-   * @exception java.sql.SQLException if a databvase access error occurs
-   *
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * What's a column's name?
+     *
+     * @param column the first column is 1, the second is 2, etc.
+     * @return the column name
+     * @throws java.sql.SQLException if a databvase access error occurs
+     *
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public String getColumnName(int column)
-                         throws java.sql.SQLException
-    {
+                         throws java.sql.SQLException {
 
         return getField(column).getName();
     }
 
     /**
-   * What is a column's SQL Type? (java.sql.Type int)
-   *
-   * @param column the first column is 1, the second is 2, etc.
-   * @return the java.sql.Type value
-   * @exception java.sql.SQLException if a database access error occurs
-   * @see java.sql.Types
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * What is a column's SQL Type? (java.sql.Type int)
+     *
+     * @param column the first column is 1, the second is 2, etc.
+     * @return the java.sql.Type value
+     * @throws java.sql.SQLException if a database access error occurs
+     * @see java.sql.Types
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public int getColumnType(int column)
-                      throws java.sql.SQLException
-    {
+                      throws java.sql.SQLException {
 
         return getField(column).getSQLType();
     }
 
     /**
-   * Whats is the column's data source specific type name?
-   *
-   * @param column the first column is 1, the second is 2, etc.
-   * @return the type name
-   * @exception java.sql.SQLException if a database access error occurs
-   *   
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Whats is the column's data source specific type name?
+     *
+     * @param column the first column is 1, the second is 2, etc.
+     * @return the type name
+     * @throws java.sql.SQLException if a database access error occurs
+     *   
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public String getColumnTypeName(int column)
-                             throws java.sql.SQLException
-    {
+                             throws java.sql.SQLException {
 
-        int mysql_type = getField(column).getMysqlType();
+        int mysqlType = getField(column).getMysqlType();
 
-        switch (mysql_type) {
+        switch (mysqlType) {
 
             case MysqlDefs.FIELD_TYPE_DECIMAL:
                 return "DECIMAL";
@@ -400,49 +388,46 @@ public class ResultSetMetaData
     }
 
     /**
-   * Is the column a cash value?
-   *
-   * @param column the first column is 1, the second is 2...
-   * @return true if its a cash column
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Is the column a cash value?
+     *
+     * @param column the first column is 1, the second is 2...
+     * @return true if its a cash column
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public boolean isCurrency(int column)
-                       throws java.sql.SQLException
-    {
+                       throws java.sql.SQLException {
 
         return false;
     }
 
     /**
-   * Will a write on this column definately succeed?
-   *
-   * @param column the first column is 1, the second is 2, etc..
-   * @return true if so
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Will a write on this column definately succeed?
+     *
+     * @param column the first column is 1, the second is 2, etc..
+     * @return true if so
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public boolean isDefinitelyWritable(int column)
-                                 throws java.sql.SQLException
-    {
+                                 throws java.sql.SQLException {
 
         return isWritable(column);
     }
 
     /**
-   * Can you put a NULL in this column?  
-   *
-   * @param column the first column is 1, the second is 2...
-   * @return one of the columnNullable values
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Can you put a NULL in this column?  
+     *
+     * @param column the first column is 1, the second is 2...
+     * @return one of the columnNullable values
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public int isNullable(int column)
-                   throws java.sql.SQLException
-    {
+                   throws java.sql.SQLException {
 
         if (!getField(column).isNotNull()) {
 
@@ -454,132 +439,127 @@ public class ResultSetMetaData
     }
 
     /**
-   * What is a column's number of decimal digits.
-   *
-   * @param column the first column is 1, the second is 2...
-   * @return the precision
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author James Klicman <james@klicman.com>
-   */
+     * What is a column's number of decimal digits.
+     *
+     * @param column the first column is 1, the second is 2...
+     * @return the precision
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author James Klicman <james@klicman.com>
+     */
     public int getPrecision(int column)
-                     throws java.sql.SQLException
-    {
+                     throws java.sql.SQLException {
 
-        Field F = getField(column);
+        Field f = getField(column);
 
-        if (isDecimalType(F.getSQLType())) {
+        if (isDecimalType(f.getSQLType())) {
 
-            if (F.getDecimals() > 0) {
+            if (f.getDecimals() > 0) {
 
-                return F.getLength() - 1;
+                return f.getLength() - 1;
             }
 
-            return F.getLength();
+            return f.getLength();
         }
 
         return 0;
     }
 
     /**
-   * Is the column definitely not writable?
-   *
-   * @param column the first column is 1, the second is 2, etc.
-   * @return true if so
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Is the column definitely not writable?
+     *
+     * @param column the first column is 1, the second is 2, etc.
+     * @return true if so
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public boolean isReadOnly(int column)
-                       throws java.sql.SQLException
-    {
+                       throws java.sql.SQLException {
 
         return false;
     }
 
     /**
-   * What is a column's number of digits to the right of the
-   * decimal point?
-   *
-   * @param column the first column is 1, the second is 2...
-   * @return the scale
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author James Klicman <james@klicman.com>
-   */
+     * What is a column's number of digits to the right of the
+     * decimal point?
+     *
+     * @param column the first column is 1, the second is 2...
+     * @return the scale
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author James Klicman <james_at_klicman.com>
+     */
     public int getScale(int column)
-                 throws java.sql.SQLException
-    {
+                 throws java.sql.SQLException {
 
-        Field F = getField(column);
+        Field f = getField(column);
 
-        if (isDecimalType(F.getSQLType())) {
+        if (isDecimalType(f.getSQLType())) {
 
-            return F.getDecimals();
+            return f.getDecimals();
         }
 
         return 0;
     }
 
     /**
-   * What is a column's table's schema?  This relies on us knowing
-   * the table name.
-   *
-   * The JDBC specification allows us to return "" if this is not
-   * applicable.
-   *
-   * @param column the first column is 1, the second is 2...
-   * @return the Schema
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * What is a column's table's schema?  This relies on us knowing
+     * the table name.
+     *
+     * The JDBC specification allows us to return "" if this is not
+     * applicable.
+     *
+     * @param column the first column is 1, the second is 2...
+     * @return the Schema
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public String getSchemaName(int column)
-                         throws java.sql.SQLException
-    {
+                         throws java.sql.SQLException {
 
         return "";
     }
 
     /**
-   * Can the column be used in a WHERE clause?  Basically for
-   * this, I split the functions into two types: recognised
-   * types (which are always useable), and OTHER types (which
-   * may or may not be useable).  The OTHER types, for now, I
-   * will assume they are useable.  We should really query the
-   * catalog to see if they are useable.
-   *
-   * @param column the first column is 1, the second is 2...
-   * @return true if they can be used in a WHERE clause
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Can the column be used in a WHERE clause?  Basically for
+     * this, I split the functions into two types: recognised
+     * types (which are always useable), and OTHER types (which
+     * may or may not be useable).  The OTHER types, for now, I
+     * will assume they are useable.  We should really query the
+     * catalog to see if they are useable.
+     *
+     * @param column the first column is 1, the second is 2...
+     * @return true if they can be used in a WHERE clause
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public boolean isSearchable(int column)
-                         throws java.sql.SQLException
-    {
+                         throws java.sql.SQLException {
 
         return true;
     }
 
     /**
-   * Is the column a signed number?
-   *
-   * @param column the first column is 1, the second is 2...
-   * @return true if so
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Is the column a signed number?
+     *
+     * @param column the first column is 1, the second is 2...
+     * @return true if so
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public boolean isSigned(int column)
-                     throws java.sql.SQLException
-    {
+                     throws java.sql.SQLException {
 
-        Field F = getField(column);
-        int sql_type = F.getSQLType();
+        Field f = getField(column);
+        int sqlType = f.getSQLType();
 
-        switch (sql_type) {
-			case Types.TINYINT:
+        switch (sqlType) {
+
+            case Types.TINYINT:
             case Types.SMALLINT:
             case Types.INTEGER:
             case Types.BIGINT:
@@ -588,12 +568,12 @@ public class ResultSetMetaData
             case Types.DOUBLE:
             case Types.NUMERIC:
             case Types.DECIMAL:
-                return !F.isUnsigned();
+                return !f.isUnsigned();
 
             case Types.DATE:
             case Types.TIME:
             case Types.TIMESTAMP:
-                return false; // I guess
+                return false;
 
             default:
                 return false;
@@ -601,33 +581,31 @@ public class ResultSetMetaData
     }
 
     /**
-   * Whats a column's table's name?  
-   *
-   * @param column the first column is 1, the second is 2...
-   * @return column name, or "" if not applicable
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Whats a column's table's name?  
+     *
+     * @param column the first column is 1, the second is 2...
+     * @return column name, or "" if not applicable
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public String getTableName(int column)
-                        throws java.sql.SQLException
-    {
+                        throws java.sql.SQLException {
 
         return getField(column).getTableName();
     }
 
     /**
-   * Is it possible for a write on the column to succeed?
-   *
-   * @param column the first column is 1, the second is 2, etc.
-   * @return true if so
-   * @exception java.sql.SQLException if a database access error occurs
-   * 
-   * @author Mark Matthews <mmatthew@worldserver.com>
-   */
+     * Is it possible for a write on the column to succeed?
+     *
+     * @param column the first column is 1, the second is 2, etc.
+     * @return true if so
+     * @throws java.sql.SQLException if a database access error occurs
+     * 
+     * @author Mark Matthews <mark_at_mysql.com>
+     */
     public boolean isWritable(int column)
-                       throws java.sql.SQLException
-    {
+                       throws java.sql.SQLException {
 
         if (isReadOnly(column)) {
 
@@ -644,25 +622,23 @@ public class ResultSetMetaData
     //
     // *********************************************************************
     protected Field getField(int columnIndex)
-                      throws java.sql.SQLException
-    {
+                      throws java.sql.SQLException {
 
-        if (columnIndex < 1 || columnIndex > Fields.length) {
+        if (columnIndex < 1 || columnIndex > fields.length) {
             throw new java.sql.SQLException("Column index out of range.", 
                                             "S1002");
         }
 
-        return Fields[columnIndex - 1];
+        return fields[columnIndex - 1];
     }
 
     /**
      * Checks if the SQL Type is a Decimal/Number Type
      * @param type SQL Type
      * 
-     * @author James Klicman <james@klicman.com>
+     * @author James Klicman <james_at_klicman.com>
      */
-    private static final boolean isDecimalType(int type)
-    {
+    private static final boolean isDecimalType(int type) {
 
         switch (type) {
 

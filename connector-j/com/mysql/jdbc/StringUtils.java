@@ -21,15 +21,16 @@ import java.io.UnsupportedEncodingException;
 /**
  * Various utility methods for converting to/from byte
  * arrays in the platform encoding
+ * 
+ * @author Mark Matthews
  */
-public class StringUtils
-{
+public class StringUtils {
 
     //~ Instance/static variables .............................................
 
-    private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE) - 
-                                          Byte.MIN_VALUE;
-    public static byte[] allBytes = new byte[BYTE_RANGE];
+    private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE)
+                                          - Byte.MIN_VALUE;
+    private static byte[] allBytes = new byte[BYTE_RANGE];
     private static char[] byteToChars = new char[BYTE_RANGE];
 
     //~ Initializers ..........................................................
@@ -37,7 +38,7 @@ public class StringUtils
     static {
 
         for (int i = Byte.MIN_VALUE; i <= Byte.MAX_VALUE; i++) {
-            allBytes[i - Byte.MIN_VALUE] = (byte)i;
+            allBytes[i - Byte.MIN_VALUE] = (byte) i;
         }
 
         String allBytesString = new String(allBytes, 0, 
@@ -50,9 +51,16 @@ public class StringUtils
 
     //~ Methods ...............................................................
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param s DOCUMENT ME!
+     * @param encoding DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws UnsupportedEncodingException DOCUMENT ME!
+     */
     public static final byte[] getBytes(String s, String encoding)
-                                 throws UnsupportedEncodingException
-    {
+                                 throws UnsupportedEncodingException {
 
         byte[] b = null;
         SingleByteCharsetConverter converter = SingleByteCharsetConverter.getInstance(
@@ -67,44 +75,70 @@ public class StringUtils
         return b;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param buffer DOCUMENT ME!
+     * @param startPos DOCUMENT ME!
+     * @param length DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     */
     public static final String toAsciiString3(byte[] buffer, int startPos, 
-                                              int length)
-    {
+                                              int length) {
 
         char[] charArray = new char[length];
         int readpoint = startPos;
 
         for (int i = 0; i < length; i++) {
-            charArray[i] = byteToChars[(int)buffer[readpoint] - 
-                           Byte.MIN_VALUE];
+            charArray[i] = byteToChars[(int) buffer[readpoint]
+                           - Byte.MIN_VALUE];
             readpoint++;
         }
 
         return new String(charArray);
     }
 
-    public static final String toAsciiString(byte[] buffer)
-    {
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param buffer DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     */
+    public static final String toAsciiString(byte[] buffer) {
 
         return toAsciiString3(buffer, 0, buffer.length);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param buffer DOCUMENT ME!
+     * @param startPos DOCUMENT ME!
+     * @param length DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     */
     public static final String toAsciiString2(byte[] buffer, int startPos, 
-                                              int length)
-    {
+                                              int length) {
 
         return new String(buffer, startPos, length);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param buffer DOCUMENT ME!
+     * @param startPos DOCUMENT ME!
+     * @param length DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     */
     public static final String toAsciiString(byte[] buffer, int startPos, 
-                                             int length)
-    {
+                                             int length) {
 
         StringBuffer result = new StringBuffer();
         int endPoint = startPos + length;
 
         for (int i = startPos; i < endPoint; i++) {
-            result.append(byteToChars[(int)buffer[i] - Byte.MIN_VALUE]);
+            result.append(byteToChars[(int) buffer[i] - Byte.MIN_VALUE]);
         }
 
         return result.toString();

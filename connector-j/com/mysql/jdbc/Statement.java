@@ -17,6 +17,14 @@
       
  */
 
+package com.mysql.jdbc;
+
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Types;
+
+import java.util.ArrayList;
+
 /**
  * A Statement object is used for executing a static SQL statement and
  * obtaining the results produced by it.
@@ -32,18 +40,8 @@
  * @author Mark Matthews
  * @version $Id$
  */
-package com.mysql.jdbc;
-
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Types;
-
-import java.util.ArrayList;
-
-
 public class Statement
-    implements java.sql.Statement
-{
+    implements java.sql.Statement {
 
     //~ Instance/static variables .............................................
 
@@ -58,41 +56,41 @@ public class Statement
     protected Connection connection = null;
     protected int resultSetConcurrency = 0;
     protected int resultSetType = 0;
-    String currentCatalog = null;
+    protected String currentCatalog = null;
 
     /**
      * Should we process escape codes?
      */
-    boolean doEscapeProcessing = true;
+    protected boolean doEscapeProcessing = true;
 
     /**
      * Processes JDBC escape codes
      */
-    EscapeProcessor escaper = null;
-    long lastInsertId = -1;
-    int maxFieldSize = MysqlIO.MAXBUF;
-    int maxRows = -1;
+    protected EscapeProcessor escaper = null;
+    protected long lastInsertId = -1;
+    protected int maxFieldSize = MysqlIO.getMaxBuf();
+    protected int maxRows = -1;
 
     /**
      * The next result set
      */
-    ResultSet nextResults = null;
+    protected ResultSet nextResults = null;
 
     /**
      * The current results
      */
-    ResultSet results = null;
+    protected ResultSet results = null;
 
     /**
      * The timeout for a query
      */
-    int timeout = 0;
-    long updateCount = -1;
+    protected int timeout = 0;
+    protected long updateCount = -1;
 
     /**
      * The warnings chain.
      */
-    SQLWarning warningChain = null;
+    protected SQLWarning warningChain = null;
     private int fetchSize = 0;
     private boolean isClosed = false;
 
@@ -105,16 +103,15 @@ public class Statement
      * @param c the Connection instantation that creates us
      */
     public Statement(Connection c, String catalog)
-              throws SQLException
-    {
+              throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = { c };
-            Debug.methodCall(this, "constructor", Args);
+            Object[] args = { c };
+            Debug.methodCall(this, "constructor", args);
         }
 
-        if (c == null || ((com.mysql.jdbc.Connection)c).isClosed()) {
+        if (c == null || ((com.mysql.jdbc.Connection) c).isClosed()) {
             throw new SQLException("Connection is closed.", "08003");
         }
 
@@ -138,10 +135,9 @@ public class Statement
      * Return the Connection that produced the Statement.
      */
     public java.sql.Connection getConnection()
-                                      throws SQLException
-    {
+                                      throws SQLException {
 
-        return (java.sql.Connection)connection;
+        return (java.sql.Connection) connection;
     }
 
     /**
@@ -159,13 +155,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setCursorName(String name)
-                       throws java.sql.SQLException
-    {
+                       throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = { name };
-            Debug.methodCall(this, "setCursorName", Args);
+            Object[] args = { name };
+            Debug.methodCall(this, "setCursorName", args);
         }
 
         // No-op
@@ -179,13 +174,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setEscapeProcessing(boolean enable)
-                             throws java.sql.SQLException
-    {
+                             throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = { new Boolean(enable) };
-            Debug.methodCall(this, "setEscapeProcessing", Args);
+            Object[] args = { new Boolean(enable) };
+            Debug.methodCall(this, "setEscapeProcessing", args);
         }
 
         doEscapeProcessing = enable;
@@ -207,8 +201,7 @@ public class Statement
      * ResultSet.FETCH_UNKNOWN
      */
     public void setFetchDirection(int direction)
-                           throws SQLException
-    {
+                           throws SQLException {
 
         switch (direction) {
 
@@ -232,8 +225,7 @@ public class Statement
      * @exception SQLException if a database-access error occurs
      */
     public int getFetchDirection()
-                          throws SQLException
-    {
+                          throws SQLException {
 
         return java.sql.ResultSet.FETCH_FORWARD;
     }
@@ -252,11 +244,10 @@ public class Statement
      * condition 0 <= rows <= this.getMaxRows() is not satisfied.
      */
     public void setFetchSize(int rows)
-                      throws SQLException
-    {
+                      throws SQLException {
 
-        if (rows > this.getMaxRows() || 
-            (rows < 0 && rows != Integer.MIN_VALUE)) {
+        if (rows > this.getMaxRows()
+            || (rows < 0 && rows != Integer.MIN_VALUE)) {
             throw new SQLException("Illegal value for setFetchSize()", "S1009");
         }
 
@@ -269,8 +260,7 @@ public class Statement
      * Determine the default fetch size.
      */
     public int getFetchSize()
-                     throws SQLException
-    {
+                     throws SQLException {
 
         return fetchSize;
     }
@@ -282,8 +272,7 @@ public class Statement
      * @throws SQLException DOCUMENT ME!
      */
     public java.sql.ResultSet getGeneratedKeys()
-                                        throws SQLException
-    {
+                                        throws SQLException {
 
         Field[] fields = new Field[1];
         fields[0] = new Field("", "GENERATED_KEY", Types.INTEGER, 17);
@@ -310,13 +299,12 @@ public class Statement
      *
      * @return the last update ID.
      */
-    public long getLastInsertID()
-    {
+    public long getLastInsertID() {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "getLastInsertID", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "getLastInsertID", args);
         }
 
         return lastInsertId;
@@ -334,13 +322,12 @@ public class Statement
      * @return the current result as an update count.
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public long getLongUpdateCount()
-    {
+    public long getLongUpdateCount() {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "getLongUpdateCount", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "getLongUpdateCount", args);
         }
 
         if (results == null) {
@@ -363,13 +350,12 @@ public class Statement
      * @exception java.sql.SQLException if size exceeds buffer size
      */
     public void setMaxFieldSize(int max)
-                         throws java.sql.SQLException
-    {
+                         throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = { new Integer(max) };
-            Debug.methodCall(this, "setMaxFieldSize", Args);
+            Object[] args = { new Integer(max) };
+            Debug.methodCall(this, "setMaxFieldSize", args);
         }
 
         if (max < 0) {
@@ -377,12 +363,12 @@ public class Statement
                                    "S1009");
         }
 
-        int max_buf = (connection != null)
-                          ? connection.getMaxAllowedPacket() : MysqlIO.MAXBUF;
+        int maxBuf = (connection != null)
+                         ? connection.getMaxAllowedPacket() : MysqlIO.getMaxBuf();
 
-        if (max > max_buf) {
-            throw new java.sql.SQLException("Can not set max field size > max allowed packet: " + 
-                                            max_buf, "S1009");
+        if (max > maxBuf) {
+            throw new java.sql.SQLException("Can not set max field size > max allowed packet: "
+                                            + maxBuf, "S1009");
         } else {
             maxFieldSize = max;
         }
@@ -399,13 +385,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public int getMaxFieldSize()
-                        throws java.sql.SQLException
-    {
+                        throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "getMaxFieldSize", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "getMaxFieldSize", args);
         }
 
         return maxFieldSize;
@@ -419,19 +404,18 @@ public class Statement
      * @see getMaxRows
      */
     public void setMaxRows(int max)
-                    throws java.sql.SQLException
-    {
+                    throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = { new Integer(max) };
-            Debug.methodCall(this, "setMaxRows", Args);
+            Object[] args = { new Integer(max) };
+            Debug.methodCall(this, "setMaxRows", args);
         }
 
         if (max > MysqlDefs.MAX_ROWS || max < 0) {
-            throw new java.sql.SQLException("setMaxRows() out of range. " + 
-                                            max + " > " + 
-                                            MysqlDefs.MAX_ROWS + ".", "S1009");
+            throw new java.sql.SQLException("setMaxRows() out of range. "
+                                            + max + " > " + MysqlDefs.MAX_ROWS
+                                            + ".", "S1009");
         }
 
         if (max == 0) {
@@ -457,13 +441,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public int getMaxRows()
-                   throws java.sql.SQLException
-    {
+                   throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "getMaxRows", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "getMaxRows", args);
         }
 
         if (maxRows <= 0) {
@@ -483,13 +466,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public boolean getMoreResults()
-                           throws java.sql.SQLException
-    {
+                           throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "getMoreResults", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "getMoreResults", args);
         }
 
         return getMoreResults(CLOSE_CURRENT_RESULT);
@@ -499,8 +481,7 @@ public class Statement
      * @see Statement#getMoreResults(int)
      */
     public boolean getMoreResults(int current)
-                           throws SQLException
-    {
+                           throws SQLException {
 
         switch (current) {
 
@@ -508,9 +489,9 @@ public class Statement
             case Statement.CLOSE_ALL_RESULTS:
             case Statement.KEEP_CURRENT_RESULT:
 
-                if (results != null && 
-                    (current == CLOSE_ALL_RESULTS || 
-                        current == CLOSE_CURRENT_RESULT)) {
+                if (results != null
+                    && (current == CLOSE_ALL_RESULTS
+                        || current == CLOSE_CURRENT_RESULT)) {
                     results.close();
                 }
 
@@ -532,13 +513,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setQueryTimeout(int seconds)
-                         throws java.sql.SQLException
-    {
+                         throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = { new Integer(seconds) };
-            Debug.methodCall(this, "setQueryTimeout", Args);
+            Object[] args = { new Integer(seconds) };
+            Debug.methodCall(this, "setQueryTimeout", args);
         }
 
         if (seconds < 0) {
@@ -558,13 +538,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public int getQueryTimeout()
-                        throws java.sql.SQLException
-    {
+                        throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "getQueryTimeout", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "getQueryTimeout", args);
         }
 
         return timeout;
@@ -578,17 +557,16 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs (why?)
      */
     public synchronized java.sql.ResultSet getResultSet()
-                                                 throws java.sql.SQLException
-    {
+                                                 throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "getResultSet", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "getResultSet", args);
         }
 
         return (results != null && results.reallyResult())
-                   ? (java.sql.ResultSet)results : null;
+                   ? (java.sql.ResultSet) results : null;
     }
 
     /**
@@ -597,8 +575,7 @@ public class Statement
      * Determine the result set concurrency.
      */
     public int getResultSetConcurrency()
-                                throws SQLException
-    {
+                                throws SQLException {
 
         return resultSetConcurrency;
     }
@@ -607,8 +584,7 @@ public class Statement
      * @see Statement#getResultSetHoldability()
      */
     public int getResultSetHoldability()
-                                throws SQLException
-    {
+                                throws SQLException {
 
         return ResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
@@ -619,8 +595,7 @@ public class Statement
      * Determine the result set type.
      */
     public int getResultSetType()
-                         throws SQLException
-    {
+                         throws SQLException {
 
         return resultSetType;
     }
@@ -634,13 +609,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized int getUpdateCount()
-                                    throws java.sql.SQLException
-    {
+                                    throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "getUpdateCount", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "getUpdateCount", args);
         }
 
         if (results == null) {
@@ -653,15 +627,15 @@ public class Statement
             return -1;
         }
 
-        int truncated_updateCount = 0;
+        int truncatedUpdateCount = 0;
 
         if (results.getUpdateCount() > Integer.MAX_VALUE) {
-            truncated_updateCount = Integer.MAX_VALUE;
+            truncatedUpdateCount = Integer.MAX_VALUE;
         } else {
-            truncated_updateCount = (int)results.getUpdateCount();
+            truncatedUpdateCount = (int) results.getUpdateCount();
         }
 
-        return truncated_updateCount;
+        return truncatedUpdateCount;
     }
 
     /**
@@ -681,13 +655,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized java.sql.SQLWarning getWarnings()
-                                                 throws java.sql.SQLException
-    {
+                                                 throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "getWarnings", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "getWarnings", args);
         }
 
         return warningChain;
@@ -700,8 +673,7 @@ public class Statement
      * @throws SQLException DOCUMENT ME!
      */
     public synchronized void addBatch(String sql)
-                               throws SQLException
-    {
+                               throws SQLException {
 
         if (batchedArgs == null) {
             batchedArgs = new ArrayList();
@@ -722,13 +694,12 @@ public class Statement
      * @exception java.sql.SQLException only because thats the spec.
      */
     public void cancel()
-                throws java.sql.SQLException
-    {
+                throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "cancel", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "cancel", args);
         }
 
         // No-op
@@ -744,8 +715,7 @@ public class Statement
      * driver does not support batch statements
      */
     public synchronized void clearBatch()
-                                 throws SQLException
-    {
+                                 throws SQLException {
 
         if (batchedArgs != null) {
             batchedArgs.clear();
@@ -759,13 +729,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs (why?)
      */
     public synchronized void clearWarnings()
-                                    throws java.sql.SQLException
-    {
+                                    throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "clearWarnings", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "clearWarnings", args);
         }
 
         warningChain = null;
@@ -784,13 +753,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized void close()
-                            throws java.sql.SQLException
-    {
+                            throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = new Object[0];
-            Debug.methodCall(this, "close", Args);
+            Object[] args = new Object[0];
+            Debug.methodCall(this, "close", args);
         }
 
         if (results != null) {
@@ -821,13 +789,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized boolean execute(String sql)
-                                 throws java.sql.SQLException
-    {
+                                 throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = { sql };
-            Debug.methodCall(this, "execute", Args);
+            Object[] args = { sql };
+            Debug.methodCall(this, "execute", args);
         }
 
         if (connection.isReadOnly()) {
@@ -849,8 +816,8 @@ public class Statement
                 }
 
                 if (firstNonWsChar != 'S' && firstNonWsChar != 's') {
-                    throw new SQLException("Connection is read-only. " + 
-                                           "Queries leading to data modification are not allowed", 
+                    throw new SQLException("Connection is read-only. "
+                                           + "Queries leading to data modification are not allowed", 
                                            "S1009");
                 }
             }
@@ -903,8 +870,8 @@ public class Statement
                                     "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
                         } else {
                             connection.execSQL(
-                                    "SET OPTION SQL_SELECT_LIMIT=" + 
-                                    maxRows, -1);
+                                    "SET OPTION SQL_SELECT_LIMIT=" + maxRows, 
+                                    -1);
                         }
                     }
                 } else {
@@ -942,8 +909,7 @@ public class Statement
      * @see Statement#execute(String, int)
      */
     public boolean execute(String arg0, int arg1)
-                    throws SQLException
-    {
+                    throws SQLException {
 
         return execute(arg0);
     }
@@ -952,8 +918,7 @@ public class Statement
      * @see Statement#execute(String, int[])
      */
     public boolean execute(String arg0, int[] arg1)
-                    throws SQLException
-    {
+                    throws SQLException {
 
         return execute(arg0);
     }
@@ -962,8 +927,7 @@ public class Statement
      * @see Statement#execute(String, String[])
      */
     public boolean execute(String arg0, String[] arg1)
-                    throws SQLException
-    {
+                    throws SQLException {
 
         return execute(arg0);
     }
@@ -981,12 +945,11 @@ public class Statement
     * driver does not support batch statements
     */
     public synchronized int[] executeBatch()
-                                    throws SQLException
-    {
+                                    throws SQLException {
 
         if (connection.isReadOnly()) {
-            throw new SQLException("Connection is read-only. " + 
-                                   "Queries leading to data modification are not allowed", 
+            throw new SQLException("Connection is read-only. "
+                                   + "Queries leading to data modification are not allowed", 
                                    "S1009");
         }
 
@@ -1009,7 +972,7 @@ public class Statement
 
                     try {
                         updateCounts[i] = executeUpdate(
-                                                  (String)batchedArgs.get(i));
+                                                  (String) batchedArgs.get(i));
                     } catch (SQLException ex) {
                         sqlEx = ex;
                     }
@@ -1037,13 +1000,12 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized java.sql.ResultSet executeQuery(String sql)
-                                                 throws java.sql.SQLException
-    {
+                                                 throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = { sql };
-            Debug.methodCall(this, "executeQuery", Args);
+            Object[] args = { sql };
+            Debug.methodCall(this, "executeQuery", args);
         }
 
         checkClosed();
@@ -1131,7 +1093,7 @@ public class Statement
                                    "S1009");
         }
 
-        return (java.sql.ResultSet)results;
+        return (java.sql.ResultSet) results;
     }
 
     /**
@@ -1148,18 +1110,17 @@ public class Statement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized int executeUpdate(String sql)
-                                   throws java.sql.SQLException
-    {
+                                   throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
-            Object[] Args = { sql };
-            Debug.methodCall(this, "executeUpdate", Args);
+            Object[] args = { sql };
+            Debug.methodCall(this, "executeUpdate", args);
         }
 
         if (connection.isReadOnly()) {
-            throw new SQLException("Connection is read-only. " + 
-                                   "Queries leading to data modification are not allowed", 
+            throw new SQLException("Connection is read-only. "
+                                   + "Queries leading to data modification are not allowed", 
                                    "S1009");
         }
 
@@ -1217,17 +1178,17 @@ public class Statement
         } else {
             updateCount = rs.getUpdateCount();
 
-            int truncated_updateCount = 0;
+            int truncatedUpdateCount = 0;
 
             if (updateCount > Integer.MAX_VALUE) {
-                truncated_updateCount = Integer.MAX_VALUE;
+                truncatedUpdateCount = Integer.MAX_VALUE;
             } else {
-                truncated_updateCount = (int)updateCount;
+                truncatedUpdateCount = (int) updateCount;
             }
 
             lastInsertId = rs.getUpdateID();
 
-            return truncated_updateCount;
+            return truncatedUpdateCount;
         }
     }
 
@@ -1235,8 +1196,7 @@ public class Statement
      * @see Statement#executeUpdate(String, int)
      */
     public int executeUpdate(String arg0, int arg1)
-                      throws SQLException
-    {
+                      throws SQLException {
 
         return executeUpdate(arg0);
     }
@@ -1245,8 +1205,7 @@ public class Statement
      * @see Statement#executeUpdate(String, int[])
      */
     public int executeUpdate(String arg0, int[] arg1)
-                      throws SQLException
-    {
+                      throws SQLException {
 
         return executeUpdate(arg0);
     }
@@ -1255,15 +1214,13 @@ public class Statement
      * @see Statement#executeUpdate(String, String[])
      */
     public int executeUpdate(String arg0, String[] arg1)
-                      throws SQLException
-    {
+                      throws SQLException {
 
         return executeUpdate(arg0);
     }
 
     protected void checkClosed()
-                        throws SQLException
-    {
+                        throws SQLException {
 
         if (isClosed) {
             throw new SQLException("No operations allowed after statement closed");
@@ -1273,16 +1230,14 @@ public class Statement
     /**
      * Sets the concurrency for result sets generated by this statement
      */
-    void setResultSetConcurrency(int concurrencyFlag)
-    {
+    void setResultSetConcurrency(int concurrencyFlag) {
         resultSetConcurrency = concurrencyFlag;
     }
 
     /**
      * Sets the result set type for result sets generated by this statement
      */
-    void setResultSetType(int typeFlag)
-    {
+    void setResultSetType(int typeFlag) {
         resultSetType = typeFlag;
     }
 
@@ -1290,12 +1245,11 @@ public class Statement
      * We only stream result sets when they are forward-only, read-only,
      * and the fetch size has been set to Integer.MIN_VALUE
      */
-    protected boolean createStreamingResultSet()
-    {
+    protected boolean createStreamingResultSet() {
 
-        if (!(resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY && 
-                resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY && 
-                fetchSize == Integer.MIN_VALUE)) {
+        if (!(resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY
+                && resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY
+                && fetchSize == Integer.MIN_VALUE)) {
 
             return false;
         } else {

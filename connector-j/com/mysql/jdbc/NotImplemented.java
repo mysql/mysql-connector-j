@@ -15,17 +15,20 @@
  */
 package com.mysql.jdbc;
 
+/**
+ * Thrown from methods not required to be implemented.
+ * 
+ * @author Mark Matthews
+ */
 public class NotImplemented
-    extends java.sql.SQLException
-{
+    extends java.sql.SQLException {
 
     //~ Constructors ..........................................................
 
     /**
      * Creates a new NotImplemented object.
      */
-    public NotImplemented()
-    {
+    public NotImplemented() {
         super("Feature not implemented", "S1C00");
     }
 }

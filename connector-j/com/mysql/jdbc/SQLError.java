@@ -25,60 +25,59 @@ import java.util.Hashtable;
  * SQLError is a utility class that maps MySQL error codes to X/Open
  * error codes as is required by the JDBC spec.
  *
- * @author Mark Matthews <mmatthew@worldserver.com>
+ * @author Mark Matthews <mmatthew_at_worldserver.com>
  * @version $Id$
  */
-class SQLError
-{
+class SQLError {
 
     //~ Instance/static variables .............................................
 
-    static Hashtable Map;
-    static Hashtable Msg;
+    private static Hashtable mysqlToSqlState;
+    private static Hashtable sqlStateMessages;
 
     //~ Initializers ..........................................................
 
     static {
-        Msg = new Hashtable();
-        Msg.put("01002", "Disconnect error");
-        Msg.put("01004", "Data truncated");
-        Msg.put("01006", "Privilege not revoked");
-        Msg.put("01S00", "Invalid connection string attribute");
-        Msg.put("01S01", "Error in row");
-        Msg.put("01S03", "No rows updated or deleted");
-        Msg.put("01S04", "More than one row updated or deleted");
-        Msg.put("07001", "Wrong number of parameters");
-        Msg.put("08001", "Unable to connect to data source");
-        Msg.put("08002", "Connection in use");
-        Msg.put("08003", "Connection not open");
-        Msg.put("08004", "Data source rejected establishment of connection");
-        Msg.put("08007", "Connection failure during transaction");
-        Msg.put("08S01", "Communication link failure");
-        Msg.put("21S01", "Insert value list does not match column list");
-        Msg.put("22003", "Numeric value out of range");
-        Msg.put("22005", "Numeric value out of range");
-        Msg.put("22008", "Datetime field overflow");
-        Msg.put("22012", "Division by zero");
-        Msg.put("28000", "Invalid authorization specification");
-        Msg.put("42000", "Syntax error or access violation");
-        Msg.put("S0001", "Base table or view already exists");
-        Msg.put("S0002", "Base table not found");
-        Msg.put("S0011", "Index already exists");
-        Msg.put("S0012", "Index not found");
-        Msg.put("S0021", "Column already exists");
-        Msg.put("S0022", "Column not found");
-        Msg.put("S0023", "No default for column");
-        Msg.put("S1000", "General error");
-        Msg.put("S1001", "Memory allocation failure");
-        Msg.put("S1002", "Invalid column number");
-        Msg.put("S1009", "Invalid argument value");
-        Msg.put("S1C00", "Driver not capable");
-        Msg.put("S1T00", "Timeout expired");
+        sqlStateMessages = new Hashtable();
+        sqlStateMessages.put("01002", "Disconnect error");
+        sqlStateMessages.put("01004", "Data truncated");
+        sqlStateMessages.put("01006", "Privilege not revoked");
+        sqlStateMessages.put("01S00", "Invalid connection string attribute");
+        sqlStateMessages.put("01S01", "Error in row");
+        sqlStateMessages.put("01S03", "No rows updated or deleted");
+        sqlStateMessages.put("01S04", "More than one row updated or deleted");
+        sqlStateMessages.put("07001", "Wrong number of parameters");
+        sqlStateMessages.put("08001", "Unable to connect to data source");
+        sqlStateMessages.put("08002", "Connection in use");
+        sqlStateMessages.put("08003", "Connection not open");
+        sqlStateMessages.put("08004", "Data source rejected establishment of connection");
+        sqlStateMessages.put("08007", "Connection failure during transaction");
+        sqlStateMessages.put("08S01", "Communication link failure");
+        sqlStateMessages.put("21S01", "Insert value list does not match column list");
+        sqlStateMessages.put("22003", "Numeric value out of range");
+        sqlStateMessages.put("22005", "Numeric value out of range");
+        sqlStateMessages.put("22008", "Datetime field overflow");
+        sqlStateMessages.put("22012", "Division by zero");
+        sqlStateMessages.put("28000", "Invalid authorization specification");
+        sqlStateMessages.put("42000", "Syntax error or access violation");
+        sqlStateMessages.put("S0001", "Base table or view already exists");
+        sqlStateMessages.put("S0002", "Base table not found");
+        sqlStateMessages.put("S0011", "Index already exists");
+        sqlStateMessages.put("S0012", "Index not found");
+        sqlStateMessages.put("S0021", "Column already exists");
+        sqlStateMessages.put("S0022", "Column not found");
+        sqlStateMessages.put("S0023", "No default for column");
+        sqlStateMessages.put("S1000", "General error");
+        sqlStateMessages.put("S1001", "Memory allocation failure");
+        sqlStateMessages.put("S1002", "Invalid column number");
+        sqlStateMessages.put("S1009", "Invalid argument value");
+        sqlStateMessages.put("S1C00", "Driver not capable");
+        sqlStateMessages.put("S1T00", "Timeout expired");
 
         //
         // Map MySQL error codes to X/Open error codes
         //
-        Map = new Hashtable();
+        mysqlToSqlState = new Hashtable();
 
         //
         // Communications Errors
@@ -88,17 +87,17 @@ class SQLError
         // ER_UNKNOWN_COM_ERROR 1047
         // ER_IPSOCK_ERROR 1081
         //
-        Map.put(new Integer(1042), "08S01");
-        Map.put(new Integer(1043), "08S01");
-        Map.put(new Integer(1047), "08S01");
-        Map.put(new Integer(1081), "08S01");
+        mysqlToSqlState.put(new Integer(1042), "08S01");
+        mysqlToSqlState.put(new Integer(1043), "08S01");
+        mysqlToSqlState.put(new Integer(1047), "08S01");
+        mysqlToSqlState.put(new Integer(1081), "08S01");
 
         //
         // Authentication Errors
         //
         // ER_ACCESS_DENIED_ERROR 1045
         //
-        Map.put(new Integer(1045), "28000");
+        mysqlToSqlState.put(new Integer(1045), "28000");
 
         //
         // Resource errors
@@ -115,8 +114,8 @@ class SQLError
         // ER_OUTOFMEMORY 1037
         // ER_OUT_OF_SORTMEMORY 1038
         //
-        Map.put(new Integer(1037), "S1001");
-        Map.put(new Integer(1038), "S1001");
+        mysqlToSqlState.put(new Integer(1037), "S1001");
+        mysqlToSqlState.put(new Integer(1038), "S1001");
 
         //
         // Syntax Errors
@@ -124,8 +123,8 @@ class SQLError
         // ER_PARSE_ERROR 1064
         // ER_EMPTY_QUERY 1065
         //
-        Map.put(new Integer(1064), "42000");
-        Map.put(new Integer(1065), "42000");
+        mysqlToSqlState.put(new Integer(1064), "42000");
+        mysqlToSqlState.put(new Integer(1065), "42000");
 
         //
         // Invalid argument errors
@@ -152,32 +151,32 @@ class SQLError
         // ER_WRONG_FIELD_TERMINATORS 1083
         // ER_BLOBS_AND_NO_TERMINATED 1084
         //
-        Map.put(new Integer(1055), "S1009");
-        Map.put(new Integer(1056), "S1009");
-        Map.put(new Integer(1057), "S1009");
-        Map.put(new Integer(1059), "S1009");
-        Map.put(new Integer(1060), "S1009");
-        Map.put(new Integer(1061), "S1009");
-        Map.put(new Integer(1062), "S1009");
-        Map.put(new Integer(1063), "S1009");
-        Map.put(new Integer(1066), "S1009");
-        Map.put(new Integer(1067), "S1009");
-        Map.put(new Integer(1068), "S1009");
-        Map.put(new Integer(1069), "S1009");
-        Map.put(new Integer(1070), "S1009");
-        Map.put(new Integer(1071), "S1009");
-        Map.put(new Integer(1072), "S1009");
-        Map.put(new Integer(1073), "S1009");
-        Map.put(new Integer(1074), "S1009");
-        Map.put(new Integer(1075), "S1009");
-        Map.put(new Integer(1082), "S1009");
-        Map.put(new Integer(1083), "S1009");
-        Map.put(new Integer(1084), "S1009");
+        mysqlToSqlState.put(new Integer(1055), "S1009");
+        mysqlToSqlState.put(new Integer(1056), "S1009");
+        mysqlToSqlState.put(new Integer(1057), "S1009");
+        mysqlToSqlState.put(new Integer(1059), "S1009");
+        mysqlToSqlState.put(new Integer(1060), "S1009");
+        mysqlToSqlState.put(new Integer(1061), "S1009");
+        mysqlToSqlState.put(new Integer(1062), "S1009");
+        mysqlToSqlState.put(new Integer(1063), "S1009");
+        mysqlToSqlState.put(new Integer(1066), "S1009");
+        mysqlToSqlState.put(new Integer(1067), "S1009");
+        mysqlToSqlState.put(new Integer(1068), "S1009");
+        mysqlToSqlState.put(new Integer(1069), "S1009");
+        mysqlToSqlState.put(new Integer(1070), "S1009");
+        mysqlToSqlState.put(new Integer(1071), "S1009");
+        mysqlToSqlState.put(new Integer(1072), "S1009");
+        mysqlToSqlState.put(new Integer(1073), "S1009");
+        mysqlToSqlState.put(new Integer(1074), "S1009");
+        mysqlToSqlState.put(new Integer(1075), "S1009");
+        mysqlToSqlState.put(new Integer(1082), "S1009");
+        mysqlToSqlState.put(new Integer(1083), "S1009");
+        mysqlToSqlState.put(new Integer(1084), "S1009");
 
         //
         // ER_WRONG_VALUE_COUNT 1058
         //
-        Map.put(new Integer(1058), "21S01");
+        mysqlToSqlState.put(new Integer(1058), "21S01");
 
         // ER_CANT_CREATE_DB 1006
         // ER_DB_CREATE_EXISTS 1007
@@ -214,7 +213,7 @@ class SQLError
         // ER_BAD_TABLE_ERROR 1051
         // ER_NON_UNIQ_ERROR 1052
         // ER_BAD_FIELD_ERROR 1054
-        Map.put(new Integer(1054), "S0022");
+        mysqlToSqlState.put(new Integer(1054), "S0022");
 
         // ER_TEXTFILE_NOT_READABLE 1085
         // ER_FILE_EXISTS_ERROR 1086
@@ -229,10 +228,9 @@ class SQLError
 
     //~ Methods ...............................................................
 
-    static String get(String StateCode)
-    {
+    static String get(String stateCode) {
 
-        return (String)Msg.get(StateCode);
+        return (String) sqlStateMessages.get(stateCode);
     }
 
     /**
@@ -241,14 +239,13 @@ class SQLError
    * @param errno the MySQL error code
    * @return the corresponding X/Open error code
    */
-    static String mysqlToXOpen(int errno)
-    {
+    static String mysqlToXOpen(int errno) {
 
-        Integer Err = new Integer(errno);
+        Integer err = new Integer(errno);
 
-        if (Map.containsKey(Err)) {
+        if (mysqlToSqlState.containsKey(err)) {
 
-            return (String)Map.get(Err);
+            return (String) mysqlToSqlState.get(err);
         } else {
 
             return "S1000";

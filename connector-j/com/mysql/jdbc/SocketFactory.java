@@ -27,15 +27,9 @@ import java.util.Properties;
 
 
 /**
- * DOCUMENT ME!
- * 
- * @author Owner To change this generated comment edit the template variable
- *         "typecomment": Window>Preferences>Java>Templates. To enable and
- *         disable the creation of type comments go to
- *         Window>Preferences>Java>Code Generation.
+ * Interface to allow pluggable socket creation in the driver
  */
-public interface SocketFactory
-{
+public interface SocketFactory {
 
     //~ Methods ...............................................................
 
@@ -55,22 +49,20 @@ public interface SocketFactory
      * @throws IOException DOCUMENT ME!
      */
     public Socket connect(String host, Properties props)
-                        throws SocketException, IOException;
-                        
+                   throws SocketException, IOException;
+
     /**
      * Called by the driver before issuing the MySQL protocol handshake.
      * Should return the socket instance that should be used during
      * the handshake.
      */
-    public Socket beforeHandshake() throws SocketException, IOException;
-    
+    public Socket beforeHandshake()
+                           throws SocketException, IOException;
+
     /**
      * Called by the driver after issuing the MySQL protocol handshake and
      * reading the results of the handshake.
      */
-    public Socket afterHandshake() throws SocketException, IOException;
-
-    //~ Inner classes .........................................................
-
-  
+    public Socket afterHandshake()
+                          throws SocketException, IOException;
 }

@@ -23,32 +23,26 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
 
-import java.util.Properties;
-
 
 //import javax.net.SSLSocketFactory;
 
 
 /**
- * DOCUMENT ME!
- * 
- * @author Owner To change this generated comment edit the template variable
- *         "typecomment": Window>Preferences>Java>Templates. To enable and
- *         disable the creation of type comments go to
- *         Window>Preferences>Java>Code Generation.
+ * Socket factory that creates SSL sockets.
  */
 public class SSLSocketFactory
-    extends StandardSocketFactory
-{
-	/**
-	 * @see com.mysql.jdbc.SocketFactory#beforeHandshake()
-	 */
-	public Socket beforeHandshake() throws SocketException, IOException 
-	{
-		javax.net.ssl.SSLSocketFactory sslFact = (javax.net.ssl.SSLSocketFactory)javax.net.ssl.SSLSocketFactory.getDefault();
-		
-        return sslFact.createSocket(rawSocket, host, port, true);
-		
-	}
+    extends StandardSocketFactory {
 
+    //~ Methods ...............................................................
+
+    /**
+     * @see com.mysql.jdbc.SocketFactory#beforeHandshake()
+     */
+    public Socket beforeHandshake()
+                           throws SocketException, IOException {
+
+        javax.net.ssl.SSLSocketFactory sslFact = (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory.getDefault();
+
+        return sslFact.createSocket(rawSocket, host, port, true);
+    }
 }

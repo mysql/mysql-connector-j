@@ -37,8 +37,7 @@ import java.util.ArrayList;
  * A result set that is updatable.
  */
 public class UpdatableResultSet
-    extends ResultSet
-{
+    extends ResultSet {
 
     //~ Instance/static variables .............................................
 
@@ -82,8 +81,7 @@ public class UpdatableResultSet
      * @param updateCount DOCUMENT ME!
      * @param updateID DOCUMENT ME!
      */
-    public UpdatableResultSet(long updateCount, long updateID)
-    {
+    public UpdatableResultSet(long updateCount, long updateID) {
         super(updateCount, updateID);
     }
 
@@ -105,8 +103,7 @@ public class UpdatableResultSet
      */
     public UpdatableResultSet(Field[] fields, RowData rows, 
                               com.mysql.jdbc.Connection conn)
-                       throws SQLException
-    {
+                       throws SQLException {
         super(fields, rows, conn);
         isUpdatable = isUpdateable();
     }
@@ -120,8 +117,7 @@ public class UpdatableResultSet
      * @throws SQLException DOCUMENT ME!
      */
     public UpdatableResultSet(Field[] fields, RowData rows)
-                       throws SQLException
-    {
+                       throws SQLException {
         super(fields, rows);
         isUpdatable = isUpdateable();
     }
@@ -141,8 +137,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public synchronized boolean isAfterLast()
-                                     throws SQLException
-    {
+                                     throws SQLException {
 
         return super.isAfterLast();
     }
@@ -171,8 +166,7 @@ public class UpdatableResultSet
      * @see getBinaryStream
      */
     public synchronized InputStream getAsciiStream(int columnIndex)
-                                            throws java.sql.SQLException
-    {
+                                            throws java.sql.SQLException {
 
         return super.getAsciiStream(columnIndex);
     }
@@ -187,8 +181,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized InputStream getAsciiStream(String columnName)
-                                            throws java.sql.SQLException
-    {
+                                            throws java.sql.SQLException {
 
         return super.getAsciiStream(columnName);
     }
@@ -210,8 +203,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public synchronized boolean isBeforeFirst()
-                                       throws SQLException
-    {
+                                       throws SQLException {
 
         return super.isBeforeFirst();
     }
@@ -228,8 +220,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized BigDecimal getBigDecimal(int columnIndex, int scale)
-                                          throws java.sql.SQLException
-    {
+                                          throws java.sql.SQLException {
 
         return super.getBigDecimal(columnIndex, scale);
     }
@@ -245,8 +236,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized BigDecimal getBigDecimal(String ColumnName, int scale)
-                                          throws java.sql.SQLException
-    {
+                                          throws java.sql.SQLException {
 
         return super.getBigDecimal(findColumn(ColumnName), scale);
     }
@@ -267,8 +257,7 @@ public class UpdatableResultSet
      * @see getUnicodeStream
      */
     public synchronized InputStream getBinaryStream(int columnIndex)
-                                             throws java.sql.SQLException
-    {
+                                             throws java.sql.SQLException {
 
         return super.getBinaryStream(columnIndex);
     }
@@ -283,8 +272,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized InputStream getBinaryStream(String columnName)
-                                             throws java.sql.SQLException
-    {
+                                             throws java.sql.SQLException {
 
         return super.getBinaryStream(columnName);
     }
@@ -299,8 +287,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized boolean getBoolean(int columnIndex)
-                                    throws java.sql.SQLException
-    {
+                                    throws java.sql.SQLException {
 
         return super.getBoolean(columnIndex);
     }
@@ -315,8 +302,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized boolean getBoolean(String ColumnName)
-                                    throws java.sql.SQLException
-    {
+                                    throws java.sql.SQLException {
 
         return super.getBoolean(findColumn(ColumnName));
     }
@@ -331,8 +317,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized byte getByte(int columnIndex)
-                              throws java.sql.SQLException
-    {
+                              throws java.sql.SQLException {
 
         return super.getByte(columnIndex);
     }
@@ -347,8 +332,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized byte getByte(String ColumnName)
-                              throws java.sql.SQLException
-    {
+                              throws java.sql.SQLException {
 
         return super.getByte(findColumn(ColumnName));
     }
@@ -367,8 +351,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized byte[] getBytes(int columnIndex)
-                                 throws java.sql.SQLException
-    {
+                                 throws java.sql.SQLException {
 
         return super.getBytes(columnIndex);
     }
@@ -383,8 +366,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized byte[] getBytes(String ColumnName)
-                                 throws java.sql.SQLException
-    {
+                                 throws java.sql.SQLException {
 
         return super.getBytes(findColumn(ColumnName));
     }
@@ -398,8 +380,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public int getConcurrency()
-                       throws SQLException
-    {
+                       throws SQLException {
 
         return (isUpdatable ? CONCUR_UPDATABLE : CONCUR_READ_ONLY);
     }
@@ -429,8 +410,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized String getCursorName()
-                                      throws java.sql.SQLException
-    {
+                                      throws java.sql.SQLException {
 
         return super.getCursorName();
     }
@@ -445,8 +425,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized java.sql.Date getDate(int columnIndex)
-                                       throws java.sql.SQLException
-    {
+                                       throws java.sql.SQLException {
 
         return super.getDate(columnIndex);
     }
@@ -461,8 +440,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized java.sql.Date getDate(String ColumnName)
-                                       throws java.sql.SQLException
-    {
+                                       throws java.sql.SQLException {
 
         return super.getDate(findColumn(ColumnName));
     }
@@ -477,8 +455,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized double getDouble(int columnIndex)
-                                  throws java.sql.SQLException
-    {
+                                  throws java.sql.SQLException {
 
         return super.getDouble(columnIndex);
     }
@@ -493,8 +470,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized double getDouble(String ColumnName)
-                                  throws java.sql.SQLException
-    {
+                                  throws java.sql.SQLException {
 
         return super.getDouble(findColumn(ColumnName));
     }
@@ -511,8 +487,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public synchronized boolean isFirst()
-                                 throws SQLException
-    {
+                                 throws SQLException {
 
         return super.isFirst();
     }
@@ -527,8 +502,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized float getFloat(int columnIndex)
-                                throws java.sql.SQLException
-    {
+                                throws java.sql.SQLException {
 
         return super.getFloat(columnIndex);
     }
@@ -543,8 +517,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized float getFloat(String ColumnName)
-                                throws java.sql.SQLException
-    {
+                                throws java.sql.SQLException {
 
         return super.getFloat(findColumn(ColumnName));
     }
@@ -559,8 +532,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized int getInt(int columnIndex)
-                            throws java.sql.SQLException
-    {
+                            throws java.sql.SQLException {
 
         return super.getInt(columnIndex);
     }
@@ -575,8 +547,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized int getInt(String ColumnName)
-                            throws java.sql.SQLException
-    {
+                            throws java.sql.SQLException {
 
         return super.getInt(findColumn(ColumnName));
     }
@@ -596,8 +567,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public synchronized boolean isLast()
-                                throws SQLException
-    {
+                                throws SQLException {
 
         return super.isLast();
     }
@@ -612,8 +582,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized long getLong(int columnIndex)
-                              throws java.sql.SQLException
-    {
+                              throws java.sql.SQLException {
 
         return super.getLong(columnIndex);
     }
@@ -628,8 +597,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized long getLong(String ColumnName)
-                              throws java.sql.SQLException
-    {
+                              throws java.sql.SQLException {
 
         return super.getLong(findColumn(ColumnName));
     }
@@ -656,8 +624,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized Object getObject(int columnIndex)
-                                  throws java.sql.SQLException
-    {
+                                  throws java.sql.SQLException {
 
         return super.getObject(columnIndex);
     }
@@ -684,8 +651,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized Object getObject(String columnName)
-                                  throws java.sql.SQLException
-    {
+                                  throws java.sql.SQLException {
 
         return super.getObject(columnName);
     }
@@ -704,8 +670,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public synchronized int getRow()
-                            throws SQLException
-    {
+                            throws SQLException {
 
         return super.getRow();
     }
@@ -720,8 +685,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized short getShort(int columnIndex)
-                                throws java.sql.SQLException
-    {
+                                throws java.sql.SQLException {
 
         return super.getShort(columnIndex);
     }
@@ -736,8 +700,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized short getShort(String ColumnName)
-                                throws java.sql.SQLException
-    {
+                                throws java.sql.SQLException {
 
         return super.getShort(findColumn(ColumnName));
     }
@@ -752,8 +715,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized String getString(int columnIndex)
-                                  throws java.sql.SQLException
-    {
+                                  throws java.sql.SQLException {
 
         return super.getString(columnIndex);
     }
@@ -769,8 +731,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized String getString(String ColumnName)
-                                  throws java.sql.SQLException
-    {
+                                  throws java.sql.SQLException {
 
         return super.getString(findColumn(ColumnName));
     }
@@ -785,8 +746,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized Time getTime(int columnIndex)
-                              throws java.sql.SQLException
-    {
+                              throws java.sql.SQLException {
 
         return super.getTime(columnIndex);
     }
@@ -801,8 +761,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized Time getTime(String ColumnName)
-                              throws java.sql.SQLException
-    {
+                              throws java.sql.SQLException {
 
         return super.getTime(findColumn(ColumnName));
     }
@@ -818,8 +777,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized Timestamp getTimestamp(int columnIndex)
-                                        throws java.sql.SQLException
-    {
+                                        throws java.sql.SQLException {
 
         return super.getTimestamp(columnIndex);
     }
@@ -834,8 +792,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized Timestamp getTimestamp(String ColumnName)
-                                        throws java.sql.SQLException
-    {
+                                        throws java.sql.SQLException {
 
         return super.getTimestamp(ColumnName);
     }
@@ -856,8 +813,7 @@ public class UpdatableResultSet
      * @see getBinaryStream
      */
     public synchronized InputStream getUnicodeStream(int columnIndex)
-                                              throws java.sql.SQLException
-    {
+                                              throws java.sql.SQLException {
 
         return super.getUnicodeStream(columnIndex);
     }
@@ -872,8 +828,7 @@ public class UpdatableResultSet
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public synchronized InputStream getUnicodeStream(String columnName)
-                                              throws java.sql.SQLException
-    {
+                                              throws java.sql.SQLException {
 
         return super.getUnicodeStream(columnName);
     }
@@ -917,8 +872,7 @@ public class UpdatableResultSet
      *            or result set type is TYPE_FORWARD_ONLY.
      */
     public synchronized boolean absolute(int row)
-                                  throws SQLException
-    {
+                                  throws SQLException {
 
         return super.absolute(row);
     }
@@ -935,8 +889,7 @@ public class UpdatableResultSet
      *            type is TYPE_FORWARD_ONLY.
      */
     public synchronized void afterLast()
-                                throws SQLException
-    {
+                                throws SQLException {
         super.afterLast();
     }
 
@@ -952,8 +905,7 @@ public class UpdatableResultSet
      *            type is TYPE_FORWARD_ONLY
      */
     public synchronized void beforeFirst()
-                                  throws SQLException
-    {
+                                  throws SQLException {
         super.beforeFirst();
     }
 
@@ -967,8 +919,7 @@ public class UpdatableResultSet
      *            when on the insert row.
      */
     public synchronized void cancelRowUpdates()
-                                       throws SQLException
-    {
+                                       throws SQLException {
 
         if (doingUpdates) {
             doingUpdates = false;
@@ -983,8 +934,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized void clearWarnings()
-                                    throws java.sql.SQLException
-    {
+                                    throws java.sql.SQLException {
         warningChain = null;
     }
 
@@ -1005,8 +955,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized void close()
-                            throws java.sql.SQLException
-    {
+                            throws java.sql.SQLException {
         super.close();
     }
 
@@ -1019,8 +968,7 @@ public class UpdatableResultSet
      * @throws NotUpdatable DOCUMENT ME!
      */
     public synchronized void deleteRow()
-                                throws SQLException
-    {
+                                throws SQLException {
 
         if (!isUpdatable) {
             throw new NotUpdatable();
@@ -1042,47 +990,51 @@ public class UpdatableResultSet
                 generateStatements();
             }
 
-            deleter = (com.mysql.jdbc.PreparedStatement)connection.prepareStatement(
+            deleter = (com.mysql.jdbc.PreparedStatement) connection.prepareStatement(
                               deleteSQL);
         }
 
         deleter.clearParameters();
 
-        String Encoding = null;
+        String characterEncoding = null;
 
         if (connection.useUnicode()) {
-            Encoding = connection.getEncoding();
+            characterEncoding = connection.getEncoding();
         }
 
+		//
+		// FIXME: Use internal routines where possible for character
+		//        conversion!
+		
         try {
 
             int num_keys = primaryKeyIndicies.size();
 
             if (num_keys == 1) {
 
-                int index = ((Integer)primaryKeyIndicies.get(0)).intValue();
-                String CurrentVal = ((Encoding == null)
+                int index = ((Integer) primaryKeyIndicies.get(0)).intValue();
+                String currentVal = ((characterEncoding == null)
                                          ? new String(thisRow[index])
-                                         : new String(thisRow[index], Encoding));
-                deleter.setString(1, CurrentVal);
+                                         : new String(thisRow[index], characterEncoding));
+                deleter.setString(1, currentVal);
             } else {
 
                 for (int i = 0; i < num_keys; i++) {
 
-                    int index = ((Integer)primaryKeyIndicies.get(i)).intValue();
-                    String CurrentVal = ((Encoding == null)
+                    int index = ((Integer) primaryKeyIndicies.get(i)).intValue();
+                    String currentVal = ((characterEncoding == null)
                                              ? new String(thisRow[index])
                                              : new String(thisRow[index], 
-                                                          Encoding));
-                    deleter.setString(i + 1, CurrentVal);
+                                                          characterEncoding));
+                    deleter.setString(i + 1, currentVal);
                 }
             }
 
             deleter.executeUpdate();
             rowData.removeRow(rowData.getCurrentRowNumber());
-        } catch (java.io.UnsupportedEncodingException UE) {
-            throw new SQLException("Unsupported character encoding '" + 
-                                   connection.getEncoding() + "'");
+        } catch (java.io.UnsupportedEncodingException encodingEx) {
+            throw new SQLException("Unsupported character encoding '"
+                                   + connection.getEncoding() + "'");
         }
     }
 
@@ -1099,8 +1051,7 @@ public class UpdatableResultSet
      *            type is TYPE_FORWARD_ONLY.
      */
     public synchronized boolean first()
-                               throws SQLException
-    {
+                               throws SQLException {
 
         return super.first();
     }
@@ -1114,8 +1065,7 @@ public class UpdatableResultSet
      *            in the insert row have not been given a value
      */
     public synchronized void insertRow()
-                                throws SQLException
-    {
+                                throws SQLException {
 
         if (!onInsertRow) {
             throw new SQLException("Not on insert row");
@@ -1129,24 +1079,24 @@ public class UpdatableResultSet
             }
 
             long autoIncrementId = inserter.getLastInsertID();
-            int num_fields = fields.length;
-            byte[][] NewRow = new byte[num_fields][];
+            int numFields = fields.length;
+            byte[][] newRow = new byte[numFields][];
 
-            for (int i = 0; i < num_fields; i++) {
+            for (int i = 0; i < numFields; i++) {
 
                 if (inserter.isNull(i)) {
-                    NewRow[i] = null;
+                    newRow[i] = null;
                 } else {
-                    NewRow[i] = inserter.getBytes(i);
+                    newRow[i] = inserter.getBytes(i);
                 }
 
-                if ((numPrimaryKeys == 1) && fields[i].isPrimaryKey() && 
-                    (autoIncrementId > 0)) {
-                    NewRow[i] = String.valueOf(autoIncrementId).getBytes();
+                if ((numPrimaryKeys == 1) && fields[i].isPrimaryKey()
+                    && (autoIncrementId > 0)) {
+                    newRow[i] = String.valueOf(autoIncrementId).getBytes();
                 }
             }
 
-            rowData.addRow(NewRow);
+            rowData.addRow(newRow);
             resetInserter();
         }
     }
@@ -1164,8 +1114,7 @@ public class UpdatableResultSet
      *            type is TYPE_FORWARD_ONLY.
      */
     public synchronized boolean last()
-                              throws SQLException
-    {
+                              throws SQLException {
 
         return super.last();
     }
@@ -1179,8 +1128,7 @@ public class UpdatableResultSet
      * @throws NotUpdatable DOCUMENT ME!
      */
     public synchronized void moveToCurrentRow()
-                                       throws SQLException
-    {
+                                       throws SQLException {
 
         if (!isUpdatable) {
             throw new NotUpdatable();
@@ -1206,8 +1154,7 @@ public class UpdatableResultSet
      * @throws NotUpdatable DOCUMENT ME!
      */
     public synchronized void moveToInsertRow()
-                                      throws SQLException
-    {
+                                      throws SQLException {
 
         if (!isUpdatable) {
             throw new NotUpdatable();
@@ -1215,7 +1162,7 @@ public class UpdatableResultSet
 
         if (inserter == null) {
             generateStatements();
-            inserter = (com.mysql.jdbc.PreparedStatement)connection.prepareStatement(
+            inserter = (com.mysql.jdbc.PreparedStatement) connection.prepareStatement(
                                insertSQL);
             resetInserter();
         } else {
@@ -1243,8 +1190,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized boolean next()
-                              throws java.sql.SQLException
-    {
+                              throws java.sql.SQLException {
 
         return super.next();
     }
@@ -1266,8 +1212,7 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized boolean prev()
-                              throws java.sql.SQLException
-    {
+                              throws java.sql.SQLException {
 
         return super.prev();
     }
@@ -1290,8 +1235,7 @@ public class UpdatableResultSet
      *            type is TYPE_FORWAR_DONLY.
      */
     public synchronized boolean previous()
-                                  throws SQLException
-    {
+                                  throws SQLException {
 
         return super.previous();
     }
@@ -1315,8 +1259,7 @@ public class UpdatableResultSet
      * @throws NotUpdatable DOCUMENT ME!
      */
     public synchronized void refreshRow()
-                                 throws SQLException
-    {
+                                 throws SQLException {
 
         if (!isUpdatable) {
             throw new NotUpdatable();
@@ -1338,7 +1281,7 @@ public class UpdatableResultSet
                 generateStatements();
             }
 
-            refresher = (com.mysql.jdbc.PreparedStatement)connection.prepareStatement(
+            refresher = (com.mysql.jdbc.PreparedStatement) connection.prepareStatement(
                                 refreshSQL);
         }
 
@@ -1357,7 +1300,7 @@ public class UpdatableResultSet
             if (numKeys == 1) {
 
                 byte[] dataFrom = null;
-                int index = ((Integer)primaryKeyIndicies.get(0)).intValue();
+                int index = ((Integer) primaryKeyIndicies.get(0)).intValue();
 
                 if (!doingUpdates) {
                     dataFrom = thisRow[index];
@@ -1379,7 +1322,7 @@ public class UpdatableResultSet
                 for (int i = 0; i < numKeys; i++) {
 
                     byte[] dataFrom = null;
-                    int index = ((Integer)primaryKeyIndicies.get(i)).intValue();
+                    int index = ((Integer) primaryKeyIndicies.get(i)).intValue();
 
                     if (!doingUpdates) {
                         dataFrom = thisRow[index];
@@ -1387,8 +1330,7 @@ public class UpdatableResultSet
                         dataFrom = updater.getBytes(index);
 
                         // Primary keys not set?
-                        if (updater.isNull(index) || 
-                            (dataFrom.length == 0)) {
+                        if (updater.isNull(index) || (dataFrom.length == 0)) {
                             dataFrom = thisRow[index];
                         }
                     }
@@ -1435,8 +1377,8 @@ public class UpdatableResultSet
                 }
             }
         } catch (java.io.UnsupportedEncodingException UE) {
-            throw new SQLException("Unsupported character encoding '" + 
-                                   connection.getEncoding() + "'");
+            throw new SQLException("Unsupported character encoding '"
+                                   + connection.getEncoding() + "'");
         }
     }
 
@@ -1465,8 +1407,7 @@ public class UpdatableResultSet
      *            no current row, or result set type is TYPE_FORWARD_ONLY.
      */
     public synchronized boolean relative(int rows)
-                                  throws SQLException
-    {
+                                  throws SQLException {
 
         return super.relative(rows);
     }
@@ -1485,8 +1426,7 @@ public class UpdatableResultSet
      * @see DatabaseMetaData#deletesAreDetected
      */
     public synchronized boolean rowDeleted()
-                                    throws SQLException
-    {
+                                    throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1503,8 +1443,7 @@ public class UpdatableResultSet
      * @see DatabaseMetaData#insertsAreDetected
      */
     public synchronized boolean rowInserted()
-                                     throws SQLException
-    {
+                                     throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1525,8 +1464,7 @@ public class UpdatableResultSet
      * @see DatabaseMetaData#updatesAreDetected
      */
     public synchronized boolean rowUpdated()
-                                    throws SQLException
-    {
+                                    throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1546,8 +1484,7 @@ public class UpdatableResultSet
     public synchronized void updateAsciiStream(int columnIndex, 
                                                java.io.InputStream x, 
                                                int length)
-                                        throws SQLException
-    {
+                                        throws SQLException {
 
         if (!onInsertRow) {
 
@@ -1578,8 +1515,7 @@ public class UpdatableResultSet
     public synchronized void updateAsciiStream(String columnName, 
                                                java.io.InputStream x, 
                                                int length)
-                                        throws SQLException
-    {
+                                        throws SQLException {
         updateAsciiStream(findColumn(columnName), x, length);
     }
 
@@ -1596,8 +1532,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateBigDecimal(int columnIndex, BigDecimal x)
-                                       throws SQLException
-    {
+                                       throws SQLException {
 
         if (!onInsertRow) {
 
@@ -1625,8 +1560,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateBigDecimal(String columnName, BigDecimal x)
-                                       throws SQLException
-    {
+                                       throws SQLException {
         updateBigDecimal(findColumn(columnName), x);
     }
 
@@ -1646,8 +1580,7 @@ public class UpdatableResultSet
     public synchronized void updateBinaryStream(int columnIndex, 
                                                 java.io.InputStream x, 
                                                 int length)
-                                         throws SQLException
-    {
+                                         throws SQLException {
 
         if (!onInsertRow) {
 
@@ -1678,8 +1611,7 @@ public class UpdatableResultSet
     public synchronized void updateBinaryStream(String columnName, 
                                                 java.io.InputStream x, 
                                                 int length)
-                                         throws SQLException
-    {
+                                         throws SQLException {
         updateBinaryStream(findColumn(columnName), x, length);
     }
 
@@ -1687,8 +1619,7 @@ public class UpdatableResultSet
      * @see ResultSet#updateBlob(int, Blob)
      */
     public void updateBlob(int arg0, java.sql.Blob arg1)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1696,8 +1627,7 @@ public class UpdatableResultSet
      * @see ResultSet#updateBlob(String, Blob)
      */
     public void updateBlob(String arg0, java.sql.Blob arg1)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1714,8 +1644,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateBoolean(int columnIndex, boolean x)
-                                    throws SQLException
-    {
+                                    throws SQLException {
 
         if (!onInsertRow) {
 
@@ -1743,8 +1672,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateBoolean(String columnName, boolean x)
-                                    throws SQLException
-    {
+                                    throws SQLException {
         updateBoolean(findColumn(columnName), x);
     }
 
@@ -1761,8 +1689,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateByte(int columnIndex, byte x)
-                                 throws SQLException
-    {
+                                 throws SQLException {
 
         if (!onInsertRow) {
 
@@ -1790,8 +1717,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateByte(String columnName, byte x)
-                                 throws SQLException
-    {
+                                 throws SQLException {
         updateByte(findColumn(columnName), x);
     }
 
@@ -1808,8 +1734,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateBytes(int columnIndex, byte[] x)
-                                  throws SQLException
-    {
+                                  throws SQLException {
 
         if (!onInsertRow) {
 
@@ -1837,8 +1762,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateBytes(String columnName, byte[] x)
-                                  throws SQLException
-    {
+                                  throws SQLException {
         updateBytes(findColumn(columnName), x);
     }
 
@@ -1858,8 +1782,7 @@ public class UpdatableResultSet
     public synchronized void updateCharacterStream(int columnIndex, 
                                                    java.io.Reader x, 
                                                    int length)
-                                            throws SQLException
-    {
+                                            throws SQLException {
 
         if (!onInsertRow) {
 
@@ -1890,8 +1813,7 @@ public class UpdatableResultSet
     public synchronized void updateCharacterStream(String columnName, 
                                                    java.io.Reader reader, 
                                                    int length)
-                                            throws SQLException
-    {
+                                            throws SQLException {
         updateCharacterStream(findColumn(columnName), reader, length);
     }
 
@@ -1908,8 +1830,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateDate(int columnIndex, java.sql.Date x)
-                                 throws SQLException
-    {
+                                 throws SQLException {
 
         if (!onInsertRow) {
 
@@ -1937,8 +1858,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateDate(String columnName, java.sql.Date x)
-                                 throws SQLException
-    {
+                                 throws SQLException {
         updateDate(findColumn(columnName), x);
     }
 
@@ -1955,8 +1875,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateDouble(int columnIndex, double x)
-                                   throws SQLException
-    {
+                                   throws SQLException {
 
         if (!onInsertRow) {
 
@@ -1984,8 +1903,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateDouble(String columnName, double x)
-                                   throws SQLException
-    {
+                                   throws SQLException {
         updateDouble(findColumn(columnName), x);
     }
 
@@ -2002,8 +1920,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateFloat(int columnIndex, float x)
-                                  throws SQLException
-    {
+                                  throws SQLException {
 
         if (!onInsertRow) {
 
@@ -2031,8 +1948,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateFloat(String columnName, float x)
-                                  throws SQLException
-    {
+                                  throws SQLException {
         updateFloat(findColumn(columnName), x);
     }
 
@@ -2049,8 +1965,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateInt(int columnIndex, int x)
-                                throws SQLException
-    {
+                                throws SQLException {
 
         if (!onInsertRow) {
 
@@ -2078,8 +1993,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateInt(String columnName, int x)
-                                throws SQLException
-    {
+                                throws SQLException {
         updateInt(findColumn(columnName), x);
     }
 
@@ -2096,8 +2010,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateLong(int columnIndex, long x)
-                                 throws SQLException
-    {
+                                 throws SQLException {
 
         if (!onInsertRow) {
 
@@ -2125,8 +2038,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateLong(String columnName, long x)
-                                 throws SQLException
-    {
+                                 throws SQLException {
         updateLong(findColumn(columnName), x);
     }
 
@@ -2142,8 +2054,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateNull(int columnIndex)
-                                 throws SQLException
-    {
+                                 throws SQLException {
 
         if (!onInsertRow) {
 
@@ -2170,8 +2081,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateNull(String columnName)
-                                 throws SQLException
-    {
+                                 throws SQLException {
         updateNull(findColumn(columnName));
     }
 
@@ -2191,8 +2101,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateObject(int columnIndex, Object x, int scale)
-                                   throws SQLException
-    {
+                                   throws SQLException {
 
         if (!onInsertRow) {
 
@@ -2220,8 +2129,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateObject(int columnIndex, Object x)
-                                   throws SQLException
-    {
+                                   throws SQLException {
 
         if (!onInsertRow) {
 
@@ -2253,8 +2161,7 @@ public class UpdatableResultSet
      */
     public synchronized void updateObject(String columnName, Object x, 
                                           int scale)
-                                   throws SQLException
-    {
+                                   throws SQLException {
         updateObject(findColumn(columnName), x);
     }
 
@@ -2271,8 +2178,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateObject(String columnName, Object x)
-                                   throws SQLException
-    {
+                                   throws SQLException {
         updateObject(findColumn(columnName), x);
     }
 
@@ -2285,8 +2191,7 @@ public class UpdatableResultSet
      * @throws NotUpdatable DOCUMENT ME!
      */
     public synchronized void updateRow()
-                                throws SQLException
-    {
+                                throws SQLException {
 
         if (!isUpdatable) {
             throw new NotUpdatable();
@@ -2317,8 +2222,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateShort(int columnIndex, short x)
-                                  throws SQLException
-    {
+                                  throws SQLException {
 
         if (!onInsertRow) {
 
@@ -2346,8 +2250,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateShort(String columnName, short x)
-                                  throws SQLException
-    {
+                                  throws SQLException {
         updateShort(findColumn(columnName), x);
     }
 
@@ -2364,8 +2267,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateString(int columnIndex, String x)
-                                   throws SQLException
-    {
+                                   throws SQLException {
 
         if (!onInsertRow) {
 
@@ -2393,8 +2295,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateString(String columnName, String x)
-                                   throws SQLException
-    {
+                                   throws SQLException {
         updateString(findColumn(columnName), x);
     }
 
@@ -2411,8 +2312,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateTime(int columnIndex, java.sql.Time x)
-                                 throws SQLException
-    {
+                                 throws SQLException {
 
         if (!onInsertRow) {
 
@@ -2440,8 +2340,7 @@ public class UpdatableResultSet
      * @exception SQLException if a database-access error occurs
      */
     public synchronized void updateTime(String columnName, java.sql.Time x)
-                                 throws SQLException
-    {
+                                 throws SQLException {
         updateTime(findColumn(columnName), x);
     }
 
@@ -2459,8 +2358,7 @@ public class UpdatableResultSet
      */
     public synchronized void updateTimestamp(int columnIndex, 
                                              java.sql.Timestamp x)
-                                      throws SQLException
-    {
+                                      throws SQLException {
 
         if (!onInsertRow) {
 
@@ -2489,8 +2387,7 @@ public class UpdatableResultSet
      */
     public synchronized void updateTimestamp(String columnName, 
                                              java.sql.Timestamp x)
-                                      throws SQLException
-    {
+                                      throws SQLException {
         updateTimestamp(findColumn(columnName), x);
     }
 
@@ -2505,14 +2402,12 @@ public class UpdatableResultSet
      * @exception java.sql.SQLException if a database access error occurred
      */
     public synchronized boolean wasNull()
-                                 throws java.sql.SQLException
-    {
+                                 throws java.sql.SQLException {
 
         return super.wasNull();
     }
 
-    protected void setResultSetConcurrency(int concurrencyFlag)
-    {
+    protected void setResultSetConcurrency(int concurrencyFlag) {
         super.setResultSetConcurrency(concurrencyFlag);
 
         //
@@ -2533,8 +2428,7 @@ public class UpdatableResultSet
      * @throws NotUpdatable DOCUMENT ME!
      */
     protected void generateStatements()
-                               throws SQLException
-    {
+                               throws SQLException {
 
         if (!isUpdatable) {
             throw new NotUpdatable();
@@ -2542,86 +2436,86 @@ public class UpdatableResultSet
 
         boolean useQuotedIdentifiers = connection.supportsQuotedIdentifiers();
         String quotedId = getQuotedIdChar();
-        String TableName = fields[0].getTableName();
+        String tableName = fields[0].getTableName();
         primaryKeyIndicies = new ArrayList();
 
-        StringBuffer FieldValues = new StringBuffer();
-        StringBuffer KeyValues = new StringBuffer();
-        StringBuffer ColumnNames = new StringBuffer();
-        StringBuffer InsertPlaceHolders = new StringBuffer();
-        boolean first_time = true;
-        boolean keys_first_time = true;
+        StringBuffer fieldValues = new StringBuffer();
+        StringBuffer keyValues = new StringBuffer();
+        StringBuffer columnNames = new StringBuffer();
+        StringBuffer insertPlaceHolders = new StringBuffer();
+        boolean firstTime = true;
+        boolean keysFirstTime = true;
 
         for (int i = 0; i < fields.length; i++) {
 
             if (fields[i].isPrimaryKey()) {
                 primaryKeyIndicies.add(new Integer(i));
 
-                if (!keys_first_time) {
-                    KeyValues.append(" AND ");
+                if (!keysFirstTime) {
+                    keyValues.append(" AND ");
                 } else {
-                    keys_first_time = false;
+                    keysFirstTime = false;
                 }
 
                 if (useQuotedIdentifiers) {
-                    KeyValues.append(quotedId);
+                    keyValues.append(quotedId);
                 }
 
-                KeyValues.append(fields[i].getName());
+                keyValues.append(fields[i].getName());
 
                 if (useQuotedIdentifiers) {
-                    KeyValues.append(quotedId);
+                    keyValues.append(quotedId);
                 }
 
-                KeyValues.append("=?");
+                keyValues.append("=?");
             }
 
-            if (first_time) {
-                first_time = false;
-                FieldValues.append("SET ");
+            if (firstTime) {
+                firstTime = false;
+                fieldValues.append("SET ");
             } else {
-                FieldValues.append(",");
-                ColumnNames.append(",");
-                InsertPlaceHolders.append(",");
+                fieldValues.append(",");
+                columnNames.append(",");
+                insertPlaceHolders.append(",");
             }
 
-            InsertPlaceHolders.append("?");
+            insertPlaceHolders.append("?");
 
             if (useQuotedIdentifiers) {
-                ColumnNames.append(quotedId);
+                columnNames.append(quotedId);
             }
 
-            ColumnNames.append(fields[i].getName());
+            columnNames.append(fields[i].getName());
 
             if (useQuotedIdentifiers) {
-                ColumnNames.append(quotedId);
+                columnNames.append(quotedId);
             }
 
             if (useQuotedIdentifiers) {
-                FieldValues.append(quotedId);
+                fieldValues.append(quotedId);
             }
 
-            FieldValues.append(fields[i].getName());
+            fieldValues.append(fields[i].getName());
 
             if (useQuotedIdentifiers) {
-                FieldValues.append(quotedId);
+                fieldValues.append(quotedId);
             }
 
-            FieldValues.append("=?");
+            fieldValues.append("=?");
         }
 
         String quotedIdStr = useQuotedIdentifiers ? quotedId : "";
-        updateSQL = "UPDATE " + quotedIdStr + TableName + quotedIdStr + " " + 
-                    FieldValues.toString() + " WHERE " + 
-                    KeyValues.toString();
-        insertSQL = "INSERT INTO " + quotedIdStr + TableName + quotedIdStr + 
-                    " (" + ColumnNames.toString() + ") VALUES (" + 
-                    InsertPlaceHolders.toString() + ")";
-        refreshSQL = "SELECT " + ColumnNames.toString() + " FROM " + 
-                     quotedIdStr + TableName + quotedIdStr + " WHERE " + 
-                     KeyValues.toString();
-        deleteSQL = "DELETE FROM " + quotedIdStr + TableName + quotedIdStr + 
-                    " WHERE " + KeyValues.toString();
+        updateSQL = "UPDATE " + quotedIdStr + tableName + quotedIdStr + " "
+                    + fieldValues.toString() + " WHERE "
+                    + keyValues.toString();
+        insertSQL = "INSERT INTO " + quotedIdStr + tableName + quotedIdStr
+                    + " (" + columnNames.toString() + ") VALUES ("
+                    + insertPlaceHolders.toString() + ")";
+        refreshSQL = "SELECT " + columnNames.toString() + " FROM "
+                     + quotedIdStr + tableName + quotedIdStr + " WHERE "
+                     + keyValues.toString();
+        deleteSQL = "DELETE FROM " + quotedIdStr + tableName + quotedIdStr
+                    + " WHERE " + keyValues.toString();
     }
 
     /**
@@ -2629,8 +2523,7 @@ public class UpdatableResultSet
      * building.
      * @return DOCUMENT ME!
      */
-    int getResultSetType()
-    {
+    int getResultSetType() {
 
         return 0;
     }
@@ -2639,26 +2532,25 @@ public class UpdatableResultSet
      * Is this ResultSet updateable?
      * @return DOCUMENT ME!
      */
-    boolean isUpdateable()
-    {
+    boolean isUpdateable() {
 
         if (fields.length > 0) {
 
-            String TableName = fields[0].getTableName();
+            String tableName = fields[0].getTableName();
 
             //
             // References only one table?
             //
             for (int i = 1; i < fields.length; i++) {
 
-                if ((TableName == null) || 
-                    !fields[i].getTableName().equals(TableName)) {
+                if ((tableName == null)
+                    || !fields[i].getTableName().equals(tableName)) {
 
                     return false;
                 }
             }
 
-            if ((TableName == null) || (TableName.length() == 0)) {
+            if ((tableName == null) || (tableName.length() == 0)) {
 
                 return false;
             }
@@ -2670,18 +2562,18 @@ public class UpdatableResultSet
         //
         // Contains the primary key?
         //
-        boolean has_primary_key = false;
+        boolean hasPrimaryKey = false;
 
         for (int i = 0; i < fields.length; i++) {
 
             if (fields[i].isPrimaryKey()) {
-                has_primary_key = true;
+                hasPrimaryKey = true;
 
                 break;
             }
         }
 
-        if (!has_primary_key) {
+        if (!hasPrimaryKey) {
 
             return false;
         }
@@ -2695,8 +2587,7 @@ public class UpdatableResultSet
      * @throws SQLException DOCUMENT ME!
      */
     void syncUpdate()
-             throws SQLException
-    {
+             throws SQLException {
 
         if (updater == null) {
 
@@ -2704,14 +2595,14 @@ public class UpdatableResultSet
                 generateStatements();
             }
 
-            updater = (com.mysql.jdbc.PreparedStatement)connection.prepareStatement(
+            updater = (com.mysql.jdbc.PreparedStatement) connection.prepareStatement(
                               updateSQL);
         }
 
-        int num_fields = fields.length;
+        int numFields = fields.length;
         updater.clearParameters();
 
-        for (int i = 0; i < num_fields; i++) {
+        for (int i = 0; i < numFields; i++) {
 
             if (thisRow[i] != null) {
                 updater.setBytes(i + 1, thisRow[i]);
@@ -2724,27 +2615,27 @@ public class UpdatableResultSet
 
         if (numKeys == 1) {
 
-            int index = ((Integer)primaryKeyIndicies.get(0)).intValue();
-            byte[] keyData = thisRow[((Integer)primaryKeyIndicies.get(0)).intValue()];
-            updater.setBytes(num_fields + 1, keyData);
+            int index = ((Integer) primaryKeyIndicies.get(0)).intValue();
+            byte[] keyData = thisRow[((Integer) primaryKeyIndicies.get(0)).intValue()];
+            updater.setBytes(numFields + 1, keyData);
         } else {
 
             for (int i = 0; i < numKeys; i++) {
 
-                byte[] currentVal = thisRow[((Integer)primaryKeyIndicies.get(i)).intValue()];
+                byte[] currentVal = thisRow[((Integer) primaryKeyIndicies.get(
+                                                     i)).intValue()];
 
                 if (currentVal != null) {
-                    updater.setBytes(num_fields + i + 1, currentVal);
+                    updater.setBytes(numFields + i + 1, currentVal);
                 } else {
-                    updater.setNull(num_fields + i + 1, 0);
+                    updater.setNull(numFields + i + 1, 0);
                 }
             }
         }
     }
 
     private synchronized String getQuotedIdChar()
-                                         throws SQLException
-    {
+                                         throws SQLException {
 
         if (quotedIdChar == null) {
 
@@ -2756,8 +2647,7 @@ public class UpdatableResultSet
     }
 
     private void resetInserter()
-                        throws SQLException
-    {
+                        throws SQLException {
         inserter.clearParameters();
 
         for (int i = 0; i < fields.length; i++) {
@@ -2766,8 +2656,7 @@ public class UpdatableResultSet
     }
 
     private void resetUpdater()
-                       throws SQLException
-    {
+                       throws SQLException {
         updater.clearParameters();
 
         for (int i = 0; i < fields.length; i++) {

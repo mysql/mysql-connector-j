@@ -27,14 +27,13 @@ import java.util.HashMap;
  * Much faster than the built-in solution that ships
  * with the JVM.
  */
-public class SingleByteCharsetConverter
-{
+public class SingleByteCharsetConverter {
 
     //~ Instance/static variables .............................................
 
     protected static byte[] charToByteMap = new byte[65535];
-    private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE) - 
-                                          Byte.MIN_VALUE;
+    private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE)
+                                          - Byte.MIN_VALUE;
     private static final HashMap converterMap = new HashMap();
     public static byte[] allBytes = new byte[BYTE_RANGE];
     char[] byteToChars = new char[BYTE_RANGE];
@@ -44,7 +43,7 @@ public class SingleByteCharsetConverter
     static {
 
         for (int i = Byte.MIN_VALUE; i <= Byte.MAX_VALUE; i++) {
-            allBytes[i - Byte.MIN_VALUE] = (byte)i;
+            allBytes[i - Byte.MIN_VALUE] = (byte) i;
         }
     }
 
@@ -57,8 +56,7 @@ public class SingleByteCharsetConverter
      *                                       the encoding
      */
     private SingleByteCharsetConverter(String encodingName)
-                                throws UnsupportedEncodingException
-    {
+                                throws UnsupportedEncodingException {
 
         String allBytesString = new String(allBytes, 0, 
                                            Byte.MAX_VALUE - Byte.MIN_VALUE, 
@@ -81,16 +79,15 @@ public class SingleByteCharsetConverter
      * Get a converter for the given encoding name
      */
     public static SingleByteCharsetConverter getInstance(String encodingName)
-        throws UnsupportedEncodingException
-    {
+        throws UnsupportedEncodingException {
 
-        SingleByteCharsetConverter instance = (SingleByteCharsetConverter)converterMap.get(
+        SingleByteCharsetConverter instance = (SingleByteCharsetConverter) converterMap.get(
                                                       encodingName);
 
         if (instance == null) {
-            throw new UnsupportedEncodingException("Character encoding '" + 
-                                                   encodingName + 
-                                                   "' is not supported.");
+            throw new UnsupportedEncodingException("Character encoding '"
+                                                   + encodingName
+                                                   + "' is not supported.");
         }
 
         return instance;
@@ -101,8 +98,7 @@ public class SingleByteCharsetConverter
      * character encoding.
      */
     public static void initCharset(String encodingName)
-                            throws UnsupportedEncodingException
-    {
+                            throws UnsupportedEncodingException {
         converterMap.put(encodingName, 
                          new SingleByteCharsetConverter(encodingName));
     }
@@ -112,8 +108,7 @@ public class SingleByteCharsetConverter
      * to a string with no encoding.
      */
     public static String toStringDefaultEncoding(byte[] buffer, int startPos, 
-                                                 int length)
-    {
+                                                 int length) {
 
         return new String(buffer, startPos, length);
     }
@@ -121,8 +116,7 @@ public class SingleByteCharsetConverter
     /**
      * Convert the given string to an array of bytes.
      */
-    public final byte[] toBytes(String s)
-    {
+    public final byte[] toBytes(String s) {
 
         if (s == null) {
 
@@ -145,8 +139,7 @@ public class SingleByteCharsetConverter
      * Convert the byte buffer to a string using this instance's 
      * character encoding.
      */
-    public final String toString(byte[] buffer)
-    {
+    public final String toString(byte[] buffer) {
 
         return toString(buffer, 0, buffer.length);
     }
@@ -155,15 +148,14 @@ public class SingleByteCharsetConverter
      * Convert the byte buffer from startPos to a length of length
      * to a string using this instance's character encoding.
      */
-    public final String toString(byte[] buffer, int startPos, int length)
-    {
+    public final String toString(byte[] buffer, int startPos, int length) {
 
         char[] charArray = new char[length];
         int readpoint = startPos;
 
         for (int i = 0; i < length; i++) {
-            charArray[i] = byteToChars[(int)buffer[readpoint] - 
-                           Byte.MIN_VALUE];
+            charArray[i] = byteToChars[(int) buffer[readpoint]
+                           - Byte.MIN_VALUE];
             readpoint++;
         }
 

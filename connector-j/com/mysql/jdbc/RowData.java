@@ -16,18 +16,17 @@
       Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
       
  */
+ 
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
-
 
 /** 
  * This interface abstracts away how row data is accessed by
  * the result set. It is meant to allow a static implementation
  * (Current version), and a streaming one.
  */
-public interface RowData
-{
+public interface RowData {
 
     //~ Instance/static variables .............................................
 
@@ -35,7 +34,7 @@ public interface RowData
      * What's returned for the size of a result set
      * when its size can not be determined.
      */
-    public int RESULT_SET_SIZE_UNKNOWN = -1;
+    public static final int RESULT_SET_SIZE_UNKNOWN = -1;
 
     //~ Methods ...............................................................
 

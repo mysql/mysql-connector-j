@@ -17,6 +17,10 @@
       
  */
 
+package com.mysql.jdbc;
+
+import java.sql.Types;
+
 /**
  * MysqlDefs contains many values that are needed for communication
  * with the MySQL server.
@@ -24,13 +28,7 @@
  * @author Mark Matthews
  * @version $Id$
  */
-package com.mysql.jdbc;
-
-import java.sql.Types;
-
-
-final class MysqlDefs
-{
+final class MysqlDefs {
 
     //~ Instance/static variables .............................................
 
@@ -98,218 +96,222 @@ final class MysqlDefs
 
     //~ Methods ...............................................................
 
-    static int mysqlToJavaType(int mysql_type)
-    {
+	/**
+	 * Maps the given MySQL type to the correct JDBC type.
+	 */
+    static int mysqlToJavaType(int mysqlType) {
 
-        int sql_type;
+        int jdbcType;
 
-        switch (mysql_type) {
+        switch (mysqlType) {
 
             case MysqlDefs.FIELD_TYPE_DECIMAL:
-                sql_type = Types.DECIMAL;
+                jdbcType = Types.DECIMAL;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_TINY:
-                sql_type = Types.TINYINT;
+                jdbcType = Types.TINYINT;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_SHORT:
-                sql_type = Types.SMALLINT;
+                jdbcType = Types.SMALLINT;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_LONG:
-                sql_type = Types.INTEGER;
+                jdbcType = Types.INTEGER;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_FLOAT:
-                sql_type = Types.FLOAT;
+                jdbcType = Types.FLOAT;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_DOUBLE:
-                sql_type = Types.DOUBLE;
+                jdbcType = Types.DOUBLE;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_NULL:
-                sql_type = Types.NULL;
+                jdbcType = Types.NULL;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-                sql_type = Types.TIMESTAMP;
+                jdbcType = Types.TIMESTAMP;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_LONGLONG:
-                sql_type = Types.BIGINT;
+                jdbcType = Types.BIGINT;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_INT24:
-                sql_type = Types.INTEGER;
+                jdbcType = Types.INTEGER;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_DATE:
-                sql_type = Types.DATE;
+                jdbcType = Types.DATE;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_TIME:
-                sql_type = Types.TIME;
+                jdbcType = Types.TIME;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_DATETIME:
-                sql_type = Types.TIMESTAMP;
+                jdbcType = Types.TIMESTAMP;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_YEAR:
-                sql_type = Types.DATE;
+                jdbcType = Types.DATE;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_NEWDATE:
-                sql_type = Types.DATE;
+                jdbcType = Types.DATE;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_ENUM:
-                sql_type = Types.CHAR;
+                jdbcType = Types.CHAR;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_SET:
-                sql_type = Types.CHAR;
+                jdbcType = Types.CHAR;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_TINY_BLOB:
-                sql_type = Types.VARBINARY;
+                jdbcType = Types.VARBINARY;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
-                sql_type = Types.LONGVARBINARY;
+                jdbcType = Types.LONGVARBINARY;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_LONG_BLOB:
-                sql_type = Types.LONGVARBINARY;
+                jdbcType = Types.LONGVARBINARY;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_BLOB:
-                sql_type = Types.LONGVARBINARY;
+                jdbcType = Types.LONGVARBINARY;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_VAR_STRING:
-                sql_type = Types.VARCHAR;
+                jdbcType = Types.VARCHAR;
 
                 break;
 
             case MysqlDefs.FIELD_TYPE_STRING:
-                sql_type = Types.CHAR;
+                jdbcType = Types.CHAR;
 
                 break;
 
             default:
-                sql_type = Types.VARCHAR;
+                jdbcType = Types.VARCHAR;
         }
 
-        return sql_type;
+        return jdbcType;
     }
 
-    static int mysqlToJavaType(String MySQLType)
-    {
-        MySQLType = MySQLType.toUpperCase();
+	/**
+	 * Maps the given MySQL type to the correct JDBC type.
+	 */
+    static int mysqlToJavaType(String mysqlType) {
+        
 
-        if (MySQLType.equals("TINYINT")) {
+        if (mysqlType.equalsIgnoreCase("TINYINT")) {
 
             return java.sql.Types.TINYINT;
-        } else if (MySQLType.equals("SMALLINT")) {
+        } else if (mysqlType.equalsIgnoreCase("SMALLINT")) {
 
             return java.sql.Types.SMALLINT;
-        } else if (MySQLType.equals("MEDIUMINT")) {
+        } else if (mysqlType.equalsIgnoreCase("MEDIUMINT")) {
 
             return java.sql.Types.SMALLINT;
-        } else if (MySQLType.equals("INT")) {
+        } else if (mysqlType.equalsIgnoreCase("INT")) {
 
             return java.sql.Types.INTEGER;
-        } else if (MySQLType.equals("INTEGER")) {
+        } else if (mysqlType.equalsIgnoreCase("INTEGER")) {
 
             return java.sql.Types.INTEGER;
-        } else if (MySQLType.equals("BIGINT")) {
+        } else if (mysqlType.equalsIgnoreCase("BIGINT")) {
 
             return java.sql.Types.BIGINT;
-        } else if (MySQLType.equals("INT24")) {
+        } else if (mysqlType.equalsIgnoreCase("INT24")) {
 
             return java.sql.Types.BIGINT;
-        } else if (MySQLType.equals("REAL")) {
+        } else if (mysqlType.equalsIgnoreCase("REAL")) {
 
             return java.sql.Types.REAL;
-        } else if (MySQLType.equals("FLOAT")) {
+        } else if (mysqlType.equalsIgnoreCase("FLOAT")) {
 
             return java.sql.Types.FLOAT;
-        } else if (MySQLType.equals("DECIMAL")) {
+        } else if (mysqlType.equalsIgnoreCase("DECIMAL")) {
 
             return java.sql.Types.DECIMAL;
-        } else if (MySQLType.equals("NUMERIC")) {
+        } else if (mysqlType.equalsIgnoreCase("NUMERIC")) {
 
             return java.sql.Types.NUMERIC;
-        } else if (MySQLType.equals("DOUBLE")) {
+        } else if (mysqlType.equalsIgnoreCase("DOUBLE")) {
 
             return java.sql.Types.DOUBLE;
-        } else if (MySQLType.equals("CHAR")) {
+        } else if (mysqlType.equalsIgnoreCase("CHAR")) {
 
             return java.sql.Types.CHAR;
-        } else if (MySQLType.equals("VARCHAR")) {
+        } else if (mysqlType.equalsIgnoreCase("VARCHAR")) {
 
             return java.sql.Types.VARCHAR;
-        } else if (MySQLType.equals("DATE")) {
+        } else if (mysqlType.equalsIgnoreCase("DATE")) {
 
             return java.sql.Types.DATE;
-        } else if (MySQLType.equals("TIME")) {
+        } else if (mysqlType.equalsIgnoreCase("TIME")) {
 
             return java.sql.Types.TIME;
-        } else if (MySQLType.equals("TIMESTAMP")) {
+        } else if (mysqlType.equalsIgnoreCase("TIMESTAMP")) {
 
             return java.sql.Types.TIMESTAMP;
-        } else if (MySQLType.equals("DATETIME")) {
+        } else if (mysqlType.equalsIgnoreCase("DATETIME")) {
 
             return java.sql.Types.TIMESTAMP;
-        } else if (MySQLType.equals("TINYBLOB")) {
+        } else if (mysqlType.equalsIgnoreCase("TINYBLOB")) {
 
             return java.sql.Types.BINARY;
-        } else if (MySQLType.equals("BLOB")) {
+        } else if (mysqlType.equalsIgnoreCase("BLOB")) {
 
             return java.sql.Types.VARBINARY;
-        } else if (MySQLType.equals("MEDIUMBLOB")) {
+        } else if (mysqlType.equalsIgnoreCase("MEDIUMBLOB")) {
 
             return java.sql.Types.VARBINARY;
-        } else if (MySQLType.equals("LONGBLOB")) {
+        } else if (mysqlType.equalsIgnoreCase("LONGBLOB")) {
 
             return java.sql.Types.LONGVARBINARY;
-        } else if (MySQLType.equals("TINYTEXT")) {
+        } else if (mysqlType.equalsIgnoreCase("TINYTEXT")) {
 
             return java.sql.Types.VARCHAR;
-        } else if (MySQLType.equals("TEXT")) {
+        } else if (mysqlType.equalsIgnoreCase("TEXT")) {
 
             return java.sql.Types.LONGVARCHAR;
-        } else if (MySQLType.equals("MEDIUMTEXT")) {
+        } else if (mysqlType.equalsIgnoreCase("MEDIUMTEXT")) {
 
             return java.sql.Types.LONGVARCHAR;
-        } else if (MySQLType.equals("ENUM")) {
+        } else if (mysqlType.equalsIgnoreCase("ENUM")) {
 
             return java.sql.Types.CHAR;
-        } else if (MySQLType.equals("SET")) {
+        } else if (mysqlType.equalsIgnoreCase("SET")) {
 
             return java.sql.Types.CHAR;
         }

@@ -62,8 +62,7 @@ import java.util.TimeZone;
  * @version $Id$
  */
 public class Connection
-    implements java.sql.Connection
-{
+    implements java.sql.Connection {
 
     //~ Instance/static variables .............................................
 
@@ -73,7 +72,8 @@ public class Connection
     private static final String PING_COMMAND = "SELECT 1";
 
     /**
-     * Map mysql transaction isolation level name to java.sql.Connection.TRANSACTION_XXX
+     * Map mysql transaction isolation level name to 
+     * java.sql.Connection.TRANSACTION_XXX
      */
     private static Hashtable mapTransIsolationName2Value = null;
 
@@ -96,16 +96,16 @@ public class Connection
      * The database we're currently using
      * (called Catalog in JDBC terms).
      */
-    protected String database = null;
+    private String database = null;
 
     /** Should we return PreparedStatements for UltraDev's stupid bug? */
-    protected boolean useUltraDevWorkAround = false;
+    private boolean useUltraDevWorkAround = false;
 
     /** 
      * The I/O abstraction interface (network conn to
      * MySQL server
      */
-    MysqlIO io = null;
+    private MysqlIO io = null;
 
     /**
      * Do we expose sensitive information in exception
@@ -285,24 +285,22 @@ public class Connection
      */
     private boolean useSSL = false;
     private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
-    
+
     /**
      * Properties for this connection specified by user
      */
-    
     private Properties props = null;
-    
+
     /**
      * Classname for socket factory
      */
-    
     private String socketFactoryClassName = null;
-    
+
     /**
      * Default socket factory classname
      */
-    
-    private String DEFAULT_SOCKET_FACTORY = StandardSocketFactory.class.getName();
+    private static final String DEFAULT_SOCKET_FACTORY = 
+    	StandardSocketFactory.class.getName();
 
     //~ Initializers ..........................................................
 
@@ -311,16 +309,16 @@ public class Connection
         mapTransIsolationName2Value = new Hashtable(8);
         mapTransIsolationName2Value.put("READ-UNCOMMITED", 
                                         new Integer(
-                                                java.sql.Connection.TRANSACTION_READ_UNCOMMITTED));
+                                               TRANSACTION_READ_UNCOMMITTED));
         mapTransIsolationName2Value.put("READ-COMMITTED", 
                                         new Integer(
-                                                java.sql.Connection.TRANSACTION_READ_COMMITTED));
+                                                TRANSACTION_READ_COMMITTED));
         mapTransIsolationName2Value.put("REPEATABLE-READ", 
                                         new Integer(
-                                                java.sql.Connection.TRANSACTION_REPEATABLE_READ));
+                                                TRANSACTION_REPEATABLE_READ));
         mapTransIsolationName2Value.put("SERIALIZABLE", 
                                         new Integer(
-                                                java.sql.Connection.TRANSACTION_SERIALIZABLE));
+                                                TRANSACTION_SERIALIZABLE));
     }
 
     //~ Methods ...............................................................
@@ -347,10 +345,9 @@ public class Connection
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setAutoCommit(boolean autoCommit)
-                       throws java.sql.SQLException
-    {
+                       throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = { new Boolean(autoCommit) };
             Debug.methodCall(this, "setAutoCommit", args);
@@ -364,8 +361,8 @@ public class Connection
         } else {
 
             if ((autoCommit == false) && (this.relaxAutoCommit == false)) {
-                throw new SQLException("MySQL Versions Older than 3.23.15 do not support transactions", 
-                                       "08003");
+                throw new SQLException("MySQL Versions Older than 3.23.15 "
+                + "do not support transactions", "08003");
             } else {
                 this.autoCommit = autoCommit;
             }
@@ -382,10 +379,9 @@ public class Connection
      * @see setAutoCommit
      */
     public boolean getAutoCommit()
-                          throws java.sql.SQLException
-    {
+                          throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "getAutoCommit", args);
@@ -403,13 +399,13 @@ public class Connection
      *
      * <p><b>Note:</b> MySQL's notion of catalogs are individual databases.
      *
-     * @exception java.sql.SQLException if a database access error occurs
+     * @param catalog the database for this connection to use
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public void setCatalog(String catalog)
-                    throws java.sql.SQLException
-    {
+                    throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = { catalog };
             Debug.methodCall(this, "setCatalog", args);
@@ -428,10 +424,9 @@ public class Connection
      * @exception java.sql.SQLException if a database access error occurs
      */
     public String getCatalog()
-                      throws java.sql.SQLException
-    {
+                      throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "getCatalog", args);
@@ -441,10 +436,14 @@ public class Connection
         return this.database;
     }
 
-    public boolean isClosed()
-    {
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
+    public boolean isClosed() {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "isClosedNoPing", args);
@@ -455,9 +454,12 @@ public class Connection
         return this.isClosed;
     }
 
-    /** Returns the character encoding for this Connection */
-    public String getEncoding()
-    {
+    /** 
+     * Returns the character encoding for this Connection 
+     *
+     * @return the character encoding for this connection.
+     */
+    public String getEncoding() {
 
         return this.encoding;
     }
@@ -466,8 +468,7 @@ public class Connection
      * @see Connection#setHoldability(int)
      */
     public void setHoldability(int arg0)
-                        throws SQLException
-    {
+                        throws SQLException {
 
         // do nothing
     }
@@ -476,8 +477,7 @@ public class Connection
      * @see Connection#getHoldability()
      */
     public int getHoldability()
-                       throws SQLException
-    {
+                       throws SQLException {
 
         return ResultSet.CLOSE_CURSORS_AT_COMMIT;
     }
@@ -492,8 +492,7 @@ public class Connection
      * @return number of ms that this connection has
      * been idle, 0 if the driver is busy retrieving results.
      */
-    public long getIdleFor()
-    {
+    public long getIdleFor() {
 
         if (this.lastQueryFinishedTime == 0) {
 
@@ -517,8 +516,7 @@ public class Connection
      * @exception java.sql.SQLException if a database access error occurs
      */
     public java.sql.DatabaseMetaData getMetaData()
-                                          throws java.sql.SQLException
-    {
+                                          throws java.sql.SQLException {
 
         return new DatabaseMetaData(this, this.database);
     }
@@ -534,10 +532,9 @@ public class Connection
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setReadOnly(boolean readOnly)
-                     throws java.sql.SQLException
-    {
+                     throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = { new Boolean(readOnly) };
             Debug.methodCall(this, "setReadOnly", args);
@@ -556,10 +553,9 @@ public class Connection
      * @exception java.sql.SQLException if a database access error occurs
      */
     public boolean isReadOnly()
-                       throws java.sql.SQLException
-    {
+                       throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "isReadOnly", args);
@@ -573,8 +569,7 @@ public class Connection
      * @see Connection#setSavepoint()
      */
     public java.sql.Savepoint setSavepoint()
-                                    throws SQLException
-    {
+                                    throws SQLException {
         throw new NotImplemented();
     }
 
@@ -582,8 +577,7 @@ public class Connection
      * @see Connection#setSavepoint(String)
      */
     public java.sql.Savepoint setSavepoint(String arg0)
-                                    throws SQLException
-    {
+                                    throws SQLException {
         throw new NotImplemented();
     }
 
@@ -594,10 +588,9 @@ public class Connection
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public void setTransactionIsolation(int level)
-                                 throws java.sql.SQLException
-    {
+                                 throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = { new Integer(level) };
             Debug.methodCall(this, "setTransactionIsolation", args);
@@ -605,13 +598,14 @@ public class Connection
 
         if (this.hasIsolationLevels) {
 
-            StringBuffer sql = new StringBuffer(
-                                       "SET SESSION TRANSACTION ISOLATION LEVEL ");
+            StringBuffer sql = 
+            	new StringBuffer("SET SESSION TRANSACTION ISOLATION LEVEL ");
 
             switch (level) {
 
                 case java.sql.Connection.TRANSACTION_NONE:
-                    throw new SQLException("Transaction isolation level NONE not supported by MySQL");
+                    throw new SQLException("Transaction isolation level "
+                     + "NONE not supported by MySQL");
 
                 case java.sql.Connection.TRANSACTION_READ_COMMITTED:
                     sql.append("READ COMMITTED");
@@ -634,14 +628,16 @@ public class Connection
                     break;
 
                 default:
-                    throw new SQLException("Unsupported transaction isolation level '" + 
-                                           level + "'", "S1C00");
+                    throw new SQLException("Unsupported transaction "
+                    + "isolation level '"
+                    + level + "'", "S1C00");
             }
 
             execSQL(sql.toString(), -1);
             isolationLevel = level;
         } else {
-            throw new java.sql.SQLException("Transaction Isolation Levels are not supported on MySQL versions older than 3.23.36.", 
+            throw new java.sql.SQLException("Transaction Isolation Levels are "
+            + "not supported on MySQL versions older than 3.23.36.", 
                                             "S1C00");
         }
     }
@@ -653,16 +649,15 @@ public class Connection
      * @exception java.sql.SQLException if a database access error occurs
      */
     public int getTransactionIsolation()
-                                throws java.sql.SQLException
-    {
+                                throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "getTransactionIsolation", args);
             Debug.returnValue(this, "getTransactionIsolation", 
-                              new Integer(
-                                      java.sql.Connection.TRANSACTION_SERIALIZABLE));
+                              new Integer(isolationLevel));
+                                      
         }
 
         return isolationLevel;
@@ -673,22 +668,26 @@ public class Connection
      *
      * Install a type-map object as the default type-map for
      * this connection
+     *
+     * @param map the type mapping
+     * @throws SQLException if a database error occurs.
      */
     public void setTypeMap(java.util.Map map)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotImplemented();
     }
 
     /**
      * JDBC 2.0
      *
-         * Get the type-map object associated with this connection.
-         * By default, the map returned is empty.
+     * Get the type-map object associated with this connection.
+     * By default, the map returned is empty.
+     *
+     * @return the type map
+     * @throws SQLException if a database error occurs
      */
     public java.util.Map getTypeMap()
-                             throws SQLException
-    {
+                             throws SQLException {
         throw new NotImplemented();
     }
 
@@ -703,10 +702,9 @@ public class Connection
      * @exception java.sql.SQLException if a database access error occurs
      */
     public java.sql.SQLWarning getWarnings()
-                                    throws java.sql.SQLException
-    {
+                                    throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "getWarnings", args);
@@ -721,8 +719,7 @@ public class Connection
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean capitalizeDBMDTypes()
-    {
+    public boolean capitalizeDBMDTypes() {
 
         return this.capitalizeDBMDTypes;
     }
@@ -734,10 +731,9 @@ public class Connection
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void clearWarnings()
-                       throws java.sql.SQLException
-    {
+                       throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "clearWarnings", args);
@@ -758,10 +754,9 @@ public class Connection
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void close()
-               throws java.sql.SQLException
-    {
+               throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "close", args);
@@ -809,18 +804,17 @@ public class Connection
      * @see setAutoCommit
      */
     public void commit()
-                throws java.sql.SQLException
-    {
+                throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "commit", args);
         }
 
         if (this.isClosed) {
-            throw new java.sql.SQLException("Commit attempt on closed connection.", 
-                                            "08003");
+            throw new java.sql.SQLException("Commit attempt on closed "
+             + "connection.", "08003");
         }
 
         // no-op if _relaxAutoCommit == true
@@ -843,15 +837,13 @@ public class Connection
      * @param database the database to connect to
      * @param url the URL of the connection
      * @param d the Driver instantation of the connection
-     * @return a valid connection profile
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void connectionInit(String host, int port, Properties info, 
                                String database, String url, Driver d)
-                        throws java.sql.SQLException
-    {
+                        throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = { host, new Integer(port), info, database, url, d };
             Debug.methodCall(this, "constructor", args);
@@ -897,139 +889,10 @@ public class Connection
             this.password = "";
         }
 
-		this.props = info;
-		
-		this.socketFactoryClassName = info.getProperty("socketFactory", DEFAULT_SOCKET_FACTORY);
-		
-        // Check for driver specific properties
-        if (info.getProperty("relaxAutoCommit") != null) {
-            this.relaxAutoCommit = info.getProperty("relaxAutoCommit").toUpperCase()
-                .equals("TRUE");
-        }
+        this.props = info;
+        initializeDriverProperties(info);
 
-        if (info.getProperty("paranoid") != null) {
-            this.paranoid = info.getProperty("paranoid").toUpperCase().equals(
-                                    "TRUE");
-        }
-
-        if (info.getProperty("autoReconnect") != null) {
-            this.highAvailability = info.getProperty("autoReconnect").toUpperCase()
-                .equals("TRUE");
-        }
-
-        if (info.getProperty("capitalizeTypeNames") != null) {
-            this.capitalizeDBMDTypes = info.getProperty("capitalizeTypeNames").toUpperCase()
-                .equals("TRUE");
-        }
-
-        if (info.getProperty("ultraDevHack") != null) {
-            this.useUltraDevWorkAround = info.getProperty("ultraDevHack").toUpperCase()
-                .equals("TRUE");
-        }
-
-        if (info.getProperty("strictFloatingPoint") != null) {
-            this.strictFloatingPoint = info.getProperty("strictFloatingPoint").toUpperCase()
-                .equals("TRUE");
-        }
-
-        if (info.getProperty("useSSL") != null) {
-            this.useSSL = info.getProperty("useSSL").toUpperCase().equals(
-                                  "TRUE");
-        }
-
-        if (info.getProperty("socketTimeout") != null) {
-
-            try {
-
-                int n = Integer.parseInt(info.getProperty("socketTimeout"));
-
-                if (n < 0) {
-                    throw new SQLException("socketTimeout can not be < 0", 
-                                           "0S100");
-                }
-
-                this.socketTimeout = n;
-            } catch (NumberFormatException NFE) {
-                throw new SQLException("Illegal parameter '" + 
-                                       info.getProperty("socketTimeout") + 
-                                       "' for socketTimeout", "0S100");
-            }
-        }
-
-        if (this.highAvailability) {
-
-            if (info.getProperty("maxReconnects") != null) {
-
-                try {
-
-                    int n = Integer.parseInt(info.getProperty("maxReconnects"));
-                    this.maxReconnects = n;
-                } catch (NumberFormatException NFE) {
-                    throw new SQLException("Illegal parameter '" + 
-                                           info.getProperty("maxReconnects") + 
-                                           "' for maxReconnects", "0S100");
-                }
-            }
-
-            if (info.getProperty("initialTimeout") != null) {
-
-                try {
-
-                    double n = Integer.parseInt(info.getProperty(
-                                                        "initialTimeout"));
-                    this.initialTimeout = n;
-                } catch (NumberFormatException NFE) {
-                    throw new SQLException("Illegal parameter '" + 
-                                           info.getProperty("initialTimeout") + 
-                                           "' for initialTimeout", "0S100");
-                }
-            }
-        }
-
-        if (info.getProperty("maxRows") != null) {
-
-            try {
-
-                int n = Integer.parseInt(info.getProperty("maxRows"));
-
-                if (n == 0) {
-                    n = -1;
-                } // adjust so that it will become MysqlDefs.MAX_ROWS
-
-                // in execSQL()
-                this.maxRows = n;
-            } catch (NumberFormatException NFE) {
-                throw new SQLException("Illegal parameter '" + 
-                                       info.getProperty("maxRows") + 
-                                       "' for maxRows", "0S100");
-            }
-        }
-
-        if (info.getProperty("useUnicode") != null) {
-
-            String useUnicode = info.getProperty("useUnicode").toUpperCase();
-
-            if (useUnicode.startsWith("TRUE")) {
-                this.doUnicode = true;
-            }
-
-            if (info.getProperty("characterEncoding") != null) {
-                this.encoding = info.getProperty("characterEncoding");
-
-                // Attempt to use the encoding, and bail out if it
-                // can't be used
-                try {
-
-                    String testString = "abc";
-                    testString.getBytes(this.encoding);
-                } catch (UnsupportedEncodingException UE) {
-                    throw new SQLException("Unsupported character encoding '" + 
-                                           this.encoding + "'.", "0S100");
-                }
-            }
-        }
-
-        if (Driver.debug) {
+        if (Driver.DEBUG) {
             System.out.println(
                     "Connect: " + this.user + " to " + this.database);
         }
@@ -1039,125 +902,7 @@ public class Connection
             this.isClosed = false;
             this.serverVariables = new Hashtable();
 
-            if (this.io.versionMeetsMinimum(3, 22, 1)) {
-                this.useFastPing = true;
-            }
-
-            //
-            // If version is greater than 3.21.22 get the server
-            // variables.
-            if (this.io.versionMeetsMinimum(3, 21, 22)) {
-
-                com.mysql.jdbc.Statement stmt = null;
-                com.mysql.jdbc.ResultSet results = null;
-
-                try {
-                    stmt = (com.mysql.jdbc.Statement)createStatement();
-                    results = (com.mysql.jdbc.ResultSet)stmt.executeQuery(
-                                      "SHOW VARIABLES");
-
-                    while (results.next()) {
-                        this.serverVariables.put(results.getString(1), 
-                                                 results.getString(2));
-                    }
-                } catch (java.sql.SQLException e) {
-                    throw e;
-                } finally {
-
-                    if (results != null) {
-
-                        try {
-                            results.close();
-                        } catch (java.sql.SQLException sqlE) {
-                            ;
-                        }
-                    }
-
-                    if (stmt != null) {
-
-                        try {
-                            stmt.close();
-                        } catch (java.sql.SQLException sqlE) {
-                            ;
-                        }
-                    }
-                }
-
-                if (this.serverVariables.containsKey("max_allowed_packet")) {
-                    this.maxAllowedPacket = Integer.parseInt(
-                                                    (String)this.serverVariables.get(
-                                                            "max_allowed_packet"));
-                }
-
-                if (this.serverVariables.containsKey("net_buffer_length")) {
-                    this.netBufferLength = Integer.parseInt(
-                                                   (String)this.serverVariables.get(
-                                                           "net_buffer_length"));
-                }
-
-                /*
-                   String serverTimezoneStr = (String)this.serverVariables.get("timezone");
-                                                  
-                   if (serverTimezoneStr != null && serverTimezoneStr.trim().length() > 0)
-                   {
-                       try
-                       {
-                           serverTimezoneStr = TimeUtil.getCanoncialTimezone(serverTimezoneStr);
-                                                                  
-                           if (serverTimezoneStr != null)
-                           {
-                               this.serverTimezone = TimeZone.getTimeZone(serverTimezoneStr);
-                                                          
-                               this.useTimezone = true;
-                           }
-                       }
-                       catch (Exception ex) { // Bail-out, we can't use the timezone 
-                       }
-                   }
-                 */
-                checkTransactionIsolationLevel();
-                checkServerEncoding();
-            }
-
-            if (this.io.versionMeetsMinimum(3, 23, 15)) {
-                this.transactionsSupported = true;
-                setAutoCommit(true); // to override anything
-                                     // the server is set to...reqd
-                                     // by JDBC spec.
-            } else {
-                this.transactionsSupported = false;
-            }
-
-            if (this.io.versionMeetsMinimum(3, 23, 36)) {
-                this.hasIsolationLevels = true;
-            } else {
-                this.hasIsolationLevels = false;
-            }
-
-            // Start logging perf/profile data if the user has requested it.
-            String profileSql = info.getProperty("profileSql");
-
-            if ((profileSql != null) && 
-                profileSql.trim().equalsIgnoreCase("true")) {
-                this.io.setProfileSql(true);
-            } else {
-                this.io.setProfileSql(false);
-            }
-
-            this.hasQuotedIdentifiers = this.io.versionMeetsMinimum(3, 23, 6);
-
-            if (this.serverVariables.containsKey("sql_mode")) {
-
-                int sqlMode = Integer.parseInt(
-                                      (String)this.serverVariables.get(
-                                              "sql_mode"));
-
-                if ((sqlMode & 4) > 0) {
-                    this.useAnsiQuotes = true;
-                } else {
-                    this.useAnsiQuotes = false;
-                }
-            }
+            initializePropsFromServer(info);
 
             this.io.resetMaxBuf();
         } catch (java.sql.SQLException ex) {
@@ -1171,7 +916,7 @@ public class Connection
 
             // don't clobber SQL exceptions
             throw ex;
-        }
+         }
          catch (Exception ex) {
 
             try {
@@ -1192,11 +937,14 @@ public class Connection
                 mesg.append("Make sure that there is a MySQL server ");
                 mesg.append("running on the machine/port you are trying ");
                 mesg.append(
-                        "to connect to and that the machine this software is running on ");
+                        "to connect to and that the machine this software is "
+                        + "running on ");
                 mesg.append(
-                        "is able to connect to this host/port (i.e. not firewalled). ");
+                        "is able to connect to this host/port "
+                        + "(i.e. not firewalled). ");
                 mesg.append(
-                        "Also make sure that the server has not been started with the --skip-networking ");
+                        "Also make sure that the server has not been started "
+                        + "with the --skip-networking ");
                 mesg.append("flag.\n\n");
             } else {
                 mesg.append("Unable to connect to database.");
@@ -1207,6 +955,271 @@ public class Connection
             throw new java.sql.SQLException(mesg.toString(), "08S01");
         }
     }
+
+	/**
+	 * Sets varying properties that depend on server information.
+	 * Called once we have connected to the server.
+	 */
+	private void initializePropsFromServer(Properties info) 
+		throws SQLException {
+		if (this.io.versionMeetsMinimum(3, 22, 1)) {
+		    this.useFastPing = true;
+		}
+		
+		//
+		// If version is greater than 3.21.22 get the server
+		// variables.
+		if (this.io.versionMeetsMinimum(3, 21, 22)) {
+		
+		    com.mysql.jdbc.Statement stmt = null;
+		    com.mysql.jdbc.ResultSet results = null;
+		
+		    try {
+		        stmt = (com.mysql.jdbc.Statement) createStatement();
+		        results = (com.mysql.jdbc.ResultSet) stmt.executeQuery(
+		                          "SHOW VARIABLES");
+		
+		        while (results.next()) {
+		            this.serverVariables.put(results.getString(1), 
+		                                     results.getString(2));
+		        }
+		    } catch (java.sql.SQLException e) {
+		        throw e;
+		    } finally {
+		
+		        if (results != null) {
+		
+		            try {
+		                results.close();
+		            } catch (java.sql.SQLException sqlE) {
+		                ;
+		            }
+		        }
+		
+		        if (stmt != null) {
+		
+		            try {
+		                stmt.close();
+		            } catch (java.sql.SQLException sqlE) {
+		                ;
+		            }
+		        }
+		    }
+		
+		    if (this.serverVariables.containsKey(
+		    	"max_allowed_packet")) {
+		        this.maxAllowedPacket = 
+		        Integer.parseInt((String) this.serverVariables.get(
+		                         "max_allowed_packet"));
+		    }
+		
+		    if (this.serverVariables.containsKey("net_buffer_length")) {
+		        this.netBufferLength = 
+		        Integer.parseInt((String) this.serverVariables.get(
+		                         "net_buffer_length"));
+		    }
+		                    
+		    checkTransactionIsolationLevel();
+		    checkServerEncoding();
+		}
+		
+		if (this.io.versionMeetsMinimum(3, 23, 15)) {
+		    this.transactionsSupported = true;
+		    setAutoCommit(true); // to override anything
+		                         // the server is set to...reqd
+		                         // by JDBC spec.
+		} else {
+		    this.transactionsSupported = false;
+		}
+		
+		if (this.io.versionMeetsMinimum(3, 23, 36)) {
+		    this.hasIsolationLevels = true;
+		} else {
+		    this.hasIsolationLevels = false;
+		}
+		
+		// Start logging perf/profile data if the user has requested it.
+		String profileSql = info.getProperty("profileSql");
+		
+		if ((profileSql != null)
+		    && profileSql.trim().equalsIgnoreCase("true")) {
+		    this.io.setProfileSql(true);
+		} else {
+		    this.io.setProfileSql(false);
+		}
+		
+		this.hasQuotedIdentifiers = 
+			this.io.versionMeetsMinimum(3, 23, 6);
+		
+		if (this.serverVariables.containsKey("sql_mode")) {
+		
+		    int sqlMode = Integer.parseInt(
+		                          (String) this.serverVariables.get(
+		                                  "sql_mode"));
+		
+		    if ((sqlMode & 4) > 0) {
+		        this.useAnsiQuotes = true;
+		    } else {
+		        this.useAnsiQuotes = false;
+		    }
+		}
+	}
+
+	/**
+	 * Initializes driver properties that come from URL or
+	 * properties passed to the driver manager.
+	 */
+	private void initializeDriverProperties(Properties info) 
+		throws SQLException {
+		this.socketFactoryClassName = 
+			info.getProperty("socketFactory", 
+				             DEFAULT_SOCKET_FACTORY);
+		
+		if (info.getProperty("relaxAutoCommit") != null) {
+		    this.relaxAutoCommit = 
+		    	info.getProperty("relaxAutoCommit").toUpperCase()
+		        .equals("TRUE");
+		}
+		
+		if (info.getProperty("paranoid") != null) {
+		    this.paranoid = 
+		    	info.getProperty("paranoid").toUpperCase().equals(
+		                            "TRUE");
+		}
+		
+		if (info.getProperty("autoReconnect") != null) {
+		    this.highAvailability = 
+		    	info.getProperty("autoReconnect").toUpperCase()
+		        .equals("TRUE");
+		}
+		
+		if (info.getProperty("capitalizeTypeNames") != null) {
+		    this.capitalizeDBMDTypes = 
+		    	info.getProperty("capitalizeTypeNames").toUpperCase()
+		        .equals("TRUE");
+		}
+		
+		if (info.getProperty("ultraDevHack") != null) {
+		    this.useUltraDevWorkAround = 
+		    	info.getProperty("ultraDevHack").toUpperCase()
+		        .equals("TRUE");
+		}
+		
+		if (info.getProperty("strictFloatingPoint") != null) {
+		    this.strictFloatingPoint = 
+		    	info.getProperty("strictFloatingPoint").toUpperCase()
+		        .equals("TRUE");
+		}
+		
+		if (info.getProperty("useSSL") != null) {
+		    this.useSSL = 
+		    	info.getProperty("useSSL").toUpperCase().equals(
+		                          "TRUE");
+		}
+		
+		if (info.getProperty("socketTimeout") != null) {
+		
+		    try {
+		
+		        int n = 
+		        	Integer.parseInt(
+		        		info.getProperty("socketTimeout"));
+		
+		        if (n < 0) {
+		            throw new SQLException("socketTimeout can not "
+		            + "be < 0", "0S100");
+		        }
+		
+		        this.socketTimeout = n;
+		    } catch (NumberFormatException NFE) {
+		        throw new SQLException("Illegal parameter '"
+		                               + info.getProperty(
+		                               	"socketTimeout")
+		                               + "' for socketTimeout", 
+		                               "0S100");
+		    }
+		}
+		
+		if (this.highAvailability) {
+		
+		    if (info.getProperty("maxReconnects") != null) {
+		
+		        try {
+		
+		            int n = Integer.parseInt(
+		            	info.getProperty("maxReconnects"));
+		            this.maxReconnects = n;
+		        } catch (NumberFormatException NFE) {
+		            throw new SQLException("Illegal parameter '"
+		                                   + info.getProperty(
+		                                   "maxReconnects")
+		                                   + "' for maxReconnects", 
+		                                   "0S100");
+		        }
+		    }
+		
+		    if (info.getProperty("initialTimeout") != null) {
+		
+		        try {
+		
+		            double n = Integer.parseInt(
+		            	info.getProperty("initialTimeout"));
+		            this.initialTimeout = n;
+		        } catch (NumberFormatException NFE) {
+		            throw new SQLException("Illegal parameter '"
+		                                   + info.getProperty(
+		                                   "initialTimeout")
+		                                   + "' for initialTimeout", 
+		                                   "0S100");
+		        }
+		    }
+		}
+		
+		if (info.getProperty("maxRows") != null) {
+		
+		    try {
+		
+		        int n = Integer.parseInt(info.getProperty("maxRows"));
+		
+		        if (n == 0) {
+		            n = -1;
+		        } // adjust so that it will become MysqlDefs.MAX_ROWS
+		
+		        // in execSQL()
+		        this.maxRows = n;
+		    } catch (NumberFormatException NFE) {
+		        throw new SQLException("Illegal parameter '"
+		                               + info.getProperty("maxRows")
+		                               + "' for maxRows", "0S100");
+		    }
+		}
+		
+		if (info.getProperty("useUnicode") != null) {
+		
+		    String useUnicode = 
+		    	info.getProperty("useUnicode").toUpperCase();
+		
+		    if (useUnicode.startsWith("TRUE")) {
+		        this.doUnicode = true;
+		    }
+		
+		    if (info.getProperty("characterEncoding") != null) {
+		        this.encoding = info.getProperty("characterEncoding");
+		
+		        // Attempt to use the encoding, and bail out if it
+		        // can't be used
+		        try {
+		
+		            String testString = "abc";
+		            testString.getBytes(this.encoding);
+		        } catch (UnsupportedEncodingException UE) {
+		            throw new SQLException("Unsupported character "
+		            	+ "encoding '"
+		                + this.encoding + "'.", "0S100");
+		        }
+		    }
+		}
+	}
 
     //--------------------------JDBC 2.0-----------------------------
 
@@ -1223,8 +1236,7 @@ public class Connection
      */
     public java.sql.Statement createStatement(int resultSetType, 
                                               int resultSetConcurrency)
-                                       throws SQLException
-    {
+                                       throws SQLException {
 
         Statement stmt = new com.mysql.jdbc.Statement(this, this.database);
         stmt.setResultSetType(resultSetType);
@@ -1239,11 +1251,10 @@ public class Connection
      * times, it is more efficient to use a PreparedStatement
      *
      * @return a new Statement object
-     * @exception java.sql.SQLException passed through from the constructor
+     * @throws SQLException passed through from the constructor
      */
     public java.sql.Statement createStatement()
-                                       throws SQLException
-    {
+                                       throws SQLException {
 
         return createStatement(java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE, 
                                java.sql.ResultSet.CONCUR_READ_ONLY);
@@ -1255,8 +1266,7 @@ public class Connection
     public java.sql.Statement createStatement(int resultSetType, 
                                               int resultSetConcurrency, 
                                               int resultSetHoldability)
-                                       throws SQLException
-    {
+                                       throws SQLException {
 
         return createStatement(resultSetType, resultSetConcurrency);
     }
@@ -1267,8 +1277,7 @@ public class Connection
      * @throws Throwable DOCUMENT ME!
      */
     public void finalize()
-                  throws Throwable
-    {
+                  throws Throwable {
         cleanup();
     }
 
@@ -1276,8 +1285,7 @@ public class Connection
     * Destroys this connection and any underlying resources
     */
     private void cleanup()
-                  throws SQLException
-    {
+                  throws SQLException {
 
         if ((this.io != null) && !isClosed()) {
             close();
@@ -1303,10 +1311,9 @@ public class Connection
      * @exception java.sql.SQLException if a database access error occurs
      */
     public String nativeSQL(String sql)
-                     throws java.sql.SQLException
-    {
+                     throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = { sql };
             Debug.methodCall(this, "nativeSQL", args);
@@ -1324,14 +1331,14 @@ public class Connection
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public java.sql.CallableStatement prepareCall(String sql)
-                                           throws java.sql.SQLException
-    {
+                                           throws java.sql.SQLException {
 
-        if (this.useUltraDevWorkAround) {
+        if (this.getUseUltraDevWorkAround()) {
 
             return new UltraDevWorkAround(prepareStatement(sql));
         } else {
-            throw new java.sql.SQLException("Callable statments not supported.", 
+            throw new java.sql.SQLException("Callable statments not "
+            	+ "supported.", 
                                             "S1C00");
         }
     }
@@ -1342,6 +1349,7 @@ public class Connection
      * Same as prepareCall() above, but allows the default result set
      * type and result set concurrency type to be overridden.
      *
+     * @param sql the SQL representing the callable statement
      * @param resultSetType a result set type, see ResultSet.TYPE_XXX
      * @param resultSetConcurrency a concurrency type, see ResultSet.CONCUR_XXX
      * @return a new CallableStatement object containing the
@@ -1351,8 +1359,7 @@ public class Connection
     public java.sql.CallableStatement prepareCall(String sql, 
                                                   int resultSetType, 
                                                   int resultSetConcurrency)
-                                           throws SQLException
-    {
+                                           throws SQLException {
 
         return prepareCall(sql);
     }
@@ -1362,8 +1369,7 @@ public class Connection
      */
     public java.sql.CallableStatement prepareCall(String arg0, int arg1, 
                                                   int arg2, int arg3)
-                                           throws SQLException
-    {
+                                           throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1393,8 +1399,7 @@ public class Connection
      * @exception java.sql.SQLException if a database access error occurs.
      */
     public java.sql.PreparedStatement prepareStatement(String sql)
-                                                throws java.sql.SQLException
-    {
+                                                throws java.sql.SQLException {
 
         return prepareStatement(sql, 
                                 java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE, 
@@ -1416,16 +1421,16 @@ public class Connection
     public java.sql.PreparedStatement prepareStatement(String sql, 
                                                        int resultSetType, 
                                                        int resultSetConcurrency)
-                                                throws SQLException
-    {
+                                                throws SQLException {
 
         //
         // FIXME: Create warnings if can't create results of the given
         //        type or concurrency
         //
-        PreparedStatement pStmt = new com.mysql.jdbc.PreparedStatement(this, 
-                                                                       sql, 
-                                                                       this.database);
+        PreparedStatement pStmt = 
+        	new com.mysql.jdbc.PreparedStatement(this, 
+                                                  sql, 
+                                                  this.database);
         pStmt.setResultSetType(resultSetType);
         pStmt.setResultSetConcurrency(resultSetConcurrency);
 
@@ -1439,8 +1444,7 @@ public class Connection
                                                        int resultSetType, 
                                                        int resultSetConcurrency, 
                                                        int resultSetHoldability)
-                                                throws SQLException
-    {
+                                                throws SQLException {
 
         return prepareStatement(sql, resultSetType, resultSetConcurrency);
     }
@@ -1450,8 +1454,7 @@ public class Connection
      */
     public java.sql.PreparedStatement prepareStatement(String sql, 
                                                        int autoGenKeyIndex)
-                                                throws SQLException
-    {
+                                                throws SQLException {
 
         return prepareStatement(sql);
     }
@@ -1461,8 +1464,7 @@ public class Connection
      */
     public java.sql.PreparedStatement prepareStatement(String sql, 
                                                        int[] autoGenKeyIndexes)
-                                                throws SQLException
-    {
+                                                throws SQLException {
 
         return prepareStatement(sql);
     }
@@ -1472,8 +1474,7 @@ public class Connection
      */
     public java.sql.PreparedStatement prepareStatement(String sql, 
                                                        String[] autoGenKeyColNames)
-                                                throws SQLException
-    {
+                                                throws SQLException {
 
         return prepareStatement(sql);
     }
@@ -1482,8 +1483,7 @@ public class Connection
      * @see Connection#releaseSavepoint(Savepoint)
      */
     public void releaseSavepoint(Savepoint arg0)
-                          throws SQLException
-    {
+                          throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1496,10 +1496,9 @@ public class Connection
      * @see commit
      */
     public void rollback()
-                  throws java.sql.SQLException
-    {
+                  throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "rollback", args);
@@ -1523,8 +1522,7 @@ public class Connection
      * @see Connection#rollback(Savepoint)
      */
     public void rollback(Savepoint arg0)
-                  throws SQLException
-    {
+                  throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1533,8 +1531,7 @@ public class Connection
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean supportsIsolationLevel()
-    {
+    public boolean supportsIsolationLevel() {
 
         return this.hasIsolationLevels;
     }
@@ -1544,8 +1541,7 @@ public class Connection
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean supportsQuotedIdentifiers()
-    {
+    public boolean supportsQuotedIdentifiers() {
 
         return this.hasQuotedIdentifiers;
     }
@@ -1555,8 +1551,7 @@ public class Connection
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean supportsTransactions()
-    {
+    public boolean supportsTransactions() {
 
         return this.transactionsSupported;
     }
@@ -1564,40 +1559,53 @@ public class Connection
     /**
      * Should we enable work-arounds for floating
      * point rounding errors in the server?
+     * 
+     * @return should we use floating point work-arounds?
      */
-    public boolean useStrictFloatingPoint()
-    {
+    public boolean useStrictFloatingPoint() {
 
         return this.strictFloatingPoint;
     }
 
     /** 
      * Should unicode character mapping be used ?  
+     * 
+     * @return should we use Unicode character mapping?
      */
-    public boolean useUnicode()
-    {
+    public boolean useUnicode() {
 
         return this.doUnicode;
     }
 
     /**
      * Should we use SSL?
+     * 
+     * @return should we use SSL to communicate with
+     * the server?
      */
-    public boolean useSSL()
-    {
+    public boolean useSSL() {
 
         return this.useSSL;
     }
 
-    protected MysqlIO getIO()
-    {
+	/**
+	 * Returns the IO channel to the server
+	 * 
+	 * @return the IO channel to the server
+	 */	
+    protected MysqlIO getIO() {
 
         return this.io;
     }
 
+	/**
+	 * Creates an IO channel to the server
+	 * 
+	 * @throws SQLException if a database access error
+	 * occurs
+	 */
     protected com.mysql.jdbc.MysqlIO createNewIO()
-                                          throws SQLException
-    {
+                                          throws SQLException {
 
         MysqlIO newIo = null;
 
@@ -1607,10 +1615,9 @@ public class Connection
 
                 try {
                     this.io = new MysqlIO(this.hostList.get(hostIndex).toString(), 
-                                          this.port, this.socketFactoryClassName, 
-                                          this.props, 
-                                          this, 
-                                          this.socketTimeout);
+                                          this.port, 
+                                          this.socketFactoryClassName, 
+                                          this.props, this, this.socketTimeout);
                     this.io.init(this.user, this.password);
 
                     if (this.database.length() != 0) {
@@ -1660,8 +1667,8 @@ public class Connection
                     }
 
                     if ((hostListSize - 1) == hostIndex) {
-                        throw new SQLException("Unable to connect to any hosts due to exception: " + 
-                                               unknownException.toString(), 
+                        throw new SQLException("Unable to connect to any hosts due to exception: "
+                                               + unknownException.toString(), 
                                                "08S01");
                     }
                 }
@@ -1690,9 +1697,9 @@ public class Connection
                         }
 
                         this.io = new MysqlIO(this.hostList.get(hostIndex).toString(), 
-                                              this.port, this.socketFactoryClassName,
-                                              this.props,
-                                              this, 
+                                              this.port, 
+                                              this.socketFactoryClassName, 
+                                              this.props, this, 
                                               this.socketTimeout);
                         this.io.init(this.user, this.password);
 
@@ -1724,7 +1731,7 @@ public class Connection
                     }
 
                     try {
-                        Thread.currentThread().sleep((long)timeout * 1000);
+                        Thread.currentThread().sleep((long) timeout * 1000);
                         timeout = timeout * timeout;
                     } catch (InterruptedException IE) {
                         ;
@@ -1734,9 +1741,9 @@ public class Connection
                 if (!connectionGood) {
 
                     // We've really failed!
-                    throw new SQLException("Server connection failure during transaction. \nAttemtped reconnect " + 
-                                           this.maxReconnects + 
-                                           " times. Giving up.", "08001");
+                    throw new SQLException("Server connection failure during transaction. \nAttemtped reconnect "
+                                           + this.maxReconnects
+                                           + " times. Giving up.", "08001");
                 }
             }
         }
@@ -1750,16 +1757,14 @@ public class Connection
     }
 
     /** Returns the maximum packet size the MySQL server will accept */
-    int getMaxAllowedPacket()
-    {
+    int getMaxAllowedPacket() {
 
         return this.maxAllowedPacket;
     }
 
     /** Returns the Mutex all queries are locked against */
     Object getMutex()
-             throws SQLException
-    {
+             throws SQLException {
 
         if (this.io == null) {
             throw new SQLException("Connection.close() has already been called. Invalid operation in this state.", 
@@ -1771,44 +1776,37 @@ public class Connection
 
     /** Returns the packet buffer size the MySQL server reported
      *  upon connection */
-    int getNetBufferLength()
-    {
+    int getNetBufferLength() {
 
         return this.netBufferLength;
     }
 
-    int getServerMajorVersion()
-    {
+    int getServerMajorVersion() {
 
         return this.io.getServerMajorVersion();
     }
 
-    int getServerMinorVersion()
-    {
+    int getServerMinorVersion() {
 
         return this.io.getServerMinorVersion();
     }
 
-    int getServerSubMinorVersion()
-    {
+    int getServerSubMinorVersion() {
 
         return this.io.getServerSubMinorVersion();
     }
 
-    String getServerVersion()
-    {
+    String getServerVersion() {
 
         return this.io.getServerVersion();
     }
 
-    String getURL()
-    {
+    String getURL() {
 
         return this.myURL;
     }
 
-    String getUser()
-    {
+    String getUser() {
 
         return this.user;
     }
@@ -1825,10 +1823,9 @@ public class Connection
      * @exception java.sql.SQLException if a database error occurs
      */
     ResultSet execSQL(String sql, int maxRowsToRetreive)
-               throws java.sql.SQLException
-    {
+               throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = { sql, new Integer(maxRowsToRetreive) };
             Debug.methodCall(this, "execSQL", args);
@@ -1840,15 +1837,13 @@ public class Connection
 
     ResultSet execSQL(String sql, int maxRows, int resultSetType, 
                       boolean streamResults)
-               throws SQLException
-    {
+               throws SQLException {
 
         return execSQL(sql, maxRows, null, resultSetType, streamResults);
     }
 
     ResultSet execSQL(String sql, int maxRows, Buffer packet)
-               throws java.sql.SQLException
-    {
+               throws java.sql.SQLException {
 
         return execSQL(sql, maxRows, packet, 
                        java.sql.ResultSet.CONCUR_READ_ONLY);
@@ -1856,18 +1851,16 @@ public class Connection
 
     ResultSet execSQL(String sql, int maxRows, Buffer packet, 
                       int resultSetType)
-               throws java.sql.SQLException
-    {
+               throws java.sql.SQLException {
 
         return execSQL(sql, maxRows, packet, resultSetType, true);
     }
 
     ResultSet execSQL(String sql, int maxRows, Buffer packet, 
                       int resultSetType, boolean streamResults)
-               throws java.sql.SQLException
-    {
+               throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = { sql, new Integer(maxRows), packet };
             Debug.methodCall(this, "execSQL", args);
@@ -1917,10 +1910,10 @@ public class Connection
 
                 String exceptionType = ex.getClass().getName();
                 String exceptionMessage = ex.getMessage();
-                throw new java.sql.SQLException("Error during query: Unexpected Exception: " + 
-                                                exceptionType + 
-                                                " message given: " + 
-                                                exceptionMessage, "S1000");
+                throw new java.sql.SQLException("Error during query: Unexpected Exception: "
+                                                + exceptionType
+                                                + " message given: "
+                                                + exceptionMessage, "S1000");
             } finally {
                 this.lastQueryFinishedTime = System.currentTimeMillis();
             }
@@ -1928,20 +1921,17 @@ public class Connection
     }
 
     /** Has the maxRows value changed? */
-    synchronized void maxRowsChanged()
-    {
+    synchronized void maxRowsChanged() {
         this.maxRowsChanged = true;
     }
 
-    boolean useAnsiQuotedIdentifiers()
-    {
+    boolean useAnsiQuotedIdentifiers() {
 
         return this.useAnsiQuotes;
     }
 
     /** Has maxRows() been set? */
-    synchronized boolean useMaxRows()
-    {
+    synchronized boolean useMaxRows() {
 
         return this.maxRowsChanged;
     }
@@ -1952,15 +1942,14 @@ public class Connection
      * Is called by connectionInit(...)
      */
     private void checkServerEncoding()
-                              throws SQLException
-    {
+                              throws SQLException {
 
-        String serverEncoding = (String)this.serverVariables.get(
+        String serverEncoding = (String) this.serverVariables.get(
                                         "character_set");
         String mappedServerEncoding = null;
 
         if (serverEncoding != null) {
-            mappedServerEncoding = (String)charsetMap.get(serverEncoding.toUpperCase());
+            mappedServerEncoding = (String) charsetMap.get(serverEncoding.toUpperCase());
         }
 
         //
@@ -2016,16 +2005,16 @@ public class Connection
             // can't be used
             try {
 
-                String TestString = "abc";
-                TestString.getBytes(this.encoding);
+                String testString = "abc";
+                testString.getBytes(this.encoding);
             } catch (UnsupportedEncodingException UE) {
-                throw new SQLException("The driver can not map the character encoding '" + 
-                                       this.encoding + 
-                                       "' that your server is using " + 
-                                       "to a character encoding your JVM understands. You " + 
-                                       "can specify this mapping manually by adding \"useUnicode=true\" " + 
-                                       "as well as \"characterEncoding=[an_encoding_your_jvm_understands]\" " + 
-                                       "to your JDBC URL.", "0S100");
+                throw new SQLException("The driver can not map the character encoding '"
+                                       + this.encoding
+                                       + "' that your server is using "
+                                       + "to a character encoding your JVM understands. You "
+                                       + "can specify this mapping manually by adding \"useUnicode=true\" "
+                                       + "as well as \"characterEncoding=[an_encoding_your_jvm_understands]\" "
+                                       + "to your JDBC URL.", "0S100");
             }
         }
     }
@@ -2035,14 +2024,13 @@ public class Connection
      * Is called by connectionInit(...)
      */
     private void checkTransactionIsolationLevel()
-                                         throws SQLException
-    {
+                                         throws SQLException {
 
-        String s = (String)this.serverVariables.get("transaction_isolation");
+        String s = (String) this.serverVariables.get("transaction_isolation");
 
         if (s != null) {
 
-            Integer intTI = (Integer)mapTransIsolationName2Value.get(s);
+            Integer intTI = (Integer) mapTransIsolationName2Value.get(s);
 
             if (intTI != null) {
                 isolationLevel = intTI.intValue();
@@ -2060,8 +2048,7 @@ public class Connection
      *  Detect if the connection is still good
      */
     private void ping()
-               throws Exception
-    {
+               throws Exception {
 
         if (this.useFastPing) {
             this.io.sendCommand(MysqlDefs.PING, null, null);
@@ -2075,38 +2062,16 @@ public class Connection
      * Loads the mapping between MySQL character sets and 
      * Java character sets
      */
-    private static void loadCharacterSetMapping()
-    {
-
-        //Properties map = new Properties();
-        //try
-        //{
-        //   InputStream charsetFile =
-        //      Class.forName("com.mysql.jdbc.Connection").getResourceAsStream("charsets.properties");
-        //
-        //   if (charsetFile != null)
-        //   {
-        //      try
-        //      {
-        //         map.load(charsetFile);
-        //      }
-        //      catch (IOException ioEx)
-        //      {
-        //         // should never happen
-        //      }
-        //   }
-        //}
-        //catch (ClassNotFoundException cnfe)
-        //{
-        //   // should never happen
-        //}
+    private static void loadCharacterSetMapping() {
+    	
         multibyteCharsetsMap = new HashMap();
 
-        Iterator multibyteCharsets = CharsetMapping.multibyteCharsets.keySet().iterator();
+        Iterator multibyteCharsets = CharsetMapping.MULTIBYTE_CHARSETS.keySet()
+                                 .iterator();
 
         while (multibyteCharsets.hasNext()) {
 
-            String charset = ((String)multibyteCharsets.next()).toUpperCase();
+            String charset = ((String) multibyteCharsets.next()).toUpperCase();
             multibyteCharsetsMap.put(charset, charset);
         }
 
@@ -2114,13 +2079,13 @@ public class Connection
         // Now change all server encodings to upper-case to "future-proof"
         // this mapping
         //
-        Iterator keys = CharsetMapping.charsetMapping.keySet().iterator();
+        Iterator keys = CharsetMapping.CHARSETMAP.keySet().iterator();
         charsetMap = new HashMap();
 
         while (keys.hasNext()) {
 
-            String mysqlCharsetName = ((String)keys.next()).trim();
-            String javaCharsetName = CharsetMapping.charsetMapping.get(
+            String mysqlCharsetName = ((String) keys.next()).trim();
+            String javaCharsetName = CharsetMapping.CHARSETMAP.get(
                                              mysqlCharsetName).toString().trim();
             charsetMap.put(mysqlCharsetName.toUpperCase(), javaCharsetName);
             charsetMap.put(mysqlCharsetName, javaCharsetName);
@@ -2144,8 +2109,7 @@ public class Connection
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean useTimezone()
-    {
+    public boolean useTimezone() {
 
         return this.useTimezone;
     }
@@ -2155,8 +2119,7 @@ public class Connection
      * 
      * @return DOCUMENT ME! 
      */
-    public TimeZone getServerTimezone()
-    {
+    public TimeZone getServerTimezone() {
 
         return this.serverTimezone;
     }
@@ -2165,11 +2128,18 @@ public class Connection
      * Returns the paranoidErrorMessages.
      * @return boolean
      */
-    public boolean useParanoidErrorMessages()
-    {
+    public boolean useParanoidErrorMessages() {
 
         return paranoid;
     }
+
+	private void setUseUltraDevWorkAround(boolean useUltraDevWorkAround) {
+		this.useUltraDevWorkAround = useUltraDevWorkAround;
+	}
+
+	private boolean getUseUltraDevWorkAround() {
+		return useUltraDevWorkAround;
+	}
 
     //~ Inner classes .........................................................
 
@@ -2180,25 +2150,21 @@ public class Connection
      * Nice going, macromedia!
      */
     class UltraDevWorkAround
-        implements java.sql.CallableStatement
-    {
+        implements java.sql.CallableStatement {
 
-        java.sql.PreparedStatement delegate = null;
+        private java.sql.PreparedStatement delegate = null;
 
-        UltraDevWorkAround(java.sql.PreparedStatement pstmt)
-        {
+        UltraDevWorkAround(java.sql.PreparedStatement pstmt) {
             delegate = pstmt;
         }
 
         public void setArray(int p1, final java.sql.Array p2)
-                      throws java.sql.SQLException
-        {
+                      throws java.sql.SQLException {
             delegate.setArray(p1, p2);
         }
 
         public java.sql.Array getArray(int p1)
-                                throws java.sql.SQLException
-        {
+                                throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2206,15 +2172,13 @@ public class Connection
          * @see CallableStatement#getArray(String)
          */
         public java.sql.Array getArray(String arg0)
-                                throws SQLException
-        {
+                                throws SQLException {
             throw new NotImplemented();
         }
 
         public void setAsciiStream(int p1, final java.io.InputStream p2, 
                                    int p3)
-                            throws java.sql.SQLException
-        {
+                            throws java.sql.SQLException {
             delegate.setAsciiStream(p1, p2, p3);
         }
 
@@ -2222,14 +2186,12 @@ public class Connection
          * @see CallableStatement#setAsciiStream(String, InputStream, int)
          */
         public void setAsciiStream(String arg0, InputStream arg1, int arg2)
-                            throws SQLException
-        {
+                            throws SQLException {
             throw new NotImplemented();
         }
 
         public void setBigDecimal(int p1, final java.math.BigDecimal p2)
-                           throws java.sql.SQLException
-        {
+                           throws java.sql.SQLException {
             delegate.setBigDecimal(p1, p2);
         }
 
@@ -2237,20 +2199,17 @@ public class Connection
          * @see CallableStatement#setBigDecimal(String, BigDecimal)
          */
         public void setBigDecimal(String arg0, BigDecimal arg1)
-                           throws SQLException
-        {
+                           throws SQLException {
             throw new NotImplemented();
         }
 
         public java.math.BigDecimal getBigDecimal(int p1)
-                                           throws java.sql.SQLException
-        {
+                                           throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
         public java.math.BigDecimal getBigDecimal(int p1, int p2)
-                                           throws java.sql.SQLException
-        {
+                                           throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2258,16 +2217,14 @@ public class Connection
          * @see CallableStatement#getBigDecimal(String)
          */
         public BigDecimal getBigDecimal(String arg0)
-                                 throws SQLException
-        {
+                                 throws SQLException {
 
             return null;
         }
 
         public void setBinaryStream(int p1, final java.io.InputStream p2, 
                                     int p3)
-                             throws java.sql.SQLException
-        {
+                             throws java.sql.SQLException {
             delegate.setBinaryStream(p1, p2, p3);
         }
 
@@ -2275,20 +2232,17 @@ public class Connection
          * @see CallableStatement#setBinaryStream(String, InputStream, int)
          */
         public void setBinaryStream(String arg0, InputStream arg1, int arg2)
-                             throws SQLException
-        {
+                             throws SQLException {
             throw new NotImplemented();
         }
 
         public void setBlob(int p1, final java.sql.Blob p2)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             delegate.setBlob(p1, p2);
         }
 
         public java.sql.Blob getBlob(int p1)
-                              throws java.sql.SQLException
-        {
+                              throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2296,14 +2250,12 @@ public class Connection
          * @see CallableStatement#getBlob(String)
          */
         public java.sql.Blob getBlob(String arg0)
-                              throws SQLException
-        {
+                              throws SQLException {
             throw new NotImplemented();
         }
 
         public void setBoolean(int p1, boolean p2)
-                        throws java.sql.SQLException
-        {
+                        throws java.sql.SQLException {
             delegate.setBoolean(p1, p2);
         }
 
@@ -2311,14 +2263,12 @@ public class Connection
          * @see CallableStatement#setBoolean(String, boolean)
          */
         public void setBoolean(String arg0, boolean arg1)
-                        throws SQLException
-        {
+                        throws SQLException {
             throw new NotImplemented();
         }
 
         public boolean getBoolean(int p1)
-                           throws java.sql.SQLException
-        {
+                           throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2326,14 +2276,12 @@ public class Connection
          * @see CallableStatement#getBoolean(String)
          */
         public boolean getBoolean(String arg0)
-                           throws SQLException
-        {
+                           throws SQLException {
             throw new NotImplemented();
         }
 
         public void setByte(int p1, byte p2)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             delegate.setByte(p1, p2);
         }
 
@@ -2341,14 +2289,12 @@ public class Connection
          * @see CallableStatement#setByte(String, byte)
          */
         public void setByte(String arg0, byte arg1)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
         public byte getByte(int p1)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2356,14 +2302,12 @@ public class Connection
          * @see CallableStatement#getByte(String)
          */
         public byte getByte(String arg0)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
         public void setBytes(int p1, byte[] p2)
-                      throws java.sql.SQLException
-        {
+                      throws java.sql.SQLException {
             delegate.setBytes(p1, p2);
         }
 
@@ -2371,14 +2315,12 @@ public class Connection
          * @see CallableStatement#setBytes(String, byte[])
          */
         public void setBytes(String arg0, byte[] arg1)
-                      throws SQLException
-        {
+                      throws SQLException {
             throw new NotImplemented();
         }
 
         public byte[] getBytes(int p1)
-                        throws java.sql.SQLException
-        {
+                        throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2386,14 +2328,12 @@ public class Connection
          * @see CallableStatement#getBytes(String)
          */
         public byte[] getBytes(String arg0)
-                        throws SQLException
-        {
+                        throws SQLException {
             throw new NotImplemented();
         }
 
         public void setCharacterStream(int p1, final java.io.Reader p2, int p3)
-                                throws java.sql.SQLException
-        {
+                                throws java.sql.SQLException {
             delegate.setCharacterStream(p1, p2, p3);
         }
 
@@ -2401,20 +2341,17 @@ public class Connection
          * @see CallableStatement#setCharacterStream(String, Reader, int)
          */
         public void setCharacterStream(String arg0, Reader arg1, int arg2)
-                                throws SQLException
-        {
+                                throws SQLException {
             throw new NotImplemented();
         }
 
         public void setClob(int p1, final java.sql.Clob p2)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             delegate.setClob(p1, p2);
         }
 
         public java.sql.Clob getClob(int p1)
-                              throws java.sql.SQLException
-        {
+                              throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2422,34 +2359,29 @@ public class Connection
          * @see CallableStatement#getClob(String)
          */
         public Clob getClob(String arg0)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
         public java.sql.Connection getConnection()
-                                          throws java.sql.SQLException
-        {
+                                          throws java.sql.SQLException {
 
             return delegate.getConnection();
         }
 
         public void setCursorName(java.lang.String p1)
-                           throws java.sql.SQLException
-        {
+                           throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
         public void setDate(int p1, final java.sql.Date p2)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             delegate.setDate(p1, p2);
         }
 
         public void setDate(int p1, final java.sql.Date p2, 
                             final java.util.Calendar p3)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             delegate.setDate(p1, p2, p3);
         }
 
@@ -2457,8 +2389,7 @@ public class Connection
          * @see CallableStatement#setDate(String, Date, Calendar)
          */
         public void setDate(String arg0, Date arg1, Calendar arg2)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
@@ -2466,20 +2397,17 @@ public class Connection
          * @see CallableStatement#setDate(String, Date)
          */
         public void setDate(String arg0, Date arg1)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
         public java.sql.Date getDate(int p1)
-                              throws java.sql.SQLException
-        {
+                              throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
         public java.sql.Date getDate(int p1, final java.util.Calendar p2)
-                              throws java.sql.SQLException
-        {
+                              throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2487,8 +2415,7 @@ public class Connection
          * @see CallableStatement#getDate(String, Calendar)
          */
         public Date getDate(String arg0, Calendar arg1)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
@@ -2496,14 +2423,12 @@ public class Connection
          * @see CallableStatement#getDate(String)
          */
         public Date getDate(String arg0)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
         public void setDouble(int p1, double p2)
-                       throws java.sql.SQLException
-        {
+                       throws java.sql.SQLException {
             delegate.setDouble(p1, p2);
         }
 
@@ -2511,14 +2436,12 @@ public class Connection
          * @see CallableStatement#setDouble(String, double)
          */
         public void setDouble(String arg0, double arg1)
-                       throws SQLException
-        {
+                       throws SQLException {
             throw new NotImplemented();
         }
 
         public double getDouble(int p1)
-                         throws java.sql.SQLException
-        {
+                         throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2526,46 +2449,39 @@ public class Connection
          * @see CallableStatement#getDouble(String)
          */
         public double getDouble(String arg0)
-                         throws SQLException
-        {
+                         throws SQLException {
             throw new NotImplemented();
         }
 
         public void setEscapeProcessing(boolean p1)
-                                 throws java.sql.SQLException
-        {
+                                 throws java.sql.SQLException {
             delegate.setEscapeProcessing(p1);
         }
 
         public void setFetchDirection(int p1)
-                               throws java.sql.SQLException
-        {
+                               throws java.sql.SQLException {
             delegate.setFetchDirection(p1);
         }
 
         public int getFetchDirection()
-                              throws java.sql.SQLException
-        {
+                              throws java.sql.SQLException {
 
             return delegate.getFetchDirection();
         }
 
         public void setFetchSize(int p1)
-                          throws java.sql.SQLException
-        {
+                          throws java.sql.SQLException {
             delegate.setFetchSize(p1);
         }
 
         public int getFetchSize()
-                         throws java.sql.SQLException
-        {
+                         throws java.sql.SQLException {
 
             return delegate.getFetchSize();
         }
 
         public void setFloat(int p1, float p2)
-                      throws java.sql.SQLException
-        {
+                      throws java.sql.SQLException {
             delegate.setFloat(p1, p2);
         }
 
@@ -2573,14 +2489,12 @@ public class Connection
          * @see CallableStatement#setFloat(String, float)
          */
         public void setFloat(String arg0, float arg1)
-                      throws SQLException
-        {
+                      throws SQLException {
             throw new NotImplemented();
         }
 
         public float getFloat(int p1)
-                       throws java.sql.SQLException
-        {
+                       throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2588,8 +2502,7 @@ public class Connection
          * @see CallableStatement#getFloat(String)
          */
         public float getFloat(String arg0)
-                       throws SQLException
-        {
+                       throws SQLException {
             throw new NotImplemented();
         }
 
@@ -2597,15 +2510,13 @@ public class Connection
          * @see Statement#getGeneratedKeys()
          */
         public java.sql.ResultSet getGeneratedKeys()
-                                            throws SQLException
-        {
+                                            throws SQLException {
 
             return delegate.getGeneratedKeys();
         }
 
         public void setInt(int p1, int p2)
-                    throws java.sql.SQLException
-        {
+                    throws java.sql.SQLException {
             delegate.setInt(p1, p2);
         }
 
@@ -2613,14 +2524,12 @@ public class Connection
          * @see CallableStatement#setInt(String, int)
          */
         public void setInt(String arg0, int arg1)
-                    throws SQLException
-        {
+                    throws SQLException {
             throw new NotImplemented();
         }
 
         public int getInt(int p1)
-                   throws java.sql.SQLException
-        {
+                   throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2628,14 +2537,12 @@ public class Connection
          * @see CallableStatement#getInt(String)
          */
         public int getInt(String arg0)
-                   throws SQLException
-        {
+                   throws SQLException {
             throw new NotImplemented();
         }
 
         public void setLong(int p1, long p2)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             delegate.setLong(p1, p2);
         }
 
@@ -2643,14 +2550,12 @@ public class Connection
          * @see CallableStatement#setLong(String, long)
          */
         public void setLong(String arg0, long arg1)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
         public long getLong(int p1)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2658,46 +2563,39 @@ public class Connection
          * @see CallableStatement#getLong(String)
          */
         public long getLong(String arg0)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
         public void setMaxFieldSize(int p1)
-                             throws java.sql.SQLException
-        {
+                             throws java.sql.SQLException {
             delegate.setMaxFieldSize(p1);
         }
 
         public int getMaxFieldSize()
-                            throws java.sql.SQLException
-        {
+                            throws java.sql.SQLException {
 
             return delegate.getMaxFieldSize();
         }
 
         public void setMaxRows(int p1)
-                        throws java.sql.SQLException
-        {
+                        throws java.sql.SQLException {
             delegate.setMaxRows(p1);
         }
 
         public int getMaxRows()
-                       throws java.sql.SQLException
-        {
+                       throws java.sql.SQLException {
 
             return delegate.getMaxRows();
         }
 
         public java.sql.ResultSetMetaData getMetaData()
-                                               throws java.sql.SQLException
-        {
+                                               throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
         public boolean getMoreResults()
-                               throws java.sql.SQLException
-        {
+                               throws java.sql.SQLException {
 
             return delegate.getMoreResults();
         }
@@ -2706,21 +2604,18 @@ public class Connection
          * @see Statement#getMoreResults(int)
          */
         public boolean getMoreResults(int arg0)
-                               throws SQLException
-        {
+                               throws SQLException {
 
             return delegate.getMoreResults();
         }
 
         public void setNull(int p1, int p2)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             delegate.setNull(p1, p2);
         }
 
         public void setNull(int p1, int p2, java.lang.String p3)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             delegate.setNull(p1, p2, p3);
         }
 
@@ -2728,8 +2623,7 @@ public class Connection
          * @see CallableStatement#setNull(String, int, String)
          */
         public void setNull(String arg0, int arg1, String arg2)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
@@ -2737,27 +2631,23 @@ public class Connection
          * @see CallableStatement#setNull(String, int)
          */
         public void setNull(String arg0, int arg1)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
         public void setObject(int p1, final java.lang.Object p2)
-                       throws java.sql.SQLException
-        {
+                       throws java.sql.SQLException {
             delegate.setObject(p1, p2);
         }
 
         public void setObject(int p1, final java.lang.Object p2, int p3)
-                       throws java.sql.SQLException
-        {
+                       throws java.sql.SQLException {
             delegate.setObject(p1, p2, p3);
         }
 
         public void setObject(int p1, final java.lang.Object p2, int p3, 
                               int p4)
-                       throws java.sql.SQLException
-        {
+                       throws java.sql.SQLException {
             delegate.setObject(p1, p2, p3, p4);
         }
 
@@ -2765,8 +2655,7 @@ public class Connection
          * @see CallableStatement#setObject(String, Object, int, int)
          */
         public void setObject(String arg0, Object arg1, int arg2, int arg3)
-                       throws SQLException
-        {
+                       throws SQLException {
             throw new NotImplemented();
         }
 
@@ -2774,8 +2663,7 @@ public class Connection
          * @see CallableStatement#setObject(String, Object, int)
          */
         public void setObject(String arg0, Object arg1, int arg2)
-                       throws SQLException
-        {
+                       throws SQLException {
             throw new NotImplemented();
         }
 
@@ -2783,20 +2671,17 @@ public class Connection
          * @see CallableStatement#setObject(String, Object)
          */
         public void setObject(String arg0, Object arg1)
-                       throws SQLException
-        {
+                       throws SQLException {
             throw new NotImplemented();
         }
 
         public java.lang.Object getObject(int p1)
-                                   throws java.sql.SQLException
-        {
+                                   throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
         public java.lang.Object getObject(int p1, final java.util.Map p2)
-                                   throws java.sql.SQLException
-        {
+                                   throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2804,8 +2689,7 @@ public class Connection
          * @see CallableStatement#getObject(String, Map)
          */
         public Object getObject(String arg0, Map arg1)
-                         throws SQLException
-        {
+                         throws SQLException {
             throw new NotImplemented();
         }
 
@@ -2813,8 +2697,7 @@ public class Connection
          * @see CallableStatement#getObject(String)
          */
         public Object getObject(String arg0)
-                         throws SQLException
-        {
+                         throws SQLException {
             throw new NotImplemented();
         }
 
@@ -2822,34 +2705,29 @@ public class Connection
          * @see PreparedStatement#getParameterMetaData()
          */
         public ParameterMetaData getParameterMetaData()
-                                               throws SQLException
-        {
+                                               throws SQLException {
 
             return delegate.getParameterMetaData();
         }
 
         public void setQueryTimeout(int p1)
-                             throws java.sql.SQLException
-        {
+                             throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
         public int getQueryTimeout()
-                            throws java.sql.SQLException
-        {
+                            throws java.sql.SQLException {
 
             return delegate.getQueryTimeout();
         }
 
         public void setRef(int p1, final java.sql.Ref p2)
-                    throws java.sql.SQLException
-        {
+                    throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
         public java.sql.Ref getRef(int p1)
-                            throws java.sql.SQLException
-        {
+                            throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2857,21 +2735,18 @@ public class Connection
          * @see CallableStatement#getRef(String)
          */
         public Ref getRef(String arg0)
-                   throws SQLException
-        {
+                   throws SQLException {
             throw new NotImplemented();
         }
 
         public java.sql.ResultSet getResultSet()
-                                        throws java.sql.SQLException
-        {
+                                        throws java.sql.SQLException {
 
             return delegate.getResultSet();
         }
 
         public int getResultSetConcurrency()
-                                    throws java.sql.SQLException
-        {
+                                    throws java.sql.SQLException {
 
             return delegate.getResultSetConcurrency();
         }
@@ -2880,22 +2755,19 @@ public class Connection
          * @see Statement#getResultSetHoldability()
          */
         public int getResultSetHoldability()
-                                    throws SQLException
-        {
+                                    throws SQLException {
 
             return delegate.getResultSetHoldability();
         }
 
         public int getResultSetType()
-                             throws java.sql.SQLException
-        {
+                             throws java.sql.SQLException {
 
             return delegate.getResultSetType();
         }
 
         public void setShort(int p1, short p2)
-                      throws java.sql.SQLException
-        {
+                      throws java.sql.SQLException {
             delegate.setShort(p1, p2);
         }
 
@@ -2903,14 +2775,12 @@ public class Connection
          * @see CallableStatement#setShort(String, short)
          */
         public void setShort(String arg0, short arg1)
-                      throws SQLException
-        {
+                      throws SQLException {
             throw new NotImplemented();
         }
 
         public short getShort(int p1)
-                       throws java.sql.SQLException
-        {
+                       throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2918,14 +2788,12 @@ public class Connection
          * @see CallableStatement#getShort(String)
          */
         public short getShort(String arg0)
-                       throws SQLException
-        {
+                       throws SQLException {
             throw new NotImplemented();
         }
 
         public void setString(int p1, java.lang.String p2)
-                       throws java.sql.SQLException
-        {
+                       throws java.sql.SQLException {
             delegate.setString(p1, p2);
         }
 
@@ -2933,14 +2801,12 @@ public class Connection
          * @see CallableStatement#setString(String, String)
          */
         public void setString(String arg0, String arg1)
-                       throws SQLException
-        {
+                       throws SQLException {
             throw new NotImplemented();
         }
 
         public java.lang.String getString(int p1)
-                                   throws java.sql.SQLException
-        {
+                                   throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -2948,21 +2814,18 @@ public class Connection
          * @see CallableStatement#getString(String)
          */
         public String getString(String arg0)
-                         throws SQLException
-        {
+                         throws SQLException {
             throw new NotImplemented();
         }
 
         public void setTime(int p1, final java.sql.Time p2)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             delegate.setTime(p1, p2);
         }
 
         public void setTime(int p1, final java.sql.Time p2, 
                             final java.util.Calendar p3)
-                     throws java.sql.SQLException
-        {
+                     throws java.sql.SQLException {
             delegate.setTime(p1, p2, p3);
         }
 
@@ -2970,8 +2833,7 @@ public class Connection
          * @see CallableStatement#setTime(String, Time, Calendar)
          */
         public void setTime(String arg0, Time arg1, Calendar arg2)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
@@ -2979,20 +2841,17 @@ public class Connection
          * @see CallableStatement#setTime(String, Time)
          */
         public void setTime(String arg0, Time arg1)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
         public java.sql.Time getTime(int p1)
-                              throws java.sql.SQLException
-        {
+                              throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
         public java.sql.Time getTime(int p1, final java.util.Calendar p2)
-                              throws java.sql.SQLException
-        {
+                              throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -3000,8 +2859,7 @@ public class Connection
          * @see CallableStatement#getTime(String, Calendar)
          */
         public Time getTime(String arg0, Calendar arg1)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
@@ -3009,21 +2867,18 @@ public class Connection
          * @see CallableStatement#getTime(String)
          */
         public Time getTime(String arg0)
-                     throws SQLException
-        {
+                     throws SQLException {
             throw new NotImplemented();
         }
 
         public void setTimestamp(int p1, final java.sql.Timestamp p2)
-                          throws java.sql.SQLException
-        {
+                          throws java.sql.SQLException {
             delegate.setTimestamp(p1, p2);
         }
 
         public void setTimestamp(int p1, final java.sql.Timestamp p2, 
                                  final java.util.Calendar p3)
-                          throws java.sql.SQLException
-        {
+                          throws java.sql.SQLException {
             delegate.setTimestamp(p1, p2, p3);
         }
 
@@ -3031,8 +2886,7 @@ public class Connection
          * @see CallableStatement#setTimestamp(String, Timestamp, Calendar)
          */
         public void setTimestamp(String arg0, Timestamp arg1, Calendar arg2)
-                          throws SQLException
-        {
+                          throws SQLException {
             throw new NotImplemented();
         }
 
@@ -3040,21 +2894,18 @@ public class Connection
          * @see CallableStatement#setTimestamp(String, Timestamp)
          */
         public void setTimestamp(String arg0, Timestamp arg1)
-                          throws SQLException
-        {
+                          throws SQLException {
             throw new NotImplemented();
         }
 
         public java.sql.Timestamp getTimestamp(int p1)
-                                        throws java.sql.SQLException
-        {
+                                        throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
         public java.sql.Timestamp getTimestamp(int p1, 
                                                final java.util.Calendar p2)
-                                        throws java.sql.SQLException
-        {
+                                        throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -3062,8 +2913,7 @@ public class Connection
          * @see CallableStatement#getTimestamp(String, Calendar)
          */
         public Timestamp getTimestamp(String arg0, Calendar arg1)
-                               throws SQLException
-        {
+                               throws SQLException {
             throw new NotImplemented();
         }
 
@@ -3071,8 +2921,7 @@ public class Connection
          * @see CallableStatement#getTimestamp(String)
          */
         public Timestamp getTimestamp(String arg0)
-                               throws SQLException
-        {
+                               throws SQLException {
             throw new NotImplemented();
         }
 
@@ -3080,8 +2929,7 @@ public class Connection
          * @see CallableStatement#setURL(String, URL)
          */
         public void setURL(String arg0, URL arg1)
-                    throws SQLException
-        {
+                    throws SQLException {
             throw new NotImplemented();
         }
 
@@ -3089,8 +2937,7 @@ public class Connection
          * @see PreparedStatement#setURL(int, URL)
          */
         public void setURL(int arg0, URL arg1)
-                    throws SQLException
-        {
+                    throws SQLException {
             delegate.setURL(arg0, arg1);
         }
 
@@ -3098,8 +2945,7 @@ public class Connection
          * @see CallableStatement#getURL(int)
          */
         public URL getURL(int arg0)
-                   throws SQLException
-        {
+                   throws SQLException {
             throw new NotImplemented();
         }
 
@@ -3107,84 +2953,71 @@ public class Connection
          * @see CallableStatement#getURL(String)
          */
         public URL getURL(String arg0)
-                   throws SQLException
-        {
+                   throws SQLException {
             throw new NotImplemented();
         }
 
         public void setUnicodeStream(int p1, final java.io.InputStream p2, 
                                      int p3)
-                              throws java.sql.SQLException
-        {
+                              throws java.sql.SQLException {
             delegate.setUnicodeStream(p1, p2, p3);
         }
 
         public int getUpdateCount()
-                           throws java.sql.SQLException
-        {
+                           throws java.sql.SQLException {
 
             return delegate.getUpdateCount();
         }
 
         public java.sql.SQLWarning getWarnings()
-                                        throws java.sql.SQLException
-        {
+                                        throws java.sql.SQLException {
 
             return delegate.getWarnings();
         }
 
         public void addBatch()
-                      throws java.sql.SQLException
-        {
+                      throws java.sql.SQLException {
             delegate.addBatch();
         }
 
         public void addBatch(java.lang.String p1)
-                      throws java.sql.SQLException
-        {
+                      throws java.sql.SQLException {
             delegate.addBatch(p1);
         }
 
         public void cancel()
-                    throws java.sql.SQLException
-        {
+                    throws java.sql.SQLException {
             delegate.cancel();
         }
 
         public void clearBatch()
-                        throws java.sql.SQLException
-        {
+                        throws java.sql.SQLException {
             delegate.clearBatch();
         }
 
         public void clearParameters()
-                             throws java.sql.SQLException
-        {
+                             throws java.sql.SQLException {
             delegate.clearParameters();
         }
 
         public void clearWarnings()
-                           throws java.sql.SQLException
-        {
+                           throws java.sql.SQLException {
             delegate.clearWarnings();
         }
 
         public void close()
-                   throws java.sql.SQLException
-        {
+                   throws java.sql.SQLException {
             delegate.close();
         }
 
         public boolean execute()
-                        throws java.sql.SQLException
-        {
+                        throws java.sql.SQLException {
 
             return delegate.execute();
         }
 
         public boolean execute(java.lang.String p1)
-                        throws java.sql.SQLException
-        {
+                        throws java.sql.SQLException {
 
             return delegate.execute(p1);
         }
@@ -3193,8 +3026,7 @@ public class Connection
          * @see Statement#execute(String, int)
          */
         public boolean execute(String arg0, int arg1)
-                        throws SQLException
-        {
+                        throws SQLException {
 
             return delegate.execute(arg0, arg1);
         }
@@ -3203,8 +3035,7 @@ public class Connection
          * @see Statement#execute(String, int[])
          */
         public boolean execute(String arg0, int[] arg1)
-                        throws SQLException
-        {
+                        throws SQLException {
 
             return delegate.execute(arg0, arg1);
         }
@@ -3213,43 +3044,37 @@ public class Connection
          * @see Statement#execute(String, String[])
          */
         public boolean execute(String arg0, String[] arg1)
-                        throws SQLException
-        {
+                        throws SQLException {
 
             return delegate.execute(arg0, arg1);
         }
 
         public int[] executeBatch()
-                           throws java.sql.SQLException
-        {
+                           throws java.sql.SQLException {
 
             return delegate.executeBatch();
         }
 
         public java.sql.ResultSet executeQuery()
-                                        throws java.sql.SQLException
-        {
+                                        throws java.sql.SQLException {
 
             return delegate.executeQuery();
         }
 
         public java.sql.ResultSet executeQuery(java.lang.String p1)
-                                        throws java.sql.SQLException
-        {
+                                        throws java.sql.SQLException {
 
             return delegate.executeQuery(p1);
         }
 
         public int executeUpdate()
-                          throws java.sql.SQLException
-        {
+                          throws java.sql.SQLException {
 
             return delegate.executeUpdate();
         }
 
         public int executeUpdate(java.lang.String p1)
-                          throws java.sql.SQLException
-        {
+                          throws java.sql.SQLException {
 
             return delegate.executeUpdate(p1);
         }
@@ -3258,8 +3083,7 @@ public class Connection
          * @see Statement#executeUpdate(String, int)
          */
         public int executeUpdate(String arg0, int arg1)
-                          throws SQLException
-        {
+                          throws SQLException {
 
             return delegate.executeUpdate(arg0, arg1);
         }
@@ -3268,8 +3092,7 @@ public class Connection
          * @see Statement#executeUpdate(String, int[])
          */
         public int executeUpdate(String arg0, int[] arg1)
-                          throws SQLException
-        {
+                          throws SQLException {
 
             return delegate.executeUpdate(arg0, arg1);
         }
@@ -3278,27 +3101,23 @@ public class Connection
          * @see Statement#executeUpdate(String, String[])
          */
         public int executeUpdate(String arg0, String[] arg1)
-                          throws SQLException
-        {
+                          throws SQLException {
 
             return delegate.executeUpdate(arg0, arg1);
         }
 
         public void registerOutParameter(int p1, int p2)
-                                  throws java.sql.SQLException
-        {
+                                  throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
         public void registerOutParameter(int p1, int p2, int p3)
-                                  throws java.sql.SQLException
-        {
+                                  throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
         public void registerOutParameter(int p1, int p2, java.lang.String p3)
-                                  throws java.sql.SQLException
-        {
+                                  throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
 
@@ -3306,8 +3125,7 @@ public class Connection
          * @see CallableStatement#registerOutParameter(String, int, int)
          */
         public void registerOutParameter(String arg0, int arg1, int arg2)
-                                  throws SQLException
-        {
+                                  throws SQLException {
             throw new NotImplemented();
         }
 
@@ -3315,8 +3133,7 @@ public class Connection
          * @see CallableStatement#registerOutParameter(String, int, String)
          */
         public void registerOutParameter(String arg0, int arg1, String arg2)
-                                  throws SQLException
-        {
+                                  throws SQLException {
             throw new NotImplemented();
         }
 
@@ -3324,14 +3141,12 @@ public class Connection
          * @see CallableStatement#registerOutParameter(String, int)
          */
         public void registerOutParameter(String arg0, int arg1)
-                                  throws SQLException
-        {
+                                  throws SQLException {
             throw new NotImplemented();
         }
 
         public boolean wasNull()
-                        throws java.sql.SQLException
-        {
+                        throws java.sql.SQLException {
             throw new SQLException("Not supported");
         }
     }

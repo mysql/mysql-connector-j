@@ -29,20 +29,18 @@ package com.mysql.jdbc;
 import java.util.StringTokenizer;
 
 
-class EscapeProcessor
-{
+class EscapeProcessor {
 
     //~ Methods ...............................................................
 
-    /**
+  /**
    * Escape process one string
    *
    * @param SQL the SQL to escape process.
    * @return the SQL after it has been escape processed.
    */
     public synchronized String escapeSQL(String sql)
-                                  throws java.sql.SQLException
-    {
+                                  throws java.sql.SQLException {
 
         boolean replaceEscapeSequence = false;
         String escapeSequence = null;
@@ -75,8 +73,8 @@ class EscapeProcessor
             if (token.startsWith("{")) { // It's an escape code
 
                 if (!token.endsWith("}")) {
-                    throw new java.sql.SQLException("Not a valid escape sequence: " + 
-                                                    token);
+                    throw new java.sql.SQLException("Not a valid escape sequence: "
+                                                    + token);
                 }
 
                 /*
@@ -91,8 +89,8 @@ class EscapeProcessor
                         escapeSequence = st.nextToken();
 
                         if (escapeSequence.length() < 3) {
-                            throw new java.sql.SQLException("Syntax error for escape sequence '" + 
-                                                            token + "'", 
+                            throw new java.sql.SQLException("Syntax error for escape sequence '"
+                                                            + token + "'", 
                                                             "42000");
                         }
 
@@ -100,8 +98,8 @@ class EscapeProcessor
                                                                   escapeSequence.length() - 1);
                         replaceEscapeSequence = true;
                     } catch (java.util.NoSuchElementException e) {
-                        throw new java.sql.SQLException("Syntax error for escape sequence '" + 
-                                                        token + "'", "42000");
+                        throw new java.sql.SQLException("Syntax error for escape sequence '"
+                                                        + token + "'", "42000");
                     }
                 } else if (token.toLowerCase().startsWith("{fn")) {
 
@@ -115,8 +113,8 @@ class EscapeProcessor
                     int endPos = token.lastIndexOf("'"); // no }
 
                     if (startPos == -1 || endPos == -1) {
-                        throw new java.sql.SQLException("Syntax error for DATE escape sequence '" + 
-                                                        token + "'", "42000");
+                        throw new java.sql.SQLException("Syntax error for DATE escape sequence '"
+                                                        + token + "'", "42000");
                     }
 
                     String argument = token.substring(startPos, endPos);
@@ -128,12 +126,12 @@ class EscapeProcessor
                         String year4 = st.nextToken();
                         String month2 = st.nextToken();
                         String day2 = st.nextToken();
-                        String dateString = "'" + year4 + "-" + month2 + 
-                                            "-" + day2 + "'";
+                        String dateString = "'" + year4 + "-" + month2 + "-"
+                                            + day2 + "'";
                         newSql.append(dateString);
                     } catch (java.util.NoSuchElementException e) {
-                        throw new java.sql.SQLException("Syntax error for DATE escape sequence '" + 
-                                                        argument + "'", 
+                        throw new java.sql.SQLException("Syntax error for DATE escape sequence '"
+                                                        + argument + "'", 
                                                         "42000");
                     }
                 } else if (token.toLowerCase().startsWith("{ts")) {
@@ -142,8 +140,8 @@ class EscapeProcessor
                     int endPos = token.lastIndexOf("'"); // no }
 
                     if (startPos == -1 || endPos == -1) {
-                        throw new java.sql.SQLException("Syntax error for TIMESTAMP escape sequence '" + 
-                                                        token + "'", "42000");
+                        throw new java.sql.SQLException("Syntax error for TIMESTAMP escape sequence '"
+                                                        + token + "'", "42000");
                     }
 
                     String argument = token.substring(startPos, endPos);
@@ -189,8 +187,8 @@ class EscapeProcessor
                                 hour).append(":").append(minute).append(":").append(
                                 second).append("'");
                     } catch (java.util.NoSuchElementException e) {
-                        throw new java.sql.SQLException("Syntax error for TIMESTAMP escape sequence '" + 
-                                                        argument + "'", 
+                        throw new java.sql.SQLException("Syntax error for TIMESTAMP escape sequence '"
+                                                        + argument + "'", 
                                                         "42000");
                     }
                 } else if (token.toLowerCase().startsWith("{t")) {
@@ -199,8 +197,8 @@ class EscapeProcessor
                     int endPos = token.lastIndexOf("'"); // no }
 
                     if (startPos == -1 || endPos == -1) {
-                        throw new java.sql.SQLException("Syntax error for TIME escape sequence '" + 
-                                                        token + "'", "42000");
+                        throw new java.sql.SQLException("Syntax error for TIME escape sequence '"
+                                                        + token + "'", "42000");
                     }
 
                     String argument = token.substring(startPos, endPos);
@@ -212,18 +210,18 @@ class EscapeProcessor
                         String hour = st.nextToken();
                         String minute = st.nextToken();
                         String second = st.nextToken();
-                        String timeString = "'" + hour + ":" + minute + ":" + 
-                                            second + "'";
+                        String timeString = "'" + hour + ":" + minute + ":"
+                                            + second + "'";
                         newSql.append(timeString);
                     } catch (java.util.NoSuchElementException e) {
-                        throw new java.sql.SQLException("Syntax error for escape sequence '" + 
-                                                        argument + "'", 
+                        throw new java.sql.SQLException("Syntax error for escape sequence '"
+                                                        + argument + "'", 
                                                         "42000");
                     }
-                } else if (token.toLowerCase().startsWith("{call") || 
-                           token.toLowerCase().startsWith("{? = call")) {
-                    throw new java.sql.SQLException("Stored procedures not supported: " + 
-                                                    token, "S1C00");
+                } else if (token.toLowerCase().startsWith("{call")
+                           || token.toLowerCase().startsWith("{? = call")) {
+                    throw new java.sql.SQLException("Stored procedures not supported: "
+                                                    + token, "S1C00");
                 } else if (token.toLowerCase().startsWith("{oj")) {
 
                     // MySQL already handles this escape sequence
@@ -248,10 +246,10 @@ class EscapeProcessor
             while (currentSql.indexOf(escapeSequence) != -1) {
 
                 int escapePos = currentSql.indexOf(escapeSequence);
-                String LHS = currentSql.substring(0, escapePos);
-                String RHS = currentSql.substring(escapePos + 1, 
+                String lhs = currentSql.substring(0, escapePos);
+                String rhs = currentSql.substring(escapePos + 1, 
                                                   currentSql.length());
-                currentSql = LHS + "\\" + RHS;
+                currentSql = lhs + "\\" + rhs;
             }
 
             escapedSql = currentSql;

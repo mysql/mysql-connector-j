@@ -16,6 +16,10 @@
       Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
       
  */
+package com.mysql.jdbc;
+
+import java.io.UnsupportedEncodingException;
+
 
 /**
  * Field is a class used to describe fields in a
@@ -24,29 +28,23 @@
  * @author Mark Matthews
  * @version $Id$
  */
-package com.mysql.jdbc;
-
-import java.io.UnsupportedEncodingException;
-
-
-public class Field
-{
+public class Field {
 
     //~ Instance/static variables .............................................
 
     private static final int AUTO_INCREMENT_FLAG = 512;
-    int colDecimals;
-    short colFlag;
-    int length; // Internal length of the field;
-    int mysqlType = -1; // the MySQL type
-    String name; // The Field name
-    int nameStart;
-    int nameLength;
-    int sqlType = -1; // the java.sql.Type
-    String tableName; // The Name of the Table
-    int tableNameStart;
-    int tableNameLength;
-    byte[] buffer;
+    private int colDecimals;
+    private short colFlag;
+    private int length; // Internal length of the field;
+    private int mysqlType = -1; // the MySQL type
+    private String name; // The Field name
+    private int nameStart;
+    private int nameLength;
+    private int sqlType = -1; // the java.sql.Type
+    private String tableName; // The Name of the Table
+    private int tableNameStart;
+    private int tableNameLength;
+    private byte[] buffer;
     private String fullName = null;
     private Connection connection = null;
 
@@ -55,8 +53,7 @@ public class Field
     /**
    * Constructor used by DatabaseMetaData methods.
    */
-    public Field(String tableName, String columnName, int jdbcType, int length)
-    {
+    Field(String tableName, String columnName, int jdbcType, int length) {
         this.tableName = tableName;
         this.name = columnName;
         this.length = length;
@@ -67,8 +64,7 @@ public class Field
 
     Field(byte[] buffer, int nameStart, int nameLength, int tableNameStart, 
           int tableNameLength, int length, int mysqlType, short colFlag, 
-          int colDecimals)
-    {
+          int colDecimals) {
         this.buffer = buffer;
         this.nameStart = nameStart;
         this.nameLength = nameLength;
@@ -101,8 +97,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean isAutoIncrement()
-    {
+    public boolean isAutoIncrement() {
 
         if ((colFlag & AUTO_INCREMENT_FLAG) > 0) {
 
@@ -118,8 +113,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean isBinary()
-    {
+    public boolean isBinary() {
 
         if ((colFlag & 128) > 0) {
 
@@ -135,8 +129,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean isBlob()
-    {
+    public boolean isBlob() {
 
         if ((colFlag & 16) > 0) {
 
@@ -152,14 +145,13 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public String getFullName()
-    {
+    public String getFullName() {
 
         if (fullName == null) {
 
             StringBuffer fullNameBuf = new StringBuffer(
-                                               getTableName().length() + 1 + 
-                                               getName().length());
+                                               getTableName().length() + 1
+                                               + getName().length());
             fullNameBuf.append(tableName);
 
             // much faster to append a char than a String
@@ -177,8 +169,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public int getLength()
-    {
+    public int getLength() {
 
         return length;
     }
@@ -188,8 +179,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean isMultipleKey()
-    {
+    public boolean isMultipleKey() {
 
         if ((colFlag & 8) > 0) {
 
@@ -205,8 +195,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public int getMysqlType()
-    {
+    public int getMysqlType() {
 
         return mysqlType;
     }
@@ -216,8 +205,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public String getName()
-    {
+    public String getName() {
 
         if (name == null) {
             name = getStringFromBytes(nameStart, nameLength);
@@ -231,8 +219,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean isPrimaryKey()
-    {
+    public boolean isPrimaryKey() {
 
         if ((colFlag & 2) > 0) {
 
@@ -248,8 +235,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public int getSQLType()
-    {
+    public int getSQLType() {
 
         return sqlType;
     }
@@ -259,8 +245,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public String getTable()
-    {
+    public String getTable() {
 
         return getTableName();
     }
@@ -270,8 +255,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public String getTableName()
-    {
+    public String getTableName() {
 
         if (tableName == null) {
             tableName = getStringFromBytes(tableNameStart, tableNameLength);
@@ -284,8 +268,7 @@ public class Field
      * Create a string with the correct charset encoding from the
      * byte-buffer that contains the data for this field
      */
-    private String getStringFromBytes(int stringStart, int stringLength)
-    {
+    private String getStringFromBytes(int stringStart, int stringLength) {
 
         String stringVal = null;
 
@@ -310,24 +293,24 @@ public class Field
                     if (converter != null) { // we have a converter
                         stringVal = converter.toString(buffer, stringStart, 
                                                        stringLength);
-                    } else // we have no converter, use JVM standard charset
-                     {
+                    } // we have no converter, use JVM standard charset 
+                    else {
                         stringVal = StringUtils.toAsciiString3(buffer, 
                                                                stringStart, 
                                                                stringLength);
                     }
-                } else // we have no encoding, use JVM standard charset
-                 {
+                } // we have no encoding, use JVM standard charset 
+                else {
                     stringVal = StringUtils.toAsciiString3(buffer, stringStart, 
                                                            stringLength);
                 }
-            } else // we are not using unicode, so use JVM standard charset
-             {
+            } // we are not using unicode, so use JVM standard charset 
+            else {
                 stringVal = StringUtils.toAsciiString3(buffer, stringStart, 
                                                        stringLength);
             }
-        } else // we don't have a connection, so punt
-         {
+        } // we don't have a connection, so punt 
+        else {
             stringVal = StringUtils.toAsciiString3(buffer, stringStart, 
                                                    stringLength);
         }
@@ -340,8 +323,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean isUniqueKey()
-    {
+    public boolean isUniqueKey() {
 
         if ((colFlag & 4) > 0) {
 
@@ -357,8 +339,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean isUnsigned()
-    {
+    public boolean isUnsigned() {
 
         if ((colFlag & 32) > 0) {
 
@@ -374,8 +355,7 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public boolean isZeroFill()
-    {
+    public boolean isZeroFill() {
 
         if ((colFlag & 64) > 0) {
 
@@ -391,25 +371,26 @@ public class Field
      * 
      * @return DOCUMENT ME! 
      */
-    public String toString()
-    {
+    public String toString() {
 
         return getFullName();
     }
 
-    public void setConnection(Connection conn)
-    {
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param conn DOCUMENT ME!
+     */
+    public void setConnection(Connection conn) {
         this.connection = conn;
     }
 
-    int getDecimals()
-    {
+    int getDecimals() {
 
         return colDecimals;
     }
 
-    boolean isNotNull()
-    {
+    boolean isNotNull() {
 
         if ((colFlag & 1) > 0) {
 

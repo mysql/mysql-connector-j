@@ -17,28 +17,28 @@
       
  */
 
+
+package com.mysql.jdbc;
+
 /**
  * EscapeTokenizer breaks up an SQL statement into SQL and
  * escape code parts.
  *
  * @author Mark Matthews
  */
-package com.mysql.jdbc;
-
-public class EscapeTokenizer
-{
+public class EscapeTokenizer {
 
     //~ Instance/static variables .............................................
 
-    protected boolean emittingEscapeCode = false;
-    protected boolean inBraces = false;
-    protected boolean inQuotes = false;
-    protected char lastChar = 0;
-    protected char lastLastChar = 0;
-    protected int pos = 0;
-    protected char quoteChar = 0;
-    protected String source = null;
-    protected int sourceLength = 0;
+    private boolean emittingEscapeCode = false;
+    private boolean inBraces = false;
+    private boolean inQuotes = false;
+    private char lastChar = 0;
+    private char lastLastChar = 0;
+    private int pos = 0;
+    private char quoteChar = 0;
+    private String source = null;
+    private int sourceLength = 0;
 
     //~ Constructors ..........................................................
 
@@ -47,8 +47,7 @@ public class EscapeTokenizer
      * 
      * @param s DOCUMENT ME!
      */
-    public EscapeTokenizer(String s)
-    {
+    public EscapeTokenizer(String s) {
         source = s;
         sourceLength = s.length();
         pos = 0;
@@ -61,8 +60,7 @@ public class EscapeTokenizer
      * 
      * @return DOCUMENT ME! 
      */
-    public synchronized boolean hasMoreTokens()
-    {
+    public synchronized boolean hasMoreTokens() {
 
         return (pos < sourceLength);
     }
@@ -72,8 +70,7 @@ public class EscapeTokenizer
      * 
      * @return DOCUMENT ME! 
      */
-    public synchronized String nextToken()
-    {
+    public synchronized String nextToken() {
 
         StringBuffer tokenBuf = new StringBuffer();
 

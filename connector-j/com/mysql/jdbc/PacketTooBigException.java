@@ -22,13 +22,13 @@ import java.sql.SQLException;
 
 
 /**
- * DOCUMENT ME!
+ * Thrown when a packet that is too big for the server is
+ * created.
  * 
  * @author Mark Matthews
  */
 public class PacketTooBigException
-    extends SQLException
-{
+    extends SQLException {
 
     //~ Constructors ..........................................................
 
@@ -38,9 +38,8 @@ public class PacketTooBigException
      * @param packetSize DOCUMENT ME!
      * @param maximumPacketSize DOCUMENT ME!
      */
-    public PacketTooBigException(long packetSize, long maximumPacketSize)
-    {
-        super("Packet for query is too large (" + packetSize + " > " + 
-              maximumPacketSize + ")", "S1000");
+    public PacketTooBigException(long packetSize, long maximumPacketSize) {
+        super("Packet for query is too large (" + packetSize + " > "
+              + maximumPacketSize + ")", "S1000");
     }
 }

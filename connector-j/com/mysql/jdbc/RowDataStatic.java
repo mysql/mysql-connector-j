@@ -17,10 +17,11 @@ package com.mysql.jdbc;
 
 import java.util.ArrayList;
 
-
+/**
+ * Represents an in-memory result set
+ */
 public class RowDataStatic
-    implements RowData
-{
+    implements RowData {
 
     //~ Instance/static variables .............................................
 
@@ -34,8 +35,7 @@ public class RowDataStatic
      * 
      * @param rows DOCUMENT ME!
      */
-    public RowDataStatic(ArrayList rows)
-    {
+    public RowDataStatic(ArrayList rows) {
         this.index = -1;
         this.rows = rows;
     }
@@ -46,8 +46,7 @@ public class RowDataStatic
      * Returns true if we got the last element.
      * @return DOCUMENT ME!
      */
-    public boolean isAfterLast()
-    {
+    public boolean isAfterLast() {
 
         return this.index >= rows.size();
     }
@@ -59,15 +58,14 @@ public class RowDataStatic
      * 
      * @return DOCUMENT ME!
      */
-    public byte[][] getAt(int atIndex)
-    {
+    public byte[][] getAt(int atIndex) {
 
         if ((atIndex < 0) || (atIndex >= rows.size())) {
 
             return null;
         } else {
 
-            return (byte[][])rows.get(atIndex);
+            return (byte[][]) rows.get(atIndex);
         }
     }
 
@@ -75,8 +73,7 @@ public class RowDataStatic
      * Returns if iteration has not occured yet.
      * @return DOCUMENT ME!
      */
-    public boolean isBeforeFirst()
-    {
+    public boolean isBeforeFirst() {
 
         return this.index == -1;
     }
@@ -86,8 +83,7 @@ public class RowDataStatic
      * 
      * @param newIndex DOCUMENT ME!
      */
-    public void setCurrentRow(int newIndex)
-    {
+    public void setCurrentRow(int newIndex) {
         this.index = newIndex;
     }
 
@@ -96,8 +92,7 @@ public class RowDataStatic
      * 
      * @return DOCUMENT ME!
      */
-    public int getCurrentRowNumber()
-    {
+    public int getCurrentRowNumber() {
 
         return this.index;
     }
@@ -107,8 +102,7 @@ public class RowDataStatic
      * 
      * @return DOCUMENT ME!
      */
-    public boolean isDynamic()
-    {
+    public boolean isDynamic() {
 
         return false;
     }
@@ -118,8 +112,7 @@ public class RowDataStatic
      * 
      * @return DOCUMENT ME!
      */
-    public boolean isEmpty()
-    {
+    public boolean isEmpty() {
 
         return rows.size() == 0;
     }
@@ -129,8 +122,7 @@ public class RowDataStatic
      * 
      * @return DOCUMENT ME!
      */
-    public boolean isFirst()
-    {
+    public boolean isFirst() {
 
         return this.index == 0;
     }
@@ -140,8 +132,7 @@ public class RowDataStatic
      * 
      * @return DOCUMENT ME!
      */
-    public boolean isLast()
-    {
+    public boolean isLast() {
 
         return (this.index == rows.size() - 1);
     }
@@ -151,40 +142,35 @@ public class RowDataStatic
      * 
      * @param row DOCUMENT ME!
      */
-    public void addRow(byte[][] row)
-    {
+    public void addRow(byte[][] row) {
         rows.add(row);
     }
 
     /**
      * Moves to after last.
      */
-    public void afterLast()
-    {
+    public void afterLast() {
         this.index = rows.size();
     }
 
     /**
      * Moves to before first.
      */
-    public void beforeFirst()
-    {
+    public void beforeFirst() {
         this.index = -1;
     }
 
     /**
      * DOCUMENT ME!
      */
-    public void beforeLast()
-    {
+    public void beforeLast() {
         this.index = rows.size() - 2;
     }
 
     /**
      * DOCUMENT ME!
      */
-    public void close()
-    {
+    public void close() {
     }
 
     /**
@@ -192,8 +178,7 @@ public class RowDataStatic
      * 
      * @return DOCUMENT ME!
      */
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
 
         boolean hasMore = (this.index + 1) < rows.size();
 
@@ -205,8 +190,7 @@ public class RowDataStatic
      * 
      * @param rows DOCUMENT ME!
      */
-    public void moveRowRelative(int rows)
-    {
+    public void moveRowRelative(int rows) {
         this.index += rows;
     }
 
@@ -215,13 +199,12 @@ public class RowDataStatic
      * 
      * @return DOCUMENT ME!
      */
-    public byte[][] next()
-    {
+    public byte[][] next() {
         this.index++;
 
         if (this.index < rows.size()) {
 
-            return (byte[][])rows.get(this.index);
+            return (byte[][]) rows.get(this.index);
         } else {
 
             return null;
@@ -233,8 +216,7 @@ public class RowDataStatic
      * 
      * @param atIndex DOCUMENT ME!
      */
-    public void removeRow(int atIndex)
-    {
+    public void removeRow(int atIndex) {
         rows.remove(atIndex);
     }
 
@@ -243,8 +225,7 @@ public class RowDataStatic
      * 
      * @return DOCUMENT ME!
      */
-    public int size()
-    {
+    public int size() {
 
         return rows.size();
     }

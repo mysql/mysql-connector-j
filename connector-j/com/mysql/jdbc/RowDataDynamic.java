@@ -23,8 +23,7 @@ import java.sql.SQLException;
 
 /** Allows streaming of MySQL data.*/
 public class RowDataDynamic
-    implements RowData
-{
+    implements RowData {
 
     //~ Instance/static variables .............................................
 
@@ -45,8 +44,7 @@ public class RowDataDynamic
      * @throws SQLException DOCUMENT ME!
      */
     public RowDataDynamic(MysqlIO io, int colCount)
-                   throws SQLException
-    {
+                   throws SQLException {
         this.io = io;
         this.columnCount = colCount;
         nextRecord();
@@ -55,13 +53,12 @@ public class RowDataDynamic
     //~ Methods ...............................................................
 
     private void nextRecord()
-                     throws SQLException
-    {
+                     throws SQLException {
 
         try {
 
             if (!isAtEnd) {
-                nextRow = io.nextRow((int)columnCount);
+                nextRow = io.nextRow((int) columnCount);
 
                 if (nextRow == null) {
                     isAtEnd = true;
@@ -70,15 +67,14 @@ public class RowDataDynamic
                 isAfterEnd = true;
             }
         } catch (Exception e) {
-            throw new SQLException("Error trying to fetch row:" + 
-                                   e.getMessage(), "S1000");
+            throw new SQLException("Error trying to fetch row:"
+                                   + e.getMessage(), "S1000");
         }
     }
 
     /** Returns true if another row exsists.*/
     public boolean hasNext()
-                    throws SQLException
-    {
+                    throws SQLException {
 
         boolean hasNext = (nextRow != null);
 
@@ -91,8 +87,7 @@ public class RowDataDynamic
 
     /** Returns the next row.*/
     public byte[][] next()
-                  throws SQLException
-    {
+                  throws SQLException {
         index++;
 
         byte[][] ret = nextRow;
@@ -102,45 +97,39 @@ public class RowDataDynamic
     }
 
     private void notSupported()
-                       throws SQLException
-    {
+                       throws SQLException {
         throw new OperationNotSupportedException();
     }
 
     /** Returns if iteration has not occured yet.*/
     public boolean isBeforeFirst()
-                          throws SQLException
-    {
+                          throws SQLException {
 
         return index < 0;
     }
 
     /** Returns true if we got the last element.*/
     public boolean isAfterLast()
-                        throws SQLException
-    {
+                        throws SQLException {
 
         return isAfterEnd;
     }
 
     /** Moves to before first.*/
     public void beforeFirst()
-                     throws SQLException
-    {
+                     throws SQLException {
         notSupported();
     }
 
     /** Moves to after last.*/
     public void afterLast()
-                   throws SQLException
-    {
+                   throws SQLException {
         notSupported();
     }
 
     /** Moves to before last so next el is the last el.*/
     public void beforeLast()
-                    throws SQLException
-    {
+                    throws SQLException {
         notSupported();
     }
 
@@ -151,8 +140,7 @@ public class RowDataDynamic
      * @throws SQLException DOCUMENT ME!
      */
     public boolean isFirst()
-                    throws SQLException
-    {
+                    throws SQLException {
         notSupported();
 
         return false;
@@ -165,8 +153,7 @@ public class RowDataDynamic
      * @throws SQLException DOCUMENT ME!
      */
     public boolean isLast()
-                   throws SQLException
-    {
+                   throws SQLException {
         notSupported();
 
         return false;
@@ -174,8 +161,7 @@ public class RowDataDynamic
 
     /** We're done.*/
     public void close()
-               throws SQLException
-    {
+               throws SQLException {
 
         //drain the rest of the records.
         while (this.hasNext()) {
@@ -192,8 +178,7 @@ public class RowDataDynamic
      * @throws SQLException DOCUMENT ME!
      */
     public int getCurrentRowNumber()
-                            throws SQLException
-    {
+                            throws SQLException {
         notSupported();
 
         return -1;
@@ -206,8 +191,7 @@ public class RowDataDynamic
      * @throws SQLException DOCUMENT ME!
      */
     public void setCurrentRow(int index)
-                       throws SQLException
-    {
+                       throws SQLException {
         notSupported();
     }
 
@@ -218,8 +202,7 @@ public class RowDataDynamic
      * @throws SQLException DOCUMENT ME!
      */
     public void moveRowRelative(int rows)
-                         throws SQLException
-    {
+                         throws SQLException {
         notSupported();
     }
 
@@ -227,23 +210,20 @@ public class RowDataDynamic
    *  This means that move back and move forward won't work
    *  because we do not hold on to the records.
    */
-    public boolean isDynamic()
-    {
+    public boolean isDynamic() {
 
         return true;
     }
 
     /** Only works on non dynamic result sets.*/
-    public int size()
-    {
+    public int size() {
 
         return RESULT_SET_SIZE_UNKNOWN;
     }
 
     /** Has no records.*/
     public boolean isEmpty()
-                    throws SQLException
-    {
+                    throws SQLException {
         notSupported();
 
         return false;
@@ -251,8 +231,7 @@ public class RowDataDynamic
 
     /** Only works on non dynamic result sets.*/
     public byte[][] getAt(int index)
-                   throws SQLException
-    {
+                   throws SQLException {
         notSupported();
 
         return null;
@@ -265,8 +244,7 @@ public class RowDataDynamic
      * @throws SQLException DOCUMENT ME!
      */
     public void addRow(byte[][] row)
-                throws SQLException
-    {
+                throws SQLException {
         notSupported();
     }
 
@@ -277,18 +255,15 @@ public class RowDataDynamic
      * @throws SQLException DOCUMENT ME!
      */
     public void removeRow(int index)
-                   throws SQLException
-    {
+                   throws SQLException {
         notSupported();
     }
 
     //~ Inner classes .........................................................
 
     class OperationNotSupportedException
-        extends SQLException
-    {
-        OperationNotSupportedException()
-        {
+        extends SQLException {
+        OperationNotSupportedException() {
             super("Operation not supported for streaming result sets", "S1009");
         }
     }

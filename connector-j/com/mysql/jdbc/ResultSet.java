@@ -22,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.StringReader;
 
 import java.math.BigDecimal;
 
@@ -88,8 +89,7 @@ import java.util.HashMap;
  * @version $Id$
  */
 public class ResultSet
-    implements java.sql.ResultSet
-{
+    implements java.sql.ResultSet {
 
     //~ Instance/static variables .............................................
 
@@ -133,7 +133,7 @@ public class ResultSet
     // For getTimestamp()
     private SimpleDateFormat timestampFormatter = null;
     private boolean useStrictFloatingPoint = false;
-    private boolean _hasBuiltIndexMapping = false;
+    private boolean hasBuiltIndexMapping = false;
 
     //~ Constructors ..........................................................
 
@@ -148,12 +148,11 @@ public class ResultSet
      * @param updateCount the number of rows affected by the operation
      * @param cursor the positioned update/delete cursor name
      */
-    public ResultSet(Field[] Fields, RowData Tuples, 
-                     com.mysql.jdbc.Connection Conn)
-              throws SQLException
-    {
-        this(Fields, Tuples);
-        setConnection(Conn);
+    public ResultSet(Field[] fields, RowData tuples, 
+                     com.mysql.jdbc.Connection conn)
+              throws SQLException {
+        this(fields, tuples);
+        setConnection(conn);
     }
 
     /**
@@ -163,16 +162,15 @@ public class ResultSet
      * @param Tuples DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
-    public ResultSet(Field[] Fields, RowData Tuples)
-              throws SQLException
-    {
+    public ResultSet(Field[] fields, RowData tuples)
+              throws SQLException {
 
         //_currentRow   = -1;
-        this.fields = Fields;
-        rowData = Tuples;
-        updateCount = (long)rowData.size();
+        this.fields = fields;
+        rowData = tuples;
+        updateCount = (long) rowData.size();
 
-        if (Driver.debug) {
+        if (Driver.DEBUG) {
             System.out.println("Retrieved " + updateCount + " rows");
         }
 
@@ -203,9 +201,9 @@ public class ResultSet
      * Create a result set for an executeUpdate statement.
      *
      * @param updateCount the number of rows affected by the update
+     * @param updateID the autoincrement value (if any)
      */
-    public ResultSet(long updateCount, long updateID)
-    {
+    public ResultSet(long updateCount, long updateID) {
         this.updateCount = updateCount;
         this.updateId = updateID;
         reallyResult = false;
@@ -225,10 +223,9 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public boolean isAfterLast()
-                        throws SQLException
-    {
+                        throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = {  };
             Debug.methodCall(this, "isAfterLast", args);
@@ -236,7 +233,7 @@ public class ResultSet
 
         boolean b = rowData.isAfterLast();
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
             Debug.returnValue(this, "isAfterLast", new Boolean(b));
         }
 
@@ -250,10 +247,10 @@ public class ResultSet
      *
      * @param i the first column is 1, the second is 2, ...
      * @return an object representing an SQL array
+     * @throws SQLException if a database error occurs
      */
     public java.sql.Array getArray(int i)
-                            throws SQLException
-    {
+                            throws SQLException {
         throw new NotImplemented();
     }
 
@@ -264,10 +261,10 @@ public class ResultSet
      *
      * @param colName the column name
      * @return an object representing an SQL array
+     * @throws SQLException if a database error occurs
      */
     public java.sql.Array getArray(String colName)
-                            throws SQLException
-    {
+                            throws SQLException {
         throw new NotImplemented();
     }
 
@@ -292,8 +289,7 @@ public class ResultSet
      * @see getBinaryStream
      */
     public InputStream getAsciiStream(int columnIndex)
-                               throws java.sql.SQLException
-    {
+                               throws java.sql.SQLException {
         checkRowPos();
 
         return getBinaryStream(columnIndex);
@@ -302,15 +298,14 @@ public class ResultSet
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public InputStream getAsciiStream(String ColumnName)
-                               throws java.sql.SQLException
-    {
+    public InputStream getAsciiStream(String columnName)
+                               throws java.sql.SQLException {
 
-        return getAsciiStream(findColumn(ColumnName));
+        return getAsciiStream(findColumn(columnName));
     }
 
     //---------------------------------------------------------------------
@@ -328,10 +323,9 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public boolean isBeforeFirst()
-                          throws SQLException
-    {
+                          throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = {  };
             Debug.methodCall(this, "isBeforeFirst", args);
@@ -339,7 +333,7 @@ public class ResultSet
 
         boolean b = rowData.isBeforeFirst();
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
             Debug.returnValue(this, "isBeforeFirst", new Boolean(b));
         }
 
@@ -356,39 +350,38 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public BigDecimal getBigDecimal(int columnIndex, int scale)
-                             throws java.sql.SQLException
-    {
+                             throws java.sql.SQLException {
 
-        String S = getString(columnIndex);
-        BigDecimal Val;
+        String stringVal = getString(columnIndex);
+        BigDecimal val;
 
-        if (S != null) {
+        if (stringVal != null) {
 
-            if (S.length() == 0) {
-                Val = new BigDecimal(0);
+            if (stringVal.length() == 0) {
+                val = new BigDecimal(0);
 
-                return Val.setScale(scale);
+                return val.setScale(scale);
             }
 
             try {
-                Val = new BigDecimal(S);
-            } catch (NumberFormatException E) {
-                throw new java.sql.SQLException("Bad format for BigDecimal '" + S + 
-                                                "' in column " + 
-                                                columnIndex + "(" + 
-                                                fields[columnIndex - 1] + 
-                                                ").", "S1009");
+                val = new BigDecimal(stringVal);
+            } catch (NumberFormatException ex) {
+                throw new java.sql.SQLException("Bad format for BigDecimal '" + stringVal
+                                                + "' in column " + columnIndex
+                                                + "("
+                                                + fields[columnIndex - 1]
+                                                + ").", "S1009");
             }
 
             try {
 
-                return Val.setScale(scale);
-            } catch (ArithmeticException E) {
-                throw new java.sql.SQLException("Bad format for BigDecimal '" + S + 
-                                                "' in column " + 
-                                                columnIndex + "(" + 
-                                                fields[columnIndex - 1] + 
-                                                ").", "S1009");
+                return val.setScale(scale);
+            } catch (ArithmeticException ex) {
+                throw new java.sql.SQLException("Bad format for BigDecimal '" + stringVal
+                                                + "' in column " + columnIndex
+                                                + "("
+                                                + fields[columnIndex - 1]
+                                                + ").", "S1009");
             }
         }
 
@@ -398,16 +391,15 @@ public class ResultSet
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @param scale DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public BigDecimal getBigDecimal(String ColumnName, int scale)
-                             throws java.sql.SQLException
-    {
+    public BigDecimal getBigDecimal(String columnName, int scale)
+                             throws java.sql.SQLException {
 
-        return getBigDecimal(findColumn(ColumnName), scale);
+        return getBigDecimal(findColumn(columnName), scale);
     }
 
     /**
@@ -422,30 +414,29 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public BigDecimal getBigDecimal(int columnIndex)
-                             throws SQLException
-    {
+                             throws SQLException {
 
-        String S = getString(columnIndex);
-        BigDecimal Val;
+        String stringVal = getString(columnIndex);
+        BigDecimal val;
 
-        if (S != null) {
+        if (stringVal != null) {
 
-            if (S.length() == 0) {
-                Val = new BigDecimal(0);
+            if (stringVal.length() == 0) {
+                val = new BigDecimal(0);
 
-                return Val;
+                return val;
             }
 
             try {
-                Val = new BigDecimal(S);
+                val = new BigDecimal(stringVal);
 
-                return Val;
-            } catch (NumberFormatException E) {
-                throw new java.sql.SQLException("Bad format for BigDecimal '" + S + 
-                                                "' in column " + 
-                                                columnIndex + "(" + 
-                                                fields[columnIndex - 1] + 
-                                                ").", "S1009");
+                return val;
+            } catch (NumberFormatException ex) {
+                throw new java.sql.SQLException("Bad format for BigDecimal '" + stringVal
+                                                + "' in column " + columnIndex
+                                                + "("
+                                                + fields[columnIndex - 1]
+                                                + ").", "S1009");
             }
         }
 
@@ -460,28 +451,27 @@ public class ResultSet
      *
      */
     public BigDecimal getBigDecimal(String columnName)
-                             throws SQLException
-    {
+                             throws SQLException {
 
-        String S = getString(columnName);
-        BigDecimal Val;
+        String stringVal = getString(columnName);
+        BigDecimal val;
 
-        if (S != null) {
+        if (stringVal != null) {
 
-            if (S.length() == 0) {
-                Val = new BigDecimal(0);
+            if (stringVal.length() == 0) {
+                val = new BigDecimal(0);
 
-                return Val;
+                return val;
             }
 
             try {
-                Val = new BigDecimal(S);
+                val = new BigDecimal(stringVal);
 
-                return Val;
-            } catch (NumberFormatException E) {
-                throw new java.sql.SQLException("Bad format for BigDecimal '" + S + 
-                                                "' in column " + columnName + 
-                                                ".", "S1009");
+                return val;
+            } catch (NumberFormatException ex) {
+                throw new java.sql.SQLException("Bad format for BigDecimal '" + stringVal
+                                                + "' in column " + columnName
+                                                + ".", "S1009");
             }
         }
 
@@ -501,8 +491,7 @@ public class ResultSet
      * @see getUnicodeStream
      */
     public InputStream getBinaryStream(int columnIndex)
-                                throws java.sql.SQLException
-    {
+                                throws java.sql.SQLException {
         checkRowPos();
 
         byte[] b = getBytes(columnIndex);
@@ -518,15 +507,14 @@ public class ResultSet
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public InputStream getBinaryStream(String ColumnName)
-                                throws java.sql.SQLException
-    {
+    public InputStream getBinaryStream(String columnName)
+                                throws java.sql.SQLException {
 
-        return getBinaryStream(findColumn(ColumnName));
+        return getBinaryStream(findColumn(columnName));
     }
 
     /**
@@ -538,14 +526,13 @@ public class ResultSet
      * @return an object representing a BLOB
      */
     public java.sql.Blob getBlob(int columnIndex)
-                          throws SQLException
-    {
+                          throws SQLException {
         checkRowPos();
 
         if (columnIndex < 1 || columnIndex > fields.length) {
-            throw new java.sql.SQLException("Column Index out of range ( " + 
-                                            columnIndex + " > " + 
-                                            fields.length + ").", "S1002");
+            throw new java.sql.SQLException("Column Index out of range ( "
+                                            + columnIndex + " > "
+                                            + fields.length + ").", "S1002");
         }
 
         try {
@@ -555,7 +542,7 @@ public class ResultSet
             } else {
                 wasNullFlag = false;
             }
-        } catch (NullPointerException E) {
+        } catch (NullPointerException ex) {
             wasNullFlag = true;
         }
 
@@ -576,8 +563,7 @@ public class ResultSet
      * @return an object representing a BLOB
      */
     public java.sql.Blob getBlob(String colName)
-                          throws SQLException
-    {
+                          throws SQLException {
 
         return getBlob(findColumn(colName));
     }
@@ -590,8 +576,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public boolean getBoolean(int columnIndex)
-                       throws java.sql.SQLException
-    {
+                       throws java.sql.SQLException {
 
         String S = getString(columnIndex);
 
@@ -599,8 +584,7 @@ public class ResultSet
 
             int c = S.toLowerCase().charAt(0);
 
-            return ((c == 't') || (c == 'y') || (c == '1') || 
-                   S.equals("-1"));
+            return ((c == 't') || (c == 'y') || (c == '1') || S.equals("-1"));
         }
 
         return false;
@@ -609,15 +593,14 @@ public class ResultSet
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean getBoolean(String ColumnName)
-                       throws java.sql.SQLException
-    {
+    public boolean getBoolean(String columnName)
+                       throws java.sql.SQLException {
 
-        return getBoolean(findColumn(ColumnName));
+        return getBoolean(findColumn(columnName));
     }
 
     /**
@@ -628,8 +611,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public byte getByte(int columnIndex)
-                 throws java.sql.SQLException
-    {
+                 throws java.sql.SQLException {
         checkRowPos();
 
         try {
@@ -672,9 +654,8 @@ public class ResultSet
 
                     return Byte.parseByte(S);
                 } catch (NumberFormatException NFE) {
-                    throw new SQLException("Value '" + 
-                                           getString(columnIndex) + 
-                                           "' is out of range [-127,127]", 
+                    throw new SQLException("Value '" + getString(columnIndex)
+                                           + "' is out of range [-127,127]", 
                                            "S1009");
                 }
 
@@ -691,9 +672,8 @@ public class ResultSet
 
                     return Byte.parseByte(S);
                 } catch (NumberFormatException NFE) {
-                    throw new SQLException("Value '" + 
-                                           getString(columnIndex) + 
-                                           "' is out of range [-127,127]", 
+                    throw new SQLException("Value '" + getString(columnIndex)
+                                           + "' is out of range [-127,127]", 
                                            "S1009");
                 }
 
@@ -705,15 +685,14 @@ public class ResultSet
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public byte getByte(String ColumnName)
-                 throws java.sql.SQLException
-    {
+    public byte getByte(String columnName)
+                 throws java.sql.SQLException {
 
-        return getByte(findColumn(ColumnName));
+        return getByte(findColumn(columnName));
     }
 
     /**
@@ -728,8 +707,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public byte[] getBytes(int columnIndex)
-                    throws java.sql.SQLException
-    {
+                    throws java.sql.SQLException {
         checkRowPos();
 
         try {
@@ -743,9 +721,9 @@ public class ResultSet
             wasNullFlag = true;
         }
          catch (ArrayIndexOutOfBoundsException aioobEx) {
-            throw new java.sql.SQLException("Column Index out of range ( " + 
-                                            columnIndex + " > " + 
-                                            fields.length + ").", "S1002");
+            throw new java.sql.SQLException("Column Index out of range ( "
+                                            + columnIndex + " > "
+                                            + fields.length + ").", "S1002");
         }
 
         if (wasNullFlag) {
@@ -760,15 +738,14 @@ public class ResultSet
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public byte[] getBytes(String ColumnName)
-                    throws java.sql.SQLException
-    {
+    public byte[] getBytes(String columnName)
+                    throws java.sql.SQLException {
 
-        return getBytes(findColumn(ColumnName));
+        return getBytes(findColumn(columnName));
     }
 
     //--------------------------JDBC 2.0-----------------------------------
@@ -782,9 +759,16 @@ public class ResultSet
      * <p>Get the value of a column in the current row as a java.io.Reader.
      */
     public java.io.Reader getCharacterStream(int columnIndex)
-                                      throws SQLException
-    {
-        throw new NotImplemented();
+                                      throws SQLException {
+        String stringVal = getString(columnIndex);
+        
+        if (stringVal != null) {
+        	return new StringReader(stringVal);
+        }
+        else {
+        	return null;
+        }
+        
     }
 
     /**
@@ -793,9 +777,8 @@ public class ResultSet
      * <p>Get the value of a column in the current row as a java.io.Reader.
      */
     public java.io.Reader getCharacterStream(String columnName)
-                                      throws SQLException
-    {
-        throw new NotImplemented();
+                                      throws SQLException {
+        return getCharacterStream(findColumn(columnName));
     }
 
     /**
@@ -807,8 +790,7 @@ public class ResultSet
      * @return an object representing a CLOB
      */
     public java.sql.Clob getClob(int i)
-                          throws SQLException
-    {
+                          throws SQLException {
 
         return new com.mysql.jdbc.Clob(getString(i));
     }
@@ -822,8 +804,7 @@ public class ResultSet
      * @return an object representing a CLOB
      */
     public java.sql.Clob getClob(String colName)
-                          throws SQLException
-    {
+                          throws SQLException {
 
         return getClob(findColumn(colName));
     }
@@ -838,8 +819,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public int getConcurrency()
-                       throws SQLException
-    {
+                       throws SQLException {
 
         return (CONCUR_READ_ONLY);
     }
@@ -849,8 +829,7 @@ public class ResultSet
      * 
      * @param Conn DOCUMENT ME!
      */
-    public void setConnection(com.mysql.jdbc.Connection Conn)
-    {
+    public void setConnection(com.mysql.jdbc.Connection Conn) {
         this.connection = Conn;
 
         if (connection != null) {
@@ -877,8 +856,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public String getCursorName()
-                         throws java.sql.SQLException
-    {
+                         throws java.sql.SQLException {
         throw new java.sql.SQLException("Positioned Update not supported.", 
                                         "S1C00");
     }
@@ -892,8 +870,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public java.sql.Date getDate(int columnIndex)
-                          throws java.sql.SQLException
-    {
+                          throws java.sql.SQLException {
 
         Integer Y = null;
         Integer M = null;
@@ -906,9 +883,9 @@ public class ResultSet
             if (S == null) {
 
                 return null;
-            } else if (S.equals("0000-00-00") || 
-                       S.equals("0000-00-00 00:00:00") || 
-                       S.equals("00000000000000")) {
+            } else if (S.equals("0000-00-00")
+                       || S.equals("0000-00-00 00:00:00")
+                       || S.equals("00000000000000")) {
                 wasNullFlag = true;
 
                 return null;
@@ -919,8 +896,7 @@ public class ResultSet
 
                     case 14:
                     case 8:
-
-                    {
+                     {
                         Y = new Integer(S.substring(0, 4));
                         M = new Integer(S.substring(4, 6));
                         D = new Integer(S.substring(6, 8));
@@ -933,8 +909,7 @@ public class ResultSet
                     case 12:
                     case 10:
                     case 6:
-
-                    {
+                     {
                         Y = new Integer(S.substring(0, 2));
 
                         if (Y.intValue() <= 69) {
@@ -950,8 +925,7 @@ public class ResultSet
                     }
 
                     case 4:
-
-                    {
+                     {
                         Y = new Integer(S.substring(0, 4));
 
                         if (Y.intValue() <= 69) {
@@ -965,8 +939,7 @@ public class ResultSet
                     }
 
                     case 2:
-
-                    {
+                     {
                         Y = new Integer(S.substring(0, 2));
 
                         if (Y.intValue() <= 69) {
@@ -977,11 +950,10 @@ public class ResultSet
                     }
 
                     default:
-                        throw new SQLException("Bad format for Date '" + S + 
-                                               "' in column " + columnIndex + 
-                                               "(" + 
-                                               fields[columnIndex - 1] + 
-                                               ").", "S1009");
+                        throw new SQLException("Bad format for Date '" + S
+                                               + "' in column " + columnIndex
+                                               + "(" + fields[columnIndex - 1]
+                                               + ").", "S1009");
                 } /* endswitch */
             } else if (fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
                 Y = new Integer(S.substring(0, 4));
@@ -990,10 +962,10 @@ public class ResultSet
             } else {
 
                 if (S.length() < 10) {
-                    throw new SQLException("Bad format for Date '" + S + 
-                                           "' in column " + columnIndex + 
-                                           "(" + fields[columnIndex - 1] + 
-                                           ").", "S1009");
+                    throw new SQLException("Bad format for Date '" + S
+                                           + "' in column " + columnIndex
+                                           + "(" + fields[columnIndex - 1]
+                                           + ").", "S1009");
                 }
 
                 Y = new Integer(S.substring(0, 4));
@@ -1004,24 +976,23 @@ public class ResultSet
             return new java.sql.Date(Y.intValue() - 1900, M.intValue() - 1, 
                                      D.intValue());
         } catch (Exception e) {
-            throw new java.sql.SQLException("Cannot convert value '" + S + 
-                                            "' from column " + columnIndex + 
-                                            "(" + S + " ) to DATE.", "S1009");
+            throw new java.sql.SQLException("Cannot convert value '" + S
+                                            + "' from column " + columnIndex
+                                            + "(" + S + " ) to DATE.", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public java.sql.Date getDate(String ColumnName)
-                          throws java.sql.SQLException
-    {
+    public java.sql.Date getDate(String columnName)
+                          throws java.sql.SQLException {
 
-        return getDate(findColumn(ColumnName));
+        return getDate(findColumn(columnName));
     }
 
     /**
@@ -1038,8 +1009,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Date getDate(int columnIndex, Calendar cal)
-                          throws SQLException
-    {
+                          throws SQLException {
 
         return getDate(columnIndex);
     }
@@ -1056,8 +1026,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Date getDate(String columnName, Calendar cal)
-                          throws SQLException
-    {
+                          throws SQLException {
 
         return getDate(columnName);
     }
@@ -1070,8 +1039,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public double getDouble(int columnIndex)
-                     throws java.sql.SQLException
-    {
+                     throws java.sql.SQLException {
         checkRowPos();
 
         if (fields == null) {
@@ -1090,9 +1058,9 @@ public class ResultSet
             wasNullFlag = true;
         }
          catch (ArrayIndexOutOfBoundsException aioobEx) {
-            throw new java.sql.SQLException("Column Index out of range ( " + 
-                                            columnIndex + " > " + 
-                                            fields.length + ").", "S1002");
+            throw new java.sql.SQLException("Column Index out of range ( "
+                                            + columnIndex + " > "
+                                            + fields.length + ").", "S1002");
         }
 
         if (wasNullFlag) {
@@ -1104,26 +1072,26 @@ public class ResultSet
 
             return getDouble(thisRow[columnIndex - 1]);
         } catch (NumberFormatException E) {
-            throw new java.sql.SQLException("Bad format for number '" + 
-                                            new String(thisRow[columnIndex - 1]) + 
-                                            "' in column " + columnIndex + 
-                                            "(" + fields[columnIndex - 1] + 
-                                            ").", "S1009");
+            throw new java.sql.SQLException("Bad format for number '"
+                                            + new String(
+                                                    thisRow[columnIndex - 1])
+                                            + "' in column " + columnIndex
+                                            + "(" + fields[columnIndex - 1]
+                                            + ").", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public double getDouble(String ColumnName)
-                     throws java.sql.SQLException
-    {
+    public double getDouble(String columnName)
+                     throws java.sql.SQLException {
 
-        return getDouble(findColumn(ColumnName));
+        return getDouble(findColumn(columnName));
     }
 
     /**
@@ -1142,8 +1110,7 @@ public class ResultSet
      * set anyway, so the direction is immaterial.
      */
     public void setFetchDirection(int direction)
-                           throws SQLException
-    {
+                           throws SQLException {
 
         if (direction != FETCH_FORWARD && direction != FETCH_REVERSE) {
             throw new SQLException("Illegal value for fetch direction", 
@@ -1161,8 +1128,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs 
      */
     public int getFetchDirection()
-                          throws SQLException
-    {
+                          throws SQLException {
 
         return fetchDirection;
     }
@@ -1185,8 +1151,7 @@ public class ResultSet
      * Currently ignored by this driver.
      */
     public void setFetchSize(int rows)
-                      throws SQLException
-    {
+                      throws SQLException {
 
         if (rows < 0) { /* || rows > getMaxRows()*/
             throw new SQLException("Value must be between 0 and getMaxRows()", 
@@ -1204,8 +1169,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs 
      */
     public int getFetchSize()
-                     throws SQLException
-    {
+                     throws SQLException {
 
         return fetchSize;
     }
@@ -1219,10 +1183,9 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public boolean isFirst()
-                    throws SQLException
-    {
+                    throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = {  };
             Debug.methodCall(this, "isFirst", args);
@@ -1230,7 +1193,7 @@ public class ResultSet
 
         boolean b = rowData.isFirst();
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
             Debug.returnValue(this, "isFirst", new Boolean(b));
         }
 
@@ -1245,8 +1208,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public float getFloat(int columnIndex)
-                   throws java.sql.SQLException
-    {
+                   throws java.sql.SQLException {
         checkRowPos();
 
         String val = null;
@@ -1292,23 +1254,22 @@ public class ResultSet
                 return 0;
             }
         } catch (NumberFormatException nfe) {
-            throw new SQLException("Invalid value for getFloat() - '" + val + 
-                                   "'", "S1009");
+            throw new SQLException("Invalid value for getFloat() - '" + val
+                                   + "'", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public float getFloat(String ColumnName)
-                   throws java.sql.SQLException
-    {
+    public float getFloat(String columnName)
+                   throws java.sql.SQLException {
 
-        return getFloat(findColumn(ColumnName));
+        return getFloat(findColumn(columnName));
     }
 
     /**
@@ -1319,8 +1280,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public int getInt(int columnIndex)
-               throws java.sql.SQLException
-    {
+               throws java.sql.SQLException {
         checkRowPos();
 
         String val = null;
@@ -1347,37 +1307,36 @@ public class ResultSet
                     }
                 }
 
-                if (val.indexOf("e") == -1 && val.indexOf("E") == -1 && 
-                    val.indexOf(".") == -1) {
+                if (val.indexOf("e") == -1 && val.indexOf("E") == -1
+                    && val.indexOf(".") == -1) {
 
                     return Integer.parseInt(val);
                 } else {
 
                     // Convert floating point
-                    return (int)(Double.parseDouble(val));
+                    return (int) (Double.parseDouble(val));
                 }
             } else {
 
                 return 0;
             }
         } catch (NumberFormatException nfe) {
-            throw new SQLException("Invalid value for getInt() - '" + val + 
-                                   "'", "S1009");
+            throw new SQLException("Invalid value for getInt() - '" + val
+                                   + "'", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getInt(String ColumnName)
-               throws java.sql.SQLException
-    {
+    public int getInt(String columnName)
+               throws java.sql.SQLException {
 
-        return getInt(findColumn(ColumnName));
+        return getInt(findColumn(columnName));
     }
 
     /**
@@ -1392,10 +1351,9 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public boolean isLast()
-                   throws SQLException
-    {
+                   throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = {  };
             Debug.methodCall(this, "isLast", args);
@@ -1403,7 +1361,7 @@ public class ResultSet
 
         boolean b = rowData.isLast();
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
             Debug.returnValue(this, "relative", new Boolean(b));
         }
 
@@ -1418,8 +1376,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public long getLong(int columnIndex)
-                 throws java.sql.SQLException
-    {
+                 throws java.sql.SQLException {
         checkRowPos();
 
         String val = null;
@@ -1435,30 +1392,29 @@ public class ResultSet
                 } else {
 
                     // Convert floating point
-                    return (long)(Double.parseDouble(val));
+                    return (long) (Double.parseDouble(val));
                 }
             } else {
 
                 return 0;
             }
         } catch (NumberFormatException nfe) {
-            throw new SQLException("Invalid value for getLong() - '" + val + 
-                                   "'", "S1009");
+            throw new SQLException("Invalid value for getLong() - '" + val
+                                   + "'", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public long getLong(String ColumnName)
-                 throws java.sql.SQLException
-    {
+    public long getLong(String columnName)
+                 throws java.sql.SQLException {
 
-        return getLong(findColumn(ColumnName));
+        return getLong(findColumn(columnName));
     }
 
     /**
@@ -1466,8 +1422,7 @@ public class ResultSet
      * into an long
      */
     public long getLong(byte[] buf)
-                 throws NumberFormatException
-    {
+                 throws NumberFormatException {
 
         long result = 0;
         boolean negative = false;
@@ -1480,7 +1435,7 @@ public class ResultSet
 
         if (max > 0) {
 
-            if ((char)buf[0] == '-') {
+            if ((char) buf[0] == '-') {
                 negative = true;
                 limit = Long.MIN_VALUE;
                 i++;
@@ -1491,7 +1446,7 @@ public class ResultSet
             multmin = limit / radix;
 
             if (i < max) {
-                digit = Character.digit((char)buf[i++], radix);
+                digit = Character.digit((char) buf[i++], radix);
 
                 if (digit < 0) {
                     throw new NumberFormatException(new String(buf));
@@ -1503,7 +1458,7 @@ public class ResultSet
             while (i < max) {
 
                 // Accumulating negatively avoids surprises near MAX_VALUE
-                digit = Character.digit((char)buf[i++], radix);
+                digit = Character.digit((char) buf[i++], radix);
 
                 if (digit < 0) {
                     throw new NumberFormatException(new String(buf));
@@ -1548,8 +1503,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public java.sql.ResultSetMetaData getMetaData()
-                                           throws java.sql.SQLException
-    {
+                                           throws java.sql.SQLException {
 
         return new com.mysql.jdbc.ResultSetMetaData(fields);
     }
@@ -1570,11 +1524,10 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public Object getObject(int columnIndex)
-                     throws java.sql.SQLException
-    {
+                     throws java.sql.SQLException {
         checkRowPos();
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = { new Integer(columnIndex) };
             Debug.methodCall(this, "getObject", args);
@@ -1588,9 +1541,9 @@ public class ResultSet
                 return null;
             }
         } catch (ArrayIndexOutOfBoundsException aioobEx) {
-            throw new java.sql.SQLException("Column Index out of range ( " + 
-                                            columnIndex + " > " + 
-                                            fields.length + ").", "S1002");
+            throw new java.sql.SQLException("Column Index out of range ( "
+                                            + columnIndex + " > "
+                                            + fields.length + ").", "S1002");
         }
 
         wasNullFlag = false;
@@ -1639,28 +1592,28 @@ public class ResultSet
             case Types.DECIMAL:
             case Types.NUMERIC:
 
-                String S = getString(columnIndex);
-                BigDecimal Val;
+                String stringVal = getString(columnIndex);
+                BigDecimal val;
 
-                if (S != null) {
+                if (stringVal != null) {
 
-                    if (S.length() == 0) {
-                        Val = new BigDecimal(0);
+                    if (stringVal.length() == 0) {
+                        val = new BigDecimal(0);
 
-                        return Val;
+                        return val;
                     }
 
                     try {
-                        Val = new BigDecimal(S);
-                    } catch (NumberFormatException E) {
-                        throw new java.sql.SQLException("Bad format for BigDecimal '" + S + 
-                                                        "' in column " + 
-                                                        columnIndex + "(" + 
-                                                        fields[columnIndex - 1] + 
-                                                        ").", "S1009");
+                        val = new BigDecimal(stringVal);
+                    } catch (NumberFormatException ex) {
+                        throw new java.sql.SQLException("Bad format for BigDecimal '" + stringVal
+                                                        + "' in column "
+                                                        + columnIndex + "("
+                                                        + fields[columnIndex - 1]
+                                                        + ").", "S1009");
                     }
 
-                    return Val;
+                    return val;
                 } else {
 
                     return null;
@@ -1690,35 +1643,35 @@ public class ResultSet
                     return getString(columnIndex);
                 } else {
 
-                    byte[] Data = getBytes(columnIndex);
-                    Object Obj = Data;
+                    byte[] data = getBytes(columnIndex);
+                    Object obj = data;
 
-                    if (Data != null && Data.length >= 2) {
+                    if (data != null && data.length >= 2) {
 
-                        if (Data[0] == -84 && Data[1] == -19) {
+                        if (data[0] == -84 && data[1] == -19) {
 
                             // Serialized object?
                             try {
 
-                                ByteArrayInputStream BIn = new ByteArrayInputStream(
-                                                                   Data);
-                                ObjectInputStream ObjIn = new ObjectInputStream(
-                                                                  BIn);
-                                Obj = ObjIn.readObject();
-                                ObjIn.close();
-                                BIn.close();
-                            } catch (ClassNotFoundException CnFe) {
-                                throw new SQLException("Class not found: " + 
-                                                       CnFe.toString() + 
-                                                       " while reading serialized object");
+                                ByteArrayInputStream bytesIn = new ByteArrayInputStream(
+                                                                   data);
+                                ObjectInputStream objIn = new ObjectInputStream(
+                                                                  bytesIn);
+                                obj = objIn.readObject();
+                                objIn.close();
+                                bytesIn.close();
+                            } catch (ClassNotFoundException cnfe) {
+                                throw new SQLException("Class not found: "
+                                                       + cnfe.toString()
+                                                       + " while reading serialized object");
                             }
-                             catch (IOException Ex) {
-                                Obj = Data; // not serialized?
+                             catch (IOException ex) {
+                                obj = data; // not serialized?
                             }
                         }
                     }
 
-                    return Obj;
+                    return obj;
                 }
 
             case Types.DATE:
@@ -1750,11 +1703,10 @@ public class ResultSet
      * @return a Object holding the column value
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public Object getObject(String ColumnName)
-                     throws java.sql.SQLException
-    {
+    public Object getObject(String columnName)
+                     throws java.sql.SQLException {
 
-        return getObject(findColumn(ColumnName));
+        return getObject(findColumn(columnName));
     }
 
     /**
@@ -1769,8 +1721,7 @@ public class ResultSet
      * @return an object representing the SQL value
      */
     public Object getObject(int i, java.util.Map map)
-                     throws SQLException
-    {
+                     throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1786,8 +1737,7 @@ public class ResultSet
      * @return an object representing the SQL value
      */
     public Object getObject(String colName, java.util.Map map)
-                     throws SQLException
-    {
+                     throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1800,8 +1750,7 @@ public class ResultSet
      * @return an object representing data of an SQL REF type
      */
     public java.sql.Ref getRef(int i)
-                        throws SQLException
-    {
+                        throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1814,8 +1763,7 @@ public class ResultSet
      * @return an object representing data of an SQL REF type
      */
     public java.sql.Ref getRef(String colName)
-                        throws SQLException
-    {
+                        throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1830,10 +1778,9 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public int getRow()
-               throws SQLException
-    {
+               throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = {  };
             Debug.methodCall(this, "getRow", args);
@@ -1846,8 +1793,7 @@ public class ResultSet
         // for this information
         if (!rowData.isDynamic()) {
 
-            if (currentRow < 0 || rowData.isAfterLast() || 
-                rowData.isEmpty()) {
+            if (currentRow < 0 || rowData.isAfterLast() || rowData.isEmpty()) {
                 row = 0;
             } else {
                 row = currentRow + 1;
@@ -1858,11 +1804,11 @@ public class ResultSet
             row = currentRow + 1;
         }
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
             Debug.returnValue(this, "getRow", new Integer(row));
         }
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
             Debug.returnValue(this, "getRow", new Integer(row));
         }
 
@@ -1877,8 +1823,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public short getShort(int columnIndex)
-                   throws java.sql.SQLException
-    {
+                   throws java.sql.SQLException {
         checkRowPos();
 
         String val = null;
@@ -1888,37 +1833,36 @@ public class ResultSet
 
             if (val != null && val.length() != 0) {
 
-                if (val.indexOf("e") == -1 && val.indexOf("E") == -1 && 
-                    val.indexOf(".") == -1) {
+                if (val.indexOf("e") == -1 && val.indexOf("E") == -1
+                    && val.indexOf(".") == -1) {
 
                     return Short.parseShort(val);
                 } else {
 
                     // Convert floating point
-                    return (short)(Double.parseDouble(val));
+                    return (short) (Double.parseDouble(val));
                 }
             } else {
 
                 return 0;
             }
         } catch (NumberFormatException nfe) {
-            throw new SQLException("Invalid value for getShort() - '" + val + 
-                                   "'", "S1009");
+            throw new SQLException("Invalid value for getShort() - '" + val
+                                   + "'", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public short getShort(String ColumnName)
-                   throws java.sql.SQLException
-    {
+    public short getShort(String columnName)
+                   throws java.sql.SQLException {
 
-        return getShort(findColumn(ColumnName));
+        return getShort(findColumn(columnName));
     }
 
     /**
@@ -1931,10 +1875,9 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public java.sql.Statement getStatement()
-                                    throws SQLException
-    {
+                                    throws SQLException {
 
-        return (java.sql.Statement)owningStatement;
+        return (java.sql.Statement) owningStatement;
     }
 
     /**
@@ -1945,8 +1888,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public String getString(int columnIndex)
-                     throws java.sql.SQLException
-    {
+                     throws java.sql.SQLException {
         checkRowPos();
 
         if (fields == null) {
@@ -1969,9 +1911,9 @@ public class ResultSet
             return null;
         }
          catch (ArrayIndexOutOfBoundsException aioobEx) {
-            throw new java.sql.SQLException("Column Index out of range ( " + 
-                                            columnIndex + " > " + 
-                                            fields.length + ").", "S1002");
+            throw new java.sql.SQLException("Column Index out of range ( "
+                                            + columnIndex + " > "
+                                            + fields.length + ").", "S1002");
         }
 
         String stringVal = null;
@@ -1998,8 +1940,8 @@ public class ResultSet
                     }
                 }
             } catch (java.io.UnsupportedEncodingException E) {
-                throw new SQLException("Unsupported character encoding '" + 
-                                       connection.getEncoding() + "'.", 
+                throw new SQLException("Unsupported character encoding '"
+                                       + connection.getEncoding() + "'.", 
                                        "0S100");
             }
         } else {
@@ -2045,11 +1987,10 @@ public class ResultSet
      * @return the column value
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public String getString(String ColumnName)
-                     throws java.sql.SQLException
-    {
+    public String getString(String columnName)
+                     throws java.sql.SQLException {
 
-        return getString(findColumn(ColumnName));
+        return getString(findColumn(columnName));
     }
 
     /**
@@ -2061,8 +2002,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public Time getTime(int columnIndex)
-                 throws java.sql.SQLException
-    {
+                 throws java.sql.SQLException {
 
         int hr = 0;
         int min = 0;
@@ -2075,9 +2015,9 @@ public class ResultSet
             if (timeAsString == null) {
 
                 return null;
-            } else if (timeAsString.equals("0000-00-00") || 
-                       timeAsString.equals("0000-00-00 00:00:00") || 
-                       timeAsString.equals("00000000000000")) {
+            } else if (timeAsString.equals("0000-00-00")
+                       || timeAsString.equals("0000-00-00 00:00:00")
+                       || timeAsString.equals("00000000000000")) {
                 wasNullFlag = true;
 
                 return null;
@@ -2094,8 +2034,7 @@ public class ResultSet
 
                     case 14:
                     case 12:
-
-                    {
+                     {
                         hr = Integer.parseInt(timeAsString.substring(
                                                       length - 6, length - 4));
                         min = Integer.parseInt(timeAsString.substring(
@@ -2107,8 +2046,7 @@ public class ResultSet
                     break;
 
                     case 10:
-
-                    {
+                     {
                         hr = Integer.parseInt(timeAsString.substring(6, 8));
                         min = Integer.parseInt(timeAsString.substring(8, 10));
                         sec = 0;
@@ -2117,17 +2055,17 @@ public class ResultSet
                     break;
 
                     default:
-                        throw new SQLException("Timestamp too small to convert to Time value in column " + 
-                                               columnIndex + "(" + 
-                                               fields[columnIndex - 1] + 
-                                               ").", "S1009");
+                        throw new SQLException("Timestamp too small to convert to Time value in column "
+                                               + columnIndex + "("
+                                               + fields[columnIndex - 1]
+                                               + ").", "S1009");
                 } /* endswitch */
 
                 SQLWarning precisionLost = new SQLWarning(
-                                                   "Precision lost converting TIMESTAMP to Time with getTime() on column " + 
-                                                   columnIndex + "(" + 
-                                                   fields[columnIndex - 1] + 
-                                                   ").");
+                                                   "Precision lost converting TIMESTAMP to Time with getTime() on column "
+                                                   + columnIndex + "("
+                                                   + fields[columnIndex - 1]
+                                                   + ").");
 
                 if (warningChain == null) {
                     warningChain = precisionLost;
@@ -2140,10 +2078,10 @@ public class ResultSet
                 sec = Integer.parseInt(timeAsString.substring(17, 19));
 
                 SQLWarning precisionLost = new SQLWarning(
-                                                   "Precision lost converting DATETIME to Time with getTime() on column " + 
-                                                   columnIndex + "(" + 
-                                                   fields[columnIndex - 1] + 
-                                                   ").");
+                                                   "Precision lost converting DATETIME to Time with getTime() on column "
+                                                   + columnIndex + "("
+                                                   + fields[columnIndex - 1]
+                                                   + ").");
 
                 if (warningChain == null) {
                     warningChain = precisionLost;
@@ -2153,12 +2091,11 @@ public class ResultSet
             } else {
 
                 // convert a String to a Time
-                if (timeAsString.length() != 5 && 
-                    timeAsString.length() != 8) {
-                    throw new SQLException("Bad format for Time '" + 
-                                           timeAsString + "' in column " + 
-                                           columnIndex + "(" + 
-                                           fields[columnIndex - 1] + ").", 
+                if (timeAsString.length() != 5 && timeAsString.length() != 8) {
+                    throw new SQLException("Bad format for Time '"
+                                           + timeAsString + "' in column "
+                                           + columnIndex + "("
+                                           + fields[columnIndex - 1] + ").", 
                                            "S1009");
                 }
 
@@ -2185,8 +2122,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public Time getTime(String columnName)
-                 throws java.sql.SQLException
-    {
+                 throws java.sql.SQLException {
 
         return getTime(findColumn(columnName));
     }
@@ -2203,8 +2139,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Time getTime(int columnIndex, Calendar cal)
-                          throws SQLException
-    {
+                          throws SQLException {
 
         return getTime(columnIndex);
     }
@@ -2221,8 +2156,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Time getTime(String columnName, Calendar cal)
-                          throws SQLException
-    {
+                          throws SQLException {
 
         return getTime(columnName);
     }
@@ -2236,8 +2170,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public Timestamp getTimestamp(int columnIndex)
-                           throws java.sql.SQLException
-    {
+                           throws java.sql.SQLException {
 
         String timestampValue = getString(columnIndex);
 
@@ -2246,9 +2179,9 @@ public class ResultSet
             if (timestampValue == null) {
 
                 return null;
-            } else if (timestampValue.equals("0000-00-00") || 
-                       timestampValue.equals("0000-00-00 00:00:00") || 
-                       timestampValue.equals("00000000000000")) {
+            } else if (timestampValue.equals("0000-00-00")
+                       || timestampValue.equals("0000-00-00 00:00:00")
+                       || timestampValue.equals("00000000000000")) {
                 wasNullFlag = true;
 
                 return null;
@@ -2267,8 +2200,7 @@ public class ResultSet
                 switch (timestampValue.length()) {
 
                     case 19:
-
-                    {
+                     {
 
                         int year = Integer.parseInt(timestampValue.substring(0, 
                                                                              4));
@@ -2293,8 +2225,7 @@ public class ResultSet
                     }
 
                     case 14:
-
-                    {
+                     {
 
                         int year = Integer.parseInt(timestampValue.substring(0, 
                                                                              4));
@@ -2319,8 +2250,7 @@ public class ResultSet
                     }
 
                     case 12:
-
-                    {
+                     {
 
                         int year = Integer.parseInt(timestampValue.substring(0, 
                                                                              2));
@@ -2350,8 +2280,7 @@ public class ResultSet
                     }
 
                     case 10:
-
-                    {
+                     {
 
                         // FIXME: SourceForge bug 559134
                         int year = Integer.parseInt(timestampValue.substring(0, 
@@ -2379,8 +2308,7 @@ public class ResultSet
                     }
 
                     case 8:
-
-                    {
+                     {
 
                         int year = Integer.parseInt(timestampValue.substring(0, 
                                                                              4));
@@ -2398,8 +2326,7 @@ public class ResultSet
                     }
 
                     case 6:
-
-                    {
+                     {
 
                         int year = Integer.parseInt(timestampValue.substring(0, 
                                                                              2));
@@ -2421,8 +2348,7 @@ public class ResultSet
                     }
 
                     case 4:
-
-                    {
+                     {
 
                         int year = Integer.parseInt(timestampValue.substring(0, 
                                                                              2));
@@ -2442,8 +2368,7 @@ public class ResultSet
                     }
 
                     case 2:
-
-                    {
+                     {
 
                         int year = Integer.parseInt(timestampValue.substring(0, 
                                                                              2));
@@ -2460,35 +2385,34 @@ public class ResultSet
                     }
 
                     default:
-                        throw new java.sql.SQLException("Bad format for Timestamp '" + 
-                                                        timestampValue + 
-                                                        "' in column " + 
-                                                        columnIndex + "(" + 
-                                                        fields[columnIndex - 1] + 
-                                                        ").", "S1009");
+                        throw new java.sql.SQLException("Bad format for Timestamp '"
+                                                        + timestampValue
+                                                        + "' in column "
+                                                        + columnIndex + "("
+                                                        + fields[columnIndex - 1]
+                                                        + ").", "S1009");
                 }
             }
         } catch (Exception e) {
-            throw new java.sql.SQLException("Cannot convert value '" + 
-                                            timestampValue + 
-                                            "' from column " + columnIndex + 
-                                            "(" + timestampValue + 
-                                            " ) to TIMESTAMP.", "S1009");
+            throw new java.sql.SQLException("Cannot convert value '"
+                                            + timestampValue
+                                            + "' from column " + columnIndex
+                                            + "(" + timestampValue
+                                            + " ) to TIMESTAMP.", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public Timestamp getTimestamp(String ColumnName)
-                           throws java.sql.SQLException
-    {
+    public Timestamp getTimestamp(String columnName)
+                           throws java.sql.SQLException {
 
-        return getTimestamp(findColumn(ColumnName));
+        return getTimestamp(findColumn(columnName));
     }
 
     /**
@@ -2503,8 +2427,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Timestamp getTimestamp(int columnIndex, Calendar cal)
-                                    throws SQLException
-    {
+                                    throws SQLException {
 
         return getTimestamp(columnIndex);
     }
@@ -2521,8 +2444,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Timestamp getTimestamp(String columnName, Calendar cal)
-                                    throws SQLException
-    {
+                                    throws SQLException {
 
         return getTimestamp(columnName);
     }
@@ -2538,8 +2460,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public int getType()
-                throws SQLException
-    {
+                throws SQLException {
 
         return resultSetType;
     }
@@ -2548,8 +2469,7 @@ public class ResultSet
      * @see ResultSet#getURL(int)
      */
     public URL getURL(int colIndex)
-               throws SQLException
-    {
+               throws SQLException {
 
         String val = getString(colIndex);
 
@@ -2571,8 +2491,7 @@ public class ResultSet
      * @see ResultSet#getURL(String)
      */
     public URL getURL(String colName)
-               throws SQLException
-    {
+               throws SQLException {
 
         String val = getString(colName);
 
@@ -2603,8 +2522,7 @@ public class ResultSet
      * @see getBinaryStream
      */
     public InputStream getUnicodeStream(int columnIndex)
-                                 throws java.sql.SQLException
-    {
+                                 throws java.sql.SQLException {
         checkRowPos();
 
         return getBinaryStream(columnIndex);
@@ -2613,15 +2531,14 @@ public class ResultSet
     /**
      * DOCUMENT ME!
      * 
-     * @param ColumnName DOCUMENT ME!
+     * @param columnName DOCUMENT ME!
      * @return DOCUMENT ME! 
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public InputStream getUnicodeStream(String ColumnName)
-                                 throws java.sql.SQLException
-    {
+    public InputStream getUnicodeStream(String columnName)
+                                 throws java.sql.SQLException {
 
-        return getUnicodeStream(findColumn(ColumnName));
+        return getUnicodeStream(findColumn(columnName));
     }
 
     /**
@@ -2641,8 +2558,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs.
      */
     public java.sql.SQLWarning getWarnings()
-                                    throws java.sql.SQLException
-    {
+                                    throws java.sql.SQLException {
 
         return warningChain;
     }
@@ -2673,10 +2589,9 @@ public class ResultSet
      * row is 0, or result set type is TYPE_FORWARD_ONLY.
      */
     public boolean absolute(int row)
-                     throws SQLException
-    {
+                     throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = { new Integer(row) };
             Debug.methodCall(this, "absolute", args);
@@ -2713,24 +2628,24 @@ public class ResultSet
                 if (row < 0) {
 
                     // adjust to reflect after end of result set
-                    int new_row_position = rowData.size() + row + 1;
+                    int newRowPosition = rowData.size() + row + 1;
 
-                    if (new_row_position <= 0) {
+                    if (newRowPosition <= 0) {
                         beforeFirst();
                         b = false;
                     } else {
-                        b = absolute(new_row_position);
+                        b = absolute(newRowPosition);
                     }
                 } else {
                     row--; // adjust for index difference
                     rowData.setCurrentRow(row);
-                    thisRow = (byte[][])rowData.getAt(row);
+                    thisRow = (byte[][]) rowData.getAt(row);
                     b = true;
                 }
             }
         }
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
             Debug.returnValue(this, "absolute", new Boolean(b));
         }
 
@@ -2747,10 +2662,9 @@ public class ResultSet
      * result set type is TYPE_FORWARD_ONLY.
      */
     public void afterLast()
-                   throws SQLException
-    {
+                   throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = {  };
             Debug.methodCall(this, "afterLast", args);
@@ -2780,10 +2694,9 @@ public class ResultSet
      * result set type is TYPE_FORWARD_ONLY
      */
     public void beforeFirst()
-                     throws SQLException
-    {
+                     throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = {  };
             Debug.methodCall(this, "beforeFirst", args);
@@ -2820,8 +2733,7 @@ public class ResultSet
      *
      */
     public void cancelRowUpdates()
-                          throws SQLException
-    {
+                          throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -2832,8 +2744,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void clearWarnings()
-                       throws java.sql.SQLException
-    {
+                       throws java.sql.SQLException {
         warningChain = null;
     }
 
@@ -2852,8 +2763,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void close()
-               throws java.sql.SQLException
-    {
+               throws java.sql.SQLException {
 
         if (rowData != null) {
             rowData.close();
@@ -2873,8 +2783,7 @@ public class ResultSet
      * called when on the insert row.
      */
     public void deleteRow()
-                   throws SQLException
-    {
+                   throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -2885,23 +2794,22 @@ public class ResultSet
      * @return the column index
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public int findColumn(String ColumnName)
-                   throws java.sql.SQLException
-    {
+    public int findColumn(String columnName)
+                   throws java.sql.SQLException {
 
         Integer index;
 
         synchronized (this) {
 
-            if (!_hasBuiltIndexMapping) {
+            if (!hasBuiltIndexMapping) {
                 buildIndexMapping();
             }
         }
 
-        index = (Integer)columnNameToIndex.get(ColumnName);
+        index = (Integer) columnNameToIndex.get(columnName);
 
         if (index == null) {
-            index = (Integer)fullColumnNameToIndex.get(ColumnName);
+            index = (Integer) fullColumnNameToIndex.get(columnName);
         }
 
         if (index != null) {
@@ -2910,7 +2818,7 @@ public class ResultSet
         } else {
 
             // Try this inefficient way, now
-            String columnNameUC = ColumnName.toUpperCase();
+            String columnNameUC = columnName.toUpperCase();
 
             for (int i = 0; i < fields.length; i++) {
 
@@ -2924,8 +2832,8 @@ public class ResultSet
                 }
             }
 
-            throw new java.sql.SQLException("Column '" + ColumnName + 
-                                            "' not found.", "S0022");
+            throw new java.sql.SQLException("Column '" + columnName
+                                            + "' not found.", "S0022");
         }
     }
 
@@ -2939,10 +2847,9 @@ public class ResultSet
      * result set type is TYPE_FORWARD_ONLY.
      */
     public boolean first()
-                  throws SQLException
-    {
+                  throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = {  };
             Debug.methodCall(this, "first", args);
@@ -2979,8 +2886,7 @@ public class ResultSet
      * the insert row have not been given a value
      */
     public void insertRow()
-                   throws SQLException
-    {
+                   throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -2994,10 +2900,9 @@ public class ResultSet
      * result set type is TYPE_FORWARD_ONLY.
      */
     public boolean last()
-                 throws SQLException
-    {
+                 throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = {  };
             Debug.methodCall(this, "last", args);
@@ -3034,8 +2939,7 @@ public class ResultSet
      * or the result set is not updatable
      */
     public void moveToCurrentRow()
-                          throws SQLException
-    {
+                          throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3060,8 +2964,7 @@ public class ResultSet
      * or the result set is not updatable
      */
     public void moveToInsertRow()
-                         throws SQLException
-    {
+                         throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3079,10 +2982,9 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public boolean next()
-                 throws java.sql.SQLException
-    {
+                 throws java.sql.SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = {  };
             Debug.methodCall(this, "next", args);
@@ -3119,7 +3021,7 @@ public class ResultSet
             }
         }
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
             Debug.returnValue(this, "next", new Boolean(b));
         }
 
@@ -3140,15 +3042,14 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public boolean prev()
-                 throws java.sql.SQLException
-    {
+                 throws java.sql.SQLException {
 
         int rowIndex = rowData.getCurrentRowNumber();
 
         if (rowIndex - 1 >= 0) {
             rowIndex--;
             rowData.setCurrentRow(rowIndex);
-            thisRow = (byte[][])rowData.getAt(rowIndex);
+            thisRow = (byte[][]) rowData.getAt(rowIndex);
 
             return true;
         } else {
@@ -3170,10 +3071,9 @@ public class ResultSet
      * result set type is TYPE_FORWAR_DONLY.
      */
     public boolean previous()
-                     throws SQLException
-    {
+                     throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = {  };
             Debug.methodCall(this, "previous", args);
@@ -3214,8 +3114,7 @@ public class ResultSet
      * called when on the insert row.
      */
     public void refreshRow()
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3234,14 +3133,13 @@ public class ResultSet
      * or after the last row of the result set.
      *
      * @return true if on a row, false otherwise.
-     * @exception SQLException if a database-access error occurs, or there
+     * @throws SQLException if a database-access error occurs, or there
      * is no current row, or result set type is TYPE_FORWARD_ONLY.
      */
     public boolean relative(int rows)
-                     throws SQLException
-    {
+                     throws SQLException {
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
 
             Object[] args = { new Integer(rows) };
             Debug.methodCall(this, "relative", args);
@@ -3257,7 +3155,7 @@ public class ResultSet
 
         boolean b = (!rowData.isAfterLast() && !rowData.isBeforeFirst());
 
-        if (Driver.trace) {
+        if (Driver.TRACE) {
             Debug.returnValue(this, "relative", new Boolean(b));
         }
 
@@ -3278,8 +3176,7 @@ public class ResultSet
      * @see DatabaseMetaData#deletesAreDetected
      */
     public boolean rowDeleted()
-                       throws SQLException
-    {
+                       throws SQLException {
         throw new NotImplemented();
     }
 
@@ -3295,8 +3192,7 @@ public class ResultSet
      * @see DatabaseMetaData#insertsAreDetected
      */
     public boolean rowInserted()
-                        throws SQLException
-    {
+                        throws SQLException {
         throw new NotImplemented();
     }
 
@@ -3317,8 +3213,7 @@ public class ResultSet
      * @see DatabaseMetaData#updatesAreDetected
      */
     public boolean rowUpdated()
-                       throws SQLException
-    {
+                       throws SQLException {
         throw new NotImplemented();
     }
 
@@ -3326,8 +3221,7 @@ public class ResultSet
      * @see ResultSet#updateArray(int, Array)
      */
     public void updateArray(int arg0, Array arg1)
-                     throws SQLException
-    {
+                     throws SQLException {
         throw new NotImplemented();
     }
 
@@ -3335,8 +3229,7 @@ public class ResultSet
      * @see ResultSet#updateArray(String, Array)
      */
     public void updateArray(String arg0, Array arg1)
-                     throws SQLException
-    {
+                     throws SQLException {
         throw new NotImplemented();
     }
 
@@ -3357,8 +3250,7 @@ public class ResultSet
      */
     public void updateAsciiStream(int columnIndex, java.io.InputStream x, 
                                   int length)
-                           throws SQLException
-    {
+                           throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3379,8 +3271,7 @@ public class ResultSet
      */
     public void updateAsciiStream(String columnName, java.io.InputStream x, 
                                   int length)
-                           throws SQLException
-    {
+                           throws SQLException {
         updateAsciiStream(findColumn(columnName), x, length);
     }
 
@@ -3399,8 +3290,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBigDecimal(int columnIndex, BigDecimal x)
-                          throws SQLException
-    {
+                          throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3419,8 +3309,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBigDecimal(String columnName, BigDecimal x)
-                          throws SQLException
-    {
+                          throws SQLException {
         updateBigDecimal(findColumn(columnName), x);
     }
 
@@ -3441,8 +3330,7 @@ public class ResultSet
      */
     public void updateBinaryStream(int columnIndex, java.io.InputStream x, 
                                    int length)
-                            throws SQLException
-    {
+                            throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3463,8 +3351,7 @@ public class ResultSet
      */
     public void updateBinaryStream(String columnName, java.io.InputStream x, 
                                    int length)
-                            throws SQLException
-    {
+                            throws SQLException {
         updateBinaryStream(findColumn(columnName), x, length);
     }
 
@@ -3472,8 +3359,7 @@ public class ResultSet
      * @see ResultSet#updateBlob(int, Blob)
      */
     public void updateBlob(int arg0, java.sql.Blob arg1)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3481,8 +3367,7 @@ public class ResultSet
      * @see ResultSet#updateBlob(String, Blob)
      */
     public void updateBlob(String arg0, java.sql.Blob arg1)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3501,8 +3386,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBoolean(int columnIndex, boolean x)
-                       throws SQLException
-    {
+                       throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3521,8 +3405,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBoolean(String columnName, boolean x)
-                       throws SQLException
-    {
+                       throws SQLException {
         updateBoolean(findColumn(columnName), x);
     }
 
@@ -3541,8 +3424,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateByte(int columnIndex, byte x)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3561,8 +3443,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateByte(String columnName, byte x)
-                    throws SQLException
-    {
+                    throws SQLException {
         updateByte(findColumn(columnName), x);
     }
 
@@ -3581,8 +3462,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBytes(int columnIndex, byte[] x)
-                     throws SQLException
-    {
+                     throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3601,8 +3481,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBytes(String columnName, byte[] x)
-                     throws SQLException
-    {
+                     throws SQLException {
         updateBytes(findColumn(columnName), x);
     }
 
@@ -3623,8 +3502,7 @@ public class ResultSet
      */
     public void updateCharacterStream(int columnIndex, java.io.Reader x, 
                                       int length)
-                               throws SQLException
-    {
+                               throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3639,14 +3517,13 @@ public class ResultSet
      * methods are called to update the database.
      *
      * @param columnName the name of the column
-     * @param x the new column value
+     * @param reader the stream to update the column with
      * @param length of the stream
-     * @exception SQLException if a database-access error occurs
+     * @throws SQLException if a database-access error occurs
      */
     public void updateCharacterStream(String columnName, java.io.Reader reader, 
                                       int length)
-                               throws SQLException
-    {
+                               throws SQLException {
         updateCharacterStream(findColumn(columnName), reader, length);
     }
 
@@ -3654,8 +3531,7 @@ public class ResultSet
      * @see ResultSet#updateClob(int, Clob)
      */
     public void updateClob(int arg0, Clob arg1)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotImplemented();
     }
 
@@ -3663,8 +3539,7 @@ public class ResultSet
      * @see ResultSet#updateClob(String, Clob)
      */
     public void updateClob(String arg0, Clob arg1)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotImplemented();
     }
 
@@ -3683,8 +3558,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateDate(int columnIndex, java.sql.Date x)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3703,8 +3577,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateDate(String columnName, java.sql.Date x)
-                    throws SQLException
-    {
+                    throws SQLException {
         updateDate(findColumn(columnName), x);
     }
 
@@ -3723,8 +3596,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateDouble(int columnIndex, double x)
-                      throws SQLException
-    {
+                      throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3743,8 +3615,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateDouble(String columnName, double x)
-                      throws SQLException
-    {
+                      throws SQLException {
         updateDouble(findColumn(columnName), x);
     }
 
@@ -3763,8 +3634,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateFloat(int columnIndex, float x)
-                     throws SQLException
-    {
+                     throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3783,8 +3653,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateFloat(String columnName, float x)
-                     throws SQLException
-    {
+                     throws SQLException {
         updateFloat(findColumn(columnName), x);
     }
 
@@ -3803,8 +3672,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateInt(int columnIndex, int x)
-                   throws SQLException
-    {
+                   throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3823,8 +3691,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateInt(String columnName, int x)
-                   throws SQLException
-    {
+                   throws SQLException {
         updateInt(findColumn(columnName), x);
     }
 
@@ -3843,8 +3710,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateLong(int columnIndex, long x)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3863,8 +3729,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateLong(String columnName, long x)
-                    throws SQLException
-    {
+                    throws SQLException {
         updateLong(findColumn(columnName), x);
     }
 
@@ -3882,8 +3747,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateNull(int columnIndex)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3901,8 +3765,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateNull(String columnName)
-                    throws SQLException
-    {
+                    throws SQLException {
         updateNull(findColumn(columnName));
     }
 
@@ -3924,8 +3787,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateObject(int columnIndex, Object x, int scale)
-                      throws SQLException
-    {
+                      throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3944,8 +3806,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateObject(int columnIndex, Object x)
-                      throws SQLException
-    {
+                      throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3967,8 +3828,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateObject(String columnName, Object x, int scale)
-                      throws SQLException
-    {
+                      throws SQLException {
         updateObject(findColumn(columnName), x);
     }
 
@@ -3987,8 +3847,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateObject(String columnName, Object x)
-                      throws SQLException
-    {
+                      throws SQLException {
         updateObject(findColumn(columnName), x);
     }
 
@@ -3996,8 +3855,7 @@ public class ResultSet
      * @see ResultSet#updateRef(int, Ref)
      */
     public void updateRef(int arg0, Ref arg1)
-                   throws SQLException
-    {
+                   throws SQLException {
         throw new NotImplemented();
     }
 
@@ -4005,8 +3863,7 @@ public class ResultSet
      * @see ResultSet#updateRef(String, Ref)
      */
     public void updateRef(String arg0, Ref arg1)
-                   throws SQLException
-    {
+                   throws SQLException {
         throw new NotImplemented();
     }
 
@@ -4020,8 +3877,7 @@ public class ResultSet
      * if called when on the insert row
      */
     public void updateRow()
-                   throws SQLException
-    {
+                   throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -4040,8 +3896,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateShort(int columnIndex, short x)
-                     throws SQLException
-    {
+                     throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -4060,8 +3915,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateShort(String columnName, short x)
-                     throws SQLException
-    {
+                     throws SQLException {
         updateShort(findColumn(columnName), x);
     }
 
@@ -4080,8 +3934,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateString(int columnIndex, String x)
-                      throws SQLException
-    {
+                      throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -4100,8 +3953,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateString(String columnName, String x)
-                      throws SQLException
-    {
+                      throws SQLException {
         updateString(findColumn(columnName), x);
     }
 
@@ -4120,8 +3972,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateTime(int columnIndex, java.sql.Time x)
-                    throws SQLException
-    {
+                    throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -4140,8 +3991,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateTime(String columnName, java.sql.Time x)
-                    throws SQLException
-    {
+                    throws SQLException {
         updateTime(findColumn(columnName), x);
     }
 
@@ -4160,8 +4010,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateTimestamp(int columnIndex, java.sql.Timestamp x)
-                         throws SQLException
-    {
+                         throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -4180,8 +4029,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateTimestamp(String columnName, java.sql.Timestamp x)
-                         throws SQLException
-    {
+                         throws SQLException {
         updateTimestamp(findColumn(columnName), x);
     }
 
@@ -4195,8 +4043,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurred
      */
     public boolean wasNull()
-                    throws java.sql.SQLException
-    {
+                    throws java.sql.SQLException {
 
         return wasNullFlag;
     }
@@ -4214,8 +4061,7 @@ public class ResultSet
      * to a double. Need a faster way to do this.
      */
     protected double getDouble(byte[] buf)
-                        throws SQLException
-    {
+                        throws SQLException {
 
         if (buf.length == 0) {
 
@@ -4255,24 +4101,22 @@ public class ResultSet
 
             return d;
         } catch (NumberFormatException e) {
-            throw new SQLException("Bad format for number '" + 
-                                   new String(buf) + "'");
+            throw new SQLException("Bad format for number '" + new String(buf)
+                                   + "'");
         }
     }
 
     /**
      * Sets the concurrency (JDBC2)
      */
-    protected void setResultSetConcurrency(int concurrencyFlag)
-    {
+    protected void setResultSetConcurrency(int concurrencyFlag) {
         resultSetConcurrency = concurrencyFlag;
     }
 
     /**
      * Sets the result set type for (JDBC2)
      */
-    protected void setResultSetType(int typeFlag)
-    {
+    protected void setResultSetType(int typeFlag) {
         resultSetType = typeFlag;
     }
 
@@ -4280,8 +4124,7 @@ public class ResultSet
      * Builds a hash between column names and their indices for fast
      * retrieval.
      */
-    protected void buildIndexMapping()
-    {
+    protected void buildIndexMapping() {
 
         int numFields = fields.length;
         columnNameToIndex = new HashMap();
@@ -4307,12 +4150,11 @@ public class ResultSet
         }
 
         // set the flag to prevent rebuilding...
-        _hasBuiltIndexMapping = true;
+        hasBuiltIndexMapping = true;
     }
 
     protected void checkRowPos()
-                        throws SQLException
-    {
+                        throws SQLException {
 
         if (isClosed) {
             throw new SQLException("Operation not allowed after ResultSet closed");
@@ -4337,31 +4179,26 @@ public class ResultSet
      * Allows Statements to determine the type of result set they ended
      * up building.
      */
-    int getResultSetType()
-    {
+    int getResultSetType() {
 
         return 0;
     }
 
-    void setStatement(com.mysql.jdbc.Statement stmt)
-    {
+    void setStatement(com.mysql.jdbc.Statement stmt) {
         owningStatement = stmt;
     }
 
-    long getUpdateCount()
-    {
+    long getUpdateCount() {
 
         return updateCount;
     }
 
-    long getUpdateID()
-    {
+    long getUpdateID() {
 
         return updateId;
     }
 
-    boolean reallyResult()
-    {
+    boolean reallyResult() {
 
         return reallyResult;
     }

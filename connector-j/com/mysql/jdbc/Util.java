@@ -16,13 +16,17 @@
       Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
       
  */
+ 
 package com.mysql.jdbc;
 
 import java.io.ObjectInputStream;
 
-
-public class Util
-{
+/**
+ * Various utility methods for the driver.
+ * 
+ * @author Mark Matthews
+ */
+public class Util {
 
     //~ Methods ...............................................................
 
@@ -31,14 +35,13 @@ public class Util
      * read binary data from the column which represents a serialized object,
      * and re-create the object.
      *
-     * @param RS the ResultSet to use.
+     * @param resultSet the ResultSet to use.
      * @param index an index into the ResultSet.
      * @return the object if it can be de-serialized
      * @throws Exception if an error occurs
      */
     public static Object readObject(java.sql.ResultSet resultSet, int index)
-                             throws Exception
-    {
+                             throws Exception {
 
         ObjectInputStream objIn = new ObjectInputStream(resultSet.getBinaryStream(
                                                                 index));
@@ -49,8 +52,7 @@ public class Util
     }
 
     // Right from Monty's code
-    static String newCrypt(String password, String seed)
-    {
+    static String newCrypt(String password, String seed) {
 
         byte b;
         double d;
@@ -70,25 +72,24 @@ public class Util
         for (int i = 0; i < seed.length(); i++) {
             seed1 = (seed1 * 3 + seed2) % max;
             seed2 = (seed1 + seed2 + 33) % max;
-            d = (double)seed1 / (double)max;
-            b = (byte)java.lang.Math.floor((d * 31) + 64);
-            chars[i] = (char)b;
+            d = (double) seed1 / (double) max;
+            b = (byte) java.lang.Math.floor((d * 31) + 64);
+            chars[i] = (char) b;
         }
 
         seed1 = (seed1 * 3 + seed2) % max;
         seed2 = (seed1 + seed2 + 33) % max;
-        d = (double)seed1 / (double)max;
-        b = (byte)java.lang.Math.floor(d * 31);
+        d = (double) seed1 / (double) max;
+        b = (byte) java.lang.Math.floor(d * 31);
 
         for (int i = 0; i < seed.length(); i++) {
-            chars[i] ^= (char)b;
+            chars[i] ^= (char) b;
         }
 
         return new String(chars);
     }
 
-    static long[] newHash(String password)
-    {
+    static long[] newHash(String password) {
 
         long nr = 1345345333L;
         long add = 7;
@@ -102,7 +103,7 @@ public class Util
                 continue; // skip spaces
             }
 
-            tmp = (long)(0xff & password.charAt(i));
+            tmp = (long) (0xff & password.charAt(i));
             nr ^= (((nr & 63) + add) * tmp) + (nr << 8);
             nr2 += (nr2 << 8) ^ nr;
             add += tmp;
@@ -115,8 +116,7 @@ public class Util
         return result;
     }
 
-    static String oldCrypt(String password, String seed)
-    {
+    static String oldCrypt(String password, String seed) {
 
         long hp;
         long hm;
@@ -144,16 +144,15 @@ public class Util
         for (int i = 0; i < seed.length(); i++) {
             s1 = (s1 * 3 + s2) % max;
             s2 = (s1 + s2 + 33) % max;
-            d = (double)s1 / max;
-            b = (byte)java.lang.Math.floor((d * 31) + 64);
-            chars[i] = (char)b;
+            d = (double) s1 / max;
+            b = (byte) java.lang.Math.floor((d * 31) + 64);
+            chars[i] = (char) b;
         }
 
         return new String(chars);
     }
 
-    static long oldHash(String password)
-    {
+    static long oldHash(String password) {
 
         long nr = 1345345333;
         long nr2 = 7;
@@ -166,11 +165,11 @@ public class Util
                 continue;
             }
 
-            tmp = (long)password.charAt(i);
+            tmp = (long) password.charAt(i);
             nr ^= (((nr & 63) + nr2) * tmp) + (nr << 8);
             nr2 += tmp;
         }
 
-        return nr & (((long)1L << 31) - 1L);
+        return nr & (((long) 1L << 31) - 1L);
     }
 }

@@ -30,33 +30,32 @@ import java.util.Properties;
  * Socket factory for vanilla TCP/IP sockets (the standard)
  */
 public class StandardSocketFactory
-    implements SocketFactory
-{
-	protected Socket rawSocket = null;
-	protected String host = null;
-	protected int port = 3306;
-	
+    implements SocketFactory {
+
+    //~ Instance/static variables .............................................
+
+    protected Socket rawSocket = null;
+    protected String host = null;
+    protected int port = 3306;
+
     //~ Methods ...............................................................
 
     /**
      * @see com.mysql.jdbc.SocketFactory#createSocket(Properties)
      */
     public Socket connect(String host, Properties props)
-                        throws SocketException, IOException
-    {
+                   throws SocketException, IOException {
 
         if (props != null) {
-
             this.host = host;
+
             String portStr = props.getProperty("PORT");
-            
 
             if (portStr != null) {
                 port = Integer.parseInt(portStr);
             }
 
             if (this.host != null) {
-
                 rawSocket = new Socket(this.host, port);
 
                 try {
@@ -72,24 +71,25 @@ public class StandardSocketFactory
 
         throw new SocketException("Unable to create socket");
     }
-    
-     /**
+
+    /**
      * Called by the driver before issuing the MySQL protocol handshake.
      * Should return the socket instance that should be used during
      * the handshake.
      */
-    public Socket beforeHandshake() throws SocketException, IOException
-    {
-    	return rawSocket;
+    public Socket beforeHandshake()
+                           throws SocketException, IOException {
+
+        return rawSocket;
     }
-    
+
     /**
      * Called by the driver after issuing the MySQL protocol handshake and
      * reading the results of the handshake.
      */
-    public Socket afterHandshake() throws SocketException, IOException
-    {
-    	return rawSocket;
-    }
+    public Socket afterHandshake()
+                          throws SocketException, IOException {
 
+        return rawSocket;
+    }
 }

@@ -38,15 +38,12 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 
-import java.text.NumberFormat;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
-
-import sun.io.CharToByteConverter;
 
 
 /**
@@ -69,20 +66,19 @@ import sun.io.CharToByteConverter;
  */
 public class PreparedStatement
     extends com.mysql.jdbc.Statement
-    implements java.sql.PreparedStatement
-{
+    implements java.sql.PreparedStatement {
 
     //~ Instance/static variables .............................................
 
-    protected static SimpleDateFormat TSDF = new SimpleDateFormat(
-                                                     "yyyy-MM-dd HH:mm:ss");
-    static boolean timezoneSet = false;
-    static final Object tzMutex = new Object();
-    protected static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
-    protected boolean[] isNull = null;
-    protected boolean[] isStream = null;
-    protected InputStream[] parameterStreams = null;
-    protected String[] parameterValues = null;
+    private static final SimpleDateFormat TSDF = new SimpleDateFormat(
+                                                   "yyyy-MM-dd HH:mm:ss");
+    private static boolean timezoneSet = false;
+    private static final Object TZ_MUTEX = new Object();
+    private static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
+    private boolean[] isNull = null;
+    private boolean[] isStream = null;
+    private InputStream[] parameterStreams = null;
+    private String[] parameterValues = null;
     private String originalSql = null;
     private byte[] streamConvertBuf = new byte[4096];
     private char firstCharOfStmt;
@@ -96,10 +92,16 @@ public class PreparedStatement
 
     /**
      * Constructor for the PreparedStatement class.
+     * 
+     * @param conn the connection creating this statement
+     * @param sql the SQL for this statement
+     * @param catalog the catalog/database this statement should
+     *                 be issued against
+     * 
+     * @throws java.sql.SQLException if a database error occurs.
      */
     public PreparedStatement(Connection conn, String sql, String catalog)
-                      throws java.sql.SQLException
-    {
+                      throws java.sql.SQLException {
         super(conn, catalog);
 
         if (sql == null) {
@@ -173,14 +175,14 @@ public class PreparedStatement
 
             if (characterEncoding == null) {
 
-                EndPoint ep = (EndPoint)endpointList.get(i);
+                EndPoint ep = (EndPoint) endpointList.get(i);
                 int end = ep.end;
                 int begin = ep.begin;
                 int len = end - begin;
                 byte[] buf = new byte[len];
 
                 for (int j = 0; j < len; j++) {
-                    buf[j] = (byte)statementAsChars[begin + j];
+                    buf[j] = (byte) statementAsChars[begin + j];
                 }
 
                 staticSqlStrings[i] = buf;
@@ -188,7 +190,7 @@ public class PreparedStatement
 
                 try {
 
-                    EndPoint ep = (EndPoint)endpointList.get(i);
+                    EndPoint ep = (EndPoint) endpointList.get(i);
                     int end = ep.end;
                     int begin = ep.begin;
                     int len = end - begin;
@@ -223,8 +225,7 @@ public class PreparedStatement
      * @param x an object representing an SQL array
      */
     public void setArray(int i, Array x)
-                  throws SQLException
-    {
+                  throws SQLException {
         throw new NotImplemented();
     }
 
@@ -244,15 +245,14 @@ public class PreparedStatement
      * @param length the number of bytes in the stream
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public synchronized void setAsciiStream(int parameterIndex, InputStream X, 
+    public synchronized void setAsciiStream(int parameterIndex, InputStream x, 
                                             int length)
-                                     throws java.sql.SQLException
-    {
+                                     throws java.sql.SQLException {
 
-        if (X == null) {
+        if (x == null) {
             setNull(parameterIndex, java.sql.Types.VARCHAR);
         } else {
-            setBinaryStream(parameterIndex, X, length);
+            setBinaryStream(parameterIndex, x, length);
         }
     }
 
@@ -265,14 +265,13 @@ public class PreparedStatement
      * @param x the parameter value
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public void setBigDecimal(int parameterIndex, BigDecimal X)
-                       throws java.sql.SQLException
-    {
+    public void setBigDecimal(int parameterIndex, BigDecimal x)
+                       throws java.sql.SQLException {
 
-        if (X == null) {
+        if (x == null) {
             setNull(parameterIndex, java.sql.Types.DECIMAL);
         } else {
-            setInternal(parameterIndex, fixDecimalExponent(X.toString()));
+            setInternal(parameterIndex, fixDecimalExponent(x.toString()));
         }
     }
 
@@ -290,23 +289,21 @@ public class PreparedStatement
      * @param x the parameter value
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public void setBinaryStream(int parameterIndex, InputStream X, int length)
-                         throws java.sql.SQLException
-    {
+    public void setBinaryStream(int parameterIndex, InputStream x, int length)
+                         throws java.sql.SQLException {
 
-        if (X == null) {
+        if (x == null) {
             setNull(parameterIndex, java.sql.Types.BINARY);
         } else {
 
-            if (parameterIndex < 1 || 
-                parameterIndex > staticSqlStrings.length) {
-                throw new java.sql.SQLException("Parameter index out of range (" + 
-                                                parameterIndex + " > " + 
-                                                staticSqlStrings.length + 
-                                                ")", "S1009");
+            if (parameterIndex < 1 || parameterIndex > staticSqlStrings.length) {
+                throw new java.sql.SQLException("Parameter index out of range ("
+                                                + parameterIndex + " > "
+                                                + staticSqlStrings.length
+                                                + ")", "S1009");
             }
 
-            parameterStreams[parameterIndex - 1] = X;
+            parameterStreams[parameterIndex - 1] = x;
             isStream[parameterIndex - 1] = true;
             isNull[parameterIndex - 1] = false;
         }
@@ -321,8 +318,7 @@ public class PreparedStatement
      * @param x an object representing a BLOB
      */
     public void setBlob(int i, java.sql.Blob x)
-                 throws SQLException
-    {
+                 throws SQLException {
         setBinaryStream(i, x.getBinaryStream(), Integer.MAX_VALUE);
     }
 
@@ -335,8 +331,7 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setBoolean(int parameterIndex, boolean x)
-                    throws java.sql.SQLException
-    {
+                    throws java.sql.SQLException {
 
         if (useTrueBoolean) {
             setInternal(parameterIndex, x ? "'1'" : "'0'");
@@ -354,8 +349,7 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setByte(int parameterIndex, byte x)
-                 throws java.sql.SQLException
-    {
+                 throws java.sql.SQLException {
         setInternal(parameterIndex, String.valueOf(x));
     }
 
@@ -371,8 +365,7 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setBytes(int parameterIndex, byte[] x)
-                  throws java.sql.SQLException
-    {
+                  throws java.sql.SQLException {
 
         if (x == null) {
             setNull(parameterIndex, java.sql.Types.BINARY);
@@ -403,8 +396,7 @@ public class PreparedStatement
      */
     public void setCharacterStream(int parameterIndex, java.io.Reader reader, 
                                    int length)
-                            throws SQLException
-    {
+                            throws SQLException {
 
         try {
 
@@ -436,9 +428,8 @@ public class PreparedStatement
      * @param x an object representing a CLOB
      */
     public void setClob(int i, Clob x)
-                 throws SQLException
-    {
-        setString(i, x.getSubString(0L, (int)x.length()));
+                 throws SQLException {
+        setString(i, x.getSubString(0L, (int) x.length()));
     }
 
     /**
@@ -449,16 +440,15 @@ public class PreparedStatement
      * @param x the parameter value
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public void setDate(int parameterIndex, java.sql.Date X)
-                 throws java.sql.SQLException
-    {
+    public void setDate(int parameterIndex, java.sql.Date x)
+                 throws java.sql.SQLException {
 
-        if (X == null) {
+        if (x == null) {
             setNull(parameterIndex, java.sql.Types.DATE);
         } else {
 
             SimpleDateFormat DF = new SimpleDateFormat("''yyyy-MM-dd''");
-            setInternal(parameterIndex, DF.format(X));
+            setInternal(parameterIndex, DF.format(x));
         }
     }
 
@@ -471,8 +461,7 @@ public class PreparedStatement
      * @exception SQLException if a database-access error occurs.
      */
     public void setDate(int parameterIndex, java.sql.Date X, Calendar Cal)
-                 throws SQLException
-    {
+                 throws SQLException {
         setDate(parameterIndex, X);
     }
 
@@ -485,23 +474,9 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setDouble(int parameterIndex, double x)
-                   throws java.sql.SQLException
-    {
+                   throws java.sql.SQLException {
 
-        //set(parameterIndex, _DoubleFormatter.format(x));
-        //if (x <= Long.MAX_VALUE && x >= Long.MIN_VALUE)
-        //{
-        //   synchronized (_DoubleFormatter)
-        //   {
-        //      setInternal(parameterIndex, _DoubleFormatter.format(x));
-        //   }
-        //}
-        //else
-        //{
         setInternal(parameterIndex, fixDecimalExponent(String.valueOf(x)));
-
-        //}
-        // - Fix for large doubles by Steve Ferguson
     }
 
     /**
@@ -513,8 +488,7 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setFloat(int parameterIndex, float x)
-                  throws java.sql.SQLException
-    {
+                  throws java.sql.SQLException {
         setInternal(parameterIndex, fixDecimalExponent(String.valueOf(x)));
     }
 
@@ -527,8 +501,7 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setInt(int parameterIndex, int x)
-                throws java.sql.SQLException
-    {
+                throws java.sql.SQLException {
         setInternal(parameterIndex, String.valueOf(x));
     }
 
@@ -541,8 +514,7 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setLong(int parameterIndex, long x)
-                 throws java.sql.SQLException
-    {
+                 throws java.sql.SQLException {
         setInternal(parameterIndex, String.valueOf(x));
     }
 
@@ -554,8 +526,7 @@ public class PreparedStatement
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.ResultSetMetaData getMetaData()
-                                           throws SQLException
-    {
+                                           throws SQLException {
         throw new NotImplemented();
     }
 
@@ -570,8 +541,7 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setNull(int parameterIndex, int sqlType)
-                 throws java.sql.SQLException
-    {
+                 throws java.sql.SQLException {
         setInternal(parameterIndex, "null");
         isNull[parameterIndex - 1] = true;
     }
@@ -585,11 +555,11 @@ public class PreparedStatement
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param sqlType SQL type code defined by java.sql.Types
+     * @param arg argument parameters for null
      * @exception SQLException if a database-access error occurs.
      */
-    public void setNull(int parameterIndex, int sqlType, String Arg)
-                 throws SQLException
-    {
+    public void setNull(int parameterIndex, int sqlType, String arg)
+                 throws SQLException {
         setNull(parameterIndex, sqlType);
     }
 
@@ -605,17 +575,16 @@ public class PreparedStatement
      * Java type and using a targetSqlType of java.sql.Types.OTHER
      *
      * @param parameterIndex the first parameter is 1...
-     * @param x the object containing the input parameter value
+     * @param parameterObj the object containing the input parameter value
      * @param targetSqlType The SQL type to be send to the database
      * @param scale For java.sql.Types.DECIMAL or java.sql.Types.NUMERIC
      *      types this is the number of digits after the decimal.  For 
      *      all other types this value will be ignored.
-     * @exception java.sql.SQLException if a database access error occurs
+     * @throws java.sql.SQLException if a database access error occurs
      */
     public void setObject(int parameterIndex, Object parameterObj, 
                           int targetSqlType, int scale)
-                   throws java.sql.SQLException
-    {
+                   throws java.sql.SQLException {
 
         if (parameterObj == null) {
             setNull(parameterIndex, java.sql.Types.OTHER);
@@ -639,7 +608,7 @@ public class PreparedStatement
                         Number parameterAsNum;
 
                         if (parameterObj instanceof Boolean) {
-                            parameterAsNum = ((Boolean)parameterObj).booleanValue()
+                            parameterAsNum = ((Boolean) parameterObj).booleanValue()
                                                  ? new Integer(1)
                                                  : new Integer(0);
                         } else if (parameterObj instanceof String) {
@@ -648,7 +617,7 @@ public class PreparedStatement
 
                                 case Types.BIT:
                                     parameterAsNum = (Boolean.getBoolean(
-                                                              (String)parameterObj)
+                                                              (String) parameterObj)
                                                           ? new Integer("1")
                                                           : new Integer("0"));
 
@@ -658,26 +627,26 @@ public class PreparedStatement
                                 case Types.SMALLINT:
                                 case Types.INTEGER:
                                     parameterAsNum = Integer.valueOf(
-                                                             (String)parameterObj);
+                                                             (String) parameterObj);
 
                                     break;
 
                                 case Types.BIGINT:
                                     parameterAsNum = Long.valueOf(
-                                                             (String)parameterObj);
+                                                             (String) parameterObj);
 
                                     break;
 
                                 case Types.REAL:
                                     parameterAsNum = Float.valueOf(
-                                                             (String)parameterObj);
+                                                             (String) parameterObj);
 
                                     break;
 
                                 case Types.FLOAT:
                                 case Types.DOUBLE:
                                     parameterAsNum = Double.valueOf(
-                                                             (String)parameterObj);
+                                                             (String) parameterObj);
 
                                     break;
 
@@ -685,10 +654,10 @@ public class PreparedStatement
                                 case Types.NUMERIC:
                                 default:
                                     parameterAsNum = new java.math.BigDecimal(
-                                                             (String)parameterObj);
+                                                             (String) parameterObj);
                             }
                         } else {
-                            parameterAsNum = (Number)parameterObj;
+                            parameterAsNum = (Number) parameterObj;
                         }
 
                         switch (targetSqlType) {
@@ -727,11 +696,11 @@ public class PreparedStatement
 
                                 if (parameterAsNum instanceof java.math.BigDecimal) {
                                     setBigDecimal(parameterIndex, 
-                                                  (java.math.BigDecimal)parameterAsNum);
+                                                  (java.math.BigDecimal) parameterAsNum);
                                 } else if (parameterAsNum instanceof java.math.BigInteger) {
                                     setBigDecimal(parameterIndex, 
                                                   new java.math.BigDecimal(
-                                                          (java.math.BigInteger)parameterAsNum, 
+                                                          (java.math.BigInteger) parameterAsNum, 
                                                           scale));
                                 } else {
                                     setBigDecimal(parameterIndex, 
@@ -756,9 +725,9 @@ public class PreparedStatement
 
                         if (parameterObj instanceof String) {
                             setBytes(parameterIndex, 
-                                     ((String)parameterObj).getBytes());
+                                     ((String) parameterObj).getBytes());
                         } else {
-                            setBytes(parameterIndex, (byte[])parameterObj);
+                            setBytes(parameterIndex, (byte[]) parameterObj);
                         }
 
                         break;
@@ -772,12 +741,12 @@ public class PreparedStatement
 
                             ParsePosition pp = new ParsePosition(0);
                             java.text.DateFormat sdf = new java.text.SimpleDateFormat(getDateTimePattern(
-                                                                                              (String)parameterObj, 
+                                                                                              (String) parameterObj, 
                                                                                               false));
-                            parameterAsDate = sdf.parse((String)parameterObj, 
+                            parameterAsDate = sdf.parse((String) parameterObj, 
                                                         pp);
                         } else {
-                            parameterAsDate = (java.util.Date)parameterObj;
+                            parameterAsDate = (java.util.Date) parameterObj;
                         }
 
                         switch (targetSqlType) {
@@ -786,7 +755,7 @@ public class PreparedStatement
 
                                 if (parameterAsDate instanceof java.sql.Date) {
                                     setDate(parameterIndex, 
-                                            (java.sql.Date)parameterAsDate);
+                                            (java.sql.Date) parameterAsDate);
                                 } else {
                                     setDate(parameterIndex, 
                                             new java.sql.Date(parameterAsDate.getTime()));
@@ -798,7 +767,7 @@ public class PreparedStatement
 
                                 if (parameterAsDate instanceof java.sql.Timestamp) {
                                     setTimestamp(parameterIndex, 
-                                                 (java.sql.Timestamp)parameterAsDate);
+                                                 (java.sql.Timestamp) parameterAsDate);
                                 } else {
                                     setTimestamp(parameterIndex, 
                                                  new java.sql.Timestamp(parameterAsDate.getTime()));
@@ -814,20 +783,20 @@ public class PreparedStatement
                         if (parameterObj instanceof String) {
 
                             java.text.DateFormat sdf = new java.text.SimpleDateFormat(getDateTimePattern(
-                                                                                              (String)parameterObj, 
+                                                                                              (String) parameterObj, 
                                                                                               true));
                             setTime(parameterIndex, 
-                                    new java.sql.Time(sdf.parse((String)parameterObj).getTime()));
+                                    new java.sql.Time(sdf.parse((String) parameterObj).getTime()));
                         } else if (parameterObj instanceof Timestamp) {
 
-                            Timestamp xT = (Timestamp)parameterObj;
+                            Timestamp xT = (Timestamp) parameterObj;
                             setTime(parameterIndex, 
                                     new java.sql.Time(xT.getHours(), 
                                                       xT.getMinutes(), 
                                                       xT.getSeconds()));
                         } else {
                             setTime(parameterIndex, 
-                                    (java.sql.Time)parameterObj);
+                                    (java.sql.Time) parameterObj);
                         }
 
                         break;
@@ -844,13 +813,13 @@ public class PreparedStatement
             } catch (Exception ex) {
 
                 if (ex instanceof java.sql.SQLException) {
-                    throw (java.sql.SQLException)ex;
+                    throw (java.sql.SQLException) ex;
                 } else {
-                    throw new java.sql.SQLException("Cannot convert " + 
-                                                    parameterObj.getClass().toString() + 
-                                                    " to SQL type requested due to " + 
-                                                    ex.getClass().getName() + 
-                                                    " - " + ex.getMessage(), 
+                    throw new java.sql.SQLException("Cannot convert "
+                                                    + parameterObj.getClass().toString()
+                                                    + " to SQL type requested due to "
+                                                    + ex.getClass().getName()
+                                                    + " - " + ex.getMessage(), 
                                                     "S1000");
                 }
             }
@@ -861,14 +830,13 @@ public class PreparedStatement
      * DOCUMENT ME!
      * 
      * @param parameterIndex DOCUMENT ME!
-     * @param X DOCUMENT ME!
+     * @param parameterObj DOCUMENT ME!
      * @param targetSqlType DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public void setObject(int parameterIndex, Object parameterObj, 
                           int targetSqlType)
-                   throws java.sql.SQLException
-    {
+                   throws java.sql.SQLException {
         setObject(parameterIndex, parameterObj, targetSqlType, 0);
     }
 
@@ -876,50 +844,50 @@ public class PreparedStatement
      * DOCUMENT ME!
      * 
      * @param parameterIndex DOCUMENT ME!
-     * @param X DOCUMENT ME!
+     * @param parameterObj DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public void setObject(int parameterIndex, Object parameterObj)
-                   throws java.sql.SQLException
-    {
+                   throws java.sql.SQLException {
 
         if (parameterObj == null) {
             setNull(parameterIndex, java.sql.Types.OTHER);
         } else {
 
             if (parameterObj instanceof Byte) {
-                setInt(parameterIndex, ((Byte)parameterObj).intValue());
+                setInt(parameterIndex, ((Byte) parameterObj).intValue());
             } else if (parameterObj instanceof String) {
-                setString(parameterIndex, (String)parameterObj);
+                setString(parameterIndex, (String) parameterObj);
             } else if (parameterObj instanceof BigDecimal) {
-                setBigDecimal(parameterIndex, (BigDecimal)parameterObj);
+                setBigDecimal(parameterIndex, (BigDecimal) parameterObj);
             } else if (parameterObj instanceof Short) {
-                setShort(parameterIndex, ((Short)parameterObj).shortValue());
+                setShort(parameterIndex, ((Short) parameterObj).shortValue());
             } else if (parameterObj instanceof Integer) {
-                setInt(parameterIndex, ((Integer)parameterObj).intValue());
+                setInt(parameterIndex, ((Integer) parameterObj).intValue());
             } else if (parameterObj instanceof Long) {
-                setLong(parameterIndex, ((Long)parameterObj).longValue());
+                setLong(parameterIndex, ((Long) parameterObj).longValue());
             } else if (parameterObj instanceof Float) {
-                setFloat(parameterIndex, ((Float)parameterObj).floatValue());
+                setFloat(parameterIndex, ((Float) parameterObj).floatValue());
             } else if (parameterObj instanceof Double) {
-                setDouble(parameterIndex, ((Double)parameterObj).doubleValue());
+                setDouble(parameterIndex, 
+                          ((Double) parameterObj).doubleValue());
             } else if (parameterObj instanceof byte[]) {
-                setBytes(parameterIndex, (byte[])parameterObj);
+                setBytes(parameterIndex, (byte[]) parameterObj);
             } else if (parameterObj instanceof java.sql.Date) {
-                setDate(parameterIndex, (java.sql.Date)parameterObj);
+                setDate(parameterIndex, (java.sql.Date) parameterObj);
             } else if (parameterObj instanceof Time) {
-                setTime(parameterIndex, (Time)parameterObj);
+                setTime(parameterIndex, (Time) parameterObj);
             } else if (parameterObj instanceof Timestamp) {
-                setTimestamp(parameterIndex, (Timestamp)parameterObj);
+                setTimestamp(parameterIndex, (Timestamp) parameterObj);
             } else if (parameterObj instanceof Boolean) {
                 setBoolean(parameterIndex, 
-                           ((Boolean)parameterObj).booleanValue());
+                           ((Boolean) parameterObj).booleanValue());
             } else if (parameterObj instanceof InputStream) {
-                setBinaryStream(parameterIndex, (InputStream)parameterObj, -1);
+                setBinaryStream(parameterIndex, (InputStream) parameterObj, -1);
             } else if (parameterObj instanceof java.sql.Blob) {
-                setBlob(parameterIndex, (java.sql.Blob)parameterObj);
+                setBlob(parameterIndex, (java.sql.Blob) parameterObj);
             } else if (parameterObj instanceof java.sql.Clob) {
-                setClob(parameterIndex, (java.sql.Clob)parameterObj);
+                setClob(parameterIndex, (java.sql.Clob) parameterObj);
             } else {
                 setSerializableObject(parameterIndex, parameterObj);
             }
@@ -935,8 +903,7 @@ public class PreparedStatement
      * @param x an object representing data of an SQL REF Type
      */
     public void setRef(int i, Ref x)
-                throws SQLException
-    {
+                throws SQLException {
         throw new NotImplemented();
     }
 
@@ -949,8 +916,7 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setShort(int parameterIndex, short x)
-                  throws java.sql.SQLException
-    {
+                  throws java.sql.SQLException {
         setInternal(parameterIndex, String.valueOf(x));
     }
 
@@ -965,16 +931,15 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void setString(int parameterIndex, String x)
-                   throws java.sql.SQLException
-    {
+                   throws java.sql.SQLException {
 
         // if the passed string is null, then set this column to null
         if (x == null) {
             setInternal(parameterIndex, "null");
         } else {
 
-            StringBuffer B = new StringBuffer((int)(x.length() * 1.1));
-            B.append('\'');
+            StringBuffer buf = new StringBuffer((int) (x.length() * 1.1));
+            buf.append('\'');
 
             for (int i = 0; i < x.length(); ++i) {
 
@@ -983,54 +948,54 @@ public class PreparedStatement
                 switch (c) {
 
                     case 0: /* Must be escaped for 'mysql' */
-                        B.append('\\');
-                        B.append('0');
+                        buf.append('\\');
+                        buf.append('0');
 
                         break;
 
                     case '\n': /* Must be escaped for logs */
-                        B.append('\\');
-                        B.append('n');
+                        buf.append('\\');
+                        buf.append('n');
 
                         break;
 
                     case '\r':
-                        B.append('\\');
-                        B.append('r');
+                        buf.append('\\');
+                        buf.append('r');
 
                         break;
 
                     case '\\':
-                        B.append('\\');
-                        B.append('\\');
+                        buf.append('\\');
+                        buf.append('\\');
 
                         break;
 
                     case '\'':
-                        B.append('\\');
-                        B.append('\'');
+                        buf.append('\\');
+                        buf.append('\'');
 
                         break;
 
                     case '"': /* Better safe than sorry */
-                        B.append('\\');
-                        B.append('"');
+                        buf.append('\\');
+                        buf.append('"');
 
                         break;
 
                     case '\032': /* This gives problems on Win32 */
-                        B.append('\\');
-                        B.append('Z');
+                        buf.append('\\');
+                        buf.append('Z');
 
                         break;
 
                     default:
-                        B.append(c);
+                        buf.append(c);
                 }
             }
 
-            B.append('\'');
-            setInternal(parameterIndex, B.toString());
+            buf.append('\'');
+            setInternal(parameterIndex, buf.toString());
         }
     }
 
@@ -1040,13 +1005,12 @@ public class PreparedStatement
      *
      * @param parameterIndex the first parameter is 1...));
      * @param x the parameter value
-     * @exception java.sql.SQLException if a database access error occurs
+     * @throws java.sql.SQLException if a database access error occurs
      */
-    public void setTime(int parameterIndex, Time X)
-                 throws java.sql.SQLException
-    {
+    public void setTime(int parameterIndex, Time x)
+                 throws java.sql.SQLException {
 
-        if (X == null) {
+        if (x == null) {
             setNull(parameterIndex, java.sql.Types.TIME);
         } else {
 
@@ -1055,7 +1019,7 @@ public class PreparedStatement
             //
             //   X = TimeUtil.changeTimezone(X, TimeUtil.GMT_TIMEZONE, _conn.getServerTimezone());
             //}
-            setInternal(parameterIndex, "'" + X.toString() + "'");
+            setInternal(parameterIndex, "'" + x.toString() + "'");
         }
     }
 
@@ -1065,12 +1029,12 @@ public class PreparedStatement
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value
-     * @exception SQLException if a database-access error occurs.
+     * @param cal the cal specifying the timezone
+     * @throws SQLException if a database-access error occurs.
      */
-    public void setTime(int parameterIndex, java.sql.Time X, Calendar Cal)
-                 throws SQLException
-    {
-        setTime(parameterIndex, X);
+    public void setTime(int parameterIndex, java.sql.Time x, Calendar cal)
+                 throws SQLException {
+        setTime(parameterIndex, x);
     }
 
     /**
@@ -1079,17 +1043,16 @@ public class PreparedStatement
      *
      * @param parameterIndex the first parameter is 1...
      * @param x the parameter value
-     * @exception java.sql.SQLException if a database access error occurs
+     * @throws java.sql.SQLException if a database access error occurs
      */
-    public void setTimestamp(int parameterIndex, Timestamp X)
-                      throws java.sql.SQLException
-    {
+    public void setTimestamp(int parameterIndex, Timestamp x)
+                      throws java.sql.SQLException {
 
-        if (X == null) {
+        if (x == null) {
             setNull(parameterIndex, java.sql.Types.TIMESTAMP);
         } else {
 
-            String TimestampString = null;
+            String timestampString = null;
 
             //if (_conn.useTimezone())
             //{
@@ -1097,10 +1060,10 @@ public class PreparedStatement
             //   X = TimeUtil.changeTimezone(X, TimeUtil.GMT_TIMEZONE, _conn.getServerTimezone());
             //}
             synchronized (TSDF) {
-                TimestampString = "'" + TSDF.format(X) + "'";
+                timestampString = "'" + TSDF.format(x) + "'";
             }
 
-            setInternal(parameterIndex, TimestampString); // SimpleDateFormat is not thread-safe
+            setInternal(parameterIndex, timestampString); // SimpleDateFormat is not thread-safe
         }
     }
 
@@ -1111,13 +1074,13 @@ public class PreparedStatement
      *
      * @param parameterIndex the first parameter is 1, the second is 2, ...
      * @param x the parameter value 
-     * @exception SQLException if a database-access error occurs.
+     * @param cal the calendar specifying the timezone to use
+     * @throws SQLException if a database-access error occurs.
      */
-    public void setTimestamp(int parameterIndex, java.sql.Timestamp X, 
-                             Calendar Cal)
-                      throws SQLException
-    {
-        setTimestamp(parameterIndex, X);
+    public void setTimestamp(int parameterIndex, java.sql.Timestamp x, 
+                             Calendar cal)
+                      throws SQLException {
+        setTimestamp(parameterIndex, x);
     }
 
     /**
@@ -1133,16 +1096,16 @@ public class PreparedStatement
      *
      * @param parameterIndex the first parameter is 1...
      * @param x the parameter value
-     * @exception java.sql.SQLException if a database access error occurs
+     * @param length the number of bytes to read from the stream
+     * @throws java.sql.SQLException if a database access error occurs
      */
-    public void setUnicodeStream(int parameterIndex, InputStream X, int length)
-                          throws java.sql.SQLException
-    {
+    public void setUnicodeStream(int parameterIndex, InputStream x, int length)
+                          throws java.sql.SQLException {
 
-        if (X == null) {
+        if (x == null) {
             setNull(parameterIndex, java.sql.Types.VARCHAR);
         } else {
-            setBinaryStream(parameterIndex, X, length);
+            setBinaryStream(parameterIndex, x, length);
         }
     }
 
@@ -1155,8 +1118,7 @@ public class PreparedStatement
      * @see Statement#addBatch
      */
     public void addBatch()
-                  throws SQLException
-    {
+                  throws SQLException {
 
         if (batchedArgs == null) {
             batchedArgs = new ArrayList();
@@ -1176,8 +1138,7 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public void clearParameters()
-                         throws java.sql.SQLException
-    {
+                         throws java.sql.SQLException {
 
         for (int i = 0; i < parameterValues.length; i++) {
             parameterValues[i] = null;
@@ -1190,10 +1151,11 @@ public class PreparedStatement
     /**
      * Closes this prepared statement and releases all
      * resources.
+     * 
+     * @throws SQLException if database error occurs.
      */
     public void close()
-               throws SQLException
-    {
+               throws SQLException {
         super.close();
         originalSql = null;
         staticSqlStrings = null;
@@ -1215,12 +1177,11 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public boolean execute()
-                    throws java.sql.SQLException
-    {
+                    throws java.sql.SQLException {
 
         if (connection.isReadOnly() && firstCharOfStmt != 'S') {
-            throw new SQLException("Connection is read-only. " + 
-                                   "Queries leading to data modification are not allowed", 
+            throw new SQLException("Connection is read-only. "
+                                   + "Queries leading to data modification are not allowed", 
                                    "S1009");
         }
 
@@ -1233,22 +1194,21 @@ public class PreparedStatement
             sendPacket.clear();
         }
 
-        sendPacket.writeByte((byte)MysqlDefs.QUERY);
+        sendPacket.writeByte((byte) MysqlDefs.QUERY);
 
-        String Encoding = null;
+        String charEncoding = null;
 
         if (connection.useUnicode()) {
-            Encoding = connection.getEncoding();
+            charEncoding = connection.getEncoding();
         }
 
         try {
 
             for (int i = 0; i < parameterValues.length; i++) {
 
-                if (parameterValues[i] == null && 
-                    parameterStreams[i] == null) {
-                    throw new java.sql.SQLException("No value specified for parameter " + 
-                                                    (i + 1));
+                if (parameterValues[i] == null && parameterStreams[i] == null) {
+                    throw new java.sql.SQLException("No value specified for parameter "
+                                                    + (i + 1));
                 }
 
                 //if (Encoding != null) {
@@ -1263,9 +1223,9 @@ public class PreparedStatement
                                                         parameterStreams[i]));
                 } else {
 
-                    if (Encoding != null) {
+                    if (charEncoding != null) {
                         sendPacket.writeStringNoNull(parameterValues[i], 
-                                                     Encoding);
+                                                     charEncoding);
                     } else {
                         sendPacket.writeStringNoNull(parameterValues[i]);
                     }
@@ -1281,18 +1241,18 @@ public class PreparedStatement
             //   _SendPacket.writeStringNoNull(_TemplateStrings[_ParameterStrings.length]);
             // }
         } catch (java.io.UnsupportedEncodingException UE) {
-            throw new SQLException("Unsupported character encoding '" + 
-                                   Encoding + "'");
+            throw new SQLException("Unsupported character encoding '"
+                                   + charEncoding + "'");
         }
 
-        ResultSet RS = null;
+        ResultSet rs = null;
 
         synchronized (connection.getMutex()) {
 
-            String OldCatalog = null;
+            String oldCatalog = null;
 
             if (!connection.getCatalog().equals(currentCatalog)) {
-                OldCatalog = connection.getCatalog();
+                oldCatalog = connection.getCatalog();
                 connection.setCatalog(currentCatalog);
             }
 
@@ -1310,7 +1270,7 @@ public class PreparedStatement
                 if (firstCharOfStmt == 'S') {
 
                     if (hasLimitClause) {
-                        RS = connection.execSQL((String)null, maxRows, 
+                        rs = connection.execSQL((String) null, maxRows, 
                                                 sendPacket, resultSetType, 
                                                 createStreamingResultSet());
                     } else {
@@ -1320,8 +1280,8 @@ public class PreparedStatement
                                     "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
                         } else {
                             connection.execSQL(
-                                    "SET OPTION SQL_SELECT_LIMIT=" + 
-                                    maxRows, -1);
+                                    "SET OPTION SQL_SELECT_LIMIT=" + maxRows, 
+                                    -1);
                         }
                     }
                 } else {
@@ -1330,30 +1290,30 @@ public class PreparedStatement
                 }
 
                 // Finally, execute the query
-                RS = connection.execSQL(null, -1, sendPacket, resultSetType, 
+                rs = connection.execSQL(null, -1, sendPacket, resultSetType, 
                                         createStreamingResultSet());
             } else {
-                RS = connection.execSQL(null, -1, sendPacket, resultSetType, 
+                rs = connection.execSQL(null, -1, sendPacket, resultSetType, 
                                         createStreamingResultSet());
             }
 
-            if (OldCatalog != null) {
-                connection.setCatalog(OldCatalog);
+            if (oldCatalog != null) {
+                connection.setCatalog(oldCatalog);
             }
         }
 
-        lastInsertId = RS.getUpdateID();
+        lastInsertId = rs.getUpdateID();
 
-        if (RS != null) {
-            results = RS;
+        if (rs != null) {
+            results = rs;
         }
 
-        RS.setConnection(connection);
-        RS.setResultSetType(resultSetType);
-        RS.setResultSetConcurrency(resultSetConcurrency);
-        RS.setStatement(this);
+        rs.setConnection(connection);
+        rs.setResultSetType(resultSetType);
+        rs.setResultSetConcurrency(resultSetConcurrency);
+        rs.setStatement(this);
 
-        return (RS != null && RS.reallyResult());
+        return (rs != null && rs.reallyResult());
     }
 
     /**
@@ -1369,12 +1329,11 @@ public class PreparedStatement
      * driver does not support batch statements
      */
     public int[] executeBatch()
-                       throws SQLException
-    {
+                       throws SQLException {
 
         if (connection.isReadOnly()) {
-            throw new SQLException("Connection is read-only. " + 
-                                   "Queries leading to data modification are not allowed", 
+            throw new SQLException("Connection is read-only. "
+                                   + "Queries leading to data modification are not allowed", 
                                    "S1009");
         }
 
@@ -1398,10 +1357,10 @@ public class PreparedStatement
                     Object arg = batchedArgs.get(i);
 
                     if (arg instanceof String) {
-                        updateCounts[i] = executeUpdate((String)arg);
+                        updateCounts[i] = executeUpdate((String) arg);
                     } else {
 
-                        BatchParams paramArg = (BatchParams)arg;
+                        BatchParams paramArg = (BatchParams) arg;
 
                         try {
                             updateCounts[i] = executeUpdate(
@@ -1437,8 +1396,7 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized java.sql.ResultSet executeQuery()
-                                                 throws java.sql.SQLException
-    {
+                                                 throws java.sql.SQLException {
         checkClosed();
 
         if (sendPacket == null) {
@@ -1448,22 +1406,21 @@ public class PreparedStatement
             sendPacket.clear();
         }
 
-        sendPacket.writeByte((byte)MysqlDefs.QUERY);
+        sendPacket.writeByte((byte) MysqlDefs.QUERY);
 
-        String Encoding = null;
+        String charEncoding = null;
 
         if (connection.useUnicode()) {
-            Encoding = connection.getEncoding();
+            charEncoding = connection.getEncoding();
         }
 
         try {
 
             for (int i = 0; i < parameterValues.length; i++) {
 
-                if (parameterValues[i] == null && 
-                    parameterStreams[i] == null) {
-                    throw new java.sql.SQLException("No value specified for parameter " + 
-                                                    (i + 1), "07001");
+                if (parameterValues[i] == null && parameterStreams[i] == null) {
+                    throw new java.sql.SQLException("No value specified for parameter "
+                                                    + (i + 1), "07001");
                 }
 
                 sendPacket.writeBytesNoNull(staticSqlStrings[i]);
@@ -1473,9 +1430,9 @@ public class PreparedStatement
                                                         parameterStreams[i]));
                 } else {
 
-                    if (Encoding != null) {
+                    if (charEncoding != null) {
                         sendPacket.writeStringNoNull(parameterValues[i], 
-                                                     Encoding);
+                                                     charEncoding);
                     } else {
                         sendPacket.writeStringNoNull(parameterValues[i]);
                     }
@@ -1485,8 +1442,8 @@ public class PreparedStatement
             sendPacket.writeBytesNoNull(
                     staticSqlStrings[parameterValues.length]);
         } catch (java.io.UnsupportedEncodingException UE) {
-            throw new SQLException("Unsupported character encoding '" + 
-                                   Encoding + "'");
+            throw new SQLException("Unsupported character encoding '"
+                                   + charEncoding + "'");
         }
 
         if (results != null) {
@@ -1499,10 +1456,10 @@ public class PreparedStatement
         // on the same mutex.
         synchronized (connection.getMutex()) {
 
-            String OldCatalog = null;
+            String oldCatalog = null;
 
             if (!connection.getCatalog().equals(currentCatalog)) {
-                OldCatalog = connection.getCatalog();
+                oldCatalog = connection.getCatalog();
                 connection.setCatalog(currentCatalog);
             }
 
@@ -1515,7 +1472,7 @@ public class PreparedStatement
                 // generated from the current Connection (saves
                 // a query, and network traffic).
                 if (hasLimitClause) {
-                    results = connection.execSQL((String)null, maxRows, 
+                    results = connection.execSQL((String) null, maxRows, 
                                                  sendPacket, resultSetType, 
                                                  createStreamingResultSet());
                 } else {
@@ -1532,8 +1489,8 @@ public class PreparedStatement
                                                  resultSetType, 
                                                  createStreamingResultSet());
 
-                    if (OldCatalog != null) {
-                        connection.setCatalog(OldCatalog);
+                    if (oldCatalog != null) {
+                        connection.setCatalog(oldCatalog);
                     }
                 }
             } else {
@@ -1542,8 +1499,8 @@ public class PreparedStatement
                                              createStreamingResultSet());
             }
 
-            if (OldCatalog != null) {
-                connection.setCatalog(OldCatalog);
+            if (oldCatalog != null) {
+                connection.setCatalog(oldCatalog);
             }
         }
 
@@ -1570,7 +1527,7 @@ public class PreparedStatement
                                    "S1009");
         }
 
-        return (java.sql.ResultSet)results;
+        return (java.sql.ResultSet) results;
     }
 
     /**
@@ -1583,8 +1540,7 @@ public class PreparedStatement
      * @exception java.sql.SQLException if a database access error occurs
      */
     public synchronized int executeUpdate()
-                                   throws java.sql.SQLException
-    {
+                                   throws java.sql.SQLException {
 
         return executeUpdate(parameterValues, parameterStreams, isStream, 
                              isNull);
@@ -1595,33 +1551,32 @@ public class PreparedStatement
      * 
      * @return DOCUMENT ME! 
      */
-    public String toString()
-    {
+    public String toString() {
 
-        String Encoding = null;
+        String charEncoding = null;
 
         if (connection != null && connection.useUnicode()) {
-            Encoding = connection.getEncoding();
+            charEncoding = connection.getEncoding();
         }
 
-        StringBuffer SB = new StringBuffer();
-        SB.append(super.toString());
-        SB.append(": ");
+        StringBuffer buf = new StringBuffer();
+        buf.append(super.toString());
+        buf.append(": ");
 
         try {
 
             for (int i = 0; i < parameterValues.length; ++i) {
 
-                if (Encoding != null) {
-                    SB.append(new String(staticSqlStrings[i], Encoding));
+                if (charEncoding != null) {
+                    buf.append(new String(staticSqlStrings[i], charEncoding));
                 } else {
-                    SB.append(new String(staticSqlStrings[i]));
+                    buf.append(new String(staticSqlStrings[i]));
                 }
 
                 if (parameterValues[i] == null && !isStream[i]) {
-                    SB.append("** NOT SPECIFIED **");
+                    buf.append("** NOT SPECIFIED **");
                 } else if (isStream[i]) {
-                    SB.append("** STREAM DATA **");
+                    buf.append("** STREAM DATA **");
                 } else {
 
                     if (doEscapeProcessing) {
@@ -1634,43 +1589,51 @@ public class PreparedStatement
                         }
                     }
 
-                    if (Encoding != null) {
-                        SB.append(new String(parameterValues[i].getBytes(), 
-                                             Encoding));
+                    if (charEncoding != null) {
+                        buf.append(new String(parameterValues[i].getBytes(), 
+                                             charEncoding));
                     } else {
-                        SB.append(new String(parameterValues[i].getBytes()));
+                        buf.append(new String(parameterValues[i].getBytes()));
                     }
                 }
             }
 
-            if (Encoding != null) {
-                SB.append(new String(staticSqlStrings[parameterValues.length], 
-                                     Encoding));
+            if (charEncoding != null) {
+                buf.append(new String(staticSqlStrings[parameterValues.length], 
+                                     charEncoding));
             } else {
-                SB.append(staticSqlStrings[parameterValues.length]);
+                buf.append(staticSqlStrings[parameterValues.length]);
             }
         } catch (java.io.UnsupportedEncodingException UE) {
-            SB.append("\n\n** WARNING **\n\n Unsupported character encoding '");
-            SB.append(Encoding);
-            SB.append("'");
+            buf.append("\n\n** WARNING **\n\n Unsupported character encoding '");
+            buf.append(charEncoding);
+            buf.append("'");
         }
 
-        return SB.toString();
+        return buf.toString();
     }
 
     /**
      * Added to allow batch-updates
+     * 
+     * @param batchedParameterStrings string values used in single statement
+     * @param batchedParameterStreams stream values used in single statement
+     * @param batchedIsStream flags for streams used in single statement
+     * @param batchedIsNull flags for parameters that are null
+     * 
+     * @return the update count
+     * 
+     * @throws SQLException if a database error occurs
      */
     protected synchronized int executeUpdate(String[] batchedParameterStrings, 
                                              InputStream[] batchedParameterStreams, 
                                              boolean[] batchedIsStream, 
                                              boolean[] batchedIsNull)
-                                      throws java.sql.SQLException
-    {
+                                      throws SQLException {
 
         if (connection.isReadOnly()) {
-            throw new SQLException("Connection is read-only. " + 
-                                   "Queries leading to data modification are not allowed", 
+            throw new SQLException("Connection is read-only. "
+                                   + "Queries leading to data modification are not allowed", 
                                    "S1009");
         }
 
@@ -1683,22 +1646,22 @@ public class PreparedStatement
             sendPacket.clear();
         }
 
-        sendPacket.writeByte((byte)MysqlDefs.QUERY);
+        sendPacket.writeByte((byte) MysqlDefs.QUERY);
 
-        String Encoding = null;
+        String charEncoding = null;
 
         if (connection.useUnicode()) {
-            Encoding = connection.getEncoding();
+            charEncoding = connection.getEncoding();
         }
 
         try {
 
             for (int i = 0; i < batchedParameterStrings.length; i++) {
 
-                if (batchedParameterStrings[i] == null && 
-                    batchedParameterStreams[i] == null) {
-                    throw new java.sql.SQLException("No value specified for parameter " + 
-                                                    (i + 1), "07001");
+                if (batchedParameterStrings[i] == null
+                    && batchedParameterStreams[i] == null) {
+                    throw new java.sql.SQLException("No value specified for parameter "
+                                                    + (i + 1), "07001");
                 }
 
                 //if (Encoding != null) {
@@ -1713,9 +1676,9 @@ public class PreparedStatement
                                                         batchedParameterStreams[i]));
                 } else {
 
-                    if (Encoding != null) {
+                    if (charEncoding != null) {
                         sendPacket.writeStringNoNull(
-                                batchedParameterStrings[i], Encoding);
+                                batchedParameterStrings[i], charEncoding);
                     } else {
                         sendPacket.writeStringNoNull(
                                 batchedParameterStrings[i]);
@@ -1732,8 +1695,8 @@ public class PreparedStatement
             //   _SendPacket.writeStringNoNull(_TemplateStrings[_ParameterStrings.length]);
             //}
         } catch (java.io.UnsupportedEncodingException UE) {
-            throw new SQLException("Unsupported character encoding '" + 
-                                   Encoding + "'");
+            throw new SQLException("Unsupported character encoding '"
+                                   + charEncoding + "'");
         }
 
         // The checking and changing of catalogs
@@ -1777,7 +1740,7 @@ public class PreparedStatement
             if (updateCount > Integer.MAX_VALUE) {
                 truncatedUpdateCount = Integer.MAX_VALUE;
             } else {
-                truncatedUpdateCount = (int)updateCount;
+                truncatedUpdateCount = (int) updateCount;
             }
 
             lastInsertId = rs.getUpdateID();
@@ -1790,8 +1753,7 @@ public class PreparedStatement
     // Adds '+' to decimal numbers that are positive (MySQL doesn't
     // understand them otherwise
     //
-    protected static final String fixDecimalExponent(String dString)
-    {
+    private static final String fixDecimalExponent(String dString) {
 
         int ePos = dString.indexOf("E");
 
@@ -1825,16 +1787,14 @@ public class PreparedStatement
      * works.
      *
      */
-    protected final byte[] streamToBytes(InputStream in)
-                                  throws java.sql.SQLException
-    {
+    private final byte[] streamToBytes(InputStream in)
+                                  throws java.sql.SQLException {
 
         return streamToBytes(in, true);
     }
 
-    protected final byte[] streamToBytes(InputStream in, boolean escape)
-                                  throws java.sql.SQLException
-    {
+    private final byte[] streamToBytes(InputStream in, boolean escape)
+                                  throws java.sql.SQLException {
 
         try {
 
@@ -1874,8 +1834,7 @@ public class PreparedStatement
     }
 
     byte[] getBytes(int parameterIndex)
-             throws SQLException
-    {
+             throws SQLException {
 
         if (isStream[parameterIndex]) {
 
@@ -1894,16 +1853,15 @@ public class PreparedStatement
 
                     String stringVal = parameterValues[parameterIndex];
 
-                    if (stringVal.startsWith("'") && 
-                        stringVal.endsWith("'")) {
+                    if (stringVal.startsWith("'") && stringVal.endsWith("'")) {
                         stringVal = stringVal.substring(1, 
                                                         stringVal.length() - 1);
                     }
 
                     return StringUtils.getBytes(stringVal, encoding);
                 } catch (java.io.UnsupportedEncodingException uee) {
-                    throw new SQLException("Unsupported character encoding '" + 
-                                           encoding + "'");
+                    throw new SQLException("Unsupported character encoding '"
+                                           + encoding + "'");
                 }
             } else {
 
@@ -1918,8 +1876,7 @@ public class PreparedStatement
         }
     }
 
-    boolean isNull(int paramIndex)
-    {
+    boolean isNull(int paramIndex) {
 
         return isNull[paramIndex];
     }
@@ -1927,22 +1884,19 @@ public class PreparedStatement
     /**
      * Sets the concurrency for result sets generated by this statement
      */
-    void setResultSetConcurrency(int concurrencyFlag)
-    {
+    void setResultSetConcurrency(int concurrencyFlag) {
         resultSetConcurrency = concurrencyFlag;
     }
 
     /**
      * Sets the result set type for result sets generated by this statement
      */
-    void setResultSetType(int typeFlag)
-    {
+    void setResultSetType(int typeFlag) {
         resultSetType = typeFlag;
     }
 
     private final String getDateTimePattern(String dt, boolean toTime)
-                                     throws Exception
-    {
+                                     throws Exception {
 
         //
         // Special case
@@ -2004,7 +1958,7 @@ public class PreparedStatement
         char separator;
         StringReader reader = new StringReader(dt + " ");
         ArrayList vec = new ArrayList();
-        ArrayList vec_removelist = new ArrayList();
+        ArrayList vecRemovelist = new ArrayList();
         Object[] nv = new Object[3];
         Object[] v;
         nv[0] = new Character('y');
@@ -2021,20 +1975,20 @@ public class PreparedStatement
         }
 
         while ((z = reader.read()) != -1) {
-            separator = (char)z;
+            separator = (char) z;
             maxvecs = vec.size();
 
             for (count = 0; count < maxvecs; count++) {
-                v = (Object[])vec.get(count);
-                n = ((Integer)v[2]).intValue();
-                c = getSuccessor(((Character)v[0]).charValue(), n);
+                v = (Object[]) vec.get(count);
+                n = ((Integer) v[2]).intValue();
+                c = getSuccessor(((Character) v[0]).charValue(), n);
 
                 if (!Character.isLetterOrDigit(separator)) {
 
-                    if ((c == ((Character)v[0]).charValue()) && (c != 'S')) {
-                        vec_removelist.add(v);
+                    if ((c == ((Character) v[0]).charValue()) && (c != 'S')) {
+                        vecRemovelist.add(v);
                     } else {
-                        ((StringBuffer)v[1]).append(separator);
+                        ((StringBuffer) v[1]).append(separator);
 
                         if (c == 'X' || c == 'Y') {
                             v[2] = new Integer(4);
@@ -2045,7 +1999,7 @@ public class PreparedStatement
                     if (c == 'X') {
                         c = 'y';
                         nv = new Object[3];
-                        nv[1] = (new StringBuffer(((StringBuffer)v[1]).toString())).append(
+                        nv[1] = (new StringBuffer(((StringBuffer) v[1]).toString())).append(
                                         'M');
                         nv[0] = new Character('M');
                         nv[2] = new Integer(1);
@@ -2053,16 +2007,16 @@ public class PreparedStatement
                     } else if (c == 'Y') {
                         c = 'M';
                         nv = new Object[3];
-                        nv[1] = (new StringBuffer(((StringBuffer)v[1]).toString())).append(
+                        nv[1] = (new StringBuffer(((StringBuffer) v[1]).toString())).append(
                                         'd');
                         nv[0] = new Character('d');
                         nv[2] = new Integer(1);
                         vec.add(nv);
                     }
 
-                    ((StringBuffer)v[1]).append(c);
+                    ((StringBuffer) v[1]).append(c);
 
-                    if (c == ((Character)v[0]).charValue()) {
+                    if (c == ((Character) v[0]).charValue()) {
                         v[2] = new Integer(n + 1);
                     } else {
                         v[0] = new Character(c);
@@ -2071,56 +2025,56 @@ public class PreparedStatement
                 }
             }
 
-            int size = vec_removelist.size();
+            int size = vecRemovelist.size();
 
             for (int i = 0; i < size; i++) {
-                v = (Object[])vec_removelist.get(i);
+                v = (Object[]) vecRemovelist.get(i);
                 vec.remove(v);
             }
 
-            vec_removelist.clear();
+            vecRemovelist.clear();
         }
 
         int size = vec.size();
 
         for (int i = 0; i < size; i++) {
-            v = (Object[])vec.get(i);
-            c = ((Character)v[0]).charValue();
-            n = ((Integer)v[2]).intValue();
+            v = (Object[]) vec.get(i);
+            c = ((Character) v[0]).charValue();
+            n = ((Integer) v[2]).intValue();
 
             boolean bk = getSuccessor(c, n) != c;
             boolean atEnd = ((c == 's' || c == 'm' || (c == 'h' && toTime)) && bk);
             boolean finishesAtDate = (bk && (c == 'd') && !toTime);
-            boolean containsEnd = (((StringBuffer)v[1]).toString().indexOf('W') != -1);
+            boolean containsEnd = (((StringBuffer) v[1]).toString().indexOf(
+                                           'W') != -1);
 
             if ((!atEnd && !finishesAtDate) || (containsEnd)) {
-                vec_removelist.add(v);
+                vecRemovelist.add(v);
             }
         }
 
-        size = vec_removelist.size();
+        size = vecRemovelist.size();
 
         for (int i = 0; i < size; i++) {
-            vec.remove(vec_removelist.get(i));
+            vec.remove(vecRemovelist.get(i));
         }
 
-        vec_removelist.clear();
-        v = (Object[])vec.get(0); //might throw exception
+        vecRemovelist.clear();
+        v = (Object[]) vec.get(0); //might throw exception
 
-        StringBuffer format = (StringBuffer)v[1];
+        StringBuffer format = (StringBuffer) v[1];
         format.setLength(format.length() - 1);
 
         return format.toString();
     }
 
     private final void setInternal(int paramIndex, String val)
-                            throws java.sql.SQLException
-    {
+                            throws java.sql.SQLException {
 
         if (paramIndex < 1 || paramIndex > staticSqlStrings.length) {
-            throw new java.sql.SQLException("Parameter index out of range (" + 
-                                            paramIndex + " > " + 
-                                            staticSqlStrings.length + ").", 
+            throw new java.sql.SQLException("Parameter index out of range ("
+                                            + paramIndex + " > "
+                                            + staticSqlStrings.length + ").", 
                                             "S1009");
         }
 
@@ -2130,8 +2084,7 @@ public class PreparedStatement
         parameterValues[paramIndex - 1] = val;
     }
 
-    private final char getSuccessor(char c, int n)
-    {
+    private final char getSuccessor(char c, int n) {
 
         return (c == 'y' && n == 2)
                    ? 'X'
@@ -2145,31 +2098,29 @@ public class PreparedStatement
                                                ? 'M'
                                                : ((c == 'M')
                                                       ? 'd'
-                                                      : ((c == 'd' && 
-                                                                                n < 2)
+                                                      : ((c == 'd' && n < 2)
                                                              ? 'd'
                                                              : ((c == 'd')
                                                                     ? 'H'
-                                                                    : ((c == 'H' && 
-                                                                                                      n < 2)
+                                                                    : ((c == 'H'
+                                                                                                      && n < 2)
                                                                            ? 'H'
                                                                            : ((c == 'H')
                                                                                   ? 'm'
-                                                                                  : ((c == 'm' && 
-                                                                                                                            n < 2)
+                                                                                  : ((c == 'm'
+                                                                                                                            && n < 2)
                                                                                          ? 'm'
                                                                                          : ((c == 'm')
                                                                                                 ? 's'
-                                                                                                : ((c == 's' && 
-                                                                                                                                                  n < 2)
+                                                                                                : ((c == 's'
+                                                                                                                                                  && n < 2)
                                                                                                        ? 's'
                                                                                                        : 'W'))))))))))));
     }
 
     private final void escapeblockFast(byte[] buf, 
                                        ByteArrayOutputStream bytesOut, 
-                                       int size)
-    {
+                                       int size) {
 
         int lastwritten = 0;
 
@@ -2211,8 +2162,7 @@ public class PreparedStatement
     }
 
     private final void escapeblock(byte[] buf, ByteArrayOutputStream bytesOut, 
-                                   int size)
-    {
+                                   int size) {
 
         byte[] out = new byte[buf.length * 2];
         int iIndex = 0;
@@ -2224,44 +2174,44 @@ public class PreparedStatement
             switch (b) {
 
                 case 0: /* Must be escaped for 'mysql' */
-                    out[iIndex++] = (byte)'\\';
-                    out[iIndex++] = (byte)'0';
+                    out[iIndex++] = (byte) '\\';
+                    out[iIndex++] = (byte) '0';
 
                     break;
 
                 case '\n': /* Must be escaped for logs */
-                    out[iIndex++] = (byte)'\\';
-                    out[iIndex++] = (byte)'n';
+                    out[iIndex++] = (byte) '\\';
+                    out[iIndex++] = (byte) 'n';
 
                     break;
 
                 case '\r':
-                    out[iIndex++] = (byte)'\\';
-                    out[iIndex++] = (byte)'r';
+                    out[iIndex++] = (byte) '\\';
+                    out[iIndex++] = (byte) 'r';
 
                     break;
 
                 case '\\':
-                    out[iIndex++] = (byte)'\\';
-                    out[iIndex++] = (byte)'\\';
+                    out[iIndex++] = (byte) '\\';
+                    out[iIndex++] = (byte) '\\';
 
                     break;
 
                 case '\'':
-                    out[iIndex++] = (byte)'\\';
-                    out[iIndex++] = (byte)'\'';
+                    out[iIndex++] = (byte) '\\';
+                    out[iIndex++] = (byte) '\'';
 
                     break;
 
                 case '"': /* Better safe than sorry */
-                    out[iIndex++] = (byte)'\\';
-                    out[iIndex++] = (byte)'"';
+                    out[iIndex++] = (byte) '\\';
+                    out[iIndex++] = (byte) '"';
 
                     break;
 
                 case '\032': /* This gives problems on Win32 */
-                    out[iIndex++] = (byte)'\\';
-                    out[iIndex++] = (byte)'Z';
+                    out[iIndex++] = (byte) '\\';
+                    out[iIndex++] = (byte) 'Z';
 
                     break;
 
@@ -2274,15 +2224,14 @@ public class PreparedStatement
     }
 
     private final int readblock(InputStream i, byte[] b)
-                         throws java.sql.SQLException
-    {
+                         throws java.sql.SQLException {
 
         try {
 
             return i.read(b);
         } catch (Throwable E) {
-            throw new java.sql.SQLException("Error reading from InputStream " + 
-                                            E.getClass().getName(), "S1000");
+            throw new java.sql.SQLException("Error reading from InputStream "
+                                            + E.getClass().getName(), "S1000");
         }
     }
 
@@ -2292,8 +2241,7 @@ public class PreparedStatement
      */
     private final void setSerializableObject(int parameterIndex, 
                                              Object parameterObj)
-                                      throws SQLException
-    {
+                                      throws SQLException {
 
         try {
 
@@ -2309,8 +2257,8 @@ public class PreparedStatement
             ByteArrayInputStream bytesIn = new ByteArrayInputStream(buf);
             setBinaryStream(parameterIndex, bytesIn, -1);
         } catch (Exception ex) {
-            throw new java.sql.SQLException("Invalid argument value: " + 
-                                            ex.getClass().getName(), "S1009");
+            throw new java.sql.SQLException("Invalid argument value: "
+                                            + ex.getClass().getName(), "S1009");
         }
     }
 
@@ -2318,8 +2266,7 @@ public class PreparedStatement
      * @see PreparedStatement#getParameterMetaData()
      */
     public ParameterMetaData getParameterMetaData()
-                                           throws SQLException
-    {
+                                           throws SQLException {
         throw new NotImplemented();
     }
 
@@ -2327,8 +2274,7 @@ public class PreparedStatement
      * @see PreparedStatement#setURL(int, URL)
      */
     public void setURL(int parameterIndex, URL arg)
-                throws SQLException
-    {
+                throws SQLException {
 
         if (arg != null) {
             setString(parameterIndex, arg.toString());
@@ -2339,8 +2285,7 @@ public class PreparedStatement
 
     //~ Inner classes .........................................................
 
-    class BatchParams
-    {
+    class BatchParams {
 
         boolean[] isNull = null;
         boolean[] isStream = null;
@@ -2348,8 +2293,7 @@ public class PreparedStatement
         String[] parameterStrings = null;
 
         BatchParams(String[] strings, InputStream[] streams, 
-                    boolean[] isStreamFlags, boolean[] isNullFlags)
-        {
+                    boolean[] isStreamFlags, boolean[] isNullFlags) {
 
             //
             // Make copies
@@ -2366,14 +2310,12 @@ public class PreparedStatement
         }
     }
 
-    class EndPoint
-    {
+    class EndPoint {
 
         int begin;
         int end;
 
-        EndPoint(int b, int e)
-        {
+        EndPoint(int b, int e) {
             begin = b;
             end = e;
         }
