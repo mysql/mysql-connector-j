@@ -29,6 +29,12 @@
     - The driver now only works with JDK-1.2 or newer.
     - Added multi-host failover support (see README)
     - General source-code cleanup.
+    - Overall speed improvements via controlling transient object
+      creation in MysqlIO class when reading packets
+    - Performance improvements in  string handling and field 
+      metadata creation (lazily instantiated) contributed by
+      Alex Twisleton-Wykeham-Fiennes
+      
     
 05-16-02 - Version 2.0.14
 
