@@ -5473,10 +5473,10 @@ public class DatabaseMetaData
     /**
      * @see DatabaseMetaData#supportsResultSetHoldability(int)
      */
-    public boolean supportsResultSetHoldability(int arg0)
+    public boolean supportsResultSetHoldability(int holdability)
                                          throws SQLException {
 
-        return false;
+        return (holdability == ResultSet.HOLD_CURSORS_OVER_COMMIT);
     }
 
     /**
