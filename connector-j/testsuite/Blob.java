@@ -40,7 +40,7 @@ public class Blob extends Object {
     public Blob() throws Exception
     {
 	try {
-	    Class.forName("org.gjt.mm.mysql.Driver").newInstance();
+	    Class.forName("com.mysql.jdbc.Driver").newInstance();
 	    
 	    Conn = DriverManager.getConnection(DBUrl);
 

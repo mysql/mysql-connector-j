@@ -137,7 +137,7 @@ characterEncoding   | if useUnicode is true, what character     | none
                     | encoding should the driver use when       |
                     | dealing with strings?                     | 				
 --------------------+-------------------------------------------+-------------
-relaxAutocommit	    | if the version of MySQL the driver        | false
+relaxAutoCommit	    | if the version of MySQL the driver        | false
                     | connects to does not support              |
                     | transactions, allow calls to commit,      |
                     | rollback and setAutoCommit? (true/false)	|

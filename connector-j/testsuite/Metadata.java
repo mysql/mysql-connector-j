@@ -27,7 +27,7 @@ public class Metadata
         Statement stmt = null;
  
         try {
-            Class.forName("org.gjt.mm.mysql.Driver").newInstance();
+            Class.forName("com.mysql.jdbc.Driver").newInstance();
             conn = DriverManager.getConnection(DBUrl);
             stmt = conn.createStatement();
 

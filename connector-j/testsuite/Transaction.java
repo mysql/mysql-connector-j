@@ -39,7 +39,7 @@ public class Transaction
         Statement Stmt = null;
 
         try {
-            Class.forName("org.gjt.mm.mysql.Driver").newInstance();
+            Class.forName("com.mysql.jdbc.Driver").newInstance();
             Conn = DriverManager.getConnection(DBUrl);
             Conn.setAutoCommit(true);
             Stmt = Conn.createStatement();

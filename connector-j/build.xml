@@ -7,7 +7,7 @@
 		<filter token="VERSION" value="${version}"/>
 		<delete dir="build"/>
 
-		<copy todir="./build/mm.mysql-${version}" filtering="true">
+		<copy todir="./build/mysql-jdbc-${version}" filtering="true">
 			<fileset dir="." excludes="**/CVS">
 				<patternset id="classjar" >
     					<exclude name="**/*.class*"/>
@@ -15,7 +15,7 @@
   				</patternset>
 			</fileset>
 		</copy>
-		<copy todir="./build/mm.mysql-${version}" filtering="false">
+		<copy todir="./build/mysql-jdbc-${version}" filtering="false">
 			<fileset dir="." excludes="**/CVS">
 				<patternset id="dojar" >
     					<include name="**/*.jar*"/>
@@ -27,17 +27,17 @@
 
 	<target name="dist" depends="init, compile">
 		
-		<delete file="./build/mm.mysql-${version}-bin.jar"/>
-		<delete file="../mm.mysql-${version}.jar"/>
+		<delete file="./build/mysql-jdbc-${version}-bin.jar"/>
+		<delete file="../mysql-jdbc-${version}.jar"/>
 
-		<jar jarfile="./build/mm.mysql-${version}/mm.mysql-${version}-bin.jar">
-			<fileset dir="./build/mm.mysql-${version}"
+		<jar jarfile="./build/mysql-jdbc-${version}/mysql-jdbc-${version}-bin.jar">
+			<fileset dir="./build/mysql-jdbc-${version}"
 				includes="**/*.class"/>
-			<fileset dir="./build/mm.mysql-${version}"
+			<fileset dir="./build/mysql-jdbc-${version}"
 				includes="COPYING, README"/>
 		</jar>
 
-		<jar jarfile="../mm.mysql-${version}.jar">
+		<jar jarfile="../mysql-jdbc-${version}.jar">
 			<fileset dir="./build">
 				<patternset id="non.test.sources" >
     					<exclude name="**/*.nb*"/>
@@ -52,33 +52,33 @@
 	</target>
 
 	<target name="compile-core" depends="init">
-		<javac srcdir="./build/mm.mysql-${version}"
-			excludes="testsuite/**, org/gjt/mm/mysql/jdbc1/**, org/gjt/mm/mysql/jdbc2/**"
-			classpath="./build/mm.mysql-${version};lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar"
+		<javac srcdir="./build/mysql-jdbc-${version}"
+			excludes="testsuite/**, com/mysql/jdbc/jdbc1/**, com/mysql/jdbc/jdbc2/**"
+			classpath="./build/mysql-jdbc-${version};lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar"
 			debug="off"
 		/>
 
 	</target>
 
 	<target name="compile-jdbc1" depends="init, compile-core">
-		<exec dir="./build/mm.mysql-${version}/org/gjt/mm/mysql/jdbc1" executable="${javac.1.1}">
-			<arg line="-g -classpath ${basedir}/build/mm.mysql-${version};${java1.1.home}/lib/classes.zip *.java"/>
+		<exec dir="./build/mysql-jdbc-${version}/com/mysql/jdbc/jdbc1" executable="${javac.1.1}">
+			<arg line="-g -classpath ${basedir}/build/mysql-jdbc-${version};${java1.1.home}/lib/classes.zip *.java"/>
 		</exec>
 	</target>
 	
 
 	<target name="compile-jdbc2" depends="init, compile-core">
-		<javac srcdir="./build/mm.mysql-${version}"
-			excludes="testsuite/**, org/gjt/mm/mysql/jdbc1/**"
-			classpath="./build/mm.mysql-${version};lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar"
+		<javac srcdir="./build/mysql-jdbc-${version}"
+			excludes="testsuite/**, com/mysql/jdbc/jdbc1/**"
+			classpath="./build/mysql-jdbc-${version};lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar"
 			debug="off"
 		/>
 
 	</target>
 
 	<target name="compile-testsuite">
-		<javac srcdir="./build/mm.mysql-${version}"
-			excludes="org/gjt/mm/mysql/**"
+		<javac srcdir="./build/mysql-jdbc-${version}"
+			excludes="com/mysql/jdbc/**"
 			classpath="lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar"
 		/>
 

@@ -145,14 +145,14 @@ public class JNDIDataSource
     static public void registerDataSource()
                                    throws Exception
     {
-        org.gjt.mm.mysql.jdbc2.optional.MysqlDataSource ds;
+        com.mysql.jdbc.jdbc2.optional.MysqlDataSource ds;
         Context ctx;
         Hashtable env = new Hashtable();
         env.put(Context.INITIAL_CONTEXT_FACTORY, 
                 "com.sun.jndi.fscontext.RefFSContextFactory");
         ctx = new InitialContext(env);
         System.out.println("Context is: " + ctx);
-        ds = new org.gjt.mm.mysql.jdbc2.optional.MysqlDataSource();
+        ds = new com.mysql.jdbc.jdbc2.optional.MysqlDataSource();
         System.out.println("DataSource is: " + ds);
         ds.setServerName("localhost");
         ds.setDatabaseName("test");

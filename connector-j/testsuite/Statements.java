@@ -45,7 +45,7 @@ public class Statements
         PreparedStatement pStmt = null;
 
         try {
-            Class.forName("org.gjt.mm.mysql.Driver").newInstance();
+            Class.forName("com.mysql.jdbc.Driver").newInstance();
 
             long begin = System.currentTimeMillis();
             conn = DriverManager.getConnection(DBUrl);
