@@ -249,8 +249,7 @@ Copyright (C) 2002 MySQL AB
 	</target>
 
 
-	<target name="clean">
-		
+	<target name="realclean">
 		<delete dir="${buildDir}"/>
 		<delete>
 			<fileset dir="${distDir}" 
@@ -258,6 +257,10 @@ Copyright (C) 2002 MySQL AB
 		</delete>
 	</target>
 
+    <target name="clean">
+		<delete dir="${buildDir}"/>
+	</target>
+	
 	<!-- Cruise Control Targets -->
 
 	<target name="checkout" description="Update package from CVS">
