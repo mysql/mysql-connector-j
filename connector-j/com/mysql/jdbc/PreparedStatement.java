@@ -420,9 +420,24 @@ public class PreparedStatement
                 StringBuffer buf = new StringBuffer(length);
                 char[] c = new char[4096];
                 int len = 0;
-
-                while ((len = reader.read(c)) != -1) {
-                    buf.append(c, 0, len);
+                boolean useLength = this.connection.useStreamLengthsInPrepStmts();
+                
+                if (useLength && length != -1) {
+                    int readLen = reader.read(c, 0, length); // blocks until all read
+                    
+                    if (readLen == -1) {
+                        throw new SQLException("Unexpected end-of-stream", "S1009");
+                    }
+                    else if (readLen != length) {
+                        throw new SQLException("Only read " + readLen + " of " + length + " expected characters.", "S1009");
+                    }
+                    
+                    
+                    buf.append(c, 0, length);
+                } else {
+                    while ((len = reader.read(c)) != -1) {
+                        buf.append(c, 0, len);
+                    }
                 }
 
                 setString(parameterIndex, buf.toString());
@@ -1867,6 +1882,10 @@ public class PreparedStatement
 
         try {
 
+            if (streamLength == -1) {
+                useLength = false;
+            }
+            
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
             
             int bc = -1;
@@ -1876,20 +1895,31 @@ public class PreparedStatement
             } else {
                 bc = readblock(in, streamConvertBuf);
             }
+            
+            int lengthLeftToRead = streamLength - bc;
 
+            int bytesRead = bc;
+            
             if (escape) {
                 bytesOut.write('\'');
             }
 
             while (bc > 0) {
-
                 if (escape) {
                     escapeblockFast(streamConvertBuf, bytesOut, bc);
                 } else {
                     bytesOut.write(streamConvertBuf, 0, bc);
                 }
 
-                bc = readblock(in, streamConvertBuf);
+                if (useLength) {
+                    bc = readblock(in, streamConvertBuf, lengthLeftToRead);
+                    
+                    if (bc > 0) {
+                        lengthLeftToRead -= bc;
+                    }
+                } else {
+                    bc = readblock(in, streamConvertBuf);
+                }
             }
 
             if (escape) {

@@ -48,9 +48,9 @@
       for ResultSet.TYPE_SCROLL_INSENSITIVE and ResultSet.CONCUR_READ_ONLY or
       ResultSet.CONCUR_UPDATABLE
     - Fixed ResultSet.isLast() for empty result sets (should return false).
-    - PreparedStatement now honors stream lengths in setBinary/AsciiStream()
-      unless you set the connection property 'useStreamLengthsInPrepStmts' to
-      'false'.
+    - PreparedStatement now honors stream lengths in setBinary/Ascii/Character
+      Stream() unless you set the connection property 
+      'useStreamLengthsInPrepStmts' to 'false'.
     - Removed some not-needed temporary object creation by using Strings
       smarter in EscapeProcessor, Connection and DatabaseMetaData classes.
              	
