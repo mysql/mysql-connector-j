@@ -274,9 +274,9 @@ public abstract class Connection
         }
 
         // Check for driver specific properties
-        if (info.getProperty("_relaxAutoCommit") != null)
+        if (info.getProperty("relaxAutoCommit") != null)
         {
-            _relaxAutoCommit = info.getProperty("_relaxAutoCommit").toUpperCase().equals(
+            _relaxAutoCommit = info.getProperty("relaxAutoCommit").toUpperCase().equals(
                                        "TRUE");
         }
 

@@ -12,6 +12,7 @@
 	- LogicalHandle.isClosed() calls through to physical connection
 	- Added SQL profiling (to STDERR). Set "profileSql=true" in your JDBC url. 
 	  See README for more information.
+	- Fixed typo for relaxAutoCommit parameter.
 	
 04-24-02 - Version 2.0.13
 
