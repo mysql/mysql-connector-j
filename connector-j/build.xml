@@ -1,13 +1,8 @@
 <project name="MM.MySQL" default="dist" basedir=".">
-	<property name="version" value="2.0.11"/>
+	<property name="version" value="2.0.12"/>
 	<property name="java1.1.home" value="d:/jdk1.1.8"/>
 	<property name="javac.1.1" value="${java1.1.home}/bin/javac"/>
-	<!-- enable the following property to build under Eclipse... -->
-	<!--<property name="build.compiler" value="org.eclipse.pde.internal.core.JDTCompilerAdapter"/>-->
-
-
 	
-
 	<target name="init">
 		<filter token="VERSION" value="${version}"/>
 		<delete dir="build"/>
