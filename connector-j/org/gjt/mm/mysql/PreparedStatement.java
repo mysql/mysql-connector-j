@@ -51,26 +51,10 @@ import java.sql.*;
 import java.text.*;
 import java.util.*;
 
-public class PreparedStatement extends org.gjt.mm.mysql.Statement {
+public class PreparedStatement extends org.gjt.mm.mysql.Statement
+{
 	protected static SimpleDateFormat _TSDF =
 		new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-	//
-	// Don't shift time due to daylight savings time
-	//
-
-	static {
-		try {
-			TimeZone defaultTimeZone = TimeZone.getDefault();
-			SimpleTimeZone tz =
-				new SimpleTimeZone(defaultTimeZone.getRawOffset(), defaultTimeZone.getID());
-
-			_TSDF.setTimeZone(tz);
-		}
-		catch (Throwable t) { /* do nothing we're not on Java2 */
-		}
-
-	}
 
 	private String _Sql = null;
 	private byte[][] _TemplateStrings = null;
@@ -91,11 +75,13 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 
 	private char _firstChar;
 
-	class EndPoint {
+	class EndPoint
+	{
 		int begin;
 		int end;
 
-		EndPoint(int b, int e) {
+		EndPoint(int b, int e)
+		{
 			begin = b;
 			end = e;
 		}
@@ -113,7 +99,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 */
 
 	public PreparedStatement(Connection Conn, String Sql, String Catalog)
-		throws java.sql.SQLException {
+		throws java.sql.SQLException
+	{
 		super(Conn, Catalog);
 
 		_useTrueBoolean = _conn.getIO().versionMeetsMinimum(3, 21, 23);
@@ -128,8 +115,10 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 
 		int placeHolderCount = 0;
 
-		for (int i = 0; i < statementLength; i++) {
-			if (statementAsChars[i] == '?') {
+		for (int i = 0; i < statementLength; i++)
+		{
+			if (statementAsChars[i] == '?')
+			{
 				placeHolderCount++;
 			}
 		}
@@ -147,18 +136,21 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 		int pre1 = 0;
 		int pre2 = 0;
 
-		for (i = 0; i < statementLength; ++i) {
+		for (i = 0; i < statementLength; ++i)
+		{
 			int c = statementAsChars[i];
 
-			if (c == '\'' && pre1 == '\\' && pre2 == '\\') {
+			if (c == '\'' && pre1 == '\\' && pre2 == '\\')
+			{
 				inQuotes = !inQuotes;
 			}
-			else
-				if (c == '\'' && pre1 != '\\') {
-					inQuotes = !inQuotes;
-				}
+			else if (c == '\'' && pre1 != '\\')
+			{
+				inQuotes = !inQuotes;
+			}
 
-			if (c == '?' && !inQuotes) {
+			if (c == '?' && !inQuotes)
+			{
 
 				//V.addElement(_Sql.substring (lastParmEnd, i));
 				V.addElement(new EndPoint(lastParmEnd, i));
@@ -176,12 +168,15 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 
 		String Encoding = null;
 
-		if (_conn.useUnicode()) {
+		if (_conn.useUnicode())
+		{
 			Encoding = _conn.getEncoding();
 		}
 
-		for (i = 0; i < _TemplateStrings.length; i++) {
-			if (Encoding == null) {
+		for (i = 0; i < _TemplateStrings.length; i++)
+		{
+			if (Encoding == null)
+			{
 				//        String str = (String)V.elementAt(i);
 
 				//int len = str.length();
@@ -203,15 +198,18 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 
 				byte[] buf = new byte[len];
 
-				for (int j = 0; j < len; j++) {
+				for (int j = 0; j < len; j++)
+				{
 
 					buf[j] = (byte) statementAsChars[begin + j];
 				}
 
 				_TemplateStrings[i] = buf;
 			}
-			else {
-				try {
+			else
+			{
+				try
+				{
 					EndPoint ep = (EndPoint) V.elementAt(i);
 
 					int end = ep.end;
@@ -223,7 +221,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 
 					_TemplateStrings[i] = temp.getBytes(Encoding);
 				}
-				catch (java.io.UnsupportedEncodingException ue) {
+				catch (java.io.UnsupportedEncodingException ue)
+				{
 					throw new SQLException(ue.toString());
 				}
 			}
@@ -239,7 +238,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 
 		clearParameters();
 
-		for (int j = 0; j < _ParameterStrings.length; j++) {
+		for (int j = 0; j < _ParameterStrings.length; j++)
+		{
 			_IsStream[j] = false;
 		}
 
@@ -253,13 +253,16 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized java.sql.ResultSet executeQuery() throws java.sql.SQLException {
-		
-		if (_SendPacket == null) {
+	public java.sql.ResultSet executeQuery() throws java.sql.SQLException
+	{
+
+		if (_SendPacket == null)
+		{
 			_SendPacket =
 				new Buffer(_conn.getNetBufferLength(), _conn.getMaxAllowedPacket());
 		}
-		else {
+		else
+		{
 			_SendPacket.clear();
 		}
 
@@ -267,14 +270,18 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 
 		String Encoding = null;
 
-		if (_conn.useUnicode()) {
+		if (_conn.useUnicode())
+		{
 			Encoding = _conn.getEncoding();
 		}
 
-		try {
-			for (int i = 0; i < _ParameterStrings.length; i++) {
+		try
+		{
+			for (int i = 0; i < _ParameterStrings.length; i++)
+			{
 
-				if (_ParameterStrings[i] == null && _ParameterStreams[i] == null) {
+				if (_ParameterStrings[i] == null && _ParameterStreams[i] == null)
+				{
 					throw new java.sql.SQLException(
 						"No value specified for parameter " + (i + 1),
 						"07001");
@@ -287,14 +294,18 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 				//    _SendPacket.writeStringNoNull(_TemplateStrings[i]);
 				//}
 
-				if (_IsStream[i]) {
+				if (_IsStream[i])
+				{
 					_SendPacket.writeBytesNoNull(streamToBytes(_ParameterStreams[i]));
 				}
-				else {
-					if (Encoding != null) {
+				else
+				{
+					if (Encoding != null)
+					{
 						_SendPacket.writeStringNoNull(_ParameterStrings[i], Encoding);
 					}
-					else {
+					else
+					{
 						_SendPacket.writeStringNoNull(_ParameterStrings[i]);
 					}
 				}
@@ -303,11 +314,13 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 			_SendPacket.writeBytesNoNull(_TemplateStrings[_ParameterStrings.length]);
 
 		}
-		catch (java.io.UnsupportedEncodingException UE) {
+		catch (java.io.UnsupportedEncodingException UE)
+		{
 			throw new SQLException("Unsupported character encoding '" + Encoding + "'");
 		}
 
-		if (_results != null) {
+		if (_results != null)
+		{
 			_results.close();
 		}
 
@@ -316,15 +329,18 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 		// even queries going through there synchronize
 		// on the same mutex.
 
-		synchronized (_conn.getMutex()) {
+		synchronized (_conn.getMutex())
+		{
 			String OldCatalog = null;
 
-			if (!_conn.getCatalog().equals(_catalog)) {
+			if (!_conn.getCatalog().equals(_catalog))
+			{
 				OldCatalog = _conn.getCatalog();
 				_conn.setCatalog(_catalog);
 			}
 
-			if (_conn.useMaxRows()) {
+			if (_conn.useMaxRows())
+			{
 
 				// If there isn't a limit clause in the SQL
 				// then limit the number of rows to return in 
@@ -333,29 +349,36 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 				// generated from the current Connection (saves
 				// a query, and network traffic).
 
-				if (_has_limit_clause) {
+				if (_has_limit_clause)
+				{
 					_results = _conn.execSQL(null, _maxRows, _SendPacket);
 				}
-				else {
-					if (_maxRows <= 0) {
+				else
+				{
+					if (_maxRows <= 0)
+					{
 						_conn.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
 					}
-					else {
+					else
+					{
 						_conn.execSQL("SET OPTION SQL_SELECT_LIMIT=" + _maxRows, -1);
 					}
 
 					_results = _conn.execSQL(null, -1, _SendPacket);
 
-					if (OldCatalog != null) {
+					if (OldCatalog != null)
+					{
 						_conn.setCatalog(OldCatalog);
 					}
 				}
 			}
-			else {
+			else
+			{
 				_results = _conn.execSQL(null, -1, _SendPacket);
 			}
 
-			if (OldCatalog != null) {
+			if (OldCatalog != null)
+			{
 				_conn.setCatalog(OldCatalog);
 			}
 		}
@@ -381,7 +404,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized int executeUpdate() throws java.sql.SQLException {
+	public int executeUpdate() throws java.sql.SQLException
+	{
 		return executeUpdate(_ParameterStrings, _ParameterStreams, _IsStream, _IsNull);
 	}
 
@@ -389,19 +413,21 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * Added to allow batch-updates
 	 */
 
-	protected synchronized int executeUpdate(
+	protected int executeUpdate(
 		String[] ParameterStrings,
 		InputStream[] ParameterStreams,
 		boolean[] IsStream,
 		boolean[] IsNull)
-		throws java.sql.SQLException {
-		
+		throws java.sql.SQLException
+	{
 
-		if (_SendPacket == null) {
+		if (_SendPacket == null)
+		{
 			_SendPacket =
 				new Buffer(_conn.getNetBufferLength(), _conn.getMaxAllowedPacket());
 		}
-		else {
+		else
+		{
 			_SendPacket.clear();
 		}
 
@@ -409,13 +435,17 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 
 		String Encoding = null;
 
-		if (_conn.useUnicode()) {
+		if (_conn.useUnicode())
+		{
 			Encoding = _conn.getEncoding();
 		}
 
-		try {
-			for (int i = 0; i < ParameterStrings.length; i++) {
-				if (ParameterStrings[i] == null && ParameterStreams[i] == null) {
+		try
+		{
+			for (int i = 0; i < ParameterStrings.length; i++)
+			{
+				if (ParameterStrings[i] == null && ParameterStreams[i] == null)
+				{
 					throw new java.sql.SQLException(
 						"No value specified for parameter " + (i + 1),
 						"07001");
@@ -428,14 +458,18 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 				//   _SendPacket.writeStringNoNull(_TemplateStrings[i]);
 				//}
 
-				if (IsStream[i]) {
+				if (IsStream[i])
+				{
 					_SendPacket.writeBytesNoNull(streamToBytes(ParameterStreams[i]));
 				}
-				else {
-					if (Encoding != null) {
+				else
+				{
+					if (Encoding != null)
+					{
 						_SendPacket.writeStringNoNull(ParameterStrings[i], Encoding);
 					}
-					else {
+					else
+					{
 						_SendPacket.writeStringNoNull(ParameterStrings[i]);
 					}
 				}
@@ -448,7 +482,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 			//	_SendPacket.writeStringNoNull(_TemplateStrings[_ParameterStrings.length]);
 			//}
 		}
-		catch (java.io.UnsupportedEncodingException UE) {
+		catch (java.io.UnsupportedEncodingException UE)
+		{
 			throw new SQLException("Unsupported character encoding '" + Encoding + "'");
 		}
 
@@ -458,10 +493,12 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 
 		ResultSet RS = null;
 
-		synchronized (_conn.getMutex()) {
+		synchronized (_conn.getMutex())
+		{
 			String OldCatalog = null;
 
-			if (!_conn.getCatalog().equals(_catalog)) {
+			if (!_conn.getCatalog().equals(_catalog))
+			{
 				OldCatalog = _conn.getCatalog();
 				_conn.setCatalog(_catalog);
 			}
@@ -470,29 +507,35 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 			// Only apply max_rows to selects
 			//
 
-			if (_conn.useMaxRows()) {
+			if (_conn.useMaxRows())
+			{
 				_conn.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
 			}
 
 			RS = _conn.execSQL(null, -1, _SendPacket);
 
-			if (OldCatalog != null) {
+			if (OldCatalog != null)
+			{
 				_conn.setCatalog(OldCatalog);
 			}
 		}
 
-		if (RS.reallyResult()) {
+		if (RS.reallyResult())
+		{
 			throw new java.sql.SQLException("Results returned for UPDATE ONLY.", "01S03");
 		}
-		else {
+		else
+		{
 			_updateCount = RS.getUpdateCount();
 
 			int truncated_updateCount = 0;
 
-			if (_updateCount > Integer.MAX_VALUE) {
+			if (_updateCount > Integer.MAX_VALUE)
+			{
 				truncated_updateCount = Integer.MAX_VALUE;
 			}
-			else {
+			else
+			{
 				truncated_updateCount = (int) _updateCount;
 			}
 
@@ -513,8 +556,9 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setNull(int parameterIndex, int sqlType)
-		throws java.sql.SQLException {
+	public void setNull(int parameterIndex, int sqlType)
+		throws java.sql.SQLException
+	{
 		set(parameterIndex, "null");
 		_IsNull[parameterIndex - 1] = true;
 	}
@@ -527,12 +571,15 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @param x the parameter value
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
-	public synchronized void setBoolean(int parameterIndex, boolean x)
-		throws java.sql.SQLException {
-		if (_useTrueBoolean) {
+	public void setBoolean(int parameterIndex, boolean x)
+		throws java.sql.SQLException
+	{
+		if (_useTrueBoolean)
+		{
 			set(parameterIndex, x ? "'1'" : "'0'");
 		}
-		else {
+		else
+		{
 			set(parameterIndex, x ? "'t'" : "'f'");
 		}
 	}
@@ -545,7 +592,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @param x the parameter value
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
-	public synchronized void setByte(int parameterIndex, byte x) throws java.sql.SQLException {
+	public void setByte(int parameterIndex, byte x) throws java.sql.SQLException
+	{
 		set(parameterIndex, String.valueOf(x));
 	}
 
@@ -557,8 +605,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @param x the parameter value
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
-	public synchronized void setShort(int parameterIndex, short x)
-		throws java.sql.SQLException {
+	public void setShort(int parameterIndex, short x) throws java.sql.SQLException
+	{
 		set(parameterIndex, String.valueOf(x));
 	}
 
@@ -570,7 +618,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @param x the parameter value
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
-	public synchronized void setInt(int parameterIndex, int x) throws java.sql.SQLException {
+	public void setInt(int parameterIndex, int x) throws java.sql.SQLException
+	{
 		set(parameterIndex, String.valueOf(x));
 	}
 
@@ -582,7 +631,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @param x the parameter value
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
-	public synchronized void setLong(int parameterIndex, long x) throws java.sql.SQLException {
+	public void setLong(int parameterIndex, long x) throws java.sql.SQLException
+	{
 		set(parameterIndex, String.valueOf(x));
 	}
 
@@ -594,8 +644,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @param x the parameter value
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
-	public synchronized void setFloat(int parameterIndex, float x)
-		throws java.sql.SQLException {
+	public void setFloat(int parameterIndex, float x) throws java.sql.SQLException
+	{
 		set(parameterIndex, fixDecimalExponent(String.valueOf(x)));
 	}
 
@@ -607,8 +657,9 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @param x the parameter value
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
-	public synchronized void setDouble(int parameterIndex, double x)
-		throws java.sql.SQLException {
+	public void setDouble(int parameterIndex, double x)
+		throws java.sql.SQLException
+	{
 		//set(parameterIndex, _DoubleFormatter.format(x));
 		set(parameterIndex, fixDecimalExponent(String.valueOf(x)));
 		// - Fix for large doubles by Steve Ferguson
@@ -624,12 +675,15 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setBigDecimal(int parameterIndex, BigDecimal X)
-		throws java.sql.SQLException {
-		if (X == null) {
+	public void setBigDecimal(int parameterIndex, BigDecimal X)
+		throws java.sql.SQLException
+	{
+		if (X == null)
+		{
 			setNull(parameterIndex, java.sql.Types.DECIMAL);
 		}
-		else {
+		else
+		{
 			set(parameterIndex, fixDecimalExponent(X.toString()));
 		}
 	}
@@ -639,18 +693,23 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	// understand them otherwise
 	//
 
-	protected final static String fixDecimalExponent(String dString) {
+	protected final static String fixDecimalExponent(String dString)
+	{
 		int ePos = dString.indexOf("E");
 
-		if (ePos == -1) {
+		if (ePos == -1)
+		{
 			ePos = dString.indexOf("e");
 		}
 
-		if (ePos != -1) {
-			if (dString.length() > ePos + 1) {
+		if (ePos != -1)
+		{
+			if (dString.length() > ePos + 1)
+			{
 				char maybeMinusChar = dString.charAt(ePos + 1);
 
-				if (maybeMinusChar != '-') {
+				if (maybeMinusChar != '-')
+				{
 					StringBuffer buf = new StringBuffer(dString.length() + 1);
 					buf.append(dString.substring(0, ePos + 1));
 					buf.append('+');
@@ -674,23 +733,28 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setString(int parameterIndex, String X)
-		throws java.sql.SQLException {
+	public void setString(int parameterIndex, String X)
+		throws java.sql.SQLException
+	{
 		// if the passed string is null, then set this column to null
 
-		if (X == null) {
+		if (X == null)
+		{
 			set(parameterIndex, "null");
 		}
-		else {
+		else
+		{
 			StringBuffer B = new StringBuffer();
 			int i;
 
 			B.append('\'');
 
-			for (i = 0; i < X.length(); ++i) {
+			for (i = 0; i < X.length(); ++i)
+			{
 				char c = X.charAt(i);
 
-				if (c == '\\' || c == '\'' || c == '"') {
+				if (c == '\\' || c == '\'' || c == '"')
+				{
 					B.append((char) '\\');
 				}
 				B.append(c);
@@ -713,12 +777,14 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setBytes(int parameterIndex, byte x[])
-		throws java.sql.SQLException {
-		if (x == null) {
+	public void setBytes(int parameterIndex, byte x[]) throws java.sql.SQLException
+	{
+		if (x == null)
+		{
 			setNull(parameterIndex, java.sql.Types.BINARY);
 		}
-		else {
+		else
+		{
 			ByteArrayInputStream BIn = new ByteArrayInputStream(x);
 			setBinaryStream(parameterIndex, BIn, x.length);
 		}
@@ -733,12 +799,15 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setDate(int parameterIndex, java.sql.Date X)
-		throws java.sql.SQLException {
-		if (X == null) {
+	public void setDate(int parameterIndex, java.sql.Date X)
+		throws java.sql.SQLException
+	{
+		if (X == null)
+		{
 			setNull(parameterIndex, java.sql.Types.DATE);
 		}
-		else {
+		else
+		{
 			SimpleDateFormat DF = new SimpleDateFormat("''yyyy-MM-dd''");
 
 			set(parameterIndex, DF.format(X));
@@ -754,11 +823,14 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setTime(int parameterIndex, Time X) throws java.sql.SQLException {
-		if (X == null) {
+	public void setTime(int parameterIndex, Time X) throws java.sql.SQLException
+	{
+		if (X == null)
+		{
 			setNull(parameterIndex, java.sql.Types.TIME);
 		}
-		else {
+		else
+		{
 			set(parameterIndex, "'" + X.toString() + "'");
 		}
 	}
@@ -772,15 +844,19 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setTimestamp(int parameterIndex, Timestamp X)
-		throws java.sql.SQLException {
-		if (X == null) {
+	public void setTimestamp(int parameterIndex, Timestamp X)
+		throws java.sql.SQLException
+	{
+		if (X == null)
+		{
 			setNull(parameterIndex, java.sql.Types.TIMESTAMP);
 		}
-		else {
+		else
+		{
 			String TimestampString = null;
 
-			synchronized (_TSDF) { // SimpleDateFormat is not thread-safe
+			synchronized (_TSDF)
+			{ // SimpleDateFormat is not thread-safe
 				TimestampString = "'" + _TSDF.format(X) + "'";
 			}
 
@@ -805,12 +881,18 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setAsciiStream(int parameterIndex, InputStream X, int length)
-		throws java.sql.SQLException {
-		if (X == null) {
+	public synchronized void setAsciiStream(
+		int parameterIndex,
+		InputStream X,
+		int length)
+		throws java.sql.SQLException
+	{
+		if (X == null)
+		{
 			setNull(parameterIndex, java.sql.Types.VARCHAR);
 		}
-		else {
+		else
+		{
 			setBinaryStream(parameterIndex, X, length);
 		}
 	}
@@ -831,12 +913,15 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setUnicodeStream(int parameterIndex, InputStream X, int length)
-		throws java.sql.SQLException {
-		if (X == null) {
+	public void setUnicodeStream(int parameterIndex, InputStream X, int length)
+		throws java.sql.SQLException
+	{
+		if (X == null)
+		{
 			setNull(parameterIndex, java.sql.Types.VARCHAR);
 		}
-		else {
+		else
+		{
 			setBinaryStream(parameterIndex, X, length);
 		}
 	}
@@ -856,13 +941,17 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setBinaryStream(int parameterIndex, InputStream X, int length)
-		throws java.sql.SQLException {
-		if (X == null) {
+	public void setBinaryStream(int parameterIndex, InputStream X, int length)
+		throws java.sql.SQLException
+	{
+		if (X == null)
+		{
 			setNull(parameterIndex, java.sql.Types.BINARY);
 		}
-		else {
-			if (parameterIndex < 1 || parameterIndex > _TemplateStrings.length) {
+		else
+		{
+			if (parameterIndex < 1 || parameterIndex > _TemplateStrings.length)
+			{
 				throw new java.sql.SQLException(
 					"Parameter index out of range ("
 						+ parameterIndex
@@ -887,8 +976,10 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void clearParameters() throws java.sql.SQLException {
-		for (int i = 0; i < _ParameterStrings.length; i++) {
+	public void clearParameters() throws java.sql.SQLException
+	{
+		for (int i = 0; i < _ParameterStrings.length; i++)
+		{
 			_ParameterStrings[i] = null;
 			_ParameterStreams[i] = null;
 			_IsStream[i] = false;
@@ -917,18 +1008,23 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setObject(
+	public void setObject(
 		int parameterIndex,
 		Object X,
 		int targetSqlType,
 		int scale)
-		throws java.sql.SQLException {
-		if (X == null) {
+		throws java.sql.SQLException
+	{
+		if (X == null)
+		{
 			setNull(parameterIndex, java.sql.Types.OTHER);
 		}
 		else
-			try {
-				switch (targetSqlType) {
+			try
+			{
+				switch (targetSqlType)
+				{
+					case Types.BIT :
 					case Types.TINYINT :
 					case Types.SMALLINT :
 					case Types.INTEGER :
@@ -939,34 +1035,47 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 					case Types.DECIMAL :
 					case Types.NUMERIC :
 						Number X_as_number;
+						
 						if (X instanceof Boolean)
+						{
 							X_as_number = ((Boolean) X).booleanValue() ? new Integer(1) : new Integer(0);
+						}
+						else if (X instanceof String) {
+							switch (targetSqlType)
+							{
+								case Types.BIT :
+									X_as_number =
+										(Boolean.getBoolean((String) X) ? new Integer("1") : new Integer("0"));
+									break;
+								case Types.TINYINT :
+								case Types.SMALLINT :
+								case Types.INTEGER :
+									X_as_number = Integer.valueOf((String) X);
+									break;
+								case Types.BIGINT :
+									X_as_number = Long.valueOf((String) X);
+									break;
+								case Types.REAL :
+									X_as_number = Float.valueOf((String) X);
+									break;
+								case Types.FLOAT :
+								case Types.DOUBLE :
+									X_as_number = Double.valueOf((String) X);
+									break;
+								case Types.DECIMAL :
+								case Types.NUMERIC :
+								default :
+									X_as_number = new java.math.BigDecimal((String) X);
+							}
+						}
 						else
-							if (X instanceof String)
-								switch (targetSqlType) {
-									case Types.TINYINT :
-									case Types.SMALLINT :
-									case Types.INTEGER :
-										X_as_number = Integer.valueOf((String) X);
-										break;
-									case Types.BIGINT :
-										X_as_number = Long.valueOf((String) X);
-										break;
-									case Types.REAL :
-										X_as_number = Float.valueOf((String) X);
-										break;
-									case Types.FLOAT :
-									case Types.DOUBLE :
-										X_as_number = Double.valueOf((String) X);
-										break;
-									case Types.DECIMAL :
-									case Types.NUMERIC :
-									default :
-										X_as_number = new java.math.BigDecimal((String) X);
-								}
-							else
-								X_as_number = (Number) X;
-						switch (targetSqlType) {
+						{
+							X_as_number = (Number) X;
+						}
+						
+						switch (targetSqlType)
+						{
+							case Types.BIT:
 							case Types.TINYINT :
 							case Types.SMALLINT :
 							case Types.INTEGER :
@@ -987,15 +1096,14 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 							default :
 								if (X_as_number instanceof java.math.BigDecimal)
 									setBigDecimal(parameterIndex, (java.math.BigDecimal) X_as_number);
+								else if (X_as_number instanceof java.math.BigInteger)
+									setBigDecimal(
+										parameterIndex,
+										new java.math.BigDecimal((java.math.BigInteger) X_as_number, scale));
 								else
-									if (X_as_number instanceof java.math.BigInteger)
-										setBigDecimal(
-											parameterIndex,
-											new java.math.BigDecimal((java.math.BigInteger) X_as_number, scale));
-									else
-										setBigDecimal(
-											parameterIndex,
-											new java.math.BigDecimal(X_as_number.doubleValue()));
+									setBigDecimal(
+										parameterIndex,
+										new java.math.BigDecimal(X_as_number.doubleValue()));
 								break;
 						}
 						break;
@@ -1015,7 +1123,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 					case Types.DATE :
 					case Types.TIMESTAMP :
 						java.util.Date X_as_date;
-						if (X instanceof String) {
+						if (X instanceof String)
+						{
 							ParsePosition pp = new ParsePosition(0);
 							java.text.DateFormat sdf =
 								new java.text.SimpleDateFormat(getDateTimePattern((String) X, false));
@@ -1023,7 +1132,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 						}
 						else
 							X_as_date = (java.util.Date) X;
-						switch (targetSqlType) {
+						switch (targetSqlType)
+						{
 							case Types.DATE :
 								if (X_as_date instanceof java.sql.Date)
 									setDate(parameterIndex, (java.sql.Date) X_as_date);
@@ -1039,7 +1149,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 						}
 						break;
 					case Types.TIME :
-						if (X instanceof String) {
+						if (X instanceof String)
+						{
 							java.text.DateFormat sdf =
 								new java.text.SimpleDateFormat(getDateTimePattern((String) X, true));
 							setTime(parameterIndex, new java.sql.Time(sdf.parse((String) X).getTime()));
@@ -1048,7 +1159,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 							setTime(parameterIndex, (java.sql.Time) X);
 						break;
 					case Types.OTHER :
-						try {
+						try
+						{
 							ByteArrayOutputStream BytesOut = new ByteArrayOutputStream();
 							ObjectOutputStream ObjectOut = new ObjectOutputStream(BytesOut);
 							ObjectOut.writeObject(X);
@@ -1061,7 +1173,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 							ByteArrayInputStream BytesIn = new ByteArrayInputStream(buf);
 							setBinaryStream(parameterIndex, BytesIn, -1);
 						}
-						catch (Exception E) {
+						catch (Exception E)
+						{
 							throw new java.sql.SQLException(
 								"Invalid argument value: " + E.getClass().getName(),
 								"S1009");
@@ -1071,7 +1184,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 						throw new java.sql.SQLException("Unknown Types value", "S1000");
 				}
 			}
-			catch (Exception ex) {
+			catch (Exception ex)
+			{
 				if (ex instanceof java.sql.SQLException)
 					throw (java.sql.SQLException) ex;
 				else
@@ -1081,75 +1195,70 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 			}
 	}
 
-	public synchronized void setObject(int parameterIndex, Object X, int targetSqlType)
-		throws java.sql.SQLException {
+	public void setObject(int parameterIndex, Object X, int targetSqlType)
+		throws java.sql.SQLException
+	{
 		setObject(parameterIndex, X, targetSqlType, 0);
 	}
 
-	public synchronized void setObject(int parameterIndex, Object X)
-		throws java.sql.SQLException {
-		if (X == null) {
+	public void setObject(int parameterIndex, Object X)
+		throws java.sql.SQLException
+	{
+		if (X == null)
+		{
 			setNull(parameterIndex, java.sql.Types.OTHER);
 		}
-		else {
+		else
+		{
 			if (X instanceof Byte)
 				setInt(parameterIndex, ((Byte) X).intValue());
+			else if (X instanceof String)
+				setString(parameterIndex, (String) X);
+			else if (X instanceof BigDecimal)
+				setBigDecimal(parameterIndex, (BigDecimal) X);
+			else if (X instanceof Short)
+				setShort(parameterIndex, ((Short) X).shortValue());
+			else if (X instanceof Integer)
+				setInt(parameterIndex, ((Integer) X).intValue());
+			else if (X instanceof Long)
+				setLong(parameterIndex, ((Long) X).longValue());
+			else if (X instanceof Float)
+				setFloat(parameterIndex, ((Float) X).floatValue());
+			else if (X instanceof Double)
+				setDouble(parameterIndex, ((Double) X).doubleValue());
+			else if (X instanceof byte[])
+				setBytes(parameterIndex, (byte[]) X);
+			else if (X instanceof java.sql.Date)
+				setDate(parameterIndex, (java.sql.Date) X);
+			else if (X instanceof Time)
+				setTime(parameterIndex, (Time) X);
+			else if (X instanceof Timestamp)
+				setTimestamp(parameterIndex, (Timestamp) X);
+			else if (X instanceof Boolean)
+				setBoolean(parameterIndex, ((Boolean) X).booleanValue());
 			else
-				if (X instanceof String)
-					setString(parameterIndex, (String) X);
-				else
-					if (X instanceof BigDecimal)
-						setBigDecimal(parameterIndex, (BigDecimal) X);
-					else
-						if (X instanceof Short)
-							setShort(parameterIndex, ((Short) X).shortValue());
-						else
-							if (X instanceof Integer)
-								setInt(parameterIndex, ((Integer) X).intValue());
-							else
-								if (X instanceof Long)
-									setLong(parameterIndex, ((Long) X).longValue());
-								else
-									if (X instanceof Float)
-										setFloat(parameterIndex, ((Float) X).floatValue());
-									else
-										if (X instanceof Double)
-											setDouble(parameterIndex, ((Double) X).doubleValue());
-										else
-											if (X instanceof byte[])
-												setBytes(parameterIndex, (byte[]) X);
-											else
-												if (X instanceof java.sql.Date)
-													setDate(parameterIndex, (java.sql.Date) X);
-												else
-													if (X instanceof Time)
-														setTime(parameterIndex, (Time) X);
-													else
-														if (X instanceof Timestamp)
-															setTimestamp(parameterIndex, (Timestamp) X);
-														else
-															if (X instanceof Boolean)
-																setBoolean(parameterIndex, ((Boolean) X).booleanValue());
-															else {
-																try {
-																	ByteArrayOutputStream BytesOut = new ByteArrayOutputStream();
-																	ObjectOutputStream ObjectOut = new ObjectOutputStream(BytesOut);
-																	ObjectOut.writeObject(X);
-																	ObjectOut.flush();
-																	ObjectOut.close();
-																	BytesOut.flush();
-																	BytesOut.close();
+			{
+				try
+				{
+					ByteArrayOutputStream BytesOut = new ByteArrayOutputStream();
+					ObjectOutputStream ObjectOut = new ObjectOutputStream(BytesOut);
+					ObjectOut.writeObject(X);
+					ObjectOut.flush();
+					ObjectOut.close();
+					BytesOut.flush();
+					BytesOut.close();
 
-																	byte[] buf = BytesOut.toByteArray();
-																	ByteArrayInputStream BytesIn = new ByteArrayInputStream(buf);
-																	setBinaryStream(parameterIndex, BytesIn, -1);
-																}
-																catch (Exception E) {
-																	throw new java.sql.SQLException(
-																		"Invalid argument value: " + E.getClass().getName(),
-																		"S1009");
-																}
-															}
+					byte[] buf = BytesOut.toByteArray();
+					ByteArrayInputStream BytesIn = new ByteArrayInputStream(buf);
+					setBinaryStream(parameterIndex, BytesIn, -1);
+				}
+				catch (Exception E)
+				{
+					throw new java.sql.SQLException(
+						"Invalid argument value: " + E.getClass().getName(),
+						"S1009");
+				}
+			}
 		}
 	}
 
@@ -1163,13 +1272,16 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized boolean execute() throws java.sql.SQLException {
-		
-		if (_SendPacket == null) {
+	public boolean execute() throws java.sql.SQLException
+	{
+
+		if (_SendPacket == null)
+		{
 			_SendPacket =
 				new Buffer(_conn.getNetBufferLength(), _conn.getMaxAllowedPacket());
 		}
-		else {
+		else
+		{
 			_SendPacket.clear();
 		}
 
@@ -1177,13 +1289,17 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 
 		String Encoding = null;
 
-		if (_conn.useUnicode()) {
+		if (_conn.useUnicode())
+		{
 			Encoding = _conn.getEncoding();
 		}
 
-		try {
-			for (int i = 0; i < _ParameterStrings.length; i++) {
-				if (_ParameterStrings[i] == null && _ParameterStreams[i] == null) {
+		try
+		{
+			for (int i = 0; i < _ParameterStrings.length; i++)
+			{
+				if (_ParameterStrings[i] == null && _ParameterStreams[i] == null)
+				{
 					throw new java.sql.SQLException("No value specified for parameter " + (i + 1));
 				}
 
@@ -1194,14 +1310,18 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 				//    _SendPacket.writeStringNoNull(_TemplateStrings[i]);
 				//}
 
-				if (_IsStream[i]) {
+				if (_IsStream[i])
+				{
 					_SendPacket.writeBytesNoNull(streamToBytes(_ParameterStreams[i]));
 				}
-				else {
-					if (Encoding != null) {
+				else
+				{
+					if (Encoding != null)
+					{
 						_SendPacket.writeStringNoNull(_ParameterStrings[i], Encoding);
 					}
-					else {
+					else
+					{
 						_SendPacket.writeStringNoNull(_ParameterStrings[i]);
 					}
 				}
@@ -1214,16 +1334,19 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 			//	_SendPacket.writeStringNoNull(_TemplateStrings[_ParameterStrings.length]);
 			// }
 		}
-		catch (java.io.UnsupportedEncodingException UE) {
+		catch (java.io.UnsupportedEncodingException UE)
+		{
 			throw new SQLException("Unsupported character encoding '" + Encoding + "'");
 		}
 
 		ResultSet RS = null;
 
-		synchronized (_conn.getMutex()) {
+		synchronized (_conn.getMutex())
+		{
 			String OldCatalog = null;
 
-			if (!_conn.getCatalog().equals(_catalog)) {
+			if (!_conn.getCatalog().equals(_catalog))
+			{
 				OldCatalog = _conn.getCatalog();
 				_conn.setCatalog(_catalog);
 			}
@@ -1239,41 +1362,51 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 			// Only apply max_rows to selects
 			//
 
-			if (_conn.useMaxRows()) {
+			if (_conn.useMaxRows())
+			{
 
-				if (_firstChar == 'S') {
-					if (_has_limit_clause) {
+				if (_firstChar == 'S')
+				{
+					if (_has_limit_clause)
+					{
 						RS = _conn.execSQL(null, _maxRows, _SendPacket);
 					}
-					else {
-						if (_maxRows <= 0) {
+					else
+					{
+						if (_maxRows <= 0)
+						{
 							_conn.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
 						}
-						else {
+						else
+						{
 							_conn.execSQL("SET OPTION SQL_SELECT_LIMIT=" + _maxRows, -1);
 						}
 
 					}
 				}
-				else {
+				else
+				{
 					_conn.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
 				}
 
 				// Finally, execute the query
 				RS = _conn.execSQL(null, -1, _SendPacket);
 			}
-			else {
+			else
+			{
 				RS = _conn.execSQL(null, -1, _SendPacket);
 			}
 
-			if (OldCatalog != null) {
+			if (OldCatalog != null)
+			{
 				_conn.setCatalog(OldCatalog);
 			}
 		}
 
 		_lastInsertId = RS.getUpdateID();
 
-		if (RS != null) {
+		if (RS != null)
+		{
 			_results = RS;
 		}
 
@@ -1286,10 +1419,12 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 		return (RS != null && RS.reallyResult());
 	}
 
-	public String toString() {
+	public String toString()
+	{
 		String Encoding = null;
 
-		if (_conn != null && _conn.useUnicode()) {
+		if (_conn != null && _conn.useUnicode())
+		{
 			Encoding = _conn.getEncoding();
 		}
 
@@ -1297,48 +1432,62 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 		SB.append(super.toString());
 		SB.append(": ");
 
-		try {
-			for (int i = 0; i < _ParameterStrings.length; ++i) {
+		try
+		{
+			for (int i = 0; i < _ParameterStrings.length; ++i)
+			{
 
-				if (Encoding != null) {
+				if (Encoding != null)
+				{
 					SB.append(new String(_TemplateStrings[i], Encoding));
 				}
-				else {
+				else
+				{
 					SB.append(new String(_TemplateStrings[i]));
 				}
-				if (_ParameterStrings[i] == null && !_IsStream[i]) {
+				if (_ParameterStrings[i] == null && !_IsStream[i])
+				{
 					SB.append("** NOT SPECIFIED **");
 				}
+				else if (_IsStream[i])
+				{
+					SB.append("** STREAM DATA **");
+				}
 				else
-					if (_IsStream[i]) {
-						SB.append("** STREAM DATA **");
-					}
-					else {
-						if (_escapeProcessing) {
-							try {
-								_ParameterStrings[i] = _escaper.escapeSQL(_ParameterStrings[i]);
-							}
-							catch (SQLException SQE) {
-							}
+				{
+					if (_escapeProcessing)
+					{
+						try
+						{
+							_ParameterStrings[i] = _escaper.escapeSQL(_ParameterStrings[i]);
 						}
+						catch (SQLException SQE)
+						{
+						}
+					}
 
-						if (Encoding != null) {
-							SB.append(new String(_ParameterStrings[i].getBytes(), Encoding));
-						}
-						else {
-							SB.append(_ParameterStrings[i]);
-						}
+					if (Encoding != null)
+					{
+						SB.append(new String(_ParameterStrings[i].getBytes(), Encoding));
 					}
+					else
+					{
+						SB.append(_ParameterStrings[i]);
+					}
+				}
 			}
 
-			if (Encoding != null) {
+			if (Encoding != null)
+			{
 				SB.append(new String(_TemplateStrings[_ParameterStrings.length], Encoding));
 			}
-			else {
+			else
+			{
 				SB.append(_TemplateStrings[_ParameterStrings.length]);
 			}
 		}
-		catch (java.io.UnsupportedEncodingException UE) {
+		catch (java.io.UnsupportedEncodingException UE)
+		{
 			SB.append("\n\n** WARNING **\n\n Unsupported character encoding '");
 			SB.append(Encoding);
 			SB.append("'");
@@ -1357,8 +1506,10 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 * @exception java.sql.SQLException if something goes wrong
 	 */
 
-	private final void set(int paramIndex, String S) throws java.sql.SQLException {
-		if (paramIndex < 1 || paramIndex > _TemplateStrings.length) {
+	private final void set(int paramIndex, String S) throws java.sql.SQLException
+	{
+		if (paramIndex < 1 || paramIndex > _TemplateStrings.length)
+		{
 			throw new java.sql.SQLException(
 				"Parameter index out of range ("
 					+ paramIndex
@@ -1376,11 +1527,14 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	}
 
 	private final int readblock(InputStream i, byte[] b)
-		throws java.sql.SQLException {
-		try {
+		throws java.sql.SQLException
+	{
+		try
+		{
 			return i.read(b);
 		}
-		catch (Throwable E) {
+		catch (Throwable E)
+		{
 			throw new java.sql.SQLException(
 				"Error reading from InputStream " + E.getClass().getName(),
 				"S1000");
@@ -1390,17 +1544,22 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	private final void escapeblock(
 		byte[] buf,
 		ByteArrayOutputStream bytesOut,
-		int size) {
+		int size)
+	{
 		int c = 0;
 
-		for (int i = 0; i < size; i++) {
+		for (int i = 0; i < size; i++)
+		{
 			byte b = buf[i];
-			if (b == '\0') {
+			if (b == '\0')
+			{
 				bytesOut.write('\\');
 				bytesOut.write('0');
 			}
-			else {
-				if (b == '\\' || b == '\'' || b == '"') {
+			else
+			{
+				if (b == '\\' || b == '\'' || b == '"')
+				{
 					bytesOut.write('\\');
 				}
 				bytesOut.write(b);
@@ -1415,44 +1574,55 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	 *
 	 */
 
-	protected final synchronized byte[] streamToBytes(InputStream in)
-		throws java.sql.SQLException {
+	protected final byte[] streamToBytes(InputStream in)
+		throws java.sql.SQLException
+	{
 		return streamToBytes(in, true);
 	}
 
-	protected final synchronized byte[] streamToBytes(InputStream in, boolean escape)
-		throws java.sql.SQLException {
+	protected final byte[] streamToBytes(InputStream in, boolean escape)
+		throws java.sql.SQLException
+	{
 
-		try {
+		try
+		{
 			ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
 			int bc = readblock(in, _bi);
 
-			if (escape) {
+			if (escape)
+			{
 				bytesOut.write('\'');
 			}
 
-			while (bc > 0) {
-				if (escape) {
+			while (bc > 0)
+			{
+				if (escape)
+				{
 					escapeblock(_bi, bytesOut, bc);
 				}
-				else {
+				else
+				{
 					bytesOut.write(_bi, 0, bc);
 				}
 
 				bc = readblock(in, _bi);
 			}
 
-			if (escape) {
+			if (escape)
+			{
 				bytesOut.write('\'');
 			}
 
 			return bytesOut.toByteArray();
 		}
-		finally {
-			try {
+		finally
+		{
+			try
+			{
 				in.close();
 			}
-			catch (IOException ioEx) {
+			catch (IOException ioEx)
+			{
 			}
 
 			in = null;
@@ -1460,7 +1630,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 
 	}
 
-	private final char getSuccessor(char c, int n) {
+	private final char getSuccessor(char c, int n)
+	{
 		return (c == 'y' && n == 2) ? 'X' : //ym
 		(
 			(c == 'y' && n < 4)
@@ -1484,7 +1655,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 	}
 
 	private final String getDateTimePattern(String dt, boolean toTime)
-		throws Exception {
+		throws Exception
+	{
 		int n, z, count, maxvecs;
 		char c, separator;
 		StringReader reader = new StringReader(dt + " ");
@@ -1496,31 +1668,38 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 		nv[1] = new StringBuffer();
 		nv[2] = new Integer(0);
 		vec.addElement(nv);
-		if (toTime) {
+		if (toTime)
+		{
 			nv = new Object[3];
 			nv[0] = new Character('h');
 			nv[1] = new StringBuffer();
 			nv[2] = new Integer(0);
 			vec.addElement(nv);
 		}
-		while ((z = reader.read()) != -1) {
+		while ((z = reader.read()) != -1)
+		{
 			separator = (char) z;
 			maxvecs = vec.size();
-			for (count = 0; count < maxvecs; count++) {
+			for (count = 0; count < maxvecs; count++)
+			{
 				v = (Object[]) vec.elementAt(count);
 				n = ((Integer) v[2]).intValue();
 				c = getSuccessor(((Character) v[0]).charValue(), n);
-				if (!Character.isLetterOrDigit(separator)) {
+				if (!Character.isLetterOrDigit(separator))
+				{
 					if ((c == ((Character) v[0]).charValue()) && (c != 'S'))
 						vec_removelist.addElement(v);
-					else {
+					else
+					{
 						((StringBuffer) v[1]).append(separator);
 						if (c == 'X' || c == 'Y')
 							v[2] = new Integer(4);
 					}
 				}
-				else {
-					if (c == 'X') {
+				else
+				{
+					if (c == 'X')
+					{
 						c = 'y';
 						nv = new Object[3];
 						nv[1] = (new StringBuffer(((StringBuffer) v[1]).toString())).append('M');
@@ -1528,32 +1707,35 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 						nv[2] = new Integer(1);
 						vec.addElement(nv);
 					}
-					else
-						if (c == 'Y') {
-							c = 'M';
-							nv = new Object[3];
-							nv[1] = (new StringBuffer(((StringBuffer) v[1]).toString())).append('d');
-							nv[0] = new Character('d');
-							nv[2] = new Integer(1);
-							vec.addElement(nv);
-						}
+					else if (c == 'Y')
+					{
+						c = 'M';
+						nv = new Object[3];
+						nv[1] = (new StringBuffer(((StringBuffer) v[1]).toString())).append('d');
+						nv[0] = new Character('d');
+						nv[2] = new Integer(1);
+						vec.addElement(nv);
+					}
 					((StringBuffer) v[1]).append(c);
 
 					if (c == ((Character) v[0]).charValue())
 						v[2] = new Integer(n + 1);
-					else {
+					else
+					{
 						v[0] = new Character(c);
 						v[2] = new Integer(1);
 					}
 				}
 			}
-			for (Enumeration en = vec_removelist.elements(); en.hasMoreElements();) {
+			for (Enumeration en = vec_removelist.elements(); en.hasMoreElements();)
+			{
 				v = (Object[]) en.nextElement();
 				vec.removeElement(v);
 			}
 			vec_removelist.removeAllElements();
 		}
-		for (Enumeration en = vec.elements(); en.hasMoreElements();) {
+		for (Enumeration en = vec.elements(); en.hasMoreElements();)
+		{
 			v = (Object[]) en.nextElement();
 			c = ((Character) v[0]).charValue();
 			n = ((Integer) v[2]).intValue();
@@ -1561,7 +1743,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement {
 			boolean atEnd = ((c == 's' || c == 'm' || (c == 'h' && toTime)) && bk);
 			boolean finishesAtDate = (bk && (c == 'd') && !toTime);
 			boolean containsEnd = (((StringBuffer) v[1]).toString().indexOf('W') != -1);
-			if ((!atEnd && !finishesAtDate) || (containsEnd)) {
+			if ((!atEnd && !finishesAtDate) || (containsEnd))
+			{
 				vec_removelist.addElement(v);
 			}
 		}
