@@ -157,7 +157,7 @@ class Buffer {
     // 2000-06-05 Changed
     final boolean isLastDataPacket() {
 
-        return ((getBufLength() <= 2) && ((this.byteBuffer[0] & 0xff) == 254));
+        return ((getBufLength() < 9) && ((this.byteBuffer[0] & 0xff) == 254));
     }
 
     //
