@@ -27,9 +27,8 @@
  */
 package com.mysql.jdbc;
 
-import java.sql.*;
-
-import java.util.*;
+import java.sql.SQLException;
+import java.sql.Types;
 
 
 public class ResultSetMetaData
@@ -39,8 +38,7 @@ public class ResultSetMetaData
     //~ Instance/static variables .............................................
 
     Field[]   Fields;
-    ArrayList Rows;
-
+   
     //~ Constructors ..........................................................
 
     /**
@@ -52,9 +50,9 @@ public class ResultSetMetaData
    * 
    * @author Mark Matthews <mmatthew@worldserver.com>
    */
-    public ResultSetMetaData(ArrayList Rows, Field[] Fields)
+    public ResultSetMetaData(Field[] Fields)
     {
-        this.Rows   = Rows;
+       
         this.Fields = Fields;
     }
 
