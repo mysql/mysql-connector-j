@@ -274,11 +274,20 @@ public class Driver
         serverTimezone.description = "Override detection/mapping of timezone. Used when timezone from server doesn't map to Java timezone"
         ;
 
+
+
+        DriverPropertyInfo connectTimeout = new DriverPropertyInfo("connectTimeout", 
+                                                             info.getProperty(
+                                                                     "connectTimeout", 
+                                                                     "0"));
+        connectTimeout.required = false;
+        connectTimeout.description = "Timeout for socket connect (in milliseconds), with 0 being no timeout. Only works on JDK-1.4 or newer. Defaults to '0'."
+        ;
         DriverPropertyInfo[] dpi = {
             hostProp, portProp, dbProp, userProp, passwordProp, autoReconnect, 
             maxReconnects, initialTimeout, profileSql, socketTimeout, useSSL, 
             paranoid, useHostsInPrivileges, interactiveClient, useCompression,
-            useTimezone, serverTimezone
+            useTimezone, serverTimezone, connectTimeout
         };
 
         return dpi;

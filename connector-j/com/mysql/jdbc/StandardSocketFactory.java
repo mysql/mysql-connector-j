@@ -20,7 +20,11 @@ package com.mysql.jdbc;
 
 import java.io.IOException;
 
+import java.lang.reflect.Method;
+
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
 
 import java.util.Properties;
@@ -65,8 +69,39 @@ public class StandardSocketFactory
                 port = Integer.parseInt(portStr);
             }
 
+            boolean hasConnectTimeoutMethod = false;
+            
+            try {
+                Method m = Socket.class.getDeclaredMethod("connect", new Class[]{SocketAddress.class, Integer.class});
+            } catch (NoSuchMethodException noSuchMethodEx) {
+                hasConnectTimeoutMethod = false;
+            } catch (Throwable catchAll) {
+                hasConnectTimeoutMethod = false;
+            }
+            
+            int connectTimeout = 0;
+            
+            String connectTimeoutStr = props.getProperty("connectTimeout");
+            
+            if (connectTimeoutStr != null) {
+                try {
+                    connectTimeout = Integer.parseInt(connectTimeoutStr);
+                } catch (NumberFormatException nfe) {
+                    throw new SocketException("Illegal value '" + connectTimeoutStr + "' for connectTimeout");
+                }
+            }
+            
+               
+              
             if (this.host != null) {
-                rawSocket = new Socket(this.host, port);
+                if (!hasConnectTimeoutMethod || connectTimeout == 0) {
+                    rawSocket = new Socket(this.host, port);
+                } else {
+                    InetSocketAddress sockAddr = new InetSocketAddress(this.host, port);
+                    
+                    rawSocket = new Socket();
+                    rawSocket.connect(sockAddr);
+                }
 
                 try {
                     rawSocket.setTcpNoDelay(true);
