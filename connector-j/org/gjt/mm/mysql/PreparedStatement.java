@@ -1236,6 +1236,8 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement
 				setTimestamp(parameterIndex, (Timestamp) X);
 			else if (X instanceof Boolean)
 				setBoolean(parameterIndex, ((Boolean) X).booleanValue());
+			else if (X instanceof InputStream)
+			      setBinaryStream(parameterIndex, (InputStream) X, -1 );
 			else
 			{
 				try
@@ -1419,6 +1421,26 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement
 		return (RS != null && RS.reallyResult());
 	}
 
+	/**
+	 * Closes this prepared statement and releases all
+	 * resources.
+	 */
+	
+	public void close() throws SQLException 
+	{
+		super.close();
+
+		_Sql = null;
+		_TemplateStrings = null;
+		_ParameterStrings = null;
+		_ParameterStreams = null;
+		_IsStream = null;
+		_IsNull = null;
+		_bi = null;
+		_SendPacket = null;
+		templateCache = null;
+	}
+	
 	public String toString()
 	{
 		String Encoding = null;
@@ -1496,15 +1518,7 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement
 		return SB.toString();
 	}
 
-	/**
-	 * There are a lot of setXXX classes which all basically do
-	 * the same thing.  We need a method which actually does the
-	 * set for us.
-	 *
-	 * @param paramIndex the index into the inString
-	 * @param s a string to be stored
-	 * @exception java.sql.SQLException if something goes wrong
-	 */
+
 
 	private final void set(int paramIndex, String S) throws java.sql.SQLException
 	{
