@@ -53,7 +53,10 @@ public class NamedPipeSocketFactory implements SocketFactory {
 		
         String namedPipePath = props.getProperty(NAMED_PIPE_PROP_NAME);
         
-        if (namedPipePath == null || namedPipePath.length() == 0) {
+        if (namedPipePath == null) {
+            namedPipePath = "\\\\.\\pipe\\MySQL";
+        }
+        else if (namedPipePath.length() == 0) {
             throw new SocketException("Can not specify NULL or empty value for property '" 
                 + NAMED_PIPE_PROP_NAME + "'.");
         }
@@ -91,7 +94,7 @@ public class NamedPipeSocketFactory implements SocketFactory {
                 throw new IOException("Named pipe path can not be null or empty");
             }
             
-            this.namedPipeFile = new RandomAccessFile(filePath, "RW");
+            this.namedPipeFile = new RandomAccessFile(filePath, "rw");
         }
         
     	/**
@@ -106,14 +109,14 @@ public class NamedPipeSocketFactory implements SocketFactory {
 		 * @see java.net.Socket#getInputStream()
 		 */
 		public InputStream getInputStream() throws IOException {
-			return super.getInputStream();
+			return new RandomAccessFileInputStream(this.namedPipeFile);
 		}
 
 		/**
 		 * @see java.net.Socket#getOutputStream()
 		 */
 		public OutputStream getOutputStream() throws IOException {
-			return super.getOutputStream();
+			return new RandomAccessFileOutputStream(this.namedPipeFile);
 		}
 
 		/**
@@ -124,4 +127,91 @@ public class NamedPipeSocketFactory implements SocketFactory {
 		}
 
     }
+
+    /**
+     * Enables OutputStream-type functionality for a
+     * RandomAccessFile
+     */   
+    class RandomAccessFileInputStream extends InputStream {
+        RandomAccessFile raFile;
+        
+        RandomAccessFileInputStream(RandomAccessFile file) {
+            this.raFile = file;
+        }
+        
+        
+		/**
+		 * @see java.io.InputStream#available()
+		 */
+		public int available() throws IOException {
+			return -1;
+		}
+
+		/**
+		 * @see java.io.InputStream#close()
+		 */
+		public void close() throws IOException {
+			this.raFile.close();
+		}
+
+		/**
+		 * @see java.io.InputStream#read()
+		 */
+		public int read() throws IOException {
+			return this.raFile.read();
+		}
+
+		/**
+		 * @see java.io.InputStream#read(byte[], int, int)
+		 */
+		public int read(byte[] b, int off, int len) throws IOException {
+			return this.raFile.read(b, off, len);
+		}
+
+		/**
+		 * @see java.io.InputStream#read(byte[])
+		 */
+		public int read(byte[] b) throws IOException {
+			return this.raFile.read(b);
+		}
+
+    }
+    
+    /**
+     * Enables OutputStream-type functionality for a
+     * RandomAccessFile
+     */
+    class RandomAccessFileOutputStream extends OutputStream {
+        RandomAccessFile raFile;
+        
+        RandomAccessFileOutputStream(RandomAccessFile file) {
+            this.raFile = file;
+        }
+		/**
+		 * @see java.io.OutputStream#close()
+		 */
+		public void close() throws IOException {
+			this.raFile.close();
+		}
+
+		/**
+		 * @see java.io.OutputStream#write(byte[], int, int)
+		 */
+		public void write(byte[] b, int off, int len) throws IOException {
+			this.raFile.write(b, off, len);
+		}
+
+		/**
+		 * @see java.io.OutputStream#write(byte[])
+		 */
+		public void write(byte[] b) throws IOException {
+			this.raFile.write(b);
+		}
+
+		/**
+		 * @see java.io.OutputStream#write(int)
+		 */
+		public void write(int b) throws IOException {
+		}
+    } 
 }

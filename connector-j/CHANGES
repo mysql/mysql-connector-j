@@ -39,6 +39,8 @@ xx-xx-xx - Version 3.0.3-dev
 	  property (see the README).
 	- Substitute '?' for unknown character conversions in single-byte
 	  character sets instead of '\0'.
+	- NamedPipeSocketFactory now works (only intended for Windows), see
+	  README for instructions.
 	  
 11-08-02 - Version 3.0.2-dev
 

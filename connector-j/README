@@ -121,6 +121,27 @@ In either case, whenever you are connected to a "failed-over" server, the connec
 will be set to read-only status, so queries that would modify data will have exceptions
 thrown (the query will _never_ be seen by the MySQL server).
 
+Connector/J supports access to MySQL via named pipes on Windows NT/2000/XP using the
+'NamedPipeSocketFactory' as a plugin-socket factory via the 'socketFactory' property.
+If you don't use a 'namedPipePath' property, the default of '\\.\pipe\MySQL' will be 
+used. 
+
+If you use the NamedPipeSocketFactory, the hostname and port number values in the
+JDBC url will be ignored.
+
+Adding the following parameter to your URL will enable the NamedPipeSocketFactory:
+
+socketFactory=com.mysql.jdbc.NamedPipeSocketFactory
+
+Named pipes only work when connecting to a MySQL server on the same physical machine 
+as the one the JDBC driver is being used on. 
+
+In simple performance tests, it appears that named pipe access is between 30%-50% 
+faster than the standard TCP/IP access.
+
+You can create your own socket factories by following the example code in 
+NamedPipeSocketFactory, or StandardSocketFactory.
+
 URL Parameters (can be passed as properties in 
 DriverManager.getConnection() as well):
 
@@ -226,20 +247,27 @@ useSSL              | Should Connector/J use SSL when           | false
                     | section of this document for important    |
                     | information for making this work.         |
 --------------------+-------------------------------------------+-------------
-useStreamLengthsIn\ | Should Connector/J honor stream lengths   | true                             |
+useStreamLengthsIn\ | Should Connector/J honor stream lengths   | true
 PrepStmts           | when calling PreparedStatement            |
                     | setBinary/AsciiStream() and ResultSet     |
                     | updateBinary/AsciiStream() ?   (note: the |
                     | parameter name is one word with no '\')   |
 --------------------+-------------------------------------------+-------------
-continueBatchOnError| Should Connector/J continue processing    | true                             |
+continueBatchOnError| Should Connector/J continue processing    | true
                     | batch commands if one statement fails?    |
                     |                                           |
                     | The JDBC spec allows either way.          |
 --------------------+-------------------------------------------+-------------
-allowLoadLocalInfile| Should Connector/J allow/support 'LOAD    | true                             |
+allowLoadLocalInfile| Should Connector/J allow/support 'LOAD    | true
                     | DATA LOCAL INFILE' queries (your server   |
                     | must also allow these types of queries)   |
+--------------------+-------------------------------------------+-------------
+socketFactory       | The name of the class that the driver     | com.mysql.\
+                    | should use for creating socket            | jdbc.\
+                    | connections to the server. This class     | Standard\
+                    | must implement the interface              | Socket\
+                    | 'com.mysql.jdbc.SocketFactory' and have   | Factory
+                    | a public no-args constructor.             |
 ------------------------------------------------------------------------------
   	
   	
