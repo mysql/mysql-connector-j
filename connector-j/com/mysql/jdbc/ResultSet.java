@@ -134,6 +134,8 @@ public class ResultSet
     private SimpleDateFormat timestampFormatter = null;
     private boolean useStrictFloatingPoint = false;
 
+  private boolean _hasBuiltIndexMapping = false;
+
     //~ Constructors ..........................................................
 
     /**
@@ -200,7 +202,8 @@ public class ResultSet
             thisRow = null;
         }
 
-        buildIndexMapping();
+	// this is now lazily invoked on demand....
+	//        buildIndexMapping();
     }
 
     /**
@@ -668,13 +671,6 @@ public class ResultSet
     {
         checkRowPos();
 
-        if (columnIndex < 1 || columnIndex > fields.length)
-        {
-            throw new java.sql.SQLException("Column Index out of range ( " + 
-                                            columnIndex + " > " + 
-                                            fields.length + ").", "S1002");
-        }
-
         try
         {
 
@@ -791,13 +787,6 @@ public class ResultSet
     {
         checkRowPos();
 
-        if (columnIndex < 1 || columnIndex > fields.length)
-        {
-            throw new java.sql.SQLException("Column Index out of range ( " + 
-                                            columnIndex + " > " + 
-                                            fields.length + ").", "S1002");
-        }
-
         try
         {
 
@@ -813,6 +802,12 @@ public class ResultSet
         catch (NullPointerException E)
         {
             wasNullFlag = true;
+        }
+        catch (ArrayIndexOutOfBoundsException aioobEx)
+        {
+        	 throw new java.sql.SQLException("Column Index out of range ( " + 
+                                            columnIndex + " > " + 
+                                            fields.length + ").", "S1002");
         }
 
         if (wasNullFlag)
@@ -1162,13 +1157,6 @@ public class ResultSet
                                             "S1002");
         }
 
-        if (columnIndex < 1 || columnIndex > fields.length)
-        {
-            throw new java.sql.SQLException("Column Index out of range ( " + 
-                                            columnIndex + " > " + 
-                                            fields.length + ").", "S1002");
-        }
-
         try
         {
 
@@ -1184,6 +1172,12 @@ public class ResultSet
         catch (NullPointerException E)
         {
             wasNullFlag = true;
+        }
+        catch (ArrayIndexOutOfBoundsException aioobEx)
+        {
+        	 throw new java.sql.SQLException("Column Index out of range ( " + 
+                                            columnIndex + " > " + 
+                                            fields.length + ").", "S1002");
         }
 
         if (wasNullFlag)
@@ -1454,22 +1448,33 @@ public class ResultSet
         {
             val = getString(columnIndex);
 
+			
+			
             if (val != null && val.length() != 0)
             {
+            	if (useStrictFloatingPoint)
+				{
+                	if (val.equals("-2147480000"))
+                	{
 
-                if (useStrictFloatingPoint && val.equals("-2147480000"))
-                {
+                    	return -2147483648;
+                	}
+                	else if (val.equals("2147480000"))
+                	{
 
-                    return -2147483648;
-                }
-                else if (useStrictFloatingPoint && 
-                         val.equals("2147480000"))
-                {
+                    	return 2147483647;
+                	}
+                	else if (val.equals("2147483648"))
+                	{
+                		return Integer.MAX_VALUE;
+                	}
+                	else if (val.equals("-2147483650"))
+                	{
+                		return Integer.MIN_VALUE;
+                	}
+				}
 
-                    return 2147483647;
-                }
-
-                if (val.indexOf("e") != -1 && val.indexOf("E") != -1)
+                if (val.indexOf("e") == -1 && val.indexOf("E") == -1 && val.indexOf(".") == -1)
                 {
 
                     return Integer.parseInt(val);
@@ -1739,27 +1744,32 @@ public class ResultSet
             Debug.methodCall(this, "getObject", args);
         }
 
-        Field F;
+        
 
-        if (columnIndex < 1 || columnIndex > fields.length)
+		try
+		{
+        	if (thisRow[columnIndex - 1] == null)
+        	{
+            	wasNullFlag = true;
+
+	            return null;
+    	    }
+		}
+		catch (ArrayIndexOutOfBoundsException aioobEx)
         {
-            throw new java.sql.SQLException("Column index out of range (" + 
+        	 throw new java.sql.SQLException("Column Index out of range ( " + 
                                             columnIndex + " > " + 
                                             fields.length + ").", "S1002");
         }
 
-        F = fields[columnIndex - 1];
-
-        if (thisRow[columnIndex - 1] == null)
-        {
-            wasNullFlag = true;
-
-            return null;
-        }
-
         wasNullFlag = false;
 
-        switch (F.getSQLType())
+		Field field;
+
+        
+
+        field = fields[columnIndex - 1];
+        switch (field.getSQLType())
         {
 
             case Types.BIT:
@@ -1767,7 +1777,7 @@ public class ResultSet
 
             case Types.TINYINT:
 
-                if (F.isUnsigned())
+                if (field.isUnsigned())
                 {
 
                     return new Short(getShort(columnIndex));
@@ -1780,7 +1790,7 @@ public class ResultSet
 
             case Types.SMALLINT:
 
-                if (F.isUnsigned())
+                if (field.isUnsigned())
                 {
 
                     return new Integer(getInt(columnIndex));
@@ -1793,7 +1803,7 @@ public class ResultSet
 
             case Types.INTEGER:
 
-                if (F.isUnsigned())
+                if (field.isUnsigned())
                 {
 
                     return new Long(getLong(columnIndex));
@@ -1860,12 +1870,12 @@ public class ResultSet
             case Types.VARBINARY:
             case Types.LONGVARBINARY:
 
-                if (!F.isBlob())
+                if (!field.isBlob())
                 {
 
                     return getString(columnIndex);
                 }
-                else if (!F.isBinary())
+                else if (!field.isBinary())
                 {
 
                     return getString(columnIndex);
@@ -2060,7 +2070,7 @@ public class ResultSet
             if (val != null && val.length() != 0)
             {
 
-                if (val.indexOf("e") != -1 && val.indexOf("E") != -1)
+                if (val.indexOf("e") == -1 && val.indexOf("E") == -1 && val.indexOf(".") == -1)
                 {
 
                     return Short.parseShort(val);
@@ -2133,19 +2143,13 @@ public class ResultSet
                                             "S1002");
         }
 
-        if (columnIndex < 1 || columnIndex > fields.length)
-        {
-            throw new java.sql.SQLException("Column Index out of range ( " + 
-                                            columnIndex + " > " + 
-                                            fields.length + ").", "S1002");
-        }
-
         try
         {
 
             if (thisRow[columnIndex - 1] == null)
             {
                 wasNullFlag = true;
+				return null;
             }
             else
             {
@@ -2155,12 +2159,14 @@ public class ResultSet
         catch (NullPointerException E)
         {
             wasNullFlag = true;
-        }
-
-        if (wasNullFlag)
-        {
-
-            return null;
+            
+	    	return null;
+        } 
+		catch (ArrayIndexOutOfBoundsException aioobEx) 
+		{
+            throw new java.sql.SQLException("Column Index out of range ( " + 
+                                            columnIndex + " > " + 
+                                            fields.length + ").", "S1002");
         }
 
         if (connection != null && connection.useUnicode())
@@ -2193,7 +2199,7 @@ public class ResultSet
         else
         {
 
-            String val = new String(thisRow[columnIndex - 1]);
+	  		String val = StringUtils.toAsciiString(thisRow[columnIndex - 1]);
 
             if (useStrictFloatingPoint)
             {
@@ -3118,6 +3124,15 @@ public class ResultSet
     {
 
         Integer index;
+        
+        synchronized (this) 
+        {
+			if (! _hasBuiltIndexMapping) 
+			{
+	  			buildIndexMapping();
+			}
+        }
+        
         index = (Integer)columnNameToIndex.get(ColumnName);
 
         if (index == null)
@@ -4588,6 +4603,8 @@ public class ResultSet
                 fullColumnNameToIndex.put(fullColumnName.toLowerCase(), index);
             }
         }
+	// set the flag to prevent rebuilding...
+	_hasBuiltIndexMapping = true;
     }
 
     protected void checkRowPos()

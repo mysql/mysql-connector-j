@@ -118,7 +118,14 @@ public class PreparedStatement
     public PreparedStatement(Connection conn, String sql, String catalog)
                       throws java.sql.SQLException
     {
-        super(conn, catalog);
+    	super(conn, catalog);
+    	
+    	if (sql == null)
+    	{
+    		throw new SQLException("SQL String can not be NULL", "S1009");
+    	}
+    	
+        
 
         //if (_conn.useTimezone())
         //{

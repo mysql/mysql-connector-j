@@ -1238,158 +1238,196 @@ public class UpdatableResultSet
     }
 
     /**
-     * JDBC 2.0
-     *
-     * Refresh the value of the current row with its current value in 
-     * the database.  Cannot be called when on the insert row.
-     *
-     * The refreshRow() method provides a way for an application to 
-     * explicitly tell the JDBC driver to refetch a row(s) from the
-     * database.  An application may want to call refreshRow() when 
-     * caching or prefetching is being done by the JDBC driver to
-     * fetch the latest value of a row from the database.  The JDBC driver 
-     * may actually refresh multiple rows at once if the fetch size is 
-     * greater than one.
-     * 
-     * All values are refetched subject to the transaction isolation 
-     * level and cursor sensitivity.  If refreshRow() is called after
-     * calling updateXXX(), but before calling updateRow() then the
-     * updates made to the row are lost.  Calling refreshRow() frequently
-     * will likely slow performance.
-     *
-     * @exception SQLException if a database-access error occurs, or if
-     * called when on the insert row.
-     */
-    public synchronized void refreshRow()
-                                 throws SQLException
-    {
-
-        if (!isUpdatable)
-        {
-            throw new NotUpdatable();
-        }
-
-        if (onInsertRow)
-        {
-            throw new SQLException("Can not call refreshRow() when on insert row");
-        }
-        else if (rowData.size() == 0)
-        {
-            throw new SQLException("Can't refreshRow() on empty result set");
-        }
-        else if (isBeforeFirst())
-        {
-            throw new SQLException("Before start of result set. Can not call refreshRow().");
-        }
-        else if (isAfterLast())
-        {
-            throw new SQLException("After end of result set. Can not call refreshRow().");
-        }
-
-        if (refresher == null)
-        {
-
-            if (refreshSQL == null)
-            {
-                generateStatements();
-            }
-
-            refresher = (com.mysql.jdbc.PreparedStatement)connection.prepareStatement(
-                                refreshSQL);
-        }
-
-        refresher.clearParameters();
-
-        String Encoding = null;
-
-        if (connection.useUnicode())
-        {
-            Encoding = connection.getEncoding();
-        }
-
-        try
-        {
-
-            int num_keys = primaryKeyIndicies.size();
-
-            if (num_keys == 1)
-            {
-
-                int index = ((Integer)primaryKeyIndicies.get(0)).intValue();
-                String CurrentVal = (Encoding == null
-                                         ? new String(thisRow[index])
-                                         : new String(thisRow[index], Encoding));
-                refresher.setString(1, CurrentVal);
-            }
-            else
-            {
-
-                for (int i = 0; i < num_keys; i++)
-                {
-
-                    int index = ((Integer)primaryKeyIndicies.get(i)).intValue();
-                    String CurrentVal = (Encoding == null
-                                             ? new String(thisRow[index])
-                                             : new String(thisRow[index], 
-                                                          Encoding));
-                    refresher.setString(i + 1, CurrentVal);
-                }
-            }
-
-            java.sql.ResultSet rs = null;
-
-            try
-            {
-                rs = refresher.executeQuery();
-
-                int numCols = rs.getMetaData().getColumnCount();
-
-                if (rs.next())
-                {
-
-                    for (int i = 0; i < numCols; i++)
-                    {
-
-                        byte[] val = rs.getBytes(i + 1);
-
-                        if (val == null || rs.wasNull())
-                        {
-                            thisRow[i] = null;
-                        }
-                        else
-                        {
-                            thisRow[i] = rs.getBytes(i + 1);
-                        }
-                    }
-                }
-                else
-                {
-                    throw new SQLException("refreshRow() called on row that has been deleted or had primary key changed", 
-                                           "S1000");
-                }
-            }
-            finally
-            {
-
-                if (rs != null)
-                {
-
-                    try
-                    {
-                        rs.close();
-                    }
-                    catch (Exception ex)
-                    {
-                    }
-                }
-            }
-        }
-        catch (java.io.UnsupportedEncodingException UE)
-        {
-            throw new SQLException("Unsupported character encoding '" + 
-                                   connection.getEncoding() + "'");
-        }
-    }
+	 * JDBC 2.0
+	 *
+	 * Refresh the value of the current row with its current value in 
+	 * the database.  Cannot be called when on the insert row.
+	 *
+	 * The refreshRow() method provides a way for an application to 
+	 * explicitly tell the JDBC driver to refetch a row(s) from the
+	 * database.  An application may want to call refreshRow() when 
+	 * caching or prefetching is being done by the JDBC driver to
+	 * fetch the latest value of a row from the database.  The JDBC driver 
+	 * may actually refresh multiple rows at once if the fetch size is 
+	 * greater than one.
+	 * 
+	 * All values are refetched subject to the transaction isolation 
+	 * level and cursor sensitivity.  If refreshRow() is called after
+	 * calling updateXXX(), but before calling updateRow() then the
+	 * updates made to the row are lost.  Calling refreshRow() frequently
+	 * will likely slow performance.
+	 *
+	 * @exception SQLException if a database-access error occurs, or if
+	 * called when on the insert row.
+	 */
+	
+	public synchronized void refreshRow()
+	                             throws SQLException
+	{
+	
+	    if (!isUpdatable)
+	    {
+	        throw new NotUpdatable();
+	    }
+	
+	    if (onInsertRow)
+	    {
+	        throw new SQLException("Can not call refreshRow() when on insert row");
+	    }
+	    else if (rowData.size() == 0)
+	    {
+	        throw new SQLException("Can't refreshRow() on empty result set");
+	    }
+	    else if (isBeforeFirst())
+	    {
+	        throw new SQLException("Before start of result set. Can not call refreshRow().");
+	    }
+	    else if (isAfterLast())
+	    {
+	        throw new SQLException("After end of result set. Can not call refreshRow().");
+	    }
+	
+	    if (refresher == null)
+	    {
+	
+	        if (refreshSQL == null)
+	        {
+	            generateStatements();
+	        }
+	
+	        refresher = (com.mysql.jdbc.PreparedStatement)connection.prepareStatement(
+	                            refreshSQL);
+	    }
+	
+	    refresher.clearParameters();
+	
+	    String encoding = null;
+	
+	    if (connection.useUnicode())
+	    {
+	        encoding = connection.getEncoding();
+	    }
+	
+	    try
+	    {
+	
+	        int numKeys = primaryKeyIndicies.size();
+	
+	        if (numKeys == 1)
+	        {
+				
+	            
+	            byte[] dataFrom = null;
+	            
+	            int index = ((Integer)primaryKeyIndicies.get(0)).intValue();
+	            
+	            if (!doingUpdates)
+	            {
+	            	dataFrom = thisRow[index];
+	            }
+	            else
+	            {
+	            	dataFrom = updater.getBytes(index);
+	            	
+	            	// Primary keys not set?
+	            	if (updater.isNull(index) || dataFrom.length == 0)
+	            	{
+	            		dataFrom = thisRow[index];
+	            	}
+	            }
+	            
+	            String currentVal = (encoding == null
+	                                     ? new String(dataFrom)
+	                                     : new String(dataFrom, encoding));
+	            refresher.setString(1, currentVal);
+				
+	        }
+	        else
+	        {
+	
+	            for (int i = 0; i < numKeys; i++)
+	            {
+	
+	                byte[] dataFrom = null;
+	            
+	            	int index = ((Integer)primaryKeyIndicies.get(i)).intValue();
+	           
+	            	if (!doingUpdates)
+	            	{
+	            		dataFrom = thisRow[index];
+	            	}
+	            	else
+	            	{
+	            		dataFrom = updater.getBytes(index);
+	            		
+	            		// Primary keys not set?
+	            		if (updater.isNull(index) || dataFrom.length == 0)
+	            		{
+	            			dataFrom = thisRow[index];
+	            		}
+	            	}
+	            
+	            	String currentVal = (encoding == null
+	                                     ? new String(dataFrom)
+	                                     : new String(dataFrom, encoding));
+	            	refresher.setString(i + 1, currentVal);
+	            }
+	        }
+				
+	        java.sql.ResultSet rs = null;
+	
+	        try
+	        {
+	            rs = refresher.executeQuery();
+	
+	            int numCols = rs.getMetaData().getColumnCount();
+	
+	            if (rs.next())
+	            {
+	
+	                for (int i = 0; i < numCols; i++)
+	                {
+	
+	                    byte[] val = rs.getBytes(i + 1);
+	
+	                    if (val == null || rs.wasNull())
+	                    {
+	                        thisRow[i] = null;
+	                    }
+	                    else
+	                    {
+	                        thisRow[i] = rs.getBytes(i + 1);
+	                    }
+	                }
+	            }
+	            else
+	            {
+	                throw new SQLException("refreshRow() called on row that has been deleted or had primary key changed", 
+	                                       "S1000");
+	            }
+	        }
+	        finally
+	        {
+	
+	            if (rs != null)
+	            {
+	
+	                try
+	                {
+	                    rs.close();
+	                }
+	                catch (Exception ex)
+	                {
+	                }
+	            }
+	        }
+	    }
+	    catch (java.io.UnsupportedEncodingException UE)
+	    {
+	        throw new SQLException("Unsupported character encoding '" + 
+	                               connection.getEncoding() + "'");
+	    }
+	}
 
     /**
      * JDBC 2.0
@@ -2362,18 +2400,7 @@ public class UpdatableResultSet
         {
             updater.executeUpdate();
 
-            //int num_fields = Fields.length;
-            //for (int i = 0; i < num_fields; i++) {
-            //   if (_Updater.isNull(i)) {
-            //      System.out.println("isNull(" + i + ") = true");
-            //      This_Row[i] = null;
-            //   }
-            //   else {
-            //      System.out.println("_Updater.getBytes(i) = " + new String(_Updater.getBytes(i)));
-            //
-            //      This_Row[i] = _Updater.getBytes(i);
-            //   }
-            //}
+          
             refreshRow();
             doingUpdates = false;
         }
@@ -2734,7 +2761,7 @@ public class UpdatableResultSet
 
             FieldValues.append("=?");
         }
-
+               
         String quotedIdStr = useQuotedIdentifiers ? quotedId : "";
         updateSQL = "UPDATE " + quotedIdStr + TableName + quotedIdStr + " " + 
                     FieldValues.toString() + " WHERE " + 
@@ -2858,19 +2885,19 @@ public class UpdatableResultSet
             }
         }
 
-        int num_keys = primaryKeyIndicies.size();
+        int numKeys = primaryKeyIndicies.size();
 
-        if (num_keys == 1)
+        if (numKeys == 1)
         {
 
             int index = ((Integer)primaryKeyIndicies.get(0)).intValue();
-            updater.setBytes(num_fields + 1, 
-                             thisRow[((Integer)primaryKeyIndicies.get(0)).intValue()]);
+            byte[] keyData = thisRow[((Integer)primaryKeyIndicies.get(0)).intValue()];
+            updater.setBytes(num_fields + 1, keyData );
         }
         else
         {
 
-            for (int i = 0; i < num_keys; i++)
+            for (int i = 0; i < numKeys; i++)
             {
 
                 byte[] currentVal = thisRow[((Integer)primaryKeyIndicies.get(i)).intValue()];
