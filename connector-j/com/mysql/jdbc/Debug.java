@@ -1,3 +1,21 @@
+/*
+ Copyright (C) 2002 MySQL AB
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   
+ */
 package com.mysql.jdbc;
 
 import java.io.PrintStream;
@@ -7,6 +25,7 @@ import java.sql.DriverManager;
 import java.util.Hashtable;
 import java.util.StringTokenizer;
 
+
 /**
  * The Debug class allows debug messages on a per-class
  * basis.
@@ -15,170 +34,195 @@ import java.util.StringTokenizer;
  * The user issues a trace() call, listing the classes
  * they wish to debug.
  */
+public class Debug
+{
 
-public class Debug {
-	private static Hashtable _Classes = new Hashtable();
-	private static Object _Mutex = new Object();
-	private static boolean _watch_all = false;
+    //~ Instance/static variables .............................................
 
-	/**
-	 * Set the classes to trace.
-	 *
-	 * @param ClassList the list of classes to trace, separated by colons
-	 *                  or the keyword &quot;ALL&quot; to trace
-	 *                  all classes that use the Debug class.
-	 */
+    private static Hashtable _Classes   = new Hashtable();
+    private static Object    _Mutex     = new Object();
+    private static boolean   _watch_all = false;
 
-	public static void trace(String ClassList) {
-		StringTokenizer ST = new StringTokenizer(ClassList, ":");
-		synchronized (_Mutex) {
-			_watch_all = false;
+    //~ Methods ...............................................................
 
-			if (ClassList.equals("ALL")) {
-				_watch_all = true;
-			}
-			else {
-				_Classes = new Hashtable();
+    /**
+     * Trace a method call.
+     *
+     * <p>
+     * If the user has registered in interest in the Class of Source, then 
+     * the Source class can trace method calls through this method.
+     *
+     * @param Source the Object issuing the methodCall() method
+     * @param Method the name of the Method
+     * @param Args a list of arguments
+     */
+    public static void methodCall(Object Source, String Method, Object[] Args)
+    {
 
-				while (ST.hasMoreTokens()) {
-					String ClassName = ST.nextToken();
+        synchronized (_Mutex) {
 
-					if (!_Classes.contains(ClassName)) {
-						_Classes.put(ClassName, ClassName);
-					}
-				}
-			}
-		}
-	}
+            if (_watch_all || 
+                _Classes.contains(Source.getClass().getName())) {
 
-	/**
-	 * Trace a method call.
-	 *
-	 * <p>
-	 * If the user has registered in interest in the Class of Source, then 
-	 * the Source class can trace method calls through this method.
-	 *
-	 * @param Source the Object issuing the methodCall() method
-	 * @param Method the name of the Method
-	 * @param Args a list of arguments
-	 */
+                // Print the message
+                StringBuffer Mesg = new StringBuffer("\nTRACE: ");
+                Mesg.append(Source.toString());
+                Mesg.append(".");
+                Mesg.append(Method);
+                Mesg.append("( ");
 
-	public static void methodCall(Object Source, String Method, Object[] Args) {
-		synchronized (_Mutex) {
-			if (_watch_all || _Classes.contains(Source.getClass().getName())) {
-				// Print the message
-				StringBuffer Mesg = new StringBuffer("\nTRACE: ");
-				Mesg.append(Source.toString());
-				Mesg.append(".");
-				Mesg.append(Method);
-				Mesg.append("( ");
+                // Print the argument list
+                for (int i = 0; i < Args.length - 1; i++) {
 
-				// Print the argument list
-				for (int i = 0; i < Args.length - 1; i++) {
-					if (Args[i] == null) {
-						Mesg.append("null");
-					}
-					else {
-						if (Args[i] instanceof String) {
-							Mesg.append("\"");
-						}
-						Mesg.append(Args[i].toString());
-						if (Args[i] instanceof String) {
-							Mesg.append("\"");
-						}
-					}
-					Mesg.append(", ");
-				}
-				if (Args.length > 0) {
-					if (Args[Args.length - 1] instanceof String) {
-						Mesg.append("\"");
-					}
-					Mesg.append(Args[Args.length - 1]);
-					if (Args[Args.length - 1] instanceof String) {
-						Mesg.append("\"");
-					}
-				}
-				Mesg.append(" )\n");
+                    if (Args[i] == null) {
+                        Mesg.append("null");
+                    } else {
 
-				if (DriverManager.getLogStream() == null) {
-					System.out.println(Mesg.toString());
-				}
-				else {
-					DriverManager.println(Mesg.toString());
-				}
-			}
-		}
-	}
+                        if (Args[i] instanceof String) {
+                            Mesg.append("\"");
+                        }
 
-	/**
-	 * Trace a method call.
-	 *
-	 * <p>
-	 * If the user has registered in interest in the Class of Source, then 
-	 * the Source class can trace return calls through this method.
-	 *
-	 * @param Source the Object issuing the returnValue() method
-	 * @param Method the name of the method
-	 * @param Value the return value
-	 */
+                        Mesg.append(Args[i].toString());
 
-	public static void returnValue(Object Source, String Method, Object Value) {
-		synchronized (_Mutex) {
-			if (_watch_all || _Classes.contains(Source.getClass().getName())) {
-				// Print the message
-				StringBuffer Mesg = new StringBuffer("\nTRACE: ");
-				Mesg.append(Source.toString());
-				Mesg.append(".");
-				Mesg.append(Method);
-				Mesg.append(": Returning -> ");
+                        if (Args[i] instanceof String) {
+                            Mesg.append("\"");
+                        }
+                    }
 
-				if (Value == null) {
-					Mesg.append("null");
-				}
-				else {
-					Mesg.append(Value.toString());
-				}
-				Mesg.append("\n");
+                    Mesg.append(", ");
+                }
 
-				if (DriverManager.getLogStream() == null) {
-					System.out.println(Mesg.toString());
-				}
-				else {
-					DriverManager.println(Mesg.toString());
-				}
-			}
-		}
-	}
+                if (Args.length > 0) {
 
-	/**
-	* Log a message.
-	*
-	* <p>
-	* If the user has registered in interest in the Class of Source, then 
-	* the Source class can trace return calls through this method.
-	*
-	* @param Source the Object issuing the msg() method
-	* @param Method the name of the method
-	* @param Value the return value
-	*/
+                    if (Args[Args.length - 1] instanceof String) {
+                        Mesg.append("\"");
+                    }
 
-	public static void msg(Object Source, String Message) {
-		synchronized (_Mutex) {
-			if (_watch_all || _Classes.contains(Source.getClass().getName())) {
-				// Print the message
-				StringBuffer Mesg = new StringBuffer("\nTRACE: ");
-				Mesg.append(Source.toString());
-				Mesg.append(": ");
-				Mesg.append(Message);
-				Mesg.append("\n");
+                    Mesg.append(Args[Args.length - 1]);
 
-				if (DriverManager.getLogStream() == null) {
-					System.out.println(Mesg.toString());
-				}
-				else {
-					DriverManager.println(Mesg.toString());
-				}
-			}
-		}
-	}
+                    if (Args[Args.length - 1] instanceof String) {
+                        Mesg.append("\"");
+                    }
+                }
+
+                Mesg.append(" )\n");
+
+                if (DriverManager.getLogStream() == null) {
+                    System.out.println(Mesg.toString());
+                } else {
+                    DriverManager.println(Mesg.toString());
+                }
+            }
+        }
+    }
+
+    /**
+    * Log a message.
+    *
+    * <p>
+    * If the user has registered in interest in the Class of Source, then 
+    * the Source class can trace return calls through this method.
+    *
+    * @param Source the Object issuing the msg() method
+    * @param Method the name of the method
+    * @param Value the return value
+    */
+    public static void msg(Object Source, String Message)
+    {
+
+        synchronized (_Mutex) {
+
+            if (_watch_all || 
+                _Classes.contains(Source.getClass().getName())) {
+
+                // Print the message
+                StringBuffer Mesg = new StringBuffer("\nTRACE: ");
+                Mesg.append(Source.toString());
+                Mesg.append(": ");
+                Mesg.append(Message);
+                Mesg.append("\n");
+
+                if (DriverManager.getLogStream() == null) {
+                    System.out.println(Mesg.toString());
+                } else {
+                    DriverManager.println(Mesg.toString());
+                }
+            }
+        }
+    }
+
+    /**
+     * Trace a method call.
+     *
+     * <p>
+     * If the user has registered in interest in the Class of Source, then 
+     * the Source class can trace return calls through this method.
+     *
+     * @param Source the Object issuing the returnValue() method
+     * @param Method the name of the method
+     * @param Value the return value
+     */
+    public static void returnValue(Object Source, String Method, Object Value)
+    {
+
+        synchronized (_Mutex) {
+
+            if (_watch_all || 
+                _Classes.contains(Source.getClass().getName())) {
+
+                // Print the message
+                StringBuffer Mesg = new StringBuffer("\nTRACE: ");
+                Mesg.append(Source.toString());
+                Mesg.append(".");
+                Mesg.append(Method);
+                Mesg.append(": Returning -> ");
+
+                if (Value == null) {
+                    Mesg.append("null");
+                } else {
+                    Mesg.append(Value.toString());
+                }
+
+                Mesg.append("\n");
+
+                if (DriverManager.getLogStream() == null) {
+                    System.out.println(Mesg.toString());
+                } else {
+                    DriverManager.println(Mesg.toString());
+                }
+            }
+        }
+    }
+
+    /**
+     * Set the classes to trace.
+     *
+     * @param ClassList the list of classes to trace, separated by colons
+     *                  or the keyword &quot;ALL&quot; to trace
+     *                  all classes that use the Debug class.
+     */
+    public static void trace(String ClassList)
+    {
+
+        StringTokenizer ST = new StringTokenizer(ClassList, ":");
+
+        synchronized (_Mutex) {
+            _watch_all = false;
+
+            if (ClassList.equals("ALL")) {
+                _watch_all = true;
+            } else {
+                _Classes = new Hashtable();
+
+                while (ST.hasMoreTokens()) {
+
+                    String ClassName = ST.nextToken();
+
+                    if (!_Classes.contains(ClassName)) {
+                        _Classes.put(ClassName, ClassName);
+                    }
+                }
+            }
+        }
+    }
 }

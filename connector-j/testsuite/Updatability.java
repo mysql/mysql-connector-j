@@ -29,12 +29,14 @@ public class Updatability
         try {
             Class.forName("com.mysql.jdbc.Driver").newInstance();
             Conn = DriverManager.getConnection(DBUrl);
-            Stmt = Conn.createStatement();
+            Stmt = Conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            
             System.out.print("Create test data: ");
 
             boolean create_ok = createTestData();
             System.out.println(create_ok ? "passed" : "failed");
             System.out.println("Selecting result set");
+            
             RS = Stmt.executeQuery("SELECT * FROM UPDATABLE ORDER BY pos1");
             System.out.println("Modifying result set in-place");
 

@@ -47,39 +47,42 @@
 			</fileset>
 		</jar>
 	</target>
+	
+	<target name="test" depends="compile-testsuite">
+	  <junit printSummary="yes">
+	  <sysproperty key="com.mysql.jdbc.testsuite.url" value="jdbc:mysql:///test"/>
+	  <classpath>
+      	 <pathelement location="./build/mysql-jdbc-${version}" />
+    	 <pathelement path="${java.class.path}" />
+  	  </classpath>
 
-	<target name="compile" depends="init, compile-core, compile-jdbc1, compile-jdbc2, compile-testsuite">
+      <formatter type="plain" />
+      
+      <batchtest fork="no">
+    	<fileset dir="./build/mysql-jdbc-${version}">
+      	   <include name="**/*Test.java" />
+    	</fileset>
+      </batchtest>
+      </junit>
+	</target>
+
+	<target name="compile" depends="init, compile-core, compile-testsuite">
 	</target>
 
 	<target name="compile-core" depends="init">
 		<javac srcdir="./build/mysql-jdbc-${version}"
-			excludes="testsuite/**, com/mysql/jdbc/jdbc1/**, com/mysql/jdbc/jdbc2/**"
+			excludes="testsuite/**"
 			classpath="./build/mysql-jdbc-${version};lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar"
-			debug="off"
+			debug="on"
 		/>
 
 	</target>
 
-	<target name="compile-jdbc1" depends="init, compile-core">
-		<exec dir="./build/mysql-jdbc-${version}/com/mysql/jdbc/jdbc1" executable="${javac.1.1}">
-			<arg line="-g -classpath ${basedir}/build/mysql-jdbc-${version};${java1.1.home}/lib/classes.zip *.java"/>
-		</exec>
-	</target>
-	
-
-	<target name="compile-jdbc2" depends="init, compile-core">
-		<javac srcdir="./build/mysql-jdbc-${version}"
-			excludes="testsuite/**, com/mysql/jdbc/jdbc1/**"
-			classpath="./build/mysql-jdbc-${version};lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar"
-			debug="off"
-		/>
-
-	</target>
 
 	<target name="compile-testsuite">
 		<javac srcdir="./build/mysql-jdbc-${version}"
 			excludes="com/mysql/jdbc/**"
-			classpath="lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar"
+			classpath="lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar;lib-nodist/junit.jar"
 		/>
 
 	</target>

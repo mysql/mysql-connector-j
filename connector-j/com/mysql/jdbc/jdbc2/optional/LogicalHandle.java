@@ -1,3 +1,22 @@
+/*
+ Copyright (C) 2002 MySQL AB
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   
+ */
+ 
 /**
  * This class serves as a wrapper for the org.gjt.mm.mysql.jdbc2.Connection class.  
  * It is returned to the application server which may wrap it again and then return
@@ -18,7 +37,6 @@
 package com.mysql.jdbc.jdbc2.optional;
 
 import java.sql.*;
-import com.mysql.jdbc.jdbc2.optional.MysqlPooledConnection;
 
 public class LogicalHandle implements Connection
 {
@@ -532,4 +550,218 @@ public class LogicalHandle implements Connection
             }       
         }    
     }
+	/**
+	 * @see Connection#createStatement(int, int, int)
+	 */
+	public java.sql.Statement createStatement(int arg0, int arg1, int arg2)
+		throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                return mc.createStatement(arg0, arg1, arg2);
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }    
+	}
+
+	/**
+	 * @see Connection#getHoldability()
+	 */
+	public int getHoldability() throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                return mc.getHoldability();
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }    
+	}
+
+	/**
+	 * @see Connection#prepareCall(String, int, int, int)
+	 */
+	public java.sql.CallableStatement prepareCall(
+		String arg0,
+		int arg1,
+		int arg2,
+		int arg3)
+		throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                return mc.prepareCall(
+		arg0,
+		arg1,
+		arg2,
+		arg3);
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }   
+	}
+
+	/**
+	 * @see Connection#prepareStatement(String, int, int, int)
+	 */
+	public java.sql.PreparedStatement prepareStatement(
+		String arg0,
+		int arg1,
+		int arg2,
+		int arg3)
+		throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                return mc.prepareStatement(
+		arg0,
+		arg1,
+		arg2,
+		arg3);
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }   
+	}
+
+	/**
+	 * @see Connection#prepareStatement(String, int)
+	 */
+	public java.sql.PreparedStatement prepareStatement(String arg0, int arg1)
+		throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                return mc.prepareStatement(arg0, arg1);
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }   
+	}
+
+	/**
+	 * @see Connection#prepareStatement(String, int[])
+	 */
+	public java.sql.PreparedStatement prepareStatement(String arg0, int[] arg1)
+		throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                return mc.prepareStatement(arg0, arg1);
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }   
+	}
+
+	/**
+	 * @see Connection#prepareStatement(String, String[])
+	 */
+	public java.sql.PreparedStatement prepareStatement(String arg0, String[] arg1)
+		throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                return mc.prepareStatement(arg0, arg1);
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }   
+	}
+
+	/**
+	 * @see Connection#releaseSavepoint(Savepoint)
+	 */
+	public void releaseSavepoint(Savepoint arg0) throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                mc.releaseSavepoint(arg0);
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }   
+	}
+
+	/**
+	 * @see Connection#rollback(Savepoint)
+	 */
+	public void rollback(Savepoint arg0) throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                mc.rollback(arg0);
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }   
+	}
+
+	/**
+	 * @see Connection#setHoldability(int)
+	 */
+	public void setHoldability(int arg0) throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                mc.setHoldability(arg0);
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }   
+	}
+
+	/**
+	 * @see Connection#setSavepoint()
+	 */
+	public java.sql.Savepoint setSavepoint() throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                return mc.setSavepoint();
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }   
+	}
+
+	/**
+	 * @see Connection#setSavepoint(String)
+	 */
+	public java.sql.Savepoint setSavepoint(String arg0) throws SQLException {
+		if (closed) {
+            throw new SQLException(invalidHandleStr);
+        } else {    
+            try {
+                return mc.setSavepoint(arg0);
+            } catch (SQLException sqlException) {
+                mpc.callListener(2, sqlException);
+                throw sqlException;
+            }       
+        }   
+	}
+
 }

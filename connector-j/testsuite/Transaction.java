@@ -49,7 +49,7 @@ public class Transaction
             } catch (SQLException sqlEx) { /* ignore */
             }
 
-            Stmt.executeUpdate("CREATE TABLE trans_test (id int not null primary key, decdata double) type=BDB");
+            Stmt.executeUpdate("CREATE TABLE trans_test (id int not null primary key, decdata double) type=InnoDB");
             Conn.setAutoCommit(false);
             Stmt.executeUpdate("INSERT INTO trans_test (id, decdata) VALUES (1, 1.0)");
             Conn.rollback();
