@@ -31,7 +31,13 @@ public class Statements {
         {
             Class.forName("org.gjt.mm.mysql.Driver").newInstance();
 
+			long begin = System.currentTimeMillis();
+			
             conn = DriverManager.getConnection(DBUrl);
+            
+            long end = System.currentTimeMillis();
+            
+            System.out.println(end - begin);
 
             stmt = conn.createStatement();
 

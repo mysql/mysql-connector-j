@@ -40,6 +40,19 @@ public class DateTest
             System.out.println("Selected date from row " + eventID +
                                ": " + ts.getTime());
             pst.close();
+            
+            conn.createStatement().executeUpdate("create table if not exists date_test " +
+    			"(yr year) type = MyISAM;");
+    			
+    		conn.createStatement().executeUpdate("insert into date_test values (74)");
+    		conn.createStatement().executeUpdate("insert into date_test values (1974)");
+    		
+    		rs = conn.createStatement().executeQuery("select * from date_test");
+    		
+    		while (rs.next())
+    		{
+    			System.out.println(rs.getDate(1));
+    		}
         }
         catch (Exception e)
         {

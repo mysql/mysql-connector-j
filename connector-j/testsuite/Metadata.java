@@ -38,7 +38,16 @@ public class Metadata {
 
 	    DatabaseMetaData dbmd = conn.getMetaData();
 
-	    ResultSet rs = dbmd.getImportedKeys("shopcart", null, "ORDERITEM");
+	    ResultSet rs = dbmd.getImportedKeys(null, null, "child");
+            
+
+           	while (rs.next()) {
+			System.out.println(rs.getString("PKCOLUMN_NAME") + " -> " +rs.getString("FKCOLUMN_NAME"));
+		}
+		
+		rs.close();
+		
+		rs = dbmd.getExportedKeys(null, null, "parent");
             
 
            	while (rs.next()) {

@@ -33,10 +33,27 @@ public class Updatability
 	    
 	    System.out.println("Modifying result set in-place");
 
+		int numCols = RS.getMetaData().getColumnCount();
+		
 	    while (RS.next()) {
+	    	System.out.print("Before modification: ");
+	    	for (int i = 0; i < numCols; i++)
+	    	{
+	    		System.out.print(RS.getString(i + 1)  + ",");
+	    	}
+	    	System.out.println();
+	    		
 		int row_pos = RS.getInt(1);
 		RS.updateString(3, "New Data" + (100 - row_pos));
 		RS.updateRow();
+		
+		System.out.print("After modification: ");
+	    	for (int i = 0; i < numCols; i++)
+	    	{
+	    		System.out.print(RS.getString(i + 1) + ",");
+	    	}
+	    	System.out.println("\n");
+		
 	    }
 
 	    //
