@@ -1124,7 +1124,10 @@ public class DatabaseMetaData
                                     "show table status " + databasePart);
             }
 	    
-                                    
+                   
+                String foreignTableWithCase = getTableNameWithCase(foreignTable);
+                String primaryTableWithCase = getTableNameWithCase(primaryTable);
+                
 	            /*
 	             * Parse imported foreign key information
 	             */
@@ -1194,7 +1197,7 @@ public class DatabaseMetaData
 	
                                     
                                     
-	                                if (dummy.compareTo(foreignTable) != 0) {
+	                                if (dummy.compareTo(foreignTableWithCase) != 0) {
 	
 	                                    continue;
 	                                } else {
@@ -1210,7 +1213,7 @@ public class DatabaseMetaData
                                     
                                     
 	                                // Skip foreign key if it doesn't refer to the right table
-	                                if (referencedTable.compareTo(primaryTable) != 0) {
+	                                if (referencedTable.compareTo(primaryTableWithCase) != 0) {
 	
 	                                    continue;
 	                                }
@@ -1532,8 +1535,8 @@ public class DatabaseMetaData
 
            
 
-            
-                
+                // lower-case table name might be turned on
+                String tableNameWithCase = getTableNameWithCase(table);
 
                 /*
                 * Parse imported foreign key information
@@ -1563,7 +1566,7 @@ public class DatabaseMetaData
 
                                     String keys = commentTokens.nextToken();
                                     ForeignKeyUtil.getExportKeyResults(catalog, 
-                                                                       table, 
+                                                                       tableNameWithCase, 
                                                                        keys, 
                                                                        tuples, 
                                                                        fkresults.getString(
@@ -1638,6 +1641,12 @@ public class DatabaseMetaData
             return buildResultSet(fields, new ArrayList());
         }
     }
+
+	private String getTableNameWithCase(String table) {
+		String tableNameWithCase = 
+		    (this.conn.lowerCaseTableNames() ? table.toLowerCase() : table);
+		return tableNameWithCase;
+	}
 
     /**
      * Get all the "extra" characters that can be used in unquoted

@@ -341,7 +341,12 @@ public class Connection
     
     private boolean pedantic = false;
     
-
+    /**
+     * Is lower case table names on?
+     */
+    
+    private boolean lowerCaseTableNames = false;
+    
     /**
      * Default socket factory classname
      */
@@ -1053,6 +1058,12 @@ public class Connection
                 }
             }
 
+            String lowerCaseTables = (String)serverVariables.get("lower_case_table_names");
+            
+            if (lowerCaseTables != null) {
+                this.lowerCaseTableNames = lowerCaseTables.trim().equalsIgnoreCase("on");
+            }
+            
             if (this.useTimezone && this.serverVariables.containsKey("timezone")) {
                 // user can specify/override as property
                 String canoncicalTimezone = this.props.getProperty("serverTimezone");
@@ -2279,6 +2290,15 @@ public class Connection
         }
     }
 
+    /**
+     * Is the server configured to use lower-case
+     * table names only?
+     */
+    
+    public boolean lowerCaseTableNames() {
+        return this.lowerCaseTableNames;
+    }
+    
     /**
      * DOCUMENT ME!
      * 
