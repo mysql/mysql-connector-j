@@ -75,6 +75,8 @@ public class MysqlIO {
     private static final int CLIENT_ODBC = 64; /* Odbc client */
     private static final int CLIENT_PROTOCOL_41 = 16384;
 
+    private static final int CLIENT_INTERACTIVE = 1024;
+    
     //
     // For SQL Warnings
     //
@@ -138,6 +140,7 @@ public class MysqlIO {
     private String socketFactoryClassName = null;
     private SocketFactory socketFactory = null;
     private javax.net.ssl.SSLSocketFactory sslFact = null;
+    private boolean isInteractiveClient = false;
 
     //~ Constructors ..........................................................
 
@@ -182,6 +185,8 @@ public class MysqlIO {
                                                   16384);
         this.mysqlOutput = new BufferedOutputStream(this.mysqlConnection.getOutputStream(), 
                                                     16384);
+                                                    
+        this.isInteractiveClient = this.connection.isInteractiveClient();
     }
 
     //~ Methods ...............................................................
@@ -524,6 +529,10 @@ public class MysqlIO {
 
             // return FOUND rows
             clientParam |= CLIENT_FOUND_ROWS;
+            
+            if (isInteractiveClient) {
+                clientParam |= CLIENT_INTERACTIVE;
+            }
 
             // Authenticate
             if (this.protocolVersion > 9) {
