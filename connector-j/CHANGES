@@ -1,6 +1,16 @@
 # Changelog
 # $Id$
 
+xx-xx-xx - Version 3.0.4-gamma
+	- Added quoted identifiers to database names for 
+	  Connection.setCatalog.
+	- Added support for quoted identifiers in PreparedStatement
+	  parser.
+	- Streamlined character conversion and byte[] handling in 
+	  PreparedStatements for setByte().
+	- Reduce memory footprint of PreparedStatements by sharing 
+	  outbound packet with MysqlIO.
+	  
 12-17-02 - Version 3.0.3-dev
 	- Changed charsToByte in SingleByteCharConverter to be non-static
 	- Changed SingleByteCharConverter to use lazy initialization of each
