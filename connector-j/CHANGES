@@ -1,0 +1,505 @@
+# Changelog
+# $Id$
+
+01-27-02 - Version 2.0.11
+
+	 - Fixed missing DELETE_RULE value in 
+	   DBMD.getImported/ExportedKeys() and getCrossReference().
+	 - Full synchronization of Statement.java.
+	 - More changes to fix "Unexpected end of input stream"
+	   errors when reading BLOBs. This should be the last fix.
+	   
+01-24-02 - Version 2.0.10
+
+     - Fixed spurious "Unexpected end of input stream" errors in 
+       MysqlIO (bug 507456).
+     - Fixed null-pointer-exceptions when using 
+       MysqlConnectionPoolDataSource with Websphere 4 (bug 505839).
+       
+01-13-02 - Version 2.0.9
+
+	 - Ant build was corrupting included jar files, fixed 
+	   (bug 487669).
+	 - Fixed extra memory allocation in MysqlIO.readPacket() 
+	   (bug 488663).
+     - Implementation of DatabaseMetaData.getExported/ImportedKeys() and
+       getCrossReference().
+     - Full synchronization on methods modifying instance and class-shared
+       references, driver should be entirely thread-safe now (please
+       let me know if you have problems)
+     - DataSource implementations moved to org.gjt.mm.mysql.jdbc2.optional
+       package, and (initial) implementations of PooledConnectionDataSource
+       and XADataSource are in place (thanks to Todd Wolff for the 
+       implementation and testing of PooledConnectionDataSource with 
+       IBM WebSphere 4).
+     - Added detection of network connection being closed when reading packets
+       (thanks to Todd Lizambri).
+     - Fixed quoting error with escape processor (bug 486265).
+     - Report batch update support through DatabaseMetaData (bug 495101).
+     - Fixed off-by-one-hour error in PreparedStatement.setTimestamp() 
+       (bug 491577).
+     - Removed concatenation support from driver (the '||' operator),
+       as older versions of VisualAge seem to be the only thing that
+       use it, and it conflicts with the logical '||' operator. You will
+       need to start mysqld with the "--ansi" flag to use the '||' 
+       operator as concatenation (bug 491680)
+     - Fixed casting bug in PreparedStatement (bug 488663).
+     
+11-25-01 - Version 2.0.8
+
+	 - Batch updates now supported (thanks to some inspiration 
+	   from Daniel Rall).
+	 - XADataSource/ConnectionPoolDataSource code (experimental)
+	 - PreparedStatement.setAnyNumericType() now handles positive
+	   exponents correctly (adds "+" so MySQL can understand it).
+	 - DatabaseMetaData.getPrimaryKeys() and getBestRowIdentifier()
+	   are now more robust in identifying primary keys (matches 
+	   regardless of case or abbreviation/full spelling of Primary Key
+	   in Key_type column).
+	   
+10-24-01 - Version 2.0.7
+
+         - PreparedStatement.setCharacterStream() now implemented
+         
+	 - Fixed dangling socket problem when in high availability
+	   (autoReconnect=true) mode, and finalizer for Connection will
+	   close any dangling sockets on GC.
+	   
+         - Fixed ResultSetMetaData.getPrecision() returning one
+           less than actual on newer versions of MySQL.
+           
+         - ResultSet.getBlob() now returns null if column value
+           was null.
+           
+         - Character sets read from database if useUnicode=true
+           and characterEncoding is not set. (thanks to 
+           Dmitry Vereshchagin)
+           
+         - Initial transaction isolation level read from 
+           database (if avaialable) (thanks to Dmitry Vereshchagin)
+           
+         - Fixed DatabaseMetaData.supportsTransactions(), and
+           supportsTransactionIsolationLevel() and getTypeInfo()
+           SQL_DATETIME_SUB and SQL_DATA_TYPE fields not being
+           readable.
+            
+         - Fixed PreparedStatement generating SQL that would end
+           up with syntax errors for some queries.
+           
+         - Fixed ResultSet.isAfterLast() always returning false.
+         
+         - Fixed timezone issue in PreparedStatement.setTimestamp()
+           (thanks to Erik Olofsson)
+         
+         - Captialize type names when "captializeTypeNames=true"
+           is passed in URL or properties (for WebObjects, thanks
+           to Anjo Krank)
+         
+         - Updatable result sets now correctly handle NULL
+           values in fields.
+           
+         - PreparedStatement.setDouble() now uses full-precision
+           doubles (reverting a fix made earlier to truncate them).
+           
+         - PreparedStatement.setBoolean() will use 1/0 for values
+           if your MySQL Version >= 3.21.23.
+
+06-16-01 - Fixed PreparedStatement parameter checking
+	 
+	 - Fixed case-sensitive column names in ResultSet.java
+
+06-13-01 - Fixed ResultSet.getBlob() ArrayIndex out-of-bounds
+
+	 - Fixed ResultSetMetaData.getColumnTypeName for TEXT/BLOB
+
+         - Fixed ArrayIndexOutOfBounds when sending large BLOB queries 
+           (Max size packet was not being set)
+
+         - Added ISOLATION level support to Connection.setIsolationLevel()
+
+         - Fixed NPE on PreparedStatement.executeUpdate() when all columns
+           have not been set.
+
+         - Fixed data parsing of TIMESTAMPs with 2-digit years
+
+         - Added Byte to PreparedStatement.setObject()
+
+         - ResultSet.getBoolean() now recognizes '-1' as 'true'
+
+         - ResultSet has +/-Inf/inf support
+
+         - ResultSet.insertRow() works now, even if not all columns are
+           set (they will be set to "NULL")
+
+         - DataBaseMetaData.getCrossReference() no longer ArrayIndexOOB
+
+         - getObject() on ResultSet correctly does TINYINT->Byte and
+           SMALLINT->Short
+
+12-03-00 - Implemented getBigDecimal() without scale component
+           for JDBC2.
+
+         - Fixed composite key problem with updateable result sets.
+
+         - Added detection of -/+INF for doubles.
+
+         - Faster ASCII string operations.
+
+         - Fixed incorrect detection of MAX_ALLOWED_PACKET, so sending
+           large blobs should work now.
+
+         - Fixed off-by-one error in java.sql.Blob implementation code.
+
+         - Added "ultraDevHack" URL parameter, set to "true" to allow 
+           (broken) Macromedia UltraDev to use the driver.
+
+04-06-00 - Fixed RSMD.isWritable() returning wrong value. 
+           Thanks to Moritz Maass.
+
+         - Cleaned up exception handling when driver connects
+
+	 - Columns that are of type TEXT now return as Strings
+           when you use getObject()
+
+	 - DatabaseMetaData.getPrimaryKeys() now works correctly wrt
+	   to key_seq. Thanks to Brian Slesinsky.
+
+         - No escape processing is done on PreparedStatements anymore
+           per JDBC spec.
+
+         - Fixed many JDBC-2.0 traversal, positioning bugs, especially
+           wrt to empty result sets. Thanks to Ron Smits, Nick Brook,
+           Cessar Garcia and Carlos Martinez.
+
+	 - Fixed some issues with updatability support in ResultSet when
+           using multiple primary keys.
+
+02-21-00 - Fixed Bad Handshake problem.
+
+01-10-00 - Fixes to ResultSet for insertRow() - Thanks to
+           Cesar Garcia
+
+	 - Fix to Driver to recognize JDBC-2.0 by loading a JDBC-2.0
+           class, instead of relying on JDK version numbers. Thanks
+	   to John Baker.
+
+	 - Fixed ResultSet to return correct row numbers.
+
+	 - Statement.getUpdateCount() now returns rows matched,
+	   instead of rows actually updated, which is more SQL-92
+	   like.
+
+10-29-99 - Statement/PreparedStatement.getMoreResults() bug fixed. 
+           Thanks to Noel J. Bergman.
+
+         - Added Short as a type to PreparedStatement.setObject().
+           Thanks to Jeff Crowder
+
+         - Driver now automagically configures maximum/preferred packet
+           sizes by querying server.
+
+         - Autoreconnect code uses fast ping command if server supports
+           it.
+
+         - Fixed various bugs wrt. to packet sizing when reading from
+           the server and when alloc'ing to write to the server.
+
+08-17-99 - Now compiles under JDK-1.2. The driver supports both JDK-1.1
+           and JDK-1.2 at the same time through a core set of classes.
+           The driver will load the appropriate interface classes at
+           runtime by figuring out which JVM version you are using.
+
+         - Fixes for result sets with all nulls in the first row.
+           (Pointed out by Tim Endres)
+
+         - Fixes to column numbers in SQLExceptions in ResultSet
+           (Thanks to Blas Rodriguez Somoza)
+
+         - The database no longer needs to specified to connect.
+           (Thanks to Christian Motschke)
+
+07-04-99 - Better Documentation (in progress), in doc/mm.doc/book1.html
+
+           DBMD now allows null for a column name pattern (not in 
+           spec), which it changes to '%'.
+
+           DBMD now has correct types/lengths for getXXX().
+
+           ResultSet.getDate(), getTime(), and getTimestamp() fixes. 
+           (contributed by Alan Wilken)
+
+           EscapeProcessor now handles \{ \} and { or } inside quotes
+           correctly. (thanks to Alik for some ideas on how to fix it)
+
+           Fixes to properties handling in Connection.
+           (contributed by Juho Tikkala)
+
+           ResultSet.getObject() now returns null for NULL columns
+           in the table, rather than bombing out.
+           (thanks to Ben Grosman)
+
+           ResultSet.getObject() now returns Strings for types
+           from MySQL that it doesn't know about. (Suggested by
+           Chris Perdue)
+
+           Removed DataInput/Output streams, not needed, 1/2 number
+           of method calls per IO operation.
+
+           Use default character encoding if one is not specified. This
+           is a work-around for broken JVMs, because according to spec,
+           EVERY JVM must support "ISO8859_1", but they don't.
+
+06-03-99 - Fixed Connection to use the platform character encoding
+           instead of "ISO8859_1" if one isn't explicitly set. This 
+           fixes problems people were having loading the character-
+           converter classes that didn't always exist (JVM bug).
+           (thanks to Fritz Elfert for pointing out this problem)
+
+05-27-99 - Changed MysqlIO to re-use packets where possible to reduce
+           memory usage.
+
+05-13-99 - Fixed escape-processor bugs pertaining to {} inside
+           quotes.
+
+04-14-99 - Fixed character-set support for non-Javasoft JVMs
+           (thanks to many people for pointing it out)
+
+           Fixed ResultSet.getBoolean() to recognize 'y' & 'n'
+           as well as '1' & '0' as boolean flags.
+           (thanks to Tim Pizey)
+
+           Fixed ResultSet.getTimestamp() to give better performance.
+           (thanks to Richard Swift)
+
+           Fixed getByte() for numeric types.
+           (thanks to Ray Bellis)
+
+           Fixed DatabaseMetaData.getTypeInfo() for DATE type.
+           (thanks to Paul Johnston)
+
+           Fixed EscapeProcessor for "fn" calls.
+	   (thanks to Piyush Shah at locomotive.org)
+
+           Fixed EscapeProcessor to not do extraneous work if there
+           are no escape codes.
+           (thanks to Ryan Gustafson)
+
+           Fixed Driver to parse URLs of the form "jdbc:mysql://host:port"
+           (thanks to Richard Lobb)
+
+03-24-99 - Fixed Timestamps for PreparedStatements
+    
+           Fixed null pointer exceptions in RSMD and RS
+
+           Re-compiled with jikes for valid class files (thanks ms!)
+
+03-08-99 - Fixed escape processor to deal with un-matched { and }
+           (thanks to Craig Coles)
+           
+           Fixed escape processor to create more portable (between
+           DATETIME and TIMESTAMP types) representations so that
+           it will work with BETWEEN clauses.
+           (thanks to Craig Longman)
+           
+           MysqlIO.quit() now closes the socket connection. Before,
+           after many failed connections some OS's would run out
+           of file descriptors. (thanks to Michael Brinkman)
+           
+           Fixed NullPointerException in Driver.getPropertyInfo.
+           (thanks to Dave Potts)
+            
+           Fixes to MysqlDefs to allow all *text fields to be
+           retrieved as Strings.
+           (thanks to Chris at Leverage)
+           
+           Fixed setDouble in PreparedStatement for large numbers
+           to avoid sending scientific notation to the database.
+           (thanks to J.S. Ferguson)
+           
+           Fixed getScale() and getPrecision() in RSMD.
+           (contrib'd by James Klicman)
+           
+           Fixed getObject() when field was DECIMAL or NUMERIC
+           (thanks to Bert Hobbs)
+           
+           DBMD.getTables() bombed when passed a null table-name
+           pattern. Fixed. (thanks to Richard Lobb)
+           
+           Added check for "client not authorized" errors during
+           connect. (thanks to Hannes Wallnoefer)
+           
+02-19-99 - Result set rows are now byte arrays. Blobs and Unicode
+           work bidriectonally now. The useUnicode and encoding
+           options are implemented now.
+           
+           Fixes to PreparedStatement to send binary set by
+           setXXXStream to be sent un-touched to the MySQL server.
+           
+           Fixes to getDriverPropertyInfo().
+           
+12-31-98 - Changed all ResultSet fields to Strings, this should allow
+           Unicode to work, but your JVM must be able to convert
+           between the character sets. This should also make reading
+           data from the server be a bit quicker, because there is now
+           no conversion from StringBuffer to String.
+
+           Changed PreparedStatement.streamToString() to be more
+           efficient (code from Uwe Schaefer).
+
+	     URL parsing is more robust (throws SQL exceptions on errors
+           rather than NullPointerExceptions)
+
+           PreparedStatement now can convert Strings to Time/Date values
+           via setObject() (code from Robert Currey).
+
+	     IO no longer hangs in Buffer.readInt(), that bug was
+           introduced in 1.1d when changing to all byte-arrays for
+           result sets. (Pointed out by Samo Login)
+
+11-03-98 - Fixes to DatabaseMetaData to allow both IBM VA and J-Builder
+           to work. Let me know how it goes. (thanks to Jac Kersing)
+
+	     Fix to ResultSet.getBoolean() for NULL strings 
+	     (thanks to Barry Lagerweij)
+
+	     Beginning of code cleanup, and formatting. Getting ready
+	     to branch this off to a parallel JDBC-2.0 source tree.
+
+           Added "final" modifier to critical sections in MysqlIO and
+           Buffer to allow compiler to inline methods for speed.
+
+9-29-98 - If object references passed to setXXX() in PreparedStatement are
+          null, setNull() is automatically called for you. (Thanks for the
+          suggestion goes to Erik Ostrom)
+
+          setObject() in PreparedStatement will now attempt to write a 
+          serialized  representation of the object to the database for
+          objects of Types.OTHER and objects of unknown type.
+
+          Util now has a static method readObject() which given a ResultSet
+          and a column index will re-instantiate an object serialized in
+          the above manner.
+
+9-02-98 - Got rid of "ugly hack" in MysqlIO.nextRow(). Rather than
+          catch an exception, Buffer.isLastDataPacket() was fixed.
+          
+          Connection.getCatalog() and Connection.setCatalog()
+          should work now.
+
+          Statement.setMaxRows() works, as well as setting
+          by property maxRows. Statement.setMaxRows() overrides
+          maxRows set via properties or url parameters.
+
+	  Automatic re-connection is available. Because it has
+          to "ping" the database before each query, it is
+          turned off by default. To use it, pass in "autoReconnect=true"
+          in the connection URL. You may also change the number of
+          reconnect tries, and the initial timeout value via 
+          "maxReconnects=n" (default 3) and "initialTimeout=n" 
+          (seconds, default 2) parameters. The timeout is an 
+          exponential backoff type of timeout, e.g. if you have initial 
+          timeout of 2 seconds, and maxReconnects of 3, then the driver
+          will timeout 2 seconds, 4 seconds, then 16 seconds between each
+          re-connection attempt.
+
+8-24-98 - Fixed handling of blob data in Buffer.java
+	
+	  Fixed bug with authentication packet being
+	  sized too small.
+
+	  The JDBC Driver is now under the LPGL to allow 
+          people to legally include it in their non-GPL'd 
+          software.
+	
+8-14-98 - Fixed Buffer.readLenString() to correctly
+          read data for BLOBS.
+          
+          Fixed PreparedStatement.stringToStream to
+          correctly read data for BLOBS.
+          
+          Fixed PreparedStatement.setDate() to not
+          add a day.
+          
+          (above fixes thanks to Vincent Partington)
+          
+          Added URL parameter parsing (?user=... etc).
+          
+          (thanks to Sander Magi).
+
+8-04-98 - Big news! New package name. Tim Endres from ICE
+          Engineering is starting a new source tree for
+          GNU GPL'd Java software. He's graciously given
+          me the org.gjt.mm package directory to use, so now 
+          the driver is in the org.gjt.mm.mysql package scheme.
+          I'm "legal" now. Look for more information on Tim's
+          project soon.
+          
+          Now using dynamically sized packets to reduce
+          memory usage when sending commands to the DB.
+          
+          Small fixes to getTypeInfo() for parameters, etc.
+          
+          DatabaseMetaData is now fully implemented. Let me
+          know if these drivers work with the various IDEs
+          out there. I've heard that they're working with
+          JBuilder right now.
+          
+          Added JavaDoc documentation to the package.
+          
+          Package now available in .zip or .tar.gz.
+          
+7-29-98 - Implemented getTypeInfo(). 
+          Connection.rollback() now throws an SQLException
+          per the JDBC spec.
+
+7-28-98 - Added PreparedStatement that supports all JDBC API
+          methods for PreparedStatement including InputStreams.
+          Please check this out and let me know if anything is
+          broken.
+          
+          Fixed a bug in ResultSet that would break some
+          queries that only returned 1 row.
+          
+          Fixed bugs in DatabaseMetaData.getTables(), 
+          DatabaseMetaData.getColumns() and
+          DatabaseMetaData.getCatalogs().
+          
+          Added functionality to Statement that allows
+          executeUpdate() to store values for IDs that are
+          automatically generated for AUTO_INCREMENT fields.
+          Basically, after an executeUpdate(), look at the
+          SQLWarnings for warnings like "LAST_INSERTED_ID =
+          'some number', COMMAND = 'your SQL query'".
+          
+          If you are using AUTO_INCREMENT fields in your
+          tables and are executing a lot of executeUpdate()s
+          on one Statement, be sure to clearWarnings() every
+          so often to save memory.
+
+7-06-98 - Split MysqlIO and Buffer to separate classes. Some
+          ClassLoaders gave an IllegalAccess error for some
+          fields in those two classes. Now mm.mysql works in 
+          applets and all classloaders.
+
+          Thanks to Joe Ennis <jce@mail.boone.com> for pointing
+          out the problem and working on a fix with me.
+
+7-01-98 - Fixed DatabaseMetadata problems in getColumns() and
+          bug in switch statement in the Field constructor.
+
+          Thanks to Costin Manolache <costin@tdiinc.com> for 
+          pointing these out.
+
+5-21-98 - Incorporated efficiency changes from 
+          Richard Swift <Richard.Swift@kanatek.ca> in
+          MysqlIO.java and ResultSet.java
+
+          We're now 15% faster than gwe's driver.
+
+          Started working on DatabaseMetaData.
+          
+          The following methods are implemented:
+           * getTables() 
+           * getTableTypes()
+           * getColumns
+           * getCatalogs()

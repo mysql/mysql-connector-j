@@ -1,0 +1,98 @@
+<project name="MM.MySQL" default="dist" basedir=".">
+	<property name="version" value="2.0.11"/>
+	<property name="java1.1.home" value="d:/jdk1.1.8"/>
+	<property name="javac.1.1" value="${java1.1.home}/bin/javac"/>
+	<!-- enable the following property to build under Eclipse... -->
+	<!--<property name="build.compiler" value="org.eclipse.pde.internal.core.JDTCompilerAdapter"/>-->
+
+
+	
+
+	<target name="init">
+		<filter token="VERSION" value="${version}"/>
+		<delete dir="build"/>
+
+		<copy todir="./build/mm.mysql-${version}" filtering="true">
+			<fileset dir="." excludes="**/CVS">
+				<patternset id="classjar" >
+    					<exclude name="**/*.class*"/>
+    					<exclude name="**/*.jar"/>
+  				</patternset>
+			</fileset>
+		</copy>
+		<copy todir="./build/mm.mysql-${version}" filtering="false">
+			<fileset dir="." excludes="**/CVS">
+				<patternset id="dojar" >
+    					<include name="**/*.jar*"/>
+  				</patternset>
+			</fileset>
+		</copy>
+
+	</target>
+
+	<target name="dist" depends="init, compile">
+		
+		<delete file="./build/mm.mysql-${version}-bin.jar"/>
+		<delete file="../mm.mysql-${version}.jar"/>
+
+		<jar jarfile="./build/mm.mysql-${version}/mm.mysql-${version}-bin.jar">
+			<fileset dir="./build/mm.mysql-${version}"
+				includes="**/*.class"/>
+			<fileset dir="./build/mm.mysql-${version}"
+				includes="COPYING, README"/>
+		</jar>
+
+		<jar jarfile="../mm.mysql-${version}.jar">
+			<fileset dir="./build">
+				<patternset id="non.test.sources" >
+    					<exclude name="**/*.nb*"/>
+    					<exclude name="**/*.bak"/>
+    					<exclude name="**/*.*~"/>
+  				</patternset>
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="compile" depends="init, compile-core, compile-jdbc1, compile-jdbc2, compile-testsuite">
+	</target>
+
+	<target name="compile-core" depends="init">
+		<javac srcdir="./build/mm.mysql-${version}"
+			excludes="testsuite/**, org/gjt/mm/mysql/jdbc1/**, org/gjt/mm/mysql/jdbc2/**"
+			classpath="./build/mm.mysql-${version};lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar"
+			debug="off"
+		/>
+
+	</target>
+
+	<target name="compile-jdbc1" depends="init, compile-core">
+		<exec dir="./build/mm.mysql-${version}/org/gjt/mm/mysql/jdbc1" executable="${javac.1.1}">
+			<arg line="-g -classpath ${basedir}/build/mm.mysql-${version};${java1.1.home}/lib/classes.zip *.java"/>
+		</exec>
+	</target>
+	
+
+	<target name="compile-jdbc2" depends="init, compile-core">
+		<javac srcdir="./build/mm.mysql-${version}"
+			excludes="testsuite/**, org/gjt/mm/mysql/jdbc1/**"
+			classpath="./build/mm.mysql-${version};lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar"
+			debug="off"
+		/>
+
+	</target>
+
+	<target name="compile-testsuite">
+		<javac srcdir="./build/mm.mysql-${version}"
+			excludes="org/gjt/mm/mysql/**"
+			classpath="lib/jdbc2_0-stdext.jar;lib/jta-spec1_0_1.jar"
+		/>
+
+	</target>
+
+	<target name="clean">
+		<delete>
+			<fileset dir="." includes="**/*.class"/>
+		</delete>
+	</target>
+
+</project>
