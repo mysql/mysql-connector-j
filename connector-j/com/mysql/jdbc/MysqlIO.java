@@ -1702,9 +1702,7 @@ public class MysqlIO {
             } else {
                 packet.writeLongInt(packetLen - headerLength);
                 packet.writeByte(this.packetSequence);
-                System.out.println("Sending: ");
-                packet.dump();
-                System.out.println();
+                
                 this.mysqlOutput.write(packet.getByteBuffer(), 0, packetLen);
                 this.mysqlOutput.flush();
             }
