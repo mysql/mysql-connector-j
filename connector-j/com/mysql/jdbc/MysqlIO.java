@@ -343,10 +343,10 @@ public class MysqlIO {
     private com.mysql.jdbc.ResultSet buildResultSetWithRows(com.mysql.jdbc.Field[] fields, 
                                                               RowData rows, 
                                                               com.mysql.jdbc.Connection conn, 
-                                                              int resultSetType)
+                                                              int resultSetConcurrency)
                                                        throws SQLException {
 
-        switch (resultSetType) {
+        switch (resultSetConcurrency) {
 
             case java.sql.ResultSet.CONCUR_READ_ONLY:
                 return new com.mysql.jdbc.ResultSet(fields, rows, conn);
