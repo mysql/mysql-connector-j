@@ -74,6 +74,16 @@ public class StringUtils {
         SingleByteCharsetConverter converter = SingleByteCharsetConverter.getInstance(
                                                        encoding);
 
+        return getBytes(s, converter, encoding);
+    }
+    
+    public static final byte[] getBytes(String s, 
+                                           SingleByteCharsetConverter converter, 
+                                           String encoding)
+                                 throws UnsupportedEncodingException {
+
+        byte[] b = null;
+                                                     
         if (converter != null) {
             b = converter.toBytes(s);
         } else {
@@ -161,7 +171,7 @@ public class StringUtils {
      * of its double-byte characters, so we need to escape
      * it.
      */
-    static byte[] escapeSJISByteStream(byte[] origBytes) {
+    public static byte[] escapeSJISByteStream(byte[] origBytes) {
         if (origBytes == null || origBytes.length == 0) {
             return origBytes;
         }

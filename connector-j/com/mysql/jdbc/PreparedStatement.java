@@ -780,7 +780,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
 
                     if (parameterObj instanceof String) {
                         setBytes(parameterIndex,
-                            ((String) parameterObj).getBytes());
+                            StringUtils.getBytes((String) parameterObj, this.charConverter, this.charEncoding));
                     } else {
                         setBytes(parameterIndex, (byte[]) parameterObj);
                     }
@@ -984,7 +984,11 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
         throws java.sql.SQLException {
         // if the passed string is null, then set this column to null
         if (x == null) {
-            setInternal(parameterIndex, "null".getBytes());
+            try {
+                setInternal(parameterIndex, StringUtils.getBytes("null", this.charConverter, this.charEncoding));
+            } catch (UnsupportedEncodingException uue) {
+                throw new SQLException("Unsupported character encoding '" + this.charEncoding + "'", "S1009");
+            }
         } else {
             StringBuffer buf = new StringBuffer((int) (x.length() * 1.1));
             buf.append('\'');
@@ -1046,21 +1050,14 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
 
             String parameterAsString = buf.toString();
 
-            byte[] parameterAsBytes = null;
+            try {
+                byte[] parameterAsBytes = StringUtils.getBytes(parameterAsString,
+                    this.charConverter, this.charEncoding);
 
-            if (this.charConverter != null) {
-                parameterAsBytes = this.charConverter.toBytes(parameterAsString);
-            } else {
-                try {
-                    parameterAsBytes = StringUtils.getBytes(parameterAsString,
-                            this.charEncoding);
-                } catch (UnsupportedEncodingException uEE) {
-                    throw new SQLException("Unsupported encoding '"
-                        + this.charEncoding + "'", "S1009");
-                }
+                setInternal(parameterIndex, parameterAsBytes);
+            } catch (UnsupportedEncodingException uue) {
+                throw new SQLException("Unsupported character encoding '" + this.charEncoding + "'", "S1009");
             }
-
-            setInternal(parameterIndex, parameterAsBytes);
         }
     }
 
@@ -1931,7 +1928,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
             parameterAsBytes = this.charConverter.toBytes(val);
         } else {
             try {
-                parameterAsBytes = StringUtils.getBytes(val, this.charEncoding);
+                parameterAsBytes = StringUtils.getBytes(val, this.charConverter, this.charEncoding);
             } catch (UnsupportedEncodingException uEE) {
                 throw new SQLException("Unsupported encoding '"
                     + this.charEncoding + "'", "S1009");
