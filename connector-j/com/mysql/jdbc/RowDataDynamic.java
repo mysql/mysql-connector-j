@@ -237,9 +237,7 @@ public class RowDataDynamic
     /** Only works on non dynamic result sets.*/
     public int size()
     {
-
-        //notSupported();
-        return -1;
+        return RESULT_SET_SIZE_UNKNOWN;
     }
 
     /** Has no records.*/

@@ -145,7 +145,7 @@ public class RowDataStatic
     public byte[][] getAt(int atIndex)
     {
 
-        if (atIndex < 0 || atIndex > rows.size())
+        if (atIndex < 0 || atIndex >= rows.size())
         {
 
             return null;

@@ -29,6 +29,13 @@ import java.sql.SQLException;
 public interface RowData
 {
 
+	/** 
+	 * What's returned for the size of a result set
+	 * when its size can not be determined.
+	 */
+	
+	public int RESULT_SET_SIZE_UNKNOWN = -1;
+	
     /** Returns true if another row exsists.*/
     public boolean hasNext()
                     throws SQLException;
