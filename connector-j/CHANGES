@@ -51,6 +51,8 @@
     - PreparedStatement now honors stream lengths in setBinary/AsciiStream()
       unless you set the connection property 'useStreamLengthsInPrepStmts' to
       'false'.
+    - Removed some not-needed temporary object creation by using Strings
+      smarter in EscapeProcessor, Connection and DatabaseMetaData classes.
              	
 09-21-02 - Version 3.0.1-dev
 	
