@@ -1,27 +1,27 @@
 /*
- Copyright (C) 2002 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   Copyright (C) 2002 MySQL AB
    
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+   
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+   
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, write to the Free Software
+      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+      
  */
 
 /**
  * MysqlDefs contains many values that are needed for communication
  * with the MySQL server.
  * 
- * @author Mark Matthews <mmatthew@worldserver.com>
+ * @author Mark Matthews
  * @version $Id$
  */
 package com.mysql.jdbc;
@@ -31,6 +31,9 @@ import java.sql.Types;
 
 final class MysqlDefs
 {
+
+    //~ Instance/static variables .............................................
+
     //
     // Constants defined from mysql
     //
@@ -53,11 +56,11 @@ final class MysqlDefs
     static final int TIME = 15;
     static final int DELAYED_INSERT = 16;
     static final int CHANGE_USER = 17;
-    static final int COM_BINLOG_DUMP = 18;                   
+    static final int COM_BINLOG_DUMP = 18;
     static final int COM_TABLE_DUMP = 19;
     static final int COM_CONNECT_OUT = 20;
     static final int COM_REGISTER_SLAVE = 21;
-    static final int COM_PREPARE  = 22;
+    static final int COM_PREPARE = 22;
     static final int COM_EXECUTE = 23;
     static final int COM_LONG_DATA = 24;
 
@@ -93,13 +96,14 @@ final class MysqlDefs
     // Limitations
     static final int MAX_ROWS = 50000000; // From the MySQL FAQ
 
+    //~ Methods ...............................................................
+
     static int mysqlToJavaType(int mysql_type)
     {
 
         int sql_type;
 
-        switch (mysql_type)
-        {
+        switch (mysql_type) {
 
             case MysqlDefs.FIELD_TYPE_DECIMAL:
                 sql_type = Types.DECIMAL;
@@ -227,138 +231,85 @@ final class MysqlDefs
     {
         MySQLType = MySQLType.toUpperCase();
 
-        if (MySQLType.equals("TINYINT"))
-        {
+        if (MySQLType.equals("TINYINT")) {
 
             return java.sql.Types.TINYINT;
-        }
-        else if (MySQLType.equals("SMALLINT"))
-        {
+        } else if (MySQLType.equals("SMALLINT")) {
 
             return java.sql.Types.SMALLINT;
-        }
-        else if (MySQLType.equals("MEDIUMINT"))
-        {
+        } else if (MySQLType.equals("MEDIUMINT")) {
 
             return java.sql.Types.SMALLINT;
-        }
-        else if (MySQLType.equals("INT"))
-        {
+        } else if (MySQLType.equals("INT")) {
 
             return java.sql.Types.INTEGER;
-        }
-        else if (MySQLType.equals("INTEGER"))
-        {
+        } else if (MySQLType.equals("INTEGER")) {
 
             return java.sql.Types.INTEGER;
-        }
-        else if (MySQLType.equals("BIGINT"))
-        {
+        } else if (MySQLType.equals("BIGINT")) {
 
             return java.sql.Types.BIGINT;
-        }
-        else if (MySQLType.equals("INT24"))
-        {
+        } else if (MySQLType.equals("INT24")) {
 
             return java.sql.Types.BIGINT;
-        }
-        else if (MySQLType.equals("REAL"))
-        {
+        } else if (MySQLType.equals("REAL")) {
 
             return java.sql.Types.REAL;
-        }
-        else if (MySQLType.equals("FLOAT"))
-        {
+        } else if (MySQLType.equals("FLOAT")) {
 
             return java.sql.Types.FLOAT;
-        }
-        else if (MySQLType.equals("DECIMAL"))
-        {
+        } else if (MySQLType.equals("DECIMAL")) {
 
             return java.sql.Types.DECIMAL;
-        }
-        else if (MySQLType.equals("NUMERIC"))
-        {
+        } else if (MySQLType.equals("NUMERIC")) {
 
             return java.sql.Types.NUMERIC;
-        }
-        else if (MySQLType.equals("DOUBLE"))
-        {
+        } else if (MySQLType.equals("DOUBLE")) {
 
             return java.sql.Types.DOUBLE;
-        }
-        else if (MySQLType.equals("CHAR"))
-        {
+        } else if (MySQLType.equals("CHAR")) {
 
             return java.sql.Types.CHAR;
-        }
-        else if (MySQLType.equals("VARCHAR"))
-        {
+        } else if (MySQLType.equals("VARCHAR")) {
 
             return java.sql.Types.VARCHAR;
-        }
-        else if (MySQLType.equals("DATE"))
-        {
+        } else if (MySQLType.equals("DATE")) {
 
             return java.sql.Types.DATE;
-        }
-        else if (MySQLType.equals("TIME"))
-        {
+        } else if (MySQLType.equals("TIME")) {
 
             return java.sql.Types.TIME;
-        }
-        else if (MySQLType.equals("TIMESTAMP"))
-        {
+        } else if (MySQLType.equals("TIMESTAMP")) {
 
             return java.sql.Types.TIMESTAMP;
-        }
-        else if (MySQLType.equals("DATETIME"))
-        {
+        } else if (MySQLType.equals("DATETIME")) {
 
             return java.sql.Types.TIMESTAMP;
-        }
-        else if (MySQLType.equals("TINYBLOB"))
-        {
+        } else if (MySQLType.equals("TINYBLOB")) {
 
             return java.sql.Types.BINARY;
-        }
-        else if (MySQLType.equals("BLOB"))
-        {
+        } else if (MySQLType.equals("BLOB")) {
 
             return java.sql.Types.VARBINARY;
-        }
-        else if (MySQLType.equals("MEDIUMBLOB"))
-        {
+        } else if (MySQLType.equals("MEDIUMBLOB")) {
 
             return java.sql.Types.VARBINARY;
-        }
-        else if (MySQLType.equals("LONGBLOB"))
-        {
+        } else if (MySQLType.equals("LONGBLOB")) {
 
             return java.sql.Types.LONGVARBINARY;
-        }
-        else if (MySQLType.equals("TINYTEXT"))
-        {
+        } else if (MySQLType.equals("TINYTEXT")) {
 
             return java.sql.Types.VARCHAR;
-        }
-        else if (MySQLType.equals("TEXT"))
-        {
+        } else if (MySQLType.equals("TEXT")) {
 
             return java.sql.Types.LONGVARCHAR;
-        }
-        else if (MySQLType.equals("MEDIUMTEXT"))
-        {
+        } else if (MySQLType.equals("MEDIUMTEXT")) {
 
             return java.sql.Types.LONGVARCHAR;
-        }
-        else if (MySQLType.equals("ENUM"))
-        {
+        } else if (MySQLType.equals("ENUM")) {
 
             return java.sql.Types.CHAR;
-        }
-        else if (MySQLType.equals("SET"))
-        {
+        } else if (MySQLType.equals("SET")) {
 
             return java.sql.Types.CHAR;
         }

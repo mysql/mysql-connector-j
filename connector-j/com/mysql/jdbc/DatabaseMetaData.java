@@ -49,7 +49,7 @@ import java.util.TreeMap;
  * means match any substring of 0 or more characters and "_" means match
  * any one character.
  *
- * @author Mark Matthews <mmatthew@worldserver.com>
+ * @author Mark Matthews
  * @version $Id$
  */
 public class DatabaseMetaData
@@ -1304,7 +1304,7 @@ public class DatabaseMetaData
                     String tableType = fkresults.getString("Type");
 
                     if (tableType != null && 
-                        tableType.toLowerCase().equals("innodb"))
+                        tableType.equalsIgnoreCase("innodb"))
                     {
 
                         String comment = fkresults.getString("Comment");
@@ -1322,86 +1322,97 @@ public class DatabaseMetaData
                                 // Skip InnoDB comment
                             }
 
-                            int keySeq = 0;
-
-                            while (commentTokens.hasMoreTokens())
+ 							while (commentTokens.hasMoreTokens())
                             {
-
                                 String keys = commentTokens.nextToken();
-                                StringTokenizer keyTokens = 
-                                        new StringTokenizer(keys, "() /", 
-                                                            false);
-                                byte[][] tuple = new byte[14][];
-                                tuple[4] = (foreignCatalog == null
-                                                ? null : s2b(foreignCatalog));
+                                // simple-columned keys: (m) REFER airline/tt(a)
+                                // multi-columned keys : (m n) REFER airline/vv(a b)
+                                int firstLeftParenIndex = keys.indexOf('(');
+                                int firstRightParenIndex = keys.indexOf(')');
+                                String referencingColumns = keys.substring(firstLeftParenIndex + 1, firstRightParenIndex);
+                                StringTokenizer referencingColumnsTokenizer = new StringTokenizer(referencingColumns);
 
-                                // FKTABLE_CAT
-                                tuple[5] = (foreignSchema == null
-                                                ? null : s2b(foreignSchema));
+                                int secondLeftParenIndex = keys.indexOf('(',firstRightParenIndex + 1);
+                                int secondRightParenIndex = keys.indexOf(')',firstRightParenIndex + 1);
+                                String referencedColumns = keys.substring(secondLeftParenIndex + 1, secondRightParenIndex);
+                                StringTokenizer referencedColumnsTokenizer = new StringTokenizer(referencedColumns);
 
-                                // FKTABLE_SCHEM
-                                dummy = fkresults.getString("Name");
+                                int slashIndex = keys.indexOf('/');
+                                String referencedTable = keys.substring(slashIndex+1,secondLeftParenIndex);
+                                int keySeq = 0;
+                                while (referencingColumnsTokenizer.hasMoreTokens()) {
+                                    // one tuple for each table between parenthesis
+                                    byte[][] tuple = new byte[14][];
+                                    
+                                    tuple[4] = (foreignCatalog == null
+                                                ? null : s2b(foreignCatalog));  // FKTABLE_CAT
 
-                                if (dummy.compareTo(foreignTable) != 0)
-                                {
+                               
+                                	tuple[5] = (foreignSchema == null
+                                                ? null : s2b(foreignSchema)); // FKTABLE_SCHEM
 
-                                    continue;
-                                }
-                                else
-                                {
-                                    tuple[6] = s2b(dummy); // FKTABLE_NAME
-                                }
+                                
+                                	dummy = fkresults.getString("Name"); // FKTABLE_NAME
 
-                                tuple[7] = s2b(keyTokens.nextToken());
+                                	if (dummy.compareTo(foreignTable) != 0)
+                                	{
+                                    	continue;
+                                	}
+                                	else
+                                	{
+                                    	tuple[6] = s2b(dummy); 
+                               	 	}
 
-                                // FKCOLUMN_NAME
-                                dummy = keyTokens.nextToken(); // Skip REFER
-                                tuple[0] = s2b(keyTokens.nextToken());
+                                	tuple[7] = s2b(referencingColumnsTokenizer.nextToken());  // FKCOLUMN_NAME
 
-                                // PKTABLE_CAT
-                                tuple[1] = (primarySchema == null
-                                                ? null : s2b(primarySchema));
+                                	
+                                
+                                	tuple[0] = (primaryCatalog == null
+                                                ? null : s2b(primaryCatalog)); // PKTABLE_CAT
 
-                                // PKTABLE_SCHEM
-                                // Skip foreign key if it doesn't refer to the right table
-                                dummy = keyTokens.nextToken(); // PKTABLE_NAME
+                                	tuple[1] = (primarySchema == null
+                                                ? null : s2b(primarySchema)); // PKTABLE_SCHEM
 
-                                if (dummy.compareTo(primaryTable) != 0)
-                                {
+                                	
+                                	// Skip foreign key if it doesn't refer to the right table
+                                
+                                	if (referencedTable.compareTo(primaryTable) != 0)
+                                	{
+                                    	continue;
+                                	}
 
-                                    continue;
-                                }
+                                	tuple[2] = s2b(referencedTable); // PKTABLE_NAME
+                                	tuple[3] = s2b(referencedColumnsTokenizer.nextToken()); // PKCOLUMN_NAME
 
-                                tuple[2] = s2b(primaryTable); // PKTABLE_NAME
-                                tuple[3] = s2b(keyTokens.nextToken());
+                                	
+                                	tuple[8] = Integer.toString(keySeq).getBytes();// KEY_SEQ
 
-                                // PKCOLUMN_NAME
-                                tuple[8] = Integer.toString(keySeq).getBytes();
-
-                                // KEY_SEQ
-                                tuple[9] = Integer.toString(
+                                	
+                                	tuple[9] = Integer.toString(
                                                    java.sql.DatabaseMetaData.importedKeySetDefault)
-                                       .getBytes();
+                                       .getBytes(); // UPDATE_RULE
 
-                                // UPDATE_RULE
-                                tuple[10] = Integer.toString(
+                                	
+                                	tuple[10] = Integer.toString(
                                                     java.sql.DatabaseMetaData.importedKeySetDefault)
-                                       .getBytes();
+                                       .getBytes(); // DELETE_RULE
 
-                                // DELETE_RULE
-                                tuple[11] = null; // FK_NAME
-                                tuple[12] = null; // PK_NAME
-                                tuple[13] = Integer.toString(
+                                	
+                                	tuple[11] = null; // FK_NAME
+                                	tuple[12] = null; // PK_NAME
+                                	tuple[13] = Integer.toString(
                                                     java.sql.DatabaseMetaData.importedKeyNotDeferrable)
-                                       .getBytes();
-
-                                // DEFERRABILITY
-                                tuples.add(tuple);
-                                keySeq++;
+                                       .getBytes(); // DEFERRABILITY
+ 
+                                	
+                                	tuples.add(tuple);
+                                	keySeq++;
+							    }
                             }
                         }
                     }
                 }
+
 
                 if (Driver.trace)
                 {
@@ -1731,11 +1742,12 @@ public class DatabaseMetaData
                 {
 
                     String tableType = fkresults.getString("Type");
-
+					
                     if (tableType != null && 
-                        tableType.toLowerCase().equals("innodb"))
+                        tableType.equalsIgnoreCase("innodb"))
                     {
-
+						String tableName = fkresults.getString("Name");
+						
                         String comment = fkresults.getString("Comment");
 
                         if (comment != null)
@@ -1751,66 +1763,73 @@ public class DatabaseMetaData
                                 // Skip InnoDB comment
                             }
 
-                            int keySeq = 0;
-
-                            while (commentTokens.hasMoreTokens())
+ 							while (commentTokens.hasMoreTokens())
                             {
-
                                 String keys = commentTokens.nextToken();
-                                StringTokenizer keyTokens = 
-                                        new StringTokenizer(keys, "() /", 
-                                                            false);
-                                byte[][] tuple = new byte[14][];
-                                tuple[4] = (catalog == null
+                                // simple-columned keys: (m) REFER airline/tt(a)
+                                // multi-columned keys : (m n) REFER airline/vv(a b)
+                                int firstLeftParenIndex = keys.indexOf('(');
+                                int firstRightParenIndex = keys.indexOf(')');
+                                String referencingColumns = keys.substring(firstLeftParenIndex + 1, firstRightParenIndex);
+                                StringTokenizer referencingColumnsTokenizer = new StringTokenizer(referencingColumns);
+
+                                int secondLeftParenIndex = keys.indexOf('(',firstRightParenIndex + 1);
+                                int secondRightParenIndex = keys.indexOf(')',firstRightParenIndex + 1);
+                                String referencedColumns = keys.substring(secondLeftParenIndex + 1, secondRightParenIndex);
+                                StringTokenizer referencedColumnsTokenizer = new StringTokenizer(referencedColumns);
+
+                                int slashIndex = keys.indexOf('/');
+                                String referencedTable = keys.substring(slashIndex+1,secondLeftParenIndex);
+                                int keySeq = 0;
+                                
+                                while (referencingColumnsTokenizer.hasMoreTokens()) {
+                                	
+                                    
+                                    byte[][] tuple = new byte[14][];
+                                	tuple[4] = (catalog == null
                                                 ? new byte[0] : s2b(catalog));
-                                tuple[5] = null; // FKTABLE_SCHEM
-                                tuple[6] = fkresults.getBytes("Name");
+                                	tuple[5] = null; // FKTABLE_SCHEM
+                                	tuple[6] = s2b(tableName); // FKTABLE_NAME
+                                	tuple[7] = s2b(referencingColumnsTokenizer.nextToken()); // FKCOLUMN_NAME
+                                	
+                                	tuple[0] = null; // PKTABLE_CAT
+                                	tuple[1] = null; // PKTABLE_SCHEM
 
-                                // FKTABLE_NAME
-                                tuple[7] = s2b(keyTokens.nextToken());
+                                	// Skip foreign key if it doesn't refer to the right table
+                                	
+                                	if (referencedTable.compareTo(table) != 0)
+                                	{
 
-                                // FKCOLUMN_NAME
-                                dummy = keyTokens.nextToken(); // Skip REFER
-                                tuple[0] = s2b(keyTokens.nextToken());
+                                    	continue;
+                                	}
 
-                                // PKTABLE_CAT
-                                tuple[1] = null; // PKTABLE_SCHEM
+                                	tuple[2] = s2b(referencedTable); // PKTABLE_NAME
+                                	tuple[3] = s2b(referencedColumnsTokenizer.nextToken()); // PKCOLUMN_NAME
 
-                                // Skip foreign key if it doesn't refer to the right table
-                                dummy = keyTokens.nextToken(); // PKTABLE_NAME
+                                	
+                                	tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
 
-                                if (dummy.compareTo(table) != 0)
-                                {
-
-                                    continue;
-                                }
-
-                                tuple[2] = s2b(table); // PKTABLE_NAME
-                                tuple[3] = s2b(keyTokens.nextToken());
-
-                                // PKCOLUMN_NAME
-                                tuple[8] = Integer.toString(keySeq).getBytes();
-
-                                // KEY_SEQ
-                                tuple[9] = Integer.toString(
+                                	
+                                	tuple[9] = Integer.toString(
                                                    java.sql.DatabaseMetaData.importedKeySetDefault)
-                                       .getBytes();
+                                       .getBytes(); // UPDATE_RULE
 
-                                // UPDATE_RULE
-                                tuple[10] = Integer.toString(
+                                	
+                                	tuple[10] = Integer.toString(
                                                     java.sql.DatabaseMetaData.importedKeySetDefault)
-                                       .getBytes();
+                                       .getBytes(); // DELETE_RULE
 
-                                // DELETE_RULE
-                                tuple[11] = null; // FK_NAME
-                                tuple[12] = null; // PK_NAME
-                                tuple[13] = Integer.toString(
+                                	
+                                	tuple[11] = null; // FK_NAME
+                                	tuple[12] = null; // PK_NAME
+                                	tuple[13] = Integer.toString(
                                                     java.sql.DatabaseMetaData.importedKeyNotDeferrable)
-                                       .getBytes();
+                                       .getBytes(); // DEFERRABILITY
 
-                                // DEFERRABILITY
-                                tuples.add(tuple);
-                                keySeq++;
+                                	
+                                	tuples.add(tuple);
+                                	keySeq++;
+							    }
                             }
                         }
                     }
@@ -2076,7 +2095,7 @@ public class DatabaseMetaData
                     String tableType = fkresults.getString("Type");
 
                     if (tableType != null && 
-                        tableType.toLowerCase().equals("innodb"))
+                        tableType.equalsIgnoreCase("innodb"))
                     {
 
                         String comment = fkresults.getString("Comment");
@@ -2094,60 +2113,60 @@ public class DatabaseMetaData
                                 // Skip InnoDB comment
                             }
 
-                            int keySeq = 0;
-
                             while (commentTokens.hasMoreTokens())
                             {
-
                                 String keys = commentTokens.nextToken();
-                                byte[][] tuple = new byte[14][];
-                                StringTokenizer keyTokens = 
-                                        new StringTokenizer(keys, "() /", 
-                                                            false);
-                                tuple[4] = (catalog == null
-                                                ? new byte[0] : s2b(catalog));
-                                tuple[5] = null; // FKTABLE_SCHEM
-                                tuple[6] = s2b(table); // FKTABLE_NAME
-                                tuple[7] = s2b(keyTokens.nextToken());
+                                // simple-columned keys: (m) REFER airline/tt(a)
+                                // multi-columned keys : (m n) REFER airline/vv(a b)
+                                int firstLeftParenIndex = keys.indexOf('(');
+                                int firstRightParenIndex = keys.indexOf(')');
+                                String referencingColumns = keys.substring(firstLeftParenIndex + 1, firstRightParenIndex);
+                                StringTokenizer referencingColumnsTokenizer = new StringTokenizer(referencingColumns);
 
-                                // FKCOLUMN_NAME
-                                dummy = keyTokens.nextToken(); // Skip REFER
-                                tuple[0] = s2b(keyTokens.nextToken());
+                                int secondLeftParenIndex = keys.indexOf('(',firstRightParenIndex + 1);
+                                int secondRightParenIndex = keys.indexOf(')',firstRightParenIndex + 1);
+                                String referencedColumns = keys.substring(secondLeftParenIndex + 1, secondRightParenIndex);
+                                StringTokenizer referencedColumnsTokenizer = new StringTokenizer(referencedColumns);
 
-                                // PKTABLE_CAT
-                                tuple[1] = null; // PKTABLE_SCHEM
-                                tuple[2] = s2b(keyTokens.nextToken());
-
-                                // PKTABLE_NAME
-                                tuple[3] = s2b(keyTokens.nextToken());
-
-                                // PKCOLUMN_NAME
-                                tuple[8] = Integer.toString(keySeq).getBytes();
-
-                                // KEY_SEQ
-                                tuple[9] = Integer.toString(
-                                                   java.sql.DatabaseMetaData.importedKeySetDefault)
-                                       .getBytes();
-
-                                // UPDATE_RULE
-                                tuple[10] = Integer.toString(
+                                int slashIndex = keys.indexOf('/');
+                                String referencedTable = keys.substring(slashIndex+1,secondLeftParenIndex);
+                                int keySeq = 0;
+                                while (referencingColumnsTokenizer.hasMoreTokens()) {
+                                    // one tuple for each table between parenthesis
+                                    byte[][] tuple = new byte[14][];
+                                    tuple[4] = (catalog == null
+                                                    ? new byte[0] : s2b(catalog));
+                                    tuple[5] = null; // FKTABLE_SCHEM
+                                    tuple[6] = s2b(table); // FKTABLE_NAME
+                                    tuple[7] = s2b(referencingColumnsTokenizer.nextToken()); // FKCOLUMN_NAME
+                                    tuple[0] = null; //s2b(keyTokens.nextToken());
+                                    // PKTABLE_CAT
+                                    tuple[1] = null; // PKTABLE_SCHEM
+                                    tuple[2] = s2b(referencedTable); // PKTABLE_NAME
+                                    tuple[3] = s2b(referencedColumnsTokenizer.nextToken()); // PKCOLUMN_NAME
+                                    tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
+                                    tuple[9] = Integer.toString(
                                                     java.sql.DatabaseMetaData.importedKeySetDefault)
-                                       .getBytes();
-
-                                // DELETE_RULE
-                                tuple[11] = null; // FK_NAME
-                                tuple[12] = null; // PK_NAME
-                                tuple[13] = Integer.toString(
+                                               .getBytes();
+                                                    // UPDATE_RULE
+                                    tuple[10] = Integer.toString(
+                                                    java.sql.DatabaseMetaData.importedKeySetDefault)
+                                               .getBytes();
+                                                    // DELETE_RULE
+                                    tuple[11] = null; // FK_NAME
+                                    tuple[12] = null; // PK_NAME
+                                    tuple[13] = Integer.toString(
                                                     java.sql.DatabaseMetaData.importedKeyNotDeferrable)
-                                       .getBytes();
-
-                                // DEFERRABILITY
-                                tuples.add(tuple);
-                                keySeq++;
+                                               .getBytes();
+                                                    // DEFERRABILITY
+                                    tuples.add(tuple);
+                                    keySeq++;
+							    }
                             }
                         }
                     }
                 }
+                
 
                 if (Driver.trace)
                 {
@@ -6267,13 +6286,59 @@ public class DatabaseMetaData
                                          throws SQLException
     {
 
+		int fieldsLength = fields.length;
+		
+		for (int i = 0; i < fieldsLength; i++)
+		{
+			fields[i].setConnection(conn);
+		}
+		
         return new com.mysql.jdbc.ResultSet(fields, new RowDataStatic(rows), 
                                             Conn);
     }
 
+	/**
+	 * Converts the given string to bytes, using the connection's character
+	 * encoding, or if not available, the JVM default encoding.
+	 */
+	
     private byte[] s2b(String s)
     {
+    	if (this.conn != null && this.conn.useUnicode())
+        {
+            try
+            {
 
-        return s.getBytes();
+                String encoding = this.conn.getEncoding();
+
+                if (encoding == null)
+                {
+                   return s.getBytes();
+                }
+                else
+                {
+                	SingleByteCharsetConverter converter = SingleByteCharsetConverter.getInstance(encoding);
+        
+        			if (converter != null)
+        			{
+        				return converter.toBytes(s);
+        			}
+        			else
+        			{
+        				return s.getBytes(encoding);
+        			}
+                }
+            }
+            catch (java.io.UnsupportedEncodingException E)
+            {
+                return s.getBytes();
+            }
+        }
+        else
+        {
+	  		return s.getBytes();
+        }
+
+        
     }
 }

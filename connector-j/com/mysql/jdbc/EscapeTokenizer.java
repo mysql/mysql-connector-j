@@ -1,27 +1,27 @@
 /*
- Copyright (C) 2002 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   Copyright (C) 2002 MySQL AB
    
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+   
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+   
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, write to the Free Software
+      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+      
  */
 
 /**
  * EscapeTokenizer breaks up an SQL statement into SQL and
  * escape code parts.
  *
- * @author Mark Matthews <mmatthew@worldserver.com>
+ * @author Mark Matthews
  */
 package com.mysql.jdbc;
 
@@ -77,126 +77,89 @@ public class EscapeTokenizer
 
         StringBuffer tokenBuf = new StringBuffer();
 
-        if (emittingEscapeCode)
-        {
+        if (emittingEscapeCode) {
             tokenBuf.append("{");
             emittingEscapeCode = false;
         }
 
-        for (; pos < sourceLength; pos++)
-        {
+        for (; pos < sourceLength; pos++) {
 
             char c = source.charAt(pos);
 
-            if (c == '\'')
-            {
+            if (c == '\'') {
 
-                if (lastChar != '\\')
-                {
+                if (lastChar != '\\') {
 
-                    if (inQuotes)
-                    {
+                    if (inQuotes) {
 
-                        if (quoteChar == c)
-                        {
+                        if (quoteChar == c) {
                             inQuotes = false;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         inQuotes = true;
                         quoteChar = c;
                     }
-                }
-                else if (lastLastChar == '\\')
-                {
+                } else if (lastLastChar == '\\') {
 
-                    if (inQuotes)
-                    {
+                    if (inQuotes) {
 
-                        if (quoteChar == c)
-                        {
+                        if (quoteChar == c) {
                             inQuotes = false;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         inQuotes = true;
                         quoteChar = c;
                     }
                 }
 
                 tokenBuf.append(c);
-            }
-            else if (c == '"')
-            {
+            } else if (c == '"') {
 
-                if (lastChar != '\\' && lastChar != '"')
-                {
+                if (lastChar != '\\' && lastChar != '"') {
 
-                    if (inQuotes)
-                    {
+                    if (inQuotes) {
 
-                        if (quoteChar == c)
-                        {
+                        if (quoteChar == c) {
                             inQuotes = false;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         inQuotes = true;
                         quoteChar = c;
                     }
-                }
-                else if (lastLastChar == '\\')
-                {
+                } else if (lastLastChar == '\\') {
 
-                    if (inQuotes)
-                    {
+                    if (inQuotes) {
 
-                        if (quoteChar == c)
-                        {
+                        if (quoteChar == c) {
                             inQuotes = false;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         inQuotes = true;
                         quoteChar = c;
                     }
                 }
 
                 tokenBuf.append(c);
-            }
-            else if (c == '{')
-            {
+            } else if (c == '{') {
 
-                if (inQuotes)
-                {
+                if (inQuotes) {
                     tokenBuf.append(c);
-                }
-                else
-                {
+                } else {
                     pos++;
                     emittingEscapeCode = true;
 
                     return tokenBuf.toString();
                 }
-            }
-            else if (c == '}')
-            {
+            } else if (c == '}') {
                 tokenBuf.append(c);
 
-                if (!inQuotes)
-                {
+                if (!inQuotes) {
                     lastChar = c;
                     pos++;
 
                     return tokenBuf.toString();
                 }
-            }
-            else
-            {
+            } else {
                 tokenBuf.append(c);
             }
 

@@ -34,15 +34,14 @@ class Buffer
 
     //~ Instance/static variables .............................................
 
-    final static int NO_LENGTH_LIMIT = -1;
+    static final int NO_LENGTH_LIMIT = -1;
     static long NULL_LENGTH = -1;
-    private int bufLength = 0;
     private byte[] byteBuffer;
+    private boolean wasMultiPacket = false;
+    private int bufLength = 0;
+    private int maxLength = NO_LENGTH_LIMIT;
     private int position = 0;
     private int sendLength = 0;
-    private int maxLength = NO_LENGTH_LIMIT;
-    private boolean wasMultiPacket = false;
-    
 
     //~ Constructors ..........................................................
 
@@ -67,16 +66,6 @@ class Buffer
 
     //~ Methods ...............................................................
 
-	public void setWasMultiPacket(boolean flag)
-	{
-		wasMultiPacket = flag;
-	}
-	
-	public boolean wasMultiPacket()
-	{
-		return wasMultiPacket;
-	}
-	
     /**
      * Sets the array of bytes to use as a buffer to read from.
      * 
@@ -111,12 +100,38 @@ class Buffer
     /**
      * DOCUMENT ME!
      * 
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      */
     public int getPosition()
     {
 
         return this.position;
+    }
+
+    public void setWasMultiPacket(boolean flag)
+    {
+        wasMultiPacket = flag;
+    }
+
+    public int fastSkipLenString()
+    {
+
+        int len = (int)byteBuffer[position++];
+        position += len;
+
+        return len;
+    }
+
+    public boolean wasMultiPacket()
+    {
+
+        return wasMultiPacket;
+    }
+
+    protected final byte[] getBufferSource()
+    {
+
+        return byteBuffer;
     }
 
     final void setBytes(byte[] buf)
@@ -155,8 +170,7 @@ class Buffer
         int i = this.position;
         int len = 0;
 
-        while (this.byteBuffer[i] != 0 && i < getBufLength())
-        {
+        while ((this.byteBuffer[i] != 0) && (i < getBufLength())) {
             len++;
             i++;
         }
@@ -179,19 +193,16 @@ class Buffer
         int p = 0;
         int rows = getBufLength() / 8;
 
-        for (int i = 0; i < rows; i++)
-        {
+        for (int i = 0; i < rows; i++) {
 
             int ptemp = p;
 
-            for (int j = 0; j < 8; j++)
-            {
+            for (int j = 0; j < 8; j++) {
 
                 String hexVal = Integer.toHexString(
                                         (int)this.byteBuffer[ptemp]);
 
-                if (hexVal.length() == 1)
-                {
+                if (hexVal.length() == 1) {
                     hexVal = "0" + hexVal;
                 }
 
@@ -201,15 +212,12 @@ class Buffer
 
             System.out.print("    ");
 
-            for (int j = 0; j < 8; j++)
-            {
+            for (int j = 0; j < 8; j++) {
 
-                if (this.byteBuffer[p] > 32 && this.byteBuffer[p] < 127)
-                {
+                if ((this.byteBuffer[p] > 32) && 
+                    (this.byteBuffer[p] < 127)) {
                     System.out.print((char)this.byteBuffer[p] + " ");
-                }
-                else
-                {
+                } else {
                     System.out.print(". ");
                 }
 
@@ -221,13 +229,11 @@ class Buffer
 
         int n = 0;
 
-        for (int i = p; i < getBufLength(); i++)
-        {
+        for (int i = p; i < getBufLength(); i++) {
 
             String hexVal = Integer.toHexString((int)this.byteBuffer[i]);
 
-            if (hexVal.length() == 1)
-            {
+            if (hexVal.length() == 1) {
                 hexVal = "0" + hexVal;
             }
 
@@ -235,22 +241,17 @@ class Buffer
             n++;
         }
 
-        for (int i = n; i < 8; i++)
-        {
+        for (int i = n; i < 8; i++) {
             System.out.print("   ");
         }
 
         System.out.print("    ");
 
-        for (int i = p; i < getBufLength(); i++)
-        {
+        for (int i = p; i < getBufLength(); i++) {
 
-            if (this.byteBuffer[i] > 32 && this.byteBuffer[i] < 127)
-            {
+            if ((this.byteBuffer[i] > 32) && (this.byteBuffer[i] < 127)) {
                 System.out.print((char)this.byteBuffer[i] + " ");
-            }
-            else
-            {
+            } else {
                 System.out.print(". ");
             }
         }
@@ -262,19 +263,16 @@ class Buffer
                        throws SQLException
     {
 
-        if ((this.position + additional_data) > getBufLength())
-        {
+        if ((this.position + additional_data) > getBufLength()) {
 
             int newLength = (int)(getBufLength() * 1.25);
 
-            if (newLength < (getBufLength() + additional_data))
-            {
+            if (newLength < (getBufLength() + additional_data)) {
                 newLength = getBufLength() + (int)(additional_data * 1.25);
             }
 
-            if (getMaxLength() != NO_LENGTH_LIMIT && 
-                (newLength > getMaxLength()))
-            {
+            if ((getMaxLength() != NO_LENGTH_LIMIT) && 
+                (newLength > getMaxLength())) {
                 throw new PacketTooBigException(newLength, getMaxLength());
             }
 
@@ -286,14 +284,24 @@ class Buffer
         }
     }
 
+    final String fastReadLenString()
+    {
+
+        // this has been folded in from readFieldLength()
+        int len = byteBuffer[this.position++];
+        String result = StringUtils.toAsciiString3(byteBuffer, position, len);
+        position += len; // update cursor
+
+        return result;
+    }
+
     // For MySQL servers > 3.22.5
     final long newReadLength()
     {
 
         int sw = this.byteBuffer[this.position++] & 0xff;
 
-        switch (sw)
-        {
+        switch (sw) {
 
             case 251:
                 return (long)0;
@@ -330,8 +338,7 @@ class Buffer
 
         int sw = this.byteBuffer[this.position++] & 0xff;
 
-        switch (sw)
-        {
+        switch (sw) {
 
             case 251:
                 return NULL_LENGTH;
@@ -366,70 +373,39 @@ class Buffer
 
         long len = this.readFieldLength();
 
-        if (len == NULL_LENGTH)
-        {
+        if (len == NULL_LENGTH) {
 
             return null;
         }
 
-        if (len == 0)
-        {
+        if (len == 0) {
 
             return new byte[0];
         }
 
         return getBytes((int)len);
     }
-    
-     // Read given-length string (native)
+
+    // Read given-length string (native)
     final byte[] readLenByteArray(int offset)
     {
 
         long len = this.readFieldLength();
 
-        if (len == NULL_LENGTH)
-        {
+        if (len == NULL_LENGTH) {
 
             return null;
         }
 
-        if (len == 0)
-        {
+        if (len == 0) {
 
             return new byte[0];
         }
 
-		this.position += offset;
-		
+        this.position += offset;
+
         return getBytes((int)len);
     }
-
-
-  final String fastReadLenString() 
-  {
-    // this has been folded in from readFieldLength()
-    
-    int len = byteBuffer[this.position++];
-    String result = StringUtils.toAsciiString3(byteBuffer,
-					       position,
-					       len);
-    position += len; // update cursor
-    return result;
-  }
-
-  public int fastSkipLenString() 
-  {
-    int len = (int) byteBuffer[position++];
-    position += len;
-    return len;
-  }
-
-  protected final byte[] getBufferSource() 
-  {
-    return byteBuffer;
-  }
-  
-  
 
     //
     // Read given-length string
@@ -443,14 +419,12 @@ class Buffer
 
         long len = this.readFieldLength();
 
-        if (len == NULL_LENGTH)
-        {
+        if (len == NULL_LENGTH) {
 
             return null;
         }
 
-        if (len == 0)
-        {
+        if (len == 0) {
 
             return "";
         }
@@ -466,8 +440,7 @@ class Buffer
 
         int sw = this.byteBuffer[this.position++] & 0xff;
 
-        switch (sw)
-        {
+        switch (sw) {
 
             case 251:
                 return (long)0;
@@ -537,8 +510,7 @@ class Buffer
         int i = this.position;
         int len = 0;
 
-        while (this.byteBuffer[i] != 0 && i < getBufLength())
-        {
+        while ((this.byteBuffer[i] != 0) && (i < getBufLength())) {
             len++;
             i++;
         }
@@ -559,8 +531,7 @@ class Buffer
         int i = this.position;
         int len = 0;
 
-        while (this.byteBuffer[i] != 0 && i < getBufLength())
-        {
+        while ((this.byteBuffer[i] != 0) && (i < getBufLength())) {
             len++;
             i++;
         }
@@ -574,8 +545,7 @@ class Buffer
 
         int sw = this.byteBuffer[this.position++] & 0xff;
 
-        switch (sw)
-        {
+        switch (sw) {
 
             case 1:
                 return this.byteBuffer[this.position++] & 0xff;
@@ -609,7 +579,7 @@ class Buffer
         System.arraycopy(Bytes, 0, this.byteBuffer, this.position, len);
         this.position += len;
     }
-    
+
     // Write a byte array with the given offset and length
     final void writeBytesNoNull(byte[] Bytes, int offset, int length)
                          throws SQLException
@@ -617,6 +587,24 @@ class Buffer
         ensureCapacity(length);
         System.arraycopy(Bytes, offset, this.byteBuffer, this.position, length);
         this.position += length;
+    }
+
+    final void writeDouble(double d)
+    {
+
+        long l = Double.doubleToLongBits(d);
+        writeLongLong(l);
+    }
+
+    final void writeFloat(float f)
+    {
+
+        int i = Float.floatToIntBits(f);
+        byte[] b = this.byteBuffer;
+        b[this.position++] = (byte)(i & 0xff);
+        b[this.position++] = (byte)(i >>> 8);
+        b[this.position++] = (byte)(i >>> 16);
+        b[this.position++] = (byte)(i >>> 24);
     }
 
     // 2000-06-05 Changed
@@ -648,37 +636,21 @@ class Buffer
         b[this.position++] = (byte)(i >>> 8);
         b[this.position++] = (byte)(i >>> 16);
     }
-    
+
     final void writeLongLong(long i)
     {
-    	byte[] b= this.byteBuffer;
-    	b[this.position++] = (byte)(i & 0xff);
-    	b[this.position++] = (byte)(i >>> 8);
-    	b[this.position++] = (byte)(i >>> 16);
-    	b[this.position++] = (byte)(i >>> 24);
-    	b[this.position++] = (byte)(i >>> 32);
-    	b[this.position++] = (byte)(i >>> 40);
-    	b[this.position++] = (byte)(i >>> 48);
-    	b[this.position++] = (byte)(i >>> 56);
-    }
-    
-    final void writeDouble(double d)
-    {
-    	long l = Double.doubleToLongBits(d);
-    	writeLongLong(l);
-    }
-    
-    final void writeFloat(float f)
-    {
-    	int i = Float.floatToIntBits(f);
-    	
-		byte[] b = this.byteBuffer;
+
+        byte[] b = this.byteBuffer;
         b[this.position++] = (byte)(i & 0xff);
         b[this.position++] = (byte)(i >>> 8);
         b[this.position++] = (byte)(i >>> 16);
         b[this.position++] = (byte)(i >>> 24);
+        b[this.position++] = (byte)(i >>> 32);
+        b[this.position++] = (byte)(i >>> 40);
+        b[this.position++] = (byte)(i >>> 48);
+        b[this.position++] = (byte)(i >>> 56);
     }
-    	
+
     // Write null-terminated string
     final void writeString(String s)
                     throws SQLException
@@ -694,16 +666,13 @@ class Buffer
 
         int len = s.length();
         ensureCapacity(len);
+        System.arraycopy(s.getBytes(), 0, byteBuffer, position, len);
+        position += len;
 
-	System.arraycopy(s.getBytes(), 0,
-			 byteBuffer, position,
-			 len);
-	position += len;
-
-//         for (int i = 0; i < len; i++)
-//         {
-//             this.byteBuffer[this.position++] = (byte)s.charAt(i);
-//         }
+        //         for (int i = 0; i < len; i++)
+        //         {
+        //             this.byteBuffer[this.position++] = (byte)s.charAt(i);
+        //         }
     }
 
     // Write a String using the specified character
@@ -712,7 +681,16 @@ class Buffer
                           throws UnsupportedEncodingException, SQLException
     {
 
-        byte[] b = s.getBytes(encoding);
+        byte[] b = null;
+        SingleByteCharsetConverter converter = SingleByteCharsetConverter.getInstance(
+                                                       encoding);
+
+        if (converter != null) {
+            b = converter.toBytes(s);
+        } else {
+            b = s.getBytes(encoding);
+        }
+
         int len = b.length;
         ensureCapacity(len);
         System.arraycopy(b, 0, this.byteBuffer, this.position, len);

@@ -75,8 +75,8 @@ public class MetadataTest
                        pkColumnName + "' != 'parent_id')", 
                        pkColumnName.equalsIgnoreCase("parent_id"));
             assertTrue("Foreign Key not returned correctly ('" + 
-                       fkColumnName + "' != 'parent_id')", 
-                       fkColumnName.equalsIgnoreCase("parent_id"));
+                       fkColumnName + "' != 'parent_id_fk')", 
+                       fkColumnName.equalsIgnoreCase("parent_id_fk"));
         }
 
         rs.close();
@@ -86,15 +86,25 @@ public class MetadataTest
 
             String pkColumnName = rs.getString("PKCOLUMN_NAME");
             String fkColumnName = rs.getString("FKCOLUMN_NAME");
+            String fkTableName  = rs.getString("FKTABLE_NAME");
+            
             assertTrue("Primary Key not returned correctly ('" + 
                        pkColumnName + "' != 'parent_id')", 
                        pkColumnName.equalsIgnoreCase("parent_id"));
-            assertTrue("Foreign Key not returned correctly ('" + 
-                       fkColumnName + "' != 'parent_id')", 
-                       fkColumnName.equalsIgnoreCase("parent_id"));
+                       
+                       
+            assertTrue("Foreign Key table not returned correctly for getExportedKeys ('" + 
+                       fkTableName + "' != 'child')", 
+                       fkTableName.equalsIgnoreCase("child"));
+                       
+            assertTrue("Foreign Key not returned correctly for getExportedKeys ('" + 
+                       fkColumnName + "' != 'parent_id_fk')", 
+                       fkColumnName.equalsIgnoreCase("parent_id_fk"));
         }
 
         rs.close();
+        
+        rs = dbmd.getCrossReference(null, null, "parent", null, null, "child");
     }
 
     public void testGetPrimaryKeys()
@@ -150,7 +160,7 @@ public class MetadataTest
         stmt.executeUpdate(
                 "CREATE TABLE parent(parent_id INT NOT NULL, PRIMARY KEY (parent_id)) TYPE=INNODB");
         stmt.executeUpdate(
-                "CREATE TABLE child(child_id INT, parent_id INT, INDEX par_ind (parent_id), FOREIGN KEY (parent_id) REFERENCES parent(parent_id)) TYPE=INNODB");
+                "CREATE TABLE child(child_id INT, parent_id_fk INT, INDEX par_ind (parent_id_fk), FOREIGN KEY (parent_id_fk) REFERENCES parent(parent_id)) TYPE=INNODB");
         stmt.executeUpdate(
         		"CREATE TABLE multikey(d INT NOT NULL, b INT NOT NULL, a INT NOT NULL, c INT NOT NULL, PRIMARY KEY (d, b, a, c))");
         		

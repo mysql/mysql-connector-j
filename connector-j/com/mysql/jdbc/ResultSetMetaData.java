@@ -1,20 +1,20 @@
 /*
- Copyright (C) 2002 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   Copyright (C) 2002 MySQL AB
    
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+   
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+   
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, write to the Free Software
+      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+      
  */
 
 /**
@@ -22,7 +22,7 @@
  * properties of the columns in a ResultSet
  *
  * @see java.sql.ResultSetMetaData
- * @author Mark Matthews <mmatthew@worldserver.com>
+ * @author Mark Matthews
  * @version $Id$
  */
 package com.mysql.jdbc;
@@ -92,8 +92,7 @@ public class ResultSetMetaData
 
         int sql_type = getField(column).getSQLType();
 
-        switch (sql_type)
-        {
+        switch (sql_type) {
 
             case Types.SMALLINT:
             case Types.INTEGER:
@@ -144,47 +143,37 @@ public class ResultSetMetaData
 
         Field f = getField(column);
 
-        switch (f.getSQLType())
-        {
+        switch (f.getSQLType()) {
 
             case Types.BIT:
                 return "java.lang.Boolean";
 
             case Types.TINYINT:
 
-                if (f.isUnsigned())
-                {
+                if (f.isUnsigned()) {
 
                     return "java.lang.Integer";
-                }
-                else
-                {
+                } else {
 
                     return "java.lang.Byte";
                 }
 
             case Types.SMALLINT:
 
-                if (f.isUnsigned())
-                {
+                if (f.isUnsigned()) {
 
                     return "java.lang.Integer";
-                }
-                else
-                {
+                } else {
 
                     return "java.lang.Short";
                 }
 
             case Types.INTEGER:
 
-                if (f.isUnsigned())
-                {
+                if (f.isUnsigned()) {
 
                     return "java.lang.Long";
-                }
-                else
-                {
+                } else {
 
                     return "java.lang.Integer";
                 }
@@ -212,18 +201,13 @@ public class ResultSetMetaData
             case Types.VARBINARY:
             case Types.LONGVARBINARY:
 
-                if (!f.isBlob())
-                {
+                if (!f.isBlob()) {
 
                     return "java.lang.String";
-                }
-                else if (!f.isBinary())
-                {
+                } else if (!f.isBinary()) {
 
                     return "java.lang.String";
-                }
-                else
-                {
+                } else {
 
                     return "java.lang.Object";
                 }
@@ -338,8 +322,7 @@ public class ResultSetMetaData
 
         int mysql_type = getField(column).getMysqlType();
 
-        switch (mysql_type)
-        {
+        switch (mysql_type) {
 
             case MysqlDefs.FIELD_TYPE_DECIMAL:
                 return "DECIMAL";
@@ -391,13 +374,10 @@ public class ResultSetMetaData
 
             case MysqlDefs.FIELD_TYPE_BLOB:
 
-                if (getField(column).isBinary())
-                {
+                if (getField(column).isBinary()) {
 
                     return "TEXT";
-                }
-                else
-                {
+                } else {
 
                     return "BLOB";
                 }
@@ -464,13 +444,10 @@ public class ResultSetMetaData
                    throws java.sql.SQLException
     {
 
-        if (!getField(column).isNotNull())
-        {
+        if (!getField(column).isNotNull()) {
 
             return java.sql.ResultSetMetaData.columnNullable;
-        }
-        else
-        {
+        } else {
 
             return java.sql.ResultSetMetaData.columnNoNulls;
         }
@@ -491,11 +468,9 @@ public class ResultSetMetaData
 
         Field F = getField(column);
 
-        if (isDecimalType(F.getSQLType()))
-        {
+        if (isDecimalType(F.getSQLType())) {
 
-            if (F.getDecimals() > 0)
-            {
+            if (F.getDecimals() > 0) {
 
                 return F.getLength() - 1;
             }
@@ -538,8 +513,7 @@ public class ResultSetMetaData
 
         Field F = getField(column);
 
-        if (isDecimalType(F.getSQLType()))
-        {
+        if (isDecimalType(F.getSQLType())) {
 
             return F.getDecimals();
         }
@@ -604,11 +578,11 @@ public class ResultSetMetaData
         Field F = getField(column);
         int sql_type = F.getSQLType();
 
-        switch (sql_type)
-        {
-
+        switch (sql_type) {
+			case Types.TINYINT:
             case Types.SMALLINT:
             case Types.INTEGER:
+            case Types.BIGINT:
             case Types.FLOAT:
             case Types.REAL:
             case Types.DOUBLE:
@@ -655,13 +629,10 @@ public class ResultSetMetaData
                        throws java.sql.SQLException
     {
 
-        if (isReadOnly(column))
-        {
+        if (isReadOnly(column)) {
 
             return false;
-        }
-        else
-        {
+        } else {
 
             return true;
         }
@@ -676,8 +647,7 @@ public class ResultSetMetaData
                       throws java.sql.SQLException
     {
 
-        if (columnIndex < 1 || columnIndex > Fields.length)
-        {
+        if (columnIndex < 1 || columnIndex > Fields.length) {
             throw new java.sql.SQLException("Column index out of range.", 
                                             "S1002");
         }
@@ -694,8 +664,7 @@ public class ResultSetMetaData
     private static final boolean isDecimalType(int type)
     {
 
-        switch (type)
-        {
+        switch (type) {
 
             case Types.BIT:
             case Types.TINYINT:

@@ -1,20 +1,20 @@
 /*
- Copyright (C) 2002 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   Copyright (C) 2002 MySQL AB
    
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+   
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+   
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, write to the Free Software
+      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+      
  */
 package com.mysql.jdbc;
 
@@ -26,12 +26,16 @@ public class RowDataDynamic
     implements RowData
 {
 
+    //~ Instance/static variables .............................................
+
     private MysqlIO io;
     private byte[][] nextRow;
     private int columnCount;
     private int index = -1;
     private boolean isAtEnd = false;
     private boolean isAfterEnd = false;
+
+    //~ Constructors ..........................................................
 
     /**
      * Creates a new RowDataDynamic object.
@@ -48,27 +52,24 @@ public class RowDataDynamic
         nextRecord();
     }
 
+    //~ Methods ...............................................................
+
     private void nextRecord()
                      throws SQLException
     {
 
-        try
-        {
+        try {
 
-            if (!isAtEnd)
-            {
+            if (!isAtEnd) {
                 nextRow = io.nextRow((int)columnCount);
 
-                if (nextRow == null)
+                if (nextRow == null) {
                     isAtEnd = true;
-            }
-            else
-            {
+                }
+            } else {
                 isAfterEnd = true;
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new SQLException("Error trying to fetch row:" + 
                                    e.getMessage(), "S1000");
         }
@@ -81,8 +82,7 @@ public class RowDataDynamic
 
         boolean hasNext = (nextRow != null);
 
-        if (!hasNext)
-        {
+        if (!hasNext) {
             io.closeStreamer(this);
         }
 
@@ -178,8 +178,7 @@ public class RowDataDynamic
     {
 
         //drain the rest of the records.
-        while (this.hasNext())
-        {
+        while (this.hasNext()) {
             this.next();
         }
 
@@ -237,6 +236,7 @@ public class RowDataDynamic
     /** Only works on non dynamic result sets.*/
     public int size()
     {
+
         return RESULT_SET_SIZE_UNKNOWN;
     }
 
@@ -281,6 +281,8 @@ public class RowDataDynamic
     {
         notSupported();
     }
+
+    //~ Inner classes .........................................................
 
     class OperationNotSupportedException
         extends SQLException

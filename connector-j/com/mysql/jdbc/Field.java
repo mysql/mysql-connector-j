@@ -1,37 +1,40 @@
 /*
- Copyright (C) 2002 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   Copyright (C) 2002 MySQL AB
    
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+   
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+   
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, write to the Free Software
+      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+      
  */
 
 /**
  * Field is a class used to describe fields in a
  * ResultSet
  * 
- * @author Mark Matthews <mmatthew@worldserver.com>
+ * @author Mark Matthews
  * @version $Id$
  */
 package com.mysql.jdbc;
+
+import java.io.UnsupportedEncodingException;
+
 
 public class Field
 {
 
     //~ Instance/static variables .............................................
 
-    private final static int AUTO_INCREMENT_FLAG = 512;
+    private static final int AUTO_INCREMENT_FLAG = 512;
     int colDecimals;
     short colFlag;
     int length; // Internal length of the field;
@@ -45,6 +48,7 @@ public class Field
     int tableNameLength;
     byte[] buffer;
     private String fullName = null;
+    private Connection connection = null;
 
     //~ Constructors ..........................................................
 
@@ -60,7 +64,7 @@ public class Field
         colFlag = 0;
         colDecimals = 0;
     }
-    
+
     Field(byte[] buffer, int nameStart, int nameLength, int tableNameStart, 
           int tableNameLength, int length, int mysqlType, short colFlag, 
           int colDecimals)
@@ -78,18 +82,14 @@ public class Field
         // Map MySqlTypes to java.sql Types
         sqlType = MysqlDefs.mysqlToJavaType(mysqlType);
 
-        
         boolean isBinary = isBinary();
 
         //
         // Handle TEXT type (special case), Fix proposed by Peter McKeown
         //
-        if (sqlType == java.sql.Types.LONGVARBINARY && !isBinary)
-        {
+        if (sqlType == java.sql.Types.LONGVARBINARY && !isBinary) {
             sqlType = java.sql.Types.LONGVARCHAR;
-        }
-        else if (sqlType == java.sql.Types.VARBINARY && !isBinary)
-        {
+        } else if (sqlType == java.sql.Types.VARBINARY && !isBinary) {
             sqlType = java.sql.Types.VARCHAR;
         }
     }
@@ -104,13 +104,10 @@ public class Field
     public boolean isAutoIncrement()
     {
 
-        if ((colFlag & AUTO_INCREMENT_FLAG) > 0)
-        {
+        if ((colFlag & AUTO_INCREMENT_FLAG) > 0) {
 
             return true;
-        }
-        else
-        {
+        } else {
 
             return false;
         }
@@ -124,13 +121,10 @@ public class Field
     public boolean isBinary()
     {
 
-        if ((colFlag & 128) > 0)
-        {
+        if ((colFlag & 128) > 0) {
 
             return true;
-        }
-        else
-        {
+        } else {
 
             return false;
         }
@@ -144,13 +138,10 @@ public class Field
     public boolean isBlob()
     {
 
-        if ((colFlag & 16) > 0)
-        {
+        if ((colFlag & 16) > 0) {
 
             return true;
-        }
-        else
-        {
+        } else {
 
             return false;
         }
@@ -164,8 +155,7 @@ public class Field
     public String getFullName()
     {
 
-        if (fullName == null)
-        {
+        if (fullName == null) {
 
             StringBuffer fullNameBuf = new StringBuffer(
                                                getTableName().length() + 1 + 
@@ -201,13 +191,10 @@ public class Field
     public boolean isMultipleKey()
     {
 
-        if ((colFlag & 8) > 0)
-        {
+        if ((colFlag & 8) > 0) {
 
             return true;
-        }
-        else
-        {
+        } else {
 
             return false;
         }
@@ -232,9 +219,8 @@ public class Field
     public String getName()
     {
 
-        if (name == null)
-        {
-            name = StringUtils.toAsciiString3(buffer, nameStart, nameLength);
+        if (name == null) {
+            name = getStringFromBytes(nameStart, nameLength);
         }
 
         return name;
@@ -248,13 +234,10 @@ public class Field
     public boolean isPrimaryKey()
     {
 
-        if ((colFlag & 2) > 0)
-        {
+        if ((colFlag & 2) > 0) {
 
             return true;
-        }
-        else
-        {
+        } else {
 
             return false;
         }
@@ -290,13 +273,66 @@ public class Field
     public String getTableName()
     {
 
-        if (tableName == null)
-        {
-            tableName = StringUtils.toAsciiString3(buffer, tableNameStart, 
-                                                   tableNameLength);
+        if (tableName == null) {
+            tableName = getStringFromBytes(tableNameStart, tableNameLength);
         }
 
         return tableName;
+    }
+
+    /**
+     * Create a string with the correct charset encoding from the
+     * byte-buffer that contains the data for this field
+     */
+    private String getStringFromBytes(int stringStart, int stringLength)
+    {
+
+        String stringVal = null;
+
+        if (connection != null) {
+
+            if (connection.useUnicode()) {
+
+                String encoding = connection.getEncoding();
+
+                if (encoding != null) {
+
+                    SingleByteCharsetConverter converter = null;
+
+                    try {
+                        converter = SingleByteCharsetConverter.getInstance(
+                                            encoding);
+                    } catch (UnsupportedEncodingException uee) {
+
+                        // ignore, code further down handles this
+                    }
+
+                    if (converter != null) { // we have a converter
+                        stringVal = converter.toString(buffer, stringStart, 
+                                                       stringLength);
+                    } else // we have no converter, use JVM standard charset
+                     {
+                        stringVal = StringUtils.toAsciiString3(buffer, 
+                                                               stringStart, 
+                                                               stringLength);
+                    }
+                } else // we have no encoding, use JVM standard charset
+                 {
+                    stringVal = StringUtils.toAsciiString3(buffer, stringStart, 
+                                                           stringLength);
+                }
+            } else // we are not using unicode, so use JVM standard charset
+             {
+                stringVal = StringUtils.toAsciiString3(buffer, stringStart, 
+                                                       stringLength);
+            }
+        } else // we don't have a connection, so punt
+         {
+            stringVal = StringUtils.toAsciiString3(buffer, stringStart, 
+                                                   stringLength);
+        }
+
+        return stringVal;
     }
 
     /**
@@ -307,13 +343,10 @@ public class Field
     public boolean isUniqueKey()
     {
 
-        if ((colFlag & 4) > 0)
-        {
+        if ((colFlag & 4) > 0) {
 
             return true;
-        }
-        else
-        {
+        } else {
 
             return false;
         }
@@ -327,13 +360,10 @@ public class Field
     public boolean isUnsigned()
     {
 
-        if ((colFlag & 32) > 0)
-        {
+        if ((colFlag & 32) > 0) {
 
             return true;
-        }
-        else
-        {
+        } else {
 
             return false;
         }
@@ -347,13 +377,10 @@ public class Field
     public boolean isZeroFill()
     {
 
-        if ((colFlag & 64) > 0)
-        {
+        if ((colFlag & 64) > 0) {
 
             return true;
-        }
-        else
-        {
+        } else {
 
             return false;
         }
@@ -370,6 +397,11 @@ public class Field
         return getFullName();
     }
 
+    public void setConnection(Connection conn)
+    {
+        this.connection = conn;
+    }
+
     int getDecimals()
     {
 
@@ -379,13 +411,10 @@ public class Field
     boolean isNotNull()
     {
 
-        if ((colFlag & 1) > 0)
-        {
+        if ((colFlag & 1) > 0) {
 
             return true;
-        }
-        else
-        {
+        } else {
 
             return false;
         }

@@ -19,6 +19,8 @@
  
 package testsuite.regression;
 
+import com.mysql.jdbc.StringUtils;
+
 import testsuite.BaseTestCase;
 
 /**
@@ -51,7 +53,7 @@ public class StringTest extends BaseTestCase {
 		buf[8] = (byte)'o';
 		buf[9] = (byte)'t';
 		
-		String testString = "?State-bot";
+		String testString =  "?State-bot";
 		
 		String convertedString = 
 			com.mysql.jdbc.StringUtils.toAsciiString(buf);
@@ -63,5 +65,5 @@ public class StringTest extends BaseTestCase {
 		
 		assertTrue("Converted string != test string",
 			testString.equals(convertedString));
-	}
+	}		
 }

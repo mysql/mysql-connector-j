@@ -22,11 +22,15 @@ import java.sql.SQLException;
 
 
 /**
+ * DOCUMENT ME!
+ * 
  * @author Mark Matthews
  */
 public class PacketTooBigException
     extends SQLException
 {
+
+    //~ Constructors ..........................................................
 
     /**
      * Creates a new PacketTooBigException object.

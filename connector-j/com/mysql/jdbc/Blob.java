@@ -1,20 +1,17 @@
 /*
- Copyright (C) 2002 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-   
+   Copyright (C) 2002 MySQL AB
+     This program is free software; you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation; either version 2 of the License, or
+     (at your option) any later version.
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+     You should have received a copy of the GNU General Public License
+     along with this program; if not, write to the Free Software
+     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+     
  */
 package com.mysql.jdbc;
 
@@ -25,22 +22,19 @@ import java.sql.SQLException;
 
 
 /**
- * The representation (mapping) in the JavaTM programming language 
- * of an SQL BLOB value. An SQL BLOB is a built-in type that stores 
- * a Binary Large Object as a column value in a row of a database 
- * table. The driver implements Blob using an SQL locator(BLOB), 
- * which means that a Blob object contains a logical pointer to the 
- * SQL BLOB data rather than the data itself. A Blob object is valid 
- * for the duration of the transaction in which is was created. 
- * 
- * Methods in the interfaces ResultSet, CallableStatement, and 
- * PreparedStatement, such as getBlob and setBlob allow a programmer 
- * to access an SQL BLOB value. The Blob interface provides methods 
- * for getting the length of an SQL BLOB (Binary Large Object) value, 
- * for materializing a BLOB value on the client, and for determining 
- * the position of a pattern of bytes within a BLOB value. 
- * 
- * This class is new in the JDBC 2.0 API. 
+ * The representation (mapping) in the JavaTM programming language  of an SQL
+ * BLOB value. An SQL BLOB is a built-in type that stores  a Binary Large
+ * Object as a column value in a row of a database  table. The driver
+ * implements Blob using an SQL locator(BLOB),  which means that a Blob object
+ * contains a logical pointer to the  SQL BLOB data rather than the data
+ * itself. A Blob object is valid  for the duration of the transaction in
+ * which is was created.   Methods in the interfaces ResultSet,
+ * CallableStatement, and  PreparedStatement, such as getBlob and setBlob
+ * allow a programmer  to access an SQL BLOB value. The Blob interface
+ * provides methods  for getting the length of an SQL BLOB (Binary Large
+ * Object) value,  for materializing a BLOB value on the client, and for
+ * determining  the position of a pattern of bytes within a BLOB value.   This
+ * class is new in the JDBC 2.0 API.
  */
 public class Blob
     implements java.sql.Blob
@@ -76,10 +70,10 @@ public class Blob
     }
 
     /**
-     * Retrieves the BLOB designated by this Blob instance
-     * as a stream.
+     * Retrieves the BLOB designated by this Blob instance as a stream.
      * 
      * @return this BLOB represented as a binary stream of bytes.
+     * 
      * @throws SQLException if a database error occurs
      */
     public java.io.InputStream getBinaryStream()
@@ -108,18 +102,17 @@ public class Blob
     }
 
     /**
-     * Returns as an array of bytes, part or all of the BLOB
-        * value that this Blob object designates.
-        * 
-        * @param pos where to start the part of the BLOB
-        * @param length the length of the part of the BLOB you want
-        *                returned. 
-        * 
-        * @return the bytes stored in the blob starting at position <code>pos</code>
-        * and having a length of <code>length</code>.
-        * 
-        * @throws SQLException if a database error occurs
-        */
+     * Returns as an array of bytes, part or all of the BLOB value that this
+     * Blob object designates.
+     * 
+     * @param pos where to start the part of the BLOB
+     * @param length the length of the part of the BLOB you want returned.
+     * 
+     * @return the bytes stored in the blob starting at position
+     *         <code>pos</code> and having a length of <code>length</code>.
+     * 
+     * @throws SQLException if a database error occurs
+     */
     public byte[] getBytes(long pos, int length)
                     throws SQLException
     {
@@ -131,12 +124,13 @@ public class Blob
     }
 
     /**
-        * Returns the number of bytes in the BLOB value designated
-        * by this Blob object.
-        * 
-        * @return the length of this blob
-        * @throws SQLException if a database error occurs
-        */
+     * Returns the number of bytes in the BLOB value designated by this Blob
+     * object.
+     * 
+     * @return the length of this blob
+     * 
+     * @throws SQLException if a database error occurs
+     */
     public long length()
                 throws SQLException
     {
@@ -149,7 +143,10 @@ public class Blob
      * 
      * @param pattern the pattern to find
      * @param start where to start finding the pattern
-     * @return the position where the pattern is found in the BLOB, -1 if not found
+     * 
+     * @return the position where the pattern is found in the BLOB, -1 if not
+     *         found
+     * 
      * @throws SQLException if a database error occurs
      */
     public long position(java.sql.Blob pattern, long start)
@@ -164,7 +161,9 @@ public class Blob
      * 
      * @param pattern DOCUMENT ME!
      * @param start DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * 
+     * @return DOCUMENT ME!
+     * 
      * @throws SQLException DOCUMENT ME!
      */
     public long position(byte[] pattern, long start)
