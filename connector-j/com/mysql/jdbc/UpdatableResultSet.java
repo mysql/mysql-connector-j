@@ -143,54 +143,6 @@ public class UpdatableResultSet
     }
 
     /**
-     * A column value can be retrieved as a stream of ASCII characters and then
-     * read in chunks from the stream.  This method is particulary suitable
-     * for retrieving large LONGVARCHAR values. The JDBC driver will do any
-     * necessary conversion from the database format into ASCII.
-     * 
-     * <p>
-     * <B>Note:</B> All the data in the returned stream must be read prior to
-     * getting the value of any other column.  The next call to a get method
-     * implicitly closes the stream.  Also, a stream may return 0 for
-     * available() whether there is data available or not.
-     * </p>
-     * 
-     * @param columnIndex the first column is 1, the second is 2, ...
-     * 
-     * @return a Java InputStream that delivers the database column value as a
-     *         stream of one byte ASCII characters.  If the value is SQL NULL
-     *         then the result is null
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     * 
-     * @see getBinaryStream
-     */
-    public synchronized InputStream getAsciiStream(int columnIndex)
-                                            throws java.sql.SQLException {
-
-        return super.getAsciiStream(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param columnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized InputStream getAsciiStream(String columnName)
-                                            throws java.sql.SQLException {
-
-        return super.getAsciiStream(columnName);
-    }
-
-    //---------------------------------------------------------------------
-    // Traversal/Positioning
-    //---------------------------------------------------------------------
-
-    /**
      * JDBC 2.0
      * 
      * <p>
@@ -209,169 +161,6 @@ public class UpdatableResultSet
     }
 
     /**
-     * Get the value of a column in the current row as a java.lang.BigDecimal
-     * object
-     * 
-     * @param columnIndex  the first column is 1, the second is 2...
-     * @param scale the number of digits to the right of the decimal
-     * 
-     * @return the column value; if the value is SQL NULL, null
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized BigDecimal getBigDecimal(int columnIndex, int scale)
-                                          throws java.sql.SQLException {
-
-        return super.getBigDecimal(columnIndex, scale);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * @param scale DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized BigDecimal getBigDecimal(String ColumnName, int scale)
-                                          throws java.sql.SQLException {
-
-        return super.getBigDecimal(findColumn(ColumnName), scale);
-    }
-
-    /**
-     * A column value can also be retrieved as a binary strea.  This method is
-     * suitable for retrieving LONGVARBINARY values.
-     * 
-     * @param columnIndex the first column is 1, the second is 2...
-     * 
-     * @return a Java InputStream that delivers the database column value as a
-     *         stream of bytes.  If the value is SQL NULL, then the result is
-     *         null
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     * 
-     * @see getAsciiStream
-     * @see getUnicodeStream
-     */
-    public synchronized InputStream getBinaryStream(int columnIndex)
-                                             throws java.sql.SQLException {
-
-        return super.getBinaryStream(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param columnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized InputStream getBinaryStream(String columnName)
-                                             throws java.sql.SQLException {
-
-        return super.getBinaryStream(columnName);
-    }
-
-    /**
-     * Get the value of a column in the current row as a Java boolean
-     * 
-     * @param columnIndex the first column is 1, the second is 2...
-     * 
-     * @return the column value, false for SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized boolean getBoolean(int columnIndex)
-                                    throws java.sql.SQLException {
-
-        return super.getBoolean(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized boolean getBoolean(String ColumnName)
-                                    throws java.sql.SQLException {
-
-        return super.getBoolean(findColumn(ColumnName));
-    }
-
-    /**
-     * Get the value of a column in the current row as a Java byte.
-     * 
-     * @param columnIndex the first column is 1, the second is 2,...
-     * 
-     * @return the column value; 0 if SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized byte getByte(int columnIndex)
-                              throws java.sql.SQLException {
-
-        return super.getByte(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized byte getByte(String ColumnName)
-                              throws java.sql.SQLException {
-
-        return super.getByte(findColumn(ColumnName));
-    }
-
-    /**
-     * Get the value of a column in the current row as a Java byte array.
-     * 
-     * <p>
-     * <b>Be warned</b> If the blob is huge, then you may run out of memory.
-     * </p>
-     * 
-     * @param columnIndex the first column is 1, the second is 2, ...
-     * 
-     * @return the column value; if the value is SQL NULL, the result is null
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized byte[] getBytes(int columnIndex)
-                                 throws java.sql.SQLException {
-
-        return super.getBytes(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized byte[] getBytes(String ColumnName)
-                                 throws java.sql.SQLException {
-
-        return super.getBytes(findColumn(ColumnName));
-    }
-
-    /**
      * JDBC 2.0 Return the concurrency of this result set.  The concurrency
      * used is determined by the statement that created the result set.
      * 
@@ -383,96 +172,6 @@ public class UpdatableResultSet
                        throws SQLException {
 
         return (isUpdatable ? CONCUR_UPDATABLE : CONCUR_READ_ONLY);
-    }
-
-    /**
-     * Get the name of the SQL cursor used by this ResultSet
-     * 
-     * <p>
-     * In SQL, a result table is retrieved though a cursor that is named.  The
-     * current row of a result can be updated or deleted using a positioned
-     * update/delete statement that references the cursor name.
-     * </p>
-     * 
-     * <p>
-     * JDBC supports this SQL feature by providing the name of the SQL cursor
-     * used by a ResultSet.  The current row of a ResulSet is also the current
-     * row of this SQL cursor.
-     * </p>
-     * 
-     * <p>
-     * <B>Note:</B> If positioned update is not supported, a
-     * java.sql.SQLException is thrown.
-     * </p>
-     * 
-     * @return the ResultSet's SQL cursor name.
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized String getCursorName()
-                                      throws java.sql.SQLException {
-
-        return super.getCursorName();
-    }
-
-    /**
-     * Get the value of a column in the current row as a java.sql.Date object
-     * 
-     * @param columnIndex the first column is 1, the second is 2...
-     * 
-     * @return the column value; null if SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized java.sql.Date getDate(int columnIndex)
-                                       throws java.sql.SQLException {
-
-        return super.getDate(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized java.sql.Date getDate(String ColumnName)
-                                       throws java.sql.SQLException {
-
-        return super.getDate(findColumn(ColumnName));
-    }
-
-    /**
-     * Get the value of a column in the current row as a Java double.
-     * 
-     * @param columnIndex the first column is 1, the second is 2,...
-     * 
-     * @return the column value; 0 if SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized double getDouble(int columnIndex)
-                                  throws java.sql.SQLException {
-
-        return super.getDouble(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized double getDouble(String ColumnName)
-                                  throws java.sql.SQLException {
-
-        return super.getDouble(findColumn(ColumnName));
     }
 
     /**
@@ -493,66 +192,6 @@ public class UpdatableResultSet
     }
 
     /**
-     * Get the value of a column in the current row as a Java float.
-     * 
-     * @param columnIndex the first column is 1, the second is 2,...
-     * 
-     * @return the column value; 0 if SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized float getFloat(int columnIndex)
-                                throws java.sql.SQLException {
-
-        return super.getFloat(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized float getFloat(String ColumnName)
-                                throws java.sql.SQLException {
-
-        return super.getFloat(findColumn(ColumnName));
-    }
-
-    /**
-     * Get the value of a column in the current row as a Java int.
-     * 
-     * @param columnIndex the first column is 1, the second is 2,...
-     * 
-     * @return the column value; 0 if SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized int getInt(int columnIndex)
-                            throws java.sql.SQLException {
-
-        return super.getInt(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized int getInt(String ColumnName)
-                            throws java.sql.SQLException {
-
-        return super.getInt(findColumn(ColumnName));
-    }
-
-    /**
      * JDBC 2.0
      * 
      * <p>
@@ -570,267 +209,6 @@ public class UpdatableResultSet
                                 throws SQLException {
 
         return super.isLast();
-    }
-
-    /**
-     * Get the value of a column in the current row as a Java long.
-     * 
-     * @param columnIndex the first column is 1, the second is 2,...
-     * 
-     * @return the column value; 0 if SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized long getLong(int columnIndex)
-                              throws java.sql.SQLException {
-
-        return super.getLong(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized long getLong(String ColumnName)
-                              throws java.sql.SQLException {
-
-        return super.getLong(findColumn(ColumnName));
-    }
-
-    /**
-     * Get the value of a column in the current row as a Java object
-     * 
-     * <p>
-     * This method will return the value of the given column as a Java object.
-     * The type of the Java object will be the default Java Object type
-     * corresponding to the column's SQL type, following the mapping specified
-     * in the JDBC specification.
-     * </p>
-     * 
-     * <p>
-     * This method may also be used to read database specific abstract data
-     * types.
-     * </p>
-     * 
-     * @param columnIndex the first column is 1, the second is 2...
-     * 
-     * @return a Object holding the column value
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized Object getObject(int columnIndex)
-                                  throws java.sql.SQLException {
-
-        return super.getObject(columnIndex);
-    }
-
-    /**
-     * Get the value of a column in the current row as a Java object
-     * 
-     * <p>
-     * This method will return the value of the given column as a Java object.
-     * The type of the Java object will be the default Java Object type
-     * corresponding to the column's SQL type, following the mapping specified
-     * in the JDBC specification.
-     * </p>
-     * 
-     * <p>
-     * This method may also be used to read database specific abstract data
-     * types.
-     * </p>
-     * 
-     * @param columnName is the SQL name of the column
-     * 
-     * @return a Object holding the column value
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized Object getObject(String columnName)
-                                  throws java.sql.SQLException {
-
-        return super.getObject(columnName);
-    }
-
-    /**
-     * JDBC 2.0
-     * 
-     * <p>
-     * Determine the current row number.  The first row is number 1, the second
-     * number 2, etc.
-     * </p>
-     * 
-     * @return the current row number, else return 0 if there is no  current
-     *         row
-     * 
-     * @exception SQLException if a database-access error occurs.
-     */
-    public synchronized int getRow()
-                            throws SQLException {
-
-        return super.getRow();
-    }
-
-    /**
-     * Get the value of a column in the current row as a Java short.
-     * 
-     * @param columnIndex the first column is 1, the second is 2,...
-     * 
-     * @return the column value; 0 if SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized short getShort(int columnIndex)
-                                throws java.sql.SQLException {
-
-        return super.getShort(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized short getShort(String ColumnName)
-                                throws java.sql.SQLException {
-
-        return super.getShort(findColumn(ColumnName));
-    }
-
-    /**
-     * Get the value of a column in the current row as a Java String
-     * 
-     * @param columnIndex the first column is 1, the second is 2...
-     * 
-     * @return the column value, null for SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized String getString(int columnIndex)
-                                  throws java.sql.SQLException {
-
-        return super.getString(columnIndex);
-    }
-
-    /**
-     * The following routines simply convert the columnName into a columnIndex
-     * and then call the appropriate routine above.
-     * 
-     * @param ColumnName is the SQL name of the column
-     * 
-     * @return the column value
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized String getString(String ColumnName)
-                                  throws java.sql.SQLException {
-
-        return super.getString(findColumn(ColumnName));
-    }
-
-    /**
-     * Get the value of a column in the current row as a java.sql.Time object
-     * 
-     * @param columnIndex the first column is 1, the second is 2...
-     * 
-     * @return the column value; null if SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized Time getTime(int columnIndex)
-                              throws java.sql.SQLException {
-
-        return super.getTime(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized Time getTime(String ColumnName)
-                              throws java.sql.SQLException {
-
-        return super.getTime(findColumn(ColumnName));
-    }
-
-    /**
-     * Get the value of a column in the current row as a java.sql.Timestamp
-     * object
-     * 
-     * @param columnIndex the first column is 1, the second is 2...
-     * 
-     * @return the column value; null if SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    public synchronized Timestamp getTimestamp(int columnIndex)
-                                        throws java.sql.SQLException {
-
-        return super.getTimestamp(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param ColumnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized Timestamp getTimestamp(String ColumnName)
-                                        throws java.sql.SQLException {
-
-        return super.getTimestamp(ColumnName);
-    }
-
-    /**
-     * A column value can also be retrieved as a stream of Unicode characters.
-     * We implement this as a binary stream.
-     * 
-     * @param columnIndex the first column is 1, the second is 2...
-     * 
-     * @return a Java InputStream that delivers the database column value as a
-     *         stream of two byte Unicode characters.  If the value is SQL
-     *         NULL, then the result is null
-     * 
-     * @exception java.sql.SQLException if a database access error occurs
-     * 
-     * @see getAsciiStream
-     * @see getBinaryStream
-     */
-    public synchronized InputStream getUnicodeStream(int columnIndex)
-                                              throws java.sql.SQLException {
-
-        return super.getUnicodeStream(columnIndex);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param columnName DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     * 
-     * @throws java.sql.SQLException DOCUMENT ME!
-     */
-    public synchronized InputStream getUnicodeStream(String columnName)
-                                              throws java.sql.SQLException {
-
-        return super.getUnicodeStream(columnName);
     }
 
     /**
@@ -1618,17 +996,28 @@ public class UpdatableResultSet
     /**
      * @see ResultSet#updateBlob(int, Blob)
      */
-    public void updateBlob(int arg0, java.sql.Blob arg1)
+    public void updateBlob(int columnIndex, java.sql.Blob blob)
                     throws SQLException {
-        throw new NotImplemented();
+        if (!onInsertRow) {
+
+            if (!doingUpdates) {
+                doingUpdates = true;
+                syncUpdate();
+            }
+
+            updater.setBlob(columnIndex, blob);
+        } else {
+            inserter.setBlob(columnIndex, blob);
+        }
+        
     }
 
     /**
      * @see ResultSet#updateBlob(String, Blob)
      */
-    public void updateBlob(String arg0, java.sql.Blob arg1)
+    public void updateBlob(String columnName, java.sql.Blob blob)
                     throws SQLException {
-        throw new NotImplemented();
+        updateBlob(findColumn(columnName), blob);
     }
 
     /**
@@ -2391,22 +1780,6 @@ public class UpdatableResultSet
         updateTimestamp(findColumn(columnName), x);
     }
 
-    /**
-     * A column may have the value of SQL NULL; wasNull() reports whether the
-     * last column read had this special value.  Note that you must first call
-     * getXXX on a column to try to read its value and then call wasNull() to
-     * find if the value was SQL NULL
-     * 
-     * @return true if the last column read was SQL NULL
-     * 
-     * @exception java.sql.SQLException if a database access error occurred
-     */
-    public synchronized boolean wasNull()
-                                 throws java.sql.SQLException {
-
-        return super.wasNull();
-    }
-
     protected void setResultSetConcurrency(int concurrencyFlag) {
         super.setResultSetConcurrency(concurrencyFlag);
 
@@ -2516,16 +1889,6 @@ public class UpdatableResultSet
                      + keyValues.toString();
         deleteSQL = "DELETE FROM " + quotedIdStr + tableName + quotedIdStr
                     + " WHERE " + keyValues.toString();
-    }
-
-    /**
-     * Allows Statements to determine the type of result set they ended up
-     * building.
-     * @return DOCUMENT ME!
-     */
-    int getResultSetType() {
-
-        return 0;
     }
 
     /**
