@@ -27,6 +27,11 @@ import testsuite.BaseTestCase;
 public class StatementsTest
     extends BaseTestCase {
 
+	private static final int MAX_COLUMNS_TO_TEST = 40;
+	private static final int STEP = 8;
+	private static final int MAX_COLUMN_LENGTH = 255;
+	private static final int MIN_COLUMN_LENGTH = 10;
+	
     //~ Constructors ..........................................................
 
     /**
@@ -54,6 +59,7 @@ public class StatementsTest
         new StatementsTest("testPreparedStatement").run();
         new StatementsTest("testPreparedStatementBatch").run();
         new StatementsTest("testClose").run();
+        new StatementsTest("testSelectColumns").run();
     }
 
     /**
@@ -73,6 +79,59 @@ public class StatementsTest
         stmt.executeUpdate(
                 "CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
 
+		
+		
+		for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP)
+		{
+			StringBuffer insertBuf = new StringBuffer("INSERT INTO statement_col_test_");
+			StringBuffer stmtBuf = new StringBuffer("CREATE TABLE IF NOT EXISTS statement_col_test_");
+			stmtBuf.append(i);
+			insertBuf.append(i);
+			stmtBuf.append(" (");
+			insertBuf.append(" VALUES (");
+			
+			boolean firstTime = true;
+			
+			for (int j = 0; j < i; j++)
+			{
+				if (!firstTime)
+				{
+					stmtBuf.append(",");
+					insertBuf.append(",");
+				}
+				else
+				{
+					firstTime = false;
+				}
+					stmtBuf.append("col_");
+					stmtBuf.append(j);
+					stmtBuf.append(" VARCHAR(");
+					stmtBuf.append(MAX_COLUMN_LENGTH);
+					stmtBuf.append(")");
+					
+					insertBuf.append("'");
+					int numChars = (int)((Math.random() * (MAX_COLUMN_LENGTH - MIN_COLUMN_LENGTH))) + MIN_COLUMN_LENGTH;
+					
+					for (int k = 0; k < numChars; k++)
+					{
+						insertBuf.append("A");
+					}
+					
+					insertBuf.append("'");
+			}
+			
+			stmtBuf.append(")");
+			insertBuf.append(")");
+
+			stmt.executeUpdate(stmtBuf.toString());
+			stmt.executeUpdate(insertBuf.toString());
+			
+		
+		}
+		
+		
+			
+			
         // explicitly set the catalog to exercise code in execute(), executeQuery() and
         // executeUpdate()
         // FIXME: Only works on Windows!
@@ -87,6 +146,15 @@ public class StatementsTest
     public void tearDown()
                   throws Exception {
         stmt.executeUpdate("DROP TABLE statement_test");
+        
+        for (int i = 0; i < MAX_COLUMNS_TO_TEST; i += STEP)
+		{
+			StringBuffer stmtBuf = new StringBuffer("DROP TABLE IF EXISTS statement_col_test_");
+			stmtBuf.append(i);
+			
+			stmt.executeUpdate(stmtBuf.toString());
+		}
+		
         super.tearDown();
     }
 
@@ -171,6 +239,23 @@ public class StatementsTest
         }
     }
 
+	public void testSelectColumns() throws SQLException
+	{
+		for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP)
+		{
+			long start = System.currentTimeMillis();
+			rs = stmt.executeQuery("SELECT * from statement_col_test_" + i);
+			if (rs.next())
+			{
+			}
+			long end = System.currentTimeMillis();
+			
+			System.out.println(i + " columns = " + (end - start));
+		}
+			
+			
+	}
+	
     /**
      * DOCUMENT ME!
      * 
@@ -309,7 +394,33 @@ public class StatementsTest
             assertTrue("Update count must be '1', was '" + updateCount + 
                        "'", (updateCount == 1));
         }
+        
+        
+        
+        stmt.executeUpdate("INSERT INTO statement_test (strdata1, strdata2) values ('a', 'a'), ('b', 'b'), ('c', 'c')");
+        
+        rs = stmt.getGeneratedKeys();
+        
+        int updateCountFromProtocol = 0;
+        
+        if (rs.next())
+        {
+        	updateCountFromProtocol = rs.getInt(1);
+        }
+        
+        rs.close();
+        
+        rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+        
+        int updateCountFromServer = 0;
+        
+        if (rs.next())
+        {
+        	updateCountFromServer = rs.getInt(1);
+        }
          
+        System.out.println("Update count from server: " + updateCountFromServer);
+        
         }
         finally {
         	if (rs != null) {
@@ -323,6 +434,7 @@ public class StatementsTest
         }
     }
 
+	
     /**
      * DOCUMENT ME!
      * 
