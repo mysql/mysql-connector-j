@@ -10,6 +10,8 @@ xx-xx-xx - Version 3.0.4-gamma
 	  PreparedStatements for setByte().
 	- Reduce memory footprint of PreparedStatements by sharing 
 	  outbound packet with MysqlIO.
+	- Added 'strictUpdates' property to allow control of amount
+	  of checking for 'correctness' of updatable result sets.
 	  
 12-17-02 - Version 3.0.3-dev
 	- Changed charsToByte in SingleByteCharConverter to be non-static
