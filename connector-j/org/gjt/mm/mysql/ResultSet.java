@@ -1782,160 +1782,25 @@ public abstract class ResultSet
 
 	/**
 	 * Converts a string representation of a number
-	 * to a double.
-	 *
-	 * Thanks to Steve Ferguson at Caucho.com
+	 * to a double. Need a faster way to do this.
 	 */
 
-	public static double getDouble(byte[] buf)
+	public static double getDouble(byte[] buf) throws SQLException
 	{
-
-		double value = 0;
-		int exp = 0;
-		int sign = 1;
-
-		int pos = 0;
-
-		int len = buf.length;
-
-		// remove leading spaces, we may have them wit Inf.
-
-		for (; pos < len && (char) buf[pos] == ' ';)
-			pos++;
-
-		if (pos + 3 == len)
+		if (buf.length == 0)
 		{
-			if ((char) buf[pos] == 'N'
-				&& (char) buf[pos + 1] == 'a'
-				&& (char) buf[pos + 2] == 'N')
-			{
-				return Double.NaN;
-			}
+			return 0;
+		}
+		
+		try 
+		{
+			return Double.parseDouble(new String(buf));
+		} 
+		catch (NumberFormatException e) 
+		{
+			throw new SQLException("Bad format for number '" + new String(buf) + "'");
 		}
 
-		if (pos < len)
-		{
-			if ((char) buf[pos] == '-')
-			{
-				sign = -1;
-				pos++;
-			}
-		}
-
-		for (; pos < len; pos++)
-		{
-			char ch = (char) buf[pos];
-
-			if (ch >= '0' && ch <= '9')
-			{
-				value = 10 * value + ch - '0';
-			}
-			else if (pos + 3 == len)
-			{
-				if (((char) buf[pos] == 'I' || (char) buf[pos] == 'i')
-					&& (char) buf[pos + 1] == 'n'
-					&& (char) buf[pos + 2] == 'f')
-				{
-					if (sign > 0)
-					{
-						return Double.POSITIVE_INFINITY;
-					}
-					else
-					{
-						return Double.NEGATIVE_INFINITY;
-					}
-				}
-
-				// MAG MAG MAG
-				// BREAK STATEMENT MISSING.
-				// If code executes, the current byte is not a
-				// value between 0-9 and execute of this loop needs
-				// to cease!
-				// ADD A BREAK STATEMENT HERE!
-				// MAG MAG MAG
-				break;
-			}
-			else
-			{
-				break;
-			}
-		}
-
-		if (pos == len)
-		{
-			return sign * value;
-		}
-
-		if ((char) buf[pos] == '.')
-		{
-			pos++;
-
-			for (; pos < len; pos++)
-			{
-				char ch = (char) buf[pos];
-
-				if (ch >= '0' && ch <= '9')
-				{
-					value = 10 * value + ch - '0';
-					exp--;
-				}
-				else
-				{
-					break;
-				}
-			}
-		}
-
-		if (pos < len && ((char) buf[pos] == 'e' || (char) buf[pos] == 'E'))
-		{
-			pos++;
-
-			int eSign = 1;
-
-			if (pos < len && (char) buf[pos] == '-')
-			{
-				pos++;
-
-				eSign = -1;
-			}
-
-			if (pos < len && (char) buf[pos] == '+')
-			{
-				pos++;
-			}
-
-			int expt = 0;
-
-			for (; pos < len; pos++)
-			{
-				char ch = (char) buf[pos];
-
-				if (ch >= '0' && ch <= '9')
-				{
-					expt = 10 * expt + ch - '0';
-				}
-				else
-				{
-					break;
-				}
-			}
-			exp += eSign * expt;
-
-		}
-
-		if (pos < len)
-		{
-			return 0.0;
-		}
-
-		if (exp >= 0)
-		{
-			return sign * value * Math.pow(10, exp);
-		}
-		else
-		{
-			return sign * value / Math.pow(10, -exp);
-		}
 	}
 
 	// 
