@@ -47,6 +47,8 @@ public class Field
   int _mysqlType = -1; // the MySQL type
   short _colFlag;
   int _colDecimals;
+  
+  private String _fullName;
 
   private final static int _AUTO_INCREMENT_FLAG = 512;
 
@@ -64,18 +66,32 @@ public class Field
 
     _sqlType = MysqlDefs.mysqlToJavaType(mysql_type);
 
+	StringBuffer fullNameBuf = new StringBuffer(_tableName.length() + 1 + _name.length());
+	fullNameBuf.append(_tableName);
+	fullNameBuf.append(".");
+	fullNameBuf.append(_name);
+	
+	_fullName = fullNameBuf.toString();
+	fullNameBuf = null;
+	
     boolean is_binary = isBinary();
 
     //
     // Handle TEXT type (special case), Fix proposed by Peter McKeown
     //
 
-    if (_sqlType == java.sql.Types.LONGVARBINARY && !is_binary) {
-	_sqlType = java.sql.Types.LONGVARCHAR;
+    if (_sqlType == java.sql.Types.LONGVARBINARY && 
+    	!is_binary) 
+    {
+		_sqlType = java.sql.Types.LONGVARCHAR;
     }
-    else if (_sqlType == java.sql.Types.VARBINARY && !is_binary) {
-	_sqlType = java.sql.Types.VARCHAR;
+    else if (_sqlType == java.sql.Types.VARBINARY && 
+    		  !is_binary) 
+    {
+		_sqlType = java.sql.Types.VARCHAR;
     }
+    
+    
   }
   
   /**
@@ -110,8 +126,7 @@ public class Field
  
   public String getFullName() 
   {
-    String FullName = _tableName + "." + _name;
-    return FullName;
+    return _fullName;
   }
 
   public String getTableName()
