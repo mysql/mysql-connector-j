@@ -231,6 +231,11 @@ class EscapeProcessor
 
     String escapedSql = newSql.toString();
 
+	//
+	// FIXME: Let MySQL do this, however requires
+	//        lightweight parsing of statement
+	//
+	
     if (replaceEscapeSequence) {
       String currentSql = escapedSql;
       
