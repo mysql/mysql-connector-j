@@ -146,7 +146,10 @@ public class MysqlIO
      * @param port the port number that the server is listening on
      * @exception IOException if an IOException occurs during connect.
      */
-    public MysqlIO(String Host, int port, com.mysql.jdbc.Connection Conn)
+    public MysqlIO(String Host, 
+    				int port, 
+    				com.mysql.jdbc.Connection Conn,
+    				int socketTimeout)
             throws IOException, java.sql.SQLException
     {
         this.connection = Conn;
@@ -165,7 +168,20 @@ public class MysqlIO
 
             /* Ignore */
         }
-
+        
+        if (socketTimeout != 0)
+        {
+        	try
+        	{
+            	this.mysqlConnection.setSoTimeout(socketTimeout);
+        	}
+        	catch (Exception ex)
+        	{
+	
+    	        /* Ignore */
+        	}
+        }
+      	
         this.mysqlInput = new BufferedInputStream(this.mysqlConnection.getInputStream(), 
                                                   16384);
         this.mysqlOutput = new BufferedOutputStream(this.mysqlConnection.getOutputStream(), 
@@ -547,7 +563,7 @@ public class MysqlIO
 
             // return FOUND rows
             clientParam |= CLIENT_FOUND_ROWS;
-
+            
             // Authenticate
             if (this.protocolVersion > 9)
             {
@@ -577,25 +593,69 @@ public class MysqlIO
             int packLength = (userLength + passwordLength) + 6 + 
                              HEADER_LENGTH;
 
-            // Passwords can be 16 chars long
-            Buffer packet = new Buffer(packLength);
-            packet.writeInt(clientParam);
-            packet.writeLongInt(packLength);
+			Buffer packet = null;
+			
+			if (!connection.useSSL())
+			{
+            	// Passwords can be 16 chars long
+            	packet = new Buffer(packLength);
+            	packet.writeInt(clientParam);
+            	packet.writeLongInt(packLength);
 
-            // User/Password data
-            packet.writeString(user);
+            	// User/Password data
+            	packet.writeString(user);
 
-            if (this.protocolVersion > 9)
-            {
-                packet.writeString(Util.newCrypt(password, seed));
+            	if (this.protocolVersion > 9)
+            	{
+                	packet.writeString(Util.newCrypt(password, seed));
+            	}
+            	else
+            	{
+                	packet.writeString(Util.oldCrypt(password, seed));
+            	}
+
+            	send(packet);
+			}
+			else
+			{
+				clientParam |= 2048;
+				
+				packet = new Buffer(packLength);
+            	packet.writeInt(clientParam);
+            	
+            	send(packet);
+				
+            	javax.net.ssl.SSLSocketFactory sslFact =
+      			(javax.net.ssl.SSLSocketFactory)javax.net.ssl.SSLSocketFactory.getDefault();
+      	
+      			this.mysqlConnection = sslFact.createSocket(this.host, this.port);
+      	
+        		this.mysqlInput = new BufferedInputStream(this.mysqlConnection.getInputStream(), 
+                                                  16384);
+        		this.mysqlOutput = new BufferedOutputStream(this.mysqlConnection.getOutputStream(), 
+                                                    16384);
+                                                    
+                packet.clear();
+            	packet.writeInt(clientParam);
+            	packet.writeLongInt(packLength);
+
+            	// User/Password data
+            	packet.writeString(user);
+
+            	if (this.protocolVersion > 9)
+            	{
+                	packet.writeString(Util.newCrypt(password, seed));
+            	}
+            	else
+            	{
+                	packet.writeString(Util.oldCrypt(password, seed));
+            	}
+
+            	send(packet);
+            	
             }
-            else
-            {
-                packet.writeString(Util.oldCrypt(password, seed));
-            }
-
-            send(packet);
-
+				
+     
             // Check for errors
             Buffer b = readPacket();
             byte status = b.readByte();
@@ -616,9 +676,20 @@ public class MysqlIO
 
                     if (xOpen.equals("S1000"))
                     {
-                        throw new java.sql.SQLException("Communication failure during handshake. Is there a server running on " + 
-                                                        this.host + ":" + 
-                                                        this.port + "?");
+                    	StringBuffer mesg = new StringBuffer("Communication failure during handshake.");
+                    	
+                    	
+                    	
+                    	if (connection != null && !connection.useParanoidErrorMessages())
+                    	{
+                    		mesg.append(" Is there a MySQL server running on ");
+                    		mesg.append(this.host);
+                    		mesg.append(":");
+                    		mesg.append(this.port);
+                    		mesg.append("?");
+                    	}
+                    	
+                        throw new java.sql.SQLException(mesg.toString());
                     }
                     else
                     {
@@ -671,11 +742,13 @@ public class MysqlIO
             //if ((clientParam & CLIENT_COMPRESS) != 0) {
             //use_compression = true;
             //}
+            
+           
         }
         catch (IOException ioEx)
         {
             throw new java.sql.SQLException(SQLError.get("08S01") + ": " + 
-                                            ioEx.getClass().getName(), "08S01", 
+                                            ioEx.getClass().getName() + ", underlying cause: " + ioEx.getMessage(), "08S01", 
                                             0);
         }
     }

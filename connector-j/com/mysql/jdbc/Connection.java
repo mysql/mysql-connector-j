@@ -89,6 +89,13 @@ public class Connection
      */
     MysqlIO io = null;
 
+	/**
+	 * Do we expose sensitive information in exception
+	 * and error messages?
+	 */
+	
+	private boolean paranoidErrorMessages = false;
+	
     /**
      * Are we in autoCommit mode?
      */
@@ -252,6 +259,18 @@ public class Connection
      */
     
     private boolean failedOver = false;
+    
+    /**
+     * What should we set the socket timeout to?
+     */
+    
+    private int socketTimeout = 0; // infinite
+    
+    /**
+     * Should we use SSL?
+     */
+    
+    private boolean useSSL = false;
        
     private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
 
@@ -402,7 +421,7 @@ public class Connection
         return this.database;
     }
 
-	public boolean isClosedNoPing()
+	public boolean isClosed()
 	{
 		if (Driver.trace)
         {
@@ -415,45 +434,6 @@ public class Connection
         return this.isClosed;
 	}
 	
-    /**
-     * Tests to see if a Connection is closed
-     *
-     * @return the status of the connection
-     * @exception java.sql.SQLException (why?)
-     */
-    public boolean isClosed()
-                     throws java.sql.SQLException
-    {
-
-        if (Driver.trace)
-        {
-
-            Object[] args = new Object[0];
-            Debug.methodCall(this, "isClosed", args);
-            Debug.returnValue(this, "isClosed", new Boolean(this.isClosed));
-        }
-
-        if (!this.isClosed)
-        {
-
-            // Test the connection
-            try
-            {
-
-                synchronized (this.mutex)
-                {
-                    ping();
-                }
-            }
-            catch (Exception E)
-            {
-                this.isClosed = true;
-            }
-        }
-
-        return this.isClosed;
-    }
-
     /** Returns the character encoding for this Connection */
     public String getEncoding()
     {
@@ -950,6 +930,35 @@ public class Connection
             this.strictFloatingPoint = info.getProperty("strictFloatingPoint").toUpperCase()
                 .equals("TRUE");
         }
+        
+        if (info.getProperty("useSSL") != null)
+        {
+        	this.useSSL = info.getProperty("useSSL").toUpperCase().equals("TRUE");
+        }
+        
+        if (info.getProperty("socketTimeout") != null)
+        {
+
+               try
+                {
+
+                    int n = Integer.parseInt(info.getProperty(
+                                                        "socketTimeout"));
+                                                        
+                    if (n < 0)
+                    {
+                    	throw new SQLException("socketTimeout can not be < 0", "0S100");
+                    }
+                    
+                    this.socketTimeout = n;
+                }
+                catch (NumberFormatException NFE)
+                {
+                    throw new SQLException("Illegal parameter '" + 
+                                           info.getProperty("socketTimeout") + 
+                                           "' for socketTimeout", "0S100");
+                }
+            }
 
         if (this.highAvailability)
         {
@@ -971,6 +980,8 @@ public class Connection
                 }
             }
 
+			
+            
             if (info.getProperty("initialTimeout") != null)
             {
 
@@ -1214,10 +1225,31 @@ public class Connection
         }
         catch (Exception ex)
         {
-            throw new java.sql.SQLException("Cannot connect to MySQL server on " + 
-                                            this.host + ":" + this.port + 
-                                            ". Is there a MySQL server running on the machine/port you are trying to connect to? (" + 
-                                            ex.getClass().getName() + ")", 
+        	StringBuffer mesg = new StringBuffer();
+        	
+        	if (!useParanoidErrorMessages())
+            {
+            	 mesg.append("Cannot connect to MySQL server on ");
+                 mesg.append(this.host);
+                 mesg.append(":");
+                 mesg.append(this.port);
+                 mesg.append(".\n\n");
+                 mesg.append("Make sure that there is a MySQL server ");
+                 mesg.append("running on the machine/port you are trying ");
+                 mesg.append("to connect to and that the machine this software is running on ");
+                 mesg.append("is able to connect to this host/port (i.e. not firewalled). ");
+                 mesg.append("Also make sure that the server has not been started with the --skip-networking ");
+                 mesg.append("flag.\n\n");
+            }
+            else
+            {
+            	mesg.append("Unable to connect to database.");
+            }
+            
+            mesg.append("Underlying exception: \n\n");
+            mesg.append(ex.getClass().getName());
+                  	
+            throw new java.sql.SQLException(mesg.toString(), 
                                             "08S01");
         }
     }
@@ -1564,9 +1596,8 @@ public class Connection
     }
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME! 
+     * Should we enable work-arounds for floating
+     * point rounding errors in the server?
      */
     public boolean useStrictFloatingPoint()
     {
@@ -1574,13 +1605,24 @@ public class Connection
         return this.strictFloatingPoint;
     }
 
-    /** Should unicode character mapping be used ? */
+    /** 
+     * Should unicode character mapping be used ?  
+     */
     public boolean useUnicode()
     {
 
         return this.doUnicode;
     }
 
+	/**
+	 * Should we use SSL?
+	 */
+	
+	public boolean useSSL()
+	{
+		return this.useSSL;
+	}
+	
     protected MysqlIO getIO()
     {
 
@@ -1601,7 +1643,8 @@ public class Connection
         		{
             		this.io = new MysqlIO(this.hostList.get(hostIndex).toString(), 
             							this.port, 
-            							this);
+            							this,
+            							this.socketTimeout);
             		this.io.init(this.user, this.password);
             		
             		if (this.database.length() != 0)
@@ -1702,7 +1745,8 @@ public class Connection
 
                                 this.io = new MysqlIO(this.hostList.get(hostIndex).toString(), 
             							this.port, 
-            							this);
+            							this,
+            							this.socketTimeout);
             							
             					this.io.init(this.user, this.password);
             					
@@ -3262,4 +3306,13 @@ public class Connection
 
         return this.serverTimezone;
     }
+    
+	/**
+	 * Returns the paranoidErrorMessages.
+	 * @return boolean
+	 */
+	public boolean useParanoidErrorMessages() {
+		return paranoidErrorMessages;
+	}
+
 }
