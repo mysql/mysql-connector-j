@@ -1313,16 +1313,18 @@ public class Statement
      * Close any open result sets that have been 'held open'
      */
     protected void closeAllOpenResults() {
-        for (Iterator iter = this.openResults.iterator(); iter.hasNext();) {
-			ResultSet element = (ResultSet) iter.next();
-			try {
-                element.close();
-            } catch (SQLException sqlEx) {
+        if (this.openResults != null) {
+            for (Iterator iter = this.openResults.iterator(); iter.hasNext();) {
+			     ResultSet element = (ResultSet) iter.next();
+			     try {
+                    element.close();
+                } catch (SQLException sqlEx) {
                 // ignore
-            }
-		}
+                }
+		  }
         
-        this.openResults.clear();
+            this.openResults.clear();
+        }
     }
     
     
