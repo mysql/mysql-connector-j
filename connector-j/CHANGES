@@ -1,6 +1,16 @@
 # Changelog
 # $Id$
 
+08-28-02 - Version 3.0.1-dev
+	
+    - Fixed ResultSet.getRow() off-by-one bug.
+    - Fixed RowDataStatic.getAt() off-by-one bug.
+    - Added limited Clob functionality (ResultSet.getClob(),
+      PreparedStatemtent.setClob(), 
+      PreparedStatement.setObject(Clob).
+    - Added socketTimeout parameter to URL.
+    - Connection.isClosed() no longer "pings" the server.
+	
 07-31-02 - Version 3.0.0-dev
 
 	- !!! LICENSE CHANGE !!! The driver is now GPL. If you need

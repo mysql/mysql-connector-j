@@ -1,5 +1,5 @@
-MySQL-JDBC 3.0.0-dev
-MySQL's (formerly Mark Matthews') JDBC Driver for MySQL
+MySQL Connector/J 3.0.0 Beta (formerly MM.MySQL)
+MySQL's JDBC Driver for MySQL
 Copyright (c) 2002 MySQL-AB
 
 CONTENTS
@@ -14,7 +14,7 @@ CONTENTS
 
 LICENSE
 
-MySQL-JDBC is licensed under the GPL. Please see the COPYING
+MySQL Connector/J is licensed under the GPL. Please see the COPYING
 file for more information. If you need non-GPL licenses for
 commercial distribution please contact me <mark@mysql.com> or
 sales@mysql.com.
@@ -31,7 +31,7 @@ strives to implement as much of the JDBC API as is feasible.
 
 INTRODUCTION
 
-MySQL-JDBC is an implemntation of the JDBC API for the MySQL relational
+MySQL Connector/J is an implemntation of the JDBC API for the MySQL relational
 database server. It strives to conform as much as possible to the API
 as specified by JavaSoft. It is known to work with many third-party 
 products, including Borland JBuilder, IBM Visual Age for Java, SQL/J,
@@ -39,12 +39,12 @@ JBoss, Weblogic, IBM WebSphere, Cocobase, ObjectRelationalBridge, etc.
 
 USAGE AND INSTALLATION
 
-MySQL-JDBC is distributed as a .zip or .tar.gz archive containing the sources 
-and class files as well as a class-file only "binary" .jar archive 
-named "mysql-jdbc-3.0.0-dev-bin.jar".
+MySQL Connector/J is distributed as a .zip or .tar.gz archive containing 
+the sources and class files as well as a class-file only "binary" .jar 
+archive named "mysql-connector-java-3.0.0-beta-bin.jar".
 
-You will need to use the appropriate gui or command-line utility that comes with your JDK 
-to un-archive the distribution (for example, WinZip for the .zip archive, and "tar" for 
+You will need to use the appropriate gui or command-line utility to un-archive 
+the distribution (for example, WinZip for the .zip archive, and "tar" for 
 the .tar.gz archive).
 
 Once you have un-archived the distribution archive,
@@ -54,7 +54,7 @@ Either copy the "com" and "org" subdirectories and all of their contents
 to anywhere you like, and put the directory holding the "com" and "org"
 subdirectories in your classpath, or...
 
-Put mysql-jdbc-3.0.0-dev-bin.jar in your classpath, either by adding the 
+Put mysql-connector-java-3.0.0-beta-bin.jar in your classpath, either by adding the 
 FULL path to it to your CLASSPATH enviornment variable, or putting it
 in $JAVA_HOME/jre/lib/ext.
 
@@ -163,6 +163,18 @@ profileSql          | Dump queries and execution/fetch times    | false
                     | to STDERR. Useful for optimizing queries  |
                     | that are auto-generated as in CMP EJBs    |   
                     | (true/false)                              |
+--------------------+-------------------------------------------+-------------
+socketTimeout       | When set to something other than '0', the | 0
+                    | driver will throw a SQLException when     |   
+                    | this timeout (in ms) has expired, and     |
+                    | invalidate (close) the connection.        |
+                    | The SQLState when this happens will be    |
+                    | "08S01", just as when communication fails |
+                    | for other reasons.                        |
+                    |                                           |
+                    | Your application should have code to      |
+                    | recover from this event (by creating a    |
+                    | new connection, for example)              |
 ------------------------------------------------------------------------------
 			
 A simple connection example looks like:
@@ -218,13 +230,15 @@ megabytes of memory that the JVM should be allowed to allocate.
 
 TROUBLESHOOTING
 
-There are a few issues that seem to be encountered often by users of MySQL-JDBC. 
+There are a few issues that seem to be encountered often by users of 
+MySQL Connector/J. 
+
 This section deals with their symptoms, and their resolutions. If you have
 further issues, see the "SUPPORT" section below.
 
   Issue: 
 
-  "When I try to connect to the database with MySQL-JDBC, I get the
+  "When I try to connect to the database with MySQL Connector/J, I get the
   following exception:
 
   SQLException: Server configuration denies access to data source
@@ -235,8 +249,8 @@ further issues, see the "SUPPORT" section below.
 
   Resolution: 
 
-  MySQL-JDBC must use TCP/IP sockets to connect to MySQL, as 
-  Java does not support Unix Domain Sockets. Therefore, when MySQL-JDBC
+  MySQL Connector/J must use TCP/IP sockets to connect to MySQL, as 
+  Java does not support Unix Domain Sockets. Therefore, when MySQL Connector/J
   connects to MySQL, the security manager in MySQL server will use the
   HOSTS table to determine whether or not the connection should be allowed.
 
@@ -249,11 +263,11 @@ further issues, see the "SUPPORT" section below.
   '[password]'"
 
   replacing [dbname] with the name of your database, [user] with the username,
-  [hostname] with the host that MySQL-JDBC will be connecting from, and [password]
-  with the password you want to use. Be aware that RedHat linux is broken with
-  respect to the hostname portion for the case when you are connecting from 
-  localhost. You need to use "localhost.localdomain" for the [hostname] value 
-  in this case.
+  [hostname] with the host that MySQL Connector/J will be connecting from, and 
+  [password] with the password you want to use. Be aware that RedHat linux is 
+  broken with respect to the hostname portion for the case when you are 
+  connecting from localhost. You need to use "localhost.localdomain" for the 
+  [hostname] value in this case.
 
   Follow this by issuing the "FLUSH PRIVILEGES" command.
 
@@ -276,8 +290,8 @@ further issues, see the "SUPPORT" section below.
 
   Issue: 
 
-  "I'm trying to use MySQL-JDBC in an applet and I get the following
-  exception: 
+  "I'm trying to use MySQL Connector/J in an applet or application and I 
+  get an exception similar to: 
   
   SQLException: Cannot connect to MySQL server on host:3306. Is there 
   a MySQL server running on the machine/port you are trying to connect to? 
@@ -289,12 +303,35 @@ further issues, see the "SUPPORT" section below.
 
   Resolution:
   
+  Either you're running an Applet, your MySQL server has been installed
+  with the "--skip-networking" option set, or your MySQL server has a 
+  firewall sitting in front of it.
+  
   Applets can only make network connections back to the machine that the
   webserver that served the .class files for the applet. This means that
   mysql must run on the same machine (or you must have some sort of port
   re-direction) for this to work. This also means that you will not be
   able to test applets from your local filesystem, you must always deploy
   them to a webserver.
+  
+  MySQL Connector/J can only communicate with MySQL using TCP/IP, as
+  Java does not support Unix domain sockets. TCP/IP communication with
+  MySQL might be affected if MySQL was started with the
+  "--skip-networking" flag, or if it is firewalled.
+  
+  If MySQL has been started with the "--skip-networking" option set 
+  (The Debian Linux install does this for example), you need to comment
+  it out in the file /etc/mysql/my.cnf or /etc/my.cnf. Of course your
+  my.cnf file might also exist in the "data" directory of your MySQL
+  server, or anywhere else (depending on how MySQL was compiled for 
+  your system). Binaries created by MySQL AB always look in /etc/my.cnf
+  and [datadir]/my.cnf.
+  
+  If your MySQL server has been firewalled, you will need to have the
+  firewall configured to allow TCP/IP connections from the host where
+  your Java code is running to the MySQL server on the port that MySQL
+  is listening (by default, 3306).
+  
 
   ----
 
@@ -310,7 +347,7 @@ further issues, see the "SUPPORT" section below.
   "autoReconnect" parameter (see "USAGE AND INSTALLATION"). Also, you should
   be catching SQLExceptions in your application and dealing with them, rather
   than propagating them all the way until your application exits, this is just
-  good software development. MySQL-JDBC will set the SQLState (see 
+  good software development. MySQL Connector/J will set the SQLState (see 
   java.sql.SQLException.getSQLState() in your APIDOCS) to "08S01" when it 
   encounters network-connectivity issues during the processing of a query. 
   Your application code should then attempt to re-connect to MySQL at this 
@@ -325,7 +362,7 @@ further issues, see the "SUPPORT" section below.
 
   Resolution:
 
-  Because MySQL does not have row identifiers, MySQL-JDBC can only update
+  Because MySQL does not have row identifiers, MySQL Connector/J can only update
   result sets that have come from queries that select the primary key(s) and
   only span one table (i.e. no joins). This is outlined in the JDBC specification.
 
@@ -387,10 +424,13 @@ SUPPORT
 Community-based support is available on the mysql-java mailing list 
 available from http://www.mysql.com/documentation/lists.html 
 
-MySQL-AB offers commercial support, and non-GPL commercial licenses of
-this software. Contact me <mark@mysql.com> or sales@mysql.com for more 
+MySQL-AB offers commercial support, and non-GPL commercial licenses for
+this software. Contact me <mark@mysql.com> or <sales@mysql.com> for more 
 information.
 
 --
 This software is OSI Certified Open Source Software.
 OSI Certified is a certification mark of the Open Source Initiative.
+
+--
+
