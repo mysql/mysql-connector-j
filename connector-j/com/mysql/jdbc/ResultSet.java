@@ -874,7 +874,7 @@ public class ResultSet
     public java.sql.Clob getClob(int i)
                           throws SQLException
     {
-        throw new NotImplemented();
+        return new com.mysql.jdbc.Clob(getString(i));
     }
 
     /**
@@ -888,7 +888,7 @@ public class ResultSet
     public java.sql.Clob getClob(String colName)
                           throws SQLException
     {
-        throw new NotImplemented();
+        return getClob(findColumn(colName));
     }
 
     /**
@@ -2039,7 +2039,35 @@ public class ResultSet
             Debug.methodCall(this, "getRow", args);
         }
 
-        int row = rowData.getCurrentRowNumber();
+        int currentRow = rowData.getCurrentRowNumber();
+        
+        int row = 0;
+		
+		
+		// Non-dynamic result sets can be interrogated
+		// for this information
+		
+		if (!rowData.isDynamic())
+		{
+			if (currentRow < 0 || 
+				rowData.isAfterLast() || 
+				rowData.isEmpty()) {
+				row = 0;
+			}
+			else {
+				row = currentRow + 1;
+			}
+		}
+		else
+		{
+			// dynamic (streaming) can not
+			
+			row = currentRow + 1;
+		}
+		
+		if (Driver.trace) {
+			Debug.returnValue(this, "getRow", new Integer(row));
+		}
 
         if (Driver.trace)
         {

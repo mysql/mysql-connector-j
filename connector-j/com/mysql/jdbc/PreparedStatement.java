@@ -80,11 +80,6 @@ public class PreparedStatement
     static final Object tzMutex = new Object();
     protected static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
 
-    /**
-     * Formatter for double - Steve Ferguson
-     */
-    private static NumberFormat doubleFormatter;
-    private static java.util.Hashtable templateCache = new java.util.Hashtable();
     protected boolean[] isNull = null;
     protected boolean[] isStream = null;
     protected InputStream[] parameterStreams = null;
@@ -100,16 +95,6 @@ public class PreparedStatement
 
     //~ Initializers ..........................................................
 
-    // Class Initializer
-    static
-    {
-        doubleFormatter = NumberFormat.getNumberInstance(java.util.Locale.US);
-        doubleFormatter.setGroupingUsed(false);
-
-        // attempt to prevent truncation
-        doubleFormatter.setMaximumFractionDigits(12);
-    }
-
     //~ Constructors ..........................................................
 
     /**
@@ -118,14 +103,12 @@ public class PreparedStatement
     public PreparedStatement(Connection conn, String sql, String catalog)
                       throws java.sql.SQLException
     {
-    	super(conn, catalog);
-    	
-    	if (sql == null)
-    	{
-    		throw new SQLException("SQL String can not be NULL", "S1009");
-    	}
-    	
-        
+        super(conn, catalog);
+
+        if (sql == null)
+        {
+            throw new SQLException("SQL String can not be NULL", "S1009");
+        }
 
         //if (_conn.useTimezone())
         //{
@@ -499,7 +482,7 @@ public class PreparedStatement
     public void setClob(int i, Clob x)
                  throws SQLException
     {
-        throw new NotImplemented();
+        setString(i, x.getSubString(0L, (int)x.length()));
     }
 
     /**
@@ -676,12 +659,12 @@ public class PreparedStatement
      *      all other types this value will be ignored.
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public void setObject(int parameterIndex, Object X, int targetSqlType, 
-                          int scale)
+    public void setObject(int parameterIndex, Object parameterObj, 
+                          int targetSqlType, int scale)
                    throws java.sql.SQLException
     {
 
-        if (X == null)
+        if (parameterObj == null)
         {
             setNull(parameterIndex, java.sql.Types.OTHER);
         }
@@ -705,60 +688,65 @@ public class PreparedStatement
                     case Types.DECIMAL:
                     case Types.NUMERIC:
 
-                        Number X_as_number;
+                        Number parameterAsNum;
 
-                        if (X instanceof Boolean)
+                        if (parameterObj instanceof Boolean)
                         {
-                            X_as_number = ((Boolean)X).booleanValue()
-                                              ? new Integer(1) : new Integer(0);
+                            parameterAsNum = ((Boolean)parameterObj).booleanValue()
+                                                 ? new Integer(1)
+                                                 : new Integer(0);
                         }
-                        else if (X instanceof String)
+                        else if (parameterObj instanceof String)
                         {
 
                             switch (targetSqlType)
                             {
 
                                 case Types.BIT:
-                                    X_as_number = (Boolean.getBoolean(
-                                                           (String)X)
-                                                       ? new Integer("1")
-                                                       : new Integer("0"));
+                                    parameterAsNum = (Boolean.getBoolean(
+                                                              (String)parameterObj)
+                                                          ? new Integer("1")
+                                                          : new Integer("0"));
 
                                     break;
 
                                 case Types.TINYINT:
                                 case Types.SMALLINT:
                                 case Types.INTEGER:
-                                    X_as_number = Integer.valueOf((String)X);
+                                    parameterAsNum = Integer.valueOf(
+                                                             (String)parameterObj);
 
                                     break;
 
                                 case Types.BIGINT:
-                                    X_as_number = Long.valueOf((String)X);
+                                    parameterAsNum = Long.valueOf(
+                                                             (String)parameterObj);
 
                                     break;
 
                                 case Types.REAL:
-                                    X_as_number = Float.valueOf((String)X);
+                                    parameterAsNum = Float.valueOf(
+                                                             (String)parameterObj);
 
                                     break;
 
                                 case Types.FLOAT:
                                 case Types.DOUBLE:
-                                    X_as_number = Double.valueOf((String)X);
+                                    parameterAsNum = Double.valueOf(
+                                                             (String)parameterObj);
 
                                     break;
 
                                 case Types.DECIMAL:
                                 case Types.NUMERIC:
                                 default:
-                                    X_as_number = new java.math.BigDecimal(
-                                                          (String)X);
+                                    parameterAsNum = new java.math.BigDecimal(
+                                                             (String)parameterObj);
                             }
                         }
                         else
                         {
-                            X_as_number = (Number)X;
+                            parameterAsNum = (Number)parameterObj;
                         }
 
                         switch (targetSqlType)
@@ -768,26 +756,27 @@ public class PreparedStatement
                             case Types.TINYINT:
                             case Types.SMALLINT:
                             case Types.INTEGER:
-                                setInt(parameterIndex, X_as_number.intValue());
+                                setInt(parameterIndex, 
+                                       parameterAsNum.intValue());
 
                                 break;
 
                             case Types.BIGINT:
                                 setLong(parameterIndex, 
-                                        X_as_number.longValue());
+                                        parameterAsNum.longValue());
 
                                 break;
 
                             case Types.REAL:
                                 setFloat(parameterIndex, 
-                                         X_as_number.floatValue());
+                                         parameterAsNum.floatValue());
 
                                 break;
 
                             case Types.FLOAT:
                             case Types.DOUBLE:
                                 setDouble(parameterIndex, 
-                                          X_as_number.doubleValue());
+                                          parameterAsNum.doubleValue());
 
                                 break;
 
@@ -795,22 +784,22 @@ public class PreparedStatement
                             case Types.NUMERIC:
                             default:
 
-                                if (X_as_number instanceof java.math.BigDecimal)
+                                if (parameterAsNum instanceof java.math.BigDecimal)
                                 {
                                     setBigDecimal(parameterIndex, 
-                                                  (java.math.BigDecimal)X_as_number);
+                                                  (java.math.BigDecimal)parameterAsNum);
                                 }
-                                else if (X_as_number instanceof java.math.BigInteger)
+                                else if (parameterAsNum instanceof java.math.BigInteger)
                                 {
                                     setBigDecimal(parameterIndex, 
                                                   new java.math.BigDecimal(
-                                                          (java.math.BigInteger)X_as_number, 
+                                                          (java.math.BigInteger)parameterAsNum, 
                                                           scale));
                                 }
                                 else
                                 {
                                     setBigDecimal(parameterIndex, 
-                                                  new java.math.BigDecimal(X_as_number.doubleValue()));
+                                                  new java.math.BigDecimal(parameterAsNum.doubleValue()));
                                 }
 
                                 break;
@@ -821,7 +810,7 @@ public class PreparedStatement
                     case Types.CHAR:
                     case Types.VARCHAR:
                     case Types.LONGVARCHAR:
-                        setString(parameterIndex, X.toString());
+                        setString(parameterIndex, parameterObj.toString());
 
                         break;
 
@@ -829,13 +818,14 @@ public class PreparedStatement
                     case Types.VARBINARY:
                     case Types.LONGVARBINARY:
 
-                        if (X instanceof String)
+                        if (parameterObj instanceof String)
                         {
-                            setBytes(parameterIndex, ((String)X).getBytes());
+                            setBytes(parameterIndex, 
+                                     ((String)parameterObj).getBytes());
                         }
                         else
                         {
-                            setBytes(parameterIndex, (byte[])X);
+                            setBytes(parameterIndex, (byte[])parameterObj);
                         }
 
                         break;
@@ -843,20 +833,21 @@ public class PreparedStatement
                     case Types.DATE:
                     case Types.TIMESTAMP:
 
-                        java.util.Date X_as_date;
+                        java.util.Date parameterAsDate;
 
-                        if (X instanceof String)
+                        if (parameterObj instanceof String)
                         {
 
                             ParsePosition pp = new ParsePosition(0);
                             java.text.DateFormat sdf = new java.text.SimpleDateFormat(getDateTimePattern(
-                                                                                              (String)X, 
+                                                                                              (String)parameterObj, 
                                                                                               false));
-                            X_as_date = sdf.parse((String)X, pp);
+                            parameterAsDate = sdf.parse((String)parameterObj, 
+                                                        pp);
                         }
                         else
                         {
-                            X_as_date = (java.util.Date)X;
+                            parameterAsDate = (java.util.Date)parameterObj;
                         }
 
                         switch (targetSqlType)
@@ -864,30 +855,30 @@ public class PreparedStatement
 
                             case Types.DATE:
 
-                                if (X_as_date instanceof java.sql.Date)
+                                if (parameterAsDate instanceof java.sql.Date)
                                 {
                                     setDate(parameterIndex, 
-                                            (java.sql.Date)X_as_date);
+                                            (java.sql.Date)parameterAsDate);
                                 }
                                 else
                                 {
                                     setDate(parameterIndex, 
-                                            new java.sql.Date(X_as_date.getTime()));
+                                            new java.sql.Date(parameterAsDate.getTime()));
                                 }
 
                                 break;
 
                             case Types.TIMESTAMP:
 
-                                if (X_as_date instanceof java.sql.Timestamp)
+                                if (parameterAsDate instanceof java.sql.Timestamp)
                                 {
                                     setTimestamp(parameterIndex, 
-                                                 (java.sql.Timestamp)X_as_date);
+                                                 (java.sql.Timestamp)parameterAsDate);
                                 }
                                 else
                                 {
                                     setTimestamp(parameterIndex, 
-                                                 new java.sql.Timestamp(X_as_date.getTime()));
+                                                 new java.sql.Timestamp(parameterAsDate.getTime()));
                                 }
 
                                 break;
@@ -897,19 +888,19 @@ public class PreparedStatement
 
                     case Types.TIME:
 
-                        if (X instanceof String)
+                        if (parameterObj instanceof String)
                         {
 
                             java.text.DateFormat sdf = new java.text.SimpleDateFormat(getDateTimePattern(
-                                                                                              (String)X, 
+                                                                                              (String)parameterObj, 
                                                                                               true));
                             setTime(parameterIndex, 
-                                    new java.sql.Time(sdf.parse((String)X).getTime()));
+                                    new java.sql.Time(sdf.parse((String)parameterObj).getTime()));
                         }
-                        else if (X instanceof Timestamp)
+                        else if (parameterObj instanceof Timestamp)
                         {
 
-                            Timestamp xT = (Timestamp)X;
+                            Timestamp xT = (Timestamp)parameterObj;
                             setTime(parameterIndex, 
                                     new java.sql.Time(xT.getHours(), 
                                                       xT.getMinutes(), 
@@ -917,37 +908,15 @@ public class PreparedStatement
                         }
                         else
                         {
-                            setTime(parameterIndex, (java.sql.Time)X);
+                            setTime(parameterIndex, 
+                                    (java.sql.Time)parameterObj);
                         }
 
                         break;
 
                     case Types.OTHER:
 
-                        try
-                        {
-
-                            ByteArrayOutputStream BytesOut = 
-                                    new ByteArrayOutputStream();
-                            ObjectOutputStream ObjectOut = new ObjectOutputStream(
-                                                                   BytesOut);
-                            ObjectOut.writeObject(X);
-                            ObjectOut.flush();
-                            ObjectOut.close();
-                            BytesOut.flush();
-                            BytesOut.close();
-
-                            byte[] buf = BytesOut.toByteArray();
-                            ByteArrayInputStream BytesIn = new ByteArrayInputStream(
-                                                                   buf);
-                            setBinaryStream(parameterIndex, BytesIn, -1);
-                        }
-                        catch (Exception E)
-                        {
-                            throw new java.sql.SQLException("Invalid argument value: " + 
-                                                            E.getClass().getName(), 
-                                                            "S1009");
-                        }
+                        setSerializableObject(parameterIndex, parameterObj);
 
                         break;
 
@@ -966,7 +935,7 @@ public class PreparedStatement
                 else
                 {
                     throw new java.sql.SQLException("Cannot convert " + 
-                                                    X.getClass().toString() + 
+                                                    parameterObj.getClass().toString() + 
                                                     " to SQL type requested due to " + 
                                                     ex.getClass().getName() + 
                                                     " - " + ex.getMessage(), 
@@ -984,10 +953,11 @@ public class PreparedStatement
      * @param targetSqlType DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public void setObject(int parameterIndex, Object X, int targetSqlType)
+    public void setObject(int parameterIndex, Object parameterObj, 
+                          int targetSqlType)
                    throws java.sql.SQLException
     {
-        setObject(parameterIndex, X, targetSqlType, 0);
+        setObject(parameterIndex, parameterObj, targetSqlType, 0);
     }
 
     /**
@@ -997,103 +967,86 @@ public class PreparedStatement
      * @param X DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public void setObject(int parameterIndex, Object X)
+    public void setObject(int parameterIndex, Object parameterObj)
                    throws java.sql.SQLException
     {
 
-        if (X == null)
+        if (parameterObj == null)
         {
             setNull(parameterIndex, java.sql.Types.OTHER);
         }
         else
         {
 
-            if (X instanceof Byte)
+            if (parameterObj instanceof Byte)
             {
-                setInt(parameterIndex, ((Byte)X).intValue());
+                setInt(parameterIndex, ((Byte)parameterObj).intValue());
             }
-            else if (X instanceof String)
+            else if (parameterObj instanceof String)
             {
-                setString(parameterIndex, (String)X);
+                setString(parameterIndex, (String)parameterObj);
             }
-            else if (X instanceof BigDecimal)
+            else if (parameterObj instanceof BigDecimal)
             {
-                setBigDecimal(parameterIndex, (BigDecimal)X);
+                setBigDecimal(parameterIndex, (BigDecimal)parameterObj);
             }
-            else if (X instanceof Short)
+            else if (parameterObj instanceof Short)
             {
-                setShort(parameterIndex, ((Short)X).shortValue());
+                setShort(parameterIndex, ((Short)parameterObj).shortValue());
             }
-            else if (X instanceof Integer)
+            else if (parameterObj instanceof Integer)
             {
-                setInt(parameterIndex, ((Integer)X).intValue());
+                setInt(parameterIndex, ((Integer)parameterObj).intValue());
             }
-            else if (X instanceof Long)
+            else if (parameterObj instanceof Long)
             {
-                setLong(parameterIndex, ((Long)X).longValue());
+                setLong(parameterIndex, ((Long)parameterObj).longValue());
             }
-            else if (X instanceof Float)
+            else if (parameterObj instanceof Float)
             {
-                setFloat(parameterIndex, ((Float)X).floatValue());
+                setFloat(parameterIndex, ((Float)parameterObj).floatValue());
             }
-            else if (X instanceof Double)
+            else if (parameterObj instanceof Double)
             {
-                setDouble(parameterIndex, ((Double)X).doubleValue());
+                setDouble(parameterIndex, ((Double)parameterObj).doubleValue());
             }
-            else if (X instanceof byte[])
+            else if (parameterObj instanceof byte[])
             {
-                setBytes(parameterIndex, (byte[])X);
+                setBytes(parameterIndex, (byte[])parameterObj);
             }
-            else if (X instanceof java.sql.Date)
+            else if (parameterObj instanceof java.sql.Date)
             {
-                setDate(parameterIndex, (java.sql.Date)X);
+                setDate(parameterIndex, (java.sql.Date)parameterObj);
             }
-            else if (X instanceof Time)
+            else if (parameterObj instanceof Time)
             {
-                setTime(parameterIndex, (Time)X);
+                setTime(parameterIndex, (Time)parameterObj);
             }
-            else if (X instanceof Timestamp)
+            else if (parameterObj instanceof Timestamp)
             {
-                setTimestamp(parameterIndex, (Timestamp)X);
+                setTimestamp(parameterIndex, (Timestamp)parameterObj);
             }
-            else if (X instanceof Boolean)
+            else if (parameterObj instanceof Boolean)
             {
-                setBoolean(parameterIndex, ((Boolean)X).booleanValue());
+                setBoolean(parameterIndex, 
+                           ((Boolean)parameterObj).booleanValue());
             }
-            else if (X instanceof InputStream)
+            else if (parameterObj instanceof InputStream)
             {
-                setBinaryStream(parameterIndex, (InputStream)X, -1);
+                setBinaryStream(parameterIndex, (InputStream)parameterObj, -1);
             }
-            else if (X instanceof java.sql.Blob)
+            else if (parameterObj instanceof java.sql.Blob)
             {
-            	setBinaryStream(parameterIndex, ((java.sql.Blob)X).getBinaryStream(), -1);
+                setBlob(parameterIndex, (java.sql.Blob)parameterObj);
+            }
+            else if (parameterObj instanceof java.sql.Clob)
+            {
+                setClob(parameterIndex, (java.sql.Clob)parameterObj);
             }
             else
             {
 
-                try
-                {
-
-                    ByteArrayOutputStream BytesOut = new ByteArrayOutputStream();
-                    ObjectOutputStream ObjectOut = new ObjectOutputStream(
-                                                           BytesOut);
-                    ObjectOut.writeObject(X);
-                    ObjectOut.flush();
-                    ObjectOut.close();
-                    BytesOut.flush();
-                    BytesOut.close();
-
-                    byte[] buf = BytesOut.toByteArray();
-                    ByteArrayInputStream BytesIn = new ByteArrayInputStream(
-                                                           buf);
-                    setBinaryStream(parameterIndex, BytesIn, -1);
-                }
-                catch (Exception E)
-                {
-                    throw new java.sql.SQLException("Invalid argument value: " + 
-                                                    E.getClass().getName(), 
-                                                    "S1009");
-                }
+               setSerializableObject(parameterIndex, parameterObj);
             }
         }
     }
@@ -1392,7 +1345,6 @@ public class PreparedStatement
         isNull = null;
         streamConvertBuf = null;
         sendPacket = null;
-        templateCache = null;
     }
 
     /**
@@ -1407,12 +1359,14 @@ public class PreparedStatement
     public boolean execute()
                     throws java.sql.SQLException
     {
-    	if (connection.isReadOnly() && firstCharOfStmt != 'S')
-		{
-			throw new SQLException("Connection is read-only. " + 
-				"Queries leading to data modification are not allowed", "S1009");
-		}
-		
+
+        if (connection.isReadOnly() && firstCharOfStmt != 'S')
+        {
+            throw new SQLException("Connection is read-only. " + 
+                                   "Queries leading to data modification are not allowed", 
+                                   "S1009");
+        }
+
         checkClosed();
 
         if (sendPacket == null)
@@ -1591,11 +1545,13 @@ public class PreparedStatement
     public int[] executeBatch()
                        throws SQLException
     {
-    	if (connection.isReadOnly())
-		{
-			throw new SQLException("Connection is read-only. " + 
-				"Queries leading to data modification are not allowed", "S1009");
-		}
+
+        if (connection.isReadOnly())
+        {
+            throw new SQLException("Connection is read-only. " + 
+                                   "Queries leading to data modification are not allowed", 
+                                   "S1009");
+        }
 
         try
         {
@@ -1955,12 +1911,14 @@ public class PreparedStatement
                                              boolean[] batchedIsNull)
                                       throws java.sql.SQLException
     {
-    	if (connection.isReadOnly())
-		{
-			throw new SQLException("Connection is read-only. " + 
-				"Queries leading to data modification are not allowed", "S1009");
-		}
-		
+
+        if (connection.isReadOnly())
+        {
+            throw new SQLException("Connection is read-only. " + 
+                                   "Queries leading to data modification are not allowed", 
+                                   "S1009");
+        }
+
         checkClosed();
 
         if (sendPacket == null)
@@ -2532,37 +2490,51 @@ public class PreparedStatement
                                                                                                        : 'W'))))))))))));
     }
 
-	private final void escapeblockFast(
-		byte[] buf,
-		ByteArrayOutputStream bytesOut,
-		int size) {
+    private final void escapeblockFast(byte[] buf, 
+                                       ByteArrayOutputStream bytesOut, 
+                                       int size)
+    {
 
-		int lastwritten = 0;
-		for (int i = 0; i < size; i++) {
-			byte b = buf[i];
-			if (b == '\0') {
-				//write stuff not yet written
-				if (i > lastwritten)
-					bytesOut.write(buf, lastwritten, i - lastwritten);
-				//write escape
-				bytesOut.write('\\');
-				bytesOut.write('0');
-				lastwritten = i + 1;
-			} else {
-				if (b == '\\' || b == '\'' || b == '"') {
-					//write stuff not yet written
-					if (i > lastwritten)
-						bytesOut.write(buf, lastwritten, i - lastwritten);
-					//write escape
-					bytesOut.write('\\');
-					lastwritten = i; //not i+1 as b wasn't written.
-				}
-			}
-		}
-		//write out remaining stuff from buffer
-		if (lastwritten < size)
-			bytesOut.write(buf, lastwritten, size - lastwritten);
-	}
+        int lastwritten = 0;
+
+        for (int i = 0; i < size; i++)
+        {
+
+            byte b = buf[i];
+
+            if (b == '\0')
+            {
+
+                //write stuff not yet written
+                if (i > lastwritten)
+                    bytesOut.write(buf, lastwritten, i - lastwritten);
+
+                //write escape
+                bytesOut.write('\\');
+                bytesOut.write('0');
+                lastwritten = i + 1;
+            }
+            else
+            {
+
+                if (b == '\\' || b == '\'' || b == '"')
+                {
+
+                    //write stuff not yet written
+                    if (i > lastwritten)
+                        bytesOut.write(buf, lastwritten, i - lastwritten);
+
+                    //write escape
+                    bytesOut.write('\\');
+                    lastwritten = i; //not i+1 as b wasn't written.
+                }
+            }
+        }
+
+        //write out remaining stuff from buffer
+        if (lastwritten < size)
+            bytesOut.write(buf, lastwritten, size - lastwritten);
+    }
 
     private final void escapeblock(byte[] buf, ByteArrayOutputStream bytesOut, 
                                    int size)
@@ -2642,6 +2614,38 @@ public class PreparedStatement
         {
             throw new java.sql.SQLException("Error reading from InputStream " + 
                                             E.getClass().getName(), "S1000");
+        }
+    }
+
+	/**
+	 * Sets the value for the placeholder as a serialized Java
+	 * object (used by various forms of setObject()
+	 */
+	
+    private final void setSerializableObject(int parameterIndex, 
+                                             Object parameterObj)
+                                      throws SQLException
+    {
+
+        try
+        {
+
+            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+            ObjectOutputStream objectOut = new ObjectOutputStream(bytesOut);
+            objectOut.writeObject(parameterObj);
+            objectOut.flush();
+            objectOut.close();
+            bytesOut.flush();
+            bytesOut.close();
+
+            byte[] buf = bytesOut.toByteArray();
+            ByteArrayInputStream bytesIn = new ByteArrayInputStream(buf);
+            setBinaryStream(parameterIndex, bytesIn, -1);
+        }
+        catch (Exception ex)
+        {
+            throw new java.sql.SQLException("Invalid argument value: " + 
+                                            ex.getClass().getName(), "S1009");
         }
     }
 
