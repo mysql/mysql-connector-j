@@ -225,15 +225,19 @@ useSSL              | Should Connector/J use SSL when           | false
                     | server supports it? (see the SSL SUPPORT  |
                     | section of this document for important    |
                     | information for making this work.         |
-------------------------------------------------------------------------------
+--------------------+-------------------------------------------+-------------
 useStreamLengthsIn\ | Should Connector/J honor stream lengths   | true                             |
 PrepStmts           | when calling PreparedStatement            |
                     | setBinary/AsciiStream() and ResultSet     |
                     | updateBinary/AsciiStream() ?   (note: the |
                     | parameter name is one word with no '\')   |
+--------------------+-------------------------------------------+-------------
+continueBatchOnError| Should Connector/J continue processing    | true                             |
+                    | batch commands if one statement fails?    |
+                    |                                           |
+                    | The JDBC spec allows either way.          |
 ------------------------------------------------------------------------------
-			
-			
+  					
 A simple connection example looks like:
 
 	Class.forName("com.mysql.jdbc.Driver").newInstance();

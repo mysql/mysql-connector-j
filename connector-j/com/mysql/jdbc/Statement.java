@@ -981,13 +981,27 @@ public class Statement
 
                 SQLException sqlEx = null;
 
-                for (int i = 0; i < nbrCommands; i++) {
+                int commandIndex = 0;
+                
+                for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
 
                     try {
-                        updateCounts[i] = executeUpdate(
-                                                  (String) batchedArgs.get(i));
+                        updateCounts[commandIndex] = executeUpdate(
+                                                  (String) batchedArgs.get(commandIndex));
                     } catch (SQLException ex) {
-                        sqlEx = ex;
+                        updateCounts[commandIndex] = EXECUTE_FAILED;
+                        
+                        if (this.connection.continueBatchOnError()) {
+                            sqlEx = ex;
+                        } else {
+                            int[] newUpdateCounts = new int[commandIndex];
+                            System.arraycopy(updateCounts, 0, newUpdateCounts, 0, commandIndex);
+                            
+                            throw new java.sql.BatchUpdateException(ex.getMessage(), 
+                                                            ex.getSQLState(), 
+                                                            ex.getErrorCode(), 
+                                                            newUpdateCounts);
+                        }
                     }
                 }
 

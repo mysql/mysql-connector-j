@@ -342,10 +342,20 @@ public class Connection
     private boolean pedantic = false;
     
     /**
-     * Is lower case table names on?
+     * Is the server configured to use lower-case
+     * table names only?
      */
     
     private boolean lowerCaseTableNames = false;
+    
+    /**
+     * Should we continue processing batch commands if 
+     * one fails. The JDBC spec allows either way, so
+     * we let the user choose
+     */
+    
+    private boolean continueBatchOnError = true;
+    
     
     /**
      * Default socket factory classname
@@ -1168,6 +1178,9 @@ public class Connection
                 
         }
 
+        if (info.getProperty("continueBatchOnError") != null) {
+            this.continueBatchOnError = info.getProperty("continueBatchOnError").equalsIgnoreCase("TRUE");
+        }
         
         if (info.getProperty("pedantic") != null) {
             this.pedantic = info.getProperty("pedantic").equalsIgnoreCase("TRUE");
@@ -1973,6 +1986,10 @@ public class Connection
     
     boolean isPedantic() {
         return this.pedantic;
+    }
+    
+    boolean continueBatchOnError() {
+        return this.continueBatchOnError;
     }
 
     /**

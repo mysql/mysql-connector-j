@@ -1417,25 +1417,39 @@ public class PreparedStatement
 
                 SQLException sqlEx = null;
 
-                for (int i = 0; i < nbrCommands; i++) {
+                int commandIndex = 0;
+                
+                for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
 
-                    Object arg = batchedArgs.get(i);
+                    Object arg = batchedArgs.get(commandIndex);
 
                     if (arg instanceof String) {
-                        updateCounts[i] = executeUpdate((String) arg);
+                        updateCounts[commandIndex] = executeUpdate((String) arg);
                     } else {
 
                         BatchParams paramArg = (BatchParams) arg;
 
                         try {
-                            updateCounts[i] = executeUpdate(
+                            updateCounts[commandIndex] = executeUpdate(
                                                       paramArg.parameterStrings, 
                                                       paramArg.parameterStreams, 
                                                       paramArg.isStream,
                                                       paramArg.streamLengths, 
                                                       paramArg.isNull);
                         } catch (SQLException ex) {
-                            sqlEx = ex;
+                            updateCounts[commandIndex] = EXECUTE_FAILED;
+                            
+                            if (this.connection.continueBatchOnError()) {
+                                sqlEx = ex;    
+                            } else {
+                                int[] newUpdateCounts = new int[commandIndex];
+                                System.arraycopy(updateCounts, 0, newUpdateCounts, 0, commandIndex);
+                            
+                                throw new java.sql.BatchUpdateException(ex.getMessage(), 
+                                                                        ex.getSQLState(), 
+                                                                        ex.getErrorCode(), 
+                                                                        newUpdateCounts);
+                            }
                         }
                     }
                 }

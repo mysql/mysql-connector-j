@@ -25,6 +25,9 @@ xx-xx-xx - Version 3.0.3-dev
 	- Use non-aliased table/column names and database names to fullly 
 	  qualify tables and columns in UpdatableResultSet (requires 
 	  MySQL-4.1 or newer)
+	- Allow user to alter behavior of Statement/
+	  PreparedStatement.executeBatch() via 'continueBatchOnError' property
+	  (defaults to 'true').
 	  
 11-08-02 - Version 3.0.2-dev
 

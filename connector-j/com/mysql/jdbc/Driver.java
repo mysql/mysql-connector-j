@@ -304,12 +304,20 @@ public class Driver
         useStreamLengthsInPrepStmts.description = "Honor stream length parameter in PreparedStatement/ResultSet.setXXXStream() method calls (defaults to 'true')"
         ;
         
+        DriverPropertyInfo continueBatchOnError = new DriverPropertyInfo("continueBatchOnError", 
+                                                             info.getProperty(
+                                                             "continueBatchOnError", 
+                                                             "true"));
+        continueBatchOnError.required = false;
+        continueBatchOnError.description = "Should the driver continue processing batch commands if " +
+         "one statement fails. The JDBC spec allows either way (defaults to 'true').";
+         
         DriverPropertyInfo[] dpi = {
             hostProp, portProp, dbProp, userProp, passwordProp, autoReconnect, 
             maxReconnects, initialTimeout, profileSql, socketTimeout, useSSL, 
             paranoid, useHostsInPrivileges, interactiveClient, useCompression,
             useTimezone, serverTimezone, connectTimeout, queriesBeforeRetryMaster,
-            useStreamLengthsInPrepStmts
+            useStreamLengthsInPrepStmts, continueBatchOnError
         };
 
         return dpi;
