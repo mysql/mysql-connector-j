@@ -137,6 +137,9 @@ public abstract class MysqlIO {
 	private boolean _useCompression = false;
 
 	private org.gjt.mm.mysql.Connection _connection;
+	
+	private boolean _profileSql = false;
+	
 
 	/**
 	 * Constructor:  Connect to the MySQL server and setup
@@ -586,10 +589,37 @@ public abstract class MysqlIO {
 		long updateCount = -1;
 		long updateID = -1;
 
+
+		StringBuffer profileMsgBuf = null; // used if profiling
+		long queryStartTime = 0;
+		
+		if (_profileSql)
+		{
+			profileMsgBuf = new StringBuffer();
+			queryStartTime = System.currentTimeMillis();
+			byte[] queryBuf = QueryPacket._buf;
+			
+			// Extract the actual query from the network packet
+			String query = new String(queryBuf, 5, (QueryPacket._pos - 5));
+			
+			profileMsgBuf.append("Query\t\"");
+			profileMsgBuf.append(query);
+			profileMsgBuf.append("\"\texecution time:\t");	
+		}
+		
 		// Send query command and sql query string
 		clearAllReceive();
 
 		Buffer Packet = sendCommand(MysqlDefs.QUERY, null, QueryPacket);
+
+		if (_profileSql)
+		{
+			long executionTime = System.currentTimeMillis() - queryStartTime;
+			
+			profileMsgBuf.append(executionTime);
+			profileMsgBuf.append("\t");
+		}		
+		
 		Packet._pos--;
 
 		long columnCount = Packet.readLength();
@@ -598,6 +628,8 @@ public abstract class MysqlIO {
 			Debug.msg(this, "Column count: " + columnCount);
 		}
 
+		
+			
 		if (columnCount == 0) {
 			try {
 
@@ -636,10 +668,33 @@ public abstract class MysqlIO {
 				Debug.msg(this, "Update Count = " + updateCount);
 			}
 
+			if (_profileSql)
+			{
+				System.err.println(profileMsgBuf.toString());
+			}
+			
 			return buildResultSetWithUpdates(updateCount, updateID, Conn);
 		}
 		else {
-			return getResultSet(columnCount, max_rows);
+			
+			long fetchStartTime = 0;
+			
+			if (_profileSql)
+			{
+				fetchStartTime = System.currentTimeMillis();
+			}
+			
+			org.gjt.mm.mysql.ResultSet results = getResultSet(columnCount, max_rows);
+			
+			if (_profileSql)
+			{
+				long fetchElapsedTime = System.currentTimeMillis() - fetchStartTime;
+				
+				profileMsgBuf.append("result set fetch time:\t");
+				profileMsgBuf.append(fetchElapsedTime);
+			}
+			
+			return results;
 		}
 	}
 
@@ -656,6 +711,9 @@ public abstract class MysqlIO {
 		String Encoding,
 		Connection Conn)
 		throws Exception {
+			
+		
+		
 		// We don't know exactly how many bytes we're going to get 
 		// from the query. Since we're dealing with Unicode, the 
 		// max is 2, so pad it (2 * query) + space for headers 
@@ -687,12 +745,34 @@ public abstract class MysqlIO {
 	}
 
 	final ResultSet sqlQuery(String Query, int max_rows) throws Exception {
-		long updateCount = -1;
-		long updateID = -1;
+		
+		StringBuffer profileMsgBuf = null; // used if profiling
+		long queryStartTime = 0;
+		
+		if (_profileSql)
+		{
+			profileMsgBuf = new StringBuffer();
+			queryStartTime = System.currentTimeMillis();
+		
+			profileMsgBuf.append("Query\t\"");
+			profileMsgBuf.append(Query);
+			profileMsgBuf.append("\"\texecution time:\t");	
+		}
+		
+
 
 		// Send query command and sql query string
 		clearAllReceive();
 		Buffer Packet = sendCommand(MysqlDefs.QUERY, Query, null); //, (byte)0);
+		
+		if (_profileSql)
+		{
+			long executionTime = System.currentTimeMillis() - queryStartTime;
+			
+			profileMsgBuf.append(executionTime);
+			profileMsgBuf.append("\t");
+		}		
+		
 		Packet._pos--;
 
 		long columnCount = Packet.readLength();
@@ -702,6 +782,10 @@ public abstract class MysqlIO {
 		}
 
 		if (columnCount == 0) {
+			
+			long updateCount = -1;
+			long updateID = -1;
+			
 			try {
 
 				if (versionMeetsMinimum(3, 22, 5)) {
@@ -739,10 +823,32 @@ public abstract class MysqlIO {
 				Debug.msg(this, "Update Count = " + updateCount);
 			}
 
+			if (_profileSql)
+			{
+				System.err.println(profileMsgBuf.toString());
+			}
+			
 			return buildResultSetWithUpdates(updateCount, updateID, null);
 		}
 		else {
-			return getResultSet(columnCount, max_rows);
+			long fetchStartTime = 0;
+			
+			if (_profileSql)
+			{
+				fetchStartTime = System.currentTimeMillis();
+			}
+			
+			org.gjt.mm.mysql.ResultSet results = getResultSet(columnCount, max_rows);
+			
+			if (_profileSql)
+			{
+				long fetchElapsedTime = System.currentTimeMillis() - fetchStartTime;
+				
+				profileMsgBuf.append("result set fetch time:\t");
+				profileMsgBuf.append(fetchElapsedTime);
+			}
+			
+			return results;
 		}
 	}
 
@@ -1179,4 +1285,16 @@ public abstract class MysqlIO {
 			n += count;
 		}
 	}
+	
+
+	/**
+	 * Sets the _profileSql.
+	 * @param _profileSql The _profileSql to set
+	 */
+	
+	public void set_profileSql(boolean flag) 
+	{
+		this._profileSql = flag;
+	}
+
 }
