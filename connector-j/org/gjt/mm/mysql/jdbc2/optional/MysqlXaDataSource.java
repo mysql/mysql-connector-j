@@ -249,6 +249,9 @@ public class MysqlXaDataSource extends XADataSourceImpl
 	  explicitUrl = true;
     }
 
+	public void setURL(String url) {
+        setUrl(url);
+    }
     /**
      * Gets the JDBC URL that will be used to create the
      * database connection.
