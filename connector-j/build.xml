@@ -27,7 +27,8 @@ Copyright (C) 2002 MySQL AB
 
 	<property name="version" value="3.0.3-beta"/>
 	<property name="prodName" value="mysql-connector-java"/>
-	<property name="fullProdName" value="${prodName}-${version}"/>
+	<property name="extra.version" value=""/>
+	<property name="fullProdName" value="${prodName}-${version}${extra.version}"/>
 	
 	<property name="buildDir" value="../build-mysql-jdbc"/>
 	<property name="distDir" value="../dist-mysql-jdbc"/>
