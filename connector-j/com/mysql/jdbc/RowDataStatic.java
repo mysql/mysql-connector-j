@@ -137,6 +137,14 @@ public class RowDataStatic
      */
     public boolean isLast() {
 
+        //
+        // You can never be on the 'last' row of
+        // an empty result set
+        //
+        if (rows.size() == 0) {
+            return false;
+        }
+        
         return (this.index == rows.size() - 1);
     }
 
