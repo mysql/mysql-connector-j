@@ -35,7 +35,8 @@ public class StatementRegressionTest
 
     /**
      * Constructor for StatementRegressionTest.
-     * @param name
+     * 
+     * @param name the name of the test to run
      */
     public StatementRegressionTest(String name) {
         super(name);
@@ -44,6 +45,8 @@ public class StatementRegressionTest
     /**
      * Tests a bug where Statement.setFetchSize() does not
      * work for values other than 0 or Integer.MIN_VALUE
+     * 
+     * @throws Exception if any errors occur
      */
     public void testSetFetchSize()
                           throws Exception {
@@ -57,25 +60,11 @@ public class StatementRegressionTest
         }
     }
 
-    public void testMaxRowsProps()
-                          throws Exception {
-
-        /*
-        Driver driver =
-        //props.put("maxRows", "3"); //(1)
-        Connection connection =
-        driver.connect("jdbc:mysql://tibi/ebs", props);
-        Statement statement = connection.createStatement();
-        //statement.execute("set option SQL_SELECT_LIMIT=3");
-        //(2)
-        //statement.setMaxRows(3); //(3)
-        ResultSet rs = statement.executeQuery("select * from
-        sometable");
-        while(rs.next())
-         System.out.println(rs.getString(1));
-         */
-    }
-
+    /**
+     * Tests that 'LOAD DATA LOCAL INFILE' works
+     * 
+     * @throws Exception if any errors occur
+     */
     public void testLoadData()
                       throws Exception {
 

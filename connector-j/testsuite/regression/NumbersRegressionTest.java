@@ -42,6 +42,9 @@ public class NumbersRegressionTest
 
     /** 
      * Runs all test cases
+     * 
+     * @param args command-line args
+     * @throws Exception if any errors occur
      */
     public static void main(String[] args)
                      throws Exception {
@@ -49,7 +52,9 @@ public class NumbersRegressionTest
     }
 
     /**
-     * Tests that BIGINT retrieval works correctly.
+     * Tests that BIGINT retrieval works correctly
+     * 
+     * @throws Exception if any errors occur
      */
     public void testBigInt()
                     throws Exception {
@@ -85,6 +90,13 @@ public class NumbersRegressionTest
         }
     }
     
+    /**
+     * Tests that ResultSetMetaData precision and
+     * scale methods work correctly for all numeric
+     * types.
+     * 
+     * @throws Exception if any errors occur
+     */
     public void testPrecisionAndScale() throws Exception {
         testPrecisionForType("TINYINT", 8, -1, false);
         testPrecisionForType("TINYINT", 8, -1, true);
@@ -138,10 +150,14 @@ public class NumbersRegressionTest
             rs = stmt.executeQuery("SELECT val FROM precisionAndScaleRegression");
             
             ResultSetMetaData rsmd = rs.getMetaData();
-            assertTrue("Precision returned incorrectly for type " + typeName + ", " + m + " != rsmd.getPrecision() = " + rsmd.getPrecision(1), rsmd.getPrecision(1) == m);
+            assertTrue("Precision returned incorrectly for type " 
+                + typeName + ", " + m + " != rsmd.getPrecision() = " 
+                + rsmd.getPrecision(1), rsmd.getPrecision(1) == m);
             
             if (d != -1) {
-                assertTrue("Scale returned incorrectly for type " + typeName +", d  != rsmd.getScale() = " + rsmd.getScale(1), rsmd.getScale(1) == d);
+                assertTrue("Scale returned incorrectly for type " 
+                + typeName + ", d  != rsmd.getScale() = " 
+                + rsmd.getScale(1), rsmd.getScale(1) == d);
             }
             
                     

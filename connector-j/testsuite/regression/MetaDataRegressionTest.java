@@ -50,6 +50,8 @@ public class MetaDataRegressionTest
 
     /**
      * Tests bug reported by OpenOffice team with getColumns and LONGBLOB
+     * 
+     * @throws Exception if any errors occur
      */
     public void testGetColumns()
                         throws Exception {

@@ -18,16 +18,14 @@
  */
 package testsuite.regression;
 
-import com.mysql.jdbc.SingleByteCharsetConverter;
-import com.mysql.jdbc.StringUtils;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-
 import java.util.Properties;
 
 import testsuite.BaseTestCase;
+
+import com.mysql.jdbc.StringUtils;
 
 
 /**
@@ -115,6 +113,8 @@ public class StringRegressionTest
     /**
      * Tests that the 0x5c escaping works (we didn't use to have
      * this).
+     * 
+     * @throws Exception if an error occurs.
      */
     public void testSjis5c()
                     throws Exception {
@@ -174,6 +174,12 @@ public class StringRegressionTest
         }
     }
 
+    /**
+     * Tests that single-byte character conversion
+     * works correctly.
+     * 
+     * @throws Exception if any errors occur
+     */
     public void testSingleByteConversion()
                                   throws Exception {
         testConversionForString("זרו טיעש");
@@ -181,6 +187,12 @@ public class StringRegressionTest
         testConversionForString("באגדיטךםלמףעפץתשûח");
     }
 
+    /**
+     * Tests that UTF-8 character conversion
+     * works correctly.
+     * 
+     * @throws Exception if any errors occur
+     */
     public void testUtf8Encoding()
                           throws Exception {
 
@@ -191,7 +203,13 @@ public class StringRegressionTest
         Connection utfConn = DriverManager.getConnection(dbUrl, props);
         testConversionForString(utfConn, "\u043c\u0438\u0445\u0438");
     }
-
+    
+    /**
+     * Tests that 'latin1' character conversion
+     * works correctly.
+     * 
+     * @throws Exception if any errors occur
+     */
     public void testLatin1Encoding()
                             throws Exception {
 

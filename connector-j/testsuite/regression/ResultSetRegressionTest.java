@@ -32,10 +32,22 @@ import testsuite.BaseTestCase;
  */
 public class ResultSetRegressionTest
     extends BaseTestCase {
+        
+    /**
+     * Creates a nre ResultSetRegressionTest
+     * 
+     * @param name the name of the test to run
+     */
     public ResultSetRegressionTest(String name) {
         super(name);
     }
 
+    /**
+     * Tests that result sets can be updated when
+     * all parameters are correctly set.
+     * 
+     * @throws Exception if any errors occur
+     */
     public void testUpdatability()
                           throws Exception {
 
@@ -96,6 +108,11 @@ public class ResultSetRegressionTest
         }
     }
 
+    /**
+     * Tests that streaming result sets are registered correctly.
+     * 
+     * @throws Exception if any errors occur
+     */
     public void testStreamingRegBug()
                              throws Exception {
 
@@ -140,6 +157,11 @@ public class ResultSetRegressionTest
         }
     }
 
+    /**
+     * Tests that ResultSet.getLong() does not truncate values.
+     * 
+     * @throws Exception if any errors occur
+     */
     public void testGetLongBug()
                         throws Exception {
         stmt.executeUpdate("DROP TABLE IF EXISTS getLongBug");
