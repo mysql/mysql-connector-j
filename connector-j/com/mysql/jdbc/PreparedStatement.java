@@ -1333,33 +1333,34 @@ public class PreparedStatement
                                                 sendPacket, 
                                                 resultSetConcurrency, 
                                                 createStreamingResultSet(), 
-                                                true);
+                                                true,
+                                                this.currentCatalog);
                     } else {
 
                         if (maxRows <= 0) {
                             connection.execSQL(
-                                    "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+                                    "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, this.currentCatalog);
                         } else {
                             connection.execSQL(
                                     "SET OPTION SQL_SELECT_LIMIT=" + maxRows, 
-                                    -1);
+                                    -1, this.currentCatalog);
                         }
                     }
                 } else {
                     connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", 
-                                       -1);
+                                       -1, this.currentCatalog);
                 }
 
                 // Finally, execute the query
                 rs = connection.execSQL(null, -1, sendPacket, 
                                         resultSetConcurrency, 
                                         createStreamingResultSet(), 
-                                        (firstCharOfStmt == 'S'));
+                                        (firstCharOfStmt == 'S'), this.currentCatalog);
             } else {
                 rs = connection.execSQL(null, -1, sendPacket, 
                                         resultSetConcurrency, 
                                         createStreamingResultSet(), 
-                                        (firstCharOfStmt == 'S'));
+                                        (firstCharOfStmt == 'S'), this.currentCatalog);
             }
 
             if (oldCatalog != null) {
@@ -1560,21 +1561,23 @@ public class PreparedStatement
                                                  sendPacket, 
                                                  resultSetConcurrency, 
                                                  createStreamingResultSet(), 
-                                                 true);
+                                                 true,
+                                                 this.currentCatalog);
                 } else {
 
                     if (maxRows <= 0) {
                         connection.execSQL(
-                                "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+                                "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, this.currentCatalog);
                     } else {
                         connection.execSQL(
-                                "SET OPTION SQL_SELECT_LIMIT=" + maxRows, -1);
+                                "SET OPTION SQL_SELECT_LIMIT=" + maxRows, -1, this.currentCatalog);
                     }
 
                     results = connection.execSQL(null, -1, sendPacket, 
                                                  resultSetConcurrency, 
                                                  createStreamingResultSet(), 
-                                                 true);
+                                                 true,
+                                                 this.currentCatalog);
 
                     if (oldCatalog != null) {
                         connection.setCatalog(oldCatalog);
@@ -1583,7 +1586,9 @@ public class PreparedStatement
             } else {
                 results = connection.execSQL(null, -1, sendPacket, 
                                              resultSetConcurrency, 
-                                             createStreamingResultSet(), true);
+                                             createStreamingResultSet(), 
+                                             true, 
+                                             this.currentCatalog);
             }
 
             if (oldCatalog != null) {
@@ -1809,11 +1814,11 @@ public class PreparedStatement
             // Only apply max_rows to selects
             //
             if (connection.useMaxRows()) {
-                connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+                connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, this.currentCatalog);
             }
 
             rs = connection.execSQL(null, -1, sendPacket, resultSetConcurrency, 
-                                    false, false);
+                                    false, false, this.currentCatalog);
 
             if (oldCatalog != null) {
                 connection.setCatalog(oldCatalog);
