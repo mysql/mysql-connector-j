@@ -233,6 +233,8 @@ public class StringUtils {
      * 
      * @param searchIn the string to search in
      * @param searchFor the string to search for
+     * 
+     * @return true if the string starts with 'searchFor' ignoring whitespace
      */
     
     public static boolean startsWithIgnoreCaseAndWs(String searchIn, String searchFor) {

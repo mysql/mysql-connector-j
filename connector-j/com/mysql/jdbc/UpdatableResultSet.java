@@ -88,6 +88,7 @@ public class UpdatableResultSet
      * Create a new ResultSet - Note that we create ResultSets to represent the
      * results of everything.
      * 
+     * @param catalog the database in use when this result set was created
      * @param fields an array of Field objects (basically, the ResultSet
      *        MetaData)
      * @param rows Vector of the actual data

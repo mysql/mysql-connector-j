@@ -180,7 +180,7 @@ public class Util {
      * 
      * @param ex the exception to expand into a message.
      * 
-     * @returns a message containing the exception, the
+     * @return a message containing the exception, the
      * message (if any), and a stacktrace.
      */
     

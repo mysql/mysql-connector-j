@@ -38,7 +38,7 @@ public class TimeUtil {
 
     //~ Instance/static variables .............................................
 
-    static TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
+    static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
     static final Map TIMEZONE_MAPPINGS;
 
     //~ Initializers ..........................................................
@@ -218,6 +218,13 @@ public class TimeUtil {
 
     //~ Methods ...............................................................
 
+    /**
+     * Returns the 'official' Java timezone name for the given timezone
+     * 
+     * @param timezoneStr the 'common' timezone name
+     * 
+     * @return the Java timezone name for the given timezone
+     */
     public static String getCanoncialTimezone(String timezoneStr) {
 
         if (timezoneStr == null) {
@@ -245,6 +252,16 @@ public class TimeUtil {
         return (String) TIMEZONE_MAPPINGS.get(timezoneStr);
     }
 
+    /**
+     * Change the given timestamp from one timezone to another
+     * 
+     * @param conn the current connection to the MySQL server
+     * @param tstamp the timestamp to change
+     * @param fromTz the timezone to change from
+     * @param toTz the timezone to change to
+     * 
+     * @return the timestamp changed to the timezone 'toTz'
+     */
     public static Timestamp changeTimezone(Connection conn, Timestamp tstamp, 
                                            TimeZone fromTz, TimeZone toTz) {
 
@@ -274,6 +291,16 @@ public class TimeUtil {
         }
     }
 
+    /**
+     * Change the given times from one timezone to another
+     * 
+     * @param conn the current connection to the MySQL server
+     * @param t the times to change
+     * @param fromTz the timezone to change from
+     * @param toTz the timezone to change to
+     * 
+     * @return the times changed to the timezone 'toTz'
+     */
     public static Time changeTimezone(Connection conn, Time t, TimeZone fromTz, 
                                       TimeZone toTz) {
 
