@@ -23,9 +23,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.StringReader;
+
 import java.math.BigDecimal;
+
 import java.net.MalformedURLException;
 import java.net.URL;
+
 import java.sql.Array;
 import java.sql.Clob;
 import java.sql.Ref;
@@ -34,6 +37,7 @@ import java.sql.SQLWarning;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+
 import java.text.SimpleDateFormat;
 
 import java.util.Calendar;
@@ -84,36 +88,109 @@ import java.util.TimeZone;
  * @author Mark Matthews
  * @version $Id$
  */
-public class ResultSet
-    implements java.sql.ResultSet {
-
-    //~ Instance/static variables .............................................
-
-    protected boolean isClosed = false;
-    protected HashMap columnNameToIndex = null;
+public class ResultSet implements java.sql.ResultSet {
+    /**
+     * The Connection instance that created us
+     */
     protected com.mysql.jdbc.Connection connection; // The connection that created us
-    protected int currentRow = -1; // Cursor to current row;
+
+    /**
+     * Map column names (and all of their permutations)
+     * to column indices
+     */
+    protected HashMap columnNameToIndex = null;
+
+    /**
+     * Map of fully-specified column names to column
+     * indices
+     */
+    protected HashMap fullColumnNameToIndex = null;
+
+    /**
+     * The actual rows
+     */
+    protected RowData rowData; // The results
+
+    /**
+     * The warning chain
+     */
+    protected java.sql.SQLWarning warningChain = null;
+
+    /**
+     * The statement that created us
+     */
+    protected com.mysql.jdbc.Statement owningStatement;
+
+    /**
+     * The catalog that was in use when we were created
+     */
+    protected String catalog = null;
+
+    /**
+     * The fields for this result set
+     */
+    protected Field[] fields; // The fields
+
+    /**
+     * Pointer to current row data
+     */
+    protected byte[][] thisRow; // Values for current row
 
     /**
      * Are we in the middle of doing updates to the current row?
      */
     protected boolean doingUpdates = false;
-    protected int fetchDirection = FETCH_FORWARD;
-    protected int fetchSize = 0;
-    protected Field[] fields; // The fields
-    protected HashMap fullColumnNameToIndex = null;
+
+    /**
+     * Has this result set been closed?
+     */
+    protected boolean isClosed = false;
 
     /**
      * Are we on the insert row?
      */
     protected boolean onInsertRow = false;
-    protected com.mysql.jdbc.Statement owningStatement;
-    protected boolean reallyResult = false; // for executeUpdate vs. execute
+
+    /**
+     * Do we actually contain rows, or just information
+     * about UPDATE/INSERT/DELETE?
+     */
+    protected boolean reallyResult = false;
+
+    /**
+     * Did the previous value retrieval find a NULL?
+     */
+    protected boolean wasNullFlag = false;
+
+    /**
+     * The current row #, -1 == before start of result set
+     */
+    protected int currentRow = -1; // Cursor to current row;
+
+    /**
+     * The direction to fetch rows (always FETCH_FORWARD)
+     */
+    protected int fetchDirection = FETCH_FORWARD;
+
+    /**
+     * The number of rows to fetch in one go...
+     */
+    protected int fetchSize = 0;
+
+    /**
+     * Are we read-only or updatable?
+     */
     protected int resultSetConcurrency = 0;
+
+    /**
+     * Are we scroll-sensitive/insensitive?
+     */
     protected int resultSetType = 0;
-    protected RowData rowData; // The results
-    protected byte[][] thisRow; // Values for current row
-    protected long updateCount; // How many rows did we update?
+
+    /**
+     * How many rows were affected by UPDATE/INSERT/DELETE?
+     */
+    protected long updateCount;
 
     // These are longs for
     // recent versions of the MySQL server.
@@ -122,79 +199,18 @@ public class ResultSet
     // but can be retrieved through a MySQLStatement
     // in their entirety.
     //
-    protected long updateId = -1; // for AUTO_INCREMENT
-    protected java.sql.SQLWarning warningChain = null; // The warning chain
-    protected boolean wasNullFlag = false; // for wasNull()
 
-    // For getTimestamp()
+    /**
+     * Value generated for AUTO_INCREMENT columns
+     */
+    protected long updateId = -1;
+
+    /**
+     * Formatter for getTimestamp()
+     */
     private SimpleDateFormat timestampFormatter = null;
-    private boolean useStrictFloatingPoint = false;
     private boolean hasBuiltIndexMapping = false;
-    protected String catalog = null; // the catalog that was in use when we were created
-    
-
-    //~ Constructors ..........................................................
-
-    /**
-     * Create a new ResultSet - Note that we create ResultSets to
-     * represent the results of everything.
-     *
-     * @param fields an array of Field objects (basically, the
-     *    ResultSet MetaData)
-     * @param tuples Vector of the actual data
-     * @param status the status string returned from the back end
-     * @param updateCount the number of rows affected by the operation
-     * @param cursor the positioned update/delete cursor name
-     */
-    public ResultSet(String catalog, Field[] fields, RowData tuples, 
-                     com.mysql.jdbc.Connection conn)
-              throws SQLException {
-        this(fields, tuples);
-        setConnection(conn);
-        this.catalog = catalog;
-    }
-
-    /**
-     * Creates a new ResultSet object.
-     * 
-     * @param Fields DOCUMENT ME!
-     * @param Tuples DOCUMENT ME!
-     * @throws SQLException DOCUMENT ME!
-     */
-    public ResultSet(Field[] fields, RowData tuples)
-              throws SQLException {
-
-        //_currentRow   = -1;
-        this.fields = fields;
-        rowData = tuples;
-        updateCount = (long) rowData.size();
-
-        if (Driver.DEBUG) {
-            System.out.println("Retrieved " + updateCount + " rows");
-        }
-
-        reallyResult = true;
-
-        // Check for no results
-        if (rowData.size() > 0) {
-
-            //_thisRow = _rows.next();
-            if (updateCount == 1) {
-
-                if (thisRow == null) {
-
-                    //_currentRow = -1;
-                    rowData.close(); // empty result set
-                    updateCount = -1;
-                }
-            }
-        } else {
-            thisRow = null;
-        }
-
-        // this is now lazily invoked on demand....
-        //        buildIndexMapping();
-    }
+    private boolean useStrictFloatingPoint = false;
 
     /**
      * Create a result set for an executeUpdate statement.
@@ -209,23 +225,73 @@ public class ResultSet
         fields = new Field[0];
     }
 
-    //~ Methods ...............................................................
+    /**
+     * Create a new ResultSet
+     * 
+     * @param catalog the database in use when we were created
+     * @param fields an array of Field objects (basically, the
+     *    ResultSet MetaData)
+     * @param tuples actual row data
+     * @param conn the Connection that created us.
+     * 
+     * @throws SQLException if an error occurs
+     */
+    public ResultSet(String catalog, Field[] fields, RowData tuples,
+        com.mysql.jdbc.Connection conn) throws SQLException {
+        this(fields, tuples);
+        setConnection(conn);
+        this.catalog = catalog;
+    }
+
+    /**
+     * Creates a new ResultSet object.
+     *
+     * @param fields DOCUMENT ME!
+     * @param tuples DOCUMENT ME!
+     * @throws SQLException DOCUMENT ME!
+     */
+    public ResultSet(Field[] fields, RowData tuples) throws SQLException {
+        //_currentRow   = -1;
+        this.fields = fields;
+        rowData = tuples;
+        updateCount = (long) rowData.size();
+
+        if (Driver.DEBUG) {
+            System.out.println("Retrieved " + updateCount + " rows");
+        }
+
+        reallyResult = true;
+
+        // Check for no results
+        if (rowData.size() > 0) {
+            //_thisRow = _rows.next();
+            if (updateCount == 1) {
+                if (thisRow == null) {
+                    //_currentRow = -1;
+                    rowData.close(); // empty result set
+                    updateCount = -1;
+                }
+            }
+        } else {
+            thisRow = null;
+        }
+
+        // this is now lazily invoked on demand....
+        //        buildIndexMapping();
+    }
 
     /**
      * JDBC 2.0
      *
-     * <p>Determine if the cursor is after the last row in the result 
-     * set.   
+     * <p>Determine if the cursor is after the last row in the result
+     * set.
      *
      * @return true if after the last row, false otherwise.  Returns
      * false when the result set contains no rows.
      * @exception SQLException if a database-access error occurs.
      */
-    public boolean isAfterLast()
-                        throws SQLException {
-
+    public boolean isAfterLast() throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {  };
             Debug.methodCall(this, "isAfterLast", args);
         }
@@ -248,8 +314,7 @@ public class ResultSet
      * @return an object representing an SQL array
      * @throws SQLException if a database error occurs
      */
-    public java.sql.Array getArray(int i)
-                            throws SQLException {
+    public java.sql.Array getArray(int i) throws SQLException {
         throw new NotImplemented();
     }
 
@@ -262,8 +327,7 @@ public class ResultSet
      * @return an object representing an SQL array
      * @throws SQLException if a database error occurs
      */
-    public java.sql.Array getArray(String colName)
-                            throws SQLException {
+    public java.sql.Array getArray(String colName) throws SQLException {
         throw new NotImplemented();
     }
 
@@ -288,7 +352,7 @@ public class ResultSet
      * @see getBinaryStream
      */
     public InputStream getAsciiStream(int columnIndex)
-                               throws java.sql.SQLException {
+        throws java.sql.SQLException {
         checkRowPos();
 
         return getBinaryStream(columnIndex);
@@ -296,14 +360,13 @@ public class ResultSet
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public InputStream getAsciiStream(String columnName)
-                               throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return getAsciiStream(findColumn(columnName));
     }
 
@@ -314,18 +377,15 @@ public class ResultSet
     /**
      * JDBC 2.0
      *
-     * <p>Determine if the cursor is before the first row in the result 
-     * set.   
+     * <p>Determine if the cursor is before the first row in the result
+     * set.
      *
      * @return true if before the first row, false otherwise. Returns
      * false when the result set contains no rows.
      * @exception SQLException if a database-access error occurs.
      */
-    public boolean isBeforeFirst()
-                          throws SQLException {
-
+    public boolean isBeforeFirst() throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {  };
             Debug.methodCall(this, "isBeforeFirst", args);
         }
@@ -349,13 +409,11 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public BigDecimal getBigDecimal(int columnIndex, int scale)
-                             throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         String stringVal = getString(columnIndex);
         BigDecimal val;
 
         if (stringVal != null) {
-
             if (stringVal.length() == 0) {
                 val = new BigDecimal(0);
 
@@ -366,21 +424,16 @@ public class ResultSet
                 val = new BigDecimal(stringVal);
             } catch (NumberFormatException ex) {
                 throw new java.sql.SQLException("Bad format for BigDecimal '"
-                                                + stringVal + "' in column "
-                                                + columnIndex + "("
-                                                + fields[columnIndex - 1]
-                                                + ").", "S1009");
+                    + stringVal + "' in column " + columnIndex + "("
+                    + fields[columnIndex - 1] + ").", "S1009");
             }
 
             try {
-
                 return val.setScale(scale);
             } catch (ArithmeticException ex) {
                 throw new java.sql.SQLException("Bad format for BigDecimal '"
-                                                + stringVal + "' in column "
-                                                + columnIndex + "("
-                                                + fields[columnIndex - 1]
-                                                + ").", "S1009");
+                    + stringVal + "' in column " + columnIndex + "("
+                    + fields[columnIndex - 1] + ").", "S1009");
             }
         }
 
@@ -389,37 +442,33 @@ public class ResultSet
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
      * @param scale DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public BigDecimal getBigDecimal(String columnName, int scale)
-                             throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return getBigDecimal(findColumn(columnName), scale);
     }
 
     /**
      * JDBC 2.0
      *
-     * Get the value of a column in the current row as a java.math.BigDecimal 
+     * Get the value of a column in the current row as a java.math.BigDecimal
      * object.
      *
      * @param columnIndex the first column is 1, the second is 2, ...
-     * @return the column value (full precision); if the value is SQL NULL, 
+     * @return the column value (full precision); if the value is SQL NULL,
      * the result is null
      * @exception SQLException if a database-access error occurs.
      */
-    public BigDecimal getBigDecimal(int columnIndex)
-                             throws SQLException {
-
+    public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
         String stringVal = getString(columnIndex);
         BigDecimal val;
 
         if (stringVal != null) {
-
             if (stringVal.length() == 0) {
                 val = new BigDecimal(0);
 
@@ -432,10 +481,8 @@ public class ResultSet
                 return val;
             } catch (NumberFormatException ex) {
                 throw new java.sql.SQLException("Bad format for BigDecimal '"
-                                                + stringVal + "' in column "
-                                                + columnIndex + "("
-                                                + fields[columnIndex - 1]
-                                                + ").", "S1009");
+                    + stringVal + "' in column " + columnIndex + "("
+                    + fields[columnIndex - 1] + ").", "S1009");
             }
         }
 
@@ -445,13 +492,16 @@ public class ResultSet
     /**
      * JDBC 2.0
      *
-     * Get the value of a column in the current row as a java.math.BigDecimal 
+     * Get the value of a column in the current row as a java.math.BigDecimal
      * object.
-     *
+     * 
+     * @param columnName the name of the column to retrieve the value from
+     * 
+     * @return the BigDecimal value in the column
+     * @throws SQLException if an error occurs
      */
     public BigDecimal getBigDecimal(String columnName)
-                             throws SQLException {
-
+        throws SQLException {
         return getBigDecimal(findColumn(columnName));
     }
 
@@ -468,13 +518,12 @@ public class ResultSet
      * @see getUnicodeStream
      */
     public InputStream getBinaryStream(int columnIndex)
-                                throws java.sql.SQLException {
+        throws java.sql.SQLException {
         checkRowPos();
 
         byte[] b = getBytes(columnIndex);
 
         if (b != null) {
-
             return new ByteArrayInputStream(b);
         }
 
@@ -483,14 +532,13 @@ public class ResultSet
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public InputStream getBinaryStream(String columnName)
-                                throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return getBinaryStream(findColumn(columnName));
     }
 
@@ -499,21 +547,19 @@ public class ResultSet
      *
      * Get a BLOB column.
      *
-     * @param i the first column is 1, the second is 2, ...
+     * @param columnIndex the first column is 1, the second is 2, ...
      * @return an object representing a BLOB
+     * @throws SQLException if an error occurs.
      */
-    public java.sql.Blob getBlob(int columnIndex)
-                          throws SQLException {
+    public java.sql.Blob getBlob(int columnIndex) throws SQLException {
         checkRowPos();
 
-        if (columnIndex < 1 || columnIndex > fields.length) {
+        if ((columnIndex < 1) || (columnIndex > fields.length)) {
             throw new java.sql.SQLException("Column Index out of range ( "
-                                            + columnIndex + " > "
-                                            + fields.length + ").", "S1002");
+                + columnIndex + " > " + fields.length + ").", "S1002");
         }
 
         try {
-
             if (thisRow[columnIndex - 1] == null) {
                 wasNullFlag = true;
             } else {
@@ -524,7 +570,6 @@ public class ResultSet
         }
 
         if (wasNullFlag) {
-
             return null;
         }
 
@@ -538,10 +583,10 @@ public class ResultSet
      *
      * @param colName the column name
      * @return an object representing a BLOB
+     * @throws SQLException if an error occurs.
+     * 
      */
-    public java.sql.Blob getBlob(String colName)
-                          throws SQLException {
-
+    public java.sql.Blob getBlob(String colName) throws SQLException {
         return getBlob(findColumn(colName));
     }
 
@@ -552,16 +597,14 @@ public class ResultSet
      * @return the column value, false for SQL NULL
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public boolean getBoolean(int columnIndex)
-                       throws java.sql.SQLException {
-
+    public boolean getBoolean(int columnIndex) throws java.sql.SQLException {
         String stringVal = getString(columnIndex);
 
-        if (stringVal != null && stringVal.length() > 0) {
-
+        if ((stringVal != null) && (stringVal.length() > 0)) {
             int c = Character.toLowerCase(stringVal.charAt(0));
 
-            return ((c == 't') || (c == 'y') || (c == '1') || stringVal.equals("-1"));
+            return ((c == 't') || (c == 'y') || (c == '1')
+            || stringVal.equals("-1"));
         }
 
         return false;
@@ -569,14 +612,12 @@ public class ResultSet
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean getBoolean(String columnName)
-                       throws java.sql.SQLException {
-
+    public boolean getBoolean(String columnName) throws java.sql.SQLException {
         return getBoolean(findColumn(columnName));
     }
 
@@ -587,12 +628,10 @@ public class ResultSet
      * @return the column value; 0 if SQL NULL
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public byte getByte(int columnIndex)
-                 throws java.sql.SQLException {
+    public byte getByte(int columnIndex) throws java.sql.SQLException {
         checkRowPos();
 
         try {
-
             if (thisRow[columnIndex - 1] == null) {
                 wasNullFlag = true;
             } else {
@@ -603,57 +642,53 @@ public class ResultSet
         }
 
         if (wasNullFlag) {
-
             return 0;
         }
 
         Field field = fields[columnIndex - 1];
 
         switch (field.getMysqlType()) {
+        case MysqlDefs.FIELD_TYPE_DECIMAL:
+        case MysqlDefs.FIELD_TYPE_TINY:
+        case MysqlDefs.FIELD_TYPE_SHORT:
+        case MysqlDefs.FIELD_TYPE_LONG:
+        case MysqlDefs.FIELD_TYPE_FLOAT:
+        case MysqlDefs.FIELD_TYPE_DOUBLE:
+        case MysqlDefs.FIELD_TYPE_LONGLONG:
+        case MysqlDefs.FIELD_TYPE_INT24:
 
-            case MysqlDefs.FIELD_TYPE_DECIMAL:
-            case MysqlDefs.FIELD_TYPE_TINY:
-            case MysqlDefs.FIELD_TYPE_SHORT:
-            case MysqlDefs.FIELD_TYPE_LONG:
-            case MysqlDefs.FIELD_TYPE_FLOAT:
-            case MysqlDefs.FIELD_TYPE_DOUBLE:
-            case MysqlDefs.FIELD_TYPE_LONGLONG:
-            case MysqlDefs.FIELD_TYPE_INT24:
+            try {
+                String stringVal = getString(columnIndex);
+                int decimalIndex = stringVal.indexOf(".");
 
-                try {
-
-                    String stringVal = getString(columnIndex);
-                    int decimalIndex = stringVal.indexOf(".");
-                    // Strip off the decimals
-                    if (decimalIndex != -1) {
-                        stringVal = stringVal.substring(0, decimalIndex);
-                    }
-
-                    return Byte.parseByte(stringVal);
-                } catch (NumberFormatException NFE) {
-                    throw new SQLException("Value '" + getString(columnIndex)
-                                           + "' is out of range [-127,127]", 
-                                           "S1009");
+                // Strip off the decimals
+                if (decimalIndex != -1) {
+                    stringVal = stringVal.substring(0, decimalIndex);
                 }
 
-            default:
+                return Byte.parseByte(stringVal);
+            } catch (NumberFormatException NFE) {
+                throw new SQLException("Value '" + getString(columnIndex)
+                    + "' is out of range [-127,127]", "S1009");
+            }
 
-                try {
+        default:
 
-                    String stringVal = getString(columnIndex);
+            try {
+                String stringVal = getString(columnIndex);
 
-                    int decimalIndex = stringVal.indexOf(".");
-                    // Strip off the decimals
-                    if (decimalIndex != -1) {
-                        stringVal = stringVal.substring(0, decimalIndex);
-                    }
+                int decimalIndex = stringVal.indexOf(".");
 
-                    return Byte.parseByte(stringVal);
-                } catch (NumberFormatException NFE) {
-                    throw new SQLException("Value '" + getString(columnIndex)
-                                           + "' is out of range [-127,127]", 
-                                           "S1009");
+                // Strip off the decimals
+                if (decimalIndex != -1) {
+                    stringVal = stringVal.substring(0, decimalIndex);
                 }
+
+                return Byte.parseByte(stringVal);
+            } catch (NumberFormatException NFE) {
+                throw new SQLException("Value '" + getString(columnIndex)
+                    + "' is out of range [-127,127]", "S1009");
+            }
 
             // FIXME: JDBC-Compliance test is broken, wants to convert string->byte(num)
             //return _thisRow[columnIndex - 1][0];
@@ -662,14 +697,12 @@ public class ResultSet
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public byte getByte(String columnName)
-                 throws java.sql.SQLException {
-
+    public byte getByte(String columnName) throws java.sql.SQLException {
         return getByte(findColumn(columnName));
     }
 
@@ -684,12 +717,10 @@ public class ResultSet
      *    is null
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public byte[] getBytes(int columnIndex)
-                    throws java.sql.SQLException {
+    public byte[] getBytes(int columnIndex) throws java.sql.SQLException {
         checkRowPos();
 
         try {
-
             if (thisRow[columnIndex - 1] == null) {
                 wasNullFlag = true;
             } else {
@@ -699,29 +730,24 @@ public class ResultSet
             wasNullFlag = true;
         } catch (ArrayIndexOutOfBoundsException aioobEx) {
             throw new java.sql.SQLException("Column Index out of range ( "
-                                            + columnIndex + " > "
-                                            + fields.length + ").", "S1002");
+                + columnIndex + " > " + fields.length + ").", "S1002");
         }
 
         if (wasNullFlag) {
-
             return null;
         } else {
-
             return thisRow[columnIndex - 1];
         }
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public byte[] getBytes(String columnName)
-                    throws java.sql.SQLException {
-
+    public byte[] getBytes(String columnName) throws java.sql.SQLException {
         return getBytes(findColumn(columnName));
     }
 
@@ -734,17 +760,18 @@ public class ResultSet
      * JDBC 2.0
      *
      * <p>Get the value of a column in the current row as a java.io.Reader.
+     * 
+     * @param columnIndex the column to get the value from
+     * @throws SQLException if an error occurs
+     * @return the value in the column as a java.io.Reader.
      */
     public java.io.Reader getCharacterStream(int columnIndex)
-                                      throws SQLException {
-
+        throws SQLException {
         String stringVal = getString(columnIndex);
 
         if (stringVal != null) {
-
             return new StringReader(stringVal);
         } else {
-
             return null;
         }
     }
@@ -753,10 +780,15 @@ public class ResultSet
      * JDBC 2.0
      *
      * <p>Get the value of a column in the current row as a java.io.Reader.
+     * 
+     * @param columnName the column name to retrieve the value from
+     * 
+     * @throws SQLException if an error occurs
+     * 
+     * @return the value as a java.io.Reader
      */
     public java.io.Reader getCharacterStream(String columnName)
-                                      throws SQLException {
-
+        throws SQLException {
         return getCharacterStream(findColumn(columnName));
     }
 
@@ -767,10 +799,10 @@ public class ResultSet
      *
      * @param i the first column is 1, the second is 2, ...
      * @return an object representing a CLOB
+     * 
+     * @throws SQLException if an error occurs
      */
-    public java.sql.Clob getClob(int i)
-                          throws SQLException {
-
+    public java.sql.Clob getClob(int i) throws SQLException {
         return new com.mysql.jdbc.Clob(getString(i));
     }
 
@@ -781,10 +813,10 @@ public class ResultSet
      *
      * @param colName the column name
      * @return an object representing a CLOB
+     * 
+     * @throws SQLException if an error occurs
      */
-    public java.sql.Clob getClob(String colName)
-                          throws SQLException {
-
+    public java.sql.Clob getClob(String colName) throws SQLException {
         return getClob(findColumn(colName));
     }
 
@@ -795,18 +827,16 @@ public class ResultSet
      * used is determined by the statement that created the result set.
      *
      * @return the concurrency type, CONCUR_READ_ONLY, etc.
-     * @exception SQLException if a database-access error occurs
+     * @throws SQLException if a database-access error occurs
      */
-    public int getConcurrency()
-                       throws SQLException {
-
+    public int getConcurrency() throws SQLException {
         return (CONCUR_READ_ONLY);
     }
 
     /**
      * DOCUMENT ME!
-     * 
-     * @param Conn DOCUMENT ME!
+     *
+     * @param conn the connection that created this result set.
      */
     public void setConnection(com.mysql.jdbc.Connection conn) {
         this.connection = conn;
@@ -834,10 +864,9 @@ public class ResultSet
      * @return the ResultSet's SQL cursor name.
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public String getCursorName()
-                         throws java.sql.SQLException {
-        throw new java.sql.SQLException("Positioned Update not supported.", 
-                                        "S1C00");
+    public String getCursorName() throws java.sql.SQLException {
+        throw new java.sql.SQLException("Positioned Update not supported.",
+            "S1C00");
     }
 
     /**
@@ -848,9 +877,7 @@ public class ResultSet
      * @return the column value; null if SQL NULL
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public java.sql.Date getDate(int columnIndex)
-                          throws java.sql.SQLException {
-
+    public java.sql.Date getDate(int columnIndex) throws java.sql.SQLException {
         Integer year = null;
         Integer month = null;
         Integer day = null;
@@ -860,92 +887,80 @@ public class ResultSet
             stringVal = getString(columnIndex);
 
             if (stringVal == null) {
-
                 return null;
             } else if (stringVal.equals("0000-00-00")
-                       || stringVal.equals("0000-00-00 00:00:00")
-                       || stringVal.equals("00000000000000")
-                       || stringVal.equals("0")) {
+                    || stringVal.equals("0000-00-00 00:00:00")
+                    || stringVal.equals("00000000000000")
+                    || stringVal.equals("0")) {
                 wasNullFlag = true;
 
                 return null;
             } else if (fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
-
                 // Convert from TIMESTAMP
                 switch (stringVal.length()) {
+                case 14:
+                case 8: {
+                    year = new Integer(stringVal.substring(0, 4));
+                    month = new Integer(stringVal.substring(4, 6));
+                    day = new Integer(stringVal.substring(6, 8));
 
-                    case 14:
-                    case 8:
-                     {
-                        year = new Integer(stringVal.substring(0, 4));
-                        month = new Integer(stringVal.substring(4, 6));
-                        day = new Integer(stringVal.substring(6, 8));
+                    return new java.sql.Date(year.intValue() - 1900,
+                        month.intValue() - 1, day.intValue());
+                }
 
-                        return new java.sql.Date(year.intValue() - 1900, 
-                                                 month.intValue() - 1, 
-                                                 day.intValue());
+                case 12:
+                case 10:
+                case 6: {
+                    year = new Integer(stringVal.substring(0, 2));
+
+                    if (year.intValue() <= 69) {
+                        year = new Integer(year.intValue() + 100);
                     }
 
-                    case 12:
-                    case 10:
-                    case 6:
-                     {
-                        year = new Integer(stringVal.substring(0, 2));
+                    month = new Integer(stringVal.substring(2, 4));
+                    day = new Integer(stringVal.substring(4, 6));
 
-                        if (year.intValue() <= 69) {
-                            year = new Integer(year.intValue() + 100);
-                        }
+                    return new java.sql.Date(year.intValue(),
+                        month.intValue() - 1, day.intValue());
+                }
 
-                        month = new Integer(stringVal.substring(2, 4));
-                        day = new Integer(stringVal.substring(4, 6));
+                case 4: {
+                    year = new Integer(stringVal.substring(0, 4));
 
-                        return new java.sql.Date(year.intValue(), 
-                                                 month.intValue() - 1, 
-                                                 day.intValue());
+                    if (year.intValue() <= 69) {
+                        year = new Integer(year.intValue() + 100);
                     }
 
-                    case 4:
-                     {
-                        year = new Integer(stringVal.substring(0, 4));
+                    month = new Integer(stringVal.substring(2, 4));
 
-                        if (year.intValue() <= 69) {
-                            year = new Integer(year.intValue() + 100);
-                        }
+                    return new java.sql.Date(year.intValue(),
+                        month.intValue() - 1, 1);
+                }
 
-                        month = new Integer(stringVal.substring(2, 4));
+                case 2: {
+                    year = new Integer(stringVal.substring(0, 2));
 
-                        return new java.sql.Date(year.intValue(), 
-                                                 month.intValue() - 1, 1);
+                    if (year.intValue() <= 69) {
+                        year = new Integer(year.intValue() + 100);
                     }
 
-                    case 2:
-                     {
-                        year = new Integer(stringVal.substring(0, 2));
+                    return new java.sql.Date(year.intValue(), 0, 1);
+                }
 
-                        if (year.intValue() <= 69) {
-                            year = new Integer(year.intValue() + 100);
-                        }
-
-                        return new java.sql.Date(year.intValue(), 0, 1);
-                    }
-
-                    default:
-                        throw new SQLException("Bad format for Date '" + stringVal
-                                               + "' in column " + columnIndex
-                                               + "(" + fields[columnIndex - 1]
-                                               + ").", "S1009");
+                default:
+                    throw new SQLException("Bad format for Date '" + stringVal
+                        + "' in column " + columnIndex + "("
+                        + fields[columnIndex - 1] + ").", "S1009");
                 } /* endswitch */
             } else if (fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
                 year = new Integer(stringVal.substring(0, 4));
 
                 return new java.sql.Date(year.intValue() - 1900, 0, 1);
             } else {
-
                 if (stringVal.length() < 10) {
                     throw new SQLException("Bad format for Date '" + stringVal
-                                           + "' in column " + columnIndex
-                                           + "(" + fields[columnIndex - 1]
-                                           + ").", "S1009");
+                        + "' in column " + columnIndex + "("
+                        + fields[columnIndex - 1] + ").", "S1009");
                 }
 
                 year = new Integer(stringVal.substring(0, 4));
@@ -953,32 +968,31 @@ public class ResultSet
                 day = new Integer(stringVal.substring(8, 10));
             }
 
-            return new java.sql.Date(year.intValue() - 1900, month.intValue() - 1, 
-                                     day.intValue());
+            return new java.sql.Date(year.intValue() - 1900,
+                month.intValue() - 1, day.intValue());
         } catch (Exception e) {
-            throw new java.sql.SQLException("Cannot convert value '" + stringVal
-                                            + "' from column " + columnIndex
-                                            + "(" + stringVal + " ) to DATE.", "S1009");
+            throw new java.sql.SQLException("Cannot convert value '"
+                + stringVal + "' from column " + columnIndex + "(" + stringVal
+                + " ) to DATE.", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public java.sql.Date getDate(String columnName)
-                          throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return getDate(findColumn(columnName));
     }
 
     /**
      * JDBC 2.0
      *
-     * Get the value of a column in the current row as a java.sql.Date 
+     * Get the value of a column in the current row as a java.sql.Date
      * object.  Use the calendar to construct an appropriate millisecond
      * value for the Date, if the underlying database doesn't store
      * timezone information.
@@ -989,13 +1003,12 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Date getDate(int columnIndex, Calendar cal)
-                          throws SQLException {
-
+        throws SQLException {
         return getDate(columnIndex);
     }
 
     /**
-     * Get the value of a column in the current row as a java.sql.Date 
+     * Get the value of a column in the current row as a java.sql.Date
      * object. Use the calendar to construct an appropriate millisecond
      * value for the Date, if the underlying database doesn't store
      * timezone information.
@@ -1006,8 +1019,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Date getDate(String columnName, Calendar cal)
-                          throws SQLException {
-
+        throws SQLException {
         return getDate(columnName);
     }
 
@@ -1018,17 +1030,15 @@ public class ResultSet
      * @return the column value; 0 if SQL NULL
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public double getDouble(int columnIndex)
-                     throws java.sql.SQLException {
+    public double getDouble(int columnIndex) throws java.sql.SQLException {
         checkRowPos();
 
         if (fields == null) {
-            throw new java.sql.SQLException("Query generated no fields for ResultSet", 
-                                            "S1002");
+            throw new java.sql.SQLException("Query generated no fields for ResultSet",
+                "S1002");
         }
 
         try {
-
             if (thisRow[columnIndex - 1] == null) {
                 wasNullFlag = true;
             } else {
@@ -1038,38 +1048,30 @@ public class ResultSet
             wasNullFlag = true;
         } catch (ArrayIndexOutOfBoundsException aioobEx) {
             throw new java.sql.SQLException("Column Index out of range ( "
-                                            + columnIndex + " > "
-                                            + fields.length + ").", "S1002");
+                + columnIndex + " > " + fields.length + ").", "S1002");
         }
 
         if (wasNullFlag) {
-
             return 0;
         }
 
         try {
-
             return getDouble(thisRow[columnIndex - 1]);
         } catch (NumberFormatException E) {
             throw new java.sql.SQLException("Bad format for number '"
-                                            + new String(
-                                                    thisRow[columnIndex - 1])
-                                            + "' in column " + columnIndex
-                                            + "(" + fields[columnIndex - 1]
-                                            + ").", "S1009");
+                + new String(thisRow[columnIndex - 1]) + "' in column "
+                + columnIndex + "(" + fields[columnIndex - 1] + ").", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public double getDouble(String columnName)
-                     throws java.sql.SQLException {
-
+    public double getDouble(String columnName) throws java.sql.SQLException {
         return getDouble(findColumn(columnName));
     }
 
@@ -1082,19 +1084,19 @@ public class ResultSet
      * at any time.
      *
      * @exception SQLException if a database-access error occurs, or
-     * the result set type is TYPE_FORWARD_ONLY and direction is not 
+     * the result set type is TYPE_FORWARD_ONLY and direction is not
      * FETCH_FORWARD.
      *
      * MM.MySQL actually ignores this, because it has the whole result
      * set anyway, so the direction is immaterial.
+     * 
+     * @param direction the direction to fetch rows in.
+     * @throws SQLException if an error occurs
      */
-    public void setFetchDirection(int direction)
-                           throws SQLException {
-
-        if (direction != FETCH_FORWARD && direction != FETCH_REVERSE
-            && direction != FETCH_UNKNOWN) {
-            throw new SQLException("Illegal value for fetch direction", 
-                                   "S1009");
+    public void setFetchDirection(int direction) throws SQLException {
+        if ((direction != FETCH_FORWARD) && (direction != FETCH_REVERSE)
+                && (direction != FETCH_UNKNOWN)) {
+            throw new SQLException("Illegal value for fetch direction", "S1009");
         } else {
             fetchDirection = direction;
         }
@@ -1103,25 +1105,24 @@ public class ResultSet
     /**
      * JDBC 2.0
      *
-     * Return the fetch direction for this result set.
+     * Returns the fetch direction for this result set.
      *
-     * @exception SQLException if a database-access error occurs 
+     * @return the fetch direction for this result set.
+     * @exception SQLException if a database-access error occurs
      */
-    public int getFetchDirection()
-                          throws SQLException {
-
+    public int getFetchDirection() throws SQLException {
         return fetchDirection;
     }
 
     /**
      * JDBC 2.0
      *
-     * Give the JDBC driver a hint as to the number of rows that should 
+     * Give the JDBC driver a hint as to the number of rows that should
      * be fetched from the database when more rows are needed for this result
-     * set.  If the fetch size specified is zero, then the JDBC driver 
+     * set.  If the fetch size specified is zero, then the JDBC driver
      * ignores the value, and is free to make its own best guess as to what
-     * the fetch size should be.  The default value is set by the statement 
-     * that creates the result set.  The fetch size may be changed at any 
+     * the fetch size should be.  The default value is set by the statement
+     * that creates the result set.  The fetch size may be changed at any
      * time.
      *
      * @param rows the number of rows to fetch
@@ -1130,12 +1131,10 @@ public class ResultSet
      *
      * Currently ignored by this driver.
      */
-    public void setFetchSize(int rows)
-                      throws SQLException {
-
+    public void setFetchSize(int rows) throws SQLException {
         if (rows < 0) { /* || rows > getMaxRows()*/
-            throw new SQLException("Value must be between 0 and getMaxRows()", 
-                                   "S1009");
+            throw new SQLException("Value must be between 0 and getMaxRows()",
+                "S1009");
         }
 
         fetchSize = rows;
@@ -1146,27 +1145,23 @@ public class ResultSet
      *
      * Return the fetch size for this result set.
      *
-     * @exception SQLException if a database-access error occurs 
+     * @return the fetch size for this result set.
+     * @exception SQLException if a database-access error occurs
      */
-    public int getFetchSize()
-                     throws SQLException {
-
+    public int getFetchSize() throws SQLException {
         return fetchSize;
     }
 
     /**
      * JDBC 2.0
      *
-     * <p>Determine if the cursor is on the first row of the result set.   
+     * <p>Determine if the cursor is on the first row of the result set.
      *
-     * @return true if on the first row, false otherwise.   
+     * @return true if on the first row, false otherwise.
      * @exception SQLException if a database-access error occurs.
      */
-    public boolean isFirst()
-                    throws SQLException {
-
+    public boolean isFirst() throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {  };
             Debug.methodCall(this, "isFirst", args);
         }
@@ -1187,8 +1182,7 @@ public class ResultSet
      * @return the column value; 0 if SQL NULL
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public float getFloat(int columnIndex)
-                   throws java.sql.SQLException {
+    public float getFloat(int columnIndex) throws java.sql.SQLException {
         checkRowPos();
 
         String val = null;
@@ -1196,19 +1190,15 @@ public class ResultSet
         try {
             val = getString(columnIndex);
 
-            if (val != null && val.length() != 0) {
-
+            if ((val != null) && (val.length() != 0)) {
                 float f = Float.parseFloat(val);
 
                 if (useStrictFloatingPoint) {
-
                     // Fix endpoint rounding precision loss in MySQL server
                     if (f == 2.147483648E9F) {
-
                         // Fix Odd end-point rounding on MySQL
                         f = 2.147483647E9F;
                     } else if (f == 1.0000000036275E-15F) {
-
                         // Fix odd end-point rounding on MySQL
                         f = 1.0E-15F;
                     } else if (f == 9.999999869911E14F) {
@@ -1230,25 +1220,22 @@ public class ResultSet
 
                 return f;
             } else {
-
                 return 0;
             }
         } catch (NumberFormatException nfe) {
             throw new SQLException("Invalid value for getFloat() - '" + val
-                                   + "'", "S1009");
+                + "'", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public float getFloat(String columnName)
-                   throws java.sql.SQLException {
-
+    public float getFloat(String columnName) throws java.sql.SQLException {
         return getFloat(findColumn(columnName));
     }
 
@@ -1259,8 +1246,7 @@ public class ResultSet
      * @return the column value; 0 if SQL NULL
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public int getInt(int columnIndex)
-               throws java.sql.SQLException {
+    public int getInt(int columnIndex) throws java.sql.SQLException {
         checkRowPos();
 
         String val = null;
@@ -1268,73 +1254,59 @@ public class ResultSet
         try {
             val = getString(columnIndex);
 
-            if (val != null && val.length() != 0) {
-
+            if ((val != null) && (val.length() != 0)) {
                 if (useStrictFloatingPoint) {
-
                     if (val.equals("-2147480000")) {
-
                         return -2147483648;
                     } else if (val.equals("2147480000")) {
-
                         return 2147483647;
                     } else if (val.equals("2147483648")) {
-
                         return Integer.MAX_VALUE;
                     } else if (val.equals("-2147483650")) {
-
                         return Integer.MIN_VALUE;
                     }
                 }
 
-                if (val.indexOf("e") == -1 && val.indexOf("E") == -1
-                    && val.indexOf(".") == -1) {
-
+                if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1)
+                        && (val.indexOf(".") == -1)) {
                     return Integer.parseInt(val);
                 } else {
-
                     // Convert floating point
                     return (int) (Double.parseDouble(val));
                 }
             } else {
-
                 return 0;
             }
         } catch (NumberFormatException nfe) {
-            throw new SQLException("Invalid value for getInt() - '" + val
-                                   + "'", "S1009");
+            throw new SQLException("Invalid value for getInt() - '" + val + "'",
+                "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getInt(String columnName)
-               throws java.sql.SQLException {
-
+    public int getInt(String columnName) throws java.sql.SQLException {
         return getInt(findColumn(columnName));
     }
 
     /**
      * JDBC 2.0
      *
-     * <p>Determine if the cursor is on the last row of the result set.   
+     * <p>Determine if the cursor is on the last row of the result set.
      * Note: Calling isLast() may be expensive since the JDBC driver
-     * might need to fetch ahead one row in order to determine 
+     * might need to fetch ahead one row in order to determine
      * whether the current row is the last row in the result set.
      *
-     * @return true if on the last row, false otherwise. 
+     * @return true if on the last row, false otherwise.
      * @exception SQLException if a database-access error occurs.
      */
-    public boolean isLast()
-                   throws SQLException {
-
+    public boolean isLast() throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {  };
             Debug.methodCall(this, "isLast", args);
         }
@@ -1355,8 +1327,7 @@ public class ResultSet
      * @return the column value; 0 if SQL NULL
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public long getLong(int columnIndex)
-                 throws java.sql.SQLException {
+    public long getLong(int columnIndex) throws java.sql.SQLException {
         checkRowPos();
 
         String val = null;
@@ -1364,114 +1335,31 @@ public class ResultSet
         try {
             val = getString(columnIndex);
 
-            if (val != null && val.length() != 0) {
-
-                if (val.indexOf("e") == -1 && val.indexOf("E") == -1) {
-
+            if ((val != null) && (val.length() != 0)) {
+                if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1)) {
                     return Long.parseLong(val);
                 } else {
-
                     // Convert floating point
                     return Double.doubleToLongBits(Double.parseDouble(val));
                 }
             } else {
-
                 return 0;
             }
         } catch (NumberFormatException nfe) {
             throw new SQLException("Invalid value for getLong() - '" + val
-                                   + "'", "S1009");
+                + "'", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public long getLong(String columnName)
-                 throws java.sql.SQLException {
-
+    public long getLong(String columnName) throws java.sql.SQLException {
         return getLong(findColumn(columnName));
-    }
-
-    /**
-     * Converts a string representation of an long
-     * into an long
-     */
-    public long getLong(byte[] buf)
-                 throws NumberFormatException {
-
-        long result = 0;
-        boolean negative = false;
-        int i = 0;
-        int max = buf.length;
-        long limit;
-        long multmin;
-        int digit;
-        int radix = 10;
-
-        if (max > 0) {
-
-            if ((char) buf[0] == '-') {
-                negative = true;
-                limit = Long.MIN_VALUE;
-                i++;
-            } else {
-                limit = -Long.MAX_VALUE;
-            }
-
-            multmin = limit / radix;
-
-            if (i < max) {
-                digit = Character.digit((char) buf[i++], radix);
-
-                if (digit < 0) {
-                    throw new NumberFormatException(new String(buf));
-                } else {
-                    result = -digit;
-                }
-            }
-
-            while (i < max) {
-
-                // Accumulating negatively avoids surprises near MAX_VALUE
-                digit = Character.digit((char) buf[i++], radix);
-
-                if (digit < 0) {
-                    throw new NumberFormatException(new String(buf));
-                }
-
-                if (result < multmin) {
-                    throw new NumberFormatException(new String(buf));
-                }
-
-                result *= radix;
-
-                if (result < limit + digit) {
-                    throw new NumberFormatException(new String(buf));
-                }
-
-                result -= digit;
-            }
-        } else {
-            throw new NumberFormatException(new String(buf));
-        }
-
-        if (negative) {
-
-            if (i > 1) {
-
-                return result;
-            } else {
-                throw new NumberFormatException(new String(buf));
-            }
-        } else {
-
-            return -result;
-        }
     }
 
     /**
@@ -1482,8 +1370,7 @@ public class ResultSet
      * @exception java.sql.SQLException if a database access error occurs
      */
     public java.sql.ResultSetMetaData getMetaData()
-                                           throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return new com.mysql.jdbc.ResultSetMetaData(fields);
     }
 
@@ -1502,18 +1389,15 @@ public class ResultSet
      * @return a Object holding the column value
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public Object getObject(int columnIndex)
-                     throws java.sql.SQLException {
+    public Object getObject(int columnIndex) throws java.sql.SQLException {
         checkRowPos();
 
         if (Driver.TRACE) {
-
             Object[] args = { new Integer(columnIndex) };
             Debug.methodCall(this, "getObject", args);
         }
 
         try {
-
             if (thisRow[columnIndex - 1] == null) {
                 wasNullFlag = true;
 
@@ -1521,8 +1405,7 @@ public class ResultSet
             }
         } catch (ArrayIndexOutOfBoundsException aioobEx) {
             throw new java.sql.SQLException("Column Index out of range ( "
-                                            + columnIndex + " > "
-                                            + fields.length + ").", "S1002");
+                + columnIndex + " > " + fields.length + ").", "S1002");
         }
 
         wasNullFlag = false;
@@ -1531,139 +1414,120 @@ public class ResultSet
         field = fields[columnIndex - 1];
 
         switch (field.getSQLType()) {
+        case Types.BIT:
+            return new Boolean(getBoolean(columnIndex));
 
-            case Types.BIT:
-                return new Boolean(getBoolean(columnIndex));
+        case Types.TINYINT:
 
-            case Types.TINYINT:
+            if (field.isUnsigned()) {
+                return new Short(getShort(columnIndex));
+            } else {
+                return new Byte(getByte(columnIndex));
+            }
 
-                if (field.isUnsigned()) {
+        case Types.SMALLINT:
 
-                    return new Short(getShort(columnIndex));
-                } else {
+            if (field.isUnsigned()) {
+                return new Integer(getInt(columnIndex));
+            } else {
+                return new Short(getShort(columnIndex));
+            }
 
-                    return new Byte(getByte(columnIndex));
-                }
+        case Types.INTEGER:
 
-            case Types.SMALLINT:
-
-                if (field.isUnsigned()) {
-
-                    return new Integer(getInt(columnIndex));
-                } else {
-
-                    return new Short(getShort(columnIndex));
-                }
-
-            case Types.INTEGER:
-
-                if (field.isUnsigned()) {
-
-                    return new Long(getLong(columnIndex));
-                } else {
-
-                    return new Integer(getInt(columnIndex));
-                }
-
-            case Types.BIGINT:
+            if (field.isUnsigned()) {
                 return new Long(getLong(columnIndex));
+            } else {
+                return new Integer(getInt(columnIndex));
+            }
 
-            case Types.DECIMAL:
-            case Types.NUMERIC:
+        case Types.BIGINT:
+            return new Long(getLong(columnIndex));
 
-                String stringVal = getString(columnIndex);
-                BigDecimal val;
+        case Types.DECIMAL:
+        case Types.NUMERIC:
 
-                if (stringVal != null) {
+            String stringVal = getString(columnIndex);
+            BigDecimal val;
 
-                    if (stringVal.length() == 0) {
-                        val = new BigDecimal(0);
-
-                        return val;
-                    }
-
-                    try {
-                        val = new BigDecimal(stringVal);
-                    } catch (NumberFormatException ex) {
-                        throw new java.sql.SQLException("Bad format for BigDecimal '"
-                                                        + stringVal
-                                                        + "' in column "
-                                                        + columnIndex + "("
-                                                        + fields[columnIndex - 1]
-                                                        + ").", "S1009");
-                    }
+            if (stringVal != null) {
+                if (stringVal.length() == 0) {
+                    val = new BigDecimal(0);
 
                     return val;
-                } else {
-
-                    return null;
                 }
 
-            case Types.REAL:
-                return new Float(getFloat(columnIndex));
+                try {
+                    val = new BigDecimal(stringVal);
+                } catch (NumberFormatException ex) {
+                    throw new java.sql.SQLException(
+                        "Bad format for BigDecimal '" + stringVal
+                        + "' in column " + columnIndex + "("
+                        + fields[columnIndex - 1] + ").", "S1009");
+                }
 
-            case Types.FLOAT:
-            case Types.DOUBLE:
-                return new Double(getDouble(columnIndex));
+                return val;
+            } else {
+                return null;
+            }
 
-            case Types.CHAR:
-            case Types.VARCHAR:
-            case Types.LONGVARCHAR:
+        case Types.REAL:
+            return new Float(getFloat(columnIndex));
+
+        case Types.FLOAT:
+        case Types.DOUBLE:
+            return new Double(getDouble(columnIndex));
+
+        case Types.CHAR:
+        case Types.VARCHAR:
+        case Types.LONGVARCHAR:
+            return getString(columnIndex);
+
+        case Types.BINARY:
+        case Types.VARBINARY:
+        case Types.LONGVARBINARY:
+
+            if (!field.isBlob()) {
                 return getString(columnIndex);
+            } else if (!field.isBinary()) {
+                return getString(columnIndex);
+            } else {
+                byte[] data = getBytes(columnIndex);
+                Object obj = data;
 
-            case Types.BINARY:
-            case Types.VARBINARY:
-            case Types.LONGVARBINARY:
-
-                if (!field.isBlob()) {
-
-                    return getString(columnIndex);
-                } else if (!field.isBinary()) {
-
-                    return getString(columnIndex);
-                } else {
-
-                    byte[] data = getBytes(columnIndex);
-                    Object obj = data;
-
-                    if (data != null && data.length >= 2) {
-
-                        if (data[0] == -84 && data[1] == -19) {
-
-                            // Serialized object?
-                            try {
-
-                                ByteArrayInputStream bytesIn = 
-                                        new ByteArrayInputStream(data);
-                                ObjectInputStream objIn = new ObjectInputStream(
-                                                                  bytesIn);
-                                obj = objIn.readObject();
-                                objIn.close();
-                                bytesIn.close();
-                            } catch (ClassNotFoundException cnfe) {
-                                throw new SQLException("Class not found: "
-                                                       + cnfe.toString()
-                                                       + " while reading serialized object");
-                            } catch (IOException ex) {
-                                obj = data; // not serialized?
-                            }
+                if ((data != null) && (data.length >= 2)) {
+                    if ((data[0] == -84) && (data[1] == -19)) {
+                        // Serialized object?
+                        try {
+                            ByteArrayInputStream bytesIn = new ByteArrayInputStream(data);
+                            ObjectInputStream objIn = new ObjectInputStream(bytesIn);
+                            obj = objIn.readObject();
+                            objIn.close();
+                            bytesIn.close();
+                        } catch (ClassNotFoundException cnfe) {
+                            throw new SQLException("Class not found: "
+                                + cnfe.toString()
+                                + " while reading serialized object");
+                        } catch (IOException ex) {
+                            obj = data; // not serialized?
                         }
                     }
-
-                    return obj;
                 }
 
-            case Types.DATE:
-                return getDate(columnIndex);
+                return obj;
+            }
 
-            case Types.TIME:
-                return getTime(columnIndex);
+        case Types.DATE:
+            return getDate(columnIndex);
 
-            case Types.TIMESTAMP:
-                return getTimestamp(columnIndex);
+        case Types.TIME:
+            return getTime(columnIndex);
 
-            default:
-                return getString(columnIndex);
+        case Types.TIMESTAMP:
+            return getTimestamp(columnIndex);
+
+        default:
+            return getString(columnIndex);
         }
     }
 
@@ -1682,41 +1546,42 @@ public class ResultSet
      * @return a Object holding the column value
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public Object getObject(String columnName)
-                     throws java.sql.SQLException {
-
+    public Object getObject(String columnName) throws java.sql.SQLException {
         return getObject(findColumn(columnName));
     }
 
     /**
      * JDBC 2.0
      *
-     * Returns the value of column @i as a Java object.  Use the 
-     * @map to determine the class from which to construct data of 
+     * Returns the value of column @i as a Java object.  Use the
+     * @map to determine the class from which to construct data of
      * SQL structured and distinct types.
      *
      * @param i the first column is 1, the second is 2, ...
      * @param map the mapping from SQL type names to Java classes
      * @return an object representing the SQL value
+     * 
+     * @throws SQLException because this is not implemented
      */
-    public Object getObject(int i, java.util.Map map)
-                     throws SQLException {
+    public Object getObject(int i, java.util.Map map) throws SQLException {
         throw new NotImplemented();
     }
 
     /**
      * JDBC 2.0
      *
-     * Returns the value of column @i as a Java object.  Use the 
-     * @map to determine the class from which to construct data of 
+     * Returns the value of column @i as a Java object.  Use the
+     * @map to determine the class from which to construct data of
      * SQL structured and distinct types.
      *
      * @param colName the column name
      * @param map the mapping from SQL type names to Java classes
      * @return an object representing the SQL value
+     * 
+     * @throws SQLException as this is not implemented
      */
     public Object getObject(String colName, java.util.Map map)
-                     throws SQLException {
+        throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1727,9 +1592,10 @@ public class ResultSet
      *
      * @param i the first column is 1, the second is 2, ...
      * @return an object representing data of an SQL REF type
+     *
+     * @throws SQLException as this is not implemented 
      */
-    public java.sql.Ref getRef(int i)
-                        throws SQLException {
+    public java.sql.Ref getRef(int i) throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1740,9 +1606,10 @@ public class ResultSet
      *
      * @param colName the column name
      * @return an object representing data of an SQL REF type
+     * 
+     * @throws SQLException as this method is not implemented.
      */
-    public java.sql.Ref getRef(String colName)
-                        throws SQLException {
+    public java.sql.Ref getRef(String colName) throws SQLException {
         throw new NotImplemented();
     }
 
@@ -1750,17 +1617,14 @@ public class ResultSet
      * JDBC 2.0
      *
      * <p>Determine the current row number.  The first row is number 1, the
-     * second number 2, etc.  
+     * second number 2, etc.
      *
-     * @return the current row number, else return 0 if there is no 
+     * @return the current row number, else return 0 if there is no
      * current row
      * @exception SQLException if a database-access error occurs.
      */
-    public int getRow()
-               throws SQLException {
-
+    public int getRow() throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {  };
             Debug.methodCall(this, "getRow", args);
         }
@@ -1771,14 +1635,12 @@ public class ResultSet
         // Non-dynamic result sets can be interrogated
         // for this information
         if (!rowData.isDynamic()) {
-
-            if (currentRow < 0 || rowData.isAfterLast() || rowData.isEmpty()) {
+            if ((currentRow < 0) || rowData.isAfterLast() || rowData.isEmpty()) {
                 row = 0;
             } else {
                 row = currentRow + 1;
             }
         } else {
-
             // dynamic (streaming) can not
             row = currentRow + 1;
         }
@@ -1801,8 +1663,7 @@ public class ResultSet
      * @return the column value; 0 if SQL NULL
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public short getShort(int columnIndex)
-                   throws java.sql.SQLException {
+    public short getShort(int columnIndex) throws java.sql.SQLException {
         checkRowPos();
 
         String val = null;
@@ -1810,37 +1671,31 @@ public class ResultSet
         try {
             val = getString(columnIndex);
 
-            if (val != null && val.length() != 0) {
-
-                if (val.indexOf("e") == -1 && val.indexOf("E") == -1
-                    && val.indexOf(".") == -1) {
-
+            if ((val != null) && (val.length() != 0)) {
+                if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1)
+                        && (val.indexOf(".") == -1)) {
                     return Short.parseShort(val);
                 } else {
-
                     // Convert floating point
                     return (short) (Double.parseDouble(val));
                 }
             } else {
-
                 return 0;
             }
         } catch (NumberFormatException nfe) {
             throw new SQLException("Invalid value for getShort() - '" + val
-                                   + "'", "S1009");
+                + "'", "S1009");
         }
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public short getShort(String columnName)
-                   throws java.sql.SQLException {
-
+    public short getShort(String columnName) throws java.sql.SQLException {
         return getShort(findColumn(columnName));
     }
 
@@ -1853,9 +1708,7 @@ public class ResultSet
      * null if the result was produced some other way.
      * @exception SQLException if a database-access error occurs
      */
-    public java.sql.Statement getStatement()
-                                    throws SQLException {
-
+    public java.sql.Statement getStatement() throws SQLException {
         return (java.sql.Statement) owningStatement;
     }
 
@@ -1866,17 +1719,15 @@ public class ResultSet
      * @return the column value, null for SQL NULL
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public String getString(int columnIndex)
-                     throws java.sql.SQLException {
+    public String getString(int columnIndex) throws java.sql.SQLException {
         checkRowPos();
 
         if (fields == null) {
-            throw new java.sql.SQLException("Query generated no fields for ResultSet", 
-                                            "S1002");
+            throw new java.sql.SQLException("Query generated no fields for ResultSet",
+                "S1002");
         }
 
         try {
-
             if (thisRow[columnIndex - 1] == null) {
                 wasNullFlag = true;
 
@@ -1890,51 +1741,42 @@ public class ResultSet
             return null;
         } catch (ArrayIndexOutOfBoundsException aioobEx) {
             throw new java.sql.SQLException("Column Index out of range ( "
-                                            + columnIndex + " > "
-                                            + fields.length + ").", "S1002");
+                + columnIndex + " > " + fields.length + ").", "S1002");
         }
 
         String stringVal = null;
 
-        if (connection != null && connection.useUnicode()) {
-
+        if ((connection != null) && connection.useUnicode()) {
             try {
-
                 String encoding = connection.getEncoding();
 
                 if (encoding == null) {
                     stringVal = new String(thisRow[columnIndex - 1]);
                 } else {
-
-                    SingleByteCharsetConverter converter = SingleByteCharsetConverter.getInstance(
-                                                                   encoding);
+                    SingleByteCharsetConverter converter = SingleByteCharsetConverter
+                        .getInstance(encoding);
 
                     if (converter != null) {
-                        stringVal = converter.toString(
-                                            thisRow[columnIndex - 1]);
+                        stringVal = converter.toString(thisRow[columnIndex - 1]);
                     } else {
-                        stringVal = new String(thisRow[columnIndex - 1], 
-                                               encoding);
+                        stringVal = new String(thisRow[columnIndex - 1],
+                                encoding);
                     }
                 }
             } catch (java.io.UnsupportedEncodingException E) {
                 throw new SQLException("Unsupported character encoding '"
-                                       + connection.getEncoding() + "'.", 
-                                       "0S100");
+                    + connection.getEncoding() + "'.", "0S100");
             }
         } else {
             stringVal = StringUtils.toAsciiString(thisRow[columnIndex - 1]);
         }
 
         if (useStrictFloatingPoint) {
-
             // Fix endpoint rounding precision loss in MySQL server
             if (stringVal.equalsIgnoreCase("2.147483648E9")) {
-
                 // Fix Odd end-point rounding on MySQL
                 stringVal = "2.147483647E9";
             } else if (stringVal.equalsIgnoreCase("1.0000000036275E-15")) {
-
                 // Fix odd end-point rounding on MySQL
                 stringVal = "1.0E-15";
             } else if (stringVal.equalsIgnoreCase("9.999999869911E14")) {
@@ -1965,9 +1807,7 @@ public class ResultSet
      * @return the column value
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public String getString(String columnName)
-                     throws java.sql.SQLException {
-
+    public String getString(String columnName) throws java.sql.SQLException {
         return getString(findColumn(columnName));
     }
 
@@ -1977,150 +1817,26 @@ public class ResultSet
      *
      * @param columnIndex the first column is 1, the second is 2...
      * @return the column value; null if SQL NULL
-     * @exception java.sql.SQLException if a database access error occurs
+     * @throws java.sql.SQLException if a database access error occurs
      */
-    public Time getTime(int columnIndex)
-                 throws java.sql.SQLException {
+    public Time getTime(int columnIndex) throws java.sql.SQLException {
         return getTimeInternal(columnIndex, TimeZone.getDefault());
     }
-    
+
     /**
      * Get the value of a column in the current row as a java.sql.Time
-     * object in the given timezone
+     * object.
      *
-     * @param columnIndex the first column is 1, the second is 2...
-     * @param tz the Timezone to use
-     * 
-     * @return the column value; null if SQL NULL
-     * @exception java.sql.SQLException if a database access error occurs
-     */
-    private Time getTimeInternal(int columnIndex, TimeZone tz)
-                 throws java.sql.SQLException {
-        int hr = 0;
-        int min = 0;
-        int sec = 0;
-
-        try {
-
-            String timeAsString = getString(columnIndex);
-
-            if (timeAsString == null) {
-
-                return null;
-            } else if (timeAsString.equals("0000-00-00")
-                       || timeAsString.equals("0000-00-00 00:00:00")
-                       || timeAsString.equals("00000000000000")) {
-                wasNullFlag = true;
-
-                return null;
-            }
-
-            Field timeColField = fields[columnIndex - 1];
-
-            if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
-
-                // It's a timestamp
-                int length = timeAsString.length();
-
-                switch (length) {
-
-                    case 14:
-                    case 12:
-                     {
-                        hr = Integer.parseInt(timeAsString.substring(
-                                                      length - 6, length - 4));
-                        min = Integer.parseInt(timeAsString.substring(
-                                                       length - 4, length - 2));
-                        sec = Integer.parseInt(timeAsString.substring(
-                                                       length - 2, length));
-                    }
-
-                    break;
-
-                    case 10:
-                     {
-                        hr = Integer.parseInt(timeAsString.substring(6, 8));
-                        min = Integer.parseInt(timeAsString.substring(8, 10));
-                        sec = 0;
-                    }
-
-                    break;
-
-                    default:
-                        throw new SQLException("Timestamp too small to convert to Time value in column "
-                                               + columnIndex + "("
-                                               + fields[columnIndex - 1]
-                                               + ").", "S1009");
-                } /* endswitch */
-
-                SQLWarning precisionLost = new SQLWarning(
-                                                   "Precision lost converting TIMESTAMP to Time with getTime() on column "
-                                                   + columnIndex + "("
-                                                   + fields[columnIndex - 1]
-                                                   + ").");
-
-                if (warningChain == null) {
-                    warningChain = precisionLost;
-                } else {
-                    warningChain.setNextWarning(precisionLost);
-                }
-            } else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATETIME) {
-                hr = Integer.parseInt(timeAsString.substring(11, 13));
-                min = Integer.parseInt(timeAsString.substring(14, 16));
-                sec = Integer.parseInt(timeAsString.substring(17, 19));
-
-                SQLWarning precisionLost = new SQLWarning(
-                                                   "Precision lost converting DATETIME to Time with getTime() on column "
-                                                   + columnIndex + "("
-                                                   + fields[columnIndex - 1]
-                                                   + ").");
-
-                if (warningChain == null) {
-                    warningChain = precisionLost;
-                } else {
-                    warningChain.setNextWarning(precisionLost);
-                }
-            } else {
-
-                // convert a String to a Time
-                if (timeAsString.length() != 5 && timeAsString.length() != 8) {
-                    throw new SQLException("Bad format for Time '"
-                                           + timeAsString + "' in column "
-                                           + columnIndex + "("
-                                           + fields[columnIndex - 1] + ").", 
-                                           "S1009");
-                }
-
-                hr = Integer.parseInt(timeAsString.substring(0, 2));
-                min = Integer.parseInt(timeAsString.substring(3, 5));
-                sec = (timeAsString.length() == 5)
-                          ? 0 : Integer.parseInt(timeAsString.substring(6));
-            }
-
-            return TimeUtil.changeTimezone(this.connection, new Time(hr, min, sec), 
-                                           connection.getServerTimezone(), 
-                                           tz);
-        } catch (Exception ex) {
-            throw new java.sql.SQLException(ex.getClass().getName(), "S1009");
-        }
-    }
-
-    /**
-     * Get the value of a column in the current row as a java.sql.Time 
-     * object. 
-     * 
      * @param columnName is the SQL name of the column
      * @return the column value; if the value is SQL NULL, the result is null
-     * @exception SQLException if a database-access error occurs.
+     * @throws java.sql.SQLException if a database-access error occurs.
      */
-    public Time getTime(String columnName)
-                 throws java.sql.SQLException {
-
+    public Time getTime(String columnName) throws java.sql.SQLException {
         return getTime(findColumn(columnName));
     }
 
     /**
-     * Get the value of a column in the current row as a java.sql.Time 
+     * Get the value of a column in the current row as a java.sql.Time
      * object. Use the calendar to construct an appropriate millisecond
      * value for the Time, if the underlying database doesn't store
      * timezone information.
@@ -2131,13 +1847,12 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Time getTime(int columnIndex, Calendar cal)
-                          throws SQLException {
-
+        throws SQLException {
         return getTimeInternal(columnIndex, cal.getTimeZone());
     }
 
     /**
-     * Get the value of a column in the current row as a java.sql.Time 
+     * Get the value of a column in the current row as a java.sql.Time
      * object. Use the calendar to construct an appropriate millisecond
      * value for the Time, if the underlying database doesn't store
      * timezone information.
@@ -2148,8 +1863,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Time getTime(String columnName, Calendar cal)
-                          throws SQLException {
-
+        throws SQLException {
         return getTime(findColumn(columnName), cal);
     }
 
@@ -2161,270 +1875,24 @@ public class ResultSet
      * @return the column value; null if SQL NULL
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public Timestamp getTimestamp(int columnIndex)
-                           throws java.sql.SQLException {
+    public Timestamp getTimestamp(int columnIndex) throws java.sql.SQLException {
         return getTimestampInternal(columnIndex, TimeZone.getDefault());
-    }
-      
-    /**
-     * Get the value of a column in the current row as a
-     * java.sql.Timestamp object in the given timezone
-     *
-     * @param columnIndex the first column is 1, the second is 2...
-     * @param tz the timezone to use
-     * 
-     * @return the column value; null if SQL NULL
-     * @exception java.sql.SQLException if a database access error occurs
-     */                      
-    private Timestamp getTimestampInternal(int columnIndex, TimeZone tz)
-                           throws java.sql.SQLException {
-
-        String timestampValue = getString(columnIndex);
-
-        try {
-
-            if (timestampValue == null) {
-
-                return null;
-            } else if (timestampValue.equals("0000-00-00")
-                       || timestampValue.equals("0000-00-00 00:00:00")
-                       || timestampValue.equals("00000000000000")
-                       || timestampValue.equals("0")) {
-                wasNullFlag = true;
-
-                return null;
-            } else if (fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
-
-                return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
-                                                       Integer.parseInt(timestampValue.substring(
-                                                                                0, 
-                                                                                4)) - 1900, 
-                                                       0, 1, 0, 0, 0, 0), 
-                                               connection.getServerTimezone(), 
-                                               tz);
-            } else {
-
-                // Convert from TIMESTAMP or DATE
-                switch (timestampValue.length()) {
-
-                    case 19:
-                     {
-
-                        int year = Integer.parseInt(timestampValue.substring(0, 
-                                                                             4));
-                        int month = Integer.parseInt(timestampValue.substring(
-                                                             5, 7));
-                        int day = Integer.parseInt(timestampValue.substring(8, 
-                                                                            10));
-                        int hour = Integer.parseInt(timestampValue.substring(
-                                                            11, 13));
-                        int minutes = Integer.parseInt(timestampValue.substring(
-                                                               14, 16));
-                        int seconds = Integer.parseInt(timestampValue.substring(
-                                                               17, 19));
-
-                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
-                                                               year - 1900, 
-                                                               month - 1, day, 
-                                                               hour, minutes, 
-                                                               seconds, 0), 
-                                                       connection.getServerTimezone(), 
-                                                       tz);
-                    }
-
-                    case 14:
-                     {
-
-                        int year = Integer.parseInt(timestampValue.substring(0, 
-                                                                             4));
-                        int month = Integer.parseInt(timestampValue.substring(
-                                                             4, 6));
-                        int day = Integer.parseInt(timestampValue.substring(6, 
-                                                                            8));
-                        int hour = Integer.parseInt(timestampValue.substring(8, 
-                                                                             10));
-                        int minutes = Integer.parseInt(timestampValue.substring(
-                                                               10, 12));
-                        int seconds = Integer.parseInt(timestampValue.substring(
-                                                               12, 14));
-
-                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
-                                                               year - 1900, 
-                                                               month - 1, day, 
-                                                               hour, minutes, 
-                                                               seconds, 0), 
-                                                       connection.getServerTimezone(), 
-                                                       tz);
-                    }
-
-                    case 12:
-                     {
-
-                        int year = Integer.parseInt(timestampValue.substring(0, 
-                                                                             2));
-
-                        if (year <= 69) {
-                            year = (year + 100);
-                        }
-
-                        int month = Integer.parseInt(timestampValue.substring(
-                                                             2, 4));
-                        int day = Integer.parseInt(timestampValue.substring(4, 
-                                                                            6));
-                        int hour = Integer.parseInt(timestampValue.substring(6, 
-                                                                             8));
-                        int minutes = Integer.parseInt(timestampValue.substring(
-                                                               8, 10));
-                        int seconds = Integer.parseInt(timestampValue.substring(
-                                                               10, 12));
-
-                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
-                                                               year, month - 1, 
-                                                               day, hour, 
-                                                               minutes, 
-                                                               seconds, 0), 
-                                                       connection.getServerTimezone(), 
-                                                       tz);
-                    }
-
-                    case 10:
-                     {
-
-                        // FIXME: SourceForge bug 559134
-                        int year = Integer.parseInt(timestampValue.substring(0, 
-                                                                             2));
-
-                        if (year <= 69) {
-                            year = (year + 100);
-                        }
-
-                        int month = Integer.parseInt(timestampValue.substring(
-                                                             2, 4));
-                        int day = Integer.parseInt(timestampValue.substring(4, 
-                                                                            6));
-                        int hour = Integer.parseInt(timestampValue.substring(6, 
-                                                                             8));
-                        int minutes = Integer.parseInt(timestampValue.substring(
-                                                               8, 10));
-
-                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
-                                                               year, month - 1, 
-                                                               day, hour, 
-                                                               minutes, 0, 0), 
-                                                       connection.getServerTimezone(), 
-                                                       tz);
-                    }
-
-                    case 8:
-                     {
-
-                        int year = Integer.parseInt(timestampValue.substring(0, 
-                                                                             4));
-                        int month = Integer.parseInt(timestampValue.substring(
-                                                             4, 6));
-                        int day = Integer.parseInt(timestampValue.substring(6, 
-                                                                            8));
-
-                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
-                                                               year - 1900, 
-                                                               month - 1, day, 
-                                                               0, 0, 0, 0), 
-                                                       connection.getServerTimezone(), 
-                                                       tz);
-                    }
-
-                    case 6:
-                     {
-
-                        int year = Integer.parseInt(timestampValue.substring(0, 
-                                                                             2));
-
-                        if (year <= 69) {
-                            year = (year + 100);
-                        }
-
-                        int month = Integer.parseInt(timestampValue.substring(
-                                                             2, 4));
-                        int day = Integer.parseInt(timestampValue.substring(4, 
-                                                                            6));
-
-                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
-                                                               year, month - 1, 
-                                                               day, 0, 0, 0, 0), 
-                                                       connection.getServerTimezone(), 
-                                                       tz);
-                    }
-
-                    case 4:
-                     {
-
-                        int year = Integer.parseInt(timestampValue.substring(0, 
-                                                                             2));
-
-                        if (year <= 69) {
-                            year = (year + 100);
-                        }
-
-                        int month = Integer.parseInt(timestampValue.substring(
-                                                             2, 4));
-
-                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
-                                                               year, month - 1, 
-                                                               1, 0, 0, 0, 0), 
-                                                       connection.getServerTimezone(), 
-                                                       tz);
-                    }
-
-                    case 2:
-                     {
-
-                        int year = Integer.parseInt(timestampValue.substring(0, 
-                                                                             2));
-
-                        if (year <= 69) {
-                            year = (year + 100);
-                        }
-
-                        return TimeUtil.changeTimezone(this.connection, new java.sql.Timestamp(
-                                                               year, 0, 1, 0, 
-                                                               0, 0, 0), 
-                                                       connection.getServerTimezone(), 
-                                                       tz);
-                    }
-
-                    default:
-                        throw new java.sql.SQLException("Bad format for Timestamp '"
-                                                        + timestampValue
-                                                        + "' in column "
-                                                        + columnIndex + "("
-                                                        + fields[columnIndex - 1]
-                                                        + ").", "S1009");
-                }
-            }
-        } catch (Exception e) {
-            throw new java.sql.SQLException("Cannot convert value '"
-                                            + timestampValue
-                                            + "' from column " + columnIndex
-                                            + "(" + timestampValue
-                                            + " ) to TIMESTAMP.", "S1009");
-        }
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public Timestamp getTimestamp(String columnName)
-                           throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return getTimestamp(findColumn(columnName));
     }
 
     /**
-     * Get the value of a column in the current row as a java.sql.Timestamp 
+     * Get the value of a column in the current row as a java.sql.Timestamp
      * object. Use the calendar to construct an appropriate millisecond
      * value for the Timestamp, if the underlying database doesn't store
      * timezone information.
@@ -2435,13 +1903,12 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Timestamp getTimestamp(int columnIndex, Calendar cal)
-                                    throws SQLException {
-
+        throws SQLException {
         return getTimestampInternal(columnIndex, cal.getTimeZone());
     }
 
     /**
-     * Get the value of a column in the current row as a java.sql.Timestamp 
+     * Get the value of a column in the current row as a java.sql.Timestamp
      * object. Use the calendar to construct an appropriate millisecond
      * value for the Timestamp, if the underlying database doesn't store
      * timezone information.
@@ -2452,8 +1919,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.Timestamp getTimestamp(String columnName, Calendar cal)
-                                    throws SQLException {
-
+        throws SQLException {
         return getTimestamp(findColumn(columnName), cal);
     }
 
@@ -2467,27 +1933,20 @@ public class ResultSet
      * TYPE_SCROLL_SENSITIVE
      * @exception SQLException if a database-access error occurs
      */
-    public int getType()
-                throws SQLException {
-
+    public int getType() throws SQLException {
         return resultSetType;
     }
 
     /**
      * @see ResultSet#getURL(int)
      */
-    public URL getURL(int colIndex)
-               throws SQLException {
-
+    public URL getURL(int colIndex) throws SQLException {
         String val = getString(colIndex);
 
         if (val == null) {
-
             return null;
         } else {
-
             try {
-
                 return new URL(val);
             } catch (MalformedURLException mfe) {
                 throw new SQLException("Malformed URL '" + val + "'", "S1009");
@@ -2498,18 +1957,13 @@ public class ResultSet
     /**
      * @see ResultSet#getURL(String)
      */
-    public URL getURL(String colName)
-               throws SQLException {
-
+    public URL getURL(String colName) throws SQLException {
         String val = getString(colName);
 
         if (val == null) {
-
             return null;
         } else {
-
             try {
-
                 return new URL(val);
             } catch (MalformedURLException mfe) {
                 throw new SQLException("Malformed URL '" + val + "'", "S1009");
@@ -2530,7 +1984,7 @@ public class ResultSet
      * @see getBinaryStream
      */
     public InputStream getUnicodeStream(int columnIndex)
-                                 throws java.sql.SQLException {
+        throws java.sql.SQLException {
         checkRowPos();
 
         return getBinaryStream(columnIndex);
@@ -2538,14 +1992,13 @@ public class ResultSet
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param columnName DOCUMENT ME!
-     * @return DOCUMENT ME! 
+     * @return DOCUMENT ME!
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public InputStream getUnicodeStream(String columnName)
-                                 throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return getUnicodeStream(findColumn(columnName));
     }
 
@@ -2565,9 +2018,7 @@ public class ResultSet
      * @return the first java.sql.SQLWarning or null;
      * @exception java.sql.SQLException if a database access error occurs.
      */
-    public java.sql.SQLWarning getWarnings()
-                                    throws java.sql.SQLException {
-
+    public java.sql.SQLWarning getWarnings() throws java.sql.SQLException {
         return warningChain;
     }
 
@@ -2578,10 +2029,10 @@ public class ResultSet
      *
      * <p>If row is positive, moves to an absolute row with respect to the
      * beginning of the result set.  The first row is row 1, the second
-     * is row 2, etc. 
+     * is row 2, etc.
      *
      * <p>If row is negative, moves to an absolute row position with respect to
-     * the end of result set.  For example, calling absolute(-1) positions the 
+     * the end of result set.  For example, calling absolute(-1) positions the
      * cursor on the last row, absolute(-2) indicates the next-to-last
      * row, etc.
      *
@@ -2592,15 +2043,13 @@ public class ResultSet
      * <p>Note: Calling absolute(1) is the same as calling first().
      * Calling absolute(-1) is the same as calling last().
      *
+     * @param row the row number to move to
      * @return true if on the result set, false if off.
-     * @exception SQLException if a database-access error occurs, or 
+     * @exception SQLException if a database-access error occurs, or
      * row is 0, or result set type is TYPE_FORWARD_ONLY.
      */
-    public boolean absolute(int row)
-                     throws SQLException {
-
+    public boolean absolute(int row) throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = { new Integer(row) };
             Debug.methodCall(this, "absolute", args);
         }
@@ -2610,10 +2059,9 @@ public class ResultSet
         if (rowData.size() == 0) {
             b = false;
         } else {
-
             if (row == 0) {
-                throw new SQLException("Cannot absolute position to row 0", 
-                                       "S1009");
+                throw new SQLException("Cannot absolute position to row 0",
+                    "S1009");
             }
 
             if (onInsertRow) {
@@ -2632,9 +2080,7 @@ public class ResultSet
                 afterLast();
                 b = false;
             } else {
-
                 if (row < 0) {
-
                     // adjust to reflect after end of result set
                     int newRowPosition = rowData.size() + row + 1;
 
@@ -2669,11 +2115,8 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs, or
      * result set type is TYPE_FORWARD_ONLY.
      */
-    public void afterLast()
-                   throws SQLException {
-
+    public void afterLast() throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {  };
             Debug.methodCall(this, "afterLast", args);
         }
@@ -2701,11 +2144,8 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs, or
      * result set type is TYPE_FORWARD_ONLY
      */
-    public void beforeFirst()
-                     throws SQLException {
-
+    public void beforeFirst() throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {  };
             Debug.methodCall(this, "beforeFirst", args);
         }
@@ -2719,7 +2159,6 @@ public class ResultSet
         }
 
         if (rowData.size() == 0) {
-
             return;
         } else {
             rowData.beforeFirst();
@@ -2731,17 +2170,16 @@ public class ResultSet
      * JDBC 2.0
      *
      * The cancelRowUpdates() method may be called after calling an
-     * updateXXX() method(s) and before calling updateRow() to rollback 
-     * the updates made to a row.  If no updates have been made or 
-     * updateRow() has already been called, then this method has no 
+     * updateXXX() method(s) and before calling updateRow() to rollback
+     * the updates made to a row.  If no updates have been made or
+     * updateRow() has already been called, then this method has no
      * effect.
      *
      * @exception SQLException if a database-access error occurs, or if
      * called when on the insert row.
      *
      */
-    public void cancelRowUpdates()
-                          throws SQLException {
+    public void cancelRowUpdates() throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -2751,8 +2189,7 @@ public class ResultSet
      *
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public void clearWarnings()
-                       throws java.sql.SQLException {
+    public void clearWarnings() throws java.sql.SQLException {
         warningChain = null;
     }
 
@@ -2770,9 +2207,7 @@ public class ResultSet
      *
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public void close()
-               throws java.sql.SQLException {
-
+    public void close() throws java.sql.SQLException {
         if (rowData != null) {
             rowData.close();
         }
@@ -2790,8 +2225,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs, or if
      * called when on the insert row.
      */
-    public void deleteRow()
-                   throws SQLException {
+    public void deleteRow() throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -2802,13 +2236,10 @@ public class ResultSet
      * @return the column index
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public int findColumn(String columnName)
-                   throws java.sql.SQLException {
-
+    public int findColumn(String columnName) throws java.sql.SQLException {
         Integer index;
 
         synchronized (this) {
-
             if (!hasBuiltIndexMapping) {
                 buildIndexMapping();
             }
@@ -2821,44 +2252,35 @@ public class ResultSet
         }
 
         if (index != null) {
-
             return index.intValue() + 1;
         } else {
-
             // Try this inefficient way, now
             String columnNameUC = columnName.toUpperCase();
 
             for (int i = 0; i < fields.length; i++) {
-
                 if (fields[i].getName().toUpperCase().equals(columnNameUC)) {
-
                     return i + 1;
-                } else if (fields[i].getFullName().toUpperCase().equals(
-                                   columnNameUC)) {
-
+                } else if (fields[i].getFullName().toUpperCase().equals(columnNameUC)) {
                     return i + 1;
                 }
             }
 
             throw new java.sql.SQLException("Column '" + columnName
-                                            + "' not found.", "S0022");
+                + "' not found.", "S0022");
         }
     }
 
     /**
      * JDBC 2.0
      *
-     * <p>Moves to the first row in the result set.  
+     * <p>Moves to the first row in the result set.
      *
      * @return true if on a valid row, false if no rows in the result set.
      * @exception SQLException if a database-access error occurs, or
      * result set type is TYPE_FORWARD_ONLY.
      */
-    public boolean first()
-                  throws SQLException {
-
+    public boolean first() throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {  };
             Debug.methodCall(this, "first", args);
         }
@@ -2868,10 +2290,8 @@ public class ResultSet
         }
 
         if (rowData.isEmpty()) {
-
             return false;
         } else {
-
             if (doingUpdates) {
                 doingUpdates = false;
             }
@@ -2893,34 +2313,28 @@ public class ResultSet
      * if called when not on the insert row, or if all non-nullable columns in
      * the insert row have not been given a value
      */
-    public void insertRow()
-                   throws SQLException {
+    public void insertRow() throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
      *
-     * <p>Moves to the last row in the result set.  
+     * <p>Moves to the last row in the result set.
      *
      * @return true if on a valid row, false if no rows in the result set.
      * @exception SQLException if a database-access error occurs, or
      * result set type is TYPE_FORWARD_ONLY.
      */
-    public boolean last()
-                 throws SQLException {
-
+    public boolean last() throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {  };
             Debug.methodCall(this, "last", args);
         }
 
         if (rowData.size() == 0) {
-
             return false;
         } else {
-
             if (onInsertRow) {
                 onInsertRow = false;
             }
@@ -2940,30 +2354,29 @@ public class ResultSet
      * JDBC 2.0
      *
      * Move the cursor to the remembered cursor position, usually the
-     * current row.  Has no effect unless the cursor is on the insert 
-     * row. 
+     * current row.  Has no effect unless the cursor is on the insert
+     * row.
      *
      * @exception SQLException if a database-access error occurs,
      * or the result set is not updatable
      */
-    public void moveToCurrentRow()
-                          throws SQLException {
+    public void moveToCurrentRow() throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
      *
-     * Move to the insert row.  The current cursor position is 
+     * Move to the insert row.  The current cursor position is
      * remembered while the cursor is positioned on the insert row.
      *
      * The insert row is a special row associated with an updatable
      * result set.  It is essentially a buffer where a new row may
-     * be constructed by calling the updateXXX() methods prior to 
-     * inserting the row into the result set.  
+     * be constructed by calling the updateXXX() methods prior to
+     * inserting the row into the result set.
      *
-     * Only the updateXXX(), getXXX(), and insertRow() methods may be 
-     * called when the cursor is on the insert row.  All of the columns in 
+     * Only the updateXXX(), getXXX(), and insertRow() methods may be
+     * called when the cursor is on the insert row.  All of the columns in
      * a result set must be given a value each time this method is
      * called before calling insertRow().  UpdateXXX()must be called before
      * getXXX() on a column.
@@ -2971,8 +2384,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs,
      * or the result set is not updatable
      */
-    public void moveToInsertRow()
-                         throws SQLException {
+    public void moveToInsertRow() throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -2989,11 +2401,8 @@ public class ResultSet
      *    more rows
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public boolean next()
-                 throws java.sql.SQLException {
-
+    public boolean next() throws java.sql.SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {  };
             Debug.methodCall(this, "next", args);
         }
@@ -3009,16 +2418,14 @@ public class ResultSet
         boolean b;
 
         if (!reallyResult()) {
-            throw new java.sql.SQLException("ResultSet is from UPDATE. No Data", 
-                                            "S1000");
+            throw new java.sql.SQLException("ResultSet is from UPDATE. No Data",
+                "S1000");
         }
 
         if (rowData.size() == 0) {
             b = false;
         } else {
-
             if (!rowData.hasNext()) {
-
                 // force scroll past end
                 rowData.next();
                 b = false;
@@ -3049,19 +2456,16 @@ public class ResultSet
      *    more rows
      * @exception java.sql.SQLException if a database access error occurs
      */
-    public boolean prev()
-                 throws java.sql.SQLException {
-
+    public boolean prev() throws java.sql.SQLException {
         int rowIndex = rowData.getCurrentRowNumber();
 
-        if (rowIndex - 1 >= 0) {
+        if ((rowIndex - 1) >= 0) {
             rowIndex--;
             rowData.setCurrentRow(rowIndex);
             thisRow = (byte[][]) rowData.getAt(rowIndex);
 
             return true;
         } else {
-
             return false;
         }
     }
@@ -3069,7 +2473,7 @@ public class ResultSet
     /**
      * JDBC 2.0
      *
-     * <p>Moves to the previous row in the result set.  
+     * <p>Moves to the previous row in the result set.
      *
      * <p>Note: previous() is not the same as relative(-1) since it
      * makes sense to call previous() when there is no current row.
@@ -3078,11 +2482,8 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs, or
      * result set type is TYPE_FORWAR_DONLY.
      */
-    public boolean previous()
-                     throws SQLException {
-
+    public boolean previous() throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {  };
             Debug.methodCall(this, "previous", args);
         }
@@ -3101,18 +2502,18 @@ public class ResultSet
     /**
      * JDBC 2.0
      *
-     * Refresh the value of the current row with its current value in 
+     * Refresh the value of the current row with its current value in
      * the database.  Cannot be called when on the insert row.
      *
-     * The refreshRow() method provides a way for an application to 
+     * The refreshRow() method provides a way for an application to
      * explicitly tell the JDBC driver to refetch a row(s) from the
-     * database.  An application may want to call refreshRow() when 
+     * database.  An application may want to call refreshRow() when
      * caching or prefetching is being done by the JDBC driver to
-     * fetch the latest value of a row from the database.  The JDBC driver 
-     * may actually refresh multiple rows at once if the fetch size is 
+     * fetch the latest value of a row from the database.  The JDBC driver
+     * may actually refresh multiple rows at once if the fetch size is
      * greater than one.
-     * 
-     * All values are refetched subject to the transaction isolation 
+     *
+     * All values are refetched subject to the transaction isolation
      * level and cursor sensitivity.  If refreshRow() is called after
      * calling updateXXX(), but before calling updateRow() then the
      * updates made to the row are lost.  Calling refreshRow() frequently
@@ -3121,8 +2522,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs, or if
      * called when on the insert row.
      */
-    public void refreshRow()
-                    throws SQLException {
+    public void refreshRow() throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3140,21 +2540,18 @@ public class ResultSet
      * for example, when the cursor is positioned before the first row
      * or after the last row of the result set.
      *
+     * @param rows the number of relative rows to move the cursor.
      * @return true if on a row, false otherwise.
      * @throws SQLException if a database-access error occurs, or there
      * is no current row, or result set type is TYPE_FORWARD_ONLY.
      */
-    public boolean relative(int rows)
-                     throws SQLException {
-
+    public boolean relative(int rows) throws SQLException {
         if (Driver.TRACE) {
-
             Object[] args = { new Integer(rows) };
             Debug.methodCall(this, "relative", args);
         }
 
         if (rowData.size() == 0) {
-
             return false;
         }
 
@@ -3175,32 +2572,30 @@ public class ResultSet
      *
      * Determine if this row has been deleted.  A deleted row may leave
      * a visible "hole" in a result set.  This method can be used to
-     * detect holes in a result set.  The value returned depends on whether 
+     * detect holes in a result set.  The value returned depends on whether
      * or not the result set can detect deletions.
      *
      * @return true if deleted and deletes are detected
      * @exception SQLException if a database-access error occurs
-     * 
+     *
      * @see DatabaseMetaData#deletesAreDetected
      */
-    public boolean rowDeleted()
-                       throws SQLException {
+    public boolean rowDeleted() throws SQLException {
         throw new NotImplemented();
     }
 
     /**
      * JDBC 2.0
      *
-     * Determine if the current row has been inserted.  The value returned 
+     * Determine if the current row has been inserted.  The value returned
      * depends on whether or not the result set can detect visible inserts.
      *
      * @return true if inserted and inserts are detected
      * @exception SQLException if a database-access error occurs
-     * 
+     *
      * @see DatabaseMetaData#insertsAreDetected
      */
-    public boolean rowInserted()
-                        throws SQLException {
+    public boolean rowInserted() throws SQLException {
         throw new NotImplemented();
     }
 
@@ -3211,43 +2606,40 @@ public class ResultSet
     /**
      * JDBC 2.0
      *
-     * Determine if the current row has been updated.  The value returned 
+     * Determine if the current row has been updated.  The value returned
      * depends on whether or not the result set can detect updates.
      *
      * @return true if the row has been visibly updated by the owner or
      * another, and updates are detected
      * @exception SQLException if a database-access error occurs
-     * 
+     *
      * @see DatabaseMetaData#updatesAreDetected
      */
-    public boolean rowUpdated()
-                       throws SQLException {
+    public boolean rowUpdated() throws SQLException {
         throw new NotImplemented();
     }
 
     /**
      * @see ResultSet#updateArray(int, Array)
      */
-    public void updateArray(int arg0, Array arg1)
-                     throws SQLException {
+    public void updateArray(int arg0, Array arg1) throws SQLException {
         throw new NotImplemented();
     }
 
     /**
      * @see ResultSet#updateArray(String, Array)
      */
-    public void updateArray(String arg0, Array arg1)
-                     throws SQLException {
+    public void updateArray(String arg0, Array arg1) throws SQLException {
         throw new NotImplemented();
     }
 
-    /** 
+    /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with an ascii stream value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3256,19 +2648,18 @@ public class ResultSet
      * @param length the length of the stream
      * @exception SQLException if a database-access error occurs
      */
-    public void updateAsciiStream(int columnIndex, java.io.InputStream x, 
-                                  int length)
-                           throws SQLException {
+    public void updateAsciiStream(int columnIndex, java.io.InputStream x,
+        int length) throws SQLException {
         throw new NotUpdatable();
     }
 
-    /** 
+    /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with an ascii stream value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3277,19 +2668,18 @@ public class ResultSet
      * @param length of the stream
      * @exception SQLException if a database-access error occurs
      */
-    public void updateAsciiStream(String columnName, java.io.InputStream x, 
-                                  int length)
-                           throws SQLException {
+    public void updateAsciiStream(String columnName, java.io.InputStream x,
+        int length) throws SQLException {
         updateAsciiStream(findColumn(columnName), x, length);
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a BigDecimal value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3298,17 +2688,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBigDecimal(int columnIndex, BigDecimal x)
-                          throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a BigDecimal value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3317,38 +2707,37 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBigDecimal(String columnName, BigDecimal x)
-                          throws SQLException {
+        throws SQLException {
         updateBigDecimal(findColumn(columnName), x);
     }
 
-    /** 
+    /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a binary stream value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
      * @param columnIndex the first column is 1, the second is 2, ...
-     * @param x the new column value     
+     * @param x the new column value
      * @param length the length of the stream
      * @exception SQLException if a database-access error occurs
      */
-    public void updateBinaryStream(int columnIndex, java.io.InputStream x, 
-                                   int length)
-                            throws SQLException {
+    public void updateBinaryStream(int columnIndex, java.io.InputStream x,
+        int length) throws SQLException {
         throw new NotUpdatable();
     }
 
-    /** 
+    /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a binary stream value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3357,9 +2746,8 @@ public class ResultSet
      * @param length of the stream
      * @exception SQLException if a database-access error occurs
      */
-    public void updateBinaryStream(String columnName, java.io.InputStream x, 
-                                   int length)
-                            throws SQLException {
+    public void updateBinaryStream(String columnName, java.io.InputStream x,
+        int length) throws SQLException {
         updateBinaryStream(findColumn(columnName), x, length);
     }
 
@@ -3367,7 +2755,7 @@ public class ResultSet
      * @see ResultSet#updateBlob(int, Blob)
      */
     public void updateBlob(int arg0, java.sql.Blob arg1)
-                    throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
@@ -3375,17 +2763,17 @@ public class ResultSet
      * @see ResultSet#updateBlob(String, Blob)
      */
     public void updateBlob(String arg0, java.sql.Blob arg1)
-                    throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     * 
+     *
      * Update a column with a boolean value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3394,17 +2782,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBoolean(int columnIndex, boolean x)
-                       throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a boolean value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3413,17 +2801,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBoolean(String columnName, boolean x)
-                       throws SQLException {
+        throws SQLException {
         updateBoolean(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     *   
+     *
      * Update a column with a byte value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3431,18 +2819,17 @@ public class ResultSet
      * @param x the new column value
      * @exception SQLException if a database-access error occurs
      */
-    public void updateByte(int columnIndex, byte x)
-                    throws SQLException {
+    public void updateByte(int columnIndex, byte x) throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a byte value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3450,18 +2837,17 @@ public class ResultSet
      * @param x the new column value
      * @exception SQLException if a database-access error occurs
      */
-    public void updateByte(String columnName, byte x)
-                    throws SQLException {
+    public void updateByte(String columnName, byte x) throws SQLException {
         updateByte(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a byte array value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3470,17 +2856,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBytes(int columnIndex, byte[] x)
-                     throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a byte array value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3489,17 +2875,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateBytes(String columnName, byte[] x)
-                     throws SQLException {
+        throws SQLException {
         updateBytes(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a character stream value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3508,19 +2894,18 @@ public class ResultSet
      * @param length the length of the stream
      * @exception SQLException if a database-access error occurs
      */
-    public void updateCharacterStream(int columnIndex, java.io.Reader x, 
-                                      int length)
-                               throws SQLException {
+    public void updateCharacterStream(int columnIndex, java.io.Reader x,
+        int length) throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a character stream value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3529,35 +2914,32 @@ public class ResultSet
      * @param length of the stream
      * @throws SQLException if a database-access error occurs
      */
-    public void updateCharacterStream(String columnName, java.io.Reader reader, 
-                                      int length)
-                               throws SQLException {
+    public void updateCharacterStream(String columnName, java.io.Reader reader,
+        int length) throws SQLException {
         updateCharacterStream(findColumn(columnName), reader, length);
     }
 
     /**
      * @see ResultSet#updateClob(int, Clob)
      */
-    public void updateClob(int arg0, Clob arg1)
-                    throws SQLException {
+    public void updateClob(int arg0, Clob arg1) throws SQLException {
         throw new NotImplemented();
     }
 
     /**
      * @see ResultSet#updateClob(String, Clob)
      */
-    public void updateClob(String arg0, Clob arg1)
-                    throws SQLException {
+    public void updateClob(String arg0, Clob arg1) throws SQLException {
         throw new NotImplemented();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a Date value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3566,17 +2948,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateDate(int columnIndex, java.sql.Date x)
-                    throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a Date value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3585,17 +2967,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateDate(String columnName, java.sql.Date x)
-                    throws SQLException {
+        throws SQLException {
         updateDate(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a Double value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3604,17 +2986,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateDouble(int columnIndex, double x)
-                      throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a double value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3623,17 +3005,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateDouble(String columnName, double x)
-                      throws SQLException {
+        throws SQLException {
         updateDouble(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a float value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3641,18 +3023,17 @@ public class ResultSet
      * @param x the new column value
      * @exception SQLException if a database-access error occurs
      */
-    public void updateFloat(int columnIndex, float x)
-                     throws SQLException {
+    public void updateFloat(int columnIndex, float x) throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a float value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3661,17 +3042,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateFloat(String columnName, float x)
-                     throws SQLException {
+        throws SQLException {
         updateFloat(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     *   
+     *
      * Update a column with an integer value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3679,18 +3060,17 @@ public class ResultSet
      * @param x the new column value
      * @exception SQLException if a database-access error occurs
      */
-    public void updateInt(int columnIndex, int x)
-                   throws SQLException {
+    public void updateInt(int columnIndex, int x) throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with an integer value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3698,18 +3078,17 @@ public class ResultSet
      * @param x the new column value
      * @exception SQLException if a database-access error occurs
      */
-    public void updateInt(String columnName, int x)
-                   throws SQLException {
+    public void updateInt(String columnName, int x) throws SQLException {
         updateInt(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     *   
+     *
      * Update a column with a long value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3717,18 +3096,17 @@ public class ResultSet
      * @param x the new column value
      * @exception SQLException if a database-access error occurs
      */
-    public void updateLong(int columnIndex, long x)
-                    throws SQLException {
+    public void updateLong(int columnIndex, long x) throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a long value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3736,54 +3114,51 @@ public class ResultSet
      * @param x the new column value
      * @exception SQLException if a database-access error occurs
      */
-    public void updateLong(String columnName, long x)
-                    throws SQLException {
+    public void updateLong(String columnName, long x) throws SQLException {
         updateLong(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     * 
+     *
      * Give a nullable column a null value.
-     * 
+     *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
      * @param columnIndex the first column is 1, the second is 2, ...
      * @exception SQLException if a database-access error occurs
      */
-    public void updateNull(int columnIndex)
-                    throws SQLException {
+    public void updateNull(int columnIndex) throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a null value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
      * @param columnName the name of the column
      * @exception SQLException if a database-access error occurs
      */
-    public void updateNull(String columnName)
-                    throws SQLException {
+    public void updateNull(String columnName) throws SQLException {
         updateNull(findColumn(columnName));
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with an Object value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3795,17 +3170,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateObject(int columnIndex, Object x, int scale)
-                      throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with an Object value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3814,17 +3189,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateObject(int columnIndex, Object x)
-                      throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with an Object value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3836,17 +3211,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateObject(String columnName, Object x, int scale)
-                      throws SQLException {
+        throws SQLException {
         updateObject(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with an Object value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3855,23 +3230,21 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateObject(String columnName, Object x)
-                      throws SQLException {
+        throws SQLException {
         updateObject(findColumn(columnName), x);
     }
 
     /**
      * @see ResultSet#updateRef(int, Ref)
      */
-    public void updateRef(int arg0, Ref arg1)
-                   throws SQLException {
+    public void updateRef(int arg0, Ref arg1) throws SQLException {
         throw new NotImplemented();
     }
 
     /**
      * @see ResultSet#updateRef(String, Ref)
      */
-    public void updateRef(String arg0, Ref arg1)
-                   throws SQLException {
+    public void updateRef(String arg0, Ref arg1) throws SQLException {
         throw new NotImplemented();
     }
 
@@ -3884,18 +3257,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs, or
      * if called when on the insert row
      */
-    public void updateRow()
-                   throws SQLException {
+    public void updateRow() throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *   
+     *
      * Update a column with a short value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3903,18 +3275,17 @@ public class ResultSet
      * @param x the new column value
      * @exception SQLException if a database-access error occurs
      */
-    public void updateShort(int columnIndex, short x)
-                     throws SQLException {
+    public void updateShort(int columnIndex, short x) throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a short value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3923,17 +3294,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateShort(String columnName, short x)
-                     throws SQLException {
+        throws SQLException {
         updateShort(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a String value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3942,17 +3313,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateString(int columnIndex, String x)
-                      throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a String value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3961,17 +3332,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateString(String columnName, String x)
-                      throws SQLException {
+        throws SQLException {
         updateString(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a Time value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3980,17 +3351,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateTime(int columnIndex, java.sql.Time x)
-                    throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a Time value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -3999,17 +3370,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateTime(String columnName, java.sql.Time x)
-                    throws SQLException {
+        throws SQLException {
         updateTime(findColumn(columnName), x);
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a Timestamp value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -4018,17 +3389,17 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateTimestamp(int columnIndex, java.sql.Timestamp x)
-                         throws SQLException {
+        throws SQLException {
         throw new NotUpdatable();
     }
 
     /**
      * JDBC 2.0
-     *  
+     *
      * Update a column with a Timestamp value.
      *
      * The updateXXX() methods are used to update column values in the
-     * current row, or the insert row.  The updateXXX() methods do not 
+     * current row, or the insert row.  The updateXXX() methods do not
      * update the underlying database, instead the updateRow() or insertRow()
      * methods are called to update the database.
      *
@@ -4037,7 +3408,7 @@ public class ResultSet
      * @exception SQLException if a database-access error occurs
      */
     public void updateTimestamp(String columnName, java.sql.Timestamp x)
-                         throws SQLException {
+        throws SQLException {
         updateTimestamp(findColumn(columnName), x);
     }
 
@@ -4050,9 +3421,7 @@ public class ResultSet
      * @return true if the last column read was SQL NULL
      * @exception java.sql.SQLException if a database access error occurred
      */
-    public boolean wasNull()
-                    throws java.sql.SQLException {
-
+    public boolean wasNull() throws java.sql.SQLException {
         return wasNullFlag;
     }
 
@@ -4067,29 +3436,26 @@ public class ResultSet
     /**
      * Converts a string representation of a number
      * to a double. Need a faster way to do this.
+     * 
+     * @param buf the bytes that represent the string value of the double
+     * @throws SQLException if an error occurs
+     * @return the double value represented by the string in buf
      */
-    protected double getDouble(byte[] buf)
-                        throws SQLException {
-
+    protected double getDouble(byte[] buf) throws SQLException {
         if (buf.length == 0) {
-
             return 0;
         }
 
         try {
-
             String s = new String(buf);
             double d = Double.parseDouble(s);
 
-            if (useStrictFloatingPoint) {
-
+            if (this.useStrictFloatingPoint) {
                 // Fix endpoint rounding precision loss in MySQL server
                 if (d == 2.147483648E9) {
-
                     // Fix Odd end-point rounding on MySQL
                     d = 2.147483647E9;
                 } else if (d == 1.0000000036275E-15) {
-
                     // Fix odd end-point rounding on MySQL
                     d = 1.0E-15;
                 } else if (d == 9.999999869911E14) {
@@ -4110,12 +3476,14 @@ public class ResultSet
             return d;
         } catch (NumberFormatException e) {
             throw new SQLException("Bad format for number '" + new String(buf)
-                                   + "'");
+                + "'");
         }
     }
 
     /**
      * Sets the concurrency (JDBC2)
+     * 
+     * @param concurrencyFlag CONCUR_UPDATABLE or CONCUR_READONLY
      */
     protected void setResultSetConcurrency(int concurrencyFlag) {
         resultSetConcurrency = concurrencyFlag;
@@ -4123,23 +3491,25 @@ public class ResultSet
 
     /**
      * Sets the result set type for (JDBC2)
+     * 
+     * @param typeFlag SCROLL_SENSITIVE or SCROLL_INSENSITIVE (we
+     * only support SCROLL_INSENSITIVE)
+     * 
      */
     protected void setResultSetType(int typeFlag) {
         resultSetType = typeFlag;
     }
 
-    /** 
+    /**
      * Builds a hash between column names and their indices for fast
      * retrieval.
      */
     protected void buildIndexMapping() {
-
         int numFields = fields.length;
         columnNameToIndex = new HashMap();
         fullColumnNameToIndex = new HashMap();
 
         for (int i = 0; i < numFields; i++) {
-
             Integer index = new Integer(i);
             String columnName = fields[i].getName();
             String fullColumnName = fields[i].getFullName();
@@ -4161,11 +3531,17 @@ public class ResultSet
         hasBuiltIndexMapping = true;
     }
 
-    protected void checkRowPos()
-                        throws SQLException {
-
+    /**
+     * Ensures that the cursor is positioned on a 
+     * valid row and that the result set is not closed
+     * 
+     * @throws SQLException if the result set is not in a valid
+     * state for traversal
+     */
+    protected void checkRowPos() throws SQLException {
         if (isClosed) {
-            throw new SQLException("Operation not allowed after ResultSet closed");
+            throw new SQLException(
+                "Operation not allowed after ResultSet closed");
         }
 
         if (rowData.isBeforeFirst()) {
@@ -4177,22 +3553,297 @@ public class ResultSet
         }
     }
 
-        void setStatement(com.mysql.jdbc.Statement stmt) {
+    void setStatement(com.mysql.jdbc.Statement stmt) {
         owningStatement = stmt;
     }
 
     long getUpdateCount() {
-
         return updateCount;
     }
 
     long getUpdateID() {
-
         return updateId;
     }
 
     boolean reallyResult() {
-
         return reallyResult;
+    }
+
+    /**
+     * Get the value of a column in the current row as a java.sql.Time
+     * object in the given timezone
+     *
+     * @param columnIndex the first column is 1, the second is 2...
+     * @param tz the Timezone to use
+     *
+     * @return the column value; null if SQL NULL
+     * @exception java.sql.SQLException if a database access error occurs
+     */
+    private Time getTimeInternal(int columnIndex, TimeZone tz)
+        throws java.sql.SQLException {
+        int hr = 0;
+        int min = 0;
+        int sec = 0;
+
+        try {
+            String timeAsString = getString(columnIndex);
+
+            if (timeAsString == null) {
+                return null;
+            } else if (timeAsString.equals("0000-00-00")
+                    || timeAsString.equals("0000-00-00 00:00:00")
+                    || timeAsString.equals("00000000000000")) {
+                wasNullFlag = true;
+
+                return null;
+            }
+
+            Field timeColField = fields[columnIndex - 1];
+
+            if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
+                // It's a timestamp
+                int length = timeAsString.length();
+
+                switch (length) {
+                case 14:
+                case 12: {
+                    hr = Integer.parseInt(timeAsString.substring(length - 6,
+                                length - 4));
+                    min = Integer.parseInt(timeAsString.substring(length - 4,
+                                length - 2));
+                    sec = Integer.parseInt(timeAsString.substring(length - 2,
+                                length));
+                }
+
+                break;
+
+                case 10: {
+                    hr = Integer.parseInt(timeAsString.substring(6, 8));
+                    min = Integer.parseInt(timeAsString.substring(8, 10));
+                    sec = 0;
+                }
+
+                break;
+
+                default:
+                    throw new SQLException(
+                        "Timestamp too small to convert to Time value in column "
+                        + columnIndex + "(" + fields[columnIndex - 1] + ").",
+                        "S1009");
+                } /* endswitch */
+
+                SQLWarning precisionLost = new SQLWarning(
+                        "Precision lost converting TIMESTAMP to Time with getTime() on column "
+                        + columnIndex + "(" + fields[columnIndex - 1] + ").");
+
+                if (warningChain == null) {
+                    warningChain = precisionLost;
+                } else {
+                    warningChain.setNextWarning(precisionLost);
+                }
+            } else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATETIME) {
+                hr = Integer.parseInt(timeAsString.substring(11, 13));
+                min = Integer.parseInt(timeAsString.substring(14, 16));
+                sec = Integer.parseInt(timeAsString.substring(17, 19));
+
+                SQLWarning precisionLost = new SQLWarning(
+                        "Precision lost converting DATETIME to Time with getTime() on column "
+                        + columnIndex + "(" + fields[columnIndex - 1] + ").");
+
+                if (warningChain == null) {
+                    warningChain = precisionLost;
+                } else {
+                    warningChain.setNextWarning(precisionLost);
+                }
+            } else {
+                // convert a String to a Time
+                if ((timeAsString.length() != 5)
+                        && (timeAsString.length() != 8)) {
+                    throw new SQLException("Bad format for Time '"
+                        + timeAsString + "' in column " + columnIndex + "("
+                        + fields[columnIndex - 1] + ").", "S1009");
+                }
+
+                hr = Integer.parseInt(timeAsString.substring(0, 2));
+                min = Integer.parseInt(timeAsString.substring(3, 5));
+                sec = (timeAsString.length() == 5) ? 0
+                                                   : Integer.parseInt(timeAsString
+                        .substring(6));
+            }
+
+            return TimeUtil.changeTimezone(this.connection,
+                new Time(hr, min, sec), connection.getServerTimezone(), tz);
+        } catch (Exception ex) {
+            throw new java.sql.SQLException(ex.getClass().getName(), "S1009");
+        }
+    }
+
+    /**
+     * Get the value of a column in the current row as a
+     * java.sql.Timestamp object in the given timezone
+     *
+     * @param columnIndex the first column is 1, the second is 2...
+     * @param tz the timezone to use
+     *
+     * @return the column value; null if SQL NULL
+     * @exception java.sql.SQLException if a database access error occurs
+     */
+    private Timestamp getTimestampInternal(int columnIndex, TimeZone tz)
+        throws java.sql.SQLException {
+        String timestampValue = getString(columnIndex);
+
+        try {
+            if (timestampValue == null) {
+                return null;
+            } else if (timestampValue.equals("0000-00-00")
+                    || timestampValue.equals("0000-00-00 00:00:00")
+                    || timestampValue.equals("00000000000000")
+                    || timestampValue.equals("0")) {
+                wasNullFlag = true;
+
+                return null;
+            } else if (fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
+                return TimeUtil.changeTimezone(this.connection,
+                    new java.sql.Timestamp(Integer.parseInt(
+                            timestampValue.substring(0, 4)) - 1900, 0, 1, 0, 0,
+                        0, 0), connection.getServerTimezone(), tz);
+            } else {
+                // Convert from TIMESTAMP or DATE
+                switch (timestampValue.length()) {
+                case 19: {
+                    int year = Integer.parseInt(timestampValue.substring(0, 4));
+                    int month = Integer.parseInt(timestampValue.substring(5, 7));
+                    int day = Integer.parseInt(timestampValue.substring(8, 10));
+                    int hour = Integer.parseInt(timestampValue.substring(11, 13));
+                    int minutes = Integer.parseInt(timestampValue.substring(
+                                14, 16));
+                    int seconds = Integer.parseInt(timestampValue.substring(
+                                17, 19));
+
+                    return TimeUtil.changeTimezone(this.connection,
+                        new java.sql.Timestamp(year - 1900, month - 1, day,
+                            hour, minutes, seconds, 0),
+                        connection.getServerTimezone(), tz);
+                }
+
+                case 14: {
+                    int year = Integer.parseInt(timestampValue.substring(0, 4));
+                    int month = Integer.parseInt(timestampValue.substring(4, 6));
+                    int day = Integer.parseInt(timestampValue.substring(6, 8));
+                    int hour = Integer.parseInt(timestampValue.substring(8, 10));
+                    int minutes = Integer.parseInt(timestampValue.substring(
+                                10, 12));
+                    int seconds = Integer.parseInt(timestampValue.substring(
+                                12, 14));
+
+                    return TimeUtil.changeTimezone(this.connection,
+                        new java.sql.Timestamp(year - 1900, month - 1, day,
+                            hour, minutes, seconds, 0),
+                        connection.getServerTimezone(), tz);
+                }
+
+                case 12: {
+                    int year = Integer.parseInt(timestampValue.substring(0, 2));
+
+                    if (year <= 69) {
+                        year = (year + 100);
+                    }
+
+                    int month = Integer.parseInt(timestampValue.substring(2, 4));
+                    int day = Integer.parseInt(timestampValue.substring(4, 6));
+                    int hour = Integer.parseInt(timestampValue.substring(6, 8));
+                    int minutes = Integer.parseInt(timestampValue.substring(8,
+                                10));
+                    int seconds = Integer.parseInt(timestampValue.substring(
+                                10, 12));
+
+                    return TimeUtil.changeTimezone(this.connection,
+                        new java.sql.Timestamp(year, month - 1, day, hour,
+                            minutes, seconds, 0),
+                        connection.getServerTimezone(), tz);
+                }
+
+                case 10: {
+                    // FIXME: SourceForge bug 559134
+                    int year = Integer.parseInt(timestampValue.substring(0, 2));
+
+                    if (year <= 69) {
+                        year = (year + 100);
+                    }
+
+                    int month = Integer.parseInt(timestampValue.substring(2, 4));
+                    int day = Integer.parseInt(timestampValue.substring(4, 6));
+                    int hour = Integer.parseInt(timestampValue.substring(6, 8));
+                    int minutes = Integer.parseInt(timestampValue.substring(8,
+                                10));
+
+                    return TimeUtil.changeTimezone(this.connection,
+                        new java.sql.Timestamp(year, month - 1, day, hour,
+                            minutes, 0, 0), connection.getServerTimezone(), tz);
+                }
+
+                case 8: {
+                    int year = Integer.parseInt(timestampValue.substring(0, 4));
+                    int month = Integer.parseInt(timestampValue.substring(4, 6));
+                    int day = Integer.parseInt(timestampValue.substring(6, 8));
+
+                    return TimeUtil.changeTimezone(this.connection,
+                        new java.sql.Timestamp(year - 1900, month - 1, day, 0,
+                            0, 0, 0), connection.getServerTimezone(), tz);
+                }
+
+                case 6: {
+                    int year = Integer.parseInt(timestampValue.substring(0, 2));
+
+                    if (year <= 69) {
+                        year = (year + 100);
+                    }
+
+                    int month = Integer.parseInt(timestampValue.substring(2, 4));
+                    int day = Integer.parseInt(timestampValue.substring(4, 6));
+
+                    return TimeUtil.changeTimezone(this.connection,
+                        new java.sql.Timestamp(year, month - 1, day, 0, 0, 0, 0),
+                        connection.getServerTimezone(), tz);
+                }
+
+                case 4: {
+                    int year = Integer.parseInt(timestampValue.substring(0, 2));
+
+                    if (year <= 69) {
+                        year = (year + 100);
+                    }
+
+                    int month = Integer.parseInt(timestampValue.substring(2, 4));
+
+                    return TimeUtil.changeTimezone(this.connection,
+                        new java.sql.Timestamp(year, month - 1, 1, 0, 0, 0, 0),
+                        connection.getServerTimezone(), tz);
+                }
+
+                case 2: {
+                    int year = Integer.parseInt(timestampValue.substring(0, 2));
+
+                    if (year <= 69) {
+                        year = (year + 100);
+                    }
+
+                    return TimeUtil.changeTimezone(this.connection,
+                        new java.sql.Timestamp(year, 0, 1, 0, 0, 0, 0),
+                        connection.getServerTimezone(), tz);
+                }
+
+                default:
+                    throw new java.sql.SQLException(
+                        "Bad format for Timestamp '" + timestampValue
+                        + "' in column " + columnIndex + "("
+                        + fields[columnIndex - 1] + ").", "S1009");
+                }
+            }
+        } catch (Exception e) {
+            throw new java.sql.SQLException("Cannot convert value '"
+                + timestampValue + "' from column " + columnIndex + "("
+                + timestampValue + " ) to TIMESTAMP.", "S1009");
+        }
     }
 }
