@@ -75,7 +75,8 @@ public class PreparedStatement
 
     //~ Instance/static variables .............................................
 
-    protected static SimpleDateFormat _TSDF;      
+    protected static SimpleDateFormat TSDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+         
     static boolean                    timezoneSet = false;
     static final Object               tzMutex     = new Object();
     protected static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
@@ -83,31 +84,31 @@ public class PreparedStatement
     /**
      * Formatter for double - Steve Ferguson
      */
-    private static NumberFormat        _DoubleFormatter;
+    private static NumberFormat        doubleFormatter;
     private static java.util.Hashtable templateCache       = 
             new java.util.Hashtable();
-    protected boolean[]                _isNull             = null;
-    protected boolean[]                _isStream           = null;
-    protected InputStream[]            _parameterStreams   = null;
-    protected String[]                 _parameterValues    = null;
-    private String                     _Sql                = null;
-    private byte[]                     _bi                 = new byte[4096];
-    private char                       _firstChar;
-    private boolean                    _hasLimitClause     = false;
-    private Buffer                     _sendPacket         = null;
-    private byte[][]                   _staticSqlStrings   = null;
-    private boolean                    _useTrueBoolean     = false;
+    protected boolean[]                isNull             = null;
+    protected boolean[]                isStream           = null;
+    protected InputStream[]            parameterStreams   = null;
+    protected String[]                 parameterValues    = null;
+    private String                     originalSql                = null;
+    private byte[]                     streamConvertBuf                 = new byte[4096];
+    private char                       firstCharOfStmt;
+    private boolean                    hasLimitClause     = false;
+    private Buffer                     sendPacket         = null;
+    private byte[][]                   staticSqlStrings   = null;
+    private boolean                    useTrueBoolean     = false;
     private byte[]                     resultSetByteValues;
 
     //~ Initializers ..........................................................
 
     // Class Initializer
     static {
-        _DoubleFormatter = NumberFormat.getNumberInstance(java.util.Locale.US);
-        _DoubleFormatter.setGroupingUsed(false);
+        doubleFormatter = NumberFormat.getNumberInstance(java.util.Locale.US);
+        doubleFormatter.setGroupingUsed(false);
 
         // attempt to prevent truncation
-        _DoubleFormatter.setMaximumFractionDigits(12);
+        doubleFormatter.setMaximumFractionDigits(12);
     }
 
     //~ Constructors ..........................................................
@@ -115,12 +116,12 @@ public class PreparedStatement
     /**
      * Constructor for the PreparedStatement class.
      */
-    public PreparedStatement(Connection Conn, String Sql, String Catalog)
+    public PreparedStatement(Connection conn, String sql, String catalog)
                       throws java.sql.SQLException
     {
-        super(Conn, Catalog);
+        super(conn, catalog);
         
-        _TSDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        
         
         //if (_conn.useTimezone())
         //{
@@ -128,27 +129,32 @@ public class PreparedStatement
         //	_TSDF.setTimeZone(TimeZone.getTimeZone("GMT"));
         //}
         
-        _useTrueBoolean = _conn.getIO().versionMeetsMinimum(3, 21, 23);
-        _firstChar      = Character.toUpperCase(Sql.charAt(0));
-        _hasLimitClause = (Sql.toUpperCase().indexOf("LIMIT") != -1);
+        useTrueBoolean = connection.getIO().versionMeetsMinimum(3, 21, 23);
+                 
+        hasLimitClause = (sql.toUpperCase().indexOf("LIMIT") != -1);
 
-        char[] statementAsChars = Sql.toCharArray();
+        char[] statementAsChars = sql.toCharArray();
         int    statementLength  = statementAsChars.length;
         int    placeHolderCount = 0;
-
+        
         for (int i = 0; i < statementLength; i++) {
 
             if (statementAsChars[i] == '?') {
                 placeHolderCount++;
             }
+            
+            if (!Character.isWhitespace(statementAsChars[i])) {
+            	// Determine what kind of statement we're doing (_S_elect, _I_nsert, etc.)
+        		firstCharOfStmt = Character.toUpperCase(statementAsChars[i]);
+        	}
         }
 
-        ArrayList V           = new ArrayList(placeHolderCount + 1);
+        ArrayList endpointList           = new ArrayList(placeHolderCount + 1);
         boolean   inQuotes    = false;
         int       lastParmEnd = 0;
         int       i;
-        _Sql  = Sql;
-        _conn = Conn;
+        originalSql  = sql;
+        connection = conn;
 
         int pre1 = 0;
         int pre2 = 0;
@@ -164,7 +170,7 @@ public class PreparedStatement
             }
 
             if (c == '?' && !inQuotes) {
-                V.add(new EndPoint(lastParmEnd, i));
+                endpointList.add(new EndPoint(lastParmEnd, i));
                 lastParmEnd = i + 1;
             }
 
@@ -172,20 +178,20 @@ public class PreparedStatement
             pre1 = c;
         }
 
-        V.add(new EndPoint(lastParmEnd, statementLength));
-        _staticSqlStrings = new byte[V.size()][];
+        endpointList.add(new EndPoint(lastParmEnd, statementLength));
+        staticSqlStrings = new byte[endpointList.size()][];
 
-        String Encoding = null;
+        String characterEncoding = null;
 
-        if (_conn.useUnicode()) {
-            Encoding = _conn.getEncoding();
+        if (connection.useUnicode()) {
+            characterEncoding = connection.getEncoding();
         }
 
-        for (i = 0; i < _staticSqlStrings.length; i++) {
+        for (i = 0; i < staticSqlStrings.length; i++) {
 
-            if (Encoding == null) {
+            if (characterEncoding == null) {
 
-                EndPoint ep    = (EndPoint)V.get(i);
+                EndPoint ep    = (EndPoint)endpointList.get(i);
                 int      end   = ep.end;
                 int      begin = ep.begin;
                 int      len   = end - begin;
@@ -195,32 +201,32 @@ public class PreparedStatement
                     buf[j] = (byte)statementAsChars[begin + j];
                 }
 
-                _staticSqlStrings[i] = buf;
+                staticSqlStrings[i] = buf;
             } else {
 
                 try {
 
-                    EndPoint ep          = (EndPoint)V.get(i);
+                    EndPoint ep          = (EndPoint)endpointList.get(i);
                     int      end         = ep.end;
                     int      begin       = ep.begin;
                     int      len         = end - begin;
                     String   temp        = new String(statementAsChars, begin, 
                                                       len);
-                    _staticSqlStrings[i] = temp.getBytes(Encoding);
+                    staticSqlStrings[i] = temp.getBytes(characterEncoding);
                 } catch (java.io.UnsupportedEncodingException ue) {
                     throw new SQLException(ue.toString());
                 }
             }
         }
 
-        _parameterValues  = new String[_staticSqlStrings.length - 1];
-        _parameterStreams = new InputStream[_staticSqlStrings.length - 1];
-        _isStream         = new boolean[_staticSqlStrings.length - 1];
-        _isNull           = new boolean[_staticSqlStrings.length - 1];
+        parameterValues  = new String[staticSqlStrings.length - 1];
+        parameterStreams = new InputStream[staticSqlStrings.length - 1];
+        isStream         = new boolean[staticSqlStrings.length - 1];
+        isNull           = new boolean[staticSqlStrings.length - 1];
         clearParameters();
 
-        for (int j = 0; j < _parameterValues.length; j++) {
-            _isStream[j] = false;
+        for (int j = 0; j < parameterValues.length; j++) {
+            isStream[j] = false;
         }
     }
 
@@ -311,16 +317,16 @@ public class PreparedStatement
         } else {
 
             if (parameterIndex < 1 || 
-                parameterIndex > _staticSqlStrings.length) {
+                parameterIndex > staticSqlStrings.length) {
                 throw new java.sql.SQLException("Parameter index out of range (" + 
                                                 parameterIndex + " > " + 
-                                                _staticSqlStrings.length + 
+                                                staticSqlStrings.length + 
                                                 ")", "S1009");
             }
 
-            _parameterStreams[parameterIndex - 1] = X;
-            _isStream[parameterIndex - 1]         = true;
-            _isNull[parameterIndex - 1]           = false;
+            parameterStreams[parameterIndex - 1] = X;
+            isStream[parameterIndex - 1]         = true;
+            isNull[parameterIndex - 1]           = false;
         }
     }
 
@@ -350,7 +356,7 @@ public class PreparedStatement
                     throws java.sql.SQLException
     {
 
-        if (_useTrueBoolean) {
+        if (useTrueBoolean) {
             setInternal(parameterIndex, x ? "'1'" : "'0'");
         } else {
             setInternal(parameterIndex, x ? "'t'" : "'f'");
@@ -587,7 +593,7 @@ public class PreparedStatement
                  throws java.sql.SQLException
     {
         setInternal(parameterIndex, "null");
-        _isNull[parameterIndex - 1] = true;
+        isNull[parameterIndex - 1] = true;
     }
 
     //--------------------------JDBC 2.0-----------------------------
@@ -1125,8 +1131,8 @@ public class PreparedStatement
            	//}
            	
 
-            synchronized (_TSDF) {
-                TimestampString = "'" + _TSDF.format(X) + "'";
+            synchronized (TSDF) {
+                TimestampString = "'" + TSDF.format(X) + "'";
             }
 
             setInternal(parameterIndex, TimestampString); // SimpleDateFormat is not thread-safe
@@ -1187,12 +1193,12 @@ public class PreparedStatement
                   throws SQLException
     {
 
-        if (_batchedArgs == null) {
-            _batchedArgs = new ArrayList();
+        if (batchedArgs == null) {
+            batchedArgs = new ArrayList();
         }
 
-        _batchedArgs.add(new BatchParams(_parameterValues, _parameterStreams, 
-                                         _isStream, _isNull));
+        batchedArgs.add(new BatchParams(parameterValues, parameterStreams, 
+                                         isStream, isNull));
     }
 
     /**
@@ -1208,11 +1214,11 @@ public class PreparedStatement
                          throws java.sql.SQLException
     {
 
-        for (int i = 0; i < _parameterValues.length; i++) {
-            _parameterValues[i]  = null;
-            _parameterStreams[i] = null;
-            _isStream[i]         = false;
-            _isNull[i]           = false;
+        for (int i = 0; i < parameterValues.length; i++) {
+            parameterValues[i]  = null;
+            parameterStreams[i] = null;
+            isStream[i]         = false;
+            isNull[i]           = false;
         }
     }
 
@@ -1224,14 +1230,14 @@ public class PreparedStatement
                throws SQLException
     {
         super.close();
-        _Sql              = null;
-        _staticSqlStrings = null;
-        _parameterValues  = null;
-        _parameterStreams = null;
-        _isStream         = null;
-        _isNull           = null;
-        _bi               = null;
-        _sendPacket       = null;
+        originalSql              = null;
+        staticSqlStrings = null;
+        parameterValues  = null;
+        parameterStreams = null;
+        isStream         = null;
+        isNull           = null;
+        streamConvertBuf               = null;
+        sendPacket       = null;
         templateCache     = null;
     }
 
@@ -1249,55 +1255,55 @@ public class PreparedStatement
     {
         checkClosed();
 
-        if (_sendPacket == null) {
-            _sendPacket = new Buffer(_conn.getNetBufferLength(), 
-                                     _conn.getMaxAllowedPacket());
+        if (sendPacket == null) {
+            sendPacket = new Buffer(connection.getNetBufferLength(), 
+                                     connection.getMaxAllowedPacket());
         } else {
-            _sendPacket.clear();
+            sendPacket.clear();
         }
 
-        _sendPacket.writeByte((byte)MysqlDefs.QUERY);
+        sendPacket.writeByte((byte)MysqlDefs.QUERY);
 
         String Encoding = null;
 
-        if (_conn.useUnicode()) {
-            Encoding = _conn.getEncoding();
+        if (connection.useUnicode()) {
+            Encoding = connection.getEncoding();
         }
 
         try {
 
-            for (int i = 0; i < _parameterValues.length; i++) {
+            for (int i = 0; i < parameterValues.length; i++) {
 
-                if (_parameterValues[i] == null && 
-                    _parameterStreams[i] == null) {
+                if (parameterValues[i] == null && 
+                    parameterStreams[i] == null) {
                     throw new java.sql.SQLException("No value specified for parameter " + 
                                                     (i + 1));
                 }
 
                 //if (Encoding != null) {
-                _sendPacket.writeBytesNoNull(_staticSqlStrings[i]);
+                sendPacket.writeBytesNoNull(staticSqlStrings[i]);
 
                 //}
                 //else {
                 //    _SendPacket.writeStringNoNull(_TemplateStrings[i]);
                 //}
-                if (_isStream[i]) {
-                    _sendPacket.writeBytesNoNull(streamToBytes(
-                                                         _parameterStreams[i]));
+                if (isStream[i]) {
+                    sendPacket.writeBytesNoNull(streamToBytes(
+                                                         parameterStreams[i]));
                 } else {
 
                     if (Encoding != null) {
-                        _sendPacket.writeStringNoNull(_parameterValues[i], 
+                        sendPacket.writeStringNoNull(parameterValues[i], 
                                                       Encoding);
                     } else {
-                        _sendPacket.writeStringNoNull(_parameterValues[i]);
+                        sendPacket.writeStringNoNull(parameterValues[i]);
                     }
                 }
             }
 
             //if (Encoding != null) {
-            _sendPacket.writeBytesNoNull(
-                    _staticSqlStrings[_parameterValues.length]);
+            sendPacket.writeBytesNoNull(
+                    staticSqlStrings[parameterValues.length]);
 
             // }
             // else {
@@ -1310,13 +1316,13 @@ public class PreparedStatement
 
         ResultSet RS = null;
 
-        synchronized (_conn.getMutex()) {
+        synchronized (connection.getMutex()) {
 
             String OldCatalog = null;
 
-            if (!_conn.getCatalog().equals(_catalog)) {
-                OldCatalog = _conn.getCatalog();
-                _conn.setCatalog(_catalog);
+            if (!connection.getCatalog().equals(currentCatalog)) {
+                OldCatalog = connection.getCatalog();
+                connection.setCatalog(currentCatalog);
             }
 
             // If there isn't a limit clause in the SQL
@@ -1328,47 +1334,47 @@ public class PreparedStatement
             //
             // Only apply max_rows to selects
             //
-            if (_conn.useMaxRows()) {
+            if (connection.useMaxRows()) {
 
-                if (_firstChar == 'S') {
+                if (firstCharOfStmt == 'S') {
 
-                    if (_hasLimitClause) {
-                        RS = _conn.execSQL(null, _maxRows, _sendPacket);
+                    if (hasLimitClause) {
+                        RS = connection.execSQL((String)null, maxRows, sendPacket, resultSetType, createStreamingResultSet());
                     } else {
 
-                        if (_maxRows <= 0) {
-                            _conn.execSQL(
+                        if (maxRows <= 0) {
+                            connection.execSQL(
                                     "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
                         } else {
-                            _conn.execSQL(
+                            connection.execSQL(
                                     "SET OPTION SQL_SELECT_LIMIT=" + 
-                                    _maxRows, -1);
+                                    maxRows, -1);
                         }
                     }
                 } else {
-                    _conn.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+                    connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
                 }
 
                 // Finally, execute the query
-                RS = _conn.execSQL(null, -1, _sendPacket, _resultSetType);
+                RS = connection.execSQL(null, -1, sendPacket, resultSetType, createStreamingResultSet());
             } else {
-                RS = _conn.execSQL(null, -1, _sendPacket, _resultSetType);
+                RS = connection.execSQL(null, -1, sendPacket, resultSetType, createStreamingResultSet());
             }
 
             if (OldCatalog != null) {
-                _conn.setCatalog(OldCatalog);
+                connection.setCatalog(OldCatalog);
             }
         }
 
-        _lastInsertId = RS.getUpdateID();
+        lastInsertId = RS.getUpdateID();
 
         if (RS != null) {
-            _results = RS;
+            results = RS;
         }
 
-        RS.setConnection(_conn);
-        RS.setResultSetType(_resultSetType);
-        RS.setResultSetConcurrency(_resultSetConcurrency);
+        RS.setConnection(connection);
+        RS.setResultSetType(resultSetType);
+        RS.setResultSetConcurrency(resultSetConcurrency);
         RS.setStatement(this);
 
         return (RS != null && RS.reallyResult());
@@ -1394,9 +1400,9 @@ public class PreparedStatement
 
             int[] updateCounts = null;
 
-            if (_batchedArgs != null) {
+            if (batchedArgs != null) {
 
-                int nbrCommands = _batchedArgs.size();
+                int nbrCommands = batchedArgs.size();
                 updateCounts = new int[nbrCommands];
 
                 for (int i = 0; i < nbrCommands; i++) {
@@ -1407,7 +1413,7 @@ public class PreparedStatement
 
                 for (int i = 0; i < nbrCommands; i++) {
 
-                    Object arg = _batchedArgs.get(i);
+                    Object arg = batchedArgs.get(i);
 
                     if (arg instanceof String) {
                         updateCounts[i] = executeUpdate((String)arg);
@@ -1453,72 +1459,72 @@ public class PreparedStatement
     {
         checkClosed();
 
-        if (_sendPacket == null) {
-            _sendPacket = new Buffer(_conn.getNetBufferLength(), 
-                                     _conn.getMaxAllowedPacket());
+        if (sendPacket == null) {
+            sendPacket = new Buffer(connection.getNetBufferLength(), 
+                                     connection.getMaxAllowedPacket());
         } else {
-            _sendPacket.clear();
+            sendPacket.clear();
         }
 
-        _sendPacket.writeByte((byte)MysqlDefs.QUERY);
+        sendPacket.writeByte((byte)MysqlDefs.QUERY);
 
         String Encoding = null;
 
-        if (_conn.useUnicode()) {
-            Encoding = _conn.getEncoding();
+        if (connection.useUnicode()) {
+            Encoding = connection.getEncoding();
         }
 
         try {
 
-            for (int i = 0; i < _parameterValues.length; i++) {
+            for (int i = 0; i < parameterValues.length; i++) {
 
-                if (_parameterValues[i] == null && 
-                    _parameterStreams[i] == null) {
+                if (parameterValues[i] == null && 
+                    parameterStreams[i] == null) {
                     throw new java.sql.SQLException("No value specified for parameter " + 
                                                     (i + 1), "07001");
                 }
 
-                _sendPacket.writeBytesNoNull(_staticSqlStrings[i]);
+                sendPacket.writeBytesNoNull(staticSqlStrings[i]);
 
-                if (_isStream[i]) {
-                    _sendPacket.writeBytesNoNull(streamToBytes(
-                                                         _parameterStreams[i]));
+                if (isStream[i]) {
+                    sendPacket.writeBytesNoNull(streamToBytes(
+                                                         parameterStreams[i]));
                 } else {
 
                     if (Encoding != null) {
-                        _sendPacket.writeStringNoNull(_parameterValues[i], 
+                        sendPacket.writeStringNoNull(parameterValues[i], 
                                                       Encoding);
                     } else {
-                        _sendPacket.writeStringNoNull(_parameterValues[i]);
+                        sendPacket.writeStringNoNull(parameterValues[i]);
                     }
                 }
             }
 
-            _sendPacket.writeBytesNoNull(
-                    _staticSqlStrings[_parameterValues.length]);
+            sendPacket.writeBytesNoNull(
+                    staticSqlStrings[parameterValues.length]);
         } catch (java.io.UnsupportedEncodingException UE) {
             throw new SQLException("Unsupported character encoding '" + 
                                    Encoding + "'");
         }
 
-        if (_results != null) {
-            _results.close();
+        if (results != null) {
+            results.close();
         }
 
         // We need to execute this all together
         // So synchronize on the Connection's mutex (because
         // even queries going through there synchronize
         // on the same mutex.
-        synchronized (_conn.getMutex()) {
+        synchronized (connection.getMutex()) {
 
             String OldCatalog = null;
 
-            if (!_conn.getCatalog().equals(_catalog)) {
-                OldCatalog = _conn.getCatalog();
-                _conn.setCatalog(_catalog);
+            if (!connection.getCatalog().equals(currentCatalog)) {
+                OldCatalog = connection.getCatalog();
+                connection.setCatalog(currentCatalog);
             }
 
-            if (_conn.useMaxRows()) {
+            if (connection.useMaxRows()) {
 
                 // If there isn't a limit clause in the SQL
                 // then limit the number of rows to return in
@@ -1526,47 +1532,47 @@ public class PreparedStatement
                 // setMaxRows() hasn't been used on any Statements
                 // generated from the current Connection (saves
                 // a query, and network traffic).
-                if (_hasLimitClause) {
-                    _results = _conn.execSQL(null, _maxRows, _sendPacket);
+                if (hasLimitClause) {
+                    results = connection.execSQL((String)null, maxRows, sendPacket, resultSetType, createStreamingResultSet());
                 } else {
 
-                    if (_maxRows <= 0) {
-                        _conn.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", 
+                    if (maxRows <= 0) {
+                        connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", 
                                       -1);
                     } else {
-                        _conn.execSQL(
-                                "SET OPTION SQL_SELECT_LIMIT=" + _maxRows, -1);
+                        connection.execSQL(
+                                "SET OPTION SQL_SELECT_LIMIT=" + maxRows, -1);
                     }
 
-                    _results = _conn.execSQL(null, -1, _sendPacket, 
-                                             _resultSetType);
+                    results = connection.execSQL(null, -1, sendPacket, 
+                                             resultSetType, createStreamingResultSet());
 
                     if (OldCatalog != null) {
-                        _conn.setCatalog(OldCatalog);
+                        connection.setCatalog(OldCatalog);
                     }
                 }
             } else {
-                _results = _conn.execSQL(null, -1, _sendPacket, _resultSetType);
+                results = connection.execSQL(null, -1, sendPacket, resultSetType, createStreamingResultSet());
             }
 
             if (OldCatalog != null) {
-                _conn.setCatalog(OldCatalog);
+                connection.setCatalog(OldCatalog);
             }
         }
 
-        _lastInsertId = _results.getUpdateID();
-        _nextResults  = _results;
-        _results.setConnection(_conn);
-        _results.setResultSetType(_resultSetType);
-        _results.setResultSetConcurrency(_resultSetConcurrency);
-        _results.setStatement(this);
+        lastInsertId = results.getUpdateID();
+        nextResults  = results;
+        results.setConnection(connection);
+        results.setResultSetType(resultSetType);
+        results.setResultSetConcurrency(resultSetConcurrency);
+        results.setStatement(this);
 
-        if (!_results.reallyResult()) {
+        if (!results.reallyResult()) {
 
-            if (!_conn.getAutoCommit()) {
+            if (!connection.getAutoCommit()) {
 
                 try {
-                    _conn.rollback();
+                    connection.rollback();
                 } catch (SQLException sqlEx) {
 
                     // FIXME: Log later?
@@ -1577,7 +1583,7 @@ public class PreparedStatement
                                    "S1009");
         }
 
-        return (java.sql.ResultSet)_results;
+        return (java.sql.ResultSet)results;
     }
 
     /**
@@ -1593,8 +1599,8 @@ public class PreparedStatement
                                    throws java.sql.SQLException
     {
 
-        return executeUpdate(_parameterValues, _parameterStreams, _isStream, 
-                             _isNull);
+        return executeUpdate(parameterValues, parameterStreams, isStream, 
+                             isNull);
     }
 
     public String toString()
@@ -1602,8 +1608,8 @@ public class PreparedStatement
 
         String Encoding = null;
 
-        if (_conn != null && _conn.useUnicode()) {
-            Encoding = _conn.getEncoding();
+        if (connection != null && connection.useUnicode()) {
+            Encoding = connection.getEncoding();
         }
 
         StringBuffer SB = new StringBuffer();
@@ -1612,43 +1618,43 @@ public class PreparedStatement
 
         try {
 
-            for (int i = 0; i < _parameterValues.length; ++i) {
+            for (int i = 0; i < parameterValues.length; ++i) {
 
                 if (Encoding != null) {
-                    SB.append(new String(_staticSqlStrings[i], Encoding));
+                    SB.append(new String(staticSqlStrings[i], Encoding));
                 } else {
-                    SB.append(new String(_staticSqlStrings[i]));
+                    SB.append(new String(staticSqlStrings[i]));
                 }
 
-                if (_parameterValues[i] == null && !_isStream[i]) {
+                if (parameterValues[i] == null && !isStream[i]) {
                     SB.append("** NOT SPECIFIED **");
-                } else if (_isStream[i]) {
+                } else if (isStream[i]) {
                     SB.append("** STREAM DATA **");
                 } else {
 
-                    if (_escapeProcessing) {
+                    if (doEscapeProcessing) {
 
                         try {
-                            _parameterValues[i] = _escaper.escapeSQL(
-                                                          _parameterValues[i]);
+                            parameterValues[i] = escaper.escapeSQL(
+                                                          parameterValues[i]);
                         } catch (SQLException SQE) {
                         }
                     }
 
                     if (Encoding != null) {
-                        SB.append(new String(_parameterValues[i].getBytes(), 
+                        SB.append(new String(parameterValues[i].getBytes(), 
                                              Encoding));
                     } else {
-                        SB.append(new String(_parameterValues[i].getBytes()));
+                        SB.append(new String(parameterValues[i].getBytes()));
                     }
                 }
             }
 
             if (Encoding != null) {
-                SB.append(new String(_staticSqlStrings[_parameterValues.length], 
+                SB.append(new String(staticSqlStrings[parameterValues.length], 
                                      Encoding));
             } else {
-                SB.append(_staticSqlStrings[_parameterValues.length]);
+                SB.append(staticSqlStrings[parameterValues.length]);
             }
         } catch (java.io.UnsupportedEncodingException UE) {
             SB.append("\n\n** WARNING **\n\n Unsupported character encoding '");
@@ -1662,63 +1668,63 @@ public class PreparedStatement
     /**
      * Added to allow batch-updates
      */
-    protected synchronized int executeUpdate(String[] ParameterStrings, 
-                                             InputStream[] ParameterStreams, 
-                                             boolean[] IsStream, 
-                                             boolean[] IsNull)
+    protected synchronized int executeUpdate(String[] batchedParameterStrings, 
+                                             InputStream[] batchedParameterStreams, 
+                                             boolean[] batchedIsStream, 
+                                             boolean[] batchedIsNull)
                                       throws java.sql.SQLException
     {
         checkClosed();
 
-        if (_sendPacket == null) {
-            _sendPacket = new Buffer(_conn.getNetBufferLength(), 
-                                     _conn.getMaxAllowedPacket());
+        if (sendPacket == null) {
+            sendPacket = new Buffer(connection.getNetBufferLength(), 
+                                     connection.getMaxAllowedPacket());
         } else {
-            _sendPacket.clear();
+            sendPacket.clear();
         }
 
-        _sendPacket.writeByte((byte)MysqlDefs.QUERY);
+        sendPacket.writeByte((byte)MysqlDefs.QUERY);
 
         String Encoding = null;
 
-        if (_conn.useUnicode()) {
-            Encoding = _conn.getEncoding();
+        if (connection.useUnicode()) {
+            Encoding = connection.getEncoding();
         }
 
         try {
 
-            for (int i = 0; i < ParameterStrings.length; i++) {
+            for (int i = 0; i < batchedParameterStrings.length; i++) {
 
-                if (ParameterStrings[i] == null && 
-                    ParameterStreams[i] == null) {
+                if (batchedParameterStrings[i] == null && 
+                    batchedParameterStreams[i] == null) {
                     throw new java.sql.SQLException("No value specified for parameter " + 
                                                     (i + 1), "07001");
                 }
 
                 //if (Encoding != null) {
-                _sendPacket.writeBytesNoNull(_staticSqlStrings[i]);
+                sendPacket.writeBytesNoNull(staticSqlStrings[i]);
 
                 //}
                 //else {
                 //   _SendPacket.writeStringNoNull(_TemplateStrings[i]);
                 //}
-                if (IsStream[i]) {
-                    _sendPacket.writeBytesNoNull(streamToBytes(
-                                                         ParameterStreams[i]));
+                if (batchedIsStream[i]) {
+                    sendPacket.writeBytesNoNull(streamToBytes(
+                                                         batchedParameterStreams[i]));
                 } else {
 
                     if (Encoding != null) {
-                        _sendPacket.writeStringNoNull(ParameterStrings[i], 
+                        sendPacket.writeStringNoNull(batchedParameterStrings[i], 
                                                       Encoding);
                     } else {
-                        _sendPacket.writeStringNoNull(ParameterStrings[i]);
+                        sendPacket.writeStringNoNull(batchedParameterStrings[i]);
                     }
                 }
             }
 
             //if (Encoding != null) {
-            _sendPacket.writeBytesNoNull(
-                    _staticSqlStrings[ParameterStrings.length]);
+            sendPacket.writeBytesNoNull(
+                    staticSqlStrings[batchedParameterStrings.length]);
 
             // }
             // else {
@@ -1732,48 +1738,49 @@ public class PreparedStatement
         // The checking and changing of catalogs
         // must happen in sequence, so synchronize
         // on the same mutex that _conn is using
-        ResultSet RS = null;
+        ResultSet rs = null;
 
-        synchronized (_conn.getMutex()) {
+        synchronized (connection.getMutex()) {
 
-            String OldCatalog = null;
+            String oldCatalog = null;
 
-            if (!_conn.getCatalog().equals(_catalog)) {
-                OldCatalog = _conn.getCatalog();
-                _conn.setCatalog(_catalog);
+            if (!connection.getCatalog().equals(currentCatalog)) {
+                oldCatalog = connection.getCatalog();
+                connection.setCatalog(currentCatalog);
             }
 
             //
             // Only apply max_rows to selects
             //
-            if (_conn.useMaxRows()) {
-                _conn.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+            if (connection.useMaxRows()) {
+                connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
             }
 
-            RS = _conn.execSQL(null, -1, _sendPacket, _resultSetType);
+            rs = connection.execSQL(null, -1, sendPacket, resultSetType, false);
 
-            if (OldCatalog != null) {
-                _conn.setCatalog(OldCatalog);
+            if (oldCatalog != null) {
+                connection.setCatalog(oldCatalog);
             }
         }
 
-        if (RS.reallyResult()) {
+        if (rs.reallyResult()) {
+        	// FIXME: Rollback?
             throw new java.sql.SQLException("Results returned for UPDATE ONLY.", 
                                             "01S03");
         } else {
-            _updateCount = RS.getUpdateCount();
+            updateCount = rs.getUpdateCount();
 
-            int truncated_updateCount = 0;
+            int truncatedUpdateCount = 0;
 
-            if (_updateCount > Integer.MAX_VALUE) {
-                truncated_updateCount = Integer.MAX_VALUE;
+            if (updateCount > Integer.MAX_VALUE) {
+                truncatedUpdateCount = Integer.MAX_VALUE;
             } else {
-                truncated_updateCount = (int)_updateCount;
+                truncatedUpdateCount = (int)updateCount;
             }
 
-            _lastInsertId = RS.getUpdateID();
+            lastInsertId = rs.getUpdateID();
 
-            return truncated_updateCount;
+            return truncatedUpdateCount;
         }
     }
 
@@ -1830,7 +1837,7 @@ public class PreparedStatement
         try {
 
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-            int                   bc = readblock(in, _bi);
+            int                   bc = readblock(in, streamConvertBuf);
 
             if (escape) {
                 bytesOut.write('\'');
@@ -1839,12 +1846,12 @@ public class PreparedStatement
             while (bc > 0) {
 
                 if (escape) {
-                    escapeblock(_bi, bytesOut, bc);
+                    escapeblock(streamConvertBuf, bytesOut, bc);
                 } else {
-                    bytesOut.write(_bi, 0, bc);
+                    bytesOut.write(streamConvertBuf, 0, bc);
                 }
 
-                bc = readblock(in, _bi);
+                bc = readblock(in, streamConvertBuf);
             }
 
             if (escape) {
@@ -1867,22 +1874,22 @@ public class PreparedStatement
              throws SQLException
     {
 
-        if (_isStream[parameterIndex]) {
+        if (isStream[parameterIndex]) {
 
-            return streamToBytes(_parameterStreams[parameterIndex], false);
+            return streamToBytes(parameterStreams[parameterIndex], false);
         } else {
 
             String encoding = null;
 
-            if (_conn.useUnicode()) {
-                encoding = _conn.getEncoding();
+            if (connection.useUnicode()) {
+                encoding = connection.getEncoding();
             }
 
             if (encoding != null) {
 
                 try {
 
-                    String stringVal = _parameterValues[parameterIndex];
+                    String stringVal = parameterValues[parameterIndex];
 
                     if (stringVal.startsWith("'") && 
                         stringVal.endsWith("'")) {
@@ -1897,7 +1904,7 @@ public class PreparedStatement
                 }
             } else {
 
-                String stringVal = _parameterValues[parameterIndex];
+                String stringVal = parameterValues[parameterIndex];
 
                 if (stringVal.startsWith("'") && stringVal.endsWith("'")) {
                     stringVal = stringVal.substring(1, stringVal.length() - 1);
@@ -1911,7 +1918,7 @@ public class PreparedStatement
     boolean isNull(int paramIndex)
     {
 
-        return _isNull[paramIndex];
+        return isNull[paramIndex];
     }
 
     /**
@@ -1919,7 +1926,7 @@ public class PreparedStatement
      */
     void setResultSetConcurrency(int concurrencyFlag)
     {
-        _resultSetConcurrency = concurrencyFlag;
+        resultSetConcurrency = concurrencyFlag;
     }
 
     /**
@@ -1927,7 +1934,7 @@ public class PreparedStatement
      */
     void setResultSetType(int typeFlag)
     {
-        _resultSetType = typeFlag;
+        resultSetType = typeFlag;
     }
 
     private final String getDateTimePattern(String dt, boolean toTime)
@@ -2108,17 +2115,17 @@ public class PreparedStatement
                             throws java.sql.SQLException
     {
 
-        if (paramIndex < 1 || paramIndex > _staticSqlStrings.length) {
+        if (paramIndex < 1 || paramIndex > staticSqlStrings.length) {
             throw new java.sql.SQLException("Parameter index out of range (" + 
                                             paramIndex + " > " + 
-                                            _staticSqlStrings.length + ").", 
+                                            staticSqlStrings.length + ").", 
                                             "S1009");
         }
 
-        _isStream[paramIndex - 1]         = false;
-        _isNull[paramIndex - 1]           = false;
-        _parameterStreams[paramIndex - 1] = null;
-        _parameterValues[paramIndex - 1]  = val;
+        isStream[paramIndex - 1]         = false;
+        isNull[paramIndex - 1]           = false;
+        parameterStreams[paramIndex - 1] = null;
+        parameterValues[paramIndex - 1]  = val;
     }
 
     private final char getSuccessor(char c, int n)

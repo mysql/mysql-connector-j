@@ -50,51 +50,51 @@ public class Statement
     /**
      * Holds batched commands
      */
-    protected ArrayList _batchedArgs;
+    protected ArrayList batchedArgs;
 
     /**
      * The connection who created us
      */
-    protected Connection _conn                 = null;
-    protected int        _resultSetConcurrency = 0;
-    protected int        _resultSetType        = 0;
-    String               _catalog              = null;
+    protected Connection connection = null;
+    protected int resultSetConcurrency = 0;
+    protected int resultSetType = 0;
+    String currentCatalog = null;
 
     /**
      * Should we process escape codes?
      */
-    boolean _escapeProcessing = true;
+    boolean doEscapeProcessing = true;
 
     /**
      * Processes JDBC escape codes
      */
-    EscapeProcessor _escaper      = null;
-    long            _lastInsertId = -1;
-    int             _maxFieldSize = MysqlIO.MAXBUF;
-    int             _maxRows      = -1;
+    EscapeProcessor escaper = null;
+    long lastInsertId = -1;
+    int maxFieldSize = MysqlIO.MAXBUF;
+    int maxRows = -1;
 
     /**
      * The next result set
      */
-    ResultSet _nextResults = null;
+    ResultSet nextResults = null;
 
     /**
      * The current results
      */
-    ResultSet _results = null;
+    ResultSet results = null;
 
     /**
      * The timeout for a query
      */
-    int  _timeout     = 0;
-    long _updateCount = -1;
+    int timeout = 0;
+    long updateCount = -1;
 
     /**
      * The warnings chain.
      */
-    SQLWarning      _warnings  = null;
-    private int     _fetchSize = 0;
-    private boolean _isClosed  = false;
+    SQLWarning warningChain = null;
+    private int fetchSize = 0;
+    private boolean isClosed = false;
 
     //~ Constructors ..........................................................
 
@@ -107,21 +107,23 @@ public class Statement
     public Statement(Connection c, String catalog)
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = { c };
             Debug.methodCall(this, "constructor", Args);
         }
 
-        _conn    = c;
-        _escaper = new EscapeProcessor();
-        _catalog = catalog;
+        connection = c;
+        escaper = new EscapeProcessor();
+        currentCatalog = catalog;
 
         //
         // Adjust, if we know it
         //
-        if (_conn != null) {
-            _maxFieldSize = _conn.getMaxAllowedPacket();
+        if (connection != null)
+        {
+            maxFieldSize = connection.getMaxAllowedPacket();
         }
     }
 
@@ -136,7 +138,7 @@ public class Statement
                                       throws SQLException
     {
 
-        return (java.sql.Connection)_conn;
+        return (java.sql.Connection)connection;
     }
 
     /**
@@ -157,7 +159,8 @@ public class Statement
                        throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = { name };
             Debug.methodCall(this, "setCursorName", Args);
@@ -177,13 +180,14 @@ public class Statement
                              throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = { new Boolean(enable) };
             Debug.methodCall(this, "setEscapeProcessing", Args);
         }
 
-        _escapeProcessing = enable;
+        doEscapeProcessing = enable;
     }
 
     //--------------------------JDBC 2.0-----------------------------
@@ -205,7 +209,8 @@ public class Statement
                            throws SQLException
     {
 
-        switch (direction) {
+        switch (direction)
+        {
 
             case java.sql.ResultSet.FETCH_FORWARD:
             case java.sql.ResultSet.FETCH_REVERSE:
@@ -250,11 +255,13 @@ public class Statement
                       throws SQLException
     {
 
-        if (rows > this.getMaxRows() || rows < 0) {
+        if (rows > this.getMaxRows() || 
+            (rows < 0 && rows != Integer.MIN_VALUE))
+        {
             throw new SQLException("Illegal value for setFetchSize()", "S1009");
         }
 
-        _fetchSize = rows;
+        fetchSize = rows;
     }
 
     /**
@@ -266,7 +273,7 @@ public class Statement
                      throws SQLException
     {
 
-        return _fetchSize;
+        return fetchSize;
     }
 
     public java.sql.ResultSet getGeneratedKeys()
@@ -277,11 +284,12 @@ public class Statement
         fields[0] = new Field("", "GENERATED_KEY", Types.INTEGER, 17);
 
         ArrayList rowSet = new ArrayList();
-        byte[][]  row = new byte[1][];
+        byte[][] row = new byte[1][];
         row[0] = Long.toString(getLastInsertID()).getBytes();
         rowSet.add(row);
 
-        return new com.mysql.jdbc.ResultSet(fields, rowSet, _conn);
+        return new com.mysql.jdbc.ResultSet(fields, new RowDataStatic(rowSet), 
+                                            connection);
     }
 
     /**
@@ -300,13 +308,14 @@ public class Statement
     public long getLastInsertID()
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "getLastInsertID", Args);
         }
 
-        return _lastInsertId;
+        return lastInsertId;
     }
 
     /**
@@ -324,23 +333,26 @@ public class Statement
     public long getLongUpdateCount()
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "getLongUpdateCount", Args);
         }
 
-        if (_results == null) {
+        if (results == null)
+        {
 
             return -1;
         }
 
-        if (_results.reallyResult()) {
+        if (results.reallyResult())
+        {
 
             return -1;
         }
 
-        return _updateCount;
+        return updateCount;
     }
 
     /**
@@ -353,25 +365,30 @@ public class Statement
                          throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = { new Integer(max) };
             Debug.methodCall(this, "setMaxFieldSize", Args);
         }
 
-        if (max < 0) {
+        if (max < 0)
+        {
             throw new SQLException("Illegal value for setMaxFieldSize()", 
                                    "S1009");
         }
 
-        int max_buf = (_conn != null)
-                          ? _conn.getMaxAllowedPacket() : MysqlIO.MAXBUF;
+        int max_buf = (connection != null)
+                          ? connection.getMaxAllowedPacket() : MysqlIO.MAXBUF;
 
-        if (max > max_buf) {
+        if (max > max_buf)
+        {
             throw new java.sql.SQLException("Can not set max field size > max allowed packet: " + 
                                             max_buf, "S1009");
-        } else {
-            _maxFieldSize = max;
+        }
+        else
+        {
+            maxFieldSize = max;
         }
     }
 
@@ -389,13 +406,14 @@ public class Statement
                         throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "getMaxFieldSize", Args);
         }
 
-        return _maxFieldSize;
+        return maxFieldSize;
     }
 
     /**
@@ -409,30 +427,33 @@ public class Statement
                     throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = { new Integer(max) };
             Debug.methodCall(this, "setMaxRows", Args);
         }
 
-        if (max > MysqlDefs.MAX_ROWS || max < 0) {
+        if (max > MysqlDefs.MAX_ROWS || max < 0)
+        {
             throw new java.sql.SQLException("setMaxRows() out of range. " + 
                                             max + " > " + 
                                             MysqlDefs.MAX_ROWS + ".", "S1009");
         }
 
-        if (max == 0) {
+        if (max == 0)
+        {
             max = -1;
         }
 
-        _maxRows = max;
+        maxRows = max;
 
         // Most people don't use setMaxRows()
         // so don't penalize them
         // with the extra query it takes
         // to do it efficiently unless we need
         // to.
-        _conn.maxRowsChanged();
+        connection.maxRowsChanged();
     }
 
     /**
@@ -447,18 +468,22 @@ public class Statement
                    throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "getMaxRows", Args);
         }
 
-        if (_maxRows <= 0) {
+        if (maxRows <= 0)
+        {
 
             return 0;
-        } else {
+        }
+        else
+        {
 
-            return _maxRows;
+            return maxRows;
         }
     }
 
@@ -473,20 +498,22 @@ public class Statement
                            throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "getMoreResults", Args);
         }
 
-        if (_results != null) {
-            _results.close();
+        if (results != null)
+        {
+            results.close();
         }
 
-        _results     = _nextResults;
-        _nextResults = null;
+        results = nextResults;
+        nextResults = null;
 
-        return (_results != null && _results.reallyResult()) ? true : false;
+        return (results != null && results.reallyResult()) ? true : false;
     }
 
     /**
@@ -508,18 +535,20 @@ public class Statement
                          throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = { new Integer(seconds) };
             Debug.methodCall(this, "setQueryTimeout", Args);
         }
 
-        if (seconds < 0) {
+        if (seconds < 0)
+        {
             throw new SQLException("Illegal value for setQueryTimeout()", 
                                    "S1009");
         }
 
-        _timeout = seconds;
+        timeout = seconds;
     }
 
     /**
@@ -534,13 +563,14 @@ public class Statement
                         throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "getQueryTimeout", Args);
         }
 
-        return _timeout;
+        return timeout;
     }
 
     /**
@@ -554,14 +584,15 @@ public class Statement
                                                  throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "getResultSet", Args);
         }
 
-        return (_results != null && _results.reallyResult())
-                   ? (java.sql.ResultSet)_results : null;
+        return (results != null && results.reallyResult())
+                   ? (java.sql.ResultSet)results : null;
     }
 
     /**
@@ -573,7 +604,7 @@ public class Statement
                                 throws SQLException
     {
 
-        return _resultSetConcurrency;
+        return resultSetConcurrency;
     }
 
     /**
@@ -594,7 +625,7 @@ public class Statement
                          throws SQLException
     {
 
-        return _resultSetType;
+        return resultSetType;
     }
 
     /**
@@ -609,28 +640,34 @@ public class Statement
                                     throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "getUpdateCount", Args);
         }
 
-        if (_results == null) {
+        if (results == null)
+        {
 
             return -1;
         }
 
-        if (_results.reallyResult()) {
+        if (results.reallyResult())
+        {
 
             return -1;
         }
 
         int truncated_updateCount = 0;
 
-        if (_results.getUpdateCount() > Integer.MAX_VALUE) {
+        if (results.getUpdateCount() > Integer.MAX_VALUE)
+        {
             truncated_updateCount = Integer.MAX_VALUE;
-        } else {
-            truncated_updateCount = (int)_results.getUpdateCount();
+        }
+        else
+        {
+            truncated_updateCount = (int)results.getUpdateCount();
         }
 
         return truncated_updateCount;
@@ -656,25 +693,28 @@ public class Statement
                                                  throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "getWarnings", Args);
         }
 
-        return _warnings;
+        return warningChain;
     }
 
     public synchronized void addBatch(String sql)
                                throws SQLException
     {
 
-        if (_batchedArgs == null) {
-            _batchedArgs = new ArrayList();
+        if (batchedArgs == null)
+        {
+            batchedArgs = new ArrayList();
         }
 
-        if (sql != null) {
-            _batchedArgs.add(sql);
+        if (sql != null)
+        {
+            batchedArgs.add(sql);
         }
     }
 
@@ -691,7 +731,8 @@ public class Statement
                 throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "cancel", Args);
@@ -713,8 +754,9 @@ public class Statement
                                  throws SQLException
     {
 
-        if (_batchedArgs != null) {
-            _batchedArgs.clear();
+        if (batchedArgs != null)
+        {
+            batchedArgs.clear();
         }
     }
 
@@ -728,13 +770,14 @@ public class Statement
                                     throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "clearWarnings", Args);
         }
 
-        _warnings = null;
+        warningChain = null;
     }
 
     /**
@@ -753,25 +796,30 @@ public class Statement
                             throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = new Object[0];
             Debug.methodCall(this, "close", Args);
         }
 
-        if (_results != null) {
+        if (results != null)
+        {
 
-            try {
-                _results.close();
-            } catch (Exception ex) {
+            try
+            {
+                results.close();
+            }
+            catch (Exception ex)
+            {
             }
         }
 
-        _results  = null;
-        _conn     = null;
-        _warnings = null;
-        _escaper  = null;
-        _isClosed = true;
+        results = null;
+        connection = null;
+        warningChain = null;
+        escaper = null;
+        isClosed = true;
     }
 
     /**
@@ -789,7 +837,8 @@ public class Statement
                                  throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = { sql };
             Debug.methodCall(this, "execute", Args);
@@ -797,12 +846,14 @@ public class Statement
 
         checkClosed();
 
-        if (_escapeProcessing) {
-            sql = _escaper.escapeSQL(sql);
+        if (doEscapeProcessing)
+        {
+            sql = escaper.escapeSQL(sql);
         }
 
-        if (_results != null) {
-            _results.close();
+        if (results != null)
+        {
+            results.close();
         }
 
         ResultSet rs = null;
@@ -813,61 +864,81 @@ public class Statement
         // setMaxRows() hasn't been used on any Statements
         // generated from the current Connection (saves
         // a query, and network traffic).
-        synchronized (_conn.getMutex()) {
+        synchronized (connection.getMutex())
+        {
 
             String oldCatalog = null;
 
-            if (!_conn.getCatalog().equals(_catalog)) {
-                oldCatalog = _conn.getCatalog();
-                _conn.setCatalog(_catalog);
+            if (!connection.getCatalog().equals(currentCatalog))
+            {
+                oldCatalog = connection.getCatalog();
+                connection.setCatalog(currentCatalog);
             }
 
             //
             // Only apply max_rows to selects
             //
-            if (_conn.useMaxRows()) {
+            if (connection.useMaxRows())
+            {
 
                 char firstChar = Character.toUpperCase(sql.charAt(0));
 
-                if (firstChar == 'S') {
+                if (firstChar == 'S')
+                {
 
-                    if (sql.toUpperCase().indexOf("LIMIT") != -1) {
-                        rs = _conn.execSQL(sql, _maxRows);
-                    } else {
+                    if (sql.toUpperCase().indexOf("LIMIT") != -1)
+                    {
+                        rs = connection.execSQL(sql, maxRows, 
+                                           resultSetConcurrency, 
+                                           createStreamingResultSet());
+                    }
+                    else
+                    {
 
-                        if (_maxRows <= 0) {
-                            _conn.execSQL(
+                        if (maxRows <= 0)
+                        {
+                            connection.execSQL(
                                     "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
-                        } else {
-                            _conn.execSQL(
+                        }
+                        else
+                        {
+                            connection.execSQL(
                                     "SET OPTION SQL_SELECT_LIMIT=" + 
-                                    _maxRows, -1);
+                                    maxRows, -1);
                         }
                     }
-                } else {
-                    _conn.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+                }
+                else
+                {
+                    connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
                 }
 
                 // Finally, execute the query
-                rs = _conn.execSQL(sql, -1);
-            } else {
-                rs = _conn.execSQL(sql, -1);
+                rs = connection.execSQL(sql, -1, resultSetConcurrency, 
+                                   createStreamingResultSet());
+            }
+            else
+            {
+                rs = connection.execSQL(sql, -1, resultSetConcurrency, 
+                                   createStreamingResultSet());
             }
 
-            if (oldCatalog != null) {
-                _conn.setCatalog(oldCatalog);
+            if (oldCatalog != null)
+            {
+                connection.setCatalog(oldCatalog);
             }
         }
 
-        _lastInsertId = rs.getUpdateID();
+        lastInsertId = rs.getUpdateID();
 
-        if (rs != null) {
-            _results = rs;
+        if (rs != null)
+        {
+            results = rs;
         }
 
-        rs.setConnection(_conn);
-        rs.setResultSetType(_resultSetType);
-        rs.setResultSetConcurrency(_resultSetConcurrency);
+        rs.setConnection(connection);
+        rs.setResultSetType(resultSetType);
+        rs.setResultSetConcurrency(resultSetConcurrency);
 
         return (rs != null && rs.reallyResult());
     }
@@ -915,32 +986,40 @@ public class Statement
                                     throws SQLException
     {
 
-        try {
+        try
+        {
 
             int[] updateCounts = null;
 
-            if (_batchedArgs != null) {
+            if (batchedArgs != null)
+            {
 
-                int nbrCommands = _batchedArgs.size();
+                int nbrCommands = batchedArgs.size();
                 updateCounts = new int[nbrCommands];
 
-                for (int i = 0; i < nbrCommands; i++) {
+                for (int i = 0; i < nbrCommands; i++)
+                {
                     updateCounts[i] = -3;
                 }
 
                 SQLException sqlEx = null;
 
-                for (int i = 0; i < nbrCommands; i++) {
+                for (int i = 0; i < nbrCommands; i++)
+                {
 
-                    try {
+                    try
+                    {
                         updateCounts[i] = executeUpdate(
-                                                  (String)_batchedArgs.get(i));
-                    } catch (SQLException ex) {
+                                                  (String)batchedArgs.get(i));
+                    }
+                    catch (SQLException ex)
+                    {
                         sqlEx = ex;
                     }
                 }
 
-                if (sqlEx != null) {
+                if (sqlEx != null)
+                {
                     throw new java.sql.BatchUpdateException(sqlEx.getMessage(), 
                                                             sqlEx.getSQLState(), 
                                                             sqlEx.getErrorCode(), 
@@ -949,7 +1028,9 @@ public class Statement
             }
 
             return updateCounts != null ? updateCounts : new int[0];
-        } finally {
+        }
+        finally
+        {
             clearBatch();
         }
     }
@@ -965,7 +1046,8 @@ public class Statement
                                                  throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = { sql };
             Debug.methodCall(this, "executeQuery", Args);
@@ -973,12 +1055,14 @@ public class Statement
 
         checkClosed();
 
-        if (_escapeProcessing) {
-            sql = _escaper.escapeSQL(sql);
+        if (doEscapeProcessing)
+        {
+            sql = escaper.escapeSQL(sql);
         }
 
-        if (_results != null) {
-            _results.close();
+        if (results != null)
+        {
+            results.close();
         }
 
         // If there isn't a limit clause in the SQL
@@ -987,62 +1071,84 @@ public class Statement
         // setMaxRows() hasn't been used on any Statements
         // generated from the current Connection (saves
         // a query, and network traffic).
-        synchronized (_conn.getMutex()) {
+        synchronized (connection.getMutex())
+        {
 
             String oldCatalog = null;
 
-            if (!_conn.getCatalog().equals(_catalog)) {
-                oldCatalog = _conn.getCatalog();
-                _conn.setCatalog(_catalog);
+            if (!connection.getCatalog().equals(currentCatalog))
+            {
+                oldCatalog = connection.getCatalog();
+                connection.setCatalog(currentCatalog);
             }
 
-            if (_conn.useMaxRows()) {
+            if (connection.useMaxRows())
+            {
 
                 // We need to execute this all together
                 // So synchronize on the Connection's mutex (because
                 // even queries going through there synchronize
                 // on the connection
-                if (sql.toUpperCase().indexOf("LIMIT") != -1) {
-                    _results = _conn.execSQL(sql, _maxRows);
-                } else {
+                if (sql.toUpperCase().indexOf("LIMIT") != -1)
+                {
+                    results = connection.execSQL(sql, maxRows, 
+                                             resultSetConcurrency, 
+                                             createStreamingResultSet());
+                }
+                else
+                {
 
-                    if (_maxRows <= 0) {
-                        _conn.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", 
+                    if (maxRows <= 0)
+                    {
+                        connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", 
                                       -1);
-                    } else {
-                        _conn.execSQL(
-                                "SET OPTION SQL_SELECT_LIMIT=" + _maxRows, -1);
+                    }
+                    else
+                    {
+                        connection.execSQL(
+                                "SET OPTION SQL_SELECT_LIMIT=" + maxRows, -1);
                     }
 
-                    _results = _conn.execSQL(sql, -1, _resultSetConcurrency);
+                    results = connection.execSQL(sql, -1, resultSetConcurrency, 
+                                             createStreamingResultSet());
 
-                    if (oldCatalog != null) {
-                        _conn.setCatalog(oldCatalog);
+                    if (oldCatalog != null)
+                    {
+                        connection.setCatalog(oldCatalog);
                     }
                 }
-            } else {
-                _results = _conn.execSQL(sql, -1, _resultSetConcurrency);
+            }
+            else
+            {
+                results = connection.execSQL(sql, -1, resultSetConcurrency, 
+                                         createStreamingResultSet());
             }
 
-            if (oldCatalog != null) {
-                _conn.setCatalog(oldCatalog);
+            if (oldCatalog != null)
+            {
+                connection.setCatalog(oldCatalog);
             }
         }
 
-        _lastInsertId = _results.getUpdateID();
-        _nextResults  = _results;
-        _results.setConnection(_conn);
-        _results.setResultSetType(_resultSetType);
-        _results.setResultSetConcurrency(_resultSetConcurrency);
-        _results.setStatement(this);
+        lastInsertId = results.getUpdateID();
+        nextResults = results;
+        results.setConnection(connection);
+        results.setResultSetType(resultSetType);
+        results.setResultSetConcurrency(resultSetConcurrency);
+        results.setStatement(this);
 
-        if (!_results.reallyResult()) {
+        if (!results.reallyResult())
+        {
 
-            if (!_conn.getAutoCommit()) {
+            if (!connection.getAutoCommit())
+            {
 
-                try {
-                    _conn.rollback();
-                } catch (SQLException sqlEx) {
+                try
+                {
+                    connection.rollback();
+                }
+                catch (SQLException sqlEx)
+                {
 
                     // FIXME: Log later?
                 }
@@ -1052,7 +1158,7 @@ public class Statement
                                    "S1009");
         }
 
-        return (java.sql.ResultSet)_results;
+        return (java.sql.ResultSet)results;
     }
 
     /**
@@ -1072,7 +1178,8 @@ public class Statement
                                    throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] Args = { sql };
             Debug.methodCall(this, "executeUpdate", Args);
@@ -1080,8 +1187,9 @@ public class Statement
 
         checkClosed();
 
-        if (_escapeProcessing) {
-            sql = _escaper.escapeSQL(sql);
+        if (doEscapeProcessing)
+        {
+            sql = escaper.escapeSQL(sql);
         }
 
         // The checking and changing of catalogs
@@ -1089,45 +1197,72 @@ public class Statement
         // on the same mutex that _conn is using
         ResultSet rs = null;
 
-        synchronized (_conn.getMutex()) {
+        synchronized (connection.getMutex())
+        {
 
             String oldCatalog = null;
 
-            if (!_conn.getCatalog().equals(_catalog)) {
-                oldCatalog = _conn.getCatalog();
-                _conn.setCatalog(_catalog);
+            if (!connection.getCatalog().equals(currentCatalog))
+            {
+                oldCatalog = connection.getCatalog();
+                connection.setCatalog(currentCatalog);
             }
 
             //
             // Only apply max_rows to selects
             //
-            if (_conn.useMaxRows()) {
-                _conn.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
+            if (connection.useMaxRows())
+            {
+                connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1);
             }
 
-            rs = _conn.execSQL(sql, -1, java.sql.ResultSet.CONCUR_READ_ONLY);
-            rs.setConnection(_conn);
+            rs = connection.execSQL(sql, -1, java.sql.ResultSet.CONCUR_READ_ONLY, 
+                               false);
+            rs.setConnection(connection);
 
-            if (oldCatalog != null) {
-                _conn.setCatalog(oldCatalog);
+            if (oldCatalog != null)
+            {
+                connection.setCatalog(oldCatalog);
             }
         }
 
-        if (rs.reallyResult()) {
+        if (rs.reallyResult())
+        {
+
+            if (!connection.getAutoCommit())
+            {
+
+                try
+                {
+                    connection.rollback();
+                }
+                catch (SQLException sqlEx)
+                {
+
+                    // FIXME: Log later?
+                }
+            }
+
+            rs.close();
             throw new java.sql.SQLException("Results returned for UPDATE ONLY.", 
                                             "01S03");
-        } else {
-            _updateCount = rs.getUpdateCount();
+        }
+        else
+        {
+            updateCount = rs.getUpdateCount();
 
             int truncated_updateCount = 0;
 
-            if (_updateCount > Integer.MAX_VALUE) {
+            if (updateCount > Integer.MAX_VALUE)
+            {
                 truncated_updateCount = Integer.MAX_VALUE;
-            } else {
-                truncated_updateCount = (int)_updateCount;
+            }
+            else
+            {
+                truncated_updateCount = (int)updateCount;
             }
 
-            _lastInsertId = rs.getUpdateID();
+            lastInsertId = rs.getUpdateID();
 
             return truncated_updateCount;
         }
@@ -1164,7 +1299,8 @@ public class Statement
                         throws SQLException
     {
 
-        if (_isClosed) {
+        if (isClosed)
+        {
             throw new SQLException("No operations allowed after statement closed");
         }
     }
@@ -1174,7 +1310,7 @@ public class Statement
      */
     void setResultSetConcurrency(int concurrencyFlag)
     {
-        _resultSetConcurrency = concurrencyFlag;
+        resultSetConcurrency = concurrencyFlag;
     }
 
     /**
@@ -1182,6 +1318,27 @@ public class Statement
      */
     void setResultSetType(int typeFlag)
     {
-        _resultSetType = typeFlag;
+        resultSetType = typeFlag;
+    }
+
+    /**
+     * We only stream result sets when they are forward-only, read-only,
+     * and the fetch size has been set to Integer.MIN_VALUE
+     */
+    protected boolean createStreamingResultSet()
+    {
+
+        if (!(resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY && 
+                resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY && 
+                fetchSize == Integer.MIN_VALUE))
+        {
+
+            return false;
+        }
+        else
+        {
+
+            return true;
+        }
     }
 }

@@ -26,72 +26,67 @@
  */
 package com.mysql.jdbc;
 
-import java.sql.*;
-
-import java.util.*;
-
-
 public class Field
 {
 
     //~ Instance/static variables .............................................
 
-    private final static int _AUTO_INCREMENT_FLAG = 512;
-    int                      _colDecimals;
-    short                    _colFlag;
-    int                      _length; // Internal length of the field;
-    int                      _mysqlType = -1; // the MySQL type
-    String                   _name; // The Field name
-    int                      _sqlType   = -1; // the java.sql.Type
-    String                   _tableName; // The Name of the Table
-    private String           _fullName;
+    private final static int AUTO_INCREMENT_FLAG = 512;
+    int                      colDecimals;
+    short                    colFlag;
+    int                      length; // Internal length of the field;
+    int                      mysqlType = -1; // the MySQL type
+    String                   name; // The Field name
+    int                      sqlType   = -1; // the java.sql.Type
+    String                   tableName; // The Name of the Table
+    private String           fullName;
 
     //~ Constructors ..........................................................
 
     /**
    * Constructor used by DatabaseMetaData methods.
    */
-    public Field(String Table, String Name, int jdbc_type, int length)
+    public Field(String tableName, String columnName, int jdbcType, int length)
     {
-        this._tableName = Table;
-        this._name      = Name;
-        this._length    = length;
-        _sqlType        = jdbc_type;
-        _colFlag        = 0;
-        _colDecimals    = 0;
+        this.tableName = tableName;
+        this.name      = columnName;
+        this.length    = length;
+        sqlType        = jdbcType;
+        colFlag        = 0;
+        colDecimals    = 0;
     }
 
-    Field(String Table, String Name, int length, int mysql_type, 
-          short col_flag, int col_decimals)
+    Field(String tableName, String columnName, int length, int mysqlType, 
+          short colFlag, int colDecimals)
     {
-        this._tableName = Table;
-        this._name      = Name;
-        this._length    = length;
-        _colFlag        = col_flag;
-        _colDecimals    = col_decimals;
-        this._mysqlType = mysql_type;
+        this.tableName = tableName;
+        this.name      = columnName;
+        this.length    = length;
+        this.colFlag        = colFlag;
+        this.colDecimals    = colDecimals;
+        this.mysqlType = mysqlType;
 
         // Map MySqlTypes to java.sql Types
-        _sqlType = MysqlDefs.mysqlToJavaType(mysql_type);
+        sqlType = MysqlDefs.mysqlToJavaType(mysqlType);
 
         StringBuffer fullNameBuf = new StringBuffer(
-                                           _tableName.length() + 1 + 
-                                           _name.length());
-        fullNameBuf.append(_tableName);
+                                           tableName.length() + 1 + 
+                                           name.length());
+        fullNameBuf.append(tableName);
         fullNameBuf.append(".");
-        fullNameBuf.append(_name);
-        _fullName   = fullNameBuf.toString();
+        fullNameBuf.append(name);
+        fullName   = fullNameBuf.toString();
         fullNameBuf = null;
 
-        boolean is_binary = isBinary();
+        boolean isBinary = isBinary();
 
         //
         // Handle TEXT type (special case), Fix proposed by Peter McKeown
         //
-        if (_sqlType == java.sql.Types.LONGVARBINARY && !is_binary) {
-            _sqlType = java.sql.Types.LONGVARCHAR;
-        } else if (_sqlType == java.sql.Types.VARBINARY && !is_binary) {
-            _sqlType = java.sql.Types.VARCHAR;
+        if (sqlType == java.sql.Types.LONGVARBINARY && !isBinary) {
+            sqlType = java.sql.Types.LONGVARCHAR;
+        } else if (sqlType == java.sql.Types.VARBINARY && !isBinary) {
+            sqlType = java.sql.Types.VARCHAR;
         }
     }
 
@@ -100,7 +95,7 @@ public class Field
     public boolean isAutoIncrement()
     {
 
-        if ((_colFlag & _AUTO_INCREMENT_FLAG) > 0) {
+        if ((colFlag & AUTO_INCREMENT_FLAG) > 0) {
 
             return true;
         } else {
@@ -112,7 +107,7 @@ public class Field
     public boolean isBinary()
     {
 
-        if ((_colFlag & 128) > 0) {
+        if ((colFlag & 128) > 0) {
 
             return true;
         }
@@ -125,7 +120,7 @@ public class Field
     public boolean isBlob()
     {
 
-        if ((_colFlag & 16) > 0) {
+        if ((colFlag & 16) > 0) {
 
             return true;
         }
@@ -138,19 +133,19 @@ public class Field
     public String getFullName()
     {
 
-        return _fullName;
+        return fullName;
     }
 
     public int getLength()
     {
 
-        return _length;
+        return length;
     }
 
     public boolean isMultipleKey()
     {
 
-        if ((_colFlag & 8) > 0) {
+        if ((colFlag & 8) > 0) {
 
             return true;
         }
@@ -163,15 +158,15 @@ public class Field
     public int getMysqlType()
     {
 
-        return _mysqlType;
+        return mysqlType;
     }
 
     public String getName()
     {
 
-        if (_name != null) {
+        if (name != null) {
 
-            return _name;
+            return name;
         }
          else {
 
@@ -182,7 +177,7 @@ public class Field
     public boolean isPrimaryKey()
     {
 
-        if ((_colFlag & 2) > 0) {
+        if ((colFlag & 2) > 0) {
 
             return true;
         }
@@ -195,15 +190,15 @@ public class Field
     public int getSQLType()
     {
 
-        return _sqlType;
+        return sqlType;
     }
 
     public String getTable()
     {
 
-        if (_tableName != null) {
+        if (tableName != null) {
 
-            return _tableName;
+            return tableName;
         }
          else {
 
@@ -214,13 +209,13 @@ public class Field
     public String getTableName()
     {
 
-        return _tableName;
+        return tableName;
     }
 
     public boolean isUniqueKey()
     {
 
-        if ((_colFlag & 4) > 0) {
+        if ((colFlag & 4) > 0) {
 
             return true;
         }
@@ -233,7 +228,7 @@ public class Field
     public boolean isUnsigned()
     {
 
-        if ((_colFlag & 32) > 0) {
+        if ((colFlag & 32) > 0) {
 
             return true;
         }
@@ -246,7 +241,7 @@ public class Field
     public boolean isZeroFill()
     {
 
-        if ((_colFlag & 64) > 0) {
+        if ((colFlag & 64) > 0) {
 
             return true;
         }
@@ -265,13 +260,13 @@ public class Field
     int getDecimals()
     {
 
-        return _colDecimals;
+        return colDecimals;
     }
 
     boolean isNotNull()
     {
 
-        if ((_colFlag & 1) > 0) {
+        if ((colFlag & 1) > 0) {
 
             return true;
         }

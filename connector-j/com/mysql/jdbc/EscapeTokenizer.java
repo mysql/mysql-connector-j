@@ -30,23 +30,23 @@ public class EscapeTokenizer
 
     //~ Instance/static variables .............................................
 
-    protected boolean _emittingEscapeCode = false;
-    protected boolean _inBraces     = false;
-    protected boolean _inQuotes     = false;
-    protected char    _lastChar     = 0;
-    protected char    _lastLastChar = 0;
-    protected int     _pos          = 0;
-    protected char    _quoteChar    = 0;
-    protected String  _source       = null;
-    protected int     _sourceLength = 0;
+    protected boolean emittingEscapeCode = false;
+    protected boolean inBraces     = false;
+    protected boolean inQuotes     = false;
+    protected char    lastChar     = 0;
+    protected char    lastLastChar = 0;
+    protected int     pos          = 0;
+    protected char    quoteChar    = 0;
+    protected String  source       = null;
+    protected int     sourceLength = 0;
 
     //~ Constructors ..........................................................
 
     public EscapeTokenizer(String s)
     {
-        _source       = s;
-        _sourceLength = s.length();
-        _pos          = 0;
+        source       = s;
+        sourceLength = s.length();
+        pos          = 0;
     }
 
     //~ Methods ...............................................................
@@ -54,7 +54,7 @@ public class EscapeTokenizer
     public synchronized boolean hasMoreTokens()
     {
 
-        return (_pos < _sourceLength);
+        return (pos < sourceLength);
     }
 
     public synchronized String nextToken()
@@ -62,85 +62,85 @@ public class EscapeTokenizer
 
         StringBuffer tokenBuf = new StringBuffer();
 
-        if (_emittingEscapeCode) {
+        if (emittingEscapeCode) {
             tokenBuf.append("{");
-            _emittingEscapeCode = false;
+            emittingEscapeCode = false;
         }
 
-        for (; _pos < _sourceLength; _pos++) {
+        for (; pos < sourceLength; pos++) {
 
-            char c = _source.charAt(_pos);
+            char c = source.charAt(pos);
 
             if (c == '\'') {
 
-                if (_lastChar != '\\') {
+                if (lastChar != '\\') {
 
-                    if (_inQuotes) {
+                    if (inQuotes) {
 
-                        if (_quoteChar == c) {
-                            _inQuotes = false;
+                        if (quoteChar == c) {
+                            inQuotes = false;
                         }
                     } else {
-                        _inQuotes  = true;
-                        _quoteChar = c;
+                        inQuotes  = true;
+                        quoteChar = c;
                     }
-                } else if (_lastLastChar == '\\') {
+                } else if (lastLastChar == '\\') {
 
-                    if (_inQuotes) {
+                    if (inQuotes) {
 
-                        if (_quoteChar == c) {
-                            _inQuotes = false;
+                        if (quoteChar == c) {
+                            inQuotes = false;
                         }
                     } else {
-                        _inQuotes  = true;
-                        _quoteChar = c;
+                        inQuotes  = true;
+                        quoteChar = c;
                     }
                 }
 
                 tokenBuf.append(c);
             } else if (c == '"') {
 
-                if (_lastChar != '\\' && _lastChar != '"') {
+                if (lastChar != '\\' && lastChar != '"') {
 
-                    if (_inQuotes) {
+                    if (inQuotes) {
 
-                        if (_quoteChar == c) {
-                            _inQuotes = false;
+                        if (quoteChar == c) {
+                            inQuotes = false;
                         }
                     } else {
-                        _inQuotes  = true;
-                        _quoteChar = c;
+                        inQuotes  = true;
+                        quoteChar = c;
                     }
-                } else if (_lastLastChar == '\\') {
+                } else if (lastLastChar == '\\') {
 
-                    if (_inQuotes) {
+                    if (inQuotes) {
 
-                        if (_quoteChar == c) {
-                            _inQuotes = false;
+                        if (quoteChar == c) {
+                            inQuotes = false;
                         }
                     } else {
-                        _inQuotes  = true;
-                        _quoteChar = c;
+                        inQuotes  = true;
+                        quoteChar = c;
                     }
                 }
 
                 tokenBuf.append(c);
             } else if (c == '{') {
 
-                if (_inQuotes) {
+                if (inQuotes) {
                     tokenBuf.append(c);
                 } else {
-                    _pos++;
-                    _emittingEscapeCode = true;
+                    pos++;
+                    emittingEscapeCode = true;
 
                     return tokenBuf.toString();
                 }
             } else if (c == '}') {
                 tokenBuf.append(c);
 
-                if (!_inQuotes) {
-                    _lastChar = c;
-                    _pos++;
+                if (!inQuotes) {
+                    lastChar = c;
+                    pos++;
 
                     return tokenBuf.toString();
                 }
@@ -148,8 +148,8 @@ public class EscapeTokenizer
                 tokenBuf.append(c);
             }
 
-            _lastLastChar = _lastChar;
-            _lastChar     = c;
+            lastLastChar = lastChar;
+            lastChar     = c;
         }
 
         return tokenBuf.toString();
