@@ -807,71 +807,71 @@ public class DatabaseMetaData
                                 size = typeInfo.substring(
                                                (typeInfo.indexOf("(") + 1), 
                                                (typeInfo.indexOf(")")));
-                            } else if (typeInfo.toLowerCase().equals("tinyint")) {
+                            } else if (typeInfo.equalsIgnoreCase("tinyint")) {
                                 size = "1";
-                            } else if (typeInfo.toLowerCase().equals(
+                            } else if (typeInfo.equalsIgnoreCase(
                                                "smallint")) {
                                 size = "6";
-                            } else if (typeInfo.toLowerCase().equals(
+                            } else if (typeInfo.equalsIgnoreCase(
                                                "mediumint")) {
                                 size = "6";
-                            } else if (typeInfo.toLowerCase().equals("int")) {
+                            } else if (typeInfo.equalsIgnoreCase("int")) {
                                 size = "11";
-                            } else if (typeInfo.toLowerCase().equals("integer")) {
+                            } else if (typeInfo.equalsIgnoreCase("integer")) {
                                 size = "11";
-                            } else if (typeInfo.toLowerCase().equals("bigint")) {
+                            } else if (typeInfo.equalsIgnoreCase("bigint")) {
                                 size = "25";
-                            } else if (typeInfo.toLowerCase().equals("int24")) {
+                            } else if (typeInfo.equalsIgnoreCase("int24")) {
                                 size = "25";
-                            } else if (typeInfo.toLowerCase().equals("real")) {
+                            } else if (typeInfo.equalsIgnoreCase("real")) {
                                 size = "12";
-                            } else if (typeInfo.toLowerCase().equals("float")) {
+                            } else if (typeInfo.equalsIgnoreCase("float")) {
                                 size = "12";
-                            } else if (typeInfo.toLowerCase().equals("decimal")) {
+                            } else if (typeInfo.equalsIgnoreCase("decimal")) {
                                 size = "12";
-                            } else if (typeInfo.toLowerCase().equals("numeric")) {
+                            } else if (typeInfo.equalsIgnoreCase("numeric")) {
                                 size = "12";
-                            } else if (typeInfo.toLowerCase().equals("double")) {
+                            } else if (typeInfo.equalsIgnoreCase("double")) {
                                 size = "22";
-                            } else if (typeInfo.toLowerCase().equals("char")) {
+                            } else if (typeInfo.equalsIgnoreCase("char")) {
                                 size = "1";
-                            } else if (typeInfo.toLowerCase().equals("varchar")) {
+                            } else if (typeInfo.equalsIgnoreCase("varchar")) {
                                 size = "255";
-                            } else if (typeInfo.toLowerCase().equals("date")) {
+                            } else if (typeInfo.equalsIgnoreCase("date")) {
                                 size = "10";
-                            } else if (typeInfo.toLowerCase().equals("time")) {
+                            } else if (typeInfo.equalsIgnoreCase("time")) {
                                 size = "8";
-                            } else if (typeInfo.toLowerCase().equals(
+                            } else if (typeInfo.equalsIgnoreCase(
                                                "timestamp")) {
                                 size = "19";
-                            } else if (typeInfo.toLowerCase().equals(
+                            } else if (typeInfo.equalsIgnoreCase(
                                                "datetime")) {
                                 size = "19";
-                            } else if (typeInfo.toLowerCase().equals(
+                            } else if (typeInfo.equalsIgnoreCase(
                                                "tinyblob")) {
                                 size = "255";
-                            } else if (typeInfo.toLowerCase().equals("blob")) {
+                            } else if (typeInfo.equalsIgnoreCase("blob")) {
                                 size = Integer.toString(Math.min(65535, 
                                                                  MysqlIO.getMaxBuf()));
-                            } else if (typeInfo.toLowerCase().equals(
+                            } else if (typeInfo.equalsIgnoreCase(
                                                "mediumblob")) {
                                 size = Integer.toString(Math.min(16277215, 
                                                                  MysqlIO.getMaxBuf()));
-                            } else if (typeInfo.toLowerCase().equals(
+                            } else if (typeInfo.equalsIgnoreCase(
                                                "longblob")) {
                                 size = Integer.toString(Integer.MAX_VALUE);
-                            } else if (typeInfo.toLowerCase().equals(
+                            } else if (typeInfo.equalsIgnoreCase(
                                                "tinytext")) {
                                 size = "255";
-                            } else if (typeInfo.toLowerCase().equals("text")) {
+                            } else if (typeInfo.equalsIgnoreCase("text")) {
                                 size = "65535";
-                            } else if (typeInfo.toLowerCase().equals(
+                            } else if (typeInfo.equalsIgnoreCase(
                                                "mediumtext")) {
                                 size = Integer.toString(Math.min(16277215, 
                                                                  MysqlIO.getMaxBuf()));
-                            } else if (typeInfo.toLowerCase().equals("enum")) {
+                            } else if (typeInfo.equalsIgnoreCase("enum")) {
                                 size = "255";
-                            } else if (typeInfo.toLowerCase().equals("set")) {
+                            } else if (typeInfo.equalsIgnoreCase("set")) {
                                 size = "255";
                             }
 

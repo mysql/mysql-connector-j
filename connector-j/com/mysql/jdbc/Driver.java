@@ -529,7 +529,7 @@ public class Driver
 
                 if (protocol != null) {
 
-                    if (!protocol.toLowerCase().equals("jdbc")) {
+                    if (!protocol.equalsIgnoreCase("jdbc")) {
 
                         return null;
                     }
@@ -569,7 +569,7 @@ public class Driver
 
                 if (subProto != null) {
 
-                    if (!subProto.toLowerCase().equals("mysql")) {
+                    if (!subProto.equalsIgnoreCase("mysql")) {
 
                         return null;
                     }
