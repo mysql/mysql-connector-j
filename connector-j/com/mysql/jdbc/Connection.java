@@ -666,12 +666,12 @@ public class Connection
     /**
      * JDBC 2.0
      *
-     * Install a type-map object as the default type-map for
-     * this connection
+    ï¿½* Install a type-map object as the default type-map for
+    ï¿½* this connection
      *
      * @param map the type mapping
      * @throws SQLException if a database error occurs.
-     */
+    ï¿½*/
     public void setTypeMap(java.util.Map map)
                     throws SQLException {
         throw new NotImplemented();
@@ -680,12 +680,12 @@ public class Connection
     /**
      * JDBC 2.0
      *
-     * Get the type-map object associated with this connection.
-     * By default, the map returned is empty.
+    ï¿½* Get the type-map object associated with this connection.
+    ï¿½* By default, the map returned is empty.
      *
      * @return the type map
      * @throws SQLException if a database error occurs
-     */
+    ï¿½*/
     public java.util.Map getTypeMap()
                              throws SQLException {
         throw new NotImplemented();
@@ -1202,7 +1202,9 @@ public class Connection
 		    if (useUnicode.startsWith("TRUE")) {
 		        this.doUnicode = true;
 		    }
+		}
 		
+		if (this.doUnicode) {
 		    if (info.getProperty("characterEncoding") != null) {
 		        this.encoding = info.getProperty("characterEncoding");
 		
@@ -1944,6 +1946,11 @@ public class Connection
     private void checkServerEncoding()
                               throws SQLException {
 
+		if (this.doUnicode && this.encoding != null) {
+			// spec'd by client, don't map
+			return;
+		}
+		
         String serverEncoding = (String) this.serverVariables.get(
                                         "character_set");
         String mappedServerEncoding = null;

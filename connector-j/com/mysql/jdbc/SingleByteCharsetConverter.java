@@ -83,13 +83,7 @@ public class SingleByteCharsetConverter {
 
         SingleByteCharsetConverter instance = (SingleByteCharsetConverter) converterMap.get(
                                                       encodingName);
-
-        if (instance == null) {
-            throw new UnsupportedEncodingException("Character encoding '"
-                                                   + encodingName
-                                                   + "' is not supported.");
-        }
-
+                                                      
         return instance;
     }
 
