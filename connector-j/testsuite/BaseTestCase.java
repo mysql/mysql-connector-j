@@ -111,4 +111,16 @@ public abstract class BaseTestCase
             }
         }
     }
+    
+    /**
+     * Checks whether a certain system property is defined,
+     * in order to run/not-run certain tests
+     */
+    protected boolean runTestIfSysPropDefined(String propName) {
+        String prop = System.getProperty(propName);
+        
+        return prop != null && prop.length() > 0;
+    }
+        
+        
 }
