@@ -39,118 +39,100 @@ public interface RowData {
     //~ Methods ...............................................................
 
     /** Returns true if another row exsists.*/
-    public boolean hasNext()
+    boolean hasNext()
                     throws SQLException;
 
     /** Returns the next row.*/
-    public byte[][] next()
+    byte[][] next()
                   throws SQLException;
 
     /** Returns if iteration has not occured yet.*/
-    public boolean isBeforeFirst()
+    boolean isBeforeFirst()
                           throws SQLException;
 
     /** Returns true if we got the last element.*/
-    public boolean isAfterLast()
+    boolean isAfterLast()
                         throws SQLException;
 
     /** Moves to before first.*/
-    public void beforeFirst()
+    void beforeFirst()
                      throws SQLException;
 
     /** Moves to after last.*/
-    public void afterLast()
+    void afterLast()
                    throws SQLException;
 
     /** Moves to before last so next el is the last el.*/
-    public void beforeLast()
+    void beforeLast()
                     throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME! 
-     * @throws SQLException DOCUMENT ME!
+     * Are we on the first row of the result set?
      */
-    public boolean isFirst()
+    boolean isFirst()
                     throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME! 
-     * @throws SQLException DOCUMENT ME!
+     * Are we on the last row of the result set?
      */
-    public boolean isLast()
+    boolean isLast()
                    throws SQLException;
 
     /** We're done.*/
-    public void close()
+    void close()
                throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME! 
-     * @throws SQLException DOCUMENT ME!
+     * Returns the current position in the result set as 
+     * a row number.
      */
-    public int getCurrentRowNumber()
+    int getCurrentRowNumber()
                             throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @param index DOCUMENT ME!
-     * @throws SQLException DOCUMENT ME!
+     * Moves the current position in the result set to 
+     * the given row number.
      */
-    public void setCurrentRow(int index)
+    void setCurrentRow(int rowNumber)
                        throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @param rows DOCUMENT ME!
-     * @throws SQLException DOCUMENT ME!
+     * Moves the current position relative 'rows' from
+     * the current position.
      */
-    public void moveRowRelative(int rows)
+    void moveRowRelative(int rows)
                          throws SQLException;
 
     /** 
      * Returns true if the result set is dynamic.
-        *  
-        * This means that move back and move forward won't work
+     *  
+     * This means that move back and move forward won't work
      * because we do not hold on to the records.
      */
-    public boolean isDynamic()
+    boolean isDynamic()
                       throws SQLException;
 
     /** Only works on non dynamic result sets.*/
-    public int size()
+    int size()
              throws SQLException;
 
     /** Has no records.*/
-    public boolean isEmpty()
+    boolean isEmpty()
                     throws SQLException;
 
     /** Only works on non dynamic result sets.*/
-    public byte[][] getAt(int index)
+    byte[][] getAt(int index)
                    throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @param row DOCUMENT ME!
-     * @throws SQLException DOCUMENT ME!
+     * Adds a row to this row data.
      */
-    public void addRow(byte[][] row)
+    void addRow(byte[][] row)
                 throws SQLException;
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @param index DOCUMENT ME!
-     * @throws SQLException DOCUMENT ME!
+     * Removes the row at the given index.
      */
-    public void removeRow(int index)
+    void removeRow(int index)
                    throws SQLException;
 }
