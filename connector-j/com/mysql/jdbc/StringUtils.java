@@ -225,4 +225,20 @@ public class StringUtils {
 
         return bytesOut.toByteArray();
     }
+    
+    /** 
+     * Determines whether or not the string 'searchIn' contains
+     * the string 'searchFor', dis-regarding case.
+     * 
+     * Shorthand for a String.regionMatch(...)
+     * 
+     * @param searchIn the string to search in
+     * @param searchFor the string to search for
+     * 
+     * @return whether searchIn starts with searchFor, ignoring case
+     */
+    
+    public static boolean startsWithIgnoreCase(String searchIn, String searchFor) {
+        return searchIn.regionMatches(true, 0, searchFor, 0, searchFor.length());   
+    }
 }
