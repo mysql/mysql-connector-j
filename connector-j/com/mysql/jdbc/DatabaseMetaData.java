@@ -1542,7 +1542,7 @@ public class DatabaseMetaData
                             throws java.sql.SQLException
     {
 
-        return "3.0.0-dev";
+        return "3.0.0-beta";
     }
 
     /**
