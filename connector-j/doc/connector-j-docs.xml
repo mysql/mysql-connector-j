@@ -1,0 +1,56 @@
+<?xml version='1.0'?>
+ <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+                    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<book>
+	<bookinfo>
+		<title>MySQL Connector/J 3.0 Documentation</title>
+		<author>
+			<firstname>Mark</firstname>
+			<surname>Matthews</surname>
+		</author>
+		<copyright>
+			<year>2002</year>
+			<holder>MySQL AB</holder>
+		</copyright>
+	</bookinfo>
+	
+	<chapter>
+		<title>Release Notes</title>
+		<para>...</para>
+		<sect1>
+			<title>First Section</title>
+			<para>...</para>
+		</sect1>
+	</chapter>
+	
+	<chapter>
+		<title>Installation</title>
+		<para>...</para>
+		<sect1>
+			<title>First Section</title>
+			<para>...</para>
+		</sect1>
+	</chapter>
+	
+	<chapter>
+		<title>Developing Applications with JDBC</title>
+		<para>...</para>
+		<sect1>
+			<title>First Section</title>
+			<para>...</para>
+		</sect1>
+	</chapter>
+	
+	<chapter>
+		<title>Troubleshooting</title>
+		<para>...</para>
+		<sect1>
+			<title>First Section</title>
+			<para>...</para>
+		</sect1>
+	</chapter>
+</book>
+
+
+
+
