@@ -59,7 +59,7 @@ public class Statements
             } catch (SQLException sqlEx) { /* ignore */
             }
 
-            stmt.executeUpdate("CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255), strdata2 varchar(255))");
+            stmt.executeUpdate("CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
 
             for (int i = 0; i < 10; i++) {
                 stmt.executeUpdate("INSERT INTO statement_test (strdata1,strdata2) values ('abcdefg', 'poi')");
