@@ -20,9 +20,11 @@ package com.mysql.jdbc;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
+import java.io.Reader;
 import java.io.StringReader;
 
 import java.math.BigDecimal;
@@ -420,19 +422,12 @@ public class PreparedStatement
                 StringBuffer buf = new StringBuffer(length);
                 char[] c = new char[4096];
                 int len = 0;
+                
                 boolean useLength = this.connection.useStreamLengthsInPrepStmts();
                 
                 if (useLength && length != -1) {
-                    int readLen = reader.read(c, 0, length); // blocks until all read
-                    
-                    if (readLen == -1) {
-                        throw new SQLException("Unexpected end-of-stream", "S1009");
-                    }
-                    else if (readLen != length) {
-                        throw new SQLException("Only read " + readLen + " of " + length + " expected characters.", "S1009");
-                    }
-                    
-                    
+                    readFully(reader, c, length); // blocks until all read
+                          
                     buf.append(c, 0, length);
                 } else {
                     while ((len = reader.read(c)) != -1) {
@@ -2411,6 +2406,29 @@ public class PreparedStatement
         } else {
             setNull(parameterIndex, Types.CHAR);
         }
+    }
+    
+    /**
+     * Reads length bytes from reader into buf. Blocks until
+     * enough input is available
+     */
+    
+    private static void readFully(Reader reader, char[] buf, int length) 
+        throws IOException {
+            
+
+        int numCharsRead = 0;
+        
+        while (numCharsRead < length) {
+            int count = reader.read(buf, numCharsRead, length - numCharsRead);
+            
+            if (count < 0) {
+                throw new EOFException();
+            }
+            
+            numCharsRead += count;
+        }
+
     }
 
     //~ Inner classes .........................................................
