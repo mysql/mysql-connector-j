@@ -163,7 +163,6 @@ public class DateTest
             System.out.println("\n");
         }
 
-        System.out.println("Blah " + thenDate);
         rs.close();
         rs = null;
     }
