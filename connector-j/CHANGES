@@ -15,6 +15,7 @@ xx-xx-xx - Version 3.0.3-dev
 	  for some floating point types.
 	- Fixed ResultSetMetaData.getColumnTypeName() returning BLOB for 
 	  TEXT and TEXT for BLOB types.
+	- Fixed Buffer.isLastDataPacket() for 4.1 and newer servers.
 	  
 11-08-02 - Version 3.0.2-dev
 
