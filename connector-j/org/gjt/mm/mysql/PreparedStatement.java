@@ -1472,7 +1472,7 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement
 					}
 					else
 					{
-						SB.append(_ParameterStrings[i]);
+						SB.append(new String(_ParameterStrings[i].getBytes()));
 					}
 				}
 			}
