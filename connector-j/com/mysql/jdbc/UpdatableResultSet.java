@@ -1940,6 +1940,10 @@ public class UpdatableResultSet
         if (fields.length > 0) {
 
             tableName = fields[0].getTableName();
+            
+            if (fields[0].isPrimaryKey()) {
+                primaryKeyCount++;
+            }
 
             //
             // References only one table?
