@@ -46,8 +46,33 @@ public class Field {
     private int tableNameLength;
     private byte[] buffer;
     private String fullName = null;
+    private String fullOriginalName = null;
+    private String fullNameWithDatabase = null;
+    private String fullOriginalNameWithDatabase = null;
     private Connection connection = null;
     private int precisionAdjustFactor = 0;
+    
+    // database name info
+    private int databaseNameStart = -1;
+    private int databaseNameLength = -1;
+    private String databaseName = null;
+    
+    // table name info (before aliasing)
+    private int originalTableNameStart = -1;
+    private int originalTableNameLength = -1;
+    private String originalTableName = null;
+    
+    // column name info (before aliasing)
+    private int originalColumnNameStart = -1;
+    private int originalColumnNameLength = -1;
+    private String originalColumnName = null;
+    
+    // default value info - from COM_LIST_FIELDS execution
+    private int defaultValueStart = -1;
+    private int defaultValueLength = -1;
+    private String defaultValue = null;
+        
+    
 
     //~ Constructors ..........................................................
 
@@ -63,9 +88,40 @@ public class Field {
         colDecimals = 0;
     }
 
+    /**
+     * Constructor used when communicating with pre 4.1 servers
+     */
     Field(Connection conn, byte[] buffer, int nameStart, int nameLength, int tableNameStart, 
           int tableNameLength, int length, int mysqlType, short colFlag, 
           int colDecimals) {
+            this(conn, buffer, 
+                 -1, -1, 
+                 tableNameStart, tableNameLength,
+                 -1, -1,
+                 nameStart, nameLength,
+                 -1, -1,
+                 length,
+                 mysqlType,
+                 colFlag,
+                 colDecimals,
+                 -1, -1);  
+    }
+    
+    /**
+     * Constructor used when communicating with 4.1 and newer
+     * servers
+     */
+    Field(Connection conn, byte[] buffer,
+          int databaseNameStart, int databaseNameLength,
+          int tableNameStart, int tableNameLength, 
+          int originalTableNameStart, int originalTableNameLength,
+          int nameStart, int nameLength, 
+          int originalColumnNameStart, int originalColumnNameLength,
+          int length, 
+          int mysqlType, 
+          short colFlag, 
+          int colDecimals,
+          int defaultValueStart, int defaultValueLength) {
         this.connection = conn;
         this.buffer = buffer;
         this.nameStart = nameStart;
@@ -76,7 +132,21 @@ public class Field {
         this.colFlag = colFlag;
         this.colDecimals = colDecimals;
         this.mysqlType = mysqlType;
-
+        
+        // 4.1 field info...
+        
+        this.databaseNameStart = databaseNameStart;
+        this.databaseNameLength = databaseNameLength;
+    
+        this.originalTableNameStart = originalTableNameStart;
+        this.originalTableNameLength = originalTableNameLength;
+        
+        this.originalColumnNameStart = originalColumnNameStart;
+        this.originalColumnNameLength = originalColumnNameLength;
+    
+        this.defaultValueStart = defaultValueStart;
+        this.defaultValueLength = defaultValueLength;
+   
         // Map MySqlTypes to java.sql Types
         sqlType = MysqlDefs.mysqlToJavaType(mysqlType);
 
@@ -114,7 +184,7 @@ public class Field {
                  this.precisionAdjustFactor = 1;
                  break;
             }
-        }    
+        }  
     }
 
     //~ Methods ...............................................................
@@ -194,6 +264,37 @@ public class Field {
 
         return fullName;
     }
+    
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
+    public String getFullOriginalName() {
+
+        getOriginalName();
+        
+        if (this.originalColumnName == null) {
+            return null; // we don't have this information
+        } 
+        
+        
+        if (fullName == null) {
+
+            StringBuffer fullOriginalNameBuf = new StringBuffer(
+                                               getOriginalTableName().length() + 1
+                                               + getOriginalName().length());
+            fullOriginalNameBuf.append(this.originalTableName);
+
+            // much faster to append a char than a String
+            fullOriginalNameBuf.append('.');
+            fullOriginalNameBuf.append(this.originalColumnName);
+            this.fullOriginalName = fullOriginalNameBuf.toString();
+            fullOriginalNameBuf = null;
+        }
+
+        return this.fullOriginalName;
+    }
 
     /**
      * DOCUMENT ME!
@@ -238,12 +339,64 @@ public class Field {
      */
     public String getName() {
 
-        if (name == null) {
-            name = getStringFromBytes(nameStart, nameLength);
+        if (this.name == null) {
+            this.name = getStringFromBytes(this.nameStart, this.nameLength);
         }
 
         return name;
     }
+    
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
+    public String getOriginalName() {
+
+        if (this.originalColumnName == null 
+            && this.originalColumnNameStart != -1 
+            && this.originalColumnNameLength != -1) {
+            this.originalColumnName = getStringFromBytes(this.originalColumnNameStart, 
+            this.originalColumnNameLength);
+        }
+
+        return this.originalColumnName;
+    }
+    
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
+    public String getOriginalTableName() {
+
+        if (this.originalTableName == null 
+            && this.originalTableNameStart != -1 
+            && this.originalTableNameLength != -1) {
+            this.originalTableName = getStringFromBytes(this.originalTableNameStart, 
+            this.originalTableNameLength);
+        }
+
+        return this.originalTableName;
+    }
+    
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
+    public String getDatabaseName() {
+
+        if (this.databaseName == null 
+            && this.databaseNameStart != -1 
+            && this.databaseNameLength != -1) {
+            this.databaseName = getStringFromBytes(this.databaseNameStart, 
+            this.databaseNameLength);
+        }
+
+        return this.databaseName;
+    }
+
 
     /**
      * DOCUMENT ME!
@@ -301,6 +454,10 @@ public class Field {
      */
     private String getStringFromBytes(int stringStart, int stringLength) {
 
+        if (stringStart == -1 || stringLength == -1) {
+            return null;
+        }
+        
         String stringVal = null;
 
         if (connection != null) {

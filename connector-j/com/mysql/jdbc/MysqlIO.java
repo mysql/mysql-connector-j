@@ -141,6 +141,18 @@ public class MysqlIO {
     private String socketFactoryClassName = null;
     private SocketFactory socketFactory = null;
     private boolean isInteractiveClient = false;
+    
+    /** 
+     * Does the server support long column info?
+     */
+    
+    private boolean hasLongColumnInfo = false;
+    
+    /**
+     * Should we use 4.1 protocol extensions?
+     */
+    
+    private boolean use41Extensions = false;
 
     //~ Constructors ..........................................................
 
@@ -209,7 +221,7 @@ public class MysqlIO {
         // Read in the column information
         for (int i = 0; i < columnCount; i++) {
             packet = readPacket();
-            fields[i] = unpackField(packet);
+            fields[i] = unpackField(packet, false);
         }
 
         packet = readPacket();
@@ -257,50 +269,83 @@ public class MysqlIO {
         return buildResultSetWithRows(fields, rowData, null, resultSetType);
     }
 
-    private final Field unpackField(Buffer packet) {
+    /**
+     * Unpacks the Field information from the given
+     * packet.
+     * 
+     * Understands pre 4.1 and post 4.1 server version field
+     * packet structures.
+     * 
+     * @param packet the packet containing the field information
+     */
+    private final Field unpackField(Buffer packet, boolean extractDefaultValues) {
 
-        if ((this.clientParam & CLIENT_PROTOCOL_41) != 0) {
-
-            // databaseName is never used so skip
-            packet.fastSkipLenString();
+        if (this.use41Extensions) {
 
             // we only store the position of the string and
-            // calculate only if needed...
+            // materialize only if needed...
+            
+            int databaseNameStart = packet.getPosition() + 1;
+            int databaseNameLength = packet.fastSkipLenString();
+            
             int tableNameStart = packet.getPosition() + 1;
             int tableNameLength = packet.fastSkipLenString();
 
             // orgTableName is never used so skip
-            packet.fastSkipLenString();
+            int originalTableNameStart = packet.getPosition() + 1;
+            int originalTableNameLength = packet.fastSkipLenString();
 
             // we only store the position again...
             int nameStart = packet.getPosition() + 1;
             int nameLength = packet.fastSkipLenString();
 
             // orgColName is not required so skip...
-            packet.fastSkipLenString();
+            int originalColumnNameStart = packet.getPosition() + 1;
+            int originalColumnNameLength = packet.fastSkipLenString();
 
             int colLength = packet.readnBytes();
             int colType = packet.readnBytes();
+
             packet.readByte();
 
-            short colFlag = (short) (packet.readByte() & 0xff);
+            short colFlag = 0;
+            
+            if (this.hasLongColumnInfo) {
+                colFlag = (short) (packet.readInt());
+            } else {
+                colFlag = (short) (packet.readByte() & 0xff);
+            }
+            
             int colDecimals = (packet.readByte() & 0xff);
 
             //if (INTERNAL_NUM_FIELD(field))
             //   field->flags|= NUM_FLAG;
-            String defaultValue = packet.readLenString();
 
+            int defaultValueStart = -1;
+            int defaultValueLength = -1;
+            
+            if (extractDefaultValues) {
+                defaultValueStart = packet.getPosition() + 1;
+                defaultValueLength = packet.fastSkipLenString();
+            }
+            
             //if (default_value && row->data[8])
             //   field->def=strdup_root(alloc,(char*) row->data[8]);
             //else
             //   field->def=0;
             //field->max_length= 0;
-            Field field = new Field(this.connection, packet.getBufferSource(), nameStart, 
-                                    nameLength, tableNameStart, 
-                                    tableNameLength, colLength, colType, 
-                                    colFlag, colDecimals);
-            field.setConnection(connection);
-
+            
+            Field field = new Field(this.connection, packet.getBufferSource(), 
+                                    databaseNameStart, databaseNameLength,
+                                    tableNameStart, tableNameLength, 
+                                    originalTableNameStart, originalTableNameLength,
+                                    nameStart, nameLength, 
+                                    originalColumnNameStart, originalColumnNameLength,
+                                    colLength, 
+                                    colType, 
+                                    colFlag, 
+                                    colDecimals,
+                                    defaultValueStart, defaultValueLength);
             return field;
         } else {
 
@@ -312,7 +357,14 @@ public class MysqlIO {
             int colType = packet.readnBytes();
             packet.readByte(); // We know it's currently 2
 
-            short colFlag = (short) (packet.readByte() & 0xff);
+            short colFlag = 0;
+            
+            if (this.hasLongColumnInfo) {
+                colFlag = (short) (packet.readInt());
+            } else {
+                colFlag = (short) (packet.readByte() & 0xff);
+            }
+            
             int colDecimals = (packet.readByte() & 0xff);
 
             if (this.colDecimalNeedsBump) {
@@ -323,7 +375,6 @@ public class MysqlIO {
                                     nameLength, tableNameStart, 
                                     tableNameLength, colLength, colType, 
                                     colFlag, colDecimals);
-            field.setConnection(connection);
 
             return field;
         }
@@ -526,10 +577,19 @@ public class MysqlIO {
                     && this.connection.useSSL()) {
                     this.connection.setUseSSL(false);
                 }
+                
+                if ((serverCapabilities & CLIENT_LONG_FLAG) != 0) {
+                    // We understand other column flags, as well
+                
+                    clientParam |= CLIENT_LONG_FLAG;
+                    this.hasLongColumnInfo = true;
+                }
             }
 
             // return FOUND rows
             clientParam |= CLIENT_FOUND_ROWS;
+            
+            
 
             if (isInteractiveClient) {
                 clientParam |= CLIENT_INTERACTIVE;
@@ -546,7 +606,8 @@ public class MysqlIO {
             // 4.1 has some differences in the protocol
             //
             if (versionMeetsMinimum(4, 1, 0)) {
-                clientParam |= CLIENT_PROTOCOL_41;
+               clientParam |= CLIENT_PROTOCOL_41;
+               this.use41Extensions = true;
             }
 
             int passwordLength = 16;
@@ -1206,6 +1267,11 @@ public class MysqlIO {
                     updateCount = (long) resultPacket.readLength();
                     updateID = (long) resultPacket.readLength();
                 }
+                
+                if (this.use41Extensions) {
+                    int serverStatus = resultPacket.readInt();
+                    int warningCount = resultPacket.readInt();
+                }
             } catch (Exception ex) {
                 throw new java.sql.SQLException(SQLError.get("S1000") + ": "
                                                 + ex.getClass().getName(), 
@@ -1362,7 +1428,7 @@ public class MysqlIO {
         // Get the next incoming packet, re-using the packet because
         // all the data we need gets copied out of it.
         Buffer rowPacket = reuseAndReadPacket(this.reusablePacket);
-
+        
         // check for errors.
         if (rowPacket.readByte() == (byte) 0xff) {
 
@@ -1635,40 +1701,55 @@ public class MysqlIO {
             packet.setPosition(0);
 
             if (useCompression) {
-                headerLength += COMP_HEADER_LENGTH;
-
-                Buffer compressedPacket = new Buffer(packetLen + headerLength);
-                byte[] compressedBytes = compressedPacket.getByteBuffer();
-                int compLen = 0;
+                packet.writeLongInt(packetLen - headerLength);
+                packet.writeByte(this.packetSequence);
 
                 if (packetLen < MIN_COMPRESS_LEN) {
 
                     // Don't compress small packets
-                    compLen = packetLen;
+                    
+                    headerLength += COMP_HEADER_LENGTH;
+
+                    Buffer compressedPacket = new Buffer(packetLen + headerLength);
+                    
                     compressedPacket.setPosition(0);
                     compressedPacket.writeLongInt(0);
-                    compressedPacket.writeLongInt(packetLen - headerLength);
+                    compressedPacket.writeLongInt(packetLen - HEADER_LENGTH);
                     compressedPacket.writeByte(this.packetSequence);
-
-                    for (int i = HEADER_LENGTH; i < packetLen; i++) {
-                        compressedBytes[i] = packet.getByteBuffer()[i];
+                    
+                    // FIXME: Do this quicker :)
+                    for (int i = HEADER_LENGTH + 1; i < packetLen; i++) {
+                        compressedPacket.writeByte(packet.getByteBuffer()[i]);
                     }
+                        
+               
 
-                    //System.arraycopy(packet, HEADER_LENGTH, compressedBytes, headerLength, (packetLen - HEADER_LENGTH));
+                    this.mysqlOutput.write(compressedPacket.getByteBuffer(), 0, 
+                                       compressedPacket.getPosition());
+                    this.mysqlOutput.flush();
+                    
+                    return;
                 } else {
+                    headerLength += COMP_HEADER_LENGTH;
+
+                    Buffer compressedPacket = new Buffer(packetLen + headerLength);
+                    byte[] compressedBytes = compressedPacket.getByteBuffer();
+                    
+                    
                     deflater.setInput(packet.getByteBuffer(), HEADER_LENGTH, 
                                       packetLen);
-                    compLen = deflater.deflate(compressedBytes, headerLength, 
+                    int compLen = deflater.deflate(compressedBytes, headerLength, 
                                                packetLen);
                     compressedPacket.setPosition(0);
                     compressedPacket.writeLongInt(compLen);
                     compressedPacket.writeLongInt(packetLen - headerLength);
                     compressedPacket.writeByte(this.packetSequence);
-                }
+               
 
-                this.mysqlOutput.write(compressedPacket.getByteBuffer(), 0, 
+                    this.mysqlOutput.write(compressedPacket.getByteBuffer(), 0, 
                                        compLen);
-                this.mysqlOutput.flush();
+                    this.mysqlOutput.flush();
+                }
             } else {
                 packet.writeLongInt(packetLen - headerLength);
                 packet.writeByte(this.packetSequence);
@@ -1677,6 +1758,8 @@ public class MysqlIO {
             }
         }
     }
+    
+    
 
     /** 
      * Sends a large packet to the server as a series of smaller packets

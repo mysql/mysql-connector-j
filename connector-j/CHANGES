@@ -16,6 +16,8 @@ xx-xx-xx - Version 3.0.3-dev
 	- Fixed ResultSetMetaData.getColumnTypeName() returning BLOB for 
 	  TEXT and TEXT for BLOB types.
 	- Fixed Buffer.isLastDataPacket() for 4.1 and newer servers.
+	- Added CLIENT_LONG_FLAG to be able to get more column flags 
+	  (isAutoIncrement() being the most important)
 	  
 11-08-02 - Version 3.0.2-dev
 
