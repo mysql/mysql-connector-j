@@ -25,7 +25,7 @@ public class Blob extends Object {
     ResultSet RS = null;
     Statement Stmt = null;
 
-    static String DBUrl = "jdbc:mysql://127.0.0.1:3306/test";
+    static String DBUrl = "jdbc:mysql:///test";
 
     public static void main(String[] Args) throws Exception
     {
@@ -92,7 +92,7 @@ public class Blob extends Object {
 	    
 	    Stmt.executeUpdate("CREATE TABLE BLOBTEST (pos int PRIMARY KEY auto_increment, blobdata LONGBLOB)");
 	    
-            byte[] testBlob = new byte[128 * 1024]; // 128k blob
+            byte[] testBlob = new byte[1024 * 1024 * 12]; // 128k blob
             
             int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
             
