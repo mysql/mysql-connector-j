@@ -143,6 +143,7 @@ public class MysqlDataSource implements DataSource, Referenceable, Serializable
 
 		Props.put("user", UserID);
 		Props.put("password", Password);
+		Props.put("profileSql", getProfileSql());
 
 		return getConnection(Props);
 	}
@@ -212,6 +213,18 @@ public class MysqlDataSource implements DataSource, Referenceable, Serializable
 		return _port;
 	}
 
+	protected String _profileSql = "false";
+	
+	public String getProfileSql()
+	{
+		return _profileSql;
+	}
+	
+	public void setProfileSql(String flag)
+	{
+		_profileSql = flag;
+	}
+	
 	/**
 	 * Required method to support this class as a <CODE>Referenceable</CODE>.
 	 */
@@ -227,6 +240,7 @@ public class MysqlDataSource implements DataSource, Referenceable, Serializable
 		Ref.add(new StringRefAddr("serverName", getServerName()));
 		Ref.add(new StringRefAddr("port", "" + getPort()));
 		Ref.add(new StringRefAddr("databaseName", getDatabaseName()));
+		Ref.add(new StringRefAddr("profileSql", getProfileSql()));
 
 		return Ref;
 	}
