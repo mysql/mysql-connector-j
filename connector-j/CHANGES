@@ -16,6 +16,7 @@
 	  that you create them from SELECTs on tables with primary keys and
 	  that you have selected all primary keys in your query.
 	- Added support for 4.0.8-style large packets. 
+	- Fixed PreparedStatement.executeBatch() parameter overwriting.
 	  
 12-17-02 - Version 3.0.3-dev
 	- Changed charsToByte in SingleByteCharConverter to be non-static

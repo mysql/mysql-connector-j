@@ -1340,6 +1340,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
                         BatchParams paramArg = (BatchParams) arg;
 
                         try {
+                            
                             updateCounts[commandIndex] = executeUpdate(paramArg.parameterStrings,
                                     paramArg.parameterStreams,
                                     paramArg.isStream, paramArg.streamLengths,
@@ -1659,11 +1660,13 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
 		            batchedParameterStreams[i], batchedStreamLengths[i],
 		            useStreamLengths));
 		    } else {
-		        sendPacket.writeBytesNoNull(parameterValues[i]);
+		        sendPacket.writeBytesNoNull(batchedParameterStrings[i]);
 		    }
+            
 		}
 		
 		sendPacket.writeBytesNoNull(staticSqlStrings[batchedParameterStrings.length]);
+        
         
         return sendPacket;
 	}

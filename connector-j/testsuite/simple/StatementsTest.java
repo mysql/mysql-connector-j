@@ -84,9 +84,19 @@ public class StatementsTest
         } /* ignore */ catch (SQLException sqlEx) {
             ;
         }
+        
+        try {
+            stmt.executeUpdate("DROP TABLE statement_batch_test");
+        } /* ignore */ catch (SQLException sqlEx) {
+            ;
+        }
 
         stmt.executeUpdate(
                 "CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
+                
+        stmt.executeUpdate(
+                "CREATE TABLE statement_batch_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255), UNIQUE INDEX (strdata1))");
+
 
         for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
 
@@ -156,6 +166,12 @@ public class StatementsTest
             stmt.executeUpdate(stmtBuf.toString());
         }
 
+        try {
+            stmt.executeUpdate("DROP TABLE statement_batch_test");
+        } /* ignore */ catch (SQLException sqlEx) {
+            ;
+        }
+        
         super.tearDown();
     }
 
@@ -477,7 +493,7 @@ public class StatementsTest
                                     throws SQLException {
         pstmt = conn.prepareStatement(
                         "INSERT INTO "
-                        + "statement_test (strdata1, strdata2) VALUES (?,?)");
+                        + "statement_batch_test (strdata1, strdata2) VALUES (?,?)");
 
         for (int i = 0; i < 10; i++) {
             pstmt.setString(1, "batch_" + i);
