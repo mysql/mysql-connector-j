@@ -1,20 +1,20 @@
 /*
    Copyright (C) 2002 MySQL AB
-   
+
       This program is free software; you can redistribute it and/or modify
       it under the terms of the GNU General Public License as published by
       the Free Software Foundation; either version 2 of the License, or
       (at your option) any later version.
-   
+
       This program is distributed in the hope that it will be useful,
       but WITHOUT ANY WARRANTY; without even the implied warranty of
       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
       GNU General Public License for more details.
-   
+
       You should have received a copy of the GNU General Public License
       along with this program; if not, write to the Free Software
       Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-      
+
  */
 package com.mysql.jdbc;
 
@@ -26,62 +26,82 @@ import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 
 /**
  * JDBC Interface to Mysql functions
- * 
+ *
  * <p>
  * This class provides information about the database as a whole.
  * </p>
- * 
+ *
  * <p>
  * Many of the methods here return lists of information in ResultSets. You can
  * use the normal ResultSet methods such as getString and getInt to retrieve
  * the data from these ResultSets.  If a given form of metadata is not
  * available, these methods show throw a java.sql.SQLException.
  * </p>
- * 
+ *
  * <p>
  * Some of these methods take arguments that are String patterns.  These
  * methods all have names such as fooPattern.  Within a pattern String "%"
  * means match any substring of 0 or more characters and "_" means match any
  * one character.
  * </p>
- * 
+ *
  * @version $Id: DatabaseMetaData.java,v 1.20 2002/12/06 21:27:07 mmatthew Exp
  *          $
  * @author Mark Matthews
  */
-public class DatabaseMetaData
-    implements java.sql.DatabaseMetaData {
-
-    //~ Instance/static variables .............................................
-
+public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     private static final byte[] TABLE_AS_BYTES = "TABLE".getBytes();
-    
-    /** 
+
+    /**
+     * The table type for generic tables that support foreign
+     * keys.
+     */
+    private static final String SUPPORTS_FK = "SUPPORTS_FK";
+
+    //
+    // Column indexes used by all DBMD foreign key
+    // ResultSets
+    //
+    private static final int PKTABLE_CAT = 0;
+    private static final int PKTABLE_SCHEM = 1;
+    private static final int PKTABLE_NAME = 2;
+    private static final int PKCOLUMN_NAME = 3;
+    private static final int FKTABLE_CAT = 4;
+    private static final int FKTABLE_SCHEM = 5;
+    private static final int FKTABLE_NAME = 6;
+    private static final int FKCOLUMN_NAME = 7;
+    private static final int KEY_SEQ = 8;
+    private static final int UPDATE_RULE = 9;
+    private static final int DELETE_RULE = 10;
+    private static final int FK_NAME = 11;
+    private static final int PK_NAME = 12;
+    private static final int DEFERRABILITY = 13;
+
+    /**
      * The connection to the database
      */
     protected Connection conn;
-    
+
     /**
      * The 'current' database name being used
      */
     protected String database = null;
-    
+
     /**
      * What character to use when quoting identifiers
      */
     protected String quotedId = null;
 
-    //~ Constructors ..........................................................
-
     /**
      * Creates a new DatabaseMetaData object.
-     * 
+     *
      * @param conn DOCUMENT ME!
      * @param database DOCUMENT ME!
      */
@@ -91,23 +111,18 @@ public class DatabaseMetaData
 
         try {
             this.quotedId = this.conn.supportsQuotedIdentifiers()
-                                ? getIdentifierQuoteString() : "";
+                ? getIdentifierQuoteString() : "";
         } catch (SQLException sqlEx) {
-
             // Forced by API, never thrown from getIdentifierQuoteString() in this
             // implementation.
         }
     }
 
-    //~ Methods ...............................................................
-
     /**
      * @see DatabaseMetaData#getAttributes(String, String, String, String)
      */
-    public java.sql.ResultSet getAttributes(String arg0, String arg1, 
-                                            String arg2, String arg3)
-                                     throws SQLException {
-
+    public java.sql.ResultSet getAttributes(String arg0, String arg1,
+        String arg2, String arg3) throws SQLException {
         Field[] fields = new Field[21];
         fields[0] = new Field("", "TYPE_CAT", Types.CHAR, 32);
         fields[1] = new Field("", "TYPE_SCHEM", Types.CHAR, 32);
@@ -137,14 +152,14 @@ public class DatabaseMetaData
     /**
      * Get a description of a table's optimal set of columns that uniquely
      * identifies a row. They are ordered by SCOPE.
-     * 
+     *
      * <P>
      * Each column description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>SCOPE</B> short => actual scope of result
-     * 
+     *
      * <UL>
      * <li>
      * bestRowTemporary - very temporary, while using row
@@ -178,7 +193,7 @@ public class DatabaseMetaData
      * <li>
      * <B>PSEUDO_COLUMN</B> short => is this a pseudo column like an Oracle
      * ROWID
-     * 
+     *
      * <UL>
      * <li>
      * bestRowUnknown - may or may not be pseudo column
@@ -193,7 +208,7 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schema a schema name; "" retrieves those without a schema
      * @param table a table name
@@ -202,11 +217,9 @@ public class DatabaseMetaData
      * @return ResultSet each row is a column description
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public java.sql.ResultSet getBestRowIdentifier(String catalog, 
-                                                   String schema, String table, 
-                                                   int scope, boolean nullable)
-                                            throws java.sql.SQLException {
-
+    public java.sql.ResultSet getBestRowIdentifier(String catalog,
+        String schema, String table, int scope, boolean nullable)
+        throws java.sql.SQLException {
         Field[] fields = new Field[8];
         fields[0] = new Field("", "SCOPE", Types.SMALLINT, 5);
         fields[1] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
@@ -220,14 +233,13 @@ public class DatabaseMetaData
         String databasePart = "";
 
         if (catalog != null) {
-
             if (!catalog.equals("")) {
                 databasePart = " FROM " + this.quotedId + catalog
-                               + this.quotedId;
+                    + this.quotedId;
             }
         } else {
             databasePart = " FROM " + this.quotedId + this.database
-                           + this.quotedId;
+                + this.quotedId;
         }
 
         if (table == null) {
@@ -239,23 +251,19 @@ public class DatabaseMetaData
 
         try {
             stmt = this.conn.createStatement();
-            results = stmt.executeQuery(
-                              "show columns from " + table + databasePart);
+            results = stmt.executeQuery("show columns from " + table
+                    + databasePart);
 
             ArrayList tuples = new ArrayList();
 
             while (results.next()) {
-
                 String keyType = results.getString("Key");
 
                 if (keyType != null) {
-
                     if (StringUtils.startsWithIgnoreCase(keyType, "PRI")) {
-
                         byte[][] rowVal = new byte[8][];
-                        rowVal[0] = Integer.toString(
-                                            java.sql.DatabaseMetaData.bestRowSession)
-                               .getBytes();
+                        rowVal[0] = Integer.toString(java.sql.DatabaseMetaData.bestRowSession)
+                                           .getBytes();
                         rowVal[1] = results.getBytes("Field");
 
                         String type = results.getString("Type");
@@ -266,40 +274,29 @@ public class DatabaseMetaData
                          * Parse the Type column from MySQL
                          */
                         if (type.indexOf("enum") != -1) {
-
-                            String temp = type.substring(type.indexOf("("), 
-                                                         type.indexOf(")"));
-                            java.util.StringTokenizer tokenizer = 
-                                    new java.util.StringTokenizer(temp, ",");
+                            String temp = type.substring(type.indexOf("("),
+                                    type.indexOf(")"));
+                            java.util.StringTokenizer tokenizer = new java.util.StringTokenizer(temp,
+                                    ",");
                             int maxLength = 0;
 
                             while (tokenizer.hasMoreTokens()) {
-                                maxLength = Math.max(maxLength, 
-                                                     (tokenizer.nextToken().length() - 2));
+                                maxLength = Math.max(maxLength,
+                                        (tokenizer.nextToken().length() - 2));
                             }
 
                             size = maxLength;
                             decimals = 0;
                             type = "enum";
                         } else if (type.indexOf("(") != -1) {
-
                             if (type.indexOf(",") != -1) {
-                                size = Integer.parseInt(type.substring(
-                                                                type.indexOf(
-                                                                        "(") + 1, 
-                                                                type.indexOf(
-                                                                        ",")));
-                                decimals = Integer.parseInt(type.substring(
-                                                                    type.indexOf(
-                                                                            ",") + 1, 
-                                                                    type.indexOf(
-                                                                            ")")));
+                                size = Integer.parseInt(type.substring(type
+                                            .indexOf("(") + 1, type.indexOf(",")));
+                                decimals = Integer.parseInt(type.substring(type
+                                            .indexOf(",") + 1, type.indexOf(")")));
                             } else {
-                                size = Integer.parseInt(type.substring(
-                                                                type.indexOf(
-                                                                        "(") + 1, 
-                                                                type.indexOf(
-                                                                        ")")));
+                                size = Integer.parseInt(type.substring(type
+                                            .indexOf("(") + 1, type.indexOf(")")));
                             }
 
                             type = type.substring(type.indexOf("("));
@@ -310,9 +307,8 @@ public class DatabaseMetaData
                         rowVal[4] = Integer.toString(size + decimals).getBytes();
                         rowVal[5] = Integer.toString(size + decimals).getBytes();
                         rowVal[6] = Integer.toString(decimals).getBytes();
-                        rowVal[7] = Integer.toString(
-                                            java.sql.DatabaseMetaData.bestRowNotPseudo)
-                               .getBytes();
+                        rowVal[7] = Integer.toString(java.sql.DatabaseMetaData.bestRowNotPseudo)
+                                           .getBytes();
                         tuples.add(rowVal);
                     }
                 }
@@ -320,9 +316,7 @@ public class DatabaseMetaData
 
             return buildResultSet(fields, tuples);
         } finally {
-
             if (results != null) {
-
                 try {
                     results.close();
                 } catch (Exception ex) {
@@ -333,7 +327,6 @@ public class DatabaseMetaData
             }
 
             if (stmt != null) {
-
                 try {
                     stmt.close();
                 } catch (Exception ex) {
@@ -348,61 +341,53 @@ public class DatabaseMetaData
     /**
      * Does a catalog appear at the start of a qualified table name?
      * (Otherwise it appears at the end)
-     * 
+     *
      * @return true if it appears at the start
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean isCatalogAtStart()
-                             throws java.sql.SQLException {
-
+    public boolean isCatalogAtStart() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * What's the separator between catalog and table name?
-     * 
+     *
      * @return the separator string
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getCatalogSeparator()
-                               throws java.sql.SQLException {
-
+    public String getCatalogSeparator() throws java.sql.SQLException {
         return ".";
     }
 
     /**
      * What's the database vendor's preferred term for "catalog"?
-     * 
+     *
      * @return the vendor term
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getCatalogTerm()
-                          throws java.sql.SQLException {
-
+    public String getCatalogTerm() throws java.sql.SQLException {
         return "database";
     }
 
     /**
      * Get the catalog names available in this database.  The results are
      * ordered by catalog name.
-     * 
+     *
      * <P>
      * The catalog column is:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TABLE_CAT</B> String => catalog name
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @return ResultSet each row has a single String column that is a catalog
      *         name
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public java.sql.ResultSet getCatalogs()
-                                   throws java.sql.SQLException {
-
+    public java.sql.ResultSet getCatalogs() throws java.sql.SQLException {
         java.sql.ResultSet results = null;
         java.sql.Statement stmt = null;
 
@@ -412,13 +397,12 @@ public class DatabaseMetaData
 
             java.sql.ResultSetMetaData resultsMD = results.getMetaData();
             Field[] fields = new Field[1];
-            fields[0] = new Field("", "TABLE_CAT", Types.VARCHAR, 
-                                  resultsMD.getColumnDisplaySize(1));
+            fields[0] = new Field("", "TABLE_CAT", Types.VARCHAR,
+                    resultsMD.getColumnDisplaySize(1));
 
             ArrayList tuples = new ArrayList();
 
             while (results.next()) {
-
                 byte[][] rowVal = new byte[1][];
                 rowVal[0] = results.getBytes(1);
                 tuples.add(rowVal);
@@ -426,13 +410,10 @@ public class DatabaseMetaData
 
             return buildResultSet(fields, tuples);
         } finally {
-
             if (results != null) {
-
                 try {
                     results.close();
                 } catch (SQLException sqlEx) {
-
                     // ignore
                 }
 
@@ -440,11 +421,9 @@ public class DatabaseMetaData
             }
 
             if (stmt != null) {
-
                 try {
                     stmt.close();
                 } catch (SQLException sqlEx) {
-
                     // ignore
                 }
 
@@ -455,15 +434,15 @@ public class DatabaseMetaData
 
     /**
      * Get a description of the access rights for a table's columns.
-     * 
+     *
      * <P>
      * Only privileges matching the column name criteria are returned.  They
      * are ordered by COLUMN_NAME and PRIVILEGE.
      * </p>
-     * 
+     *
      * <P>
      * Each privilige description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TABLE_CAT</B> String => table catalog (may be null)
@@ -493,7 +472,7 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schema a schema name; "" retrieves those without a schema
      * @param table a table name
@@ -502,11 +481,9 @@ public class DatabaseMetaData
      * @see #getSearchStringEscape
      * @throws java.sql.SQLException if a database access error occurs
      */
-    public java.sql.ResultSet getColumnPrivileges(String catalog, 
-                                                  String schema, String table, 
-                                                  String columnNamePattern)
-                                           throws java.sql.SQLException {
-
+    public java.sql.ResultSet getColumnPrivileges(String catalog,
+        String schema, String table, String columnNamePattern)
+        throws java.sql.SQLException {
         Field[] fields = new Field[8];
         fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 64);
         fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 1);
@@ -518,13 +495,13 @@ public class DatabaseMetaData
         fields[7] = new Field("", "IS_GRANTABLE", Types.CHAR, 3);
 
         StringBuffer grantQuery = new StringBuffer(
-                                          "SELECT c.host, c.db, t.grantor, c.user, "
-                                          + "c.table_name, c.column_name, c.column_priv "
-                                          + "from mysql.columns_priv c, mysql.tables_priv t "
-                                          + "where c.host = t.host and c.db = t.db and "
-                                          + "c.table_name = t.table_name ");
+                "SELECT c.host, c.db, t.grantor, c.user, "
+                + "c.table_name, c.column_name, c.column_priv "
+                + "from mysql.columns_priv c, mysql.tables_priv t "
+                + "where c.host = t.host and c.db = t.db and "
+                + "c.table_name = t.table_name ");
 
-        if (catalog != null && catalog.length() != 0) {
+        if ((catalog != null) && (catalog.length() != 0)) {
             grantQuery.append(" AND c.db='");
             grantQuery.append(catalog);
             grantQuery.append("' ");
@@ -546,19 +523,18 @@ public class DatabaseMetaData
             results = stmt.executeQuery(grantQuery.toString());
 
             while (results.next()) {
-
                 String host = results.getString(1);
                 String database = results.getString(2);
                 String grantor = results.getString(3);
                 String user = results.getString(4);
 
-                if (user == null || user.length() == 0) {
+                if ((user == null) || (user.length() == 0)) {
                     user = "%";
                 }
 
                 StringBuffer fullUser = new StringBuffer(user);
 
-                if (host != null && this.conn.useHostsInPrivileges()) {
+                if ((host != null) && this.conn.useHostsInPrivileges()) {
                     fullUser.append("@");
                     fullUser.append(host);
                 }
@@ -569,11 +545,9 @@ public class DatabaseMetaData
                 if (allPrivileges != null) {
                     allPrivileges = allPrivileges.toUpperCase();
 
-                    StringTokenizer st = new StringTokenizer(allPrivileges, 
-                                                             ",");
+                    StringTokenizer st = new StringTokenizer(allPrivileges, ",");
 
                     while (st.hasMoreTokens()) {
-
                         String privilege = st.nextToken().trim();
                         byte[][] tuple = new byte[8][];
                         tuple[0] = s2b(database);
@@ -595,9 +569,7 @@ public class DatabaseMetaData
                 }
             }
         } finally {
-
             if (results != null) {
-
                 try {
                     results.close();
                 } catch (Exception ex) {
@@ -608,7 +580,6 @@ public class DatabaseMetaData
             }
 
             if (stmt != null) {
-
                 try {
                     stmt.close();
                 } catch (Exception ex) {
@@ -624,16 +595,16 @@ public class DatabaseMetaData
 
     /**
      * Get a description of table columns available in a catalog.
-     * 
+     *
      * <P>
      * Only column descriptions matching the catalog, schema, table and column
      * name criteria are returned.  They are ordered by TABLE_SCHEM,
      * TABLE_NAME and ORDINAL_POSITION.
      * </p>
-     * 
+     *
      * <P>
      * Each column description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TABLE_CAT</B> String => table catalog (may be null)
@@ -669,7 +640,7 @@ public class DatabaseMetaData
      * </li>
      * <li>
      * <B>NULLABLE</B> int => is NULL allowed?
-     * 
+     *
      * <UL>
      * <li>
      * columnNoNulls - might not allow NULL values
@@ -708,7 +679,7 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schemaPattern a schema name pattern; "" retrieves those without
      *        a schema
@@ -718,11 +689,9 @@ public class DatabaseMetaData
      * @see #getSearchStringEscape
      * @throws java.sql.SQLException if a database access error occurs
      */
-    public java.sql.ResultSet getColumns(String catalog, String schemaPattern, 
-                                         String tableName, 
-                                         String columnNamePattern)
-                                  throws java.sql.SQLException {
-
+    public java.sql.ResultSet getColumns(String catalog, String schemaPattern,
+        String tableName, String columnNamePattern)
+        throws java.sql.SQLException {
         String databasePart = "";
 
         if (columnNamePattern == null) {
@@ -730,21 +699,19 @@ public class DatabaseMetaData
         }
 
         if (catalog != null) {
-
             if (!catalog.equals("")) {
                 databasePart = " FROM " + this.quotedId + catalog
-                               + this.quotedId;
+                    + this.quotedId;
             }
         } else {
             databasePart = " FROM " + this.quotedId + this.database
-                           + this.quotedId;
+                + this.quotedId;
         }
 
         ArrayList tableNameList = new ArrayList();
         int tablenameLength = 0;
 
         if (tableName == null) {
-
             // Select from all tables
             java.sql.ResultSet tables = null;
 
@@ -752,7 +719,6 @@ public class DatabaseMetaData
                 tables = getTables(catalog, schemaPattern, "%", new String[0]);
 
                 while (tables.next()) {
-
                     String tableNameFromList = tables.getString("TABLE_NAME");
                     tableNameList.add(tableNameFromList);
 
@@ -761,13 +727,10 @@ public class DatabaseMetaData
                     }
                 }
             } finally {
-
                 if (tables != null) {
-
                     try {
                         tables.close();
                     } catch (Exception sqlEx) {
-
                         // ignore
                     }
 
@@ -775,15 +738,13 @@ public class DatabaseMetaData
                 }
             }
         } else {
-
             java.sql.ResultSet tables = null;
 
             try {
-                tables = getTables(catalog, schemaPattern, tableName, 
-                                   new String[0]);
+                tables = getTables(catalog, schemaPattern, tableName,
+                        new String[0]);
 
                 while (tables.next()) {
-
                     String tableNameFromList = tables.getString("TABLE_NAME");
                     tableNameList.add(tableNameFromList);
 
@@ -792,13 +753,10 @@ public class DatabaseMetaData
                     }
                 }
             } finally {
-
                 if (tables != null) {
-
                     try {
                         tables.close();
                     } catch (SQLException sqlEx) {
-
                         // ignore
                     }
 
@@ -824,8 +782,8 @@ public class DatabaseMetaData
         fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
         fields[4] = new Field("", "DATA_TYPE", Types.SMALLINT, 5);
         fields[5] = new Field("", "TYPE_NAME", Types.CHAR, 16);
-        fields[6] = new Field("", "COLUMN_SIZE", Types.INTEGER, 
-                              Integer.toString(Integer.MAX_VALUE).length());
+        fields[6] = new Field("", "COLUMN_SIZE", Types.INTEGER,
+                Integer.toString(Integer.MAX_VALUE).length());
         fields[7] = new Field("", "BUFFER_LENGTH", Types.INTEGER, 10);
         fields[8] = new Field("", "DECIMAL_DIGITS", Types.INTEGER, 10);
         fields[9] = new Field("", "NUM_PREC_RADIX", Types.INTEGER, 10);
@@ -834,30 +792,27 @@ public class DatabaseMetaData
         fields[12] = new Field("", "COLUMN_DEF", Types.CHAR, 0);
         fields[13] = new Field("", "SQL_DATA_TYPE", Types.INTEGER, 10);
         fields[14] = new Field("", "SQL_DATETIME_SUB", Types.INTEGER, 10);
-        fields[15] = new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, 
-                               Integer.toString(Integer.MAX_VALUE).length());
+        fields[15] = new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER,
+                Integer.toString(Integer.MAX_VALUE).length());
         fields[16] = new Field("", "ORDINAL_POSITION", Types.INTEGER, 10);
         fields[17] = new Field("", "IS_NULLABLE", Types.CHAR, 3);
 
         ArrayList tuples = new ArrayList();
 
         while (tableNames.hasNext()) {
-
             String tableNamePattern = (String) tableNames.next();
             Statement stmt = null;
             ResultSet results = null;
 
             try {
                 stmt = this.conn.createStatement();
-                results = stmt.executeQuery(
-                                  "show columns from " + tableNamePattern
-                                  + databasePart + " like '"
-                                  + columnNamePattern + "'");
+                results = stmt.executeQuery("show columns from "
+                        + tableNamePattern + databasePart + " like '"
+                        + columnNamePattern + "'");
 
                 int ordPos = 1;
 
                 while (results.next()) {
-
                     byte[][] rowVal = new byte[18][];
                     rowVal[0] = s2b(catalog); // TABLE_CAT
                     rowVal[1] = null;
@@ -875,8 +830,7 @@ public class DatabaseMetaData
                     String mysqlType = "";
 
                     if (typeInfo.indexOf("(") != -1) {
-                        mysqlType = typeInfo.substring(0, 
-                                                       typeInfo.indexOf("("));
+                        mysqlType = typeInfo.substring(0, typeInfo.indexOf("("));
                     } else {
                         mysqlType = typeInfo;
                     }
@@ -885,56 +839,47 @@ public class DatabaseMetaData
                         mysqlType = mysqlType.toUpperCase();
                     }
 
-                    /* 
+                    /*
                      * Convert to XOPEN (thanks JK)
                      */
                     rowVal[4] = Integer.toString(MysqlDefs.mysqlToJavaType(
-                                                         mysqlType)).getBytes();
+                                mysqlType)).getBytes();
 
                     // DATA_TYPE (jdbc)
                     rowVal[5] = s2b(mysqlType); // TYPE_NAME (native)
 
                     // Figure Out the Size
                     if (typeInfo != null) {
-
-                        if (typeInfo.indexOf("enum") != -1
-                            || typeInfo.indexOf("set") != -1) {
-
+                        if ((typeInfo.indexOf("enum") != -1)
+                                || (typeInfo.indexOf("set") != -1)) {
                             String temp = typeInfo.substring(typeInfo.indexOf(
-                                                                     "("), 
-                                                             typeInfo.lastIndexOf(
-                                                                     ")"));
-                            java.util.StringTokenizer tokenizer = 
-                                    new java.util.StringTokenizer(temp, ",");
+                                        "("), typeInfo.lastIndexOf(")"));
+                            java.util.StringTokenizer tokenizer = new java.util.StringTokenizer(temp,
+                                    ",");
                             int maxLength = 0;
 
                             while (tokenizer.hasMoreTokens()) {
-                                maxLength = Math.max(maxLength, 
-                                                     (tokenizer.nextToken().length() - 2));
+                                maxLength = Math.max(maxLength,
+                                        (tokenizer.nextToken().length() - 2));
                             }
 
                             rowVal[6] = Integer.toString(maxLength).getBytes();
                             rowVal[8] = new byte[] { (byte) '0' };
                         } else if (typeInfo.indexOf(",") != -1) {
-
                             // Numeric with decimals
-                            String size = typeInfo.substring(
-                                                  (typeInfo.indexOf("(") + 1), 
-                                                  (typeInfo.indexOf(",")));
-                            String decimals = typeInfo.substring(
-                                                      (typeInfo.indexOf(",") + 1), 
-                                                      (typeInfo.indexOf(")")));
+                            String size = typeInfo.substring((typeInfo.indexOf(
+                                        "(") + 1), (typeInfo.indexOf(",")));
+                            String decimals = typeInfo.substring((typeInfo
+                                    .indexOf(",") + 1), (typeInfo.indexOf(")")));
                             rowVal[6] = s2b(size);
                             rowVal[8] = s2b(decimals);
                         } else {
-
                             String size = "0";
 
                             /* If the size is specified with the DDL, use that */
                             if (typeInfo.indexOf("(") != -1) {
-                                size = typeInfo.substring(
-                                               (typeInfo.indexOf("(") + 1), 
-                                               (typeInfo.indexOf(")")));
+                                size = typeInfo.substring((typeInfo.indexOf("(")
+                                        + 1), (typeInfo.indexOf(")")));
                             } else if (typeInfo.equalsIgnoreCase("tinyint")) {
                                 size = "1";
                             } else if (typeInfo.equalsIgnoreCase("smallint")) {
@@ -974,11 +919,11 @@ public class DatabaseMetaData
                             } else if (typeInfo.equalsIgnoreCase("tinyblob")) {
                                 size = "255";
                             } else if (typeInfo.equalsIgnoreCase("blob")) {
-                                size = Integer.toString(Math.min(65535, 
-                                                                 MysqlIO.getMaxBuf()));
+                                size = Integer.toString(Math.min(65535,
+                                            MysqlIO.getMaxBuf()));
                             } else if (typeInfo.equalsIgnoreCase("mediumblob")) {
-                                size = Integer.toString(Math.min(16277215, 
-                                                                 MysqlIO.getMaxBuf()));
+                                size = Integer.toString(Math.min(16277215,
+                                            MysqlIO.getMaxBuf()));
                             } else if (typeInfo.equalsIgnoreCase("longblob")) {
                                 size = Integer.toString(Integer.MAX_VALUE);
                             } else if (typeInfo.equalsIgnoreCase("tinytext")) {
@@ -986,8 +931,8 @@ public class DatabaseMetaData
                             } else if (typeInfo.equalsIgnoreCase("text")) {
                                 size = "65535";
                             } else if (typeInfo.equalsIgnoreCase("mediumtext")) {
-                                size = Integer.toString(Math.min(16277215, 
-                                                                 MysqlIO.getMaxBuf()));
+                                size = Integer.toString(Math.min(16277215,
+                                            MysqlIO.getMaxBuf()));
                             } else if (typeInfo.equalsIgnoreCase("enum")) {
                                 size = "255";
                             } else if (typeInfo.equalsIgnoreCase("set")) {
@@ -1012,24 +957,20 @@ public class DatabaseMetaData
 
                     // Nullable?
                     if (nullable != null) {
-
                         if (nullable.equals("YES")) {
-                            rowVal[10] = Integer.toString(
-                                                 java.sql.DatabaseMetaData.columnNullable)
-                                   .getBytes();
+                            rowVal[10] = Integer.toString(java.sql.DatabaseMetaData.columnNullable)
+                                                .getBytes();
                             rowVal[17] = new String("YES").getBytes();
 
                             // IS_NULLABLE
                         } else {
-                            rowVal[10] = Integer.toString(
-                                                 java.sql.DatabaseMetaData.columnNoNulls)
-                                   .getBytes();
+                            rowVal[10] = Integer.toString(java.sql.DatabaseMetaData.columnNoNulls)
+                                                .getBytes();
                             rowVal[17] = "NO".getBytes();
                         }
                     } else {
-                        rowVal[10] = Integer.toString(
-                                             java.sql.DatabaseMetaData.columnNoNulls)
-                               .getBytes();
+                        rowVal[10] = Integer.toString(java.sql.DatabaseMetaData.columnNoNulls)
+                                            .getBytes();
                         rowVal[17] = "NO".getBytes();
                     }
 
@@ -1063,9 +1004,7 @@ public class DatabaseMetaData
                     tuples.add(rowVal);
                 }
             } finally {
-
                 if (results != null) {
-
                     try {
                         results.close();
                     } catch (Exception ex) {
@@ -1076,7 +1015,6 @@ public class DatabaseMetaData
                 }
 
                 if (stmt != null) {
-
                     try {
                         stmt.close();
                     } catch (Exception ex) {
@@ -1095,13 +1033,11 @@ public class DatabaseMetaData
 
     /**
      * JDBC 2.0 Return the connection that produced this metadata object.
-     * 
+     *
      * @return the connection that produced this metadata object.
      * @throws SQLException if a database error occurs
      */
-    public java.sql.Connection getConnection()
-                                      throws SQLException {
-
+    public java.sql.Connection getConnection() throws SQLException {
         return (java.sql.Connection) this.conn;
     }
 
@@ -1112,10 +1048,10 @@ public class DatabaseMetaData
      * return a single foreign key/primary key pair (most tables only import
      * a foreign key from a table once.)  They are ordered by FKTABLE_CAT,
      * FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ.
-     * 
+     *
      * <P>
      * Each foreign key column description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>PKTABLE_CAT</B> String => primary key table catalog (may be null)
@@ -1149,7 +1085,7 @@ public class DatabaseMetaData
      * <li>
      * <B>UPDATE_RULE</B> short => What happens to foreign key when primary is
      * updated:
-     * 
+     *
      * <UL>
      * <li>
      * importedKeyCascade - change imported key to agree with primary key
@@ -1168,7 +1104,7 @@ public class DatabaseMetaData
      * <li>
      * <B>DELETE_RULE</B> short => What happens to the foreign key when
      * primary is deleted.
-     * 
+     *
      * <UL>
      * <li>
      * importedKeyCascade - delete rows that import a deleted key
@@ -1191,7 +1127,7 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @param primaryCatalog a catalog name; "" retrieves those without a catalog
      * @param primarySchema a schema name pattern; "" retrieves those without a schema
      * @param primaryTable a table name
@@ -1201,18 +1137,12 @@ public class DatabaseMetaData
      * @return ResultSet each row is a foreign key column description
      * @throws java.sql.SQLException if a database access error occurs
      */
-    public java.sql.ResultSet getCrossReference(String primaryCatalog, 
-                                                String primarySchema, 
-                                                String primaryTable, 
-                                                String foreignCatalog, 
-                                                String foreignSchema, 
-                                                String foreignTable)
-                                         throws java.sql.SQLException {
-
+    public java.sql.ResultSet getCrossReference(String primaryCatalog,
+        String primarySchema, String primaryTable, String foreignCatalog,
+        String foreignSchema, String foreignTable) throws java.sql.SQLException {
         if (Driver.TRACE) {
-
             Object[] args = {
-                primaryCatalog, primarySchema, primaryTable, foreignCatalog, 
+                primaryCatalog, primarySchema, primaryTable, foreignCatalog,
                 foreignSchema, foreignTable
             };
             Debug.methodCall(this, "getCrossReference", args);
@@ -1239,35 +1169,29 @@ public class DatabaseMetaData
         fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
 
         if (this.conn.getIO().versionMeetsMinimum(3, 23, 0)) {
-
             Statement stmt = null;
             ResultSet fkresults = null;
 
             try {
-
                 /*
                  * Get foreign key information for table
                  */
                 if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
-
                     // we can use 'SHOW CREATE TABLE'
                     String database = this.database;
 
                     if (foreignCatalog != null) {
-
                         if (!foreignCatalog.equals("")) {
                             database = foreignCatalog;
                         }
                     }
 
-                    fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(
-                                        this.conn, this, database, null);
+                    fkresults = extractForeignKeyFromCreateTable(this.conn,
+                            this, database, null);
                 } else {
-
                     String databasePart = "";
 
                     if (foreignCatalog != null) {
-
                         if (!foreignCatalog.equals("")) {
                             databasePart = " FROM " + foreignCatalog;
                         }
@@ -1276,14 +1200,12 @@ public class DatabaseMetaData
                     }
 
                     stmt = this.conn.createStatement();
-                    fkresults = stmt.executeQuery(
-                                        "show table status " + databasePart);
+                    fkresults = stmt.executeQuery("show table status "
+                            + databasePart);
                 }
 
-                String foreignTableWithCase = getTableNameWithCase(
-                                                      foreignTable);
-                String primaryTableWithCase = getTableNameWithCase(
-                                                      primaryTable);
+                String foreignTableWithCase = getTableNameWithCase(foreignTable);
+                String primaryTableWithCase = getTableNameWithCase(primaryTable);
 
                 /*
                 * Parse imported foreign key information
@@ -1292,19 +1214,16 @@ public class DatabaseMetaData
                 String dummy;
 
                 while (fkresults.next()) {
-
                     String tableType = fkresults.getString("Type");
 
-                    if (tableType != null
-                        && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(
-                                                                            ForeignKeyUtil.SUPPORTS_FK))) {
-
+                    if ((tableType != null)
+                            && (tableType.equalsIgnoreCase("innodb")
+                            || tableType.equalsIgnoreCase(SUPPORTS_FK))) {
                         String comment = fkresults.getString("Comment").trim();
 
                         if (comment != null) {
-
-                            StringTokenizer commentTokens = 
-                                    new StringTokenizer(comment, ";", false);
+                            StringTokenizer commentTokens = new StringTokenizer(comment,
+                                    ";", false);
 
                             if (commentTokens.hasMoreTokens()) {
                                 dummy = commentTokens.nextToken();
@@ -1313,83 +1232,73 @@ public class DatabaseMetaData
                             }
 
                             while (commentTokens.hasMoreTokens()) {
-
                                 String keys = commentTokens.nextToken();
 
                                 // simple-columned keys: (m) REFER airline/tt(a)
                                 // multi-columned keys : (m n) REFER airline/vv(a b)
                                 int firstLeftParenIndex = keys.indexOf('(');
                                 int firstRightParenIndex = keys.indexOf(')');
-                                String referencingColumns = 
-                                        keys.substring(firstLeftParenIndex + 1, 
-                                                       firstRightParenIndex);
-                                StringTokenizer referencingColumnsTokenizer = 
-                                        new StringTokenizer(referencingColumns, 
-                                                            ", ");
-                                int secondLeftParenIndex = keys.indexOf('(', 
-                                                                        firstRightParenIndex + 1);
-                                int secondRightParenIndex = 
-                                        keys.indexOf(')', 
-                                                     firstRightParenIndex + 1);
-                                String referencedColumns = keys.substring(
-                                                                   secondLeftParenIndex + 1, 
-                                                                   secondRightParenIndex);
-                                StringTokenizer referencedColumnsTokenizer = 
-                                        new StringTokenizer(referencedColumns, 
-                                                            ", ");
+                                String referencingColumns = keys.substring(firstLeftParenIndex
+                                        + 1, firstRightParenIndex);
+                                StringTokenizer referencingColumnsTokenizer = new StringTokenizer(referencingColumns,
+                                        ", ");
+                                int secondLeftParenIndex = keys.indexOf('(',
+                                        firstRightParenIndex + 1);
+                                int secondRightParenIndex = keys.indexOf(')',
+                                        firstRightParenIndex + 1);
+                                String referencedColumns = keys.substring(secondLeftParenIndex
+                                        + 1, secondRightParenIndex);
+                                StringTokenizer referencedColumnsTokenizer = new StringTokenizer(referencedColumns,
+                                        ", ");
                                 int slashIndex = keys.indexOf('/');
-                                String referencedTable = keys.substring(
-                                                                 slashIndex + 1, 
-                                                                 secondLeftParenIndex);
+                                String referencedTable = keys.substring(slashIndex
+                                        + 1, secondLeftParenIndex);
                                 int keySeq = 0;
 
-                                while (referencingColumnsTokenizer.hasMoreTokens()) {
-
-                                    String referencingColumn = 
-                                            referencingColumnsTokenizer.nextToken();
+                                while (referencingColumnsTokenizer
+                                        .hasMoreTokens()) {
+                                    String referencingColumn = referencingColumnsTokenizer
+                                        .nextToken();
 
                                     // one tuple for each table between parenthesis
                                     byte[][] tuple = new byte[14][];
-                                    tuple[4] = (foreignCatalog == null
-                                                    ? null : s2b(foreignCatalog));
-                                    tuple[5] = (foreignSchema == null
-                                                    ? null : s2b(foreignSchema));
+                                    tuple[4] = ((foreignCatalog == null) ? null
+                                                                         : s2b(foreignCatalog));
+                                    tuple[5] = ((foreignSchema == null) ? null
+                                                                        : s2b(foreignSchema));
                                     dummy = fkresults.getString("Name"); // FKTABLE_NAME
 
                                     if (dummy.compareTo(foreignTableWithCase) != 0) {
-
                                         continue;
                                     } else {
                                         tuple[6] = s2b(dummy);
                                     }
 
                                     tuple[7] = s2b(referencingColumn); // FKCOLUMN_NAME
-                                    tuple[0] = (primaryCatalog == null
-                                                    ? null : s2b(primaryCatalog));
-                                    tuple[1] = (primarySchema == null
-                                                    ? null : s2b(primarySchema));
+                                    tuple[0] = ((primaryCatalog == null) ? null
+                                                                         : s2b(primaryCatalog));
+                                    tuple[1] = ((primarySchema == null) ? null
+                                                                        : s2b(primarySchema));
 
                                     // Skip foreign key if it doesn't refer to the right table
                                     if (referencedTable.compareTo(
                                                 primaryTableWithCase) != 0) {
-
                                         continue;
                                     }
 
                                     tuple[2] = s2b(referencedTable); // PKTABLE_NAME
-                                    tuple[3] = s2b(referencedColumnsTokenizer.nextToken()); // PKCOLUMN_NAME
-                                    tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
-                                    tuple[9] = Integer.toString(
-                                                       java.sql.DatabaseMetaData.importedKeySetDefault)
-                                           .getBytes();
-                                    tuple[10] = Integer.toString(ForeignKeyUtil.getCascadeDeleteOption(
-                                                                         keys))
-                                           .getBytes();
+                                    tuple[3] = s2b(referencedColumnsTokenizer
+                                            .nextToken()); // PKCOLUMN_NAME
+                                    tuple[8] = Integer.toString(keySeq)
+                                                      .getBytes(); // KEY_SEQ
+                                    tuple[9] = Integer.toString(java.sql.DatabaseMetaData.importedKeySetDefault)
+                                                      .getBytes();
+                                    tuple[10] = Integer.toString(getCascadeDeleteOption(
+                                                keys)).getBytes();
                                     tuple[11] = null; // FK_NAME
                                     tuple[12] = null; // PK_NAME
-                                    tuple[13] = Integer.toString(
-                                                        java.sql.DatabaseMetaData.importedKeyNotDeferrable)
-                                           .getBytes();
+                                    tuple[13] = Integer.toString(java.sql.DatabaseMetaData.importedKeyNotDeferrable)
+                                                       .getBytes();
                                     tuples.add(tuple);
                                     keySeq++;
                                 }
@@ -1399,19 +1308,16 @@ public class DatabaseMetaData
                 }
 
                 if (Driver.TRACE) {
-
                     StringBuffer rows = new StringBuffer();
                     rows.append("\n");
 
                     for (int i = 0; i < tuples.size(); i++) {
-
                         byte[][] b = (byte[][]) tuples.get(i);
                         rows.append("[Row] ");
 
                         boolean firstTime = true;
 
                         for (int j = 0; j < b.length; j++) {
-
                             if (!firstTime) {
                                 rows.append(", ");
                             } else {
@@ -1428,19 +1334,15 @@ public class DatabaseMetaData
                         rows.append("\n");
                     }
 
-                    Debug.returnValue(this, "getCrossReference", 
-                                      rows.toString());
+                    Debug.returnValue(this, "getCrossReference", rows.toString());
                 }
 
                 return buildResultSet(fields, tuples);
             } finally {
-
                 if (fkresults != null) {
-
                     try {
                         fkresults.close();
                     } catch (Exception sqlEx) {
-
                         // ignore
                     }
 
@@ -1448,7 +1350,6 @@ public class DatabaseMetaData
                 }
 
                 if (stmt != null) {
-
                     try {
                         stmt.close();
                     } catch (Exception ex) {
@@ -1459,7 +1360,6 @@ public class DatabaseMetaData
                 }
             }
         } else {
-
             return buildResultSet(fields, new ArrayList());
         }
     }
@@ -1467,42 +1367,34 @@ public class DatabaseMetaData
     /**
      * @see DatabaseMetaData#getDatabaseMajorVersion()
      */
-    public int getDatabaseMajorVersion()
-                                throws SQLException {
-
+    public int getDatabaseMajorVersion() throws SQLException {
         return this.conn.getServerMajorVersion();
     }
 
     /**
      * @see DatabaseMetaData#getDatabaseMinorVersion()
      */
-    public int getDatabaseMinorVersion()
-                                throws SQLException {
-
+    public int getDatabaseMinorVersion() throws SQLException {
         return this.conn.getServerMinorVersion();
     }
 
     /**
      * What's the name of this database product?
-     * 
+     *
      * @return database product name
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getDatabaseProductName()
-                                  throws java.sql.SQLException {
-
+    public String getDatabaseProductName() throws java.sql.SQLException {
         return "MySQL";
     }
 
     /**
      * What's the version of this database product?
-     * 
+     *
      * @return database version
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getDatabaseProductVersion()
-                                     throws java.sql.SQLException {
-
+    public String getDatabaseProductVersion() throws java.sql.SQLException {
         return this.conn.getServerVersion();
     }
 
@@ -1511,75 +1403,85 @@ public class DatabaseMetaData
     /**
      * What's the database's default transaction isolation level?  The values
      * are defined in java.sql.Connection.
-     * 
+     *
      * @return the default isolation level
      * @see Connection
      * @throws java.sql.SQLException if a database access error occurs
      */
-    public int getDefaultTransactionIsolation()
-                                       throws java.sql.SQLException {
-
+    public int getDefaultTransactionIsolation() throws java.sql.SQLException {
         if (this.conn.supportsIsolationLevel()) {
-
             return java.sql.Connection.TRANSACTION_READ_COMMITTED;
         } else {
-
             return java.sql.Connection.TRANSACTION_NONE;
         }
     }
 
     /**
      * What's this JDBC driver's major version number?
-     * 
+     *
      * @return JDBC driver major version
      */
     public int getDriverMajorVersion() {
-
         return Driver.MAJORVERSION;
     }
 
     /**
      * What's this JDBC driver's minor version number?
-     * 
+     *
      * @return JDBC driver minor version number
      */
     public int getDriverMinorVersion() {
-
         return Driver.MINORVERSION;
     }
 
     /**
      * What's the name of this JDBC driver?
-     * 
+     *
      * @return JDBC driver name
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getDriverName()
-                         throws java.sql.SQLException {
-
+    public String getDriverName() throws java.sql.SQLException {
         return "MySQL-AB JDBC Driver";
     }
 
     /**
      * What's the version of this JDBC driver?
-     * 
+     *
      * @return JDBC driver version
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getDriverVersion()
-                            throws java.sql.SQLException {
-
+    public String getDriverVersion() throws java.sql.SQLException {
         return "3.0.4-gamma";
+    }
+
+    /**
+     * Adds to the tuples list the exported keys of exportingTable based on the
+     * keysComment from the 'show table status' sql command. KeysComment is that part of
+     * the comment field that follows the "InnoDB free ...;" prefix.
+     *
+     * @param catalog the database to use
+     * @param exportingTable the table keys are being exported from
+     * @param keysComment the comment from 'show table status'
+     * @param fkTableName the foreign key table name
+     * @param tuples the rows to add results to
+     *
+     * @throws SQLException if a database access error occurs
+     */
+    public void getExportKeyResults(String catalog, String exportingTable,
+        String keysComment, List tuples, String fkTableName)
+        throws SQLException {
+        getResultsImpl(catalog, exportingTable, keysComment, tuples,
+            fkTableName, true);
     }
 
     /**
      * Get a description of a foreign key columns that reference a table's
      * primary key columns (the foreign keys exported by a table).  They are
      * ordered by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ.
-     * 
+     *
      * <P>
      * Each foreign key column description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>PKTABLE_CAT</B> String => primary key table catalog (may be null)
@@ -1613,7 +1515,7 @@ public class DatabaseMetaData
      * <li>
      * <B>UPDATE_RULE</B> short => What happens to foreign key when primary is
      * updated:
-     * 
+     *
      * <UL>
      * <li>
      * importedKeyCascade - change imported key to agree with primary key
@@ -1632,7 +1534,7 @@ public class DatabaseMetaData
      * <li>
      * <B>DELETE_RULE</B> short => What happens to the foreign key when
      * primary is deleted.
-     * 
+     *
      * <UL>
      * <li>
      * importedKeyCascade - delete rows that import a deleted key
@@ -1655,7 +1557,7 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schema a schema name pattern; "" retrieves those without a schema
      * @param table a table name
@@ -1663,12 +1565,9 @@ public class DatabaseMetaData
      * @see #getImportedKeys
      * @throws java.sql.SQLException if a database access error occurs
      */
-    public java.sql.ResultSet getExportedKeys(String catalog, String schema, 
-                                              String table)
-                                       throws java.sql.SQLException {
-
+    public java.sql.ResultSet getExportedKeys(String catalog, String schema,
+        String table) throws java.sql.SQLException {
         if (Driver.TRACE) {
-
             Object[] args = { catalog, schema, table };
             Debug.methodCall(this, "getExportedKeys", args);
         }
@@ -1694,35 +1593,29 @@ public class DatabaseMetaData
         fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
 
         if (this.conn.getIO().versionMeetsMinimum(3, 23, 0)) {
-
             Statement stmt = null;
             ResultSet fkresults = null;
 
             try {
-
                 /*
                  * Get foreign key information for table
                  */
                 if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
-
                     // we can use 'SHOW CREATE TABLE'
                     String database = this.database;
 
                     if (catalog != null) {
-
                         if (!catalog.equals("")) {
                             database = catalog;
                         }
                     }
 
-                    fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(
-                                        this.conn, this, database, null);
+                    fkresults = extractForeignKeyFromCreateTable(this.conn,
+                            this, database, null);
                 } else {
-
                     String databasePart = "";
 
                     if (catalog != null) {
-
                         if (!catalog.equals("")) {
                             databasePart = " FROM " + catalog;
                         }
@@ -1731,8 +1624,8 @@ public class DatabaseMetaData
                     }
 
                     stmt = this.conn.createStatement();
-                    fkresults = stmt.executeQuery(
-                                        "show table status " + databasePart);
+                    fkresults = stmt.executeQuery("show table status "
+                            + databasePart);
                 }
 
                 // lower-case table name might be turned on
@@ -1745,32 +1638,25 @@ public class DatabaseMetaData
                 String dummy;
 
                 while (fkresults.next()) {
-
                     String tableType = fkresults.getString("Type");
 
-                    if (tableType != null
-                        && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(
-                                                                            ForeignKeyUtil.SUPPORTS_FK))) {
-
+                    if ((tableType != null)
+                            && (tableType.equalsIgnoreCase("innodb")
+                            || tableType.equalsIgnoreCase(SUPPORTS_FK))) {
                         String comment = fkresults.getString("Comment").trim();
 
                         if (comment != null) {
-
-                            StringTokenizer commentTokens = 
-                                    new StringTokenizer(comment, ";", false);
+                            StringTokenizer commentTokens = new StringTokenizer(comment,
+                                    ";", false);
 
                             if (commentTokens.hasMoreTokens()) {
                                 dummy = commentTokens.nextToken(); // Skip InnoDB comment
 
                                 while (commentTokens.hasMoreTokens()) {
-
                                     String keys = commentTokens.nextToken();
-                                    ForeignKeyUtil.getExportKeyResults(catalog, 
-                                                                       tableNameWithCase, 
-                                                                       keys, 
-                                                                       tuples, 
-                                                                       fkresults.getString(
-                                                                               "Name"));
+                                    getExportKeyResults(catalog,
+                                        tableNameWithCase, keys, tuples,
+                                        fkresults.getString("Name"));
                                 }
                             }
                         }
@@ -1778,19 +1664,16 @@ public class DatabaseMetaData
                 }
 
                 if (Driver.TRACE) {
-
                     StringBuffer rows = new StringBuffer();
                     rows.append("\n");
 
                     for (int i = 0; i < tuples.size(); i++) {
-
                         byte[][] b = (byte[][]) tuples.get(i);
                         rows.append("[Row] ");
 
                         boolean firstTime = true;
 
                         for (int j = 0; j < b.length; j++) {
-
                             if (!firstTime) {
                                 rows.append(", ");
                             } else {
@@ -1812,13 +1695,10 @@ public class DatabaseMetaData
 
                 return buildResultSet(fields, tuples);
             } finally {
-
                 if (fkresults != null) {
-
                     try {
                         fkresults.close();
                     } catch (SQLException sqlEx) {
-
                         // ignore
                     }
 
@@ -1826,11 +1706,9 @@ public class DatabaseMetaData
                 }
 
                 if (stmt != null) {
-
                     try {
                         stmt.close();
                     } catch (Exception ex) {
-
                         // ignore
                     }
 
@@ -1838,29 +1716,18 @@ public class DatabaseMetaData
                 }
             }
         } else {
-
             return buildResultSet(fields, new ArrayList());
         }
-    }
-
-    private String getTableNameWithCase(String table) {
-
-        String tableNameWithCase = (this.conn.lowerCaseTableNames()
-                                        ? table.toLowerCase() : table);
-
-        return tableNameWithCase;
     }
 
     /**
      * Get all the "extra" characters that can be used in unquoted identifier
      * names (those beyond a-z, 0-9 and _).
-     * 
+     *
      * @return the string containing the extra characters
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getExtraNameCharacters()
-                                  throws java.sql.SQLException {
-
+    public String getExtraNameCharacters() throws java.sql.SQLException {
         return "#@";
     }
 
@@ -1868,26 +1735,37 @@ public class DatabaseMetaData
      * What's the string used to quote SQL identifiers? This returns a space "
      * " if identifier quoting isn't supported. A JDBC compliant driver
      * always uses a double quote character.
-     * 
+     *
      * @return the quoting string
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getIdentifierQuoteString()
-                                    throws java.sql.SQLException {
-
+    public String getIdentifierQuoteString() throws java.sql.SQLException {
         if (this.conn.supportsQuotedIdentifiers()) {
-
             if (!this.conn.useAnsiQuotedIdentifiers()) {
-
                 return "`";
             } else {
-
                 return "\"";
             }
         } else {
-
             return " ";
         }
+    }
+
+    /**
+     * Populates the tuples list with the imported keys of importingTable based on the
+     * keysComment from the 'show table status' sql command. KeysComment is that part of
+     * the comment field that follows the "InnoDB free ...;" prefix.
+     *
+     * @param catalog the database to use
+     * @param importingTable the table keys are being imported to
+     * @param keysComment the comment from 'show table status'
+     * @param tuples the rows to add results to
+     *
+     * @throws SQLException if a database access error occurs
+     */
+    public void getImportKeyResults(String catalog, String importingTable,
+        String keysComment, List tuples) throws SQLException {
+        getResultsImpl(catalog, importingTable, keysComment, tuples, null, false);
     }
 
     /**
@@ -1895,10 +1773,10 @@ public class DatabaseMetaData
      * table's foreign key columns (the primary keys imported by a table).
      * They are ordered by PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, and
      * KEY_SEQ.
-     * 
+     *
      * <P>
      * Each primary key column description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>PKTABLE_CAT</B> String => primary key table catalog being imported
@@ -1932,7 +1810,7 @@ public class DatabaseMetaData
      * <li>
      * <B>UPDATE_RULE</B> short => What happens to foreign key when primary is
      * updated:
-     * 
+     *
      * <UL>
      * <li>
      * importedKeyCascade - change imported key to agree with primary key
@@ -1951,7 +1829,7 @@ public class DatabaseMetaData
      * <li>
      * <B>DELETE_RULE</B> short => What happens to the foreign key when
      * primary is deleted.
-     * 
+     *
      * <UL>
      * <li>
      * importedKeyCascade - delete rows that import a deleted key
@@ -1974,7 +1852,7 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schema a schema name pattern; "" retrieves those without a schema
      * @param table a table name
@@ -1982,12 +1860,9 @@ public class DatabaseMetaData
      * @see #getExportedKeys
      * @throws java.sql.SQLException if a database access error occurs
      */
-    public java.sql.ResultSet getImportedKeys(String catalog, String schema, 
-                                              String table)
-                                       throws java.sql.SQLException {
-
+    public java.sql.ResultSet getImportedKeys(String catalog, String schema,
+        String table) throws java.sql.SQLException {
         if (Driver.TRACE) {
-
             Object[] args = { catalog, schema, table };
             Debug.methodCall(this, "getImportedKeys", args);
         }
@@ -2013,35 +1888,29 @@ public class DatabaseMetaData
         fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
 
         if (this.conn.getIO().versionMeetsMinimum(3, 23, 0)) {
-
             Statement stmt = null;
             ResultSet fkresults = null;
 
             try {
-
                 /*
                  * Get foreign key information for table
                  */
                 if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
-
                     // we can use 'SHOW CREATE TABLE'
                     String database = this.database;
 
                     if (catalog != null) {
-
                         if (!catalog.equals("")) {
                             database = catalog;
                         }
                     }
 
-                    fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(
-                                        this.conn, this, database, table);
+                    fkresults = extractForeignKeyFromCreateTable(this.conn,
+                            this, database, table);
                 } else {
-
                     String databasePart = "";
 
                     if (catalog != null) {
-
                         if (!catalog.equals("")) {
                             databasePart = " FROM " + catalog;
                         }
@@ -2050,9 +1919,8 @@ public class DatabaseMetaData
                     }
 
                     stmt = this.conn.createStatement();
-                    fkresults = stmt.executeQuery(
-                                        "show table status " + databasePart
-                                        + " like '" + table + "'");
+                    fkresults = stmt.executeQuery("show table status "
+                            + databasePart + " like '" + table + "'");
                 }
 
                 /*
@@ -2062,30 +1930,24 @@ public class DatabaseMetaData
                 String dummy;
 
                 while (fkresults.next()) {
-
                     String tableType = fkresults.getString("Type");
 
-                    if (tableType != null
-                        && (tableType.equalsIgnoreCase("innodb") || tableType.equalsIgnoreCase(
-                                                                            ForeignKeyUtil.SUPPORTS_FK))) {
-
+                    if ((tableType != null)
+                            && (tableType.equalsIgnoreCase("innodb")
+                            || tableType.equalsIgnoreCase(SUPPORTS_FK))) {
                         String comment = fkresults.getString("Comment").trim();
 
                         if (comment != null) {
-
-                            StringTokenizer commentTokens = 
-                                    new StringTokenizer(comment, ";", false);
+                            StringTokenizer commentTokens = new StringTokenizer(comment,
+                                    ";", false);
 
                             if (commentTokens.hasMoreTokens()) {
                                 dummy = commentTokens.nextToken(); // Skip InnoDB comment
 
                                 while (commentTokens.hasMoreTokens()) {
-
                                     String keys = commentTokens.nextToken();
-                                    ForeignKeyUtil.getImportKeyResults(catalog, 
-                                                                       table, 
-                                                                       keys, 
-                                                                       tuples);
+                                    getImportKeyResults(catalog, table, keys,
+                                        tuples);
                                 }
                             }
                         }
@@ -2093,19 +1955,16 @@ public class DatabaseMetaData
                 }
 
                 if (Driver.TRACE) {
-
                     StringBuffer rows = new StringBuffer();
                     rows.append("\n");
 
                     for (int i = 0; i < tuples.size(); i++) {
-
                         byte[][] b = (byte[][]) tuples.get(i);
                         rows.append("[Row] ");
 
                         boolean firstTime = true;
 
                         for (int j = 0; j < b.length; j++) {
-
                             if (!firstTime) {
                                 rows.append(", ");
                             } else {
@@ -2127,13 +1986,10 @@ public class DatabaseMetaData
 
                 return buildResultSet(fields, tuples);
             } finally {
-
                 if (fkresults != null) {
-
                     try {
                         fkresults.close();
                     } catch (SQLException sqlEx) {
-
                         // ignore
                     }
 
@@ -2141,11 +1997,9 @@ public class DatabaseMetaData
                 }
 
                 if (stmt != null) {
-
                     try {
                         stmt.close();
                     } catch (Exception ex) {
-
                         // ignore
                     }
 
@@ -2153,7 +2007,6 @@ public class DatabaseMetaData
                 }
             }
         } else {
-
             return buildResultSet(fields, new ArrayList());
         }
     }
@@ -2161,10 +2014,10 @@ public class DatabaseMetaData
     /**
      * Get a description of a table's indices and statistics. They are ordered
      * by NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
-     * 
+     *
      * <P>
      * Each index column description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TABLE_CAT</B> String => table catalog (may be null)
@@ -2189,7 +2042,7 @@ public class DatabaseMetaData
      * </li>
      * <li>
      * <B>TYPE</B> short => index type:
-     * 
+     *
      * <UL>
      * <li>
      * tableIndexStatistic - this identifies table statistics that are
@@ -2235,7 +2088,7 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schema a schema name pattern; "" retrieves those without a schema
      * @param table a table name
@@ -2247,11 +2100,9 @@ public class DatabaseMetaData
      * @return ResultSet each row is an index column description
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public java.sql.ResultSet getIndexInfo(String catalog, String schema, 
-                                           String table, boolean unique, 
-                                           boolean approximate)
-                                    throws java.sql.SQLException {
-
+    public java.sql.ResultSet getIndexInfo(String catalog, String schema,
+        String table, boolean unique, boolean approximate)
+        throws java.sql.SQLException {
         /*
          * MySQL stores index information in the following fields:
          *
@@ -2267,14 +2118,13 @@ public class DatabaseMetaData
         String databasePart = "";
 
         if (catalog != null) {
-
             if (!catalog.equals("")) {
                 databasePart = " FROM " + this.quotedId + catalog
-                               + this.quotedId;
+                    + this.quotedId;
             }
         } else {
             databasePart = " FROM " + this.quotedId + this.database
-                           + this.quotedId;
+                + this.quotedId;
         }
 
         Statement stmt = null;
@@ -2282,8 +2132,8 @@ public class DatabaseMetaData
 
         try {
             stmt = this.conn.createStatement();
-            results = stmt.executeQuery(
-                              "SHOW INDEX FROM " + table + databasePart);
+            results = stmt.executeQuery("SHOW INDEX FROM " + table
+                    + databasePart);
 
             Field[] fields = new Field[13];
             fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
@@ -2303,17 +2153,16 @@ public class DatabaseMetaData
             ArrayList rows = new ArrayList();
 
             while (results.next()) {
-
                 byte[][] row = new byte[14][];
-                row[0] = (catalog == null ? new byte[0] : s2b(catalog));
+                row[0] = ((catalog == null) ? new byte[0] : s2b(catalog));
                 row[1] = null;
                 row[2] = results.getBytes("Table");
-                row[3] = (results.getInt("Non_unique") != 0
-                              ? s2b("true") : s2b("false"));
+                row[3] = ((results.getInt("Non_unique") != 0) ? s2b("true")
+                                                              : s2b("false"));
                 row[4] = new byte[0];
                 row[5] = results.getBytes("Key_name");
-                row[6] = Integer.toString(
-                                 java.sql.DatabaseMetaData.tableIndexOther).getBytes();
+                row[6] = Integer.toString(java.sql.DatabaseMetaData.tableIndexOther)
+                                .getBytes();
                 row[7] = results.getBytes("Seq_in_index");
                 row[8] = results.getBytes("Column_name");
                 row[9] = results.getBytes("Collation");
@@ -2327,9 +2176,7 @@ public class DatabaseMetaData
 
             return indexInfo;
         } finally {
-
             if (results != null) {
-
                 try {
                     results.close();
                 } catch (Exception ex) {
@@ -2340,7 +2187,6 @@ public class DatabaseMetaData
             }
 
             if (stmt != null) {
-
                 try {
                     stmt.close();
                 } catch (Exception ex) {
@@ -2355,18 +2201,14 @@ public class DatabaseMetaData
     /**
      * @see DatabaseMetaData#getJDBCMajorVersion()
      */
-    public int getJDBCMajorVersion()
-                            throws SQLException {
-
+    public int getJDBCMajorVersion() throws SQLException {
         return 3;
     }
 
     /**
      * @see DatabaseMetaData#getJDBCMinorVersion()
      */
-    public int getJDBCMinorVersion()
-                            throws SQLException {
-
+    public int getJDBCMinorVersion() throws SQLException {
         return 0;
     }
 
@@ -2378,266 +2220,224 @@ public class DatabaseMetaData
 
     /**
      * How many hex characters can you have in an inline binary literal?
-     * 
+     *
      * @return max literal length
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxBinaryLiteralLength()
-                                  throws java.sql.SQLException {
-
+    public int getMaxBinaryLiteralLength() throws java.sql.SQLException {
         return 16777208;
     }
 
     /**
      * What's the maximum length of a catalog name?
-     * 
+     *
      * @return max name length in bytes
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxCatalogNameLength()
-                                throws java.sql.SQLException {
-
+    public int getMaxCatalogNameLength() throws java.sql.SQLException {
         return 32;
     }
 
     /**
      * What's the max length for a character literal?
-     * 
+     *
      * @return max literal length
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxCharLiteralLength()
-                                throws java.sql.SQLException {
-
+    public int getMaxCharLiteralLength() throws java.sql.SQLException {
         return 16777208;
     }
 
     /**
      * What's the limit on column name length?
-     * 
+     *
      * @return max literal length
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxColumnNameLength()
-                               throws java.sql.SQLException {
-
+    public int getMaxColumnNameLength() throws java.sql.SQLException {
         return 64;
     }
 
     /**
      * What's the maximum number of columns in a "GROUP BY" clause?
-     * 
+     *
      * @return max number of columns
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxColumnsInGroupBy()
-                               throws java.sql.SQLException {
-
+    public int getMaxColumnsInGroupBy() throws java.sql.SQLException {
         return 64;
     }
 
     /**
      * What's the maximum number of columns allowed in an index?
-     * 
+     *
      * @return max columns
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxColumnsInIndex()
-                             throws java.sql.SQLException {
-
+    public int getMaxColumnsInIndex() throws java.sql.SQLException {
         return 16;
     }
 
     /**
      * What's the maximum number of columns in an "ORDER BY" clause?
-     * 
+     *
      * @return max columns
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxColumnsInOrderBy()
-                               throws java.sql.SQLException {
-
+    public int getMaxColumnsInOrderBy() throws java.sql.SQLException {
         return 64;
     }
 
     /**
      * What's the maximum number of columns in a "SELECT" list?
-     * 
+     *
      * @return max columns
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxColumnsInSelect()
-                              throws java.sql.SQLException {
-
+    public int getMaxColumnsInSelect() throws java.sql.SQLException {
         return 256;
     }
 
     /**
      * What's maximum number of columns in a table?
-     * 
+     *
      * @return max columns
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxColumnsInTable()
-                             throws java.sql.SQLException {
-
+    public int getMaxColumnsInTable() throws java.sql.SQLException {
         return 512;
     }
 
     /**
      * How many active connections can we have at a time to this database?
-     * 
+     *
      * @return max connections
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxConnections()
-                          throws java.sql.SQLException {
-
+    public int getMaxConnections() throws java.sql.SQLException {
         return 0;
     }
 
     /**
      * What's the maximum cursor name length?
-     * 
+     *
      * @return max cursor name length in bytes
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxCursorNameLength()
-                               throws java.sql.SQLException {
-
+    public int getMaxCursorNameLength() throws java.sql.SQLException {
         return 64;
     }
 
     /**
      * What's the maximum length of an index (in bytes)?
-     * 
+     *
      * @return max index length in bytes
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxIndexLength()
-                          throws java.sql.SQLException {
-
+    public int getMaxIndexLength() throws java.sql.SQLException {
         return 256;
     }
 
     /**
      * What's the maximum length of a procedure name?
-     * 
+     *
      * @return max name length in bytes
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxProcedureNameLength()
-                                  throws java.sql.SQLException {
-
+    public int getMaxProcedureNameLength() throws java.sql.SQLException {
         return 0;
     }
 
     /**
      * What's the maximum length of a single row?
-     * 
+     *
      * @return max row size in bytes
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxRowSize()
-                      throws java.sql.SQLException {
-
+    public int getMaxRowSize() throws java.sql.SQLException {
         return Integer.MAX_VALUE - 8; // Max buffer size - HEADER
     }
 
     /**
      * What's the maximum length allowed for a schema name?
-     * 
+     *
      * @return max name length in bytes
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxSchemaNameLength()
-                               throws java.sql.SQLException {
-
+    public int getMaxSchemaNameLength() throws java.sql.SQLException {
         return 0;
     }
 
     /**
      * What's the maximum length of a SQL statement?
-     * 
+     *
      * @return max length in bytes
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxStatementLength()
-                              throws java.sql.SQLException {
-
+    public int getMaxStatementLength() throws java.sql.SQLException {
         return MysqlIO.getMaxBuf() - 4; // Max buffer - header
     }
 
     /**
      * How many active statements can we have open at one time to this
      * database?
-     * 
+     *
      * @return the maximum
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxStatements()
-                         throws java.sql.SQLException {
-
+    public int getMaxStatements() throws java.sql.SQLException {
         return 0;
     }
 
     /**
      * What's the maximum length of a table name?
-     * 
+     *
      * @return max name length in bytes
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxTableNameLength()
-                              throws java.sql.SQLException {
-
+    public int getMaxTableNameLength() throws java.sql.SQLException {
         return 64;
     }
 
     /**
      * What's the maximum number of tables in a SELECT?
-     * 
+     *
      * @return the maximum
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxTablesInSelect()
-                             throws java.sql.SQLException {
-
+    public int getMaxTablesInSelect() throws java.sql.SQLException {
         return 256;
     }
 
     /**
      * What's the maximum length of a user name?
-     * 
+     *
      * @return max name length  in bytes
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public int getMaxUserNameLength()
-                             throws java.sql.SQLException {
-
+    public int getMaxUserNameLength() throws java.sql.SQLException {
         return 16;
     }
 
     /**
      * Get a comma separated list of math functions.
-     * 
+     *
      * @return the list
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getNumericFunctions()
-                               throws java.sql.SQLException {
-
+    public String getNumericFunctions() throws java.sql.SQLException {
         return "ABS,ACOS,ASIN,ATAN,ATAN2,BIT_COUNT,CEILING,COS,"
-            + "COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,"
-            + "POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE";
+        + "COT,DEGREES,EXP,FLOOR,LOG,LOG10,MAX,MIN,MOD,PI,POW,"
+        + "POWER,RADIANS,RAND,ROUND,SIN,SQRT,TAN,TRUNCATE";
     }
 
     /**
      * Get a description of a table's primary key columns.  They are ordered
      * by COLUMN_NAME.
-     * 
+     *
      * <P>
      * Each column description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TABLE_CAT</B> String => table catalog (may be null)
@@ -2659,17 +2459,15 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schema a schema name pattern; "" retrieves those without a schema
      * @param table a table name
      * @return ResultSet each row is a primary key column description
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, 
-                                             String table)
-                                      throws java.sql.SQLException {
-
+    public java.sql.ResultSet getPrimaryKeys(String catalog, String schema,
+        String table) throws java.sql.SQLException {
         Field[] fields = new Field[6];
         fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
         fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
@@ -2681,7 +2479,6 @@ public class DatabaseMetaData
         String dbSub = "";
 
         if (catalog != null) {
-
             if (!catalog.equals("")) {
                 dbSub = " FROM " + this.quotedId + catalog + this.quotedId;
             }
@@ -2702,18 +2499,14 @@ public class DatabaseMetaData
 
             ArrayList tuples = new ArrayList();
             TreeMap sortMap = new TreeMap();
-            
 
             while (rs.next()) {
-
                 String keyType = rs.getString("Key_name");
 
                 if (keyType != null) {
-
                     if (keyType.toUpperCase().startsWith("PRI")) {
-
                         byte[][] tuple = new byte[6][];
-                        tuple[0] = (catalog == null ? new byte[0] : s2b(catalog));
+                        tuple[0] = ((catalog == null) ? new byte[0] : s2b(catalog));
                         tuple[1] = null;
                         tuple[2] = s2b(table);
 
@@ -2735,9 +2528,7 @@ public class DatabaseMetaData
 
             return buildResultSet(fields, tuples);
         } finally {
-
             if (rs != null) {
-
                 try {
                     rs.close();
                 } catch (Exception ex) {
@@ -2748,7 +2539,6 @@ public class DatabaseMetaData
             }
 
             if (stmt != null) {
-
                 try {
                     stmt.close();
                 } catch (Exception ex) {
@@ -2763,7 +2553,7 @@ public class DatabaseMetaData
     /**
      * Get a description of a catalog's stored procedure parameters and result
      * columns.
-     * 
+     *
      * <P>
      * Only descriptions matching the schema, procedure and parameter name
      * criteria are returned.  They are ordered by PROCEDURE_SCHEM and
@@ -2771,11 +2561,11 @@ public class DatabaseMetaData
      * are the parameter descriptions in call order. The column descriptions
      * follow in column number order.
      * </p>
-     * 
+     *
      * <P>
      * Each row in the ResultSet is a parameter desription or column
      * description with the following fields:
-     * 
+     *
      * <OL>
      * <li>
      * <B>PROCEDURE_CAT</B> String => procedure catalog (may be null)
@@ -2791,7 +2581,7 @@ public class DatabaseMetaData
      * </li>
      * <li>
      * <B>COLUMN_TYPE</B> Short => kind of column/parameter:
-     * 
+     *
      * <UL>
      * <li>
      * procedureColumnUnknown - nobody knows
@@ -2833,7 +2623,7 @@ public class DatabaseMetaData
      * </li>
      * <li>
      * <B>NULLABLE</B> short => can it contain NULL?
-     * 
+     *
      * <UL>
      * <li>
      * procedureNoNulls - does not allow NULL values
@@ -2851,13 +2641,13 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * <P>
      * <B>Note:</B> Some databases may not return the column descriptions for
      * a procedure. Additional columns beyond REMARKS can be defined by the
      * database.
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schemaPattern a schema name pattern; "" retrieves those without
      *        a schema
@@ -2868,12 +2658,9 @@ public class DatabaseMetaData
      * @see #getSearchStringEscape
      * @throws java.sql.SQLException if a database access error occurs
      */
-    public java.sql.ResultSet getProcedureColumns(String catalog, 
-                                                  String schemaPattern, 
-                                                  String procedureNamePattern, 
-                                                  String columnNamePattern)
-                                           throws java.sql.SQLException {
-
+    public java.sql.ResultSet getProcedureColumns(String catalog,
+        String schemaPattern, String procedureNamePattern,
+        String columnNamePattern) throws java.sql.SQLException {
         Field[] fields = new Field[14];
         fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 0);
         fields[1] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
@@ -2895,28 +2682,26 @@ public class DatabaseMetaData
 
     /**
      * What's the database vendor's preferred term for "procedure"?
-     * 
+     *
      * @return the vendor term
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getProcedureTerm()
-                            throws java.sql.SQLException {
-
+    public String getProcedureTerm() throws java.sql.SQLException {
         return "";
     }
 
     /**
      * Get a description of stored procedures available in a catalog.
-     * 
+     *
      * <P>
      * Only procedure descriptions matching the schema and procedure name
      * criteria are returned.  They are ordered by PROCEDURE_SCHEM, and
      * PROCEDURE_NAME.
      * </p>
-     * 
+     *
      * <P>
      * Each procedure description has the the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>PROCEDURE_CAT</B> String => procedure catalog (may be null)
@@ -2941,7 +2726,7 @@ public class DatabaseMetaData
      * </li>
      * <li>
      * <B>PROCEDURE_TYPE</B> short => kind of procedure:
-     * 
+     *
      * <UL>
      * <li>
      * procedureResultUnknown - May return a result
@@ -2956,7 +2741,7 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schemaPattern a schema name pattern; "" retrieves those without
      *        a schema
@@ -2965,11 +2750,9 @@ public class DatabaseMetaData
      * @see #getSearchStringEscape
      * @throws java.sql.SQLException if a database access error occurs
      */
-    public java.sql.ResultSet getProcedures(String catalog, 
-                                            String schemaPattern, 
-                                            String procedureNamePattern)
-                                     throws java.sql.SQLException {
-
+    public java.sql.ResultSet getProcedures(String catalog,
+        String schemaPattern, String procedureNamePattern)
+        throws java.sql.SQLException {
         Field[] fields = new Field[8];
         fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
         fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 0);
@@ -2985,80 +2768,68 @@ public class DatabaseMetaData
 
     /**
      * Is the database in read-only mode?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean isReadOnly()
-                       throws java.sql.SQLException {
-
+    public boolean isReadOnly() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * @see DatabaseMetaData#getResultSetHoldability()
      */
-    public int getResultSetHoldability()
-                                throws SQLException {
-
+    public int getResultSetHoldability() throws SQLException {
         return ResultSet.CLOSE_CURSORS_AT_COMMIT;
     }
 
     /**
      * Get a comma separated list of all a database's SQL keywords that are
      * NOT also SQL92 keywords.
-     * 
+     *
      * @return the list
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getSQLKeywords()
-                          throws java.sql.SQLException {
-
+    public String getSQLKeywords() throws java.sql.SQLException {
         return "AUTO_INCREMENT,BINARY,BLOB,ENUM,INFILE,LOAD,MEDIUMINT,OPTION,OUTFILE,REPLACE,SET,TEXT,UNSIGNED,ZEROFILL";
     }
 
     /**
      * @see DatabaseMetaData#getSQLStateType()
      */
-    public int getSQLStateType()
-                        throws SQLException {
-
+    public int getSQLStateType() throws SQLException {
         return 0;
     }
 
     /**
      * What's the database vendor's preferred term for "schema"?
-     * 
+     *
      * @return the vendor term
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getSchemaTerm()
-                         throws java.sql.SQLException {
-
+    public String getSchemaTerm() throws java.sql.SQLException {
         return "";
     }
 
     /**
      * Get the schema names available in this database.  The results are
      * ordered by schema name.
-     * 
+     *
      * <P>
      * The schema column is:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TABLE_SCHEM</B> String => schema name
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @return ResultSet each row has a single String column that is a schema
      *         name
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public java.sql.ResultSet getSchemas()
-                                  throws java.sql.SQLException {
-
+    public java.sql.ResultSet getSchemas() throws java.sql.SQLException {
         Field[] fields = new Field[1];
         fields[0] = new Field("", "TABLE_SCHEM", java.sql.Types.CHAR, 0);
 
@@ -3071,49 +2842,43 @@ public class DatabaseMetaData
     /**
      * This is the string that can be used to escape '_' or '%' in the string
      * pattern style catalog search parameters.
-     * 
+     *
      * <P>
      * The '_' character represents any single character.
      * </p>
-     * 
+     *
      * <P>
      * The '%' character represents any sequence of zero or more characters.
      * </p>
-     * 
+     *
      * @return the string used to escape wildcard characters
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getSearchStringEscape()
-                                 throws java.sql.SQLException {
-
+    public String getSearchStringEscape() throws java.sql.SQLException {
         return "\\";
     }
 
     /**
      * Get a comma separated list of string functions.
-     * 
+     *
      * @return the list
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getStringFunctions()
-                              throws java.sql.SQLException {
-
+    public String getStringFunctions() throws java.sql.SQLException {
         return "ASCII,BIN,BIT_LENGTH,CHAR,CHARACTER_LENGTH,CHAR_LENGTH,CONCAT,"
-            + "CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
-            + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,"
-            + "LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
-            + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,"
-            + "SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
-            + "SUBSTRING_INDEX,TRIM,UCASE,UPPER";
+        + "CONCAT_WS,CONV,ELT,EXPORT_SET,FIELD,FIND_IN_SET,HEX,INSERT,"
+        + "INSTR,LCASE,LEFT,LENGTH,LOAD_FILE,LOCATE,LOCATE,LOWER,LPAD,"
+        + "LTRIM,MAKE_SET,MATCH,MID,OCT,OCTET_LENGTH,ORD,POSITION,"
+        + "QUOTE,REPEAT,REPLACE,REVERSE,RIGHT,RPAD,RTRIM,SOUNDEX,"
+        + "SPACE,STRCMP,SUBSTRING,SUBSTRING,SUBSTRING,SUBSTRING,"
+        + "SUBSTRING_INDEX,TRIM,UCASE,UPPER";
     }
 
     /**
      * @see DatabaseMetaData#getSuperTables(String, String, String)
      */
-    public java.sql.ResultSet getSuperTables(String arg0, String arg1, 
-                                             String arg2)
-                                      throws SQLException {
-
+    public java.sql.ResultSet getSuperTables(String arg0, String arg1,
+        String arg2) throws SQLException {
         Field[] fields = new Field[4];
         fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 32);
         fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 32);
@@ -3126,10 +2891,8 @@ public class DatabaseMetaData
     /**
      * @see DatabaseMetaData#getSuperTypes(String, String, String)
      */
-    public java.sql.ResultSet getSuperTypes(String arg0, String arg1, 
-                                            String arg2)
-                                     throws SQLException {
-
+    public java.sql.ResultSet getSuperTypes(String arg0, String arg1,
+        String arg2) throws SQLException {
         Field[] fields = new Field[6];
         fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 32);
         fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 32);
@@ -3143,28 +2906,26 @@ public class DatabaseMetaData
 
     /**
      * Get a comma separated list of system functions.
-     * 
+     *
      * @return the list
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getSystemFunctions()
-                              throws java.sql.SQLException {
-
+    public String getSystemFunctions() throws java.sql.SQLException {
         return "DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VEresultsION";
     }
 
     /**
      * Get a description of the access rights for each table available in a
      * catalog.
-     * 
+     *
      * <P>
      * Only privileges matching the schema and table name criteria are
      * returned.  They are ordered by TABLE_SCHEM, TABLE_NAME, and PRIVILEGE.
      * </p>
-     * 
+     *
      * <P>
      * Each privilige description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TABLE_CAT</B> String => table catalog (may be null)
@@ -3194,7 +2955,7 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schemaPattern a schema name pattern; "" retrieves those without
      *        a schema
@@ -3203,11 +2964,9 @@ public class DatabaseMetaData
      * @see #getSearchStringEscape
      * @throws java.sql.SQLException if a database access error occurs
      */
-    public java.sql.ResultSet getTablePrivileges(String catalog, 
-                                                 String schemaPattern, 
-                                                 String tableNamePattern)
-                                          throws java.sql.SQLException {
-
+    public java.sql.ResultSet getTablePrivileges(String catalog,
+        String schemaPattern, String tableNamePattern)
+        throws java.sql.SQLException {
         Field[] fields = new Field[7];
         fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 64);
         fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 1);
@@ -3218,10 +2977,10 @@ public class DatabaseMetaData
         fields[6] = new Field("", "IS_GRANTABLE", Types.CHAR, 3);
 
         StringBuffer grantQuery = new StringBuffer(
-                                          "SELECT host,db,table_name,grantor,user,table_priv from mysql.tables_priv ");
+                "SELECT host,db,table_name,grantor,user,table_priv from mysql.tables_priv ");
         grantQuery.append(" WHERE ");
 
-        if (catalog != null && catalog.length() != 0) {
+        if ((catalog != null) && (catalog.length() != 0)) {
             grantQuery.append(" db='");
             grantQuery.append(catalog);
             grantQuery.append("' AND ");
@@ -3240,20 +2999,19 @@ public class DatabaseMetaData
             results = stmt.executeQuery(grantQuery.toString());
 
             while (results.next()) {
-
                 String host = results.getString(1);
                 String database = results.getString(2);
                 String table = results.getString(3);
                 String grantor = results.getString(4);
                 String user = results.getString(5);
 
-                if (user == null || user.length() == 0) {
+                if ((user == null) || (user.length() == 0)) {
                     user = "%";
                 }
 
                 StringBuffer fullUser = new StringBuffer(user);
 
-                if (host != null && this.conn.useHostsInPrivileges()) {
+                if ((host != null) && this.conn.useHostsInPrivileges()) {
                     fullUser.append("@");
                     fullUser.append(host);
                 }
@@ -3263,23 +3021,19 @@ public class DatabaseMetaData
                 if (allPrivileges != null) {
                     allPrivileges = allPrivileges.toUpperCase();
 
-                    StringTokenizer st = new StringTokenizer(allPrivileges, 
-                                                             ",");
+                    StringTokenizer st = new StringTokenizer(allPrivileges, ",");
 
                     while (st.hasMoreTokens()) {
-
                         String privilege = st.nextToken().trim();
 
                         // Loop through every column in the table
                         java.sql.ResultSet columnResults = null;
 
                         try {
-                            columnResults = getColumns(catalog, schemaPattern, 
-                                                       table, "%");
+                            columnResults = getColumns(catalog, schemaPattern,
+                                    table, "%");
 
                             while (columnResults.next()) {
-
-                                
                                 byte[][] tuple = new byte[8][];
                                 tuple[0] = s2b(database);
                                 tuple[1] = null;
@@ -3297,9 +3051,7 @@ public class DatabaseMetaData
                                 grantRows.add(tuple);
                             }
                         } finally {
-
                             if (columnResults != null) {
-
                                 try {
                                     columnResults.close();
                                 } catch (Exception ex) {
@@ -3311,9 +3063,7 @@ public class DatabaseMetaData
                 }
             }
         } finally {
-
             if (results != null) {
-
                 try {
                     results.close();
                 } catch (Exception ex) {
@@ -3324,7 +3074,6 @@ public class DatabaseMetaData
             }
 
             if (stmt != null) {
-
                 try {
                     stmt.close();
                 } catch (Exception ex) {
@@ -3341,10 +3090,10 @@ public class DatabaseMetaData
     /**
      * Get the table types available in this database.  The results are
      * ordered by table type.
-     * 
+     *
      * <P>
      * The table type is:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TABLE_TYPE</B> String => table type.  Typical types are "TABLE",
@@ -3353,14 +3102,12 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @return ResultSet each row has a single String column that is a table
      *         type
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public java.sql.ResultSet getTableTypes()
-                                     throws java.sql.SQLException {
-
+    public java.sql.ResultSet getTableTypes() throws java.sql.SQLException {
         ArrayList tuples = new ArrayList();
         Field[] fields = new Field[1];
         fields[0] = new Field("", "TABLE_TYPE", Types.VARCHAR, 5);
@@ -3378,16 +3125,16 @@ public class DatabaseMetaData
 
     /**
      * Get a description of tables available in a catalog.
-     * 
+     *
      * <P>
      * Only table descriptions matching the catalog, schema, table name and
      * type criteria are returned.  They are ordered by TABLE_TYPE,
      * TABLE_SCHEM and TABLE_NAME.
      * </p>
-     * 
+     *
      * <P>
      * Each table description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TABLE_CAT</B> String => table catalog (may be null)
@@ -3408,11 +3155,11 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * <P>
      * <B>Note:</B> Some databases may not return information for all tables.
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schemaPattern a schema name pattern; "" retrieves those without
      *        a schema
@@ -3422,22 +3169,18 @@ public class DatabaseMetaData
      * @throws java.sql.SQLException DOCUMENT ME!
      * @see #getSearchStringEscape
      */
-    public java.sql.ResultSet getTables(String catalog, String schemaPattern, 
-                                        String tableNamePattern, 
-                                        String[] types)
-                                 throws java.sql.SQLException {
-
+    public java.sql.ResultSet getTables(String catalog, String schemaPattern,
+        String tableNamePattern, String[] types) throws java.sql.SQLException {
         String databasePart = "";
 
         if (catalog != null) {
-
             if (!catalog.equals("")) {
                 databasePart = " FROM " + this.quotedId + catalog
-                               + this.quotedId;
+                    + this.quotedId;
             }
         } else {
             databasePart = " FROM " + this.quotedId + this.database
-                           + this.quotedId;
+                + this.quotedId;
         }
 
         if (tableNamePattern == null) {
@@ -3449,17 +3192,14 @@ public class DatabaseMetaData
 
         try {
             stmt = this.conn.createStatement();
-            results = stmt.executeQuery(
-                              "show tables " + databasePart + " like '"
-                              + tableNamePattern + "'");
+            results = stmt.executeQuery("show tables " + databasePart
+                    + " like '" + tableNamePattern + "'");
 
-            
             Field[] fields = new Field[5];
-            fields[0] = new Field("", "TABLE_CAT", java.sql.Types.VARCHAR, 
-                                  (catalog == null) ? 0 : catalog.length());
+            fields[0] = new Field("", "TABLE_CAT", java.sql.Types.VARCHAR,
+                    (catalog == null) ? 0 : catalog.length());
             fields[1] = new Field("", "TABLE_SCHEM", java.sql.Types.VARCHAR, 0);
-            fields[2] = new Field("", "TABLE_NAME", java.sql.Types.VARCHAR, 
-                                  255);
+            fields[2] = new Field("", "TABLE_NAME", java.sql.Types.VARCHAR, 255);
             fields[3] = new Field("", "TABLE_TYPE", java.sql.Types.VARCHAR, 5);
             fields[4] = new Field("", "REMARKS", java.sql.Types.VARCHAR, 0);
 
@@ -3467,7 +3207,6 @@ public class DatabaseMetaData
             byte[][] row = null;
 
             while (results.next()) {
-
                 String name = results.getString(1);
                 row = new byte[5][];
                 row[0] = (catalog == null) ? new byte[0] : s2b(catalog);
@@ -3482,9 +3221,7 @@ public class DatabaseMetaData
 
             return tables;
         } finally {
-
             if (results != null) {
-
                 try {
                     results.close();
                 } catch (Exception ex) {
@@ -3495,7 +3232,6 @@ public class DatabaseMetaData
             }
 
             if (stmt != null) {
-
                 try {
                     stmt.close();
                 } catch (Exception ex) {
@@ -3509,29 +3245,27 @@ public class DatabaseMetaData
 
     /**
      * Get a comma separated list of time and date functions.
-     * 
+     *
      * @return the list
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getTimeDateFunctions()
-                                throws java.sql.SQLException {
-
+    public String getTimeDateFunctions() throws java.sql.SQLException {
         return "DAYOFWEEK,WEEKDAY,DAYOFMONTH,DAYOFYEAR,MONTH,DAYNAME,"
-        +       "MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD," 
-        +       "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,"
-        +       "CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
-        +       "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,"
-        +       "SEC_TO_TIME,TIME_TO_SEC";
+        + "MONTHNAME,QUARTER,WEEK,YEAR,HOUR,MINUTE,SECOND,PERIOD_ADD,"
+        + "PERIOD_DIFF,TO_DAYS,FROM_DAYS,DATE_FORMAT,TIME_FORMAT,"
+        + "CURDATE,CURRENT_DATE,CURTIME,CURRENT_TIME,NOW,SYSDATE,"
+        + "CURRENT_TIMESTAMP,UNIX_TIMESTAMP,FROM_UNIXTIME,"
+        + "SEC_TO_TIME,TIME_TO_SEC";
     }
 
     /**
      * Get a description of all the standard SQL types supported by this
      * database. They are ordered by DATA_TYPE and then by how closely the
      * data type maps to the corresponding JDBC SQL type.
-     * 
+     *
      * <P>
      * Each type description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TYPE_NAME</B> String => Type name
@@ -3556,7 +3290,7 @@ public class DatabaseMetaData
      * </li>
      * <li>
      * <B>NULLABLE</B> short => can you use NULL for this type?
-     * 
+     *
      * <UL>
      * <li>
      * typeNoNulls - does not allow NULL values
@@ -3574,7 +3308,7 @@ public class DatabaseMetaData
      * </li>
      * <li>
      * <B>SEARCHABLE</B> short => can you use "WHERE" based on this type:
-     * 
+     *
      * <UL>
      * <li>
      * typePredNone - No support
@@ -3621,7 +3355,7 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @return ResultSet each row is a SQL type description
      * @throws java.sql.SQLException DOCUMENT ME!
      */
@@ -3629,10 +3363,10 @@ public class DatabaseMetaData
      * Get a description of all the standard SQL types supported by this
      * database. They are ordered by DATA_TYPE and then by how closely the
      * data type maps to the corresponding JDBC SQL type.
-     * 
+     *
      * <P>
      * Each type description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TYPE_NAME</B> String => Type name
@@ -3657,7 +3391,7 @@ public class DatabaseMetaData
      * </li>
      * <li>
      * <B>NULLABLE</B> short => can you use NULL for this type?
-     * 
+     *
      * <UL>
      * <li>
      * typeNoNulls - does not allow NULL values
@@ -3675,7 +3409,7 @@ public class DatabaseMetaData
      * </li>
      * <li>
      * <B>SEARCHABLE</B> short => can you use "WHERE" based on this type:
-     * 
+     *
      * <UL>
      * <li>
      * typePredNone - No support
@@ -3722,13 +3456,11 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @return ResultSet each row is a SQL type description
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public java.sql.ResultSet getTypeInfo()
-                                   throws java.sql.SQLException {
-
+    public java.sql.ResultSet getTypeInfo() throws java.sql.SQLException {
         Field[] fields = new Field[18];
         fields[0] = new Field("", "TYPE_NAME", Types.CHAR, 32);
         fields[1] = new Field("", "DATA_TYPE", Types.SMALLINT, 5);
@@ -3770,11 +3502,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -3801,11 +3535,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -3832,11 +3568,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("true"); // Unsignable
@@ -3863,11 +3601,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("true"); // Unsignable
@@ -3894,11 +3634,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -3925,11 +3667,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -3958,11 +3702,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -3989,11 +3735,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4020,11 +3768,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4051,11 +3801,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b("(M)"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4082,11 +3834,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b("(M)"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("true"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4113,11 +3867,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4144,11 +3900,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4177,11 +3935,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4208,11 +3968,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4239,11 +4001,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4270,11 +4034,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b("(M)"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4301,11 +4067,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M[,D])] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4332,11 +4100,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M[,D])] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4363,11 +4133,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("true"); // Unsignable
@@ -4394,11 +4166,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("true"); // Unsignable
@@ -4425,11 +4199,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("true"); // Unsignable
@@ -4456,11 +4232,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("true"); // Unsignable
@@ -4487,11 +4265,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M,D)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4518,11 +4298,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M,D)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4549,11 +4331,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M,D)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4580,11 +4364,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M,D)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4611,11 +4397,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b(""); // Literal Prefix
         rowVal[4] = s2b(""); // Literal Suffix
         rowVal[5] = s2b("[(M,D)] [ZEROFILL]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4642,11 +4430,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b("(M)"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4673,11 +4463,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4704,11 +4496,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4735,11 +4529,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4766,11 +4562,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4797,11 +4595,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b(""); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4828,11 +4628,13 @@ public class DatabaseMetaData
         rowVal[3] = s2b("'"); // Literal Prefix
         rowVal[4] = s2b("'"); // Literal Suffix
         rowVal[5] = s2b("[(M)]"); // Create Params
-        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable).getBytes();
+        rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+                           .getBytes();
 
         // Nullable
         rowVal[7] = s2b("false"); // Case Sensitive
-        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable).getBytes();
+        rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+                           .getBytes();
 
         // Searchable
         rowVal[9] = s2b("false"); // Unsignable
@@ -4853,17 +4655,17 @@ public class DatabaseMetaData
      * JDBC 2.0 Get a description of the user-defined types defined in a
      * particular schema.  Schema specific UDTs may have type JAVA_OBJECT,
      * STRUCT,  or DISTINCT.
-     * 
+     *
      * <P>
      * Only types matching the catalog, schema, type name and type   criteria
      * are returned.  They are ordered by DATA_TYPE, TYPE_SCHEM  and
      * TYPE_NAME.  The type name parameter may be a fully qualified  name.
      * In this case, the catalog and schemaPattern parameters are ignored.
      * </p>
-     * 
+     *
      * <P>
      * Each type description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>TYPE_CAT</B> String => the type's catalog (may be null)
@@ -4886,12 +4688,12 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * <P>
      * <B>Note:</B> If the driver does not support UDTs then an empty result
      * set is returned.
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog;
      *        null means drop catalog name from the selection criteria
      * @param schemaPattern a schema name pattern; "" retrieves those without
@@ -4903,10 +4705,8 @@ public class DatabaseMetaData
      * @return ResultSet - each row is a type description
      * @exception SQLException if a database-access error occurs.
      */
-    public java.sql.ResultSet getUDTs(String catalog, String schemaPattern, 
-                                      String typeNamePattern, int[] types)
-                               throws SQLException {
-
+    public java.sql.ResultSet getUDTs(String catalog, String schemaPattern,
+        String typeNamePattern, int[] types) throws SQLException {
         Field[] fields = new Field[6];
         fields[0] = new Field("", "TYPE_CAT", Types.VARCHAR, 32);
         fields[1] = new Field("", "TYPE_SCHEM", Types.VARCHAR, 32);
@@ -4922,27 +4722,22 @@ public class DatabaseMetaData
 
     /**
      * What's the url for this database?
-     * 
+     *
      * @return the url or null if it can't be generated
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getURL()
-                  throws java.sql.SQLException {
-
+    public String getURL() throws java.sql.SQLException {
         return this.conn.getURL();
     }
 
     /**
      * What's our user name as known to the database?
-     * 
+     *
      * @return our database user name
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public String getUserName()
-                       throws java.sql.SQLException {
-
+    public String getUserName() throws java.sql.SQLException {
         if (this.conn.useHostsInPrivileges()) {
-
             Statement stmt = null;
             ResultSet rs = null;
 
@@ -4953,13 +4748,10 @@ public class DatabaseMetaData
 
                 return rs.getString(1);
             } finally {
-
                 if (rs != null) {
-
                     try {
                         rs.close();
                     } catch (Exception ex) {
-
                         // ignore
                     }
 
@@ -4967,11 +4759,9 @@ public class DatabaseMetaData
                 }
 
                 if (stmt != null) {
-
                     try {
                         stmt.close();
                     } catch (Exception ex) {
-
                         // ignore
                     }
 
@@ -4979,7 +4769,6 @@ public class DatabaseMetaData
                 }
             }
         } else {
-
             return this.conn.getUser();
         }
     }
@@ -4987,10 +4776,10 @@ public class DatabaseMetaData
     /**
      * Get a description of a table's columns that are automatically updated
      * when any value in a row is updated.  They are unordered.
-     * 
+     *
      * <P>
      * Each column description has the following columns:
-     * 
+     *
      * <OL>
      * <li>
      * <B>SCOPE</B> short => is not used
@@ -5016,7 +4805,7 @@ public class DatabaseMetaData
      * <li>
      * <B>PSEUDO_COLUMN</B> short => is this a pseudo column like an Oracle
      * ROWID
-     * 
+     *
      * <UL>
      * <li>
      * versionColumnUnknown - may or may not be pseudo column
@@ -5031,17 +4820,15 @@ public class DatabaseMetaData
      * </li>
      * </ol>
      * </p>
-     * 
+     *
      * @param catalog a catalog name; "" retrieves those without a catalog
      * @param schema a schema name; "" retrieves those without a schema
      * @param table a table name
      * @return ResultSet each row is a column description
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public java.sql.ResultSet getVersionColumns(String catalog, String schema, 
-                                                String table)
-                                         throws java.sql.SQLException {
-
+    public java.sql.ResultSet getVersionColumns(String catalog, String schema,
+        String table) throws java.sql.SQLException {
         Field[] fields = new Field[8];
         fields[0] = new Field("", "SCOPE", Types.SMALLINT, 5);
         fields[1] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
@@ -5060,50 +4847,44 @@ public class DatabaseMetaData
     /**
      * Can all the procedures returned by getProcedures be called by the
      * current user?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean allProceduresAreCallable()
-                                     throws java.sql.SQLException {
-
+    public boolean allProceduresAreCallable() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can all the tables returned by getTable be SELECTed by the current user?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean allTablesAreSelectable()
-                                   throws java.sql.SQLException {
-
+    public boolean allTablesAreSelectable() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Does a data definition statement within a transaction force the
      * transaction to commit?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean dataDefinitionCausesTransactionCommit()
-                                                  throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Is a data definition statement within a transaction ignored?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean dataDefinitionIgnoredInTransactions()
-                                                throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
@@ -5111,327 +4892,460 @@ public class DatabaseMetaData
      * JDBC 2.0 Determine whether or not a visible row delete can be detected
      * by  calling ResultSet.rowDeleted().  If deletesAreDetected() returns
      * false, then deleted rows are removed from the result set.
-     * 
+     *
      * @param type set type, i.e. ResultSet.TYPE_XXX
      * @return true if changes are detected by the resultset type
      * @exception SQLException if a database-access error occurs.
      */
-    public boolean deletesAreDetected(int type)
-                               throws SQLException {
-
+    public boolean deletesAreDetected(int type) throws SQLException {
         return false;
     }
 
     /**
      * Did getMaxRowSize() include LONGVARCHAR and LONGVARBINARY blobs?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean doesMaxRowSizeIncludeBlobs()
-                                       throws java.sql.SQLException {
-
+    public boolean doesMaxRowSizeIncludeBlobs() throws java.sql.SQLException {
         return true;
+    }
+
+    /**
+     * Extracts foreign key info for one table.
+     *
+     * @param rows the list of rows to add to
+     * @param rs the result set from 'SHOW CREATE TABLE'
+     * @param catalog the database name
+     *
+     * @throws SQLException if a database access error occurs
+     * @return the list of rows with new rows added
+     */
+    public List extractForeignKeyForTable(ArrayList rows,
+        java.sql.ResultSet rs, String catalog) throws SQLException {
+        byte[][] row = new byte[3][];
+        row[0] = rs.getBytes(1);
+        row[1] = s2b(SUPPORTS_FK);
+
+        String createTableString = rs.getString(2);
+        StringTokenizer lineTokenizer = new StringTokenizer(createTableString,
+                "\n");
+        StringBuffer commentBuf = new StringBuffer("comment; ");
+        boolean firstTime = true;
+
+        while (lineTokenizer.hasMoreTokens()) {
+            String line = lineTokenizer.nextToken().trim();
+
+            if (line.startsWith("FOREIGN KEY")) {
+                if (line.endsWith(",")) {
+                    line = line.substring(0, line.length() - 1);
+                }
+
+                // Remove all back-ticks
+                int lineLength = line.length();
+                StringBuffer lineBuf = new StringBuffer(lineLength);
+
+                for (int i = 0; i < lineLength; i++) {
+                    char c = line.charAt(i);
+
+                    if (c != '`') {
+                        lineBuf.append(c);
+                    }
+                }
+
+                line = lineBuf.toString();
+
+                StringTokenizer keyTokens = new StringTokenizer(line, "()",
+                        false);
+                keyTokens.nextToken(); // eat 'FOREIGN KEY'
+
+                String localColumnNamesString = keyTokens.nextToken();
+                String referCatalogTableString = keyTokens.nextToken();
+                StringTokenizer referSchemaTable = new StringTokenizer(referCatalogTableString
+                        .trim(), " .");
+                String referColumnNamesString = keyTokens.nextToken();
+                referSchemaTable.nextToken(); //discard the REFERENCES token
+
+                int numTokensLeft = referSchemaTable.countTokens();
+
+                String referCatalog = null;
+                String referTable = null;
+
+                if (numTokensLeft == 2) {
+                    // some versions of MySQL don't report the database name
+                    referCatalog = referSchemaTable.nextToken();
+                    referTable = referSchemaTable.nextToken();
+                } else {
+                    referTable = referSchemaTable.nextToken();
+                    referCatalog = catalog;
+                }
+
+                if (!firstTime) {
+                    commentBuf.append("; ");
+                } else {
+                    firstTime = false;
+                }
+
+                commentBuf.append("(");
+                commentBuf.append(localColumnNamesString);
+                commentBuf.append(") REFER ");
+                commentBuf.append(referCatalog);
+                commentBuf.append("/");
+                commentBuf.append(referTable);
+                commentBuf.append("(");
+                commentBuf.append(referColumnNamesString);
+                commentBuf.append(")");
+
+                int lastParenIndex = line.lastIndexOf(")");
+
+                if (lastParenIndex != (line.length() - 1)) {
+                    String cascadeOptions = cascadeOptions = line.substring(lastParenIndex
+                                + 1);
+                    commentBuf.append(" ");
+                    commentBuf.append(cascadeOptions);
+                }
+            }
+        }
+
+        row[2] = s2b(commentBuf.toString());
+        rows.add(row);
+
+        return rows;
+    }
+
+    /**
+     * Creates a result set similar enough to 'SHOW TABLE STATUS' to allow the
+     * same code to work on extracting the foreign key data
+     *
+     * @param conn the database connection to use
+     * @param metadata the DatabaseMetaData instance calling this method
+     * @param catalog the database name to extract foreign key info for
+     * @param tableName the table to extract foreign key info for
+     *
+     * @throws SQLException if a database access error occurs.
+     * @return A result set that has the structure of 'show table status'
+     */
+    public ResultSet extractForeignKeyFromCreateTable(
+        java.sql.Connection conn, java.sql.DatabaseMetaData metadata,
+        String catalog, String tableName) throws SQLException {
+        ArrayList tableList = new ArrayList();
+        java.sql.ResultSet rs = null;
+        java.sql.Statement stmt = null;
+
+        if (tableName != null) {
+            tableList.add(tableName);
+        } else {
+            try {
+                rs = metadata.getTables(catalog, "", "%",
+                        new String[] { "TABLE" });
+
+                while (rs.next()) {
+                    tableList.add(rs.getString("TABLE_NAME"));
+                }
+            } finally {
+                if (rs != null) {
+                    rs.close();
+                }
+
+                rs = null;
+            }
+        }
+
+        ArrayList rows = new ArrayList();
+        Field[] fields = new Field[3];
+        fields[0] = new Field("", "Name", Types.CHAR, Integer.MAX_VALUE);
+        fields[1] = new Field("", "Type", Types.CHAR, 255);
+        fields[2] = new Field("", "Comment", Types.CHAR, Integer.MAX_VALUE);
+
+        int numTables = tableList.size();
+
+        try {
+            for (int i = 0; i < numTables; i++) {
+                String tableToExtract = (String) tableList.get(i);
+                stmt = conn.createStatement();
+
+                String query = new StringBuffer("SHOW CREATE TABLE ").append(
+                        "`").append(catalog).append("`.`").append(tableToExtract)
+                                                                     .append("`")
+                                                                     .toString();
+                rs = stmt.executeQuery(query);
+
+                while (rs.next()) {
+                    extractForeignKeyForTable(rows, rs, catalog);
+                }
+            }
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+
+            rs = null;
+
+            if (stmt != null) {
+                stmt.close();
+            }
+
+            stmt = null;
+        }
+
+        return buildResultSet(fields, rows);
     }
 
     /**
      * JDBC 2.0 Determine whether or not a visible row insert can be detected
      * by calling ResultSet.rowInserted().
-     * 
+     *
      * @param type set type, i.e. ResultSet.TYPE_XXX
      * @return true if changes are detected by the resultset type
      * @exception SQLException if a database-access error occurs.
      */
-    public boolean insertsAreDetected(int type)
-                               throws SQLException {
-
+    public boolean insertsAreDetected(int type) throws SQLException {
         return false;
     }
 
     /**
      * @see DatabaseMetaData#locatorsUpdateCopy()
      */
-    public boolean locatorsUpdateCopy()
-                               throws SQLException {
-
+    public boolean locatorsUpdateCopy() throws SQLException {
         return true;
     }
 
     /**
      * Are concatenations between NULL and non-NULL values NULL? A JDBC
      * compliant driver always returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean nullPlusNonNullIsNull()
-                                  throws java.sql.SQLException {
-
+    public boolean nullPlusNonNullIsNull() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Are NULL values sorted at the end regardless of sort order?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean nullsAreSortedAtEnd()
-                                throws java.sql.SQLException {
-
+    public boolean nullsAreSortedAtEnd() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Are NULL values sorted at the start regardless of sort order?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean nullsAreSortedAtStart()
-                                  throws java.sql.SQLException {
-
+    public boolean nullsAreSortedAtStart() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Are NULL values sorted high?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean nullsAreSortedHigh()
-                               throws java.sql.SQLException {
-
+    public boolean nullsAreSortedHigh() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Are NULL values sorted low?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean nullsAreSortedLow()
-                              throws java.sql.SQLException {
-
+    public boolean nullsAreSortedLow() throws java.sql.SQLException {
         return !nullsAreSortedHigh();
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param type DOCUMENT ME!
      * @return DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
-    public boolean othersDeletesAreVisible(int type)
-                                    throws SQLException {
-
+    public boolean othersDeletesAreVisible(int type) throws SQLException {
         return false;
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param type DOCUMENT ME!
      * @return DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
-    public boolean othersInsertsAreVisible(int type)
-                                    throws SQLException {
-
+    public boolean othersInsertsAreVisible(int type) throws SQLException {
         return false;
     }
 
     /**
      * JDBC 2.0 Determine whether changes made by others are visible.
-     * 
+     *
      * @param type set type, i.e. ResultSet.TYPE_XXX
      * @return true if changes are visible for the result set type
      * @exception SQLException if a database-access error occurs.
      */
-    public boolean othersUpdatesAreVisible(int type)
-                                    throws SQLException {
-
+    public boolean othersUpdatesAreVisible(int type) throws SQLException {
         return false;
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param type DOCUMENT ME!
      * @return DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
-    public boolean ownDeletesAreVisible(int type)
-                                 throws SQLException {
-
+    public boolean ownDeletesAreVisible(int type) throws SQLException {
         return false;
     }
 
     /**
      * DOCUMENT ME!
-     * 
+     *
      * @param type DOCUMENT ME!
      * @return DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
-    public boolean ownInsertsAreVisible(int type)
-                                 throws SQLException {
-
+    public boolean ownInsertsAreVisible(int type) throws SQLException {
         return false;
     }
 
     /**
      * JDBC 2.0 Determine whether a result set's own changes visible.
-     * 
+     *
      * @param type set type, i.e. ResultSet.TYPE_XXX
      * @return true if changes are visible for the result set type
      * @exception SQLException if a database-access error occurs.
      */
-    public boolean ownUpdatesAreVisible(int type)
-                                 throws SQLException {
-
+    public boolean ownUpdatesAreVisible(int type) throws SQLException {
         return false;
     }
 
     /**
      * Does the database store mixed case unquoted SQL identifiers in lower
      * case?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean storesLowerCaseIdentifiers()
-                                       throws java.sql.SQLException {
-
+    public boolean storesLowerCaseIdentifiers() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Does the database store mixed case quoted SQL identifiers in lower
      * case? A JDBC compliant driver will always return false.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean storesLowerCaseQuotedIdentifiers()
-                                             throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Does the database store mixed case unquoted SQL identifiers in mixed
      * case?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean storesMixedCaseIdentifiers()
-                                       throws java.sql.SQLException {
-
+    public boolean storesMixedCaseIdentifiers() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Does the database store mixed case quoted SQL identifiers in mixed
      * case? A JDBC compliant driver will always return false.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean storesMixedCaseQuotedIdentifiers()
-                                             throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Does the database store mixed case unquoted SQL identifiers in upper
      * case?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean storesUpperCaseIdentifiers()
-                                       throws java.sql.SQLException {
-
+    public boolean storesUpperCaseIdentifiers() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Does the database store mixed case quoted SQL identifiers in upper
      * case? A JDBC compliant driver will always return true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean storesUpperCaseQuotedIdentifiers()
-                                             throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Is the ANSI92 entry level SQL grammar supported? All JDBC compliant
      * drivers must return true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsANSI92EntryLevelSQL()
-                                        throws java.sql.SQLException {
-
+    public boolean supportsANSI92EntryLevelSQL() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Is the ANSI92 full SQL grammar supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsANSI92FullSQL()
-                                  throws java.sql.SQLException {
-
+    public boolean supportsANSI92FullSQL() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Is the ANSI92 intermediate SQL grammar supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsANSI92IntermediateSQL()
-                                          throws java.sql.SQLException {
-
+    public boolean supportsANSI92IntermediateSQL() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Is "ALTER TABLE" with add column supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsAlterTableWithAddColumn()
-                                            throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Is "ALTER TABLE" with drop column supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsAlterTableWithDropColumn()
-                                             throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return true;
     }
 
@@ -5441,106 +5355,95 @@ public class DatabaseMetaData
      * @return DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
-    public boolean supportsBatchUpdates()
-                                 throws SQLException {
-
+    public boolean supportsBatchUpdates() throws SQLException {
         return true;
     }
 
     /**
      * Can a catalog name be used in a data manipulation statement?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCatalogsInDataManipulation()
-                                               throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         // Servers before 3.22 could not do this
         return this.conn.getIO().versionMeetsMinimum(3, 3, 22);
     }
 
     /**
      * Can a catalog name be used in a index definition statement?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCatalogsInIndexDefinitions()
-                                               throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can a catalog name be used in a privilege definition statement?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCatalogsInPrivilegeDefinitions()
         throws java.sql.SQLException {
-
         return false;
     }
 
     /**
      * Can a catalog name be used in a procedure call statement?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCatalogsInProcedureCalls()
-                                             throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can a catalog name be used in a table definition statement?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsCatalogsInTableDefinitions()
-                                               throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Is column aliasing supported?
-     * 
+     *
      * <P>
      * If so, the SQL AS clause can be used to provide names for computed
      * columns or to provide alias names for columns as required. A JDBC
      * compliant driver always returns true.
      * </p>
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsColumnAliasing()
-                                   throws java.sql.SQLException {
-
+    public boolean supportsColumnAliasing() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Is the CONVERT function between SQL types supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsConvert()
-                            throws java.sql.SQLException {
-
+    public boolean supportsConvert() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Is CONVERT between the given SQL types supported?
-     * 
+     *
      * @param fromType the type to convert from
      * @param toType the type to convert to
      * @return true if so
@@ -5548,56 +5451,19 @@ public class DatabaseMetaData
      * @throws java.sql.SQLException if an error occurs
      */
     public boolean supportsConvert(int fromType, int toType)
-                            throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         switch (fromType) {
+        /* The char/binary types can be converted
+         * to pretty much anything.
+         */
+        case java.sql.Types.CHAR:
+        case java.sql.Types.VARCHAR:
+        case java.sql.Types.LONGVARCHAR:
+        case java.sql.Types.BINARY:
+        case java.sql.Types.VARBINARY:
+        case java.sql.Types.LONGVARBINARY:
 
-            /* The char/binary types can be converted
-             * to pretty much anything.
-             */
-            case java.sql.Types.CHAR:
-            case java.sql.Types.VARCHAR:
-            case java.sql.Types.LONGVARCHAR:
-            case java.sql.Types.BINARY:
-            case java.sql.Types.VARBINARY:
-            case java.sql.Types.LONGVARBINARY:
-
-                switch (toType) {
-
-                    case java.sql.Types.DECIMAL:
-                    case java.sql.Types.NUMERIC:
-                    case java.sql.Types.REAL:
-                    case java.sql.Types.TINYINT:
-                    case java.sql.Types.SMALLINT:
-                    case java.sql.Types.INTEGER:
-                    case java.sql.Types.BIGINT:
-                    case java.sql.Types.FLOAT:
-                    case java.sql.Types.DOUBLE:
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                    case java.sql.Types.OTHER:
-                    case java.sql.Types.DATE:
-                    case java.sql.Types.TIME:
-                    case java.sql.Types.TIMESTAMP:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-            /* We don't handle the BIT type
-             * yet.
-             */
-            case java.sql.Types.BIT:
-                return false;
-
-            /* The numeric types. Basically they can convert
-             * among themselves, and with char/binary types.
-             */
+            switch (toType) {
             case java.sql.Types.DECIMAL:
             case java.sql.Types.NUMERIC:
             case java.sql.Types.REAL:
@@ -5607,161 +5473,184 @@ public class DatabaseMetaData
             case java.sql.Types.BIGINT:
             case java.sql.Types.FLOAT:
             case java.sql.Types.DOUBLE:
-
-                switch (toType) {
-
-                    case java.sql.Types.DECIMAL:
-                    case java.sql.Types.NUMERIC:
-                    case java.sql.Types.REAL:
-                    case java.sql.Types.TINYINT:
-                    case java.sql.Types.SMALLINT:
-                    case java.sql.Types.INTEGER:
-                    case java.sql.Types.BIGINT:
-                    case java.sql.Types.FLOAT:
-                    case java.sql.Types.DOUBLE:
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-            /* MySQL doesn't support a NULL type. */
-            case java.sql.Types.NULL:
-                return false;
-
-            /* With this driver, this will always be a serialized
-             * object, so the char/binary types will work.
-             */
+            case java.sql.Types.CHAR:
+            case java.sql.Types.VARCHAR:
+            case java.sql.Types.LONGVARCHAR:
+            case java.sql.Types.BINARY:
+            case java.sql.Types.VARBINARY:
+            case java.sql.Types.LONGVARBINARY:
             case java.sql.Types.OTHER:
-
-                switch (toType) {
-
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-            /* Dates can be converted to char/binary types. */
             case java.sql.Types.DATE:
-
-                switch (toType) {
-
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-            /* Time can be converted to char/binary types */
             case java.sql.Types.TIME:
-
-                switch (toType) {
-
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-            /* Timestamp can be converted to char/binary types
-             * and date/time types (with loss of precision).
-             */
             case java.sql.Types.TIMESTAMP:
+                return true;
 
-                switch (toType) {
-
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                    case java.sql.Types.LONGVARBINARY:
-                    case java.sql.Types.TIME:
-                    case java.sql.Types.DATE:
-                        return true;
-
-                    default:
-                        return false;
-                }
-
-            /* We shouldn't get here! */
             default:
-                return false; // not sure
+                return false;
+            }
+
+        /* We don't handle the BIT type
+         * yet.
+         */
+        case java.sql.Types.BIT:
+            return false;
+
+        /* The numeric types. Basically they can convert
+         * among themselves, and with char/binary types.
+         */
+        case java.sql.Types.DECIMAL:
+        case java.sql.Types.NUMERIC:
+        case java.sql.Types.REAL:
+        case java.sql.Types.TINYINT:
+        case java.sql.Types.SMALLINT:
+        case java.sql.Types.INTEGER:
+        case java.sql.Types.BIGINT:
+        case java.sql.Types.FLOAT:
+        case java.sql.Types.DOUBLE:
+
+            switch (toType) {
+            case java.sql.Types.DECIMAL:
+            case java.sql.Types.NUMERIC:
+            case java.sql.Types.REAL:
+            case java.sql.Types.TINYINT:
+            case java.sql.Types.SMALLINT:
+            case java.sql.Types.INTEGER:
+            case java.sql.Types.BIGINT:
+            case java.sql.Types.FLOAT:
+            case java.sql.Types.DOUBLE:
+            case java.sql.Types.CHAR:
+            case java.sql.Types.VARCHAR:
+            case java.sql.Types.LONGVARCHAR:
+            case java.sql.Types.BINARY:
+            case java.sql.Types.VARBINARY:
+            case java.sql.Types.LONGVARBINARY:
+                return true;
+
+            default:
+                return false;
+            }
+
+        /* MySQL doesn't support a NULL type. */
+        case java.sql.Types.NULL:
+            return false;
+
+        /* With this driver, this will always be a serialized
+         * object, so the char/binary types will work.
+         */
+        case java.sql.Types.OTHER:
+
+            switch (toType) {
+            case java.sql.Types.CHAR:
+            case java.sql.Types.VARCHAR:
+            case java.sql.Types.LONGVARCHAR:
+            case java.sql.Types.BINARY:
+            case java.sql.Types.VARBINARY:
+            case java.sql.Types.LONGVARBINARY:
+                return true;
+
+            default:
+                return false;
+            }
+
+        /* Dates can be converted to char/binary types. */
+        case java.sql.Types.DATE:
+
+            switch (toType) {
+            case java.sql.Types.CHAR:
+            case java.sql.Types.VARCHAR:
+            case java.sql.Types.LONGVARCHAR:
+            case java.sql.Types.BINARY:
+            case java.sql.Types.VARBINARY:
+            case java.sql.Types.LONGVARBINARY:
+                return true;
+
+            default:
+                return false;
+            }
+
+        /* Time can be converted to char/binary types */
+        case java.sql.Types.TIME:
+
+            switch (toType) {
+            case java.sql.Types.CHAR:
+            case java.sql.Types.VARCHAR:
+            case java.sql.Types.LONGVARCHAR:
+            case java.sql.Types.BINARY:
+            case java.sql.Types.VARBINARY:
+            case java.sql.Types.LONGVARBINARY:
+                return true;
+
+            default:
+                return false;
+            }
+
+        /* Timestamp can be converted to char/binary types
+         * and date/time types (with loss of precision).
+         */
+        case java.sql.Types.TIMESTAMP:
+
+            switch (toType) {
+            case java.sql.Types.CHAR:
+            case java.sql.Types.VARCHAR:
+            case java.sql.Types.LONGVARCHAR:
+            case java.sql.Types.BINARY:
+            case java.sql.Types.VARBINARY:
+            case java.sql.Types.LONGVARBINARY:
+            case java.sql.Types.TIME:
+            case java.sql.Types.DATE:
+                return true;
+
+            default:
+                return false;
+            }
+
+        /* We shouldn't get here! */
+        default:
+            return false; // not sure
         }
     }
 
     /**
      * Is the ODBC Core SQL grammar supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsCoreSQLGrammar()
-                                   throws java.sql.SQLException {
-
+    public boolean supportsCoreSQLGrammar() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Are correlated subqueries supported? A JDBC compliant driver always
      * returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsCorrelatedSubqueries()
-                                         throws java.sql.SQLException {
-
+    public boolean supportsCorrelatedSubqueries() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Are both data definition and data manipulation statements within a
      * transaction supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsDataDefinitionAndDataManipulationTransactions()
         throws java.sql.SQLException {
-
         return false;
     }
 
     /**
      * Are only data manipulation statements within a transaction supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsDataManipulationTransactionsOnly()
         throws java.sql.SQLException {
-
         return false;
     }
 
@@ -5769,49 +5658,42 @@ public class DatabaseMetaData
      * If table correlation names are supported, are they restricted to be
      * different from the names of the tables? A JDBC compliant driver always
      * returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsDifferentTableCorrelationNames()
         throws java.sql.SQLException {
-
         return true;
     }
 
     /**
      * Are expressions in "ORDER BY" lists supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsExpressionsInOrderBy()
-                                         throws java.sql.SQLException {
-
+    public boolean supportsExpressionsInOrderBy() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Is the ODBC Extended SQL grammar supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsExtendedSQLGrammar()
-                                       throws java.sql.SQLException {
-
+    public boolean supportsExtendedSQLGrammar() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Are full nested outer joins supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsFullOuterJoins()
-                                   throws java.sql.SQLException {
-
+    public boolean supportsFullOuterJoins() throws java.sql.SQLException {
         return false;
     }
 
@@ -5820,283 +5702,244 @@ public class DatabaseMetaData
      * @return DOCUMENT ME!
      */
     public boolean supportsGetGeneratedKeys() {
-
         return true;
     }
 
     /**
      * Is some form of "GROUP BY" clause supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsGroupBy()
-                            throws java.sql.SQLException {
-
+    public boolean supportsGroupBy() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Can a "GROUP BY" clause add columns not in the SELECT provided it
      * specifies all the columns in the SELECT?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsGroupByBeyondSelect()
-                                        throws java.sql.SQLException {
-
+    public boolean supportsGroupByBeyondSelect() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Can a "GROUP BY" clause use columns not in the SELECT?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsGroupByUnrelated()
-                                     throws java.sql.SQLException {
-
+    public boolean supportsGroupByUnrelated() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Is the SQL Integrity Enhancement Facility supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsIntegrityEnhancementFacility()
-                                                 throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Is the escape character in "LIKE" clauses supported? A JDBC compliant
      * driver always returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsLikeEscapeClause()
-                                     throws java.sql.SQLException {
-
+    public boolean supportsLikeEscapeClause() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Is there limited support for outer joins?  (This will be true if
      * supportFullOuterJoins is true.)
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsLimitedOuterJoins()
-                                      throws java.sql.SQLException {
-
+    public boolean supportsLimitedOuterJoins() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Is the ODBC Minimum SQL grammar supported? All JDBC compliant drivers
      * must return true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsMinimumSQLGrammar()
-                                      throws java.sql.SQLException {
-
+    public boolean supportsMinimumSQLGrammar() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Does the database support mixed case unquoted SQL identifiers?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsMixedCaseIdentifiers()
-                                         throws java.sql.SQLException {
-
+    public boolean supportsMixedCaseIdentifiers() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Does the database support mixed case quoted SQL identifiers? A JDBC
      * compliant driver will always return true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsMixedCaseQuotedIdentifiers()
-                                               throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * @see DatabaseMetaData#supportsMultipleOpenResults()
      */
-    public boolean supportsMultipleOpenResults()
-                                        throws SQLException {
-
+    public boolean supportsMultipleOpenResults() throws SQLException {
         return false;
     }
 
     /**
      * Are multiple ResultSets from a single execute supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsMultipleResultSets()
-                                       throws java.sql.SQLException {
-
+    public boolean supportsMultipleResultSets() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can we have multiple transactions open at once (on different
      * connections)?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsMultipleTransactions()
-                                         throws java.sql.SQLException {
-
+    public boolean supportsMultipleTransactions() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * @see DatabaseMetaData#supportsNamedParameters()
      */
-    public boolean supportsNamedParameters()
-                                    throws SQLException {
-
+    public boolean supportsNamedParameters() throws SQLException {
         return false;
     }
 
     /**
      * Can columns be defined as non-nullable? A JDBC compliant driver always
      * returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsNonNullableColumns()
-                                       throws java.sql.SQLException {
-
+    public boolean supportsNonNullableColumns() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Can cursors remain open across commits?
-     * 
+     *
      * @return true if so
      * @see Connection#disableAutoClose
      * @throws java.sql.SQLException if a database access error occurs
      */
     public boolean supportsOpenCursorsAcrossCommit()
-                                            throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can cursors remain open across rollbacks?
-     * 
+     *
      * @return true if so
      * @see Connection#disableAutoClose
      * @throws java.sql.SQLException if an error occurs
      */
     public boolean supportsOpenCursorsAcrossRollback()
-                                              throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can statements remain open across commits?
-     * 
+     *
      * @return true if so
      * @see Connection#disableAutoClose
      * @throws java.sql.SQLException if an error occurs
      */
     public boolean supportsOpenStatementsAcrossCommit()
-                                               throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can statements remain open across rollbacks?
-     * 
+     *
      * @return true if so
      * @see Connection#disableAutoClose
      * @throws java.sql.SQLException if an error occurs
      */
     public boolean supportsOpenStatementsAcrossRollback()
-                                                 throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can an "ORDER BY" clause use columns not in the SELECT?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsOrderByUnrelated()
-                                     throws java.sql.SQLException {
-
+    public boolean supportsOrderByUnrelated() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Is some form of outer join supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsOuterJoins()
-                               throws java.sql.SQLException {
-
+    public boolean supportsOuterJoins() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Is positioned DELETE supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsPositionedDelete()
-                                     throws java.sql.SQLException {
-
+    public boolean supportsPositionedDelete() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Is positioned UPDATE supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsPositionedUpdate()
-                                     throws java.sql.SQLException {
-
+    public boolean supportsPositionedUpdate() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * JDBC 2.0 Does the database support the concurrency type in combination
      * with the given result set type?
-     * 
+     *
      * @param type defined in java.sql.ResultSet
      * @param concurrency type defined in java.sql.ResultSet
      * @return true if so
@@ -6104,230 +5947,201 @@ public class DatabaseMetaData
      * @see Connection
      */
     public boolean supportsResultSetConcurrency(int type, int concurrency)
-                                         throws SQLException {
-
-        return (type == ResultSet.TYPE_SCROLL_INSENSITIVE
-               && (concurrency == ResultSet.CONCUR_READ_ONLY
-                   || concurrency == ResultSet.CONCUR_UPDATABLE));
+        throws SQLException {
+        return ((type == ResultSet.TYPE_SCROLL_INSENSITIVE)
+        && ((concurrency == ResultSet.CONCUR_READ_ONLY)
+        || (concurrency == ResultSet.CONCUR_UPDATABLE)));
     }
 
     /**
      * @see DatabaseMetaData#supportsResultSetHoldability(int)
      */
     public boolean supportsResultSetHoldability(int holdability)
-                                         throws SQLException {
-
+        throws SQLException {
         return (holdability == ResultSet.HOLD_CURSORS_OVER_COMMIT);
     }
 
     /**
      * JDBC 2.0 Does the database support the given result set type?
-     * 
+     *
      * @param type defined in java.sql.ResultSet
      * @return true if so
      * @exception SQLException if a database-access error occurs.
      * @see Connection
      */
-    public boolean supportsResultSetType(int type)
-                                  throws SQLException {
-
+    public boolean supportsResultSetType(int type) throws SQLException {
         return (type == ResultSet.TYPE_SCROLL_INSENSITIVE);
     }
 
     /**
      * @see DatabaseMetaData#supportsSavepoints()
      */
-    public boolean supportsSavepoints()
-                               throws SQLException {
-
+    public boolean supportsSavepoints() throws SQLException {
         return false;
     }
 
     /**
      * Can a schema name be used in a data manipulation statement?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSchemasInDataManipulation()
-                                              throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can a schema name be used in an index definition statement?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSchemasInIndexDefinitions()
-                                              throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can a schema name be used in a privilege definition statement?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSchemasInPrivilegeDefinitions()
-                                                  throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can a schema name be used in a procedure call statement?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSchemasInProcedureCalls()
-                                            throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Can a schema name be used in a table definition statement?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSchemasInTableDefinitions()
-                                              throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Is SELECT for UPDATE supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsSelectForUpdate()
-                                    throws java.sql.SQLException {
-
+    public boolean supportsSelectForUpdate() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * @see DatabaseMetaData#supportsStatementPooling()
      */
-    public boolean supportsStatementPooling()
-                                     throws SQLException {
-
+    public boolean supportsStatementPooling() throws SQLException {
         return false;
     }
 
     /**
      * Are stored procedure calls using the stored procedure escape syntax
      * supported?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsStoredProcedures()
-                                     throws java.sql.SQLException {
-
+    public boolean supportsStoredProcedures() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Are subqueries in comparison expressions supported? A JDBC compliant
      * driver always returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSubqueriesInComparisons()
-                                            throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
     }
 
     /**
      * Are subqueries in exists expressions supported? A JDBC compliant driver
      * always returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsSubqueriesInExists()
-                                       throws java.sql.SQLException {
-
+    public boolean supportsSubqueriesInExists() throws java.sql.SQLException {
         return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
     }
 
     /**
      * Are subqueries in "in" statements supported? A JDBC compliant driver
      * always returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsSubqueriesInIns()
-                                    throws java.sql.SQLException {
-
+    public boolean supportsSubqueriesInIns() throws java.sql.SQLException {
         return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
     }
 
     /**
      * Are subqueries in quantified expressions supported? A JDBC compliant
      * driver always returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
     public boolean supportsSubqueriesInQuantifieds()
-                                            throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
     }
 
     /**
      * Are table correlation names supported? A JDBC compliant driver always
      * returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsTableCorrelationNames()
-                                          throws java.sql.SQLException {
-
+    public boolean supportsTableCorrelationNames() throws java.sql.SQLException {
         return true;
     }
 
     /**
      * Does the database support the given transaction isolation level?
-     * 
+     *
      * @param level the values are defined in java.sql.Connection
      * @return true if so
      * @see Connection
      * @throws java.sql.SQLException if a database access error occurs
      */
     public boolean supportsTransactionIsolationLevel(int level)
-                                              throws java.sql.SQLException {
-
+        throws java.sql.SQLException {
         if (this.conn.supportsIsolationLevel()) {
-
             switch (level) {
+            case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+            case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
+            case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
+            case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+                return true;
 
-                case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-                case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
-                case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
-                case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-                    return true;
-
-                default:
-                    return false;
+            default:
+                return false;
             }
         } else {
-
             return false;
         }
     }
@@ -6335,90 +6149,248 @@ public class DatabaseMetaData
     /**
      * Are transactions supported? If not, commit is a noop and the isolation
      * level is TRANSACTION_NONE.
-     * 
+     *
      * @return true if transactions are supported
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsTransactions()
-                                 throws java.sql.SQLException {
-
+    public boolean supportsTransactions() throws java.sql.SQLException {
         return this.conn.supportsTransactions();
     }
 
     /**
      * Is SQL UNION supported? A JDBC compliant driver always returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsUnion()
-                          throws java.sql.SQLException {
-
+    public boolean supportsUnion() throws java.sql.SQLException {
         return this.conn.getIO().versionMeetsMinimum(4, 0, 0);
     }
 
     /**
      * Is SQL UNION ALL supported? A JDBC compliant driver always returns true.
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean supportsUnionAll()
-                             throws java.sql.SQLException {
-
+    public boolean supportsUnionAll() throws java.sql.SQLException {
         return this.conn.getIO().versionMeetsMinimum(4, 0, 0);
     }
 
     /**
      * JDBC 2.0 Determine whether or not a visible row update can be detected
      * by  calling ResultSet.rowUpdated().
-     * 
+     *
      * @param type set type, i.e. ResultSet.TYPE_XXX
      * @return true if changes are detected by the resultset type
      * @exception SQLException if a database-access error occurs.
      */
-    public boolean updatesAreDetected(int type)
-                               throws SQLException {
-
+    public boolean updatesAreDetected(int type) throws SQLException {
         return false;
     }
 
     /**
      * Does the database use a file for each table?
-     * 
+     *
      * @return true if the database uses a local file for each table
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean usesLocalFilePerTable()
-                                  throws java.sql.SQLException {
-
+    public boolean usesLocalFilePerTable() throws java.sql.SQLException {
         return false;
     }
 
     /**
      * Does the database store tables in a local file?
-     * 
+     *
      * @return true if so
      * @throws java.sql.SQLException DOCUMENT ME!
      */
-    public boolean usesLocalFiles()
-                           throws java.sql.SQLException {
-
+    public boolean usesLocalFiles() throws java.sql.SQLException {
         return false;
     }
 
-    private java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields, 
-                                                java.util.ArrayList rows)
-                                         throws SQLException {
+    /**
+     * Parses the cascade option string and returns the DBMD constant
+     * that represents it
+     *
+     * @param commentString the comment from 'SHOW TABLE STATUS'
+     * @return the DBMD constant that represents the cascade option
+     */
+    private int getCascadeDeleteOption(String commentString) {
+        int lastParenIndex = commentString.lastIndexOf(")");
 
+        if (lastParenIndex != (commentString.length() - 1)) {
+            String cascadeOptions = cascadeOptions = commentString.substring(lastParenIndex
+                        + 1).trim();
+
+            if (cascadeOptions.equalsIgnoreCase("ON DELETE CASCADE")) {
+                return DatabaseMetaData.importedKeyCascade;
+            } else if (cascadeOptions.equalsIgnoreCase("ON DELETE SET NULL")) {
+                return DatabaseMetaData.importedKeySetNull;
+            }
+        }
+
+        return DatabaseMetaData.importedKeySetDefault;
+    }
+
+    private void getResultsImpl(String catalog, String table,
+        String keysComment, List tuples, String fkTableName, boolean isExport)
+        throws SQLException {
+        // keys will equal something like this:
+        // (parent_service_id child_service_id) REFER ds/subservices(parent_service_id child_service_id)
+        // parse of the string into three phases:
+        // 1: parse the opening parentheses to determine how many results there will be
+        // 2: read in the schema name/table name
+        // 3: parse the closing parentheses
+        StringTokenizer keyTokens = new StringTokenizer(keysComment.trim(),
+                "()", false);
+        String localColumnNamesString = keyTokens.nextToken();
+        StringTokenizer localColumnNames = new StringTokenizer(localColumnNamesString,
+                " ,");
+        String referCatalogTableString = keyTokens.nextToken();
+        StringTokenizer referSchemaTable = new StringTokenizer(referCatalogTableString,
+                " /");
+        String referColumnNamesString = keyTokens.nextToken();
+        StringTokenizer referColumnNames = new StringTokenizer(referColumnNamesString,
+                " ,");
+        referSchemaTable.nextToken(); //discard the REFER token
+
+        String referCatalog = referSchemaTable.nextToken();
+        String referTable = referSchemaTable.nextToken();
+
+        if (isExport && !referTable.equals(table)) {
+            return;
+        }
+
+        if (localColumnNames.countTokens() != referColumnNames.countTokens()) {
+            throw new SQLException("Error parsing foriegn keys definition",
+                "S1000");
+        }
+
+        while (localColumnNames.hasMoreTokens()) {
+            byte[][] tuple = new byte[14][];
+            String localColumnName = localColumnNames.nextToken();
+            String referColumnName = referColumnNames.nextToken();
+            tuple[FKTABLE_CAT] = ((catalog == null) ? new byte[0] : s2b(catalog));
+            tuple[FKTABLE_SCHEM] = null;
+            tuple[FKTABLE_NAME] = s2b((isExport) ? fkTableName : table);
+            tuple[FKCOLUMN_NAME] = s2b(localColumnName);
+            tuple[PKTABLE_CAT] = s2b(referCatalog);
+            tuple[PKTABLE_SCHEM] = null;
+            tuple[PKTABLE_NAME] = s2b((isExport) ? table : referTable);
+            tuple[PKCOLUMN_NAME] = s2b(referColumnName);
+            tuple[KEY_SEQ] = s2b(Integer.toString(tuples.size()));
+            tuple[UPDATE_RULE] = s2b(Integer.toString(
+                        java.sql.DatabaseMetaData.importedKeySetDefault));
+            tuple[DELETE_RULE] = s2b(Integer.toString(getCascadeDeleteOption(
+                            keysComment)));
+            tuple[FK_NAME] = null; //not available from show table status
+            tuple[PK_NAME] = null; //not available from show table status
+            tuple[DEFERRABILITY] = s2b(Integer.toString(
+                        java.sql.DatabaseMetaData.importedKeyNotDeferrable));
+            tuples.add(tuple);
+        }
+    }
+
+    private void getResultsImplFromShowCreate(String catalog, String table,
+        String keysComment, List tuples, String fkTableName, boolean isExport)
+        throws SQLException {
+        // keys will equal something like this:
+        // (parent_service_id child_service_id) REFER ds/subservices(parent_service_id child_service_id)
+        // parse of the string into three phases:
+        // 1: parse the opening parentheses to determine how many results there will be
+        // 2: read in the schema name/table name
+        // 3: parse the closing parentheses
+        StringTokenizer keyTokens = new StringTokenizer(keysComment.trim(),
+                "()", false);
+        keyTokens.nextToken(); // eat 'FOREIGN KEY'
+
+        String localColumnNamesString = keyTokens.nextToken();
+        StringTokenizer localColumnNames = new StringTokenizer(localColumnNamesString,
+                ",");
+        String referCatalogTableString = keyTokens.nextToken();
+        StringTokenizer referSchemaTable = new StringTokenizer(referCatalogTableString
+                .trim(), " .");
+        String referColumnNamesString = keyTokens.nextToken();
+        StringTokenizer referColumnNames = new StringTokenizer(referColumnNamesString,
+                ",");
+        referSchemaTable.nextToken(); //discard the REFERENCES token
+
+        String referCatalog = referSchemaTable.nextToken();
+        String referTable = referSchemaTable.nextToken();
+        int lastParenIndex = keysComment.lastIndexOf(")");
+        String cascadeOptions = null;
+
+        if (lastParenIndex != (keysComment.length() - 1)) {
+            cascadeOptions = keysComment.substring(lastParenIndex + 1);
+        }
+
+        if (isExport && !referTable.equals(table)) {
+            return;
+        }
+
+        if (localColumnNames.countTokens() != referColumnNames.countTokens()) {
+            throw new SQLException("Error parsing foriegn keys definition",
+                "S1000");
+        }
+
+        while (localColumnNames.hasMoreTokens()) {
+            byte[][] tuple = new byte[14][];
+            String localColumnName = localColumnNames.nextToken();
+            String referColumnName = referColumnNames.nextToken();
+            tuple[FKTABLE_CAT] = ((catalog == null) ? new byte[0] : s2b(catalog));
+            tuple[FKTABLE_SCHEM] = null;
+            tuple[FKTABLE_NAME] = s2b((isExport) ? fkTableName : table);
+            tuple[FKCOLUMN_NAME] = s2b(localColumnName);
+            tuple[PKTABLE_CAT] = s2b(referCatalog);
+            tuple[PKTABLE_SCHEM] = null;
+            tuple[PKTABLE_NAME] = s2b((isExport) ? table : referTable);
+            tuple[PKCOLUMN_NAME] = s2b(referColumnName);
+            tuple[KEY_SEQ] = s2b(Integer.toString(tuples.size()));
+            tuple[UPDATE_RULE] = s2b(Integer.toString(
+                        java.sql.DatabaseMetaData.importedKeySetDefault));
+
+            if (cascadeOptions == null) {
+                tuple[DELETE_RULE] = s2b(Integer.toString(
+                            java.sql.DatabaseMetaData.importedKeyNoAction));
+            } else if (cascadeOptions.equalsIgnoreCase("ON DELETE CASCADE")) {
+                tuple[DELETE_RULE] = s2b(Integer.toString(
+                            java.sql.DatabaseMetaData.importedKeyCascade));
+            } else if (cascadeOptions.equalsIgnoreCase("ON DELETE SET NULL")) {
+                tuple[DELETE_RULE] = s2b(Integer.toString(
+                            java.sql.DatabaseMetaData.importedKeySetNull));
+            } else {
+                // shouldn't ever reach here, but it's a fallback in case the cascade  
+                // options change. 
+                tuple[DELETE_RULE] = s2b(Integer.toString(
+                            java.sql.DatabaseMetaData.importedKeyNoAction));
+            }
+
+            tuple[FK_NAME] = null; //not available from show table status
+            tuple[PK_NAME] = null; //not available from show table status
+            tuple[DEFERRABILITY] = s2b(Integer.toString(
+                        java.sql.DatabaseMetaData.importedKeyNotDeferrable));
+            tuples.add(tuple);
+        }
+    }
+
+    private String getTableNameWithCase(String table) {
+        String tableNameWithCase = (this.conn.lowerCaseTableNames()
+            ? table.toLowerCase() : table);
+
+        return tableNameWithCase;
+    }
+
+    private java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields,
+        java.util.ArrayList rows) throws SQLException {
         int fieldsLength = fields.length;
 
         for (int i = 0; i < fieldsLength; i++) {
             fields[i].setConnection(this.conn);
         }
 
-        return new com.mysql.jdbc.ResultSet(this.conn.getCatalog(), fields, 
-                                            new RowDataStatic(rows), this.conn);
+        return new com.mysql.jdbc.ResultSet(this.conn.getCatalog(), fields,
+            new RowDataStatic(rows), this.conn);
     }
 
     /**
@@ -6428,35 +6400,26 @@ public class DatabaseMetaData
      * @return DOCUMENT ME!
      */
     private byte[] s2b(String s) {
-
-        if (this.conn != null && this.conn.useUnicode()) {
-
+        if ((this.conn != null) && this.conn.useUnicode()) {
             try {
-
                 String encoding = this.conn.getEncoding();
 
                 if (encoding == null) {
-
                     return s.getBytes();
                 } else {
-
-                    SingleByteCharsetConverter converter = SingleByteCharsetConverter.getInstance(
-                                                                   encoding);
+                    SingleByteCharsetConverter converter = SingleByteCharsetConverter
+                        .getInstance(encoding);
 
                     if (converter != null) {
-
                         return converter.toBytes(s);
                     } else {
-
                         return s.getBytes(encoding);
                     }
                 }
             } catch (java.io.UnsupportedEncodingException E) {
-
                 return s.getBytes();
             }
         } else {
-
             return s.getBytes();
         }
     }
