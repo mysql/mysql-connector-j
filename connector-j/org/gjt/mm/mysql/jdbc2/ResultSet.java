@@ -104,7 +104,14 @@ public class ResultSet
 	protected String _DeleteSQL = null;
 
 	protected String _InsertSQL = null;
+	
+	protected String _RefreshSQL = null;
 
+	/**
+	 * PreparedStatement used to refresh data
+	 */
+	
+	protected org.gjt.mm.mysql.jdbc2.PreparedStatement _Refresher;
 	/**
 	 * PreparedStatement used to delete data
 	 */
@@ -140,6 +147,7 @@ public class ResultSet
 	 */
 
 	protected boolean _doing_updates = false;
+	
 
 	/**
 	 * Are we on the insert row?
@@ -278,6 +286,7 @@ public class ResultSet
 
 		if (_doing_updates) {
 			_doing_updates = false;
+			
 		}
 
 		return super.next();
@@ -440,6 +449,7 @@ public class ResultSet
 
 		if (_doing_updates) {
 			_doing_updates = false;
+			
 		}
 
 		if (Rows.size() == 0) {
@@ -473,6 +483,7 @@ public class ResultSet
 
 		if (_doing_updates) {
 			_doing_updates = false;
+			
 		}
 
 		if (Rows.size() != 0) {
@@ -507,6 +518,7 @@ public class ResultSet
 		else {
 			if (_doing_updates) {
 				_doing_updates = false;
+				
 			}
 
 			currentRow = 0;
@@ -543,6 +555,7 @@ public class ResultSet
 
 			if (_doing_updates) {
 				_doing_updates = false;
+				
 			}
 
 			currentRow = Rows.size() - 1;
@@ -637,6 +650,7 @@ public class ResultSet
 
 		if (_doing_updates) {
 			_doing_updates = false;
+			
 		}
 
 		if (row == 1) {
@@ -747,6 +761,7 @@ public class ResultSet
 
 		if (_doing_updates) {
 			_doing_updates = false;
+			
 		}
 
 		return prev();
@@ -1950,16 +1965,21 @@ public class ResultSet
 		if (_doing_updates) {
 			_Updater.executeUpdate();
 
-			int num_fields = Fields.length;
+			//int num_fields = Fields.length;
 
-			for (int i = 0; i < num_fields; i++) {
-				if (_Updater.isNull(i)) {
-					This_Row[i] = null;
-				}
-				else {
-					This_Row[i] = _Updater.getBytes(i);
-				}
-			}
+			//for (int i = 0; i < num_fields; i++) {
+			//	if (_Updater.isNull(i)) {
+			//		System.out.println("isNull(" + i + ") = true");
+			//		This_Row[i] = null;
+			//	}
+			//	else {
+			//		System.out.println("_Updater.getBytes(i) = " + new String(_Updater.getBytes(i)));
+			//		
+			//		This_Row[i] = _Updater.getBytes(i);
+			//	}
+			//}
+			
+			refreshRow();
 
 			_doing_updates = false;
 		}
@@ -2077,7 +2097,112 @@ public class ResultSet
 	 */
 
 	public  void refreshRow() throws SQLException {
-		throw new NotImplemented();
+		if (!_updatable) {
+			throw new SQLException(UPDATEABLE_MESSAGE, "S1000");
+		}
+
+		if (_on_insert_row) {
+			throw new SQLException("Can not call refreshRow() when on insert row");
+		}
+		else
+			if (Rows.size() == 0) {
+				throw new SQLException("Can't refreshRow() on empty result set");
+			}
+			else
+				if (isBeforeFirst()) {
+					throw new SQLException("Before start of result set. Can not call refreshRow().");
+				}
+				else
+					if (isAfterLast()) {
+						throw new SQLException("After end of result set. Can not call refreshRow().");
+					}
+
+		if (_Refresher == null) {
+			if (_RefreshSQL == null) {
+				generateStatements();
+			}
+
+			_Refresher =
+				(org.gjt.mm.mysql.jdbc2.PreparedStatement) Conn.prepareStatement(_RefreshSQL);
+		}
+
+		_Refresher.clearParameters();
+
+		String Encoding = null;
+
+		if (Conn.useUnicode()) {
+			Encoding = Conn.getEncoding();
+		}
+
+		try {
+			int num_keys = _PrimaryKeyIndicies.size();
+
+			if (num_keys == 1) {
+				int index = ((Integer) _PrimaryKeyIndicies.elementAt(0)).intValue();
+				String CurrentVal =
+					(Encoding == null
+						? new String(This_Row[index])
+						: new String(This_Row[index], Encoding));
+				_Refresher.setString(1, CurrentVal);
+			}
+			else {
+				for (int i = 0; i < num_keys; i++) {
+					int index = ((Integer) _PrimaryKeyIndicies.elementAt(i)).intValue();
+					String CurrentVal =
+						(Encoding == null
+							? new String(This_Row[index])
+							: new String(This_Row[index], Encoding));
+					_Refresher.setString(i + 1, CurrentVal);
+				}
+			}
+
+			java.sql.ResultSet rs = null;
+			
+			try
+			{
+				rs = _Refresher.executeQuery();
+				
+				int numCols = rs.getMetaData().getColumnCount();
+				
+				if (rs.next())
+				{
+					for (int i = 0; i < numCols; i++)
+					{
+						byte[] val = rs.getBytes(i + 1);
+						
+						if (val == null || rs.wasNull())
+						{
+							This_Row[i] = null;
+						}
+						else
+						{
+							This_Row[i] = rs.getBytes(i + 1);
+						}
+					}
+				}
+				else
+				{
+					throw new SQLException("refreshRow() called on row that has been deleted or had primary key changed", "S1000");
+				}
+			}
+			finally
+			{
+				if (rs != null)
+				{
+					try
+					{
+						rs.close();
+					}
+					catch (Exception ex) {}
+				}
+			}
+
+		}
+		catch (java.io.UnsupportedEncodingException UE) {
+			throw new SQLException(
+				"Unsupported character encoding '" + Conn.getEncoding() + "'");
+		}
+
 	}
 
 	/**
@@ -2554,6 +2679,12 @@ public class ResultSet
 				+ ") VALUES ("
 				+ InsertPlaceHolders.toString()
 				+ ")";
+				
+		_RefreshSQL =
+			"SELECT " + ColumnNames.toString() + " FROM `"
+				+ TableName
+				+ "` WHERE " + KeyValues.toString();
+
 
 		_DeleteSQL = "DELETE FROM `" + TableName + "` WHERE " + KeyValues.toString();
 	}
@@ -2575,12 +2706,15 @@ public class ResultSet
 				(org.gjt.mm.mysql.jdbc2.PreparedStatement) Conn.prepareStatement(_UpdateSQL);
 		}
 
+		
 		int num_fields = Fields.length;
 
 		_Updater.clearParameters();
 
 		for (int i = 0; i < num_fields; i++) {
 			if (This_Row[i] != null) {
+				
+				
 				_Updater.setBytes(i + 1, This_Row[i]);
 			}
 			else {
@@ -2610,6 +2744,8 @@ public class ResultSet
 				}
 			}
 		}
+		
+		
 	}
 
 	/**
