@@ -313,7 +313,7 @@ public class Connection
      * Should we tell MySQL that we're an interactive client?
      */
     private boolean isInteractiveClient = false;
-    
+
     /**
      * How many queries should we wait before we try to re-connect
      * to the master, when we are failing over to replicated hosts
@@ -321,48 +321,42 @@ public class Connection
      * Defaults to 50
      */
     private int queriesBeforeRetryMaster = 50;
-    
+
     /**
      * Number of queries we've issued since the master
      * failed
      */
     private long queriesIssuedFailedOver = 0;
-    
+
     /**
      * Should we use stream lengths in prepared statements?
      * (true by default == JDBC compliant)
      */
-    
     private boolean useStreamLengthsInPrepStmts = true;
-    
+
     /** 
      * Should we do 'extra' sanity checks?
      */
-    
     private boolean pedantic = false;
-    
+
     /**
      * Is the server configured to use lower-case
      * table names only?
      */
-    
     private boolean lowerCaseTableNames = false;
-    
+
     /**
      * Should we continue processing batch commands if 
      * one fails. The JDBC spec allows either way, so
      * we let the user choose
      */
-    
     private boolean continueBatchOnError = true;
-    
+
     /**
      * Allow LOAD LOCAL INFILE (defaults to true)
      */
-    
     private boolean allowLoadLocalInfile = true;
-    
-    
+
     /**
      * Default socket factory classname
      */
@@ -418,19 +412,19 @@ public class Connection
         }
 
         checkClosed();
-        
+
         if (this.transactionsSupported) {
+
             // this internal value must be set first as failover depends on it
             // being set to true to fail over (which is done by most
             // app servers and connection pools at the end of
             // a transaction), and the driver issues an implicit set
             // based on this value when it (re)-connects to a server
             // so the value holds across connections
-            
-            this.autoCommit = autoCommit; 
+            this.autoCommit = autoCommit;
+
             String sql = "SET autocommit=" + (autoCommit ? "1" : "0");
             execSQL(sql, -1, this.database);
-            
         } else {
 
             if ((autoCommit == false) && (this.relaxAutoCommit == false)) {
@@ -486,7 +480,6 @@ public class Connection
         }
 
         checkClosed();
-        
         execSQL("USE " + catalog, -1, catalog);
         this.database = catalog;
     }
@@ -593,9 +586,8 @@ public class Connection
      */
     public java.sql.DatabaseMetaData getMetaData()
                                           throws java.sql.SQLException {
-
         checkClosed();
-        
+
         return new DatabaseMetaData(this, this.database);
     }
 
@@ -620,7 +612,6 @@ public class Connection
         }
 
         checkClosed();
-        
         this.readOnly = readOnly;
     }
 
@@ -677,7 +668,7 @@ public class Connection
         }
 
         checkClosed();
-        
+
         if (this.hasIsolationLevels) {
 
             StringBuffer sql = new StringBuffer(
@@ -1081,36 +1072,46 @@ public class Connection
                 }
             }
 
-            String lowerCaseTables = (String)serverVariables.get("lower_case_table_names");
-            
+            String lowerCaseTables = (String) serverVariables.get(
+                                             "lower_case_table_names");
+
             if (lowerCaseTables != null) {
-                this.lowerCaseTableNames = lowerCaseTables.trim().equalsIgnoreCase("on");
+                this.lowerCaseTableNames = lowerCaseTables.trim().equalsIgnoreCase(
+                                                   "on");
             }
-            
-            if (this.useTimezone && this.serverVariables.containsKey("timezone")) {
+
+            if (this.useTimezone
+                && this.serverVariables.containsKey("timezone")) {
+
                 // user can specify/override as property
-                String canoncicalTimezone = this.props.getProperty("serverTimezone");
-                
-                if (canoncicalTimezone == null || canoncicalTimezone.length() == 0) {
-                
-   
-                    String serverTimezoneStr = (String) this.serverVariables.get("timezone");
-                    canoncicalTimezone = TimeUtil.getCanoncialTimezone(serverTimezoneStr);
-                    
+                String canoncicalTimezone = this.props.getProperty(
+                                                    "serverTimezone");
+
+                if (canoncicalTimezone == null
+                    || canoncicalTimezone.length() == 0) {
+
+                    String serverTimezoneStr = (String) this.serverVariables.get(
+                                                       "timezone");
+                    canoncicalTimezone = TimeUtil.getCanoncialTimezone(
+                                                 serverTimezoneStr);
+
                     if (canoncicalTimezone == null) {
-                        throw new SQLException("Can't map timezone '" + serverTimezoneStr + "' to "
-                        + " canonical timezone.", "S1009");
+                        throw new SQLException("Can't map timezone '"
+                                               + serverTimezoneStr + "' to "
+                                               + " canonical timezone.", 
+                                               "S1009");
                     }
                 }
-                
+
                 serverTimezone = TimeZone.getTimeZone(canoncicalTimezone);
-                
-                if (!canoncicalTimezone.equalsIgnoreCase("GMT") && serverTimezone.getID().equals("GMT")) {
-                    throw new SQLException("No timezone mapping entry for '" + canoncicalTimezone + "'", "S1009");
+
+                if (!canoncicalTimezone.equalsIgnoreCase("GMT")
+                    && serverTimezone.getID().equals("GMT")) {
+                    throw new SQLException("No timezone mapping entry for '"
+                                           + canoncicalTimezone + "'", "S1009");
                 }
             }
-                    
-                
+
             if (this.serverVariables.containsKey("max_allowed_packet")) {
                 this.maxAllowedPacket = Integer.parseInt(
                                                 (String) this.serverVariables.get(
@@ -1177,64 +1178,81 @@ public class Connection
         this.socketFactoryClassName = info.getProperty("socketFactory", 
                                                        DEFAULT_SOCKET_FACTORY);
 
-
-
         if (info.getProperty("queriesBeforeRetryMaster") != null) {
-            String queriesBeforeRetryStr = info.getProperty("queriesBeforeRetryMaster");
-            
-            try {  
-                this.queriesBeforeRetryMaster = Integer.parseInt(queriesBeforeRetryStr);
+
+            String queriesBeforeRetryStr = info.getProperty(
+                                                   "queriesBeforeRetryMaster");
+
+            try {
+                this.queriesBeforeRetryMaster = Integer.parseInt(
+                                                        queriesBeforeRetryStr);
             } catch (NumberFormatException nfe) {
-                throw new SQLException("Illegal non-numeric value '" + queriesBeforeRetryStr 
-                    + "' for 'queriesBeforeRetryMaster'", "S1009");
+                throw new SQLException("Illegal non-numeric value '"
+                                       + queriesBeforeRetryStr
+                                       + "' for 'queriesBeforeRetryMaster'", 
+                                       "S1009");
             }
-                
         }
 
         if (info.getProperty("allowLoadLocalInfile") != null) {
-            this.allowLoadLocalInfile = info.getProperty("allowLoadLocalInfile").equalsIgnoreCase("TRUE");
+            this.allowLoadLocalInfile = info.getProperty(
+                                                "allowLoadLocalInfile").equalsIgnoreCase(
+                                                "TRUE");
         }
-        
+
         if (info.getProperty("continueBatchOnError") != null) {
-            this.continueBatchOnError = info.getProperty("continueBatchOnError").equalsIgnoreCase("TRUE");
+            this.continueBatchOnError = info.getProperty(
+                                                "continueBatchOnError").equalsIgnoreCase(
+                                                "TRUE");
         }
-        
+
         if (info.getProperty("pedantic") != null) {
-            this.pedantic = info.getProperty("pedantic").equalsIgnoreCase("TRUE");
+            this.pedantic = info.getProperty("pedantic").equalsIgnoreCase(
+                                    "TRUE");
         }
-        
+
         if (info.getProperty("useStreamLengthsInPrepStmts") != null) {
-            this.useStreamLengthsInPrepStmts = info.getProperty("useStreamLengthsInPrepStmts").equalsIgnoreCase("TRUE");
+            this.useStreamLengthsInPrepStmts = info.getProperty(
+                                                       "useStreamLengthsInPrepStmts")
+                .equalsIgnoreCase("TRUE");
         }
-        
+
         if (info.getProperty("useTimezone") != null) {
-            this.useTimezone = info.getProperty("useTimezone").equalsIgnoreCase("TRUE");
+            this.useTimezone = info.getProperty("useTimezone").equalsIgnoreCase(
+                                       "TRUE");
         }
-        
+
         if (info.getProperty("relaxAutoCommit") != null) {
-            this.relaxAutoCommit = info.getProperty("relaxAutoCommit").equalsIgnoreCase("TRUE");
+            this.relaxAutoCommit = info.getProperty("relaxAutoCommit").equalsIgnoreCase(
+                                           "TRUE");
         } else if (info.getProperty("relaxAutocommit") != null) {
-            this.relaxAutoCommit = info.getProperty("relaxAutocommit").equalsIgnoreCase("TRUE");
+            this.relaxAutoCommit = info.getProperty("relaxAutocommit").equalsIgnoreCase(
+                                           "TRUE");
         }
 
         if (info.getProperty("paranoid") != null) {
-            this.paranoid = info.getProperty("paranoid").equalsIgnoreCase("TRUE");
+            this.paranoid = info.getProperty("paranoid").equalsIgnoreCase(
+                                    "TRUE");
         }
 
         if (info.getProperty("autoReconnect") != null) {
-            this.highAvailability = info.getProperty("autoReconnect").equalsIgnoreCase("TRUE");
+            this.highAvailability = info.getProperty("autoReconnect").equalsIgnoreCase(
+                                            "TRUE");
         }
 
         if (info.getProperty("capitalizeTypeNames") != null) {
-            this.capitalizeDBMDTypes = info.getProperty("capitalizeTypeNames").equalsIgnoreCase("TRUE");
+            this.capitalizeDBMDTypes = info.getProperty("capitalizeTypeNames").equalsIgnoreCase(
+                                               "TRUE");
         }
 
         if (info.getProperty("ultraDevHack") != null) {
-            this.useUltraDevWorkAround = info.getProperty("ultraDevHack").equalsIgnoreCase("TRUE");
+            this.useUltraDevWorkAround = info.getProperty("ultraDevHack").equalsIgnoreCase(
+                                                 "TRUE");
         }
 
         if (info.getProperty("strictFloatingPoint") != null) {
-            this.strictFloatingPoint = info.getProperty("strictFloatingPoint").equalsIgnoreCase("TRUE");
+            this.strictFloatingPoint = info.getProperty("strictFloatingPoint").equalsIgnoreCase(
+                                               "TRUE");
         }
 
         if (info.getProperty("useSSL") != null) {
@@ -1242,7 +1260,8 @@ public class Connection
         }
 
         if (info.getProperty("useCompression") != null) {
-            this.useSSL = info.getProperty("useCompression").equalsIgnoreCase("TRUE");
+            this.useSSL = info.getProperty("useCompression").equalsIgnoreCase(
+                                  "TRUE");
         }
 
         if (info.getProperty("socketTimeout") != null) {
@@ -1316,17 +1335,20 @@ public class Connection
 
         if (info.getProperty("useHostsInPrivileges") != null) {
             this.useHostsInPrivileges = info.getProperty(
-                                                "useHostsInPrivileges").equalsIgnoreCase("TRUE");
+                                                "useHostsInPrivileges").equalsIgnoreCase(
+                                                "TRUE");
         }
 
         if (info.getProperty("interactiveClient") != null) {
-            this.isInteractiveClient = info.getProperty("interactiveClient").equalsIgnoreCase("TRUE");
+            this.isInteractiveClient = info.getProperty("interactiveClient").equalsIgnoreCase(
+                                               "TRUE");
         }
 
         if (info.getProperty("useUnicode") != null) {
-            this.doUnicode = info.getProperty("useUnicode").equalsIgnoreCase("TRUE");
+            this.doUnicode = info.getProperty("useUnicode").equalsIgnoreCase(
+                                     "TRUE");
         }
-        
+
         if (this.doUnicode) {
 
             if (info.getProperty("characterEncoding") != null) {
@@ -1364,7 +1386,7 @@ public class Connection
                                               int resultSetConcurrency)
                                        throws SQLException {
         checkClosed();
-        
+
         Statement stmt = new com.mysql.jdbc.Statement(this, this.database);
         stmt.setResultSetType(resultSetType);
         stmt.setResultSetConcurrency(resultSetConcurrency);
@@ -1396,12 +1418,13 @@ public class Connection
                                        throws SQLException {
 
         if (this.pedantic) {
+
             if (resultSetHoldability != ResultSet.HOLD_CURSORS_OVER_COMMIT) {
                 throw new SQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level", 
-                    "S1009");
+                                       "S1009");
             }
         }
-        
+
         return createStatement(resultSetType, resultSetConcurrency);
     }
 
@@ -1457,7 +1480,7 @@ public class Connection
         }
 
         EscapeProcessor escaper = new EscapeProcessor();
-        
+
         return escaper.escapeSQL(sql);
     }
 
@@ -1504,17 +1527,20 @@ public class Connection
     /**
      * @see Connection#prepareCall(String, int, int, int)
      */
-    public java.sql.CallableStatement prepareCall(String sql, int resultSetType,
-                                                  int resultSetConcurrency, int resultSetHoldability)
-                                             throws SQLException {
-                                                
+    public java.sql.CallableStatement prepareCall(String sql, 
+                                                  int resultSetType, 
+                                                  int resultSetConcurrency, 
+                                                  int resultSetHoldability)
+                                           throws SQLException {
+
         if (this.pedantic) {
+
             if (resultSetHoldability != ResultSet.HOLD_CURSORS_OVER_COMMIT) {
                 throw new SQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level", 
-                    "S1009");
+                                       "S1009");
             }
         }
-        
+
         throw new NotImplemented();
     }
 
@@ -1557,6 +1583,7 @@ public class Connection
      * Same as prepareStatement() above, but allows the default result set
      * type and result set concurrency type to be overridden.
      *
+     * @param sql the SQL query containing place holders
      * @param resultSetType a result set type, see ResultSet.TYPE_XXX
      * @param resultSetConcurrency a concurrency type, see ResultSet.CONCUR_XXX
      * @return a new PreparedStatement object containing the
@@ -1568,7 +1595,7 @@ public class Connection
                                                        int resultSetConcurrency)
                                                 throws SQLException {
         checkClosed();
-        
+
         //
         // FIXME: Create warnings if can't create results of the given
         //        type or concurrency
@@ -1592,12 +1619,13 @@ public class Connection
                                                 throws SQLException {
 
         if (this.pedantic) {
+
             if (resultSetHoldability != ResultSet.HOLD_CURSORS_OVER_COMMIT) {
                 throw new SQLException("HOLD_CUSRORS_OVER_COMMIT is only supported holdability level", 
-                    "S1009");
+                                       "S1009");
             }
         }
-        
+
         return prepareStatement(sql, resultSetType, resultSetConcurrency);
     }
 
@@ -1769,8 +1797,10 @@ public class Connection
     /**
      * Creates an IO channel to the server
      * 
+     * @param isForReconnect is this request for a re-connect
      * @throws SQLException if a database access error
      * occurs
+     * @return a new MysqlIO instance connected to a server
      */
     protected com.mysql.jdbc.MysqlIO createNewIO(boolean isForReconnect)
                                           throws SQLException {
@@ -1968,8 +1998,9 @@ public class Connection
 
         return this.useHostsInPrivileges;
     }
-    
+
     boolean useStreamLengthsInPrepStmts() {
+
         return this.useStreamLengthsInPrepStmts;
     }
 
@@ -2021,12 +2052,14 @@ public class Connection
 
         return this.user;
     }
-    
+
     boolean isPedantic() {
+
         return this.pedantic;
     }
-    
+
     boolean continueBatchOnError() {
+
         return this.continueBatchOnError;
     }
 
@@ -2055,7 +2088,8 @@ public class Connection
     }
 
     ResultSet execSQL(String sql, int maxRows, int resultSetType, 
-                      boolean streamResults, boolean queryIsSelectOnly, String catalog)
+                      boolean streamResults, boolean queryIsSelectOnly, 
+                      String catalog)
                throws SQLException {
 
         return execSQL(sql, maxRows, null, resultSetType, streamResults, 
@@ -2073,7 +2107,8 @@ public class Connection
                       int resultSetType, String catalog)
                throws java.sql.SQLException {
 
-        return execSQL(sql, maxRows, packet, resultSetType, true, false, catalog);
+        return execSQL(sql, maxRows, packet, resultSetType, true, false, 
+                       catalog);
     }
 
     ResultSet execSQL(String sql, int maxRows, Buffer packet, 
@@ -2092,33 +2127,29 @@ public class Connection
         // issued queriesBeforeRetryMaster queries since
         // we failed over
         //
-        
         synchronized (this.mutex) {
             this.lastQueryFinishedTime = 0; // we're busy!
 
             //
             // Fixme: Is this transaction-safe with replication?
             //
-            
             if (this.failedOver && this.autoCommit) {
-                  
                 this.queriesIssuedFailedOver++;
-                
+
                 if ((this.queriesIssuedFailedOver % this.queriesBeforeRetryMaster) == 0) {
                     createNewIO(true);
-                    
+
                     String connectedHost = this.io.getHost();
-                    
-                    if (connectedHost != null 
+
+                    if (connectedHost != null
                         && this.hostList.get(0).equals(connectedHost)) {
                         this.failedOver = false;
                         this.queriesIssuedFailedOver = 0;
                         setReadOnly(false);
                     }
-                        
                 }
             }
-                    
+
             if ((this.highAvailability || this.failedOver) && this.autoCommit) {
 
                 try {
@@ -2141,15 +2172,14 @@ public class Connection
                     }
 
                     return this.io.sqlQuery(sql, realMaxRows, encoding, this, 
-                                            resultSetType, streamResults, catalog);
+                                            resultSetType, streamResults, 
+                                            catalog);
                 } else {
 
                     return this.io.sqlQueryDirect(packet, realMaxRows, this, 
-                                                  resultSetType, streamResults, catalog);
+                                                  resultSetType, streamResults, 
+                                                  catalog);
                 }
-            } catch (java.io.EOFException eofE) {
-                throw new java.sql.SQLException("Lost connection to server during query", 
-                                                "08007");
             } catch (java.sql.SQLException sqlE) {
 
                 // don't clobber SQL exceptions
@@ -2307,8 +2337,9 @@ public class Connection
         if (this.useFastPing) {
             this.io.sendCommand(MysqlDefs.PING, null, null);
         } else {
-            this.io.sqlQuery(PING_COMMAND, MysqlDefs.MAX_ROWS, 
-                             this.encoding, this, java.sql.ResultSet.CONCUR_READ_ONLY, false, this.database);
+            this.io.sqlQuery(PING_COMMAND, MysqlDefs.MAX_ROWS, this.encoding, 
+                             this, java.sql.ResultSet.CONCUR_READ_ONLY, false, 
+                             this.database);
         }
     }
 
@@ -2348,12 +2379,14 @@ public class Connection
     /**
      * Is the server configured to use lower-case
      * table names only?
+     * 
+     * @return true if lower_case_table_names is 'on'
      */
-    
     public boolean lowerCaseTableNames() {
+
         return this.lowerCaseTableNames;
     }
-    
+
     /**
      * DOCUMENT ME!
      * 
@@ -2376,6 +2409,8 @@ public class Connection
 
     /**
      * Should we tell MySQL that we're an interactive client
+     * 
+     * @return true if isInteractiveClient was set to true.
      */
     public boolean isInteractiveClient() {
 
@@ -2384,14 +2419,18 @@ public class Connection
 
     /**
      * Allow use of LOAD LOCAL INFILE?
+     * 
+     * @return true if allowLoadLocalInfile was set to true.
      */
     public boolean allowLoadLocalInfile() {
+
         return this.allowLoadLocalInfile;
     }
-    
+
     /**
      * Returns the paranoidErrorMessages.
-     * @return boolean
+     * @return boolean if we should be paranoid about
+     * error messages.
      */
     public boolean useParanoidErrorMessages() {
 
@@ -2415,13 +2454,14 @@ public class Connection
     }
 
     private void checkClosed()
-                        throws SQLException {
+                      throws SQLException {
 
         if (this.isClosed) {
-            throw new SQLException("No operations allowed after connection closed", "08003");
+            throw new SQLException("No operations allowed after connection closed", 
+                                   "08003");
         }
     }
-    
+
     private void setUseUltraDevWorkAround(boolean useUltraDevWorkAround) {
         this.useUltraDevWorkAround = useUltraDevWorkAround;
     }
