@@ -76,6 +76,7 @@ public class PreparedStatement
     private static final Object TZ_MUTEX = new Object();
     private boolean[] isNull = null;
     private boolean[] isStream = null;
+    private int[]      streamLengths = null;
     private InputStream[] parameterStreams = null;
     private String[] parameterValues = null;
     private String originalSql = null;
@@ -206,13 +207,16 @@ public class PreparedStatement
             }
         }
 
-        parameterValues = new String[staticSqlStrings.length - 1];
-        parameterStreams = new InputStream[staticSqlStrings.length - 1];
-        isStream = new boolean[staticSqlStrings.length - 1];
-        isNull = new boolean[staticSqlStrings.length - 1];
+        int numberOfParameters = staticSqlStrings.length - 1;
+        
+        parameterValues = new String[numberOfParameters];
+        parameterStreams = new InputStream[numberOfParameters];
+        isStream = new boolean[numberOfParameters];
+        streamLengths = new int[numberOfParameters];
+        isNull = new boolean[numberOfParameters];
         clearParameters();
 
-        for (int j = 0; j < parameterValues.length; j++) {
+        for (int j = 0; j < numberOfParameters; j++) {
             isStream[j] = false;
         }
     }
@@ -310,6 +314,7 @@ public class PreparedStatement
 
             parameterStreams[parameterIndex - 1] = x;
             isStream[parameterIndex - 1] = true;
+            streamLengths[parameterIndex - 1] = length;
             isNull[parameterIndex - 1] = false;
         }
     }
@@ -1164,7 +1169,7 @@ public class PreparedStatement
         }
 
         batchedArgs.add(new BatchParams(parameterValues, parameterStreams, 
-                                        isStream, isNull));
+                                        isStream, streamLengths, isNull));
     }
 
     /**
@@ -1201,6 +1206,7 @@ public class PreparedStatement
         parameterValues = null;
         parameterStreams = null;
         isStream = null;
+        streamLengths = null;
         isNull = null;
         streamConvertBuf = null;
         sendPacket = null;
@@ -1243,6 +1249,8 @@ public class PreparedStatement
 
         try {
 
+            boolean useStreamLengths = this.connection.useStreamLengthsInPrepStmts();
+            
             for (int i = 0; i < parameterValues.length; i++) {
 
                 if (parameterValues[i] == null && parameterStreams[i] == null) {
@@ -1259,7 +1267,9 @@ public class PreparedStatement
                 //}
                 if (isStream[i]) {
                     sendPacket.writeBytesNoNull(streamToBytes(
-                                                        parameterStreams[i]));
+                                                        parameterStreams[i],
+                                                        streamLengths[i], 
+                                                        useStreamLengths));
                 } else {
 
                     if (charEncoding != null) {
@@ -1411,7 +1421,8 @@ public class PreparedStatement
                             updateCounts[i] = executeUpdate(
                                                       paramArg.parameterStrings, 
                                                       paramArg.parameterStreams, 
-                                                      paramArg.isStream, 
+                                                      paramArg.isStream,
+                                                      paramArg.streamLengths, 
                                                       paramArg.isNull);
                         } catch (SQLException ex) {
                             sqlEx = ex;
@@ -1461,6 +1472,8 @@ public class PreparedStatement
 
         try {
 
+            boolean useStreamLengths = this.connection.useStreamLengthsInPrepStmts();
+            
             for (int i = 0; i < parameterValues.length; i++) {
 
                 if (parameterValues[i] == null && parameterStreams[i] == null) {
@@ -1472,7 +1485,9 @@ public class PreparedStatement
 
                 if (isStream[i]) {
                     sendPacket.writeBytesNoNull(streamToBytes(
-                                                        parameterStreams[i]));
+                                                        parameterStreams[i],
+                                                        streamLengths[i],
+                                                        useStreamLengths));
                 } else {
 
                     if (charEncoding != null) {
@@ -1591,7 +1606,7 @@ public class PreparedStatement
                                    throws java.sql.SQLException {
 
         return executeUpdate(parameterValues, parameterStreams, isStream, 
-                             isNull);
+                             streamLengths, isNull);
     }
 
     /**
@@ -1675,7 +1690,8 @@ public class PreparedStatement
      */
     protected synchronized int executeUpdate(String[] batchedParameterStrings, 
                                              InputStream[] batchedParameterStreams, 
-                                             boolean[] batchedIsStream, 
+                                             boolean[] batchedIsStream,
+                                             int[] batchedStreamLengths, 
                                              boolean[] batchedIsNull)
                                       throws SQLException {
 
@@ -1704,6 +1720,8 @@ public class PreparedStatement
 
         try {
 
+            boolean useStreamLengths = this.connection.useStreamLengthsInPrepStmts();
+            
             for (int i = 0; i < batchedParameterStrings.length; i++) {
 
                 if (batchedParameterStrings[i] == null
@@ -1721,7 +1739,9 @@ public class PreparedStatement
                 //}
                 if (batchedIsStream[i]) {
                     sendPacket.writeBytesNoNull(streamToBytes(
-                                                        batchedParameterStreams[i]));
+                                                        batchedParameterStreams[i],
+                                                        batchedStreamLengths[i],
+                                                        useStreamLengths));
                 } else {
 
                     if (charEncoding != null) {
@@ -1836,19 +1856,26 @@ public class PreparedStatement
      * works.
      *
      */
-    private final byte[] streamToBytes(InputStream in)
+    private final byte[] streamToBytes(InputStream in, int streamLength, boolean useLength)
                                 throws java.sql.SQLException {
 
-        return streamToBytes(in, true);
+        return streamToBytes(in, true, streamLength, useLength);
     }
 
-    private final byte[] streamToBytes(InputStream in, boolean escape)
+    private final byte[] streamToBytes(InputStream in, boolean escape, int streamLength, boolean useLength)
                                 throws java.sql.SQLException {
 
         try {
 
             ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-            int bc = readblock(in, streamConvertBuf);
+            
+            int bc = -1;
+            
+            if (useLength) {
+                bc = readblock(in, streamConvertBuf, streamLength);
+            } else {
+                bc = readblock(in, streamConvertBuf);
+            }
 
             if (escape) {
                 bytesOut.write('\'');
@@ -1887,7 +1914,10 @@ public class PreparedStatement
 
         if (isStream[parameterIndex]) {
 
-            return streamToBytes(parameterStreams[parameterIndex], false);
+            return streamToBytes(parameterStreams[parameterIndex], 
+                                  false, 
+                                  streamLengths[parameterIndex], 
+                                  this.connection.useStreamLengthsInPrepStmts());
         } else {
 
             String encoding = null;
@@ -2276,6 +2306,18 @@ public class PreparedStatement
         bytesOut.write(out, 0, iIndex);
     }
 
+    private final int readblock(InputStream i, byte[] b, int length)
+                         throws java.sql.SQLException {
+
+        try {
+
+            return i.read(b, 0, length);
+        } catch (Throwable E) {
+            throw new java.sql.SQLException("Error reading from InputStream "
+                                            + E.getClass().getName(), "S1000");
+        }
+    }
+    
     private final int readblock(InputStream i, byte[] b)
                          throws java.sql.SQLException {
 
@@ -2308,7 +2350,7 @@ public class PreparedStatement
 
             byte[] buf = bytesOut.toByteArray();
             ByteArrayInputStream bytesIn = new ByteArrayInputStream(buf);
-            setBinaryStream(parameterIndex, bytesIn, -1);
+            setBinaryStream(parameterIndex, bytesIn, buf.length);
         } catch (Exception ex) {
             throw new java.sql.SQLException("Invalid argument value: "
                                             + ex.getClass().getName(), "S1009");
@@ -2342,11 +2384,12 @@ public class PreparedStatement
 
         boolean[] isNull = null;
         boolean[] isStream = null;
+        int[] streamLengths = null;
         InputStream[] parameterStreams = null;
         String[] parameterStrings = null;
 
         BatchParams(String[] strings, InputStream[] streams, 
-                    boolean[] isStreamFlags, boolean[] isNullFlags) {
+                    boolean[] isStreamFlags, int[] lengths, boolean[] isNullFlags) {
 
             //
             // Make copies
@@ -2354,11 +2397,14 @@ public class PreparedStatement
             parameterStrings = new String[strings.length];
             parameterStreams = new InputStream[streams.length];
             isStream = new boolean[isStreamFlags.length];
+            streamLengths = new int[lengths.length];
             isNull = new boolean[isNullFlags.length];
             System.arraycopy(strings, 0, parameterStrings, 0, strings.length);
             System.arraycopy(streams, 0, parameterStreams, 0, streams.length);
             System.arraycopy(isStreamFlags, 0, isStream, 0, 
                              isStreamFlags.length);
+            System.arraycopy(lengths, 0, streamLengths, 0, 
+                             lengths.length);
             System.arraycopy(isNullFlags, 0, isNull, 0, isNullFlags.length);
         }
     }
