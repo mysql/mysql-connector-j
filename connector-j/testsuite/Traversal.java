@@ -78,9 +78,9 @@ public class Traversal
 		System.out.println("FAILED! Only traversed " + count + "/100 rows");
 	    }
 
-	    boolean is_last = RS.isLast();
+	    boolean isAfterLast = RS.isAfterLast();
 
-	    System.out.println("Checking ResultSet.isLast(): " + (is_last ? "OK" : "FAILED!"));
+	    System.out.println("Checking ResultSet.isAfterLast(): " + (isAfterLast ? "OK" : "FAILED!"));
 
 	    System.out.print("Positioning after end of result set: ");
 	    try {
