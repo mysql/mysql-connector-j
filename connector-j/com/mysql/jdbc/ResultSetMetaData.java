@@ -68,7 +68,9 @@ public class ResultSetMetaData
     public boolean isAutoIncrement(int column)
                             throws java.sql.SQLException {
 
-        return false;
+        Field f = getField(column);
+        
+        return f.isAutoIncrement();
     }
 
     /**
