@@ -16,8 +16,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
    
  */
-
-
 package com.mysql.jdbc;
 
 import java.io.InputStream;
@@ -37,11 +35,14 @@ import java.sql.Savepoint;
 import java.sql.Time;
 import java.sql.Timestamp;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
+import java.util.StringTokenizer;
 import java.util.TimeZone;
+
 
 /**
  * A Connection represents a session with a specific database.  Within the
@@ -125,7 +126,7 @@ public class Connection
     /**
      * The hostname we're connected to
      */
-    private String host           = null;
+    private String host = null;
     private double initialTimeout = 2.0D;
 
     /**
@@ -173,8 +174,8 @@ public class Connection
     /**
      * The JDBC URL we're using
      */
-    private String myURL           = null;
-    private int    netBufferLength = 16384;
+    private String myURL = null;
+    private int netBufferLength = 16384;
 
     /**
      * The password we used
@@ -224,50 +225,53 @@ public class Connection
      * The user we're connected as
      */
     private String user = null;
-    
+
     /**
      * Should we use timezone information?
      */
-    
     private boolean useTimezone = false;
-    
+
     /**
      * The timezone of the server
      */
-    
     private TimeZone serverTimezone = null;
 
     /**
-     * You can call this method to try to change the transaction
-     * isolation level using one of the TRANSACTION_* values.
-     *
-     * <B>Note:</B> setTransactionIsolation cannot be called while
-     * in the middle of a transaction
-     *
-     * @param level one of the TRANSACTION_* isolation values with
-     *    the exception of TRANSACTION_NONE; some databases may
-     *    not support other values
-     * @exception java.sql.SQLException if a database access error occurs
-     * @see java.sql.DatabaseMetaData#supportsTransactionIsolationLevel
+     * The list of host(s) to try and connect to
      */
+    private ArrayList hostList = null;
+    
+    /**
+     * How many hosts are in the host list?
+     */
+    
+    private int hostListSize = 0;
+    
+    /**
+     * Are we failed-over to a non-master host
+     */
+    
+    private boolean failedOver = false;
+       
     private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
 
     //~ Initializers ..........................................................
 
-    static {
+    static
+    {
         mapTransIsolationName2Value = new Hashtable(8);
         mapTransIsolationName2Value.put("READ-UNCOMMITED", 
-                                         new Integer(
-                                                 java.sql.Connection.TRANSACTION_READ_UNCOMMITTED));
+                                        new Integer(
+                                                java.sql.Connection.TRANSACTION_READ_UNCOMMITTED));
         mapTransIsolationName2Value.put("READ-COMMITTED", 
-                                         new Integer(
-                                                 java.sql.Connection.TRANSACTION_READ_COMMITTED));
+                                        new Integer(
+                                                java.sql.Connection.TRANSACTION_READ_COMMITTED));
         mapTransIsolationName2Value.put("REPEATABLE-READ", 
-                                         new Integer(
-                                                 java.sql.Connection.TRANSACTION_REPEATABLE_READ));
+                                        new Integer(
+                                                java.sql.Connection.TRANSACTION_REPEATABLE_READ));
         mapTransIsolationName2Value.put("SERIALIZABLE", 
-                                         new Integer(
-                                                 java.sql.Connection.TRANSACTION_SERIALIZABLE));
+                                        new Integer(
+                                                java.sql.Connection.TRANSACTION_SERIALIZABLE));
     }
 
     //~ Methods ...............................................................
@@ -297,23 +301,30 @@ public class Connection
                        throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = { new Boolean(autoCommit) };
             Debug.methodCall(this, "setAutoCommit", args);
         }
 
-        if (this.transactionsSupported) {
+        if (this.transactionsSupported)
+        {
 
             String sql = "SET autocommit=" + (autoCommit ? "1" : "0");
             execSQL(sql, -1);
             this.autoCommit = autoCommit;
-        } else {
+        }
+        else
+        {
 
-            if (autoCommit == false && this.relaxAutoCommit == false) {
+            if (autoCommit == false && this.relaxAutoCommit == false)
+            {
                 throw new SQLException("MySQL Versions Older than 3.23.15 do not support transactions", 
                                        "08003");
-            } else {
+            }
+            else
+            {
                 this.autoCommit = autoCommit;
             }
         }
@@ -332,11 +343,13 @@ public class Connection
                           throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "getAutoCommit", args);
-            Debug.returnValue(this, "getAutoCommit", new Boolean(this.autoCommit));
+            Debug.returnValue(this, "getAutoCommit", 
+                              new Boolean(this.autoCommit));
         }
 
         return this.autoCommit;
@@ -355,7 +368,8 @@ public class Connection
                     throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = { catalog };
             Debug.methodCall(this, "setCatalog", args);
@@ -377,7 +391,8 @@ public class Connection
                       throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "getCatalog", args);
@@ -397,22 +412,28 @@ public class Connection
                      throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "isClosed", args);
             Debug.returnValue(this, "isClosed", new Boolean(this.isClosed));
         }
 
-        if (!this.isClosed) {
+        if (!this.isClosed)
+        {
 
             // Test the connection
-            try {
+            try
+            {
 
-                synchronized (this.mutex) {
+                synchronized (this.mutex)
+                {
                     ping();
                 }
-            } catch (Exception E) {
+            }
+            catch (Exception E)
+            {
                 this.isClosed = true;
             }
         }
@@ -460,12 +481,15 @@ public class Connection
     public long getIdleFor()
     {
 
-        if (this.lastQueryFinishedTime == 0) {
+        if (this.lastQueryFinishedTime == 0)
+        {
 
             return 0;
-        } else {
+        }
+        else
+        {
 
-            long now      = System.currentTimeMillis();
+            long now = System.currentTimeMillis();
             long idleTime = now - this.lastQueryFinishedTime;
 
             return idleTime;
@@ -502,7 +526,8 @@ public class Connection
                      throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = { new Boolean(readOnly) };
             Debug.methodCall(this, "setReadOnly", args);
@@ -524,7 +549,8 @@ public class Connection
                        throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "isReadOnly", args);
@@ -552,22 +578,31 @@ public class Connection
         throw new NotImplemented();
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param level DOCUMENT ME!
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public void setTransactionIsolation(int level)
                                  throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = { new Integer(level) };
             Debug.methodCall(this, "setTransactionIsolation", args);
         }
 
-        if (this.hasIsolationLevels) {
+        if (this.hasIsolationLevels)
+        {
 
             StringBuffer sql = new StringBuffer(
                                        "SET SESSION TRANSACTION ISOLATION LEVEL ");
 
-            switch (level) {
+            switch (level)
+            {
 
                 case java.sql.Connection.TRANSACTION_NONE:
                     throw new SQLException("Transaction isolation level NONE not supported by MySQL");
@@ -599,7 +634,9 @@ public class Connection
 
             execSQL(sql.toString(), -1);
             isolationLevel = level;
-        } else {
+        }
+        else
+        {
             throw new java.sql.SQLException("Transaction Isolation Levels are not supported on MySQL versions older than 3.23.36.", 
                                             "S1C00");
         }
@@ -615,7 +652,8 @@ public class Connection
                                 throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "getTransactionIsolation", args);
@@ -665,7 +703,8 @@ public class Connection
                                     throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "getWarnings", args);
@@ -675,6 +714,11 @@ public class Connection
         return null;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean capitalizeDBMDTypes()
     {
 
@@ -691,7 +735,8 @@ public class Connection
                        throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "clearWarnings", args);
@@ -715,17 +760,22 @@ public class Connection
                throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "close", args);
         }
 
-        if (this.io != null) {
+        if (this.io != null)
+        {
 
-            try {
+            try
+            {
                 this.io.quit();
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
             }
 
             this.io = null;
@@ -750,21 +800,26 @@ public class Connection
                 throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "commit", args);
         }
 
-        if (this.isClosed) {
+        if (this.isClosed)
+        {
             throw new java.sql.SQLException("Commit attempt on closed connection.", 
                                             "08003");
         }
 
         // no-op if _relaxAutoCommit == true
-        if (this.autoCommit && !this.relaxAutoCommit) {
+        if (this.autoCommit && !this.relaxAutoCommit)
+        {
             throw new SQLException("Can't call commit when autocommit=true");
-        } else if (this.transactionsSupported) {
+        }
+        else if (this.transactionsSupported)
+        {
             execSQL("commit", -1);
         }
 
@@ -795,87 +850,126 @@ public class Connection
                         throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = { host, new Integer(port), info, database, url, d };
             Debug.methodCall(this, "constructor", args);
         }
 
-        if (host == null) {
+ 		hostList = new ArrayList();
+ 		
+        if (host == null)
+        {
             this.host = "localhost";
-        } else {
-            this.host = host;
+            hostList.add(this.host);
         }
+        else if (host.indexOf(",") != -1)
+        {
+
+            // multiple hosts separated by commas (failover)
+            StringTokenizer hostTokenizer = new StringTokenizer(host, ",", 
+                                                                false);
+
+            while (hostTokenizer.hasMoreTokens())
+            {
+                hostList.add(hostTokenizer.nextToken().trim());
+            }
+        }
+        else
+        {
+            this.host = host;
+            hostList.add(this.host);
+        }
+        
+        hostListSize = hostList.size();
 
         this.port = port;
 
-        if (database == null) {
+        if (database == null)
+        {
             throw new SQLException("Malformed URL '" + url + "'.", "S1000");
         }
 
         this.database = database;
-        this.myURL    = url;
+        this.myURL = url;
         this.myDriver = d;
-        this.user     = info.getProperty("user");
+        this.user = info.getProperty("user");
         this.password = info.getProperty("password");
 
-        if (this.user == null || this.user.equals("")) {
+        if (this.user == null || this.user.equals(""))
+        {
             this.user = "nobody";
         }
 
-        if (this.password == null) {
+        if (this.password == null)
+        {
             this.password = "";
         }
 
         // Check for driver specific properties
-        if (info.getProperty("relaxAutoCommit") != null) {
+        if (info.getProperty("relaxAutoCommit") != null)
+        {
             this.relaxAutoCommit = info.getProperty("relaxAutoCommit").toUpperCase()
                 .equals("TRUE");
         }
 
-        if (info.getProperty("autoReconnect") != null) {
+        if (info.getProperty("autoReconnect") != null)
+        {
             this.highAvailability = info.getProperty("autoReconnect").toUpperCase()
                 .equals("TRUE");
         }
 
-        if (info.getProperty("capitalizeTypeNames") != null) {
+        if (info.getProperty("capitalizeTypeNames") != null)
+        {
             this.capitalizeDBMDTypes = info.getProperty("capitalizeTypeNames").toUpperCase()
                 .equals("TRUE");
         }
 
-        if (info.getProperty("ultraDevHack") != null) {
+        if (info.getProperty("ultraDevHack") != null)
+        {
             this.useUltraDevWorkAround = info.getProperty("ultraDevHack").toUpperCase()
                 .equals("TRUE");
         }
 
-        if (info.getProperty("strictFloatingPoint") != null) {
+        if (info.getProperty("strictFloatingPoint") != null)
+        {
             this.strictFloatingPoint = info.getProperty("strictFloatingPoint").toUpperCase()
                 .equals("TRUE");
         }
 
-        if (this.highAvailability) {
+        if (this.highAvailability)
+        {
 
-            if (info.getProperty("maxReconnects") != null) {
+            if (info.getProperty("maxReconnects") != null)
+            {
 
-                try {
+                try
+                {
 
                     int n = Integer.parseInt(info.getProperty("maxReconnects"));
                     this.maxReconnects = n;
-                } catch (NumberFormatException NFE) {
+                }
+                catch (NumberFormatException NFE)
+                {
                     throw new SQLException("Illegal parameter '" + 
                                            info.getProperty("maxReconnects") + 
                                            "' for maxReconnects", "0S100");
                 }
             }
 
-            if (info.getProperty("initialTimeout") != null) {
+            if (info.getProperty("initialTimeout") != null)
+            {
 
-                try {
+                try
+                {
 
                     double n = Integer.parseInt(info.getProperty(
                                                         "initialTimeout"));
                     this.initialTimeout = n;
-                } catch (NumberFormatException NFE) {
+                }
+                catch (NumberFormatException NFE)
+                {
                     throw new SQLException("Illegal parameter '" + 
                                            info.getProperty("initialTimeout") + 
                                            "' for initialTimeout", "0S100");
@@ -883,153 +977,185 @@ public class Connection
             }
         }
 
-        if (info.getProperty("maxRows") != null) {
+        if (info.getProperty("maxRows") != null)
+        {
 
-            try {
+            try
+            {
 
                 int n = Integer.parseInt(info.getProperty("maxRows"));
 
-                if (n == 0) {
+                if (n == 0)
+                {
                     n = -1;
                 } // adjust so that it will become MysqlDefs.MAX_ROWS
 
                 // in execSQL()
                 this.maxRows = n;
-            } catch (NumberFormatException NFE) {
+            }
+            catch (NumberFormatException NFE)
+            {
                 throw new SQLException("Illegal parameter '" + 
                                        info.getProperty("maxRows") + 
                                        "' for maxRows", "0S100");
             }
         }
 
-        if (info.getProperty("useUnicode") != null) {
+        if (info.getProperty("useUnicode") != null)
+        {
 
             String useUnicode = info.getProperty("useUnicode").toUpperCase();
 
-            if (useUnicode.startsWith("TRUE")) {
+            if (useUnicode.startsWith("TRUE"))
+            {
                 this.doUnicode = true;
             }
 
-            if (info.getProperty("characterEncoding") != null) {
+            if (info.getProperty("characterEncoding") != null)
+            {
                 this.encoding = info.getProperty("characterEncoding");
 
                 // Attempt to use the encoding, and bail out if it
                 // can't be used
-                try {
+                try
+                {
 
                     String testString = "abc";
                     testString.getBytes(this.encoding);
-                } catch (UnsupportedEncodingException UE) {
+                }
+                catch (UnsupportedEncodingException UE)
+                {
                     throw new SQLException("Unsupported character encoding '" + 
                                            this.encoding + "'.", "0S100");
                 }
             }
         }
 
-        if (Driver.debug) {
-            System.out.println("Connect: " + this.user + " to " + this.database);
+        if (Driver.debug)
+        {
+            System.out.println(
+                    "Connect: " + this.user + " to " + this.database);
         }
 
-        try {
-            this.io = createNewIO(host, port);
-            this.io.init(this.user, this.password);
+        try
+        {
+        	
+        	createNewIO();
+        	
+            this.isClosed = false;
+            this.serverVariables = new Hashtable();
 
-            if (this.database.length() != 0) {
-                this.io.sendCommand(MysqlDefs.INIT_DB, this.database, null);
-            }
-
-            this.isClosed             = false;
-            this.serverVariables      = new Hashtable();
-
-            if (this.io.versionMeetsMinimum(3, 22, 1)) {
+            if (this.io.versionMeetsMinimum(3, 22, 1))
+            {
                 this.useFastPing = true;
             }
 
             //
             // If version is greater than 3.21.22 get the server
             // variables.
-            if (this.io.versionMeetsMinimum(3, 21, 22)) {
+            if (this.io.versionMeetsMinimum(3, 21, 22))
+            {
 
-                com.mysql.jdbc.Statement stmt    = null;
+                com.mysql.jdbc.Statement stmt = null;
                 com.mysql.jdbc.ResultSet results = null;
 
-                try {
-                    stmt    = (com.mysql.jdbc.Statement)createStatement();
+                try
+                {
+                    stmt = (com.mysql.jdbc.Statement)createStatement();
                     results = (com.mysql.jdbc.ResultSet)stmt.executeQuery(
                                       "SHOW VARIABLES");
 
-                    while (results.next()) {
+                    while (results.next())
+                    {
                         this.serverVariables.put(results.getString(1), 
-                                             results.getString(2));
-                    }
-                } catch (java.sql.SQLException e) {
-                    throw e;
-                } finally {
-
-                    if (results != null) {
-
-                        try {
-                            results.close();
-                        } catch (java.sql.SQLException sqlE) {
-                        }
-                    }
-
-                    if (stmt != null) {
-
-                        try {
-                            stmt.close();
-                        } catch (java.sql.SQLException sqlE) {
-                        }
+                                                 results.getString(2));
                     }
                 }
-
-                if (this.serverVariables.containsKey("max_allowed_packet")) {
-                    this.maxAllowedPacket = Integer.parseInt(
-                                                (String)this.serverVariables.get(
-                                                        "max_allowed_packet"));
-                }
-
-                if (this.serverVariables.containsKey("net_buffer_length")) {
-                    this.netBufferLength = Integer.parseInt(
-                                               (String)this.serverVariables.get(
-                                                       "net_buffer_length"));
-                }
-               
-               /*
-                String serverTimezoneStr = (String)this.serverVariables.get("timezone");
-                
-                if (serverTimezoneStr != null && serverTimezoneStr.trim().length() > 0)
+                catch (java.sql.SQLException e)
                 {
-                	try
-                	{
-                		serverTimezoneStr = TimeUtil.getCanoncialTimezone(serverTimezoneStr);
-                				
-                		if (serverTimezoneStr != null)
-                		{
-                			this.serverTimezone = TimeZone.getTimeZone(serverTimezoneStr);
-                		
-                			this.useTimezone = true;
-                		}
-                	}
-                	catch (Exception ex) { // Bail-out, we can't use the timezone 
-                	}
+                    throw e;
                 }
-                */
-                	
+                finally
+                {
 
+                    if (results != null)
+                    {
+
+                        try
+                        {
+                            results.close();
+                        }
+                        catch (java.sql.SQLException sqlE)
+                        {
+                        }
+                    }
+
+                    if (stmt != null)
+                    {
+
+                        try
+                        {
+                            stmt.close();
+                        }
+                        catch (java.sql.SQLException sqlE)
+                        {
+                        }
+                    }
+                }
+
+                if (this.serverVariables.containsKey("max_allowed_packet"))
+                {
+                    this.maxAllowedPacket = Integer.parseInt(
+                                                    (String)this.serverVariables.get(
+                                                            "max_allowed_packet"));
+                }
+
+                if (this.serverVariables.containsKey("net_buffer_length"))
+                {
+                    this.netBufferLength = Integer.parseInt(
+                                                   (String)this.serverVariables.get(
+                                                           "net_buffer_length"));
+                }
+
+                /*
+                 String serverTimezoneStr = (String)this.serverVariables.get("timezone");
+                                
+                 if (serverTimezoneStr != null && serverTimezoneStr.trim().length() > 0)
+                 {
+                     try
+                     {
+                         serverTimezoneStr = TimeUtil.getCanoncialTimezone(serverTimezoneStr);
+                                                
+                         if (serverTimezoneStr != null)
+                         {
+                             this.serverTimezone = TimeZone.getTimeZone(serverTimezoneStr);
+                                        
+                             this.useTimezone = true;
+                         }
+                     }
+                     catch (Exception ex) { // Bail-out, we can't use the timezone 
+                     }
+                 }
+                 */
                 checkTransactionIsolationLevel();
                 checkServerEncoding();
             }
 
-            if (this.io.versionMeetsMinimum(3, 23, 15)) {
+            if (this.io.versionMeetsMinimum(3, 23, 15))
+            {
                 this.transactionsSupported = true;
-            } else {
+            }
+            else
+            {
                 this.transactionsSupported = false;
             }
 
-            if (this.io.versionMeetsMinimum(3, 23, 36)) {
+            if (this.io.versionMeetsMinimum(3, 23, 36))
+            {
                 this.hasIsolationLevels = true;
-            } else {
+            }
+            else
+            {
                 this.hasIsolationLevels = false;
             }
 
@@ -1037,33 +1163,44 @@ public class Connection
             String profileSql = info.getProperty("profileSql");
 
             if (profileSql != null && 
-                profileSql.trim().equalsIgnoreCase("true")) {
+                profileSql.trim().equalsIgnoreCase("true"))
+            {
                 this.io.setProfileSql(true);
-            } else {
+            }
+            else
+            {
                 this.io.setProfileSql(false);
             }
 
             this.hasQuotedIdentifiers = this.io.versionMeetsMinimum(3, 23, 6);
 
-            if (this.serverVariables.containsKey("sql_mode")) {
+            if (this.serverVariables.containsKey("sql_mode"))
+            {
 
                 int sqlMode = Integer.parseInt(
-                                      (String)this.serverVariables.get("sql_mode"));
+                                      (String)this.serverVariables.get(
+                                              "sql_mode"));
 
-                if ((sqlMode & 4) > 0) {
+                if ((sqlMode & 4) > 0)
+                {
                     this.useAnsiQuotes = true;
-                } else {
+                }
+                else
+                {
                     this.useAnsiQuotes = false;
                 }
             }
 
             this.io.resetMaxBuf();
-        } catch (java.sql.SQLException ex) {
+        }
+        catch (java.sql.SQLException ex)
+        {
 
             // don't clobber SQL exceptions
             throw ex;
         }
-         catch (Exception ex) {
+        catch (Exception ex)
+        {
             throw new java.sql.SQLException("Cannot connect to MySQL server on " + 
                                             this.host + ":" + this.port + 
                                             ". Is there a MySQL server running on the machine/port you are trying to connect to? (" + 
@@ -1116,19 +1253,29 @@ public class Connection
     /**
      * @see Connection#createStatement(int, int, int)
      */
-    public java.sql.Statement createStatement(int arg0, int arg1, int arg2)
+    public java.sql.Statement createStatement(int resultSetType, 
+    										   int resultSetConcurrency, 
+    										   int resultSetHoldability)
                                        throws SQLException
     {
-        throw new NotImplemented();
+        return createStatement(resultSetType, resultSetConcurrency);
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws Throwable DOCUMENT ME!
+     */
     public void finalize()
                   throws Throwable
     {
 
-        if (this.io != null && !isClosed()) {
+        if (this.io != null && !isClosed())
+        {
             close();
-        } else if (this.io != null) {
+        }
+        else if (this.io != null)
+        {
             this.io.forceClose();
         }
     }
@@ -1147,7 +1294,8 @@ public class Connection
                      throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = { sql };
             Debug.methodCall(this, "nativeSQL", args);
@@ -1157,14 +1305,24 @@ public class Connection
         return sql;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param sql DOCUMENT ME!
+     * @return DOCUMENT ME! 
+     * @throws java.sql.SQLException DOCUMENT ME!
+     */
     public java.sql.CallableStatement prepareCall(String sql)
                                            throws java.sql.SQLException
     {
 
-        if (this.useUltraDevWorkAround) {
+        if (this.useUltraDevWorkAround)
+        {
 
             return new UltraDevWorkAround(prepareStatement(sql));
-        } else {
+        }
+        else
+        {
             throw new java.sql.SQLException("Callable statments not supported.", 
                                             "S1C00");
         }
@@ -1269,39 +1427,39 @@ public class Connection
     /**
      * @see Connection#prepareStatement(String, int, int, int)
      */
-    public java.sql.PreparedStatement prepareStatement(String arg0, int arg1, 
-                                                       int arg2, int arg3)
+    public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, 
+                                                       int resultSetConcurrency, int resultSetHoldability)
                                                 throws SQLException
     {
-        throw new NotImplemented();
+        return prepareStatement(sql, resultSetType, resultSetConcurrency);
     }
 
     /**
      * @see Connection#prepareStatement(String, int)
      */
-    public java.sql.PreparedStatement prepareStatement(String arg0, int arg1)
+    public java.sql.PreparedStatement prepareStatement(String sql, int autoGenKeyIndex)
                                                 throws SQLException
     {
-        throw new NotImplemented();
+        return prepareStatement(sql);
     }
 
     /**
      * @see Connection#prepareStatement(String, int[])
      */
-    public java.sql.PreparedStatement prepareStatement(String arg0, int[] arg1)
+    public java.sql.PreparedStatement prepareStatement(String sql, int[] autoGenKeyIndexes)
                                                 throws SQLException
     {
-        throw new NotImplemented();
+        return prepareStatement(sql);
     }
 
     /**
      * @see Connection#prepareStatement(String, String[])
      */
-    public java.sql.PreparedStatement prepareStatement(String arg0, 
-                                                       String[] arg1)
+    public java.sql.PreparedStatement prepareStatement(String sql, 
+                                                       String[] autoGenKeyColNames)
                                                 throws SQLException
     {
-        throw new NotImplemented();
+        return prepareStatement(sql);
     }
 
     /**
@@ -1325,22 +1483,27 @@ public class Connection
                   throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = new Object[0];
             Debug.methodCall(this, "rollback", args);
         }
 
-        if (this.isClosed) {
+        if (this.isClosed)
+        {
             throw new java.sql.SQLException("Rollback attempt on closed connection.", 
                                             "08003");
         }
 
         // no-op if _relaxAutoCommit == true
-        if (this.autoCommit && !this.relaxAutoCommit) {
+        if (this.autoCommit && !this.relaxAutoCommit)
+        {
             throw new SQLException("Can't call commit when autocommit=true", 
                                    "08003");
-        } else if (this.transactionsSupported) {
+        }
+        else if (this.transactionsSupported)
+        {
             execSQL("rollback", -1);
         }
     }
@@ -1354,24 +1517,44 @@ public class Connection
         throw new NotImplemented();
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean supportsIsolationLevel()
     {
 
         return this.hasIsolationLevels;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean supportsQuotedIdentifiers()
     {
 
         return this.hasQuotedIdentifiers;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean supportsTransactions()
     {
 
         return this.transactionsSupported;
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean useStrictFloatingPoint()
     {
 
@@ -1391,11 +1574,183 @@ public class Connection
         return this.io;
     }
 
-    protected com.mysql.jdbc.MysqlIO createNewIO(String host, int port)
-                                          throws Exception
+    protected com.mysql.jdbc.MysqlIO createNewIO()
+                                          throws SQLException
     {
 
-        return new MysqlIO(host, port, this);
+		MysqlIO newIo = null;
+
+		if (!highAvailability && !this.failedOver)
+		{		
+			for (int hostIndex = 0; hostIndex < hostListSize; hostIndex++)
+        	{
+        		try
+        		{
+            		this.io = new MysqlIO(this.hostList.get(hostIndex).toString(), 
+            							this.port, 
+            							this);
+            		this.io.init(this.user, this.password);
+            		
+            		if (this.database.length() != 0)
+            		{
+                		this.io.sendCommand(MysqlDefs.INIT_DB, this.database, null);
+            		}
+
+            		if (hostIndex != 0)
+            		{
+            			// FIXME: User Selectable?
+            			setReadOnly(true);
+            			this.failedOver = true;
+            		}
+            		else
+					{
+						this.failedOver = false;
+						setReadOnly(false);
+					}
+            		
+            		
+            		
+            		break; // low-level connection succeeded
+            		
+        		}
+        		catch (SQLException sqlEx) 
+        		{
+        			try
+                    {
+                    	if (this.io != null)
+                     	{
+                     		this.io.forceClose();
+                     	}
+                    }
+                    catch (Exception ex)
+                    {
+
+                                    // do nothing
+                    }
+                     
+                                
+        			String sqlState = sqlEx.getSQLState();
+        			
+        			if (sqlState == null || !sqlState.equals("08S01"))
+        			{
+        				throw sqlEx;
+        			}
+        		}
+        		catch (Exception unknownException)
+        		{
+        			try
+                    {
+                    	if (this.io != null)
+                     	{
+                     		this.io.forceClose();
+                     	}
+                    }
+                    catch (Exception ex)
+                    {
+
+                                    // do nothing
+                    }
+                    
+                    if ((hostListSize - 1) == hostIndex) 
+                    {
+                    	throw new SQLException("Unable to connect to any hosts due to exception: " + unknownException.toString(), "08S01");
+                    }
+        		}		
+        	}
+    	}
+    	else
+    	{
+    		double timeout = this.initialTimeout;
+                    boolean connectionGood = false;
+                   
+                    for (int hostIndex = 0; hostIndex < hostListSize; hostIndex++)
+                    {
+
+                        for (int attemptCount = 0;
+                             attemptCount < this.maxReconnects;
+                             attemptCount++)
+                        {
+
+                            try
+                            {
+								if (this.io != null)
+                                {
+                                	try
+                                	{
+                                	
+                                    		this.io.forceClose();
+                                	}
+                                	catch (Exception ex)
+                                	{
+
+	                                    // do nothing
+    	                            }
+                                }
+
+                                this.io = new MysqlIO(this.hostList.get(hostIndex).toString(), 
+            							this.port, 
+            							this);
+            							
+            					this.io.init(this.user, this.password);
+            					
+            					if (this.database.length() != 0)
+            					{
+                					this.io.sendCommand(MysqlDefs.INIT_DB, this.database, null);
+            					}
+
+                                
+                                ping();
+                                connectionGood = true;
+
+								if (hostIndex != 0)
+								{
+									setReadOnly(true);
+									this.failedOver = true;
+								}
+								else
+								{
+									this.failedOver = false;
+									setReadOnly(false);
+								}
+								
+                           		break;
+                            }
+                            catch (Exception EEE)
+                            {
+                            	int i = 0;
+                            }
+
+							if (connectionGood)
+							{
+								break;
+							}
+							
+							try
+                            {
+                                Thread.currentThread().sleep(
+                                        (long)timeout * 1000);
+                                timeout = timeout * timeout;
+                            }
+                            catch (InterruptedException IE)
+                            {
+                            }
+                            
+                        }
+
+                        if (!connectionGood)
+                        {
+
+                            // We've really failed!
+                            throw new SQLException("Server connection failure during transaction. \nAttemtped reconnect " + 
+                                                   this.maxReconnects + 
+                                                   " times. Giving up.", 
+                                                   "08001");
+                        }
+                    }
+    	}
+    		
+        	
+        return newIo;
     }
 
     /** Returns the maximum packet size the MySQL server will accept */
@@ -1410,7 +1765,8 @@ public class Connection
              throws SQLException
     {
 
-        if (this.io == null) {
+        if (this.io == null)
+        {
             throw new SQLException("Connection.close() has already been called. Invalid operation in this state.", 
                                    "08003");
         }
@@ -1477,7 +1833,8 @@ public class Connection
                throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = { sql, new Integer(maxRowsToRetreive) };
             Debug.methodCall(this, "execSQL", args);
@@ -1487,7 +1844,8 @@ public class Connection
                        java.sql.ResultSet.CONCUR_READ_ONLY);
     }
 
-    ResultSet execSQL(String sql, int maxRows, int resultSetType, boolean streamResults)
+    ResultSet execSQL(String sql, int maxRows, int resultSetType, 
+                      boolean streamResults)
                throws SQLException
     {
 
@@ -1502,121 +1860,97 @@ public class Connection
                        java.sql.ResultSet.CONCUR_READ_ONLY);
     }
 
-	ResultSet execSQL(String sql, int maxRows, Buffer packet, 
-                      int resultSetType) throws java.sql.SQLException
+    ResultSet execSQL(String sql, int maxRows, Buffer packet, 
+                      int resultSetType)
+               throws java.sql.SQLException
     {
-    	return execSQL(sql, maxRows, packet, 
-                      resultSetType, true);
+
+        return execSQL(sql, maxRows, packet, resultSetType, true);
     }
-    
+
     ResultSet execSQL(String sql, int maxRows, Buffer packet, 
                       int resultSetType, boolean streamResults)
                throws java.sql.SQLException
     {
 
-        if (Driver.trace) {
+        if (Driver.trace)
+        {
 
             Object[] args = { sql, new Integer(maxRows), packet };
             Debug.methodCall(this, "execSQL", args);
         }
 
-        synchronized (this.mutex) {
+        synchronized (this.mutex)
+        {
             this.lastQueryFinishedTime = 0; // we're busy!
 
-            if (this.highAvailability) {
+            if (this.highAvailability || this.failedOver)
+            {
 
-                try {
+                try
+                {
                     ping();
-                } catch (Exception Ex) {
-
-                    double  timeout        = this.initialTimeout;
-                    boolean connectionGood = false;
-
-                    for (int i = 0; i < this.maxReconnects; i++) {
-
-                        try {
-
-                            try {
-                                this.io.forceClose();
-                            } catch (Exception ex) {
-
-                                // do nothing
-                            }
-
-                            this.io = createNewIO(this.host, this.port);
-                            this.io.init(this.user, this.password);
-
-                            if (this.database.length() != 0) {
-                                this.io.sendCommand(MysqlDefs.INIT_DB, this.database, 
-                                                null);
-                            }
-
-                            ping();
-                            connectionGood = true;
-
-                            break;
-                        } catch (Exception EEE) {
-                        }
-
-                        try {
-                            Thread.currentThread().sleep((long)timeout * 1000);
-                            timeout = timeout * timeout;
-                        } catch (InterruptedException IE) {
-                        }
-                    }
-
-                    if (!connectionGood) {
-
-                        // We've really failed!
-                        throw new SQLException("Server connection failure during transaction. \nAttemtped reconnect " + 
-                                               this.maxReconnects + 
-                                               " times. Giving up.", "08001");
-                    }
+                    
+                }
+                catch (Exception Ex)
+                {
+					createNewIO();	
                 }
             }
 
-            try {
+            try
+            {
 
                 int realMaxRows = (maxRows == -1) ? MysqlDefs.MAX_ROWS : maxRows;
 
-                if (packet == null) {
+                if (packet == null)
+                {
 
                     String encoding = null;
 
-                    if (useUnicode()) {
+                    if (useUnicode())
+                    {
                         encoding = getEncoding();
                     }
 
                     return this.io.sqlQuery(sql, realMaxRows, encoding, this, 
-                                        resultSetType, streamResults);
-                } else {
+                                            resultSetType, streamResults);
+                }
+                else
+                {
 
                     return this.io.sqlQueryDirect(packet, realMaxRows, this, 
-                                              resultSetType, streamResults);
+                                                  resultSetType, streamResults);
                 }
-            } catch (java.io.EOFException eofE) {
+            }
+            catch (java.io.EOFException eofE)
+            {
                 throw new java.sql.SQLException("Lost connection to server during query", 
                                                 "08007");
             }
-             catch (java.sql.SQLException sqlE) {
+            catch (java.sql.SQLException sqlE)
+            {
 
                 // don't clobber SQL exceptions
                 throw sqlE;
             }
-             catch (Exception ex) {
+            catch (Exception ex)
+            {
 
-                String exceptionType    = ex.getClass().getName();
+                String exceptionType = ex.getClass().getName();
                 String exceptionMessage = ex.getMessage();
                 throw new java.sql.SQLException("Error during query: Unexpected Exception: " + 
                                                 exceptionType + 
                                                 " message given: " + 
                                                 exceptionMessage, "S1000");
-            } finally {
+            }
+            finally
+            {
                 this.lastQueryFinishedTime = System.currentTimeMillis();
             }
         }
     }
-
+    
     /** Has the maxRows value changed? */
     synchronized void maxRowsChanged()
     {
@@ -1645,29 +1979,35 @@ public class Connection
                               throws SQLException
     {
 
-        if (useUnicode() && getEncoding() == null) {
+        if (useUnicode() && getEncoding() == null)
+        {
             this.encoding = (String)this.serverVariables.get("character_set");
 
-            if (this.encoding != null) {
+            if (this.encoding != null)
+            {
 
                 // dirty hack to work around discrepancies in character encoding names, e.g.
                 // mysql    java
                 // latin1   Latin1
                 // cp1251   Cp1251
-                if (Character.isLowerCase(this.encoding.charAt(0))) {
+                if (Character.isLowerCase(this.encoding.charAt(0)))
+                {
 
                     char[] ach = this.encoding.toCharArray();
-                    ach[0]    = Character.toUpperCase(this.encoding.charAt(0));
+                    ach[0] = Character.toUpperCase(this.encoding.charAt(0));
                     this.encoding = new String(ach);
                 }
 
                 // Attempt to use the encoding, and bail out if it
                 // can't be used
-                try {
+                try
+                {
 
                     String TestString = "abc";
                     TestString.getBytes(this.encoding);
-                } catch (UnsupportedEncodingException UE) {
+                }
+                catch (UnsupportedEncodingException UE)
+                {
 
                     //              throw new SQLException("Unsupported character encoding '" +
                     //                                     this.encoding + "'.", "0S100");
@@ -1687,11 +2027,13 @@ public class Connection
 
         String s = (String)this.serverVariables.get("transaction_isolation");
 
-        if (s != null) {
+        if (s != null)
+        {
 
             Integer intTI = (Integer)mapTransIsolationName2Value.get(s);
 
-            if (intTI != null) {
+            if (intTI != null)
+            {
                 isolationLevel = intTI.intValue();
             }
         }
@@ -1710,11 +2052,14 @@ public class Connection
                throws Exception
     {
 
-        if (this.useFastPing) {
+        if (this.useFastPing)
+        {
             this.io.sendCommand(MysqlDefs.PING, null, null);
-        } else {
+        }
+        else
+        {
             this.io.sqlQuery(PING_COMMAND, MysqlDefs.MAX_ROWS, 
-                         java.sql.ResultSet.CONCUR_READ_ONLY, false);
+                             java.sql.ResultSet.CONCUR_READ_ONLY, false);
         }
     }
 
@@ -2880,16 +3225,28 @@ public class Connection
                         throws java.sql.SQLException
         {
             throw new SQLException("Not supported");
-        } 
+        }
     }
-    
+
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public boolean useTimezone()
     {
-    	return this.useTimezone;
+
+        return this.useTimezone;
     }
-    
+
+    /**
+     * DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME! 
+     */
     public TimeZone getServerTimezone()
     {
-    	return this.serverTimezone;
+
+        return this.serverTimezone;
     }
 }
