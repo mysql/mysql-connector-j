@@ -49,7 +49,7 @@ public class CharsetMapping {
 
     static {
         HashMap tempMap = new HashMap();
-        
+             
         tempMap.put("usa7", "US-ASCII");
         tempMap.put("big5", "Big5");
         tempMap.put("gbk", "GBK");
