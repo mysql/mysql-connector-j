@@ -120,9 +120,9 @@ class Buffer {
         
         position += len;
 
-        return (int)len; // this is safe, as this is only
-                          // used when unpacking fields, and
-                          // field names can't be > Integer.MAX_VALUE
+        return (int) len; // this is safe, as this is only
+                           // used when unpacking fields, and
+                           // field names can't be > Integer.MAX_VALUE
     }
 
     /**

@@ -45,7 +45,8 @@ public class MysqlConnectionPoolDataSource
     /**
      * Returns a pooled connection.
      *
-     * @exception java.sql.SQLException
+     * @exception SQLException if an error occurs
+     * @return a PooledConnection
      */
     public synchronized PooledConnection getPooledConnection()
                                                       throws SQLException {
@@ -63,7 +64,8 @@ public class MysqlConnectionPoolDataSource
      *
      * @param s user name
      * @param s1 password
-     * @exception java.sql.SQLException
+     * @exception SQLException if an error occurs
+     * @return a PooledConnection
      */
     public synchronized PooledConnection getPooledConnection(String s, 
                                                              String s1)

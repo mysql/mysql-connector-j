@@ -18,6 +18,7 @@
  */
 package testsuite.simple;
 
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 
 import testsuite.BaseTestCase;
@@ -56,11 +57,11 @@ public class ConnectionTest extends BaseTestCase {
      */
     public void testIsolationLevel() throws Exception {
         int[] isolationLevels = new int[] {
-            this.conn.TRANSACTION_NONE,
-            this.conn.TRANSACTION_READ_COMMITTED,
-            this.conn.TRANSACTION_READ_UNCOMMITTED,
-            this.conn.TRANSACTION_REPEATABLE_READ,
-            this.conn.TRANSACTION_SERIALIZABLE
+            Connection.TRANSACTION_NONE,
+            Connection.TRANSACTION_READ_COMMITTED,
+            Connection.TRANSACTION_READ_UNCOMMITTED,
+            Connection.TRANSACTION_REPEATABLE_READ,
+            Connection.TRANSACTION_SERIALIZABLE
         };
         
         DatabaseMetaData dbmd = this.conn.getMetaData();

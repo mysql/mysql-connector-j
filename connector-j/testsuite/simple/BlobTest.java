@@ -47,7 +47,7 @@ public class BlobTest
         int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
 
         for (int i = 0; i < TESTBLOB.length; i++) {
-            TESTBLOB[i] = (byte)((Math.random() * dataRange) + Byte.MIN_VALUE);
+            TESTBLOB[i] = (byte) ((Math.random() * dataRange) + Byte.MIN_VALUE);
         }  
     }
 

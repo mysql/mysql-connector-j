@@ -21,8 +21,6 @@ package testsuite.perf;
 
 import java.sql.PreparedStatement;
 
-import testsuite.BaseTestCase;
-
 /**
  * Simple performance testing unit test.
  * 
@@ -79,6 +77,11 @@ public class LoadStorePerfTest extends BasePerfTest {
         doIterations(30);
     }
     
+    /**
+     * Runs the test 10 times to get JIT going, and GC going
+     * 
+     * @throws Exception if an error occurs.
+     */
     protected void warmUp() throws Exception {
         System.out.print("Warm-up period (10 iterations)");
         for (int i = 0; i < 10; i++) {
@@ -89,6 +92,11 @@ public class LoadStorePerfTest extends BasePerfTest {
         System.out.println("Warm-up period ends");
     }
     
+    /**
+     * Runs one iteration of the test.
+     * 
+     * @see testsuite.perf.BasePerfTest#doOneIteration()
+     */
     protected void doOneIteration() throws Exception {
         PreparedStatement pStmt = conn.prepareStatement("UPDATE perfLoadStore SET priKey=?, charField=? where priKey=?");
         long begin = System.currentTimeMillis();

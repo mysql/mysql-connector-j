@@ -95,7 +95,10 @@ public class StatementsTest
                 "CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
                 
         stmt.executeUpdate(
-                "CREATE TABLE statement_batch_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255), UNIQUE INDEX (strdata1))");
+                "CREATE TABLE statement_batch_test " 
+                + "(id int not null primary key auto_increment, " 
+                + "strdata1 varchar(255) not null, strdata2 varchar(255), "
+                + "UNIQUE INDEX (strdata1))");
 
 
         for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {

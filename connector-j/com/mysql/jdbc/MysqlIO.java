@@ -29,7 +29,6 @@ import java.lang.ref.SoftReference;
 
 import java.net.Socket;
 
-import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 

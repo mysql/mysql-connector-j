@@ -124,6 +124,8 @@ public class StatementRegressionTest
     /**
      * Tests PreparedStatement.setCharacterStream() to ensure
      * it accepts > 4K streams
+     * 
+     * @throws Exception if an error occurs.
      */
     
     public void testSetCharacterStream() throws Exception {

@@ -28,6 +28,8 @@ import javax.naming.spi.ObjectFactory;
 
 /**
  * Factory class for MysqlDataSource objects
+ * 
+ * @author Mark Matthews
  */
 public class MysqlDataSourceFactory
     implements ObjectFactory {
@@ -35,9 +37,13 @@ public class MysqlDataSourceFactory
     //~ Instance/static variables .............................................
 
     /**
-     * The class name for a standard Mysql DataSource.
+     * The class name for a standard MySQL DataSource.
      */
     protected final String dataSourceClassName = "com.mysql.jdbc.jdbc2.optional.MysqlDataSource";
+    
+    /**
+     * The class name for a poolable MySQL DataSource.
+     */
     protected final String poolDataSourceName = "com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource";
 
     //~ Methods ...............................................................

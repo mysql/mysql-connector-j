@@ -76,6 +76,17 @@ public class StringUtils {
         return getBytes(s, converter, encoding);
     }
     
+    /**
+     * Returns the byte[] representation of the given string
+     * (re)using the given charset converter, and the given encoding.
+     * 
+     * @param s the string to convert
+     * @param converter the converter to reuse
+     * @param encoding the character encoding to use
+     * @return byte[] representation of the string
+     * @throws UnsupportedEncodingException if an encoding unsupported by
+     * the JVM is supplied.
+     */
     public static final byte[] getBytes(String s, 
                                            SingleByteCharsetConverter converter, 
                                            String encoding)
@@ -166,9 +177,11 @@ public class StringUtils {
     }
 
     /**
-     * Unfortunately, SJIS has 0x5c as a high byte in some
-     * of its double-byte characters, so we need to escape
-     * it.
+     * Unfortunately, SJIS has 0x5c as a high byte in some of its double-byte
+     * characters, so we need to escape it.
+     *
+     * @param origBytes the original bytes in SJIS format
+     * @return byte[] with 0x5c escaped
      */
     public static byte[] escapeSJISByteStream(byte[] origBytes) {
         if (origBytes == null || origBytes.length == 0) {

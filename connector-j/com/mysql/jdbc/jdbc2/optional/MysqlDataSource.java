@@ -35,6 +35,8 @@ import javax.sql.DataSource;
 
 /**
  * A JNDI DataSource for a Mysql JDBC connection
+ * 
+ * @author Mark Matthews
  */
 public class MysqlDataSource
     implements DataSource,
@@ -50,6 +52,10 @@ public class MysqlDataSource
 
     /** Should we construct the URL, or has it been set explicitly */
     protected boolean explicitUrl = false;
+    
+    /**
+     * The JDBC URL
+     */
     protected String url = null;
 
     /**
@@ -86,6 +92,10 @@ public class MysqlDataSource
      * Log stream
      */
     protected PrintWriter logWriter = null;
+    
+    /**
+     * The profileSql property
+     */
     protected String profileSql = "false";
 
     //~ Initializers ..........................................................
@@ -114,6 +124,9 @@ public class MysqlDataSource
     /**
      * Creates a new connection using the already configured
      * username and password.
+     * 
+     * @throws SQLException if an error occurs
+     * @return a connection to the database
      */
     public java.sql.Connection getConnection()
                                       throws SQLException {
@@ -123,6 +136,12 @@ public class MysqlDataSource
 
     /**
      * Creates a new connection with the given username and password
+     * 
+     * @param userID the user id to connect with
+     * @param password the password to connect with
+     * 
+     * @throws SQLException if an error occurs
+     * @return a connection to the database
      */
     public java.sql.Connection getConnection(String userID, String password)
                                       throws SQLException {
@@ -146,6 +165,10 @@ public class MysqlDataSource
 
     /**
      * Creates a connection using the specified properties.
+     * 
+     * @param props the properties to connect with
+     * @throws SQLException if an error occurs
+     * @return a connection to the database
      */
     protected java.sql.Connection getConnection(Properties props)
                                          throws SQLException {
@@ -178,6 +201,8 @@ public class MysqlDataSource
 
     /**
      * Gets the name of the database
+     * 
+     * @return the name of the database for this data source
      */
     public String getDatabaseName() {
 
@@ -185,9 +210,9 @@ public class MysqlDataSource
     }
 
     /**
-     * DOCUMENT ME!
+     * Returns the log writer for this data source
      * 
-     * @return DOCUMENT ME! 
+     * @return the log writer for this data source
      */
     public java.io.PrintWriter getLogWriter() {
 
@@ -195,21 +220,19 @@ public class MysqlDataSource
     }
 
     /**
-     * DOCUMENT ME!
+     * Returns the login timeout
      * 
-     * @return DOCUMENT ME! 
-     * @throws SQLException DOCUMENT ME!
+     * @return the login timeout
      */
-    public int getLoginTimeout()
-                        throws SQLException {
+    public int getLoginTimeout() {
 
         return 0;
     }
 
     /**
-     * DOCUMENT ME!
+     * Returns the port number
      * 
-     * @return DOCUMENT ME! 
+     * @return the port number
      */
     public int getPortNumber() {
 
@@ -217,9 +240,9 @@ public class MysqlDataSource
     }
 
     /**
-     * DOCUMENT ME!
+     * Returns the port number
      * 
-     * @return DOCUMENT ME! 
+     * @return the port number
      */
     public int getPort() {
 
@@ -227,9 +250,9 @@ public class MysqlDataSource
     }
 
     /**
-     * DOCUMENT ME!
+     * Returns the value for the profileSql property
      * 
-     * @return DOCUMENT ME! 
+     * @return the value for the profileSql property
      */
     public String getProfileSql() {
 
@@ -237,9 +260,9 @@ public class MysqlDataSource
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets the profileSql property
      * 
-     * @param flag DOCUMENT ME!
+     * @param flag true/false
      */
     public void setProfileSql(String flag) {
         profileSql = flag;
@@ -247,6 +270,9 @@ public class MysqlDataSource
 
     /**
      * Required method to support this class as a <CODE>Referenceable</CODE>.
+     * 
+     * @return a Reference to this data source
+     * @throws NamingException if a JNDI error occurs
      */
     public Reference getReference()
                            throws NamingException {
@@ -264,7 +290,9 @@ public class MysqlDataSource
     }
 
     /**
-     * Gets the name of the database server
+     * Returns the name of the database server
+     * 
+     * @return the name of the database server
      */
     public String getServerName() {
 
@@ -277,7 +305,6 @@ public class MysqlDataSource
       * introspection and matches if property name in descriptor is "url".
       *
       * @param url url to be used within driver.connect
-      * @exception java.sql.SQLException
       */
     public void setUrl(String url) {
         this.url = url;
@@ -285,8 +312,10 @@ public class MysqlDataSource
     }
 
     /**
-     * Gets the JDBC URL that will be used to create the
-     * database connection.
+     * Returns  the   JDBC URL that will be used to create the database
+     * connection.
+     * 
+     * @return the URL for this connection
      */
     public String getUrl() {
 
@@ -309,18 +338,18 @@ public class MysqlDataSource
     //
 
     /**
-     * DOCUMENT ME!
+     * Sets the URL for this connection
      * 
-     * @param url DOCUMENT ME!
+     * @param url the URL for this connection
      */
     public void setURL(String url) {
         setUrl(url);
     }
 
     /**
-     * DOCUMENT ME!
+     * Returns the URL for this connection
      * 
-     * @return DOCUMENT ME! 
+     * @return the URL for this connection
      */
     public String getURL() {
 
@@ -328,7 +357,9 @@ public class MysqlDataSource
     }
 
     /**
-     * Gets the configured user for this connection
+	 * Returns the  configured user for this connection
+     * 
+     * @return the user for this connection
      */
     public String getUser() {
 
@@ -337,7 +368,7 @@ public class MysqlDataSource
 
     /**
      * Sets the database name.
-     * @param nom the name of the database
+     * @param dbName the name of the database
      */
     public void setDatabaseName(String dbName) {
         databaseName = dbName;
@@ -345,6 +376,8 @@ public class MysqlDataSource
 
     /**
      * Sets the log writer for this data source.
+     * 
+     * @see javax.sql.DataSource#setLogWriter(PrintWriter)
      */
     public void setLogWriter(PrintWriter output)
                       throws SQLException {
@@ -363,6 +396,8 @@ public class MysqlDataSource
 
     /**
      * Sets the password
+     * 
+     * @param pass the password
      */
     public void setPassword(String pass) {
         password = pass;
@@ -370,15 +405,18 @@ public class MysqlDataSource
 
     /**
      * Sets the database port.
+     * 
+     * @param p the port
      */
     public void setPort(int p) {
         port = p;
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets the port number
      * 
-     * @param p DOCUMENT ME!
+     * @param p the port
+     * @see #setPort
      */
     public void setPortNumber(int p) {
         setPort(p);
@@ -386,6 +424,8 @@ public class MysqlDataSource
 
     /**
      * Sets the server name.
+     * 
+     * @param serverName the server name
      */
     public void setServerName(String serverName) {
         hostName = serverName;
@@ -393,6 +433,8 @@ public class MysqlDataSource
 
     /**
      * Sets the user ID.
+     * 
+     * @param userID the User ID
      */
     public void setUser(String userID) {
         user = userID;

@@ -56,7 +56,7 @@ public class LogicalHandle
      *
      * @param mysqlPooledConnection reference to object that instantiated this object
      * @param mysqlConnection physical connection to db
-     * @throws SQLException
+     * @throws SQLException if an error occurs.
      */
     public LogicalHandle(MysqlPooledConnection mysqlPooledConnection, 
                          Connection mysqlConnection)
@@ -83,7 +83,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  
      * Notifies listeners of any caught exceptions before 
      * re-throwing to client.
-     * @throws SQLException
+     * @throws SQLException if an error occurs
      */
     public void clearWarnings()
                        throws SQLException {
@@ -107,7 +107,7 @@ public class LogicalHandle
      * de-referenced by the pooled connection each time mysqlPooledConnection.getConnection() 
      * is called by app server.  
      * 
-     * @throws SQLException
+     * @throws SQLException if an error occurs
      */
     public synchronized void close()
                             throws SQLException {
@@ -129,7 +129,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @throws SQLException if an error occurs
      */
     public void commit()
                 throws SQLException {
@@ -151,7 +151,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#createStatement()
      */
     public java.sql.Statement createStatement()
                                        throws SQLException {
@@ -174,7 +174,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#createStatement()
      */
     public java.sql.Statement createStatement(int resultSetType, 
                                               int resultSetConcurrency)
@@ -198,7 +198,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#getAutoCommit()
      */
     public boolean getAutoCommit()
                           throws SQLException {
@@ -222,7 +222,7 @@ public class LogicalHandle
      * any caught exceptions before re-throwing to client.
      * 
      * @return the current catalog
-     * @throws SQLException
+     * @throws SQLException if an error occurs
      */
     public String getCatalog()
                       throws SQLException {
@@ -246,7 +246,7 @@ public class LogicalHandle
      * any caught exceptions before re-throwing to client.
      * 
      * @return a metadata instance
-     * @throws SQLException
+     * @throws SQLException if an error occurs
      */
     public java.sql.DatabaseMetaData getMetaData()
                                           throws SQLException {
@@ -269,7 +269,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#getTransactionIsolation()
      */
     public int getTransactionIsolation()
                                 throws SQLException {
@@ -292,7 +292,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#getTypeMap()
      */
     public java.util.Map getTypeMap()
                              throws SQLException {
@@ -315,7 +315,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#getWarnings
      */
     public java.sql.SQLWarning getWarnings()
                                     throws SQLException {
@@ -338,7 +338,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#isClosed()
      */
     public boolean isClosed()
                      throws SQLException {
@@ -350,7 +350,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#isReadOnly()
      */
     public boolean isReadOnly()
                        throws SQLException {
@@ -373,7 +373,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#nativeSQL()
      */
     public String nativeSQL(String sql)
                      throws SQLException {
@@ -396,7 +396,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#prepareCall()
      */
     public java.sql.CallableStatement prepareCall(String sql)
                                            throws SQLException {
@@ -419,7 +419,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#prepareCall()
      */
     public java.sql.CallableStatement prepareCall(String sql, 
                                                   int resultSetType, 
@@ -444,7 +444,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#prepareStatement()
      */
     public java.sql.PreparedStatement prepareStatement(String sql)
                                                 throws SQLException {
@@ -467,7 +467,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#prepareStatement()
      */
     public java.sql.PreparedStatement prepareStatement(String sql, 
                                                        int resultSetType, 
@@ -493,7 +493,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#rollback()
      */
     public void rollback()
                   throws SQLException {
@@ -515,7 +515,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#setAutoCommit
      */
     public void setAutoCommit(boolean autoCommit)
                        throws SQLException {
@@ -537,7 +537,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#setCatalog()
      */
     public void setCatalog(String catalog)
                     throws SQLException {
@@ -559,7 +559,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#setReadOnly()
      */
     public void setReadOnly(boolean readOnly)
                      throws SQLException {
@@ -581,7 +581,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#setTransactionIsolation()
      */
     public void setTransactionIsolation(int level)
                                  throws SQLException {
@@ -603,7 +603,7 @@ public class LogicalHandle
      * Passes call to method on physical connection instance.  Notifies listeners of
      * any caught exceptions before re-throwing to client.
      * 
-     * @throws SQLException
+     * @see java.sql.Connection#setTypeMap()
      */
     public void setTypeMap(java.util.Map map)
                     throws SQLException {
