@@ -28,7 +28,7 @@ import testsuite.BaseTestCase;
  * 
  * @author Mark Matthews
  */
-public class LoadStorePerfTest extends BaseTestCase {
+public class LoadStorePerfTest extends BasePerfTest {
 
 	/**
 	 * Constructor for LoadStorePerfTest.
@@ -45,7 +45,7 @@ public class LoadStorePerfTest extends BaseTestCase {
      * @throws Exception if an error occurs
      */
 	public static void main(String[] args) throws Exception {
-        new LoadStorePerfTest("test100Transactions").run();
+        new LoadStorePerfTest("test1000Transactions").run();
 	}
     
 	/**
@@ -70,15 +70,30 @@ public class LoadStorePerfTest extends BaseTestCase {
 	}
     
     /**
-     * Tests and times 100 load/store type transactions
+     * Tests and times 1000 load/store type transactions
      * 
      * @throws Exception if an error occurs
      */
-    public void test100Transactions() throws Exception {
+    public void test1000Transactions() throws Exception {
+        warmUp();
+        doIterations(30);
+    }
+    
+    protected void warmUp() throws Exception {
+        System.out.print("Warm-up period (10 iterations)");
+        for (int i = 0; i < 10; i++) {
+            doOneIteration();
+            System.out.print(".");
+        }
+        System.out.println();
+        System.out.println("Warm-up period ends");
+    }
+    
+    protected void doOneIteration() throws Exception {
         PreparedStatement pStmt = conn.prepareStatement("UPDATE perfLoadStore SET priKey=?, charField=? where priKey=?");
         long begin = System.currentTimeMillis();
         
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 5000; i++) {
             conn.setAutoCommit(false);
             rs = stmt.executeQuery("SELECT COUNT(*) FROM perfLoadStore WHERE priKey=1");
             
@@ -114,13 +129,9 @@ public class LoadStorePerfTest extends BaseTestCase {
         
         long end = System.currentTimeMillis();
         
-        long timeElapsed = (end - begin) / 1000;
+        long timeElapsed = (end - begin);
         
-        double tps = 1000 / timeElapsed;
-        
-        System.out.println(tps);
+        addResult(timeElapsed);
         
     }
-            
-
 }
