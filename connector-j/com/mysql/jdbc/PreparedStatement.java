@@ -2164,7 +2164,7 @@ public class PreparedStatement
 
                 if (escape)
                 {
-                    escapeblock(streamConvertBuf, bytesOut, bc);
+                    escapeblockFast(streamConvertBuf, bytesOut, bc);
                 }
                 else
                 {
@@ -2527,6 +2527,38 @@ public class PreparedStatement
                                                                                                        ? 's'
                                                                                                        : 'W'))))))))))));
     }
+
+	private final void escapeblockFast(
+		byte[] buf,
+		ByteArrayOutputStream bytesOut,
+		int size) {
+
+		int lastwritten = 0;
+		for (int i = 0; i < size; i++) {
+			byte b = buf[i];
+			if (b == '\0') {
+				//write stuff not yet written
+				if (i > lastwritten)
+					bytesOut.write(buf, lastwritten, i - lastwritten);
+				//write escape
+				bytesOut.write('\\');
+				bytesOut.write('0');
+				lastwritten = i + 1;
+			} else {
+				if (b == '\\' || b == '\'' || b == '"') {
+					//write stuff not yet written
+					if (i > lastwritten)
+						bytesOut.write(buf, lastwritten, i - lastwritten);
+					//write escape
+					bytesOut.write('\\');
+					lastwritten = i; //not i+1 as b wasn't written.
+				}
+			}
+		}
+		//write out remaining stuff from buffer
+		if (lastwritten < size)
+			bytesOut.write(buf, lastwritten, size - lastwritten);
+	}
 
     private final void escapeblock(byte[] buf, ByteArrayOutputStream bytesOut, 
                                    int size)
