@@ -65,6 +65,8 @@ public abstract class DatabaseMetaData
 	protected Connection _conn;
 
 	protected String _database = null;
+	
+	protected String _quotedId = null;
 
 	private static final byte[] _TABLE_AS_BYTES = "TABLE".getBytes();
 
@@ -72,6 +74,8 @@ public abstract class DatabaseMetaData
 	{
 		_conn = Conn;
 		_database = Database;
+		
+		_quotedId = _conn.supportsQuotedIdentifiers() ? "`" : "";
 	}
 
 	/**
@@ -106,7 +110,7 @@ public abstract class DatabaseMetaData
 
 	public String getURL() throws java.sql.SQLException
 	{
-		return new String(_conn.getURL());
+		return _conn.getURL();
 	}
 
 	/**
@@ -117,7 +121,7 @@ public abstract class DatabaseMetaData
 
 	public String getUserName() throws java.sql.SQLException
 	{
-		return new String(_conn.getUser());
+		return _conn.getUser();
 	}
 
 	/**
@@ -195,7 +199,7 @@ public abstract class DatabaseMetaData
 
 	public String getDatabaseProductVersion() throws java.sql.SQLException
 	{
-		return new String(_conn.getServerVersion());
+		return _conn.getServerVersion();
 	}
 
 	/**
@@ -217,7 +221,7 @@ public abstract class DatabaseMetaData
 
 	public String getDriverVersion() throws java.sql.SQLException
 	{
-		return "2.0.13";
+		return "2.0.14";
 	}
 
 	/**
@@ -1264,7 +1268,7 @@ public abstract class DatabaseMetaData
 
 	public boolean supportsUnion() throws java.sql.SQLException
 	{
-		return false; // not sure
+		return _conn._io.versionMeetsMinimum(4, 0, 0); 
 	}
 
 	/**
@@ -1277,7 +1281,7 @@ public abstract class DatabaseMetaData
 
 	public boolean supportsUnionAll() throws java.sql.SQLException
 	{
-		return false; // not sure
+		return _conn._io.versionMeetsMinimum(4, 0, 0);
 	}
 
 	/**
@@ -1862,12 +1866,12 @@ public abstract class DatabaseMetaData
 		{
 			if (!Catalog.equals(""))
 			{
-				DB_Sub = " FROM " + Catalog;
+				DB_Sub = " FROM " + _quotedId + Catalog + _quotedId;
 			}
 		}
 		else
 		{
-			DB_Sub = " FROM " + _database;
+			DB_Sub = " FROM " + _quotedId + _database + _quotedId;
 		}
 
 		if (TableNamePattern == null)
@@ -2069,12 +2073,12 @@ public abstract class DatabaseMetaData
 		{
 			if (!Catalog.equals(""))
 			{
-				DB_Sub = " FROM " + Catalog;
+				DB_Sub = " FROM " + _quotedId + Catalog + _quotedId;
 			}
 		}
 		else
 		{
-			DB_Sub = " FROM " + _database;
+			DB_Sub = " FROM " + _quotedId + _database + _quotedId;
 		}
 
 		Vector TableNameList = new Vector();
@@ -2409,14 +2413,14 @@ public abstract class DatabaseMetaData
 					{
 						RowVal[10] =
 							Integer.toString(java.sql.DatabaseMetaData.columnNoNulls).getBytes();
-						RowVal[17] = new String("NO").getBytes();
+						RowVal[17] = "NO".getBytes();
 					}
 				}
 				else
 				{
 					RowVal[10] =
 						Integer.toString(java.sql.DatabaseMetaData.columnNoNulls).getBytes();
-					RowVal[17] = new String("NO").getBytes();
+					RowVal[17] = "NO".getBytes();
 				}
 
 				//
@@ -2847,12 +2851,12 @@ public abstract class DatabaseMetaData
 		{
 			if (!Catalog.equals(""))
 			{
-				DB_Sub = " FROM " + Catalog;
+				DB_Sub = " FROM " + _quotedId + Catalog + _quotedId;
 			}
 		}
 		else
 		{
-			DB_Sub = " FROM " + _database;
+			DB_Sub = " FROM " + _quotedId + _database + _quotedId;
 		}
 
 		if (Table == null)
@@ -3032,12 +3036,12 @@ public abstract class DatabaseMetaData
 		{
 			if (!Catalog.equals(""))
 			{
-				DB_Sub = " FROM " + Catalog;
+				DB_Sub = " FROM " + _quotedId + Catalog + _quotedId;
 			}
 		}
 		else
 		{
-			DB_Sub = " FROM " + _database;
+			DB_Sub = " FROM " + _quotedId + _database + _quotedId;
 		}
 
 		if (Table == null)
@@ -5057,12 +5061,12 @@ public abstract class DatabaseMetaData
 		{
 			if (!Catalog.equals(""))
 			{
-				DB_Sub = " FROM " + Catalog;
+				DB_Sub = " FROM " + _quotedId + Catalog + _quotedId;
 			}
 		}
 		else
 		{
-			DB_Sub = " FROM " + _database;
+			DB_Sub = " FROM " + _quotedId + _database + _quotedId;
 		}
 
 		org.gjt.mm.mysql.ResultSet RS =
