@@ -1,6 +1,20 @@
 # Changelog
 # $Id$
 
+04-24-02 - Version 2.0.13
+	- More code cleanup.
+	- Fixed unicode chars being read incorrectly (SF bug 541088)
+	- Faster blob escaping for PrepStmt code contributed by 
+	  Pertti Roos (Thanks!)
+	- Added set/getPortNumber() to DataSource(s) (SF bug 548167)
+	- Added setURL() to MySQLXADataSource (SF bug 546019)
+	- PreparedStatement.toString() fixed (SF bug 534026)
+	- ResultSetMetaData.getColumnClassName() now implemented
+	- Rudimentary version of Statement.getGeneratedKeys() from JDBC-3.0
+	  now implemented (you need to be using JDK-1.4 for this to work, I
+	  believe)
+	- DBMetaData.getIndexInfo() - bad PAGES fixed (SF BUG 542201)
+	
 04-07-02 - Version 2.0.12
 
 	- General code cleanup. 
