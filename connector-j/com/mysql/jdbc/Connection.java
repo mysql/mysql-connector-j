@@ -321,6 +321,23 @@ public class Connection
      * Defaults to 50
      */
     private int queriesBeforeRetryMaster = 50;
+    
+    /** 
+     * How many seconds should we wait before retrying to connect
+     * to the master if failed over? We fall back when either
+     * queriesBeforeRetryMaster or secondsBeforeRetryMaster is
+     * reached.
+     */
+    
+    private long secondsBeforeRetryMaster = 30L;
+    
+    /**
+     * When did the master fail?
+     */
+    
+    private long masterFailTimeMillis = 0L;
+    
+    
 
     /**
      * Number of queries we've issued since the master
@@ -356,6 +373,13 @@ public class Connection
      * Allow LOAD LOCAL INFILE (defaults to true)
      */
     private boolean allowLoadLocalInfile = true;
+    
+    /**
+     * Internal DBMD to use for various database-version
+     * specific features
+     */
+    
+    private DatabaseMetaData dbmd = null;
 
     /**
      * Default socket factory classname
@@ -480,7 +504,19 @@ public class Connection
         }
 
         checkClosed();
-        execSQL("USE " + catalog, -1, catalog);
+        
+        String quotedId = this.dbmd.getIdentifierQuoteString();
+        
+        if (quotedId == null || quotedId.equals(" ")) {
+            quotedId = "";
+        }
+        
+        StringBuffer query = new StringBuffer("USE ");
+        query.append(quotedId);
+        query.append(catalog);
+        query.append(quotedId);
+        
+        execSQL(query.toString(), -1, catalog);
         this.database = catalog;
     }
 
@@ -969,6 +1005,7 @@ public class Connection
 
         try {
             createNewIO(false);
+            this.dbmd = new DatabaseMetaData(this, this.database);
         } catch (java.sql.SQLException ex) {
 
             try {
@@ -1178,6 +1215,30 @@ public class Connection
         this.socketFactoryClassName = info.getProperty("socketFactory", 
                                                        DEFAULT_SOCKET_FACTORY);
 
+        if (info.getProperty("secondsBeforeRetryMaster") != null) {
+
+            String secondsBeforeRetryStr = info.getProperty(
+                                                   "secondsBeforeRetryMaster");
+
+            try {
+                int seconds = Integer.parseInt(secondsBeforeRetryStr);
+                
+                if (seconds < 1) {
+                    throw new SQLException("Illegal (< 1)  value '"
+                                       + secondsBeforeRetryStr
+                                       + "' for 'secondsBeforeRetryMaster'", 
+                                       "S1009");
+                }
+                
+                this.secondsBeforeRetryMaster = seconds;
+            } catch (NumberFormatException nfe) {
+                throw new SQLException("Illegal non-numeric value '"
+                                       + secondsBeforeRetryStr
+                                       + "' for 'secondsBeforeRetryMaster'", 
+                                       "S1009");
+            }
+        }
+        
         if (info.getProperty("queriesBeforeRetryMaster") != null) {
 
             String queriesBeforeRetryStr = info.getProperty(
@@ -1842,9 +1903,7 @@ public class Connection
 
                     if (hostIndex != 0) {
 
-                        // FIXME: User Selectable?
-                        setReadOnly(true);
-                        this.failedOver = true;
+                        setFailedOverState();
                     } else {
                         this.failedOver = false;
                         setReadOnly(false);
@@ -1944,8 +2003,7 @@ public class Connection
                         connectionGood = true;
 
                         if (hostIndex != 0) {
-                            setReadOnly(true);
-                            this.failedOver = true;
+                            setFailedOverState();
                         } else {
                             this.failedOver = false;
                             setReadOnly(false);
@@ -1954,7 +2012,7 @@ public class Connection
                         break;
                     } catch (Exception EEE) {
 
-                        int i = 0;
+                        // ignore
                     }
 
                     if (connectionGood) {
@@ -1987,6 +2045,17 @@ public class Connection
 
         return newIo;
     }
+
+    /** 
+     * Sets state for a failed-over connection
+     */
+	private void setFailedOverState() throws SQLException {
+		// FIXME: User Selectable?
+		setReadOnly(true);
+        this.queriesIssuedFailedOver = 0;
+		this.failedOver = true;
+		this.masterFailTimeMillis = System.currentTimeMillis();
+	}
 
     /** Returns the maximum packet size the MySQL server will accept */
     int getMaxAllowedPacket() {
@@ -2136,7 +2205,7 @@ public class Connection
             if (this.failedOver && this.autoCommit) {
                 this.queriesIssuedFailedOver++;
 
-                if ((this.queriesIssuedFailedOver % this.queriesBeforeRetryMaster) == 0) {
+                if (shouldFallBack()) {
                     createNewIO(true);
 
                     String connectedHost = this.io.getHost();
@@ -2197,6 +2266,19 @@ public class Connection
             }
         }
     }
+    
+    /**
+     * Should we try to connect back to the master?
+     * 
+     * We try when we've been failed over >= this.secondsBeforeRetryMaster
+     * _or_ we've issued > this.queriesIssuedFailedOver
+     */
+	private boolean shouldFallBack() {
+        long secondsSinceFailedOver = (System.currentTimeMillis() - this.masterFailTimeMillis) / 1000;
+        
+		return ((secondsSinceFailedOver >= this.secondsBeforeRetryMaster) 
+            || (this.queriesIssuedFailedOver % this.queriesBeforeRetryMaster) == 0);
+	}
 
     /** Has the maxRows value changed? */
     synchronized void maxRowsChanged() {

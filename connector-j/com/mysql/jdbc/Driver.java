@@ -291,10 +291,22 @@ public class Driver
                                                                      "queriesBeforeRetryMaster", 
                                                                      "50"));
         queriesBeforeRetryMaster.required = false;
-        queriesBeforeRetryMaster.description = "Number of queries to issue before falling back to master when failed over (when using multi-host failover)"
+        queriesBeforeRetryMaster.description = "Number of queries to issue before falling back to master when failed over "
+            + "(when using multi-host failover). Whichever condition is met first, " 
+            + "'queriesBeforeRetryMaster' or 'secondsBeforeRetryMaster' will cause an " 
+            + "attempt to be made to reconnect to the master. Defaults to 50.";
         ;
         
-        
+        DriverPropertyInfo secondsBeforeRetryMaster = new DriverPropertyInfo("secondsBeforeRetryMaster", 
+                                                             info.getProperty(
+                                                             "secondsBeforeRetryMaster", 
+                                                             "30"));
+        secondsBeforeRetryMaster.required = false;
+        secondsBeforeRetryMaster.description = "How long should the driver wait, when failed over, before attempting "
+            + "to reconnect to the master server? Whichever condition is met first, " 
+            + "'queriesBeforeRetryMaster' or 'secondsBeforeRetryMaster' will cause an " 
+            + "attempt to be made to reconnect to the master. Time in seconds, defaults to 30";
+            
         
         DriverPropertyInfo useStreamLengthsInPrepStmts = new DriverPropertyInfo("useStreamLengthsInPrepStmts", 
                                                              info.getProperty(
@@ -320,12 +332,18 @@ public class Driver
         allowLoadLocalInfile.required = false;
         allowLoadLocalInfile.description = "Should the driver allow use of 'LOAD DATA LOCAL INFILE...' (defaults to 'true').";
         
+        
+        
+        
+        
+        
         DriverPropertyInfo[] dpi = {
             hostProp, portProp, dbProp, userProp, passwordProp, autoReconnect, 
             maxReconnects, initialTimeout, profileSql, socketTimeout, useSSL, 
             paranoid, useHostsInPrivileges, interactiveClient, useCompression,
-            useTimezone, serverTimezone, connectTimeout, queriesBeforeRetryMaster,
-            useStreamLengthsInPrepStmts, continueBatchOnError, allowLoadLocalInfile
+            useTimezone, serverTimezone, connectTimeout, secondsBeforeRetryMaster, 
+            queriesBeforeRetryMaster, useStreamLengthsInPrepStmts, 
+            continueBatchOnError, allowLoadLocalInfile
         };
 
         return dpi;
