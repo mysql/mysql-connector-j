@@ -56,7 +56,7 @@ public class BlobTest
     /**
      * Creates a new BlobTest object.
      * 
-     * @param name DOCUMENT ME!
+     * @param name the test to run
      */
     public BlobTest(String name) {
         super(name);
@@ -65,9 +65,9 @@ public class BlobTest
     //~ Methods ...............................................................
 
     /**
-     * DOCUMENT ME!
+     * Runs all test cases
      * 
-     * @param args DOCUMENT ME!
+     * @param args ignored
      */
     public static void main(String[] args) {
         new BlobTest("testBytesInsert").run();
@@ -75,9 +75,9 @@ public class BlobTest
     }
 
     /**
-     * DOCUMENT ME!
+     * Setup the test case
      * 
-     * @throws Exception DOCUMENT ME!
+     * @throws Exception if an error occurs
      */
     public void setUp()
                throws Exception {
@@ -86,9 +86,9 @@ public class BlobTest
     }
 
     /**
-     * DOCUMENT ME!
+     * Destroy resources created by test case
      * 
-     * @throws Exception DOCUMENT ME!
+     * @throws Exception if an error occurs
      */
     public void tearDown()
                   throws Exception {
@@ -118,9 +118,9 @@ public class BlobTest
     }
 
     /**
-     * DOCUMENT ME!
+     * Tests inserting BLOB data as byte[]
      * 
-     * @throws SQLException DOCUMENT ME!
+     * @throws Exception if an error occurs
      */
     public void testBytesInsert()
                          throws Exception {
@@ -135,9 +135,9 @@ public class BlobTest
     }
 
     /**
-     * DOCUMENT ME!
+     * Tests inserting blob data as a stream
      * 
-     * @throws SQLException DOCUMENT ME!
+     * @throws Exception if an error occurs
      */
     public void testByteStreamInsert()
                               throws Exception {

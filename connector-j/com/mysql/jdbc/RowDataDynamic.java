@@ -21,7 +21,13 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 
 
-/** Allows streaming of MySQL data.*/
+/** 
+ * Allows streaming of MySQL data.
+ * 
+ * @author dgan
+ * @version $Id$
+ */
+
 public class RowDataDynamic
     implements RowData {
 
@@ -74,7 +80,12 @@ public class RowDataDynamic
 
     private boolean streamerClosed = false;
 
-    /** Returns true if another row exsists.*/
+    /** 
+     * Returns true if another row exsists.
+     *
+     * @return true if more rows
+     * @throws SQLException if a database error occurs
+     */
     public boolean hasNext()
                     throws SQLException {
 
@@ -88,7 +99,12 @@ public class RowDataDynamic
         return hasNext;
     }
 
-    /** Returns the next row.*/
+    /** 
+     * Returns the next row.
+     *
+     * @return the next row value
+     * @throws SQLException if a database error occurs
+     */
     public byte[][] next()
                   throws SQLException {
         index++;
@@ -104,43 +120,65 @@ public class RowDataDynamic
         throw new OperationNotSupportedException();
     }
 
-    /** Returns if iteration has not occured yet.*/
+    /** 
+     * Returns if iteration has not occured yet.
+     *
+     * @return true if before first row
+     * @throws SQLException if a database error occurs
+     */
     public boolean isBeforeFirst()
                           throws SQLException {
 
         return index < 0;
     }
 
-    /** Returns true if we got the last element.*/
+    /** 
+     * Returns true if we got the last element.
+     *
+     * @return true if after last row 
+     * @throws SQLException if a database error occurs
+     */
     public boolean isAfterLast()
                         throws SQLException {
 
         return isAfterEnd;
     }
 
-    /** Moves to before first.*/
+    /** 
+     * Moves to before first.
+     *
+     * @throws SQLException if a database error occurs
+     */
     public void beforeFirst()
                      throws SQLException {
         notSupported();
     }
 
-    /** Moves to after last.*/
+    /** 
+     * Moves to after last.
+     *
+     * @throws SQLException if a database error occurs
+     */
     public void afterLast()
                    throws SQLException {
         notSupported();
     }
 
-    /** Moves to before last so next el is the last el.*/
+    /** 
+     * Moves to before last so next el is the last el.
+     *
+     * @throws SQLException if a database error occurs
+     */
     public void beforeLast()
                     throws SQLException {
         notSupported();
     }
 
     /**
-     * DOCUMENT ME!
+     * Are we on the first row of the result set?
      * 
-     * @return DOCUMENT ME! 
-     * @throws SQLException DOCUMENT ME!
+     * @return true if on first row
+     * @throws SQLException if a database error occurs
      */
     public boolean isFirst()
                     throws SQLException {
@@ -150,10 +188,10 @@ public class RowDataDynamic
     }
 
     /**
-     * DOCUMENT ME!
+     * Are we on the last row of the result set?
      * 
-     * @return DOCUMENT ME! 
-     * @throws SQLException DOCUMENT ME!
+     * @return true if on last row
+     * @throws SQLException if a database error occurs
      */
     public boolean isLast()
                    throws SQLException {
@@ -162,7 +200,11 @@ public class RowDataDynamic
         return false;
     }
 
-    /** We're done.*/
+    /** 
+     * We're done.
+     *
+     * @throws SQLException if a database error occurs
+     */
     public void close()
                throws SQLException {
 
@@ -173,10 +215,11 @@ public class RowDataDynamic
     }
 
     /**
-     * DOCUMENT ME!
+     * Returns the current position in the result set as
+     * a row number.
      * 
-     * @return DOCUMENT ME! 
-     * @throws SQLException DOCUMENT ME!
+     * @return the current row number
+     * @throws SQLException if a database error occurs
      */
     public int getCurrentRowNumber()
                             throws SQLException {
@@ -185,44 +228,59 @@ public class RowDataDynamic
         return -1;
     }
 
-    /**
-     * DOCUMENT ME!
+   /**
+     * Moves the current position in the result set to
+     * the given row number.
      * 
-     * @param index DOCUMENT ME!
-     * @throws SQLException DOCUMENT ME!
+     * @param rowNumber row to move to
+     * @throws SQLException if a database error occurs
      */
-    public void setCurrentRow(int index)
+    public void setCurrentRow(int rowNumber)
                        throws SQLException {
         notSupported();
     }
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @param rows DOCUMENT ME!
-     * @throws SQLException DOCUMENT ME!
+     * Moves the current position relative 'rows' from
+     * the current position.
+     *
+     * @param rows the relative number of rows to move
+     * @throws SQLException if a database error occurs
      */
     public void moveRowRelative(int rows)
                          throws SQLException {
         notSupported();
     }
 
-    /** Returns true if the result set is dynamic.
-   *  This means that move back and move forward won't work
-   *  because we do not hold on to the records.
-   */
+    /**
+     * Returns true if the result set is dynamic.
+     *
+     * This means that move back and move forward won't work
+     * because we do not hold on to the records.
+     * 
+     * @return true if this result set is streaming from the server
+     */
     public boolean isDynamic() {
 
         return true;
     }
 
-    /** Only works on non dynamic result sets.*/
+    /** 
+     * Only works on non dynamic result sets.
+     *
+     * @return the size of this row data
+     */
     public int size() {
 
         return RESULT_SET_SIZE_UNKNOWN;
     }
 
-    /** Has no records.*/
+    /** 
+     * Has no records.
+     * 
+     * @return true if no records
+     * @throws SQLException if a database error occurs
+     */
     public boolean isEmpty()
                     throws SQLException {
         notSupported();
@@ -230,7 +288,13 @@ public class RowDataDynamic
         return false;
     }
 
-    /** Only works on non dynamic result sets.*/
+    /** 
+     * Only works on non dynamic result sets.
+     *
+     * @param index row number to get at
+     * @return row data at index
+     * @throws SQLException if a database error occurs
+     */
     public byte[][] getAt(int index)
                    throws SQLException {
         notSupported();
@@ -239,10 +303,10 @@ public class RowDataDynamic
     }
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @param row DOCUMENT ME!
-     * @throws SQLException DOCUMENT ME!
+     * Adds a row to this row data.
+     *
+     * @param row the row to add
+     * @throws SQLException if a database error occurs
      */
     public void addRow(byte[][] row)
                 throws SQLException {
@@ -250,10 +314,10 @@ public class RowDataDynamic
     }
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @param index DOCUMENT ME!
-     * @throws SQLException DOCUMENT ME!
+     * Removes the row at the given index.
+     *
+     * @param index the row to move to
+     * @throws SQLException if a database error occurs
      */
     public void removeRow(int index)
                    throws SQLException {

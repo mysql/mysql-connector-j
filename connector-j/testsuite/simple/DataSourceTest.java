@@ -71,6 +71,8 @@ public class DataSourceTest
     /**
      * Sets up this test, calling registerDataSource() to bind a 
      * DataSource into JNDI, using the FSContext JNDI provider from Sun
+     * 
+     * @throws Exception if an error occurs.
      */
     public void setUp()
                throws Exception {
@@ -80,6 +82,8 @@ public class DataSourceTest
 
     /**
      * Un-binds the DataSource, and cleans up the filesystem
+     * 
+     * @throws Exception if an error occurs
      */
     public void tearDown()
                   throws Exception {
@@ -92,6 +96,8 @@ public class DataSourceTest
     /**
      * Tests that we can get a connection from the DataSource bound
      * in JNDI during test setup
+     * 
+     * @throws Exception if an error occurs
      */
     public void testDataSource()
                         throws Exception {
@@ -132,7 +138,8 @@ public class DataSourceTest
      * normally would NOT register a JDBC driver in your code.  It would
      * likely be configered into your naming and directory service using some
      * GUI.
-     * @throws Exception DOCUMENT ME!
+     * 
+     * @throws Exception if an error occurs
      */
     private void registerDataSource()
                              throws Exception {

@@ -33,7 +33,7 @@ public class ConnectionTest extends BaseTestCase {
 
 	/**
 	 * Constructor for ConnectionTest.
-	 * @param name
+	 * @param name the name of the test to run
 	 */
 	public ConnectionTest(String name) {
 		super(name);
@@ -41,6 +41,8 @@ public class ConnectionTest extends BaseTestCase {
 
     /**
      * Runs all tests in this test case
+     * 
+     * @param args ignored
      */
 	public static void main(String[] args) {
         new ConnectionTest("testIsolationLevel").run();
@@ -49,6 +51,8 @@ public class ConnectionTest extends BaseTestCase {
     
     /**
      * Tests isolation level functionality
+     * 
+     * @throws Exception if an error occurs
      */
     public void testIsolationLevel() throws Exception {
         int[] isolationLevels = new int[] {
@@ -72,6 +76,8 @@ public class ConnectionTest extends BaseTestCase {
     
     /**
      * Tests catalog functionality
+     * 
+     * @throws Exception if an error occurs
      */
     public void testCatalog() throws Exception {
         String currentCatalog = this.conn.getCatalog();
