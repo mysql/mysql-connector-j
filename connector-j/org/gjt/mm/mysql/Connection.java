@@ -44,7 +44,7 @@
  *                 are committed as they are executed.
  *
  * @see java.sql.Connection
- * @author Mark Matthews <mmatthew@worldserver.com>
+ * @author Mark Matthews mmatthew@worldserver.com
  * @version $Id$
  */
 package org.gjt.mm.mysql;
@@ -196,7 +196,7 @@ public abstract class Connection
     /**
      * Should we capitalize mysql types
      */
-    private boolean capitalizeDBMDTypes = false;
+    private boolean _capitalizeDBMDTypes = false;
 
 
     /**
@@ -276,7 +276,7 @@ public abstract class Connection
 
         if (info.getProperty("capitalizeTypeNames") != null)
         {
-            capitalizeDBMDTypes = info.getProperty("capitalizeTypeNames").toUpperCase().equals(
+            _capitalizeDBMDTypes = info.getProperty("capitalizeTypeNames").toUpperCase().equals(
                                           "TRUE");
         }
 
@@ -495,7 +495,7 @@ public abstract class Connection
 
     public boolean capitalizeDBMDTypes()
     {
-        return capitalizeDBMDTypes;
+        return _capitalizeDBMDTypes;
     }
 
     public boolean supportsTransactions()

@@ -733,25 +733,25 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public void setString(int parameterIndex, String X)
+	public void setString(int parameterIndex, String x)
 		throws java.sql.SQLException
 	{
 		// if the passed string is null, then set this column to null
 
-		if (X == null)
+		if (x == null)
 		{
 			set(parameterIndex, "null");
 		}
 		else
 		{
-			StringBuffer B = new StringBuffer();
+			StringBuffer B = new StringBuffer(x.length() * 2);
 			int i;
 
 			B.append('\'');
 
-			for (i = 0; i < X.length(); ++i)
+			for (i = 0; i < x.length(); ++i)
 			{
-				char c = X.charAt(i);
+				char c = x.charAt(i);
 
 				if (c == '\\' || c == '\'' || c == '"')
 				{
@@ -1544,28 +1544,28 @@ public class PreparedStatement extends org.gjt.mm.mysql.Statement
 	private final void escapeblock(
 		byte[] buf,
 		ByteArrayOutputStream bytesOut,
-		int size)
+		int size) 
 	{
-		int c = 0;
+		byte[] out = new byte[buf.length * 2];
+		
+		int iIndex = 0;
 
-		for (int i = 0; i < size; i++)
-		{
+		for (int i = 0; i < size; i++) {
 			byte b = buf[i];
-			if (b == '\0')
-			{
-				bytesOut.write('\\');
-				bytesOut.write('0');
-			}
-			else
-			{
-				if (b == '\\' || b == '\'' || b == '"')
-				{
-					bytesOut.write('\\');
+			if (b == '\0') {
+				out[iIndex++] = (byte) '\\';
+				out[iIndex++] = (byte) '0';
+			} else {
+				if (b == '\\' || b == '\'' || b == '"') {
+					out[iIndex++] = (byte) '\\';
 				}
-				bytesOut.write(b);
+				out[iIndex++] = b;
 			}
 		}
+
+		bytesOut.write(out, 0, iIndex);
 	}
+
 
 	/**
 	 * For the setXXXStream() methods. Basically converts an

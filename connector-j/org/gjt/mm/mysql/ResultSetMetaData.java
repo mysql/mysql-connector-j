@@ -491,7 +491,7 @@ public class ResultSetMetaData
   // *********************************************************************
 
   
-  private Field getField(int columnIndex) throws java.sql.SQLException
+  protected Field getField(int columnIndex) throws java.sql.SQLException
   {
     if (columnIndex < 1 || columnIndex > Fields.length)
       throw new java.sql.SQLException("Column index out of range.", "S1002");

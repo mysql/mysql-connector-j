@@ -48,7 +48,7 @@ import java.util.zip.Inflater;
 public abstract class MysqlIO {
 	/** The connection to the server */
 
-	private Socket _Mysql_Conn = null;
+	private Socket _mysqlConnection = null;
 
 	/** Buffered data from the server */
 
@@ -62,34 +62,34 @@ public abstract class MysqlIO {
 
 	//private DataInputStream      _Mysql_Input              = null;
 
-	private InputStream _Mysql_Input = null;
+	private InputStream _mysqlInput = null;
 
 	/** Data to the server */
 
 	//private DataOutputStream     _Mysql_Output             = null;
 
-	private BufferedOutputStream _Mysql_Output = null;
+	private BufferedOutputStream _mysqlOutput = null;
 
 	/** Current open, streaming result set (if any) */
 
-	private ResultSet _PendingResultSet = null;
+	private ResultSet _pendingResultSet = null;
 
 	static int MAXBUF = 65535;
 	static final int HEADER_LENGTH = 4;
 	static final int COMP_HEADER_LENGTH = 3;
 
 	private byte _packetSequence = 0;
-	private byte _protocol_V = 0;
-	private String _Server_V = null;
-	private int _server_major_version = 0;
-	private int _server_minor_version = 0;
-	private int _server_sub_minor_version = 0;
+	private byte _protocolVersion = 0;
+	private String _serverVersion = null;
+	private int _serverMajorVersion = 0;
+	private int _serverMinorVersion = 0;
+	private int _serverSubMinorVersion = 0;
 
 	private int _port = 3306;
-	private String _Host = null;
+	private String _host = null;
 
-	private Deflater _Deflater = null;
-	private Inflater _Inflater = null;
+	private Deflater _deflater = null;
+	private Inflater _inflater = null;
 
 	//
 	// Use this when reading in rows to avoid thousands of new()
@@ -97,15 +97,15 @@ public abstract class MysqlIO {
 	// packet anyway
 	//
 
-	private Buffer _ReusablePacket = null;
+	private Buffer _reusablePacket = null;
 
-	private Buffer _SendPacket = null;
+	private Buffer _sendPacket = null;
 
 	//
 	// For SQL Warnings
 	//
 
-	java.sql.SQLWarning _Warning = null;
+	java.sql.SQLWarning _warningChain = null;
 
 	private static int CLIENT_LONG_PASSWORD = 1; /* new more secure 
 	passwords */
@@ -134,9 +134,9 @@ public abstract class MysqlIO {
 	private static int CLIENT_IGNORE_SPACE = 256; /* Ignore spaces 
 	before '(' */
 
-	private boolean use_compression = false;
+	private boolean _useCompression = false;
 
-	private org.gjt.mm.mysql.Connection _Conn;
+	private org.gjt.mm.mysql.Connection _connection;
 
 	/**
 	 * Constructor:  Connect to the MySQL server and setup
@@ -149,24 +149,24 @@ public abstract class MysqlIO {
 
 	public MysqlIO(String Host, int port, org.gjt.mm.mysql.Connection Conn)
 		throws IOException, java.sql.SQLException {
-		_Conn = Conn;
-		_ReusablePacket =
-			new Buffer(_Conn.getNetBufferLength(), _Conn.getMaxAllowedPacket());
+		_connection = Conn;
+		_reusablePacket =
+			new Buffer(_connection.getNetBufferLength(), _connection.getMaxAllowedPacket());
 
 		_port = port;
-		_Host = Host;
+		_host = Host;
 
-		_Mysql_Conn = new Socket(_Host, _port);
+		_mysqlConnection = new Socket(_host, _port);
 
 		try {
-			_Mysql_Conn.setTcpNoDelay(true);
+			_mysqlConnection.setTcpNoDelay(true);
 		}
 		catch (Exception ex) {
 			/* Ignore */
 		}
 
-		_Mysql_Input = _Mysql_Conn.getInputStream();
-		_Mysql_Output = new BufferedOutputStream(_Mysql_Conn.getOutputStream());
+		_mysqlInput = _mysqlConnection.getInputStream();
+		_mysqlOutput = new BufferedOutputStream(_mysqlConnection.getOutputStream());
 
 		//_Mysql_Input  = new DataInputStream(_Mysql_Buf_Input);
 		//_Mysql_Output = new DataOutputStream(_Mysql_Buf_Output);
@@ -186,11 +186,11 @@ public abstract class MysqlIO {
 			Buffer Buf = readPacket();
 
 			// Get the protocol version
-			_protocol_V = Buf.readByte();
+			_protocolVersion = Buf.readByte();
 
-			if (_protocol_V == -1) {
+			if (_protocolVersion == -1) {
 				try {
-					_Mysql_Conn.close();
+					_mysqlConnection.close();
 				}
 				catch (Exception E) {
 				}
@@ -200,28 +200,28 @@ public abstract class MysqlIO {
 					"08001",
 					0);
 			}
-			_Server_V = Buf.readString();
+			_serverVersion = Buf.readString();
 
 			// Parse the server version into major/minor/subminor 
 
-			int point = _Server_V.indexOf(".");
+			int point = _serverVersion.indexOf(".");
 
 			if (point != -1) {
 				try {
-					int n = Integer.parseInt(_Server_V.substring(0, point));
-					_server_major_version = n;
+					int n = Integer.parseInt(_serverVersion.substring(0, point));
+					_serverMajorVersion = n;
 				}
 				catch (NumberFormatException NFE1) {
 				}
 
-				String Remaining = _Server_V.substring(point + 1, _Server_V.length());
+				String Remaining = _serverVersion.substring(point + 1, _serverVersion.length());
 
 				point = Remaining.indexOf(".");
 
 				if (point != -1) {
 					try {
 						int n = Integer.parseInt(Remaining.substring(0, point));
-						_server_minor_version = n;
+						_serverMinorVersion = n;
 					}
 					catch (NumberFormatException NFE2) {
 					}
@@ -239,7 +239,7 @@ public abstract class MysqlIO {
 
 					try {
 						int n = Integer.parseInt(Remaining.substring(0, pos));
-						_server_sub_minor_version = n;
+						_serverSubMinorVersion = n;
 					}
 					catch (NumberFormatException NFE3) {
 					}
@@ -251,8 +251,8 @@ public abstract class MysqlIO {
 			Seed = Buf.readString();
 
 			if (Driver.trace) {
-				Debug.msg(this, "Protocol Version: " + (int) _protocol_V);
-				Debug.msg(this, "Server Version: " + _Server_V);
+				Debug.msg(this, "Protocol Version: " + (int) _protocolVersion);
+				Debug.msg(this, "Server Version: " + _serverVersion);
 				Debug.msg(this, "Thread ID: " + threadId);
 				Debug.msg(this, "Crypt Seed: " + Seed);
 			}
@@ -260,7 +260,7 @@ public abstract class MysqlIO {
 			// Client capabilities
 			int clientParam = 0;
 
-			if (Buf.pos < Buf.buf_length) {
+			if (Buf._pos < Buf._bufLength) {
 				int serverCapabilities = Buf.readInt();
 
 				// Should be settable by user
@@ -281,7 +281,7 @@ public abstract class MysqlIO {
 
 			// Authenticate
 
-			if (_protocol_V > 9) {
+			if (_protocolVersion > 9) {
 				clientParam |= CLIENT_LONG_PASSWORD; // for long passwords
 			}
 			else {
@@ -305,7 +305,7 @@ public abstract class MysqlIO {
 			// User/Password data
 			Packet.writeString(User);
 
-			if (_protocol_V > 9) {
+			if (_protocolVersion > 9) {
 				Packet.writeString(Util.newCrypt(Password, Seed));
 			}
 			else {
@@ -322,7 +322,7 @@ public abstract class MysqlIO {
 				String Message = "";
 				int errno = 2000;
 
-				if (_protocol_V > 9) {
+				if (_protocolVersion > 9) {
 					errno = B.readInt();
 					Message = B.readString();
 					clearReceive();
@@ -331,7 +331,7 @@ public abstract class MysqlIO {
 					if (XOpen.equals("S1000")) {
 						throw new java.sql.SQLException(
 							"Communication failure during handshake. Is there a server running on "
-								+ _Host
+								+ _host
 								+ ":"
 								+ _port
 								+ "?");
@@ -363,9 +363,9 @@ public abstract class MysqlIO {
 			else
 				if (status == 0x00) {
 
-					if (_server_major_version >= 3
-						&& _server_minor_version >= 22
-						&& _server_sub_minor_version >= 5) {
+					if (_serverMajorVersion >= 3
+						&& _serverMinorVersion >= 22
+						&& _serverSubMinorVersion >= 5) {
 						Packet.newReadLength();
 						Packet.newReadLength();
 					}
@@ -398,8 +398,8 @@ public abstract class MysqlIO {
 	 */
 
 	void resetMaxBuf() {
-		_ReusablePacket.max_length = _Conn.getMaxAllowedPacket();
-		_SendPacket.max_length = _Conn.getMaxAllowedPacket();
+		_reusablePacket._maxLength = _connection.getMaxAllowedPacket();
+		_sendPacket._maxLength = _connection.getMaxAllowedPacket();
 	}
 
 	/**
@@ -407,7 +407,7 @@ public abstract class MysqlIO {
 	 */
 
 	String getServerVersion() {
-		return _Server_V;
+		return _serverVersion;
 	}
 
 	/**
@@ -442,39 +442,39 @@ public abstract class MysqlIO {
 						+ (ExtraData != null ? ExtraData.length() : 0)
 						+ 2;
 
-				if (_SendPacket == null) {
-					_SendPacket = new Buffer(pack_length, _Conn.getMaxAllowedPacket());
+				if (_sendPacket == null) {
+					_sendPacket = new Buffer(pack_length, _connection.getMaxAllowedPacket());
 				}
 
 				_packetSequence = -1;
-				_SendPacket.clear();
+				_sendPacket.clear();
 
 				// Offset different for compression
-				if (use_compression) {
-					_SendPacket.pos += COMP_HEADER_LENGTH;
+				if (_useCompression) {
+					_sendPacket._pos += COMP_HEADER_LENGTH;
 				}
 
-				_SendPacket.writeByte((byte) command);
+				_sendPacket.writeByte((byte) command);
 
 				if (command == MysqlDefs.INIT_DB
 					|| command == MysqlDefs.CREATE_DB
 					|| command == MysqlDefs.DROP_DB
 					|| command == MysqlDefs.QUERY) {
 
-					_SendPacket.writeStringNoNull(ExtraData);
+					_sendPacket.writeStringNoNull(ExtraData);
 				}
 				else
 					if (command == MysqlDefs.PROCESS_KILL) {
 						long id = new Long(ExtraData).longValue();
-						_SendPacket.writeLong(id);
+						_sendPacket.writeLong(id);
 					}
 					else
-						if (command == MysqlDefs.RELOAD && _protocol_V > 9) {
+						if (command == MysqlDefs.RELOAD && _protocolVersion > 9) {
 							Debug.msg(this, "Reload");
 							//Packet.writeByte(reloadParam);
 						}
 
-				send(_SendPacket);
+				send(_sendPacket);
 			}
 			else {
 				_packetSequence = -1;
@@ -519,7 +519,7 @@ public abstract class MysqlIO {
 				String ErrorMessage;
 				int errno = 2000;
 
-				if (_protocol_V > 9) {
+				if (_protocolVersion > 9) {
 					errno = Ret.readInt();
 					ErrorMessage = Ret.readString();
 					clearReceive();
@@ -552,17 +552,17 @@ public abstract class MysqlIO {
 				if (statusCode == 0x00) {
 					if (command == MysqlDefs.CREATE_DB || command == MysqlDefs.DROP_DB) {
 						java.sql.SQLWarning NW = new java.sql.SQLWarning("Command=" + command + ": ");
-						if (_Warning != null)
-							NW.setNextException(_Warning);
-						_Warning = NW;
+						if (_warningChain != null)
+							NW.setNextException(_warningChain);
+						_warningChain = NW;
 					}
 				}
 				else
 					if (Ret.isLastDataPacket()) {
 						java.sql.SQLWarning NW = new java.sql.SQLWarning("Command=" + command + ": ");
-						if (_Warning != null)
-							NW.setNextException(_Warning);
-						_Warning = NW;
+						if (_warningChain != null)
+							NW.setNextException(_warningChain);
+						_warningChain = NW;
 					}
 			return Ret;
 		}
@@ -590,7 +590,7 @@ public abstract class MysqlIO {
 		clearAllReceive();
 
 		Buffer Packet = sendCommand(MysqlDefs.QUERY, null, QueryPacket);
-		Packet.pos--;
+		Packet._pos--;
 
 		long columnCount = Packet.readLength();
 
@@ -662,23 +662,23 @@ public abstract class MysqlIO {
 
 		int pack_length = HEADER_LENGTH + 1 + (Query.length() * 2) + 2;
 
-		if (_SendPacket == null) {
-			_SendPacket = new Buffer(pack_length, _Conn.getMaxAllowedPacket());
+		if (_sendPacket == null) {
+			_sendPacket = new Buffer(pack_length, _connection.getMaxAllowedPacket());
 		}
 		else {
-			_SendPacket.clear();
+			_sendPacket.clear();
 		}
 
-		_SendPacket.writeByte((byte) MysqlDefs.QUERY);
+		_sendPacket.writeByte((byte) MysqlDefs.QUERY);
 
 		if (Encoding != null) {
-			_SendPacket.writeStringNoNull(Query, Encoding);
+			_sendPacket.writeStringNoNull(Query, Encoding);
 		}
 		else {
-			_SendPacket.writeStringNoNull(Query);
+			_sendPacket.writeStringNoNull(Query);
 		}
 
-		return sqlQueryDirect(_SendPacket, max_rows, Conn);
+		return sqlQueryDirect(_sendPacket, max_rows, Conn);
 	}
 
 	final ResultSet sqlQuery(String Query, int max_rows, String Encoding)
@@ -693,7 +693,7 @@ public abstract class MysqlIO {
 		// Send query command and sql query string
 		clearAllReceive();
 		Buffer Packet = sendCommand(MysqlDefs.QUERY, Query, null); //, (byte)0);
-		Packet.pos--;
+		Packet._pos--;
 
 		long columnCount = Packet.readLength();
 
@@ -818,7 +818,7 @@ public abstract class MysqlIO {
 		// Get the next incoming packet, re-using the packet because
 		// all the data we need gets copied out of it.
 
-		Buffer Packet = reuseAndReadPacket(_ReusablePacket);
+		Buffer Packet = reuseAndReadPacket(_reusablePacket);
 
 		// check for errors.
 
@@ -826,7 +826,7 @@ public abstract class MysqlIO {
 			String ErrorMessage;
 			int errno = 2000;
 
-			if (_protocol_V > 9) {
+			if (_protocolVersion > 9) {
 				errno = Packet.readInt();
 				ErrorMessage = Packet.readString();
 				String XOpen = SQLError.mysqlToXOpen(errno);
@@ -848,7 +848,7 @@ public abstract class MysqlIO {
 
 		// Away we go....
 
-		Packet.pos--;
+		Packet._pos--;
 
 		int[] dataStart = new int[columnCount];
 		byte[][] Row = new byte[columnCount][];
@@ -856,12 +856,12 @@ public abstract class MysqlIO {
 		if (!Packet.isLastDataPacket()) {
 
 			for (int i = 0; i < columnCount; i++) {
-				int p = Packet.pos;
+				int p = Packet._pos;
 				dataStart[i] = p;
-				Packet.pos = (int) Packet.readLength() + Packet.pos;
+				Packet._pos = (int) Packet.readLength() + Packet._pos;
 			}
 			for (int i = 0; i < columnCount; i++) {
-				Packet.pos = dataStart[i];
+				Packet._pos = dataStart[i];
 				Row[i] = Packet.readLenByteArray();
 
 				if (Driver.trace) {
@@ -891,7 +891,7 @@ public abstract class MysqlIO {
 	}
 
 	protected final void forceClose() throws IOException {
-		_Mysql_Conn.close();
+		_mysqlConnection.close();
 	}
 
 	/**
@@ -900,7 +900,7 @@ public abstract class MysqlIO {
 	 */
 
 	final int getServerMajorVersion() {
-		return _server_major_version;
+		return _serverMajorVersion;
 	}
 
 	/**
@@ -909,7 +909,7 @@ public abstract class MysqlIO {
 	 */
 
 	final int getServerMinorVersion() {
-		return _server_minor_version;
+		return _serverMinorVersion;
 	}
 
 	/**
@@ -918,7 +918,7 @@ public abstract class MysqlIO {
 	 */
 
 	final int getServerSubMinorVersion() {
-		return _server_sub_minor_version;
+		return _serverSubMinorVersion;
 	}
 
 	/**
@@ -929,9 +929,9 @@ public abstract class MysqlIO {
 
 		byte b0, b1, b2;
 
-		b0 = (byte) _Mysql_Input.read();
-		b1 = (byte) _Mysql_Input.read();
-		b2 = (byte) _Mysql_Input.read();
+		b0 = (byte) _mysqlInput.read();
+		b1 = (byte) _mysqlInput.read();
+		b2 = (byte) _mysqlInput.read();
 
 		// If a read failure is detected, close the socket and throw an IOException 
 
@@ -943,12 +943,12 @@ public abstract class MysqlIO {
 
 		int packetLength = (int) (ub(b0) + (256 * ub(b1)) + (256 * 256 * ub(b2)));
 
-		byte packetSeq = (byte) _Mysql_Input.read();
+		byte packetSeq = (byte) _mysqlInput.read();
 
 		// Read data
 		byte[] buffer = new byte[packetLength + 1];
 
-		readFully(_Mysql_Input, buffer, 0, packetLength);
+		readFully(_mysqlInput, buffer, 0, packetLength);
 
 		buffer[packetLength] = 0;
 
@@ -963,9 +963,9 @@ public abstract class MysqlIO {
 
 		byte b0, b1, b2;
 
-		b0 = (byte) _Mysql_Input.read();
-		b1 = (byte) _Mysql_Input.read();
-		b2 = (byte) _Mysql_Input.read();
+		b0 = (byte) _mysqlInput.read();
+		b1 = (byte) _mysqlInput.read();
+		b2 = (byte) _mysqlInput.read();
 
 		// If a read failure is detected, close the socket and throw an IOException 
 		if ((int) b0 == -1 && (int) b1 == -1 && (int) b2 == -1) {
@@ -976,12 +976,12 @@ public abstract class MysqlIO {
 
 		int packetLength = (int) (ub(b0) + (256 * ub(b1)) + (256 * 256 * ub(b2)));
 
-		byte packetSeq = (byte) _Mysql_Input.read();
+		byte packetSeq = (byte) _mysqlInput.read();
 
 		// Set the Buffer to it's original state
 
-		Reuse.pos = 0;
-		Reuse.send_length = 0;
+		Reuse._pos = 0;
+		Reuse._sendLength = 0;
 
 		// Do we need to re-alloc the byte buffer?
 		//
@@ -990,19 +990,19 @@ public abstract class MysqlIO {
 		// necesarily the actual length of the byte array
 		// used as the buffer
 
-		if (Reuse.buf.length <= packetLength) {
-			Reuse.buf = new byte[packetLength + 1];
+		if (Reuse._buf.length <= packetLength) {
+			Reuse._buf = new byte[packetLength + 1];
 		}
 
 		// Set the new length
 
-		Reuse.buf_length = packetLength;
+		Reuse._bufLength = packetLength;
 
 		// Read the data from the server
 
-		readFully(_Mysql_Input, Reuse.buf, 0, packetLength);
+		readFully(_mysqlInput, Reuse._buf, 0, packetLength);
 
-		Reuse.buf[packetLength] = 0; // Null-termination
+		Reuse._buf[packetLength] = 0; // Null-termination
 
 		return Reuse;
 	}
@@ -1012,13 +1012,13 @@ public abstract class MysqlIO {
 	 */
 
 	private final void send(Buffer Packet) throws IOException {
-		int l = Packet.pos;
+		int l = Packet._pos;
 		_packetSequence++;
-		Packet.pos = 0;
+		Packet._pos = 0;
 		Packet.writeLongInt(l - HEADER_LENGTH);
 		Packet.writeByte(_packetSequence);
-		_Mysql_Output.write(Packet.buf, 0, l);
-		_Mysql_Output.flush();
+		_mysqlOutput.write(Packet._buf, 0, l);
+		_mysqlOutput.flush();
 
 		int total_header_length = HEADER_LENGTH;
 	}
@@ -1029,7 +1029,7 @@ public abstract class MysqlIO {
 
 	private final void clearReceive() throws IOException {
 
-		int len = _Mysql_Input.available();
+		int len = _mysqlInput.available();
 
 		if (len > 0) {
 			// _Mysql_Input.skipBytes(len);
@@ -1043,18 +1043,18 @@ public abstract class MysqlIO {
 
 	private final void clearAllReceive() throws java.sql.SQLException {
 		try {
-			int len = _Mysql_Input.available();
+			int len = _mysqlInput.available();
 
 			if (len > 0) {
 				Buffer Packet = readPacket();
-				if (Packet.buf[0] == (byte) 0xff) {
+				if (Packet._buf[0] == (byte) 0xff) {
 					clearReceive();
 					return;
 				}
 				while (!Packet.isLastDataPacket()) {
 					// larger than the socket buffer.
 					Packet = readPacket();
-					if (Packet.buf[0] == (byte) 0xff)
+					if (Packet._buf[0] == (byte) 0xff)
 						break;
 				}
 			}

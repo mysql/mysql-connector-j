@@ -49,6 +49,9 @@
 package org.gjt.mm.mysql.jdbc2;
 
 import java.sql.*;
+import java.util.Vector;
+
+import org.gjt.mm.mysql.Field;
 
 public class Statement
 	extends org.gjt.mm.mysql.Statement
@@ -181,5 +184,22 @@ public class Statement
 			clearBatch();
 		}
 
+	}
+	
+	public java.sql.ResultSet getGeneratedKeys() throws SQLException
+	{
+		Field[] fields = new Field[1];
+		
+		fields[0] = new Field("", "GENERATED_KEY", Types.INTEGER, 17);
+		
+		Vector rowSet = new Vector();
+		
+		byte[][] row = new byte[1][];
+		
+		row[0] = Long.toString(getLastInsertID()).getBytes();
+		
+		rowSet.addElement(row);
+		
+		return new org.gjt.mm.mysql.jdbc2.ResultSet(fields, rowSet, _conn);
 	}
 }

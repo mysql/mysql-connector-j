@@ -42,26 +42,26 @@ import java.util.*;
  */
 class Buffer
 {
-    byte[] buf;
-    int buf_length = 0;
-    int pos = 0;
-    int send_length = 0;
+    byte[] _buf;
+    int _bufLength = 0;
+    int _pos = 0;
+    int _sendLength = 0;
     final static int NO_LENGTH_LIMIT = -1;
-    int max_length = NO_LENGTH_LIMIT;
+    int _maxLength = NO_LENGTH_LIMIT;
     static long NULL_LENGTH = -1;
 
     Buffer(byte[] buf)
     {
-        this.buf = buf;
-        buf_length = buf.length;
+        this._buf = buf;
+        _bufLength = buf.length;
     }
 
     Buffer(int size, int max_packet_size)
     {
-        buf = new byte[size];
-        buf_length = buf.length;
-        pos = MysqlIO.HEADER_LENGTH;
-        max_length = max_packet_size;
+        _buf = new byte[size];
+        _bufLength = _buf.length;
+        _pos = MysqlIO.HEADER_LENGTH;
+        _maxLength = max_packet_size;
     }
 
     Buffer(int size)
@@ -71,74 +71,74 @@ class Buffer
 
     final void setBytes(byte[] buf)
     {
-        send_length = buf_length;
-        System.arraycopy(buf, 0, this.buf, 0, buf_length);
+        _sendLength = _bufLength;
+        System.arraycopy(buf, 0, this._buf, 0, _bufLength);
     }
 
     final byte readByte()
     {
-        return buf[pos++];
+        return _buf[_pos++];
     }
 
 
     // 2000-06-05 Changed
     final int readInt()
     {
-        byte[] b = buf; // a little bit optimization
+        byte[] b = _buf; // a little bit optimization
 
-        return (b[pos++] & 0xff) | 
-               ((b[pos++] & 0xff) << 8);
+        return (b[_pos++] & 0xff) | 
+               ((b[_pos++] & 0xff) << 8);
     }
 
 
     // 2000-06-05 Changed
     final int readLongInt()
     {
-        byte[] b = buf;
+        byte[] b = _buf;
 
-        return (b[pos++] & 0xff) | 
-               ((b[pos++] & 0xff) << 8) | 
-               ((b[pos++] & 0xff) << 16);
+        return (b[_pos++] & 0xff) | 
+               ((b[_pos++] & 0xff) << 8) | 
+               ((b[_pos++] & 0xff) << 16);
     }
 
 
     // 2000-06-05 Fixed
     final long readLong()
     {
-        byte[] b = buf;
+        byte[] b = _buf;
 
-        return (b[pos++] & 0xff) | 
-               ((b[pos++] & 0xff) << 8) | 
-               ((b[pos++] & 0xff) << 16) | 
-               ((b[pos++] & 0xff) << 24);
+        return (b[_pos++] & 0xff) | 
+               ((b[_pos++] & 0xff) << 8) | 
+               ((b[_pos++] & 0xff) << 16) | 
+               ((b[_pos++] & 0xff) << 24);
     }
 
 
     // 2000-06-05 Fixed
     final long readLongLong()
     {
-        byte[] b = buf;
+        byte[] b = _buf;
 
-        return (long)(b[pos++] & 0xff) | 
-               ((long)(b[pos++] & 0xff) << 8) | 
-               ((long)(b[pos++] & 0xff) << 16) | 
-               ((long)(b[pos++] & 0xff) << 24) | 
-               ((long)(b[pos++] & 0xff) << 32) | 
-               ((long)(b[pos++] & 0xff) << 40) | 
-               ((long)(b[pos++] & 0xff) << 48) | 
-               ((long)(b[pos++] & 0xff) << 56);
+        return (long)(b[_pos++] & 0xff) | 
+               ((long)(b[_pos++] & 0xff) << 8) | 
+               ((long)(b[_pos++] & 0xff) << 16) | 
+               ((long)(b[_pos++] & 0xff) << 24) | 
+               ((long)(b[_pos++] & 0xff) << 32) | 
+               ((long)(b[_pos++] & 0xff) << 40) | 
+               ((long)(b[_pos++] & 0xff) << 48) | 
+               ((long)(b[_pos++] & 0xff) << 56);
     }
 
 
     // Read n bytes depending
     final int readnBytes()
     {
-        int sw = buf[pos++] & 0xff;
+        int sw = _buf[_pos++] & 0xff;
 
         switch (sw)
         {
             case 1:
-                return buf[pos++] & 0xff;
+                return _buf[_pos++] & 0xff;
 
             case 2:
                 return this.readInt();
@@ -156,7 +156,7 @@ class Buffer
 
     final long readLength()
     {
-        int sw = buf[pos++] & 0xff;
+        int sw = _buf[_pos++] & 0xff;
 
         switch (sw)
         {
@@ -181,7 +181,7 @@ class Buffer
     // For MySQL servers > 3.22.5
     final long newReadLength()
     {
-        int sw = buf[pos++] & 0xff;
+        int sw = _buf[_pos++] & 0xff;
 
         switch (sw)
         {
@@ -204,7 +204,7 @@ class Buffer
 
     final long readFieldLength()
     {
-        int sw = buf[pos++] & 0xff;
+        int sw = _buf[_pos++] & 0xff;
 
         switch (sw)
         {
@@ -260,17 +260,17 @@ class Buffer
     //
     final String readString()
     {
-        int i = pos;
+        int i = _pos;
         int len = 0;
 
-        while (buf[i] != 0 && i < buf_length)
+        while (_buf[i] != 0 && i < _bufLength)
         {
             len++;
             i++;
         }
 
-        String S = new String(buf, pos, len);
-        pos += (len + 1); // update cursor
+        String S = new String(_buf, _pos, len);
+        _pos += (len + 1); // update cursor
 
         return S;
     }
@@ -297,8 +297,8 @@ class Buffer
             return "";
         }
 
-        String S = new String(buf, pos, (int)len);
-        pos += len; // update cursor
+        String S = new String(_buf, _pos, (int)len);
+        _pos += len; // update cursor
 
         return S;
     }
@@ -310,8 +310,8 @@ class Buffer
     final byte[] getBytes(int len)
     {
         byte[] b = new byte[len];
-        System.arraycopy(buf, pos, b, 0, len);
-        pos += len; // update cursor
+        System.arraycopy(_buf, _pos, b, 0, len);
+        _pos += len; // update cursor
 
         return b;
     }
@@ -322,18 +322,18 @@ class Buffer
     //
     final byte[] getNullTerminatedBytes()
     {
-        int i = pos;
+        int i = _pos;
         int len = 0;
 
-        while (buf[i] != 0 && i < buf_length)
+        while (_buf[i] != 0 && i < _bufLength)
         {
             len++;
             i++;
         }
 
         byte[] b = new byte[len];
-        System.arraycopy(buf, pos, b, 0, len);
-        pos += (len + 1); // update cursor
+        System.arraycopy(_buf, _pos, b, 0, len);
+        _pos += (len + 1); // update cursor
 
         return b;
     }
@@ -344,48 +344,48 @@ class Buffer
     {
 
         // return ((buf_length <= 2) && (ub(buf[0]) == 254));
-        return ((buf_length <= 2) && 
-               ((buf[0] & 0xff) == 254));
+        return ((_bufLength <= 2) && 
+               ((_buf[0] & 0xff) == 254));
     }
 
     final void clear()
     {
-        pos = MysqlIO.HEADER_LENGTH;
+        _pos = MysqlIO.HEADER_LENGTH;
     }
 
     final void writeByte(byte b)
     {
-        buf[pos++] = b;
+        _buf[_pos++] = b;
     }
 
 
     // 2000-06-05 Changed
     final void writeInt(int i)
     {
-        byte[] b = buf;
-        b[pos++] = (byte)(i & 0xff);
-        b[pos++] = (byte)(i >>> 8);
+        byte[] b = _buf;
+        b[_pos++] = (byte)(i & 0xff);
+        b[_pos++] = (byte)(i >>> 8);
     }
 
 
     // 2000-06-05 Changed
     final void writeLongInt(int i)
     {
-        byte[] b = buf;
-        b[pos++] = (byte)(i & 0xff);
-        b[pos++] = (byte)(i >>> 8);
-        b[pos++] = (byte)(i >>> 16);
+        byte[] b = _buf;
+        b[_pos++] = (byte)(i & 0xff);
+        b[_pos++] = (byte)(i >>> 8);
+        b[_pos++] = (byte)(i >>> 16);
     }
 
 
     // 2000-06-05 Changed
     final void writeLong(long i)
     {
-        byte[] b = buf;
-        b[pos++] = (byte)(i & 0xff);
-        b[pos++] = (byte)(i >>> 8);
-        b[pos++] = (byte)(i >>> 16);
-        b[pos++] = (byte)(i >>> 24);
+        byte[] b = _buf;
+        b[_pos++] = (byte)(i & 0xff);
+        b[_pos++] = (byte)(i >>> 8);
+        b[_pos++] = (byte)(i >>> 16);
+        b[_pos++] = (byte)(i >>> 24);
     }
 
 
@@ -393,7 +393,7 @@ class Buffer
     final void writeString(String S)
     {
         writeStringNoNull(S);
-        buf[pos++] = 0;
+        _buf[_pos++] = 0;
     }
 
 
@@ -405,7 +405,7 @@ class Buffer
 
         for (int i = 0; i < len; i++)
         {
-            buf[pos++] = (byte)S.charAt(i);
+            _buf[_pos++] = (byte)S.charAt(i);
         }
     }
 
@@ -418,8 +418,8 @@ class Buffer
         byte[] b = S.getBytes(Encoding);
         int len = b.length;
         ensureCapacity(len);
-        System.arraycopy(b, 0, buf, pos, len);
-        pos += len;
+        System.arraycopy(b, 0, _buf, _pos, len);
+        _pos += len;
     }
 
 
@@ -428,41 +428,41 @@ class Buffer
     {
         int len = Bytes.length;
         ensureCapacity(len);
-        System.arraycopy(Bytes, 0, buf, pos, len);
-        pos += len;
+        System.arraycopy(Bytes, 0, _buf, _pos, len);
+        _pos += len;
     }
 
     final void ensureCapacity(int additional_data)
     {
-        if ((pos + additional_data) > buf_length)
+        if ((_pos + additional_data) > _bufLength)
         {
-            int new_length = (int)(buf_length * 1.25);
+            int new_length = (int)(_bufLength * 1.25);
 
-            if (new_length < (buf_length + additional_data))
+            if (new_length < (_bufLength + additional_data))
             {
-                new_length = buf_length + 
+                new_length = _bufLength + 
                              (int)(additional_data * 1.25);
             }
 
-            if (max_length != NO_LENGTH_LIMIT && 
-                (new_length > max_length))
+            if (_maxLength != NO_LENGTH_LIMIT && 
+                (new_length > _maxLength))
             {
                 throw new IllegalArgumentException(
                         "Packet is larger than max_allowed_packet from server configuration of " + 
-                        max_length + " bytes");
+                        _maxLength + " bytes");
             }
 
             byte[] NewBytes = new byte[new_length];
-            System.arraycopy(buf, 0, NewBytes, 0, buf.length);
-            buf = NewBytes;
-            buf_length = buf.length;
+            System.arraycopy(_buf, 0, NewBytes, 0, _buf.length);
+            _buf = NewBytes;
+            _bufLength = _buf.length;
         }
     }
 
     final void dump()
     {
         int p = 0;
-        int rows = buf_length / 8;
+        int rows = _bufLength / 8;
 
         for (int i = 0; i < rows; i++)
         {
@@ -470,7 +470,7 @@ class Buffer
 
             for (int j = 0; j < 8; j++)
             {
-                String HexVal = Integer.toHexString((int)buf[ptemp]);
+                String HexVal = Integer.toHexString((int)_buf[ptemp]);
 
                 if (HexVal.length() == 1)
                 {
@@ -485,9 +485,9 @@ class Buffer
 
             for (int j = 0; j < 8; j++)
             {
-                if (buf[p] > 32 && buf[p] < 127)
+                if (_buf[p] > 32 && _buf[p] < 127)
                 {
-                    System.out.print((char)buf[p] + " ");
+                    System.out.print((char)_buf[p] + " ");
                 }
                 else
                 {
@@ -502,9 +502,9 @@ class Buffer
 
         int n = 0;
 
-        for (int i = p; i < buf_length; i++)
+        for (int i = p; i < _bufLength; i++)
         {
-            String HexVal = Integer.toHexString((int)buf[i]);
+            String HexVal = Integer.toHexString((int)_buf[i]);
 
             if (HexVal.length() == 1)
             {
@@ -522,11 +522,11 @@ class Buffer
 
         System.out.print("    ");
 
-        for (int i = p; i < buf_length; i++)
+        for (int i = p; i < _bufLength; i++)
         {
-            if (buf[i] > 32 && buf[i] < 127)
+            if (_buf[i] > 32 && _buf[i] < 127)
             {
-                System.out.print((char)buf[i] + " ");
+                System.out.print((char)_buf[i] + " ");
             }
             else
             {
