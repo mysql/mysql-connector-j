@@ -519,11 +519,11 @@ public class StatementsTest
     	
     		rs.next();
     	
-    		assertTrue("NULL field not returned as NULL", rs.getString(1) == null && rs.wasNull());
+    		assertTrue("NULL field not returned as NULL", rs.getString("field_1") == null && rs.wasNull());
     	
     		rs.next();
     	
-    		assertTrue("Empty field not returned as \"\"", rs.getString(1).equals("") && !rs.wasNull());
+    		assertTrue("Empty field not returned as \"\"", rs.getString("field_1").equals("") && !rs.wasNull());
     	
     		rs.close();   	
     	} finally {
