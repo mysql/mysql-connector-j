@@ -96,30 +96,7 @@ public class DataSourceTest
     public void testDataSource()
                         throws Exception
     {
-    	Object obj = ctx.lookup(
-                                tempDir.getAbsolutePath() + "/test");
-                                
-        DataSource ds = (DataSource)ctx.lookup(
-                                tempDir.getAbsolutePath() + "/test");
-        assertTrue("Datasource not bound", ds != null);
-
-        Connection con = ds.getConnection();
-        con.close();
-        assertTrue("Connection can not be obtained from data source", 
-                   con != null);
-    }
-
-    /**
-     * This method is separated from the rest of the example since you
-     * normally would NOT register a JDBC driver in your code.  It would
-     * likely be configered into your naming and directory service using some
-     * GUI.
-     * @throws Exception DOCUMENT ME!
-     */
-    private void registerDataSource()
-                             throws Exception
-    {
-        tempDir = File.createTempFile("jnditest", null);
+    	tempDir = File.createTempFile("jnditest", null);
         tempDir.delete();
         tempDir.mkdir();
         tempDir.deleteOnExit();
@@ -137,6 +114,31 @@ public class DataSourceTest
         
         ds.setUrl(dbUrl); // from BaseTestCase
         ctx.bind(tempDir.getAbsolutePath() + "/test", ds);
+        
+    	Object obj = ctx.lookup(
+                                tempDir.getAbsolutePath() + "/test");
+                                
+        DataSource boundDs = (DataSource)ctx.lookup(
+                                tempDir.getAbsolutePath() + "/test");
+        assertTrue("Datasource not bound", boundDs != null);
+
+        Connection con = boundDs.getConnection();
+        con.close();
+        assertTrue("Connection can not be obtained from data source", 
+                   con != null);
+    }
+
+    /**
+     * This method is separated from the rest of the example since you
+     * normally would NOT register a JDBC driver in your code.  It would
+     * likely be configered into your naming and directory service using some
+     * GUI.
+     * @throws Exception DOCUMENT ME!
+     */
+    private void registerDataSource()
+                             throws Exception
+    {
+        
       
     }
 }
