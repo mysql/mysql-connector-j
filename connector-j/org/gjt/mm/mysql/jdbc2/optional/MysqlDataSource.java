@@ -202,6 +202,11 @@ public class MysqlDataSource implements DataSource, Referenceable, Serializable
 		return 0;
 	}
 
+	public int getPortNumber()
+	{
+		return getPort();
+	}
+	
 	public int getPort()
 	{
 		return _port;
@@ -336,6 +341,11 @@ public class MysqlDataSource implements DataSource, Referenceable, Serializable
 	public void setPort(int p)
 	{
 		_port = p;
+	}
+	
+	public void setPortNumber(int p)
+	{
+		setPort(p);
 	}
 
 	/**
