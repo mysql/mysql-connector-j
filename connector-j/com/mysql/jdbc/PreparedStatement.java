@@ -1225,44 +1225,17 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
         }
 
         checkClosed();
-
-        if (sendPacket == null) {
-            sendPacket = new Buffer(connection.getNetBufferLength(),
-                    connection.getMaxAllowedPacket());
-        } else {
-            sendPacket.clear();
-        }
-
-        sendPacket.writeByte((byte) MysqlDefs.QUERY);
-
-        boolean useStreamLengths = this.connection.useStreamLengthsInPrepStmts();
-
-        for (int i = 0; i < parameterValues.length; i++) {
-            if ((parameterValues[i] == null) && (parameterStreams[i] == null)) {
-                throw new java.sql.SQLException(
-                    "No value specified for parameter " + (i + 1));
-            }
-
-            sendPacket.writeBytesNoNull(staticSqlStrings[i]);
-
-            if (isStream[i]) {
-                sendPacket.writeBytesNoNull(streamToBytes(parameterStreams[i],
-                        streamLengths[i], useStreamLengths));
-            } else {
-                sendPacket.writeBytesNoNull(parameterValues[i]);
-            }
-        }
-
-        sendPacket.writeBytesNoNull(staticSqlStrings[parameterValues.length]);
-
+        
         ResultSet rs = null;
-
+        
         synchronized (connection.getMutex()) {
+            fillSendPacket();
+
             String oldCatalog = null;
 
-            if (!connection.getCatalog().equals(currentCatalog)) {
-                oldCatalog = connection.getCatalog();
-                connection.setCatalog(currentCatalog);
+            if (!this.connection.getCatalog().equals(currentCatalog)) {
+                oldCatalog = this.connection.getCatalog();
+                this.connection.setCatalog(currentCatalog);
             }
 
             // If there isn't a limit clause in the SQL
@@ -1274,39 +1247,39 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
             //
             // Only apply max_rows to selects
             //
-            if (connection.useMaxRows()) {
+            if (this.connection.useMaxRows()) {
                 if (firstCharOfStmt == 'S') {
                     if (hasLimitClause) {
-                        rs = connection.execSQL((String) null, maxRows,
+                        rs = this.connection.execSQL((String) null, maxRows,
                                 sendPacket, resultSetConcurrency,
                                 createStreamingResultSet(), true,
                                 this.currentCatalog);
                     } else {
                         if (maxRows <= 0) {
-                            connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT",
+                            this.connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT",
                                 -1, this.currentCatalog);
                         } else {
-                            connection.execSQL("SET OPTION SQL_SELECT_LIMIT="
+                            this.connection.execSQL("SET OPTION SQL_SELECT_LIMIT="
                                 + maxRows, -1, this.currentCatalog);
                         }
                     }
                 } else {
-                    connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT",
+                    this.connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT",
                         -1, this.currentCatalog);
                 }
 
                 // Finally, execute the query
-                rs = connection.execSQL(null, -1, sendPacket,
+                rs = this.connection.execSQL(null, -1, sendPacket,
                         resultSetConcurrency, createStreamingResultSet(),
                         (firstCharOfStmt == 'S'), this.currentCatalog);
             } else {
-                rs = connection.execSQL(null, -1, sendPacket,
+                rs = this.connection.execSQL(null, -1, sendPacket,
                         resultSetConcurrency, createStreamingResultSet(),
                         (firstCharOfStmt == 'S'), this.currentCatalog);
             }
 
             if (oldCatalog != null) {
-                connection.setCatalog(oldCatalog);
+                this.connection.setCatalog(oldCatalog);
             }
         }
 
@@ -1412,53 +1385,26 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
     public synchronized java.sql.ResultSet executeQuery()
         throws java.sql.SQLException {
         checkClosed();
-
-        if (sendPacket == null) {
-            sendPacket = new Buffer(connection.getNetBufferLength(),
-                    connection.getMaxAllowedPacket());
-        } else {
-            sendPacket.clear();
-        }
-
-        sendPacket.writeByte((byte) MysqlDefs.QUERY);
-
-        boolean useStreamLengths = this.connection.useStreamLengthsInPrepStmts();
-
-        for (int i = 0; i < parameterValues.length; i++) {
-            if ((parameterValues[i] == null) && (parameterStreams[i] == null)) {
-                throw new java.sql.SQLException(
-                    "No value specified for parameter " + (i + 1), "07001");
-            }
-
-            sendPacket.writeBytesNoNull(staticSqlStrings[i]);
-
-            if (isStream[i]) {
-                sendPacket.writeBytesNoNull(streamToBytes(parameterStreams[i],
-                        streamLengths[i], useStreamLengths));
-            } else {
-                sendPacket.writeBytesNoNull(parameterValues[i]);
-            }
-        }
-
-        sendPacket.writeBytesNoNull(staticSqlStrings[parameterValues.length]);
-
-        if (results != null) {
-            results.close();
-        }
-
+        
         // We need to execute this all together
         // So synchronize on the Connection's mutex (because
         // even queries going through there synchronize
         // on the same mutex.
         synchronized (connection.getMutex()) {
-            String oldCatalog = null;
+            fillSendPacket();
 
-            if (!connection.getCatalog().equals(currentCatalog)) {
-                oldCatalog = connection.getCatalog();
-                connection.setCatalog(currentCatalog);
+            if (this.results != null) {
+                this.results.close();
             }
 
-            if (connection.useMaxRows()) {
+            String oldCatalog = null;
+
+            if (!this.connection.getCatalog().equals(currentCatalog)) {
+                oldCatalog = this.connection.getCatalog();
+                this.connection.setCatalog(currentCatalog);
+            }
+
+            if (this.connection.useMaxRows()) {
                 // If there isn't a limit clause in the SQL
                 // then limit the number of rows to return in
                 // an efficient manner. Only do this if
@@ -1466,46 +1412,46 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
                 // generated from the current Connection (saves
                 // a query, and network traffic).
                 if (hasLimitClause) {
-                    results = connection.execSQL((String) null, maxRows,
+                    results = this.connection.execSQL((String) null, maxRows,
                             sendPacket, resultSetConcurrency,
                             createStreamingResultSet(), true,
                             this.currentCatalog);
                 } else {
                     if (maxRows <= 0) {
-                        connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT",
+                        this.connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT",
                             -1, this.currentCatalog);
                     } else {
-                        connection.execSQL("SET OPTION SQL_SELECT_LIMIT="
+                        this.connection.execSQL("SET OPTION SQL_SELECT_LIMIT="
                             + maxRows, -1, this.currentCatalog);
                     }
 
-                    results = connection.execSQL(null, -1, sendPacket,
+                    this.results = this.connection.execSQL(null, -1, sendPacket,
                             resultSetConcurrency, createStreamingResultSet(),
                             true, this.currentCatalog);
 
                     if (oldCatalog != null) {
-                        connection.setCatalog(oldCatalog);
+                        this.connection.setCatalog(oldCatalog);
                     }
                 }
             } else {
-                results = connection.execSQL(null, -1, sendPacket,
+                this.results = this.connection.execSQL(null, -1, sendPacket,
                         resultSetConcurrency, createStreamingResultSet(), true,
                         this.currentCatalog);
             }
 
             if (oldCatalog != null) {
-                connection.setCatalog(oldCatalog);
+                this.connection.setCatalog(oldCatalog);
             }
         }
 
-        lastInsertId = results.getUpdateID();
-        nextResults = results;
-        results.setConnection(connection);
-        results.setResultSetType(resultSetType);
-        results.setResultSetConcurrency(resultSetConcurrency);
-        results.setStatement(this);
+        lastInsertId = this.results.getUpdateID();
+        nextResults = this.results;
+        this.results.setConnection(connection);
+        this.results.setResultSetType(resultSetType);
+        this.results.setResultSetConcurrency(resultSetConcurrency);
+        this.results.setStatement(this);
 
-        if (!results.reallyResult()) {
+        if (!this.results.reallyResult()) {
             if (!connection.getAutoCommit()) {
                 try {
                     connection.rollback();
@@ -1518,8 +1464,19 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
                 "S1009");
         }
 
-        return (java.sql.ResultSet) results;
+        return (java.sql.ResultSet) this.results;
     }
+
+    /**
+     * Creates the packet that contains the query to be sent
+     * to the server.
+     */
+	private void fillSendPacket() throws SQLException {
+		fillSendPacket(this.parameterValues,
+            this.parameterStreams, 
+            this.isStream,
+            this.streamLengths);
+	}
 
     /**
      * Execute a SQL INSERT, UPDATE or DELETE statement.  In addition,
@@ -1612,64 +1569,40 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
         }
 
         checkClosed();
-
-        if (sendPacket == null) {
-            sendPacket = new Buffer(connection.getNetBufferLength(),
-                    connection.getMaxAllowedPacket());
-        } else {
-            sendPacket.clear();
-        }
-
-        sendPacket.writeByte((byte) MysqlDefs.QUERY);
-
-        boolean useStreamLengths = this.connection.useStreamLengthsInPrepStmts();
-
-        for (int i = 0; i < batchedParameterStrings.length; i++) {
-            if ((batchedParameterStrings[i] == null)
-                    && (batchedParameterStreams[i] == null)) {
-                throw new java.sql.SQLException(
-                    "No value specified for parameter " + (i + 1), "07001");
-            }
-
-            sendPacket.writeBytesNoNull(staticSqlStrings[i]);
-
-            if (batchedIsStream[i]) {
-                sendPacket.writeBytesNoNull(streamToBytes(
-                        batchedParameterStreams[i], batchedStreamLengths[i],
-                        useStreamLengths));
-            } else {
-                sendPacket.writeBytesNoNull(parameterValues[i]);
-            }
-        }
-
-        sendPacket.writeBytesNoNull(staticSqlStrings[batchedParameterStrings.length]);
+       
+        ResultSet rs = null;
 
         // The checking and changing of catalogs
         // must happen in sequence, so synchronize
         // on the same mutex that _conn is using
-        ResultSet rs = null;
-
         synchronized (connection.getMutex()) {
+            fillSendPacket(
+				batchedParameterStrings,
+				batchedParameterStreams,
+				batchedIsStream,
+				batchedStreamLengths);
+
+        
             String oldCatalog = null;
 
-            if (!connection.getCatalog().equals(currentCatalog)) {
-                oldCatalog = connection.getCatalog();
-                connection.setCatalog(currentCatalog);
+            if (!this.connection.getCatalog().equals(currentCatalog)) {
+                oldCatalog = this.connection.getCatalog();
+                this.connection.setCatalog(currentCatalog);
             }
 
             //
             // Only apply max_rows to selects
             //
-            if (connection.useMaxRows()) {
-                connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1,
+            if (this.connection.useMaxRows()) {
+                this.connection.execSQL("SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1,
                     this.currentCatalog);
             }
 
-            rs = connection.execSQL(null, -1, sendPacket, resultSetConcurrency,
+            rs = this.connection.execSQL(null, -1, sendPacket, resultSetConcurrency,
                     false, false, this.currentCatalog);
 
             if (oldCatalog != null) {
-                connection.setCatalog(oldCatalog);
+                this.connection.setCatalog(oldCatalog);
             }
         }
 
@@ -1693,6 +1626,47 @@ public class PreparedStatement extends com.mysql.jdbc.Statement
             return truncatedUpdateCount;
         }
     }
+
+    /**
+     * Creates the packet that contains the query to be sent
+     * to the server.
+     */
+	private void fillSendPacket(
+		byte[][] batchedParameterStrings,
+		InputStream[] batchedParameterStreams,
+		boolean[] batchedIsStream,
+		int[] batchedStreamLengths)
+		throws SQLException {
+		if (this.sendPacket == null) {
+		    this.sendPacket = this.connection.getIO().getSendPacket();
+		}
+		
+		this.sendPacket.clear();
+		
+		this.sendPacket.writeByte((byte) MysqlDefs.QUERY);
+		
+		boolean useStreamLengths = this.connection.useStreamLengthsInPrepStmts();
+		
+		for (int i = 0; i < batchedParameterStrings.length; i++) {
+		    if ((batchedParameterStrings[i] == null)
+		        && (batchedParameterStreams[i] == null)) {
+		        throw new java.sql.SQLException(
+		        "No value specified for parameter " + (i + 1), "07001");
+		    }
+		
+		    this.sendPacket.writeBytesNoNull(staticSqlStrings[i]);
+		
+		    if (batchedIsStream[i]) {
+		        this.sendPacket.writeBytesNoNull(streamToBytes(
+		            batchedParameterStreams[i], batchedStreamLengths[i],
+		            useStreamLengths));
+		    } else {
+		        this.sendPacket.writeBytesNoNull(parameterValues[i]);
+		    }
+		}
+		
+		this.sendPacket.writeBytesNoNull(staticSqlStrings[batchedParameterStrings.length]);
+	}
 
     byte[] getBytes(int parameterIndex) throws SQLException {
         if (isStream[parameterIndex]) {
