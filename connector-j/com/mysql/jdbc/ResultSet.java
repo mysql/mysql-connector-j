@@ -25,6 +25,7 @@ import java.io.ObjectInputStream;
 
 import java.math.BigDecimal;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import java.sql.Array;
@@ -977,7 +978,9 @@ public class ResultSet
 
                 return null;
             }
-            else if (S.equals("0000-00-00"))
+            else if (S.equals("0000-00-00") || 
+                      S.equals("0000-00-00 00:00:00") || 
+                      S.equals("00000000000000"))
             {
                 wasNullFlag = true;
 
@@ -2283,7 +2286,9 @@ public class ResultSet
 
                 return null;
             }
-            else if (S.equals("0000-00-00"))
+            else if (S.equals("0000-00-00") || 
+                      S.equals("0000-00-00 00:00:00") || 
+                      S.equals("00000000000000"))
             {
                 wasNullFlag = true;
 
@@ -2462,7 +2467,9 @@ public class ResultSet
 
                 return null;
             }
-            else if (S.equals("0000-00-00"))
+            else if (S.equals("0000-00-00") || 
+                      S.equals("0000-00-00 00:00:00") || 
+                      S.equals("00000000000000"))
             {
                 wasNullFlag = true;
 
@@ -2732,19 +2739,51 @@ public class ResultSet
     /**
      * @see ResultSet#getURL(int)
      */
-    public URL getURL(int arg0)
+    public URL getURL(int colIndex)
                throws SQLException
     {
-        throw new NotImplemented();
+        String val = getString(colIndex);
+        
+        if (val == null)
+        {
+        	return null;
+        }
+        else
+        {
+        	try
+        	{
+        		return new URL(val);
+        	}
+        	catch (MalformedURLException mfe)
+        	{
+        		throw new SQLException("Malformed URL '" + val + "'", "S1009");
+        	}
+        }
     }
 
     /**
      * @see ResultSet#getURL(String)
      */
-    public URL getURL(String arg0)
+    public URL getURL(String colName)
                throws SQLException
     {
-        throw new NotImplemented();
+        String val = getString(colName);
+        
+        if (val == null)
+        {
+        	return null;
+        }
+        else
+        {
+        	try
+        	{
+        		return new URL(val);
+        	}
+        	catch (MalformedURLException mfe)
+        	{
+        		throw new SQLException("Malformed URL '" + val + "'", "S1009");
+        	}
+        }
     }
 
     /**
