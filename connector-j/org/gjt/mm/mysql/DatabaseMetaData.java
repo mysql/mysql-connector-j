@@ -217,7 +217,7 @@ public abstract class DatabaseMetaData
 
 	public String getDriverVersion() throws java.sql.SQLException
 	{
-		return "2.0.12";
+		return "2.0.13";
 	}
 
 	/**
@@ -5105,8 +5105,8 @@ public abstract class DatabaseMetaData
 			Tuple[8] = RS.getBytes("Column_name");
 			Tuple[9] = RS.getBytes("Collation");
 			Tuple[10] = RS.getBytes("Cardinality");
-			Tuple[11] = new byte[0];
-			Tuple[12] = new byte[0];
+			Tuple[11] = s2b("0");
+			Tuple[12] = null;
 
 			Tuples.addElement(Tuple);
 		}
