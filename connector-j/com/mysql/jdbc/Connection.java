@@ -1273,7 +1273,7 @@ public class Connection
 
         if (info.getProperty("useUnicode") != null) {
 
-            String useUnicode = info.getProperty("useUnicode").toUpperCase();
+            String useUnicode = info.getProperty("useUnicode");
 
             if (useUnicode.equalsIgnoreCase("TRUE")) {
                 this.doUnicode = true;
