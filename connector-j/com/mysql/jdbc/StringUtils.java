@@ -226,6 +226,29 @@ public class StringUtils {
         return bytesOut.toByteArray();
     }
     
+    /**
+     * Determines whether or not the sting 'searchIn' contains
+     * the string 'searchFor', di-regarding case and
+     * leading whitespace
+     * 
+     * @param searchIn the string to search in
+     * @param searchFor the string to search for
+     */
+    
+    public static boolean startsWithIgnoreCaseAndWs(String searchIn, String searchFor) {
+        int beginPos = 0;
+        
+        int inLength = searchIn.length();
+        
+        for (beginPos = 0; beginPos < inLength; beginPos++) {
+            if (!Character.isWhitespace(searchIn.charAt(beginPos))) {
+                break;
+            }
+        }   
+        
+        return startsWithIgnoreCase(searchIn, beginPos, searchFor);     
+    }
+    
     /** 
      * Determines whether or not the string 'searchIn' contains
      * the string 'searchFor', dis-regarding case.
@@ -239,6 +262,24 @@ public class StringUtils {
      */
     
     public static boolean startsWithIgnoreCase(String searchIn, String searchFor) {
-        return searchIn.regionMatches(true, 0, searchFor, 0, searchFor.length());   
+        return startsWithIgnoreCase(searchIn, 0, searchFor);   
+    }
+    
+    /** 
+     * Determines whether or not the string 'searchIn' contains
+     * the string 'searchFor', dis-regarding case starting at
+     * 'startAt'
+     * 
+     * Shorthand for a String.regionMatch(...)
+     * 
+     * @param searchIn the string to search in
+     * @param startAt the position to start at
+     * @param searchFor the string to search for
+     * 
+     * @return whether searchIn starts with searchFor, ignoring case
+     */
+    
+    public static boolean startsWithIgnoreCase(String searchIn, int startAt, String searchFor) {
+        return searchIn.regionMatches(true, 0, searchFor, startAt, searchFor.length());   
     }
 }
