@@ -16,6 +16,7 @@ Copyright (C) 2002 MySQL AB
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -->
 
+
 <project name="MySQL Connector/J" default="dist" basedir=".">
 
 	<property name="cvs.repository" value=":ext:mark_matthews@cvs.mmmysql.sourceforge.net:/cvsroot/mmmysql"/>
