@@ -35,7 +35,6 @@ import java.io.InputStream;
 
 import java.lang.ref.SoftReference;
 
-
 import java.net.Socket;
 
 import java.sql.SQLException;
@@ -51,7 +50,7 @@ public class MysqlIO
     //~ Instance/static variables .............................................
 
     static final int COMP_HEADER_LENGTH = 3;
-    static final long MAX_THREE_BYTES = 255L*255L*255L;
+    static final long MAX_THREE_BYTES = 255L * 255L * 255L;
     static final int HEADER_LENGTH = 4;
     static int MAXBUF = 65535;
     private static int CLIENT_COMPRESS = 32; /* Can use compression 
@@ -74,8 +73,7 @@ public class MysqlIO
     private static int CLIENT_NO_SCHEMA = 16; /* Don't allow 
     db.table.column */
     private static int CLIENT_ODBC = 64; /* Odbc client */
-    
-    private static int CLIENT_PROTOCOL_41       = 16384;
+    private static int CLIENT_PROTOCOL_41 = 16384;
 
     //
     // For SQL Warnings
@@ -115,13 +113,12 @@ public class MysqlIO
     private int port = 3306;
     private boolean profileSql = false;
     private byte protocolVersion = 0;
-    
+
     //
     // Used to send large packets to the server versions 4+
     // We use a SoftReference, so that we don't penalize intermittent
     // use of this feature
     //
-    
     private SoftReference splitBufRef;
 
     //
@@ -171,7 +168,8 @@ public class MysqlIO
 
         this.mysqlInput = new BufferedInputStream(this.mysqlConnection.getInputStream(), 
                                                   16384);
-        this.mysqlOutput = new BufferedOutputStream(this.mysqlConnection.getOutputStream(), 16384);
+        this.mysqlOutput = new BufferedOutputStream(this.mysqlConnection.getOutputStream(), 
+                                                    16384);
 
         //_Mysql_Input  = new DataInputStream(_Mysql_Buf_Input);
         //_Mysql_Output = new DataOutputStream(_Mysql_Buf_Output);
@@ -205,8 +203,7 @@ public class MysqlIO
         for (int i = 0; i < columnCount; i++)
         {
             Packet = readPacket();
-
-			Fields[i] = unpackField(Packet);
+            Fields[i] = unpackField(Packet);
         }
 
         Packet = readPacket();
@@ -265,55 +262,74 @@ public class MysqlIO
         return buildResultSetWithRows(Fields, rowData, null, resultSetType);
     }
 
-	private final Field unpackField(Buffer packet) 
-	{
-		if ((this.clientParam & CLIENT_PROTOCOL_41) != 0)
-		{
-			String databaseName       = packet.readLenString();
-      		String tableName    = packet.readLenString();
-      		String orgTableName = packet.readLenString();
-      		String colName     = packet.readLenString();
-      		String orgColName = packet.readLenString();
-      		int colLength = packet.readnBytes();
-			int colType = packet.readnBytes();
-			packet.readByte();
-		    short colFlag = (short)(packet.readByte() & 0xff);
-			int colDecimals = (packet.readByte() & 0xff);
+    private final Field unpackField(Buffer packet)
+    {
+		
+        if ((this.clientParam & CLIENT_PROTOCOL_41) != 0)
+        {
 
-	      	//if (INTERNAL_NUM_FIELD(field))
-        	//	field->flags|= NUM_FLAG;
-        	
-        	String defaultValue = packet.readLenString();
-        	
-      		//if (default_value && row->data[8])
-        	//	field->def=strdup_root(alloc,(char*) row->data[8]);
-      		//else
-        	//	field->def=0;
-      		//field->max_length= 0;
-      		
-      		return new Field(tableName, colName, colLength, colType, 
-		                      colFlag, colDecimals);
-		}
-		else
-		{
-			String tableName = packet.readLenString();
-			String colName = packet.readLenString();
-			int colLength = packet.readnBytes();
-			int colType = packet.readnBytes();
-			packet.readByte(); // We know it's currently 2
-		
-			short colFlag = (short)(packet.readByte() & 0xff);
-			int colDecimals = (packet.readByte() & 0xff);
-		
-			if (this.colDecimalNeedsBump)
-			{
-		   		colDecimals++;
-			}
-		
-			return new Field(tableName, colName, colLength, colType, 
-		                      colFlag, colDecimals);
-		}
-	}
+            // databaseName is never used so skip
+            packet.fastSkipLenString();
+
+            // we only store the position of the string and
+            // calculate only if needed...
+            int tableNameStart = packet.getPosition() + 1;
+            int tableNameLength = packet.fastSkipLenString();
+
+            // orgTableName is never used so skip
+            packet.fastSkipLenString();
+
+            // we only store the position again...
+            int nameStart = packet.getPosition() + 1;
+            int nameLength = packet.fastSkipLenString();
+
+            // orgColName is not required so skip...
+            packet.fastSkipLenString();
+
+            int colLength = packet.readnBytes();
+            int colType = packet.readnBytes();
+            packet.readByte();
+
+            short colFlag = (short)(packet.readByte() & 0xff);
+            int colDecimals = (packet.readByte() & 0xff);
+
+            //if (INTERNAL_NUM_FIELD(field))
+            //   field->flags|= NUM_FLAG;
+            String defaultValue = packet.readLenString();
+
+            //if (default_value && row->data[8])
+            //   field->def=strdup_root(alloc,(char*) row->data[8]);
+            //else
+            //   field->def=0;
+            //field->max_length= 0;
+            return new Field(packet.getBufferSource(), nameStart, nameLength, 
+                             tableNameStart, tableNameLength, colLength, 
+                             colType, colFlag, colDecimals);
+        }
+        else
+        {
+
+            int tableNameStart = packet.getPosition() + 1;
+            int tableNameLength = packet.fastSkipLenString();
+            int nameStart = packet.getPosition() + 1;
+            int nameLength = packet.fastSkipLenString();
+            int colLength = packet.readnBytes();
+            int colType = packet.readnBytes();
+            packet.readByte(); // We know it's currently 2
+
+            short colFlag = (short)(packet.readByte() & 0xff);
+            int colDecimals = (packet.readByte() & 0xff);
+
+            if (this.colDecimalNeedsBump)
+            {
+                colDecimals++;
+            }
+
+            return new Field(packet.getBufferSource(), nameStart, nameLength, 
+                             tableNameStart, tableNameLength, colLength, 
+                             colType, colFlag, colDecimals);
+        }
+    }
 
     protected final void forceClose()
                              throws IOException
@@ -512,8 +528,6 @@ public class MysqlIO
                 Debug.msg(this, "Crypt Seed: " + seed);
             }
 
-           
-
             if (buf.getPosition() < buf.getBufLength())
             {
 
@@ -543,15 +557,14 @@ public class MysqlIO
             {
                 clientParam &= ~CLIENT_LONG_PASSWORD;
             }
-            
+
             //
             // 4.1 has some differences in the protocol
             //
-            
-            if (versionMeetsMinimum(4, 1,0))
+            if (versionMeetsMinimum(4, 1, 0))
             {
-            	clientParam |= CLIENT_PROTOCOL_41;
-            }      
+                clientParam |= CLIENT_PROTOCOL_41;
+            }
 
             int passwordLength = 16;
             int userLength = 0;
@@ -887,7 +900,7 @@ public class MysqlIO
      * Prepares a query for execution (MySQL server 4.1+)
      */
     final ResultSet prepareQuery(String query, String characterEncoding)
-                      throws Exception
+                          throws Exception
     {
 
         // We don't know exactly how many bytes we're going to get
@@ -915,12 +928,12 @@ public class MysqlIO
         {
             this.sendPacket.writeStringNoNull(query);
         }
-        
+
         // Send query command and sql query string
         clearAllReceive();
 
-        Buffer resultPacket = sendCommand(MysqlDefs.COM_PREPARE, null, this.sendPacket);
-        
+        Buffer resultPacket = sendCommand(MysqlDefs.COM_PREPARE, null, 
+                                          this.sendPacket);
         resultPacket.setPosition(resultPacket.getPosition() - 1);
 
         long columnCount = resultPacket.readLength();
@@ -933,28 +946,26 @@ public class MysqlIO
         if (columnCount != 0)
         {
 
-            com.mysql.jdbc.ResultSet results = getResultSet(columnCount, 
-                                                            -1, 
+            com.mysql.jdbc.ResultSet results = getResultSet(columnCount, -1, 
                                                             java.sql.ResultSet.CONCUR_READ_ONLY, 
                                                             false);
-
-    
 
             return results;
         }
         else
         {
-        	throw new SQLException("No handle or metadata returned for statement prepare", "S1000");
+            throw new SQLException("No handle or metadata returned for statement prepare", 
+                                   "S1000");
         }
     }
-    
+
     /**
      * Send a query stored in a packet directly to the server.
      */
     final ResultSet executePreparedQuery(Buffer paramPacket, int maxRows, 
-                                   Connection conn, int resultSetType, 
-                                   boolean streamResults)
-                            throws Exception
+                                         Connection conn, int resultSetType, 
+                                         boolean streamResults)
+                                  throws Exception
     {
 
         long updateCount = -1;
@@ -971,10 +982,9 @@ public class MysqlIO
 
         // Send query command and sql query string
         clearAllReceive();
-        
-        
 
-        Buffer resultPacket = sendCommand(MysqlDefs.COM_EXECUTE, null, paramPacket);
+        Buffer resultPacket = sendCommand(MysqlDefs.COM_EXECUTE, null, 
+                                          paramPacket);
 
         if (this.profileSql)
         {
@@ -1059,8 +1069,7 @@ public class MysqlIO
         }
     }
 
-
-	/**
+    /**
      * Send a query specified in the String "Query" to the MySQL server.
      *
      * This method uses the specified character encoding to get the
@@ -1101,8 +1110,6 @@ public class MysqlIO
         return sqlQueryDirect(this.sendPacket, maxRows, conn, resultSetType, 
                               streamResults);
     }
-
-
 
     final ResultSet sqlQuery(String query, int maxRows, String encoding, 
                              int resultSetType, boolean streamResults)
@@ -1215,6 +1222,8 @@ public class MysqlIO
                                         fetchStartTime;
                 profileMsgBuf.append("result set fetch time:\t");
                 profileMsgBuf.append(fetchElapsedTime);
+                
+                System.err.println(profileMsgBuf.toString());
             }
 
             return results;
@@ -1332,6 +1341,8 @@ public class MysqlIO
                                         fetchStartTime;
                 profileMsgBuf.append("result set fetch time:\t");
                 profileMsgBuf.append(fetchElapsedTime);
+                
+                System.err.println(profileMsgBuf.toString());
             }
 
             return results;
@@ -1508,7 +1519,6 @@ public class MysqlIO
 
         int[] dataStart = new int[columnCount];
         byte[][] rowData = new byte[columnCount][];
-        
         int offset = rowPacket.wasMultiPacket() ? HEADER_LENGTH + 1 : 0;
 
         if (!rowPacket.isLastDataPacket())
@@ -1581,24 +1591,19 @@ public class MysqlIO
     private final Buffer readPacket()
                              throws IOException
     {
+        int packetLength = mysqlInput.read() +
+                           (mysqlInput.read() << 8) +  
+                           (mysqlInput.read() << 16);
 
-        byte b0;
-        byte b1;
-        byte b2;
-        b0 = (byte)this.mysqlInput.read();
-        b1 = (byte)this.mysqlInput.read();
-        b2 = (byte)this.mysqlInput.read();
-
-        // If a read failure is detected, close the socket and throw an IOException
-        if ((int)b0 == -1 && (int)b1 == -1 && (int)b2 == -1)
+        // -1 for all values through above assembly sequence
+        if (packetLength == -65793)
         {
             forceClose();
             throw new IOException("Unexpected end of input stream");
         }
 
-        int packetLength = (int)((b0 & 0xff) + ((b1 & 0xff) << 8) + 
-                           ((b2 & 0xff) << 16));
-        byte packetSeq = (byte)this.mysqlInput.read();
+        // we don't look at packet sequence in this case
+        this.mysqlInput.skip(1);
 
         // Read data
         byte[] buffer = new byte[packetLength + 1];
@@ -1615,46 +1620,39 @@ public class MysqlIO
                                      throws IOException, SQLException
     {
 
-		if (reuse.wasMultiPacket())
-		{
-			// Check available, as we ate the "last data packet" packet
-			
-			int bytesAvail = mysqlInput.available();
-			
-			if (bytesAvail <= 2)
-			{
-				reuse.setBufLength(1);
-				reuse.setPosition(0);
-				reuse.writeByte((byte)254);
-				mysqlInput.skip(bytesAvail);
-			}
-			
-			reuse.setWasMultiPacket(false);
-			
-			return reuse;
-		}
-		
-		reuse.setWasMultiPacket(false);
-		
-        byte b0;
-        byte b1;
-        byte b2;
-        b0 = (byte)this.mysqlInput.read();
-        b1 = (byte)this.mysqlInput.read();
-        b2 = (byte)this.mysqlInput.read();
+        if (reuse.wasMultiPacket())
+        {
 
-        // If a read failure is detected, close the socket and throw an IOException
-        if ((int)b0 == -1 && (int)b1 == -1 && (int)b2 == -1)
+            // Check available, as we ate the "last data packet" packet
+            int bytesAvail = mysqlInput.available();
+
+            if (bytesAvail <= 2)
+            {
+                reuse.setBufLength(1);
+                reuse.setPosition(0);
+                reuse.writeByte((byte)254);
+                mysqlInput.skip(bytesAvail);
+            }
+
+            reuse.setWasMultiPacket(false);
+
+            return reuse;
+        }
+
+        reuse.setWasMultiPacket(false);
+
+        int packetLength = mysqlInput.read() +
+                           (mysqlInput.read() << 8) +  
+                           (mysqlInput.read() << 16);
+
+        // -1 for all values through above assembly sequence
+        if (packetLength == -65793)
         {
             forceClose();
             throw new IOException("Unexpected end of input stream");
         }
-
-        //int packetLength = (int) (ub(b0) + (256 * ub(b1)) + (256 * 256 * ub(b2)));
-        int packetLength = (int)((b0 & 0xff) + ((b1 & 0xff) << 8) + 
-                           ((b2 & 0xff) << 16));
         
-        byte packetSeq = (byte)this.mysqlInput.read();
+        byte multiPacketSeq = (byte)this.mysqlInput.read();
 
         // Set the Buffer to it's original state
         reuse.setPosition(0);
@@ -1676,107 +1674,95 @@ public class MysqlIO
 
         // Read the data from the server
         readFully(this.mysqlInput, reuse.getByteBuffer(), 0, packetLength);
-        
+
         boolean isMultiPacket = false;
-        
+
         if (packetLength == MAX_THREE_BYTES)
         {
-        	reuse.setPosition((int)MAX_THREE_BYTES);
-        	
-        	int packetEndPoint = packetLength;
-        	
-        	// it's multi-packet
-        	
-        	isMultiPacket = true;
-        	
-        	 
-        	b0 = (byte)this.mysqlInput.read();
-        	b1 = (byte)this.mysqlInput.read();
-        	b2 = (byte)this.mysqlInput.read();
+            reuse.setPosition((int)MAX_THREE_BYTES);
 
-        	// If a read failure is detected, close the socket and throw an IOException
-        
-        	if ((int)b0 == -1 && (int)b1 == -1 && (int)b2 == -1)
+            int packetEndPoint = packetLength;
+
+            // it's multi-packet
+            isMultiPacket = true;
+           
+            packetLength = mysqlInput.read() +
+                           (mysqlInput.read() << 8) +  
+                           (mysqlInput.read() << 16);
+
+        	// -1 for all values through above assembly sequence
+        	if (packetLength == -65793)
         	{
             	forceClose();
-            	throw new IOException("Unexpected end of input stream during multi-packet read");
+            	throw new IOException("Unexpected end of input stream");
         	}
 
-	        //int packetLength = (int) (ub(b0) + (256 * ub(b1)) + (256 * 256 * ub(b2)));
-    	    packetLength = (int)((b0 & 0xff) + ((b1 & 0xff) << 8) + 
-                           ((b2 & 0xff) << 16));
-                           
             Buffer multiPacket = new Buffer(packetLength);
-        
-        	boolean firstMultiPkt = true;
-        	
-        	for (;;)
-        	{
-        		if (!firstMultiPkt)
-        		{
-        			b0 = (byte)this.mysqlInput.read();
-        			b1 = (byte)this.mysqlInput.read();
-        			b2 = (byte)this.mysqlInput.read();
+            boolean firstMultiPkt = true;
 
-		        	// If a read failure is detected, close the socket and throw an IOException
-        
-        			if ((int)b0 == -1 && (int)b1 == -1 && (int)b2 == -1)
+            for (;;)
+            {
+
+                if (!firstMultiPkt)
+                {
+                  
+
+                    packetLength = mysqlInput.read() +
+                           (mysqlInput.read() << 8) +  
+                           (mysqlInput.read() << 16);
+
+        			// -1 for all values through above assembly sequence
+        			if (packetLength == -65793)
         			{
             			forceClose();
-            			throw new IOException("Unexpected end of input stream during multi-packet read");
+            			throw new IOException("Unexpected end of input stream");
         			}
-        			
+                }
+                else
+                {
+                    firstMultiPkt = false;
+                }
 
-			        //int packetLength = (int) (ub(b0) + (256 * ub(b1)) + (256 * 256 * ub(b2)));
-    			    packetLength = (int)((b0 & 0xff) + ((b1 & 0xff) << 8) + 
-                           ((b2 & 0xff) << 16));
-        		}
-        		else
-        		{
-        			firstMultiPkt = false;
-        		}
+                if (packetLength == 1)
+                {
 
-				if (packetLength == 1)
-				{
-					break; // end of multipacket sequence
-				}
-				        			
-        		byte newPacketSeq = (byte)this.mysqlInput.read();
+                    break; // end of multipacket sequence
+                }
 
-        		// Set the Buffer to it's original state
-        		multiPacket.setPosition(0);
-        		multiPacket.setSendLength(0);
-        		
-        		// Set the new length
-        		multiPacket.setBufLength(packetLength);
+                byte newPacketSeq = (byte)this.mysqlInput.read();
+                
+                if (newPacketSeq != (multiPacketSeq + 1))
+                {
+                	throw new IOException("Packets received out of order");
+                }
+                
+                multiPacketSeq = newPacketSeq;
 
-        		// Read the data from the server
-        		
-        		byte[] byteBuf = multiPacket.getByteBuffer();
-        		
-        		
-        		int lengthToWrite = packetLength;
-        		
-        		readFully(this.mysqlInput, byteBuf, 0, packetLength);
-        				
-        		reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
-        		
-        		packetEndPoint += lengthToWrite;
-        	}   
-        	
-        	reuse.writeByte((byte)0); 	
-        	reuse.setPosition(0);
-        	reuse.setWasMultiPacket(true);
+                // Set the Buffer to it's original state
+                multiPacket.setPosition(0);
+                multiPacket.setSendLength(0);
+
+                // Set the new length
+                multiPacket.setBufLength(packetLength);
+
+                // Read the data from the server
+                byte[] byteBuf = multiPacket.getByteBuffer();
+                int lengthToWrite = packetLength;
+                readFully(this.mysqlInput, byteBuf, 0, packetLength);
+                reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
+                packetEndPoint += lengthToWrite;
+            }
+
+            reuse.writeByte((byte)0);
+            reuse.setPosition(0);
+            reuse.setWasMultiPacket(true);
         }
-        
+
         if (!isMultiPacket)
         {
-        	reuse.getByteBuffer()[packetLength] = 0; // Null-termination
+            reuse.getByteBuffer()[packetLength] = 0; // Null-termination
         }
-        else
-        {
-        }
-
+        
         return reuse;
     }
 
@@ -1786,97 +1772,92 @@ public class MysqlIO
     private final void send(Buffer packet)
                      throws IOException
     {
-		int l = packet.getPosition();
-		
-		if (serverMajorVersion >= 4 && l >= MAX_THREE_BYTES)
-		{
-			sendSplitPackets(packet);
-		}
-		else
-		{
-        	
-        	this.packetSequence++;
-        	packet.setPosition(0);
-        	packet.writeLongInt(l - HEADER_LENGTH);
-        	packet.writeByte(this.packetSequence);
-        	this.mysqlOutput.write(packet.getByteBuffer(), 0, l);
-        	this.mysqlOutput.flush();
-		}
+
+        int l = packet.getPosition();
+
+        if (serverMajorVersion >= 4 && l >= MAX_THREE_BYTES)
+        {
+            sendSplitPackets(packet);
+        }
+        else
+        {
+            this.packetSequence++;
+            packet.setPosition(0);
+            packet.writeLongInt(l - HEADER_LENGTH);
+            packet.writeByte(this.packetSequence);
+            this.mysqlOutput.write(packet.getByteBuffer(), 0, l);
+            this.mysqlOutput.flush();
+        }
     }
-    
+
     /** 
      * Sends a large packet to the server as a series of smaller packets
      */
-    
-    private final void sendSplitPackets(Buffer packet) throws IOException
+    private final void sendSplitPackets(Buffer packet)
+                                 throws IOException
     {
-    	//
- 		// Big packets are handled by splitting them in packets of MAX_THREE_BYTES
-    	// length. The last packet is always a packet that is < MAX_THREE_BYTES.
-    	// (The last packet may even have a length of 0)
-   		//
-   		
-    	//
-    	// NB: Guarded by execSQL. If the driver changes architecture, this
-    	// will need to be synchronized in some other way
-    	//
-    	
-    	Buffer headerPacket = (splitBufRef == null) ? null : (Buffer)(splitBufRef.get());
-    	
-    	//
-    	// Store this packet in a soft reference...It can be re-used if not GC'd (so clients
-    	// that use it frequently won't have to re-alloc the 16M buffer), but we don't
-    	// penalize infrequent users of large packets by keeping 16M allocated all of the time
-    	//
-    	
-    	if (headerPacket == null)
-    	{
-    		headerPacket = new Buffer((int)(MAX_THREE_BYTES + HEADER_LENGTH));
-    		splitBufRef = new SoftReference(headerPacket);
-    	}
-    	
-  		int len = packet.getPosition();
-  		
-  		int splitSize = (int)MAX_THREE_BYTES;
-  		int originalPacketPos = HEADER_LENGTH;
-  		
-  		byte[] origPacketBytes = packet.getByteBuffer();
-  		
-  		byte[] headerPacketBytes = headerPacket.getByteBuffer();
-  		
-  		while (len >= MAX_THREE_BYTES)
-  		{
-   			headerPacket.setPosition(0);
-  			headerPacket.writeLongInt(splitSize);
-  			this.packetSequence++;
-  			headerPacket.writeByte(this.packetSequence);
-   	
-  			System.arraycopy(origPacketBytes, originalPacketPos, headerPacketBytes, 4, splitSize);
-   			
-  			this.mysqlOutput.write(headerPacketBytes, 0, splitSize + HEADER_LENGTH);
-  			this.mysqlOutput.flush();
-   			
-   			originalPacketPos += splitSize;
-   			len -= splitSize;
-  		}
-   
-   		//
-  		// Write last packet 
-  		//
-  		
-  		headerPacket.clear();
-  		headerPacket.setPosition(0);
-  		headerPacket.writeLongInt(len - HEADER_LENGTH);
-  		this.packetSequence++;
-  		headerPacket.writeByte(this.packetSequence);
-  		
-  		if (len != 0)
-  		{
-  			System.arraycopy(origPacketBytes, originalPacketPos, headerPacketBytes, 4, len - HEADER_LENGTH);
-  		}
-  		
-  		this.mysqlOutput.write(headerPacket.getByteBuffer(), 0, len);
-   		this.mysqlOutput.flush();
+
+        //
+        // Big packets are handled by splitting them in packets of MAX_THREE_BYTES
+        // length. The last packet is always a packet that is < MAX_THREE_BYTES.
+        // (The last packet may even have a length of 0)
+        //
+        //
+        // NB: Guarded by execSQL. If the driver changes architecture, this
+        // will need to be synchronized in some other way
+        //
+        Buffer headerPacket = (splitBufRef == null)
+                                  ? null : (Buffer)(splitBufRef.get());
+
+        //
+        // Store this packet in a soft reference...It can be re-used if not GC'd (so clients
+        // that use it frequently won't have to re-alloc the 16M buffer), but we don't
+        // penalize infrequent users of large packets by keeping 16M allocated all of the time
+        //
+        if (headerPacket == null)
+        {
+            headerPacket = new Buffer((int)(MAX_THREE_BYTES + HEADER_LENGTH));
+            splitBufRef = new SoftReference(headerPacket);
+        }
+
+        int len = packet.getPosition();
+        int splitSize = (int)MAX_THREE_BYTES;
+        int originalPacketPos = HEADER_LENGTH;
+        byte[] origPacketBytes = packet.getByteBuffer();
+        byte[] headerPacketBytes = headerPacket.getByteBuffer();
+
+        while (len >= MAX_THREE_BYTES)
+        {
+            headerPacket.setPosition(0);
+            headerPacket.writeLongInt(splitSize);
+            this.packetSequence++;
+            headerPacket.writeByte(this.packetSequence);
+            System.arraycopy(origPacketBytes, originalPacketPos, 
+                             headerPacketBytes, 4, splitSize);
+            this.mysqlOutput.write(headerPacketBytes, 0, 
+                                   splitSize + HEADER_LENGTH);
+            this.mysqlOutput.flush();
+            originalPacketPos += splitSize;
+            len -= splitSize;
+        }
+
+        //
+        // Write last packet
+        //
+        headerPacket.clear();
+        headerPacket.setPosition(0);
+        headerPacket.writeLongInt(len - HEADER_LENGTH);
+        this.packetSequence++;
+        headerPacket.writeByte(this.packetSequence);
+
+        if (len != 0)
+        {
+            System.arraycopy(origPacketBytes, originalPacketPos, 
+                             headerPacketBytes, 4, len - HEADER_LENGTH);
+        }
+
+        this.mysqlOutput.write(headerPacket.getByteBuffer(), 0, len);
+        this.mysqlOutput.flush();
     }
 
     void closeStreamer(RowData streamer)
