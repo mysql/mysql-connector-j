@@ -18,6 +18,10 @@
  */
 package com.mysql.jdbc;
 
+import java.io.UnsupportedEncodingException;
+
+import java.sql.SQLException;
+
 
 /**
  * Buffer contains code to read and write packets from/to the MySQL server.
@@ -25,33 +29,37 @@ package com.mysql.jdbc;
  * @version $Id$
  * @author Mark Matthews
  */
-class Buffer {
+class Buffer
+{
 
     //~ Instance/static variables .............................................
 
-    final static int NO_LENGTH_LIMIT = -1;
-    static long      NULL_LENGTH = -1;
-    private int      bufLength  = 0;
-    private byte[]   byteBuffer;
-    private int      position   = 0;
-    private int      sendLength = 0;
-    private int      maxLength  = NO_LENGTH_LIMIT;
+    final static int 	NO_LENGTH_LIMIT 	= -1;
+    static long 		NULL_LENGTH 		= -1;
+    private int 		bufLength 			= 0;
+    private byte[] 	byteBuffer;
+    private int 		position 			= 0;
+    private int 		sendLength 			= 0;
+    private int 		maxLength 			= NO_LENGTH_LIMIT;
 
     //~ Constructors ..........................................................
 
-    Buffer(byte[] buf) {
+    Buffer(byte[] buf)
+    {
         this.byteBuffer = buf;
         setBufLength(buf.length);
     }
 
-    Buffer(int size, int max_packet_size) {
+    Buffer(int size, int max_packet_size)
+    {
         this.byteBuffer = new byte[size];
         setBufLength(this.byteBuffer.length);
         this.position = MysqlIO.HEADER_LENGTH;
         setMaxLength(max_packet_size);
     }
 
-    Buffer(int size) {
+    Buffer(int size)
+    {
         this(size, NO_LENGTH_LIMIT);
     }
 
@@ -62,7 +70,8 @@ class Buffer {
      * 
      * @param byteBuffer the array of bytes to use as a buffer
      */
-    public void setByteBuffer(byte[] byteBuffer) {
+    public void setByteBuffer(byte[] byteBuffer)
+    {
         this.byteBuffer = byteBuffer;
     }
 
@@ -71,7 +80,8 @@ class Buffer {
      * 
      * @return byte array being read from
      */
-    public byte[] getByteBuffer() {
+    public byte[] getByteBuffer()
+    {
 
         return this.byteBuffer;
     }
@@ -81,7 +91,8 @@ class Buffer {
      * 
      * @param position DOCUMENT ME!
      */
-    public void setPosition(int position) {
+    public void setPosition(int position)
+    {
         this.position = position;
     }
 
@@ -90,12 +101,14 @@ class Buffer {
      * 
      * @return DOCUMENT ME! 
      */
-    public int getPosition() {
+    public int getPosition()
+    {
 
         return this.position;
     }
 
-    final void setBytes(byte[] buf) {
+    final void setBytes(byte[] buf)
+    {
         setSendLength(getBufLength());
         System.arraycopy(buf, 0, this.byteBuffer, 0, getBufLength());
     }
@@ -103,7 +116,8 @@ class Buffer {
     //
     // Read a given-length array of bytes
     //
-    final byte[] getBytes(int len) {
+    final byte[] getBytes(int len)
+    {
 
         byte[] b = new byte[len];
         System.arraycopy(this.byteBuffer, this.position, b, 0, len);
@@ -113,20 +127,24 @@ class Buffer {
     }
 
     // 2000-06-05 Changed
-    final boolean isLastDataPacket() {
+    final boolean isLastDataPacket()
+    {
 
-        return ((getBufLength() <= 2) && ((this.byteBuffer[0] & 0xff) == 254));
+        return ((getBufLength() <= 2) && 
+               ((this.byteBuffer[0] & 0xff) == 254));
     }
 
     //
     // Read a null-terminated array of bytes
     //
-    final byte[] getNullTerminatedBytes() {
+    final byte[] getNullTerminatedBytes()
+    {
 
-        int i   = this.position;
+        int i = this.position;
         int len = 0;
 
-        while (this.byteBuffer[i] != 0 && i < getBufLength()) {
+        while (this.byteBuffer[i] != 0 && i < getBufLength())
+        {
             len++;
             i++;
         }
@@ -138,24 +156,30 @@ class Buffer {
         return b;
     }
 
-    final void clear() {
+    final void clear()
+    {
         this.position = MysqlIO.HEADER_LENGTH;
     }
 
-    final void dump() {
+    final void dump()
+    {
 
-        int p    = 0;
+        int p = 0;
         int rows = getBufLength() / 8;
 
-        for (int i = 0; i < rows; i++) {
+        for (int i = 0; i < rows; i++)
+        {
 
             int ptemp = p;
 
-            for (int j = 0; j < 8; j++) {
+            for (int j = 0; j < 8; j++)
+            {
 
-                String hexVal = Integer.toHexString((int) this.byteBuffer[ptemp]);
+                String hexVal = Integer.toHexString(
+                                        (int)this.byteBuffer[ptemp]);
 
-                if (hexVal.length() == 1) {
+                if (hexVal.length() == 1)
+                {
                     hexVal = "0" + hexVal;
                 }
 
@@ -165,11 +189,15 @@ class Buffer {
 
             System.out.print("    ");
 
-            for (int j = 0; j < 8; j++) {
+            for (int j = 0; j < 8; j++)
+            {
 
-                if (this.byteBuffer[p] > 32 && this.byteBuffer[p] < 127) {
-                    System.out.print((char) this.byteBuffer[p] + " ");
-                } else {
+                if (this.byteBuffer[p] > 32 && this.byteBuffer[p] < 127)
+                {
+                    System.out.print((char)this.byteBuffer[p] + " ");
+                }
+                else
+                {
                     System.out.print(". ");
                 }
 
@@ -181,11 +209,13 @@ class Buffer {
 
         int n = 0;
 
-        for (int i = p; i < getBufLength(); i++) {
+        for (int i = p; i < getBufLength(); i++)
+        {
 
-            String hexVal = Integer.toHexString((int) this.byteBuffer[i]);
+            String hexVal = Integer.toHexString((int)this.byteBuffer[i]);
 
-            if (hexVal.length() == 1) {
+            if (hexVal.length() == 1)
+            {
                 hexVal = "0" + hexVal;
             }
 
@@ -193,17 +223,22 @@ class Buffer {
             n++;
         }
 
-        for (int i = n; i < 8; i++) {
+        for (int i = n; i < 8; i++)
+        {
             System.out.print("   ");
         }
 
         System.out.print("    ");
 
-        for (int i = p; i < getBufLength(); i++) {
+        for (int i = p; i < getBufLength(); i++)
+        {
 
-            if (this.byteBuffer[i] > 32 && this.byteBuffer[i] < 127) {
-                System.out.print((char) this.byteBuffer[i] + " ");
-            } else {
+            if (this.byteBuffer[i] > 32 && this.byteBuffer[i] < 127)
+            {
+                System.out.print((char)this.byteBuffer[i] + " ");
+            }
+            else
+            {
                 System.out.print(". ");
             }
         }
@@ -211,112 +246,127 @@ class Buffer {
         System.out.println();
     }
 
-    final void ensureCapacity(int additional_data) {
+    final void ensureCapacity(int additional_data)
+                       throws SQLException
+    {
 
-        if ((this.position + additional_data) > getBufLength()) {
+        if ((this.position + additional_data) > getBufLength())
+        {
 
-            int newLength = (int) (getBufLength() * 1.25);
+            int newLength = (int)(getBufLength() * 1.25);
 
-            if (newLength < (getBufLength() + additional_data)) {
-                newLength = getBufLength() + (int) (additional_data * 1.25);
+            if (newLength < (getBufLength() + additional_data))
+            {
+                newLength = getBufLength() + (int)(additional_data * 1.25);
             }
 
             if (getMaxLength() != NO_LENGTH_LIMIT && 
-                (newLength > getMaxLength())) {
-                throw new IllegalArgumentException("Packet is larger than max_allowed_packet from server configuration of " + 
-                                                   getMaxLength() + 
-                                                   " bytes");
+                (newLength > getMaxLength()))
+            {
+                throw new PacketTooBigException(newLength, getMaxLength());
             }
 
             byte[] newBytes = new byte[newLength];
-            System.arraycopy(this.byteBuffer, 0, newBytes, 0, this.byteBuffer.length);
+            System.arraycopy(this.byteBuffer, 0, newBytes, 0, 
+                             this.byteBuffer.length);
             this.byteBuffer = newBytes;
             setBufLength(this.byteBuffer.length);
         }
     }
 
     // For MySQL servers > 3.22.5
-    final long newReadLength() {
+    final long newReadLength()
+    {
 
         int sw = this.byteBuffer[this.position++] & 0xff;
 
-        switch (sw) {
+        switch (sw)
+        {
 
             case 251:
-                return (long) 0;
+                return (long)0;
 
             case 252:
-                return (long) readInt();
+                return (long)readInt();
 
             case 253:
-                return (long) readLongInt();
+                return (long)readLongInt();
 
             case 254: // changed for 64 bit lengths
-                return (long) readLongLong();
+                return (long)readLongLong();
 
             default:
-                return (long) sw;
+                return (long)sw;
         }
     }
 
-    final byte readByte() {
+    final byte readByte()
+    {
 
         return this.byteBuffer[this.position++];
     }
 
     // Read null-terminated string (native)
-    final byte[] readByteArray() {
+    final byte[] readByteArray()
+    {
 
         return getNullTerminatedBytes();
     }
 
-    final long readFieldLength() {
+    final long readFieldLength()
+    {
 
         int sw = this.byteBuffer[this.position++] & 0xff;
 
-        switch (sw) {
+        switch (sw)
+        {
 
             case 251:
                 return NULL_LENGTH;
 
             case 252:
-                return (long) readInt();
+                return (long)readInt();
 
             case 253:
-                return (long) readLongInt();
+                return (long)readLongInt();
 
             case 254:
-                return (long) readLong();
+                return (long)readLong();
 
             default:
-                return (long) sw;
+                return (long)sw;
         }
     }
 
     // 2000-06-05 Changed
-    final int readInt() {
+    final int readInt()
+    {
 
         byte[] b = this.byteBuffer; // a little bit optimization
 
-        return (b[this.position++] & 0xff) | ((b[this.position++] & 0xff) << 8);
+        return (b[this.position++] & 0xff) | 
+               ((b[this.position++] & 0xff) << 8);
     }
 
     // Read given-length string (native)
-    final byte[] readLenByteArray() {
+    final byte[] readLenByteArray()
+    {
 
         long len = this.readFieldLength();
 
-        if (len == NULL_LENGTH) {
+        if (len == NULL_LENGTH)
+        {
 
             return null;
         }
 
-        if (len == 0) {
+        if (len == 0)
+        {
 
             return new byte[0];
         }
 
-        return getBytes((int) len);
+        return getBytes((int)len);
     }
 
     //
@@ -326,81 +376,91 @@ class Buffer {
     // quickly be thrown away, we do this by
     // hand instead of calling getBytes()
     //
-    final String readLenString() {
+    final String readLenString()
+    {
 
         long len = this.readFieldLength();
 
-        if (len == NULL_LENGTH) {
+        if (len == NULL_LENGTH)
+        {
 
             return null;
         }
 
-        if (len == 0) {
+        if (len == 0)
+        {
 
             return "";
         }
 
-        String S = new String(this.byteBuffer, this.position, (int) len);
+        String S = new String(this.byteBuffer, this.position, (int)len);
         this.position += len; // update cursor
 
         return S;
     }
 
-    final long readLength() {
+    final long readLength()
+    {
 
         int sw = this.byteBuffer[this.position++] & 0xff;
 
-        switch (sw) {
+        switch (sw)
+        {
 
             case 251:
-                return (long) 0;
+                return (long)0;
 
             case 252:
-                return (long) readInt();
+                return (long)readInt();
 
             case 253:
-                return (long) readLongInt();
+                return (long)readLongInt();
 
             case 254:
-                return (long) readLong();
+                return (long)readLong();
 
             default:
-                return (long) sw;
+                return (long)sw;
         }
     }
 
     // 2000-06-05 Fixed
-    final long readLong() {
+    final long readLong()
+    {
 
         byte[] b = this.byteBuffer;
 
-        return (b[this.position++] & 0xff) | ((b[this.position++] & 0xff) << 8) | 
+        return (b[this.position++] & 0xff) | 
+               ((b[this.position++] & 0xff) << 8) | 
                ((b[this.position++] & 0xff) << 16) | 
                ((b[this.position++] & 0xff) << 24);
     }
 
     // 2000-06-05 Changed
-    final int readLongInt() {
+    final int readLongInt()
+    {
 
         byte[] b = this.byteBuffer;
 
-        return (b[this.position++] & 0xff) | ((b[this.position++] & 0xff) << 8) | 
+        return (b[this.position++] & 0xff) | 
+               ((b[this.position++] & 0xff) << 8) | 
                ((b[this.position++] & 0xff) << 16);
     }
 
     // 2000-06-05 Fixed
-    final long readLongLong() {
+    final long readLongLong()
+    {
 
         byte[] b = this.byteBuffer;
 
-        return (long) (b[this.position++] & 0xff) | 
-               ((long) (b[this.position++] & 0xff) << 8) | 
-               ((long) (b[this.position++] & 0xff) << 16) | 
-               ((long) (b[this.position++] & 0xff) << 24) | 
-               ((long) (b[this.position++] & 0xff) << 32) | 
-               ((long) (b[this.position++] & 0xff) << 40) | 
-               ((long) (b[this.position++] & 0xff) << 48) | 
-               ((long) (b[this.position++] & 0xff) << 56);
+        return (long)(b[this.position++] & 0xff) | 
+               ((long)(b[this.position++] & 0xff) << 8) | 
+               ((long)(b[this.position++] & 0xff) << 16) | 
+               ((long)(b[this.position++] & 0xff) << 24) | 
+               ((long)(b[this.position++] & 0xff) << 32) | 
+               ((long)(b[this.position++] & 0xff) << 40) | 
+               ((long)(b[this.position++] & 0xff) << 48) | 
+               ((long)(b[this.position++] & 0xff) << 56);
     }
 
     //
@@ -409,12 +469,14 @@ class Buffer {
     // To avoid alloc'ing a new byte array, we
     // do this by hand, rather than calling getNullTerminatedBytes()
     //
-    final String readString() {
+    final String readString()
+    {
 
-        int i   = this.position;
+        int i = this.position;
         int len = 0;
 
-        while (this.byteBuffer[i] != 0 && i < getBufLength()) {
+        while (this.byteBuffer[i] != 0 && i < getBufLength())
+        {
             len++;
             i++;
         }
@@ -429,12 +491,14 @@ class Buffer {
     // Read a null-terminated string, but don't actually do anything with it
     // (avoiding allocation, but needed for protocol support
     //
-    final void readStringNoop() {
+    final void readStringNoop()
+    {
 
-        int i   = this.position;
+        int i = this.position;
         int len = 0;
 
-        while (this.byteBuffer[i] != 0 && i < getBufLength()) {
+        while (this.byteBuffer[i] != 0 && i < getBufLength())
+        {
             len++;
             i++;
         }
@@ -443,11 +507,13 @@ class Buffer {
     }
 
     // Read n bytes depending
-    final int readnBytes() {
+    final int readnBytes()
+    {
 
         int sw = this.byteBuffer[this.position++] & 0xff;
 
-        switch (sw) {
+        switch (sw)
+        {
 
             case 1:
                 return this.byteBuffer[this.position++] & 0xff;
@@ -459,19 +525,22 @@ class Buffer {
                 return this.readLongInt();
 
             case 4:
-                return (int) this.readLong();
+                return (int)this.readLong();
 
             default:
                 return 255;
         }
     }
 
-    final void writeByte(byte b) {
+    final void writeByte(byte b)
+    {
         this.byteBuffer[this.position++] = b;
     }
 
     // Write a byte array
-    final void writeBytesNoNull(byte[] Bytes) {
+    final void writeBytesNoNull(byte[] Bytes)
+                         throws SQLException
+    {
 
         int len = Bytes.length;
         ensureCapacity(len);
@@ -480,84 +549,99 @@ class Buffer {
     }
 
     // 2000-06-05 Changed
-    final void writeInt(int i) {
+    final void writeInt(int i)
+    {
 
         byte[] b = this.byteBuffer;
-        b[this.position++] = (byte) (i & 0xff);
-        b[this.position++] = (byte) (i >>> 8);
+        b[this.position++] = (byte)(i & 0xff);
+        b[this.position++] = (byte)(i >>> 8);
     }
 
     // 2000-06-05 Changed
-    final void writeLong(long i) {
+    final void writeLong(long i)
+    {
 
         byte[] b = this.byteBuffer;
-        b[this.position++] = (byte) (i & 0xff);
-        b[this.position++] = (byte) (i >>> 8);
-        b[this.position++] = (byte) (i >>> 16);
-        b[this.position++] = (byte) (i >>> 24);
+        b[this.position++] = (byte)(i & 0xff);
+        b[this.position++] = (byte)(i >>> 8);
+        b[this.position++] = (byte)(i >>> 16);
+        b[this.position++] = (byte)(i >>> 24);
     }
 
     // 2000-06-05 Changed
-    final void writeLongInt(int i) {
+    final void writeLongInt(int i)
+    {
 
         byte[] b = this.byteBuffer;
-        b[this.position++] = (byte) (i & 0xff);
-        b[this.position++] = (byte) (i >>> 8);
-        b[this.position++] = (byte) (i >>> 16);
+        b[this.position++] = (byte)(i & 0xff);
+        b[this.position++] = (byte)(i >>> 8);
+        b[this.position++] = (byte)(i >>> 16);
     }
 
     // Write null-terminated string
-    final void writeString(String s) {
+    final void writeString(String s)
+                    throws SQLException
+    {
         writeStringNoNull(s);
         this.byteBuffer[this.position++] = 0;
     }
 
     // Write string, with no termination
-    final void writeStringNoNull(String s) {
+    final void writeStringNoNull(String s)
+                          throws SQLException
+    {
 
         int len = s.length();
         ensureCapacity(len);
 
-        for (int i = 0; i < len; i++) {
-            this.byteBuffer[this.position++] = (byte) s.charAt(i);
+        for (int i = 0; i < len; i++)
+        {
+            this.byteBuffer[this.position++] = (byte)s.charAt(i);
         }
     }
 
     // Write a String using the specified character
     // encoding
     final void writeStringNoNull(String s, String encoding)
-                          throws java.io.UnsupportedEncodingException {
+                          throws UnsupportedEncodingException, SQLException
+    {
 
-        byte[] b   = s.getBytes(encoding);
-        int    len = b.length;
+        byte[] b = s.getBytes(encoding);
+        int len = b.length;
         ensureCapacity(len);
         System.arraycopy(b, 0, this.byteBuffer, this.position, len);
         this.position += len;
     }
 
-    void setBufLength(int bufLength) {
+    void setBufLength(int bufLength)
+    {
         this.bufLength = bufLength;
     }
 
-    int getBufLength() {
+    int getBufLength()
+    {
 
         return bufLength;
     }
 
-    void setMaxLength(int maxLength) {
+    void setMaxLength(int maxLength)
+    {
         this.maxLength = maxLength;
     }
 
-    int getMaxLength() {
+    int getMaxLength()
+    {
 
         return maxLength;
     }
 
-    void setSendLength(int sendLength) {
+    void setSendLength(int sendLength)
+    {
         this.sendLength = sendLength;
     }
 
-    int getSendLength() {
+    int getSendLength()
+    {
 
         return this.sendLength;
     }
