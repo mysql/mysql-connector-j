@@ -16,7 +16,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
    
  */
-
 package com.mysql.jdbc;
 
 import java.sql.DriverPropertyInfo;
@@ -24,6 +23,7 @@ import java.sql.SQLException;
 
 import java.util.Properties;
 import java.util.StringTokenizer;
+
 
 /**
  * The Java SQL framework allows for multiple database drivers.  Each
@@ -58,23 +58,28 @@ public class Driver
     //
     // Version Info
     //
-    static final int _MAJORVERSION = 2;
-    static final int _MINORVERSION = 0;
+    static final int MAJORVERSION = 3;
+    static final int MINORVERSION = 0;
 
     //~ Initializers ..........................................................
 
     //
     // Register ourselves with the DriverManager
     //
-    static {
+    static
+    {
 
-        try {
+        try
+        {
             java.sql.DriverManager.registerDriver(new Driver());
-        } catch (java.sql.SQLException E) {
+        }
+        catch (java.sql.SQLException E)
+        {
             throw new RuntimeException("Can't register driver!");
         }
 
-        if (debug) {
+        if (debug)
+        {
             Debug.trace("ALL");
         }
     }
@@ -103,7 +108,7 @@ public class Driver
     public int getMajorVersion()
     {
 
-        return _MAJORVERSION;
+        return MAJORVERSION;
     }
 
     /**
@@ -114,7 +119,7 @@ public class Driver
     public int getMinorVersion()
     {
 
-        return _MINORVERSION;
+        return MINORVERSION;
     }
 
     /**
@@ -140,77 +145,78 @@ public class Driver
     {
         info = parseURL(url, info);
 
-        DriverPropertyInfo HostProp = new DriverPropertyInfo("HOST", 
+        DriverPropertyInfo hostProp = new DriverPropertyInfo("HOST", 
                                                              info.getProperty(
                                                                      "HOST"));
-        HostProp.required          = true;
-        HostProp.description       = "Hostname of MySQL Server";
+        hostProp.required = true;
+        hostProp.description = "Hostname of MySQL Server";
 
-        DriverPropertyInfo PortProp = new DriverPropertyInfo("PORT", 
+        DriverPropertyInfo portProp = new DriverPropertyInfo("PORT", 
                                                              info.getProperty(
                                                                      "PORT", 
                                                                      "3306"));
-        PortProp.required          = false;
-        PortProp.description       = "Port number of MySQL Server";
+        portProp.required = false;
+        portProp.description = "Port number of MySQL Server";
 
-        DriverPropertyInfo DBProp  = new DriverPropertyInfo("DBNAME", 
-                                                            info.getProperty(
-                                                                    "DBNAME"));
-        DBProp.required            = false;
-        DBProp.description         = "Database name";
+        DriverPropertyInfo dbProp = new DriverPropertyInfo("DBNAME", 
+                                                           info.getProperty(
+                                                                   "DBNAME"));
+        dbProp.required = false;
+        dbProp.description = "Database name";
 
-        DriverPropertyInfo UserProp = new DriverPropertyInfo("user", 
+        DriverPropertyInfo userProp = new DriverPropertyInfo("user", 
                                                              info.getProperty(
                                                                      "user"));
-        UserProp.required          = true;
-        UserProp.description       = "Username to authenticate as";
+        userProp.required = true;
+        userProp.description = "Username to authenticate as";
 
-        DriverPropertyInfo PasswordProp = new DriverPropertyInfo("password", 
+        DriverPropertyInfo passwordProp = new DriverPropertyInfo("password", 
                                                                  info.getProperty(
                                                                          "password"));
-        PasswordProp.required      = true;
-        PasswordProp.description   = "Password to use for authentication";
+        passwordProp.required = true;
+        passwordProp.description = "Password to use for authentication";
 
-        DriverPropertyInfo AutoReconnect = new DriverPropertyInfo(
+        DriverPropertyInfo autoReconnect = new DriverPropertyInfo(
                                                    "autoReconnect", 
                                                    info.getProperty(
                                                            "autoReconnect", 
                                                            "false"));
-        AutoReconnect.required     = false;
-        AutoReconnect.choices      = new String[] { "true", "false" };
-        AutoReconnect.description  = "Should the driver try to re-establish bad connections?";
+        autoReconnect.required = false;
+        autoReconnect.choices = new String[] { "true", "false" };
+        autoReconnect.description = "Should the driver try to re-establish bad connections?";
 
-        DriverPropertyInfo MaxReconnects = new DriverPropertyInfo(
+        DriverPropertyInfo maxReconnects = new DriverPropertyInfo(
                                                    "maxReconnects", 
                                                    info.getProperty(
                                                            "maxReconnects", 
                                                            "3"));
-        MaxReconnects.required     = false;
-        MaxReconnects.description  = "Maximum number of reconnects to attempt if autoReconnect is true";
+        maxReconnects.required = false;
+        maxReconnects.description = "Maximum number of reconnects to attempt if autoReconnect is true";
         ;
 
-        DriverPropertyInfo InitialTimeout = new DriverPropertyInfo(
+        DriverPropertyInfo initialTimeout = new DriverPropertyInfo(
                                                     "initialTimeout", 
                                                     info.getProperty(
                                                             "initialTimeout", 
                                                             "2"));
-        InitialTimeout.required    = false;
-        InitialTimeout.description = "Initial timeout (seconds) to wait between failed connections";
+        initialTimeout.required = false;
+        initialTimeout.description = "Initial timeout (seconds) to wait between failed connections";
 
         DriverPropertyInfo profileSql = new DriverPropertyInfo("profileSql", 
                                                                info.getProperty(
                                                                        "profileSql", 
                                                                        "false"));
-        profileSql.required    = false;
+        profileSql.required = false;
         profileSql.description = "Trace queries and their execution/fetch times on STDERR (true/false) defaults to false";
         ;
 
-        DriverPropertyInfo[] Dpi = {
-            HostProp, PortProp, DBProp, UserProp, PasswordProp, AutoReconnect, 
-            MaxReconnects, InitialTimeout, profileSql
+        DriverPropertyInfo[] dpi = 
+        {
+            hostProp, portProp, dbProp, userProp, passwordProp, autoReconnect, 
+            maxReconnects, initialTimeout, profileSql
         };
 
-        return Dpi;
+        return dpi;
     }
 
     /**
@@ -223,14 +229,17 @@ public class Driver
      * @return true if this driver accepts the given URL
      * @exception java.sql.SQLException if a database-access error occurs
      */
-    public synchronized boolean acceptsURL(String Url)
+    public synchronized boolean acceptsURL(String url)
                                     throws java.sql.SQLException
     {
 
-        if (parseURL(Url, null) == null) {
+        if (parseURL(url, null) == null)
+        {
 
             return false;
-        } else {
+        }
+        else
+        {
 
             return true;
         }
@@ -273,25 +282,31 @@ public class Driver
 
         Properties props = null;
 
-        if ((props = parseURL(url, info)) == null) {
+        if ((props = parseURL(url, info)) == null)
+        {
 
             return null;
-        } else {
+        }
+        else
+        {
 
-            try {
+            try
+            {
 
                 Connection newConn = new com.mysql.jdbc.Connection();
                 newConn.connectionInit(host(props), port(props), props, 
                                        database(props), url, this);
 
                 return (java.sql.Connection)newConn;
-            } // Don't wrap SQLExceptions, throw 
-            catch (SQLException sqlEx) {
+            } // Don't wrap SQLExceptions, throw
+            catch (SQLException sqlEx)
+            {
 
                 // them un-changed.
                 throw sqlEx;
             }
-             catch (Exception ex) {
+            catch (Exception ex)
+            {
                 throw new SQLException("Cannot load connection class because of underlying exception: '" + 
                                        ex.toString() + "'.", "08001");
             }
@@ -362,216 +377,277 @@ public class Driver
     // This is a new URL-parser. This file no longer contains any
     // Postgresql code.
     //
-    Properties parseURL(String Url, Properties Defaults)
+    Properties parseURL(String url, Properties defaults)
                  throws java.sql.SQLException
     {
 
-        Properties URLProps = new Properties(Defaults);
+        Properties urlProps = new Properties(defaults);
 
-        if (Url == null) {
+        if (url == null)
+        {
 
             return null;
-        } else {
+        }
+        else
+        {
 
             /*
             * Parse parameters after the ? in the URL and remove
             * them from the original URL.
             */
-            int index = Url.indexOf("?");
+            int index = url.indexOf("?");
 
-            if (index != -1) {
+            if (index != -1)
+            {
 
-                String ParamString = Url.substring(index + 1, Url.length());
-                Url = Url.substring(0, index);
+                String paramString = url.substring(index + 1, url.length());
+                url = url.substring(0, index);
 
-                StringTokenizer QueryParams = new StringTokenizer(ParamString, 
+                StringTokenizer queryParams = new StringTokenizer(paramString, 
                                                                   "&");
 
-                while (QueryParams.hasMoreTokens()) {
+                while (queryParams.hasMoreTokens())
+                {
 
-                    StringTokenizer VP    = new StringTokenizer(QueryParams.nextToken(), 
-                                                                "=");
-                    String          Param = "";
+                    StringTokenizer vp = new StringTokenizer(queryParams.nextToken(), 
+                                                             "=");
+                    String param = "";
 
-                    if (VP.hasMoreTokens()) {
-                        Param = VP.nextToken();
+                    if (vp.hasMoreTokens())
+                    {
+                        param = vp.nextToken();
                     }
 
-                    String Value = "";
+                    String value = "";
 
-                    if (VP.hasMoreTokens()) {
-                        Value = VP.nextToken();
+                    if (vp.hasMoreTokens())
+                    {
+                        value = vp.nextToken();
                     }
 
-                    if (Value.length() > 0 && Param.length() > 0) {
-                        URLProps.put(Param, Value);
+                    if (value.length() > 0 && param.length() > 0)
+                    {
+                        urlProps.put(param, value);
                     }
                 }
             }
 
-            StringTokenizer ST = new StringTokenizer(Url, ":/", true);
+            StringTokenizer st = new StringTokenizer(url, ":/", true);
 
-            if (ST.hasMoreTokens()) {
+            if (st.hasMoreTokens())
+            {
 
-                String Protocol = ST.nextToken();
+                String protocol = st.nextToken();
 
-                if (Protocol != null) {
+                if (protocol != null)
+                {
 
-                    if (!Protocol.toLowerCase().equals("jdbc")) {
+                    if (!protocol.toLowerCase().equals("jdbc"))
+                    {
 
                         return null;
                     }
-                } else {
+                }
+                else
+                {
 
                     return null;
                 }
-            } else {
+            }
+            else
+            {
 
                 return null;
             }
 
             // Look for the colon following 'jdbc'
-            if (ST.hasMoreTokens()) {
+            if (st.hasMoreTokens())
+            {
 
-                String Colon = ST.nextToken();
+                String colon = st.nextToken();
 
-                if (Colon != null) {
+                if (colon != null)
+                {
 
-                    if (!Colon.equals(":")) {
+                    if (!colon.equals(":"))
+                    {
 
                         return null;
                     }
-                } else {
+                }
+                else
+                {
 
                     return null;
                 }
-            } else {
+            }
+            else
+            {
 
                 return null;
             }
 
             // Look for sub-protocol to be mysql
-            if (ST.hasMoreTokens()) {
+            if (st.hasMoreTokens())
+            {
 
-                String SubProto = ST.nextToken();
+                String subProto = st.nextToken();
 
-                if (SubProto != null) {
+                if (subProto != null)
+                {
 
-                    if (!SubProto.toLowerCase().equals("mysql")) {
+                    if (!subProto.toLowerCase().equals("mysql"))
+                    {
 
                         return null;
                     }
-                } else {
+                }
+                else
+                {
 
                     return null;
                 }
-            } else {
+            }
+            else
+            {
 
                 return null;
             }
 
             // Look for the colon following 'mysql'
-            if (ST.hasMoreTokens()) {
+            if (st.hasMoreTokens())
+            {
 
-                String Colon = ST.nextToken();
+                String colon = st.nextToken();
 
-                if (Colon != null) {
+                if (colon != null)
+                {
 
-                    if (!Colon.equals(":")) {
+                    if (!colon.equals(":"))
+                    {
 
                         return null;
                     }
-                } else {
+                }
+                else
+                {
 
                     return null;
                 }
-            } else {
+            }
+            else
+            {
 
                 return null;
             }
 
             // Look for the "//" of the URL
-            if (ST.hasMoreTokens()) {
+            if (st.hasMoreTokens())
+            {
 
-                String Slash  = ST.nextToken();
-                String Slash2 = "";
+                String slash = st.nextToken();
+                String slash2 = "";
 
-                if (ST.hasMoreTokens()) {
-                    Slash2 = ST.nextToken();
+                if (st.hasMoreTokens())
+                {
+                    slash2 = st.nextToken();
                 }
 
-                if (Slash != null && Slash2 != null) {
+                if (slash != null && slash2 != null)
+                {
 
-                    if (!Slash.equals("/") && !Slash2.equals("/")) {
+                    if (!slash.equals("/") && !slash2.equals("/"))
+                    {
 
                         return null;
                     }
-                } else {
+                }
+                else
+                {
 
                     return null;
                 }
-            } else {
+            }
+            else
+            {
 
                 return null;
             }
 
             // Okay the next one is a candidate for many things
-            if (ST.hasMoreTokens()) {
+            if (st.hasMoreTokens())
+            {
 
-                String Token = ST.nextToken();
+                String token = st.nextToken();
 
-                if (Token != null) {
+                if (token != null)
+                {
 
-                    if (!Token.equals(":") && !Token.equals("/")) {
+                    if (!token.equals(":") && !token.equals("/"))
+                    {
 
                         // Must be hostname
-                        URLProps.put("HOST", Token);
+                        urlProps.put("HOST", token);
 
-                        if (ST.hasMoreTokens()) {
-                            Token = ST.nextToken();
-                        } else {
+                        if (st.hasMoreTokens())
+                        {
+                            token = st.nextToken();
+                        }
+                        else
+                        {
 
                             return null;
                         }
                     }
 
                     // Check for Port spec
-                    if (Token.equals(":")) {
+                    if (token.equals(":"))
+                    {
 
-                        if (ST.hasMoreTokens()) {
-                            Token = ST.nextToken();
-                            URLProps.put("PORT", Token);
+                        if (st.hasMoreTokens())
+                        {
+                            token = st.nextToken();
+                            urlProps.put("PORT", token);
 
-                            if (ST.hasMoreTokens()) {
-                                Token = ST.nextToken();
+                            if (st.hasMoreTokens())
+                            {
+                                token = st.nextToken();
                             }
                         }
                     }
 
-                    if (Token.equals("/")) {
+                    if (token.equals("/"))
+                    {
 
-                        if (ST.hasMoreTokens()) {
-                            Token = ST.nextToken();
-                            URLProps.put("DBNAME", Token);
+                        if (st.hasMoreTokens())
+                        {
+                            token = st.nextToken();
+                            urlProps.put("DBNAME", token);
 
                             // We're done
-                            return URLProps;
-                        } else {
-                            URLProps.put("DBNAME", "");
+                            return urlProps;
+                        }
+                        else
+                        {
+                            urlProps.put("DBNAME", "");
 
-                            return URLProps;
+                            return urlProps;
                         }
                     }
-                } else {
+                }
+                else
+                {
 
                     return null;
                 }
-            } else {
+            }
+            else
+            {
 
                 return null;
             }
         }
 
-        return URLProps;
+        return urlProps;
     }
 }
