@@ -29,6 +29,7 @@ import java.lang.ref.SoftReference;
 
 import java.net.Socket;
 
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 
@@ -679,6 +680,8 @@ public class MysqlIO {
             if (!connection.useSSL()) {
 
                 if ((serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
+                    clientParam |= CLIENT_SECURE_CONNECTION;
+                    secureAuth(packLength, clientParam, user, password);
                 } else {
                 
                     // Passwords can be 16 chars long
@@ -1699,6 +1702,9 @@ public class MysqlIO {
             } else {
                 packet.writeLongInt(packetLen - headerLength);
                 packet.writeByte(this.packetSequence);
+                System.out.println("Sending: ");
+                packet.dump();
+                System.out.println();
                 this.mysqlOutput.write(packet.getByteBuffer(), 0, packetLen);
                 this.mysqlOutput.flush();
             }
@@ -1858,8 +1864,9 @@ public class MysqlIO {
     private void secureAuth(int packLength, 
                              int clientParam, 
                              String user,
-                             String password) throws SQLException {
+                             String password) throws SQLException, IOException {
         // Passwords can be 16 chars long
+        
          Buffer packet = new Buffer(packLength);
          packet.writeInt(clientParam);
          packet.writeLongInt(packLength);
@@ -1876,6 +1883,63 @@ public class MysqlIO {
             packet.writeString("");
         }
         
-        //send(packet);
+        packet.dump();
+        
+        send(packet, packLength);
+        
+        Buffer b = readPacket();
+        
+        System.out.println("\nReading stage 1 packet...\n");
+        b.dump();
+        
+  
+        b.setPosition(0);
+        byte[] replyAsBytes = b.getByteBuffer();
+        
+        if (replyAsBytes.length == 25 && replyAsBytes[0] != 0) {
+            // Old passwords will have '*' at the first byte of hash */
+            if (replyAsBytes[0] != '*') {
+                /* Build full password hash as it is required to decode scramble */
+                //password_hash_stage1(buff, passwd);
+                /* Store copy as we'll need it later */
+                //memcpy(password_hash,buff,SCRAMBLE41_LENGTH);
+                /* Finally hash complete password using hash we got from server */
+                //password_hash_stage2(password_hash,net->read_pos);
+                /* Decypt and store scramble 4 = hash for stage2 */
+                //password_crypt(net->read_pos+4,mysql->scramble_buff,password_hash,
+                 //          SCRAMBLE41_LENGTH);
+                //mysql->scramble_buff[SCRAMBLE41_LENGTH]=0;
+                /* Encode scramble with password. Recycle buffer */
+                //password_crypt(mysql->scramble_buff,buff,buff,SCRAMBLE41_LENGTH);
+            } else {
+                try {
+                /* Create password to decode scramble */
+                
+                byte[] passwordHash = Password.createKeyFromOldPassword(password);
+                
+                /* Decypt and store scramble 4 = hash for stage2 */
+                byte[] scrambleBuf = new byte[20];
+                byte[] origPassword = new byte[20];
+                System.arraycopy(replyAsBytes, 4, origPassword, 0, 20);
+                Password.passwordCrypt(origPassword, scrambleBuf, passwordHash, 20);
+                 ////     SCRAMBLE41_LENGTH);
+                //mysql->scramble_buff[SCRAMBLE41_LENGTH]=0;
+                /* Finally scramble decoded scramble with password */
+                String scrambledPassword = Util.newCrypt(password, new String(scrambleBuf));
+                
+                Buffer packet2 = new Buffer(packLength);
+                packet2.writeString(scrambledPassword);
+                this.packetSequence++;
+                send(packet2, 24);
+                
+                b = readPacket();
+                b.dump();
+                System.out.println("foo");
+                
+                } catch (NoSuchAlgorithmException nse) {
+                    throw new SQLException("Failed to create message digest for authentication");
+                }
+            }  
+        }   
     }
 }
