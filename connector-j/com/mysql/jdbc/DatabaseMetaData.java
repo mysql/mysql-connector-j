@@ -22,7 +22,10 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 
 /**
@@ -2096,64 +2099,76 @@ public class DatabaseMetaData
      * @param table a table name
      * @return ResultSet each row is a primary key column description
      */
-    public java.sql.ResultSet getPrimaryKeys(String Catalog, String Schema, 
-                                             String Table)
+    public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, 
+                                             String table)
                                       throws java.sql.SQLException
     {
 
-        Field[] Fields = new Field[6];
-        Fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
-        Fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
-        Fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 255);
-        Fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
-        Fields[4] = new Field("", "KEY_SEQ", Types.SMALLINT, 5);
-        Fields[5] = new Field("", "PK_NAME", Types.CHAR, 32);
+        Field[] fields = new Field[6];
+        fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
+        fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
+        fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 255);
+        fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
+        fields[4] = new Field("", "KEY_SEQ", Types.SMALLINT, 5);
+        fields[5] = new Field("", "PK_NAME", Types.CHAR, 32);
 
-        String DB_Sub = "";
+        String dbSub = "";
 
-        if (Catalog != null) {
+        if (catalog != null) {
 
-            if (!Catalog.equals("")) {
-                DB_Sub = " FROM " + _quotedId + Catalog + _quotedId;
+            if (!catalog.equals("")) {
+                dbSub = " FROM " + _quotedId + catalog + _quotedId;
             }
         } else {
-            DB_Sub = " FROM " + _quotedId + _database + _quotedId;
+            dbSub = " FROM " + _quotedId + _database + _quotedId;
         }
 
-        if (Table == null) {
+        if (table == null) {
             throw new java.sql.SQLException("Table not specified.", "S1009");
         }
 
-        com.mysql.jdbc.ResultSet RS = _conn.execSQL(
-                                              "show keys from " + Table + 
-                                              DB_Sub, -1);
-        RS.setConnection(_conn);
+        com.mysql.jdbc.ResultSet rs = _conn.execSQL(
+                                              "show keys from " + table + 
+                                              dbSub, -1);
+        rs.setConnection(_conn);
 
-        ArrayList Tuples     = new ArrayList();
+        ArrayList tuples     = new ArrayList();
+        TreeMap   sortMap    = new TreeMap();
+        
         int       row_number = 1;
 
-        while (RS.next()) {
+        while (rs.next()) {
 
-            String KeyType = RS.getString("Key_name");
+            String keyType = rs.getString("Key_name");
 
-            if (KeyType != null) {
+            if (keyType != null) {
 
-                if (KeyType.toUpperCase().startsWith("PRI")) {
+                if (keyType.toUpperCase().startsWith("PRI")) {
 
-                    byte[][] Tuple = new byte[6][];
-                    Tuple[0] = (Catalog == null
-                                    ? new byte[0] : Catalog.getBytes());
-                    Tuple[1] = new byte[0];
-                    Tuple[2] = Table.getBytes();
-                    Tuple[3] = RS.getBytes("Column_name");
-                    Tuple[4] = s2b(RS.getString("Seq_in_index"));
-                    Tuple[5] = Tuple[3];
-                    Tuples.add(Tuple);
+                    byte[][] tuple = new byte[6][];
+                    tuple[0] = (catalog == null
+                                    ? new byte[0] : s2b(catalog));
+                    tuple[1] = new byte[0];
+                    tuple[2] = table.getBytes();
+                    String columnName = rs.getString("Column_name");
+                    tuple[3] = s2b(columnName);
+                    tuple[4] = s2b(rs.getString("Seq_in_index"));
+                    tuple[5] = s2b(keyType);
+                    
+                    sortMap.put(columnName, tuple);
                 }
             }
         }
-
-        return buildResultSet(Fields, Tuples, _conn);
+        
+        // Now pull out in column name sorted order
+        
+        Iterator sortedIterator = sortMap.values().iterator();
+        
+        while (sortedIterator.hasNext()) {
+        	tuples.add(sortedIterator.next());
+        }
+        
+        return buildResultSet(fields, tuples, _conn);
     }
 
     /**
