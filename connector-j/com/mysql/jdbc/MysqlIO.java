@@ -112,8 +112,6 @@ public class MysqlIO {
     private BufferedOutputStream mysqlOutput = null;
     private byte packetSequence = 0;
 
-    /** Current open, streaming result set (if any) */
-    private ResultSet pendingResultSet = null;
     private int port = 3306;
     private boolean profileSql = false;
     private byte protocolVersion = 0;
@@ -640,7 +638,9 @@ public class MysqlIO {
             // return FOUND rows
             clientParam |= CLIENT_FOUND_ROWS;
             
-            clientParam |= CLIENT_LOCAL_FILES;
+            if (this.connection.allowLoadLocalInfile()) {
+                clientParam |= CLIENT_LOCAL_FILES;
+            }
             
             if (isInteractiveClient) {
                 clientParam |= CLIENT_INTERACTIVE;
@@ -699,9 +699,7 @@ public class MysqlIO {
                                                this.mysqlConnection, this.host, 
                                                this.port, true);
 
-                String[] allowedProtocols = ((javax.net.ssl.SSLSocket) this.mysqlConnection).getSupportedProtocols();
-                String[] enabledProtocols = ((javax.net.ssl.SSLSocket) this.mysqlConnection).getEnabledProtocols();
-
+               
                 // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake
                 // which MySQL doesn't understand
                 ((javax.net.ssl.SSLSocket) this.mysqlConnection).setEnabledProtocols(
@@ -1252,13 +1250,7 @@ public class MysqlIO {
 
                     if (getServerMinorVersion() == minor) {
 
-                        if (getServerSubMinorVersion() >= subminor) {
-
-                            return true;
-                        } else {
-
-                            return false;
-                        }
+                        return (getServerSubMinorVersion() >= subminor);
                     } else {
 
                         // newer than major.minor
@@ -1448,7 +1440,7 @@ public class MysqlIO {
         
         // we don't look at packet sequence in this case
         //this.mysqlInput.skip(1);
-        int b = this.mysqlInput.read();
+        this.mysqlInput.read();
         
         // Read data
         byte[] buffer = new byte[packetLength + 1];
