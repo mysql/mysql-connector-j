@@ -16,6 +16,8 @@
       usernames, etc.), as well as clearing "sensitive" data structures
       when possible.
     - Fixed ResultSetMetaData.isSigned() for TINYINT and BIGINT.
+    - Charsets now automatically detected. Optimized code for single-byte
+      character set conversion.
 	
 07-31-02 - Version 3.0.0-dev
 
