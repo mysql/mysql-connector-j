@@ -47,6 +47,7 @@ public class Field {
     private byte[] buffer;
     private String fullName = null;
     private Connection connection = null;
+    private int precisionAdjustFactor = 0;
 
     //~ Constructors ..........................................................
 
@@ -89,10 +90,39 @@ public class Field {
         } else if (sqlType == java.sql.Types.VARBINARY && !isBinary) {
             sqlType = java.sql.Types.VARCHAR;
         }
+        
+        //
+        // Handle odd values for 'M' for floating point/decimal numbers
+        //
+        
+        if (!isUnsigned()) {
+            switch (this.mysqlType) {
+                
+                
+                case MysqlDefs.FIELD_TYPE_DECIMAL:
+                 this.precisionAdjustFactor = -1;
+                 break;
+                case MysqlDefs.FIELD_TYPE_DOUBLE:
+                case MysqlDefs.FIELD_TYPE_FLOAT:
+                 this.precisionAdjustFactor = 1;
+                 break;
+            }
+        } else {
+            switch (this.mysqlType) {
+                case MysqlDefs.FIELD_TYPE_DOUBLE:
+                case MysqlDefs.FIELD_TYPE_FLOAT:
+                 this.precisionAdjustFactor = 1;
+                 break;
+            }
+        }    
     }
 
     //~ Methods ...............................................................
 
+    public int getPrecisionAdjustFactor() {
+        return this.precisionAdjustFactor;
+    }
+    
     /**
      * DOCUMENT ME!
      * 

@@ -456,10 +456,10 @@ public class ResultSetMetaData
 
             if (f.getDecimals() > 0) {
 
-                return f.getLength() - 1;
+                return f.getLength() - 1 + f.getPrecisionAdjustFactor();
             }
 
-            return f.getLength();
+            return f.getLength() + f.getPrecisionAdjustFactor();
         }
 
         return 0;

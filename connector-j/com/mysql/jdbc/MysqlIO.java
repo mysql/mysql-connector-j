@@ -493,6 +493,7 @@ public class MysqlIO {
             }
 
             this.colDecimalNeedsBump = versionMeetsMinimum(3, 23, 0);
+            this.colDecimalNeedsBump = !versionMeetsMinimum(3, 23, 15); // guess? Not noted in changelog
             this.useNewUpdateCounts = versionMeetsMinimum(3, 22, 5);
 
             long threadId = buf.readLong();
@@ -1006,6 +1007,8 @@ public class MysqlIO {
                                         - fetchStartTime;
                 profileMsgBuf.append("result set fetch time:\t");
                 profileMsgBuf.append(fetchElapsedTime);
+                
+                System.err.println(profileMsgBuf.toString()); 
             }
 
             return results;
