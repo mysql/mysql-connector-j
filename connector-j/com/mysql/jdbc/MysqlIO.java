@@ -855,9 +855,6 @@ public class MysqlIO {
                       throws Exception {
         checkForOutstandingStreamingData();
 
-        Buffer resultPacket = null; // results of our query
-        byte statusCode; // query status code
-
         try {
 
             //
@@ -915,88 +912,7 @@ public class MysqlIO {
                                             0);
         }
 
-        try {
-
-            // Check return value, if we get a java.io.EOFException,
-            // the server has gone away. We'll pass it on up the
-            // exception chain and let someone higher up decide
-            // what to do (barf, reconnect, etc).
-            //Ret = readPacket();
-            resultPacket = reuseAndReadPacket(this.reusablePacket);
-            statusCode = resultPacket.readByte();
-        } catch (java.io.EOFException eofe) {
-            throw eofe;
-        } catch (Exception fallThru) {
-            throw new java.sql.SQLException(SQLError.get("08S01") + ": "
-                                            + fallThru.getClass().getName(), 
-                                            "08S01", 0);
-        }
-
-        try {
-
-            // Error handling
-            if (statusCode == (byte) 0xff) {
-
-                String errorMessage;
-                int errno = 2000;
-
-                if (this.protocolVersion > 9) {
-                    errno = resultPacket.readInt();
-                    errorMessage = resultPacket.readString();
-                    clearReceive();
-
-                    String xOpen = SQLError.mysqlToXOpen(errno);
-                    throw new java.sql.SQLException(SQLError.get(xOpen) + ": "
-                                                    + errorMessage, xOpen, 
-                                                    errno);
-                } else {
-                    errorMessage = resultPacket.readString();
-                    clearReceive();
-
-                    if (errorMessage.indexOf("Unknown column") != -1) {
-                        throw new java.sql.SQLException(SQLError.get("S0022")
-                                                        + ": " + errorMessage, 
-                                                        "S0022", -1);
-                    } else {
-                        throw new java.sql.SQLException(SQLError.get("S1000")
-                                                        + ": " + errorMessage, 
-                                                        "S1000", -1);
-                    }
-                }
-            } else if (statusCode == 0x00) {
-
-                if (command == MysqlDefs.CREATE_DB
-                    || command == MysqlDefs.DROP_DB) {
-
-                    java.sql.SQLWarning newWarning = new java.sql.SQLWarning(
-                                                             "Command="
-                                                             + command + ": ");
-
-                    if (this.warningChain != null) {
-                        newWarning.setNextException(this.warningChain);
-                    }
-
-                    this.warningChain = newWarning;
-                }
-            } else if (resultPacket.isLastDataPacket()) {
-
-                java.sql.SQLWarning newWarning = new java.sql.SQLWarning(
-                                                         "Command=" + command
-                                                         + ": ");
-
-                if (this.warningChain != null) {
-                    newWarning.setNextException(this.warningChain);
-                }
-
-                this.warningChain = newWarning;
-            }
-
-            return resultPacket;
-        } catch (IOException ioEx) {
-            throw new java.sql.SQLException(SQLError.get("08S01") + ": "
-                                            + ioEx.getClass().getName(), 
-                                            "08S01", 0);
-        }
+        return checkErrorPacket(command);
     }
 
     /**
@@ -1576,70 +1492,115 @@ public class MysqlIO {
         return buildResultSetWithUpdates(resultPacket);
     }
 
+	/**
+	 * Checks for errors in the reply packet, and if none, returns the reply
+	 * packet, ready for reading
+	 */ 
+	private Buffer checkErrorPacket() throws IOException, SQLException {
+		return checkErrorPacket(-1);
+	}
+	
     /** 
      * Checks for errors in the reply packet, and if none, returns the
      * reply packet, ready for reading
+     * 
+     * @param command the command being issued (if used)
+     * @throws IOException if an I/O problem occurs
+     * @throws SQLException if an error packet was received
      */
-	private Buffer checkErrorPacket() throws EOFException, SQLException {
+	private Buffer checkErrorPacket(int command) throws IOException, SQLException {
 		int statusCode = 0;
 		Buffer resultPacket = null;
 		
 		try {
-		
-		    // Check return value, if we get a java.io.EOFException,
-		    // the server has gone away. We'll pass it on up the
-		    // exception chain and let someone higher up decide
-		    // what to do (barf, reconnect, etc).
-		    //Ret = readPacket();
-		    resultPacket = reuseAndReadPacket(this.reusablePacket);
-		    statusCode = resultPacket.readByte();
+
+			// Check return value, if we get a java.io.EOFException,
+			// the server has gone away. We'll pass it on up the
+			// exception chain and let someone higher up decide
+			// what to do (barf, reconnect, etc).
+			
+			resultPacket = reuseAndReadPacket(this.reusablePacket);
+			statusCode = resultPacket.readByte();
 		} catch (java.io.EOFException eofe) {
-		    throw eofe;
+			throw eofe;
 		} catch (Exception fallThru) {
-		    throw new java.sql.SQLException(SQLError.get("08S01") + ": "
-		                                    + fallThru.getClass().getName(), 
-		                                    "08S01", 0);
+			throw new java.sql.SQLException(SQLError.get("08S01") + ": "
+											+ fallThru.getClass().getName(), 
+											"08S01", 0);
 		}
-		                                    
+
 		try {
-		
-		    // Error handling
-		    if (statusCode == (byte) 0xff) {
-		
-		        String errorMessage;
-		        int errno = 2000;
-		
-		        if (this.protocolVersion > 9) {
-		            errno = resultPacket.readInt();
-		            errorMessage = resultPacket.readString();
-		            clearReceive();
-		
-		            String xOpen = SQLError.mysqlToXOpen(errno);
-		            throw new java.sql.SQLException(SQLError.get(xOpen) + ": "
-		                                            + errorMessage, xOpen, 
-		                                            errno);
-		        } else {
-		            errorMessage = resultPacket.readString();
-		            clearReceive();
-		
-		            if (errorMessage.indexOf("Unknown column") != -1) {
-		                throw new java.sql.SQLException(SQLError.get("S0022")
-		                                                + ": " + errorMessage, 
-		                                                "S0022", -1);
-		            } else {
-		                throw new java.sql.SQLException(SQLError.get("S1000")
-		                                                + ": " + errorMessage, 
-		                                                "S1000", -1);
-		            }
-		        }
-            }
-		  
+
+			// Error handling
+			if (statusCode == (byte) 0xff) {
+
+				String serverErrorMessage;
+				int errno = 2000;
+
+				if (this.protocolVersion > 9) {
+					errno = resultPacket.readInt();
+					serverErrorMessage = resultPacket.readString();
+					
+					clearReceive();
+
+					StringBuffer errorBuf = new StringBuffer("Received error from mysql server: ");
+					errorBuf.append(serverErrorMessage);
+					
+					String xOpen = SQLError.mysqlToXOpen(errno);
+					throw new java.sql.SQLException(SQLError.get(xOpen) + ": "
+													+ errorBuf.toString(), xOpen, 
+													errno);
+				} else {
+					serverErrorMessage = resultPacket.readString();
+					clearReceive();
+
+					if (serverErrorMessage.indexOf("Unknown column") != -1) {
+						throw new java.sql.SQLException(SQLError.get("S0022")
+														+ ": " + serverErrorMessage, 
+														"S0022", -1);
+					} else {
+						StringBuffer errorBuf = new StringBuffer("Received error from mysql server: ");
+						errorBuf.append(serverErrorMessage);
+						
+						throw new java.sql.SQLException(SQLError.get("S1000")
+														+ ": " + errorBuf.toString(), 
+														"S1000", -1);
+					}
+				}
+			} else if (statusCode == 0x00) {
+
+				if (command == MysqlDefs.CREATE_DB
+					|| command == MysqlDefs.DROP_DB) {
+
+					java.sql.SQLWarning newWarning = new java.sql.SQLWarning(
+															 "Command="
+															 + command + ": ");
+
+					if (this.warningChain != null) {
+						newWarning.setNextException(this.warningChain);
+					}
+
+					this.warningChain = newWarning;
+				}
+			} else if (resultPacket.isLastDataPacket()) {
+
+				java.sql.SQLWarning newWarning = new java.sql.SQLWarning(
+														 "Command=" + command
+														 + ": ");
+
+				if (this.warningChain != null) {
+					newWarning.setNextException(this.warningChain);
+				}
+
+				this.warningChain = newWarning;
+			}
+
+			return resultPacket;
 		} catch (IOException ioEx) {
-		    throw new java.sql.SQLException(SQLError.get("08S01") + ": "
-		                                    + ioEx.getClass().getName(), 
-		                                    "08S01", 0);
+			throw new java.sql.SQLException(SQLError.get("08S01") + ": "
+											+ ioEx.getClass().getName(), 
+											"08S01", 0);
 		}
-		return resultPacket;
 	}
     
     /**
