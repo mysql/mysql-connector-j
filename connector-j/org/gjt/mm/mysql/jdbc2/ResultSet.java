@@ -1920,8 +1920,16 @@ public class ResultSet
 			throw new SQLException("Not on insert row");
 		}
 		else {
+			
 			_Inserter.executeUpdate();
-
+			
+			int numPrimaryKeys = 0;
+			
+			if (_PrimaryKeyIndicies != null)
+			{
+				numPrimaryKeys = _PrimaryKeyIndicies.size();
+			}
+			
 			long autoIncrementId = _Inserter.getLastInsertID();
 
 			int num_fields = Fields.length;
@@ -1936,7 +1944,9 @@ public class ResultSet
 					NewRow[i] = _Inserter.getBytes(i);
 				}
 
-				if (Fields[i].isAutoIncrement()) {
+				if (numPrimaryKeys == 1 && 
+				    Fields[i].isPrimaryKey() &&
+				    autoIncrementId > 0) {
 					NewRow[i] = String.valueOf(autoIncrementId).getBytes();
 				}
 			}
