@@ -282,7 +282,7 @@ public class LogicalHandle implements Connection
     */
     
     public boolean isClosed() throws java.sql.SQLException {
-        return closed;   
+        return (closed || mc.isClosed());   
     }
     
     /**
