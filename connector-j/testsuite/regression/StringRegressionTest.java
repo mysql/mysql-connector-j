@@ -176,6 +176,7 @@ public class StringRegressionTest
     public void testSingleByteConversion() throws Exception {
          testConversionForString("זרו טיעש");
          testConversionForString("Kaarle Äהnis Ilmari");
+         testConversionForString("באגדיטךםלמףעפץתשûח");
     }
     
     public void testUtf8Encoding() throws Exception {
