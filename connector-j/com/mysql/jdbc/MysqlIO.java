@@ -52,7 +52,7 @@ public class MysqlIO {
     //~ Instance/static variables .............................................
     static final int NULL_LENGTH = ~0;
     static final int COMP_HEADER_LENGTH = 3;
-    static final long MAX_THREE_BYTES = 255L * 255L * 255L;
+    
     static final int MIN_COMPRESS_LEN = 50;
     static final int HEADER_LENGTH = 4;
     private static int maxBufferSize = 65535;
@@ -64,7 +64,6 @@ public class MysqlIO {
     before '(' */
     private static final int CLIENT_LOCAL_FILES = 128; /* Can use LOAD DATA 
     LOCAL */
-
     /* Found instead of 
        affected rows */
     private static final int CLIENT_LONG_FLAG = 4; /* Get all column flags */
@@ -92,6 +91,8 @@ public class MysqlIO {
     private String host = null;
     private Inflater inflater = null;
     private int clientParam = 0;
+    private long maxThreeBytes = 255L * 255L * 255L;
+    private boolean useNewLargePackets = false;
 
     /** The connection to the server */
     private Socket mysqlConnection = null;
@@ -515,7 +516,7 @@ public class MysqlIO {
      *
      * Handles logging on, and handling initial connection errors.
      */
-    void init(String user, String password)
+    void doHandshake(String user, String password)
        throws java.sql.SQLException {
 
         String seed;
@@ -596,6 +597,14 @@ public class MysqlIO {
                 }
             }
 
+            if (versionMeetsMinimum(4, 0, 8)) {
+                this.maxThreeBytes = 256 * 256 * 256 - 1;
+                this.useNewLargePackets = true;
+            } else {
+                this.maxThreeBytes = 255 * 255 * 255;
+                this.useNewLargePackets = false;
+            }
+            
             this.colDecimalNeedsBump = versionMeetsMinimum(3, 23, 0);
             this.colDecimalNeedsBump = !versionMeetsMinimum(3, 23, 15); // guess? Not noted in changelog
             this.useNewUpdateCounts = versionMeetsMinimum(3, 22, 5);
@@ -679,10 +688,6 @@ public class MysqlIO {
 
             if (!connection.useSSL()) {
 
-                if ((serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
-                    clientParam |= CLIENT_SECURE_CONNECTION;
-                    secureAuth(packLength, clientParam, user, password);
-                } else {
                 
                     // Passwords can be 16 chars long
                     packet = new Buffer(packLength);
@@ -699,7 +704,7 @@ public class MysqlIO {
                     }
 
                     send(packet);
-                }
+                
             } else {
                 clientParam |= CLIENT_SSL;
                 packet = new Buffer(packLength);
@@ -1208,12 +1213,15 @@ public class MysqlIO {
     private final void clearReceive()
                              throws IOException {
 
+        /*
         int len = this.mysqlInput.available();
 
+        
         if (len > 0) {
 
             // _Mysql_Input.skipBytes(len);
         }
+        */
     }
 
     /**
@@ -1259,13 +1267,22 @@ public class MysqlIO {
 
         int[] dataStart = new int[columnCount];
         byte[][] rowData = new byte[columnCount][];
-        int offset = rowPacket.wasMultiPacket() ? HEADER_LENGTH + 1 : 0;
-
+        int offset = 0;
+        
+        if (rowPacket.wasMultiPacket()) {
+            if (useNewLargePackets) {
+                offset = HEADER_LENGTH;
+            } else {
+                offset = HEADER_LENGTH + 1;
+            }
+        }
+        
         if (!rowPacket.isLastDataPacket()) {
 
             for (int i = 0; i < columnCount; i++) {
 
                 int p = rowPacket.getPosition();
+                
                 dataStart[i] = p;
                 rowPacket.setPosition(
                         (int) rowPacket.readLength() + rowPacket.getPosition());
@@ -1402,8 +1419,8 @@ public class MysqlIO {
 
         boolean isMultiPacket = false;
 
-        if (packetLength == MAX_THREE_BYTES) {
-            reuse.setPosition((int) MAX_THREE_BYTES);
+        if (packetLength == maxThreeBytes) {
+            reuse.setPosition((int) maxThreeBytes);
 
             int packetEndPoint = packetLength;
 
@@ -1437,7 +1454,7 @@ public class MysqlIO {
                     firstMultiPkt = false;
                 }
 
-                if (packetLength == 1) {
+                if (packetLength == 1 || (this.useNewLargePackets && packetLength == 0)) {
 
                     break; // end of multipacket sequence
                 }
@@ -1641,7 +1658,7 @@ public class MysqlIO {
 
         
         
-        if (serverMajorVersion >= 4 && packetLen >= MAX_THREE_BYTES) {
+        if (serverMajorVersion >= 4 && packetLen >= maxThreeBytes) {
             sendSplitPackets(packet);
         } else {
 
@@ -1735,17 +1752,17 @@ public class MysqlIO {
         // penalize infrequent users of large packets by keeping 16M allocated all of the time
         //
         if (headerPacket == null) {
-            headerPacket = new Buffer((int) (MAX_THREE_BYTES + HEADER_LENGTH));
+            headerPacket = new Buffer((int) (maxThreeBytes + HEADER_LENGTH));
             splitBufRef = new SoftReference(headerPacket);
         }
 
         int len = packet.getPosition();
-        int splitSize = (int) MAX_THREE_BYTES;
+        int splitSize = (int) maxThreeBytes;
         int originalPacketPos = HEADER_LENGTH;
         byte[] origPacketBytes = packet.getByteBuffer();
         byte[] headerPacketBytes = headerPacket.getByteBuffer();
 
-        while (len >= MAX_THREE_BYTES) {
+        while (len >= maxThreeBytes) {
             headerPacket.setPosition(0);
             headerPacket.writeLongInt(splitSize);
             this.packetSequence++;
@@ -1857,87 +1874,6 @@ public class MysqlIO {
         return    (((a) + (l) - 1) & ~((l) - 1));
     }
     
-    private final static String FALSE_SCRAMBLE = "xxxxxxxx";
+    private static final String FALSE_SCRAMBLE = "xxxxxxxx";
     
-    private void secureAuth(int packLength, 
-                             int clientParam, 
-                             String user,
-                             String password) throws SQLException, IOException {
-        // Passwords can be 16 chars long
-        
-         Buffer packet = new Buffer(packLength);
-         packet.writeInt(clientParam);
-         packet.writeLongInt(packLength);
-
-         // User/Password data
-         packet.writeString(user);
-
-                    
-        if (password.length() != 0) {
-            /* Prepare false scramble  */
-            packet.writeString(FALSE_SCRAMBLE);
-        } else {
-            /* For empty password*/
-            packet.writeString("");
-        }
-        
-        packet.dump();
-        
-        send(packet, packLength);
-        
-        Buffer b = readPacket();
-        
-        System.out.println("\nReading stage 1 packet...\n");
-        b.dump();
-        
-  
-        b.setPosition(0);
-        byte[] replyAsBytes = b.getByteBuffer();
-        
-        if (replyAsBytes.length == 25 && replyAsBytes[0] != 0) {
-            // Old passwords will have '*' at the first byte of hash */
-            if (replyAsBytes[0] != '*') {
-                /* Build full password hash as it is required to decode scramble */
-                //password_hash_stage1(buff, passwd);
-                /* Store copy as we'll need it later */
-                //memcpy(password_hash,buff,SCRAMBLE41_LENGTH);
-                /* Finally hash complete password using hash we got from server */
-                //password_hash_stage2(password_hash,net->read_pos);
-                /* Decypt and store scramble 4 = hash for stage2 */
-                //password_crypt(net->read_pos+4,mysql->scramble_buff,password_hash,
-                 //          SCRAMBLE41_LENGTH);
-                //mysql->scramble_buff[SCRAMBLE41_LENGTH]=0;
-                /* Encode scramble with password. Recycle buffer */
-                //password_crypt(mysql->scramble_buff,buff,buff,SCRAMBLE41_LENGTH);
-            } else {
-                try {
-                /* Create password to decode scramble */
-                
-                byte[] passwordHash = Password.createKeyFromOldPassword(password);
-                
-                /* Decypt and store scramble 4 = hash for stage2 */
-                byte[] scrambleBuf = new byte[20];
-                byte[] origPassword = new byte[20];
-                System.arraycopy(replyAsBytes, 4, origPassword, 0, 20);
-                Password.passwordCrypt(origPassword, scrambleBuf, passwordHash, 20);
-                 ////     SCRAMBLE41_LENGTH);
-                //mysql->scramble_buff[SCRAMBLE41_LENGTH]=0;
-                /* Finally scramble decoded scramble with password */
-                String scrambledPassword = Util.newCrypt(password, new String(scrambleBuf));
-                
-                Buffer packet2 = new Buffer(packLength);
-                packet2.writeString(scrambledPassword);
-                this.packetSequence++;
-                send(packet2, 24);
-                
-                b = readPacket();
-                b.dump();
-                System.out.println("foo");
-                
-                } catch (NoSuchAlgorithmException nse) {
-                    throw new SQLException("Failed to create message digest for authentication");
-                }
-            }  
-        }   
-    }
 }
