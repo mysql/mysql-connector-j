@@ -25,7 +25,8 @@ import testsuite.BaseTestCase;
 
 
 /** 
- *
+ * Tests BLOB functionality in the driver.
+ * 
  * @author  Mark Matthews
  * @version $Id$
  */
@@ -34,7 +35,7 @@ public class BlobTest
 
     //~ Instance/static variables .............................................
 
-    private static final byte[] TESTBLOB = new byte[2 * 1024 * 1024];
+    private static final byte[] TESTBLOB = new byte[512 * 1024];
 
     //~ Initializers ..........................................................
 
