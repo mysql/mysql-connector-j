@@ -20,6 +20,7 @@ package com.mysql.jdbc;
 
 import java.io.IOException;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 import java.net.Socket;
@@ -69,17 +70,23 @@ public class StandardSocketFactory
 
             boolean hasConnectTimeoutMethod = false;
             
+            Method connectWithTimeoutMethod = null;
+            
             try {
                 // Have to do this with reflection, otherwise older JVMs croak
                 Class socketAddressClass = Class.forName("java.net.SocketAddress");
                 
-                Method m = Socket.class.getMethod("connect", new Class[]{socketAddressClass, Integer.TYPE});
+                connectWithTimeoutMethod = Socket.class.getMethod("connect", new Class[]{socketAddressClass, Integer.TYPE});
+            
                 hasConnectTimeoutMethod = true;
+            } catch (NoClassDefFoundError noClassDefFound) {
+                hasConnectTimeoutMethod = false;
             } catch (NoSuchMethodException noSuchMethodEx) {
                 hasConnectTimeoutMethod = false;
             } catch (Throwable catchAll) {
                 hasConnectTimeoutMethod = false;
             }
+            
             
             int connectTimeout = 0;
             
@@ -92,8 +99,6 @@ public class StandardSocketFactory
                     throw new SocketException("Illegal value '" + connectTimeoutStr + "' for connectTimeout");
                 }
             }
-            
-               
               
             if (this.host != null) {
                 if (!hasConnectTimeoutMethod || connectTimeout == 0) {
@@ -101,10 +106,21 @@ public class StandardSocketFactory
                 } else {
                     // must explicitly state this due to classloader issues
                     // when running on older JVMs :(
-                    java.net.InetSocketAddress sockAddr = new java.net.InetSocketAddress(this.host, port);
+                    try {
+                        Class inetSocketAddressClass = Class.forName("java.net.InetSocketAddress");
+                        Constructor addrConstructor = inetSocketAddressClass.getConstructor(new Class[] {String.class, Integer.TYPE});
+                        
+                        Object sockAddr = addrConstructor.newInstance(new Object[] {this.host, new Integer(port)});
+                        
+                        
                     
-                    rawSocket = new Socket();
-                    rawSocket.connect(sockAddr, connectTimeout);
+                        rawSocket = new Socket();
+                        connectWithTimeoutMethod.invoke(rawSocket, new Object[] {sockAddr, new Integer(connectTimeout)});
+
+                    } catch (Throwable t) {
+                        throw new SocketException(t.toString());
+                    }
+                    
                 }
 
                 try {
