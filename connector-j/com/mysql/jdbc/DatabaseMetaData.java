@@ -115,7 +115,7 @@ public class DatabaseMetaData
         fields[19] = new Field("", "SCOPE_TABLE", Types.CHAR, 32);
         fields[20] = new Field("", "SOURCE_DATA_TYPE", Types.SMALLINT, 32);
 
-        return buildResultSet(fields, new ArrayList(), this.conn);
+        return buildResultSet(fields, new ArrayList());
     }
 
     /**
@@ -153,7 +153,7 @@ public class DatabaseMetaData
      * @return ResultSet each row is a column description
      */
     public java.sql.ResultSet getBestRowIdentifier(String catalog, 
-                                                   String Schema, String table, 
+                                                   String schema, String table, 
                                                    int scope, boolean nullable)
                                             throws java.sql.SQLException {
 
@@ -268,7 +268,7 @@ public class DatabaseMetaData
                 }
             }
 
-            return buildResultSet(fields, tuples, this.conn);
+            return buildResultSet(fields, tuples);
         } finally {
 
             if (results != null) {
@@ -365,7 +365,7 @@ public class DatabaseMetaData
                 tuples.add(rowVal);
             }
 
-            return buildResultSet(fields, tuples, this.conn);
+            return buildResultSet(fields, tuples);
         } finally {
 
             if (results != null) {
@@ -439,7 +439,7 @@ public class DatabaseMetaData
         StringBuffer grantQuery = new StringBuffer(
                                           "SELECT c.host, c.db, t.grantor, c.user, "
                                           + "c.table_name, c.column_name, c.column_priv "
-                                          + "from mysql.columns_priv c, mysql.tables_priv t " 
+                                          + "from mysql.columns_priv c, mysql.tables_priv t "
                                           + "where c.host = t.host and c.db = t.db and "
                                           + "c.table_name = t.table_name ");
 
@@ -538,7 +538,7 @@ public class DatabaseMetaData
             }
         }
 
-        return buildResultSet(fields, grantRows, this.conn);
+        return buildResultSet(fields, grantRows);
     }
 
     /**
@@ -732,7 +732,7 @@ public class DatabaseMetaData
 
                     byte[][] rowVal = new byte[18][];
                     rowVal[0] = s2b(catalog); // TABLE_CAT
-                    rowVal[1] = new byte[0];
+                    rowVal[1] = null;
 
                     // TABLE_SCHEM (No schemas in MySQL)
                     rowVal[2] = s2b(tableNamePattern); // TABLE_NAME
@@ -807,9 +807,7 @@ public class DatabaseMetaData
                                 size = typeInfo.substring(
                                                (typeInfo.indexOf("(") + 1), 
                                                (typeInfo.indexOf(")")));
-                            }
-                            /* Otherwise resort to defaults */
-                            else if (typeInfo.toLowerCase().equals("tinyint")) {
+                            } else if (typeInfo.toLowerCase().equals("tinyint")) {
                                 size = "1";
                             } else if (typeInfo.toLowerCase().equals(
                                                "smallint")) {
@@ -861,7 +859,7 @@ public class DatabaseMetaData
                                                                  MysqlIO.getMaxBuf()));
                             } else if (typeInfo.toLowerCase().equals(
                                                "longblob")) {
-                               size = Integer.toString(Integer.MAX_VALUE);
+                                size = Integer.toString(Integer.MAX_VALUE);
                             } else if (typeInfo.toLowerCase().equals(
                                                "tinytext")) {
                                 size = "255";
@@ -971,7 +969,7 @@ public class DatabaseMetaData
             }
         }
 
-        java.sql.ResultSet results = buildResultSet(fields, tuples, this.conn);
+        java.sql.ResultSet results = buildResultSet(fields, tuples);
 
         return results;
     }
@@ -992,291 +990,318 @@ public class DatabaseMetaData
     }
 
     /**
-     * Get a description of the foreign key columns in the foreign key
-     * table that reference the primary key columns of the primary key
-     * table (describe how one table imports another's key.) This
-     * should normally return a single foreign key/primary key pair
-     * (most tables only import a foreign key from a table once.)  They
-     * are ordered by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and
-     * KEY_SEQ.
-     *
-     * <P>Each foreign key column description has the following columns:
-     *  <OL>
-     *    <LI><B>PKTABLE_CAT</B> String => primary key table catalog (may be null)
-     *    <LI><B>PKTABLE_SCHEM</B> String => primary key table schema (may be null)
-     *    <LI><B>PKTABLE_NAME</B> String => primary key table name
-     *    <LI><B>PKCOLUMN_NAME</B> String => primary key column name
-     *    <LI><B>FKTABLE_CAT</B> String => foreign key table catalog (may be null)
-     *      being exported (may be null)
-     *    <LI><B>FKTABLE_SCHEM</B> String => foreign key table schema (may be null)
-     *      being exported (may be null)
-     *    <LI><B>FKTABLE_NAME</B> String => foreign key table name
-     *      being exported
-     *    <LI><B>FKCOLUMN_NAME</B> String => foreign key column name
-     *      being exported
-     *    <LI><B>KEY_SEQ</B> short => sequence number within foreign key
-     *    <LI><B>UPDATE_RULE</B> short => What happens to
-     *       foreign key when primary is updated:
-     *      <UL>
-     *      <LI> importedKeyCascade - change imported key to agree
-     *               with primary key update
-     *      <LI> importedKeyRestrict - do not allow update of primary
-     *               key if it has been imported
-     *      <LI> importedKeySetNull - change imported key to NULL if
-     *               its primary key has been updated
-     *      </UL>
-     *    <LI><B>DELETE_RULE</B> short => What happens to
-     *      the foreign key when primary is deleted.
-     *      <UL>
-     *      <LI> importedKeyCascade - delete rows that import a deleted key
-     *      <LI> importedKeyRestrict - do not allow delete of primary
-     *               key if it has been imported
-     *      <LI> importedKeySetNull - change imported key to NULL if
-     *               its primary key has been deleted
-     *      </UL>
-     *    <LI><B>FK_NAME</B> String => foreign key identifier (may be null)
-     *    <LI><B>PK_NAME</B> String => primary key identifier (may be null)
-     *  </OL>
-     *
-     * @param catalog a catalog name; "" retrieves those without a catalog
-     * @param schema a schema name pattern; "" retrieves those
-     * without a schema
-     * @param table a table name
-     * @return ResultSet each row is a foreign key column description
-     * @see #getImportedKeys
-     */
-    public java.sql.ResultSet getCrossReference(String primaryCatalog, 
-                                                String primarySchema, 
-                                                String primaryTable, 
-                                                String foreignCatalog, 
-                                                String foreignSchema, 
-                                                String foreignTable)
-                                         throws java.sql.SQLException {
-
-        if (Driver.TRACE) {
-
-            Object[] args = {
-                primaryCatalog, primarySchema, primaryTable, foreignCatalog, 
-                foreignSchema, foreignTable
-            };
-            Debug.methodCall(this, "getCrossReference", args);
-        }
-
-        Field[] fields = new Field[14];
-        fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
-        fields[1] = new Field("", "PKTABLE_SCHEM", Types.CHAR, 0);
-        fields[2] = new Field("", "PKTABLE_NAME", Types.CHAR, 255);
-        fields[3] = new Field("", "PKCOLUMN_NAME", Types.CHAR, 32);
-        fields[4] = new Field("", "FKTABLE_CAT", Types.CHAR, 255);
-        fields[5] = new Field("", "FKTABLE_SCHEM", Types.CHAR, 0);
-        fields[6] = new Field("", "FKTABLE_NAME", Types.CHAR, 255);
-        fields[7] = new Field("", "FKCOLUMN_NAME", Types.CHAR, 32);
-        fields[8] = new Field("", "KEY_SEQ", Types.SMALLINT, 2);
-        fields[9] = new Field("", "UPDATE_RULE", Types.SMALLINT, 2);
-        fields[10] = new Field("", "DELETE_RULE", Types.SMALLINT, 2);
-        fields[11] = new Field("", "FK_NAME", Types.CHAR, 0);
-        fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
-        fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
-
-        if (this.conn.getIO().versionMeetsMinimum(3, 23, 0)) {
-
-            /*
-             * Get foreign key information for table
-             */
-            String databasePart = "";
-
-            if (foreignCatalog != null) {
-
-                if (!foreignCatalog.equals("")) {
-                    databasePart = " FROM " + foreignCatalog;
-                }
-            } else {
-                databasePart = " FROM " + this.database;
-            }
-
-            if (primaryTable == null) {
+	 * Get a description of the foreign key columns in the foreign key
+	 * table that reference the primary key columns of the primary key
+	 * table (describe how one table imports another's key.) This
+	 * should normally return a single foreign key/primary key pair
+	 * (most tables only import a foreign key from a table once.)  They
+	 * are ordered by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and
+	 * KEY_SEQ.
+	 *
+	 * <P>Each foreign key column description has the following columns:
+	 *  <OL>
+	 *    <LI><B>PKTABLE_CAT</B> String => primary key table catalog (may be null)
+	 *    <LI><B>PKTABLE_SCHEM</B> String => primary key table schema (may be null)
+	 *    <LI><B>PKTABLE_NAME</B> String => primary key table name
+	 *    <LI><B>PKCOLUMN_NAME</B> String => primary key column name
+	 *    <LI><B>FKTABLE_CAT</B> String => foreign key table catalog (may be null)
+	 *      being exported (may be null)
+	 *    <LI><B>FKTABLE_SCHEM</B> String => foreign key table schema (may be null)
+	 *      being exported (may be null)
+	 *    <LI><B>FKTABLE_NAME</B> String => foreign key table name
+	 *      being exported
+	 *    <LI><B>FKCOLUMN_NAME</B> String => foreign key column name
+	 *      being exported
+	 *    <LI><B>KEY_SEQ</B> short => sequence number within foreign key
+	 *    <LI><B>UPDATE_RULE</B> short => What happens to
+	 *       foreign key when primary is updated:
+	 *      <UL>
+	 *      <LI> importedKeyCascade - change imported key to agree
+	 *               with primary key update
+	 *      <LI> importedKeyRestrict - do not allow update of primary
+	 *               key if it has been imported
+	 *      <LI> importedKeySetNull - change imported key to NULL if
+	 *               its primary key has been updated
+	 *      </UL>
+	 *    <LI><B>DELETE_RULE</B> short => What happens to
+	 *      the foreign key when primary is deleted.
+	 *      <UL>
+	 *      <LI> importedKeyCascade - delete rows that import a deleted key
+	 *      <LI> importedKeyRestrict - do not allow delete of primary
+	 *               key if it has been imported
+	 *      <LI> importedKeySetNull - change imported key to NULL if
+	 *               its primary key has been deleted
+	 *      </UL>
+	 *    <LI><B>FK_NAME</B> String => foreign key identifier (may be null)
+	 *    <LI><B>PK_NAME</B> String => primary key identifier (may be null)
+	 *  </OL>
+	 *
+	 * @param catalog a catalog name; "" retrieves those without a catalog
+	 * @param schema a schema name pattern; "" retrieves those
+	 * without a schema
+	 * @param table a table name
+	 * @return ResultSet each row is a foreign key column description
+	 * @see #getImportedKeys
+	 */
+	public java.sql.ResultSet getCrossReference(String primaryCatalog, 
+	                                            String primarySchema, 
+	                                            String primaryTable, 
+	                                            String foreignCatalog, 
+	                                            String foreignSchema, 
+	                                            String foreignTable)
+	                                     throws java.sql.SQLException {
+	
+	    if (Driver.TRACE) {
+	
+	        Object[] args = {
+	            primaryCatalog, primarySchema, primaryTable, foreignCatalog, 
+	            foreignSchema, foreignTable
+	        };
+	        Debug.methodCall(this, "getCrossReference", args);
+	    }
+        
+        if (primaryTable == null) {
                 throw new java.sql.SQLException("Table not specified.", 
                                                 "S1009");
-            }
+        }
+	
+        
+	    Field[] fields = new Field[14];
+	    fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
+	    fields[1] = new Field("", "PKTABLE_SCHEM", Types.CHAR, 0);
+	    fields[2] = new Field("", "PKTABLE_NAME", Types.CHAR, 255);
+	    fields[3] = new Field("", "PKCOLUMN_NAME", Types.CHAR, 32);
+	    fields[4] = new Field("", "FKTABLE_CAT", Types.CHAR, 255);
+	    fields[5] = new Field("", "FKTABLE_SCHEM", Types.CHAR, 0);
+	    fields[6] = new Field("", "FKTABLE_NAME", Types.CHAR, 255);
+	    fields[7] = new Field("", "FKCOLUMN_NAME", Types.CHAR, 32);
+	    fields[8] = new Field("", "KEY_SEQ", Types.SMALLINT, 2);
+	    fields[9] = new Field("", "UPDATE_RULE", Types.SMALLINT, 2);
+	    fields[10] = new Field("", "DELETE_RULE", Types.SMALLINT, 2);
+	    fields[11] = new Field("", "FK_NAME", Types.CHAR, 0);
+	    fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
+	    fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
+	
+        if (this.conn.getIO().versionMeetsMinimum(3, 23, 0)) {
 
             Statement stmt = null;
             ResultSet fkresults = null;
-
+            
             try {
+                /*
+                 * Get foreign key information for table
+                 */
+                 
+            if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
+                // we can use 'SHOW CREATE TABLE'
+                String database = this.database;
+                
+                if (foreignCatalog  != null) {
+
+                    if (!foreignCatalog.equals("")) {
+                        database = foreignCatalog ;
+                    }
+                }
+                
+                fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(this.conn, this, database, null);
+            } else {
+           
+                String databasePart = "";
+
+                if (foreignCatalog  != null) {
+
+                    if (!foreignCatalog.equals("")) {
+                        databasePart = " FROM " + foreignCatalog ;
+                    }
+                } else {
+                    databasePart = " FROM " + this.database;
+                }
+
+           
+            
                 stmt = this.conn.createStatement();
                 fkresults = stmt.executeQuery(
                                     "show table status " + databasePart);
-
-                /*
-                 * Parse imported foreign key information
-                 */
-                ArrayList tuples = new ArrayList();
-                String dummy;
-
-                while (fkresults.next()) {
-
-                    String tableType = fkresults.getString("Type");
-
-                    if (tableType != null
-                        && tableType.equalsIgnoreCase("innodb")) {
-
-                        String comment = fkresults.getString("Comment");
-
-                        if (comment != null) {
-
-                            StringTokenizer commentTokens = 
-                                    new StringTokenizer(comment, ";", false);
-
-                            if (commentTokens.hasMoreTokens()) {
-                                dummy = commentTokens.nextToken();
-
-                                // Skip InnoDB comment
-                            }
-
-                            while (commentTokens.hasMoreTokens()) {
-
-                                String keys = commentTokens.nextToken();
-
-                                // simple-columned keys: (m) REFER airline/tt(a)
-                                // multi-columned keys : (m n) REFER airline/vv(a b)
-                                int firstLeftParenIndex = keys.indexOf('(');
-                                int firstRightParenIndex = keys.indexOf(')');
-                                String referencingColumns = 
-                                        keys.substring(firstLeftParenIndex + 1, 
-                                                       firstRightParenIndex);
-                                StringTokenizer referencingColumnsTokenizer = 
-                                        new StringTokenizer(referencingColumns);
-                                int secondLeftParenIndex = keys.indexOf('(', 
-                                                                        firstRightParenIndex + 1);
-                                int secondRightParenIndex = 
-                                        keys.indexOf(')', 
-                                                     firstRightParenIndex + 1);
-                                String referencedColumns = keys.substring(
-                                                                   secondLeftParenIndex + 1, 
-                                                                   secondRightParenIndex);
-                                StringTokenizer referencedColumnsTokenizer = 
-                                        new StringTokenizer(referencedColumns);
-                                int slashIndex = keys.indexOf('/');
-                                String referencedTable = keys.substring(
-                                                                 slashIndex + 1, 
-                                                                 secondLeftParenIndex);
-                                int keySeq = 0;
-
-                                while (referencingColumnsTokenizer.hasMoreTokens()) {
-
-                                    // one tuple for each table between parenthesis
-                                    byte[][] tuple = new byte[14][];
-                                    tuple[4] = (foreignCatalog == null // FKTABLE_CAT
-                                                    ? null : s2b(foreignCatalog));
-                                    tuple[5] = (foreignSchema == null // FKTABLE_SCHEM
-                                                    ? null : s2b(foreignSchema));
-                                    dummy = fkresults.getString("Name"); // FKTABLE_NAME
-
-                                    if (dummy.compareTo(foreignTable) != 0) {
-
-                                        continue;
-                                    } else {
-                                        tuple[6] = s2b(dummy);
-                                    }
-
-                                    tuple[7] = s2b(referencingColumnsTokenizer.nextToken()); // FKCOLUMN_NAME
-                                    tuple[0] = (primaryCatalog == null // PKTABLE_CAT
-                                                    ? null : s2b(primaryCatalog));
-                                    tuple[1] = (primarySchema == null // PKTABLE_SCHEM
-                                                    ? null : s2b(primarySchema));
-
-                                    // Skip foreign key if it doesn't refer to the right table
-                                    if (referencedTable.compareTo(primaryTable) != 0) {
-
-                                        continue;
-                                    }
-
-                                    tuple[2] = s2b(referencedTable); // PKTABLE_NAME
-                                    tuple[3] = s2b(referencedColumnsTokenizer.nextToken()); // PKCOLUMN_NAME
-                                    tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
-                                    tuple[9] = Integer.toString(
-                                                       java.sql.DatabaseMetaData.importedKeySetDefault)
-                                           .getBytes();
-                                    tuple[10] = Integer.toString(
-                                                        java.sql.DatabaseMetaData.importedKeySetDefault)
-                                           .getBytes();
-                                    tuple[11] = null; // FK_NAME
-                                    tuple[12] = null; // PK_NAME
-                                    tuple[13] = Integer.toString(
-                                                        java.sql.DatabaseMetaData.importedKeyNotDeferrable)
-                                           .getBytes();
-                                    tuples.add(tuple);
-                                    keySeq++;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (Driver.TRACE) {
-
-                    StringBuffer rows = new StringBuffer();
-                    rows.append("\n");
-
-                    for (int i = 0; i < tuples.size(); i++) {
-
-                        byte[][] b = (byte[][]) tuples.get(i);
-                        rows.append("[Row] ");
-
-                        boolean firstTime = true;
-
-                        for (int j = 0; j < b.length; j++) {
-
-                            if (!firstTime) {
-                                rows.append(", ");
-                            } else {
-                                firstTime = false;
-                            }
-
-                            if (b[j] == null) {
-                                rows.append("null");
-                            } else {
-                                rows.append(new String(b[j]));
-                            }
-                        }
-
-                        rows.append("\n");
-                    }
-
-                    Debug.returnValue(this, "getImportedKeys", rows.toString());
-                }
-
-                return buildResultSet(fields, tuples, this.conn);
-            } finally {
-
-                if (fkresults != null) {
-
-                    try {
-                        fkresults.close();
-                    } catch (Exception sqlEx) {
-
-                        // ignore
-                    }
-
-                    fkresults = null;
-                }
-
-                if (stmt != null) {
-
-                    try {
-                        stmt.close();
-                    } catch (Exception ex) {
-                        ;
-                    }
-
-                    stmt = null;
-                }
             }
-        } else {
-
-            return buildResultSet(fields, new ArrayList(), this.conn);
-        }
-    }
+	    
+                                    
+	            /*
+	             * Parse imported foreign key information
+	             */
+	            ArrayList tuples = new ArrayList();
+	            String dummy;
+	
+	            while (fkresults.next()) {
+	
+	                String tableType = fkresults.getString("Type");
+	
+	                if (tableType != null
+	                    && (tableType.equalsIgnoreCase("innodb")
+                            || tableType.equalsIgnoreCase(ForeignKeyUtil.SUPPORTS_FK))) {
+	
+	                    String comment = fkresults.getString("Comment").trim();
+	
+	                    if (comment != null) {
+	
+	                        StringTokenizer commentTokens = 
+	                                new StringTokenizer(comment, ";", false);
+	
+	                        if (commentTokens.hasMoreTokens()) {
+	                            dummy = commentTokens.nextToken();
+	
+	                            // Skip InnoDB comment
+	                        }
+	
+	                        while (commentTokens.hasMoreTokens()) {
+	
+	                            String keys = commentTokens.nextToken();
+	
+	                            // simple-columned keys: (m) REFER airline/tt(a)
+	                            // multi-columned keys : (m n) REFER airline/vv(a b)
+	                            int firstLeftParenIndex = keys.indexOf('(');
+	                            int firstRightParenIndex = keys.indexOf(')');
+	                            String referencingColumns = 
+	                                    keys.substring(firstLeftParenIndex + 1, 
+	                                                   firstRightParenIndex);
+	                            StringTokenizer referencingColumnsTokenizer = 
+	                                    new StringTokenizer(referencingColumns, ", ");
+	                            int secondLeftParenIndex = keys.indexOf('(', 
+	                                                                    firstRightParenIndex + 1);
+	                            int secondRightParenIndex = 
+	                                    keys.indexOf(')', 
+	                                                 firstRightParenIndex + 1);
+	                            String referencedColumns = keys.substring(
+	                                                               secondLeftParenIndex + 1, 
+	                                                               secondRightParenIndex);
+	                            StringTokenizer referencedColumnsTokenizer = 
+	                                    new StringTokenizer(referencedColumns, ", ");
+	                            int slashIndex = keys.indexOf('/');
+	                            String referencedTable = keys.substring(
+	                                                             slashIndex + 1, 
+	                                                             secondLeftParenIndex);
+	                            int keySeq = 0;
+	
+	                            while (referencingColumnsTokenizer.hasMoreTokens()) {
+	                               
+	                                String referencingColumn = referencingColumnsTokenizer.nextToken();
+	                                // one tuple for each table between parenthesis
+	                                byte[][] tuple = new byte[14][];
+	                                tuple[4] = (foreignCatalog == null
+	                                                ? null : s2b(foreignCatalog));
+	                                tuple[5] = (foreignSchema == null
+	                                                ? null : s2b(foreignSchema));
+	                                dummy = fkresults.getString("Name"); // FKTABLE_NAME
+	
+                                    
+                                    
+	                                if (dummy.compareTo(foreignTable) != 0) {
+	
+	                                    continue;
+	                                } else {
+	                                    tuple[6] = s2b(dummy);
+	                                }
+	
+	                                tuple[7] = s2b(referencingColumn); // FKCOLUMN_NAME
+	                                tuple[0] = (primaryCatalog == null
+	                                                ? null : s2b(primaryCatalog));
+	                                tuple[1] = (primarySchema == null
+	                                                ? null : s2b(primarySchema));
+	
+                                    
+                                    
+	                                // Skip foreign key if it doesn't refer to the right table
+	                                if (referencedTable.compareTo(primaryTable) != 0) {
+	
+	                                    continue;
+	                                }
+	
+	                                tuple[2] = s2b(referencedTable); // PKTABLE_NAME
+	                                tuple[3] = s2b(referencedColumnsTokenizer.nextToken()); // PKCOLUMN_NAME
+	                                tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
+	                                tuple[9] = Integer.toString(
+	                                                   java.sql.DatabaseMetaData.importedKeySetDefault)
+	                                       .getBytes();
+	                                tuple[10] = Integer.toString(
+	                                                    ForeignKeyUtil.getCascadeDeleteOption(keys))
+	                                       .getBytes();
+	                                tuple[11] = null; // FK_NAME
+	                                tuple[12] = null; // PK_NAME
+	                                tuple[13] = Integer.toString(
+	                                                    java.sql.DatabaseMetaData.importedKeyNotDeferrable)
+	                                       .getBytes();
+	                                tuples.add(tuple);
+	                                keySeq++;
+	                            }
+	                        }
+	                    }
+	                }
+	            }
+	
+	            if (Driver.TRACE) {
+	
+	                StringBuffer rows = new StringBuffer();
+	                rows.append("\n");
+	
+	                for (int i = 0; i < tuples.size(); i++) {
+	
+	                    byte[][] b = (byte[][]) tuples.get(i);
+	                    rows.append("[Row] ");
+	
+	                    boolean firstTime = true;
+	
+	                    for (int j = 0; j < b.length; j++) {
+	
+	                        if (!firstTime) {
+	                            rows.append(", ");
+	                        } else {
+	                            firstTime = false;
+	                        }
+	
+	                        if (b[j] == null) {
+	                            rows.append("null");
+	                        } else {
+	                            rows.append(new String(b[j]));
+	                        }
+	                    }
+	
+	                    rows.append("\n");
+	                }
+	               
+    
+	                Debug.returnValue(this, "getCrossReference", rows.toString());
+	            }
+	
+	            return buildResultSet(fields, tuples);
+	        } finally {
+	
+	            if (fkresults != null) {
+	
+	                try {
+	                    fkresults.close();
+	                } catch (Exception sqlEx) {
+	
+	                    // ignore
+	                }
+	
+	                fkresults = null;
+	            }
+	
+	            if (stmt != null) {
+	
+	                try {
+	                    stmt.close();
+	                } catch (Exception ex) {
+	                    ;
+	                }
+	
+	                stmt = null;
+	            }
+	        }
+	    } else {
+	
+	        return buildResultSet(fields, new ArrayList());
+	    }
+	}
 
     /**
      * @see DatabaseMetaData#getDatabaseMajorVersion()
@@ -1441,6 +1466,11 @@ public class DatabaseMetaData
             Object[] args = { catalog, schema, table };
             Debug.methodCall(this, "getExportedKeys", args);
         }
+        
+         if (table == null) {
+                throw new java.sql.SQLException("Table not specified.", 
+                                                "S1009");
+        }
 
         Field[] fields = new Field[14];
         fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
@@ -1460,36 +1490,54 @@ public class DatabaseMetaData
 
         if (this.conn.getIO().versionMeetsMinimum(3, 23, 0)) {
 
-            /*
-             * Get foreign key information for table
-             */
-            String databasePart = "";
-
-            if (catalog != null) {
-
-                if (!catalog.equals("")) {
-                    databasePart = " FROM " + catalog;
-                }
-            } else {
-                databasePart = " FROM " + this.database;
-            }
-
-            if (table == null) {
-                throw new java.sql.SQLException("Table not specified.", 
-                                                "S1009");
-            }
-
             Statement stmt = null;
             ResultSet fkresults = null;
-
+            
             try {
+                /*
+                 * Get foreign key information for table
+                 */
+                 
+            if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
+                // we can use 'SHOW CREATE TABLE'
+                String database = this.database;
+                
+                if (catalog != null) {
+
+                    if (!catalog.equals("")) {
+                        database = catalog;
+                    }
+                }
+                
+                fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(this.conn, this, database, null);
+            } else {
+           
+                String databasePart = "";
+
+                if (catalog != null) {
+
+                    if (!catalog.equals("")) {
+                        databasePart = " FROM " + catalog;
+                    }
+                } else {
+                    databasePart = " FROM " + this.database;
+                }
+
+           
+            
                 stmt = this.conn.createStatement();
                 fkresults = stmt.executeQuery(
                                     "show table status " + databasePart);
+            }
+
+           
+
+            
+                
 
                 /*
-                 * Parse imported foreign key information
-                 */
+                * Parse imported foreign key information
+                */
                 ArrayList tuples = new ArrayList();
                 String dummy;
 
@@ -1498,10 +1546,10 @@ public class DatabaseMetaData
                     String tableType = fkresults.getString("Type");
 
                     if (tableType != null
-                        && tableType.equalsIgnoreCase("innodb")) {
+                        && (tableType.equalsIgnoreCase("innodb")
+                            || tableType.equalsIgnoreCase(ForeignKeyUtil.SUPPORTS_FK))) {
 
-                        String tableName = fkresults.getString("Name");
-                        String comment = fkresults.getString("Comment");
+                        String comment = fkresults.getString("Comment").trim();
 
                         if (comment != null) {
 
@@ -1509,73 +1557,17 @@ public class DatabaseMetaData
                                     new StringTokenizer(comment, ";", false);
 
                             if (commentTokens.hasMoreTokens()) {
-                                dummy = commentTokens.nextToken();
+                                dummy = commentTokens.nextToken(); // Skip InnoDB comment
 
-                                // Skip InnoDB comment
-                            }
+                                if (commentTokens.hasMoreTokens()) {
 
-                            while (commentTokens.hasMoreTokens()) {
-
-                                String keys = commentTokens.nextToken();
-
-                                // simple-columned keys: (m) REFER airline/tt(a)
-                                // multi-columned keys : (m n) REFER airline/vv(a b)
-                                int firstLeftParenIndex = keys.indexOf('(');
-                                int firstRightParenIndex = keys.indexOf(')');
-                                String referencingColumns = 
-                                        keys.substring(firstLeftParenIndex + 1, 
-                                                       firstRightParenIndex);
-                                StringTokenizer referencingColumnsTokenizer = 
-                                        new StringTokenizer(referencingColumns);
-                                int secondLeftParenIndex = keys.indexOf('(', 
-                                                                        firstRightParenIndex + 1);
-                                int secondRightParenIndex = 
-                                        keys.indexOf(')', 
-                                                     firstRightParenIndex + 1);
-                                String referencedColumns = keys.substring(
-                                                                   secondLeftParenIndex + 1, 
-                                                                   secondRightParenIndex);
-                                StringTokenizer referencedColumnsTokenizer = 
-                                        new StringTokenizer(referencedColumns);
-                                int slashIndex = keys.indexOf('/');
-                                String referencedTable = keys.substring(
-                                                                 slashIndex + 1, 
-                                                                 secondLeftParenIndex);
-                                int keySeq = 0;
-
-                                while (referencingColumnsTokenizer.hasMoreTokens()) {
-
-                                    byte[][] tuple = new byte[14][];
-                                    tuple[4] = (catalog == null
-                                                    ? new byte[0] : s2b(catalog));
-                                    tuple[5] = null; // FKTABLE_SCHEM
-                                    tuple[6] = s2b(tableName); // FKTABLE_NAME
-                                    tuple[7] = s2b(referencingColumnsTokenizer.nextToken()); // FKCOLUMN_NAME
-                                    tuple[0] = null; // PKTABLE_CAT
-                                    tuple[1] = null; // PKTABLE_SCHEM
-
-                                    // Skip foreign key if it doesn't refer to the right table
-                                    if (referencedTable.compareTo(table) != 0) {
-
-                                        continue;
-                                    }
-
-                                    tuple[2] = s2b(referencedTable); // PKTABLE_NAME
-                                    tuple[3] = s2b(referencedColumnsTokenizer.nextToken()); // PKCOLUMN_NAME
-                                    tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
-                                    tuple[9] = Integer.toString(
-                                                       java.sql.DatabaseMetaData.importedKeySetDefault)
-                                           .getBytes();
-                                    tuple[10] = Integer.toString(
-                                                        java.sql.DatabaseMetaData.importedKeySetDefault)
-                                           .getBytes();
-                                    tuple[11] = null; // FK_NAME
-                                    tuple[12] = null; // PK_NAME
-                                    tuple[13] = Integer.toString(
-                                                        java.sql.DatabaseMetaData.importedKeyNotDeferrable)
-                                           .getBytes();
-                                    tuples.add(tuple);
-                                    keySeq++;
+                                    String keys = commentTokens.nextToken();
+                                    ForeignKeyUtil.getExportKeyResults(catalog, 
+                                                                       table, 
+                                                                       keys, 
+                                                                       tuples, 
+                                                                       fkresults.getString(
+                                                                               "Name"));
                                 }
                             }
                         }
@@ -1615,7 +1607,7 @@ public class DatabaseMetaData
                     Debug.returnValue(this, "getImportedKeys", rows.toString());
                 }
 
-                return buildResultSet(fields, tuples, this.conn);
+                return buildResultSet(fields, tuples);
             } finally {
 
                 if (fkresults != null) {
@@ -1635,7 +1627,7 @@ public class DatabaseMetaData
                     try {
                         stmt.close();
                     } catch (Exception ex) {
-                        ;
+                        // ignore
                     }
 
                     stmt = null;
@@ -1643,7 +1635,7 @@ public class DatabaseMetaData
             }
         } else {
 
-            return buildResultSet(fields, new ArrayList(), this.conn);
+            return buildResultSet(fields, new ArrayList());
         }
     }
 
@@ -1745,6 +1737,11 @@ public class DatabaseMetaData
             Object[] args = { catalog, schema, table };
             Debug.methodCall(this, "getImportedKeys", args);
         }
+        
+        if (table == null) {
+                throw new java.sql.SQLException("Table not specified.", 
+                                                "S1009");
+        }
 
         Field[] fields = new Field[14];
         fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
@@ -1761,40 +1758,60 @@ public class DatabaseMetaData
         fields[11] = new Field("", "FK_NAME", Types.CHAR, 0);
         fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
         fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
+        
+        
+
 
         if (this.conn.getIO().versionMeetsMinimum(3, 23, 0)) {
 
-            /*
-             * Get foreign key information for table
-             */
-            String databasePart = "";
-
-            if (catalog != null) {
-
-                if (!catalog.equals("")) {
-                    databasePart = " from " + catalog;
-                }
-            } else {
-                databasePart = " from " + this.database;
-            }
-
-            if (table == null) {
-                throw new java.sql.SQLException("Table not specified.", 
-                                                "S1009");
-            }
-
             Statement stmt = null;
             ResultSet fkresults = null;
-
+            
             try {
+                /*
+                 * Get foreign key information for table
+                 */
+                 
+            if (this.conn.getIO().versionMeetsMinimum(3, 23, 50)) {
+                // we can use 'SHOW CREATE TABLE'
+                String database = this.database;
+                
+                if (catalog != null) {
+
+                    if (!catalog.equals("")) {
+                        database = catalog;
+                    }
+                }
+                
+                fkresults = ForeignKeyUtil.extractForeignKeyFromCreateTable(this.conn, this, database, table);
+            } else {
+           
+                String databasePart = "";
+
+                if (catalog != null) {
+
+                    if (!catalog.equals("")) {
+                        databasePart = " FROM " + catalog;
+                    }
+                } else {
+                    databasePart = " FROM " + this.database;
+                }
+
+           
+            
                 stmt = this.conn.createStatement();
+                
                 fkresults = stmt.executeQuery(
                                     "show table status " + databasePart
                                     + " like '" + table + "'");
 
+            }
+
+       
+                
                 /*
-                 * Parse imported foreign key information
-                 */
+                * Parse imported foreign key information
+                */
                 ArrayList tuples = new ArrayList();
                 String dummy;
 
@@ -1803,9 +1820,10 @@ public class DatabaseMetaData
                     String tableType = fkresults.getString("Type");
 
                     if (tableType != null
-                        && tableType.equalsIgnoreCase("innodb")) {
+                        && (tableType.equalsIgnoreCase("innodb")
+                            || tableType.equalsIgnoreCase(ForeignKeyUtil.SUPPORTS_FK))) {
 
-                        String comment = fkresults.getString("Comment");
+                        String comment = fkresults.getString("Comment").trim();
 
                         if (comment != null) {
 
@@ -1813,75 +1831,15 @@ public class DatabaseMetaData
                                     new StringTokenizer(comment, ";", false);
 
                             if (commentTokens.hasMoreTokens()) {
-                                dummy = commentTokens.nextToken();
+                                dummy = commentTokens.nextToken(); // Skip InnoDB comment
 
-                                // Skip InnoDB comment
-                            }
+                                if (commentTokens.hasMoreTokens()) {
 
-                            while (commentTokens.hasMoreTokens()) {
-
-                                String keys = commentTokens.nextToken();
-
-                                // simple-columned keys: (m) REFER airline/tt(a)
-                                // multi-columned keys : (m n) REFER airline/vv(a b)
-                                int firstLeftParenIndex = keys.indexOf('(');
-                                int firstRightParenIndex = keys.indexOf(')');
-                                String referencingColumns = 
-                                        keys.substring(firstLeftParenIndex + 1, 
-                                                       firstRightParenIndex);
-                                StringTokenizer referencingColumnsTokenizer = 
-                                        new StringTokenizer(referencingColumns);
-                                int secondLeftParenIndex = keys.indexOf('(', 
-                                                                        firstRightParenIndex + 1);
-                                int secondRightParenIndex = 
-                                        keys.indexOf(')', 
-                                                     firstRightParenIndex + 1);
-                                String referencedColumns = keys.substring(
-                                                                   secondLeftParenIndex + 1, 
-                                                                   secondRightParenIndex);
-                                StringTokenizer referencedColumnsTokenizer = 
-                                        new StringTokenizer(referencedColumns);
-                                int slashIndex = keys.indexOf('/');
-                                String referencedTable = keys.substring(
-                                                                 slashIndex + 1, 
-                                                                 secondLeftParenIndex);
-                                int keySeq = 0;
-
-                                while (referencingColumnsTokenizer.hasMoreTokens()) {
-
-                                    // one tuple for each table between parenthesis
-                                    byte[][] tuple = new byte[14][];
-                                    tuple[4] = (catalog == null
-                                                    ? new byte[0] : s2b(catalog));
-                                    tuple[5] = null; // FKTABLE_SCHEM
-                                    tuple[6] = s2b(table); // FKTABLE_NAME
-                                    tuple[7] = s2b(referencingColumnsTokenizer.nextToken()); // FKCOLUMN_NAME
-                                    tuple[0] = null; //s2b(keyTokens.nextToken());
-
-                                    // PKTABLE_CAT
-                                    tuple[1] = null; // PKTABLE_SCHEM
-                                    tuple[2] = s2b(referencedTable); // PKTABLE_NAME
-                                    tuple[3] = s2b(referencedColumnsTokenizer.nextToken()); // PKCOLUMN_NAME
-                                    tuple[8] = Integer.toString(keySeq).getBytes(); // KEY_SEQ
-                                    tuple[9] = Integer.toString(
-                                                       java.sql.DatabaseMetaData.importedKeySetDefault)
-                                           .getBytes();
-
-                                    // UPDATE_RULE
-                                    tuple[10] = Integer.toString(
-                                                        java.sql.DatabaseMetaData.importedKeySetDefault)
-                                           .getBytes();
-
-                                    // DELETE_RULE
-                                    tuple[11] = null; // FK_NAME
-                                    tuple[12] = null; // PK_NAME
-                                    tuple[13] = Integer.toString(
-                                                        java.sql.DatabaseMetaData.importedKeyNotDeferrable)
-                                           .getBytes();
-
-                                    // DEFERRABILITY
-                                    tuples.add(tuple);
-                                    keySeq++;
+                                    String keys = commentTokens.nextToken();
+                                    ForeignKeyUtil.getImportKeyResults(catalog, 
+                                                                       table, 
+                                                                       keys, 
+                                                                       tuples);
                                 }
                             }
                         }
@@ -1921,7 +1879,7 @@ public class DatabaseMetaData
                     Debug.returnValue(this, "getImportedKeys", rows.toString());
                 }
 
-                return buildResultSet(fields, tuples, this.conn);
+                return buildResultSet(fields, tuples);
             } finally {
 
                 if (fkresults != null) {
@@ -1941,7 +1899,7 @@ public class DatabaseMetaData
                     try {
                         stmt.close();
                     } catch (Exception ex) {
-                        ;
+                        // ignore
                     }
 
                     stmt = null;
@@ -1949,7 +1907,7 @@ public class DatabaseMetaData
             }
         } else {
 
-            return buildResultSet(fields, new ArrayList(), this.conn);
+            return buildResultSet(fields, new ArrayList());
         }
     }
 
@@ -2062,14 +2020,14 @@ public class DatabaseMetaData
 
                 byte[][] row = new byte[14][];
                 row[0] = (catalog == null ? new byte[0] : s2b(catalog));
-                row[1] = new byte[0];
+                row[1] = null;
                 row[2] = results.getBytes("Table");
                 row[3] = (results.getInt("Non_unique") != 0
-                                ? s2b("true") : s2b("false"));
+                              ? s2b("true") : s2b("false"));
                 row[4] = new byte[0];
                 row[5] = results.getBytes("Key_name");
                 row[6] = Integer.toString(
-                                   java.sql.DatabaseMetaData.tableIndexOther).getBytes();
+                                 java.sql.DatabaseMetaData.tableIndexOther).getBytes();
                 row[7] = results.getBytes("Seq_in_index");
                 row[8] = results.getBytes("Column_name");
                 row[9] = results.getBytes("Collation");
@@ -2079,8 +2037,7 @@ public class DatabaseMetaData
                 rows.add(row);
             }
 
-            java.sql.ResultSet indexInfo = buildResultSet(fields, rows, 
-                                                          this.conn);
+            java.sql.ResultSet indexInfo = buildResultSet(fields, rows);
 
             return indexInfo;
         } finally {
@@ -2433,7 +2390,7 @@ public class DatabaseMetaData
 
                         byte[][] tuple = new byte[6][];
                         tuple[0] = (catalog == null ? new byte[0] : s2b(catalog));
-                        tuple[1] = new byte[0];
+                        tuple[1] = null;
                         tuple[2] = s2b(table);
 
                         String columnName = rs.getString("Column_name");
@@ -2452,7 +2409,7 @@ public class DatabaseMetaData
                 tuples.add(sortedIterator.next());
             }
 
-            return buildResultSet(fields, tuples, this.conn);
+            return buildResultSet(fields, tuples);
         } finally {
 
             if (rs != null) {
@@ -2534,9 +2491,9 @@ public class DatabaseMetaData
      * @see #getSearchStringEscape
      */
     public java.sql.ResultSet getProcedureColumns(String catalog, 
-                                                  String SchemaPattern, 
-                                                  String ProcedureNamePattern, 
-                                                  String ColumnNamePattern)
+                                                  String schemaPattern, 
+                                                  String procedureNamePattern, 
+                                                  String columnNamePattern)
                                            throws java.sql.SQLException {
 
         Field[] fields = new Field[14];
@@ -2555,7 +2512,7 @@ public class DatabaseMetaData
         fields[12] = new Field("", "NULLABLE", Types.SMALLINT, 0);
         fields[13] = new Field("", "REMARKS", Types.CHAR, 0);
 
-        return buildResultSet(fields, new ArrayList(), this.conn);
+        return buildResultSet(fields, new ArrayList());
     }
 
     /**
@@ -2616,7 +2573,7 @@ public class DatabaseMetaData
         fields[6] = new Field("", "REMARKS", Types.CHAR, 0);
         fields[7] = new Field("", "PROCEDURE_TYPE", Types.SMALLINT, 0);
 
-        return buildResultSet(fields, new ArrayList(), this.conn);
+        return buildResultSet(fields, new ArrayList());
     }
 
     /**
@@ -2690,7 +2647,7 @@ public class DatabaseMetaData
         fields[0] = new Field("", "TABLE_SCHEM", java.sql.Types.CHAR, 0);
 
         ArrayList tuples = new ArrayList();
-        java.sql.ResultSet results = buildResultSet(fields, tuples, this.conn);
+        java.sql.ResultSet results = buildResultSet(fields, tuples);
 
         return results;
     }
@@ -2734,7 +2691,7 @@ public class DatabaseMetaData
         fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 32);
         fields[3] = new Field("", "SUPERTABLE_NAME", Types.CHAR, 32);
 
-        return buildResultSet(fields, new ArrayList(), this.conn);
+        return buildResultSet(fields, new ArrayList());
     }
 
     /**
@@ -2752,7 +2709,7 @@ public class DatabaseMetaData
         fields[4] = new Field("", "SUPERTYPE_SCHEM", Types.CHAR, 32);
         fields[5] = new Field("", "SUPERTYPE_NAME", Types.CHAR, 32);
 
-        return buildResultSet(fields, new ArrayList(), this.conn);
+        return buildResultSet(fields, new ArrayList());
     }
 
     /**
@@ -2927,7 +2884,7 @@ public class DatabaseMetaData
             }
         }
 
-        return buildResultSet(fields, grantRows, this.conn);
+        return buildResultSet(fields, grantRows);
     }
 
     /**
@@ -2954,12 +2911,12 @@ public class DatabaseMetaData
         byte[][] tableTypeRow = new byte[1][];
         tableTypeRow[0] = TABLE_AS_BYTES;
         tuples.add(tableTypeRow);
-        
+
         byte[][] tempTypeRow = new byte[1][];
         tempTypeRow[0] = s2b("LOCAL TEMPORARY");
         tuples.add(tempTypeRow);
 
-        return buildResultSet(fields, tuples, this.conn);
+        return buildResultSet(fields, tuples);
     }
 
     /**
@@ -3040,15 +2997,14 @@ public class DatabaseMetaData
                 String name = results.getString(1);
                 row = new byte[5][];
                 row[0] = (catalog == null) ? new byte[0] : s2b(catalog);
-                row[1] = new byte[0];
+                row[1] = null;
                 row[2] = name.getBytes();
                 row[3] = TABLE_AS_BYTES;
                 row[4] = new byte[0];
                 tuples.add(row);
             }
 
-            java.sql.ResultSet tables = buildResultSet(fields, tuples, 
-                                                       this.conn);
+            java.sql.ResultSet tables = buildResultSet(fields, tuples);
 
             return tables;
         } finally {
@@ -4298,7 +4254,7 @@ public class DatabaseMetaData
         rowVal[17] = s2b("10"); //  NUM_PREC_RADIX (2 or 10)
         tuples.add(rowVal);
 
-        return buildResultSet(fields, tuples, this.conn);
+        return buildResultSet(fields, tuples);
     }
 
     /**
@@ -4353,7 +4309,7 @@ public class DatabaseMetaData
 
         ArrayList tuples = new ArrayList();
 
-        return buildResultSet(fields, tuples, this.conn);
+        return buildResultSet(fields, tuples);
     }
 
     /**
@@ -4375,7 +4331,47 @@ public class DatabaseMetaData
     public String getUserName()
                        throws java.sql.SQLException {
 
-        return this.conn.getUser();
+        if (this.conn.useHostsInPrivileges()) {
+
+            Statement stmt = null;
+            ResultSet rs = null;
+
+            try {
+                stmt = this.conn.createStatement();
+                rs = stmt.executeQuery("SELECT USER()");
+                rs.next();
+
+                return rs.getString(1);
+            } finally {
+
+                if (rs != null) {
+
+                    try {
+                        rs.close();
+                    } catch (Exception ex) {
+
+                        // ignore
+                    }
+
+                    rs = null;
+                }
+
+                if (stmt != null) {
+
+                    try {
+                        stmt.close();
+                    } catch (Exception ex) {
+
+                        // ignore
+                    }
+
+                    stmt = null;
+                }
+            }
+        } else {
+
+            return this.conn.getUser();
+        }
     }
 
     /**
@@ -4420,7 +4416,7 @@ public class DatabaseMetaData
         fields[6] = new Field("", "DECIMAL_DIGITS", Types.CHAR, 16);
         fields[7] = new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5);
 
-        return buildResultSet(fields, new ArrayList(), this.conn);
+        return buildResultSet(fields, new ArrayList());
 
         // do TIMESTAMP columns count?
     }
@@ -5595,7 +5591,7 @@ public class DatabaseMetaData
     public boolean supportsSubqueriesInComparisons()
                                             throws java.sql.SQLException {
 
-        return false;
+         return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
     }
 
     /**
@@ -5608,7 +5604,7 @@ public class DatabaseMetaData
     public boolean supportsSubqueriesInExists()
                                        throws java.sql.SQLException {
 
-        return false;
+        return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
     }
 
     /**
@@ -5621,7 +5617,7 @@ public class DatabaseMetaData
     public boolean supportsSubqueriesInIns()
                                     throws java.sql.SQLException {
 
-        return false;
+         return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
     }
 
     /**
@@ -5634,7 +5630,7 @@ public class DatabaseMetaData
     public boolean supportsSubqueriesInQuantifieds()
                                             throws java.sql.SQLException {
 
-        return false;
+         return this.conn.getIO().versionMeetsMinimum(4, 1, 0);
     }
 
     /**
@@ -5756,18 +5752,17 @@ public class DatabaseMetaData
     }
 
     protected java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields, 
-                                                java.util.ArrayList rows, 
-                                                com.mysql.jdbc.Connection Conn)
+                                                java.util.ArrayList rows)
                                          throws SQLException {
 
         int fieldsLength = fields.length;
 
         for (int i = 0; i < fieldsLength; i++) {
-            fields[i].setConnection(conn);
+            fields[i].setConnection(this.conn);
         }
 
         return new com.mysql.jdbc.ResultSet(fields, new RowDataStatic(rows), 
-                                            Conn);
+                                            this.conn);
     }
 
     /**
