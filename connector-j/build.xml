@@ -21,6 +21,7 @@ Copyright (C) 2002 MySQL AB
 	<property name="version" value="3.0.0-dev"/>
 	
 	<property name="buildDir" value="../build-mysql-jdbc"/>
+	<property name="distDir" value="../dist-mysql-jdbc"/>
 	
 	<!-- Begin: Checkstyle coding style conformance tool -->
 	
@@ -118,7 +119,9 @@ Copyright (C) 2002 MySQL AB
 	<target name="dist" depends="init, compile">
 		
 		<delete file="${buildDir}/mysql-jdbc-${version}-bin.jar"/>
-		<delete file="${buildDir}/mysql-jdbc-${version}.jar"/>
+		<delete file="${distDir}/mysql-jdbc-${version}.jar"/>
+		
+		<mkdir dir="${distDir}" />
 
 		<jar jarfile="${buildDir}/mysql-jdbc-${version}/mysql-jdbc-${version}-bin.jar">
 			<fileset dir="${buildDir}/mysql-jdbc-${version}"
@@ -127,16 +130,34 @@ Copyright (C) 2002 MySQL AB
 				includes="COPYING, README"/>
 		</jar>
 
-		<jar jarfile="${buildDir}/mysql-jdbc-${version}.jar">
+		<tar destfile="${distDir}/mysql-jdbc-${version}.tar.gz"
+			compression="gzip" longfile="gnu">
+			<tarfileset dir="${buildDir}">
+				<patternset id="non.test.sources" >
+    					<exclude name="**/*.nb*"/>
+    					<exclude name="**/*.bak"/>
+    					<exclude name="**/*.*~"/>
+    					<exclude name="**/lib-nodist/*"/>
+    					<exclude name="**/clover/*"/>
+    					<exclude name="**/checkstyle/*"/>
+  				</patternset>
+			</tarfileset>
+		</tar>
+		
+		
+		<jar jarfile="${distDir}/mysql-jdbc-${version}.zip">
 			<fileset dir="${buildDir}">
 				<patternset id="non.test.sources" >
     					<exclude name="**/*.nb*"/>
     					<exclude name="**/*.bak"/>
     					<exclude name="**/*.*~"/>
     					<exclude name="**/lib-nodist/*"/>
+    					<exclude name="**/clover/*"/>
+    					<exclude name="**/checkstyle/*"/>
   				</patternset>
 			</fileset>
 		</jar>
+		
 	</target>
 	
 	<target name="test" depends="compile-testsuite">
