@@ -504,4 +504,37 @@ public class StatementsTest
             ;
         }
     }
+    
+    /**
+     * Tests that NULLs and '' work correctly.
+     */
+    public void testNulls() throws SQLException {
+    	try {
+    		stmt.executeUpdate("DROP TABLE IF EXISTS nullTest");
+    		stmt.executeUpdate("CREATE TABLE IF NOT EXISTS nullTest (field_1 CHAR(20), rowOrder INT)");
+    		stmt.executeUpdate("INSERT INTO nullTest VALUES (null, 1), ('', 2)");
+    	
+    		rs = stmt.executeQuery("SELECT field_1 FROM nullTest ORDER BY rowOrder");
+    	
+    		rs.next();
+    	
+    		assertTrue("NULL field not returned as NULL", rs.getString(1) == null && rs.wasNull());
+    	
+    		rs.next();
+    	
+    		assertTrue("Empty field not returned as \"\"", rs.getString(1).equals("") && !rs.wasNull());
+    	
+    		rs.close();   	
+    	} finally {
+    		if (rs != null) {
+    			try {
+    				rs.close();
+    			} catch (Exception ex) {
+    				// ignore
+    			}	
+    		}
+    		
+    		stmt.executeUpdate("DROP TABLE IF EXISTS nullTest");
+    	}
+    }
 }
