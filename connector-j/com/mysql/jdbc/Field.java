@@ -37,9 +37,14 @@ public class Field
     int length; // Internal length of the field;
     int mysqlType = -1; // the MySQL type
     String name; // The Field name
+    int nameStart;
+    int nameLength;
     int sqlType = -1; // the java.sql.Type
     String tableName; // The Name of the Table
-    private String fullName;
+    int tableNameStart;
+    int tableNameLength;
+    byte[] buffer;
+    private String fullName = null;
 
     //~ Constructors ..........................................................
 
@@ -55,12 +60,16 @@ public class Field
         colFlag = 0;
         colDecimals = 0;
     }
-
-    Field(String tableName, String columnName, int length, int mysqlType, 
-          short colFlag, int colDecimals)
+    
+    Field(byte[] buffer, int nameStart, int nameLength, int tableNameStart, 
+          int tableNameLength, int length, int mysqlType, short colFlag, 
+          int colDecimals)
     {
-        this.tableName = tableName;
-        this.name = columnName;
+        this.buffer = buffer;
+        this.nameStart = nameStart;
+        this.nameLength = nameLength;
+        this.tableNameStart = tableNameStart;
+        this.tableNameLength = tableNameLength;
         this.length = length;
         this.colFlag = colFlag;
         this.colDecimals = colDecimals;
@@ -69,15 +78,7 @@ public class Field
         // Map MySqlTypes to java.sql Types
         sqlType = MysqlDefs.mysqlToJavaType(mysqlType);
 
-        StringBuffer fullNameBuf = new StringBuffer(
-                                           tableName.length() + 1 + 
-                                           name.length());
-        fullNameBuf.append(tableName);
-        fullNameBuf.append(".");
-        fullNameBuf.append(name);
-        fullName = fullNameBuf.toString();
-        fullNameBuf = null;
-
+        
         boolean isBinary = isBinary();
 
         //
@@ -163,6 +164,21 @@ public class Field
     public String getFullName()
     {
 
+        if (fullName == null)
+        {
+
+            StringBuffer fullNameBuf = new StringBuffer(
+                                               getTableName().length() + 1 + 
+                                               getName().length());
+            fullNameBuf.append(tableName);
+
+            // much faster to append a char than a String
+            fullNameBuf.append('.');
+            fullNameBuf.append(name);
+            fullName = fullNameBuf.toString();
+            fullNameBuf = null;
+        }
+
         return fullName;
     }
 
@@ -216,16 +232,12 @@ public class Field
     public String getName()
     {
 
-        if (name != null)
+        if (name == null)
         {
-
-            return name;
+            name = StringUtils.toAsciiString3(buffer, nameStart, nameLength);
         }
-        else
-        {
 
-            return null;
-        }
+        return name;
     }
 
     /**
@@ -267,16 +279,7 @@ public class Field
     public String getTable()
     {
 
-        if (tableName != null)
-        {
-
-            return tableName;
-        }
-        else
-        {
-
-            return null;
-        }
+        return getTableName();
     }
 
     /**
@@ -286,6 +289,12 @@ public class Field
      */
     public String getTableName()
     {
+
+        if (tableName == null)
+        {
+            tableName = StringUtils.toAsciiString3(buffer, tableNameStart, 
+                                                   tableNameLength);
+        }
 
         return tableName;
     }
