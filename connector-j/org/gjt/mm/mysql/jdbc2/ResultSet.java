@@ -2626,6 +2626,8 @@ public class ResultSet
 
 		boolean useQuotedIdentifiers = _connection.supportsQuotedIdentifiers();
 		
+		String quotedId = getQuotedIdChar();
+		
 		String TableName = _fields[0].getTableName();
 
 		_PrimaryKeyIndicies = new Vector();
@@ -2652,14 +2654,14 @@ public class ResultSet
 
 				if (useQuotedIdentifiers)
 				{
-					KeyValues.append("`");
+					KeyValues.append(quotedId);
 				}
 				
 				KeyValues.append(_fields[i].getName());
 				
 				if (useQuotedIdentifiers)
 				{
-					KeyValues.append("`");
+					KeyValues.append(quotedId);
 				}
 				
 				KeyValues.append("=?");
@@ -2679,59 +2681,74 @@ public class ResultSet
 			
 			if (useQuotedIdentifiers)
 			{
-				ColumnNames.append("`");
+				ColumnNames.append(quotedId);
 			}
 			
 			ColumnNames.append(_fields[i].getName());
 			
 			if (useQuotedIdentifiers)
 			{
-				ColumnNames.append("`");
+				ColumnNames.append(quotedId);
 			}
 			
 			if (useQuotedIdentifiers)
 			{
-				FieldValues.append("`");
+				FieldValues.append(quotedId);
 			}
 			
 			FieldValues.append(_fields[i].getName());
 			
 			if (useQuotedIdentifiers)
 			{
-				FieldValues.append("`");
+				FieldValues.append(quotedId);
 			}
 			
 			FieldValues.append("=?");
 		}
 
-		String quotedId = useQuotedIdentifiers ? "`" : "";
+		String quotedIdStr = useQuotedIdentifiers ? quotedId : "";
 		
 		_UpdateSQL =
-			"UPDATE " + quotedId
+			"UPDATE " + quotedIdStr
 				+ TableName
-				+ quotedId + " "
+				+ quotedIdStr + " "
 				+ FieldValues.toString()
 				+ " WHERE "
 				+ KeyValues.toString();
 
 		_InsertSQL =
-			"INSERT INTO " + quotedId
+			"INSERT INTO " + quotedIdStr
 				+ TableName
-				+ quotedId + " ("
+				+ quotedIdStr + " ("
 				+ ColumnNames.toString()
 				+ ") VALUES ("
 				+ InsertPlaceHolders.toString()
 				+ ")";
 				
 		_RefreshSQL =
-			"SELECT " + ColumnNames.toString() + " FROM " + quotedId
+			"SELECT " + ColumnNames.toString() + " FROM " + quotedIdStr
 				+ TableName
-				+ quotedId + " WHERE " + KeyValues.toString();
+				+ quotedIdStr + " WHERE " + KeyValues.toString();
 
 
-		_DeleteSQL = "DELETE FROM " + quotedId + TableName + quotedId + " WHERE " + KeyValues.toString();
+		_DeleteSQL = "DELETE FROM " + quotedIdStr + TableName + quotedIdStr + " WHERE " + KeyValues.toString();
 	}
 
+	static private String quotedIdChar = null;
+	
+	private synchronized String getQuotedIdChar() throws SQLException
+	{
+		
+		if (quotedIdChar == null)
+		{
+			java.sql.DatabaseMetaData dbmd = _connection.getMetaData();
+			quotedIdChar = dbmd.getIdentifierQuoteString();
+		}
+		
+		return quotedIdChar;
+		
+	}
+		
 	/**
 	 * Reset UPDATE prepared statement to value in current row.
 	 * 

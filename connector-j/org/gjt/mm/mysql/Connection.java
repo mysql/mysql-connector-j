@@ -203,6 +203,12 @@ public abstract class Connection
      */
     
     private boolean _hasQuotedIdentifiers = false;
+    
+    /** 
+     * Has ANSI_QUOTES been enabled on the server?
+     */
+    
+    private boolean _useAnsiQuotes = false;
 
 
     /**
@@ -482,7 +488,35 @@ public abstract class Connection
                 _hasIsolationLevels = false;
             }
 
+			// Start logging perf/profile data if the user has requested it.
+			
+			String profileSql = info.getProperty("profileSql");
+			
+			if (profileSql != null && profileSql.trim().equalsIgnoreCase("true"))
+			{
+				_io.setProfileSql(true);
+			}
+			else
+			{
+				_io.setProfileSql(false);
+			}
+			
 			_hasQuotedIdentifiers = _io.versionMeetsMinimum(3, 23, 6);
+			
+			if (_serverVariables.containsKey("sql_mode"))
+			{
+				int sqlMode = Integer.parseInt((String)_serverVariables.get(
+					"sql_mode"));
+					
+				if ((sqlMode & 4) > 0)
+				{
+					_useAnsiQuotes = true;
+				}
+				else
+				{
+					_useAnsiQuotes = false;
+				}
+			}
 			
             _io.resetMaxBuf();
         }
@@ -1379,11 +1413,17 @@ public abstract class Connection
     {
         return _netBufferLength;
     }
+    
+   	boolean useAnsiQuotedIdentifiers()
+   	{
+   		return _useAnsiQuotes;
+   	}
 
     protected MysqlIO getIO()
     {
         return _io;
     }
+
 
 
     /**

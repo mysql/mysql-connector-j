@@ -75,7 +75,15 @@ public abstract class DatabaseMetaData
 		_conn = Conn;
 		_database = Database;
 		
-		_quotedId = _conn.supportsQuotedIdentifiers() ? "`" : "";
+		try
+		{
+			_quotedId = _conn.supportsQuotedIdentifiers() ? getIdentifierQuoteString() : "";
+		}
+		catch (SQLException sqlEx)
+		{
+			// Forced by API, never thrown from getIdentifierQuoteString() in this
+			// implementation.
+		}
 	}
 
 	/**
@@ -382,7 +390,21 @@ public abstract class DatabaseMetaData
 
 	public String getIdentifierQuoteString() throws java.sql.SQLException
 	{
-		return " ";
+		if (_conn.supportsQuotedIdentifiers())
+		{
+			if (!_conn.useAnsiQuotedIdentifiers())
+			{
+				return "`";
+			}
+			else
+			{
+				return "\"";
+			}
+		}
+		else
+		{
+			return " ";
+		}
 	}
 
 	/**
