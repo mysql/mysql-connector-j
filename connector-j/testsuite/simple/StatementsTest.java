@@ -16,12 +16,14 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
    
  */
- 
 package testsuite.simple;
 
-import java.sql.*;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 import testsuite.BaseTestCase;
+
+import com.mysql.jdbc.NotImplemented;
 
 
 public class StatementsTest
@@ -40,10 +42,12 @@ public class StatementsTest
     public static void main(String[] args)
                      throws Exception
     {
+    	new StatementsTest("testStubbed").run();
         new StatementsTest("testInsert").run();
-		new StatementsTest("testAutoIncrement").run();
+        new StatementsTest("testAutoIncrement").run();
         new StatementsTest("testPreparedStatement").run();
         new StatementsTest("testPreparedStatementBatch").run();
+        new StatementsTest("testClose").run();
     }
 
     public void setUp()
@@ -78,9 +82,8 @@ public class StatementsTest
 
         if (rs.next()) {
             autoIncKeyFromApi = rs.getInt(1);
-        }
-        else {
-        	fail("Failed to retrieve AUTO_INCREMENT using Statement.getGeneratedKeys()");
+        } else {
+            fail("Failed to retrieve AUTO_INCREMENT using Statement.getGeneratedKeys()");
         }
 
         int autoIncKeyFromFunc = -1;
@@ -88,17 +91,54 @@ public class StatementsTest
 
         if (rs.next()) {
             autoIncKeyFromFunc = rs.getInt(1);
+        } else {
+            fail("Failed to retrieve AUTO_INCREMENT using LAST_INSERT_ID()");
         }
-        else {
-        	fail("Failed to retrieve AUTO_INCREMENT using LAST_INSERT_ID()");
-        }
-        
+
         if (autoIncKeyFromApi != -1 && autoIncKeyFromFunc != -1) {
-        	assertTrue("Key retrieved from API (" + autoIncKeyFromApi + ") does not match key retrieved from LAST_INSERT_ID() " + autoIncKeyFromFunc + ") function", autoIncKeyFromApi == autoIncKeyFromFunc);
+            assertTrue("Key retrieved from API (" + autoIncKeyFromApi + 
+                       ") does not match key retrieved from LAST_INSERT_ID() " + 
+                       autoIncKeyFromFunc + ") function", 
+                       autoIncKeyFromApi == autoIncKeyFromFunc);
+        } else {
+            fail("AutoIncrement keys were '0'");
         }
-        else {
-        	fail("AutoIncrement keys were '0'");
+    }
+
+    public void testClose()
+                   throws SQLException
+    {
+
+        Statement closeStmt = null;
+		boolean exceptionAfterClosed = false;
+		
+        try {
+            closeStmt = conn.createStatement();
+            closeStmt.close();
+
+            
+
+            try {
+                closeStmt.executeQuery("SELECT 1");
+            } catch (SQLException sqlEx) {
+                exceptionAfterClosed = true;
+            }
+        } finally {
+
+            if (closeStmt != null) {
+
+                try {
+                    closeStmt.close();
+                } catch (SQLException sqlEx) {
+                	/* ignore */
+                }
+            }
+
+            closeStmt = null;
         }
+
+        assertTrue("Operations not allowed on Statement after .close() is called!", 
+                   exceptionAfterClosed);
     }
 
     public void testInsert()
@@ -150,4 +190,24 @@ public class StatementsTest
                        "'", (updateCounts[i] == 1));
         }
     }
+    
+    public void testStubbed() throws SQLException
+    {
+    	try {
+    		stmt.executeUpdate("", 1);
+    	}
+    	catch (NotImplemented notImplEx) { /* ignore */ }
+    	
+    	try{
+	     	stmt.executeUpdate("", new int[0]);
+	    }
+    	catch (NotImplemented notImplEx) { /* ignore */ }
+    	
+    	try {
+    		stmt.executeUpdate("", new String[0]);
+    	}
+    	catch (NotImplemented notImplEx) { /* ignore */ }
+    	
+    }
+    
 }
