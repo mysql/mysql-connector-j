@@ -38,10 +38,6 @@ public class MetadataTest
     extends BaseTestCase
 {
 
-    //~ Instance/static variables .............................................
-
-   
-
     //~ Constructors ..........................................................
 
     public MetadataTest(String name)
@@ -53,6 +49,7 @@ public class MetadataTest
 
     public static void main(String[] args)
     {
+    	new MetadataTest("testGetPrimaryKeys").run();
         new MetadataTest("testForeignKeys").run();
     }
 
@@ -71,26 +68,72 @@ public class MetadataTest
         rs = dbmd.getImportedKeys(null, null, "child");
 
         while (rs.next()) {
-        	String pkColumnName = rs.getString("PKCOLUMN_NAME");
-        	String fkColumnName = rs.getString("FKCOLUMN_NAME");
-        	
-        	assertTrue("Primary Key not returned correctly ('" + pkColumnName + "' != 'id')", pkColumnName.equalsIgnoreCase("id"));
-        	assertTrue("Foreign Key not returned correctly ('" + fkColumnName + "' != 'parent_id')", fkColumnName.equalsIgnoreCase("parent_id"));
+
+            String pkColumnName = rs.getString("PKCOLUMN_NAME");
+            String fkColumnName = rs.getString("FKCOLUMN_NAME");
+            assertTrue("Primary Key not returned correctly ('" + 
+                       pkColumnName + "' != 'parent_id')", 
+                       pkColumnName.equalsIgnoreCase("parent_id"));
+            assertTrue("Foreign Key not returned correctly ('" + 
+                       fkColumnName + "' != 'parent_id')", 
+                       fkColumnName.equalsIgnoreCase("parent_id"));
         }
 
         rs.close();
         rs = dbmd.getExportedKeys(null, null, "parent");
 
         while (rs.next()) {
-        	String pkColumnName = rs.getString("PKCOLUMN_NAME");
-        	String fkColumnName = rs.getString("FKCOLUMN_NAME");
-        	
-        	assertTrue("Primary Key not returned correctly ('" + pkColumnName + "' != 'id')", pkColumnName.equalsIgnoreCase("id"));
-        	assertTrue("Foreign Key not returned correctly ('" + fkColumnName + "' != 'parent_id')", fkColumnName.equalsIgnoreCase("parent_id"));
+
+            String pkColumnName = rs.getString("PKCOLUMN_NAME");
+            String fkColumnName = rs.getString("FKCOLUMN_NAME");
+            assertTrue("Primary Key not returned correctly ('" + 
+                       pkColumnName + "' != 'parent_id')", 
+                       pkColumnName.equalsIgnoreCase("parent_id"));
+            assertTrue("Foreign Key not returned correctly ('" + 
+                       fkColumnName + "' != 'parent_id')", 
+                       fkColumnName.equalsIgnoreCase("parent_id"));
         }
 
-
         rs.close();
+    }
+
+    public void testGetPrimaryKeys()
+                            throws SQLException
+    {
+
+        try {
+
+            DatabaseMetaData dbmd = conn.getMetaData();
+            rs = dbmd.getPrimaryKeys(conn.getCatalog(), "", "multikey");
+			short[] keySeqs = new short[4];
+			String[] columnNames = new String[4];
+			int i = 0;
+			
+            while (rs.next()) {
+            	String tableName = rs.getString("TABLE_NAME");
+            	columnNames[i] = rs.getString("COLUMN_NAME");
+            	String pkName = rs.getString("PK_NAME");
+            	keySeqs[i] = rs.getShort("KEY_SEQ");
+            	i++;
+            }
+            
+            if (keySeqs[0] != 3 &&
+            	keySeqs[1] != 2 &&
+            	keySeqs[2] != 4 &&
+            	keySeqs[4] != 1) {
+            		fail("Keys returned in wrong order");
+            }
+            
+        } finally {
+
+            if (rs != null) {
+
+                try {
+                    rs.close();
+                } catch (SQLException sqlEx) { /* ignore */
+                }
+            }
+        }
     }
 
     private void createTestTable()
@@ -100,12 +143,16 @@ public class MetadataTest
         try {
             stmt.executeUpdate("DROP TABLE parent");
             stmt.executeUpdate("DROP TABLE child");
+            stmt.executeUpdate("DROP TABLE multikey");
         } catch (SQLException sqlEx) {
         }
 
         stmt.executeUpdate(
-                "CREATE TABLE parent(id INT NOT NULL, PRIMARY KEY (id)) TYPE=INNODB");
+                "CREATE TABLE parent(parent_id INT NOT NULL, PRIMARY KEY (parent_id)) TYPE=INNODB");
         stmt.executeUpdate(
-                "CREATE TABLE child(id INT, parent_id INT, INDEX par_ind (parent_id), FOREIGN KEY (parent_id) REFERENCES parent(id)) TYPE=INNODB");
+                "CREATE TABLE child(child_id INT, parent_id INT, INDEX par_ind (parent_id), FOREIGN KEY (parent_id) REFERENCES parent(parent_id)) TYPE=INNODB");
+        stmt.executeUpdate(
+        		"CREATE TABLE multikey(d INT NOT NULL, b INT NOT NULL, a INT NOT NULL, c INT NOT NULL, PRIMARY KEY (d, b, a, c))");
+        		
     }
 }
