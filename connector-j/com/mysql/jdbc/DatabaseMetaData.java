@@ -200,7 +200,7 @@ public class DatabaseMetaData
 
                 if (keyType != null) {
 
-                    if (keyType.toUpperCase().startsWith("PRI")) {
+                    if (StringUtils.startsWithIgnoreCase(keyType, "PRI")) {
 
                         byte[][] rowVal = new byte[8][];
                         rowVal[0] = Integer.toString(
