@@ -226,6 +226,12 @@ useSSL              | Should Connector/J use SSL when           | false
                     | section of this document for important    |
                     | information for making this work.         |
 ------------------------------------------------------------------------------
+useStreamLengthsIn\ | Should Connector/J honor stream lengths   | true                             |
+PrepStmts           | when calling PreparedStatement            |
+                    | setBinary/AsciiStream() and ResultSet     |
+                    | updateBinary/AsciiStream() ?   (note: the |
+                    | parameter name is one word with no '\')   |
+------------------------------------------------------------------------------
 			
 			
 A simple connection example looks like:
@@ -248,7 +254,7 @@ were not completed (see section 6.1 in the JDBC-2.1 API spec for more details).
 
 Various DataSource implementations exist, all under the 
 com.mysql.jdbc.jdbc2.optional package. They are "MysqlDataSource",
-"MysqlConnectionPoolDataSource" and "MysqlXaDataSource". Refer to your 
+and "MysqlConnectionPoolDataSource". Refer to your 
 application server documentation for information on how to use these classes.
 An example of using the standard DataSource ("MysqlDataSource") can be found
 in the "testsuite" directory.
@@ -619,8 +625,6 @@ to implement them).
 
 The following methods are not implemented:
 
-	Blob.setBinaryStream()
-	Blob.setBytes()
 	Blob.truncate()
 
 	Connection.setSavePoint()
@@ -631,7 +635,6 @@ The following methods are not implemented:
 	Connection.rollback(Savepoint)
 
 	PreparedStatement.setArray(int, Array)
-	PreparedStatement.setClob(int, Clob)
 	PreparedStatement.getMetaData()
 	PreparedStatement.setRef()
 	PreparedStatement.getParameterMetaData()

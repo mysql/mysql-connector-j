@@ -47,6 +47,10 @@
     - Fixed DBMD.supportsResultSetConcurrency() so that it returns true
       for ResultSet.TYPE_SCROLL_INSENSITIVE and ResultSet.CONCUR_READ_ONLY or
       ResultSet.CONCUR_UPDATABLE
+    - Fixed ResultSet.isLast() for empty result sets (should return false).
+    - PreparedStatement now honors stream lengths in setBinary/AsciiStream()
+      unless you set the connection property 'useStreamLengthsInPrepStmts' to
+      'false'.
              	
 09-21-02 - Version 3.0.1-dev
 	
