@@ -246,8 +246,8 @@ public class Statement
     public void setFetchSize(int rows)
                       throws SQLException {
 
-        if (rows > this.getMaxRows()
-            || (rows < 0 && rows != Integer.MIN_VALUE)) {
+        if (maxRows != 0 && maxRows != -1 && (rows > this.getMaxRows()
+            || (rows < 0 && rows != Integer.MIN_VALUE))) {
             throw new SQLException("Illegal value for setFetchSize()", "S1009");
         }
 
