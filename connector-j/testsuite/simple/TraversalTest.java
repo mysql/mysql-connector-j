@@ -1,27 +1,23 @@
 /*
- Copyright (C) 2002 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   Copyright (C) 2002 MySQL AB
    
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+   
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+   
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, write to the Free Software
+      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+      
  */
-
 package testsuite.simple;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -31,37 +27,52 @@ import testsuite.BaseTestCase;
 
 /** 
  *
- * @author  Administrator
- * @version 
+ * @author  Mark Matthews
+ * @version $Id$
  */
 public class TraversalTest
-    extends BaseTestCase
-{
+    extends BaseTestCase {
 
     //~ Constructors ..........................................................
 
-    public TraversalTest(String name)
-    {
+    /**
+     * Creates a new TraversalTest object.
+     * 
+     * @param name DOCUMENT ME!
+     */
+    public TraversalTest(String name) {
         super(name);
     }
 
     //~ Methods ...............................................................
 
-    public static void main(String[] args)
-    {
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param args DOCUMENT ME!
+     */
+    public static void main(String[] args) {
         new TraversalTest("testTransaction").run();
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws Exception DOCUMENT ME!
+     */
     public void setUp()
-               throws Exception
-    {
+               throws Exception {
         super.setUp();
         createTestTable();
     }
 
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws SQLException DOCUMENT ME!
+     */
     public void testTraversal()
-                       throws SQLException
-    {
+                       throws SQLException {
 
         Statement scrollableStmt = null;
 
@@ -69,10 +80,10 @@ public class TraversalTest
             scrollableStmt = conn.createStatement(
                                      ResultSet.TYPE_SCROLL_SENSITIVE, 
                                      ResultSet.CONCUR_READ_ONLY);
-            rs             = scrollableStmt.executeQuery(
-                                     "SELECT * FROM TRAVERSAL ORDER BY pos");
+            rs = scrollableStmt.executeQuery(
+                         "SELECT * FROM TRAVERSAL ORDER BY pos");
 
-            int count      = 0;
+            int count = 0;
             rs.beforeFirst();
 
             boolean forwardOk = true;
@@ -115,7 +126,7 @@ public class TraversalTest
                 if (pos != count) {
                     reverseOk = false;
                 }
-			
+
                 count--;
             }
 
@@ -144,14 +155,14 @@ public class TraversalTest
                 try {
                     scrollableStmt.close();
                 } catch (SQLException sqlEx) {
+                    ;
                 }
             }
         }
     }
 
     private void createTestTable()
-                          throws SQLException
-    {
+                          throws SQLException {
 
         //
         // Catch the error, the table might exist
@@ -159,6 +170,7 @@ public class TraversalTest
         try {
             stmt.executeUpdate("DROP TABLE TRAVERSAL");
         } catch (SQLException SQLE) {
+            ;
         }
 
         stmt.executeUpdate(
@@ -166,8 +178,7 @@ public class TraversalTest
 
         for (int i = 0; i < 100; i++) {
             stmt.executeUpdate(
-                    "INSERT INTO TRAVERSAL VALUES (" + i + 
-                    ", 'StringData')");
+                    "INSERT INTO TRAVERSAL VALUES (" + i + ", 'StringData')");
         }
     }
 }

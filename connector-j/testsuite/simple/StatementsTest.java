@@ -23,15 +23,21 @@ import junit.framework.Test;
 
 import testsuite.BaseTestCase;
 
-
+/** 
+ *
+ * @author  Mark Matthews
+ * @version $Id$
+ */
 public class StatementsTest
     extends BaseTestCase {
 
-	private static final int MAX_COLUMNS_TO_TEST = 40;
-	private static final int STEP = 8;
-	private static final int MAX_COLUMN_LENGTH = 255;
-	private static final int MIN_COLUMN_LENGTH = 10;
-	
+    //~ Instance/static variables .............................................
+
+    private static final int MAX_COLUMNS_TO_TEST = 40;
+    private static final int STEP = 8;
+    private static final int MAX_COLUMN_LENGTH = 255;
+    private static final int MIN_COLUMN_LENGTH = 10;
+
     //~ Constructors ..........................................................
 
     /**
@@ -74,64 +80,57 @@ public class StatementsTest
         try {
             stmt.executeUpdate("DROP TABLE statement_test");
         } /* ignore */ catch (SQLException sqlEx) {
+            ;
         }
 
         stmt.executeUpdate(
                 "CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
 
-		
-		
-		for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP)
-		{
-			StringBuffer insertBuf = new StringBuffer("INSERT INTO statement_col_test_");
-			StringBuffer stmtBuf = new StringBuffer("CREATE TABLE IF NOT EXISTS statement_col_test_");
-			stmtBuf.append(i);
-			insertBuf.append(i);
-			stmtBuf.append(" (");
-			insertBuf.append(" VALUES (");
-			
-			boolean firstTime = true;
-			
-			for (int j = 0; j < i; j++)
-			{
-				if (!firstTime)
-				{
-					stmtBuf.append(",");
-					insertBuf.append(",");
-				}
-				else
-				{
-					firstTime = false;
-				}
-					stmtBuf.append("col_");
-					stmtBuf.append(j);
-					stmtBuf.append(" VARCHAR(");
-					stmtBuf.append(MAX_COLUMN_LENGTH);
-					stmtBuf.append(")");
-					
-					insertBuf.append("'");
-					int numChars = (int)((Math.random() * (MAX_COLUMN_LENGTH - MIN_COLUMN_LENGTH))) + MIN_COLUMN_LENGTH;
-					
-					for (int k = 0; k < numChars; k++)
-					{
-						insertBuf.append("A");
-					}
-					
-					insertBuf.append("'");
-			}
-			
-			stmtBuf.append(")");
-			insertBuf.append(")");
+        for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
 
-			stmt.executeUpdate(stmtBuf.toString());
-			stmt.executeUpdate(insertBuf.toString());
-			
-		
-		}
-		
-		
-			
-			
+            StringBuffer insertBuf = new StringBuffer(
+                                             "INSERT INTO statement_col_test_");
+            StringBuffer stmtBuf = new StringBuffer(
+                                           "CREATE TABLE IF NOT EXISTS statement_col_test_");
+            stmtBuf.append(i);
+            insertBuf.append(i);
+            stmtBuf.append(" (");
+            insertBuf.append(" VALUES (");
+
+            boolean firstTime = true;
+
+            for (int j = 0; j < i; j++) {
+
+                if (!firstTime) {
+                    stmtBuf.append(",");
+                    insertBuf.append(",");
+                } else {
+                    firstTime = false;
+                }
+
+                stmtBuf.append("col_");
+                stmtBuf.append(j);
+                stmtBuf.append(" VARCHAR(");
+                stmtBuf.append(MAX_COLUMN_LENGTH);
+                stmtBuf.append(")");
+                insertBuf.append("'");
+
+                int numChars = (int) (Math.random() * (MAX_COLUMN_LENGTH - MIN_COLUMN_LENGTH))
+                               + MIN_COLUMN_LENGTH;
+
+                for (int k = 0; k < numChars; k++) {
+                    insertBuf.append("A");
+                }
+
+                insertBuf.append("'");
+            }
+
+            stmtBuf.append(")");
+            insertBuf.append(")");
+            stmt.executeUpdate(stmtBuf.toString());
+            stmt.executeUpdate(insertBuf.toString());
+        }
+
         // explicitly set the catalog to exercise code in execute(), executeQuery() and
         // executeUpdate()
         // FIXME: Only works on Windows!
@@ -146,15 +145,15 @@ public class StatementsTest
     public void tearDown()
                   throws Exception {
         stmt.executeUpdate("DROP TABLE statement_test");
-        
-        for (int i = 0; i < MAX_COLUMNS_TO_TEST; i += STEP)
-		{
-			StringBuffer stmtBuf = new StringBuffer("DROP TABLE IF EXISTS statement_col_test_");
-			stmtBuf.append(i);
-			
-			stmt.executeUpdate(stmtBuf.toString());
-		}
-		
+
+        for (int i = 0; i < MAX_COLUMNS_TO_TEST; i += STEP) {
+
+            StringBuffer stmtBuf = new StringBuffer(
+                                           "DROP TABLE IF EXISTS statement_col_test_");
+            stmtBuf.append(i);
+            stmt.executeUpdate(stmtBuf.toString());
+        }
+
         super.tearDown();
     }
 
@@ -176,13 +175,16 @@ public class StatementsTest
             accessorStmt.setMaxRows(1);
             accessorStmt.setMaxRows(0); // FIXME, test that this actually affects rows returned
             accessorStmt.setMaxFieldSize(255);
-            assertTrue("Max field size should match what was set", accessorStmt.getMaxFieldSize() == 255);
-            
+            assertTrue("Max field size should match what was set", 
+                       accessorStmt.getMaxFieldSize() == 255);
+
             try {
-            	accessorStmt.setMaxFieldSize(Integer.MAX_VALUE);
-            	fail("Should not be able to set max field size > max_packet_size");
-            } catch (SQLException sqlEx) { /* ignore */ }
-           
+                accessorStmt.setMaxFieldSize(Integer.MAX_VALUE);
+                fail("Should not be able to set max field size > max_packet_size");
+            } /* ignore */ catch (SQLException sqlEx) {
+                ;
+            }
+
             accessorStmt.setCursorName("undef");
             accessorStmt.setEscapeProcessing(true);
             accessorStmt.setFetchDirection(java.sql.ResultSet.FETCH_FORWARD);
@@ -194,44 +196,50 @@ public class StatementsTest
             try {
                 accessorStmt.setFetchDirection(Integer.MAX_VALUE);
                 fail("Should not be able to set fetch direction to invalid value");
-            } catch (SQLException sqlEx) { /* ignore */
+            } /* ignore */ catch (SQLException sqlEx) {
+                ;
             }
 
             try {
                 accessorStmt.setMaxRows(50000000 + 10);
                 fail("Should not be able to set max rows > 50000000");
-            } catch (SQLException sqlEx) { /* ignore */
+            } /* ignore */ catch (SQLException sqlEx) {
+                ;
             }
 
             try {
                 accessorStmt.setMaxRows(Integer.MIN_VALUE);
                 fail("Should not be able to set max rows < 0");
-            } catch (SQLException sqlEx) { /* ignore */
+            } /* ignore */ catch (SQLException sqlEx) {
+                ;
             }
-            
+
             int fetchSize = stmt.getFetchSize();
-            
+
             try {
-            	accessorStmt.setFetchSize(Integer.MAX_VALUE);
-            	fail("Should not be able to set FetchSize > max rows");
-            } catch (SQLException sqlEx) { /* ignore */ }
-            
+                accessorStmt.setFetchSize(Integer.MAX_VALUE);
+                fail("Should not be able to set FetchSize > max rows");
+            } /* ignore */ catch (SQLException sqlEx) {
+                ;
+            }
+
             try {
-            	accessorStmt.setFetchSize(-2);
-            	fail("Should not be able to set FetchSize < 0");
-            } catch (SQLException sqlEx) { /* ignore */ }
-            
-            assertTrue("Fetch size before invalid setFetchSize() calls should match fetch size now",
-            	fetchSize == stmt.getFetchSize());
-            
-            
+                accessorStmt.setFetchSize(-2);
+                fail("Should not be able to set FetchSize < 0");
+            } /* ignore */ catch (SQLException sqlEx) {
+                ;
+            }
+
+            assertTrue("Fetch size before invalid setFetchSize() calls should match fetch size now", 
+                       fetchSize == stmt.getFetchSize());
         } finally {
 
             if (accessorStmt != null) {
 
                 try {
                     accessorStmt.close();
-                } catch (SQLException sqlEx) { /* ignore */
+                } /* ignore */ catch (SQLException sqlEx) {
+                    ;
                 }
 
                 accessorStmt = null;
@@ -239,23 +247,28 @@ public class StatementsTest
         }
     }
 
-	public void testSelectColumns() throws SQLException
-	{
-		for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP)
-		{
-			long start = System.currentTimeMillis();
-			rs = stmt.executeQuery("SELECT * from statement_col_test_" + i);
-			if (rs.next())
-			{
-			}
-			long end = System.currentTimeMillis();
-			
-			System.out.println(i + " columns = " + (end - start));
-		}
-			
-			
-	}
-	
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws SQLException DOCUMENT ME!
+     */
+    public void testSelectColumns()
+                           throws SQLException {
+
+        for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
+
+            long start = System.currentTimeMillis();
+            rs = stmt.executeQuery("SELECT * from statement_col_test_" + i);
+
+            if (rs.next()) {
+                ;
+            }
+
+            long end = System.currentTimeMillis();
+            System.out.println(i + " columns = " + (end - start));
+        }
+    }
+
     /**
      * DOCUMENT ME!
      * 
@@ -263,52 +276,54 @@ public class StatementsTest
      */
     public void testAutoIncrement()
                            throws SQLException {
-        try
-        {
-        	stmt = conn.createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY, java.sql.ResultSet.CONCUR_READ_ONLY);
-        	stmt.setFetchSize(Integer.MIN_VALUE);
-        	
-        stmt.executeUpdate(
-                "INSERT INTO statement_test (strdata1) values ('blah')");
 
-        int autoIncKeyFromApi = -1;
-        rs = stmt.getGeneratedKeys();
+        try {
+            stmt = conn.createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY, 
+                                        java.sql.ResultSet.CONCUR_READ_ONLY);
+            stmt.setFetchSize(Integer.MIN_VALUE);
+            stmt.executeUpdate(
+                    "INSERT INTO statement_test (strdata1) values ('blah')");
 
-        if (rs.next()) {
-            autoIncKeyFromApi = rs.getInt(1);
-        } else {
-            fail("Failed to retrieve AUTO_INCREMENT using Statement.getGeneratedKeys()");
-        }
-        
-        rs.close();
+            int autoIncKeyFromApi = -1;
+            rs = stmt.getGeneratedKeys();
 
-        int autoIncKeyFromFunc = -1;
-        rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+            if (rs.next()) {
+                autoIncKeyFromApi = rs.getInt(1);
+            } else {
+                fail("Failed to retrieve AUTO_INCREMENT using Statement.getGeneratedKeys()");
+            }
 
-        if (rs.next()) {
-            autoIncKeyFromFunc = rs.getInt(1);
-        } else {
-            fail("Failed to retrieve AUTO_INCREMENT using LAST_INSERT_ID()");
-        }
+            rs.close();
 
-        if (autoIncKeyFromApi != -1 && autoIncKeyFromFunc != -1) {
-            assertTrue("Key retrieved from API (" + autoIncKeyFromApi + 
-                       ") does not match key retrieved from LAST_INSERT_ID() " + 
-                       autoIncKeyFromFunc + ") function", 
-                       autoIncKeyFromApi == autoIncKeyFromFunc);
-        } else {
-            fail("AutoIncrement keys were '0'");
-        }
-        }
-        finally {
-        	if (rs != null) {
-        		try {
-        			rs.close();
-        		}
-        		catch (Exception ex) { /* ignore */ }
-        	}
-        	
-        	rs = null;
+            int autoIncKeyFromFunc = -1;
+            rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+
+            if (rs.next()) {
+                autoIncKeyFromFunc = rs.getInt(1);
+            } else {
+                fail("Failed to retrieve AUTO_INCREMENT using LAST_INSERT_ID()");
+            }
+
+            if (autoIncKeyFromApi != -1 && autoIncKeyFromFunc != -1) {
+                assertTrue("Key retrieved from API (" + autoIncKeyFromApi
+                           + ") does not match key retrieved from LAST_INSERT_ID() "
+                           + autoIncKeyFromFunc + ") function", 
+                           autoIncKeyFromApi == autoIncKeyFromFunc);
+            } else {
+                fail("AutoIncrement keys were '0'");
+            }
+        } finally {
+
+            if (rs != null) {
+
+                try {
+                    rs.close();
+                } catch (Exception ex) { /* ignore */
+                    ;
+                }
+            }
+
+            rs = null;
         }
     }
 
@@ -320,8 +335,8 @@ public class StatementsTest
     public void testClose()
                    throws SQLException {
 
-        Statement closeStmt            = null;
-        boolean   exceptionAfterClosed = false;
+        Statement closeStmt = null;
+        boolean exceptionAfterClosed = false;
 
         try {
             closeStmt = conn.createStatement();
@@ -359,82 +374,77 @@ public class StatementsTest
     public void testInsert()
                     throws SQLException {
 
-		try 
-		{
-        boolean autoCommit = conn.getAutoCommit();
-
-        // Test running a query for an update. It should fail.
         try {
-            conn.setAutoCommit(false);
-            stmt.executeUpdate("SELECT * FROM statement_test");
-        } catch (SQLException sqlEx) {
-            assertTrue("Exception thrown for unknown reason", 
-                       sqlEx.getSQLState().equalsIgnoreCase("01S03"));
+
+            boolean autoCommit = conn.getAutoCommit();
+
+            // Test running a query for an update. It should fail.
+            try {
+                conn.setAutoCommit(false);
+                stmt.executeUpdate("SELECT * FROM statement_test");
+            } catch (SQLException sqlEx) {
+                assertTrue("Exception thrown for unknown reason", 
+                           sqlEx.getSQLState().equalsIgnoreCase("01S03"));
+            } finally {
+                conn.setAutoCommit(autoCommit);
+            }
+
+            // Test running a update for an query. It should fail.
+            try {
+                conn.setAutoCommit(false);
+                stmt.executeQuery(
+                        "UPDATE statement_test SET strdata1='blah' WHERE 1=0");
+            } catch (SQLException sqlEx) {
+                assertTrue("Exception thrown for unknown reason", 
+                           sqlEx.getSQLState().equalsIgnoreCase("S1009"));
+            } finally {
+                conn.setAutoCommit(autoCommit);
+            }
+
+            for (int i = 0; i < 10; i++) {
+
+                int updateCount = stmt.executeUpdate(
+                                          "INSERT INTO statement_test (strdata1,strdata2) values ('abcdefg', 'poi')");
+                assertTrue("Update count must be '1', was '" + updateCount
+                           + "'", (updateCount == 1));
+            }
+
+            stmt.executeUpdate(
+                    "INSERT INTO statement_test (strdata1, strdata2) values ('a', 'a'), ('b', 'b'), ('c', 'c')");
+            rs = stmt.getGeneratedKeys();
+
+            int updateCountFromProtocol = 0;
+
+            if (rs.next()) {
+                updateCountFromProtocol = rs.getInt(1);
+            }
+
+            rs.close();
+            rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
+
+            int updateCountFromServer = 0;
+
+            if (rs.next()) {
+                updateCountFromServer = rs.getInt(1);
+            }
+
+            System.out.println(
+                    "Update count from server: " + updateCountFromServer);
         } finally {
-            conn.setAutoCommit(autoCommit);
-        }
 
-        // Test running a update for an query. It should fail.
-        try {
-            conn.setAutoCommit(false);
-            stmt.executeQuery(
-                    "UPDATE statement_test SET strdata1='blah' WHERE 1=0");
-        } catch (SQLException sqlEx) {
-            assertTrue("Exception thrown for unknown reason", 
-                       sqlEx.getSQLState().equalsIgnoreCase("S1009"));
-        } finally {
-        	
-            conn.setAutoCommit(autoCommit);
-        }
+            if (rs != null) {
 
-        for (int i = 0; i < 10; i++) {
+                try {
+                    rs.close();
+                } catch (Exception ex) { /* ignore */
+                    ;
+                }
+            }
 
-            int updateCount = stmt.executeUpdate(
-                                      "INSERT INTO statement_test (strdata1,strdata2) values ('abcdefg', 'poi')");
-            assertTrue("Update count must be '1', was '" + updateCount + 
-                       "'", (updateCount == 1));
-        }
-        
-        
-        
-        stmt.executeUpdate("INSERT INTO statement_test (strdata1, strdata2) values ('a', 'a'), ('b', 'b'), ('c', 'c')");
-        
-        rs = stmt.getGeneratedKeys();
-        
-        int updateCountFromProtocol = 0;
-        
-        if (rs.next())
-        {
-        	updateCountFromProtocol = rs.getInt(1);
-        }
-        
-        rs.close();
-        
-        rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
-        
-        int updateCountFromServer = 0;
-        
-        if (rs.next())
-        {
-        	updateCountFromServer = rs.getInt(1);
-        }
-         
-        System.out.println("Update count from server: " + updateCountFromServer);
-        
-        }
-        finally {
-        	if (rs != null) {
-        		try {
-        			rs.close();
-        		}
-        		catch (Exception ex) { /* ignore */ }
-        	}
-        	
-        	rs = null;
+            rs = null;
         }
     }
 
-	
     /**
      * DOCUMENT ME!
      * 
@@ -463,8 +473,8 @@ public class StatementsTest
     public void testPreparedStatementBatch()
                                     throws SQLException {
         pstmt = conn.prepareStatement(
-                        "INSERT INTO " + 
-                        "statement_test (strdata1, strdata2) VALUES (?,?)");
+                        "INSERT INTO "
+                        + "statement_test (strdata1, strdata2) VALUES (?,?)");
 
         for (int i = 0; i < 10; i++) {
             pstmt.setString(1, "batch_" + i);
@@ -475,8 +485,8 @@ public class StatementsTest
         int[] updateCounts = pstmt.executeBatch();
 
         for (int i = 0; i < updateCounts.length; i++) {
-            assertTrue("Update count must be '1', was '" + updateCounts[i] + 
-                       "'", (updateCounts[i] == 1));
+            assertTrue("Update count must be '1', was '" + updateCounts[i]
+                       + "'", (updateCounts[i] == 1));
         }
     }
 
@@ -487,10 +497,11 @@ public class StatementsTest
      */
     public void testStubbed()
                      throws SQLException {
-   
+
         try {
             stmt.getResultSetHoldability();
-        } catch (NotImplemented notImplEx) { /* ignore */
+        } /* ignore */ catch (NotImplemented notImplEx) {
+            ;
         }
     }
 }

@@ -1,191 +1,219 @@
 /*
- Copyright (C) 2002 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+   Copyright (C) 2002 MySQL AB
    
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+   
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+   
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, write to the Free Software
+      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+      
  */
-
 package testsuite.simple;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.ResultSet;
-import java.sql.Statement;
-import java.sql.PreparedStatement;
-import java.sql.DriverManager;
+import java.sql.SQLException;
 
 import testsuite.BaseTestCase;
 
+
 /** 
  *
- * @author  Administrator
- * @version 
+ * @author  Mark Matthews
+ * @version $Id$
  */
-public class BlobTest extends BaseTestCase {
+public class BlobTest
+    extends BaseTestCase {
 
-	static byte[] testBlob = new byte[2 * 1024 * 1024]; // 2 meg blob
+    //~ Instance/static variables .............................................
 
-	static {
-		int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
+    private static final byte[] TESTBLOB = new byte[2 * 1024 * 1024];
 
-		for (int i = 0; i < testBlob.length; i++) {
-			testBlob[i] = (byte) ((Math.random() * dataRange) + Byte.MIN_VALUE);
-		}
-	}
+    //~ Initializers ..........................................................
 
-	public BlobTest(String name)
-	{
-		super(name);
-	}
-	
-	public static void main(String[] args)
-	{
-		new BlobTest("testBytesInsert").run();
-		new BlobTest("testByteStreamInsert").run();
-	}
-	
-	public void setUp() throws Exception {
-		super.setUp();
-		createTestTable();		
-	}
-	
-	public void tearDown() throws Exception {
-		try
-		{
-			stmt.executeUpdate("DROP TABLE IF EXISTS BLOBTEST");
-		}
-		finally 
-		{
-			super.tearDown();
-		}
-	}
+    static {
 
-	
+        int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
 
-	private void createTestTable() throws SQLException {
+        for (int i = 0; i < TESTBLOB.length; i++) {
+            TESTBLOB[i] = (byte) ((Math.random() * dataRange) + Byte.MIN_VALUE);
+        }
+    }
 
-		//
-		// Catch the error, the table might exist
-		//
+    //~ Constructors ..........................................................
 
-		try {
-			stmt.executeUpdate("DROP TABLE BLOBTEST");
-		} catch (SQLException SQLE) {
-		}
+    /**
+     * Creates a new BlobTest object.
+     * 
+     * @param name DOCUMENT ME!
+     */
+    public BlobTest(String name) {
+        super(name);
+    }
 
-		stmt.executeUpdate(
-			"CREATE TABLE BLOBTEST (pos int PRIMARY KEY auto_increment, blobdata LONGBLOB)");
-	}
+    //~ Methods ...............................................................
 
-	public void testBytesInsert() throws SQLException {
-		pstmt =
-			conn.prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)");
+    /**
+     * DOCUMENT ME!
+     * 
+     * @param args DOCUMENT ME!
+     */
+    public static void main(String[] args) {
+        new BlobTest("testBytesInsert").run();
+        new BlobTest("testByteStreamInsert").run();
+    }
 
-		pstmt.setBytes(1, testBlob);
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws Exception DOCUMENT ME!
+     */
+    public void setUp()
+               throws Exception {
+        super.setUp();
+        createTestTable();
+    }
 
-		pstmt.execute();
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws Exception DOCUMENT ME!
+     */
+    public void tearDown()
+                  throws Exception {
 
-		int rowsUpdated = pstmt.getUpdateCount();
+        try {
+            stmt.executeUpdate("DROP TABLE IF EXISTS BLOBTEST");
+        } finally {
+            super.tearDown();
+        }
+    }
 
-		pstmt.clearParameters();
-		
-		doRetrieval();
-	}
+    private void createTestTable()
+                          throws SQLException {
 
-	public void testByteStreamInsert() throws SQLException {
-		java.io.ByteArrayInputStream bIn =
-			new java.io.ByteArrayInputStream(testBlob);
-			
-		pstmt =
-			conn.prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)");
+        //
+        // Catch the error, the table might exist
+        //
+        try {
+            stmt.executeUpdate("DROP TABLE BLOBTEST");
+        } catch (SQLException SQLE) {
+            ;
+        }
 
-		pstmt.setBinaryStream(1, bIn, 0);
+        stmt.executeUpdate(
+                "CREATE TABLE BLOBTEST (pos int PRIMARY KEY auto_increment, "
+                + "blobdata LONGBLOB)");
+    }
 
-		pstmt.execute();
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws SQLException DOCUMENT ME!
+     */
+    public void testBytesInsert()
+                         throws SQLException {
+        pstmt = conn.prepareStatement(
+                        "INSERT INTO BLOBTEST(blobdata) VALUES (?)");
+        pstmt.setBytes(1, TESTBLOB);
+        pstmt.execute();
 
-		int rowsUpdated = pstmt.getUpdateCount();
+        int rowsUpdated = pstmt.getUpdateCount();
+        pstmt.clearParameters();
+        doRetrieval();
+    }
 
-		pstmt.clearParameters();
-		
-		doRetrieval();
-	}
+    /**
+     * DOCUMENT ME!
+     * 
+     * @throws SQLException DOCUMENT ME!
+     */
+    public void testByteStreamInsert()
+                              throws SQLException {
 
-	private void doRetrieval() throws SQLException {
+        java.io.ByteArrayInputStream bIn = new java.io.ByteArrayInputStream(
+                                                   TESTBLOB);
+        pstmt = conn.prepareStatement(
+                        "INSERT INTO BLOBTEST(blobdata) VALUES (?)");
+        pstmt.setBinaryStream(1, bIn, 0);
+        pstmt.execute();
 
-		boolean passed = false;
+        int rowsUpdated = pstmt.getUpdateCount();
+        pstmt.clearParameters();
+        doRetrieval();
+    }
 
-		passed = false;
+    private void doRetrieval()
+                      throws SQLException {
 
-		String message = "";
-		
-		try {
-			ResultSet rs =
-				stmt.executeQuery("SELECT blobdata from BLOBTEST LIMIT 1");
+        boolean passed = false;
+        passed = false;
 
-			rs.next();
+        String message = "";
 
-			byte[] retrBytes = rs.getBytes(1);
+        try {
 
-			if (retrBytes.length == testBlob.length) {
-				
-				/*
-				for (int i = 0; i < 20; i++) {
-					System.out.print(retrBytes[i] + " ");
-				}
-				System.out.println();
-				
-				for (int i = 0; i < 20; i++) {
-					System.out.print(testBlob[i] + " ");
-				}
-				System.out.println();
-				*/
-				
-				for (int i = 0; i < testBlob.length; i++) {
-					if (retrBytes[i] != testBlob[i]) {
-						
-						for (int j = i-10; j < i + 10; j++)
-						{
-							System.out.print(retrBytes[j] + " ");
-						}
-						System.out.println();
-						
-						for (int j = i-10; j < i + 10; j++)
-						{
-							System.out.print(testBlob[j] + " ");
-						}
-						System.out.println();
-							
-						passed = false;
-						message = "Byte pattern differed at position " + i + " , " + retrBytes[i] + " != " + testBlob[i];
-						break;
-					}
+            ResultSet rs = stmt.executeQuery(
+                                   "SELECT blobdata from BLOBTEST LIMIT 1");
+            rs.next();
 
-					passed = true;
-				}
-			}
-			else
-			{
-				passed = false;
-				message = "retrBytes.length(" + retrBytes.length + ") != testBlob.length(" + testBlob.length + ")";
-			}
-			
-			assertTrue("Inserted BLOB data did not match retrieved BLOB data." + message, passed);
-			
-		} catch (SQLException sqlEx) {
-			sqlEx.printStackTrace();
-		}
-	}
+            byte[] retrBytes = rs.getBytes(1);
 
+            if (retrBytes.length == TESTBLOB.length) {
+
+                /*
+                   for (int i = 0; i < 20; i++) {
+                       System.out.print(retrBytes[i] + " ");
+                   }
+                   System.out.println();
+                   
+                   for (int i = 0; i < 20; i++) {
+                       System.out.print(testBlob[i] + " ");
+                   }
+                   System.out.println();
+                 */
+                for (int i = 0; i < TESTBLOB.length; i++) {
+
+                    if (retrBytes[i] != TESTBLOB[i]) {
+
+                        for (int j = i - 10; j < i + 10; j++) {
+                            System.out.print(retrBytes[j] + " ");
+                        }
+
+                        System.out.println();
+
+                        for (int j = i - 10; j < i + 10; j++) {
+                            System.out.print(TESTBLOB[j] + " ");
+                        }
+
+                        System.out.println();
+                        passed = false;
+                        message = "Byte pattern differed at position " + i
+                                  + " , " + retrBytes[i] + " != "
+                                  + TESTBLOB[i];
+
+                        break;
+                    }
+
+                    passed = true;
+                }
+            } else {
+                passed = false;
+                message = "retrBytes.length(" + retrBytes.length
+                          + ") != testBlob.length(" + TESTBLOB.length + ")";
+            }
+
+            assertTrue("Inserted BLOB data did not match retrieved BLOB data."
+                       + message, passed);
+        } catch (SQLException sqlEx) {
+            sqlEx.printStackTrace();
+        }
+    }
 }
