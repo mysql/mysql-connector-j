@@ -295,6 +295,16 @@ public class Connection
      * Classname for socket factory
      */
     private String socketFactoryClassName = null;
+    
+    /**
+     * Should we tack on @hostname in DBMD.getTable/ColumnPrivileges()?
+     */
+    private boolean useHostsInPrivileges = true;
+    
+    /**
+     * Should we tell MySQL that we're an interactive client?
+     */
+    private boolean isInteractiveClient = false;
 
     /**
      * Default socket factory classname
@@ -1193,6 +1203,18 @@ public class Connection
 		                               + "' for maxRows", "0S100");
 		    }
 		}
+        
+        if (info.getProperty("useHostsInPrivileges") != null) {
+            this.useHostsInPrivileges = 
+                info.getProperty("useHostsInPrivileges").toUpperCase()
+                .equals("TRUE");
+        }
+        
+        if (info.getProperty("interactiveClient") != null) {
+            this.isInteractiveClient = 
+                info.getProperty("interactiveClient").toUpperCase()
+                .equals("TRUE");
+        }
 		
 		if (info.getProperty("useUnicode") != null) {
 		
@@ -1763,6 +1785,10 @@ public class Connection
 
         return this.maxAllowedPacket;
     }
+    
+    boolean useHostsInPrivileges() {
+        return useHostsInPrivileges;
+    }
 
     /** Returns the Mutex all queries are locked against */
     Object getMutex()
@@ -2130,6 +2156,13 @@ public class Connection
 
         return this.serverTimezone;
     }
+    
+    /**
+     * Should we tell MySQL that we're an interactive client
+     */
+    public boolean isInteractiveClient() {
+        return isInteractiveClient;
+    }
 
     /**
      * Returns the paranoidErrorMessages.
@@ -2138,6 +2171,21 @@ public class Connection
     public boolean useParanoidErrorMessages() {
 
         return paranoid;
+    }
+    
+    /**
+     * Used by MiniAdmin to shutdown a MySQL server
+     * 
+     * @throws SQLException if the command can not be issued.
+     */
+    
+    public void shutdownServer() throws SQLException {
+        try {
+            this.io.sendCommand(MysqlDefs.SHUTDOWN, null, null);
+        } catch (Exception ex) {
+            throw new SQLException("Unhandled exception '" + ex.toString() + "'", "S1000");
+        }
+        
     }
 
 	private void setUseUltraDevWorkAround(boolean useUltraDevWorkAround) {
