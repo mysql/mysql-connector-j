@@ -80,7 +80,9 @@ class EscapeProcessor {
                 /*
                  * Process the escape code
                  */
-                if (token.toLowerCase().startsWith("{escape")) {
+                 
+                
+                if (StringUtils.startsWithIgnoreCase(token, "{escape")) {
 
                     try {
 
@@ -101,13 +103,13 @@ class EscapeProcessor {
                         throw new java.sql.SQLException("Syntax error for escape sequence '"
                                                         + token + "'", "42000");
                     }
-                } else if (token.toLowerCase().startsWith("{fn")) {
+                } else if (StringUtils.startsWithIgnoreCase(token, "{fn")) {
 
                     // just pass functions right to the DB
                     int startPos = token.toLowerCase().indexOf("fn ") + 3;
                     int endPos = token.length() - 1; // no }
                     newSql.append(token.substring(startPos, endPos));
-                } else if (token.toLowerCase().startsWith("{d")) {
+                } else if (StringUtils.startsWithIgnoreCase(token, "{d")) {
 
                     int startPos = token.indexOf("'") + 1;
                     int endPos = token.lastIndexOf("'"); // no }
@@ -134,7 +136,7 @@ class EscapeProcessor {
                                                         + argument + "'", 
                                                         "42000");
                     }
-                } else if (token.toLowerCase().startsWith("{ts")) {
+                } else if (StringUtils.startsWithIgnoreCase(token, "{ts")) {
 
                     int startPos = token.indexOf("'") + 1;
                     int endPos = token.lastIndexOf("'"); // no }
@@ -191,7 +193,7 @@ class EscapeProcessor {
                                                         + argument + "'", 
                                                         "42000");
                     }
-                } else if (token.toLowerCase().startsWith("{t")) {
+                } else if (StringUtils.startsWithIgnoreCase(token, "{t")) {
 
                     int startPos = token.indexOf("'") + 1;
                     int endPos = token.lastIndexOf("'"); // no }
@@ -218,11 +220,11 @@ class EscapeProcessor {
                                                         + argument + "'", 
                                                         "42000");
                     }
-                } else if (token.toLowerCase().startsWith("{call")
-                           || token.toLowerCase().startsWith("{? = call")) {
+                } else if (StringUtils.startsWithIgnoreCase(token, "{call")
+                           || StringUtils.startsWithIgnoreCase(token, "{? = call")) {
                     throw new java.sql.SQLException("Stored procedures not supported: "
                                                     + token, "S1C00");
-                } else if (token.toLowerCase().startsWith("{oj")) {
+                } else if (StringUtils.startsWithIgnoreCase(token, "{oj")) {
 
                     // MySQL already handles this escape sequence
                     // because of ODBC. Cool.
@@ -257,4 +259,6 @@ class EscapeProcessor {
 
         return escapedSql;
     }
+    
+    
 }
