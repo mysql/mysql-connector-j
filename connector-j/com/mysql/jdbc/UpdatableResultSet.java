@@ -1935,6 +1935,8 @@ public class UpdatableResultSet
     private boolean checkUpdatability() throws SQLException {
         String tableName = null;
         
+        int primaryKeyCount = 0;
+        
         if (fields.length > 0) {
 
             tableName = fields[0].getTableName();
@@ -1949,6 +1951,10 @@ public class UpdatableResultSet
 
                     return false;
                 }
+                
+                if (fields[i].isPrimaryKey()) {
+                    primaryKeyCount++;
+                }
             }
 
             if ((tableName == null) || (tableName.length() == 0)) {
@@ -1960,6 +1966,15 @@ public class UpdatableResultSet
             return false;
         }
 
+        // 
+        // Must have at least one primary key
+        //
+                
+        if (primaryKeyCount == 0) {
+            return false;
+        }
+
+        
         // We can only do this if we know that there is a currently
         // selected database, or if we're talking to a > 4.1 version
         // of MySQL server (as it returns database names in field
@@ -1975,61 +1990,65 @@ public class UpdatableResultSet
             }
         }
         
-        java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
+        if (this.connection.useStrictUpdates()) {
+            java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
         
-        java.sql.ResultSet rs = null;
-        HashMap primaryKeyNames = new HashMap();
+            java.sql.ResultSet rs = null;
+            HashMap primaryKeyNames = new HashMap();
         
-        try {
-            rs = dbmd.getPrimaryKeys(this.catalog, null, tableName);
+            try {
+                rs = dbmd.getPrimaryKeys(this.catalog, null, tableName);
             
-            while (rs.next()) {
-                String keyName = rs.getString(4);
-                keyName = keyName.toUpperCase();
-                primaryKeyNames.put(keyName, keyName);
-            }
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (Exception ex) {
-                    // ignore
+                while (rs.next()) {
+                    String keyName = rs.getString(4);
+                    keyName = keyName.toUpperCase();
+                    primaryKeyNames.put(keyName, keyName);
                 }
+            } finally {
+                if (rs != null) {
+                    try {
+                        rs.close();
+                    } catch (Exception ex) {
+                    // ignore
+                    }
                 
-                rs = null;
+                    rs = null;
+                }
             }
-        }
               
-        if (primaryKeyNames.size() == 0) {
-            return false; // we can't update tables w/o keys
-        }
+            if (primaryKeyNames.size() == 0) {
+               return false; // we can't update tables w/o keys
+            }
               
-        //
-        // Contains all primary keys?
-        //
+            //
+            // Contains all primary keys?
+            //
 
-        for (int i = 0; i < fields.length; i++) {
+            for (int i = 0; i < fields.length; i++) {
 
-            if (fields[i].isPrimaryKey()) {
-                String columnNameUC = fields[i].getName().toUpperCase();
+                if (fields[i].isPrimaryKey()) {
+                    String columnNameUC = fields[i].getName().toUpperCase();
                 
-                if (primaryKeyNames.remove(columnNameUC) == null) {
-                    // try original name
+                    if (primaryKeyNames.remove(columnNameUC) == null) {
+                        // try original name
                     
-                    String originalName = fields[i].getOriginalName();
+                        String originalName = fields[i].getOriginalName();
                     
-                    if (originalName != null) {
-                        if (primaryKeyNames.remove(originalName.toUpperCase()) == null) {
-                            // we don't know about this key, so give up :(
+                        if (originalName != null) {
+                            if (primaryKeyNames.remove(originalName.toUpperCase()) == null) {
+                                // we don't know about this key, so give up :(
                             
-                            return false;
+                                return false;
+                            }
                         }
                     }
                 }
             }
-        }
 
-        return primaryKeyNames.isEmpty();
+            return primaryKeyNames.isEmpty();
+        }
+        
+        return true;
     }
 
     /**

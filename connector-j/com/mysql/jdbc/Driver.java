@@ -332,10 +332,12 @@ public class Driver
         allowLoadLocalInfile.required = false;
         allowLoadLocalInfile.description = "Should the driver allow use of 'LOAD DATA LOCAL INFILE...' (defaults to 'true').";
         
-        
-        
-        
-        
+        DriverPropertyInfo strictUpdates = new DriverPropertyInfo("strictUpdates", 
+                                                             info.getProperty(
+                                                             "strictUpdates", 
+                                                             "true"));
+        strictUpdates.required = false;
+        strictUpdates.description = "Should the driver do strict checking (all primary keys selected) of updatable result sets?...' (defaults to 'true').";
         
         DriverPropertyInfo[] dpi = {
             hostProp, portProp, dbProp, userProp, passwordProp, autoReconnect, 
@@ -343,7 +345,7 @@ public class Driver
             paranoid, useHostsInPrivileges, interactiveClient, useCompression,
             useTimezone, serverTimezone, connectTimeout, secondsBeforeRetryMaster, 
             queriesBeforeRetryMaster, useStreamLengthsInPrepStmts, 
-            continueBatchOnError, allowLoadLocalInfile
+            continueBatchOnError, allowLoadLocalInfile, strictUpdates
         };
 
         return dpi;

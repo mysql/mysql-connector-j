@@ -375,6 +375,12 @@ public class Connection
     private boolean allowLoadLocalInfile = true;
     
     /**
+     * Do we check all keys for updatable result sets?
+     */
+    
+    private boolean strictUpdates = true;
+    
+    /**
      * Internal DBMD to use for various database-version
      * specific features
      */
@@ -1214,7 +1220,10 @@ public class Connection
                                      throws SQLException {
         this.socketFactoryClassName = info.getProperty("socketFactory", 
                                                        DEFAULT_SOCKET_FACTORY);
-
+        if (info.getProperty("strictUpdates") != null) {
+            this.strictUpdates = info.getProperty("strictUpdates").equalsIgnoreCase("TRUE");
+        }
+        
         if (info.getProperty("secondsBeforeRetryMaster") != null) {
 
             String secondsBeforeRetryStr = info.getProperty(
@@ -3562,4 +3571,12 @@ public class Connection
             throw new SQLException("Not supported");
         }
     }
+	/**
+	 * Returns the strictUpdates value.
+	 * @return boolean
+	 */
+	public boolean useStrictUpdates() {
+		return strictUpdates;
+	}
+
 }
