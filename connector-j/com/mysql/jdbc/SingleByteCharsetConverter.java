@@ -1,17 +1,20 @@
 /*
    Copyright (C) 2002 MySQL AB
-     This program is free software; you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation; either version 2 of the License, or
-     (at your option) any later version.
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
-     You should have received a copy of the GNU General Public License
-     along with this program; if not, write to the Free Software
-     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-     
+   
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+   
+      This program is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+   
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, write to the Free Software
+      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+      
  */
 package com.mysql.jdbc;
 
@@ -34,7 +37,7 @@ public class SingleByteCharsetConverter {
     protected static byte[] charToByteMap = new byte[65535];
     private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE)
                                           - Byte.MIN_VALUE;
-    private static final HashMap converterMap = new HashMap();
+    private static final HashMap CONVERTER_MAP = new HashMap();
     public static byte[] allBytes = new byte[BYTE_RANGE];
     char[] byteToChars = new char[BYTE_RANGE];
 
@@ -81,7 +84,7 @@ public class SingleByteCharsetConverter {
     public static SingleByteCharsetConverter getInstance(String encodingName)
         throws UnsupportedEncodingException {
 
-        SingleByteCharsetConverter instance = (SingleByteCharsetConverter) converterMap.get(
+        SingleByteCharsetConverter instance = (SingleByteCharsetConverter) CONVERTER_MAP.get(
                                                       encodingName);
                                                       
         return instance;
@@ -93,7 +96,7 @@ public class SingleByteCharsetConverter {
      */
     public static void initCharset(String encodingName)
                             throws UnsupportedEncodingException {
-        converterMap.put(encodingName, 
+        CONVERTER_MAP.put(encodingName, 
                          new SingleByteCharsetConverter(encodingName));
     }
 
