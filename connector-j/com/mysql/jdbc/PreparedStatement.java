@@ -1064,6 +1064,10 @@ public class PreparedStatement
             {
                 setBinaryStream(parameterIndex, (InputStream)X, -1);
             }
+            else if (X instanceof java.sql.Blob)
+            {
+            	setBinaryStream(parameterIndex, ((java.sql.Blob)X).getBinaryStream(), -1);
+            }
             else
             {
 
