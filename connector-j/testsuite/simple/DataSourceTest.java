@@ -96,6 +96,9 @@ public class DataSourceTest
     public void testDataSource()
                         throws Exception
     {
+    	Object obj = ctx.lookup(
+                                tempDir.getAbsolutePath() + "/test");
+                                
         DataSource ds = (DataSource)ctx.lookup(
                                 tempDir.getAbsolutePath() + "/test");
         assertTrue("Datasource not bound", ds != null);
