@@ -44,6 +44,8 @@ package org.gjt.mm.mysql.jdbc2;
 import java.sql.*;
 import java.util.*;
 
+import org.gjt.mm.mysql.Field;
+
 public class ResultSetMetaData extends org.gjt.mm.mysql.ResultSetMetaData
     implements java.sql.ResultSetMetaData
 {
@@ -74,6 +76,86 @@ public class ResultSetMetaData extends org.gjt.mm.mysql.ResultSetMetaData
 
     public String getColumnClassName(int column) throws SQLException
     {
-	throw new NotImplemented();
+    	Field f = getField(column);
+    	
+    	switch (f.getSQLType())
+		{
+			case Types.BIT :
+				return "java.lang.Boolean";
+			case Types.TINYINT :
+				if (f.isUnsigned())
+				{
+					return "java.lang.Integer";
+				}
+				else
+				{
+					return "java.lang.Byte";
+				}
+			case Types.SMALLINT :
+				if (f.isUnsigned())
+				{
+					return "java.lang.Integer";
+				}
+				else
+				{
+					return "java.lang.Short";
+				}
+			case Types.INTEGER :
+				if (f.isUnsigned())
+				{
+					return "java.lang.Long";
+				}
+				else
+				{
+					return "java.lang.Integer";
+				}
+			case Types.BIGINT :
+				return "java.lang.Long";
+			case Types.DECIMAL :
+			case Types.NUMERIC :
+				return "java.math.BigDecimal";
+			case Types.REAL :
+			case Types.FLOAT :
+				return "java.lang.Float";
+			case Types.DOUBLE :
+				return "java.lang.Double";
+			case Types.CHAR :
+			case Types.VARCHAR :
+			case Types.LONGVARCHAR :
+				if (f.isBinary())
+				{
+					return "java.lang.Object";
+				}
+				else
+				{
+					return "java.lang.String";
+				}
+			case Types.BINARY :
+			case Types.VARBINARY :
+			case Types.LONGVARBINARY :
+				if (!f.isBlob())
+				{
+					return "java.lang.String";
+				}
+				else if (!f.isBinary())
+				{
+					return "java.lang.String";
+				}
+				else
+				{
+
+					return "java.lang.Object";
+				}
+
+			case Types.DATE :
+				return "java.sql.Date";
+			case Types.TIME :
+				return "java.sql.Time";
+			case Types.TIMESTAMP :
+				return "java.sql.Timestamp";
+			default :
+				return "java.lang.Object";
+		}
+	
     }
 }
