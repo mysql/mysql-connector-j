@@ -1893,4 +1893,13 @@ public class MysqlIO {
                                    + ex.toString(), "08001");
         }
     }
+
+    /**
+     * Does the server send back extra column info?
+     * 
+     * @return true if so
+     */
+	public boolean hasLongColumnInfo() {
+		return this.hasLongColumnInfo;
+	}
 }
