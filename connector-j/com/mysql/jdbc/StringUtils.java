@@ -21,20 +21,20 @@ package com.mysql.jdbc;
 
 public class StringUtils 
 {
-  private static int _byteRange = 1 + Byte.MAX_VALUE - Byte.MIN_VALUE;
-  public static byte[] _allBytes = new byte[Byte.MAX_VALUE - Byte.MIN_VALUE];
+  private static final int BYTE_RANGE = 1 + Byte.MAX_VALUE - Byte.MIN_VALUE;
+  public static byte[] allBytes = new byte[BYTE_RANGE];
   
-  private static char[] _byteToChars = new char[Byte.MAX_VALUE - Byte.MIN_VALUE];
+  private static char[] byteToChars = new char[BYTE_RANGE];
   
   static 
   {
-    _allBytes = new byte[Byte.MAX_VALUE - Byte.MIN_VALUE];
-    for (int i = Byte.MIN_VALUE; i < Byte.MAX_VALUE; i++) {
-      _allBytes[i - Byte.MIN_VALUE] = (byte) i;
+    for (int i = Byte.MIN_VALUE; i <= Byte.MAX_VALUE; i++) {
+      allBytes[i - Byte.MIN_VALUE] = (byte) i;
     }
-    String allBytesString = new String(_allBytes, 0, Byte.MAX_VALUE - Byte.MIN_VALUE);
+    
+    String allBytesString = new String(allBytes, 0, Byte.MAX_VALUE - Byte.MIN_VALUE);
     for (int i = 0; i < Byte.MAX_VALUE - Byte.MIN_VALUE; i++) {
-      _byteToChars[i] = allBytesString.charAt(i);
+      byteToChars[i] = allBytesString.charAt(i);
     }
   }
   
@@ -46,7 +46,7 @@ public class StringUtils
     StringBuffer result = new StringBuffer();
     int endPoint = startPos + length;
     for (int i = startPos; i < endPoint; i++) {
-      result.append(_byteToChars[((int) buffer[i]) - Byte.MIN_VALUE]);
+      result.append(byteToChars[((int) buffer[i]) - Byte.MIN_VALUE]);
     }
     return result.toString();
   }
@@ -72,7 +72,7 @@ public class StringUtils
     char[] charArray = new char[length];
     int readpoint = startPos;
     for (int i = 0; i < length; i++) {
-      charArray[i] = _byteToChars[((int) buffer[readpoint]) - Byte.MIN_VALUE];
+      charArray[i] = byteToChars[((int) buffer[readpoint]) - Byte.MIN_VALUE];
       readpoint++;
     }
     return new String(charArray);
