@@ -46,7 +46,7 @@ import testsuite.BaseTestCase;
  * @author  Administrator
  * @version 
  */
-public class DataSourceTtest
+public class DataSourceTest
     extends BaseTestCase
 {
 
@@ -58,7 +58,7 @@ public class DataSourceTtest
 
     //~ Constructors ..........................................................
 
-    public DataSourceTtest(String name)
+    public DataSourceTest(String name)
     {
         super(name);
     }
@@ -67,7 +67,7 @@ public class DataSourceTtest
 
     public static void main(String[] args)
     {
-        new DataSourceTtest("testDataSource").run();
+        new DataSourceTest("testDataSource").run();
     }
 
 	/**
