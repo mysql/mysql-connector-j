@@ -1759,7 +1759,25 @@ public class MysqlIO {
 
         this.streamingData = null;
     }
-
+    
+    /**
+     * Returns the packet used for sending data (used by PreparedStatement)
+     * 
+     * Guarded by external synchronization on a mutex.
+     * 
+     * @return A packet to send data with
+     */
+    
+    Buffer getSendPacket() {
+        if (this.sendPacket == null) {
+                    this.sendPacket = new Buffer(this.connection.getNetBufferLength(), 
+                                                 this.connection.getMaxAllowedPacket());
+        }
+        
+        return this.sendPacket;
+    }
+        
+       
     private void checkForOutstandingStreamingData()
                                            throws SQLException {
 
