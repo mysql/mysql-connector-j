@@ -32,12 +32,18 @@ public class LoadStorePerfTest extends BaseTestCase {
 
 	/**
 	 * Constructor for LoadStorePerfTest.
-	 * @param name
+	 * @param name the name of the test to run
 	 */
 	public LoadStorePerfTest(String name) {
        super(name);
 	}
 
+    /**
+     * Runs all tests in this test case
+     * 
+     * @param args ignored
+     * @throws Exception if an error occurs
+     */
 	public static void main(String[] args) throws Exception {
         new LoadStorePerfTest("test100Transactions").run();
 	}
@@ -63,6 +69,11 @@ public class LoadStorePerfTest extends BaseTestCase {
 		super.tearDown();
 	}
     
+    /**
+     * Tests and times 100 load/store type transactions
+     * 
+     * @throws Exception if an error occurs
+     */
     public void test100Transactions() throws Exception {
         PreparedStatement pStmt = conn.prepareStatement("UPDATE perfLoadStore SET priKey=?, charField=? where priKey=?");
         long begin = System.currentTimeMillis();
@@ -105,9 +116,11 @@ public class LoadStorePerfTest extends BaseTestCase {
         
         long timeElapsed = (end - begin) / 1000;
         
-        double tps = 10000/ timeElapsed;
+        double tps = 10000 / timeElapsed;
         
         System.out.println(tps);
+        
+        assertTrue(tps > 10000);
     }
             
 
