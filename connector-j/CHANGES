@@ -1,6 +1,18 @@
 # Changelog
 # $Id$
 
+05-16-02 - Version 2.0.14
+
+	- More code cleanup
+	- PreparedStatement now releases resources on .close() (SF bug 553268)
+	- Quoted identifiers not used if server version does not support them. Also,
+	  if server started with --ansi or --sql-mode=ANSI_QUOTES then '"' will be 
+	  used as an identifier quote, otherwise '`' will be used.
+	- ResultSet.getDouble() now uses code built into JDK to be more precise (but slower)
+	- LogicalHandle.isClosed() calls through to physical connection
+	- Added SQL profiling (to STDERR). Set "profileSql=true" in your JDBC url. 
+	  See README for more information.
+	
 04-24-02 - Version 2.0.13
 
 	- More code cleanup.
