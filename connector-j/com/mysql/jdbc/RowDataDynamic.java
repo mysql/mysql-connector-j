@@ -72,14 +72,17 @@ public class RowDataDynamic
         }
     }
 
+    private boolean streamerClosed = false;
+
     /** Returns true if another row exsists.*/
     public boolean hasNext()
                     throws SQLException {
 
         boolean hasNext = (nextRow != null);
 
-        if (!hasNext) {
+        if (!hasNext && !streamerClosed) {
             io.closeStreamer(this);
+            streamerClosed = true;
         }
 
         return hasNext;
@@ -167,8 +170,6 @@ public class RowDataDynamic
         while (this.hasNext()) {
             this.next();
         }
-
-        io.closeStreamer(this);
     }
 
     /**
