@@ -496,7 +496,7 @@ public abstract class Connection {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setAutoCommit(boolean autoCommit) throws java.sql.SQLException {
+	public void setAutoCommit(boolean autoCommit) throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { new Boolean(autoCommit)};
 			Debug.methodCall(this, "setAutoCommit", Args);
@@ -531,7 +531,7 @@ public abstract class Connection {
 	 * @see setAutoCommit
 	 */
 
-	public synchronized boolean getAutoCommit() throws java.sql.SQLException {
+	public boolean getAutoCommit() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getAutoCommit", Args);
@@ -554,7 +554,7 @@ public abstract class Connection {
 	 * @see setAutoCommit
 	 */
 
-	public synchronized void commit() throws java.sql.SQLException {
+	public void commit() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "commit", Args);
@@ -624,7 +624,7 @@ public abstract class Connection {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void close() throws java.sql.SQLException {
+	public void close() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "close", Args);
@@ -648,7 +648,7 @@ public abstract class Connection {
 	 * @exception java.sql.SQLException (why?)
 	 */
 
-	public synchronized boolean isClosed() throws java.sql.SQLException {
+	public boolean isClosed() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "isClosed", Args);
@@ -695,7 +695,7 @@ public abstract class Connection {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setReadOnly(boolean readOnly) throws java.sql.SQLException {
+	public void setReadOnly(boolean readOnly) throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { new Boolean(readOnly)};
 			Debug.methodCall(this, "setReadOnly", Args);
@@ -713,7 +713,7 @@ public abstract class Connection {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized boolean isReadOnly() throws java.sql.SQLException {
+	public boolean isReadOnly() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "isReadOnly", Args);
@@ -733,7 +733,7 @@ public abstract class Connection {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void setCatalog(String Catalog) throws java.sql.SQLException {
+	public void setCatalog(String Catalog) throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { Catalog };
 			Debug.methodCall(this, "setCatalog", Args);
@@ -752,7 +752,7 @@ public abstract class Connection {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized String getCatalog() throws java.sql.SQLException {
+	public String getCatalog() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getCatalog", Args);
@@ -778,7 +778,7 @@ public abstract class Connection {
 
 	private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
 
-	public synchronized void setTransactionIsolation(int level) throws java.sql.SQLException {
+	public void setTransactionIsolation(int level) throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = { new Integer(level)};
 			Debug.methodCall(this, "setTransactionIsolation", Args);
@@ -826,7 +826,7 @@ public abstract class Connection {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized int getTransactionIsolation() throws java.sql.SQLException {
+	public int getTransactionIsolation() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getTransactionIsolation", Args);
@@ -850,7 +850,7 @@ public abstract class Connection {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized java.sql.SQLWarning getWarnings() throws java.sql.SQLException {
+	public java.sql.SQLWarning getWarnings() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "getWarnings", Args);
@@ -867,7 +867,7 @@ public abstract class Connection {
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized void clearWarnings() throws java.sql.SQLException {
+	public void clearWarnings() throws java.sql.SQLException {
 		if (Driver.trace) {
 			Object[] Args = new Object[0];
 			Debug.methodCall(this, "clearWarnings", Args);
