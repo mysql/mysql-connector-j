@@ -73,7 +73,7 @@ public class Statement
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized java.sql.ResultSet executeQuery(String Sql)
+	public java.sql.ResultSet executeQuery(String Sql)
 		throws java.sql.SQLException {
 		return super.executeQuery(Sql);
 	}
@@ -92,7 +92,7 @@ public class Statement
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized int executeUpdate(String Sql) throws java.sql.SQLException {
+	public int executeUpdate(String Sql) throws java.sql.SQLException {
 		return super.executeUpdate(Sql);
 	}
 
@@ -108,7 +108,7 @@ public class Statement
 	 * @exception java.sql.SQLException if a database access error occurs
 	 */
 
-	public synchronized boolean execute(String Sql) throws java.sql.SQLException {
+	public boolean execute(String Sql) throws java.sql.SQLException {
 		return super.execute(Sql);
 	}
 
@@ -141,7 +141,7 @@ public class Statement
 	* driver does not support batch statements
 	*/
 
-	public synchronized int[] executeBatch() throws SQLException {
+	public int[] executeBatch() throws SQLException {
 
 		try {
 			int[] updateCounts = null;
