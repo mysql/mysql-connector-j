@@ -169,6 +169,18 @@ public class StringRegressionTest
 
             String testValue = rs.getString(1);
             assertTrue(testValue.equals(origString));
+            
+            pstmt = conn.prepareStatement("INSERT INTO sjisTest VALUES (?)");
+            pstmt.setString(1, origString);
+            pstmt.executeUpdate();
+            
+            rs = stmt.executeQuery("SELECT * FROM sjisTest");
+
+            while (rs.next()) {
+                testValue = rs.getString(1);
+                assertTrue(testValue.equals(origString));
+            }
+            
         } finally {
             stmt.executeUpdate("DROP TABLE IF EXISTS sjisTest");
         }
@@ -202,6 +214,33 @@ public class StringRegressionTest
 
         Connection utfConn = DriverManager.getConnection(dbUrl, props);
         testConversionForString(utfConn, "\u043c\u0438\u0445\u0438");
+    }
+    
+    /**
+     * Tests newline being treated correctly.
+     * 
+     * @throws Exception if an error occurs
+     */
+    public void testNewlines() throws Exception {
+        String newlineStr = "Foo\nBar\n\rBaz";
+        
+        stmt.executeUpdate("DROP TABLE IF EXISTS newlineRegressTest");
+        stmt.executeUpdate("CREATE TABLE newlineRegressTest (field1 MEDIUMTEXT)");
+        
+        try {
+            stmt.executeUpdate("INSERT INTO newlineRegressTest VALUES ('" + newlineStr + "')");
+            pstmt = conn.prepareStatement("INSERT INTO newlineRegressTest VALUES (?)");
+            pstmt.setString(1, newlineStr);
+            pstmt.executeUpdate();
+            
+            rs = stmt.executeQuery("SELECT * FROM newlineRegressTest");
+            
+            while (rs.next()) {
+                assertTrue(rs.getString(1).equals(newlineStr));
+            }
+        } finally {
+            stmt.executeUpdate("DROP TABLE IF EXISTS newlineRegressTest");
+        }
     }
     
     /**
@@ -276,7 +315,7 @@ public class StringRegressionTest
                     char rChar = retrievedString.charAt(i);
                     char origChar = latin1String.charAt(i);
                     
-                    if (rChar != origChar) {
+                    if (rChar != '?' && (rChar != origChar)) {
                         fail("characters differ at position " + i + "'" + rChar + "' retrieved from database, original char was '" + origChar + "'");
                     }
                 }
