@@ -294,11 +294,22 @@ public class Driver
         queriesBeforeRetryMaster.description = "Number of queries to issue before falling back to master when failed over (when using multi-host failover)"
         ;
         
+        
+        
+        DriverPropertyInfo useStreamLengthsInPrepStmts = new DriverPropertyInfo("useStreamLengthsInPrepStmts", 
+                                                             info.getProperty(
+                                                                     "useStreamLengthsInPrepStmts", 
+                                                                     "true"));
+        useStreamLengthsInPrepStmts.required = false;
+        useStreamLengthsInPrepStmts.description = "Honor stream length parameter in PreparedStatement/ResultSet.setXXXStream() method calls (defaults to 'true')"
+        ;
+        
         DriverPropertyInfo[] dpi = {
             hostProp, portProp, dbProp, userProp, passwordProp, autoReconnect, 
             maxReconnects, initialTimeout, profileSql, socketTimeout, useSSL, 
             paranoid, useHostsInPrivileges, interactiveClient, useCompression,
-            useTimezone, serverTimezone, connectTimeout, queriesBeforeRetryMaster
+            useTimezone, serverTimezone, connectTimeout, queriesBeforeRetryMaster,
+            useStreamLengthsInPrepStmts
         };
 
         return dpi;

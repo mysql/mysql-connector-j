@@ -327,6 +327,14 @@ public class Connection
      * failed
      */
     private long queriesIssuedFailedOver = 0;
+    
+    /**
+     * Should we use stream lengths in prepared statements?
+     * (true by default == JDBC compliant)
+     */
+    
+    private boolean useStreamLengthsInPrepStmts = true;
+    
 
     /**
      * Default socket factory classname
@@ -1143,52 +1151,46 @@ public class Connection
                 
         }
 
+        if (info.getProperty("useStreamLengthsInPrepStmts") != null) {
+            this.useStreamLengthsInPrepStmts = info.getProperty("useStreamLengthsInPrepStmts").equalsIgnoreCase("TRUE");
+        }
+        
         if (info.getProperty("useTimezone") != null) {
-            this.useTimezone = info.getProperty("useTimezone").toUpperCase()
-                .equals("TRUE");
+            this.useTimezone = info.getProperty("useTimezone").equalsIgnoreCase("TRUE");
         }
         
         if (info.getProperty("relaxAutoCommit") != null) {
-            this.relaxAutoCommit = info.getProperty("relaxAutoCommit").toUpperCase()
-                .equals("TRUE");
+            this.relaxAutoCommit = info.getProperty("relaxAutoCommit").equalsIgnoreCase("TRUE");
         } else if (info.getProperty("relaxAutocommit") != null) {
-            this.relaxAutoCommit = info.getProperty("relaxAutocommit").toUpperCase()
-                .equals("TRUE");
+            this.relaxAutoCommit = info.getProperty("relaxAutocommit").equalsIgnoreCase("TRUE");
         }
 
         if (info.getProperty("paranoid") != null) {
-            this.paranoid = info.getProperty("paranoid").toUpperCase().equals(
-                                    "TRUE");
+            this.paranoid = info.getProperty("paranoid").equalsIgnoreCase("TRUE");
         }
 
         if (info.getProperty("autoReconnect") != null) {
-            this.highAvailability = info.getProperty("autoReconnect").toUpperCase()
-                .equals("TRUE");
+            this.highAvailability = info.getProperty("autoReconnect").equalsIgnoreCase("TRUE");
         }
 
         if (info.getProperty("capitalizeTypeNames") != null) {
-            this.capitalizeDBMDTypes = info.getProperty("capitalizeTypeNames").toUpperCase()
-                .equals("TRUE");
+            this.capitalizeDBMDTypes = info.getProperty("capitalizeTypeNames").equalsIgnoreCase("TRUE");
         }
 
         if (info.getProperty("ultraDevHack") != null) {
-            this.useUltraDevWorkAround = info.getProperty("ultraDevHack").toUpperCase()
-                .equals("TRUE");
+            this.useUltraDevWorkAround = info.getProperty("ultraDevHack").equalsIgnoreCase("TRUE");
         }
 
         if (info.getProperty("strictFloatingPoint") != null) {
-            this.strictFloatingPoint = info.getProperty("strictFloatingPoint").toUpperCase()
-                .equals("TRUE");
+            this.strictFloatingPoint = info.getProperty("strictFloatingPoint").equalsIgnoreCase("TRUE");
         }
 
         if (info.getProperty("useSSL") != null) {
-            this.useSSL = info.getProperty("useSSL").toUpperCase().equals(
-                                  "TRUE");
+            this.useSSL = info.getProperty("useSSL").equalsIgnoreCase("TRUE");
         }
 
         if (info.getProperty("useCompression") != null) {
-            this.useSSL = info.getProperty("useCompression").toUpperCase().equals(
-                                  "TRUE");
+            this.useSSL = info.getProperty("useCompression").equalsIgnoreCase("TRUE");
         }
 
         if (info.getProperty("socketTimeout") != null) {
@@ -1262,20 +1264,18 @@ public class Connection
 
         if (info.getProperty("useHostsInPrivileges") != null) {
             this.useHostsInPrivileges = info.getProperty(
-                                                "useHostsInPrivileges").toUpperCase()
-                .equals("TRUE");
+                                                "useHostsInPrivileges").equalsIgnoreCase("TRUE");
         }
 
         if (info.getProperty("interactiveClient") != null) {
-            this.isInteractiveClient = info.getProperty("interactiveClient").toUpperCase()
-                .equals("TRUE");
+            this.isInteractiveClient = info.getProperty("interactiveClient").equalsIgnoreCase("TRUE");
         }
 
         if (info.getProperty("useUnicode") != null) {
 
             String useUnicode = info.getProperty("useUnicode").toUpperCase();
 
-            if (useUnicode.startsWith("TRUE")) {
+            if (useUnicode.equalsIgnoreCase("TRUE")) {
                 this.doUnicode = true;
             }
         }
@@ -1896,7 +1896,11 @@ public class Connection
 
     boolean useHostsInPrivileges() {
 
-        return useHostsInPrivileges;
+        return this.useHostsInPrivileges;
+    }
+    
+    boolean useStreamLengthsInPrepStmts() {
+        return this.useStreamLengthsInPrepStmts;
     }
 
     /** Returns the Mutex all queries are locked against */
