@@ -18,6 +18,10 @@
  */
 package testsuite.regression;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.Writer;
+
 import testsuite.BaseTestCase;
 
 
@@ -52,8 +56,10 @@ public class StatementRegressionTest
             stmt.setFetchSize(oldFetchSize);
         }
     }
-    
-    public void testMaxRowsProps() throws Exception {
+
+    public void testMaxRowsProps()
+                          throws Exception {
+
         /*
         Driver driver =
         //props.put("maxRows", "3"); //(1)
@@ -68,5 +74,60 @@ public class StatementRegressionTest
         while(rs.next())
          System.out.println(rs.getString(1));
          */
+    }
+
+    public void testLoadData()
+                      throws Exception {
+
+        try {
+            stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");
+            stmt.executeUpdate(
+                    "CREATE TABLE loadDataRegress (field1 int, field2 int)");
+
+            File tempFile = File.createTempFile("mysql", "txt");
+            tempFile.deleteOnExit();
+
+            Writer out = new FileWriter(tempFile);
+            
+            int count = 0;
+            int rowCount = 16384;
+            
+            for (int i = 0; i < rowCount; i++) {
+                out.write((count++) + "\t" + (count++) + "\n");
+            }
+            
+            out.close();
+
+            StringBuffer fileNameBuf = null;
+
+            if (File.separatorChar == '\\') {
+                fileNameBuf = new StringBuffer();
+
+                String fileName = tempFile.getAbsolutePath();
+                int fileNameLength = fileName.length();
+
+                for (int i = 0; i < fileNameLength; i++) {
+
+                    char c = fileName.charAt(i);
+
+                    if (c == '\\') {
+                        fileNameBuf.append("/");
+                    } else {
+                        fileNameBuf.append(c);
+                    }
+                }
+            } else {
+                fileNameBuf = new StringBuffer(tempFile.getAbsolutePath());
+            }
+
+            int updateCount = stmt.executeUpdate(
+                                      "LOAD DATA LOCAL INFILE '"
+                                      + fileNameBuf.toString()
+                                      + "' INTO TABLE loadDataRegress");
+            assertTrue(updateCount == rowCount);
+        } finally {
+
+            stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");
+        }
     }
 }

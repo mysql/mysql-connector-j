@@ -356,6 +356,12 @@ public class Connection
     
     private boolean continueBatchOnError = true;
     
+    /**
+     * Allow LOAD LOCAL INFILE (defaults to true)
+     */
+    
+    private boolean allowLoadLocalInfile = true;
+    
     
     /**
      * Default socket factory classname
@@ -1185,6 +1191,10 @@ public class Connection
                 
         }
 
+        if (info.getProperty("allowLoadLocalInfile") != null) {
+            this.allowLoadLocalInfile = info.getProperty("allowLoadLocalInfile").equalsIgnoreCase("TRUE");
+        }
+        
         if (info.getProperty("continueBatchOnError") != null) {
             this.continueBatchOnError = info.getProperty("continueBatchOnError").equalsIgnoreCase("TRUE");
         }
@@ -2372,6 +2382,13 @@ public class Connection
         return isInteractiveClient;
     }
 
+    /**
+     * Allow use of LOAD LOCAL INFILE?
+     */
+    public boolean allowLoadLocalInfile() {
+        return this.allowLoadLocalInfile;
+    }
+    
     /**
      * Returns the paranoidErrorMessages.
      * @return boolean

@@ -236,8 +236,14 @@ continueBatchOnError| Should Connector/J continue processing    | true          
                     | batch commands if one statement fails?    |
                     |                                           |
                     | The JDBC spec allows either way.          |
+--------------------+-------------------------------------------+-------------
+allowLoadLocalInfile| Should Connector/J allow/support 'LOAD    | true                             |
+                    | DATA LOCAL INFILE' queries (your server   |
+                    | must also allow these types of queries)   |
 ------------------------------------------------------------------------------
-  					
+  	
+  	
+  	allowLoadLocalInfile				
 A simple connection example looks like:
 
 	Class.forName("com.mysql.jdbc.Driver").newInstance();

@@ -21,6 +21,7 @@ package com.mysql.jdbc;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.EOFException;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -48,7 +49,7 @@ import java.util.zip.Inflater;
 public class MysqlIO {
 
     //~ Instance/static variables .............................................
-
+    static final int NULL_LENGTH = ~0;
     static final int COMP_HEADER_LENGTH = 3;
     static final long MAX_THREE_BYTES = 255L * 255L * 255L;
     static final int MIN_COMPRESS_LEN = 50;
@@ -123,6 +124,14 @@ public class MysqlIO {
     // use of this feature
     //
     private SoftReference splitBufRef;
+    
+    //
+    // Packet used for 'LOAD DATA LOCAL INFILE'
+    //
+    // We use a SoftReference, so that we don't penalize intermittent
+    // use of this feature
+    //
+    private SoftReference loadFileBufRef;
 
     //
     // Use this when reading in rows to avoid thousands of new()
@@ -411,9 +420,37 @@ public class MysqlIO {
         }
     }
 
-    private com.mysql.jdbc.ResultSet buildResultSetWithUpdates(long updateCount, 
-                                                               long updateID, 
-                                                               com.mysql.jdbc.Connection conn) {
+    private com.mysql.jdbc.ResultSet buildResultSetWithUpdates(Buffer resultPacket,
+                                                               com.mysql.jdbc.Connection conn) 
+        throws SQLException {
+
+        long updateCount = -1;
+            long updateID = -1;
+        
+            try {
+
+                if (this.useNewUpdateCounts) {
+                    updateCount = resultPacket.newReadLength();
+                    updateID = resultPacket.newReadLength();
+                } else {
+                    updateCount = (long) resultPacket.readLength();
+                    updateID = (long) resultPacket.readLength();
+                }
+                
+                if (this.use41Extensions) {
+                    int serverStatus = resultPacket.readInt();
+                    int warningCount = resultPacket.readInt();
+                }
+            } catch (Exception ex) {
+                throw new java.sql.SQLException(SQLError.get("S1000") + ": "
+                                                + ex.getClass().getName(), 
+                                                "S1000", -1);
+            }
+
+            if (Driver.TRACE) {
+                Debug.msg(this, "Update Count = " + updateCount);
+            }
+
 
         return new com.mysql.jdbc.ResultSet(updateCount, updateID);
     }
@@ -590,8 +627,8 @@ public class MysqlIO {
             // return FOUND rows
             clientParam |= CLIENT_FOUND_ROWS;
             
+            clientParam |= CLIENT_LOCAL_FILES;
             
-
             if (isInteractiveClient) {
                 clientParam |= CLIENT_INTERACTIVE;
             }
@@ -1022,30 +1059,11 @@ public class MysqlIO {
 
         if (columnCount == 0) {
 
-            try {
-
-                if (this.useNewUpdateCounts) {
-                    updateCount = resultPacket.newReadLength();
-                    updateID = resultPacket.newReadLength();
-                } else {
-                    updateCount = (long) resultPacket.readLength();
-                    updateID = (long) resultPacket.readLength();
-                }
-            } catch (Exception ex) {
-                throw new java.sql.SQLException(SQLError.get("S1000") + ": "
-                                                + ex.getClass().getName(), 
-                                                "S1000", -1);
-            }
-
-            if (Driver.TRACE) {
-                Debug.msg(this, "Update Count = " + updateCount);
-            }
-
             if (this.profileSql) {
                 System.err.println(profileMsgBuf.toString());
             }
 
-            return buildResultSetWithUpdates(updateCount, updateID, conn);
+            return buildResultSetWithUpdates(resultPacket, conn);
         } else {
 
             long fetchStartTime = 0;
@@ -1116,8 +1134,7 @@ public class MysqlIO {
                                    boolean streamResults, String catalog)
                             throws Exception {
 
-        long updateCount = -1;
-        long updateID = -1;
+        
         StringBuffer profileMsgBuf = null; // used if profiling
         long queryStartTime = 0;
 
@@ -1148,43 +1165,29 @@ public class MysqlIO {
 
         resultPacket.setPosition(resultPacket.getPosition() - 1);
 
-        long columnCount = resultPacket.readLength();
+        long columnCount = resultPacket.readFieldLength();
 
         if (Driver.TRACE) {
             Debug.msg(this, "Column count: " + columnCount);
         }
 
         if (columnCount == 0) {
-
-            try {
-
-                if (this.useNewUpdateCounts) {
-                    updateCount = resultPacket.newReadLength();
-                    updateID = resultPacket.newReadLength();
-                } else {
-                    updateCount = (long) resultPacket.readLength();
-                    updateID = (long) resultPacket.readLength();
-                }
-                
-                if (this.use41Extensions) {
-                    int serverStatus = resultPacket.readInt();
-                    int warningCount = resultPacket.readInt();
-                }
-            } catch (Exception ex) {
-                throw new java.sql.SQLException(SQLError.get("S1000") + ": "
-                                                + ex.getClass().getName(), 
-                                                "S1000", -1);
-            }
-
-            if (Driver.TRACE) {
-                Debug.msg(this, "Update Count = " + updateCount);
-            }
-
+            
             if (this.profileSql) {
                 System.err.println(profileMsgBuf.toString());
             }
 
-            return buildResultSetWithUpdates(updateCount, updateID, conn);
+            return buildResultSetWithUpdates(resultPacket, this.connection);
+        } else if (columnCount == Buffer.NULL_LENGTH) {
+            System.out.println("LOAD DATA LOCAL");
+            
+            String fileName = resultPacket.readString();
+            
+            System.out.println("Filename: " + fileName);
+            
+            return sendFileToServer(fileName);
+            
+            
         } else {
 
             long fetchStartTime = 0;
@@ -1577,6 +1580,136 @@ public class MysqlIO {
     }
 
     /**
+     * Reads and sends a file to the server for LOAD DATA LOCAL INFILE
+     * 
+     * @param fileName the file name to send.
+     */
+    private final ResultSet sendFileToServer(String fileName) 
+        throws IOException, SQLException {
+        Buffer filePacket = (loadFileBufRef == null)
+                                  ? null : (Buffer) (loadFileBufRef.get());
+            
+        int packetLength = alignPacketSize(this.connection.getMaxAllowedPacket() - 16, 4096);
+                              
+        if (filePacket == null) {
+            filePacket = new Buffer((int) (packetLength + HEADER_LENGTH));
+            loadFileBufRef = new SoftReference(filePacket);
+        }
+        
+        
+        filePacket.clear();
+        send(filePacket, 0);
+        
+        byte[] fileBuf = new byte[packetLength];
+        
+        BufferedInputStream fileIn = null;
+        
+        try {
+            fileIn = new BufferedInputStream(new FileInputStream(fileName));
+        
+            int bytesRead = 0;
+        
+            while ((bytesRead = fileIn.read(fileBuf)) != -1) {
+                filePacket.clear();
+                filePacket.writeBytesNoNull(fileBuf, 0, bytesRead);
+                send(filePacket);
+            }
+        
+            
+        } finally {
+            
+            if (fileIn != null) {
+                try {
+                    fileIn.close();
+                } catch (Exception ex) {
+                    // ignore
+                }
+                
+                fileIn = null;
+            } else {
+                // file open failed, but server needs one packet
+                filePacket.clear();
+                send(filePacket);
+            }
+        }
+        
+        // send empty packet to mark EOF
+        filePacket.clear();
+        send (filePacket);
+            
+        Buffer resultPacket = checkErrorPacket();
+        
+       
+        return buildResultSetWithUpdates(resultPacket, this.connection);
+    }
+
+    /** 
+     * Checks for errors in the reply packet, and if none, returns the
+     * reply packet, ready for reading
+     */
+	private Buffer checkErrorPacket() throws EOFException, SQLException {
+		int statusCode = 0;
+		Buffer resultPacket = null;
+		
+		try {
+		
+		    // Check return value, if we get a java.io.EOFException,
+		    // the server has gone away. We'll pass it on up the
+		    // exception chain and let someone higher up decide
+		    // what to do (barf, reconnect, etc).
+		    //Ret = readPacket();
+		    resultPacket = reuseAndReadPacket(this.reusablePacket);
+		    statusCode = resultPacket.readByte();
+		} catch (java.io.EOFException eofe) {
+		    throw eofe;
+		} catch (Exception fallThru) {
+		    throw new java.sql.SQLException(SQLError.get("08S01") + ": "
+		                                    + fallThru.getClass().getName(), 
+		                                    "08S01", 0);
+		}
+		                                    
+		try {
+		
+		    // Error handling
+		    if (statusCode == (byte) 0xff) {
+		
+		        String errorMessage;
+		        int errno = 2000;
+		
+		        if (this.protocolVersion > 9) {
+		            errno = resultPacket.readInt();
+		            errorMessage = resultPacket.readString();
+		            clearReceive();
+		
+		            String xOpen = SQLError.mysqlToXOpen(errno);
+		            throw new java.sql.SQLException(SQLError.get(xOpen) + ": "
+		                                            + errorMessage, xOpen, 
+		                                            errno);
+		        } else {
+		            errorMessage = resultPacket.readString();
+		            clearReceive();
+		
+		            if (errorMessage.indexOf("Unknown column") != -1) {
+		                throw new java.sql.SQLException(SQLError.get("S0022")
+		                                                + ": " + errorMessage, 
+		                                                "S0022", -1);
+		            } else {
+		                throw new java.sql.SQLException(SQLError.get("S1000")
+		                                                + ": " + errorMessage, 
+		                                                "S1000", -1);
+		            }
+		        }
+            }
+		  
+		} catch (IOException ioEx) {
+		    throw new java.sql.SQLException(SQLError.get("08S01") + ": "
+		                                    + ioEx.getClass().getName(), 
+		                                    "08S01", 0);
+		}
+		return resultPacket;
+	}
+    
+    /**
      * Send a packet to the MySQL server
      */
     private final void send(Buffer packet)
@@ -1801,4 +1934,8 @@ public class MysqlIO {
 	public boolean hasLongColumnInfo() {
 		return this.hasLongColumnInfo;
 	}
+    
+    private int alignPacketSize(int a, int l) {
+        return    (((a) + (l) - 1) & ~((l) - 1));
+    }
 }

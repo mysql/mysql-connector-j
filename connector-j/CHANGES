@@ -34,6 +34,9 @@ xx-xx-xx - Version 3.0.3-dev
 	   setAutoCommit).
 	- More robust implementation of updatable result sets. Checks that
 	  _all_ primary keys of the table have been selected.
+	- 'LOAD DATA LOCAL INFILE ...' now works, if your server is configured
+	  to allow it. Can be turned off with the 'allowLoadLocalInfile' 
+	  property (see the README).
 	  
 11-08-02 - Version 3.0.2-dev
 
