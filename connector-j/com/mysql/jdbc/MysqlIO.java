@@ -51,32 +51,33 @@ public class MysqlIO {
 
     static final int COMP_HEADER_LENGTH = 3;
     static final long MAX_THREE_BYTES = 255L * 255L * 255L;
+    static final int MIN_COMPRESS_LEN = 50;
     static final int HEADER_LENGTH = 4;
     private static int maxBufferSize = 65535;
     private static final int CLIENT_COMPRESS = 32; /* Can use compression 
-       protcol */
+    protcol */
     private static final int CLIENT_CONNECT_WITH_DB = 8;
     private static final int CLIENT_FOUND_ROWS = 2;
     private static final int CLIENT_IGNORE_SPACE = 256; /* Ignore spaces 
-       before '(' */
+    before '(' */
     private static final int CLIENT_LOCAL_FILES = 128; /* Can use LOAD DATA 
-       LOCAL */
+    LOCAL */
 
     /* Found instead of 
        affected rows */
     private static final int CLIENT_LONG_FLAG = 4; /* Get all column flags */
     private static final int CLIENT_LONG_PASSWORD = 1; /* new more secure 
-       passwords */
+    passwords */
 
     /* One can specify db 
        on connect */
     private static final int CLIENT_NO_SCHEMA = 16; /* Don't allow 
-       db.table.column */
+    db.table.column */
     private static final int CLIENT_ODBC = 64; /* Odbc client */
     private static final int CLIENT_PROTOCOL_41 = 16384;
-
     private static final int CLIENT_INTERACTIVE = 1024;
-    
+    private static final int CLIENT_SSL = 2048;
+
     //
     // For SQL Warnings
     //
@@ -139,7 +140,6 @@ public class MysqlIO {
     private RowData streamingData = null;
     private String socketFactoryClassName = null;
     private SocketFactory socketFactory = null;
-    private javax.net.ssl.SSLSocketFactory sslFact = null;
     private boolean isInteractiveClient = false;
 
     //~ Constructors ..........................................................
@@ -157,11 +157,6 @@ public class MysqlIO {
                    int socketTimeout)
             throws IOException, java.sql.SQLException {
         this.connection = conn;
-
-        if (this.connection.useSSL()) {
-            sslFact = (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory.getDefault();
-        }
-
         this.reusablePacket = new Buffer(this.connection.getNetBufferLength(), 
                                          this.connection.getMaxAllowedPacket());
         this.port = port;
@@ -179,13 +174,12 @@ public class MysqlIO {
                 /* Ignore */
             }
         }
-
+        
         this.mysqlConnection = this.socketFactory.beforeHandshake();
         this.mysqlInput = new BufferedInputStream(this.mysqlConnection.getInputStream(), 
                                                   16384);
         this.mysqlOutput = new BufferedOutputStream(this.mysqlConnection.getOutputStream(), 
                                                     16384);
-                                                    
         this.isInteractiveClient = this.connection.isInteractiveClient();
     }
 
@@ -335,21 +329,21 @@ public class MysqlIO {
         }
     }
 
-	/**
-	 * Forcibly closes the underlying socket to MySQL.
-	 * 
-	 * @throws IOException from the socket.close() method
-	 */
+    /**
+     * Forcibly closes the underlying socket to MySQL.
+     * 
+     * @throws IOException from the socket.close() method
+     */
     protected final void forceClose()
                              throws IOException {
         this.mysqlConnection.close();
     }
 
     private com.mysql.jdbc.ResultSet buildResultSetWithRows(com.mysql.jdbc.Field[] fields, 
-                                                              RowData rows, 
-                                                              com.mysql.jdbc.Connection conn, 
-                                                              int resultSetConcurrency)
-                                                       throws SQLException {
+                                                            RowData rows, 
+                                                            com.mysql.jdbc.Connection conn, 
+                                                            int resultSetConcurrency)
+                                                     throws SQLException {
 
         switch (resultSetConcurrency) {
 
@@ -366,8 +360,8 @@ public class MysqlIO {
     }
 
     private com.mysql.jdbc.ResultSet buildResultSetWithUpdates(long updateCount, 
-                                                                 long updateID, 
-                                                                 com.mysql.jdbc.Connection Conn) {
+                                                               long updateID, 
+                                                               com.mysql.jdbc.Connection conn) {
 
         return new com.mysql.jdbc.ResultSet(updateCount, updateID);
     }
@@ -516,20 +510,26 @@ public class MysqlIO {
 
                 int serverCapabilities = buf.readInt();
 
-                // Should be settable by user
-                if ((serverCapabilities & CLIENT_COMPRESS) != 0) {
+                if ((serverCapabilities & CLIENT_COMPRESS) != 0
+                    && this.connection.useCompression()) {
 
                     // The following match with ZLIB's
                     // decompress() and compress()
-                    //_Deflater = new Deflater();
-                    //_Inflater = new Inflater();
-                    //clientParam |= CLIENT_COMPRESS;
+                    this.deflater = new Deflater();
+                    this.inflater = new Inflater();
+                    clientParam |= CLIENT_COMPRESS;
+                    useCompression = true;
+                }
+
+                if ((serverCapabilities & CLIENT_SSL) == 0
+                    && this.connection.useSSL()) {
+                    this.connection.setUseSSL(false);
                 }
             }
 
             // return FOUND rows
             clientParam |= CLIENT_FOUND_ROWS;
-            
+
             if (isInteractiveClient) {
                 clientParam |= CLIENT_INTERACTIVE;
             }
@@ -576,20 +576,31 @@ public class MysqlIO {
 
                 send(packet);
             } else {
-                clientParam |= 2048;
+                clientParam |= CLIENT_SSL;
                 packet = new Buffer(packLength);
                 packet.writeInt(clientParam);
                 send(packet);
+
+                javax.net.ssl.SSLSocketFactory sslFact = (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory.getDefault();
                 this.mysqlConnection = sslFact.createSocket(
                                                this.mysqlConnection, this.host, 
                                                this.port, true);
+
+                String[] allowedProtocols = ((javax.net.ssl.SSLSocket) this.mysqlConnection).getSupportedProtocols();
+                String[] enabledProtocols = ((javax.net.ssl.SSLSocket) this.mysqlConnection).getEnabledProtocols();
+
+                // need to force TLSv1, or else JSSE tries to do a SSLv2 handshake
+                // which MySQL doesn't understand
+                ((javax.net.ssl.SSLSocket) this.mysqlConnection).setEnabledProtocols(
+                        new String[] { "TLSv1" });
+                ((javax.net.ssl.SSLSocket) this.mysqlConnection).startHandshake();
                 this.mysqlInput = new BufferedInputStream(this.mysqlConnection.getInputStream(), 
                                                           16384);
                 this.mysqlOutput = new BufferedOutputStream(this.mysqlConnection.getOutputStream(), 
                                                             16384);
+                this.mysqlOutput.flush();
                 packet.clear();
-
-                //packet.writeInt(clientParam);
+                packet.writeInt(clientParam);
                 packet.writeLongInt(packLength);
 
                 // User/Password data
@@ -785,8 +796,7 @@ public class MysqlIO {
             statusCode = resultPacket.readByte();
         } catch (java.io.EOFException eofe) {
             throw eofe;
-        }
-         catch (Exception fallThru) {
+        } catch (Exception fallThru) {
             throw new java.sql.SQLException(SQLError.get("08S01") + ": "
                                             + fallThru.getClass().getName(), 
                                             "08S01", 0);
@@ -1234,6 +1244,13 @@ public class MysqlIO {
         }
     }
 
+    /** 
+     * Returns the host this IO is connected to
+     */
+    String getHost() {
+        return this.host;
+    }
+    
     /**
      * Does the version of the MySQL server we are connected to
      * meet the given minimums?
@@ -1441,16 +1458,19 @@ public class MysqlIO {
             forceClose();
             throw new IOException("Unexpected end of input stream");
         }
-
+        
         // we don't look at packet sequence in this case
-        this.mysqlInput.skip(1);
-
+        //this.mysqlInput.skip(1);
+        int b = this.mysqlInput.read();
+        
         // Read data
         byte[] buffer = new byte[packetLength + 1];
         readFully(this.mysqlInput, buffer, 0, packetLength);
         buffer[packetLength] = 0;
 
-        return new Buffer(buffer);
+        Buffer packet = new Buffer(buffer);
+ 
+        return packet;
     }
 
     /**
@@ -1480,6 +1500,8 @@ public class MysqlIO {
 
         int packetLength = mysqlInput.read() + (mysqlInput.read() << 8)
                            + (mysqlInput.read() << 16);
+                           
+      
 
         // -1 for all values through above assembly sequence
         if (packetLength == -65793) {
@@ -1488,7 +1510,7 @@ public class MysqlIO {
         }
 
         byte multiPacketSeq = (byte) this.mysqlInput.read();
-
+        
         // Set the Buffer to it's original state
         reuse.setPosition(0);
         reuse.setSendLength(0);
@@ -1591,7 +1613,7 @@ public class MysqlIO {
      */
     private final void send(Buffer packet)
                      throws IOException {
-
+   
         int l = packet.getPosition();
         send(packet, l);
     }
@@ -1599,15 +1621,57 @@ public class MysqlIO {
     private final void send(Buffer packet, int packetLen)
                      throws IOException {
 
+        
+        
         if (serverMajorVersion >= 4 && packetLen >= MAX_THREE_BYTES) {
             sendSplitPackets(packet);
         } else {
+
+            int headerLength = HEADER_LENGTH;
             this.packetSequence++;
             packet.setPosition(0);
-            packet.writeLongInt(packetLen - HEADER_LENGTH);
-            packet.writeByte(this.packetSequence);
-            this.mysqlOutput.write(packet.getByteBuffer(), 0, packetLen);
-            this.mysqlOutput.flush();
+
+            if (useCompression) {
+                headerLength += COMP_HEADER_LENGTH;
+
+                Buffer compressedPacket = new Buffer(packetLen + headerLength);
+                byte[] compressedBytes = compressedPacket.getByteBuffer();
+                int compLen = 0;
+
+                if (packetLen < MIN_COMPRESS_LEN) {
+
+                    // Don't compress small packets
+                    compLen = packetLen;
+                    compressedPacket.setPosition(0);
+                    compressedPacket.writeLongInt(0);
+                    compressedPacket.writeLongInt(packetLen - headerLength);
+                    compressedPacket.writeByte(this.packetSequence);
+
+                    for (int i = HEADER_LENGTH; i < packetLen; i++) {
+                        compressedBytes[i] = packet.getByteBuffer()[i];
+                    }
+
+                    //System.arraycopy(packet, HEADER_LENGTH, compressedBytes, headerLength, (packetLen - HEADER_LENGTH));
+                } else {
+                    deflater.setInput(packet.getByteBuffer(), HEADER_LENGTH, 
+                                      packetLen);
+                    compLen = deflater.deflate(compressedBytes, headerLength, 
+                                               packetLen);
+                    compressedPacket.setPosition(0);
+                    compressedPacket.writeLongInt(compLen);
+                    compressedPacket.writeLongInt(packetLen - headerLength);
+                    compressedPacket.writeByte(this.packetSequence);
+                }
+
+                this.mysqlOutput.write(compressedPacket.getByteBuffer(), 0, 
+                                       compLen);
+                this.mysqlOutput.flush();
+            } else {
+                packet.writeLongInt(packetLen - headerLength);
+                packet.writeByte(this.packetSequence);
+                this.mysqlOutput.write(packet.getByteBuffer(), 0, packetLen);
+                this.mysqlOutput.flush();
+            }
         }
     }
 

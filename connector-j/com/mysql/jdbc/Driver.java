@@ -283,11 +283,22 @@ public class Driver
         connectTimeout.required = false;
         connectTimeout.description = "Timeout for socket connect (in milliseconds), with 0 being no timeout. Only works on JDK-1.4 or newer. Defaults to '0'."
         ;
+        
+        
+        
+        DriverPropertyInfo queriesBeforeRetryMaster = new DriverPropertyInfo("queriesBeforeRetryMaster", 
+                                                             info.getProperty(
+                                                                     "queriesBeforeRetryMaster", 
+                                                                     "50"));
+        queriesBeforeRetryMaster.required = false;
+        queriesBeforeRetryMaster.description = "Number of queries to issue before falling back to master when failed over (when using multi-host failover)"
+        ;
+        
         DriverPropertyInfo[] dpi = {
             hostProp, portProp, dbProp, userProp, passwordProp, autoReconnect, 
             maxReconnects, initialTimeout, profileSql, socketTimeout, useSSL, 
             paranoid, useHostsInPrivileges, interactiveClient, useCompression,
-            useTimezone, serverTimezone, connectTimeout
+            useTimezone, serverTimezone, connectTimeout, queriesBeforeRetryMaster
         };
 
         return dpi;

@@ -313,6 +313,20 @@ public class Connection
      * Should we tell MySQL that we're an interactive client?
      */
     private boolean isInteractiveClient = false;
+    
+    /**
+     * How many queries should we wait before we try to re-connect
+     * to the master, when we are failing over to replicated hosts
+     * 
+     * Defaults to 50
+     */
+    private int queriesBeforeRetryMaster = 50;
+    
+    /**
+     * Number of queries we've issued since the master
+     * failed
+     */
+    private long queriesIssuedFailedOver = 0;
 
     /**
      * Default socket factory classname
@@ -369,10 +383,17 @@ public class Connection
         }
 
         if (this.transactionsSupported) {
-
+            // this internal value must be set first as failover depends on it
+            // being set to true to fail over (which is done by most
+            // app servers and connection pools at the end of
+            // a transaction), and the driver issues an implicit set
+            // based on this value when it (re)-connects to a server
+            // so the value holds across connections
+            
+            this.autoCommit = autoCommit; 
             String sql = "SET autocommit=" + (autoCommit ? "1" : "0");
             execSQL(sql, -1);
-            this.autoCommit = autoCommit;
+            
         } else {
 
             if ((autoCommit == false) && (this.relaxAutoCommit == false)) {
@@ -1107,6 +1128,20 @@ public class Connection
                                      throws SQLException {
         this.socketFactoryClassName = info.getProperty("socketFactory", 
                                                        DEFAULT_SOCKET_FACTORY);
+
+
+
+        if (info.getProperty("queriesBeforeRetryMaster") != null) {
+            String queriesBeforeRetryStr = info.getProperty("queriesBeforeRetryMaster");
+            
+            try {  
+                this.queriesBeforeRetryMaster = Integer.parseInt(queriesBeforeRetryStr);
+            } catch (NumberFormatException nfe) {
+                throw new SQLException("Illegal non-numeric value '" + queriesBeforeRetryStr 
+                    + "' for 'queriesBeforeRetryMaster'", "S1009");
+            }
+                
+        }
 
         if (info.getProperty("useTimezone") != null) {
             this.useTimezone = info.getProperty("useTimezone").toUpperCase()
@@ -1967,10 +2002,39 @@ public class Connection
             Debug.methodCall(this, "execSQL", args);
         }
 
+        //
+        // Fall-back if the master is back online if we've
+        // issued queriesBeforeRetryMaster queries since
+        // we failed over
+        //
+        
         synchronized (this.mutex) {
             this.lastQueryFinishedTime = 0; // we're busy!
 
-            if (this.highAvailability || this.failedOver) {
+            //
+            // Fixme: Is this transaction-safe with replication?
+            //
+            
+            if (this.failedOver && this.autoCommit) {
+                  
+                this.queriesIssuedFailedOver++;
+                
+                if ((this.queriesIssuedFailedOver % this.queriesBeforeRetryMaster) == 0) {
+                    createNewIO(true);
+                    
+                    String connectedHost = this.io.getHost();
+                    
+                    if (connectedHost != null 
+                        && this.hostList.get(0).equals(connectedHost)) {
+                        this.failedOver = false;
+                        this.queriesIssuedFailedOver = 0;
+                        setReadOnly(false);
+                    }
+                        
+                }
+            }
+                    
+            if ((this.highAvailability || this.failedOver) && this.autoCommit) {
 
                 try {
                     ping();

@@ -5456,8 +5456,9 @@ public class DatabaseMetaData
     public boolean supportsResultSetConcurrency(int type, int concurrency)
                                          throws SQLException {
 
-        return (type == ResultSet.TYPE_SCROLL_SENSITIVE
-               && concurrency == ResultSet.CONCUR_READ_ONLY);
+        return (type == ResultSet.TYPE_SCROLL_INSENSITIVE
+               && (concurrency == ResultSet.CONCUR_READ_ONLY 
+                    || concurrency == ResultSet.CONCUR_UPDATABLE));
     }
 
     /**
