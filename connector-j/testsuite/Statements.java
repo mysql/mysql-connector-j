@@ -46,11 +46,11 @@ public class Statements {
             }
             catch (SQLException sqlEx) { /* ignore */}
 
-            stmt.executeUpdate("CREATE TABLE statement_test (id int not null primary key, strdata1 varchar(255), strdata2 varchar(255))");
+            stmt.executeUpdate("CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255), strdata2 varchar(255))");
             
             for (int i = 0; i < 10; i++)
             {
-            	stmt.executeUpdate("INSERT INTO statement_test (id, strdata1,strdata2) values (" + i + ", 'abcdefg', 'poi')");
+            	stmt.executeUpdate("INSERT INTO statement_test (strdata1,strdata2) values ('abcdefg', 'poi')");
             }
             
             pStmt = conn.prepareStatement("UPDATE statement_test SET strdata1=?, strdata2=? where id=?");
@@ -68,12 +68,12 @@ public class Statements {
 	    	
 	    PreparedStatement pStmtBatch = 
 	    	conn.prepareStatement("INSERT INTO "
-	    	+ "statement_test (id, strdata1, strdata2) VALUES (?,?,?)");
+	    	+ "statement_test (strdata1, strdata2) VALUES (?,?)");
 		
 	    for (int i = 0; i < 10; i++) {
-	    	pStmtBatch.setInt(1, 100 + i);
+	    	
+	    	pStmtBatch.setString(1, "batch_" + i);
 	    	pStmtBatch.setString(2, "batch_" + i);
-	    	pStmtBatch.setString(3, "batch_" + i);
 		pStmtBatch.addBatch();
 	    }
 	    
