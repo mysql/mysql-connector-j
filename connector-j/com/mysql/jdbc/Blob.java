@@ -150,7 +150,10 @@ public class Blob
      */
     public byte[] getBytes(long pos, int length)
                     throws SQLException {
-
+        if (pos < 1) {
+            throw new SQLException("Position 'pos' can not be < 1", "S1009");
+        }
+        
         byte[] newData = new byte[length];
         System.arraycopy(getBinaryData(), (int) (pos - 1), newData, 0, length);
 
