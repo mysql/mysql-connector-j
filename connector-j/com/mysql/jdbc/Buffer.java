@@ -168,7 +168,7 @@ class Buffer {
             for (int j = 0; j < 8; j++) {
 
                 String hexVal = Integer.toHexString(
-                                        (int) this.byteBuffer[ptemp]);
+                                        (int) this.byteBuffer[ptemp] & 0xff);
 
                 if (hexVal.length() == 1) {
                     hexVal = "0" + hexVal;
