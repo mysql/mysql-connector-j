@@ -209,11 +209,27 @@ public class Driver
         profileSql.required = false;
         profileSql.description = "Trace queries and their execution/fetch times on STDERR (true/false) defaults to false";
         ;
+        
+        DriverPropertyInfo socketTimeout = new DriverPropertyInfo("socketTimeout", 
+                                                               info.getProperty(
+                                                                       "socketTimeout", 
+                                                                       "0"));
+        socketTimeout.required = false;
+        socketTimeout.description = "Timeout on network socket operations (0 means no timeout)";
+        ;
+        
+        DriverPropertyInfo useSSL = new DriverPropertyInfo("useSSL", 
+                                                               info.getProperty(
+                                                                       "useSSL", 
+                                                                       "false"));
+        useSSL.required = false;
+        useSSL.description = "Use SSL when communicating with the server?";
+        ;
 
         DriverPropertyInfo[] dpi = 
         {
             hostProp, portProp, dbProp, userProp, passwordProp, autoReconnect, 
-            maxReconnects, initialTimeout, profileSql
+            maxReconnects, initialTimeout, profileSql, socketTimeout, useSSL
         };
 
         return dpi;
