@@ -148,21 +148,5 @@ public class Util {
 		return O;
 	}
 	
-	public static String bytesToString(byte[] bytes)
-	{
-		if (bytes == null)
-		{
-			return null;
-		}
-		
-		char[] charBuf = new char[bytes.length];
-		
-		for (int i = 0; i < bytes.length; i++)
-		{
-			charBuf[i] = (char)bytes[i];
-		}
-		
-		return new String(charBuf);
-	}
 		
 }
