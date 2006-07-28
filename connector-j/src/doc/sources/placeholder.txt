@@ -1,0 +1,5 @@
+This file is here to enable this directory to be checked into the
+source repository.
+
+The ant build script will copy the latest version of the documentation
+into this directory.
