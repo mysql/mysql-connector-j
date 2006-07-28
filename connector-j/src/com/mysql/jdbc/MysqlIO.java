@@ -42,13 +42,11 @@ import java.lang.ref.SoftReference;
 
 import java.math.BigInteger;
 
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 
 import java.security.NoSuchAlgorithmException;
 

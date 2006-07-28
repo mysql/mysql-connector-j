@@ -27,7 +27,6 @@ package com.mysql.jdbc;
 import java.io.IOException;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.net.InetAddress;

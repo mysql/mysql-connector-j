@@ -27,7 +27,6 @@ package testsuite.simple;
 import java.io.ByteArrayInputStream;
 import java.io.CharArrayReader;
 import java.io.Reader;
-import java.rmi.server.UID;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

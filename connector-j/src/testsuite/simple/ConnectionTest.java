@@ -27,7 +27,6 @@ package testsuite.simple;
 import testsuite.BaseTestCase;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -41,7 +40,6 @@ import java.sql.Statement;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-import com.mysql.jdbc.ConnectionPropertiesTransform;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;

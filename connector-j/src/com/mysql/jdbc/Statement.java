@@ -29,7 +29,6 @@ import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.util.LRUCache;
 
-import java.sql.DataTruncation;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Types;
@@ -39,7 +38,6 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TimerTask;
 

@@ -24,12 +24,10 @@
  */
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.Statement.CancelTask;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -51,9 +49,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Calendar;
-import java.util.Locale;
 import java.util.TimeZone;
 
 /**

@@ -25,7 +25,6 @@
 package com.mysql.jdbc;
 
 import java.sql.Types;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;

@@ -35,9 +35,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Properties;
 
 /**
  * Tests BLOB functionality in the driver.
