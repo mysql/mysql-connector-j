@@ -2966,6 +2966,7 @@ public class ResultSet implements java.sql.ResultSet {
 		case MysqlDefs.FIELD_TYPE_LONG_BLOB:
 		case MysqlDefs.FIELD_TYPE_BLOB:
 			dataAsBytes = (byte[]) this.thisRow[columnIndex - 1];
+			break;
 
 		default:
 			dataAsBytes = getNativeBytes(columnIndex, false);
@@ -2976,6 +2977,24 @@ public class ResultSet implements java.sql.ResultSet {
 		}
 
 		return new BlobFromLocator(this, columnIndex);
+	}
+
+	public static boolean arraysEqual(byte[] left, byte[] right) {
+		if (left == null) {
+			return right == null;
+		}
+		if (right == null) {
+			return false;
+		}
+		if (left.length != right.length) {
+			return false;
+		}
+		for (int i = 0; i < left.length; i++) {
+			if (left[i] != right[i]) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
