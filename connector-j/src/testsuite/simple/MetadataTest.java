@@ -540,7 +540,9 @@ public class MetadataTest extends BaseTestCase {
                 assertEquals("t1", this.rs.getString("TABLE_NAME"));
                 assertEquals("c1", this.rs.getString("COLUMN_NAME"));
             } finally {
-                conn1.close();
+                if (conn1 != null) {
+					conn1.close();
+				}
             }
         }
     }
@@ -566,7 +568,9 @@ public class MetadataTest extends BaseTestCase {
                 assertEquals("1", this.rs.getString("NON_UNIQUE"));
                 assertEquals("index1", this.rs.getString("INDEX_NAME"));
             } finally {
-                conn1.close();
+                if (conn1 != null) {
+					conn1.close();
+				}
             }
         }
     }
@@ -591,7 +595,9 @@ public class MetadataTest extends BaseTestCase {
                 assertEquals("char", this.rs.getString("TYPE_NAME"));
                 assertEquals("1", this.rs.getString("COLUMN_SIZE"));
             } finally {
-                conn1.close();
+                if (conn1 != null) {
+					conn1.close();
+				}
             }
         }
     }
@@ -623,7 +629,9 @@ public class MetadataTest extends BaseTestCase {
                 }
                 assertTrue(tableNames.isEmpty());
             } finally {
-                conn1.close();
+                if (conn1 != null) {
+					conn1.close();
+				}
             }
         }
     }
@@ -652,6 +660,7 @@ public class MetadataTest extends BaseTestCase {
 	                this.rs.next();
 	                String user = this.rs.getString(1);
 	                List userHost = StringUtils.split(user, "@", false);
+	                assertTrue(user, userHost.size() > 1);
 	                userHostQuoted = "'" + userHost.get(0) + "'@'" + userHost.get(1) + "'";
 	                
 	                try {
@@ -672,15 +681,21 @@ public class MetadataTest extends BaseTestCase {
 	                assertEquals(userHostQuoted, this.rs.getString("GRANTEE"));
 	                assertEquals("UPDATE", this.rs.getString("PRIVILEGE"));
 	            } finally {
-	            	if (stmt1 != null) {
-	            		stmt1.executeUpdate("DROP TABLE IF EXISTS t1");
-	            		stmt1.executeUpdate("REVOKE UPDATE (c1) ON t1 FROM " + userHostQuoted);
-	            		stmt1.close();
-	            	}
-	            	
-	            	if (conn1 != null) {
-	            		conn1.close();
-	            	}
+	            	try {
+						if (stmt1 != null) {
+							stmt1.executeUpdate("DROP TABLE IF EXISTS t1");
+							if (userHostQuoted != null) {
+								String revoke = "REVOKE UPDATE (c1) ON t1 FROM "
+										+ userHostQuoted;
+								stmt1.executeUpdate(revoke);
+							}
+							stmt1.close();
+						}
+					} finally {
+						if (conn1 != null) {
+							conn1.close();
+						}
+					}
 	            }
 	        }
     	}
@@ -705,7 +720,9 @@ public class MetadataTest extends BaseTestCase {
                 assertEquals("sp1", this.rs.getString("PROCEDURE_NAME"));
                 assertEquals("1", this.rs.getString("PROCEDURE_TYPE"));
             } finally {
-                conn1.close();
+                if (conn1 != null) {
+					conn1.close();
+				}
                 this.stmt.executeUpdate("DROP PROCEDURE sp1");
             }
         }
@@ -737,7 +754,9 @@ public class MetadataTest extends BaseTestCase {
             } finally {
                 this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
                 this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-                conn1.close();
+                if (conn1 != null) {
+					conn1.close();
+				}
             }
         }
     }
@@ -768,7 +787,9 @@ public class MetadataTest extends BaseTestCase {
             } finally {
                 this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
                 this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-                conn1.close();
+                if (conn1 != null) {
+					conn1.close();
+				}
             }
         }
     }
@@ -799,7 +820,9 @@ public class MetadataTest extends BaseTestCase {
             } finally {
                 this.stmt.executeUpdate("DROP TABLE IF EXISTS child");
                 this.stmt.executeUpdate("DROP TABLE If EXISTS parent");
-                conn1.close();
+                if (conn1 != null) {
+					conn1.close();
+				}
             }
         }
     }
