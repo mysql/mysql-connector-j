@@ -110,6 +110,8 @@ public class BlobTest extends BaseTestCase {
 	public void tearDown() throws Exception {
 		try {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS BLOBTEST");
+		} catch (Exception e) {
+			e.printStackTrace();
 		} finally {
 			super.tearDown();
 		}
