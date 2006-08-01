@@ -3503,4 +3503,56 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+
+	/**
+	 * Tests fix(es) for BUG#21379 - column names don't match metadata
+	 * in cases where server doesn't return original column names (functions)
+	 * thus breaking compatibility with applications that expect 1-1 mappings
+	 * between findColumn() and rsmd.getColumnName().
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug21379() throws Exception {
+		try {
+			//
+			// Test the 1-1 mapping between rs.findColumn() and rsmd.getColumnName()
+			// in the case where original column names are not returned,
+			// thus preserving pre-C/J 5.0 behavior for these cases
+			//
+			
+			this.rs = this.stmt.executeQuery("SELECT LAST_INSERT_ID() AS id");
+			this.rs.next();
+			assertEquals("id", this.rs.getMetaData().getColumnName(1));
+			assertEquals(1, this.rs.findColumn("id"));
+			
+			if (versionMeetsMinimum(4, 1)) {
+				// 
+				// test complete emulation of C/J 3.1 and earlier behavior
+				// through configuration option
+				//
+				
+				createTable("testBug21379", "(field1 int)");
+				Connection legacyConn = null;
+				Statement legacyStmt = null;
+				
+				try {
+					Properties props = new Properties();
+					props.setProperty("", "true");
+					legacyConn = getConnectionWithProps(props);
+					legacyStmt = legacyConn.createStatement();
+					
+					this.rs = legacyStmt.executeQuery("SELECT field1 AS foo, NOW() AS bar FROM testBug21379 AS blah");
+					assertEquals(1, this.rs.findColumn("foo"));
+					assertEquals(2, this.rs.findColumn("bar"));
+					assertEquals("testBug21379", this.rs.getMetaData().getTableName(1));
+				} finally {
+					if (legacyConn != null) {
+						legacyConn.close();
+					}
+				}
+			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

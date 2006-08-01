@@ -75,6 +75,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 	}
 
 	Field[] fields;
+	boolean useOldAliasBehavior = false;
 
 	/**
 	 * Initialise for a result with a tuple set and a field descriptor set
@@ -82,8 +83,9 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 	 * @param fields
 	 *            the array of field descriptors
 	 */
-	public ResultSetMetaData(Field[] fields) {
+	public ResultSetMetaData(Field[] fields, boolean useOldAliasBehavior) {
 		this.fields = fields;
+		this.useOldAliasBehavior = useOldAliasBehavior;
 	}
 
 	/**
@@ -221,6 +223,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 	 *             if a database access error occurs
 	 */
 	public String getColumnLabel(int column) throws SQLException {
+		if (this.useOldAliasBehavior) {
+			return getColumnName(column);
+		}
+		
 		return getField(column).getColumnLabel();
 	}
 
@@ -236,7 +242,17 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 	 *             if a databvase access error occurs
 	 */
 	public String getColumnName(int column) throws SQLException {
-		return getField(column).getNameNoAliases();
+		if (this.useOldAliasBehavior) {
+			return getField(column).getName();
+	}
+
+		String name = getField(column).getNameNoAliases();
+		
+		if (name != null && name.length() == 0) {
+			return getField(column).getName();
+		}
+		
+		return name;
 	}
 
 	/**
@@ -476,6 +492,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 	 *             if a database access error occurs
 	 */
 	public String getTableName(int column) throws SQLException {
+		if (this.useOldAliasBehavior) {
+			return getField(column).getTableName();
+		}
+		
 		return getField(column).getTableNameNoAliases();
 	}
 

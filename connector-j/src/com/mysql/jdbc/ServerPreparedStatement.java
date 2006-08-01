@@ -821,7 +821,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 			return null;
 		}
 
-		return new ResultSetMetaData(this.resultFields);
+		return new ResultSetMetaData(this.resultFields, 
+				this.connection.getUseOldAliasMetadataBehavior());
 	}
 
 	/**

@@ -1807,7 +1807,8 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 					this.pstmtResultMetaData = mdRs.getMetaData();
 				} else {
 					this.pstmtResultMetaData = new ResultSetMetaData(
-							new Field[0]);
+							new Field[0], 
+							this.connection.getUseOldAliasMetadataBehavior());
 				}
 			} finally {
 				SQLException sqlExRethrow = null;

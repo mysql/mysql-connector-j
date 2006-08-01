@@ -1444,49 +1444,105 @@ public class ResultSet implements java.sql.ResultSet {
 	 *                if a database access error occurs
 	 */
 	public boolean getBoolean(int columnIndex) throws SQLException {
-		if (!this.isBinaryEncoded) {
-			checkColumnBounds(columnIndex);
+		
+		checkColumnBounds(columnIndex);
 
-			//
-			// MySQL 5.0 and newer have an actual BIT type,
-			// so we need to check for that here...
-			//
+		//
+		// MySQL 5.0 and newer have an actual BIT type,
+		// so we need to check for that here...
+		//
 
-			int columnIndexMinusOne = columnIndex - 1;
+		int columnIndexMinusOne = columnIndex - 1;
 
-			Field field = this.fields[columnIndexMinusOne];
+		Field field = this.fields[columnIndexMinusOne];
 
-			if (field.getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
-				if (this.thisRow[columnIndexMinusOne] == null) {
-					this.wasNullFlag = true;
+		if (field.getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
+			return byteArrayToBoolean(columnIndexMinusOne);
+		}
 
-					return false;
+		this.wasNullFlag = false;
+		
+		int sqlType = field.getSQLType();
+		
+		switch (sqlType) {
+		case Types.BIT:
+		case Types.BOOLEAN:
+		case Types.TINYINT:
+		case Types.SMALLINT:
+		case Types.INTEGER:
+		case Types.BIGINT:
+		case Types.DECIMAL:
+		case Types.NUMERIC:
+		case Types.REAL:
+		case Types.FLOAT:
+		case Types.DOUBLE:
+			long boolVal = getLong(columnIndex, false);
+
+			return (boolVal == -1 || boolVal > 0);
+		default:
+			if (this.connection.getPedantic()) {
+				// Table B-6 from JDBC spec
+				switch (sqlType) {
+				case Types.BINARY:
+				case Types.VARBINARY:
+				case Types.LONGVARBINARY:
+				case Types.DATE:
+				case Types.TIME:
+				case Types.TIMESTAMP:
+				case Types.CLOB:
+				case Types.BLOB:
+				case Types.ARRAY:
+				case Types.REF:
+				case Types.DATALINK:
+				case Types.STRUCT:
+				case Types.JAVA_OBJECT:
+					throw SQLError.createSQLException("Required type conversion not allowed",
+							SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST);
 				}
-
-				this.wasNullFlag = false;
-
-				if (((byte[]) this.thisRow[columnIndexMinusOne]).length == 0) {
-					return false;
-				}
-
-				byte boolVal = ((byte[]) this.thisRow[columnIndexMinusOne])[0];
-
-				return (boolVal > 0);
 			}
-
+		
+			if (sqlType == Types.BINARY ||
+				sqlType == Types.VARBINARY ||
+				sqlType == Types.LONGVARBINARY ||
+				sqlType == Types.BLOB) {
+				return byteArrayToBoolean(columnIndexMinusOne);
+			}
+			
+			if (this.useUsageAdvisor) {
+				issueConversionViaParsingWarning("getBoolean()", columnIndex,
+						this.thisRow[columnIndex], this.fields[columnIndex],
+						new int[] {
+								MysqlDefs.FIELD_TYPE_BIT,
+								MysqlDefs.FIELD_TYPE_DOUBLE,
+								MysqlDefs.FIELD_TYPE_TINY,
+								MysqlDefs.FIELD_TYPE_SHORT,
+								MysqlDefs.FIELD_TYPE_LONG,
+								MysqlDefs.FIELD_TYPE_LONGLONG,
+								MysqlDefs.FIELD_TYPE_FLOAT });
+			}
+		
 			String stringVal = getString(columnIndex);
 
-			if ((stringVal != null) && (stringVal.length() > 0)) {
-				int c = Character.toLowerCase(stringVal.charAt(0));
+			return getBooleanFromString(stringVal, columnIndex);
+		}
+	}
 
-				return ((c == 't') || (c == 'y') || (c == '1') || stringVal
-						.equals("-1"));
-			}
+	private boolean byteArrayToBoolean(int columnIndexMinusOne) {
+		if (this.thisRow[columnIndexMinusOne] == null) {
+			this.wasNullFlag = true;
 
 			return false;
 		}
 
-		return getNativeBoolean(columnIndex);
+		this.wasNullFlag = false;
+
+		if (((byte[]) this.thisRow[columnIndexMinusOne]).length == 0) {
+			return false;
+		}
+
+		byte boolVal = ((byte[]) this.thisRow[columnIndexMinusOne])[0];
+
+		return (boolVal == -1 || boolVal > 0);
 	}
 
 	/**
@@ -2607,6 +2663,10 @@ public class ResultSet implements java.sql.ResultSet {
 	 *                if a database access error occurs
 	 */
 	public long getLong(int columnIndex) throws SQLException {
+		return getLong(columnIndex, true);
+	}
+	
+	private long getLong(int columnIndex, boolean overflowCheck) throws SQLException {
 		if (!this.isBinaryEncoded) {
 			checkRowPos();
 			
@@ -2654,7 +2714,7 @@ public class ResultSet implements java.sql.ResultSet {
 				if (!needsFullParse) {
 					try {
 						return parseLongWithOverflowCheck(columnIndex,
-								longAsBytes, null);
+								longAsBytes, null, overflowCheck);
 					} catch (NumberFormatException nfe) {
 						try {
 							// To do: Warn of over/underflow???
@@ -2690,7 +2750,7 @@ public class ResultSet implements java.sql.ResultSet {
 
 					if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1)) {
 						return parseLongWithOverflowCheck(columnIndex, null,
-								val);
+								val, overflowCheck);
 					}
 
 					// Convert floating point
@@ -2713,7 +2773,7 @@ public class ResultSet implements java.sql.ResultSet {
 			}
 		}
 
-		return getNativeLong(columnIndex);
+		return getNativeLong(columnIndex, overflowCheck, true);
 	}
 
 	/**
@@ -2741,7 +2801,7 @@ public class ResultSet implements java.sql.ResultSet {
 				}
 
 				if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1)) {
-					return parseLongWithOverflowCheck(columnIndex, null, val);
+					return parseLongWithOverflowCheck(columnIndex, null, val, true);
 				}
 
 				// Convert floating point
@@ -2778,7 +2838,8 @@ public class ResultSet implements java.sql.ResultSet {
 	public java.sql.ResultSetMetaData getMetaData() throws SQLException {
 		checkClosed();
 
-		return new com.mysql.jdbc.ResultSetMetaData(this.fields);
+		return new com.mysql.jdbc.ResultSetMetaData(this.fields,
+				this.connection.getUseOldAliasMetadataBehavior());
 	}
 
 	/**
@@ -2995,78 +3056,6 @@ public class ResultSet implements java.sql.ResultSet {
 			}
 		}
 		return true;
-	}
-
-	/**
-	 * Get the value of a column in the current row as a Java boolean
-	 * 
-	 * @param columnIndex
-	 *            the first column is 1, the second is 2...
-	 * 
-	 * @return the column value, false for SQL NULL
-	 * 
-	 * @exception SQLException
-	 *                if a database access error occurs
-	 */
-	protected boolean getNativeBoolean(int columnIndex) throws SQLException {
-		int columnIndexMinusOne = columnIndex - 1;
-
-		Field field = this.fields[columnIndexMinusOne];
-
-		if (field.getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
-			if (this.thisRow[columnIndexMinusOne] == null) {
-				this.wasNullFlag = true;
-
-				return false;
-			}
-
-			this.wasNullFlag = false;
-
-			if (((byte[]) this.thisRow[columnIndexMinusOne]).length == 0) {
-				return false;
-			}
-
-			byte boolVal = ((byte[]) this.thisRow[columnIndexMinusOne])[0];
-
-			return (boolVal == -1 || boolVal > 0);
-
-		}
-
-		this.wasNullFlag = false;
-		
-		switch (field.getSQLType()) {
-		case Types.BIT:
-		case Types.BOOLEAN:
-		case Types.TINYINT:
-		case Types.SMALLINT:
-		case Types.INTEGER:
-		case Types.BIGINT:
-		case Types.DECIMAL:
-		case Types.NUMERIC:
-		case Types.REAL:
-		case Types.FLOAT:
-		case Types.DOUBLE:
-			byte boolVal = getNativeByte(columnIndex);
-
-			return (boolVal == -1 || boolVal > 0);
-		default:
-			if (this.useUsageAdvisor) {
-				issueConversionViaParsingWarning("getBoolean()", columnIndex,
-						this.thisRow[columnIndex], this.fields[columnIndex],
-						new int[] {
-								MysqlDefs.FIELD_TYPE_BIT,
-								MysqlDefs.FIELD_TYPE_DOUBLE,
-								MysqlDefs.FIELD_TYPE_TINY,
-								MysqlDefs.FIELD_TYPE_SHORT,
-								MysqlDefs.FIELD_TYPE_LONG,
-								MysqlDefs.FIELD_TYPE_LONGLONG,
-								MysqlDefs.FIELD_TYPE_FLOAT });
-			}
-		
-			String stringVal = getNativeConvertToString(columnIndex, field);
-
-			return getBooleanFromString(stringVal, columnIndex);
-		}
 	}
 
 	/**
@@ -3351,7 +3340,7 @@ public class ResultSet implements java.sql.ResultSet {
 		case Types.BIT:
 			return String.valueOf(getNumericRepresentationOfSQLBitType(columnIndex));
 		case Types.BOOLEAN:
-			boolean booleanVal = getNativeBoolean(columnIndex);
+			boolean booleanVal = getBoolean(columnIndex);
 
 			if (this.wasNullFlag) {
 				return null;
@@ -6807,7 +6796,7 @@ public class ResultSet implements java.sql.ResultSet {
 	}
 
 	private long parseLongWithOverflowCheck(int columnIndex,
-			byte[] valueAsBytes, String valueAsString)
+			byte[] valueAsBytes, String valueAsString, boolean doCheck)
 			throws NumberFormatException, SQLException {
 
 		long longValue = 0;
@@ -6832,9 +6821,9 @@ public class ResultSet implements java.sql.ResultSet {
 			longValue = Long.parseLong(valueAsString);
 		}
 
-		if (this.connection.getJdbcCompliantTruncationForReads()) {
-			if (longValue == Integer.MIN_VALUE
-					|| longValue == Integer.MAX_VALUE) {
+		if (doCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (longValue == Long.MIN_VALUE
+					|| longValue == Long.MAX_VALUE) {
 				double valueAsDouble = Double
 						.parseDouble(valueAsString == null ? new String(
 								valueAsBytes) : valueAsString);

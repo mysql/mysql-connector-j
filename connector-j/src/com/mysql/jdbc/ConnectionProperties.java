@@ -1316,6 +1316,16 @@ public class ConnectionProperties implements Serializable {
 					+ " by Connection.setAutoCommit() and Connection.setTransactionIsolation(), rather than querying the database?",
 			"3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 
+	private BooleanConnectionProperty useOldAliasMetadataBehavior = new BooleanConnectionProperty(
+			"useOldAliasMetadataBehavior",
+			false,
+			"Should the driver use the legacy behavior for \"AS\" clauses on columns and tables, and only "
+		    + "return aliases (if any) for ResultSetMetaData.getColumnName() or ResultSetMetaData.getTableName() "
+		    + "rather than the original column/table name?",
+		    "5.0.4",
+		    MISC_CATEGORY,
+		    Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty useOldUTF8Behavior = new BooleanConnectionProperty(
 			"useOldUTF8Behavior",
 			false,
@@ -3738,5 +3748,11 @@ public class ConnectionProperties implements Serializable {
 		this.noAccessToProcedureBodies.setValue(flag);
 	}
 
+	public boolean getUseOldAliasMetadataBehavior() {
+		return this.useOldAliasMetadataBehavior.getValueAsBoolean();
+	}
 
+	public void setUseOldAliasMetadataBehavior(boolean flag) {
+		this.useOldAliasMetadataBehavior.setValue(flag);
+	}
 }

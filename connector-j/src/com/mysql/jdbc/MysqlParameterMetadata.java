@@ -33,7 +33,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 	
 	
 	MysqlParameterMetadata(Field[] fieldInfo, int parameterCount) {
-		this.metadata = new ResultSetMetaData(fieldInfo);
+		this.metadata = new ResultSetMetaData(fieldInfo, false);
 		
 		this.parameterCount = parameterCount;
 	}

@@ -1,6 +1,14 @@
 # Changelog
 # $Id$
 
+nn-nn-06 - Version 5.0.4
+
+   - Fixed BUG#21379 - column names don't match metadata in cases 
+     where server doesn't return original column names (column functions)
+	 thus breaking compatibility with applications that expect 1-1 mappings
+	 between findColumn() and rsmd.getColumnName(), usually manifests itself
+	 as "Can't find column ('')" exceptions.
+	 
 07-26-06 - Version 5.0.3
 
     - Fixed BUG#20650 - Statement.cancel() causes NullPointerException
