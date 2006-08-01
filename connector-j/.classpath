@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry sourcepath="JRE_SRC" kind="var" path="JRE_LIB">
-		<attributes>
-			<attribute value="http://java.sun.com/j2se/1.5.0/docs/api/" name="javadoc_location"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="var" path="JSSE_JAR">
 		<attributes>
 			<attribute value="http://java.sun.com/j2se/1.5.0/docs/api/" name="javadoc_location"/>
@@ -22,5 +17,6 @@
 	<classpathentry kind="lib" path="src/lib/log4j-1.2.9.jar"/>
 	<classpathentry kind="lib" path="src/lib/commons-logging.jar"/>
 	<classpathentry kind="lib" path="src/lib/c3p0-0.9.1-pre6.jar"/>
+	<classpathentry sourcepath="/JRE_6_SRC" kind="var" path="JRE_6_LIB"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
