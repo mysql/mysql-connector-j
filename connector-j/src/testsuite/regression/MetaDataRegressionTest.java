@@ -1559,4 +1559,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 	}
 
+	public void testRSMDToStringFromDBMD() throws Exception {
+		try {		
+			this.rs = this.conn.getMetaData().getTypeInfo();
+			
+			this.rs.getMetaData().toString(); // used to cause NPE
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+
 }

@@ -217,7 +217,11 @@ nn-nn-06 - Version 3.1.14
 	  
 	- Fixed BUG#19993 - ReplicationDriver does not always round-robin load
 	  balance depending on URL used for slaves list.
-	  	  	  	  	  
+	
+	- Fixed calling toString() on ResultSetMetaData for driver-generated
+	  (i.e. from DatabaseMetaData method calls, or from getGeneratedKeys())
+	  result sets would raise a NullPointerException.
+	    	  	  	  	  	  
 05-26-06 - Version 3.1.13
 
     - Fixed BUG#15464 - INOUT parameter does not store IN value.

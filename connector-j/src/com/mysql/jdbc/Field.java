@@ -853,36 +853,34 @@ public class Field {
 		this.useOldNameMetadata = useOldNameMetadata;
 	}
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
-	 */
 	public String toString() {
 		try {
 			StringBuffer asString = new StringBuffer();
 			asString.append(super.toString());
-			
+
 			asString.append("\n  catalog: ");
 			asString.append(this.getDatabaseName());
-					asString.append("\n  table name: ");
-					asString.append(this.getTableName());
-					asString.append("\n  original table name: ");
-					asString.append(this.getOriginalTableName());
-					asString.append("\n  column name: ");
-					asString.append(this.getName());
-					asString.append("\n  original column name: ");
-					asString.append(this.getOriginalName());
-					asString.append("\n  MySQL data type: ");
-					asString.append(getMysqlType());
-					asString.append("\n\nData as received from server:\n\n");
-					asString.append(StringUtils.dumpAsHex(this.buffer, this.buffer.length));
-					
-					return asString.toString();
-		} catch (SQLException sqlEx) {
+			asString.append("\n  table name: ");
+			asString.append(this.getTableName());
+			asString.append("\n  original table name: ");
+			asString.append(this.getOriginalTableName());
+			asString.append("\n  column name: ");
+			asString.append(this.getName());
+			asString.append("\n  original column name: ");
+			asString.append(this.getOriginalName());
+			asString.append("\n  MySQL data type: ");
+			asString.append(getMysqlType());
+
+			if (this.buffer != null) {
+				asString.append("\n\nData as received from server:\n\n");
+				asString.append(StringUtils.dumpAsHex(this.buffer,
+						this.buffer.length));
+			}
+
+			return asString.toString();
+		} catch (Throwable t) {
 			return super.toString();
 		}
-	
 	}
 
 	protected boolean isSingleBit() {
