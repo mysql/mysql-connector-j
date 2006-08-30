@@ -221,7 +221,14 @@ nn-nn-06 - Version 3.1.14
 	- Fixed calling toString() on ResultSetMetaData for driver-generated
 	  (i.e. from DatabaseMetaData method calls, or from getGeneratedKeys())
 	  result sets would raise a NullPointerException.
-	    	  	  	  	  	  
+	  
+	- Fixed Bug#21207 - Driver throws NPE when tracing prepared statements 
+	  that have been closed (in asSQL()).    	  	  	  	  	  
+	  
+	- Removed logger autodectection altogether, must now specify logger 
+	  explitly if you want to use a logger other than one that logs
+	  to STDERR.
+	  
 05-26-06 - Version 3.1.13
 
     - Fixed BUG#15464 - INOUT parameter does not store IN value.
@@ -332,7 +339,7 @@ nn-nn-06 - Version 3.1.14
 	  
 	- Fixed BUG#19282 - ResultSet.wasNull() returns incorrect value 
 	  when extracting native string from server-side prepared statement 
-	  generated result set.
+	  generated result set.	  
 	  
 11-30-05 - Version 3.1.12
 

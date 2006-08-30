@@ -516,6 +516,10 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	}
 
 	protected String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
+		if (this.isClosed) {
+			return "statement has been closed, no further internal information available";
+		}
+		
 		StringBuffer buf = new StringBuffer();
 
 		try {

@@ -3382,4 +3382,20 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+
+	/**
+	 * Tests Bug#21207 - Driver throws NPE when tracing prepared statements that
+	 * have been closed (in asSQL()).
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug21207() throws Exception {
+		try {
+			this.pstmt = this.conn.prepareStatement("SELECT 1");
+			this.pstmt.close();
+			this.pstmt.toString(); // this used to cause an NPE
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

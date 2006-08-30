@@ -342,6 +342,10 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 	protected String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
 
+		if (this.isClosed) {
+			return "statement has been closed, no further internal information available";
+		}
+		
 		PreparedStatement pStmtForSub = null;
 
 		try {

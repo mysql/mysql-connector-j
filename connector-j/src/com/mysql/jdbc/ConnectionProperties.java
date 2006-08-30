@@ -567,8 +567,7 @@ public class ConnectionProperties implements Serializable {
 	//
 	// Yes, this looks goofy, but we're trying to avoid intern()ing here
 	//
-	private static final String STANDARD_LOGGER_NAME = new String(StandardLogger.class
-			.getName().getBytes());
+	private static final String STANDARD_LOGGER_NAME = StandardLogger.class.getName();
 
 	protected static final String ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL = "convertToNull";
 
@@ -2532,42 +2531,7 @@ public class ConnectionProperties implements Serializable {
 	}
 
 	protected void postInitialization() throws SQLException {
-		//
-		// Configure logger If the value has been set by the user, then use
-		// that, otherwise, autodetect it : JDK1.4 logging, 
-		// Then fallback to our STDERR logging.
-		//
-
-		//
-		// Yes, this looks goofy (String == instead of .equals),
-		// but it's how we tell whether we're using defaults
-		// or not, and it survives JNDI/Properties initialization, etc.
-		//
-		
-		if (getLogger() == STANDARD_LOGGER_NAME) {
-			String environmentLoggerName = null;
-
-			try {
-				environmentLoggerName = System
-						.getProperty("com.mysql.jdbc.logger");
-			} catch (Throwable noAccessToSystemProperties) {
-				environmentLoggerName = null;
-			}
-
-			if (environmentLoggerName != null) {
-				setLogger(environmentLoggerName);
-			} else {	
-				try {
-					// Are we running on JDK-1.4?
-					Class.forName("java.util.logging.Level");
-					setLogger(Jdk14Logger.class.getName());
-				} catch (Throwable t2) {
-					// guess not
-					setLogger(STANDARD_LOGGER_NAME);
-				}
-			}
-		}
-
+	
 		// Support 'old' profileSql capitalization
 		if (this.profileSql.getValueAsObject() != null) {
 			this.profileSQL.initializeFrom(this.profileSql.getValueAsObject()
