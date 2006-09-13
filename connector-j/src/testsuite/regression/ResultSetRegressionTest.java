@@ -25,6 +25,7 @@
 package testsuite.regression;
 
 import java.io.Reader;
+import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
@@ -3504,6 +3505,165 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}
 	}
 
+	public void testBooleans() throws Exception {
+		if (versionMeetsMinimum(5, 0)) {
+			try {
+				createTable("testBooleans",
+						"(ob int, field1 BOOLEAN, field2 TINYINT, field3 SMALLINT, field4 INT, field5 MEDIUMINT, field6 BIGINT, field7 FLOAT, field8 DOUBLE, field9 DECIMAL, field10 VARCHAR(32), field11 BINARY(3), field12 VARBINARY(3),  field13 BLOB)");
+				this.pstmt = this.conn
+						.prepareStatement("INSERT INTO testBooleans VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+	
+				this.pstmt.setInt(1, 1);
+				this.pstmt.setBoolean(2, false);
+				this.pstmt.setByte(3, (byte)0);
+				this.pstmt.setInt(4, 0);
+				this.pstmt.setInt(5, 0);
+				this.pstmt.setInt(6, 0);
+				this.pstmt.setLong(7, 0);
+				this.pstmt.setFloat(8, 0);
+				this.pstmt.setDouble(9, 0);
+				this.pstmt.setBigDecimal(10, new BigDecimal("0"));
+				this.pstmt.setString(11, "false");
+				this.pstmt.setBytes(12, new byte[] { 0 });
+				this.pstmt.setBytes(13, new byte[] { 0 });
+				this.pstmt.setBytes(14, new byte[] { 0 });
+				
+				this.pstmt.executeUpdate();
+	
+				this.pstmt.setInt(1, 2);
+				this.pstmt.setBoolean(2, true);
+				this.pstmt.setByte(3, (byte)1);
+				this.pstmt.setInt(4, 1);
+				this.pstmt.setInt(5, 1);
+				this.pstmt.setInt(6, 1);
+				this.pstmt.setLong(7, 1);
+				this.pstmt.setFloat(8, 1);
+				this.pstmt.setDouble(9, 1);
+				this.pstmt.setBigDecimal(10, new BigDecimal("1"));
+				this.pstmt.setString(11, "true");
+				this.pstmt.setBytes(12, new byte[] { 1 });
+				this.pstmt.setBytes(13, new byte[] { 1 });
+				this.pstmt.setBytes(14, new byte[] { 1 });
+				this.pstmt.executeUpdate();
+	
+				this.pstmt.setInt(1, 3);
+				this.pstmt.setBoolean(2, true);
+				this.pstmt.setByte(3, (byte)1);
+				this.pstmt.setInt(4, 1);
+				this.pstmt.setInt(5, 1);
+				this.pstmt.setInt(6, 1);
+				this.pstmt.setLong(7, 1);
+				this.pstmt.setFloat(8, 1);
+				this.pstmt.setDouble(9, 1);
+				this.pstmt.setBigDecimal(10, new BigDecimal("1"));
+				this.pstmt.setString(11, "true");
+				this.pstmt.setBytes(12, new byte[] { 2 });
+				this.pstmt.setBytes(13, new byte[] { 2 });
+				this.pstmt.setBytes(14, new byte[] { 2 });
+				this.pstmt.executeUpdate();
+	
+				this.pstmt.setInt(1, 4);
+				this.pstmt.setBoolean(2, true);
+				this.pstmt.setByte(3, (byte)1);
+				this.pstmt.setInt(4, 1);
+				this.pstmt.setInt(5, 1);
+				this.pstmt.setInt(6, 1);
+				this.pstmt.setLong(7, 1);
+				this.pstmt.setFloat(8, 1);
+				this.pstmt.setDouble(9, 1);
+				this.pstmt.setBigDecimal(10, new BigDecimal("1"));
+				this.pstmt.setString(11, "true");
+				this.pstmt.setBytes(12, new byte[] { -1 });
+				this.pstmt.setBytes(13, new byte[] { -1 });
+				this.pstmt.setBytes(14, new byte[] { -1 });
+				this.pstmt.executeUpdate();
+	
+				this.pstmt.setInt(1, 5);
+				this.pstmt.setBoolean(2, false);
+				this.pstmt.setByte(3, (byte)0);
+				this.pstmt.setInt(4, 0);
+				this.pstmt.setInt(5, 0);
+				this.pstmt.setInt(6, 0);
+				this.pstmt.setLong(7, 0);
+				this.pstmt.setFloat(8, 0);
+				this.pstmt.setDouble(9, 0);
+				this.pstmt.setBigDecimal(10, new BigDecimal("0"));
+				this.pstmt.setString(11, "false");
+				this.pstmt.setBytes(12, new byte[] { 0, 0 });
+				this.pstmt.setBytes(13, new byte[] { 0, 0 });
+				this.pstmt.setBytes(14, new byte[] { 0, 0 });
+				this.pstmt.executeUpdate();
+	
+				this.pstmt.setInt(1, 6);
+				this.pstmt.setBoolean(2, true);
+				this.pstmt.setByte(3, (byte)1);
+				this.pstmt.setInt(4, 1);
+				this.pstmt.setInt(5, 1);
+				this.pstmt.setInt(6, 1);
+				this.pstmt.setLong(7, 1);
+				this.pstmt.setFloat(8, 1);
+				this.pstmt.setDouble(9, 1);
+				this.pstmt.setBigDecimal(10, new BigDecimal("1"));
+				this.pstmt.setString(11, "true");
+				this.pstmt.setBytes(12, new byte[] { 1, 0 });
+				this.pstmt.setBytes(13, new byte[] { 1, 0 });
+				this.pstmt.setBytes(14, new byte[] { 1, 0 });
+				this.pstmt.executeUpdate();
+	
+				this.pstmt.setInt(1, 7);
+				this.pstmt.setBoolean(2, false);
+				this.pstmt.setByte(3, (byte)0);
+				this.pstmt.setInt(4, 0);
+				this.pstmt.setInt(5, 0);
+				this.pstmt.setInt(6, 0);
+				this.pstmt.setLong(7, 0);
+				this.pstmt.setFloat(8, 0);
+				this.pstmt.setDouble(9, 0);
+				this.pstmt.setBigDecimal(10, new BigDecimal("0"));
+				this.pstmt.setString(11, "");
+				this.pstmt.setBytes(12, new byte[] {});
+				this.pstmt.setBytes(13, new byte[] {});
+				this.pstmt.setBytes(14, new byte[] {});
+				this.pstmt.executeUpdate();
+	
+				this.rs = this.stmt
+						.executeQuery("SELECT field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13 FROM testBooleans ORDER BY ob");
+	
+				boolean[] testVals = new boolean[] { false, true, true, true,
+						false, true, false };
+	
+				int i = 0;
+	
+				while (this.rs.next()) {
+					for (int j = 0; j > 13; j++) {
+						assertEquals("For field_" + (j + 1) + ", row " + (i + 1), testVals[i], this.rs
+								.getBoolean(j + 1));
+					}
+					
+					i++;
+				}
+	
+				this.rs = this.conn
+						.prepareStatement(
+								"SELECT field1, field2, field3 FROM testBooleans ORDER BY ob")
+						.executeQuery();
+	
+				i = 0;
+	
+				while (this.rs.next()) {
+					for (int j = 0; j > 13; j++) {
+						assertEquals("For field_" + (j + 1) + ", row " + (i + 1), testVals[i], this.rs
+								.getBoolean(j + 1));
+					}
+					
+					i++;
+				}
+			} finally {
+				closeMemberJDBCResources();
+			}
+		}
+	}
+	
 	/**
 	 * Tests fix(es) for BUG#21379 - column names don't match metadata
 	 * in cases where server doesn't return original column names (functions)
@@ -3537,20 +3697,35 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				
 				try {
 					Properties props = new Properties();
-					props.setProperty("", "true");
+					props.setProperty("useOldAliasMetadataBehavior", "true");
 					legacyConn = getConnectionWithProps(props);
 					legacyStmt = legacyConn.createStatement();
 					
 					this.rs = legacyStmt.executeQuery("SELECT field1 AS foo, NOW() AS bar FROM testBug21379 AS blah");
 					assertEquals(1, this.rs.findColumn("foo"));
 					assertEquals(2, this.rs.findColumn("bar"));
-					assertEquals("testBug21379", this.rs.getMetaData().getTableName(1));
+					assertEquals("blah", this.rs.getMetaData().getTableName(1));
 				} finally {
 					if (legacyConn != null) {
 						legacyConn.close();
 					}
 				}
 			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+	
+	public void testTruncationDisable() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("jdbcCompliantTruncation", "false");
+		Connection truncConn = null;
+		
+		try {
+			truncConn = getConnectionWithProps(props);
+			this.rs = truncConn.createStatement().executeQuery("SELECT " + Long.MAX_VALUE);
+			this.rs.next();
+			this.rs.getInt(1);
 		} finally {
 			closeMemberJDBCResources();
 		}

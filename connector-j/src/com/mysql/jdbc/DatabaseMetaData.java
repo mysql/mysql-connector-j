@@ -1411,6 +1411,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			for (int i = 0; i < parseListLen; i++) {
 				String declaration = (String) parseList.get(i);
 
+				if (declaration.trim().length() == 0) {
+					break; // no parameters actually declared, but whitespace spans lines
+				}
+				
 				StringTokenizer declarationTok = new StringTokenizer(
 						declaration, " \t");
 

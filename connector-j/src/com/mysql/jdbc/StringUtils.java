@@ -1167,15 +1167,32 @@ public class StringUtils {
 	 */
 	public static boolean startsWithIgnoreCaseAndWs(String searchIn,
 			String searchFor) {
+		return startsWithIgnoreCaseAndWs(searchIn, searchFor, 0);
+	}
+	
+	/**
+	 * Determines whether or not the sting 'searchIn' contains the string
+	 * 'searchFor', disregarding case and leading whitespace
+	 * 
+	 * @param searchIn
+	 *            the string to search in
+	 * @param searchFor
+	 *            the string to search for
+	 * @param beginPos
+	 *            where to start searching
+	 * 
+	 * @return true if the string starts with 'searchFor' ignoring whitespace
+	 */
+	
+	public static boolean startsWithIgnoreCaseAndWs(String searchIn,
+			String searchFor, int beginPos) {
 		if (searchIn == null) {
 			return searchFor == null;
 		}
 
-		int beginPos = 0;
-
 		int inLength = searchIn.length();
 
-		for (beginPos = 0; beginPos < inLength; beginPos++) {
+		for (; beginPos < inLength; beginPos++) {
 			if (!Character.isWhitespace(searchIn.charAt(beginPos))) {
 				break;
 			}

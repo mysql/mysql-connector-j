@@ -3,11 +3,27 @@
 
 nn-nn-06 - Version 5.0.4
 
-   - Fixed BUG#21379 - column names don't match metadata in cases 
-     where server doesn't return original column names (column functions)
-	 thus breaking compatibility with applications that expect 1-1 mappings
-	 between findColumn() and rsmd.getColumnName(), usually manifests itself
-	 as "Can't find column ('')" exceptions.
+    - Fixed BUG#21379 - column names don't match metadata in cases 
+      where server doesn't return original column names (column functions)
+	  thus breaking compatibility with applications that expect 1-1 mappings
+	  between findColumn() and rsmd.getColumnName(), usually manifests itself
+	  as "Can't find column ('')" exceptions.
+	 
+    - Fixed BUG#21544 - When using information_schema for metadata, 
+	  COLUMN_SIZE for getColumns() is not clamped to range of 
+	  java.lang.Integer as is the case when not using 
+	  information_schema, thus leading to a truncation exception that 
+	  isn't present when not using information_schema.
+	 
+    - Fixed configuration property "jdbcCompliantTruncation" was not
+      being used for reads of result set values.
+      
+    - Fixed BUG#22024 - Newlines causing whitespace to span confuse
+	  procedure parser when getting parameter metadata for stored 
+	  procedures.
+	  
+	- Driver now supports {call sp} (without "()" if procedure has no
+	  arguments).
 	 
 07-26-06 - Version 5.0.3
 

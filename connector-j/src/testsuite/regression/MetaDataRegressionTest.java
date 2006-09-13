@@ -1569,4 +1569,47 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Tests fix for BUG#21544 - When using information_schema for metadata, 
+	 * COLUMN_SIZE for getColumns() is not clamped to range of 
+	 * java.lang.Integer as is the case when not using 
+	 * information_schema, thus leading to a truncation exception that 
+	 * isn't present when not using information_schema.
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug21544() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
+		createTable("testBug21544",
+	            "(foo_id INT NOT NULL, stuff LONGTEXT"
+	            + ", PRIMARY KEY (foo_id)) TYPE=INNODB");
+		
+		Connection infoSchemConn = null;
+		
+		Properties props = new Properties();
+		props.setProperty("useInformationSchema", "true");
+		props.setProperty("jdbcCompliantTruncation", "false");
+		
+		infoSchemConn = getConnectionWithProps(props);
+		
+		try {
+	        this.rs = infoSchemConn.getMetaData().getColumns(null, null, 
+	        		"testBug21544",
+	                null);
+	        
+	        while (rs.next()) {
+	        	rs.getInt("COLUMN_SIZE");   
+	        }
+	    } finally {
+	        if (infoSchemConn != null) {
+	        	infoSchemConn.close();
+	        }
+	        
+	        closeMemberJDBCResources();
+	    }
+	}
+
 }

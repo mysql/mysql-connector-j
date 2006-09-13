@@ -2596,6 +2596,7 @@ public class ConnectionProperties implements Serializable {
 				.getValueAsBoolean();
 		this.maintainTimeStatsAsBoolean = this.maintainTimeStats
 				.getValueAsBoolean();
+		this.jdbcCompliantTruncationForReads = getJdbcCompliantTruncation();
 	}
 
 	/**

@@ -2503,7 +2503,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		try {
 			pStmt = this.conn
 					.prepareStatement("INSERT INTO testNullClob VALUES (?)");
-			pStmt.setClob(1, null);
+			pStmt.setClob(1, (Clob)null);
 			pStmt.executeUpdate();
 		} finally {
 			if (pStmt != null) {
