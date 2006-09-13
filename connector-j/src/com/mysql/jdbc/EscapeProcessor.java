@@ -436,26 +436,41 @@ class EscapeProcessor {
 											+ argument + "'", "42000");
 						}
 					} else if (StringUtils.startsWithIgnoreCase(collapsedToken,
-							"{call")
-							|| StringUtils.startsWithIgnoreCase(collapsedToken,
-									"{?=call")) {
+						"{call")
+						|| StringUtils.startsWithIgnoreCase(collapsedToken,
+						"{?=call")) {
 
 						int startPos = StringUtils.indexOfIgnoreCase(token,
-								"CALL") + 5;
+						"CALL") + 5;
 						int endPos = token.length() - 1;
 
 						if (StringUtils.startsWithIgnoreCase(collapsedToken,
-								"{?=call")) {
+							"{?=call")) {
 							callingStoredFunction = true;
 							newSql.append("SELECT ");
-							newSql.append(token.substring(startPos, endPos));
+							newSql.append(token, startPos, endPos);
 						} else {
 							callingStoredFunction = false;
 							newSql.append("CALL ");
-							newSql.append(token.substring(startPos, endPos));
+							newSql.append(token, startPos, endPos);
+						}
+
+						for (int i = endPos - 1; i >= startPos; i--) {
+							char c = token.charAt(i);
+							
+							if (Character.isWhitespace(c)) {
+								continue;
+							}
+							
+							if (c != ')') {
+								newSql.append("()");  // handle no-parenthesis no-arg call not supported
+			                                         // by MySQL parser
+							}
+							
+							break;
 						}
 					} else if (StringUtils.startsWithIgnoreCase(collapsedToken,
-							"{oj")) {
+					"{oj")) {
 						// MySQL already handles this escape sequence
 						// because of ODBC. Cool.
 						newSql.append(token);

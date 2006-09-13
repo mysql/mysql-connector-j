@@ -731,4 +731,60 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+
+	/**
+	 * Tests fix for BUG#21462 - JDBC (and ODBC) specifications allow no-parenthesis
+	 * CALL statements for procedures with no arguments, MySQL server does not.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug21462() throws Exception {
+		if (versionMeetsMinimum(5, 0)) {
+			CallableStatement cstmt = null;
+			
+			try {
+				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug21462");
+				this.stmt.executeUpdate("CREATE PROCEDURE testBug21462() BEGIN SELECT 1; END");
+				cstmt = this.conn.prepareCall("{CALL testBug21462}");
+				cstmt.execute();
+			} finally {
+				if (cstmt != null) {
+					cstmt.close();
+				}
+				
+				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug21462");
+			}
+		}
+	}
+
+	/** 
+	 * Tests fix for BUG#22024 - Newlines causing whitespace to span confuse
+	 * procedure parser when getting parameter metadata for stored procedures.
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug22024() throws Exception {
+		if (versionMeetsMinimum(5, 0)) {
+			CallableStatement cstmt = null;
+			
+			try {
+				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22024");
+				this.stmt.executeUpdate("CREATE PROCEDURE testBug22024(\r\n)\r\n BEGIN SELECT 1; END");
+				cstmt = this.conn.prepareCall("{CALL testBug22024()}");
+				cstmt.execute();
+				
+				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22024");
+				this.stmt.executeUpdate("CREATE PROCEDURE testBug22024(\r\na INT)\r\n BEGIN SELECT 1; END");
+				cstmt = this.conn.prepareCall("{CALL testBug22024(?)}");
+				cstmt.setInt(1, 1);
+				cstmt.execute();
+			} finally {
+				if (cstmt != null) {
+					cstmt.close();
+				}
+				
+				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22024");
+			}
+		}
+	}
 }
