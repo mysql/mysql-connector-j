@@ -24,13 +24,23 @@
  */
 package com.mysql.jdbc.jdbc2.optional;
 
+import java.sql.Array;
+import java.sql.BaseQuery;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
+import java.sql.NClob;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
+import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.sql.Struct;
+import java.util.Properties;
 
 import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
 
 /**
  * This class serves as a wrapper for the org.gjt.mm.mysql.jdbc2.Connection
@@ -836,5 +846,143 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		if (this.mc != null) {
 			this.mc.ping();
 		}
+	}
+
+	public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+		checkClosed();
+
+		try {
+			return this.mc.createArrayOf(typeName, elements);
+		} catch (SQLException sqlException) {
+			checkAndFireConnectionError(sqlException);
+		}
+
+		return null; // we don't reach this code, compiler can't tell
+	}
+
+	public Blob createBlob() throws SQLException {
+		checkClosed();
+		
+		return this.mc.createBlob();
+	}
+
+	public Clob createClob() throws SQLException {
+		return this.mc.createClob();
+	}
+
+	public NClob createNClob() throws SQLException {
+		return this.mc.createNClob();
+	}
+
+	public BaseQuery createQueryObject(Class arg0) throws SQLException {
+		checkClosed();
+
+		try {
+			return this.mc.createQueryObject(arg0);
+		} catch (SQLException sqlException) {
+			checkAndFireConnectionError(sqlException);
+		}
+
+		return null; // we don't reach this code, compiler can't tell
+	}
+
+	public BaseQuery createQueryObject(Class arg0, Connection arg1) throws SQLException {
+		checkClosed();
+
+		try {
+			return this.mc.createQueryObject(arg0, arg1);
+		} catch (SQLException sqlException) {
+			checkAndFireConnectionError(sqlException);
+		}
+
+		return null; // we don't reach this code, compiler can't tell
+	}
+
+	public SQLXML createSQLXML() throws SQLException {
+		checkClosed();
+
+		try {
+			return this.mc.createSQLXML();
+		} catch (SQLException sqlException) {
+			checkAndFireConnectionError(sqlException);
+		}
+
+		return null; // we don't reach this code, compiler can't tell
+	}
+
+	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+		checkClosed();
+
+		try {
+			return this.mc.createStruct(typeName, attributes);
+		} catch (SQLException sqlException) {
+			checkAndFireConnectionError(sqlException);
+		}
+
+		return null; // we don't reach this code, compiler can't tell
+	}
+
+	public Properties getClientInfo() throws SQLException {
+		checkClosed();
+
+		try {
+			return this.mc.getClientInfo();
+		} catch (SQLException sqlException) {
+			checkAndFireConnectionError(sqlException);
+		}
+
+		return null; // we don't reach this code, compiler can't tell
+	}
+
+	public String getClientInfo(String name) throws SQLException {
+		checkClosed();
+
+		try {
+			return this.mc.getClientInfo(name);
+		} catch (SQLException sqlException) {
+			checkAndFireConnectionError(sqlException);
+		}
+
+		return null; // we don't reach this code, compiler can't tell
+	}
+
+	public boolean isValid(int timeout) throws SQLException {
+		checkClosed();
+
+		try {
+			return this.mc.isValid(timeout);
+		} catch (SQLException sqlException) {
+			checkAndFireConnectionError(sqlException);
+		}
+
+		return false; // we don't reach this code, compiler can't tell
+	}
+
+	public void setClientInfo(Properties properties) throws SQLClientInfoException {
+		//checkClosed();
+
+		try {
+			this.mc.setClientInfo(properties);
+		} catch (SQLException sqlException) {
+			//checkAndFireConnectionError(sqlException);
+		}	
+	}
+
+	public void setClientInfo(String name, String value) throws SQLClientInfoException {
+		//checkClosed();
+
+		try {
+			this.mc.setClientInfo(name, value);
+		} catch (SQLException sqlException) {
+			//checkAndFireConnectionError(sqlException);
+		}
+	}
+
+	public boolean isWrapperFor(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public Object unwrap(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
 	}
 }

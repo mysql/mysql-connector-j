@@ -27,9 +27,14 @@ package com.mysql.jdbc;
 import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
+import java.io.InputStream;
+import java.io.Reader;
 import java.math.BigDecimal;
 
+import java.sql.NClob;
+import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLXML;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -2437,5 +2442,238 @@ public class UpdatableResultSet extends ResultSet {
 	public synchronized void updateTimestamp(String columnName,
 			java.sql.Timestamp x) throws SQLException {
 		updateTimestamp(findColumn(columnName), x);
+	}
+	
+	public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+
+	public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+	
+	public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+
+	public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+
+	public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException {
+		throw new NotUpdatable();
+	}
+
+	public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+
+	public void updateCharacterStream(int columnIndex, Reader x) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+
+
+	public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+
+	public void updateClob(int columnIndex, Reader reader) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+
+	public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+
+	public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+
+	public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
+		updateNCharacterStream(columnIndex, x, (int) length);
+		
+	}
+	
+
+	public void updateNClob(int columnIndex, Reader reader) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+
+	public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
+		throw new NotUpdatable();
+	}
+
+	public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
+		throw new NotUpdatable();
+		
+	}
+	
+	
+	
+	public void updateRowId(int columnIndex, RowId x) throws SQLException {
+		throw new NotUpdatable();
+	}
+
+	/**
+	 * JDBC 4.0 Update a column with a character stream value. The updateXXX()
+	 * methods are used to update column values in the current row, or the
+	 * insert row. The updateXXX() methods do not update the underlying
+	 * database, instead the updateRow() or insertRow() methods are called to
+	 * update the database.
+	 * 
+	 * @param columnIndex
+	 *            the first column is 1, the second is 2, ...
+	 * @param x
+	 *            the new column value
+	 * @param length
+	 *            the length of the stream
+	 * 
+	 * @exception SQLException
+	 *                if a database-access error occurs
+	 */
+	public synchronized void updateNCharacterStream(int columnIndex,
+	        java.io.Reader x, int length) throws SQLException {
+	    String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+	    if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+	        throw new SQLException(
+	                "Can not call updateNCharacterStream() when field's character set isn't UTF-8");
+	    }
+	    
+	    if (!this.onInsertRow) {
+	        if (!this.doingUpdates) {
+	            this.doingUpdates = true;
+	            syncUpdate();
+	        }
+	
+	        this.updater.setNCharacterStream(columnIndex, x, length);
+	    } else {
+	        this.inserter.setNCharacterStream(columnIndex, x, length);
+	
+	        if (x == null) {
+	            this.thisRow[columnIndex - 1] = null;
+	        } else {
+	            this.thisRow[columnIndex - 1] = STREAM_DATA_MARKER;
+	        }
+	    }
+	}
+
+	/**
+	 * JDBC 4.0 Update a column with a character stream value. The updateXXX()
+	 * methods are used to update column values in the current row, or the
+	 * insert row. The updateXXX() methods do not update the underlying
+	 * database, instead the updateRow() or insertRow() methods are called to
+	 * update the database.
+	 * 
+	 * @param columnName
+	 *            the name of the column
+	 * @param reader
+	 *            the new column value
+	 * @param length
+	 *            of the stream
+	 * 
+	 * @exception SQLException
+	 *                if a database-access error occurs
+	 */
+	public synchronized void updateNCharacterStream(String columnName,
+	        java.io.Reader reader, int length) throws SQLException {
+	    updateNCharacterStream(findColumn(columnName), reader, length);
+	}
+
+	/**
+	 * @see ResultSet#updateNClob(int, NClob)
+	 */
+	public void updateNClob(int columnIndex, java.sql.NClob nClob)
+	        throws SQLException {
+	    String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+	    if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+	        throw new SQLException("Can not call updateNClob() when field's character set isn't UTF-8");
+	    }
+	    
+	    if (nClob == null) {
+	        updateNull(columnIndex);
+	    } else {
+	        updateNCharacterStream(columnIndex, nClob.getCharacterStream(),
+	                (int) nClob.length());
+	    }
+	}
+
+	/**
+	 * @see ResultSet#updateClob(int, Clob)
+	 */
+	public void updateNClob(String columnName, java.sql.NClob nClob)
+	        throws SQLException {
+	    updateNClob(findColumn(columnName), nClob);
+	}
+
+	/**
+	 * JDBC 4.0 Update a column with NATIONAL CHARACTER. The updateXXX() methods are
+	 * used to update column values in the current row, or the insert row. The
+	 * updateXXX() methods do not update the underlying database, instead the
+	 * updateRow() or insertRow() methods are called to update the database.
+	 * 
+	 * @param columnIndex
+	 *            the first column is 1, the second is 2, ...
+	 * @param x
+	 *            the new column value
+	 * 
+	 * @exception SQLException
+	 *                if a database-access error occurs
+	 */
+	public synchronized void updateNString(int columnIndex, String x)
+	        throws SQLException {
+	    String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+	    if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
+	        throw new SQLException("Can not call updateNString() when field's character set isn't UTF-8");
+	    }
+	    
+	    if (!this.onInsertRow) {
+	        if (!this.doingUpdates) {
+	            this.doingUpdates = true;
+	            syncUpdate();
+	        }
+	
+	        this.updater.setNString(columnIndex, x);
+	    } else {
+	        this.inserter.setNString(columnIndex, x);
+	
+	        if (x == null) {
+	            this.thisRow[columnIndex - 1] = null;
+	        } else {
+	            this.thisRow[columnIndex - 1] = StringUtils.getBytes(x,
+	                        this.charConverter, fieldEncoding,
+	                        this.connection.getServerCharacterEncoding(),
+	                        this.connection.parserKnowsUnicode());
+	        }
+	    }
+	}
+
+	/**
+	 * JDBC 4.0 Update a column with NATIONAL CHARACTER. The updateXXX() methods are
+	 * used to update column values in the current row, or the insert row. The
+	 * updateXXX() methods do not update the underlying database, instead the
+	 * updateRow() or insertRow() methods are called to update the database.
+	 * 
+	 * @param columnName
+	 *            the name of the column
+	 * @param x
+	 *            the new column value
+	 * 
+	 * @exception SQLException
+	 *                if a database-access error occurs
+	 */
+	public synchronized void updateNString(String columnName, String x)
+	        throws SQLException {
+	    updateNString(findColumn(columnName), x);
 	}
 }

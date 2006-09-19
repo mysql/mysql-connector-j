@@ -448,11 +448,11 @@ class EscapeProcessor {
 							"{?=call")) {
 							callingStoredFunction = true;
 							newSql.append("SELECT ");
-							newSql.append(token, startPos, endPos);
+							newSql.append(token.substring(startPos, endPos));
 						} else {
 							callingStoredFunction = false;
 							newSql.append("CALL ");
-							newSql.append(token, startPos, endPos);
+							newSql.append(token.substring(startPos, endPos));
 						}
 
 						for (int i = endPos - 1; i >= startPos; i--) {

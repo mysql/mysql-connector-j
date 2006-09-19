@@ -27,6 +27,20 @@ package com.mysql.jdbc;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.sql.SQLException;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 
 /**
  * Holds functionality that falls under export-control regulations.
@@ -37,6 +51,8 @@ import java.io.IOException;
  *          Exp $
  */
 public class ExportControlled {
+	private static final String SQL_STATE_BAD_SSL_PARAMS = "08000";
+
 	protected static boolean enabled() {
 		// we may wish to un-static-ify this class
 		// this static method call may be removed entirely by the compiler
@@ -57,9 +73,8 @@ public class ExportControlled {
 	 *             perform the handshake.
 	 */
 	protected static void transformSocketToSSLSocket(MysqlIO mysqlIO)
-			throws CommunicationsException {
-		javax.net.ssl.SSLSocketFactory sslFact = (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory
-				.getDefault();
+			throws SQLException {
+		javax.net.ssl.SSLSocketFactory sslFact = getSSLSocketFactoryDefaultOrConfigured(mysqlIO);
 
 		try {
 			mysqlIO.mysqlConnection = sslFact.createSocket(
@@ -91,4 +106,128 @@ public class ExportControlled {
 
 	private ExportControlled() { /* prevent instantiation */
 	}
+
+	private static SSLSocketFactory getSSLSocketFactoryDefaultOrConfigured(
+			MysqlIO mysqlIO) throws SQLException {
+		String clientCertificateKeyStoreUrl = mysqlIO.connection
+				.getClientCertificateKeyStoreUrl();
+		String trustCertificateKeyStoreUrl = mysqlIO.connection
+				.getTrustCertificateKeyStoreUrl();
+		String clientCertificateKeyStoreType = mysqlIO.connection
+				.getClientCertificateKeyStoreType();
+		String clientCertificateKeyStorePassword = mysqlIO.connection
+				.getClientCertificateKeyStorePassword();
+		String trustCertificateKeyStoreType = mysqlIO.connection
+				.getTrustCertificateKeyStoreType();
+		String trustCertificateKeyStorePassword = mysqlIO.connection
+				.getTrustCertificateKeyStorePassword();
+
+		if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)
+				&& StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
+			return (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory
+					.getDefault();
+		}
+
+		TrustManagerFactory tmf = null;
+		KeyManagerFactory kmf = null;
+
+		try {
+			tmf = TrustManagerFactory.getInstance(TrustManagerFactory
+					.getDefaultAlgorithm());
+			kmf = KeyManagerFactory.getInstance(KeyManagerFactory
+					.getDefaultAlgorithm());
+		} catch (NoSuchAlgorithmException nsae) {
+			throw SQLError
+					.createSQLException(
+							"Default algorithm definitions for TrustManager and/or KeyManager are invalid.  Check java security properties file.",
+							SQL_STATE_BAD_SSL_PARAMS, 0, false);
+		}
+
+		if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
+			try {
+				KeyStore clientKeyStore = KeyStore
+						.getInstance(clientCertificateKeyStoreType);
+				URL ksURL = new URL(clientCertificateKeyStoreUrl);
+				char[] password = (clientCertificateKeyStorePassword == null) ? new char[0]
+						: clientCertificateKeyStorePassword.toCharArray();
+				clientKeyStore.load(ksURL.openStream(), password);
+				kmf.init(clientKeyStore, password);
+			} catch (UnrecoverableKeyException uke) {
+				throw SQLError
+						.createSQLException(
+								"Could not recover keys from client keystore.  Check password?",
+								SQL_STATE_BAD_SSL_PARAMS, 0, false);
+			} catch (NoSuchAlgorithmException nsae) {
+				throw SQLError.createSQLException(
+						"Unsupported keystore algorithm [" + nsae.getMessage()
+								+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+			} catch (KeyStoreException kse) {
+				throw SQLError.createSQLException(
+						"Could not create KeyStore instance ["
+								+ kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+			} catch (CertificateException nsae) {
+				throw SQLError.createSQLException("Could not load client"
+						+ clientCertificateKeyStoreType + " keystore from "
+						+ clientCertificateKeyStoreUrl);
+			} catch (MalformedURLException mue) {
+				throw SQLError.createSQLException(clientCertificateKeyStoreUrl
+						+ " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0,
+						false);
+			} catch (IOException ioe) {
+				throw SQLError.createSQLException("Cannot open "
+						+ clientCertificateKeyStoreUrl + " ["
+						+ ioe.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+			}
+		}
+
+		if (StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
+
+			try {
+				KeyStore trustKeyStore = KeyStore
+						.getInstance(trustCertificateKeyStoreType);
+				URL ksURL = new URL(trustCertificateKeyStoreUrl);
+
+				char[] password = (trustCertificateKeyStorePassword == null) ? new char[0]
+						: trustCertificateKeyStorePassword.toCharArray();
+				trustKeyStore.load(ksURL.openStream(), password);
+				tmf.init(trustKeyStore);
+			} catch (NoSuchAlgorithmException nsae) {
+				throw SQLError.createSQLException(
+						"Unsupported keystore algorithm [" + nsae.getMessage()
+								+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+			} catch (KeyStoreException kse) {
+				throw SQLError.createSQLException(
+						"Could not create KeyStore instance ["
+								+ kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+			} catch (CertificateException nsae) {
+				throw SQLError.createSQLException("Could not load trust"
+						+ trustCertificateKeyStoreType + " keystore from "
+						+ trustCertificateKeyStoreUrl, SQL_STATE_BAD_SSL_PARAMS, 0, false);
+			} catch (MalformedURLException mue) {
+				throw SQLError.createSQLException(trustCertificateKeyStoreUrl
+						+ " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0,
+						false);
+			} catch (IOException ioe) {
+				throw SQLError.createSQLException("Cannot open "
+						+ trustCertificateKeyStoreUrl + " [" + ioe.getMessage()
+						+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+			}
+		}
+
+		SSLContext sslContext = null;
+
+		try {
+			sslContext = SSLContext.getInstance("TLS");
+			sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+			return sslContext.getSocketFactory();
+		} catch (NoSuchAlgorithmException nsae) {
+			throw SQLError.createSQLException("TLS"
+					+ " is not a valid SSL protocol.", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+		} catch (KeyManagementException kme) {
+			throw SQLError.createSQLException("KeyManagementException: "
+					+ kme.getMessage(), SQL_STATE_BAD_SSL_PARAMS, 0, false);
+		}
+	}
+
 }

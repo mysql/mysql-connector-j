@@ -24,6 +24,7 @@
  */
 package com.mysql.jdbc;
 
+import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
@@ -213,7 +214,7 @@ public class Statement implements java.sql.Statement {
 	protected int statementId;
 
 	/** The timeout for a query */
-	protected int timeout = 0;
+	protected int timeoutInMillis = 0;
 
 	/** The update count for this statement */
 	protected long updateCount = -1;
@@ -615,11 +616,11 @@ protected ArrayList batchedGeneratedKeys = null;
 				CancelTask timeoutTask = null;
 
 				try {
-					if (this.timeout != 0
+					if (this.timeoutInMillis != 0
 							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 						timeoutTask = new CancelTask();
 						Connection.getCancelTimer().schedule(timeoutTask, 
-								this.timeout);
+								this.timeoutInMillis);
 					}
 
 					String oldCatalog = null;
@@ -1096,11 +1097,11 @@ protected ArrayList batchedGeneratedKeys = null;
 			CancelTask timeoutTask = null;
 
 			try {
-				if (this.timeout != 0
+				if (this.timeoutInMillis != 0
 						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask();
 					Connection.getCancelTimer().schedule(timeoutTask, 
-							this.timeout);
+							this.timeoutInMillis);
 				}
 
 				String oldCatalog = null;
@@ -1282,11 +1283,11 @@ protected ArrayList batchedGeneratedKeys = null;
 			CancelTask timeoutTask = null;
 
 			try {
-				if (this.timeout != 0
+				if (this.timeoutInMillis != 0
 						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask();
 					Connection.getCancelTimer().schedule(timeoutTask, 
-							this.timeout);
+							this.timeoutInMillis);
 				}
 
 				String oldCatalog = null;
@@ -1745,7 +1746,7 @@ protected ArrayList batchedGeneratedKeys = null;
 	 *                if a database access error occurs
 	 */
 	public int getQueryTimeout() throws SQLException {
-		return this.timeout;
+		return this.timeoutInMillis / 1000;
 	}
 
 	/**
@@ -2229,7 +2230,7 @@ protected ArrayList batchedGeneratedKeys = null;
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 		}
 
-		this.timeout = seconds;
+		this.timeoutInMillis = seconds * 1000;
 	}
 
 	/**
@@ -2298,5 +2299,27 @@ protected ArrayList batchedGeneratedKeys = null;
 		return this.connection.isCursorFetchEnabled() && this.fetchSize > 0
 				&& this.resultSetConcurrency == ResultSet.CONCUR_READ_ONLY
 				&& this.resultSetType == ResultSet.TYPE_FORWARD_ONLY;
+	}
+
+	public synchronized boolean isClosed() throws SQLException {
+		return this.isClosed;
+	}
+
+	private boolean isPoolable = true;
+	
+	public boolean isPoolable() throws SQLException {
+		return this.isPoolable;
+	}
+
+	public void setPoolable(boolean poolable) throws SQLException {
+		this.isPoolable = poolable;
+	}
+
+	public boolean isWrapperFor(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public Object unwrap(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
 	}
 }

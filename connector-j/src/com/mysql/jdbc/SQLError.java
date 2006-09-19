@@ -39,13 +39,15 @@ import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException;
 import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
 import com.mysql.jdbc.exceptions.MySQLSyntaxErrorException;
 import com.mysql.jdbc.exceptions.MySQLTransactionRollbackException;
+import com.mysql.jdbc.exceptions.MySQLTransientConnectionException;
 
 /**
  * SQLError is a utility class that maps MySQL error codes to X/Open error codes
  * as is required by the JDBC spec.
  * 
  * @author Mark Matthews <mmatthew_at_worldserver.com>
- * @version $Id$
+ * @version $Id: SQLError.java 5122 2006-04-03 15:37:11 +0000 (Mon, 03 Apr 2006)
+ *          mmatthews $
  */
 public class SQLError {
 	static final int ER_WARNING_NOT_COMPLETE_ROLLBACK = 1196;
@@ -127,12 +129,21 @@ public class SQLError {
 	public static final String SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE = "08001"; //$NON-NLS-1$
 
 	public static final String SQL_STATE_WRONG_NO_OF_PARAMETERS = "07001"; //$NON-NLS-1$
-	
-	public static final String SQL_STATE_INVALID_TRANSACTION_TERMINATION = "2D000"; //$NON_NLS-1$
+
+	public static final String SQL_STATE_INVALID_TRANSACTION_TERMINATION = "2D000"; // $NON_NLS-1$
+
+	private static boolean isJdbc4;
 
 	private static Map sqlStateMessages;
 
 	static {
+		try {
+			Class.forName("java.sql.NClob");
+			isJdbc4 = true;
+		} catch (Throwable t) {
+			isJdbc4 = false;
+		}
+
 		sqlStateMessages = new HashMap();
 		sqlStateMessages.put(SQL_STATE_DISCONNECT_ERROR, Messages
 				.getString("SQLError.35")); //$NON-NLS-1$
@@ -883,31 +894,7 @@ public class SQLError {
 
 	public static SQLException createSQLException(String message,
 			String sqlState) {
-		if (sqlState != null) {
-			if (sqlState.startsWith("08")) {
-				return new MySQLNonTransientConnectionException(message,
-						sqlState);
-			}
-
-			if (sqlState.startsWith("22")) {
-				return new MySQLDataException(message, sqlState);
-			}
-
-			if (sqlState.startsWith("23")) {
-				return new MySQLIntegrityConstraintViolationException(message,
-						sqlState);
-			}
-
-			if (sqlState.startsWith("42")) {
-				return new MySQLSyntaxErrorException(message, sqlState);
-			}
-
-			if (sqlState.startsWith("40")) {
-				return new MySQLTransactionRollbackException(message, sqlState);
-			}
-		}
-
-		return new SQLException(message, sqlState);
+		return createSQLException(message, sqlState, 0);
 	}
 
 	public static SQLException createSQLException(String message) {
@@ -916,33 +903,75 @@ public class SQLError {
 
 	public static SQLException createSQLException(String message,
 			String sqlState, int vendorErrorCode) {
+		return createSQLException(message, sqlState, vendorErrorCode, false);
+	}
+	
+	public static SQLException createSQLException(String message,
+			String sqlState, int vendorErrorCode,
+			boolean isTransient) {
 		if (sqlState != null) {
 			if (sqlState.startsWith("08")) {
-				return new MySQLNonTransientConnectionException(message,
-						sqlState, vendorErrorCode);
+				if (isTransient) {
+					if (!isJdbc4) {
+						return new MySQLTransientConnectionException(message,
+								sqlState, vendorErrorCode);
+					}
+					
+					return new com.mysql.jdbc.exceptions.jdbc4.MySQLTransientConnectionException(
+							message, sqlState, vendorErrorCode);
+				}
+				
+				if (!isJdbc4) {
+					return new MySQLNonTransientConnectionException(message,
+							sqlState, vendorErrorCode);
+				}
+				
+				return new com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException(
+						message, sqlState, vendorErrorCode);
 			}
 
 			if (sqlState.startsWith("22")) {
-				return new MySQLDataException(message, sqlState,
-						vendorErrorCode);
+				if (!isJdbc4) {
+					return new MySQLDataException(message, sqlState,
+							vendorErrorCode);
+				}
+				
+				return new com.mysql.jdbc.exceptions.jdbc4.MySQLDataException(
+						message, sqlState, vendorErrorCode);
 			}
 
 			if (sqlState.startsWith("23")) {
-				return new MySQLIntegrityConstraintViolationException(message,
-						sqlState, vendorErrorCode);
+
+				if (!isJdbc4) {
+					return new MySQLIntegrityConstraintViolationException(
+							message, sqlState, vendorErrorCode);
+				}
+				
+				return new com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException(
+						message, sqlState, vendorErrorCode);
 			}
 
 			if (sqlState.startsWith("42")) {
-				return new MySQLSyntaxErrorException(message, sqlState,
-						vendorErrorCode);
+				if (!isJdbc4) {
+					return new MySQLSyntaxErrorException(message, sqlState,
+							vendorErrorCode);
+				}
+				
+				return new com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException(
+						message, sqlState, vendorErrorCode);
 			}
 
 			if (sqlState.startsWith("40")) {
-				return new MySQLTransactionRollbackException(message, sqlState,
-						vendorErrorCode);
+				if (!isJdbc4) {
+					return new MySQLTransactionRollbackException(message,
+							sqlState, vendorErrorCode);
+				}
+				
+				return new com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException(
+						message, sqlState, vendorErrorCode);
 			}
 		}
-
+		
 		return new SQLException(message, sqlState, vendorErrorCode);
 	}
 }

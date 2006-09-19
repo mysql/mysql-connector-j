@@ -37,9 +37,12 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.sql.Array;
 import java.sql.Clob;
+import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
+import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -50,6 +53,7 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
@@ -322,7 +326,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * @throws IOException
 	 *             DOCUMENT ME!
 	 */
-	private static int readFully(Reader reader, char[] buf, int length)
+	protected static int readFully(Reader reader, char[] buf, int length)
 			throws IOException {
 		int numCharsRead = 0;
 
@@ -1142,11 +1146,11 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		CancelTask timeoutTask = null;
 
 		try {
-			if (this.timeout != 0
+			if (this.timeoutInMillis != 0
 					&& locallyScopedConnection.versionMeetsMinimum(5, 0, 0)) {
 				timeoutTask = new CancelTask();
 				Connection.getCancelTimer().schedule(timeoutTask, 
-						this.timeout);
+						this.timeoutInMillis);
 			}
 			
 			rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket,
@@ -1925,6 +1929,10 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		return this.isNull[paramIndex];
 	}
 
+	public boolean isWrapperFor(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
 	private final int readblock(InputStream i, byte[] b) throws SQLException {
 		try {
 			return i.read(b);
@@ -2095,6 +2103,11 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			this.streamLengths[parameterIndex - 1] = length;
 			this.isNull[parameterIndex - 1] = false;
 		}
+	}
+
+	public void setBlob(int parameterIndex, InputStream inputStream, long length)
+			throws SQLException {
+		setBinaryStream(parameterIndex, inputStream, (int)length);
 	}
 
 	/**
@@ -2440,6 +2453,11 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		}
 	}
 
+	public void setClob(int parameterIndex, Reader reader, long length)
+			throws SQLException {
+		setCharacterStream(parameterIndex, reader, length);
+	}
+
 	/**
 	 * Set a parameter to a java.sql.Date value. The driver converts this to a
 	 * SQL DATE value when it sends it to the database.
@@ -2603,6 +2621,203 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	public void setLong(int parameterIndex, long x) throws SQLException {
 		setInternal(parameterIndex, String.valueOf(x));
 	}
+
+	/**
+     * JDBC 2.0 When a very large UNICODE value is input to a LONGVARCHAR
+     * parameter, it may be more practical to send it via a java.io.Reader. JDBC
+     * will read the data from the stream as needed, until it reaches
+     * end-of-file. The JDBC driver will do any necessary conversion from
+     * UNICODE to the database char format.
+     * 
+     * <P>
+     * <B>Note:</B> This stream object can either be a standard Java stream
+     * object or your own subclass that implements the standard interface.
+     * </p>
+     * 
+     * @param parameterIndex
+     *            the first parameter is 1, the second is 2, ...
+     * @param reader
+     *            the java reader which contains the UNICODE data
+     * @param length
+     *            the number of characters in the stream
+     * 
+     * @exception SQLException
+     *                if a database-access error occurs.
+     */
+	public void setNCharacterStream(int parameterIndex, Reader reader,
+			long length) throws SQLException {
+        try {
+            if (reader == null) {
+                setNull(parameterIndex, java.sql.Types.LONGNVARCHAR);
+                
+            } else {
+                char[] c = null;
+                int len = 0;
+
+                boolean useLength = this.connection
+                        .getUseStreamLengthsInPrepStmts();
+                
+                // Ignore "clobCharacterEncoding" because utf8 should be used this time.
+
+                if (useLength && (length != -1)) {
+                    c = new char[(int) length];  // can't take more than Integer.MAX_VALUE
+
+                    int numCharsRead = readFully(reader, c, (int) length); // blocks
+                    // until
+                    // all
+                    // read
+                    setNString(parameterIndex, new String(c, 0, numCharsRead));
+
+                } else {
+                    c = new char[4096];
+
+                    StringBuffer buf = new StringBuffer();
+
+                    while ((len = reader.read(c)) != -1) {
+                        buf.append(c, 0, len);
+                    }
+
+                    setNString(parameterIndex, buf.toString());
+                }
+            }
+        } catch (java.io.IOException ioEx) {
+            throw SQLError.createSQLException(ioEx.toString(),
+                    SQLError.SQL_STATE_GENERAL_ERROR);
+        }
+    }
+    
+    /**
+     * JDBC 4.0 Set a NCLOB parameter.
+     * 
+     * @param i
+     *            the first parameter is 1, the second is 2, ...
+     * @param x
+     *            an object representing a NCLOB
+     * 
+     * @throws SQLException
+     *             if a database error occurs
+     */
+	public void setNClob(int parameterIndex, NClob value) throws SQLException {
+		if (value == null) {
+            setNull(parameterIndex, java.sql.Types.NCLOB);
+        } else {
+            setNCharacterStream(parameterIndex, value.getCharacterStream(), value.length());
+        }
+	}
+
+    /**
+     * Set a parameter to a Java String value. The driver converts this to a SQL
+     * VARCHAR or LONGVARCHAR value with introducer _utf8 (depending on the 
+     * arguments size relative to the driver's limits on VARCHARs) when it sends 
+     * it to the database. If charset is set as utf8, this method just call setString.
+     * 
+     * @param parameterIndex
+     *            the first parameter is 1...
+     * @param x
+     *            the parameter value
+     * 
+     * @exception SQLException
+     *                if a database access error occurs
+     */
+    public void setNString(int parameterIndex, String x) throws SQLException {
+        if (this.charEncoding.equalsIgnoreCase("UTF-8")
+                || this.charEncoding.equalsIgnoreCase("utf8")) {
+            setString(parameterIndex, x);
+            return;
+        }
+
+        // if the passed string is null, then set this column to null
+        if (x == null) {
+            setNull(parameterIndex, java.sql.Types.NCHAR); 
+        } else {
+            int stringLength = x.length();
+            // Ignore sql_mode=NO_BACKSLASH_ESCAPES in current implementation.
+
+            // Add introducer _utf8 for NATIONAL CHARACTER
+            StringBuffer buf = new StringBuffer((int) (x.length() * 1.1 + 4));
+            buf.append("_utf8");
+            buf.append('\'');
+
+            //
+            // Note: buf.append(char) is _faster_ than
+            // appending in blocks, because the block
+            // append requires a System.arraycopy()....
+            // go figure...
+            //
+
+            for (int i = 0; i < stringLength; ++i) {
+                char c = x.charAt(i);
+
+                switch (c) {
+                case 0: /* Must be escaped for 'mysql' */
+                    buf.append('\\');
+                    buf.append('0');
+
+                    break;
+
+                case '\n': /* Must be escaped for logs */
+                    buf.append('\\');
+                    buf.append('n');
+
+                    break;
+
+                case '\r':
+                    buf.append('\\');
+                    buf.append('r');
+
+                    break;
+
+                case '\\':
+                    buf.append('\\');
+                    buf.append('\\');
+
+                    break;
+
+                case '\'':
+                    buf.append('\\');
+                    buf.append('\'');
+
+                    break;
+
+                case '"': /* Better safe than sorry */
+                    if (this.usingAnsiMode) {
+                        buf.append('\\');
+                    }
+
+                    buf.append('"');
+
+                    break;
+
+                case '\032': /* This gives problems on Win32 */
+                    buf.append('\\');
+                    buf.append('Z');
+
+                    break;
+
+                default:
+                    buf.append(c);
+                }
+            }
+
+            buf.append('\'');
+
+            String parameterAsString = buf.toString();
+
+            byte[] parameterAsBytes = null;
+
+            if (!this.isLoadDataQuery) {
+                parameterAsBytes = StringUtils.getBytes(parameterAsString,
+                        this.connection.getCharsetConverter("UTF-8"), "UTF-8", 
+                                this.connection.getServerCharacterEncoding(),
+                                this.connection.parserKnowsUnicode());
+            } else {
+                // Send with platform character encoding
+                parameterAsBytes = parameterAsString.getBytes();
+            }
+
+            setInternal(parameterIndex, parameterAsBytes);
+        }
+    }
 
 	/**
 	 * Set a parameter to SQL NULL
@@ -3143,6 +3358,10 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		this.retrieveGeneratedKeys = retrieveGeneratedKeys;
 	}
 
+	public void setRowId(int parameterIndex, RowId x) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
 	/**
 	 * Sets the value for the placeholder as a serialized Java object (used by
 	 * various forms of setObject()
@@ -3190,6 +3409,19 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 */
 	public void setShort(int parameterIndex, short x) throws SQLException {
 		setInternal(parameterIndex, String.valueOf(x));
+	}
+
+	public void setSQLXML(int parameterIndex, SQLXML xmlObject)
+			throws SQLException {
+		if (xmlObject == null) {
+			setNull(parameterIndex, Types.SQLXML);
+		} else {
+			if (xmlObject instanceof MysqlSQLXML) {
+				setString(parameterIndex, ((MysqlSQLXML)xmlObject).serializeAsString());
+			} else {
+				setString(parameterIndex, xmlObject.getString());
+			}
+		}
 	}
 
 	/**
@@ -3749,5 +3981,89 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		}
 
 		return buf.toString();
+	}
+
+	public Object unwrap(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public void setPoolable(boolean poolable) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
+		setAsciiStream(parameterIndex, x, -1);
+		
+	}
+
+	public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
+		setAsciiStream(parameterIndex, x, (int)length);
+		
+	}
+
+	public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
+		setBinaryStream(parameterIndex, x, -1);
+		
+	}
+
+	public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
+		setBinaryStream(parameterIndex, x, (int)length);
+		
+	}
+
+	public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
+		setBinaryStream(parameterIndex, inputStream);
+		
+	}
+
+	public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
+		setCharacterStream(parameterIndex, reader, -1);
+		
+	}
+
+	public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
+		setCharacterStream(parameterIndex, reader, (int)length);
+		
+	}
+
+	public void setClob(int parameterIndex, Reader reader) throws SQLException {
+		setCharacterStream(parameterIndex, reader);
+		
+	}
+
+	public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
+		setNCharacterStream(parameterIndex, value, -1);
+		
+	}
+
+	public void setNClob(int parameterIndex, Reader reader) throws SQLException {
+		setNCharacterStream(parameterIndex, reader);
+		
+	}
+
+	public synchronized boolean isClosed() throws SQLException {
+		return this.isClosed;
+	}
+
+	/**
+	 * JDBC 4.0 Set a NCLOB parameter.
+	 * 
+	 * @param parameterIndex
+	 *            the first parameter is 1, the second is 2, ...
+	 * @param reader
+	 *            the java reader which contains the UNICODE data
+	 * @param length
+	 *            the number of characters in the stream
+	 * 
+	 * @throws SQLException
+	 *             if a database error occurs
+	 */
+	public void setNClob(int parameterIndex, Reader reader, long length)
+			throws SQLException {
+	    if (reader == null) {
+	        setNull(parameterIndex, java.sql.Types.NCLOB);
+	    } else {
+	        setNCharacterStream(parameterIndex, reader, length);
+	    }
 	}
 }

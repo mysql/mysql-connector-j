@@ -33,6 +33,8 @@ import java.io.Writer;
 
 import java.sql.SQLException;
 
+import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+
 /**
  * Simplistic implementation of java.sql.Clob for MySQL Connector/J
  * 
@@ -42,6 +44,10 @@ import java.sql.SQLException;
 public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 	private String charData;
 
+    Clob() {
+        this.charData = "";
+    }
+    
 	Clob(String charDataInit) {
 		this.charData = charDataInit;
 	}
@@ -286,5 +292,13 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 		}
 
 		this.charData = out.toString();
+	}
+
+	public void free() throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public Reader getCharacterStream(long pos, long length) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
 	}
 }

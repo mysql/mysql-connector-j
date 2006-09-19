@@ -1457,7 +1457,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				for (int j = 0; j < 2; j++) {
 					for (int i = 0; i < getMethods.length; i++) {
 						if (getMethods[i].getName().startsWith("get")
-								&& !getMethods[i].getName().equals("getURL")) {
+								&& !getMethods[i].getName().equals("getURL")
+								&& !getMethods[i].getName().equals("getRowId")
+								&& !getMethods[i].getName().equals("getSQLXML()")) {
 							Class[] parameterTypes = getMethods[i]
 									.getParameterTypes();
 

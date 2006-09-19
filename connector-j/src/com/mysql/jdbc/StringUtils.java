@@ -1445,4 +1445,8 @@ public class StringUtils {
 
 		return s.getBytes();
 	}
+	
+	public static boolean isNullOrEmpty(String toTest) {
+		return (toTest == null || toTest.length() == 0);
+	}
 }

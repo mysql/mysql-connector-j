@@ -27,6 +27,7 @@ package com.mysql.jdbc;
 import java.io.UnsupportedEncodingException;
 
 import java.sql.ResultSet;
+import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
@@ -40,6 +41,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+
+import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
 
 /**
  * JDBC Interface to Mysql functions
@@ -7361,5 +7364,45 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 */
 	public boolean usesLocalFiles() throws SQLException {
 		return false;
+	}
+
+	public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
+		return false;
+	}
+
+	public ResultSet getClientInfoProperties() throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public ResultSet getFunctionParameters(String catalog, String schemaPattern, String functionNamePattern, String parameterNamePattern) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public RowIdLifetime getRowIdLifetime() throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public boolean providesQueryObjectGenerator() throws SQLException {
+		return false; // we don't - rely on the built-in JDK one
+	}
+
+	public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
+		return true;
+	}
+
+	public boolean isWrapperFor(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public Object unwrap(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
 	}
 }

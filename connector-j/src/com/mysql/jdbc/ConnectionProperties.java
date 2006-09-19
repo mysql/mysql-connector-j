@@ -1430,6 +1430,44 @@ public class ConnectionProperties implements Serializable {
 
 	private BooleanConnectionProperty dumpMetadataOnColumnNotFound = new BooleanConnectionProperty("dumpMetadataOnColumnNotFound", false, "Should the driver dump the field-level metadata of a result set into " + "the exception message when ResultSet.findColumn() fails?", "3.1.13", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 
+	// SSL Options
+	
+	private StringConnectionProperty clientCertificateKeyStoreUrl = new StringConnectionProperty(
+			"clientCertificateKeyStoreUrl", null,
+			"URL to the client certificate KeyStore (if not specified, use defaults)", "5.1.0",
+			SECURITY_CATEGORY, Integer.MAX_VALUE);
+	
+	private StringConnectionProperty trustCertificateKeyStoreUrl = new StringConnectionProperty(
+			"trustCertificateKeyStoreUrl", null,
+			"URL to the trusted root certificate KeyStore (if not specified, use defaults)", "5.1.0",
+			SECURITY_CATEGORY, Integer.MAX_VALUE);
+	
+	private StringConnectionProperty clientCertificateKeyStoreType = new StringConnectionProperty(
+			"clientCertificateKeyStoreType", null,
+			"KeyStore type for client certificates (NULL or empty means use default, "
+			+ " standard keystore types supported by the JVM are \"JKS\" and \"PKCS12\", your "
+			+ "environment may have more available depending on what security products are "
+			+ "installed and available to the JVM.", "5.1.0",
+			SECURITY_CATEGORY, Integer.MAX_VALUE);
+	
+	private StringConnectionProperty clientCertificateKeyStorePassword = new StringConnectionProperty(
+			"clientCertificateKeyStorePassword", null,
+			"Password for the client certificates KeyStore", "5.1.0",
+			SECURITY_CATEGORY, Integer.MAX_VALUE);
+	
+	private StringConnectionProperty trustCertificateKeyStoreType = new StringConnectionProperty(
+			"trustCertificateKeyStoreType", null,
+			"KeyStore type for trusted root certificates (NULL or empty means use default, "
+			+ " standard keystore types supported by the JVM are \"JKS\" and \"PKCS12\", your "
+			+ "environment may have more available depending on what security products are "
+			+ "installed and available to the JVM.", "5.1.0",
+			SECURITY_CATEGORY, Integer.MAX_VALUE);
+	
+	private StringConnectionProperty trustCertificateKeyStorePassword = new StringConnectionProperty(
+			"trustCertificateKeyStorePassword", null,
+			"Password for the trusted root certificates KeyStore", "5.1.0",
+			SECURITY_CATEGORY, Integer.MAX_VALUE);
+	
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
 			Properties info, int slotsToReserve) throws SQLException {
 		initializeProperties(info);
@@ -3719,5 +3757,59 @@ public class ConnectionProperties implements Serializable {
 
 	public void setUseOldAliasMetadataBehavior(boolean flag) {
 		this.useOldAliasMetadataBehavior.setValue(flag);
+	}
+
+	public String getClientCertificateKeyStorePassword() {
+		return clientCertificateKeyStorePassword.getValueAsString();
+	}
+
+	public void setClientCertificateKeyStorePassword(
+			String value) {
+		this.clientCertificateKeyStorePassword.setValue(value);
+	}
+
+	public String getClientCertificateKeyStoreType() {
+		return clientCertificateKeyStoreType.getValueAsString();
+	}
+
+	public void setClientCertificateKeyStoreType(
+			String value) {
+		this.clientCertificateKeyStoreType.setValue(value);
+	}
+
+	public String getClientCertificateKeyStoreUrl() {
+		return clientCertificateKeyStoreUrl.getValueAsString();
+	}
+
+	public void setClientCertificateKeyStoreUrl(
+			String value) {
+		this.clientCertificateKeyStoreUrl.setValue(value);
+	}
+
+	public String getTrustCertificateKeyStorePassword() {
+		return trustCertificateKeyStorePassword.getValueAsString();
+	}
+
+	public void setTrustCertificateKeyStorePassword(
+			String value) {
+		this.trustCertificateKeyStorePassword.setValue(value);
+	}
+
+	public String getTrustCertificateKeyStoreType() {
+		return trustCertificateKeyStoreType.getValueAsString();
+	}
+
+	public void setTrustCertificateKeyStoreType(
+			String value) {
+		this.trustCertificateKeyStoreType.setValue(value);
+	}
+
+	public String getTrustCertificateKeyStoreUrl() {
+		return trustCertificateKeyStoreUrl.getValueAsString();
+	}
+
+	public void setTrustCertificateKeyStoreUrl(
+			String value) {
+		this.trustCertificateKeyStoreUrl.setValue(value);
 	}
 }

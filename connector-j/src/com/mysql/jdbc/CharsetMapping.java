@@ -234,7 +234,7 @@ public class CharsetMapping {
 
 		MULTIBYTE_CHARSETS = Collections.unmodifiableMap(tempMapMulti);
 
-		INDEX_TO_CHARSET = new String[99];
+		INDEX_TO_CHARSET = new String[211];
 
 		try {
 			INDEX_TO_CHARSET[1] = getJavaEncodingForMysqlEncoding("big5", null);
@@ -397,6 +397,84 @@ public class CharsetMapping {
 			INDEX_TO_CHARSET[97] = getJavaEncodingForMysqlEncoding("eucjpms",
 					null);
 			INDEX_TO_CHARSET[98] = getJavaEncodingForMysqlEncoding("eucjpms",
+					null);
+			
+			INDEX_TO_CHARSET[128] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[129] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[130] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[131] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[132] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[133] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[134] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[135] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[136] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[137] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[138] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[139] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[140] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[141] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[142] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[143] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[144] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[145] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+			INDEX_TO_CHARSET[146] = getJavaEncodingForMysqlEncoding("ucs2",
+					null);
+
+			INDEX_TO_CHARSET[192] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[193] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[194] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[195] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[196] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[197] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[198] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[199] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[200] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[201] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[202] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[203] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[204] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[205] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[206] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[207] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[208] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[209] = getJavaEncodingForMysqlEncoding("utf8",
+					null);
+			INDEX_TO_CHARSET[210] = getJavaEncodingForMysqlEncoding("utf8",
 					null);
 		} catch (SQLException sqlEx) {
 			// ignore, it won't happen in this case

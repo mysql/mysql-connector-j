@@ -34,9 +34,12 @@ import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
+import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
+import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -47,6 +50,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
 
 /**
  * Representation of stored procedures for JDBC
@@ -302,6 +307,14 @@ public class CallableStatement extends PreparedStatement implements
 		CallableStatementParamInfoJDBC3(java.sql.ResultSet paramTypesRs)
 				throws SQLException {
 			super(paramTypesRs);
+		}
+
+		public boolean isWrapperFor(Class arg0) throws SQLException {
+			throw new JDBC40NotYetImplementedException();
+		}
+
+		public Object unwrap(Class arg0) throws SQLException {
+			throw new JDBC40NotYetImplementedException();
 		}
 	}
 
@@ -2075,5 +2088,273 @@ public class CallableStatement extends PreparedStatement implements
 		}
 		
 		return super.executeBatch();
+	}
+	
+	public RowId getRowId(String parameterName) throws SQLException {
+		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		// from ?=
+
+		RowId retValue = rs.getRowId(fixParameterName(parameterName));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+		
+	}
+
+	public SQLXML getSQLXML(int parameterIndex) throws SQLException {
+		ResultSet rs = getOutputParameters(parameterIndex);
+
+		SQLXML retValue = rs
+				.getSQLXML(mapOutputParameterIndexToRsIndex(parameterIndex));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+		
+	}
+
+	public SQLXML getSQLXML(String parameterName) throws SQLException {
+		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		// from ?=
+
+		SQLXML retValue = rs.getSQLXML(fixParameterName(parameterName));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	public void setAsciiStream(String parameterName, InputStream x) throws SQLException {
+		setAsciiStream(getNamedParamIndex(parameterName, false), x);
+		
+	}
+
+	public void setAsciiStream(String parameterName, InputStream x, long length) throws SQLException {
+		setAsciiStream(getNamedParamIndex(parameterName, false), x, length);
+		
+	}
+
+	public void setBinaryStream(String parameterName, InputStream x) throws SQLException {
+		setBinaryStream(getNamedParamIndex(parameterName, false), x);
+		
+	}
+
+	public void setBinaryStream(String parameterName, InputStream x, long length) throws SQLException {
+		setBinaryStream(getNamedParamIndex(parameterName, false), x, length);
+		
+	}
+
+	public void setBlob(String parameterName, Blob x) throws SQLException {
+		setBlob(getNamedParamIndex(parameterName, false), x);
+		
+	}
+
+	public void setBlob(String parameterName, InputStream inputStream) throws SQLException {
+		setBlob(getNamedParamIndex(parameterName, false), inputStream);
+		
+	}
+
+	public void setBlob(String parameterName, InputStream inputStream, long length) throws SQLException {
+		setBlob(getNamedParamIndex(parameterName, false), inputStream, length);
+		
+	}
+
+	public void setCharacterStream(String parameterName, Reader reader) throws SQLException {
+		setCharacterStream(getNamedParamIndex(parameterName, false), reader);
+		
+	}
+
+	public void setCharacterStream(String parameterName, Reader reader, long length) throws SQLException {
+		setCharacterStream(getNamedParamIndex(parameterName, false), reader, length);
+		
+	}
+
+	public void setClob(String parameterName, Clob x) throws SQLException {
+		setClob(getNamedParamIndex(parameterName, false), x);
+		
+	}
+
+	public void setClob(String parameterName, Reader reader) throws SQLException {
+		setClob(getNamedParamIndex(parameterName, false), reader);
+		
+	}
+
+	public void setClob(String parameterName, Reader reader, long length) throws SQLException {
+		setClob(getNamedParamIndex(parameterName, false), reader, length);
+		
+	}
+
+	public void setNCharacterStream(String parameterName, Reader value) throws SQLException {
+		setNCharacterStream(getNamedParamIndex(parameterName, false), value);
+		
+	}
+
+	public void setNCharacterStream(String parameterName, Reader value, long length) throws SQLException {
+		setNCharacterStream(getNamedParamIndex(parameterName, false), value, length);
+		
+	}
+
+	public void setNClob(String parameterName, NClob value) throws SQLException {
+		setNClob(getNamedParamIndex(parameterName, false), value);
+		
+	}
+
+	public void setNClob(String parameterName, Reader reader) throws SQLException {
+		setNClob(getNamedParamIndex(parameterName, false), reader);
+		
+	}
+
+	public void setNClob(String parameterName, Reader reader, long length) throws SQLException {
+		setNClob(getNamedParamIndex(parameterName, false), reader, length);
+		
+	}
+
+	public void setNString(String parameterName, String value) throws SQLException {
+		setNString(getNamedParamIndex(parameterName, false), value);
+		
+	}
+
+	public void setRowId(String parameterName, RowId x) throws SQLException {
+		setRowId(getNamedParamIndex(parameterName, false), x);
+		
+	}
+
+	public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
+		setSQLXML(getNamedParamIndex(parameterName, false), xmlObject);
+		
+	}
+
+	public boolean isWrapperFor(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+		
+	}
+
+	public Object unwrap(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+		
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getCharacterStream(int)
+	 */
+	public Reader getCharacterStream(int parameterIndex) throws SQLException {
+	    ResultSet rs = getOutputParameters(parameterIndex);
+	
+	    Reader retValue = rs
+	            .getCharacterStream(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getCharacterStream(java.lang.String)
+	 */
+	public Reader getCharacterStream(String parameterName) throws SQLException {
+	    ResultSet rs = getOutputParameters(0); // definitely not going to be
+	    // from ?=
+	
+	    Reader retValue = rs.getCharacterStream(fixParameterName(parameterName));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNCharacterStream(int)
+	 */
+	public Reader getNCharacterStream(int parameterIndex) throws SQLException {
+	    ResultSet rs = getOutputParameters(parameterIndex);
+	
+	    Reader retValue = rs
+	            .getNCharacterStream(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNCharacterStream(java.lang.String)
+	 */
+	public Reader getNCharacterStream(String parameterName) throws SQLException {
+	    ResultSet rs = getOutputParameters(0); // definitely not going to be
+	    // from ?=
+	
+	    Reader retValue = rs.getNCharacterStream(fixParameterName(parameterName));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNClob(int)
+	 */
+	public NClob getNClob(int parameterIndex) throws SQLException {
+	    ResultSet rs = getOutputParameters(parameterIndex);
+	
+	    NClob retValue = rs
+	            .getNClob(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNClob(java.lang.String)
+	 */
+	public NClob getNClob(String parameterName) throws SQLException {
+	    ResultSet rs = getOutputParameters(0); // definitely not going to be
+	    // from ?=
+	
+	    NClob retValue = rs.getNClob(fixParameterName(parameterName));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNString(int)
+	 */
+	public String getNString(int parameterIndex) throws SQLException {
+	    ResultSet rs = getOutputParameters(parameterIndex);
+	
+	    String retValue = rs
+	            .getNString(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNString(java.lang.String)
+	 */
+	public String getNString(String parameterName) throws SQLException {
+	    ResultSet rs = getOutputParameters(0); // definitely not going to be
+	    // from ?=
+	
+	    String retValue = rs.getNString(fixParameterName(parameterName));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	public RowId getRowId(int parameterIndex) throws SQLException {
+		ResultSet rs = getOutputParameters(parameterIndex);
+
+		RowId retValue = rs
+				.getRowId(mapOutputParameterIndexToRsIndex(parameterIndex));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
 	}
 }

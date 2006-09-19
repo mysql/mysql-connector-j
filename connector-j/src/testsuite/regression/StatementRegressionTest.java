@@ -60,6 +60,7 @@ import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.ServerPreparedStatement;
+import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 
 /**
  * Regression tests for the Statement class
@@ -3396,6 +3397,42 @@ public class StatementRegressionTest extends BaseTestCase {
 			this.pstmt.toString(); // this used to cause an NPE
 		} finally {
 			closeMemberJDBCResources();
+		}
+	}
+
+	/**
+	 * Tests fix for BUG#22359 - Driver was using millis for
+	 * Statement.setQueryTimeout() when spec says argument is
+	 * seconds.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug22359() throws Exception {
+		if (versionMeetsMinimum(5, 0)) {
+			Statement timeoutStmt = null;
+			
+			try {
+				timeoutStmt = this.conn.createStatement();
+				timeoutStmt.setQueryTimeout(2);
+				
+				long begin = System.currentTimeMillis();
+				
+				try {
+					timeoutStmt.execute("SELECT SLEEP(30)");
+				} catch (MySQLTimeoutException timeoutEx) {
+					long end = System.currentTimeMillis();
+					
+					assertTrue((end - begin) > 1000);
+				} catch (com.mysql.jdbc.exceptions.jdbc4.MySQLTimeoutException timeoutEx) {
+					long end = System.currentTimeMillis();
+					
+					assertTrue((end - begin) > 1000);
+				} 
+			} finally {
+				if (timeoutStmt != null) {
+					timeoutStmt.close();
+				}
+			}
 		}
 	}
 }

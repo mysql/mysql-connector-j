@@ -27,6 +27,8 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 import java.sql.Types;
 
+import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+
 /**
  * A ResultSetMetaData object can be used to find out about the types and
  * properties of the columns in a ResultSet
@@ -802,5 +804,13 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 		default:
 			return "java.lang.Object"; //$NON-NLS-1$
 		}
+	}
+
+	public boolean isWrapperFor(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public Object unwrap(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
 	}
 }

@@ -26,6 +26,8 @@ package com.mysql.jdbc;
 import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 
+import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+
 public class MysqlParameterMetadata implements ParameterMetaData {
 	
 	ResultSetMetaData metadata = null;
@@ -94,5 +96,13 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
 	public int getParameterMode(int arg0) throws SQLException {
 		return parameterModeIn;
+	}
+
+	public boolean isWrapperFor(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public Object unwrap(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
 	}
 }

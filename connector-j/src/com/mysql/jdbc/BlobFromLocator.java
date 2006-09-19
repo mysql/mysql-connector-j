@@ -32,6 +32,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+
 /**
  * The representation (mapping) in the JavaTM programming language of an SQL
  * BLOB value. An SQL BLOB is a built-in type that stores a Binary Large Object
@@ -667,5 +669,14 @@ public class BlobFromLocator implements java.sql.Blob {
 
 			super.close();
 		}
+	}
+
+	public void free() throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+		
+	}
+
+	public InputStream getBinaryStream(long pos, long length) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
 	}
 }

@@ -21,13 +21,21 @@
  */
 package com.mysql.jdbc;
 
+import java.sql.Array;
+import java.sql.BaseQuery;
+import java.sql.Blob;
 import java.sql.CallableStatement;
+import java.sql.Clob;
 import java.sql.DatabaseMetaData;
+import java.sql.NClob;
 import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
 
@@ -511,5 +519,67 @@ public class ReplicationConnection implements java.sql.Connection {
 		}
 		
 		this.currentConnection = switchToConnection;
+	}
+
+	public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+		return this.currentConnection.createArrayOf(typeName, elements);
+	}
+
+	public Blob createBlob() throws SQLException {
+		return this.currentConnection.createBlob();
+	}
+
+	public Clob createClob() throws SQLException {
+		return this.currentConnection.createClob();
+	}
+
+	public NClob createNClob() throws SQLException {
+		return this.currentConnection.createNClob();
+	}
+
+	public BaseQuery createQueryObject(Class arg0) throws SQLException {
+		return this.currentConnection.createQueryObject(arg0);
+	}
+
+	public BaseQuery createQueryObject(Class arg0, java.sql.Connection arg1) throws SQLException {
+		return this.currentConnection.createQueryObject(arg0, arg1);
+	}
+
+	public SQLXML createSQLXML() throws SQLException {
+		return this.currentConnection.createSQLXML();
+	}
+
+	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+		return this.currentConnection.createStruct(typeName, attributes);
+	}
+
+	public Properties getClientInfo() throws SQLException {
+		return this.currentConnection.getClientInfo();
+	}
+
+	public String getClientInfo(String name) throws SQLException {
+		return this.currentConnection.getClientInfo(name);
+	}
+
+	public boolean isValid(int timeout) throws SQLException {
+		return this.currentConnection.isValid(timeout);
+	}
+
+	public void setClientInfo(Properties properties) throws SQLClientInfoException {
+		this.masterConnection.setClientInfo(properties);
+		this.slavesConnection.setClientInfo(properties);
+	}
+
+	public void setClientInfo(String name, String value) throws SQLClientInfoException {
+		this.masterConnection.setClientInfo(name, value);
+		this.slavesConnection.setClientInfo(name, value);
+	}
+
+	public boolean isWrapperFor(Class arg0) throws SQLException {
+		return this.currentConnection.isWrapperFor(arg0);
+	}
+
+	public Object unwrap(Class arg0) throws SQLException {
+		return this.currentConnection.unwrap(arg0);
 	}
 }

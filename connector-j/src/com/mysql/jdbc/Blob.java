@@ -62,6 +62,13 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
 	private boolean isClosed = false;
 
 	/**
+     * Creates a Blob without data
+     */
+    Blob() {
+        setBinaryData(Constants.EMPTY_BYTE_ARRAY);
+    }
+    
+	/**
 	 * Creates a BLOB encapsulating the given binary data
 	 * 
 	 * @param data

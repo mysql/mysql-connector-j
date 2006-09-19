@@ -787,4 +787,73 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+
+	/**
+	 * Tests workaround for server crash when calling stored procedures
+	 * via a server-side prepared statement (driver now detects 
+	 * prepare(stored procedure) and substitutes client-side prepared statement).
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug22297() throws Exception {
+		if (versionMeetsMinimum(5, 0)) {
+			this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22297");
+			
+			createTable("tblTestBug2297_1", "("
+					+ "id varchar(20) NOT NULL default '',"
+					+ "Income double(19,2) default NULL)");	
+			
+			createTable("tblTestBug2297_2", "("
+					+ "id varchar(20) NOT NULL default ''," 
+					+ "CreatedOn datetime default NULL)");
+			
+			this.stmt.executeUpdate("CREATE PROCEDURE testBug22297(pcaseid INT)"
+					+ "BEGIN"
+					+ "\nSET @sql = \"DROP TEMPORARY TABLE IF EXISTS tmpOrders\";"
+					+ " PREPARE stmt FROM @sql;"
+					+ " EXECUTE stmt;"
+					+ " DEALLOCATE PREPARE stmt;"
+					+ "\nSET @sql = \"CREATE TEMPORARY TABLE tmpOrders SELECT id, 100 AS Income FROM tblTestBug2297_1 GROUP BY id\";"
+					+ " PREPARE stmt FROM @sql;"
+					+ " EXECUTE stmt;"
+					+ " DEALLOCATE PREPARE stmt;"
+					+ "\n SELECT id, Income FROM (SELECT e.id AS id ,COALESCE(prof.Income,0) AS Income"
+					+ "\n FROM tblTestBug2297_2 e LEFT JOIN tmpOrders prof ON e.id = prof.id"
+					+ "\n WHERE e.CreatedOn > '2006-08-01') AS Final ORDER BY id;" 
+					+ "\nEND");
+	
+			this.stmt.executeUpdate("INSERT INTO tblTestBug2297_1 (`id`,`Income`) VALUES "
+					+ "('a',4094.00),"
+					+ "('b',500.00),"
+					+ "('c',3462.17),"
+					+ " ('d',500.00),"
+					+ " ('e',600.00)");
+			
+			this.stmt.executeUpdate("INSERT INTO tblTestBug2297_2 (`id`,`CreatedOn`) VALUES "
+					+ "('d','2006-08-31 00:00:00'),"
+					+ "('e','2006-08-31 00:00:00'),"
+				+ "('b','2006-08-31 00:00:00'),"
+				+ "('c','2006-08-31 00:00:00'),"
+				+ "('a','2006-08-31 00:00:00')");
+			
+			try {
+				this.pstmt = this.conn.prepareStatement("{CALL testBug22297(?)}");
+				this.pstmt.setInt(1, 1);
+				this.rs =this.pstmt.executeQuery();
+	            
+				String[] ids = new String[] { "a", "b", "c", "d", "e"};
+	            int pos = 0;
+	            
+	            while (this.rs.next()) {
+	            	assertEquals(ids[pos++], rs.getString(1));
+	            	assertEquals(100, rs.getInt(2));
+	            }
+
+                assertEquals(this.pstmt.getClass().getName(),
+                		com.mysql.jdbc.PreparedStatement.class.getName());
+			} finally {
+				closeMemberJDBCResources();
+			}
+		}
+	}
 }

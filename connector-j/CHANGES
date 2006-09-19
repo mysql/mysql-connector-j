@@ -24,6 +24,18 @@ nn-nn-06 - Version 5.0.4
 	  
 	- Driver now supports {call sp} (without "()" if procedure has no
 	  arguments).
+  
+	- Fixed BUG#22359 - Driver was using milliseconds for
+	  Statement.setQueryTimeout() when specification says argument is
+	  to be in seconds.
+	  
+	- Workaround for server crash when calling stored procedures
+	  via a server-side prepared statement (driver now detects 
+	  prepare(stored procedure) and substitutes client-side prepared 
+	  statement), addresses BUG#22297.
+	  
+	- Added new _ci collations to CharsetMapping, fixing 
+	  Bug#22456 - utf8_unicode_ci not working.
 	 
 07-26-06 - Version 5.0.3
 

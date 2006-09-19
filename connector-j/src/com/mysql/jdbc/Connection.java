@@ -24,6 +24,7 @@
  */
 package com.mysql.jdbc;
 
+import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.LogFactory;
 import com.mysql.jdbc.log.NullLogger;
@@ -42,14 +43,19 @@ import java.math.BigDecimal;
 
 import java.net.URL;
 
+import java.sql.BaseQuery;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
+import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.SQLXML;
 import java.sql.Savepoint;
+import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
 
@@ -138,883 +144,6 @@ public class Connection extends ConnectionProperties implements
 		 */
 		public int hashCode() {
 			return this.hashCode;
-		}
-	}
-
-	/**
-	 * Wrapper class for UltraDev CallableStatements that are really
-	 * PreparedStatments. Nice going, UltraDev developers.
-	 */
-	class UltraDevWorkAround implements java.sql.CallableStatement {
-		private java.sql.PreparedStatement delegate = null;
-
-		UltraDevWorkAround(java.sql.PreparedStatement pstmt) {
-			this.delegate = pstmt;
-		}
-
-		public void addBatch() throws SQLException {
-			this.delegate.addBatch();
-		}
-
-		public void addBatch(java.lang.String p1) throws SQLException {
-			this.delegate.addBatch(p1);
-		}
-
-		public void cancel() throws SQLException {
-			this.delegate.cancel();
-		}
-
-		public void clearBatch() throws SQLException {
-			this.delegate.clearBatch();
-		}
-
-		public void clearParameters() throws SQLException {
-			this.delegate.clearParameters();
-		}
-
-		public void clearWarnings() throws SQLException {
-			this.delegate.clearWarnings();
-		}
-
-		public void close() throws SQLException {
-			this.delegate.close();
-		}
-
-		public boolean execute() throws SQLException {
-			return this.delegate.execute();
-		}
-
-		public boolean execute(java.lang.String p1) throws SQLException {
-			return this.delegate.execute(p1);
-		}
-
-		/**
-		 * @see Statement#execute(String, int)
-		 */
-		public boolean execute(String arg0, int arg1) throws SQLException {
-			return this.delegate.execute(arg0, arg1);
-		}
-
-		/**
-		 * @see Statement#execute(String, int[])
-		 */
-		public boolean execute(String arg0, int[] arg1) throws SQLException {
-			return this.delegate.execute(arg0, arg1);
-		}
-
-		/**
-		 * @see Statement#execute(String, String[])
-		 */
-		public boolean execute(String arg0, String[] arg1) throws SQLException {
-			return this.delegate.execute(arg0, arg1);
-		}
-
-		public int[] executeBatch() throws SQLException {
-			return this.delegate.executeBatch();
-		}
-
-		public java.sql.ResultSet executeQuery() throws SQLException {
-			return this.delegate.executeQuery();
-		}
-
-		public java.sql.ResultSet executeQuery(java.lang.String p1)
-				throws SQLException {
-			return this.delegate.executeQuery(p1);
-		}
-
-		public int executeUpdate() throws SQLException {
-			return this.delegate.executeUpdate();
-		}
-
-		public int executeUpdate(java.lang.String p1) throws SQLException {
-			return this.delegate.executeUpdate(p1);
-		}
-
-		/**
-		 * @see Statement#executeUpdate(String, int)
-		 */
-		public int executeUpdate(String arg0, int arg1) throws SQLException {
-			return this.delegate.executeUpdate(arg0, arg1);
-		}
-
-		/**
-		 * @see Statement#executeUpdate(String, int[])
-		 */
-		public int executeUpdate(String arg0, int[] arg1) throws SQLException {
-			return this.delegate.executeUpdate(arg0, arg1);
-		}
-
-		/**
-		 * @see Statement#executeUpdate(String, String[])
-		 */
-		public int executeUpdate(String arg0, String[] arg1)
-				throws SQLException {
-			return this.delegate.executeUpdate(arg0, arg1);
-		}
-
-		public java.sql.Array getArray(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getArray(String)
-		 */
-		public java.sql.Array getArray(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public java.math.BigDecimal getBigDecimal(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * DOCUMENT ME!
-		 * 
-		 * @param p1
-		 *            DOCUMENT ME!
-		 * @param p2
-		 *            DOCUMENT ME!
-		 * @return DOCUMENT ME!
-		 * @throws SQLException
-		 *             DOCUMENT ME!
-		 * @deprecated
-		 */
-		public java.math.BigDecimal getBigDecimal(int p1, int p2)
-				throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getBigDecimal(String)
-		 */
-		public BigDecimal getBigDecimal(String arg0) throws SQLException {
-			return null;
-		}
-
-		public java.sql.Blob getBlob(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getBlob(String)
-		 */
-		public java.sql.Blob getBlob(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public boolean getBoolean(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getBoolean(String)
-		 */
-		public boolean getBoolean(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public byte getByte(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getByte(String)
-		 */
-		public byte getByte(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public byte[] getBytes(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getBytes(String)
-		 */
-		public byte[] getBytes(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public java.sql.Clob getClob(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getClob(String)
-		 */
-		public Clob getClob(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public java.sql.Connection getConnection() throws SQLException {
-			return this.delegate.getConnection();
-		}
-
-		public java.sql.Date getDate(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		public java.sql.Date getDate(int p1, final Calendar p2)
-				throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getDate(String)
-		 */
-		public Date getDate(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#getDate(String, Calendar)
-		 */
-		public Date getDate(String arg0, Calendar arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public double getDouble(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getDouble(String)
-		 */
-		public double getDouble(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public int getFetchDirection() throws SQLException {
-			return this.delegate.getFetchDirection();
-		}
-
-		public int getFetchSize() throws java.sql.SQLException {
-			return this.delegate.getFetchSize();
-		}
-
-		public float getFloat(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getFloat(String)
-		 */
-		public float getFloat(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see Statement#getGeneratedKeys()
-		 */
-		public java.sql.ResultSet getGeneratedKeys() throws SQLException {
-			return this.delegate.getGeneratedKeys();
-		}
-
-		public int getInt(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getInt(String)
-		 */
-		public int getInt(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public long getLong(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getLong(String)
-		 */
-		public long getLong(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public int getMaxFieldSize() throws SQLException {
-			return this.delegate.getMaxFieldSize();
-		}
-
-		public int getMaxRows() throws SQLException {
-			return this.delegate.getMaxRows();
-		}
-
-		public java.sql.ResultSetMetaData getMetaData() throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		public boolean getMoreResults() throws SQLException {
-			return this.delegate.getMoreResults();
-		}
-
-		/**
-		 * @see Statement#getMoreResults(int)
-		 */
-		public boolean getMoreResults(int arg0) throws SQLException {
-			return this.delegate.getMoreResults();
-		}
-
-		public java.lang.Object getObject(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		public java.lang.Object getObject(int p1, final java.util.Map p2)
-				throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getObject(String)
-		 */
-		public Object getObject(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#getObject(String, Map)
-		 */
-		public Object getObject(String arg0, Map arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see PreparedStatement#getParameterMetaData()
-		 */
-		public ParameterMetaData getParameterMetaData() throws SQLException {
-			return this.delegate.getParameterMetaData();
-		}
-
-		public int getQueryTimeout() throws SQLException {
-			return this.delegate.getQueryTimeout();
-		}
-
-		public java.sql.Ref getRef(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getRef(String)
-		 */
-		public Ref getRef(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public java.sql.ResultSet getResultSet() throws SQLException {
-			return this.delegate.getResultSet();
-		}
-
-		public int getResultSetConcurrency() throws SQLException {
-			return this.delegate.getResultSetConcurrency();
-		}
-
-		/**
-		 * @see Statement#getResultSetHoldability()
-		 */
-		public int getResultSetHoldability() throws SQLException {
-			return this.delegate.getResultSetHoldability();
-		}
-
-		public int getResultSetType() throws SQLException {
-			return this.delegate.getResultSetType();
-		}
-
-		public short getShort(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getShort(String)
-		 */
-		public short getShort(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public java.lang.String getString(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getString(String)
-		 */
-		public String getString(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public java.sql.Time getTime(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		public java.sql.Time getTime(int p1, final java.util.Calendar p2)
-				throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getTime(String)
-		 */
-		public Time getTime(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#getTime(String, Calendar)
-		 */
-		public Time getTime(String arg0, Calendar arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public java.sql.Timestamp getTimestamp(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		public java.sql.Timestamp getTimestamp(int p1,
-				final java.util.Calendar p2) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#getTimestamp(String)
-		 */
-		public Timestamp getTimestamp(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#getTimestamp(String, Calendar)
-		 */
-		public Timestamp getTimestamp(String arg0, Calendar arg1)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public int getUpdateCount() throws SQLException {
-			return this.delegate.getUpdateCount();
-		}
-
-		/**
-		 * @see CallableStatement#getURL(int)
-		 */
-		public URL getURL(int arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#getURL(String)
-		 */
-		public URL getURL(String arg0) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public java.sql.SQLWarning getWarnings() throws SQLException {
-			return this.delegate.getWarnings();
-		}
-
-		public void registerOutParameter(int p1, int p2) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		public void registerOutParameter(int p1, int p2, int p3)
-				throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		public void registerOutParameter(int p1, int p2, java.lang.String p3)
-				throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		/**
-		 * @see CallableStatement#registerOutParameter(String, int)
-		 */
-		public void registerOutParameter(String arg0, int arg1)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#registerOutParameter(String, int, int)
-		 */
-		public void registerOutParameter(String arg0, int arg1, int arg2)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#registerOutParameter(String, int, String)
-		 */
-		public void registerOutParameter(String arg0, int arg1, String arg2)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setArray(int p1, final java.sql.Array p2)
-				throws SQLException {
-			this.delegate.setArray(p1, p2);
-		}
-
-		public void setAsciiStream(int p1, final java.io.InputStream p2, int p3)
-				throws SQLException {
-			this.delegate.setAsciiStream(p1, p2, p3);
-		}
-
-		/**
-		 * @see CallableStatement#setAsciiStream(String, InputStream, int)
-		 */
-		public void setAsciiStream(String arg0, InputStream arg1, int arg2)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setBigDecimal(int p1, final java.math.BigDecimal p2)
-				throws SQLException {
-			this.delegate.setBigDecimal(p1, p2);
-		}
-
-		/**
-		 * @see CallableStatement#setBigDecimal(String, BigDecimal)
-		 */
-		public void setBigDecimal(String arg0, BigDecimal arg1)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setBinaryStream(int p1, final java.io.InputStream p2, int p3)
-				throws SQLException {
-			this.delegate.setBinaryStream(p1, p2, p3);
-		}
-
-		/**
-		 * @see CallableStatement#setBinaryStream(String, InputStream, int)
-		 */
-		public void setBinaryStream(String arg0, InputStream arg1, int arg2)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setBlob(int p1, final java.sql.Blob p2) throws SQLException {
-			this.delegate.setBlob(p1, p2);
-		}
-
-		public void setBoolean(int p1, boolean p2) throws SQLException {
-			this.delegate.setBoolean(p1, p2);
-		}
-
-		/**
-		 * @see CallableStatement#setBoolean(String, boolean)
-		 */
-		public void setBoolean(String arg0, boolean arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setByte(int p1, byte p2) throws SQLException {
-			this.delegate.setByte(p1, p2);
-		}
-
-		/**
-		 * @see CallableStatement#setByte(String, byte)
-		 */
-		public void setByte(String arg0, byte arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setBytes(int p1, byte[] p2) throws SQLException {
-			this.delegate.setBytes(p1, p2);
-		}
-
-		/**
-		 * @see CallableStatement#setBytes(String, byte[])
-		 */
-		public void setBytes(String arg0, byte[] arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setCharacterStream(int p1, final java.io.Reader p2, int p3)
-				throws SQLException {
-			this.delegate.setCharacterStream(p1, p2, p3);
-		}
-
-		/**
-		 * @see CallableStatement#setCharacterStream(String, Reader, int)
-		 */
-		public void setCharacterStream(String arg0, Reader arg1, int arg2)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setClob(int p1, final java.sql.Clob p2) throws SQLException {
-			this.delegate.setClob(p1, p2);
-		}
-
-		public void setCursorName(java.lang.String p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		public void setDate(int p1, final java.sql.Date p2) throws SQLException {
-			this.delegate.setDate(p1, p2);
-		}
-
-		public void setDate(int p1, final java.sql.Date p2,
-				final java.util.Calendar p3) throws SQLException {
-			this.delegate.setDate(p1, p2, p3);
-		}
-
-		/**
-		 * @see CallableStatement#setDate(String, Date)
-		 */
-		public void setDate(String arg0, Date arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#setDate(String, Date, Calendar)
-		 */
-		public void setDate(String arg0, Date arg1, Calendar arg2)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setDouble(int p1, double p2) throws SQLException {
-			this.delegate.setDouble(p1, p2);
-		}
-
-		/**
-		 * @see CallableStatement#setDouble(String, double)
-		 */
-		public void setDouble(String arg0, double arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setEscapeProcessing(boolean p1) throws SQLException {
-			this.delegate.setEscapeProcessing(p1);
-		}
-
-		public void setFetchDirection(int p1) throws SQLException {
-			this.delegate.setFetchDirection(p1);
-		}
-
-		public void setFetchSize(int p1) throws SQLException {
-			this.delegate.setFetchSize(p1);
-		}
-
-		public void setFloat(int p1, float p2) throws SQLException {
-			this.delegate.setFloat(p1, p2);
-		}
-
-		/**
-		 * @see CallableStatement#setFloat(String, float)
-		 */
-		public void setFloat(String arg0, float arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setInt(int p1, int p2) throws SQLException {
-			this.delegate.setInt(p1, p2);
-		}
-
-		/**
-		 * @see CallableStatement#setInt(String, int)
-		 */
-		public void setInt(String arg0, int arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setLong(int p1, long p2) throws SQLException {
-			this.delegate.setLong(p1, p2);
-		}
-
-		/**
-		 * @see CallableStatement#setLong(String, long)
-		 */
-		public void setLong(String arg0, long arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setMaxFieldSize(int p1) throws SQLException {
-			this.delegate.setMaxFieldSize(p1);
-		}
-
-		public void setMaxRows(int p1) throws SQLException {
-			this.delegate.setMaxRows(p1);
-		}
-
-		public void setNull(int p1, int p2) throws SQLException {
-			this.delegate.setNull(p1, p2);
-		}
-
-		public void setNull(int p1, int p2, java.lang.String p3)
-				throws SQLException {
-			this.delegate.setNull(p1, p2, p3);
-		}
-
-		/**
-		 * @see CallableStatement#setNull(String, int)
-		 */
-		public void setNull(String arg0, int arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#setNull(String, int, String)
-		 */
-		public void setNull(String arg0, int arg1, String arg2)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setObject(int p1, final java.lang.Object p2)
-				throws SQLException {
-			this.delegate.setObject(p1, p2);
-		}
-
-		public void setObject(int p1, final java.lang.Object p2, int p3)
-				throws SQLException {
-			this.delegate.setObject(p1, p2, p3);
-		}
-
-		public void setObject(int p1, final java.lang.Object p2, int p3, int p4)
-				throws SQLException {
-			this.delegate.setObject(p1, p2, p3, p4);
-		}
-
-		/**
-		 * @see CallableStatement#setObject(String, Object)
-		 */
-		public void setObject(String arg0, Object arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#setObject(String, Object, int)
-		 */
-		public void setObject(String arg0, Object arg1, int arg2)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#setObject(String, Object, int, int)
-		 */
-		public void setObject(String arg0, Object arg1, int arg2, int arg3)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setQueryTimeout(int p1) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		public void setRef(int p1, final Ref p2) throws SQLException {
-			throw SQLError.createSQLException("Not supported");
-		}
-
-		public void setShort(int p1, short p2) throws SQLException {
-			this.delegate.setShort(p1, p2);
-		}
-
-		/**
-		 * @see CallableStatement#setShort(String, short)
-		 */
-		public void setShort(String arg0, short arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setString(int p1, java.lang.String p2)
-				throws java.sql.SQLException {
-			this.delegate.setString(p1, p2);
-		}
-
-		/**
-		 * @see CallableStatement#setString(String, String)
-		 */
-		public void setString(String arg0, String arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setTime(int p1, final java.sql.Time p2) throws SQLException {
-			this.delegate.setTime(p1, p2);
-		}
-
-		public void setTime(int p1, final java.sql.Time p2,
-				final java.util.Calendar p3) throws SQLException {
-			this.delegate.setTime(p1, p2, p3);
-		}
-
-		/**
-		 * @see CallableStatement#setTime(String, Time)
-		 */
-		public void setTime(String arg0, Time arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#setTime(String, Time, Calendar)
-		 */
-		public void setTime(String arg0, Time arg1, Calendar arg2)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public void setTimestamp(int p1, final java.sql.Timestamp p2)
-				throws SQLException {
-			this.delegate.setTimestamp(p1, p2);
-		}
-
-		public void setTimestamp(int p1, final java.sql.Timestamp p2,
-				final java.util.Calendar p3) throws SQLException {
-			this.delegate.setTimestamp(p1, p2, p3);
-		}
-
-		/**
-		 * @see CallableStatement#setTimestamp(String, Timestamp)
-		 */
-		public void setTimestamp(String arg0, Timestamp arg1)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * @see CallableStatement#setTimestamp(String, Timestamp, Calendar)
-		 */
-		public void setTimestamp(String arg0, Timestamp arg1, Calendar arg2)
-				throws SQLException {
-			throw new NotImplemented();
-		}
-
-		/**
-		 * DOCUMENT ME!
-		 * 
-		 * @param p1
-		 *            DOCUMENT ME!
-		 * @param p2
-		 *            DOCUMENT ME!
-		 * @param p3
-		 *            DOCUMENT ME!
-		 * @throws SQLException
-		 *             DOCUMENT ME!
-		 * @deprecated
-		 */
-		public void setUnicodeStream(int p1, final java.io.InputStream p2,
-				int p3) throws SQLException {
-			this.delegate.setUnicodeStream(p1, p2, p3);
-		}
-
-		/**
-		 * @see PreparedStatement#setURL(int, URL)
-		 */
-		public void setURL(int arg0, URL arg1) throws SQLException {
-			this.delegate.setURL(arg0, arg1);
-		}
-
-		/**
-		 * @see CallableStatement#setURL(String, URL)
-		 */
-		public void setURL(String arg0, URL arg1) throws SQLException {
-			throw new NotImplemented();
-		}
-
-		public boolean wasNull() throws SQLException {
-			throw SQLError.createSQLException("Not supported");
 		}
 	}
 
@@ -1741,6 +870,12 @@ public class Connection extends ConnectionProperties implements
 
 	private boolean canHandleAsServerPreparedStatementNoCache(String sql) 
 		throws SQLException {
+		
+		// Can't use server-side prepare for CALL
+		if (StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(sql, "CALL")) {
+			return false;
+		}
+		
 		boolean canHandleAsStatement = true;
 		
 		if (!versionMeetsMinimum(5, 0, 7) && 
@@ -2084,18 +1219,25 @@ public class Connection extends ConnectionProperties implements
 	 */
 	public PreparedStatement clientPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency) throws SQLException {
+		return clientPrepareStatement(sql, resultSetType, resultSetConcurrency, true);
+	}
+	
+	protected PreparedStatement clientPrepareStatement(String sql,
+			int resultSetType, int resultSetConcurrency, 
+			boolean processEscapeCodesIfNeeded) throws SQLException {
 		checkClosed();
 
+		String nativeSql = processEscapeCodesIfNeeded && getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql;
+		
 		PreparedStatement pStmt = null;
 
 		if (getCachePreparedStatements()) {
 			synchronized (this.cachedPreparedStatementParams) {
 				PreparedStatement.ParseInfo pStmtInfo = (PreparedStatement.ParseInfo) this.cachedPreparedStatementParams
-						.get(sql);
+						.get(nativeSql);
 	
 				if (pStmtInfo == null) {
-					pStmt = new com.mysql.jdbc.PreparedStatement(this, 
-							getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql,
+					pStmt = new com.mysql.jdbc.PreparedStatement(this, nativeSql,
 							this.database);
 	
 					PreparedStatement.ParseInfo parseInfo = pStmt.getParseInfo();
@@ -2124,17 +1266,17 @@ public class Connection extends ConnectionProperties implements
 							}
 						}
 	
-						this.cachedPreparedStatementParams.put(sql, pStmt
+						this.cachedPreparedStatementParams.put(nativeSql, pStmt
 								.getParseInfo());
 					}
 				} else {
 					pStmtInfo.lastUsed = System.currentTimeMillis();
-					pStmt = new com.mysql.jdbc.PreparedStatement(this, sql,
+					pStmt = new com.mysql.jdbc.PreparedStatement(this, nativeSql,
 							this.database, pStmtInfo);
 				}
 			}
 		} else {
-			pStmt = new com.mysql.jdbc.PreparedStatement(this, sql,
+			pStmt = new com.mysql.jdbc.PreparedStatement(this, nativeSql,
 					this.database);
 		}
 
@@ -2326,6 +1468,15 @@ public class Connection extends ConnectionProperties implements
 				try {
 					String serverEncodingToSet = 
 						CharsetMapping.INDEX_TO_CHARSET[this.io.serverCharsetIndex];
+					
+
+					if (serverEncodingToSet == null || serverEncodingToSet.length() == 0) {
+						throw SQLError.createSQLException(
+								"Unknown initial character set index '"
+										+ this.io.serverCharsetIndex
+										+ "' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
+								SQLError.SQL_STATE_GENERAL_ERROR);
+					}
 					
 					if (versionMeetsMinimum(4, 1, 0) && 
 							"ISO8859_1".equalsIgnoreCase(serverEncodingToSet)) {
@@ -4405,9 +3556,6 @@ public class Connection extends ConnectionProperties implements
 	 */
 	public java.sql.CallableStatement prepareCall(String sql)
 			throws SQLException {
-		if (this.getUseUltraDevWorkAround()) {
-			return new UltraDevWorkAround(prepareStatement(sql));
-		}
 
 		return prepareCall(sql, java.sql.ResultSet.TYPE_FORWARD_ONLY,
 				java.sql.ResultSet.CONCUR_READ_ONLY);
@@ -4575,14 +3723,17 @@ public class Connection extends ConnectionProperties implements
 					if (pStmt == null) {
 						try {
 							pStmt = new com.mysql.jdbc.ServerPreparedStatement(this, nativeSql,
-									this.database);
+									this.database, resultSetType, resultSetConcurrency);
 							if (sql.length() < getPreparedStatementCacheSqlLimit()) {
 								((com.mysql.jdbc.ServerPreparedStatement)pStmt).isCached = true;
 							}
+							
+							pStmt.setResultSetType(resultSetType);
+							pStmt.setResultSetConcurrency(resultSetConcurrency);
 						} catch (SQLException sqlEx) {
 							// Punt, if necessary
 							if (getEmulateUnsupportedPstmts()) {
-								pStmt = clientPrepareStatement(nativeSql);
+								pStmt = clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
 								
 								if (sql.length() < getPreparedStatementCacheSqlLimit()) {
 									this.serverSideStatementCheckCache.put(sql, Boolean.FALSE);
@@ -4596,24 +3747,23 @@ public class Connection extends ConnectionProperties implements
 			} else {
 				try {
 					pStmt = new com.mysql.jdbc.ServerPreparedStatement(this, nativeSql,
-							this.database);
+							this.database, resultSetType, resultSetConcurrency);
+					
+					pStmt.setResultSetType(resultSetType);
+					pStmt.setResultSetConcurrency(resultSetConcurrency);
 				} catch (SQLException sqlEx) {
 					// Punt, if necessary
 					if (getEmulateUnsupportedPstmts()) {
-						pStmt = clientPrepareStatement(nativeSql);
+						pStmt = clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
 					} else {
 						throw sqlEx;
 					}
 				}
 			}
 		} else {
-			pStmt = clientPrepareStatement(nativeSql);
+			pStmt = clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
 		}
-
-
-		pStmt.setResultSetType(resultSetType);
-		pStmt.setResultSetConcurrency(resultSetConcurrency);
-
+		
 		return pStmt;
 	}
 
@@ -4749,9 +3899,11 @@ public class Connection extends ConnectionProperties implements
 
 	}
 
-	protected void recachePreparedStatement(ServerPreparedStatement pstmt) {
-		synchronized (this.serverSideStatementCache) {
-			this.serverSideStatementCache.put(pstmt.originalSql, pstmt);
+	protected void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
+		if (pstmt.isPoolable()) {
+			synchronized (this.serverSideStatementCache) {
+				this.serverSideStatementCache.put(pstmt.originalSql, pstmt);
+			}
 		}
 	}
 
@@ -5150,9 +4302,14 @@ public class Connection extends ConnectionProperties implements
 	 *             DOCUMENT ME!
 	 */
 	public ServerPreparedStatement serverPrepare(String sql)
-			throws SQLException {
-		return new ServerPreparedStatement(this, sql, this.getCatalog());
-	}
+		throws SQLException {
+
+		String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql;
+
+		return new ServerPreparedStatement(this, nativeSql, this.getCatalog(),
+				java.sql.ResultSet.TYPE_SCROLL_SENSITIVE,
+				java.sql.ResultSet.CONCUR_READ_ONLY);
+}
 
 	protected boolean serverSupportsConvertFn() throws SQLException {
 		return versionMeetsMinimum(4, 0, 2);
@@ -5659,5 +4816,74 @@ public class Connection extends ConnectionProperties implements
 	
 	public boolean hasTriedMaster() {
 		return this.hasTriedMasterFlag;
+	}
+
+	public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public BaseQuery createQueryObject(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public BaseQuery createQueryObject(Class arg0, java.sql.Connection arg1) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public SQLXML createSQLXML() throws SQLException {
+		return new MysqlSQLXML();
+	}
+
+	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public Properties getClientInfo() throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public String getClientInfo(String name) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public boolean isValid(int timeout) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public void setClientInfo(Properties properties) throws SQLClientInfoException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public void setClientInfo(String name, String value) throws SQLClientInfoException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public boolean isWrapperFor(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	public Object unwrap(Class arg0) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+	/**
+	 * @see java.sql.Connection#createBlob()
+	 */
+	public Blob createBlob() {
+	    return new com.mysql.jdbc.Blob();
+	}
+
+	/**
+	 * @see java.sql.Connection#createClob()
+	 */
+	public Clob createClob() {
+	    return new com.mysql.jdbc.Clob();
+	}
+
+	/**
+	 * @see java.sql.Connection#createNClob()
+	 */
+	public NClob createNClob() {
+	    return new com.mysql.jdbc.NClob();
 	}
 }
