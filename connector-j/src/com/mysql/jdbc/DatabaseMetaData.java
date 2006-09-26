@@ -7405,4 +7405,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	public Object unwrap(Class arg0) throws SQLException {
 		throw new JDBC40NotYetImplementedException();
 	}
+
+	public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
+		throw new JDBC40NotYetImplementedException();
+	}
 }
