@@ -145,9 +145,14 @@
 
 	<target name="full-package-no-sources" description="Builds driver, binary .jar file, docs and packages (.zip, .tar.gz) suitable for distribution that do _not_ contain sources"
 			depends="full-dist, -make-packages, -remove-sources, -create-archives"/>
-
+	
+    <!-- disable trace until we can figure out how to get aspectj to play nice with JDK6
 	<target name="full-dist" description="Builds driver, binary .jar file and docs, basically a distribution 'image'"
-		depends="-dist-trace, dist, -bundle-docs"/>
+			depends="-dist-trace, dist, -bundle-docs"/>
+	-->
+	
+	<target name="full-dist" description="Builds driver, binary .jar file and docs, basically a distribution 'image'"
+		depends="dist, -bundle-docs"/>
 
 	<target name="package" depends="dist, -make-packages, -create-archives"/>
 
