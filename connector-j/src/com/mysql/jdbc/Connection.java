@@ -3241,9 +3241,10 @@ public class Connection extends ConnectionProperties implements
 				String currentSqlMode = 
 					(String)this.serverVariables.get("sql_mode");
 				
+				boolean strictTransTablesIsSet = StringUtils.indexOfIgnoreCase(currentSqlMode, "STRICT_TRANS_TABLES") != -1;
+				
 				if (currentSqlMode == null ||
-						currentSqlMode.length() == 0 ||
-						StringUtils.indexOfIgnoreCase(currentSqlMode, "STRICT_TRANS_TABLES") == -1) {
+						currentSqlMode.length() == 0 || !strictTransTablesIsSet) {
 					StringBuffer commandBuf = new StringBuffer("SET sql_mode='");
 					
 					if (currentSqlMode != null && currentSqlMode.length() > 0) {
@@ -3258,6 +3259,9 @@ public class Connection extends ConnectionProperties implements
 							java.sql.ResultSet.CONCUR_READ_ONLY, false,
 							this.database, true, false);
 					
+					setJdbcCompliantTruncation(false); // server's handling this for us now
+				} else if (strictTransTablesIsSet) {
+					// We didn't set it, but someone did, so we piggy back on it
 					setJdbcCompliantTruncation(false); // server's handling this for us now
 				}
 				

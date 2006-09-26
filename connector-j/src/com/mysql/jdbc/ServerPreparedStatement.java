@@ -1528,8 +1528,18 @@ public class ServerPreparedStatement extends PreparedStatement {
 		if (x == null) {
 			setNull(parameterIndex, java.sql.Types.DECIMAL);
 		} else {
-			setString(parameterIndex, StringUtils.fixDecimalExponent(x
-					.toString()));
+		
+			BindValue binding = getBinding(parameterIndex, false);
+
+			if (this.connection.versionMeetsMinimum(5, 0, 3)) {
+				setType(binding, MysqlDefs.FIELD_TYPE_NEW_DECIMAL);
+			} else {
+				setType(binding, this.stringTypeCode);
+			}
+
+			binding.value = StringUtils.fixDecimalExponent(x.toString());
+			binding.isNull = false;
+			binding.isLongData = false;
 		}
 	}
 
@@ -2108,6 +2118,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 			case MysqlDefs.FIELD_TYPE_VAR_STRING:
 			case MysqlDefs.FIELD_TYPE_STRING:
 			case MysqlDefs.FIELD_TYPE_VARCHAR:
+			case MysqlDefs.FIELD_TYPE_DECIMAL:
+			case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
 				if (value instanceof byte[]) {
 					packet.writeLenBytes((byte[]) value);
 				} else if (!this.isLoadDataQuery) {

@@ -3435,4 +3435,53 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+
+	/**
+	 * Tests fix for BUG#22290 - Driver issues truncation on write exception when
+	 * it shouldn't (due to sending big decimal incorrectly to server with
+	 * server-side prepared statement).
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug22290() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
+		createTable(
+				"testbug22290",
+				"(`id` int(11) NOT NULL default '1',`cost` decimal(10,2) NOT NULL,PRIMARY KEY  (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+		assertEquals(
+				this.stmt
+						.executeUpdate("INSERT INTO testbug22290 (`id`,`cost`) VALUES (1,'1.00')"),
+				1);
+	
+		Connection configuredConn = null;
+		
+		try {
+			Properties props = new Properties();
+			props.setProperty("sessionVariables", "sql_mode='STRICT_TRANS_TABLES'");
+			
+			
+			configuredConn = getConnectionWithProps(props);
+			
+			this.pstmt = configuredConn
+					.prepareStatement("update testbug22290 set cost = cost + ? where id = 1");
+			this.pstmt.setBigDecimal(1, new BigDecimal("1.11"));
+			assertEquals(this.pstmt.executeUpdate(), 1);
+			
+			assertEquals(this.stmt
+					.executeUpdate("UPDATE testbug22290 SET cost='1.00'"), 1);
+			this.pstmt = ((com.mysql.jdbc.Connection)configuredConn)
+				.clientPrepareStatement("update testbug22290 set cost = cost + ? where id = 1");
+			this.pstmt.setBigDecimal(1, new BigDecimal("1.11"));
+			assertEquals(this.pstmt.executeUpdate(), 1);
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (configuredConn != null) {
+				configuredConn.close();
+			}
+		}
+	}
 }

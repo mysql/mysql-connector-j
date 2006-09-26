@@ -36,7 +36,11 @@ nn-nn-06 - Version 5.0.4
 	  
 	- Added new _ci collations to CharsetMapping, fixing 
 	  Bug#22456 - utf8_unicode_ci not working.
-	 
+	  
+	- Fixed BUG#22290 - Driver issues truncation on write exception when
+	  it shouldn't (due to sending big decimal incorrectly to server with
+	  server-side prepared statement).
+	  	 
 07-26-06 - Version 5.0.3
 
     - Fixed BUG#20650 - Statement.cancel() causes NullPointerException
@@ -257,6 +261,10 @@ nn-nn-06 - Version 3.1.14
 	  explitly if you want to use a logger other than one that logs
 	  to STDERR.
 	  
+    - Fixed BUG#22290 - Driver issues truncation on write exception when
+	  it shouldn't (due to sending big decimal incorrectly to server with
+	  server-side prepared statement).
+	   
 05-26-06 - Version 3.1.13
 
     - Fixed BUG#15464 - INOUT parameter does not store IN value.
