@@ -33,8 +33,10 @@ import java.util.Hashtable;
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
 import javax.sql.PooledConnection;
+import javax.sql.StatementEventListener;
 
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
 
 /**
  * This class is used to wrap and return a physical connection within a logical
@@ -209,4 +211,36 @@ public class MysqlPooledConnection implements PooledConnection {
 			}
 		}
 	}
+	
+	/**
+	 * Registers a <code>StatementEventListener</code> with this <code>PooledConnection</code> object.  Components that 
+	 * wish to be notified when  <code>PreparedStatement</code>s created by the
+         * connection are closed or are detected to be invalid may use this method 
+         * to register a <code>StatementEventListener</code> with this <code>PooledConnection</code> object.
+	 * <p>
+	 * @param listener	an component which implements the <code>StatementEventListener</code> 
+	 * 					interface that is to be registered with this <code>PooledConnection</code> object
+	 * <p>
+	 * @since 1.6
+	 */
+	public void addStatementEventListener(StatementEventListener listener) {
+		throw new JDBC40NotYetImplementedException();
+	}
+	
+	/**
+	 * Removes the specified <code>StatementEventListener</code> from the list of 
+	 * components that will be notified when the driver detects that a 
+	 * <code>PreparedStatement</code> has been closed or is invalid.
+	 * <p> 
+	 * @param listener	the component which implements the
+	 * 					<code>StatementEventListener</code> interface that was previously 
+	 * 					registered with this <code>PooledConnection</code> object
+	 * <p>
+	 * @since 1.6
+	 */
+	public void removeStatementEventListener(StatementEventListener listener) {
+		throw new JDBC40NotYetImplementedException();
+	}
+
+
 }
