@@ -546,6 +546,14 @@ public class StatementsTest extends BaseTestCase {
 							- begin < 30000);
 				}
 	
+				for (int i = 0; i < 1000; i++) {
+					try {
+						cancelStmt.executeQuery("SELECT 1");
+					} catch (SQLException timedOutEx) {
+						break;
+					}
+				}
+				
 				// Make sure we can still use the connection...
 	
 				cancelStmt.setQueryTimeout(0);
@@ -584,6 +592,14 @@ public class StatementsTest extends BaseTestCase {
 							- begin < 30000);
 				}
 	
+				for (int i = 0; i < 1000; i++) {
+					try {
+						cancelStmt.executeQuery("SELECT 1");
+					} catch (SQLException timedOutEx) {
+						break;
+					}
+				}
+				
 				// Make sure we can still use the connection...
 	
 				this.rs = cancelStmt.executeQuery("SELECT 1");
@@ -605,6 +621,14 @@ public class StatementsTest extends BaseTestCase {
 							- begin < 30000);
 				}
 	
+				for (int i = 0; i < 1000; i++) {
+					try {
+						cancelPstmt.executeQuery("SELECT 1");
+					} catch (SQLException timedOutEx) {
+						break;
+					}
+				}
+				
 				// Make sure we can still use the connection...
 	
 				this.rs = cancelStmt.executeQuery("SELECT 1");
@@ -643,6 +667,14 @@ public class StatementsTest extends BaseTestCase {
 							- begin < 30000);
 				}
 	
+				for (int i = 0; i < 1000; i++) {
+					try {
+						cancelPstmt.executeQuery("SELECT 1");
+					} catch (SQLException timedOutEx) {
+						break;
+					}
+				}
+				
 				// Make sure we can still use the connection...
 	
 				this.rs = cancelStmt.executeQuery("SELECT 1");
@@ -664,6 +696,14 @@ public class StatementsTest extends BaseTestCase {
 							- begin < 30000);
 				}
 	
+				for (int i = 0; i < 1000; i++) {
+					try {
+						cancelStmt.executeQuery("SELECT 1");
+					} catch (SQLException timedOutEx) {
+						break;
+					}
+				}
+				
 				// Make sure we can still use the connection...
 	
 				this.rs = cancelStmt.executeQuery("SELECT 1");
@@ -702,6 +742,14 @@ public class StatementsTest extends BaseTestCase {
 							- begin < 30000);
 				}
 	
+				for (int i = 0; i < 1000; i++) {
+					try {
+						cancelClientPstmt.executeQuery("SELECT 1");
+					} catch (SQLException timedOutEx) {
+						break;
+					}
+				}
+				
 				// Make sure we can still use the connection...
 	
 				this.rs = cancelStmt.executeQuery("SELECT 1");

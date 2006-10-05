@@ -651,6 +651,8 @@ public class MetadataTest extends BaseTestCase {
 	            Statement stmt1 = null;
 	            String userHostQuoted = null;
 	            
+	            boolean grantFailed = true;
+	            
 	            try {
 	                conn1 = getConnectionWithProps(props);
 	                stmt1 = conn1.createStatement();
@@ -660,42 +662,45 @@ public class MetadataTest extends BaseTestCase {
 	                this.rs.next();
 	                String user = this.rs.getString(1);
 	                List userHost = StringUtils.split(user, "@", false);
-	                assertTrue(user, userHost.size() > 1);
 	                userHostQuoted = "'" + userHost.get(0) + "'@'" + userHost.get(1) + "'";
 	                
 	                try {
 	                	stmt1.executeUpdate("GRANT update (c1) on t1 to " + userHostQuoted);
+	                	
+	                	grantFailed = false;
+	                	
 	                } catch (SQLException sqlEx) {
 	                	logDebug("This testcase needs to be run with a URL that allows the user to issue GRANTs "
 	                			+ " in the current database. You can skip this test by setting the system property \""
 	                			+ dontRunPropertyName + "\".");
 	                	
-	                	throw sqlEx;
+	                	grantFailed = true;
 	                }
 	                
-	                DatabaseMetaData metaData = conn1.getMetaData();
-	                this.rs = metaData.getColumnPrivileges(null, null, "t1", null);
-	                this.rs.next();
-	                assertEquals("t1", this.rs.getString("TABLE_NAME"));
-	                assertEquals("c1", this.rs.getString("COLUMN_NAME"));
-	                assertEquals(userHostQuoted, this.rs.getString("GRANTEE"));
-	                assertEquals("UPDATE", this.rs.getString("PRIVILEGE"));
+	                if (!grantFailed) {
+		                DatabaseMetaData metaData = conn1.getMetaData();
+		                this.rs = metaData.getColumnPrivileges(null, null, "t1", null);
+		                this.rs.next();
+		                assertEquals("t1", this.rs.getString("TABLE_NAME"));
+		                assertEquals("c1", this.rs.getString("COLUMN_NAME"));
+		                assertEquals(userHostQuoted, this.rs.getString("GRANTEE"));
+		                assertEquals("UPDATE", this.rs.getString("PRIVILEGE"));
+	                }
 	            } finally {
-	            	try {
-						if (stmt1 != null) {
-							stmt1.executeUpdate("DROP TABLE IF EXISTS t1");
-							if (userHostQuoted != null) {
-								String revoke = "REVOKE UPDATE (c1) ON t1 FROM "
-										+ userHostQuoted;
-								stmt1.executeUpdate(revoke);
-							}
-							stmt1.close();
-						}
-					} finally {
-						if (conn1 != null) {
-							conn1.close();
-						}
-					}
+		            if (stmt1 != null) {
+		       
+		            	stmt1.executeUpdate("DROP TABLE IF EXISTS t1");
+		            	
+		            	if (!grantFailed) {
+		            		stmt1.executeUpdate("REVOKE UPDATE (c1) ON t1 FROM " + userHostQuoted);
+		            	}
+		            	
+		            	stmt1.close();
+	            	}
+	            	
+	            	if (conn1 != null) {
+	            		conn1.close();
+	            	}
 	            }
 	        }
     	}
