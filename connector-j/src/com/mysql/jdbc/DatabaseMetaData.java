@@ -223,8 +223,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 			// Figure Out the Size
 			if (typeInfo != null) {
-				if (StringUtils.startsWithIgnoreCase(typeInfo, "enum")
-						|| StringUtils.startsWithIgnoreCase(typeInfo, "set")) {
+				if (StringUtils.startsWithIgnoreCase(typeInfo, "enum")) {
 					String temp = typeInfo.substring(typeInfo.indexOf("("),
 							typeInfo.lastIndexOf(")"));
 					java.util.StringTokenizer tokenizer = new java.util.StringTokenizer(
@@ -234,6 +233,25 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					while (tokenizer.hasMoreTokens()) {
 						maxLength = Math.max(maxLength, (tokenizer.nextToken()
 								.length() - 2));
+					}
+
+					this.columnSize = maxLength;
+					this.decimalDigits = 0;
+				} else if (StringUtils.startsWithIgnoreCase(typeInfo, "set")) {
+					String temp = typeInfo.substring(typeInfo.indexOf("("),
+							typeInfo.lastIndexOf(")"));
+					java.util.StringTokenizer tokenizer = new java.util.StringTokenizer(
+							temp, ",");
+					int maxLength = 0;
+
+					while (tokenizer.hasMoreTokens()) {
+						String setMember = tokenizer.nextToken().trim();
+						
+						if (setMember.startsWith("'") && setMember.endsWith("'")) {
+							maxLength += setMember.length() - 2;
+						} else {
+							maxLength += setMember.length();
+						}
 					}
 
 					this.columnSize = maxLength;

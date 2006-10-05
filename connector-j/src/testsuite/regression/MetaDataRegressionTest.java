@@ -1612,4 +1612,57 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	    }
 	}
 
+	/** 
+	 * Tests fix for BUG#22613 - DBMD.getColumns() does not return expected
+	 * COLUMN_SIZE for the SET type (fixed to be consistent with the ODBC driver)
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug22613() throws Exception {
+		
+		createTable("bug22613", "( s set('a','bc','def','ghij') default NULL, t enum('a', 'ab', 'cdef'))");
+
+		try {
+			checkMetadataForBug22613(this.conn);
+			
+			if (versionMeetsMinimum(5, 0)) {
+				Connection infoSchemConn = null;
+			
+				try {
+					Properties props = new Properties();
+					props.setProperty("useInformationSchema", "true");
+					
+					infoSchemConn = getConnectionWithProps(props);
+					
+					checkMetadataForBug22613(infoSchemConn);
+				} finally {
+					if (infoSchemConn != null) {
+						infoSchemConn.close();
+					}
+				}
+			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+	
+	private void checkMetadataForBug22613(Connection c) throws Exception {
+		String maxValue = "a,bc,def,ghij";
+		
+		try {
+			DatabaseMetaData meta = c.getMetaData();
+			this.rs = meta.getColumns(null, this.conn.getCatalog(), "bug22613", "s");
+			this.rs.first();
+
+			assertEquals(maxValue.length(), rs.getInt("COLUMN_SIZE"));
+			
+			this.rs = meta.getColumns(null, c.getCatalog(), "bug22613", "t");
+			this.rs.first();
+
+			assertEquals(4, rs.getInt("COLUMN_SIZE"));			
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+
 }

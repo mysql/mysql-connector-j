@@ -40,6 +40,11 @@ nn-nn-06 - Version 5.0.4
 	- Fixed BUG#22290 - Driver issues truncation on write exception when
 	  it shouldn't (due to sending big decimal incorrectly to server with
 	  server-side prepared statement).
+	  
+	- Fixed BUG#22613 - DBMD.getColumns() does not return expected
+	  COLUMN_SIZE for the SET type, now returns length of largest possible
+	  set disregarding whitespace or the "," delimitters to be consistent 
+	  with the ODBC driver.
 	  	 
 07-26-06 - Version 5.0.3
 
