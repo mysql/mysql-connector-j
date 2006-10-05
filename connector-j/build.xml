@@ -405,7 +405,11 @@
 
 		<mkdir dir="${junit.unitregress.results}/report"/>
 
-		<junit printSummary="yes" fork="on" jvm="${com.mysql.jdbc.testsuite.jvm}">
+		<junit printSummary="yes" 
+			fork="on" 
+			jvm="${com.mysql.jdbc.testsuite.jvm}"
+			errorProperty="tests.failed"
+			failureProperty="tests.failed">
 			<jvmarg value="-Xmx256m" />
 
 			<!-- For java.sql.SavePoint on old JVMs -->
@@ -441,6 +445,18 @@
 			</fileset>
 			<report format="frames" todir="${junit.unitregress.results}/report"/>
 		</junitreport>
+		
+		<!-- Don't fail the build if we're doing multi-tests -->
+		<if>
+		 <equals arg1="${test.result.prefix}" arg2="" />
+		 <then>
+		 	<fail message="Tests failed. Check logs and/or reports in ${junit.results}." if="tests.failed"/>
+		 </then>
+		 <else>
+		 	<echo message="Not checking test failures because we're doing a multi-test..." />
+		 </else>
+		</if>
+		
 	</target>
 
 	<!-- Runs compliance testsuite against multiple JVMs and server configs -->
@@ -506,7 +522,9 @@
 		<mkdir dir="${junit.compliance.results}"/>
 		<mkdir dir="${junit.compliance.results}/report"/>
 
-		<junit printsummary="yes" jvm="${com.mysql.jdbc.testsuite.jvm}">
+		<junit printsummary="yes" jvm="${com.mysql.jdbc.testsuite.jvm}"
+			errorProperty="tests.compliance.failed"
+			failureProperty="tests.compliance.failed">
 			<jvmarg value="-Xmx256m"/>
 			
 			<!-- For java.sql.SavePoint on old JVMs -->
@@ -553,6 +571,18 @@
 			</fileset>
 			<report format="frames" todir="${junit.compliance.results}/report"/>
 		</junitreport>
+		
+		<!-- Don't fail the build if we're doing multi-tests -->
+		<if>
+			<equals arg1="${test.result.prefix}" arg2="" />
+			<then>
+				<fail message="Tests failed. Check logs and/or reports in ${junit.compliance.results}." if="tests.compliance.failed"/>
+			</then>
+			<else>
+				<echo message="Not checking test failures because we're doing a multi-test..." />
+			</else>
+		</if>
+		
 	</target>
 
 
@@ -571,7 +601,9 @@
 			debug="${debug.enable}" 
 			excludes="testsuite/**, 
 			   com/mysql/jdbc/integration/**,
-			   com/mysql/jdbc/log/Log4JLogger.java">
+			   com/mysql/jdbc/log/Log4JLogger.java"
+			source="1.4"
+			target="1.4">
 			<classpath refid="project.build.classpath" />
 		</javac>
 	</target>
@@ -613,7 +645,9 @@
 				destdir="${buildDir}/${fullProdName}" 
 				deprecation="off" 
 				debug="${debug.enable}" 
-				includes="com/mysql/jdbc/integration/c3p0/**">
+				includes="com/mysql/jdbc/integration/c3p0/**"
+				source="1.4"
+				target="1.4">
 			<classpath refid="project.build.classpath" />
 		</javac>
 	</target>
@@ -625,7 +659,9 @@
 					destdir="${buildDir}/${fullProdName}" 
 					deprecation="off" 
 					debug="${debug.enable}" 
-					includes="com/mysql/jdbc/integration/jboss/**">
+					includes="com/mysql/jdbc/integration/jboss/**"
+					source="1.4"
+					target="1.4">
 			<classpath refid="project.build.classpath" />
 		</javac>
 	</target>
@@ -637,7 +673,9 @@
 				destdir="${buildDir}/${fullProdName}" 
 				deprecation="off" 
 				debug="${debug.enable}" 
-				includes="com/mysql/jdbc/log/Log4JLogger.java">
+				includes="com/mysql/jdbc/log/Log4JLogger.java"
+				source="1.4"
+				target="1.4">
 			<classpath refid="project.build.classpath" />
 		</javac>
 	</target>
@@ -651,7 +689,9 @@
 			deprecation="off" 
 			debug="${debug.enable}"
 			includes="testsuite/**"
-			excludes="testsuite/requiresNonRedists/**">
+			excludes="testsuite/requiresNonRedists/**"
+			source="1.4"
+			target="1.4">
 			<classpath refid="project.build.classpath"/>
 		</javac>
 	</target>
