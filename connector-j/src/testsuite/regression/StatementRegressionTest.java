@@ -3484,4 +3484,18 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+
+	public void testClientPreparedSetBoolean() throws Exception {
+		try {
+			this.pstmt = ((com.mysql.jdbc.Connection)this.conn).clientPrepareStatement("SELECT ?");
+			this.pstmt.setBoolean(1, false);
+			assertEquals("SELECT 0", 
+					this.pstmt.toString().substring(this.pstmt.toString().indexOf("SELECT")));
+			this.pstmt.setBoolean(1, true);
+			assertEquals("SELECT 1", 
+					this.pstmt.toString().substring(this.pstmt.toString().indexOf("SELECT")));
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

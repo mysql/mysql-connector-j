@@ -2150,7 +2150,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 */
 	public void setBoolean(int parameterIndex, boolean x) throws SQLException {
 		if (this.useTrueBoolean) {
-			setInternal(parameterIndex, x ? "'1'" : "'0'"); //$NON-NLS-1$ //$NON-NLS-2$
+			setInternal(parameterIndex, x ? "1" : "0"); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
 			setInternal(parameterIndex, x ? "'t'" : "'f'"); //$NON-NLS-1$ //$NON-NLS-2$
 		}

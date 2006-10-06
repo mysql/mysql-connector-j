@@ -45,7 +45,10 @@ nn-nn-06 - Version 5.0.4
 	  COLUMN_SIZE for the SET type, now returns length of largest possible
 	  set disregarding whitespace or the "," delimitters to be consistent 
 	  with the ODBC driver.
-	  	 
+	  
+	- Driver now sends numeric 1 or 0 for client-prepared statement
+	  setBoolean() calls instead of '1' or '0'.
+	   
 07-26-06 - Version 5.0.3
 
     - Fixed BUG#20650 - Statement.cancel() causes NullPointerException
