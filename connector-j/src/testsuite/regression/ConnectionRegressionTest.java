@@ -1699,4 +1699,96 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+
+	/**
+	 * Tests fix for BUG#6966, connections starting up failed-over (due to down
+	 * master) never retry master.
+	 * 
+	 * @throws Exception
+	 *             if the test fails...Note, test is timing-dependent, but
+	 *             should work in most cases.
+	 */
+	public void testDownedSlave() throws Exception {
+		Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+		props.setProperty("autoReconnect", "true");
+		props.setProperty("roundRobinLoadBalance", "true");
+		props.setProperty("failoverReadOnly", "false");
+		
+		// Re-build the connection information
+		int firstIndexOfHost = BaseTestCase.dbUrl.indexOf("//") + 2;
+		int lastIndexOfHost = BaseTestCase.dbUrl.indexOf("/", firstIndexOfHost);
+	
+		String hostPortPair = BaseTestCase.dbUrl.substring(firstIndexOfHost,
+				lastIndexOfHost);
+	
+		StringTokenizer st = new StringTokenizer(hostPortPair, ":");
+	
+		String host = null;
+		String port = null;
+	
+		if (st.hasMoreTokens()) {
+			String possibleHostOrPort = st.nextToken();
+	
+			if (Character.isDigit(possibleHostOrPort.charAt(0)) && 
+					(possibleHostOrPort.indexOf(".") == -1 /* IPV4 */)  &&
+					(possibleHostOrPort.indexOf("::") == -1 /* IPV6 */)) {
+				port = possibleHostOrPort;
+				host = "localhost";
+			} else {
+				host = possibleHostOrPort;
+			}
+		}
+	
+		if (st.hasMoreTokens()) {
+			port = st.nextToken();
+		}
+	
+		if (host == null) {
+			host = "";
+		}
+	
+		if (port == null) {
+			port = "3306";
+		}
+	
+		StringBuffer newHostBuf = new StringBuffer();
+		
+		newHostBuf.append(host);
+		if (port != null) {
+			newHostBuf.append(":");
+			newHostBuf.append(port);
+		}
+	
+		newHostBuf.append(",");
+		newHostBuf.append(host);
+		newHostBuf.append(":65532"); // make sure the slave fails
+		
+		props.remove("PORT");
+		props.remove("HOST");
+	
+		Connection failoverConnection = null;
+	
+		try {
+			failoverConnection = getConnectionWithProps("jdbc:mysql://"
+					+ newHostBuf.toString() + "/", props);
+		
+			String originalConnectionId = getSingleIndexedValueWithQuery(
+					failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
+			
+			System.out.println(originalConnectionId);
+			
+			Connection nextConnection = getConnectionWithProps("jdbc:mysql://"
+					+ newHostBuf.toString() + "/", props);
+			
+			String nextId = getSingleIndexedValueWithQuery(
+					nextConnection, 1, "SELECT CONNECTION_ID()").toString();
+			
+			System.out.println(nextId);
+			
+		} finally {
+			if (failoverConnection != null) {
+				failoverConnection.close();
+			}
+		}
+	}
 }

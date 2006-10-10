@@ -1844,8 +1844,12 @@ public class Connection extends ConnectionProperties implements
 										.equals(SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE)) {
 							throw sqlEx;
 						}
-
-						if ((this.hostListSize - 1) == hostIndex) {
+						
+						//	Check next host, it might be up...
+						if (getRoundRobinLoadBalance()) {
+							hostIndex = getNextRoundRobinHostIndex(getURL(),
+									this.hostList);
+						} else if ((this.hostListSize - 1) == hostIndex) {
 							throw sqlEx;
 						}
 					} catch (Exception unknownException) {
@@ -1853,7 +1857,11 @@ public class Connection extends ConnectionProperties implements
 							this.io.forceClose();
 						}
 
-						if ((this.hostListSize - 1) == hostIndex) {
+						// Check next host, it might be up...
+						if (getRoundRobinLoadBalance()) {
+							hostIndex = getNextRoundRobinHostIndex(getURL(),
+									this.hostList);
+						} else if ((this.hostListSize - 1) == hostIndex) {
 							throw new CommunicationsException(this,
 									(this.io != null) ? this.io
 											.getLastPacketSentTimeMs() : 0,
@@ -1967,6 +1975,12 @@ public class Connection extends ConnectionProperties implements
 						} catch (Exception EEE) {
 							connectionException = EEE;
 							connectionGood = false;
+							
+							// Check next host, it might be up...
+							if (getRoundRobinLoadBalance()) {
+								hostIndex = getNextRoundRobinHostIndex(getURL(),
+										this.hostList);
+							} 
 						}
 
 						if (connectionGood) {

@@ -272,7 +272,10 @@ nn-nn-06 - Version 3.1.14
     - Fixed BUG#22290 - Driver issues truncation on write exception when
 	  it shouldn't (due to sending big decimal incorrectly to server with
 	  server-side prepared statement).
-	   
+	  
+	- Fixed bug where driver would not advance to next host if 
+	  roundRobinLoadBalance=true and the last host in the list is down.
+	  	   
 05-26-06 - Version 3.1.13
 
     - Fixed BUG#15464 - INOUT parameter does not store IN value.
