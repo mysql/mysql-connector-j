@@ -4371,17 +4371,33 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					try {
 
 						if (!conn.versionMeetsMinimum(5, 0, 2)) {
-							results = stmt
+							try {
+								results = stmt
 									.executeQuery("SHOW TABLES FROM "
 											+ quotedId + catalogStr.toString()
 											+ quotedId + " LIKE '"
 											+ tableNamePat + "'");
+							} catch (SQLException sqlEx) {
+								if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
+									throw sqlEx;
+								}
+								
+								return;
+							}
 						} else {
-							results = stmt
+							try {
+								results = stmt
 									.executeQuery("SHOW FULL TABLES FROM "
 											+ quotedId + catalogStr.toString()
 											+ quotedId + " LIKE '"
 											+ tableNamePat + "'");
+							} catch (SQLException sqlEx) {
+								if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
+									throw sqlEx;
+								}
+								
+								return;
+							}
 						}
 
 						boolean shouldReportTables = false;

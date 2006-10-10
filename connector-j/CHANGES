@@ -275,7 +275,11 @@ nn-nn-06 - Version 3.1.14
 	  
 	- Fixed bug where driver would not advance to next host if 
 	  roundRobinLoadBalance=true and the last host in the list is down.
-	  	   
+
+	- Fixed BUG#18258 - DatabaseMetaData.getTables(), columns() with bad
+	  catalog parameter threw exception rather than return empty result
+	  set (as required by spec).
+	  	  	   
 05-26-06 - Version 3.1.13
 
     - Fixed BUG#15464 - INOUT parameter does not store IN value.

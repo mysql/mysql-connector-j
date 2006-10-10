@@ -1665,4 +1665,17 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Tests fix for BUG#18258 - Nonexistent catalog/database causes SQLException
+	 * to be raised, rather than returning empty result set.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug18258() throws Exception {
+		String bogusDatabaseName = "abcdefghijklmnopqrstuvwxyz";
+		this.conn.getMetaData().getTables(bogusDatabaseName, "%", "%", new String[] {"TABLE", "VIEW"});
+		this.conn.getMetaData().getColumns(bogusDatabaseName, "%", "%", "%");
+		this.conn.getMetaData().getProcedures(bogusDatabaseName, "%", "%");
+	}
+
 }
