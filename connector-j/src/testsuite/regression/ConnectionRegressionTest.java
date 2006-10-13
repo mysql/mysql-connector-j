@@ -1708,7 +1708,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	 *             if the test fails...Note, test is timing-dependent, but
 	 *             should work in most cases.
 	 */
-	public void testDownedSlave() throws Exception {
+	public void testBug23281() throws Exception {
 		Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
 		props.setProperty("autoReconnect", "true");
 		props.setProperty("roundRobinLoadBalance", "true");
