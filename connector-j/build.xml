@@ -601,9 +601,7 @@
 			debug="${debug.enable}" 
 			excludes="testsuite/**, 
 			   com/mysql/jdbc/integration/**,
-			   com/mysql/jdbc/log/Log4JLogger.java"
-			source="1.4"
-			target="1.4">
+			   com/mysql/jdbc/log/Log4JLogger.java">
 			<classpath refid="project.build.classpath" />
 		</javac>
 	</target>
@@ -645,9 +643,7 @@
 				destdir="${buildDir}/${fullProdName}" 
 				deprecation="off" 
 				debug="${debug.enable}" 
-				includes="com/mysql/jdbc/integration/c3p0/**"
-				source="1.4"
-				target="1.4">
+				includes="com/mysql/jdbc/integration/c3p0/**">
 			<classpath refid="project.build.classpath" />
 		</javac>
 	</target>
@@ -659,9 +655,7 @@
 					destdir="${buildDir}/${fullProdName}" 
 					deprecation="off" 
 					debug="${debug.enable}" 
-					includes="com/mysql/jdbc/integration/jboss/**"
-					source="1.4"
-					target="1.4">
+					includes="com/mysql/jdbc/integration/jboss/**">
 			<classpath refid="project.build.classpath" />
 		</javac>
 	</target>
@@ -673,9 +667,7 @@
 				destdir="${buildDir}/${fullProdName}" 
 				deprecation="off" 
 				debug="${debug.enable}" 
-				includes="com/mysql/jdbc/log/Log4JLogger.java"
-				source="1.4"
-				target="1.4">
+				includes="com/mysql/jdbc/log/Log4JLogger.java">
 			<classpath refid="project.build.classpath" />
 		</javac>
 	</target>
@@ -689,9 +681,7 @@
 			deprecation="off" 
 			debug="${debug.enable}"
 			includes="testsuite/**"
-			excludes="testsuite/requiresNonRedists/**"
-			source="1.4"
-			target="1.4">
+			excludes="testsuite/requiresNonRedists/**">
 			<classpath refid="project.build.classpath"/>
 		</javac>
 	</target>
