@@ -877,7 +877,7 @@ public class ResultSet implements java.sql.ResultSet {
 	}
 
 	private Time fastTimeCreate(Calendar cal, int hour,
-			int minute, int second) {
+			int minute, int second) throws SQLException {
 		if (cal == null) {
 			cal = this.fastDateCal;
 		}

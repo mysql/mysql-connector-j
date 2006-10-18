@@ -25,6 +25,7 @@
 package com.mysql.jdbc;
 
 import java.sql.Date;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 
@@ -992,7 +993,25 @@ public class TimeUtil {
 	}
 
 	final static Time fastTimeCreate(Calendar cal, int hour, int minute,
-			int second) {
+			int second) throws SQLException {
+		if (hour < 0 || hour > 23) {
+			throw SQLError.createSQLException("Illegal hour value '" + hour + "' for java.sql.Time type in value '"
+					+ timeFormattedString(hour, minute, second) + ".", 
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+		}
+		
+		if (minute < 0 || minute > 59) {
+			throw SQLError.createSQLException("Illegal minute value '" + minute + "'" + "' for java.sql.Time type in value '"
+					+ timeFormattedString(hour, minute, second) + ".", 
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+		}
+		
+		if (second < 0 || second > 59) {
+			throw SQLError.createSQLException("Illegal minute value '" + second + "'" + "' for java.sql.Time type in value '"
+					+ timeFormattedString(hour, minute, second) + ".", 
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+		}
+		
 		cal.clear();
 
 		// Set 'date' to epoch of Jan 1, 1970
@@ -1126,4 +1145,33 @@ public class TimeUtil {
 		return canonicalTz;
 	}
 	
+	// we could use SimpleDateFormat, but it won't work when the time values
+	// are out-of-bounds, and we're using this for error messages for exactly 
+	// that case
+	//
+	
+	private static String timeFormattedString(int hours, int minutes, int seconds) {
+		StringBuffer buf = new StringBuffer(8);
+		if (hours < 10) {
+			buf.append("0");
+		}
+		
+		buf.append(hours);
+		buf.append(":");
+		
+		if (minutes < 10) {
+			buf.append("0");
+		}
+		
+		buf.append(minutes);
+		buf.append(":");
+		
+		if (seconds < 10) {
+			buf.append("0");
+		}
+		
+		buf.append(seconds);
+		
+		return buf.toString();
+	}
 }

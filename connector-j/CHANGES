@@ -279,7 +279,12 @@ nn-nn-06 - Version 3.1.14
 	- Fixed BUG#18258 - DatabaseMetaData.getTables(), columns() with bad
 	  catalog parameter threw exception rather than return empty result
 	  set (as required by spec).
-	  	  	   
+	  
+	- Check and store value for continueBatchOnError property in constructor
+      of Statements, rather than when executing batches, so that Connections
+      closed out from underneath statements don't cause NullPointerExceptions
+      when it's required to check this property.
+      	  	  	   
 05-26-06 - Version 3.1.13
 
     - Fixed BUG#15464 - INOUT parameter does not store IN value.

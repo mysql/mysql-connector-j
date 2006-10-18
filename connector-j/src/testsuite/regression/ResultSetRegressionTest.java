@@ -3716,6 +3716,35 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}
 	}
 	
+	/** 
+	 * Tests fix for BUG#21814 - time values outside valid range silently wrap
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug21814() throws Exception {
+		try {
+			try {
+				this.rs = this.stmt.executeQuery("SELECT '24:01'");
+				this.rs.next();
+				this.rs.getTime(1);
+				fail("Expected exception");
+			} catch (SQLException sqlEx) {
+				assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());	
+			}
+			
+			try {
+				this.rs = this.stmt.executeQuery("SELECT '23:92'");
+				this.rs.next();
+				this.rs.getTime(1);
+				fail("Expected exception");
+			} catch (SQLException sqlEx) {
+				assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());	
+			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+	
 	public void testTruncationDisable() throws Exception {
 		Properties props = new Properties();
 		props.setProperty("jdbcCompliantTruncation", "false");
