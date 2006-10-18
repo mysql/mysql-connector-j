@@ -281,7 +281,7 @@
 					match="Copyright.*1307.[^replaceregexp]*USA"
 					replace="${commercialLicenseText}"
 					flags="s">
-				<fileset dir="${buildDir}/${fullProdName}" includes="**/*"/>
+				<fileset dir="${packageDest}" includes="**/*"/>
 				</replaceregexp>
 			</then>
 		</if>
