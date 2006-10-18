@@ -261,6 +261,30 @@
 		<fixcrlf srcdir="${packageDest}"
 					tab="remove" tablength="8"
 					eol="lf" includes="**/README"/>
+		
+		<if>
+			<isset property="com.mysql.jdbc.commercialBuild"/>
+			<then>
+				<!-- These are the GPL and FLOSS exceptions. They don't get shipped with
+									 commercial builds -->
+
+				<delete file="${packageDest}/COPYING"/>
+				<delete file="${packageDest}/EXCEPTIONS-CONNECTOR-J"/>
+
+				<!-- Pull in the commercial license itself -->
+
+				<copy file="${sourceDir}/lib-nodist/MySQLEULA.txt" toDir="${packageDest}"/>
+
+				<loadfile property="commercialLicenseText"
+					srcFile="${sourceDir}/lib-nodist/commercialLicense.txt"/>
+				<replaceregexp 
+					match="Copyright.*1307.[^replaceregexp]*USA"
+					replace="${commercialLicenseText}"
+					flags="s">
+				<fileset dir="${buildDir}/${fullProdName}" includes="**/*"/>
+				</replaceregexp>
+			</then>
+		</if>
 	</target>
 
 	<target name="dist" depends="init, compile">
@@ -586,10 +610,10 @@
 	</target>
 
 
-	<target name="compile" depends="init, -commercial-license, compile-driver, compile-testsuite, compile.integration">
+	<target name="compile" depends="init, compile-driver, compile-testsuite, compile.integration">
 	</target>
 
-	<target name="compile-trace" depends="init, -commercial-license, compile-driver-trace">
+	<target name="compile-trace" depends="init, compile-driver-trace">
 	</target>
 
 	<!-- Compiles the driver itself -->
@@ -730,30 +754,6 @@
 		<style in="${errorsMapping-xml}" style="${docsErrorXslTempfile}"
 			       out="${buildDir}/${fullProdName}/docs/sources/errorMappingDocBook.xml"/>
 		<delete file="${docsErrorXslTempfile}"/>
-	</target>
-
-	<!-- Replaces copyright/license banner at the top of every source
-	     file -->
-
-	<target name="-commercial-license" depends="init" if="com.mysql.jdbc.commercialBuild">
-		<!-- These are the GPL and FLOSS exceptions. They don't get shipped with
-		     commercial builds -->
-
-		<delete file="${buildDir}/${fullProdName}/COPYING"/>
-		<delete file="${buildDir}/${fullProdName}/EXCEPTIONS-CONNECTOR-J"/>
-
-		<!-- Pull in the commercial license itself -->
-
-		<copy file="${sourceDir}/lib-nodist/MySQLEULA.txt" toDir="${buildDir}/${fullProdName}"/>
-
-		<loadfile property="commercialLicenseText"
-		      srcFile="${sourceDir}/lib-nodist/commercialLicense.txt"/>
-		<replaceregexp 
-		                         match="Copyright.*1307.[^replaceregexp]*USA"
-		                         replace="${commercialLicenseText}"
-		                         flags="s">
-			<fileset dir="${buildDir}/${fullProdName}" includes="**/*"/>
-		</replaceregexp>
 	</target>
 
 	<!-- 
