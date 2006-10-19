@@ -380,6 +380,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 	}
 
+	private static final int MAX_IDENTIFIER_LENGTH = 64;
+	
 	private static final int DEFERRABILITY = 13;
 
 	private static final int DELETE_RULE = 10;
@@ -494,7 +496,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 	private void convertToJdbcFunctionList(String catalog,
 			ResultSet proceduresRs, boolean needsClientFiltering, String db,
-			Map procedureRowsOrderedByName, int nameIndex) throws SQLException {
+			Map procedureRowsOrderedByName, int nameIndex,
+			Field[] fields) throws SQLException {
 		while (proceduresRs.next()) {
 			boolean shouldAdd = true;
 
@@ -512,15 +515,31 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 			if (shouldAdd) {
 				String functionName = proceduresRs.getString(nameIndex);
-				byte[][] rowData = new byte[8][];
-				rowData[0] = catalog == null ? null : s2b(catalog);
-				rowData[1] = null;
-				rowData[2] = s2b(functionName);
-				rowData[3] = null;
-				rowData[4] = null;
-				rowData[5] = null;
-				rowData[6] = null;
-				rowData[7] = s2b(Integer.toString(procedureReturnsResult));
+				
+				byte[][] rowData = null;
+				
+				if (fields != null && fields.length == 8) {
+					
+					rowData = new byte[8][];
+					rowData[0] = catalog == null ? null : s2b(catalog);         // PROCEDURE_CAT
+					rowData[1] = null;                                          // PROCEDURE_SCHEM
+					rowData[2] = s2b(functionName);                             // PROCEDURE_NAME
+					rowData[3] = null;                                          // reserved1
+					rowData[4] = null;                                          // reserved2
+					rowData[5] = null;                                          // reserved3
+					rowData[6] = s2b(proceduresRs.getString("comment"));        // REMARKS
+					rowData[7] = s2b(Integer.toString(procedureReturnsResult)); // PROCEDURE_TYPE
+				} else {
+					
+					rowData = new byte[6][];
+					
+					rowData[0] = catalog == null ? null : s2b(catalog);  // FUNCTION_CAT
+					rowData[1] = null;                                   // FUNCTION_SCHEM
+					rowData[2] = s2b(functionName);                      // FUNCTION_NAME
+					rowData[3] = s2b(proceduresRs.getString("comment")); // REMARKS
+					rowData[4] = s2b(Integer.toString(functionNoTable)); // FUNCTION_TYPE
+					rowData[5] = s2b(functionName);                      // SPECFIC NAME
+				}
 
 				procedureRowsOrderedByName.put(functionName, rowData);
 			}
@@ -548,13 +567,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			if (shouldAdd) {
 				String procedureName = proceduresRs.getString(nameIndex);
 				byte[][] rowData = new byte[8][];
-				rowData[0] = catalog == null ? null : s2b(catalog);
-				rowData[1] = null;
-				rowData[2] = s2b(procedureName);
-				rowData[3] = null;
-				rowData[4] = null;
-				rowData[5] = null;
-				rowData[6] = null;
+				rowData[0] = catalog == null ? null : s2b(catalog);  // PROCEDURE_CAT
+				rowData[1] = null;                                   // PROCEDURE_SCHEM
+				rowData[2] = s2b(procedureName);                     // PROCEDURE_NAME
+				rowData[3] = null;                                   // reserved1
+				rowData[4] = null;                                   // reserved2
+				rowData[5] = null;                                   // reserved3
+				rowData[6] = s2b(proceduresRs.getString("comment")); // REMARKS
 
 				boolean isFunction = fromSelect ? "FUNCTION"
 						.equalsIgnoreCase(proceduresRs.getString("type"))
@@ -3740,6 +3759,27 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	public java.sql.ResultSet getProcedures(String catalog,
 			String schemaPattern, String procedureNamePattern)
 			throws SQLException {
+		Field[] fields = new Field[8];
+		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
+		fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 0);
+		fields[2] = new Field("", "PROCEDURE_NAME", Types.CHAR, 0);
+		fields[3] = new Field("", "reserved1", Types.CHAR, 0);
+		fields[4] = new Field("", "reserved2", Types.CHAR, 0);
+		fields[5] = new Field("", "reserved3", Types.CHAR, 0);
+		fields[6] = new Field("", "REMARKS", Types.CHAR, 0);
+		fields[7] = new Field("", "PROCEDURE_TYPE", Types.SMALLINT, 0);
+		
+		return getProceduresAndOrFunctions(fields, catalog, schemaPattern,
+				procedureNamePattern, true, true);
+	}
+	
+	protected java.sql.ResultSet getProceduresAndOrFunctions(
+			final Field[] fields,
+			String catalog,
+			String schemaPattern,
+			String procedureNamePattern,
+			final boolean returnProcedures,
+			final boolean returnFunctions) throws SQLException {
 		if ((procedureNamePattern == null)
 				|| (procedureNamePattern.length() == 0)) {
 			if (this.conn.getNullNamePatternMatchesAll()) {
@@ -3750,16 +3790,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 			}
 		}
-
-		Field[] fields = new Field[8];
-		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
-		fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 0);
-		fields[2] = new Field("", "PROCEDURE_NAME", Types.CHAR, 0);
-		fields[3] = new Field("", "reserved1", Types.CHAR, 0);
-		fields[4] = new Field("", "reserved2", Types.CHAR, 0);
-		fields[5] = new Field("", "reserved3", Types.CHAR, 0);
-		fields[6] = new Field("", "REMARKS", Types.CHAR, 0);
-		fields[7] = new Field("", "PROCEDURE_TYPE", Types.SMALLINT, 0);
 
 		final ArrayList procedureRows = new ArrayList();
 
@@ -3776,7 +3806,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					ResultSet proceduresRs = null;
 					boolean needsClientFiltering = true;
 					PreparedStatement proceduresStmt = conn
-							.clientPrepareStatement("SELECT name, type FROM mysql.proc WHERE name like ? and db <=> ? ORDER BY name");
+							.clientPrepareStatement("SELECT name, type, comment FROM mysql.proc WHERE name like ? and db <=> ? ORDER BY name");
 
 					try {
 						//
@@ -3834,9 +3864,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							proceduresRs = proceduresStmt.executeQuery();
 						}
 
-						convertToJdbcProcedureList(fromSelect, db,
+						if (returnProcedures) {
+							convertToJdbcProcedureList(fromSelect, db,
 								proceduresRs, needsClientFiltering, db,
 								procedureRowsOrderedByName, nameIndex);
+						}
 
 						if (!hasTypeColumn) {
 							// need to go after functions too...
@@ -3855,10 +3887,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 							proceduresRs = proceduresStmt.executeQuery();
 
-							convertToJdbcFunctionList(db, proceduresRs,
+							if (returnFunctions) {
+								convertToJdbcFunctionList(db, proceduresRs,
 									needsClientFiltering, db,
-									procedureRowsOrderedByName, nameIndex);
-
+									procedureRowsOrderedByName, nameIndex,
+									fields);
+							}
 						}
 
 						// Now, sort them
@@ -6492,7 +6526,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
-		return false;
+		// Servers before 3.22 could not do this
+		return this.conn.versionMeetsMinimum(3, 22, 0);
 	}
 
 	/**
@@ -6503,7 +6538,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
-		return false;
+		// Servers before 3.22 could not do this
+		return this.conn.versionMeetsMinimum(3, 22, 0);
 	}
 
 	/**
@@ -6514,7 +6550,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public boolean supportsCatalogsInProcedureCalls() throws SQLException {
-		return false;
+		// Servers before 3.22 could not do this
+		return this.conn.versionMeetsMinimum(3, 22, 0);
 	}
 
 	/**
@@ -6525,7 +6562,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public boolean supportsCatalogsInTableDefinitions() throws SQLException {
-		return false;
+		// Servers before 3.22 could not do this
+		return this.conn.versionMeetsMinimum(3, 22, 0);
 	}
 
 	/**
@@ -7412,8 +7450,72 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		throw new JDBC40NotYetImplementedException();
 	}
 
-	public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
+    /**
+     * Retrieves a description of the  system and user functions available 
+     * in the given catalog.
+     * <P>
+     * Only system and user function descriptions matching the schema and
+     * function name criteria are returned.  They are ordered by
+     * <code>FUNCTION_CAT</code>, <code>FUNCTION_SCHEM</code>,
+     * <code>FUNCTION_NAME</code> and 
+     * <code>SPECIFIC_ NAME</code>.
+     *
+     * <P>Each function description has the the following columns:
+     *  <OL>
+     *	<LI><B>FUNCTION_CAT</B> String => function catalog (may be <code>null</code>)
+     *	<LI><B>FUNCTION_SCHEM</B> String => function schema (may be <code>null</code>)
+     *	<LI><B>FUNCTION_NAME</B> String => function name.  This is the name 
+     * used to invoke the function
+     *	<LI><B>REMARKS</B> String => explanatory comment on the function
+     * <LI><B>FUNCTION_TYPE</B> short => kind of function:
+     *      <UL>
+     *      <LI>functionResultUnknown - Cannot determine if a return value
+     *       or table will be returned
+     *      <LI> functionNoTable- Does not return a table
+     *      <LI> functionReturnsTable - Returns a table
+     *      </UL>
+     *	<LI><B>SPECIFIC_NAME</B> String  => the name which uniquely identifies 
+     *  this function within its schema.  This is a user specified, or DBMS
+     * generated, name that may be different then the <code>FUNCTION_NAME</code> 
+     * for example with overload functions
+     *  </OL>
+     * <p>
+     * A user may not have permission to execute any of the functions that are
+     * returned by <code>getFunctions</code>
+     *
+     * @param catalog a catalog name; must match the catalog name as it
+     *        is stored in the database; "" retrieves those without a catalog;
+     *        <code>null</code> means that the catalog name should not be used to narrow
+     *        the search
+     * @param schemaPattern a schema name pattern; must match the schema name
+     *        as it is stored in the database; "" retrieves those without a schema;
+     *        <code>null</code> means that the schema name should not be used to narrow
+     *        the search
+     * @param functionNamePattern a function name pattern; must match the
+     *        function name as it is stored in the database 
+     * @return <code>ResultSet</code> - each row is a function description 
+     * @exception SQLException if a database access error occurs
+     * @see #getSearchStringEscape 
+     * @since 1.6
+     */
+	public ResultSet getFunctions(String catalog, String schemaPattern,
+			String functionNamePattern) throws SQLException {
+
+		Field[] fields = new Field[6];
+		fields[0] = new Field("", "FUNCTION_CAT", Types.CHAR,
+				MAX_IDENTIFIER_LENGTH);
+		fields[1] = new Field("", "FUNCTION_SCHEM", Types.CHAR,
+				MAX_IDENTIFIER_LENGTH);
+		fields[2] = new Field("", "FUNCTION_NAME", Types.CHAR,
+				MAX_IDENTIFIER_LENGTH);
+		fields[3] = new Field("", "REMARKS", Types.CHAR, MAX_IDENTIFIER_LENGTH);
+		fields[4] = new Field("", "FUNCTION_TYPE", Types.SMALLINT, 0);
+		fields[5] = new Field("", "SPECIFIC_NAME", Types.CHAR,
+				MAX_IDENTIFIER_LENGTH);
+
+		return getProceduresAndOrFunctions(fields, catalog, schemaPattern,
+				functionNamePattern, false, true);
+
 	}
 
 	public RowIdLifetime getRowIdLifetime() throws SQLException {

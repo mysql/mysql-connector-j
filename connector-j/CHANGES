@@ -1,7 +1,7 @@
 # Changelog
 # $Id$
 
-nn-nn-06 - Version 5.0.4
+10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 
       where server doesn't return original column names (column functions)
@@ -24,7 +24,7 @@ nn-nn-06 - Version 5.0.4
 	  
 	- Driver now supports {call sp} (without "()" if procedure has no
 	  arguments).
-  
+	  
 	- Fixed BUG#22359 - Driver was using milliseconds for
 	  Statement.setQueryTimeout() when specification says argument is
 	  to be in seconds.
@@ -48,6 +48,9 @@ nn-nn-06 - Version 5.0.4
 	  
 	- Driver now sends numeric 1 or 0 for client-prepared statement
 	  setBoolean() calls instead of '1' or '0'.
+	  
+	- DatabaseMetaData correctly reports true for supportsCatalog*()
+	  methods.
 	   
 07-26-06 - Version 5.0.3
 
