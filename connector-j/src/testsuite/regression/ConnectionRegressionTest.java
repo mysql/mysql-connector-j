@@ -1701,8 +1701,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	}
 
 	/**
-	 * Tests fix for BUG#6966, connections starting up failed-over (due to down
-	 * master) never retry master.
+	 * Tests bug where downed slave caused round robin load balance not to
+	 * cycle back to first host in the list.
 	 * 
 	 * @throws Exception
 	 *             if the test fails...Note, test is timing-dependent, but
@@ -1710,9 +1710,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	 */
 	public void testBug23281() throws Exception {
 		Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
-		props.setProperty("autoReconnect", "true");
+		props.setProperty("autoReconnect", "false");
 		props.setProperty("roundRobinLoadBalance", "true");
 		props.setProperty("failoverReadOnly", "false");
+		props.setProperty("connectTimeout", "5000");
 		
 		// Re-build the connection information
 		int firstIndexOfHost = BaseTestCase.dbUrl.indexOf("//") + 2;
@@ -1760,7 +1761,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	
 		newHostBuf.append(",");
-		newHostBuf.append(host);
+		//newHostBuf.append(host);
+		newHostBuf.append("192.0.2.1"); // non-exsitent machine from RFC3330 test network
 		newHostBuf.append(":65532"); // make sure the slave fails
 		
 		props.remove("PORT");

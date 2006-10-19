@@ -1743,6 +1743,9 @@ public class Connection extends ConnectionProperties implements
 
 		try {
 			if (!getHighAvailability() && !this.failedOver) {
+				boolean connectionGood = false;
+				Exception connectionNotEstablishedBecause = null;
+				
 				int hostIndex = 0;
 
 				//
@@ -1757,6 +1760,7 @@ public class Connection extends ConnectionProperties implements
 				}
 
 				for (; hostIndex < this.hostListSize; hostIndex++) {
+
 					if (hostIndex == 0) {
 						this.hasTriedMasterFlag = true;
 					}
@@ -1791,6 +1795,7 @@ public class Connection extends ConnectionProperties implements
 						this.io = new MysqlIO(newHost, newPort, mergedProps,
 								getSocketFactoryClassName(), this,
 								getSocketTimeout());
+	
 						this.io.doHandshake(this.user, this.password,
 								this.database);
 						this.isClosed = false;
@@ -1831,43 +1836,55 @@ public class Connection extends ConnectionProperties implements
 							}
 						}
 
-						break; // low-level connection succeeded
-					} catch (SQLException sqlEx) {
-						if (this.io != null) {
-							this.io.forceClose();
-						}
-
-						String sqlState = sqlEx.getSQLState();
-
-						if ((sqlState == null)
-								|| !sqlState
-										.equals(SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE)) {
-							throw sqlEx;
-						}
+						connectionGood = true;
 						
-						//	Check next host, it might be up...
-						if (getRoundRobinLoadBalance()) {
-							hostIndex = getNextRoundRobinHostIndex(getURL(),
-									this.hostList);
-						} else if ((this.hostListSize - 1) == hostIndex) {
-							throw sqlEx;
-						}
-					} catch (Exception unknownException) {
+						break; // low-level connection succeeded
+					} catch (Exception EEE) {
 						if (this.io != null) {
 							this.io.forceClose();
+						}
+
+						connectionNotEstablishedBecause = EEE;
+						
+						connectionGood = false;
+						
+						if (EEE instanceof SQLException) {
+							SQLException sqlEx = (SQLException)EEE;
+						
+							String sqlState = sqlEx.getSQLState();
+	
+							// If this isn't a communications failure, it will probably never succeed, so
+							// give up right here and now ....
+							if ((sqlState == null)
+									|| !sqlState
+											.equals(SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE)) {
+								throw sqlEx;
+							}
 						}
 
 						// Check next host, it might be up...
 						if (getRoundRobinLoadBalance()) {
 							hostIndex = getNextRoundRobinHostIndex(getURL(),
-									this.hostList);
+									this.hostList) - 1 /* incremented by for loop next time around */;
 						} else if ((this.hostListSize - 1) == hostIndex) {
 							throw new CommunicationsException(this,
 									(this.io != null) ? this.io
 											.getLastPacketSentTimeMs() : 0,
-									unknownException);
+											EEE);
 						}
 					}
+				}
+				
+				if (!connectionGood) {
+					// We've really failed!
+					throw SQLError.createSQLException(
+							"Could not create connection to database server due to underlying exception: '"
+									+ connectionNotEstablishedBecause
+									+ "'."
+									+ (getParanoid() ? ""
+											: Util
+													.stackTraceToString(connectionNotEstablishedBecause)),
+							SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
 				}
 			} else {
 				double timeout = getInitialTimeout();
@@ -1979,8 +1996,8 @@ public class Connection extends ConnectionProperties implements
 							// Check next host, it might be up...
 							if (getRoundRobinLoadBalance()) {
 								hostIndex = getNextRoundRobinHostIndex(getURL(),
-										this.hostList);
-							} 
+										this.hostList) - 1 /* incremented by for loop next time around */;
+							}
 						}
 
 						if (connectionGood) {

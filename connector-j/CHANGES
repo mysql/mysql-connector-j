@@ -223,7 +223,12 @@ nn-nn-06 - Version 5.0.4
       for a cancel request to block other cancel requests if all run from the
       same thread.
       
-nn-nn-06 - Version 3.1.14
+nn-nn-06 - Version 3.1.15
+
+	- Fixed BUG#23281 - Downed slave caused round-robin load balance to
+	  not cycle back to first host in list.
+	  
+10-19-06 - Version 3.1.14
 
     - Fixed BUG#20479 - Updatable result set throws ClassCastException
 	  when there is row data and moveToInsertRow() is called.
@@ -244,7 +249,7 @@ nn-nn-06 - Version 3.1.14
 	  
 	- Fixed BUG#20687 - Can't pool server-side prepared statements, exception
 	  raised when re-using them.
-	  	  
+	  
 	- Fixed BUG#21062 - ResultSet.getSomeInteger() doesn't work for BIT(>1).
 	
 	- Fixed BUG#18880 - ResultSet.getFloatFromString() can't retrieve
@@ -262,16 +267,19 @@ nn-nn-06 - Version 3.1.14
 	  (i.e. from DatabaseMetaData method calls, or from getGeneratedKeys())
 	  result sets would raise a NullPointerException.
 	  
-	- Fixed Bug#21207 - Driver throws NPE when tracing prepared statements 
-	  that have been closed (in asSQL()).    	  	  	  	  	  
+	- Fixed Bug#21207 - Driver throws NPE when tracing prepared statements that
+	  have been closed (in asSQL()).
 	  
 	- Removed logger autodectection altogether, must now specify logger 
 	  explitly if you want to use a logger other than one that logs
 	  to STDERR.
 	  
-    - Fixed BUG#22290 - Driver issues truncation on write exception when
+	- Fixed BUG#22290 - Driver issues truncation on write exception when
 	  it shouldn't (due to sending big decimal incorrectly to server with
 	  server-side prepared statement).
+	  
+	- Driver now sends numeric 1 or 0 for client-prepared statement
+	  setBoolean() calls instead of '1' or '0'.
 	  
 	- Fixed bug where driver would not advance to next host if 
 	  roundRobinLoadBalance=true and the last host in the list is down.
@@ -279,12 +287,18 @@ nn-nn-06 - Version 3.1.14
 	- Fixed BUG#18258 - DatabaseMetaData.getTables(), columns() with bad
 	  catalog parameter threw exception rather than return empty result
 	  set (as required by spec).
-	  
+	
 	- Check and store value for continueBatchOnError property in constructor
       of Statements, rather than when executing batches, so that Connections
       closed out from underneath statements don't cause NullPointerExceptions
       when it's required to check this property.
-      	  	  	   
+      
+    - Fixed bug when calling stored functions, where parameters weren't 
+      numbered correctly (first parameter is now the return value, subsequent
+      parameters if specified start at index "2").
+       
+	- Fixed BUG#21814 - time values outside valid range silently wrap.
+	       	  	         	  	   
 05-26-06 - Version 3.1.13
 
     - Fixed BUG#15464 - INOUT parameter does not store IN value.
