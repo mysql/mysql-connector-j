@@ -231,6 +231,8 @@ nn-nn-06 - Version 3.1.15
 	- Fixed BUG#23281 - Downed slave caused round-robin load balance to
 	  not cycle back to first host in list.
 	  
+	- Disabled use of server-side prepared statements by default.
+	
 10-19-06 - Version 3.1.14
 
     - Fixed BUG#20479 - Updatable result set throws ClassCastException

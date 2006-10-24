@@ -800,10 +800,10 @@ public class ConnectionProperties implements Serializable {
 
 	private BooleanConnectionProperty detectServerPreparedStmts = new BooleanConnectionProperty(
 			"useServerPrepStmts",
-			true,
-			"Use server-side prepared statements if the server supports them? (defaults to 'true').",
+			false,
+			"Use server-side prepared statements if the server supports them?",
 			"3.1.0", MISC_CATEGORY, Integer.MIN_VALUE);
-
+	
 	private BooleanConnectionProperty dontTrackOpenResources = new BooleanConnectionProperty(
 			"dontTrackOpenResources",
 			false,
