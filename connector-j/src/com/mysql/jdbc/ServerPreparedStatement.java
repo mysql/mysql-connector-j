@@ -643,7 +643,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 							} catch (SQLException ex) {
 								updateCounts[commandIndex] = EXECUTE_FAILED;
 
-								if (this.connection.getContinueBatchOnError()) {
+								if (this.continueBatchOnError) {
 									sqlEx = ex;
 								} else {
 									int[] newUpdateCounts = new int[commandIndex];

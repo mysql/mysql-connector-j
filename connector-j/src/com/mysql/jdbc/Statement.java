@@ -231,9 +231,11 @@ public class Statement implements java.sql.Statement {
 	 */
 	protected boolean holdResultsOpenOverClose = false;
 
-protected ArrayList batchedGeneratedKeys = null;
+	protected ArrayList batchedGeneratedKeys = null;
 
 	protected boolean retrieveGeneratedKeys = false;
+	
+	protected boolean continueBatchOnError = false;
 	
 	/**
 	 * Constructor for a Statement.
@@ -258,7 +260,8 @@ protected ArrayList batchedGeneratedKeys = null;
 		
 		this.currentCatalog = catalog;
 		this.pedantic = this.connection.getPedantic();
-
+		this.continueBatchOnError = this.connection.getContinueBatchOnError();
+		
 		if (!this.connection.getDontTrackOpenResources()) {
 			this.connection.registerStatement(this);
 		}
@@ -897,7 +900,7 @@ protected ArrayList batchedGeneratedKeys = null;
 						} catch (SQLException ex) {
 							updateCounts[commandIndex] = EXECUTE_FAILED;
 
-							if (locallyScopedConn.getContinueBatchOnError()) {
+							if (this.continueBatchOnError) {
 								sqlEx = ex;
 							} else {
 								int[] newUpdateCounts = new int[commandIndex];

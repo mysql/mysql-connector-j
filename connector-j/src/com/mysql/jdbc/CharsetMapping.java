@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2006 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -62,6 +62,8 @@ public class CharsetMapping {
 	private static final Map MULTIBYTE_CHARSETS;
 
 	private static final Map MYSQL_TO_JAVA_CHARSET_MAP;
+	
+	private static final String NOT_USED = "ISO8859_1"; // punting for not-used character sets
 
 	static {	
 		
@@ -102,8 +104,8 @@ public class CharsetMapping {
 			+ "ISO8859_13 =		estonia,"
 			+ "Cp437 =             *>4.1.0 cp850,"
 	 		+ "Cp437 =				dos,"
-	 		+ "Cp850 =				Cp850,"
-			+ "Cp852 = 			Cp852,"
+	 		+ "Cp850 =				cp850,"
+			+ "Cp852 = 			cp852,"
 	 		+ "Cp866 = 			cp866,"
 	 		+ "KOI8_R = 			koi8_ru,"
 			+ "KOI8_R = 			>4.1.0 koi8r,"
@@ -239,18 +241,18 @@ public class CharsetMapping {
 		try {
 			INDEX_TO_CHARSET[1] = getJavaEncodingForMysqlEncoding("big5", null);
 			INDEX_TO_CHARSET[2] = getJavaEncodingForMysqlEncoding("czech", null);
-			INDEX_TO_CHARSET[3] = getJavaEncodingForMysqlEncoding("dec8", null);
-			INDEX_TO_CHARSET[4] = getJavaEncodingForMysqlEncoding("dos", null);
+			INDEX_TO_CHARSET[3] = "ISO8859_1"; // punting for "dec8"
+			INDEX_TO_CHARSET[4] = "ISO8859_1"; // punting for "dos"
 			INDEX_TO_CHARSET[5] = getJavaEncodingForMysqlEncoding("german1",
 					null);
-			INDEX_TO_CHARSET[6] = getJavaEncodingForMysqlEncoding("hp8", null);
+			INDEX_TO_CHARSET[6] = "ISO8859_1"; // punting for "hp8"
 			INDEX_TO_CHARSET[7] = getJavaEncodingForMysqlEncoding("koi8_ru",
 					null);
 			INDEX_TO_CHARSET[8] = getJavaEncodingForMysqlEncoding("latin1",
 					null);
 			INDEX_TO_CHARSET[9] = getJavaEncodingForMysqlEncoding("latin2",
 					null);
-			INDEX_TO_CHARSET[10] = getJavaEncodingForMysqlEncoding("swe7", null);
+			INDEX_TO_CHARSET[10] = "ISO8859_1"; // punting for "swe7"
 			INDEX_TO_CHARSET[11] = getJavaEncodingForMysqlEncoding("usa7", null);
 			INDEX_TO_CHARSET[12] = getJavaEncodingForMysqlEncoding("ujis", null);
 			INDEX_TO_CHARSET[13] = getJavaEncodingForMysqlEncoding("sjis", null);
@@ -260,6 +262,9 @@ public class CharsetMapping {
 					null);
 			INDEX_TO_CHARSET[16] = getJavaEncodingForMysqlEncoding("hebrew",
 					null);
+			
+			INDEX_TO_CHARSET[17] = NOT_USED; // not used in the server 
+			
 			INDEX_TO_CHARSET[18] = getJavaEncodingForMysqlEncoding("tis620",
 					null);
 			INDEX_TO_CHARSET[19] = getJavaEncodingForMysqlEncoding("euc_kr",
@@ -268,8 +273,7 @@ public class CharsetMapping {
 					null);
 			INDEX_TO_CHARSET[21] = getJavaEncodingForMysqlEncoding("hungarian",
 					null);
-			INDEX_TO_CHARSET[22] = getJavaEncodingForMysqlEncoding("koi8_ukr",
-					null);
+			INDEX_TO_CHARSET[22] = "KOI8_R"; //punting for "koi8_ukr"
 			INDEX_TO_CHARSET[23] = getJavaEncodingForMysqlEncoding(
 					"win1251ukr", null);
 			INDEX_TO_CHARSET[24] = getJavaEncodingForMysqlEncoding("gb2312",
@@ -287,60 +291,62 @@ public class CharsetMapping {
 					null);
 			INDEX_TO_CHARSET[31] = getJavaEncodingForMysqlEncoding("latin1_de",
 					null);
-			INDEX_TO_CHARSET[32] = getJavaEncodingForMysqlEncoding("armscii8",
-					null);
+			INDEX_TO_CHARSET[32] = "ISO8859_1"; // punting "armscii8"
 			INDEX_TO_CHARSET[33] = getJavaEncodingForMysqlEncoding("utf8", null);
-			INDEX_TO_CHARSET[34] = getJavaEncodingForMysqlEncoding("win1250ch",
-					null);
+			INDEX_TO_CHARSET[34] = "Cp1250"; // punting "win1250ch"
 			INDEX_TO_CHARSET[35] = getJavaEncodingForMysqlEncoding("ucs2", null);
 			INDEX_TO_CHARSET[36] = getJavaEncodingForMysqlEncoding("cp866",
 					null);
-			INDEX_TO_CHARSET[37] = getJavaEncodingForMysqlEncoding("keybcs2",
-					null);
+			INDEX_TO_CHARSET[37] = "Cp895"; // punting "keybcs2"
 			INDEX_TO_CHARSET[38] = getJavaEncodingForMysqlEncoding("macce",
 					null);
 			INDEX_TO_CHARSET[39] = getJavaEncodingForMysqlEncoding("macroman",
 					null);
-			INDEX_TO_CHARSET[40] = getJavaEncodingForMysqlEncoding("pclatin2",
-					null);
+			INDEX_TO_CHARSET[40] = "latin2"; // punting "pclatin2"
 			INDEX_TO_CHARSET[41] = getJavaEncodingForMysqlEncoding("latvian",
 					null);
 			INDEX_TO_CHARSET[42] = getJavaEncodingForMysqlEncoding("latvian1",
 					null);
-			INDEX_TO_CHARSET[43] = getJavaEncodingForMysqlEncoding("maccebin",
+			INDEX_TO_CHARSET[43] = getJavaEncodingForMysqlEncoding("macce",
 					null);
-			INDEX_TO_CHARSET[44] = getJavaEncodingForMysqlEncoding("macceciai",
+			INDEX_TO_CHARSET[44] = getJavaEncodingForMysqlEncoding("macce",
 					null);
-			INDEX_TO_CHARSET[45] = getJavaEncodingForMysqlEncoding("maccecias",
+			INDEX_TO_CHARSET[45] = getJavaEncodingForMysqlEncoding("macce",
 					null);
-			INDEX_TO_CHARSET[46] = getJavaEncodingForMysqlEncoding("maccecsas",
+			INDEX_TO_CHARSET[46] = getJavaEncodingForMysqlEncoding("macce",
 					null);
-			INDEX_TO_CHARSET[47] = getJavaEncodingForMysqlEncoding("latin1bin",
+			INDEX_TO_CHARSET[47] = getJavaEncodingForMysqlEncoding("latin1",
 					null);
 			INDEX_TO_CHARSET[48] = getJavaEncodingForMysqlEncoding(
-					"latin1cias", null);
+					"latin1", null);
 			INDEX_TO_CHARSET[49] = getJavaEncodingForMysqlEncoding(
-					"latin1csas", null);
-			INDEX_TO_CHARSET[50] = getJavaEncodingForMysqlEncoding("cp1251bin",
+					"latin1", null);
+			INDEX_TO_CHARSET[50] = getJavaEncodingForMysqlEncoding("cp1251",
 					null);
 			INDEX_TO_CHARSET[51] = getJavaEncodingForMysqlEncoding(
-					"cp1251cias", null);
+					"cp1251", null);
 			INDEX_TO_CHARSET[52] = getJavaEncodingForMysqlEncoding(
-					"cp1251csas", null);
+					"cp1251", null);
 			INDEX_TO_CHARSET[53] = getJavaEncodingForMysqlEncoding(
-					"macromanbin", null);
+					"macroman", null);
 			INDEX_TO_CHARSET[54] = getJavaEncodingForMysqlEncoding(
-					"macromancias", null);
+					"macroman", null);
 			INDEX_TO_CHARSET[55] = getJavaEncodingForMysqlEncoding(
-					"macromanciai", null);
+					"macroman", null);
 			INDEX_TO_CHARSET[56] = getJavaEncodingForMysqlEncoding(
-					"macromancsas", null);
+					"macroman", null);
 			INDEX_TO_CHARSET[57] = getJavaEncodingForMysqlEncoding("cp1256",
 					null);
+			
+			INDEX_TO_CHARSET[58] = NOT_USED; // not used
+			INDEX_TO_CHARSET[59] = NOT_USED; // not used
+			INDEX_TO_CHARSET[60] = NOT_USED; // not used
+			INDEX_TO_CHARSET[61] = NOT_USED; // not used
+			INDEX_TO_CHARSET[62] = NOT_USED; // not used 
+			
 			INDEX_TO_CHARSET[63] = getJavaEncodingForMysqlEncoding("binary",
 					null);
-			INDEX_TO_CHARSET[64] = getJavaEncodingForMysqlEncoding("armscii",
-					null);
+			INDEX_TO_CHARSET[64] = "ISO8859_2"; // punting "armscii"
 			INDEX_TO_CHARSET[65] = getJavaEncodingForMysqlEncoding("ascii",
 					null);
 			INDEX_TO_CHARSET[66] = getJavaEncodingForMysqlEncoding("cp1250",
@@ -349,18 +355,19 @@ public class CharsetMapping {
 					null);
 			INDEX_TO_CHARSET[68] = getJavaEncodingForMysqlEncoding("cp866",
 					null);
-			INDEX_TO_CHARSET[69] = getJavaEncodingForMysqlEncoding("dec8", null);
+			INDEX_TO_CHARSET[69] = "US-ASCII"; // punting for "dec8"
 			INDEX_TO_CHARSET[70] = getJavaEncodingForMysqlEncoding("greek",
 					null);
 			INDEX_TO_CHARSET[71] = getJavaEncodingForMysqlEncoding("hebrew",
 					null);
-			INDEX_TO_CHARSET[72] = getJavaEncodingForMysqlEncoding("hp8", null);
-			INDEX_TO_CHARSET[73] = getJavaEncodingForMysqlEncoding("keybcs2",
-					null);
+			INDEX_TO_CHARSET[72] = "US-ASCII"; // punting for "hp8"
+			INDEX_TO_CHARSET[73] = "Cp895"; // punting for "keybcs2"
 			INDEX_TO_CHARSET[74] = getJavaEncodingForMysqlEncoding("koi8r",
 					null);
-			INDEX_TO_CHARSET[75] = getJavaEncodingForMysqlEncoding("koi8ukr",
-					null);
+			INDEX_TO_CHARSET[75] = "KOI8_r"; // punting for koi8ukr"
+			
+			INDEX_TO_CHARSET[76] = NOT_USED; // not used
+			
 			INDEX_TO_CHARSET[77] = getJavaEncodingForMysqlEncoding("latin2",
 					null);
 			INDEX_TO_CHARSET[78] = getJavaEncodingForMysqlEncoding("latin5",
@@ -371,7 +378,7 @@ public class CharsetMapping {
 					null);
 			INDEX_TO_CHARSET[81] = getJavaEncodingForMysqlEncoding("cp852",
 					null);
-			INDEX_TO_CHARSET[82] = getJavaEncodingForMysqlEncoding("swe7", null);
+			INDEX_TO_CHARSET[82] = "ISO8859_1"; // punting for "swe7"
 			INDEX_TO_CHARSET[83] = getJavaEncodingForMysqlEncoding("utf8", null);
 			INDEX_TO_CHARSET[84] = getJavaEncodingForMysqlEncoding("big5", null);
 			INDEX_TO_CHARSET[85] = getJavaEncodingForMysqlEncoding("euckr",
@@ -384,10 +391,8 @@ public class CharsetMapping {
 					null);
 			INDEX_TO_CHARSET[90] = getJavaEncodingForMysqlEncoding("ucs2", null);
 			INDEX_TO_CHARSET[91] = getJavaEncodingForMysqlEncoding("ujis", null);
-			INDEX_TO_CHARSET[92] = getJavaEncodingForMysqlEncoding("geostd8",
-					null);
-			INDEX_TO_CHARSET[93] = getJavaEncodingForMysqlEncoding("geostd8",
-					null);
+			INDEX_TO_CHARSET[92] = "US-ASCII"; //punting for "geostd8"
+			INDEX_TO_CHARSET[93] = "US-ASCII"; // punting for "geostd8"
 			INDEX_TO_CHARSET[94] = getJavaEncodingForMysqlEncoding("latin1",
 					null);
 			INDEX_TO_CHARSET[95] = getJavaEncodingForMysqlEncoding("cp932",
@@ -398,6 +403,10 @@ public class CharsetMapping {
 					null);
 			INDEX_TO_CHARSET[98] = getJavaEncodingForMysqlEncoding("eucjpms",
 					null);
+			
+			for (int i = 99; i < 128; i++) {
+				INDEX_TO_CHARSET[i] = NOT_USED; // not used
+			}
 			
 			INDEX_TO_CHARSET[128] = getJavaEncodingForMysqlEncoding("ucs2",
 					null);
@@ -438,6 +447,10 @@ public class CharsetMapping {
 			INDEX_TO_CHARSET[146] = getJavaEncodingForMysqlEncoding("ucs2",
 					null);
 
+			for (int i = 147; i < 192; i++) {
+				INDEX_TO_CHARSET[i] = NOT_USED; // not used
+			}
+			
 			INDEX_TO_CHARSET[192] = getJavaEncodingForMysqlEncoding("utf8",
 					null);
 			INDEX_TO_CHARSET[193] = getJavaEncodingForMysqlEncoding("utf8",
@@ -476,6 +489,14 @@ public class CharsetMapping {
 					null);
 			INDEX_TO_CHARSET[210] = getJavaEncodingForMysqlEncoding("utf8",
 					null);
+
+			// Sanity check
+			
+			for (int i = 1; i < INDEX_TO_CHARSET.length; i++) {
+				if (INDEX_TO_CHARSET[i] == null) {
+					throw new RuntimeException("Assertion failure: No mapping from charset index " + i + " to a Java character set");
+				}
+			}
 		} catch (SQLException sqlEx) {
 			// ignore, it won't happen in this case
 		}
@@ -511,7 +532,7 @@ public class CharsetMapping {
 			Collections.unmodifiableMap(tempMap);
 	}
 
-	final static String getJavaEncodingForMysqlEncoding(String mysqlEncoding,
+	public final static String getJavaEncodingForMysqlEncoding(String mysqlEncoding,
 			Connection conn) throws SQLException {
 		
 		if (conn != null && conn.versionMeetsMinimum(4, 1, 0) && 
@@ -522,7 +543,7 @@ public class CharsetMapping {
 		return (String) MYSQL_TO_JAVA_CHARSET_MAP.get(mysqlEncoding);
 	}
 
-	final static String getMysqlEncodingForJavaEncoding(String javaEncodingUC,
+	public final static String getMysqlEncodingForJavaEncoding(String javaEncodingUC,
 			Connection conn) throws SQLException {
 		List mysqlEncodings = (List) CharsetMapping.JAVA_UC_TO_MYSQL_CHARSET_MAP
 				.get(javaEncodingUC);

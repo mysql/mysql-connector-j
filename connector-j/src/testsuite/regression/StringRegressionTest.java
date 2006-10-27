@@ -36,6 +36,7 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.StringUtils;
 
 /**
@@ -833,6 +834,52 @@ public class StringRegressionTest extends BaseTestCase {
 					"SELECT field1 FROM testCp1252");
 			this.rs.next();
 			assertEquals(this.rs.getString(1), codePage1252);
+		}
+	}
+
+	/**
+	 * Tests fix for BUG#23645 - Some collations/character sets reported as "unknown"
+	 * (specifically cias variants of existing character sets), and inability to override
+	 * the detected server character set.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug23645() throws Exception {
+		if (versionMeetsMinimum(4, 1)) {
+			// Part of this isn't easily testable, hence the assertion in CharsetMapping
+			// that checks for mappings existing in both directions...
+			
+			// What we test here is the ability to override the character mapping
+			// when the server returns an "unknown" character encoding.
+			
+			String currentlyConfiguredCharacterSet = getSingleIndexedValueWithQuery(2, "SHOW VARIABLES LIKE 'character_set_connection'").toString();
+			System.out.println(currentlyConfiguredCharacterSet);
+			
+			String javaNameForMysqlName = CharsetMapping.getJavaEncodingForMysqlEncoding(currentlyConfiguredCharacterSet, null);
+			System.out.println(javaNameForMysqlName);
+			
+			for (int i = 1; i < CharsetMapping.INDEX_TO_CHARSET.length; i++) {
+				String possibleCharset = CharsetMapping.INDEX_TO_CHARSET[i];
+				
+				if (!javaNameForMysqlName.equals(possibleCharset)) {
+					System.out.println(possibleCharset);
+					
+					Properties props = new Properties();
+					props.setProperty("characterEncoding", possibleCharset);
+					props.setProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex", "65535");
+					
+					Connection forcedCharConn = null;
+					
+					forcedCharConn = getConnectionWithProps(props);
+					
+					String forcedCharset = getSingleIndexedValueWithQuery(forcedCharConn, 2, "SHOW VARIABLES LIKE 'character_set_connection'").toString();
+					
+					System.out.println(forcedCharset);
+					
+					break;
+				}
+			}
+			
 		}
 	}
 }

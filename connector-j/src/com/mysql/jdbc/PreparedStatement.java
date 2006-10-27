@@ -1087,7 +1087,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 					} catch (SQLException ex) {
 						updateCounts[commandIndex] = EXECUTE_FAILED;
 
-						if (locallyScopedConn.getContinueBatchOnError()) {
+						if (this.continueBatchOnError) {
 							sqlEx = ex;
 						} else {
 							int[] newUpdateCounts = new int[commandIndex];
@@ -2089,6 +2089,8 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		if (x == null) {
 			setNull(parameterIndex, java.sql.Types.BINARY);
 		} else {
+			int parameterIndexOffset = getParameterIndexOffset();
+			
 			if ((parameterIndex < 1)
 					|| (parameterIndex > this.staticSqlStrings.length)) {
 				throw SQLError.createSQLException(
@@ -2096,12 +2098,16 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 								+ parameterIndex
 								+ Messages.getString("PreparedStatement.3") + this.staticSqlStrings.length + Messages.getString("PreparedStatement.4"), //$NON-NLS-1$ //$NON-NLS-2$
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			} else if (parameterIndexOffset == -1 && parameterIndex == 1) {
+				throw SQLError.createSQLException("Can't set IN parameter for return value of stored function call.", 
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 			}
 
-			this.parameterStreams[parameterIndex - 1] = x;
-			this.isStream[parameterIndex - 1] = true;
-			this.streamLengths[parameterIndex - 1] = length;
-			this.isNull[parameterIndex - 1] = false;
+
+			this.parameterStreams[parameterIndex - 1 + parameterIndexOffset] = x;
+			this.isStream[parameterIndex - 1 + parameterIndexOffset] = true;
+			this.streamLengths[parameterIndex - 1 + parameterIndexOffset] = length;
+			this.isNull[parameterIndex - 1 + parameterIndexOffset] = false;
 		}
 	}
 
@@ -2569,6 +2575,8 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
 
+		int parameterIndexOffset = getParameterIndexOffset();
+		
 		if ((paramIndex < 1)) {
 			throw SQLError.createSQLException(
 					Messages.getString("PreparedStatement.49") //$NON-NLS-1$
@@ -2580,12 +2588,15 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 							+ paramIndex
 							+ Messages.getString("PreparedStatement.52") + (this.parameterValues.length) + Messages.getString("PreparedStatement.53"), //$NON-NLS-1$ //$NON-NLS-2$
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+		} else if (parameterIndexOffset == -1 && paramIndex == 1) {
+			throw SQLError.createSQLException("Can't set IN parameter for return value of stored function call.", 
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
 
-		this.isStream[paramIndex - 1] = false;
-		this.isNull[paramIndex - 1] = false;
-		this.parameterStreams[paramIndex - 1] = null;
-		this.parameterValues[paramIndex - 1] = val;
+		this.isStream[paramIndex - 1 + parameterIndexOffset] = false;
+		this.isNull[paramIndex - 1 + parameterIndexOffset] = false;
+		this.parameterStreams[paramIndex - 1 + parameterIndexOffset] = null;
+		this.parameterValues[paramIndex - 1 + parameterIndexOffset] = val;
 	}
 
 	private final void setInternal(int paramIndex, String val)
@@ -4044,7 +4055,18 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	public synchronized boolean isClosed() throws SQLException {
 		return this.isClosed;
 	}
-
+	
+	/** 
+	 * For calling stored functions, this will be -1 as we don't really count
+	 * the first '?' parameter marker, it's only syntax, but JDBC counts it
+	 * as #1, otherwise it will return 0 
+	 *
+	 */
+	
+	protected int getParameterIndexOffset() {
+		return 0;
+	}
+	
 	/**
 	 * JDBC 4.0 Set a NCLOB parameter.
 	 * 

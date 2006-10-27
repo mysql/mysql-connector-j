@@ -729,7 +729,7 @@ class MysqlIO {
                 return !inTransactionOnServer;
             }
 
-            return !autoCommitModeOnServer;
+            return autoCommitModeOnServer != autoCommitFlag;
         }
 
         return true;

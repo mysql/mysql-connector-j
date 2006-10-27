@@ -467,11 +467,17 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			try {
 				this.stmt.executeUpdate("DROP FUNCTION IF EXISTS testBug10310");
 				this.stmt
-						.executeUpdate("CREATE FUNCTION testBug10310(a float) RETURNS INT"
+						.executeUpdate("CREATE FUNCTION testBug10310(a float, b bigint, c int) RETURNS INT"
 								+ "\nBEGIN" + "\nRETURN a;" + "\nEND");
-				cStmt = this.conn.prepareCall("{? = CALL testBug10310(?)}");
+				cStmt = this.conn.prepareCall("{? = CALL testBug10310(?,?,?)}");
 				cStmt.registerOutParameter(1, Types.INTEGER);
-				cStmt.setFloat(1, 2);
+				cStmt.setFloat(2, 2);
+				cStmt.setInt(3, 1);
+				cStmt.setInt(4, 1);
+				
+				assertEquals(4, cStmt.getParameterMetaData().getParameterCount());
+				assertEquals(Types.OTHER, cStmt.getParameterMetaData().getParameterType(1));
+				
 				assertFalse(cStmt.execute());
 				assertEquals(2f, cStmt.getInt(1), .001);
 				assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
@@ -482,6 +488,20 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
 						.getName());
 
+				cStmt.setFloat("a", 4);
+				cStmt.setInt("b", 1);
+				cStmt.setInt("c", 1);
+				
+				assertFalse(cStmt.execute());
+				assertEquals(4f, cStmt.getInt(1), .001);
+				assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
+						.getName());
+				
+				assertEquals(-1, cStmt.executeUpdate());
+				assertEquals(4f, cStmt.getInt(1), .001);
+				assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
+						.getName());
+				
 				// Check metadata while we're at it
 
 				java.sql.DatabaseMetaData dbmd = this.conn.getMetaData();
@@ -493,8 +513,10 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 						.getString("PROCEDURE_NAME"));
 				assertEquals(DatabaseMetaData.procedureReturnsResult, this.rs
 						.getShort("PROCEDURE_TYPE"));
-				cStmt.setNull(1, Types.FLOAT);
-
+				cStmt.setNull(2, Types.FLOAT);
+				cStmt.setInt(3, 1);
+				cStmt.setInt(4, 1);
+				
 				assertFalse(cStmt.execute());
 				assertEquals(0f, cStmt.getInt(1), .001);
 				assertEquals(true, cStmt.wasNull());
@@ -507,6 +529,25 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				assertEquals(null, cStmt.getObject(1));
 				assertEquals(true, cStmt.wasNull());
 
+
+				// Check with literals, not all parameters filled!
+				cStmt = this.conn.prepareCall("{? = CALL testBug10310(4,5,?)}");
+				cStmt.registerOutParameter(1, Types.INTEGER);
+				cStmt.setInt(2, 1);
+				
+				assertFalse(cStmt.execute());
+				assertEquals(4f, cStmt.getInt(1), .001);
+				assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
+						.getName());
+				
+				assertEquals(-1, cStmt.executeUpdate());
+				assertEquals(4f, cStmt.getInt(1), .001);
+				assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
+						.getName());
+				
+				assertEquals(2, cStmt.getParameterMetaData().getParameterCount());
+				assertEquals(Types.OTHER, cStmt.getParameterMetaData().getParameterType(1));
+				assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(2));
 			} finally {
 				if (this.rs != null) {
 					this.rs.close();

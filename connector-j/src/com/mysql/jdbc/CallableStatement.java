@@ -124,6 +124,42 @@ public class CallableStatement extends PreparedStatement implements
 
 		Map parameterMap;
 
+		/**
+		 * Constructor that converts a full list of parameter metadata into one
+		 * that only represents the placeholders present in the {CALL ()}.
+		 * 
+		 * @param fullParamInfo the metadata for all parameters for this stored 
+		 * procedure or function.
+		 */
+		CallableStatementParamInfo(CallableStatementParamInfo fullParamInfo) {
+			this.nativeSql = originalSql;
+			this.catalogInUse = currentCatalog;
+			isFunctionCall = fullParamInfo.isFunctionCall;
+			int[] localParameterMap = placeholderToParameterIndexMap;
+			int parameterMapLength = localParameterMap.length;
+			
+			parameterList = new ArrayList(fullParamInfo.numParameters);
+			parameterMap = new HashMap(fullParamInfo.numParameters);
+			
+			if (isFunctionCall) {
+				// Take the return value
+				parameterList.add(fullParamInfo.parameterList.get(0));
+			}
+			
+			int offset = isFunctionCall ? 1 : 0;
+			
+			for (int i = 0; i < parameterMapLength; i++) {
+				if (localParameterMap[i] != 0) {
+					CallableStatementParam param = (CallableStatementParam)fullParamInfo.parameterList.get(localParameterMap[i] + offset);
+					
+					parameterList.add(param);
+					parameterMap.put(param.paramName, param);
+				}
+			}
+			
+			this.numParameters = parameterList.size();
+		}
+		
 		CallableStatementParamInfo(java.sql.ResultSet paramTypesRs)
 				throws SQLException {
 			boolean hadRows = paramTypesRs.last();
@@ -144,16 +180,15 @@ public class CallableStatement extends PreparedStatement implements
 			} else {
 				this.numParameters = 0;
 			}
+			
+			if (isFunctionCall) {
+				this.numParameters += 1;
+		}
 		}
 
 		private void addParametersFromDBMD(java.sql.ResultSet paramTypesRs)
 				throws SQLException {
 			int i = 0;
-
-			if (isFunctionCall) {
-				// first row will be return value parameter
-				paramTypesRs.next();
-			}
 
 			while (paramTypesRs.next()) {
 				String paramName = paramTypesRs.getString(4);
@@ -162,7 +197,10 @@ public class CallableStatement extends PreparedStatement implements
 				boolean isOutParameter = false;
 				boolean isInParameter = false;
 
-				if (inOutModifier == DatabaseMetaData.procedureColumnInOut) {
+				if (i == 0 && isFunctionCall) {
+					isOutParameter = true;
+					isInParameter = false;
+				} else if (inOutModifier == DatabaseMetaData.procedureColumnInOut) {
 					isOutParameter = true;
 					isInParameter = true;
 				} else if (inOutModifier == DatabaseMetaData.procedureColumnIn) {
@@ -309,6 +347,10 @@ public class CallableStatement extends PreparedStatement implements
 			super(paramTypesRs);
 		}
 
+		public CallableStatementParamInfoJDBC3(CallableStatementParamInfo paramInfo) {
+			super(paramInfo);
+		}
+		
 		public boolean isWrapperFor(Class arg0) throws SQLException {
 			throw new JDBC40NotYetImplementedException();
 		}
@@ -378,6 +420,10 @@ public class CallableStatement extends PreparedStatement implements
 
 		this.paramInfo = paramInfo;
 		this.callingStoredFunction = this.paramInfo.isFunctionCall;
+		
+		if (this.callingStoredFunction) {
+			this.parameterCount += 1;
+	}
 	}
 
 	/**
@@ -397,6 +443,10 @@ public class CallableStatement extends PreparedStatement implements
 
 		determineParameterTypes();
 		generateParameterMap();
+		
+		if (this.callingStoredFunction) {
+			this.parameterCount += 1;
+	}
 	}
 
 	private int[] placeholderToParameterIndexMap;
@@ -406,12 +456,21 @@ public class CallableStatement extends PreparedStatement implements
 		// provide a map from the specified placeholders to the actual
 		// parameter numbers
 		
+		int parameterCountFromMetaData = this.paramInfo.getParameterCount();
+		
+		// Ignore the first ? if this is a stored function, it doesn't count
+		
+		if (this.callingStoredFunction) {
+			parameterCountFromMetaData--;
+		}
+		
 		if (this.paramInfo != null &&
-				this.parameterCount != this.paramInfo.getParameterCount()) {
+				this.parameterCount != parameterCountFromMetaData) {
 			this.placeholderToParameterIndexMap = new int[this.parameterCount];
 			
-			int startPos = StringUtils.indexOfIgnoreCase(this.originalSql, 
-					"CALL");
+			int startPos = this.callingStoredFunction ? StringUtils.indexOfIgnoreCase(this.originalSql, 
+			"SELECT") : StringUtils.indexOfIgnoreCase(this.originalSql, "CALL");
+			
 			if (startPos != -1) {
 				int parenOpenPos = this.originalSql.indexOf('(', startPos + 4);
 				
@@ -464,6 +523,10 @@ public class CallableStatement extends PreparedStatement implements
 
 		determineParameterTypes();
 		generateParameterMap();
+		
+		if (this.callingStoredFunction) {
+			this.parameterCount += 1;
+	}
 	}
 
 	/*
@@ -1385,7 +1448,11 @@ public class CallableStatement extends PreparedStatement implements
 
 	public synchronized ParameterMetaData getParameterMetaData()
 			throws SQLException {
+		if (this.placeholderToParameterIndexMap == null) {
 		return (CallableStatementParamInfoJDBC3) this.paramInfo;
+		} else {
+			return new CallableStatementParamInfoJDBC3(this.paramInfo);
+	}
 	}
 
 	/**
@@ -1996,7 +2063,7 @@ public class CallableStatement extends PreparedStatement implements
 				CallableStatementParam outParamInfo = (CallableStatementParam) paramIter
 						.next();
 
-				if (outParamInfo.isOut) {
+				if (!this.callingStoredFunction && outParamInfo.isOut) {
 					String outParameterName = mangleParameterName(outParamInfo.paramName);
 
 					int outParamIndex;
@@ -2090,16 +2157,12 @@ public class CallableStatement extends PreparedStatement implements
 		return super.executeBatch();
 	}
 	
-	public RowId getRowId(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		RowId retValue = rs.getRowId(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	protected int getParameterIndexOffset() {
+		if (this.callingStoredFunction) {
+			return -1;
+		}
 		
+		return super.getParameterIndexOffset();
 	}
 
 	public SQLXML getSQLXML(int parameterIndex) throws SQLException {
@@ -2356,5 +2419,16 @@ public class CallableStatement extends PreparedStatement implements
 		this.outputParamWasNull = rs.wasNull();
 
 		return retValue;
+	}
+
+	public RowId getRowId(String parameterName) throws SQLException {
+		ResultSet rs = getOutputParameters(0); // definitely not going to be
+	    // from ?=
+	
+	    RowId retValue = rs.getRowId(fixParameterName(parameterName));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
 	}
 }
