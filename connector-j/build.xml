@@ -273,7 +273,7 @@
 
 				<!-- Pull in the commercial license itself -->
 
-				<copy file="${sourceDir}/lib-nodist/MySQLEULA.txt" toDir="${packageDest}"/>
+				<copy file="${sourceDir}/lib-nodist/LICENSE.mysql" toDir="${packageDest}"/>
 
 				<loadfile property="commercialLicenseText"
 					srcFile="${sourceDir}/lib-nodist/commercialLicense.txt"/>
