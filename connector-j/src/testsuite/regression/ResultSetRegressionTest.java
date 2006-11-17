@@ -51,6 +51,7 @@ import testsuite.BaseTestCase;
 import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.NotUpdatable;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.log.StandardLogger;
 
 /**
  * Regression test cases for the ResultSet class.
@@ -3757,6 +3758,72 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.rs.getInt(1);
 		} finally {
 			closeMemberJDBCResources();
+		}
+	}
+	
+	public void testUsageAdvisorOnZeroRowResultSet() throws Exception {
+		Connection advisorConn = null;
+		Statement advisorStmt = null;
+		
+		try {
+			Properties props = new Properties();
+			props.setProperty("useUsageAdvisor", "true");
+			
+			advisorConn = getConnectionWithProps(props);
+			
+			advisorStmt = advisorConn.createStatement();
+			
+			StringBuffer advisorBuf = new StringBuffer();
+			StandardLogger.bufferedLog = advisorBuf;
+			
+			this.rs = advisorStmt.executeQuery("SELECT 1, 2 LIMIT 0");
+			this.rs.next();
+			this.rs.close();
+			
+			advisorStmt.close();
+			
+			advisorStmt = advisorConn.createStatement(ResultSet.TYPE_FORWARD_ONLY, 
+					ResultSet.CONCUR_READ_ONLY);
+			
+			advisorStmt.setFetchSize(Integer.MIN_VALUE);
+			
+			this.rs = advisorStmt.executeQuery("SELECT 1, 2 LIMIT 0");
+			this.rs.next();
+			this.rs.close();
+			
+			StandardLogger.bufferedLog = null;
+			
+			if (versionMeetsMinimum(5, 0, 2)) {
+				advisorConn.close();
+				
+				props.setProperty("useCursorFetch", "true");
+				props.setProperty("useServerPrepStmts", "true");
+				
+				advisorConn = getConnectionWithProps(props);
+				
+				advisorStmt = advisorConn.createStatement();
+				advisorStmt.setFetchSize(1);
+				
+				StandardLogger.bufferedLog = advisorBuf;
+				
+				this.rs = advisorStmt.executeQuery("SELECT 1, 2 LIMIT 0");
+				this.rs.next();
+				this.rs.close();
+			}
+			
+			assertEquals("", advisorBuf.toString());
+		} finally {
+			StandardLogger.bufferedLog = null;
+			
+			closeMemberJDBCResources();
+			
+			if (advisorStmt != null) {
+				advisorStmt.close();
+			}
+			
+			if (advisorConn != null) {
+				advisorConn.close();
+			}
 		}
 	}
 }
