@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2006 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -96,6 +96,8 @@ public class CursorRowProvider implements RowData {
 	 * Have we attempted to fetch any rows yet?
 	 */
 	private boolean firstFetchCompleted = false;
+
+	private boolean wasEmpty = false;
 
 	/**
 	 * Creates a new cursor-backed row provider.
@@ -363,6 +365,8 @@ public class CursorRowProvider implements RowData {
 		}
 
 		synchronized (this.owner.connection.getMutex()) {
+			boolean oldFirstFetchCompleted = this.firstFetchCompleted;
+			
 			if (!this.firstFetchCompleted) {
 				this.firstFetchCompleted = true;
 			}
@@ -386,6 +390,10 @@ public class CursorRowProvider implements RowData {
 
 			if ((this.mysql.getServerStatus() & SERVER_STATUS_LAST_ROW_SENT) != 0) {
 				this.lastRowFetched = true;
+				
+				if (!oldFirstFetchCompleted && this.fetchedRows.size() == 0) {
+					this.wasEmpty  = true;
+				}
 			}
 		}
 	}
@@ -435,6 +443,10 @@ public class CursorRowProvider implements RowData {
 	 */
 	public ResultSet getOwner() {
 		return this.owner;
+	}
+
+	public boolean wasEmpty() {
+		return this.wasEmpty;
 	}
 
 }

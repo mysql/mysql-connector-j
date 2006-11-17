@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2006 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -234,4 +234,9 @@ public interface RowData {
 	 *             if a database error occurs
 	 */
 	int size() throws SQLException;
+	
+	/**
+	 * Did this result set have no rows?
+	 */
+	boolean wasEmpty();
 }

@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2006 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -3496,6 +3496,37 @@ public class StatementRegressionTest extends BaseTestCase {
 					this.pstmt.toString().substring(this.pstmt.toString().indexOf("SELECT")));
 		} finally {
 			closeMemberJDBCResources();
+		}
+	}
+	
+	/**
+	 * Tests fix for BUG#24360 .setFetchSize() breaks prepared 
+	 * SHOW and other commands.
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug24360() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+	
+		Connection c = null;
+		
+		Properties props = new Properties();
+		props.setProperty("useServerPrepStmts", "true");
+		
+		try {
+			c = getConnectionWithProps(props);
+			
+			this.pstmt = c.prepareStatement("SHOW PROCESSLIST");
+			this.pstmt.setFetchSize(5);
+			this.pstmt.execute();
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (c != null) {
+				c.close();
+			}
 		}
 	}
 }

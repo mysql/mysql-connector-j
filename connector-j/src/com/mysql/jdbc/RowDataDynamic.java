@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2006 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -65,6 +65,8 @@ public class RowDataDynamic implements RowData {
 	private ResultSet owner;
 
 	private boolean streamerClosed = false;
+	
+	private boolean wasEmpty = false; // we don't know until we attempt to traverse
 
 	// ~ Methods
 	// ----------------------------------------------------------------
@@ -354,6 +356,7 @@ public class RowDataDynamic implements RowData {
 		return ret;
 	}
 
+
 	private void nextRecord() throws SQLException {
 
 		try {
@@ -365,6 +368,10 @@ public class RowDataDynamic implements RowData {
 
 				if (this.nextRow == null) {
 					this.isAtEnd = true;
+					
+					if (this.index == -1) {
+						this.wasEmpty = true;
+					}
 				}
 			} else {
 				this.isAfterEnd = true;
@@ -432,5 +439,11 @@ public class RowDataDynamic implements RowData {
 	public int size() {
 		return RESULT_SET_SIZE_UNKNOWN;
 	}
+
+	public boolean wasEmpty() {
+		return this.wasEmpty;
+	}
+	
+	
 
 }

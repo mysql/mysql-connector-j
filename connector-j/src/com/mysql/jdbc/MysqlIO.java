@@ -390,6 +390,7 @@ class MysqlIO {
 		//
 		
 		if (this.connection.versionMeetsMinimum(5, 0, 2)
+				&& this.connection.getUseCursorFetch()
 				&& isBinaryEncoded
 				&& callingStatement != null
 				&& callingStatement.getFetchSize() != 0

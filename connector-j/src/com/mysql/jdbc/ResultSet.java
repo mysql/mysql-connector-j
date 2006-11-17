@@ -7044,7 +7044,7 @@ public class ResultSet implements java.sql.ResultSet {
 				// Report on any columns that were selected but
 				// not referenced
 				//
-				if (this.columnUsed.length > 0) {
+				if (this.columnUsed.length > 0 && !this.rowData.wasEmpty()) {
 					StringBuffer buf = new StringBuffer(
 							Messages
 									.getString("ResultSet.The_following_columns_were__160")); //$NON-NLS-1$
