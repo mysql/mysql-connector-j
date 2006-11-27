@@ -25,7 +25,6 @@
 package com.mysql.jdbc.jdbc2.optional;
 
 import java.sql.Array;
-import java.sql.BaseQuery;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Connection;
@@ -872,30 +871,6 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
 	public NClob createNClob() throws SQLException {
 		return this.mc.createNClob();
-	}
-
-	public BaseQuery createQueryObject(Class arg0) throws SQLException {
-		checkClosed();
-
-		try {
-			return this.mc.createQueryObject(arg0);
-		} catch (SQLException sqlException) {
-			checkAndFireConnectionError(sqlException);
-		}
-
-		return null; // we don't reach this code, compiler can't tell
-	}
-
-	public BaseQuery createQueryObject(Class arg0, Connection arg1) throws SQLException {
-		checkClosed();
-
-		try {
-			return this.mc.createQueryObject(arg0, arg1);
-		} catch (SQLException sqlException) {
-			checkAndFireConnectionError(sqlException);
-		}
-
-		return null; // we don't reach this code, compiler can't tell
 	}
 
 	public SQLXML createSQLXML() throws SQLException {

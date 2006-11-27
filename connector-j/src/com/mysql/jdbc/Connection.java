@@ -43,7 +43,6 @@ import java.math.BigDecimal;
 
 import java.net.URL;
 
-import java.sql.BaseQuery;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
@@ -4915,14 +4914,6 @@ public class Connection extends ConnectionProperties implements
 	}
 
 	public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public BaseQuery createQueryObject(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public BaseQuery createQueryObject(Class arg0, java.sql.Connection arg1) throws SQLException {
 		throw new JDBC40NotYetImplementedException();
 	}
 

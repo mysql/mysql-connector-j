@@ -31,9 +31,6 @@ import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
 import java.io.PrintWriter;
 import java.io.Serializable;
 
-import java.sql.BaseQuery;
-import java.sql.QueryObjectFactory;
-import java.sql.QueryObjectGenerator;
 import java.sql.SQLException;
 import java.sql.Wrapper;
 
@@ -391,62 +388,6 @@ public class MysqlDataSource extends ConnectionProperties implements
 	public String getUser() {
 		return this.user;
 	}
-	
-	 /**
-     * Retrieves the QueryObjectGenerator for the given JDBC driver.  If the 
-     * JDBC driver does not provide its own QueryObjectGenerator, NULL is
-     * returned.
-     * @return The QueryObjectGenerator for this JDBC Driver or NULL if the driver does not provide its own
-     * implementation
-     * @exception SQLException if a database access error occurs
-     * @since 1.6
-     */
-
-    public QueryObjectGenerator getQueryObjectGenerator() throws SQLException {
-    	return null;
-    }
-
-    /**
-     * Creates a concrete implementation of a Query interface using the JDBC drivers <code>QueryObjectGenerator</code>
-     * implementation.
-     * <p>
-     * If the JDBC driver does not provide its own <code>QueryObjectGenerator</code>, the <code>QueryObjectGenerator</code>
-     * provided with Java SE will be used.
-     *<p>
-     * @param ifc The Query interface that will be created
-     * @return A concrete implementation of a Query interface
-     * @exception SQLException if a database access error occurs.
-     * @since 1.6
-     */
-   public <T extends BaseQuery> T createQueryObject(Class<T> ifc) throws SQLException {
-	   // TODO: Implementation for PooledConnections?
-	   return QueryObjectFactory.createDefaultQueryObject(ifc, getConnection());
-   }
-   
-     /**
-     * Creates a concrete implementation of a Query interface using the JDBC drivers <code>QueryObjectGenerator</code>
-     * implementation.
-     * <p>*
-     * If the JDBC driver does not provide its own <code>QueryObjectGenerator</code>, the <code>QueryObjectGenerator</code>
-     * provided with Java SE will be used.
-     *<p> 
-     * This method is primarly for developers of Wrappers to JDBC implementations.
-     * Application developers should use <code>createQueryObject(Class&LT;T&GT; ifc).
-      *<p>
-     * @param ifc The Query interface that will be created
-     * @param ds The <code>DataSource</code> that will be used when invoking methods that access
-     * the data source. The QueryObjectGenerator implementation will use
-     * this <code>DataSource</code> without any unwrapping or modications 
-     * to create connections to the data source.
-     *
-     * @return An concrete implementation of a Query interface   
-     * @exception SQLException if a database access error occurs.
-     * @since 1.6
-     */
-   public <T extends BaseQuery> T createQueryObject(Class<T> ifc, DataSource ds) throws SQLException {
-    	return QueryObjectFactory.createDefaultQueryObject(ifc, ds);
-	}
-
 
 	/**
 	 * Creates a connection using the specified properties.
