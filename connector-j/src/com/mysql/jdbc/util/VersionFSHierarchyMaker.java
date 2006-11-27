@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2005 MySQL AB
+ Copyright (C) 2005-2006 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.Properties;
 
 import com.mysql.jdbc.NonRegisteringDriver;
 
@@ -46,22 +47,26 @@ public class VersionFSHierarchyMaker {
 		
 		String jdbcUrl = null;
 
-		
-		jdbcUrl = System.getProperty("com.mysql.jdbc.testsuite.url");
-		
-		
-		Connection conn = new NonRegisteringDriver().connect(jdbcUrl, null);
-
-		ResultSet rs = conn.createStatement().executeQuery("SELECT VERSION()");
-		rs.next();
-		String mysqlVersion = removeWhitespaceChars(rs.getString(1));
-
 		String jvmVersion = removeWhitespaceChars(System.getProperty("java.version"));
 		String jvmVendor = removeWhitespaceChars(System.getProperty("java.vendor"));
 		String osName = removeWhitespaceChars(System.getProperty("os.name"));
 		String osArch = removeWhitespaceChars(System.getProperty("os.arch"));
 		String osVersion = removeWhitespaceChars(System.getProperty("os.version"));
 		
+		jdbcUrl = System.getProperty("com.mysql.jdbc.testsuite.url");
+		
+		String mysqlVersion = "not-available";
+		
+		try {
+			Connection conn = new NonRegisteringDriver().connect(jdbcUrl, null);
+	
+			ResultSet rs = conn.createStatement().executeQuery("SELECT VERSION()");
+			rs.next();
+			mysqlVersion = removeWhitespaceChars(rs.getString(1));
+		} catch (Throwable t) {
+			mysqlVersion = "no-server-running-on-" + removeWhitespaceChars(jdbcUrl);
+		}
+
 		String jvmSubdirName = jvmVendor + "-" + jvmVersion;
 		String osSubdirName = osName + "-" + osArch + "-" + osVersion;
 		
