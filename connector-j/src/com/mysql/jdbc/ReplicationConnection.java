@@ -22,7 +22,6 @@
 package com.mysql.jdbc;
 
 import java.sql.Array;
-import java.sql.BaseQuery;
 import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
@@ -535,14 +534,6 @@ public class ReplicationConnection implements java.sql.Connection {
 
 	public NClob createNClob() throws SQLException {
 		return this.currentConnection.createNClob();
-	}
-
-	public BaseQuery createQueryObject(Class arg0) throws SQLException {
-		return this.currentConnection.createQueryObject(arg0);
-	}
-
-	public BaseQuery createQueryObject(Class arg0, java.sql.Connection arg1) throws SQLException {
-		return this.currentConnection.createQueryObject(arg0, arg1);
 	}
 
 	public SQLXML createSQLXML() throws SQLException {
