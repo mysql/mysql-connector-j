@@ -74,6 +74,16 @@
 	<target name="init" depends="-init-copy, -init-no-crypto">
 		<!-- Check that files needed to generate documentation are in place -->
 
+		<!-- If we're building under cruise control, update ourself -->
+		<if>
+			<isset property="cctimestamp"/>
+			<then>
+				<exec executable="svn">
+					<arg line="up"/>
+				</exec>
+			</then>
+		</if>
+		
 		<!-- We need the following for source distributions as there we
              can't dynamically alter the classpath, and not having this
 		     directory present causes the build to fail -->
