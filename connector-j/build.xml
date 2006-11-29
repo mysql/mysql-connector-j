@@ -72,9 +72,8 @@
 	</path>
 
 	<target name="init" depends="-init-copy, -init-no-crypto">
-		<!-- Check that files needed to generate documentation are in place -->
-
 		<!-- If we're building under cruise control, update ourself -->
+		
 		<if>
 			<isset property="cctimestamp"/>
 			<then>
