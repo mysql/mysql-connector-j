@@ -5772,6 +5772,17 @@ public class ResultSet implements java.sql.ResultSet {
 				int length = timeAsString.length();
 
 				switch (length) {
+				case 19: { // YYYY-MM-DD hh:mm:ss
+					 
+					hr = Integer.parseInt(timeAsString.substring(length - 8,
+							length - 6));
+					min = Integer.parseInt(timeAsString.substring(length - 5,
+							length - 3));
+					sec = Integer.parseInt(timeAsString.substring(length - 2,
+							length));
+				}
+				
+					break;
 				case 14:
 				case 12: {
 					hr = Integer.parseInt(timeAsString.substring(length - 6,

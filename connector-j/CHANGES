@@ -246,6 +246,9 @@ nn-nn-06 - Version 3.1.15
 	  
 	- Disabled use of server-side prepared statements by default.
 	
+	- Handle YYYY-MM-DD hh:mm:ss format of timestamp in 
+	  ResultSet.getTimeFromString().
+	
 10-19-06 - Version 3.1.14
 
     - Fixed BUG#20479 - Updatable result set throws ClassCastException
