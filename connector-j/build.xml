@@ -380,6 +380,9 @@
 		<delete dir="${buildDir}/junit" />
 		<antcall target="test-multijvm" />
 		<antcall target="test-compliance-multijvm" />
+
+		<fail message="Tests failed. Check logs and/or reports in ${buildDir}/junit." 
+			if="tests.compliance.failed"/>
 	</target>
 
 	<!-- Runs compliance testsuite against multiple JVMs and server configs -->
