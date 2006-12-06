@@ -1357,6 +1357,14 @@ public class ConnectionProperties implements Serializable {
 			"Use SSL when communicating with the server (true/false), defaults to 'false'",
 			"3.0.2", SECURITY_CATEGORY, 2);
 
+	private BooleanConnectionProperty useSSPSCompatibleTimezoneShift = new BooleanConnectionProperty(
+			"useSSPSCompatibleTimezoneShift",
+			false,
+			"If migrating from an environment that was using server-side prepared statements, and the"
+			+ " configuration property \"useJDBCCompliantTimeZoneShift\" set to \"true\", use compatible behavior"
+			+ " when not using server-side prepared statements when sending TIMESTAMP values to the MySQL server.",
+			"5.0.5", MISC_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty useStreamLengthsInPrepStmts = new BooleanConnectionProperty(
 			"useStreamLengthsInPrepStmts",
 			true,
@@ -3811,5 +3819,13 @@ public class ConnectionProperties implements Serializable {
 	public void setTrustCertificateKeyStoreUrl(
 			String value) {
 		this.trustCertificateKeyStoreUrl.setValue(value);
+	}
+	
+	public boolean getUseSSPSCompatibleTimezoneShift() {
+		return this.useSSPSCompatibleTimezoneShift.getValueAsBoolean();
+	}
+
+	public void setUseSSPSCompatibleTimezoneShift(boolean flag) {
+		this.useSSPSCompatibleTimezoneShift.setValue(flag);
 	}
 }

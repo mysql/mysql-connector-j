@@ -3529,4 +3529,77 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#24344 - useJDBCCompliantTimezoneShift with server-side prepared
+	 * statements gives different behavior than when using client-side prepared
+	 * statements. (this is now fixed if moving from server-side prepared statements
+	 * to client-side prepared statements by setting "useSSPSCompatibleTimezoneShift" to
+	 * "true", as the driver can't tell if this is a new deployment that never used 
+	 * server-side prepared statements, or if it is an existing deployment that is
+	 * switching to client-side prepared statements from server-side prepared statements.
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug24344() throws Exception {
+		
+		super.createTable("testBug24344", 
+				"(i INT AUTO_INCREMENT, t1 DATETIME, PRIMARY KEY (i)) ENGINE = MyISAM");
+		
+		Connection conn2 = null;
+		
+		try {
+			Properties props = new Properties();
+			props.setProperty("useServerPrepStmts", "true");
+			props.setProperty("useJDBCCompliantTimezoneShift", "true");
+			conn2 = super.getConnectionWithProps(props);
+			this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
+			Calendar c = Calendar.getInstance();
+			this.pstmt.setTimestamp(1, new Timestamp(c.getTimeInMillis()));
+			this.pstmt.execute();
+			this.pstmt.close();
+			conn2.close();
+			
+			props.setProperty("useServerPrepStmts", "false");
+			props.setProperty("useJDBCCompliantTimezoneShift", "true");
+			props.setProperty("useSSPSCompatibleTimezoneShift", "true");
+			
+			conn2 = super.getConnectionWithProps(props);
+			this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
+			this.pstmt.setTimestamp(1, new Timestamp(c.getTimeInMillis()));
+			this.pstmt.execute();
+			this.pstmt.close();
+			conn2.close();
+			
+			props.setProperty("useServerPrepStmts", "false");
+			props.setProperty("useJDBCCompliantTimezoneShift", "false");
+			props.setProperty("useSSPSCompatibleTimezoneShift", "false");
+			conn2 = super.getConnectionWithProps(props);
+			this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
+			this.pstmt.setTimestamp(1, new Timestamp(c.getTimeInMillis()));
+			this.pstmt.execute();
+			this.pstmt.close();
+			
+			Statement s = conn2.createStatement();
+			 this.rs = s.executeQuery("SELECT t1 FROM testBug24344 ORDER BY i ASC");
+			
+			 Timestamp[] dates = new Timestamp[3];
+			
+			int i = 0;
+			
+			while(rs.next()){
+				dates[i++] = rs.getTimestamp(1);
+			}
+			
+			assertEquals( "Number of rows should be 3.", 3, i);
+			assertEquals(dates[0], dates[1]);
+			assertTrue(!dates[1].equals(dates[2]));
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (conn2 != null) {
+				conn2.close();
+			}
+		}
+	}
 }

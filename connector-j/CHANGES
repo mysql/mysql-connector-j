@@ -13,7 +13,15 @@ nn-nn-06 - Version 5.0.5
       what is required.
       
     - Fixed BUG#24360 .setFetchSize() breaks prepared SHOW and other commands.
-            
+          
+    - Fixed BUG#24344 - useJDBCCompliantTimezoneShift with server-side prepared
+	  statements gives different behavior than when using client-side prepared
+	  statements. (this is now fixed if moving from server-side prepared statements
+	  to client-side prepared statements by setting "useSSPSCompatibleTimezoneShift" to
+	  true", as the driver can't tell if this is a new deployment that never used 
+	  server-side prepared statements, or if it is an existing deployment that is
+	  switching to client-side prepared statements from server-side prepared statements.
+	   
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 

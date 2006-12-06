@@ -3774,15 +3774,94 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 					.getServerTimezoneTZ(), rollForward);
 			}
 
-			if (this.tsdf == null) {
-				this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US); //$NON-NLS-1$
+			if (this.connection.getUseSSPSCompatibleTimezoneShift()) {
+				doSSPSCompatibleTimezoneShift(parameterIndex, x, sessionCalendar);
+			} else {
+				
+				if (this.tsdf == null) {
+					this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US); //$NON-NLS-1$
+				}
+				
+				timestampString = this.tsdf.format(x);
+
+				setInternal(parameterIndex, timestampString); // SimpleDateFormat is not
+															  // thread-safe
 			}
+		}
+	}
 
-			timestampString = this.tsdf.format(x);
+	private void doSSPSCompatibleTimezoneShift(int parameterIndex, Timestamp x, Calendar sessionCalendar) throws SQLException {
+		Calendar sessionCalendar2 = (this.connection
+				.getUseJDBCCompliantTimezoneShift()) ? this.connection
+				.getUtcCalendar()
+				: getCalendarInstanceForSessionOrNew();
 
-			setInternal(parameterIndex, timestampString); // SimpleDateFormat
-			// is not
-			// thread-safe
+		synchronized (sessionCalendar2) {
+			java.util.Date oldTime = sessionCalendar2.getTime();
+
+			try {
+				sessionCalendar2.setTime(x);
+
+				int year = sessionCalendar2.get(Calendar.YEAR);
+				int month = sessionCalendar2.get(Calendar.MONTH) + 1;
+				int date = sessionCalendar2.get(Calendar.DAY_OF_MONTH);
+
+				int hour = sessionCalendar2.get(Calendar.HOUR_OF_DAY);
+				int minute = sessionCalendar2.get(Calendar.MINUTE);
+				int seconds = sessionCalendar2.get(Calendar.SECOND);
+
+				StringBuffer tsBuf = new StringBuffer();
+
+				tsBuf.append('\'');
+				tsBuf.append(year);
+
+				tsBuf.append("-");
+
+				if (month < 10) {
+					tsBuf.append('0');
+				}
+
+				tsBuf.append(month);
+
+				tsBuf.append('-');
+
+				if (date < 10) {
+					tsBuf.append('0');
+				}
+
+				tsBuf.append(date);
+
+				tsBuf.append(' ');
+
+				if (hour < 10) {
+					tsBuf.append('0');
+				}
+
+				tsBuf.append(hour);
+
+				tsBuf.append(':');
+
+				if (minute < 10) {
+					tsBuf.append('0');
+				}
+
+				tsBuf.append(minute);
+
+				tsBuf.append(':');
+
+				if (seconds < 10) {
+					tsBuf.append('0');
+				}
+
+				tsBuf.append(seconds);
+
+				tsBuf.append('\'');
+
+				setInternal(parameterIndex, tsBuf.toString());
+
+			} finally {
+				sessionCalendar.setTime(oldTime);
+			}
 		}
 	}
 
