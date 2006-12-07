@@ -171,11 +171,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		int charOctetLength;
 
-		int columnSize;
+		Integer columnSize;
 
 		short dataType;
 
-		int decimalDigits;
+		Integer decimalDigits;
 
 		String isNullable;
 
@@ -235,8 +235,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								.length() - 2));
 					}
 
-					this.columnSize = maxLength;
-					this.decimalDigits = 0;
+					this.columnSize = new Integer(maxLength);
+					this.decimalDigits = null;
 				} else if (StringUtils.startsWithIgnoreCase(typeInfo, "set")) {
 					String temp = typeInfo.substring(typeInfo.indexOf("("),
 							typeInfo.lastIndexOf(")"));
@@ -254,33 +254,38 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						}
 					}
 
-					this.columnSize = maxLength;
-					this.decimalDigits = 0;
+					this.columnSize = new Integer(maxLength);
+					this.decimalDigits = null;
 				} else if (typeInfo.indexOf(",") != -1) {
 					// Numeric with decimals
-					this.columnSize = Integer.parseInt(typeInfo.substring(
+					this.columnSize = new Integer(typeInfo.substring(
 							(typeInfo.indexOf("(") + 1),
 							(typeInfo.indexOf(","))));
-					this.decimalDigits = Integer.parseInt(typeInfo.substring(
+					this.decimalDigits = new Integer(typeInfo.substring(
 							(typeInfo.indexOf(",") + 1),
 							(typeInfo.indexOf(")"))));
 				} else {
-					this.columnSize = 0;
-
+					this.columnSize = null;
+					this.decimalDigits = null;
+					
 					/* If the size is specified with the DDL, use that */
-					if (typeInfo.indexOf("(") != -1) {
+					if ((StringUtils.indexOfIgnoreCase(typeInfo, "char") != -1 ||
+							StringUtils.indexOfIgnoreCase(typeInfo, "text") != -1 ||
+							StringUtils.indexOfIgnoreCase(typeInfo, "blob") != -1 ||
+							StringUtils.indexOfIgnoreCase(typeInfo, "binary") != -1 ||
+							StringUtils.indexOfIgnoreCase(typeInfo, "bit") != -1) && typeInfo.indexOf("(") != -1) {
 						int endParenIndex = typeInfo.indexOf(")");
 
 						if (endParenIndex == -1) {
 							endParenIndex = typeInfo.length();
 						}
 
-						this.columnSize = Integer.parseInt(typeInfo.substring(
+						this.columnSize = new Integer(typeInfo.substring(
 								(typeInfo.indexOf("(") + 1), endParenIndex));
 
 						// Adjust for pseudo-boolean
 						if (conn.getTinyInt1isBit()
-								&& this.columnSize == 1
+								&& this.columnSize.intValue() == 1
 								&& StringUtils.startsWithIgnoreCase(typeInfo,
 										0, "tinyint")) {
 							if (conn.getTransformedBitIsBoolean()) {
@@ -291,69 +296,75 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								this.typeName = "BIT";
 							}
 						}
-					} else if (typeInfo.equalsIgnoreCase("tinyint")) {
-						this.columnSize = 1;
-					} else if (typeInfo.equalsIgnoreCase("smallint")) {
-						this.columnSize = 6;
-					} else if (typeInfo.equalsIgnoreCase("mediumint")) {
-						this.columnSize = 6;
-					} else if (typeInfo.equalsIgnoreCase("int")) {
-						this.columnSize = 11;
-					} else if (typeInfo.equalsIgnoreCase("integer")) {
-						this.columnSize = 11;
-					} else if (typeInfo.equalsIgnoreCase("bigint")) {
-						this.columnSize = 25;
-					} else if (typeInfo.equalsIgnoreCase("int24")) {
-						this.columnSize = 25;
-					} else if (typeInfo.equalsIgnoreCase("real")) {
-						this.columnSize = 12;
-					} else if (typeInfo.equalsIgnoreCase("float")) {
-						this.columnSize = 12;
-					} else if (typeInfo.equalsIgnoreCase("decimal")) {
-						this.columnSize = 12;
-					} else if (typeInfo.equalsIgnoreCase("numeric")) {
-						this.columnSize = 12;
-					} else if (typeInfo.equalsIgnoreCase("double")) {
-						this.columnSize = 22;
-					} else if (typeInfo.equalsIgnoreCase("char")) {
-						this.columnSize = 1;
-					} else if (typeInfo.equalsIgnoreCase("varchar")) {
-						this.columnSize = 255;
-					} else if (typeInfo.equalsIgnoreCase("date")) {
-						this.columnSize = 10;
-					} else if (typeInfo.equalsIgnoreCase("time")) {
-						this.columnSize = 8;
-					} else if (typeInfo.equalsIgnoreCase("timestamp")) {
-						this.columnSize = 19;
-					} else if (typeInfo.equalsIgnoreCase("datetime")) {
-						this.columnSize = 19;
-					} else if (typeInfo.equalsIgnoreCase("tinyblob")) {
-						this.columnSize = 255;
-					} else if (typeInfo.equalsIgnoreCase("blob")) {
-						this.columnSize = 65535;
-					} else if (typeInfo.equalsIgnoreCase("mediumblob")) {
-						this.columnSize = 16277215;
-					} else if (typeInfo.equalsIgnoreCase("longblob")) {
-						this.columnSize = Integer.MAX_VALUE;
-					} else if (typeInfo.equalsIgnoreCase("tinytext")) {
-						this.columnSize = 255;
-					} else if (typeInfo.equalsIgnoreCase("text")) {
-						this.columnSize = 65535;
-					} else if (typeInfo.equalsIgnoreCase("mediumtext")) {
-						this.columnSize = 16277215;
-					} else if (typeInfo.equalsIgnoreCase("longtext")) {
-						this.columnSize = Integer.MAX_VALUE;
-					} else if (typeInfo.equalsIgnoreCase("enum")) {
-						this.columnSize = 255;
-					} else if (typeInfo.equalsIgnoreCase("set")) {
-						this.columnSize = 255;
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "tinyint")) {
+						this.columnSize = new Integer(3);
+						this.decimalDigits = new Integer(0);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "smallint")) {
+						this.columnSize = new Integer(5);
+						this.decimalDigits = new Integer(0);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "mediumint")) {
+						this.columnSize = new Integer(7);
+						this.decimalDigits = new Integer(0);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "int")) {
+						this.columnSize = new Integer(10);
+						this.decimalDigits = new Integer(0);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "integer")) {
+						this.columnSize = new Integer(10);
+						this.decimalDigits = new Integer(0);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "bigint")) {
+						this.columnSize = new Integer(19);
+						this.decimalDigits = new Integer(0);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "int24")) {
+						this.columnSize = new Integer(19);
+						this.decimalDigits = new Integer(0);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "real")) {
+						this.columnSize = new Integer(12);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "float")) {
+						this.columnSize = new Integer(12);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "decimal")) {
+						this.columnSize = new Integer(12);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "numeric")) {
+						this.columnSize = new Integer(12);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "double")) {
+						this.columnSize = new Integer(22);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "char")) {
+						this.columnSize = new Integer(1);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "varchar")) {
+						this.columnSize = new Integer(255);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "date")) {
+						this.columnSize = null;
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "time")) {
+						this.columnSize = null;
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "timestamp")) {
+						this.columnSize = null;
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "datetime")) {
+						this.columnSize = null;
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "tinyblob")) {
+						this.columnSize = new Integer(255);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "blob")) {
+						this.columnSize = new Integer(65535);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "mediumblob")) {
+						this.columnSize = new Integer(16777215);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "longblob")) {
+						this.columnSize = new Integer(Integer.MAX_VALUE);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "tinytext")) {
+						this.columnSize = new Integer(255);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "text")) {
+						this.columnSize = new Integer(65535);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "mediumtext")) {
+						this.columnSize = new Integer(16777215);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "longtext")) {
+						this.columnSize = new Integer(Integer.MAX_VALUE);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "enum")) {
+						this.columnSize = new Integer(255);
+					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "set")) {
+						this.columnSize = new Integer(255);
 					}
 
-					this.decimalDigits = 0;
 				}
 			} else {
-				this.decimalDigits = 0;
-				this.columnSize = 0;
+				this.decimalDigits = null;
+				this.columnSize = null;
 			}
 
 			// BUFFER_LENGTH
@@ -545,7 +556,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 		}
 	}
-
 	private void convertToJdbcProcedureList(boolean fromSelect, String catalog,
 			ResultSet proceduresRs, boolean needsClientFiltering, String db,
 			Map procedureRowsOrderedByName, int nameIndex) throws SQLException {
@@ -567,13 +577,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			if (shouldAdd) {
 				String procedureName = proceduresRs.getString(nameIndex);
 				byte[][] rowData = new byte[8][];
-				rowData[0] = catalog == null ? null : s2b(catalog);  // PROCEDURE_CAT
-				rowData[1] = null;                                   // PROCEDURE_SCHEM
-				rowData[2] = s2b(procedureName);                     // PROCEDURE_NAME
-				rowData[3] = null;                                   // reserved1
-				rowData[4] = null;                                   // reserved2
-				rowData[5] = null;                                   // reserved3
-				rowData[6] = s2b(proceduresRs.getString("comment")); // REMARKS
+				rowData[0] = catalog == null ? null : s2b(catalog);
+				rowData[1] = null;
+				rowData[2] = s2b(procedureName);
+				rowData[3] = null;
+				rowData[4] = null;
+				rowData[5] = null;
+				rowData[6] = null;
 
 				boolean isFunction = fromSelect ? "FUNCTION"
 						.equalsIgnoreCase(proceduresRs.getString("type"))
@@ -610,9 +620,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 		row[5] = s2b(Short.toString(typeDesc.dataType)); // DATA_TYPE
 		row[6] = s2b(typeDesc.typeName); // TYPE_NAME
-		row[7] = s2b(Integer.toString(typeDesc.columnSize)); // PRECISION
+		row[7] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString()); // PRECISION
 		row[8] = s2b(Integer.toString(typeDesc.bufferLength)); // LENGTH
-		row[9] = s2b(Integer.toString(typeDesc.decimalDigits)); // SCALE
+		row[9] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString()); // SCALE
 		row[10] = s2b(Integer.toString(typeDesc.numPrecRadix)); // RADIX
 		// Map 'column****' to 'procedure****'
 		switch (typeDesc.nullability) {
@@ -1216,8 +1226,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		// First try 'select from mysql.proc, as this is easier to parse...
 		String parameterDef = null;
 		
-		PreparedStatement paramRetrievalPreparedStatement = null;
-		
 		try {
 			paramRetrievalStmt = this.conn.getMetadataSafeStatement();
 			
@@ -1415,16 +1423,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				}
 
 				paramRetrievalRs = null;
-			}
-
-			if (paramRetrievalPreparedStatement != null) {
-				try {
-					paramRetrievalPreparedStatement.close();
-				} catch (SQLException sqlEx) {
-					sqlExRethrow = sqlEx;
-				}
-
-				paramRetrievalPreparedStatement = null;
 			}
 
 			if (paramRetrievalStmt != null) {
@@ -2110,12 +2108,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								// DATA_TYPE (jdbc)
 								rowVal[5] = s2b(typeDesc.typeName); // TYPE_NAME
 								// (native)
-								rowVal[6] = s2b(Integer
-										.toString(typeDesc.columnSize));
-								rowVal[7] = s2b(Integer
-										.toString(typeDesc.bufferLength));
-								rowVal[8] = s2b(Integer
-										.toString(typeDesc.decimalDigits));
+								rowVal[6] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString());
+								rowVal[7] = s2b(Integer.toString(typeDesc.bufferLength));
+								rowVal[8] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString());
 								rowVal[9] = s2b(Integer
 										.toString(typeDesc.numPrecRadix));
 								rowVal[10] = s2b(Integer
@@ -2144,7 +2139,15 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 								rowVal[13] = new byte[] { (byte) '0' }; // SQL_DATA_TYPE
 								rowVal[14] = new byte[] { (byte) '0' }; // SQL_DATE_TIME_SUB
-								rowVal[15] = rowVal[6]; // CHAR_OCTET_LENGTH
+								
+								if (StringUtils.indexOfIgnoreCase(typeDesc.typeName, "CHAR") != -1 ||
+										StringUtils.indexOfIgnoreCase(typeDesc.typeName, "BLOB") != -1 ||
+										StringUtils.indexOfIgnoreCase(typeDesc.typeName, "TEXT") != -1 ||
+										StringUtils.indexOfIgnoreCase(typeDesc.typeName, "BINARY") != -1) {
+									rowVal[15] = rowVal[6]; // CHAR_OCTET_LENGTH
+								} else {
+									rowVal[15] = null;
+								}
 
 								// ORDINAL_POSITION
 								if (!fixUpOrdinalsRequired) {
@@ -3660,7 +3663,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					&& (procedureNamePattern.indexOf("?") == -1)) {
 				proceduresToExtractList.add(procedureNamePattern);
 			} else {
-				PreparedStatement procedureNameStmt = null;
+				
 				ResultSet procedureNameRs = null;
 
 				try {
@@ -3688,15 +3691,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							rethrowSqlEx = sqlEx;
 						}
 					}
-
-					if (procedureNameStmt != null) {
-						try {
-							procedureNameStmt.close();
-						} catch (SQLException sqlEx) {
-							rethrowSqlEx = sqlEx;
-						}
-					}
-
+					
 					if (rethrowSqlEx != null) {
 						throw rethrowSqlEx;
 					}
@@ -3932,6 +3927,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		return buildResultSet(fields, procedureRows);
 	}
+
 
 	/**
 	 * What's the database vendor's preferred term for "procedure"?
@@ -7526,10 +7522,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		throw new JDBC40NotYetImplementedException();
 	}
 
-	public boolean providesQueryObjectGenerator() throws SQLException {
-		return false; // we don't - rely on the built-in JDK one
-	}
-
 	public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
 		return true;
 	}
@@ -7544,5 +7536,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 	public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
 		throw new JDBC40NotYetImplementedException();
+	}
+
+	public boolean providesQueryObjectGenerator() throws SQLException {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

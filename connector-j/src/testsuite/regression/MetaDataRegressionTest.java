@@ -1678,4 +1678,151 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		this.conn.getMetaData().getProcedures(bogusDatabaseName, "%", "%");
 	}
 
+	/**
+	 * Tests fix for BUG#23304 - DBMD using "show" and DBMD using 
+	 * information_schema do not return results consistent with eachother.
+	 * 
+	 * (note this fix only addresses the inconsistencies, not the issue that
+	 * the driver is treating schemas differently than some users expect.
+	 * 
+	 * We will revisit this behavior when there is full support for schemas
+	 * in MySQL).
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug23304() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
+		Connection connShow = null;
+		Connection connInfoSchema = null;
+		
+		ResultSet rsShow = null;
+		ResultSet rsInfoSchema = null;
+		
+		try {
+			Properties noInfoSchemaProps = new Properties();
+			noInfoSchemaProps.setProperty("useInformationSchema", "false");
+			
+			Properties infoSchemaProps = new Properties();
+			infoSchemaProps.setProperty("useInformationSchema", "true");
+			infoSchemaProps.setProperty("dumpQueriesOnException", "true");
+			
+			connShow = getConnectionWithProps(noInfoSchemaProps);
+			connInfoSchema = getConnectionWithProps(infoSchemaProps);
+			
+			DatabaseMetaData dbmdUsingShow = connShow.getMetaData();
+			DatabaseMetaData dbmdUsingInfoSchema = connInfoSchema.getMetaData();
+			
+			assertNotSame(dbmdUsingShow.getClass(), dbmdUsingInfoSchema.getClass());
+			
+			if (!isRunningOnJdk131()) {
+				rsShow = dbmdUsingShow.getSchemas();
+				rsInfoSchema = dbmdUsingInfoSchema.getSchemas();
+			
+				compareResultSets(rsShow, rsInfoSchema);	
+			}
+			
+			/*
+			rsShow = dbmdUsingShow.getTables(connShow.getCatalog(), null, "%", new String[] {"TABLE", "VIEW"});
+			rsInfoSchema = dbmdUsingInfoSchema.getTables(connInfoSchema.getCatalog(), null, "%", new String[] {"TABLE", "VIEW"});
+			
+			compareResultSets(rsShow, rsInfoSchema);
+			
+			rsShow = dbmdUsingShow.getTables(null, null, "%", new String[] {"TABLE", "VIEW"});
+			rsInfoSchema = dbmdUsingInfoSchema.getTables(null, null, "%", new String[] {"TABLE", "VIEW"});
+		
+			compareResultSets(rsShow, rsInfoSchema);
+			*/
+			
+			createTable("t_testBug23304", "(field1 int primary key not null, field2 tinyint, field3 mediumint, field4 mediumint, field5 bigint, field6 float, field7 double, field8 decimal, field9 char(32), field10 varchar(32), field11 blob, field12 mediumblob, field13 longblob, field14 text, field15 mediumtext, field16 longtext, field17 date, field18 time, field19 datetime, field20 timestamp)");
+			
+			rsShow = dbmdUsingShow.getColumns(connShow.getCatalog(), null, "t_testBug23304", "%");
+			rsInfoSchema = dbmdUsingInfoSchema.getColumns(connInfoSchema.getCatalog(), null, "t_testBug23304", "%");
+			
+			compareResultSets(rsShow, rsInfoSchema);
+		} finally {
+			if (rsShow != null) {
+				rsShow.close();
+			}
+			
+			if (rsInfoSchema != null) {
+				rsInfoSchema.close();
+			}
+		}
+	}
+	
+	private void compareResultSets(ResultSet expected, ResultSet actual) throws Exception {
+		if (expected == null && actual != null) {
+			fail("Expected null result set, actual was not null.");
+		} else if (expected != null && actual == null) {
+			fail("Expected non-null actual result set.");
+		} else if (expected == null && actual == null) {
+			return;
+		}
+		
+		expected.last();
+		
+		int expectedRows = expected.getRow();
+		
+		actual.last();
+		
+		int actualRows = actual.getRow();
+		
+		assertEquals(expectedRows, actualRows);
+		
+		ResultSetMetaData metadataExpected = expected.getMetaData();
+		ResultSetMetaData metadataActual = actual.getMetaData();
+		
+		assertEquals(metadataExpected.getColumnCount(), metadataActual.getColumnCount());
+		
+		for (int i = 0; i < metadataExpected.getColumnCount(); i++) {
+			assertEquals(metadataExpected.getColumnName(i + 1), metadataActual.getColumnName(i + 1));
+			assertEquals(metadataExpected.getColumnType(i + 1), metadataActual.getColumnType(i + 1));
+			assertEquals(metadataExpected.getColumnClassName(i + 1), metadataActual.getColumnClassName(i + 1));
+		}
+		
+		expected.beforeFirst();
+		actual.beforeFirst();
+		
+		StringBuffer messageBuf = null;
+		
+		while (expected.next() && actual.next()) {
+			
+			if (messageBuf != null) {
+				messageBuf.append("\n");
+			}
+			
+			for (int i = 0; i < metadataExpected.getColumnCount(); i++) {
+				if (expected.getObject(i + 1) == null && actual.getObject(i + 1) == null) {
+					continue;
+				}
+				
+				if ((expected.getObject(i + 1) == null && actual.getObject(i + 1) != null) ||
+						(expected.getObject(i + 1) != null && actual.getObject(i + 1) == null) ||
+						(!expected.getObject(i + 1).equals(actual.getObject(i + 1)))) {
+					if ("COLUMN_DEF".equals(metadataExpected.getColumnName(i + 1)) && 
+							(expected.getObject(i + 1) == null && actual.getString(i + 1).length() == 0) ||
+							(expected.getString(i + 1).length() == 0 && actual.getObject(i + 1) == null)) {
+						continue; // known bug with SHOW FULL COLUMNS, and we can't distinguish between null and ''
+						          // for a default
+					}
+					
+					if (messageBuf == null) {
+						messageBuf = new StringBuffer();
+					} else {
+						messageBuf.append("\n");
+					}
+					
+					messageBuf.append("On row " + expected.getRow() + " ,for column named " + metadataExpected.getColumnName(i + 1) + ", expected '" + expected.getObject(i + 1) + "', found '" + actual.getObject(i + 1) + "'");
+					
+				}
+			}
+		}
+		
+		if (messageBuf != null) {
+			fail(messageBuf.toString());
+		}
+	}
 }

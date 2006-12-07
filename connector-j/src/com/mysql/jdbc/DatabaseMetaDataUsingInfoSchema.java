@@ -97,18 +97,15 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		}
 
 		if (catalog == null) {
-			if (!this.conn.getNullCatalogMeansCurrent()) {
-				throw SQLError.createSQLException("'catalog' parameter can not be null",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-			}
-
-			catalog = this.database;
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				catalog = this.database;
+			}	
 		}
 		
 		String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME,"
 			 +"COLUMN_NAME, NULL AS GRANTOR, GRANTEE, PRIVILEGE_TYPE AS PRIVILEGE, IS_GRANTABLE FROM "
 			 + "INFORMATION_SCHEMA.COLUMN_PRIVILEGES WHERE "
-			 + "TABLE_SCHEMA = ? AND "
+			 + "TABLE_SCHEMA LIKE ? AND "
 			 + "TABLE_NAME =? AND COLUMN_NAME LIKE ? ORDER BY " 
 			 + "COLUMN_NAME, PRIVILEGE_TYPE";
 		
@@ -116,7 +113,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
-			pStmt.setString(1, catalog);
+			
+			if (catalog != null) {
+				pStmt.setString(1, catalog);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
 			pStmt.setString(2, table);
 			pStmt.setString(3, columnNamePattern);
 			
@@ -196,12 +199,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		}
 
 		if (catalog == null) {
-			if (!this.conn.getNullCatalogMeansCurrent()) {
-				throw SQLError.createSQLException("'catalog' parameter can not be null",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				catalog = this.database;
 			}
-
-			catalog = this.database;
 		}
 
 		StringBuffer sqlBuf = new StringBuffer("SELECT "
@@ -221,26 +221,33 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				.append("CASE WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION ELSE CASE WHEN CHARACTER_MAXIMUM_LENGTH > " 
 						+ Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + 
 						" ELSE CHARACTER_MAXIMUM_LENGTH END END AS COLUMN_SIZE, "
-						+ " NULL AS BUFFER_LENGTH,"
+						+ MysqlIO.getMaxBuf() + " AS BUFFER_LENGTH,"
 						+ "NUMERIC_SCALE AS DECIMAL_DIGITS,"
 						+ "10 AS NUM_PREC_RADIX,"
-						+ "NULL AS NULLABLE,"
+						+ "CASE WHEN IS_NULLABLE='NO' THEN " + columnNoNulls + " ELSE CASE WHEN IS_NULLABLE='YES' THEN " + columnNullable + " ELSE " + columnNullableUnknown + " END END AS NULLABLE,"
 						+ "COLUMN_COMMENT AS REMARKS,"
 						+ "COLUMN_DEFAULT AS COLUMN_DEF,"
-						+ "NULL AS SQL_DATA_TYPE,"
-						+ "NULL AS SQL_DATETIME_SUB,"
-						+ "CHARACTER_OCTET_LENGTH AS CHAR_OCTET_LENGTH,"
+						+ "0 AS SQL_DATA_TYPE,"
+						+ "0 AS SQL_DATETIME_SUB,"
+						+ "CASE WHEN CHARACTER_OCTET_LENGTH > " + Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_OCTET_LENGTH END AS CHAR_OCTET_LENGTH,"
 						+ "ORDINAL_POSITION,"
 						+ "IS_NULLABLE "
 						+ "FROM INFORMATION_SCHEMA.COLUMNS WHERE "
-						+ "TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
+						+ "TABLE_SCHEMA LIKE ? AND "
+						+ "TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
 						+ "ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
 
 		PreparedStatement pStmt = null;
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
-			pStmt.setString(1, catalog);
+			
+			if (catalog != null) {
+				pStmt.setString(1, catalog);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
 			pStmt.setString(2, tableName);
 			pStmt.setString(3, columnNamePattern);
 
@@ -352,21 +359,15 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		}
 
 		if (primaryCatalog == null) {
-			if (!this.conn.getNullCatalogMeansCurrent()) {
-				throw SQLError.createSQLException("'catalog' parameter can not be null",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				primaryCatalog = this.database;	
 			}
-
-			primaryCatalog = this.database;
 		}
 
 		if (foreignCatalog == null) {
-			if (!this.conn.getNullCatalogMeansCurrent()) {
-				throw SQLError.createSQLException("'catalog' parameter can not be null",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				foreignCatalog = this.database;
 			}
-
-			foreignCatalog = this.database;
 		}
 
 		Field[] fields = new Field[14];
@@ -410,17 +411,28 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "A.TABLE_SCHEMA=B.TABLE_SCHEMA AND A.TABLE_NAME=B.TABLE_NAME "
 				+ "AND "
 				+ "A.CONSTRAINT_NAME=B.CONSTRAINT_NAME AND B.CONSTRAINT_TYPE IS NOT NULL "
-				+ "AND A.REFERENCED_TABLE_SCHEMA=? AND A.REFERENCED_TABLE_NAME=? "
-				+ "AND A.TABLE_SCHEMA=? AND A.TABLE_NAME=? " + "ORDER BY "
+				+ "AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=? "
+				+ "AND A.TABLE_SCHEMA LIKE ? AND A.TABLE_NAME=? " + "ORDER BY "
 				+ "A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
 
 		PreparedStatement pStmt = null;
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
-			pStmt.setString(1, primaryCatalog);
+			if (primaryCatalog != null) {
+				pStmt.setString(1, primaryCatalog);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
 			pStmt.setString(2, primaryTable);
-			pStmt.setString(3, foreignCatalog);
+			
+			if (foreignCatalog != null) {
+				pStmt.setString(3, foreignCatalog);
+			} else {
+				pStmt.setString(3, "%");
+			}
+			
 			pStmt.setString(4, foreignTable);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
@@ -517,12 +529,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		}
 
 		if (catalog == null) {
-			if (!this.conn.getNullCatalogMeansCurrent()) {
-				throw SQLError.createSQLException("'catalog' parameter can not be null",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-			}
-
-			catalog = this.database;
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				catalog = this.database;
+			}	
 		}
 
 		String sql = "SELECT "
@@ -550,14 +559,20 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "A.TABLE_SCHEMA=B.TABLE_SCHEMA AND A.TABLE_NAME=B.TABLE_NAME "
 				+ "AND "
 				+ "A.CONSTRAINT_NAME=B.CONSTRAINT_NAME AND B.CONSTRAINT_TYPE IS NOT NULL "
-				+ "AND A.REFERENCED_TABLE_SCHEMA=? AND A.REFERENCED_TABLE_NAME=? "
+				+ "AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=? "
 				+ "ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
 
 		PreparedStatement pStmt = null;
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
-			pStmt.setString(1, catalog);
+			
+			if (catalog != null) {
+				pStmt.setString(1, catalog);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
 			pStmt.setString(2, table);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
@@ -680,12 +695,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		}
 
 		if (catalog == null) {
-			if (!this.conn.getNullCatalogMeansCurrent()) {
-				throw SQLError.createSQLException("'catalog' parameter can not be null",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				catalog = this.database;
 			}
-
-			catalog = this.database;
 		}
 
 		String sql = "SELECT "
@@ -708,7 +720,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ " AS DEFERRABILITY "
 				+ "FROM "
 				+ "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A, "
-				+ "INFORMATION_SCHEMA.TABLE_CONSTRAINTS B WHERE A.TABLE_SCHEMA=? "
+				+ "INFORMATION_SCHEMA.TABLE_CONSTRAINTS B WHERE A.TABLE_SCHEMA LIKE ? "
 				+ "AND A.CONSTRAINT_NAME=B.CONSTRAINT_NAME AND A.TABLE_NAME=? "
 				+ "AND "
 				+ "B.TABLE_NAME=? AND A.REFERENCED_TABLE_SCHEMA IS NOT NULL "
@@ -720,7 +732,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
-			pStmt.setString(1, catalog);
+			
+			if (catalog != null) {
+				pStmt.setString(1, catalog);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
 			pStmt.setString(2, table);
 			pStmt.setString(3, table);
 
@@ -830,9 +848,20 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		PreparedStatement pStmt = null;
 
 		try {
+			if (catalog == null) {
+				if (this.conn.getNullCatalogMeansCurrent()) {
+					catalog = this.database;
+				}
+			}
+			
 			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
 
-			pStmt.setString(1, catalog);
+			if (catalog != null) {
+				pStmt.setString(1, catalog);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
 			pStmt.setString(2, table);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
@@ -889,12 +918,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			String table) throws SQLException {
 
 		if (catalog == null) {
-			if (!this.conn.getNullCatalogMeansCurrent()) {
-				throw SQLError.createSQLException("'catalog' parameter can not be null",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				catalog = this.database;
 			}
-
-			catalog = this.database;
 		}
 
 		if (table == null) {
@@ -912,7 +938,12 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
 
-			pStmt.setString(1, catalog);
+			if (catalog != null) {
+				pStmt.setString(1, catalog);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
 			pStmt.setString(2, table);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
@@ -989,17 +1020,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		String db = null;
 
 		if (catalog == null) {
-			db = this.database;
-		} else if (catalog.length() > 0) {
-			db = catalog;
-		} else {
-			if (!this.conn.getNullCatalogMeansCurrent()) {
-				throw SQLError.createSQLException("'catalog' parameter can not be null",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				db = this.database;
 			}
-
-			catalog = null;
-			db = null;
 		}
 
 		String sql = "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, "
@@ -1019,7 +1042,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
-			pStmt.setString(1, db);
+			
+			if (db != null) {
+				pStmt.setString(1, db);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
 			pStmt.setString(2, procedureNamePattern);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
@@ -1080,12 +1109,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	public ResultSet getTables(String catalog, String schemaPattern,
 			String tableNamePattern, String[] types) throws SQLException {
 		if (catalog == null) {
-			if (!this.conn.getNullCatalogMeansCurrent()) {
-				throw SQLError.createSQLException("'catalog' parameter can not be null",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				catalog = this.database;
 			}
-
-			catalog = this.database;
 		}
 
 		if (tableNamePattern == null) {
@@ -1109,7 +1135,13 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME";
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
-			pStmt.setString(1, catalog);
+			
+			if (catalog != null) {
+				pStmt.setString(1, catalog);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
 			pStmt.setString(2, tableNamePattern);
 
 			// This overloading of IN (...) allows us to cache this
