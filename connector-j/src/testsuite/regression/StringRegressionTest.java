@@ -882,4 +882,17 @@ public class StringRegressionTest extends BaseTestCase {
 			
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#24840 - character encoding of "US-ASCII"
+	 * doesn't map correctly for 4.1 or newer
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug24840() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("characterEncoding", "US-ASCII");
+		
+		getConnectionWithProps(props).close();
+	}
 }

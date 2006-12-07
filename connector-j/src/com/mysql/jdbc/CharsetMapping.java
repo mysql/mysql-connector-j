@@ -78,7 +78,7 @@ public class CharsetMapping {
 			//                           denotes preferred value)      
 			//
 			"US-ASCII =			usa7,"
-	 		+ "US-ASCII =			ascii,"
+	 		+ "US-ASCII =			>4.1.0 ascii,"
 	 		+ "Big5 = 				big5,"
 	 		+ "GBK = 				gbk,"
 	 		+ "SJIS = 				sjis,"
