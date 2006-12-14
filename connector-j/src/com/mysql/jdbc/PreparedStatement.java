@@ -892,77 +892,90 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 
 		java.sql.PreparedStatement batchedStatement = null;
 
-		if (this.retrieveGeneratedKeys) {
-			batchedStatement = locallyScopedConn.prepareStatement(
-					generateBatchedInsertSQL(valuesClause, numValuesPerBatch),
-					RETURN_GENERATED_KEYS);
-		} else {
-			batchedStatement = locallyScopedConn
-					.prepareStatement(generateBatchedInsertSQL(valuesClause,
-							numValuesPerBatch));
-		}
-
 		int batchedParamIndex = 1;
 		int updateCountRunningTotal = 0;
 		int numberToExecuteAsMultiValue = 0;
 		int batchCounter = 0;
-
-		if (numBatchedArgs < numValuesPerBatch) {
-			numberToExecuteAsMultiValue = numBatchedArgs;
-		} else {
-			numberToExecuteAsMultiValue = numBatchedArgs / numValuesPerBatch;
-		}
-
-		int numberArgsToExecute = numberToExecuteAsMultiValue * numValuesPerBatch;
-
-		for (int i = 0; i < numberArgsToExecute; i++) {
-			if (i != 0 && i % numValuesPerBatch == 0) {
-				updateCountRunningTotal += batchedStatement.executeUpdate();
-
-				getBatchedGeneratedKeys(batchedStatement);
-				batchedStatement.clearParameters();
-				batchedParamIndex = 1;
-
+		
+		try {
+			if (this.retrieveGeneratedKeys) {
+				batchedStatement = locallyScopedConn.prepareStatement(
+						generateBatchedInsertSQL(valuesClause, numValuesPerBatch),
+						RETURN_GENERATED_KEYS);
+			} else {
+				batchedStatement = locallyScopedConn
+						.prepareStatement(generateBatchedInsertSQL(valuesClause,
+								numValuesPerBatch));
 			}
-
-			BatchParams paramArg = (BatchParams) this.batchedArgs
-					.get(batchCounter++);
-
-			batchedParamIndex = setOneBatchedParameterSet(batchedStatement,
-					batchedParamIndex, paramArg);
-		}
-
-		updateCountRunningTotal += batchedStatement.executeUpdate();
-		getBatchedGeneratedKeys(batchedStatement);
-
-		numValuesPerBatch = numBatchedArgs - batchCounter;
-
-		if (numValuesPerBatch > 0) {
-
-			batchedStatement = locallyScopedConn.prepareStatement(
-					generateBatchedInsertSQL(valuesClause, numValuesPerBatch),
-					RETURN_GENERATED_KEYS);
-			batchedParamIndex = 1;
-
-			while (batchCounter < numBatchedArgs) {
-
+	
+	
+			if (numBatchedArgs < numValuesPerBatch) {
+				numberToExecuteAsMultiValue = numBatchedArgs;
+			} else {
+				numberToExecuteAsMultiValue = numBatchedArgs / numValuesPerBatch;
+			}
+	
+			int numberArgsToExecute = numberToExecuteAsMultiValue * numValuesPerBatch;
+	
+			for (int i = 0; i < numberArgsToExecute; i++) {
+				if (i != 0 && i % numValuesPerBatch == 0) {
+					updateCountRunningTotal += batchedStatement.executeUpdate();
+	
+					getBatchedGeneratedKeys(batchedStatement);
+					batchedStatement.clearParameters();
+					batchedParamIndex = 1;
+	
+				}
+	
 				BatchParams paramArg = (BatchParams) this.batchedArgs
 						.get(batchCounter++);
+	
 				batchedParamIndex = setOneBatchedParameterSet(batchedStatement,
 						batchedParamIndex, paramArg);
 			}
-
+	
 			updateCountRunningTotal += batchedStatement.executeUpdate();
 			getBatchedGeneratedKeys(batchedStatement);
+	
+			numValuesPerBatch = numBatchedArgs - batchCounter;
+		} finally {
+			if (batchedStatement != null) {
+				batchedStatement.close();
+			}
 		}
-
-		int[] updateCounts = new int[this.batchedArgs.size()];
-
-		for (int i = 0; i < this.batchedArgs.size(); i++) {
-			updateCounts[i] = 1;
+		
+		try {
+			if (numValuesPerBatch > 0) {
+	
+				batchedStatement = locallyScopedConn.prepareStatement(
+						generateBatchedInsertSQL(valuesClause, numValuesPerBatch),
+						RETURN_GENERATED_KEYS);
+				batchedParamIndex = 1;
+	
+				while (batchCounter < numBatchedArgs) {
+	
+					BatchParams paramArg = (BatchParams) this.batchedArgs
+							.get(batchCounter++);
+					batchedParamIndex = setOneBatchedParameterSet(batchedStatement,
+							batchedParamIndex, paramArg);
+				}
+	
+				updateCountRunningTotal += batchedStatement.executeUpdate();
+				getBatchedGeneratedKeys(batchedStatement);
+			}
+	
+			int[] updateCounts = new int[this.batchedArgs.size()];
+	
+			for (int i = 0; i < this.batchedArgs.size(); i++) {
+				updateCounts[i] = 1;
+			}
+	
+			return updateCounts;
+		} finally {
+			if (batchedStatement != null) {
+				batchedStatement.close();
+			}
 		}
-
-		return updateCounts;
 	}
 
 	protected int computeBatchSize(int numBatchedArgs) {

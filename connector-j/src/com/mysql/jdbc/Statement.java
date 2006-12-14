@@ -947,6 +947,8 @@ public class Statement implements java.sql.Statement {
 			locallyScopedConn.getIO().enableMultiQueries();
 		}
 
+		java.sql.Statement batchStmt = null;
+		
 		try {
 			int[] updateCounts = new int[nbrCommands];
 
@@ -958,7 +960,7 @@ public class Statement implements java.sql.Statement {
 
 			StringBuffer queryBuf = new StringBuffer();
 
-			java.sql.Statement batchStmt = locallyScopedConn.createStatement();
+			batchStmt = locallyScopedConn.createStatement();
 
 			int counter = 0;
 
@@ -1031,8 +1033,14 @@ public class Statement implements java.sql.Statement {
 
 			return (updateCounts != null) ? updateCounts : new int[0];
 		} finally {
-			if (!multiQueriesEnabled) {
-				locallyScopedConn.getIO().disableMultiQueries();
+			try {
+				if (batchStmt != null) {
+					batchStmt.close();
+				}
+			} finally {
+				if (!multiQueriesEnabled) {
+					locallyScopedConn.getIO().disableMultiQueries();
+				}
 			}
 		}
 	}

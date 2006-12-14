@@ -27,7 +27,10 @@ nn-nn-06 - Version 5.0.5
       addresses the inconsistencies, not the issue that the driver is 
       treating schemas differently than some users expect. We will revisit 
       this behavior when there is full support for schemas in MySQL).
-	  	   
+
+    - Fixed BUG#25073 - rewriting batched statements leaks internal statement
+	  instances, and causes a memory leak.
+	  	   	  	   
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 
@@ -262,10 +265,7 @@ nn-nn-06 - Version 3.1.15
 	
 	- Handle YYYY-MM-DD hh:mm:ss format of timestamp in 
 	  ResultSet.getTimeFromString().
-	  
-	- Fixed BUG#24840 - character encoding of "US-ASCII" doesn't map correctly 
-	  for 4.1 or newer
-	  
+	
 10-19-06 - Version 3.1.14
 
     - Fixed BUG#20479 - Updatable result set throws ClassCastException

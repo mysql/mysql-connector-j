@@ -3602,4 +3602,95 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+
+	/**
+	 * Tests fix for BUG#25073 - rewriting batched statements leaks internal statement
+	 * instances, and causes a memory leak.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug25073() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("rewriteBatchedStatements", "true");
+		Connection multiConn = getConnectionWithProps(props);
+		createTable("testBug25073", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
+		Statement multiStmt = multiConn.createStatement();
+		multiStmt.addBatch("INSERT INTO testBug25073(field1) VALUES (1)");
+		multiStmt.addBatch("INSERT INTO testBug25073(field1) VALUES (2)");
+		multiStmt.addBatch("INSERT INTO testBug25073(field1) VALUES (3)");
+		multiStmt.addBatch("INSERT INTO testBug25073(field1) VALUES (4)");
+		multiStmt.addBatch("UPDATE testBug25073 SET field1=5 WHERE field1=1");
+		multiStmt.addBatch("UPDATE testBug25073 SET field1=6 WHERE field1=2 OR field1=3");
+		
+		int beforeOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
+		
+		multiStmt.executeBatch();
+		
+		int afterOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
+		
+		assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
+		
+	
+		createTable("testBug25073", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
+		props.clear();
+		props.setProperty("rewriteBatchedStatements", "true");
+		props.setProperty("sessionVariables", "max_allowed_packet=1024");
+		multiConn = getConnectionWithProps(props);
+		multiStmt = multiConn.createStatement();
+		
+		for (int i = 0; i < 1000; i++) {
+			multiStmt.addBatch("INSERT INTO testBug25073(field1) VALUES (" + i + ")");
+		}
+		
+		beforeOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
+		
+		multiStmt.executeBatch();
+		
+		afterOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
+		
+		assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
+		
+		createTable("testBug25073", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
+		
+		props.clear();
+		props.setProperty("useServerPrepStmts", "false");
+		props.setProperty("rewriteBatchedStatements", "true");
+		multiConn = getConnectionWithProps(props);
+		PreparedStatement pStmt = multiConn.prepareStatement("INSERT INTO testBug25073(field1) VALUES (?)", 
+				Statement.RETURN_GENERATED_KEYS);
+		
+		for (int i = 0; i < 1000; i++) {
+			pStmt.setInt(1, i);
+			pStmt.addBatch();
+		}
+		
+		beforeOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
+		
+		pStmt.executeBatch();
+		
+		afterOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
+		
+		assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
+		
+		createTable("testBug25073", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
+		props.setProperty("useServerPrepStmts", "false");
+		props.setProperty("rewriteBatchedStatements", "true");
+		props.setProperty("sessionVariables", "max_allowed_packet=1024");
+		multiConn = getConnectionWithProps(props);
+		pStmt = multiConn.prepareStatement("INSERT INTO testBug25073(field1) VALUES (?)", 
+				Statement.RETURN_GENERATED_KEYS);
+		
+		for (int i = 0; i < 1000; i++) {
+			pStmt.setInt(1, i);
+			pStmt.addBatch();
+		}
+		
+		beforeOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
+		
+		pStmt.executeBatch();
+	
+		afterOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
+		
+		assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
+	}
 }
