@@ -1189,7 +1189,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	public void testBug11781() throws Exception {
 
 		if (versionMeetsMinimum(5, 1)) {
-			if (!versionMeetsMinimum(5, 1, 12)) {
+			if (!versionMeetsMinimum(5, 2)) {
 				// server bug prevents this test from functioning
 				
 				return;
