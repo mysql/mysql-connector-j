@@ -1540,35 +1540,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		assertEquals(true, dbmd.supportsGroupByUnrelated());
 	}
 
-	private void testAbsenceOfMetadataForQuery(String query) throws Exception {
-		try {
-			this.pstmt = this.conn.prepareStatement(query);
-			ResultSetMetaData rsmd = this.pstmt.getMetaData();
-
-			assertNull(rsmd);
-
-			this.pstmt = ((com.mysql.jdbc.Connection) this.conn)
-					.clientPrepareStatement(query);
-			rsmd = this.pstmt.getMetaData();
-
-			assertNull(rsmd);
-		} finally {
-			if (this.pstmt != null) {
-				this.pstmt.close();
-			}
-		}
-	}
-
-	public void testRSMDToStringFromDBMD() throws Exception {
-		try {		
-			this.rs = this.conn.getMetaData().getTypeInfo();
-			
-			this.rs.getMetaData().toString(); // used to cause NPE
-		} finally {
-			closeMemberJDBCResources();
-		}
-	}
-
 	/**
 	 * Tests fix for BUG#21544 - When using information_schema for metadata, 
 	 * COLUMN_SIZE for getColumns() is not clamped to range of 
@@ -1663,6 +1634,56 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		} finally {
 			closeMemberJDBCResources();
 		}
+	}
+
+
+	private void testAbsenceOfMetadataForQuery(String query) throws Exception {
+		try {
+			this.pstmt = this.conn.prepareStatement(query);
+			ResultSetMetaData rsmd = this.pstmt.getMetaData();
+
+			assertNull(rsmd);
+
+			this.pstmt = ((com.mysql.jdbc.Connection) this.conn)
+					.clientPrepareStatement(query);
+			rsmd = this.pstmt.getMetaData();
+
+			assertNull(rsmd);
+		} finally {
+			if (this.pstmt != null) {
+				this.pstmt.close();
+			}
+		}
+	}
+
+	public void testRSMDToStringFromDBMD() throws Exception {
+		try {		
+			this.rs = this.conn.getMetaData().getTypeInfo();
+			
+			this.rs.getMetaData().toString(); // used to cause NPE
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+	
+	public void testCharacterSetForDBMD() throws Exception {
+		if (versionMeetsMinimum(5, 1)) {
+			// server is broken, fixed in 5.2/6.0?
+			
+			if (!versionMeetsMinimum(5, 2)) {
+				return;
+			}
+		}
+		
+		String quoteChar = this.conn.getMetaData().getIdentifierQuoteString();
+		
+		String tableName = quoteChar + "\u00e9\u0074\u00e9" + quoteChar;
+		createTable(tableName, "(field1 int)");
+		this.rs = this.conn.getMetaData().getTables(this.conn.getCatalog(), 
+				null, tableName, new String[] {"TABLE"});
+		assertEquals(true, this.rs.next());
+		System.out.println(this.rs.getString("TABLE_NAME"));
+		System.out.println(new String(this.rs.getBytes("TABLE_NAME"), "UTF-8"));
 	}
 
 	/**
