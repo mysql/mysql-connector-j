@@ -30,6 +30,11 @@ nn-nn-06 - Version 5.0.5
 
     - Fixed BUG#25073 - rewriting batched statements leaks internal statement
 	  instances, and causes a memory leak.
+	  
+	- Fixed issue where field-level for metadata from DatabaseMetaData when using 
+	  INFORMATION_SCHEMA didn't have references to current connections,
+	  sometimes leading to NullPointerExceptions when intropsecting them via
+	  ResultSetMetaData.
 	  	   	  	   
 10-20-06 - Version 5.0.4
 

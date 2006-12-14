@@ -784,6 +784,7 @@ public class ResultSet implements java.sql.ResultSet {
 		
 		for (int i = 0; i < this.fields.length; i++) {
 			this.fields[i].setUseOldNameMetadata(true);
+			this.fields[i].setConnection(this.connection);
 		}
 	}
 
