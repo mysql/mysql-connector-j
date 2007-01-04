@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as
@@ -263,7 +263,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		}
 
 		try {
-			Connection newConn = new com.mysql.jdbc.Connection(host(props),
+			Connection newConn = com.mysql.jdbc.Connection.getInstance(host(props),
 					port(props), props, database(props), url);
 
 			return newConn;

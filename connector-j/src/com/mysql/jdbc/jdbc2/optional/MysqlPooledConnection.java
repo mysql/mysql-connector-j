@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -19,9 +19,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
- 
  */
+
 package com.mysql.jdbc.jdbc2.optional;
 
 import java.sql.Connection;
@@ -33,7 +32,6 @@ import java.util.Hashtable;
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
 import javax.sql.PooledConnection;
-import javax.sql.StatementEventListener;
 
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
@@ -212,35 +210,35 @@ public class MysqlPooledConnection implements PooledConnection {
 		}
 	}
 	
-	/**
-	 * Registers a <code>StatementEventListener</code> with this <code>PooledConnection</code> object.  Components that 
-	 * wish to be notified when  <code>PreparedStatement</code>s created by the
-         * connection are closed or are detected to be invalid may use this method 
-         * to register a <code>StatementEventListener</code> with this <code>PooledConnection</code> object.
-	 * <p>
-	 * @param listener	an component which implements the <code>StatementEventListener</code> 
-	 * 					interface that is to be registered with this <code>PooledConnection</code> object
-	 * <p>
-	 * @since 1.6
-	 */
-	public void addStatementEventListener(StatementEventListener listener) {
-		throw new JDBC40NotYetImplementedException();
-	}
-	
-	/**
-	 * Removes the specified <code>StatementEventListener</code> from the list of 
-	 * components that will be notified when the driver detects that a 
-	 * <code>PreparedStatement</code> has been closed or is invalid.
-	 * <p> 
-	 * @param listener	the component which implements the
-	 * 					<code>StatementEventListener</code> interface that was previously 
-	 * 					registered with this <code>PooledConnection</code> object
-	 * <p>
-	 * @since 1.6
-	 */
-	public void removeStatementEventListener(StatementEventListener listener) {
-		throw new JDBC40NotYetImplementedException();
-	}
+//	/**
+//	 * Registers a <code>StatementEventListener</code> with this <code>PooledConnection</code> object.  Components that 
+//	 * wish to be notified when  <code>PreparedStatement</code>s created by the
+//         * connection are closed or are detected to be invalid may use this method 
+//         * to register a <code>StatementEventListener</code> with this <code>PooledConnection</code> object.
+//	 * <p>
+//	 * @param listener	an component which implements the <code>StatementEventListener</code> 
+//	 * 					interface that is to be registered with this <code>PooledConnection</code> object
+//	 * <p>
+//	 * @since 1.6
+//	 */
+//	public void addStatementEventListener(StatementEventListener listener) {
+//		throw new JDBC40NotYetImplementedException();
+//	}
+//	
+//	/**
+//	 * Removes the specified <code>StatementEventListener</code> from the list of 
+//	 * components that will be notified when the driver detects that a 
+//	 * <code>PreparedStatement</code> has been closed or is invalid.
+//	 * <p> 
+//	 * @param listener	the component which implements the
+//	 * 					<code>StatementEventListener</code> interface that was previously 
+//	 * 					registered with this <code>PooledConnection</code> object
+//	 * <p>
+//	 * @since 1.6
+//	 */
+//	public void removeStatementEventListener(StatementEventListener listener) {
+//		throw new JDBC40NotYetImplementedException();
+//	}
 
 
 }

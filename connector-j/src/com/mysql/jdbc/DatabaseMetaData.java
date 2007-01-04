@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -27,7 +27,6 @@ package com.mysql.jdbc;
 import java.io.UnsupportedEncodingException;
 
 import java.sql.ResultSet;
-import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
@@ -39,10 +38,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
-
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
 
 /**
  * JDBC Interface to Mysql functions
@@ -441,6 +439,38 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	/** What character to use when quoting identifiers */
 	protected String quotedId = null;
 
+	// We need to provide factory-style methods so we can support both JDBC3 (and older)
+	// and JDBC4 runtimes, otherwise the class verifier complains...
+	
+	protected static DatabaseMetaData getInstance(
+			com.mysql.jdbc.Connection connToSet, String databaseToSet)
+			throws SQLException {
+		if (!Util.isJdbc4()) {
+			if (connToSet != null && connToSet.getUseInformationSchema()
+					&& connToSet.versionMeetsMinimum(5, 0, 7)) {
+				return new DatabaseMetaDataUsingInfoSchema(connToSet,
+						databaseToSet);
+			}
+
+			return new DatabaseMetaData(connToSet, databaseToSet);
+		}
+
+		if (connToSet != null && connToSet.getUseInformationSchema()
+				&& connToSet.versionMeetsMinimum(5, 0, 7)) {
+			return (DatabaseMetaData) Util
+					.getInstance(
+							"com.mysql.jdbc.jdbc4.JDBC4DatabaseMetaDataUsingInfoSchema",
+							new Class[] { com.mysql.jdbc.Connection.class,
+									String.class }, new Object[] { connToSet,
+									databaseToSet });
+		}
+
+		return (DatabaseMetaData) Util.getInstance(
+				"com.mysql.jdbc.jdbc4.JDBC4DatabaseMetaData", new Class[] {
+						com.mysql.jdbc.Connection.class, String.class },
+				new Object[] { connToSet, databaseToSet });
+	}
+	
 	/**
 	 * Creates a new DatabaseMetaData object.
 	 * 
@@ -449,7 +479,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * @param databaseToSet
 	 *            DOCUMENT ME!
 	 */
-	public DatabaseMetaData(Connection connToSet, String databaseToSet) {
+	protected DatabaseMetaData(Connection connToSet, String databaseToSet) {
 		this.conn = connToSet;
 		this.database = databaseToSet;
 
@@ -501,8 +531,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			fields[i].setUseOldNameMetadata(true);
 		}
 
-		return new com.mysql.jdbc.ResultSet(c.getCatalog(), fields,
-				new RowDataStatic(rows), c, null);
+		return com.mysql.jdbc.ResultSet.getInstance(c.getCatalog(), fields,
+				new RowDataStatic(rows), c, null, false);
 	}
 
 	private void convertToJdbcFunctionList(String catalog,
@@ -548,7 +578,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					rowData[1] = null;                                   // FUNCTION_SCHEM
 					rowData[2] = s2b(functionName);                      // FUNCTION_NAME
 					rowData[3] = s2b(proceduresRs.getString("comment")); // REMARKS
-					rowData[4] = s2b(Integer.toString(functionNoTable)); // FUNCTION_TYPE
+					rowData[4] = s2b(Integer.toString(getJDBC4FunctionNoTableConstant())); // FUNCTION_TYPE
 					rowData[5] = s2b(functionName);                      // SPECFIC NAME
 				}
 
@@ -556,6 +586,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 		}
 	}
+	
+	protected int getJDBC4FunctionNoTableConstant() {
+		return 0;
+	}
+	
 	private void convertToJdbcProcedureList(boolean fromSelect, String catalog,
 			ResultSet proceduresRs, boolean needsClientFiltering, String db,
 			Map procedureRowsOrderedByName, int nameIndex) throws SQLException {
@@ -7431,115 +7466,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public boolean usesLocalFiles() throws SQLException {
-		return false;
-	}
-
-	public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
-		return false;
-	}
-
-	public ResultSet getClientInfoProperties() throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public ResultSet getFunctionParameters(String catalog, String schemaPattern, String functionNamePattern, String parameterNamePattern) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-    /**
-     * Retrieves a description of the  system and user functions available 
-     * in the given catalog.
-     * <P>
-     * Only system and user function descriptions matching the schema and
-     * function name criteria are returned.  They are ordered by
-     * <code>FUNCTION_CAT</code>, <code>FUNCTION_SCHEM</code>,
-     * <code>FUNCTION_NAME</code> and 
-     * <code>SPECIFIC_ NAME</code>.
-     *
-     * <P>Each function description has the the following columns:
-     *  <OL>
-     *	<LI><B>FUNCTION_CAT</B> String => function catalog (may be <code>null</code>)
-     *	<LI><B>FUNCTION_SCHEM</B> String => function schema (may be <code>null</code>)
-     *	<LI><B>FUNCTION_NAME</B> String => function name.  This is the name 
-     * used to invoke the function
-     *	<LI><B>REMARKS</B> String => explanatory comment on the function
-     * <LI><B>FUNCTION_TYPE</B> short => kind of function:
-     *      <UL>
-     *      <LI>functionResultUnknown - Cannot determine if a return value
-     *       or table will be returned
-     *      <LI> functionNoTable- Does not return a table
-     *      <LI> functionReturnsTable - Returns a table
-     *      </UL>
-     *	<LI><B>SPECIFIC_NAME</B> String  => the name which uniquely identifies 
-     *  this function within its schema.  This is a user specified, or DBMS
-     * generated, name that may be different then the <code>FUNCTION_NAME</code> 
-     * for example with overload functions
-     *  </OL>
-     * <p>
-     * A user may not have permission to execute any of the functions that are
-     * returned by <code>getFunctions</code>
-     *
-     * @param catalog a catalog name; must match the catalog name as it
-     *        is stored in the database; "" retrieves those without a catalog;
-     *        <code>null</code> means that the catalog name should not be used to narrow
-     *        the search
-     * @param schemaPattern a schema name pattern; must match the schema name
-     *        as it is stored in the database; "" retrieves those without a schema;
-     *        <code>null</code> means that the schema name should not be used to narrow
-     *        the search
-     * @param functionNamePattern a function name pattern; must match the
-     *        function name as it is stored in the database 
-     * @return <code>ResultSet</code> - each row is a function description 
-     * @exception SQLException if a database access error occurs
-     * @see #getSearchStringEscape 
-     * @since 1.6
-     */
-	public ResultSet getFunctions(String catalog, String schemaPattern,
-			String functionNamePattern) throws SQLException {
-
-		Field[] fields = new Field[6];
-		fields[0] = new Field("", "FUNCTION_CAT", Types.CHAR,
-				MAX_IDENTIFIER_LENGTH);
-		fields[1] = new Field("", "FUNCTION_SCHEM", Types.CHAR,
-				MAX_IDENTIFIER_LENGTH);
-		fields[2] = new Field("", "FUNCTION_NAME", Types.CHAR,
-				MAX_IDENTIFIER_LENGTH);
-		fields[3] = new Field("", "REMARKS", Types.CHAR, MAX_IDENTIFIER_LENGTH);
-		fields[4] = new Field("", "FUNCTION_TYPE", Types.SMALLINT, 0);
-		fields[5] = new Field("", "SPECIFIC_NAME", Types.CHAR,
-				MAX_IDENTIFIER_LENGTH);
-
-		return getProceduresAndOrFunctions(fields, catalog, schemaPattern,
-				functionNamePattern, false, true);
-
-	}
-
-	public RowIdLifetime getRowIdLifetime() throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
-		return true;
-	}
-
-	public boolean isWrapperFor(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public Object unwrap(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public boolean providesQueryObjectGenerator() throws SQLException {
-		// TODO Auto-generated method stub
 		return false;
 	}
 }

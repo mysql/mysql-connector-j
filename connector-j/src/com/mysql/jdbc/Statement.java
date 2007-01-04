@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -1540,9 +1540,9 @@ public class Statement implements java.sql.Statement {
 		fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17); //$NON-NLS-1$ //$NON-NLS-2$
 		fields[0].setConnection(this.connection);
 
-		return new com.mysql.jdbc.ResultSet(this.currentCatalog, fields,
+		return com.mysql.jdbc.ResultSet.getInstance(this.currentCatalog, fields,
 				new RowDataStatic(this.batchedGeneratedKeys), this.connection,
-				this);
+				this, false);
 	}
 	
 	/*
@@ -1582,8 +1582,8 @@ public class Statement implements java.sql.Statement {
 			}
 		}
 
-		return new com.mysql.jdbc.ResultSet(this.currentCatalog, fields,
-				new RowDataStatic(rowSet), this.connection, this);
+		return com.mysql.jdbc.ResultSet.getInstance(this.currentCatalog, fields,
+				new RowDataStatic(rowSet), this.connection, this, false);
 	}
 
 	/**

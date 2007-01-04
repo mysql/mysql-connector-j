@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -27,6 +27,8 @@ package com.mysql.jdbc;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.SQLException;
 
 /**
  * Various utility methods for the driver.
@@ -34,9 +36,6 @@ import java.io.StringWriter;
  * @author Mark Matthews
  */
 public class Util {
-	// ~ Static fields/initializers
-	// ---------------------------------------------
-
 	class RandStructcture {
 		long maxValue;
 
@@ -47,10 +46,28 @@ public class Util {
 		long seed2;
 	}
 
+	private static boolean isJdbc4 = false;
+
+	private static Util enclosingInstance = new Util();
+	
+	// ~ Static fields/initializers
+	// ---------------------------------------------
+
+	static {
+		try {
+			Class.forName("java.sql.NClob");
+			isJdbc4 = true;
+		} catch (Throwable t) {
+			isJdbc4 = false;
+		}
+	}
+
 	// ~ Methods
 	// ----------------------------------------------------------------
 
-	private static Util enclosingInstance = new Util();
+	public static boolean isJdbc4() {
+		return isJdbc4;
+	}
 
 	// Right from Monty's code
 	static String newCrypt(String password, String seed) {
@@ -292,5 +309,28 @@ public class Util {
 		traceBuf.append(Messages.getString("Util.4")); //$NON-NLS-1$
 
 		return traceBuf.toString();
+	}
+	
+	
+	public static Object getInstance(String className, Class[] argTypes, Object[] args) throws SQLException {
+		try {
+			Class c = Class.forName(className);
+		
+			return c.getConstructor(argTypes).newInstance(args);
+		} catch (IllegalArgumentException e) {
+			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+		} catch (SecurityException e) {
+			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+		} catch (InstantiationException e) {
+			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+		} catch (IllegalAccessException e) {
+			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+		} catch (InvocationTargetException e) {
+			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+		} catch (NoSuchMethodException e) {
+			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+		} catch (ClassNotFoundException e) {
+			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+		}
 	}
 }

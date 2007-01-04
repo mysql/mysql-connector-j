@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -36,7 +36,7 @@ import java.util.Map;
  * @author Mark Matthews
  * @version $Id$
  */
-final class MysqlDefs {
+public final class MysqlDefs {
 	// ~ Static fields/initializers
 	// ---------------------------------------------
 
@@ -80,7 +80,7 @@ final class MysqlDefs {
 
 	static final int FIELD_TYPE_BIT = 16;
 
-	static final int FIELD_TYPE_BLOB = 252;
+	public static final int FIELD_TYPE_BLOB = 252;
 
 	static final int FIELD_TYPE_DATE = 10;
 

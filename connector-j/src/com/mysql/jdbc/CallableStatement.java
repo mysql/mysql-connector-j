@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2005 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -34,12 +34,9 @@ import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
-import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
-import java.sql.RowId;
 import java.sql.SQLException;
-import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -50,8 +47,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.jdbc4.NClob;
 
 /**
  * Representation of stored procedures for JDBC
@@ -395,7 +394,7 @@ public class CallableStatement extends PreparedStatement implements
 	// private Map parameterMap;
 	private ResultSet outputParameterResults;
 
-	private boolean outputParamWasNull = false;
+	protected boolean outputParamWasNull = false;
 
 	private int[] parameterIndexToRsIndex;
 
@@ -423,32 +422,48 @@ public class CallableStatement extends PreparedStatement implements
 		
 		if (this.callingStoredFunction) {
 			this.parameterCount += 1;
-	}
+		}
 	}
 
 	/**
-	 * Creates a new CallableStatement
-	 * 
-	 * @param conn
-	 *            the connection creating this statement
-	 * @param catalog
-	 *            catalog the current catalog
-	 * 
-	 * @throws SQLException
-	 *             if an error occurs
+	 * Creates a callable statement instance -- We need to provide factory-style methods
+	 * so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise
+	 * the class verifier complains when it tries to load JDBC4-only interface
+	 * classes that are present in JDBC4 method signatures.
 	 */
-	public CallableStatement(Connection conn, String catalog)
-			throws SQLException {
-		super(conn, catalog, null);
 
-		determineParameterTypes();
-		generateParameterMap();
-		
-		if (this.callingStoredFunction) {
-			this.parameterCount += 1;
-	}
-	}
+	protected static CallableStatement getInstance(Connection conn, String sql, String catalog,
+			boolean isFunctionCall) throws SQLException {
+		if (!Util.isJdbc4()) {
+			return new CallableStatement(conn, sql, catalog, isFunctionCall);
+		}
 
+		return (CallableStatement) Util.getInstance(
+				"com.mysql.jdbc.jdbc4.JDBC4CallableStatement", new Class[] {
+						com.mysql.jdbc.Connection.class, String.class, String.class,
+						Boolean.TYPE }, new Object[] {
+						conn, sql, catalog, new Boolean(isFunctionCall) });
+	}
+	
+	/**
+	 * Creates a callable statement instance -- We need to provide factory-style methods
+	 * so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise
+	 * the class verifier complains when it tries to load JDBC4-only interface
+	 * classes that are present in JDBC4 method signatures.
+	 */
+
+	protected static CallableStatement getInstance(Connection conn,
+			CallableStatementParamInfo paramInfo) throws SQLException {
+		if (!Util.isJdbc4()) {
+			return new CallableStatement(conn, paramInfo);
+		}
+
+		return (CallableStatement) Util.getInstance(
+				"com.mysql.jdbc.jdbc4.JDBC4CallableStatement", new Class[] {
+						com.mysql.jdbc.Connection.class, CallableStatementParamInfo.class }, 
+						new Object[] {conn, conn, paramInfo });
+	}
+	
 	private int[] placeholderToParameterIndexMap;
 	
 	private void generateParameterMap() throws SQLException {
@@ -526,7 +541,7 @@ public class CallableStatement extends PreparedStatement implements
 		
 		if (this.callingStoredFunction) {
 			this.parameterCount += 1;
-	}
+		}
 	}
 
 	/*
@@ -2163,272 +2178,5 @@ public class CallableStatement extends PreparedStatement implements
 		}
 		
 		return super.getParameterIndexOffset();
-	}
-
-	public SQLXML getSQLXML(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
-
-		SQLXML retValue = rs
-				.getSQLXML(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
-		
-	}
-
-	public SQLXML getSQLXML(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		SQLXML retValue = rs.getSQLXML(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
-	}
-
-	public void setAsciiStream(String parameterName, InputStream x) throws SQLException {
-		setAsciiStream(getNamedParamIndex(parameterName, false), x);
-		
-	}
-
-	public void setAsciiStream(String parameterName, InputStream x, long length) throws SQLException {
-		setAsciiStream(getNamedParamIndex(parameterName, false), x, length);
-		
-	}
-
-	public void setBinaryStream(String parameterName, InputStream x) throws SQLException {
-		setBinaryStream(getNamedParamIndex(parameterName, false), x);
-		
-	}
-
-	public void setBinaryStream(String parameterName, InputStream x, long length) throws SQLException {
-		setBinaryStream(getNamedParamIndex(parameterName, false), x, length);
-		
-	}
-
-	public void setBlob(String parameterName, Blob x) throws SQLException {
-		setBlob(getNamedParamIndex(parameterName, false), x);
-		
-	}
-
-	public void setBlob(String parameterName, InputStream inputStream) throws SQLException {
-		setBlob(getNamedParamIndex(parameterName, false), inputStream);
-		
-	}
-
-	public void setBlob(String parameterName, InputStream inputStream, long length) throws SQLException {
-		setBlob(getNamedParamIndex(parameterName, false), inputStream, length);
-		
-	}
-
-	public void setCharacterStream(String parameterName, Reader reader) throws SQLException {
-		setCharacterStream(getNamedParamIndex(parameterName, false), reader);
-		
-	}
-
-	public void setCharacterStream(String parameterName, Reader reader, long length) throws SQLException {
-		setCharacterStream(getNamedParamIndex(parameterName, false), reader, length);
-		
-	}
-
-	public void setClob(String parameterName, Clob x) throws SQLException {
-		setClob(getNamedParamIndex(parameterName, false), x);
-		
-	}
-
-	public void setClob(String parameterName, Reader reader) throws SQLException {
-		setClob(getNamedParamIndex(parameterName, false), reader);
-		
-	}
-
-	public void setClob(String parameterName, Reader reader, long length) throws SQLException {
-		setClob(getNamedParamIndex(parameterName, false), reader, length);
-		
-	}
-
-	public void setNCharacterStream(String parameterName, Reader value) throws SQLException {
-		setNCharacterStream(getNamedParamIndex(parameterName, false), value);
-		
-	}
-
-	public void setNCharacterStream(String parameterName, Reader value, long length) throws SQLException {
-		setNCharacterStream(getNamedParamIndex(parameterName, false), value, length);
-		
-	}
-
-	public void setNClob(String parameterName, NClob value) throws SQLException {
-		setNClob(getNamedParamIndex(parameterName, false), value);
-		
-	}
-
-	public void setNClob(String parameterName, Reader reader) throws SQLException {
-		setNClob(getNamedParamIndex(parameterName, false), reader);
-		
-	}
-
-	public void setNClob(String parameterName, Reader reader, long length) throws SQLException {
-		setNClob(getNamedParamIndex(parameterName, false), reader, length);
-		
-	}
-
-	public void setNString(String parameterName, String value) throws SQLException {
-		setNString(getNamedParamIndex(parameterName, false), value);
-		
-	}
-
-	public void setRowId(String parameterName, RowId x) throws SQLException {
-		setRowId(getNamedParamIndex(parameterName, false), x);
-		
-	}
-
-	public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
-		setSQLXML(getNamedParamIndex(parameterName, false), xmlObject);
-		
-	}
-
-	public boolean isWrapperFor(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-		
-	}
-
-	public Object unwrap(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-		
-	}
-
-	/**
-	 * @see java.sql.CallableStatement#getCharacterStream(int)
-	 */
-	public Reader getCharacterStream(int parameterIndex) throws SQLException {
-	    ResultSet rs = getOutputParameters(parameterIndex);
-	
-	    Reader retValue = rs
-	            .getCharacterStream(mapOutputParameterIndexToRsIndex(parameterIndex));
-	
-	    this.outputParamWasNull = rs.wasNull();
-	
-	    return retValue;
-	}
-
-	/**
-	 * @see java.sql.CallableStatement#getCharacterStream(java.lang.String)
-	 */
-	public Reader getCharacterStream(String parameterName) throws SQLException {
-	    ResultSet rs = getOutputParameters(0); // definitely not going to be
-	    // from ?=
-	
-	    Reader retValue = rs.getCharacterStream(fixParameterName(parameterName));
-	
-	    this.outputParamWasNull = rs.wasNull();
-	
-	    return retValue;
-	}
-
-	/**
-	 * @see java.sql.CallableStatement#getNCharacterStream(int)
-	 */
-	public Reader getNCharacterStream(int parameterIndex) throws SQLException {
-	    ResultSet rs = getOutputParameters(parameterIndex);
-	
-	    Reader retValue = rs
-	            .getNCharacterStream(mapOutputParameterIndexToRsIndex(parameterIndex));
-	
-	    this.outputParamWasNull = rs.wasNull();
-	
-	    return retValue;
-	}
-
-	/**
-	 * @see java.sql.CallableStatement#getNCharacterStream(java.lang.String)
-	 */
-	public Reader getNCharacterStream(String parameterName) throws SQLException {
-	    ResultSet rs = getOutputParameters(0); // definitely not going to be
-	    // from ?=
-	
-	    Reader retValue = rs.getNCharacterStream(fixParameterName(parameterName));
-	
-	    this.outputParamWasNull = rs.wasNull();
-	
-	    return retValue;
-	}
-
-	/**
-	 * @see java.sql.CallableStatement#getNClob(int)
-	 */
-	public NClob getNClob(int parameterIndex) throws SQLException {
-	    ResultSet rs = getOutputParameters(parameterIndex);
-	
-	    NClob retValue = rs
-	            .getNClob(mapOutputParameterIndexToRsIndex(parameterIndex));
-	
-	    this.outputParamWasNull = rs.wasNull();
-	
-	    return retValue;
-	}
-
-	/**
-	 * @see java.sql.CallableStatement#getNClob(java.lang.String)
-	 */
-	public NClob getNClob(String parameterName) throws SQLException {
-	    ResultSet rs = getOutputParameters(0); // definitely not going to be
-	    // from ?=
-	
-	    NClob retValue = rs.getNClob(fixParameterName(parameterName));
-	
-	    this.outputParamWasNull = rs.wasNull();
-	
-	    return retValue;
-	}
-
-	/**
-	 * @see java.sql.CallableStatement#getNString(int)
-	 */
-	public String getNString(int parameterIndex) throws SQLException {
-	    ResultSet rs = getOutputParameters(parameterIndex);
-	
-	    String retValue = rs
-	            .getNString(mapOutputParameterIndexToRsIndex(parameterIndex));
-	
-	    this.outputParamWasNull = rs.wasNull();
-	
-	    return retValue;
-	}
-
-	/**
-	 * @see java.sql.CallableStatement#getNString(java.lang.String)
-	 */
-	public String getNString(String parameterName) throws SQLException {
-	    ResultSet rs = getOutputParameters(0); // definitely not going to be
-	    // from ?=
-	
-	    String retValue = rs.getNString(fixParameterName(parameterName));
-	
-	    this.outputParamWasNull = rs.wasNull();
-	
-	    return retValue;
-	}
-
-	public RowId getRowId(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
-
-		RowId retValue = rs
-				.getRowId(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
-	}
-
-	public RowId getRowId(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
-	    // from ?=
-	
-	    RowId retValue = rs.getRowId(fixParameterName(parameterName));
-	
-	    this.outputParamWasNull = rs.wasNull();
-	
-	    return retValue;
 	}
 }

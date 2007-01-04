@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -32,7 +32,6 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 
 import java.sql.SQLException;
-import java.sql.Wrapper;
 
 import java.util.Properties;
 
@@ -49,7 +48,7 @@ import javax.sql.DataSource;
  * @author Mark Matthews
  */
 public class MysqlDataSource extends ConnectionProperties implements
-		DataSource, Referenceable, Serializable, Wrapper {
+		DataSource, Referenceable, Serializable  {
 	/** The driver to create connections with */
 	protected static com.mysql.jdbc.Driver mysqlDriver = null;
 
@@ -426,12 +425,12 @@ public class MysqlDataSource extends ConnectionProperties implements
 
 		return mysqlDriver.connect(jdbcUrlToUse, props);
 	}
-
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public <T> T unwrap(Class<T> iface) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
+//
+//	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+//		throw new JDBC40NotYetImplementedException();
+//	}
+//
+//	public <T> T unwrap(Class<T> iface) throws SQLException {
+//		throw new JDBC40NotYetImplementedException();
+//	}
 }

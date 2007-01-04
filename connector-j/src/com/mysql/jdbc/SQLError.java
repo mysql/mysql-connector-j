@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -137,12 +137,7 @@ public class SQLError {
 	private static Map sqlStateMessages;
 
 	static {
-		try {
-			Class.forName("java.sql.NClob");
-			isJdbc4 = true;
-		} catch (Throwable t) {
-			isJdbc4 = false;
-		}
+		
 
 		sqlStateMessages = new HashMap();
 		sqlStateMessages.put(SQL_STATE_DISCONNECT_ERROR, Messages
@@ -907,71 +902,107 @@ public class SQLError {
 	}
 	
 	public static SQLException createSQLException(String message,
-			String sqlState, int vendorErrorCode,
-			boolean isTransient) {
-		if (sqlState != null) {
-			if (sqlState.startsWith("08")) {
-				if (isTransient) {
-					if (!isJdbc4) {
-						return new MySQLTransientConnectionException(message,
+			String sqlState, int vendorErrorCode, boolean isTransient) {
+		try {
+			if (sqlState != null) {
+				if (sqlState.startsWith("08")) {
+					if (isTransient) {
+						if (!Util.isJdbc4()) {
+							return new MySQLTransientConnectionException(
+									message, sqlState, vendorErrorCode);
+						}
+
+						return (SQLException) Util
+								.getInstance(
+										"com.mysql.jdbc.exceptions.jdbc4.MySQLTransientConnectionException",
+										new Class[] { String.class,
+												String.class, Integer.class },
+										new Object[] { message, sqlState,
+												new Integer(vendorErrorCode) });
+					}
+
+					if (!Util.isJdbc4()) {
+						return new MySQLNonTransientConnectionException(
+								message, sqlState, vendorErrorCode);
+					}
+
+					return (SQLException) Util
+							.getInstance(
+									"com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException",
+									new Class[] { String.class, String.class,
+											Integer.class }, new Object[] {
+											message, sqlState,
+											new Integer(vendorErrorCode) });
+				}
+
+				if (sqlState.startsWith("22")) {
+					if (!Util.isJdbc4()) {
+						return new MySQLDataException(message, sqlState,
+								vendorErrorCode);
+					}
+
+					return (SQLException) Util
+							.getInstance(
+									"com.mysql.jdbc.exceptions.jdbc4.MySQLDataException",
+									new Class[] { String.class, String.class,
+											Integer.class }, new Object[] {
+											message, sqlState,
+											new Integer(vendorErrorCode) });
+				}
+
+				if (sqlState.startsWith("23")) {
+
+					if (!Util.isJdbc4()) {
+						return new MySQLIntegrityConstraintViolationException(
+								message, sqlState, vendorErrorCode);
+					}
+
+					return (SQLException) Util
+							.getInstance(
+									"com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException",
+									new Class[] { String.class, String.class,
+											Integer.class }, new Object[] {
+											message, sqlState,
+											new Integer(vendorErrorCode) });
+				}
+
+				if (sqlState.startsWith("42")) {
+					if (!Util.isJdbc4()) {
+						return new MySQLSyntaxErrorException(message, sqlState,
+								vendorErrorCode);
+					}
+
+					return (SQLException) Util
+							.getInstance(
+									"com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException",
+									new Class[] { String.class, String.class,
+											Integer.class }, new Object[] {
+											message, sqlState,
+											new Integer(vendorErrorCode) });
+				}
+
+				if (sqlState.startsWith("40")) {
+					if (!Util.isJdbc4()) {
+						return new MySQLTransactionRollbackException(message,
 								sqlState, vendorErrorCode);
 					}
-					
-					return new com.mysql.jdbc.exceptions.jdbc4.MySQLTransientConnectionException(
-							message, sqlState, vendorErrorCode);
+
+					return (SQLException) Util
+							.getInstance(
+									"com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException",
+									new Class[] { String.class, String.class,
+											Integer.class }, new Object[] {
+											message, sqlState,
+											new Integer(vendorErrorCode) });
 				}
-				
-				if (!isJdbc4) {
-					return new MySQLNonTransientConnectionException(message,
-							sqlState, vendorErrorCode);
-				}
-				
-				return new com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException(
-						message, sqlState, vendorErrorCode);
 			}
 
-			if (sqlState.startsWith("22")) {
-				if (!isJdbc4) {
-					return new MySQLDataException(message, sqlState,
-							vendorErrorCode);
-				}
-				
-				return new com.mysql.jdbc.exceptions.jdbc4.MySQLDataException(
-						message, sqlState, vendorErrorCode);
-			}
-
-			if (sqlState.startsWith("23")) {
-
-				if (!isJdbc4) {
-					return new MySQLIntegrityConstraintViolationException(
-							message, sqlState, vendorErrorCode);
-				}
-				
-				return new com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException(
-						message, sqlState, vendorErrorCode);
-			}
-
-			if (sqlState.startsWith("42")) {
-				if (!isJdbc4) {
-					return new MySQLSyntaxErrorException(message, sqlState,
-							vendorErrorCode);
-				}
-				
-				return new com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException(
-						message, sqlState, vendorErrorCode);
-			}
-
-			if (sqlState.startsWith("40")) {
-				if (!isJdbc4) {
-					return new MySQLTransactionRollbackException(message,
-							sqlState, vendorErrorCode);
-				}
-				
-				return new com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException(
-						message, sqlState, vendorErrorCode);
-			}
+			return new SQLException(message, sqlState, vendorErrorCode);
+		} catch (SQLException sqlEx) {
+			return new SQLException(
+					"Unable to create correct SQLException class instance, error class/codes may be incorrect. Reason: "
+							+ Util.stackTraceToString(sqlEx),
+					SQL_STATE_GENERAL_ERROR);
 		}
-		
-		return new SQLException(message, sqlState, vendorErrorCode);
 	}
 }

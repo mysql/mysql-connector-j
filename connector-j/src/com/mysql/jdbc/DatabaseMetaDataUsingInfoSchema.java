@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2005 MySQL AB
+ Copyright (C) 2005-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -35,7 +35,7 @@ import java.sql.Types;
  */
 public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
-	public DatabaseMetaDataUsingInfoSchema(Connection connToSet,
+	protected DatabaseMetaDataUsingInfoSchema(Connection connToSet,
 			String databaseToSet) {
 		super(connToSet, databaseToSet);
 	}

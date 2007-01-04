@@ -1,5 +1,5 @@
 /*
-      Copyright (C) 2002-2004 MySQL AB
+      Copyright (C) 2002-2007 MySQL AB
 
       This program is free software; you can redistribute it and/or modify
       it under the terms of version 2 of the GNU General Public License as
@@ -1987,8 +1987,8 @@ class MysqlIO {
 
         switch (resultSetConcurrency) {
         case java.sql.ResultSet.CONCUR_READ_ONLY:
-            rs = new com.mysql.jdbc.ResultSet(catalog, fields, rows,
-                    this.connection, callingStatement);
+            rs = com.mysql.jdbc.ResultSet.getInstance(catalog, fields, rows,
+                    this.connection, callingStatement, false);
 
             if (isBinaryEncoded) {
                 rs.setBinaryEncoded();
@@ -1997,14 +1997,14 @@ class MysqlIO {
             break;
 
         case java.sql.ResultSet.CONCUR_UPDATABLE:
-            rs = new com.mysql.jdbc.UpdatableResultSet(catalog, fields, rows,
-                    this.connection, callingStatement);
+            rs = com.mysql.jdbc.ResultSet.getInstance(catalog, fields, rows,
+                    this.connection, callingStatement, true);
 
             break;
 
         default:
-            return new com.mysql.jdbc.ResultSet(catalog, fields, rows,
-                this.connection, callingStatement);
+            return com.mysql.jdbc.ResultSet.getInstance(catalog, fields, rows,
+                this.connection, callingStatement, false);
         }
 
         rs.setResultSetType(resultSetType);
@@ -2057,7 +2057,7 @@ class MysqlIO {
                  +ex.getClass().getName(), SQLError.SQL_STATE_GENERAL_ERROR, -1);
         }
 
-        ResultSet updateRs = new com.mysql.jdbc.ResultSet(updateCount,
+        ResultSet updateRs = com.mysql.jdbc.ResultSet.getInstance(updateCount,
                 updateID, this.connection, callingStatement);
 
         if (info != null) {

@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -24,39 +24,17 @@
  */
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
-import com.mysql.jdbc.log.Log;
-import com.mysql.jdbc.log.LogFactory;
-import com.mysql.jdbc.log.NullLogger;
-import com.mysql.jdbc.profiler.ProfileEventSink;
-import com.mysql.jdbc.profiler.ProfilerEvent;
-import com.mysql.jdbc.util.LRUCache;
-
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
-
-import java.net.URL;
 
 import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.NClob;
-import java.sql.ParameterMetaData;
-import java.sql.Ref;
-import java.sql.SQLClientInfoException;
+import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
-import java.sql.SQLXML;
 import java.sql.Savepoint;
-import java.sql.Struct;
-import java.sql.Time;
-import java.sql.Timestamp;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -72,6 +50,13 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TreeMap;
+
+import com.mysql.jdbc.log.Log;
+import com.mysql.jdbc.log.LogFactory;
+import com.mysql.jdbc.log.NullLogger;
+import com.mysql.jdbc.profiler.ProfileEventSink;
+import com.mysql.jdbc.profiler.ProfilerEvent;
+import com.mysql.jdbc.util.LRUCache;
 
 /**
  * A Connection represents a session with a specific database. Within the
@@ -254,6 +239,29 @@ public class Connection extends ConnectionProperties implements
 		return cancelTimer;
 	}
 
+	/**
+	 * Creates a connection instance -- We need to provide factory-style methods
+	 * so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise
+	 * the class verifier complains when it tries to load JDBC4-only interface
+	 * classes that are present in JDBC4 method signatures.
+	 */
+
+	protected static Connection getInstance(String hostToConnectTo,
+			int portToConnectTo, Properties info, String databaseToConnectTo,
+			String url) throws SQLException {
+		if (!Util.isJdbc4()) {
+			return new Connection(hostToConnectTo, portToConnectTo, info,
+					databaseToConnectTo, url);
+		}
+
+		return (Connection) Util.getInstance(
+				"com.mysql.jdbc.jdbc4.JDBC4Connection", new Class[] {
+						String.class, Integer.TYPE, Properties.class,
+						String.class, String.class }, new Object[] {
+						hostToConnectTo, new Integer(portToConnectTo), info,
+						databaseToConnectTo, url });
+	}
+
 	private static synchronized int getNextRoundRobinHostIndex(String url,
 			List hostList) {
 		if (roundRobinStatsMap == null) {
@@ -369,12 +377,12 @@ public class Connection extends ConnectionProperties implements
 	 * with this even before we fill this dynamically from the server.
 	 */
 	private String[] indexToCharsetMapping = CharsetMapping.INDEX_TO_CHARSET;
-
+	
 	/** The I/O abstraction interface (network conn to MySQL server */
 	private MysqlIO io = null;
 	
 	private boolean isClientTzUTC = false;
-	
+
 	/** Has this connection been closed? */
 	private boolean isClosed = true;
 
@@ -517,32 +525,36 @@ public class Connection extends ConnectionProperties implements
 
 	/** The user we're connected as */
 	private String user = null;
-
+	
 	/**
 	 * Should we use server-side prepared statements? (auto-detected, but can be
 	 * disabled by user)
 	 */
 	private boolean useServerPreparedStmts = false;
-	
-	private LRUCache serverSideStatementCheckCache;
 
+	private LRUCache serverSideStatementCheckCache;
 	private LRUCache serverSideStatementCache;
 	private Calendar sessionCalendar;
+	
 	private Calendar utcCalendar;
 	
 	private String origHostToConnectTo;
-	
-	private int origPortToConnectTo;
 
 	// we don't want to be able to publicly clone this...
 	
+	private int origPortToConnectTo;
+
 	private String origDatabaseToConnectTo;
 
 	private String errorMessageEncoding = "Cp1252"; // to begin with, changes after we talk to the server
-
+	
 	private boolean usePlatformCharsetConverters;
 	
-	
+	/*
+	 * For testing failover scenarios
+	 */
+	private boolean hasTriedMasterFlag = false;
+
 	/**
 	 * Creates a connection to a MySQL Server.
 	 * 
@@ -561,7 +573,7 @@ public class Connection extends ConnectionProperties implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	Connection(String hostToConnectTo, int portToConnectTo, Properties info,
+	private Connection(String hostToConnectTo, int portToConnectTo, Properties info,
 			String databaseToConnectTo, String url)
 			throws SQLException {
 		this.charsetToNumBytesMap = new HashMap();
@@ -657,7 +669,7 @@ public class Connection extends ConnectionProperties implements
 		try {
 			createNewIO(false);
 			this.connectionId = this.io.getThreadId();
-			this.dbmd = new DatabaseMetaData(this, this.database);
+			this.dbmd = getMetaData();
 		} catch (SQLException ex) {
 			cleanup(ex);
 
@@ -736,7 +748,7 @@ public class Connection extends ConnectionProperties implements
 						: this.minimumNumberTablesAccessed,
 				this.maximumNumberTablesAccessed);
 	}
-
+	
 	/**
 	 * Builds the map needed for 4.1.0 and newer servers that maps field-level
 	 * charset/collation info to a java character encoding name.
@@ -838,7 +850,7 @@ public class Connection extends ConnectionProperties implements
 			this.indexToCharsetMapping = CharsetMapping.INDEX_TO_CHARSET;
 		}
 	}
-	
+
 	private boolean canHandleAsServerPreparedStatement(String sql) 
 		throws SQLException {
 		if (sql == null || sql.length() == 0) {
@@ -981,6 +993,15 @@ public class Connection extends ConnectionProperties implements
 		}
 		
 		setupServerForTruncationChecks();
+	}
+
+	private boolean characterSetNamesMatches(String mysqlEncodingName) {
+		// set names is equivalent to character_set_client ..._results and ..._connection,
+		// but we set _results later, so don't check it here.
+		
+		return (mysqlEncodingName != null && 
+				mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_client")) &&
+				mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_connection")));
 	}
 
 	private void checkAndCreatePerformanceHistogram() {
@@ -1176,6 +1197,10 @@ public class Connection extends ConnectionProperties implements
 		this.isClosed = true;
 	}
 
+	public void clearHasTriedMaster() {
+		this.hasTriedMasterFlag = false;
+	}
+	
 	/**
 	 * After this call, getWarnings returns null until a new warning is reported
 	 * for this connection.
@@ -1220,7 +1245,7 @@ public class Connection extends ConnectionProperties implements
 			int resultSetType, int resultSetConcurrency) throws SQLException {
 		return clientPrepareStatement(sql, resultSetType, resultSetConcurrency, true);
 	}
-	
+
 	protected PreparedStatement clientPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency, 
 			boolean processEscapeCodesIfNeeded) throws SQLException {
@@ -1236,7 +1261,7 @@ public class Connection extends ConnectionProperties implements
 						.get(nativeSql);
 	
 				if (pStmtInfo == null) {
-					pStmt = new com.mysql.jdbc.PreparedStatement(this, nativeSql,
+					pStmt = com.mysql.jdbc.PreparedStatement.getInstance(this, nativeSql,
 							this.database);
 	
 					PreparedStatement.ParseInfo parseInfo = pStmt.getParseInfo();
@@ -1275,7 +1300,7 @@ public class Connection extends ConnectionProperties implements
 				}
 			}
 		} else {
-			pStmt = new com.mysql.jdbc.PreparedStatement(this, nativeSql,
+			pStmt = com.mysql.jdbc.PreparedStatement.getInstance(this, nativeSql,
 					this.database);
 		}
 
@@ -1284,6 +1309,8 @@ public class Connection extends ConnectionProperties implements
 
 		return pStmt;
 	}
+
+	// --------------------------JDBC 2.0-----------------------------
 
 	/**
 	 * In some cases, it is desirable to immediately release a Connection's
@@ -1349,8 +1376,6 @@ public class Connection extends ConnectionProperties implements
 		}
 	}
 
-	// --------------------------JDBC 2.0-----------------------------
-
 	/**
 	 * The method commit() makes all changes made since the previous
 	 * commit/rollback permanent and releases any database locks currently held
@@ -1396,7 +1421,7 @@ public class Connection extends ConnectionProperties implements
 			return;
 		}
 	}
-
+	
 	/**
 	 * Configures client-side properties for character set information.
 	 * 
@@ -1673,15 +1698,6 @@ public class Connection extends ConnectionProperties implements
 		return characterSetAlreadyConfigured;
 	}
 
-	private boolean characterSetNamesMatches(String mysqlEncodingName) {
-		// set names is equivalent to character_set_client ..._results and ..._connection,
-		// but we set _results later, so don't check it here.
-		
-		return (mysqlEncodingName != null && 
-				mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_client")) &&
-				mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_connection")));
-	}
-	
 	/**
 	 * Configures the client's timezone if required.
 	 * 
@@ -2645,6 +2661,10 @@ public class Connection extends ConnectionProperties implements
 		return this.defaultTimeZone;
 	}
 
+	protected String getErrorMessageEncoding() {
+		return errorMessageEncoding;
+	}
+
 	/**
 	 * @see Connection#getHoldability()
 	 */
@@ -2780,14 +2800,8 @@ public class Connection extends ConnectionProperties implements
 	 *                if a database access error occurs
 	 */
 	public java.sql.DatabaseMetaData getMetaData() throws SQLException {
-		checkClosed();
-
-		if (getUseInformationSchema() &&
-				this.versionMeetsMinimum(5, 0, 7)) {
-			return new DatabaseMetaDataUsingInfoSchema(this, this.database);
-		}
-			
-		return new DatabaseMetaData(this, this.database);
+		checkClosed();	
+		return com.mysql.jdbc.DatabaseMetaData.getInstance(this, this.database);
 	}
 
 	protected java.sql.Statement getMetadataSafeStatement() throws SQLException {
@@ -2835,7 +2849,7 @@ public class Connection extends ConnectionProperties implements
 	 * 
 	 * @return the server's character set.
 	 */
-	protected String getServerCharacterEncoding() {
+	public String getServerCharacterEncoding() {
 		return (String) this.serverVariables.get("character_set");
 	}
 
@@ -2859,7 +2873,8 @@ public class Connection extends ConnectionProperties implements
 	public TimeZone getServerTimezoneTZ() {
 		return this.serverTimezoneTZ;
 	}
-
+	
+	
 	String getServerVariable(String variableName) {
 		if (this.serverVariables != null) {
 			return (String) this.serverVariables.get(variableName);
@@ -2876,8 +2891,7 @@ public class Connection extends ConnectionProperties implements
 	
 		return this.sessionCalendar;
 	}
-	
-	
+
 	/**
 	 * Get this Connection's current transaction isolation mode.
 	 * 
@@ -2983,7 +2997,7 @@ public class Connection extends ConnectionProperties implements
 	protected Calendar getUtcCalendar() {
 		return this.utcCalendar;
 	}
-
+	
 	/**
 	 * The first warning reported by calls on this Connection is returned.
 	 * <B>Note:</B> Sebsequent warnings will be changed to this
@@ -3001,6 +3015,10 @@ public class Connection extends ConnectionProperties implements
 		return this.props.equals(c.props);
 	}
 
+	public boolean hasTriedMaster() {
+		return this.hasTriedMasterFlag;
+	}
+
 	protected void incrementNumberOfPreparedExecutes() {
 		if (getGatherPerformanceMetrics()) {
 			this.numberOfPreparedExecutes++;
@@ -3011,7 +3029,7 @@ public class Connection extends ConnectionProperties implements
 			this.numberOfQueriesIssued++;
 		}
 	}
-	
+
 	protected void incrementNumberOfPrepares() {
 		if (getGatherPerformanceMetrics()) {
 			this.numberOfPrepares++;
@@ -3326,40 +3344,6 @@ public class Connection extends ConnectionProperties implements
 		return overrideDefaultAutocommit;
 	}
 
-	private void setupServerForTruncationChecks() throws SQLException {
-		if (getJdbcCompliantTruncation()) {
-			if (versionMeetsMinimum(5, 0, 2)) {
-				String currentSqlMode = 
-					(String)this.serverVariables.get("sql_mode");
-				
-				boolean strictTransTablesIsSet = StringUtils.indexOfIgnoreCase(currentSqlMode, "STRICT_TRANS_TABLES") != -1;
-				
-				if (currentSqlMode == null ||
-						currentSqlMode.length() == 0 || !strictTransTablesIsSet) {
-					StringBuffer commandBuf = new StringBuffer("SET sql_mode='");
-					
-					if (currentSqlMode != null && currentSqlMode.length() > 0) {
-						commandBuf.append(currentSqlMode);
-						commandBuf.append(",");
-					}
-					
-					commandBuf.append("STRICT_TRANS_TABLES'");
-					
-					execSQL(null,  commandBuf.toString(), -1, null,
-							java.sql.ResultSet.TYPE_FORWARD_ONLY,
-							java.sql.ResultSet.CONCUR_READ_ONLY, false,
-							this.database, true, false);
-					
-					setJdbcCompliantTruncation(false); // server's handling this for us now
-				} else if (strictTransTablesIsSet) {
-					// We didn't set it, but someone did, so we piggy back on it
-					setJdbcCompliantTruncation(false); // server's handling this for us now
-				}
-				
-			}
-		}
-	}
-
 	protected boolean isClientTzUTC() {
 		return this.isClientTzUTC;
 	}
@@ -3607,7 +3591,7 @@ public class Connection extends ConnectionProperties implements
 			isFunctionCall = false;
 		}
 
-		return new CallableStatement(this, parsedSql, this.database,
+		return CallableStatement.getInstance(this, parsedSql, this.database,
 				isFunctionCall);
 	}
 
@@ -3687,7 +3671,7 @@ public class Connection extends ConnectionProperties implements
 							.get(key);
 	
 					if (cachedParamInfo != null) {
-						cStmt = new CallableStatement(this, cachedParamInfo);
+						cStmt = CallableStatement.getInstance(this, cachedParamInfo);
 					} else {
 						cStmt = parseCallableStatement(sql);
 	
@@ -3817,7 +3801,7 @@ public class Connection extends ConnectionProperties implements
 
 					if (pStmt == null) {
 						try {
-							pStmt = new com.mysql.jdbc.ServerPreparedStatement(this, nativeSql,
+							pStmt = ServerPreparedStatement.getInstance(this, nativeSql,
 									this.database, resultSetType, resultSetConcurrency);
 							if (sql.length() < getPreparedStatementCacheSqlLimit()) {
 								((com.mysql.jdbc.ServerPreparedStatement)pStmt).isCached = true;
@@ -3841,7 +3825,7 @@ public class Connection extends ConnectionProperties implements
 				}
 			} else {
 				try {
-					pStmt = new com.mysql.jdbc.ServerPreparedStatement(this, nativeSql,
+					pStmt = ServerPreparedStatement.getInstance(this, nativeSql,
 							this.database, resultSetType, resultSetConcurrency);
 					
 					pStmt.setResultSetType(resultSetType);
@@ -4401,7 +4385,7 @@ public class Connection extends ConnectionProperties implements
 
 		String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql;
 
-		return new ServerPreparedStatement(this, nativeSql, this.getCatalog(),
+		return ServerPreparedStatement.getInstance(this, nativeSql, this.getCatalog(),
 				java.sql.ResultSet.TYPE_SCROLL_SENSITIVE,
 				java.sql.ResultSet.CONCUR_READ_ONLY);
 }
@@ -4642,7 +4626,7 @@ public class Connection extends ConnectionProperties implements
 			throw new NotImplemented();
 		}
 	}
-
+	
 	/**
 	 * @see Connection#setSavepoint(String)
 	 */
@@ -4653,7 +4637,7 @@ public class Connection extends ConnectionProperties implements
 
 		return savepoint;
 	}
-
+	
 	/**
 	 * 
 	 */
@@ -4686,7 +4670,7 @@ public class Connection extends ConnectionProperties implements
 		}
 
 	}
-
+	
 	/**
 	 * DOCUMENT ME!
 	 * 
@@ -4774,6 +4758,40 @@ public class Connection extends ConnectionProperties implements
 		this.typeMap = map;
 	}
 	
+	private void setupServerForTruncationChecks() throws SQLException {
+		if (getJdbcCompliantTruncation()) {
+			if (versionMeetsMinimum(5, 0, 2)) {
+				String currentSqlMode = 
+					(String)this.serverVariables.get("sql_mode");
+				
+				boolean strictTransTablesIsSet = StringUtils.indexOfIgnoreCase(currentSqlMode, "STRICT_TRANS_TABLES") != -1;
+				
+				if (currentSqlMode == null ||
+						currentSqlMode.length() == 0 || !strictTransTablesIsSet) {
+					StringBuffer commandBuf = new StringBuffer("SET sql_mode='");
+					
+					if (currentSqlMode != null && currentSqlMode.length() > 0) {
+						commandBuf.append(currentSqlMode);
+						commandBuf.append(",");
+					}
+					
+					commandBuf.append("STRICT_TRANS_TABLES'");
+					
+					execSQL(null,  commandBuf.toString(), -1, null,
+							java.sql.ResultSet.TYPE_FORWARD_ONLY,
+							java.sql.ResultSet.CONCUR_READ_ONLY, false,
+							this.database, true, false);
+					
+					setJdbcCompliantTruncation(false); // server's handling this for us now
+				} else if (strictTransTablesIsSet) {
+					// We didn't set it, but someone did, so we piggy back on it
+					setJdbcCompliantTruncation(false); // server's handling this for us now
+				}
+				
+			}
+		}
+	}
+	
 	/**
 	 * Should we try to connect back to the master? We try when we've been
 	 * failed over >= this.secondsBeforeRetryMaster _or_ we've issued >
@@ -4804,7 +4822,7 @@ public class Connection extends ConnectionProperties implements
 					+ "'", SQLError.SQL_STATE_GENERAL_ERROR);
 		}
 	}
-	
+
 	/**
 	 * DOCUMENT ME!
 	 * 
@@ -4822,7 +4840,7 @@ public class Connection extends ConnectionProperties implements
 	public boolean supportsQuotedIdentifiers() {
 		return this.hasQuotedIdentifiers;
 	}
-	
+
 	/**
 	 * DOCUMENT ME!
 	 * 
@@ -4831,7 +4849,7 @@ public class Connection extends ConnectionProperties implements
 	public boolean supportsTransactions() {
 		return this.transactionsSupported;
 	}
-	
+
 	/**
 	 * Remove the given statement from the list of open statements
 	 * 
@@ -4877,7 +4895,7 @@ public class Connection extends ConnectionProperties implements
 	boolean useAnsiQuotedIdentifiers() {
 		return this.useAnsiQuotes;
 	}
-
+	
 	/**
 	 * Has maxRows() been set?
 	 * 
@@ -4888,7 +4906,7 @@ public class Connection extends ConnectionProperties implements
 			return this.maxRowsChanged;
 		}
 	}
-
+	
 	public boolean versionMeetsMinimum(int major, int minor, int subminor)
 			throws SQLException {
 		checkClosed();
@@ -4896,81 +4914,5 @@ public class Connection extends ConnectionProperties implements
 		return this.io.versionMeetsMinimum(major, minor, subminor);
 	}
 
-	protected String getErrorMessageEncoding() {
-		return errorMessageEncoding;
-	}
 	
-	/*
-	 * For testing failover scenarios
-	 */
-	private boolean hasTriedMasterFlag = false;
-	
-	public void clearHasTriedMaster() {
-		this.hasTriedMasterFlag = false;
-	}
-	
-	public boolean hasTriedMaster() {
-		return this.hasTriedMasterFlag;
-	}
-
-	public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public SQLXML createSQLXML() throws SQLException {
-		return new MysqlSQLXML();
-	}
-
-	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public Properties getClientInfo() throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public String getClientInfo(String name) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public boolean isValid(int timeout) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public void setClientInfo(Properties properties) throws SQLClientInfoException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public void setClientInfo(String name, String value) throws SQLClientInfoException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public boolean isWrapperFor(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public Object unwrap(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	/**
-	 * @see java.sql.Connection#createBlob()
-	 */
-	public Blob createBlob() {
-	    return new com.mysql.jdbc.Blob();
-	}
-
-	/**
-	 * @see java.sql.Connection#createClob()
-	 */
-	public Clob createClob() {
-	    return new com.mysql.jdbc.Clob();
-	}
-
-	/**
-	 * @see java.sql.Connection#createNClob()
-	 */
-	public NClob createNClob() {
-	    return new com.mysql.jdbc.NClob();
-	}
 }

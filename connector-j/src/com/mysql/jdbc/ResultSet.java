@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as
@@ -25,6 +25,7 @@
 package com.mysql.jdbc;
 
 import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.jdbc4.MysqlSQLXML;
 import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
@@ -45,12 +46,9 @@ import java.net.URL;
 import java.sql.Array;
 import java.sql.DataTruncation;
 import java.sql.Date;
-import java.sql.NClob;
 import java.sql.Ref;
-import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
-import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -286,6 +284,58 @@ public class ResultSet implements java.sql.ResultSet {
 	protected boolean retainOwningStatement;
 
 	protected Calendar gmtCalendar = null;
+
+	/**
+	 * Creates a result set instance that represents a DML result -- We need to
+	 * provide factory-style methods so we can support both JDBC3 (and older)
+	 * and JDBC4 runtimes, otherwise the class verifier complains when it tries
+	 * to load JDBC4-only interface classes that are present in JDBC4 method
+	 * signatures.
+	 */
+
+	protected static ResultSet getInstance(long updateCount, long updateID,
+			Connection conn, Statement creatorStmt) throws SQLException {
+		if (!Util.isJdbc4()) {
+			return new ResultSet(updateCount, updateID, conn, creatorStmt);
+		}
+
+		return (ResultSet) Util.getInstance(
+				"com.mysql.jdbc.jdbc4.JDBC4ResultSet", new Class[] {
+						Long.TYPE, Long.TYPE,
+						com.mysql.jdbc.Connection.class,
+						com.mysql.jdbc.Statement.class }, new Object[] {
+						new Long(updateCount), new Long(updateID), conn,
+						creatorStmt });
+	}
+	
+	/**
+	 * Creates a result set instance that represents a query result -- We need to
+	 * provide factory-style methods so we can support both JDBC3 (and older)
+	 * and JDBC4 runtimes, otherwise the class verifier complains when it tries
+	 * to load JDBC4-only interface classes that are present in JDBC4 method
+	 * signatures.
+	 */
+
+	protected static ResultSet getInstance(String catalog, Field[] fields, RowData tuples,
+			Connection conn, Statement creatorStmt, boolean isUpdatable) throws SQLException {
+		if (!Util.isJdbc4()) {
+			if (!isUpdatable) {
+				return new ResultSet(catalog, fields, tuples, conn, creatorStmt);
+			}
+			
+			return new UpdatableResultSet(catalog, fields, tuples, conn, creatorStmt);
+		}
+
+		String className = isUpdatable ? "com.mysql.jdbc.jdbc4.JDBC4UpdatableResultSet" : "com.mysql.jdbc.jdbc4.JDBC4ResultSet";
+		
+		return (ResultSet) Util.getInstance(
+				className, new Class[] {
+						String.class, Field[].class,
+						RowData.class,
+						com.mysql.jdbc.Connection.class,
+						com.mysql.jdbc.Statement.class }, new Object[] {
+						catalog, fields, tuples, conn, creatorStmt });
+	}
 
 	/**
 	 * Create a result set for an executeUpdate statement.
@@ -773,8 +823,8 @@ public class ResultSet implements java.sql.ResultSet {
 	// Note, row data is linked between these two result sets
 	//
 	protected final ResultSet copy() throws SQLException {
-		ResultSet rs = new ResultSet(this.catalog, this.fields, this.rowData,
-				this.connection, this.owningStatement);
+		ResultSet rs = ResultSet.getInstance(this.catalog, this.fields, this.rowData,
+				this.connection, this.owningStatement, false); // note, doesn't work for updatable result sets
 
 		return rs;
 	}
@@ -8470,431 +8520,5 @@ public class ResultSet implements java.sql.ResultSet {
 			throw new SQLException("Internal error - conversion method doesn't support this type", 
 					SQLError.SQL_STATE_GENERAL_ERROR);
 		}
-	}
-	
-	/**
-	 * JDBC 4.0
-	 * 
-	 * <p>
-	 * Get the value of a column in the current row as a java.io.Reader.
-	 * </p>
-	 * 
-	 * @param columnIndex
-	 *            the column to get the value from
-	 * 
-	 * @return the value in the column as a java.io.Reader.
-	 * 
-	 * @throws SQLException
-	 *             if an error occurs
-	 */
-	public Reader getNCharacterStream(int columnIndex) throws SQLException {
-		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
-		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-			throw new SQLException(
-					"Can not call getNCharacterStream() when field's charset isn't UTF-8");
-		}
-		return getCharacterStream(columnIndex);
-	}
-
-	/**
-	 * JDBC 4.0
-	 * 
-	 * <p>
-	 * Get the value of a column in the current row as a java.io.Reader.
-	 * </p>
-	 * 
-	 * @param columnName
-	 *            the column name to retrieve the value from
-	 * 
-	 * @return the value as a java.io.Reader
-	 * 
-	 * @throws SQLException
-	 *             if an error occurs
-	 */
-	public Reader getNCharacterStream(String columnName) throws SQLException {
-		return getNCharacterStream(findColumn(columnName));
-	}
-
-	/**
-	 * JDBC 4.0 Get a NCLOB column.
-	 * 
-	 * @param i
-	 *            the first column is 1, the second is 2, ...
-	 * 
-	 * @return an object representing a NCLOB
-	 * 
-	 * @throws SQLException
-	 *             if an error occurs
-	 */
-	public NClob getNClob(int columnIndex) throws SQLException {
-		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
-		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-			throw new SQLException(
-					"Can not call getNClob() when field's charset isn't UTF-8");
-		}
-		if (!this.isBinaryEncoded) {
-			String asString = getStringForNClob(columnIndex);
-
-			if (asString == null) {
-				return null;
-			}
-
-			return new com.mysql.jdbc.NClob(asString);
-		}
-
-		return getNativeNClob(columnIndex);
-	}
-
-	/**
-	 * JDBC 4.0 Get a NCLOB column.
-	 * 
-	 * @param colName
-	 *            the column name
-	 * 
-	 * @return an object representing a NCLOB
-	 * 
-	 * @throws SQLException
-	 *             if an error occurs
-	 */
-	public NClob getNClob(String columnName) throws SQLException {
-		return getNClob(findColumn(columnName));
-	}
-	
-	/**
-	 * JDBC 4.0 Get a NCLOB column.
-	 * 
-	 * @param columnIndex
-	 *            the first column is 1, the second is 2, ...
-	 * 
-	 * @return an object representing a NCLOB
-	 * 
-	 * @throws SQLException
-	 *             if an error occurs
-	 */
-	protected java.sql.NClob getNativeNClob(int columnIndex)
-			throws SQLException {
-		String stringVal = getStringForNClob(columnIndex);
-
-		if (stringVal == null) {
-			return null;
-		}
-
-		return getNClobFromString(stringVal, columnIndex);
-	}
-	
-	private String getStringForNClob(int columnIndex) throws SQLException {
-		String asString = null;
-
-		String forcedEncoding = "UTF-8";
-
-		try {
-			byte[] asBytes = null;
-
-			if (!this.isBinaryEncoded) {
-				asBytes = getBytes(columnIndex);
-			} else {
-				asBytes = getNativeBytes(columnIndex, true);
-			}
-
-			if (asBytes != null) {
-				asString = new String(asBytes, forcedEncoding);
-			}
-		} catch (UnsupportedEncodingException uee) {
-			throw SQLError.createSQLException("Unsupported character encoding "
-					+ forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-		}
-
-		return asString;
-	}
-	
-	private final java.sql.NClob getNClobFromString(String stringVal,
-			int columnIndex) throws SQLException {
-		return new com.mysql.jdbc.NClob(stringVal);
-	}
-	
-	/**
-	 * JDBC 4.0
-	 * 
-	 * Get the value of a column in the current row as a Java String
-	 * 
-	 * @param columnIndex
-	 *            the first column is 1, the second is 2...
-	 * 
-	 * @return the column value, null for SQL NULL
-	 * 
-	 * @exception SQLException
-	 *                if a database access error occurs
-	 */
-	public String getNString(int columnIndex) throws SQLException {
-		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
-		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
-			throw new SQLException(
-					"Can not call getNString() when field's charset isn't UTF-8");
-		}
-		return getString(columnIndex);
-	}
-	
-	/**
-	 * JDBC 4.0
-	 * 
-	 * The following routines simply convert the columnName into a columnIndex
-	 * and then call the appropriate routine above.
-	 * 
-	 * @param columnName
-	 *            is the SQL name of the column
-	 * 
-	 * @return the column value
-	 * 
-	 * @exception SQLException
-	 *                if a database access error occurs
-	 */
-	public String getNString(String columnName) throws SQLException {
-		return getNString(findColumn(columnName));
-	}
-	
-	/**
-	 * JDBC 4.0 Update a column with a character stream value. The updateXXX()
-	 * methods are used to update column values in the current row, or the
-	 * insert row. The updateXXX() methods do not update the underlying
-	 * database, instead the updateRow() or insertRow() methods are called to
-	 * update the database.
-	 * 
-	 * @param columnIndex
-	 *            the first column is 1, the second is 2, ...
-	 * @param x
-	 *            the new column value
-	 * @param length
-	 *            the length of the stream
-	 * 
-	 * @exception SQLException
-	 *                if a database-access error occurs
-	 * @throws NotUpdatable
-	 *             DOCUMENT ME!
-	 */
-	public void updateNCharacterStream(int columnIndex, Reader x, int length)
-			throws SQLException {
-		throw new NotUpdatable();
-	}
-
-	/**
-	 * JDBC 4.0 Update a column with a character stream value. The updateXXX()
-	 * methods are used to update column values in the current row, or the
-	 * insert row. The updateXXX() methods do not update the underlying
-	 * database, instead the updateRow() or insertRow() methods are called to
-	 * update the database.
-	 * 
-	 * @param columnName
-	 *            the name of the column
-	 * @param reader
-	 *            the stream to update the column with
-	 * @param length
-	 *            of the stream
-	 * 
-	 * @throws SQLException
-	 *             if a database-access error occurs
-	 */
-	public void updateNCharacterStream(String columnName, Reader reader,
-			int length) throws SQLException {
-		updateNCharacterStream(findColumn(columnName), reader, length);
-	}
-	
-
-
-	/**
-	 * @see ResultSet#updateNClob(String, NClob)
-	 */
-	public void updateNClob(String columnName, NClob nClob) throws SQLException {
-		updateNClob(findColumn(columnName), nClob);
-	}
-	
-	public void updateRowId(int columnIndex, RowId x) throws SQLException {
-		throw new NotUpdatable();
-	}
-
-	public void updateRowId(String columnName, RowId x) throws SQLException {
-		updateRowId(findColumn(columnName), x);
-	}
-
-	public int getHoldability() throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public RowId getRowId(int columnIndex) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public RowId getRowId(String columnLabel) throws SQLException {
-		return getRowId(findColumn(columnLabel));
-	}
-
-	public SQLXML getSQLXML(int columnIndex) throws SQLException {
-		return new MysqlSQLXML(this, columnIndex);
-	}
-
-	public SQLXML getSQLXML(String columnLabel) throws SQLException {
-		return getSQLXML(findColumn(columnLabel));
-	}
-
-	public synchronized boolean isClosed() throws SQLException {
-		return this.isClosed();
-	}
-
-	public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {
-		updateAsciiStream(findColumn(columnLabel), x);
-		
-	}
-
-	public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException {
-		updateAsciiStream(findColumn(columnLabel), x, length);
-	}
-
-	public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {
-		updateBinaryStream(findColumn(columnLabel), x);
-	}
-
-	public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException {
-		updateBinaryStream(findColumn(columnLabel), x, length);
-	}
-
-	public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException {
-		throw new NotUpdatable();
-	}
-
-	public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {
-		updateBlob(findColumn(columnLabel), inputStream);
-	}
-
-	public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException {
-		updateBlob(findColumn(columnLabel), inputStream, length);
-	}
-
-	public void updateCharacterStream(int columnIndex, Reader x) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {
-		updateCharacterStream(findColumn(columnLabel), reader);
-	}
-
-	public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
-		updateCharacterStream(findColumn(columnLabel), reader, length);
-	}
-
-	public void updateClob(int columnIndex, Reader reader) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateClob(String columnLabel, Reader reader) throws SQLException {
-		updateClob(findColumn(columnLabel), reader);
-	}
-
-	public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {
-		updateClob(findColumn(columnLabel), reader, length);
-	}
-
-	public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {
-		updateNCharacterStream(findColumn(columnLabel), reader);
-		
-	}
-
-	public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
-		updateNCharacterStream(findColumn(columnLabel), reader, length);
-	}
-
-	public void updateNClob(int columnIndex, NClob nClob) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateNClob(int columnIndex, Reader reader) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateNClob(String columnLabel, Reader reader) throws SQLException {
-		updateNClob(findColumn(columnLabel), reader);
-		
-	}
-
-	public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
-		throw new NotUpdatable();
-	}
-
-	public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {
-		updateNClob(findColumn(columnLabel), reader, length);
-	}
-
-	public void updateNString(int columnIndex, String nString) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateNString(String columnLabel, String nString) throws SQLException {
-		updateNString(findColumn(columnLabel), nString);
-	}
-
-	public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
-		throw new NotUpdatable();
-		
-	}
-
-	public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {
-		updateSQLXML(findColumn(columnLabel), xmlObject);
-		
-	}
-
-	public boolean isWrapperFor(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
-	}
-
-	public Object unwrap(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
 	}
 }

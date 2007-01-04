@@ -3259,6 +3259,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			
 			Properties props = new Properties();
 			props.setProperty("cachePrepStmts", "true");
+			props.setProperty("useServerPrepStmts", "true");
 			
 			PreparedStatement pstmt1 = null;
 			PreparedStatement pstmt2  = null;
@@ -3423,7 +3424,11 @@ public class StatementRegressionTest extends BaseTestCase {
 					long end = System.currentTimeMillis();
 					
 					assertTrue((end - begin) > 1000);
-				} catch (com.mysql.jdbc.exceptions.jdbc4.MySQLTimeoutException timeoutEx) {
+				} catch (Exception ex) {
+					if (!"com.mysql.jdbc.exceptions.jdbc4.MySQLTimeoutException".equals(ex.getClass().getName())) {
+						throw ex;
+					}
+					
 					long end = System.currentTimeMillis();
 					
 					assertTrue((end - begin) > 1000);
@@ -3692,5 +3697,50 @@ public class StatementRegressionTest extends BaseTestCase {
 		afterOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
 		
 		assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
+	}
+	
+	/**
+	 * Tests fix for BUG#25025 - Client-side prepared statement parser gets confused by
+	 * in-line (slash-star) comments and therefore can't rewrite batched statements or
+	 * reliably detect type of statements when they're used.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug25025() throws Exception {
+		
+		Connection multiConn = null;
+		
+		createTable("testBug25025", "(field1 INT)");
+		
+		try {
+			Properties props = new Properties();
+			props.setProperty("rewriteBatchedStatements", "true");
+			props.setProperty("useServerPrepStmts", "false");
+			
+			multiConn = getConnectionWithProps(props);
+			
+			this.pstmt = multiConn.prepareStatement("/* insert foo.bar.baz INSERT INTO foo VALUES (?,?,?,?) to trick parser */ INSERT into testBug25025 VALUES (?)");
+			this.pstmt.setInt(1, 1);
+			this.pstmt.addBatch();
+			this.pstmt.setInt(1, 2);
+			this.pstmt.addBatch();
+			this.pstmt.setInt(1, 3);
+			this.pstmt.addBatch();
+			
+			int[] counts = this.pstmt.executeBatch();
+			
+			assertEquals(3, counts.length);
+			assertEquals(1, counts[0]);
+			assertEquals(1, counts[1]);
+			assertEquals(1, counts[2]);
+			assertEquals(true, 
+					((com.mysql.jdbc.PreparedStatement)this.pstmt).canRewriteAsMultivalueInsertStatement());
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (multiConn != null) {
+				multiConn.close();
+			}
+		}
 	}
 }

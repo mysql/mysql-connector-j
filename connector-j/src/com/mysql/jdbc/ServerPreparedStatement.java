@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -24,6 +24,7 @@
  */
 package com.mysql.jdbc;
 
+import com.mysql.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
@@ -41,7 +42,6 @@ import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
-import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
 import java.sql.SQLException;
@@ -77,11 +77,11 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 	}
 
-	static class BindValue {
+	public static class BindValue {
 
 		long boundBeforeExecutionNum = 0;
 		
-		long bindLength; /* Default length of data */
+		public long bindLength; /* Default length of data */
 
 		int bufferType; /* buffer type */
 
@@ -93,9 +93,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 		int intBinding;
 
-		boolean isLongData; /* long data indicator */
+		public boolean isLongData; /* long data indicator */
 
-		boolean isNull; /* NULL indicator */
+		public boolean isNull; /* NULL indicator */
 
 		boolean isSet = false; /* has this parameter been set? */
 
@@ -103,7 +103,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 		short shortBinding;
 
-		Object value; /* The value to store */
+		public Object value; /* The value to store */
 
 		BindValue() {
 		}
@@ -269,6 +269,29 @@ public class ServerPreparedStatement extends PreparedStatement {
 	private boolean serverNeedsResetBeforeEachExecution;
 
 	/**
+	 * Creates a prepared statement instance -- We need to provide factory-style
+	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
+	 * otherwise the class verifier complains when it tries to load JDBC4-only
+	 * interface classes that are present in JDBC4 method signatures.
+	 */
+
+	protected static ServerPreparedStatement getInstance(Connection conn,
+			String sql, String catalog, int resultSetType,
+			int resultSetConcurrency) throws SQLException {
+		if (!Util.isJdbc4()) {
+			return new ServerPreparedStatement(conn, sql, catalog,
+					resultSetType, resultSetConcurrency);
+		}
+
+		return (ServerPreparedStatement) Util.getInstance(
+				"com.mysql.jdbc.jdbc4.JDBC4ServerPreparedStatement",
+				new Class[] { Connection.class, String.class, String.class,
+						Integer.TYPE, Integer.TYPE }, new Object[] { conn,
+						sql, catalog, new Integer(resultSetType),
+						new Integer(resultSetConcurrency) });
+	}
+
+	/**
 	 * Creates a new ServerPreparedStatement object.
 	 * 
 	 * @param conn
@@ -281,7 +304,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 *             If an error occurs
 	 */
-	public ServerPreparedStatement(Connection conn, String sql, String catalog,
+	protected ServerPreparedStatement(Connection conn, String sql, String catalog,
 			int resultSetType, int resultSetConcurrency)
 			throws SQLException {
 		super(conn, catalog);
@@ -354,7 +377,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		PreparedStatement pStmtForSub = null;
 
 		try {
-			pStmtForSub = new PreparedStatement(this.connection,
+			pStmtForSub = PreparedStatement.getInstance(this.connection,
 					this.originalSql, this.currentCatalog);
 
 			int numParameters = pStmtForSub.parameterCount;
@@ -748,7 +771,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		return null; // we don't use this type of packet
 	}
 
-	private BindValue getBinding(int parameterIndex, boolean forLongData)
+	protected BindValue getBinding(int parameterIndex, boolean forLongData)
 			throws SQLException {
 		checkClosed();
 		
@@ -2020,7 +2043,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 	}
 
-	private void setType(BindValue oldValue, int bufferType) {
+	protected void setType(BindValue oldValue, int bufferType) {
 		if (oldValue.bufferType != bufferType) {
 			this.sendTypesToServer = true;
 		}
@@ -2440,100 +2463,5 @@ public class ServerPreparedStatement extends PreparedStatement {
 		return serverStatementId;
 	}
 
-	   /**
-     * @see java.sql.PreparedStatement#setNCharacterStream(int, java.io.Reader,
-     *      long)
-     */
-    public void setNCharacterStream(int parameterIndex, Reader reader, long length)
-            throws SQLException {
-        // can't take if characterEncoding isn't utf8
-        if (!this.charEncoding.equalsIgnoreCase("UTF-8")
-                && !this.charEncoding.equalsIgnoreCase("utf8")) {
-            throw SQLError.createSQLException(
-                "Can not call setNCharacterStream() when connection character set isn't UTF-8");
-        }
-        
-        checkClosed();
-        
-        if (reader == null) {
-            setNull(parameterIndex, java.sql.Types.BINARY);
-        } else {
-            BindValue binding = getBinding(parameterIndex, true);
-            setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
 
-            binding.value = reader;
-            binding.isNull = false;
-            binding.isLongData = true;
-
-            if (this.connection.getUseStreamLengthsInPrepStmts()) {
-                binding.bindLength = length;
-            } else {
-                binding.bindLength = -1;
-            }
-        }
-    }
-
-    /**
-     * @see java.sql.PreparedStatement#setNClob(int, java.sql.NClob)
-     */
-    public void setNClob(int parameterIndex, NClob x) throws SQLException {
-        setNClob(parameterIndex, x.getCharacterStream(), 
-        		this.connection.getUseStreamLengthsInPrepStmts()
-                ? x.length() : -1);
-    }
-
-	/**
-	 * JDBC 4.0 Set a NCLOB parameter.
-	 * 
-	 * @param parameterIndex
-	 *            the first parameter is 1, the second is 2, ...
-	 * @param reader
-	 *            the java reader which contains the UNICODE data
-	 * @param length
-	 *            the number of characters in the stream
-	 * 
-	 * @throws SQLException
-	 *             if a database error occurs
-	 */
-	public void setNClob(int parameterIndex, Reader reader, long length)
-			throws SQLException {
-		// can't take if characterEncoding isn't utf8
-        if (!this.charEncoding.equalsIgnoreCase("UTF-8")
-                && !this.charEncoding.equalsIgnoreCase("utf8")) {
-            throw SQLError.createSQLException(
-                "Can not call setNClob() when connection character set isn't UTF-8");
-        }
-        
-        checkClosed();
-        
-        if (reader == null) {
-            setNull(parameterIndex, java.sql.Types.NCLOB);
-        } else {
-            BindValue binding = getBinding(parameterIndex, true);
-            setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
-
-            binding.value = reader;
-            binding.isNull = false;
-            binding.isLongData = true;
-
-            if (this.connection.getUseStreamLengthsInPrepStmts()) {
-                binding.bindLength = length;
-            } else {
-                binding.bindLength = -1;
-            }
-        }
-	}
-
-	/**
-	 * @see java.sql.PreparedStatement#setNString(int, java.lang.String)
-	 */
-	public void setNString(int parameterIndex, String x) throws SQLException {
-	    if (this.charEncoding.equalsIgnoreCase("UTF-8")
-	            || this.charEncoding.equalsIgnoreCase("utf8")) {
-	        setString(parameterIndex, x);
-	    } else {
-	        throw SQLError.createSQLException(
-	            "Can not call setNString() when connection character set isn't UTF-8");
-	    }
-	}
 }
