@@ -35,7 +35,17 @@ nn-nn-06 - Version 5.0.5
 	  INFORMATION_SCHEMA didn't have references to current connections,
 	  sometimes leading to NullPointerExceptions when intropsecting them via
 	  ResultSetMetaData.
-	  	   	  	   
+	  
+	- Fixed BUG#25025 - Client-side prepared statement parser gets confused by
+	  in-line (/* ... */) comments and therefore can't rewrite batched statements 
+	  or reliably detect type of statements when they're used.
+
+	- Fixed BUG#24065 - Better error message when server doesn't return enough
+	  information to determine stored procedure/function parameter types.
+	  
+	- Fixed BUG#21438 - Driver sending nanoseconds to server for timestamps when
+	  using server-side prepared statements, when server expects microseconds.
+	  	  	  	   	  	   
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 
