@@ -1359,7 +1359,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				String procedureDef = parsingFunction ? paramRetrievalRs
 						.getString("Create Function") : paramRetrievalRs
 						.getString("Create Procedure");
-
+						
+				if (procedureDef == null || procedureDef.length() == 0) {
+					throw SQLError.createSQLException("User does not have access to metadata required to determine " +
+							"stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" " +
+							"to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
+							SQLError.SQL_STATE_GENERAL_ERROR);		
+				}
+				
 				int openParenIndex = StringUtils
 						.indexOfIgnoreCaseRespectQuotes(0, procedureDef, "(",
 								quoteChar.charAt(0), !this.conn
