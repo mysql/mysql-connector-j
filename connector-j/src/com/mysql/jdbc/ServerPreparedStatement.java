@@ -2267,7 +2267,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 				}
 
 				if (length == 11) {
-					intoBuf.writeLong(((java.sql.Timestamp) dt).getNanos());
+					//	MySQL expects microseconds, not nanos
+					intoBuf.writeLong(((java.sql.Timestamp) dt).getNanos() / 1000);
 				}
 			
 			} finally {

@@ -3400,7 +3400,41 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	/**
+	 * Tests BUG#21438, server-side PS fails when using jdbcCompliantTruncation.
+	 * If either is set to FALSE (&useServerPrepStmts=false or
+	 * &jdbcCompliantTruncation=false) test succedes.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
 
+	public void testBug21438() throws Exception {
+		createTable("testBug21438","(t_id int(10), test_date timestamp(30) NOT NULL,primary key t_pk (t_id));");		
+		
+		assertEquals(1, this.stmt.executeUpdate("insert into testBug21438 values (1,NOW());"));
+		
+		if (this.versionMeetsMinimum(4, 1)) {
+			this.pstmt = ((com.mysql.jdbc.Connection)this.conn)
+			.serverPrepare("UPDATE testBug21438 SET test_date=ADDDATE(?,INTERVAL 1 YEAR) WHERE t_id=1;");
+	    	
+			try {
+	    		Timestamp ts = new Timestamp(System.currentTimeMillis());
+	    		ts.setNanos(999999999);
+	    		
+	    		this.pstmt.setTimestamp(1, ts);	
+	    	
+	    		assertEquals(1, this.pstmt.executeUpdate());
+	    		
+	    		Timestamp future = (Timestamp)getSingleIndexedValueWithQuery(1, "SELECT test_date FROM testBug21438");
+	    		assertEquals(future.getYear() - ts.getYear(), 1);
+	
+	    	} finally {
+				closeMemberJDBCResources();
+			}        
+		}
+	}
+	
 	/**
 	 * Tests fix for BUG#22359 - Driver was using millis for
 	 * Statement.setQueryTimeout() when spec says argument is
