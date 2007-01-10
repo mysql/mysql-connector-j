@@ -27,6 +27,7 @@ package com.mysql.jdbc;
 import java.io.IOException;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.net.InetAddress;
@@ -136,7 +137,7 @@ public class StandardSocketFactory implements SocketFactory {
 					InetAddress[] possibleAddresses = InetAddress
 							.getAllByName(this.host);
 
-					Exception caughtWhileConnecting = null;
+					Throwable caughtWhileConnecting = null;
 
 					// Need to loop through all possible addresses, in case
 					// someone has IPV6 configured (SuSE, for example...)
@@ -152,8 +153,7 @@ public class StandardSocketFactory implements SocketFactory {
 					}
 
 					if (rawSocket == null) {
-						throw new SocketException(caughtWhileConnecting
-								.toString());
+						unwrapExceptionToProperClassAndThrowIt(caughtWhileConnecting);
 					}
 				} else {
 					// must explicitly state this due to classloader issues
@@ -162,24 +162,25 @@ public class StandardSocketFactory implements SocketFactory {
 						Class inetSocketAddressClass = Class
 								.forName("java.net.InetSocketAddress");
 						Constructor addrConstructor = inetSocketAddressClass
-						.getConstructor(new Class[] { InetAddress.class,
-								Integer.TYPE });
+								.getConstructor(new Class[] {
+										InetAddress.class, Integer.TYPE });
 
-				InetAddress[] possibleAddresses = InetAddress
-						.getAllByName(this.host);
+						InetAddress[] possibleAddresses = InetAddress
+								.getAllByName(this.host);
 
-				Exception caughtWhileConnecting = null;
+						Throwable caughtWhileConnecting = null;
 
-				// Need to loop through all possible addresses, in case
-				// someone has IPV6 configured (SuSE, for example...)
+						// Need to loop through all possible addresses, in case
+						// someone has IPV6 configured (SuSE, for example...)
 
-				for (int i = 0; i < possibleAddresses.length; i++) {
-					
-					try {
-						Object sockAddr = addrConstructor
-								.newInstance(new Object[] { possibleAddresses[i],
-										new Integer(port) });
-						
+						for (int i = 0; i < possibleAddresses.length; i++) {
+
+							try {
+								Object sockAddr = addrConstructor
+										.newInstance(new Object[] {
+												possibleAddresses[i],
+												new Integer(port) });
+
 								rawSocket = new Socket();
 								connectWithTimeoutMethod.invoke(rawSocket,
 										new Object[] { sockAddr,
@@ -194,16 +195,11 @@ public class StandardSocketFactory implements SocketFactory {
 						}
 
 						if (rawSocket == null) {
-							throw new SocketException(caughtWhileConnecting
-									.toString());
+							unwrapExceptionToProperClassAndThrowIt(caughtWhileConnecting);
 						}
 
 					} catch (Throwable t) {
-						if (!(t instanceof SocketException)) {
-							throw new SocketException(t.toString());
-						}
-
-						throw (SocketException) t;
+						unwrapExceptionToProperClassAndThrowIt(t);
 					}
 				}
 
@@ -219,5 +215,27 @@ public class StandardSocketFactory implements SocketFactory {
 		}
 
 		throw new SocketException("Unable to create socket");
+	}
+
+	private void unwrapExceptionToProperClassAndThrowIt(
+			Throwable caughtWhileConnecting) throws SocketException,
+			IOException {
+		if (caughtWhileConnecting instanceof InvocationTargetException) {
+
+			// Replace it with the target, don't use 1.4 chaining as this still
+			// needs to run on older VMs
+			caughtWhileConnecting = ((InvocationTargetException) caughtWhileConnecting)
+					.getTargetException();
+		}
+
+		if (caughtWhileConnecting instanceof SocketException) {
+			throw (SocketException) caughtWhileConnecting;
+		}
+
+		if (caughtWhileConnecting instanceof IOException) {
+			throw (IOException) caughtWhileConnecting;
+		}
+
+		throw new SocketException(caughtWhileConnecting.toString());
 	}
 }
