@@ -46,6 +46,7 @@ import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationDriver;
+import com.mysql.jdbc.log.StandardLogger;
 
 /**
  * Regression tests for Connections
@@ -1840,5 +1841,55 @@ public class ConnectionRegressionTest extends BaseTestCase {
         }
 
         return count;
+	}
+
+	/**
+	 * Tests to insure proper behavior for BUG#24706.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug24706() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("elideSetAutoCommits", "true");
+		props.setProperty("logger", "StandardLogger");
+		props.setProperty("profileSQL", "true");
+		Connection c = null;
+		
+		StringBuffer logBuf = new StringBuffer();
+		
+		StandardLogger.bufferedLog = logBuf;
+		
+		try {
+			c = getConnectionWithProps(props);
+			c.setAutoCommit(true);
+			c.createStatement().execute("SELECT 1");
+			c.setAutoCommit(true);
+			c.setAutoCommit(false);
+			c.createStatement().execute("SELECT 1");
+			c.setAutoCommit(false);
+			
+			// We should only see _one_ "set autocommit=" sent to the server
+			
+			String log = logBuf.toString();
+			int searchFrom = 0;
+			int count = 0;
+			int found = 0;
+			
+			while ((found = log.indexOf("SET autocommit=", searchFrom)) != -1) {
+				searchFrom =  found + 1;
+				count++;
+			}
+			
+			// The SELECT doesn't actually start a transaction, so being pedantic the
+			// driver issues SET autocommit=0 again in this case.
+			assertEquals(2, count);
+		} finally {
+			StandardLogger.bufferedLog = null;
+			
+			if (c != null) {
+				c.close();
+			}
+			
+		}
 	}
 }
