@@ -968,7 +968,10 @@ public class StringUtils {
 			} else if (c == quoteChar && !escaped
 					&& contextMarker == Character.MIN_VALUE) {
 				contextMarker = c;
-			} else if (c == target.charAt(0) && !escaped
+			// This test looks complex, but remember that in certain locales, upper case
+			// of two different codepoints coverts to same codepoint, and vice-versa.
+			} else if ((Character.toUpperCase(c) == Character.toUpperCase(target.charAt(0)) ||
+					Character.toLowerCase(c) == Character.toLowerCase(target.charAt(0))) && !escaped
 					&& contextMarker == Character.MIN_VALUE) {
 				if (startsWithIgnoreCase(src, i, target))
 					return i;
