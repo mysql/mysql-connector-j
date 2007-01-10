@@ -48,7 +48,11 @@ nn-nn-06 - Version 5.0.5
 
 	- Fixed BUG#25514 - Timer instance used for Statement.setQueryTimeout()
 	  created per-connection, rather than per-VM, causing memory leak
-	  	  	  	  	   	  	   
+	  
+	- Fixed BUG#25009 - Results from updates not handled correctly in 
+	  multi-statement queries, leading to erroneous "Result is from UPDATE" 
+	  exceptions.
+	    	  	  	  	   	  	   
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 

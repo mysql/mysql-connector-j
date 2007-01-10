@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2006 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -3731,6 +3731,53 @@ public class StatementRegressionTest extends BaseTestCase {
 		afterOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
 		
 		assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
+	}
+	
+	/**
+	 * Tests fix for BUG#25009 - Results from updates not handled correctly in multi-statement
+	 * queries.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug25009() throws Exception {
+		if (!versionMeetsMinimum(4, 1)) {
+			return;
+		}
+		
+		Properties props = new Properties();
+		props.setProperty("allowMultiQueries", "true");
+		
+		Connection multiConn = getConnectionWithProps(props);
+		createTable("testBug25009", "(field1 INT)");
+		
+		try {
+			Statement multiStmt = multiConn.createStatement();
+			multiStmt.execute("SELECT 1;SET @a=1; SET @b=2; SET @c=3; INSERT INTO testBug25009 VALUES (1)");
+			
+			assertEquals(-1, multiStmt.getUpdateCount());
+			
+			this.rs = multiStmt.getResultSet();
+			assertTrue(this.rs.next());
+			assertEquals(multiStmt.getMoreResults(), false);
+			
+			for (int i = 0; i < 3; i++) {
+				assertEquals(0, multiStmt.getUpdateCount());
+				assertEquals(multiStmt.getMoreResults(), false);
+			}
+			
+			assertEquals(1, multiStmt.getUpdateCount());
+
+			this.rs = multiStmt.executeQuery("SELECT field1 FROM testBug25009");
+			assertTrue(this.rs.next());
+			assertEquals(1, this.rs.getInt(1));
+			
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (multiConn != null) {
+				multiConn.close();
+			}
+		}
 	}
 	
 	/**

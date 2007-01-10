@@ -1411,12 +1411,6 @@ class MysqlIO {
         while (moreRowSetsExist) {
         	Buffer fieldPacket = checkErrorPacket();
             fieldPacket.setPosition(0);
-            
-            if ((fieldPacket.readByte(0) == 0) &&
-                    (fieldPacket.readByte(1) == 0) &&
-                    (fieldPacket.readByte(2) == 0)) {
-                break;
-            }
 
             ResultSet newResultSet = readResultsForQueryOrUpdate(callingStatement,
                     maxRows, resultSetType, resultSetConcurrency,
