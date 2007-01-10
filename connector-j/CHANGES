@@ -64,7 +64,11 @@ nn-nn-06 - Version 5.0.5
 	  
 	- Fixed BUG#23303 - DatabaseMetaData.getSchemas() doesn't return a 
 	  TABLE_CATALOG column.
-	   	  	    	  	  	  	   	  	   
+
+    - Fixed BUG#25399 - EscapeProcessor gets confused by multiple 
+      backslashes. We now push the responsibility of syntax errors back
+      on to the server for most escape sequences.
+      
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 

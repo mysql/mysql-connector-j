@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2005 MySQL AB
+ Copyright (C) 2005-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -83,5 +83,15 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
 	public void testBug14909() throws Exception {
 		assertEquals("select '{\"','}'", this.conn
 				.nativeSQL("select '{\"','}'"));
+	}
+	
+	/**
+	 * Tests fix for BUG#25399 - EscapeProcessor gets confused by multiple backslashes
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug25399() throws Exception {
+		assertEquals("\\' {d}",
+				getSingleValueWithQuery("SELECT '\\\\\\' {d}'"));
 	}
 }

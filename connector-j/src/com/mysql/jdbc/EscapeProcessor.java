@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -186,18 +186,16 @@ class EscapeProcessor {
 							escapeSequence = st.nextToken();
 
 							if (escapeSequence.length() < 3) {
-								throw SQLError.createSQLException(
-										"Syntax error for escape sequence '"
-												+ token + "'", "42000");
-							}
+								newSql.append(token); // it's just part of the query, push possible syntax errors onto server's shoulders
+							} else {
+							
 
-							escapeSequence = escapeSequence.substring(1,
+								escapeSequence = escapeSequence.substring(1,
 									escapeSequence.length() - 1);
-							replaceEscapeSequence = true;
+								replaceEscapeSequence = true;
+							}
 						} catch (java.util.NoSuchElementException e) {
-							throw SQLError.createSQLException(
-									"Syntax error for escape sequence '"
-											+ token + "'", "42000");
+							newSql.append(token); // it's just part of the query, push possible syntax errors onto server's shoulders
 						}
 					} else if (StringUtils.startsWithIgnoreCase(collapsedToken,
 							"{fn")) {
@@ -222,26 +220,25 @@ class EscapeProcessor {
 						int endPos = token.lastIndexOf('\''); // no }
 
 						if ((startPos == -1) || (endPos == -1)) {
-							throw SQLError.createSQLException(
-									"Syntax error for DATE escape sequence '"
-											+ token + "'", "42000");
-						}
-
-						String argument = token.substring(startPos, endPos);
-
-						try {
-							StringTokenizer st = new StringTokenizer(argument,
-									" -");
-							String year4 = st.nextToken();
-							String month2 = st.nextToken();
-							String day2 = st.nextToken();
-							String dateString = "'" + year4 + "-" + month2
-									+ "-" + day2 + "'";
-							newSql.append(dateString);
-						} catch (java.util.NoSuchElementException e) {
-							throw SQLError.createSQLException(
-									"Syntax error for DATE escape sequence '"
-											+ argument + "'", "42000");
+							newSql.append(token); // it's just part of the query, push possible syntax errors onto server's shoulders
+						} else {
+	
+							String argument = token.substring(startPos, endPos);
+	
+							try {
+								StringTokenizer st = new StringTokenizer(argument,
+										" -");
+								String year4 = st.nextToken();
+								String month2 = st.nextToken();
+								String day2 = st.nextToken();
+								String dateString = "'" + year4 + "-" + month2
+										+ "-" + day2 + "'";
+								newSql.append(dateString);
+							} catch (java.util.NoSuchElementException e) {
+								throw SQLError.createSQLException(
+										"Syntax error for DATE escape sequence '"
+												+ argument + "'", "42000");
+							}
 						}
 					} else if (StringUtils.startsWithIgnoreCase(collapsedToken,
 							"{ts")) {
@@ -249,121 +246,120 @@ class EscapeProcessor {
 						int endPos = token.lastIndexOf('\''); // no }
 
 						if ((startPos == -1) || (endPos == -1)) {
-							throw SQLError.createSQLException(
-									"Syntax error for TIMESTAMP escape sequence '"
-											+ token + "'", "42000");
-						}
+							newSql.append(token); // it's just part of the query, push possible syntax errors onto server's shoulders
+						} else {
 
-						String argument = token.substring(startPos, endPos);
-
-						try {
-							StringTokenizer st = new StringTokenizer(argument,
-									" .-:");
-							String year4 = st.nextToken();
-							String month2 = st.nextToken();
-							String day2 = st.nextToken();
-							String hour = st.nextToken();
-							String minute = st.nextToken();
-							String second = st.nextToken();
-
-							/*
-							 * For now, we get the fractional seconds part, but
-							 * we don't use it, as MySQL doesn't support it in
-							 * it's TIMESTAMP data type
-							 * 
-							 * String fractionalSecond = "";
-							 * 
-							 * if (st.hasMoreTokens()) { fractionalSecond =
-							 * st.nextToken(); }
-							 */
-							/*
-							 * Use the full format because number format will
-							 * not work for "between" clauses.
-							 * 
-							 * Ref. Mysql Docs
-							 * 
-							 * You can specify DATETIME, DATE and TIMESTAMP
-							 * values using any of a common set of formats:
-							 * 
-							 * As a string in either 'YYYY-MM-DD HH:MM:SS' or
-							 * 'YY-MM-DD HH:MM:SS' format.
-							 * 
-							 * Thanks to Craig Longman for pointing out this bug
-							 */
-							if (!conn.getUseTimezone() && !conn.getUseJDBCCompliantTimezoneShift()) {
-								newSql.append("'").append(year4).append("-")
-									.append(month2).append("-").append(day2)
-									.append(" ").append(hour).append(":")
-									.append(minute).append(":").append(second)
-									.append("'");
-							} else {
-								Calendar sessionCalendar;
-								
-								if (conn != null) {
-									sessionCalendar = conn.getCalendarInstanceForSessionOrNew();
+							String argument = token.substring(startPos, endPos);
+	
+							try {
+								StringTokenizer st = new StringTokenizer(argument,
+										" .-:");
+								String year4 = st.nextToken();
+								String month2 = st.nextToken();
+								String day2 = st.nextToken();
+								String hour = st.nextToken();
+								String minute = st.nextToken();
+								String second = st.nextToken();
+	
+								/*
+								 * For now, we get the fractional seconds part, but
+								 * we don't use it, as MySQL doesn't support it in
+								 * it's TIMESTAMP data type
+								 * 
+								 * String fractionalSecond = "";
+								 * 
+								 * if (st.hasMoreTokens()) { fractionalSecond =
+								 * st.nextToken(); }
+								 */
+								/*
+								 * Use the full format because number format will
+								 * not work for "between" clauses.
+								 * 
+								 * Ref. Mysql Docs
+								 * 
+								 * You can specify DATETIME, DATE and TIMESTAMP
+								 * values using any of a common set of formats:
+								 * 
+								 * As a string in either 'YYYY-MM-DD HH:MM:SS' or
+								 * 'YY-MM-DD HH:MM:SS' format.
+								 * 
+								 * Thanks to Craig Longman for pointing out this bug
+								 */
+								if (!conn.getUseTimezone() && !conn.getUseJDBCCompliantTimezoneShift()) {
+									newSql.append("'").append(year4).append("-")
+										.append(month2).append("-").append(day2)
+										.append(" ").append(hour).append(":")
+										.append(minute).append(":").append(second)
+										.append("'");
 								} else {
-									sessionCalendar = new GregorianCalendar();
-									sessionCalendar.setTimeZone(TimeZone.getTimeZone("GMT"));
-								}
-								
-								try {
-									int year4Int = Integer.parseInt(year4);
-									int month2Int = Integer.parseInt(month2);
-									int day2Int = Integer.parseInt(day2);
-									int hourInt = Integer.parseInt(hour);
-									int minuteInt = Integer.parseInt(minute);
-									int secondInt = Integer.parseInt(second);
+									Calendar sessionCalendar;
 									
-									synchronized (sessionCalendar) {
-										boolean useGmtMillis = conn.getUseGmtMillisForDatetimes();
-										
-										Timestamp toBeAdjusted = TimeUtil.fastTimestampCreate(useGmtMillis,
-												useGmtMillis ? Calendar.getInstance(TimeZone.getTimeZone("GMT")): null,
-											sessionCalendar,
-											year4Int,
-											month2Int,
-											day2Int,
-											hourInt,
-											minuteInt,
-											secondInt,
-											0);
-									
-										Timestamp inServerTimezone = TimeUtil.changeTimezone(
-												conn,
-												sessionCalendar,
-												null,
-												toBeAdjusted,
-												sessionCalendar.getTimeZone(),
-												conn.getServerTimezoneTZ(),
-												false);
-										
-										
-										newSql.append("'");
-										
-										String timezoneLiteral = inServerTimezone.toString();
-										
-										int indexOfDot = timezoneLiteral.indexOf(".");
-										
-										if (indexOfDot != -1) {
-											timezoneLiteral = timezoneLiteral.substring(0, indexOfDot);
-										}
-										
-										newSql.append(timezoneLiteral);
+									if (conn != null) {
+										sessionCalendar = conn.getCalendarInstanceForSessionOrNew();
+									} else {
+										sessionCalendar = new GregorianCalendar();
+										sessionCalendar.setTimeZone(TimeZone.getTimeZone("GMT"));
 									}
 									
-									newSql.append("'");	
+									try {
+										int year4Int = Integer.parseInt(year4);
+										int month2Int = Integer.parseInt(month2);
+										int day2Int = Integer.parseInt(day2);
+										int hourInt = Integer.parseInt(hour);
+										int minuteInt = Integer.parseInt(minute);
+										int secondInt = Integer.parseInt(second);
+										
+										synchronized (sessionCalendar) {
+											boolean useGmtMillis = conn.getUseGmtMillisForDatetimes();
+											
+											Timestamp toBeAdjusted = TimeUtil.fastTimestampCreate(useGmtMillis,
+													useGmtMillis ? Calendar.getInstance(TimeZone.getTimeZone("GMT")): null,
+												sessionCalendar,
+												year4Int,
+												month2Int,
+												day2Int,
+												hourInt,
+												minuteInt,
+												secondInt,
+												0);
+										
+											Timestamp inServerTimezone = TimeUtil.changeTimezone(
+													conn,
+													sessionCalendar,
+													null,
+													toBeAdjusted,
+													sessionCalendar.getTimeZone(),
+													conn.getServerTimezoneTZ(),
+													false);
+											
+											
+											newSql.append("'");
+											
+											String timezoneLiteral = inServerTimezone.toString();
+											
+											int indexOfDot = timezoneLiteral.indexOf(".");
+											
+											if (indexOfDot != -1) {
+												timezoneLiteral = timezoneLiteral.substring(0, indexOfDot);
+											}
+											
+											newSql.append(timezoneLiteral);
+										}
+										
+										newSql.append("'");	
+										
 									
-								
-								} catch (NumberFormatException nfe) {
-									throw SQLError.createSQLException("Syntax error in TIMESTAMP escape sequence '" 
-										+ token + "'.",
-										SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+									} catch (NumberFormatException nfe) {
+										throw SQLError.createSQLException("Syntax error in TIMESTAMP escape sequence '" 
+											+ token + "'.",
+											SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+									}
 								}
+							} catch (java.util.NoSuchElementException e) {
+								throw SQLError.createSQLException(
+										"Syntax error for TIMESTAMP escape sequence '"
+												+ argument + "'", "42000");
 							}
-						} catch (java.util.NoSuchElementException e) {
-							throw SQLError.createSQLException(
-									"Syntax error for TIMESTAMP escape sequence '"
-											+ argument + "'", "42000");
 						}
 					} else if (StringUtils.startsWithIgnoreCase(collapsedToken,
 							"{t")) {
@@ -371,81 +367,80 @@ class EscapeProcessor {
 						int endPos = token.lastIndexOf('\''); // no }
 
 						if ((startPos == -1) || (endPos == -1)) {
-							throw SQLError.createSQLException(
-									"Syntax error for TIME escape sequence '"
-											+ token + "'", "42000");
-						}
+							newSql.append(token); // it's just part of the query, push possible syntax errors onto server's shoulders
+						} else {
 
-						String argument = token.substring(startPos, endPos);
-
-						try {
-							StringTokenizer st = new StringTokenizer(argument,
-									" :");
-							String hour = st.nextToken();
-							String minute = st.nextToken();
-							String second = st.nextToken();
-							
-							if (!conn.getUseTimezone()) {
-								String timeString = "'" + hour + ":" + minute + ":"
-									+ second + "'";
-								newSql.append(timeString);
-							} else {
-								Calendar sessionCalendar = null;
+							String argument = token.substring(startPos, endPos);
+	
+							try {
+								StringTokenizer st = new StringTokenizer(argument,
+										" :");
+								String hour = st.nextToken();
+								String minute = st.nextToken();
+								String second = st.nextToken();
 								
-								if (conn != null) {
-									sessionCalendar = conn.getCalendarInstanceForSessionOrNew();
+								if (!conn.getUseTimezone()) {
+									String timeString = "'" + hour + ":" + minute + ":"
+										+ second + "'";
+									newSql.append(timeString);
 								} else {
-									sessionCalendar = new GregorianCalendar();
-								}
-
-								try {
-									int hourInt = Integer.parseInt(hour);
-									int minuteInt = Integer.parseInt(minute);
-									int secondInt = Integer.parseInt(second);
+									Calendar sessionCalendar = null;
 									
-									synchronized (sessionCalendar) {
-										Time toBeAdjusted = TimeUtil.fastTimeCreate(
-												sessionCalendar,
-												hourInt,
-												minuteInt,
-												secondInt);
-										
-										Time inServerTimezone = TimeUtil.changeTimezone(
-												conn,
-												sessionCalendar,
-												null,
-												toBeAdjusted,
-												sessionCalendar.getTimeZone(),
-												conn.getServerTimezoneTZ(),
-												false);
-										
-										newSql.append("'");
-										newSql.append(inServerTimezone.toString());
-										newSql.append("'");		
+									if (conn != null) {
+										sessionCalendar = conn.getCalendarInstanceForSessionOrNew();
+									} else {
+										sessionCalendar = new GregorianCalendar();
 									}
-								
-								} catch (NumberFormatException nfe) {
-									throw SQLError.createSQLException("Syntax error in TIMESTAMP escape sequence '" 
-										+ token + "'.",
-										SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+	
+									try {
+										int hourInt = Integer.parseInt(hour);
+										int minuteInt = Integer.parseInt(minute);
+										int secondInt = Integer.parseInt(second);
+										
+										synchronized (sessionCalendar) {
+											Time toBeAdjusted = TimeUtil.fastTimeCreate(
+													sessionCalendar,
+													hourInt,
+													minuteInt,
+													secondInt);
+											
+											Time inServerTimezone = TimeUtil.changeTimezone(
+													conn,
+													sessionCalendar,
+													null,
+													toBeAdjusted,
+													sessionCalendar.getTimeZone(),
+													conn.getServerTimezoneTZ(),
+													false);
+											
+											newSql.append("'");
+											newSql.append(inServerTimezone.toString());
+											newSql.append("'");		
+										}
+									
+									} catch (NumberFormatException nfe) {
+										throw SQLError.createSQLException("Syntax error in TIMESTAMP escape sequence '" 
+											+ token + "'.",
+											SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+									}
 								}
+							} catch (java.util.NoSuchElementException e) {
+								throw SQLError.createSQLException(
+										"Syntax error for escape sequence '"
+												+ argument + "'", "42000");
 							}
-						} catch (java.util.NoSuchElementException e) {
-							throw SQLError.createSQLException(
-									"Syntax error for escape sequence '"
-											+ argument + "'", "42000");
 						}
 					} else if (StringUtils.startsWithIgnoreCase(collapsedToken,
-						"{call")
-						|| StringUtils.startsWithIgnoreCase(collapsedToken,
-						"{?=call")) {
+							"{call")
+							|| StringUtils.startsWithIgnoreCase(collapsedToken,
+									"{?=call")) {
 
 						int startPos = StringUtils.indexOfIgnoreCase(token,
-						"CALL") + 5;
+								"CALL") + 5;
 						int endPos = token.length() - 1;
-
+		
 						if (StringUtils.startsWithIgnoreCase(collapsedToken,
-							"{?=call")) {
+								"{?=call")) {
 							callingStoredFunction = true;
 							newSql.append("SELECT ");
 							newSql.append(token.substring(startPos, endPos));
@@ -454,7 +449,7 @@ class EscapeProcessor {
 							newSql.append("CALL ");
 							newSql.append(token.substring(startPos, endPos));
 						}
-
+						
 						for (int i = endPos - 1; i >= startPos; i--) {
 							char c = token.charAt(i);
 							
@@ -470,7 +465,7 @@ class EscapeProcessor {
 							break;
 						}
 					} else if (StringUtils.startsWithIgnoreCase(collapsedToken,
-					"{oj")) {
+							"{oj")) {
 						// MySQL already handles this escape sequence
 						// because of ODBC. Cool.
 						newSql.append(token);
