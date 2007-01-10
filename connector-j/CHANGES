@@ -61,7 +61,10 @@ nn-nn-06 - Version 5.0.5
 	- Fixed BUG#21480 - Some exceptions thrown out of StandardSocketFactory
 	  were needlessly wrapped, obscurring their true cause, especially when
 	  using socket timeouts.
-	  	  	    	  	  	  	   	  	   
+	  
+	- Fixed BUG#23303 - DatabaseMetaData.getSchemas() doesn't return a 
+	  TABLE_CATALOG column.
+	   	  	    	  	  	  	   	  	   
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 

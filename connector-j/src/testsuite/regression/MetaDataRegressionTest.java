@@ -1699,6 +1699,21 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		this.conn.getMetaData().getProcedures(bogusDatabaseName, "%", "%");
 	}
 
+
+	/**
+	 * Tests fix for BUG#23303 - DBMD.getSchemas() doesn't return a TABLE_CATALOG column.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug23303() throws Exception {
+		try {
+			this.rs = this.conn.getMetaData().getSchemas();
+			this.rs.findColumn("TABLE_CATALOG");
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+	
 	/**
 	 * Tests fix for BUG#23304 - DBMD using "show" and DBMD using 
 	 * information_schema do not return results consistent with eachother.
@@ -1846,4 +1861,5 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			fail(messageBuf.toString());
 		}
 	}
+
 }

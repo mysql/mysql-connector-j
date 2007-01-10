@@ -4058,8 +4058,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public java.sql.ResultSet getSchemas() throws SQLException {
-		Field[] fields = new Field[1];
-		fields[0] = new Field("", "TABLE_SCHEM", java.sql.Types.CHAR, 0);
+		Field[] fields = new Field[2];
+	    fields[0] = new Field("", "TABLE_SCHEM", java.sql.Types.CHAR, 0);
+	    fields[1] = new Field("", "TABLE_CATALOG", java.sql.Types.CHAR, 0);
 
 		ArrayList tuples = new ArrayList();
 		java.sql.ResultSet results = buildResultSet(fields, tuples);
