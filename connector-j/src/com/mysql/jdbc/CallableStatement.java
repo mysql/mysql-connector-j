@@ -1997,7 +1997,7 @@ public class CallableStatement extends PreparedStatement implements
 								setPstmt.setBytesNoEscapeNoQuotes(1,
 										parameterAsBytes);
 							} else {
-								setPstmt.setBytes(1, parameterAsBytes);
+								setPstmt.setBytesNoEscape(1, parameterAsBytes);
 							}
 						} else {
 							setPstmt.setNull(1, Types.NULL);

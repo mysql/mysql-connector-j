@@ -897,4 +897,34 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#25379 - INOUT parameters in CallableStatements get doubly-escaped.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug25379() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
+		createTable("testBug25379", "(col char(40))");
+		
+		try {
+			this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS sp_testBug25379");
+			this.stmt.executeUpdate("CREATE PROCEDURE sp_testBug25379 (INOUT invalue char(255))"
+					+ "\nBEGIN"
+					+ "\ninsert into testBug25379(col) values(invalue);"
+					+ "\nEND");
+	
+			
+			CallableStatement cstmt = this.conn.prepareCall("{call sp_testBug25379(?)}");
+			cstmt.setString(1,"'john'");
+			cstmt.executeUpdate();
+			assertEquals("'john'", cstmt.getString(1));
+			assertEquals("'john'", getSingleValue("testBug25379", "col", "").toString());
+		} finally {
+			this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS sp_testBug25379");
+		}
+	}
 }
