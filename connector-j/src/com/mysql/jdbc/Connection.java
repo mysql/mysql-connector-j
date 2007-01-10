@@ -180,6 +180,8 @@ public class Connection extends ConnectionProperties implements
 				TRANSACTION_REPEATABLE_READ));
 		mapTransIsolationNameToValue.put("SERIALIZABLE", new Integer(
 				TRANSACTION_SERIALIZABLE));
+		
+		cancelTimer = new Timer("MySQL Statement timeout timer", false);
 	}
 
 	protected static SQLException appendMessageToException(SQLException sqlEx,
@@ -577,7 +579,7 @@ public class Connection extends ConnectionProperties implements
 			String databaseToConnectTo, String url)
 			throws SQLException {
 		this.charsetToNumBytesMap = new HashMap();
-		this.cancelTimer = new Timer(true);
+	
 		this.connectionCreationTimeMillis = System.currentTimeMillis();
 		this.pointOfOrigin = new Throwable();
 		

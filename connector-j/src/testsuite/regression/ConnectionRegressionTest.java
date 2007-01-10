@@ -1793,4 +1793,52 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#25514 - Timer instance used for Statement.setQueryTimeout()
+	 * created per-connection, rather than per-VM, causing memory leak.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug25514() throws Exception {
+
+		for (int i = 0; i < 10; i++) {
+			getConnectionWithProps(null).close();
+		}
+		
+		ThreadGroup root = Thread.currentThread().getThreadGroup().getParent();
+
+		while (root.getParent() != null) {
+	        root = root.getParent();
+	    }
+
+		int numThreadsNamedTimer = findNamedThreadCount(root, "MySQL Statement timeout timer");
+
+		assertEquals(1, numThreadsNamedTimer);
+	}
+	
+	private int findNamedThreadCount(ThreadGroup group, String nameStart) {
+		
+		int count = 0;
+		
+        int numThreads = group.activeCount();
+        Thread[] threads = new Thread[numThreads*2];
+        numThreads = group.enumerate(threads, false);
+    
+        for (int i=0; i<numThreads; i++) {
+            if (threads[i].getName().startsWith(nameStart)) {
+            	count++;
+            }
+        }
+
+        int numGroups = group.activeGroupCount();
+        ThreadGroup[] groups = new ThreadGroup[numGroups*2];
+        numGroups = group.enumerate(groups, false);
+    
+        for (int i=0; i<numGroups; i++) {
+        	count += findNamedThreadCount(groups[i], nameStart);
+        }
+
+        return count;
+	}
 }
