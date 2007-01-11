@@ -1813,7 +1813,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	        root = root.getParent();
 	    }
 
-		int numThreadsNamedTimer = findNamedThreadCount(root, "MySQL Statement timeout timer");
+		int numThreadsNamedTimer = findNamedThreadCount(root, "Timer");
 
 		assertEquals(1, numThreadsNamedTimer);
 	}

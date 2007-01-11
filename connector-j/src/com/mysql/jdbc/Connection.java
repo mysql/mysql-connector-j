@@ -181,7 +181,7 @@ public class Connection extends ConnectionProperties implements
 		mapTransIsolationNameToValue.put("SERIALIZABLE", new Integer(
 				TRANSACTION_SERIALIZABLE));
 		
-		cancelTimer = new Timer("MySQL Statement timeout timer", true);
+		cancelTimer = new Timer(true);
 	}
 
 	protected static SQLException appendMessageToException(SQLException sqlEx,
