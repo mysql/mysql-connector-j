@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -49,13 +49,14 @@ import junit.framework.TestCase;
  * closes them.
  * 
  * @author Mark Matthews
- * @version $Id$
+ * @version $Id: BaseTestCase.java 5440 2006-06-27 17:00:53 +0000 (Tue, 27 Jun
+ *          2006) mmatthews $
  */
 public abstract class BaseTestCase extends TestCase {
 	private final static String ADMIN_CONNECTION_PROPERTY_NAME = "com.mysql.jdbc.testsuite.admin-url";
 
 	private final static String NO_MULTI_HOST_PROPERTY_NAME = "com.mysql.jdbc.testsuite.no-multi-hosts-tests";
-	
+
 	/**
 	 * JDBC URL, initialized from com.mysql.jdbc.testsuite.url system property,
 	 * or defaults to jdbc:mysql:///test
@@ -68,8 +69,8 @@ public abstract class BaseTestCase extends TestCase {
 	/** Connection to server, initialized in setUp() Cleaned up in tearDown(). */
 	protected Connection conn = null;
 
-	/** list of Tables to be dropped in tearDown */
-	private List createdTables;
+	/** list of schema objects to be dropped in tearDown */
+	private List createdObjects;
 
 	/** The driver to use */
 	protected String dbClass = "com.mysql.jdbc.Driver";
@@ -95,7 +96,7 @@ public abstract class BaseTestCase extends TestCase {
 	protected Statement stmt = null;
 
 	private boolean runningOnJdk131 = false;
-	
+
 	/**
 	 * Creates a new BaseTestCase object.
 	 * 
@@ -111,8 +112,9 @@ public abstract class BaseTestCase extends TestCase {
 		if ((newDbUrl != null) && (newDbUrl.trim().length() != 0)) {
 			dbUrl = newDbUrl;
 		} else {
-			String defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.default");
-			
+			String defaultDbUrl = System
+					.getProperty("com.mysql.jdbc.testsuite.url.default");
+
 			if ((defaultDbUrl != null) && (defaultDbUrl.trim().length() != 0)) {
 				dbUrl = defaultDbUrl;
 			}
@@ -124,31 +126,62 @@ public abstract class BaseTestCase extends TestCase {
 		if ((newDriver != null) && (newDriver.trim().length() != 0)) {
 			this.dbClass = newDriver;
 		}
-		
+
 		try {
-			Blob.class.getMethod("truncate", new Class[] {Long.TYPE});
+			Blob.class.getMethod("truncate", new Class[] { Long.TYPE });
 			this.runningOnJdk131 = false;
 		} catch (NoSuchMethodException nsme) {
 			this.runningOnJdk131 = true;
 		}
 	}
 
-	protected void createTable(String tableName, String columnsAndOtherStuff)
-			throws SQLException {
-		createdTables.add(tableName);
-		dropTable(tableName);
+	protected void createSchemaObject(String objectType, String objectName,
+			String columnsAndOtherStuff) throws SQLException {
+		this.createdObjects.add(new String[] {objectType, objectName});
+		dropSchemaObject(objectType, objectName);
 
-		StringBuffer createSql = new StringBuffer(tableName.length()
-				+ columnsAndOtherStuff.length() + 10);
-		createSql.append("CREATE TABLE ");
-		createSql.append(tableName);
+		StringBuffer createSql = new StringBuffer(objectName.length()
+				+ objectType.length() + columnsAndOtherStuff.length() + 10);
+		createSql.append("CREATE  ");
+		createSql.append(objectType);
+		createSql.append(" ");
+		createSql.append(objectName);
 		createSql.append(" ");
 		createSql.append(columnsAndOtherStuff);
 		this.stmt.executeUpdate(createSql.toString());
 	}
 
+	protected void createFunction(String functionName, String functionDefn)
+			throws SQLException {
+		createSchemaObject("FUNCTION", functionName, functionDefn);
+	}
+	
+	protected void dropFunction(String functionName) throws SQLException {
+		dropSchemaObject("FUNCTION", functionName);
+	}
+	
+	protected void createProcedure(String procedureName, String procedureDefn)
+			throws SQLException {
+		createSchemaObject("PROCEDURE", procedureName, procedureDefn);
+	}
+
+	protected void dropProcedure(String procedureName) throws SQLException {
+		dropSchemaObject("PROCEDURE", procedureName);
+	}
+
+	protected void createTable(String tableName, String columnsAndOtherStuff)
+			throws SQLException {
+		createSchemaObject("TABLE", tableName, columnsAndOtherStuff);
+	}
+
 	protected void dropTable(String tableName) throws SQLException {
-		this.stmt.executeUpdate("DROP TABLE IF EXISTS " + tableName);
+		dropSchemaObject("TABLE", tableName);
+	}
+
+	protected void dropSchemaObject(String objectType, String objectName)
+			throws SQLException {
+		this.stmt.executeUpdate("DROP " + objectType + " IF EXISTS "
+				+ objectName);
 	}
 
 	protected Connection getAdminConnection() throws SQLException {
@@ -203,13 +236,12 @@ public abstract class BaseTestCase extends TestCase {
 		Object value = getSingleIndexedValueWithQuery(c, 2,
 				"SHOW VARIABLES LIKE '" + variableName + "'");
 
-		
 		if (value != null) {
 			if (value instanceof byte[]) {
 				// workaround for bad 4.1.x bugfix
-				return new String((byte[])value);
+				return new String((byte[]) value);
 			}
-			
+
 			return value.toString();
 		}
 
@@ -387,10 +419,8 @@ public abstract class BaseTestCase extends TestCase {
 		System.out.println("Loading JDBC driver '" + this.dbClass + "'");
 		Class.forName(this.dbClass).newInstance();
 		System.out.println("Done.\n");
-		createdTables = new ArrayList();
+		this.createdObjects = new ArrayList();
 
-		// System.out.println("Establishing connection to database '" + dbUrl
-		// + "'");
 
 		if (this.dbClass.equals("gwe.sql.gweMysqlDriver")) {
 			try {
@@ -412,11 +442,18 @@ public abstract class BaseTestCase extends TestCase {
 		this.stmt = this.conn.createStatement();
 
 		try {
-			this.rs = this.stmt.executeQuery("SELECT VERSION()");
-			this.rs.next();
-			logDebug("Connected to " + this.rs.getString(1));
-			this.rs.close();
-			this.rs = null;
+			if (dbUrl.indexOf("mysql") != -1) {
+				this.rs = this.stmt.executeQuery("SELECT VERSION()");
+				this.rs.next();
+				logDebug("Connected to " + this.rs.getString(1));
+				this.rs.close();
+				this.rs = null;
+			} else {
+				logDebug("Connected to "
+						+ this.conn.getMetaData().getDatabaseProductName()
+						+ " / "
+						+ this.conn.getMetaData().getDatabaseProductVersion());
+			}
 		} finally {
 			if (this.rs != null) {
 				this.rs.close();
@@ -439,9 +476,11 @@ public abstract class BaseTestCase extends TestCase {
 			}
 		}
 
-		for (int i = 0; i < createdTables.size(); i++) {
+		for (int i = 0; i < this.createdObjects.size(); i++) {
 			try {
-				dropTable((String) createdTables.get(i));
+				String[] objectInfo = (String[])this.createdObjects.get(i);
+				
+				dropSchemaObject(objectInfo[0], objectInfo[1]);
 			} catch (SQLException SQLE) {
 				;
 			}
@@ -510,36 +549,36 @@ public abstract class BaseTestCase extends TestCase {
 		return (((com.mysql.jdbc.Connection) this.conn).versionMeetsMinimum(
 				major, minor, subminor));
 	}
-	
+
 	protected boolean isRunningOnJdk131() {
 		return this.runningOnJdk131;
 	}
-	
+
 	protected boolean isClassAvailable(String classname) {
 		try {
 			Class.forName(classname);
 			return true;
 		} catch (ClassNotFoundException e) {
 			return false;
-		}	
+		}
 	}
 
 	protected void closeMemberJDBCResources() {
 		if (this.rs != null) {
 			ResultSet toClose = this.rs;
 			this.rs = null;
-			
+
 			try {
 				toClose.close();
 			} catch (SQLException sqlEx) {
 				// ignore
 			}
 		}
-		
+
 		if (this.pstmt != null) {
 			PreparedStatement toClose = this.pstmt;
 			this.pstmt = null;
-			
+
 			try {
 				toClose.close();
 			} catch (SQLException sqlEx) {
@@ -547,10 +586,11 @@ public abstract class BaseTestCase extends TestCase {
 			}
 		}
 	}
-	
+
 	protected boolean isRunningOnJRockit() {
 		String vmVendor = System.getProperty("java.vm.vendor");
-		
-		return (vmVendor != null && vmVendor.toUpperCase(Locale.US).startsWith("BEA"));
+
+		return (vmVendor != null && vmVendor.toUpperCase(Locale.US).startsWith(
+				"BEA"));
 	}
 }

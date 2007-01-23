@@ -727,7 +727,7 @@ public class CallableStatement extends PreparedStatement implements
 
 			paramTypesRs = dbmd.getProcedureColumns(this.connection
 					.versionMeetsMinimum(5, 0, 2)
-					& useCatalog ? this.currentCatalog : null, null, procName,
+					&& useCatalog ? this.currentCatalog : null, null, procName,
 					"%"); //$NON-NLS-1$
 
 			convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);

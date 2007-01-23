@@ -72,6 +72,13 @@ nn-nn-06 - Version 5.0.5
 	- Fixed BUG#25379 - INOUT parameters in CallableStatements get 
 	  doubly-escaped.
 	  
+	- Removed non-short-circuited logical ORs from "if" statements.
+	
+	- Re-worked stored procedure parameter parser to be more robust. Driver no
+	  longer requires "BEGIN" in stored procedure definition, but does have 
+	  requirement that if a stored function begins with a label directly after the 
+	  "returns" clause, that the label is not a quoted identifier.
+	  	  
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 

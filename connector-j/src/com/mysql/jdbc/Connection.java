@@ -3422,7 +3422,7 @@ public class Connection extends ConnectionProperties implements
 		
 		if (!nullSafeCompare(otherHost, this.origHostToConnectTo)) {
 			directCompare = false;
-		} else if (otherHost != null & otherHost.indexOf(",") == -1 && 
+		} else if (otherHost != null && otherHost.indexOf(",") == -1 && 
 				otherHost.indexOf(":") == -1) {
 			// need to check port numbers
 			directCompare = (otherConnection.origPortToConnectTo == 
@@ -4249,7 +4249,7 @@ public class Connection extends ConnectionProperties implements
 	 */
 	public void resetServerState() throws SQLException {
 		if (!getParanoid()
-				&& ((this.io != null) & versionMeetsMinimum(4, 0, 6))) {
+				&& ((this.io != null) && versionMeetsMinimum(4, 0, 6))) {
 			changeUser(this.user, this.password);
 		}
 	}

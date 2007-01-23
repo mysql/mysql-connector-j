@@ -549,7 +549,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 				if (db == null && procDb == null) {
 					shouldAdd = true;
-				} else if (db != null & db.equals(procDb)) {
+				} else if (db != null && db.equals(procDb)) {
 					shouldAdd = true;
 				}
 			}
@@ -604,7 +604,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 				if (db == null && procDb == null) {
 					shouldAdd = true;
-				} else if (db != null & db.equals(procDb)) {
+				} else if (db != null && db.equals(procDb)) {
 					shouldAdd = true;
 				}
 			}
@@ -1368,91 +1368,58 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				}
 				
 				int openParenIndex = StringUtils
-						.indexOfIgnoreCaseRespectQuotes(0, procedureDef, "(",
-								quoteChar.charAt(0), !this.conn
-										.isNoBackslashEscapesSet());
+				.indexOfIgnoreCaseRespectQuotes(0, procedureDef, "(",
+						quoteChar.charAt(0), !this.conn
+						.isNoBackslashEscapesSet());
+				int endOfParamDeclarationIndex = 0;
 
-				String beforeBegin = null;
+				endOfParamDeclarationIndex = endPositionOfParameterDeclaration(
+						openParenIndex, procedureDef, quoteChar);
 
-				// Try and fudge this with the 'begin' statement
-				int beginIndex = 0;
+				if (parsingFunction) {
 
-				if (!parsingFunction) {
-					beginIndex = StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-							procedureDef, "\nbegin", quoteChar.charAt(0),
-							!this.conn.isNoBackslashEscapesSet());
-				} else {
-					// Grab the return column first, since it needs
+					// Grab the return column since it needs
 					// to go first in the output result set
 					int returnsIndex = StringUtils
-							.indexOfIgnoreCaseRespectQuotes(0, procedureDef,
-									" RETURNS ", quoteChar.charAt(0),
-									!this.conn.isNoBackslashEscapesSet());
+					.indexOfIgnoreCaseRespectQuotes(0, procedureDef,
+							" RETURNS ", quoteChar.charAt(0),
+							!this.conn.isNoBackslashEscapesSet());
 
-					beginIndex = StringUtils.indexOfIgnoreCaseRespectQuotes(
-							returnsIndex, procedureDef, "\nbegin", quoteChar
-									.charAt(0), !this.conn
-									.isNoBackslashEscapesSet());
+					int endReturnsDef = findEndOfReturnsClause(procedureDef,
+							quoteChar, returnsIndex);
 
-					if (beginIndex == -1) {
-						beginIndex = StringUtils
-								.indexOfIgnoreCaseRespectQuotes(0,
-										procedureDef, "\n",
-										quoteChar.charAt(0), !this.conn
-												.isNoBackslashEscapesSet());
+					// Trim off whitespace after "RETURNS"
+
+					int declarationStart = returnsIndex + "RETURNS ".length();
+
+					while (declarationStart < procedureDef.length()) {
+						if (Character.isWhitespace(procedureDef.charAt(declarationStart))) {
+							declarationStart++;
+						} else {
+							break;
+						}
 					}
 
-					// Okay, give up...
-
-					if (beginIndex == -1) {
-						throw SQLError.createSQLException(
-								"Driver requires declaration of procedure to either contain a '\\nbegin' or '\\n' to follow argument declaration, or SELECT privilege on mysql.proc to parse column types.",
-								SQLError.SQL_STATE_GENERAL_ERROR);
-					}
-
-					String returnsDefn = procedureDef.substring(returnsIndex
-							+ "RETURNS ".length(), beginIndex);
+					String returnsDefn = procedureDef.substring(declarationStart, endReturnsDef).trim();
 					TypeDescriptor returnDescriptor = new TypeDescriptor(
 							returnsDefn, null);
 
 					resultRows.add(convertTypeDescriptorToProcedureRow(
 							procNameAsBytes, "", false, false, true,
 							returnDescriptor));
-
-					beginIndex = returnsIndex; // further processing needs to
-					// look before "RETURNS" token
 				}
 
-				// Bah, we _really_ need information schema here
-
-				if (beginIndex != -1) {
-					beforeBegin = procedureDef.substring(0, beginIndex);
-				} else {
-					beginIndex = StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-							procedureDef, "\n", quoteChar.charAt(0), !this.conn
-									.isNoBackslashEscapesSet());
-
-					if (beginIndex != -1) {
-						beforeBegin = procedureDef.substring(0, beginIndex);
-					} else {
-						throw SQLError.createSQLException(
-								"Driver requires declaration of procedure to either contain a '\\nbegin' or '\\n' to follow argument declaration, or SELECT privilege on mysql.proc to parse column types.",
-								SQLError.SQL_STATE_GENERAL_ERROR);
-					}
-
-				}
-
-				int endParenIndex = beforeBegin.lastIndexOf(')');
-
-				if ((openParenIndex == -1) || (endParenIndex == -1)) {
+				if ((openParenIndex == -1)
+						|| (endOfParamDeclarationIndex == -1)) {
 					// parse error?
-					throw SQLError.createSQLException(
+					throw SQLError
+					.createSQLException(
 							"Internal error when parsing callable statement metadata",
 							SQLError.SQL_STATE_GENERAL_ERROR);
 				}
 
 				parameterDef = procedureDef.substring(openParenIndex + 1,
-						endParenIndex);
+						endOfParamDeclarationIndex);
 			}
 		} finally {
 			SQLException sqlExRethrow = null;
@@ -1586,7 +1553,120 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			// exist, is it an error....
 		}
 	}
+	/**
+	 * Finds the end of the parameter declaration from the output of "SHOW
+	 * CREATE PROCEDURE".
+	 * 
+	 * @param beginIndex
+	 *            should be the index of the procedure body that contains the
+	 *            first "(".
+	 * @param procedureDef
+	 *            the procedure body
+	 * @param quoteChar
+	 *            the identifier quote character in use
+	 * @return the ending index of the parameter declaration, not including the
+	 *         closing ")"
+	 * @throws SQLException
+	 *             if a parse error occurs.
+	 */
+	private int endPositionOfParameterDeclaration(int beginIndex,
+			String procedureDef, String quoteChar) throws SQLException {
+		int currentPos = beginIndex + 1;
+		int parenDepth = 1; // counting the first openParen
 
+		while (parenDepth > 0 && currentPos < procedureDef.length()) {
+			int closedParenIndex = StringUtils.indexOfIgnoreCaseRespectQuotes(
+					currentPos, procedureDef, ")", quoteChar.charAt(0),
+					!this.conn.isNoBackslashEscapesSet());
+
+			if (closedParenIndex != -1) {
+				int nextOpenParenIndex = StringUtils
+						.indexOfIgnoreCaseRespectQuotes(currentPos,
+								procedureDef, "(", quoteChar.charAt(0),
+								!this.conn.isNoBackslashEscapesSet());
+
+				if (nextOpenParenIndex != -1
+						&& nextOpenParenIndex < closedParenIndex) {
+					parenDepth++;
+					currentPos = closedParenIndex + 1; // set after closed
+														// paren that increases
+														// depth
+				} else {
+					parenDepth--;
+					currentPos = closedParenIndex; // start search from same
+													// position
+				}
+			} else {
+				// we should always get closed paren of some sort
+				throw SQLError
+						.createSQLException(
+								"Internal error when parsing callable statement metadata",
+								SQLError.SQL_STATE_GENERAL_ERROR);
+			}
+		}
+
+		return currentPos;
+	}
+
+	/**
+	 * Finds the end of the RETURNS clause for SQL Functions by using any of the
+	 * keywords allowed after the RETURNS clause, or a label.
+	 * 
+	 * @param procedureDefn
+	 *            the function body containing the definition of the function
+	 * @param quoteChar
+	 *            the identifier quote string in use
+	 * @param positionOfReturnKeyword
+	 *            the position of "RETRUNS" in the definition
+	 * @return the end of the returns clause
+	 * @throws SQLException
+	 *             if a parse error occurs
+	 */
+	private int findEndOfReturnsClause(String procedureDefn, String quoteChar,
+			int positionOfReturnKeyword) throws SQLException {
+		/*
+		 * characteristic: LANGUAGE SQL | [NOT] DETERMINISTIC | { CONTAINS SQL |
+		 * NO SQL | READS SQL DATA | MODIFIES SQL DATA } | SQL SECURITY {
+		 * DEFINER | INVOKER } | COMMENT 'string'
+		 */
+
+		String[] tokens = new String[] { "LANGUAGE", "NOT", "DETERMINISTIC",
+				"CONTAINS", "NO", "READ", "MODIFIES", "SQL", "COMMENT", "BEGIN", 
+				"RETURN" };
+
+		int startLookingAt = positionOfReturnKeyword + "RETURNS".length() + 1;
+
+		for (int i = 0; i < tokens.length; i++) {
+			int endOfReturn = StringUtils.indexOfIgnoreCaseRespectQuotes(
+					startLookingAt, procedureDefn, tokens[i], quoteChar
+							.charAt(0), !this.conn.isNoBackslashEscapesSet());
+
+			if (endOfReturn != -1) {
+				return endOfReturn;
+			}
+		}
+
+		// Label?
+		int endOfReturn = StringUtils.indexOfIgnoreCaseRespectQuotes(
+				startLookingAt, procedureDefn, ":", quoteChar.charAt(0),
+				!this.conn.isNoBackslashEscapesSet());
+
+		if (endOfReturn != -1) {
+			// seek back until whitespace
+			for (int i = endOfReturn; i > 0; i--) {
+				if (Character.isWhitespace(procedureDefn.charAt(i))) {
+					return i;
+				}
+			}
+		}
+
+		// We can't parse it.
+
+		throw SQLError.createSQLException(
+				"Internal error when parsing callable statement metadata",
+				SQLError.SQL_STATE_GENERAL_ERROR);
+	}
+	
 	/**
 	 * Parses the cascade option string and returns the DBMD constant that
 	 * represents it (for deletes)
