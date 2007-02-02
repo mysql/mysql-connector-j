@@ -106,7 +106,12 @@ nn-nn-06 - Version 5.0.5
 	- Use faster datetime parsing for ResultSets that come from plain or 
 	  non-server-side prepared statements. (Enable old implementation with
 	  "useFastDateParsing=false" as a configuration parameter).
-	  	  	  
+
+	- Fixed BUG#24794 - DatabaseMetaData.getSQLKeywords() doesn't return
+	  all reserved words for current MySQL version. The current fix/implementation
+	  returns keywords for MySQL-5.1, and doesn't distinguish between different
+	  versions of the server.
+	  	  	  	  
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 
