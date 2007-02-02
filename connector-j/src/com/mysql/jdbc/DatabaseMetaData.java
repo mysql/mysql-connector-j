@@ -244,8 +244,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 					while (tokenizer.hasMoreTokens()) {
 						String setMember = tokenizer.nextToken().trim();
-						
-						if (setMember.startsWith("'") && setMember.endsWith("'")) {
+
+						if (setMember.startsWith("'")
+								&& setMember.endsWith("'")) {
 							maxLength += setMember.length() - 2;
 						} else {
 							maxLength += setMember.length();
@@ -256,109 +257,144 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					this.decimalDigits = null;
 				} else if (typeInfo.indexOf(",") != -1) {
 					// Numeric with decimals
-					this.columnSize = new Integer(typeInfo.substring(
-							(typeInfo.indexOf("(") + 1),
-							(typeInfo.indexOf(","))));
+					this.columnSize = new Integer(typeInfo.substring((typeInfo
+							.indexOf("(") + 1), (typeInfo.indexOf(","))));
 					this.decimalDigits = new Integer(typeInfo.substring(
 							(typeInfo.indexOf(",") + 1),
 							(typeInfo.indexOf(")"))));
 				} else {
 					this.columnSize = null;
 					this.decimalDigits = null;
-					
-					/* If the size is specified with the DDL, use that */
-					if ((StringUtils.indexOfIgnoreCase(typeInfo, "char") != -1 ||
-							StringUtils.indexOfIgnoreCase(typeInfo, "text") != -1 ||
-							StringUtils.indexOfIgnoreCase(typeInfo, "blob") != -1 ||
-							StringUtils.indexOfIgnoreCase(typeInfo, "binary") != -1 ||
-							StringUtils.indexOfIgnoreCase(typeInfo, "bit") != -1) && typeInfo.indexOf("(") != -1) {
-						int endParenIndex = typeInfo.indexOf(")");
 
-						if (endParenIndex == -1) {
-							endParenIndex = typeInfo.length();
-						}
+					int beginParenIndex = typeInfo.indexOf("(");
+					int endParenIndex = typeInfo.indexOf(")");
 
-						this.columnSize = new Integer(typeInfo.substring(
-								(typeInfo.indexOf("(") + 1), endParenIndex));
-
-						// Adjust for pseudo-boolean
-						if (conn.getTinyInt1isBit()
-								&& this.columnSize.intValue() == 1
-								&& StringUtils.startsWithIgnoreCase(typeInfo,
-										0, "tinyint")) {
-							if (conn.getTransformedBitIsBoolean()) {
-								this.dataType = Types.BOOLEAN;
-								this.typeName = "BOOLEAN";
-							} else {
-								this.dataType = Types.BIT;
-								this.typeName = "BIT";
-							}
-						}
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "tinyint")) {
-						this.columnSize = new Integer(3);
-						this.decimalDigits = new Integer(0);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "smallint")) {
-						this.columnSize = new Integer(5);
-						this.decimalDigits = new Integer(0);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "mediumint")) {
-						this.columnSize = new Integer(7);
-						this.decimalDigits = new Integer(0);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "int")) {
-						this.columnSize = new Integer(10);
-						this.decimalDigits = new Integer(0);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "integer")) {
-						this.columnSize = new Integer(10);
-						this.decimalDigits = new Integer(0);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "bigint")) {
-						this.columnSize = new Integer(19);
-						this.decimalDigits = new Integer(0);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "int24")) {
-						this.columnSize = new Integer(19);
-						this.decimalDigits = new Integer(0);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "real")) {
-						this.columnSize = new Integer(12);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "float")) {
-						this.columnSize = new Integer(12);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "decimal")) {
-						this.columnSize = new Integer(12);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "numeric")) {
-						this.columnSize = new Integer(12);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "double")) {
-						this.columnSize = new Integer(22);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "char")) {
-						this.columnSize = new Integer(1);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "varchar")) {
-						this.columnSize = new Integer(255);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "date")) {
-						this.columnSize = null;
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "time")) {
-						this.columnSize = null;
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "timestamp")) {
-						this.columnSize = null;
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "datetime")) {
-						this.columnSize = null;
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "tinyblob")) {
-						this.columnSize = new Integer(255);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "blob")) {
-						this.columnSize = new Integer(65535);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "mediumblob")) {
-						this.columnSize = new Integer(16777215);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "longblob")) {
-						this.columnSize = new Integer(Integer.MAX_VALUE);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "tinytext")) {
-						this.columnSize = new Integer(255);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "text")) {
-						this.columnSize = new Integer(65535);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "mediumtext")) {
-						this.columnSize = new Integer(16777215);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "longtext")) {
-						this.columnSize = new Integer(Integer.MAX_VALUE);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "enum")) {
-						this.columnSize = new Integer(255);
-					} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo, "set")) {
-						this.columnSize = new Integer(255);
+					if (endParenIndex == -1) {
+						endParenIndex = typeInfo.length();
 					}
 
+					if (beginParenIndex != -1 && endParenIndex != -1) {
+						this.columnSize = new Integer(typeInfo.substring(
+							(typeInfo.indexOf("(") + 1), endParenIndex));
+					}
+					
+					/* If the size is specified with the DDL, use that, otherwise
+					 * use hard-coded defaults */
+					if ((StringUtils.indexOfIgnoreCase(typeInfo, "char") == -1
+							&& StringUtils.indexOfIgnoreCase(typeInfo, "text") == -1
+							&& StringUtils.indexOfIgnoreCase(typeInfo, "blob") == -1
+							&& StringUtils
+									.indexOfIgnoreCase(typeInfo, "binary") != -1 
+							&& StringUtils
+								.indexOfIgnoreCase(typeInfo, "bit") != -1)
+							|| this.columnSize != null) {
+					
+						if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"tinyint")) {
+	
+							// Adjust for pseudo-boolean
+							if (conn.getTinyInt1isBit() && this.columnSize != null
+									&& this.columnSize.intValue() == 1) {
+								if (conn.getTransformedBitIsBoolean()) {
+									this.dataType = Types.BOOLEAN;
+									this.typeName = "BOOLEAN";
+								} else {
+									this.dataType = Types.BIT;
+									this.typeName = "BIT";
+								}
+							} else {
+								this.columnSize = new Integer(3);
+								this.decimalDigits = new Integer(0);
+							}
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"smallint")) {
+							this.columnSize = new Integer(5);
+							this.decimalDigits = new Integer(0);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"mediumint")) {
+							this.columnSize = new Integer(7);
+							this.decimalDigits = new Integer(0);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"int")) {
+							this.columnSize = new Integer(10);
+							this.decimalDigits = new Integer(0);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"integer")) {
+							this.columnSize = new Integer(10);
+							this.decimalDigits = new Integer(0);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"bigint")) {
+							this.columnSize = new Integer(19);
+							this.decimalDigits = new Integer(0);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"int24")) {
+							this.columnSize = new Integer(19);
+							this.decimalDigits = new Integer(0);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"real")) {
+							this.columnSize = new Integer(12);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"float")) {
+							this.columnSize = new Integer(12);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"decimal")) {
+							this.columnSize = new Integer(12);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"numeric")) {
+							this.columnSize = new Integer(12);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"double")) {
+							this.columnSize = new Integer(22);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"char")) {
+							this.columnSize = new Integer(1);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"varchar")) {
+							this.columnSize = new Integer(255);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"date")) {
+							this.columnSize = null;
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"time")) {
+							this.columnSize = null;
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"timestamp")) {
+							this.columnSize = null;
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"datetime")) {
+							this.columnSize = null;
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"tinyblob")) {
+							this.columnSize = new Integer(255);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"blob")) {
+							this.columnSize = new Integer(65535);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"mediumblob")) {
+							this.columnSize = new Integer(16777215);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"longblob")) {
+							this.columnSize = new Integer(Integer.MAX_VALUE);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"tinytext")) {
+							this.columnSize = new Integer(255);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"text")) {
+							this.columnSize = new Integer(65535);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"mediumtext")) {
+							this.columnSize = new Integer(16777215);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"longtext")) {
+							this.columnSize = new Integer(Integer.MAX_VALUE);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"enum")) {
+							this.columnSize = new Integer(255);
+						} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+								"set")) {
+							this.columnSize = new Integer(255);
+						}
+					}
 				}
 			} else {
 				this.decimalDigits = null;

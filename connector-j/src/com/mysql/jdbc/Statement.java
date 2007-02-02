@@ -62,20 +62,6 @@ import java.util.TimerTask;
  * @see ResultSet
  */
 public class Statement implements java.sql.Statement {
-	class CachedResultSetMetaData {
-		/** Map column names (and all of their permutations) to column indices */
-		Map columnNameToIndex = null;
-
-		/** Cached Field info */
-		Field[] fields;
-
-		/** Map of fully-specified column names to column indices */
-		Map fullColumnNameToIndex = null;
-
-		/** Cached ResultSetMetaData */
-		java.sql.ResultSetMetaData metadata;
-	}
-
 	/**
 	 * Thread used to implement query timeouts...Eventually we could be more
 	 * efficient and have one thread with timers, but this is a straightforward

@@ -78,7 +78,35 @@ nn-nn-06 - Version 5.0.5
 	  longer requires "BEGIN" in stored procedure definition, but does have 
 	  requirement that if a stored function begins with a label directly after the 
 	  "returns" clause, that the label is not a quoted identifier.
-	  	  
+    - Reverted back to internal character conversion routines for single-byte 
+      character sets, as the ones internal to the JVM are using much more CPU 
+      time than our internal implementation.
+      
+	- Changed cached result set metadata (when using 
+	  "cacheResultSetMetadata=true") to be cached per-connection rather
+	  than per-statement as previously implemented.
+	  
+	- Use a java.util.TreeMap to map column names to ordinal indexes for
+	  ResultSet.findColumn() instead of a HashMap. This allows us to have
+	  case-insensitive lookups (required by the JDBC specification) without
+	  resorting to the many transient object instances needed to support this
+	  requirement with a normal HashMap with either case-adjusted keys, or
+	  case-insensitive keys. (In the worst case scenario for lookups of a 1000
+	  column result set, TreeMaps are about half as fast wall-clock time as
+	  a HashMap, however in normal applications their use gives many orders
+	  of magnitude reduction in transient object instance creation which pays
+	  off later for CPU usage in garbage collection).
+	  
+	- Avoid static synchronized code in JVM class libraries for dealing with
+	  default timezones.
+	  
+	- Fixed cases where ServerPreparedStatements weren't using cached metadata
+	  when "cacheResultSetMetadata=true" was configured.
+	  
+	- Use faster datetime parsing for ResultSets that come from plain or 
+	  non-server-side prepared statements. (Enable old implementation with
+	  "useFastDateParsing=false" as a configuration parameter).
+	  	  	  
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 

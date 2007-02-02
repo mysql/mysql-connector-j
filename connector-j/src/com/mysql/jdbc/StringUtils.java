@@ -620,17 +620,17 @@ public class StringUtils {
 		}
 	}
 
-	public static int getInt(byte[] buf) throws NumberFormatException {
+	public static int getInt(byte[] buf, int offset, int endPos) throws NumberFormatException {
 		int base = 10;
 
-		int s = 0;
+		int s = offset;
 
 		/* Skip white space. */
-		while (Character.isWhitespace((char) buf[s]) && (s < buf.length)) {
+		while (Character.isWhitespace((char) buf[s]) && (s < endPos)) {
 			++s;
 		}
 
-		if (s == buf.length) {
+		if (s == endPos) {
 			throw new NumberFormatException(new String(buf));
 		}
 
@@ -658,7 +658,7 @@ public class StringUtils {
 
 		int i = 0;
 
-		for (; s < buf.length; s++) {
+		for (; s < endPos; s++) {
 			char c = (char) buf[s];
 
 			if (Character.isDigit(c)) {
@@ -692,6 +692,10 @@ public class StringUtils {
 
 		/* Return the result of the appropriate sign. */
 		return (negative ? (-i) : i);
+	}
+	
+	public static int getInt(byte[] buf) throws NumberFormatException {
+		return getInt(buf, 0, buf.length);
 	}
 
 	public static long getLong(byte[] buf) throws NumberFormatException {
@@ -1447,6 +1451,36 @@ public class StringUtils {
 		}
 
 		return s.getBytes();
+	}
+	
+	public static int lastIndexOf(byte[] s, char c) {
+		if (s == null) {
+			return -1;
+		}
+		
+		for (int i = s.length - 1; i >= 0; i--) {
+			if (s[i] == c) {
+				return i;
+			}
+		}
+		
+		return -1;
+	}
+
+	public static int indexOf(byte[] s, char c) {
+		if (s == null) {
+			return -1;
+		}
+		
+		int length = s.length;
+		
+		for (int i = 0; i < length; i++) {
+			if (s[i] == c) {
+				return i;
+			}
+		}
+		
+		return -1;
 	}
 	
 	public static boolean isNullOrEmpty(String toTest) {

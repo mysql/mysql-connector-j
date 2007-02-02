@@ -29,6 +29,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
+import java.util.TimeZone;
 
 /**
  * Various utility methods for the driver.
@@ -36,6 +37,15 @@ import java.sql.SQLException;
  * @author Mark Matthews
  */
 public class Util {
+
+	// cache this ourselves, as the method call is statically-synchronized in all but JDK6!
+	
+	private static final TimeZone DEFAULT_TIMEZONE = TimeZone.getDefault();
+	
+	static final TimeZone getDefaultTimeZone() {
+		return (TimeZone)DEFAULT_TIMEZONE.clone();
+	}
+	
 	class RandStructcture {
 		long maxValue;
 
@@ -46,9 +56,10 @@ public class Util {
 		long seed2;
 	}
 
-	private static boolean isJdbc4 = false;
 
 	private static Util enclosingInstance = new Util();
+	
+	private static boolean isJdbc4 = false;
 	
 	// ~ Static fields/initializers
 	// ---------------------------------------------

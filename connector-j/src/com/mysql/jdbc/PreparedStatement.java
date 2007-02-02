@@ -782,17 +782,21 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 *                if a database access error occurs
 	 */
 	public boolean execute() throws SQLException {
-		if (this.connection.isReadOnly() && (this.firstCharOfStmt != 'S')) {
+		checkClosed();
+		
+		Connection locallyScopedConn = this.connection;
+		
+		if (locallyScopedConn.isReadOnly() && (this.firstCharOfStmt != 'S')) {
 			throw SQLError.createSQLException(Messages.getString("PreparedStatement.20") //$NON-NLS-1$
 					+ Messages.getString("PreparedStatement.21"), //$NON-NLS-1$
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
-
-		checkClosed();
-
+		
 		ResultSet rs = null;
 
-		synchronized (this.connection.getMutex()) {
+		CachedResultSetMetaData cachedMetadata = null;
+
+		synchronized (locallyScopedConn.getMutex()) {
 			clearWarnings();
 
 			this.batchedGeneratedKeys = null;
@@ -801,16 +805,29 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 
 			String oldCatalog = null;
 
-			if (!this.connection.getCatalog().equals(this.currentCatalog)) {
-				oldCatalog = this.connection.getCatalog();
-				this.connection.setCatalog(this.currentCatalog);
+			if (!locallyScopedConn.getCatalog().equals(this.currentCatalog)) {
+				oldCatalog = locallyScopedConn.getCatalog();
+				locallyScopedConn.setCatalog(this.currentCatalog);
 			}
 
+			//
+			// Check if we have cached metadata for this query...
+			//
+			if (locallyScopedConn.getCacheResultSetMetadata()) {
+				cachedMetadata = locallyScopedConn.getCachedMetaData(this.originalSql);
+			}
+
+			Field[] metadataFromCache = null;
+			
+			if (cachedMetadata != null) {
+				metadataFromCache = cachedMetadata.fields;
+			}
+			
 			boolean oldInfoMsgState = false;
 
 			if (this.retrieveGeneratedKeys) {
-				oldInfoMsgState = this.connection.isReadInfoMsgEnabled();
-				this.connection.setReadInfoMsgEnabled(true);
+				oldInfoMsgState = locallyScopedConn.isReadInfoMsgEnabled();
+				locallyScopedConn.setReadInfoMsgEnabled(true);
 			}
 
 			// If there isn't a limit clause in the SQL
@@ -822,7 +839,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			//
 			// Only apply max_rows to selects
 			//
-			if (this.connection.useMaxRows()) {
+			if (locallyScopedConn.useMaxRows()) {
 				int rowLimit = -1;
 
 				if (this.firstCharOfStmt == 'S') {
@@ -830,13 +847,13 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 						rowLimit = this.maxRows;
 					} else {
 						if (this.maxRows <= 0) {
-							this.connection.execSQL(this,
+							locallyScopedConn.execSQL(this,
 									"SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, //$NON-NLS-1$
 									null, java.sql.ResultSet.TYPE_FORWARD_ONLY,
 									java.sql.ResultSet.CONCUR_READ_ONLY, false,
 									this.currentCatalog, true);
 						} else {
-							this.connection
+							locallyScopedConn
 									.execSQL(
 											this,
 											"SET OPTION SQL_SELECT_LIMIT=" + this.maxRows, -1, //$NON-NLS-1$
@@ -848,7 +865,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 						}
 					}
 				} else {
-					this.connection.execSQL(this,
+					locallyScopedConn.execSQL(this,
 							"SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, null, //$NON-NLS-1$
 							java.sql.ResultSet.TYPE_FORWARD_ONLY,
 							java.sql.ResultSet.CONCUR_READ_ONLY, false,
@@ -858,20 +875,30 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 				// Finally, execute the query
 				rs = executeInternal(rowLimit, sendPacket,
 						createStreamingResultSet(),
-						(this.firstCharOfStmt == 'S'), true, false);
+						(this.firstCharOfStmt == 'S'), true, metadataFromCache, false);
 			} else {
 				rs = executeInternal(-1, sendPacket,
 						createStreamingResultSet(),
-						(this.firstCharOfStmt == 'S'), true, false);
+						(this.firstCharOfStmt == 'S'), true, metadataFromCache, false);
 			}
 
+			if (cachedMetadata != null) {
+				locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql,
+						cachedMetadata, this.results);
+			} else {
+				if (rs.reallyResult() && locallyScopedConn.getCacheResultSetMetadata()) {
+					locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql,
+							null /* will be created */, this.results);
+				}
+			}
+			
 			if (this.retrieveGeneratedKeys) {
-				this.connection.setReadInfoMsgEnabled(oldInfoMsgState);
+				locallyScopedConn.setReadInfoMsgEnabled(oldInfoMsgState);
 				rs.setFirstCharOfQuery('R');
 			}
 
 			if (oldCatalog != null) {
-				this.connection.setCatalog(oldCatalog);
+				locallyScopedConn.setCatalog(oldCatalog);
 			}
 
 			this.lastInsertId = rs.getUpdateID();
@@ -1223,7 +1250,8 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 */
 	protected ResultSet executeInternal(int maxRowsToRetrieve,
 			Buffer sendPacket, boolean createStreamingResultSet,
-			boolean queryIsSelectOnly, boolean unpackFields, boolean isBatch)
+			boolean queryIsSelectOnly, boolean unpackFields, Field[] metadataFromCache,
+			boolean isBatch)
 			throws SQLException {
 		this.wasCancelled = false;
 		
@@ -1314,9 +1342,15 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			// Check if we have cached metadata for this query...
 			//
 			if (locallyScopedConn.getCacheResultSetMetadata()) {
-				cachedMetadata = getCachedMetaData(this.originalSql);
+				cachedMetadata = locallyScopedConn.getCachedMetaData(this.originalSql);
 			}
 
+			Field[] metadataFromCache = null;
+			
+			if (cachedMetadata != null) {
+				metadataFromCache = cachedMetadata.fields;
+			}
+			
 			if (locallyScopedConn.useMaxRows()) {
 				// If there isn't a limit clause in the SQL
 				// then limit the number of rows to return in
@@ -1327,7 +1361,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 				if (this.hasLimitClause) {
 					this.results = executeInternal(this.maxRows, sendPacket,
 							createStreamingResultSet(), true,
-							(cachedMetadata == null), false);
+							(cachedMetadata == null), metadataFromCache, false);
 				} else {
 					if (this.maxRows <= 0) {
 						locallyScopedConn
@@ -1347,9 +1381,11 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 										false, this.currentCatalog, true);
 					}
 
+					
+					
 					this.results = executeInternal(-1, sendPacket,
 							createStreamingResultSet(), true,
-							(cachedMetadata == null), false);
+							(cachedMetadata == null), metadataFromCache, false);
 
 					if (oldCatalog != null) {
 						this.connection.setCatalog(oldCatalog);
@@ -1358,29 +1394,29 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			} else {
 				this.results = executeInternal(-1, sendPacket,
 						createStreamingResultSet(), true,
-						(cachedMetadata == null), false);
+						(cachedMetadata == null), metadataFromCache, false);
 			}
 
 			if (oldCatalog != null) {
 				locallyScopedConn.setCatalog(oldCatalog);
 			}
+			
+			if (cachedMetadata != null) {
+				locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql,
+						cachedMetadata, this.results);
+			} else {
+				if (locallyScopedConn.getCacheResultSetMetadata()) {
+					locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql,
+							null /* will be created */, this.results);
+				}
+			}
 		}
 
 		this.lastInsertId = this.results.getUpdateID();
 
-		if (cachedMetadata != null) {
-			initializeResultsMetadataFromCache(this.originalSql,
-					cachedMetadata, this.results);
-		} else {
-			if (this.connection.getCacheResultSetMetadata()) {
-				initializeResultsMetadataFromCache(this.originalSql,
-						null /* will be created */, this.results);
-			}
-		}
-
 		return this.results;
 	}
-
+	
 	/**
 	 * Execute a SQL INSERT, UPDATE or DELETE statement. In addition, SQL
 	 * statements that return nothing such as SQL DDL statements can be
@@ -1494,7 +1530,8 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 				locallyScopedConn.setReadInfoMsgEnabled(true);
 			}
 
-			rs = executeInternal(-1, sendPacket, false, false, true, isReallyBatch);
+			rs = executeInternal(-1, sendPacket, false, false, true, null, 
+					isReallyBatch);
 
 			if (this.retrieveGeneratedKeys) {
 				locallyScopedConn.setReadInfoMsgEnabled(oldInfoMsgState);
@@ -3539,7 +3576,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 */
 	public void setTime(int parameterIndex, Time x)
 			throws java.sql.SQLException {
-		setTimeInternal(parameterIndex, x, null, TimeZone.getDefault(), false);
+		setTimeInternal(parameterIndex, x, null, Util.getDefaultTimeZone(), false);
 	}
 
 	/**
@@ -3612,7 +3649,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 */
 	public void setTimestamp(int parameterIndex, Timestamp x)
 			throws java.sql.SQLException {
-		setTimestampInternal(parameterIndex, x, null, TimeZone.getDefault(), false);
+		setTimestampInternal(parameterIndex, x, null, Util.getDefaultTimeZone(), false);
 	}
 
 	/**

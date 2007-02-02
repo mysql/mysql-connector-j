@@ -361,7 +361,7 @@ class MysqlIO {
     protected ResultSet getResultSet(Statement callingStatement,
         long columnCount, int maxRows, int resultSetType,
         int resultSetConcurrency, boolean streamResults, String catalog,
-        boolean isBinaryEncoded, boolean unpackFieldInfo)
+        boolean isBinaryEncoded, boolean unpackFieldInfo, Field[] metadataFromCache)
         throws SQLException {
         Buffer packet; // The packet from the server
         Field[] fields = null;
@@ -436,9 +436,9 @@ class MysqlIO {
        
         if (!streamResults) {
             rowData = readSingleRowSet(columnCount, maxRows,
-                    resultSetConcurrency, isBinaryEncoded, fields);
+                    resultSetConcurrency, isBinaryEncoded, unpackFieldInfo ? fields : metadataFromCache);
         } else {
-            rowData = new RowDataDynamic(this, (int) columnCount, fields,
+            rowData = new RowDataDynamic(this, (int) columnCount, unpackFieldInfo ? fields : metadataFromCache,
                     isBinaryEncoded);
             this.streamingData = rowData;
         }
@@ -1379,14 +1379,14 @@ class MysqlIO {
     ResultSet readAllResults(Statement callingStatement, int maxRows,
         int resultSetType, int resultSetConcurrency, boolean streamResults,
         String catalog, Buffer resultPacket, boolean isBinaryEncoded,
-        long preSentColumnCount, boolean unpackFieldInfo)
+        long preSentColumnCount, boolean unpackFieldInfo, Field[] metadataFromCache)
         throws SQLException {
         resultPacket.setPosition(resultPacket.getPosition() - 1);
 
         ResultSet topLevelResultSet = readResultsForQueryOrUpdate(callingStatement,
                 maxRows, resultSetType, resultSetConcurrency, streamResults,
                 catalog, resultPacket, isBinaryEncoded, preSentColumnCount,
-                unpackFieldInfo);
+                unpackFieldInfo, metadataFromCache);
 
         ResultSet currentResultSet = topLevelResultSet;
 
@@ -1415,7 +1415,7 @@ class MysqlIO {
             ResultSet newResultSet = readResultsForQueryOrUpdate(callingStatement,
                     maxRows, resultSetType, resultSetConcurrency,
                     streamResults, catalog, fieldPacket, isBinaryEncoded,
-                    preSentColumnCount, unpackFieldInfo);
+                    preSentColumnCount, unpackFieldInfo, metadataFromCache);
 
             currentResultSet.setNextResultSet(newResultSet);
 
@@ -1719,7 +1719,7 @@ class MysqlIO {
         
         ResultSet rs = readAllResults(callingStatement, maxRows, resultSetType,
                 resultSetConcurrency, streamResults, catalog, resultPacket,
-                false, -1L, unpackFieldInfo);
+                false, -1L, unpackFieldInfo, null /* we don't need metadata for cached MD in this case */);
 
         if (queryWasSlow) {
             StringBuffer mesgBuf = new StringBuffer(48 +
@@ -1936,7 +1936,7 @@ class MysqlIO {
         Statement callingStatement, int maxRows, int resultSetType,
         int resultSetConcurrency, boolean streamResults, String catalog,
         Buffer resultPacket, boolean isBinaryEncoded, long preSentColumnCount,
-        boolean unpackFieldInfo) throws SQLException {
+        boolean unpackFieldInfo, Field[] metadataFromCache) throws SQLException {
         long columnCount = resultPacket.readFieldLength();
 
         if (columnCount == 0) {
@@ -1962,7 +1962,8 @@ class MysqlIO {
         } else {
             com.mysql.jdbc.ResultSet results = getResultSet(callingStatement,
                     columnCount, maxRows, resultSetType, resultSetConcurrency,
-                    streamResults, catalog, isBinaryEncoded, unpackFieldInfo);
+                    streamResults, catalog, isBinaryEncoded, unpackFieldInfo, 
+                    metadataFromCache);
 
             return results;
         }
@@ -1981,8 +1982,8 @@ class MysqlIO {
 
         switch (resultSetConcurrency) {
         case java.sql.ResultSet.CONCUR_READ_ONLY:
-            rs = com.mysql.jdbc.ResultSet.getInstance(catalog, fields, rows,
-                    this.connection, callingStatement, false);
+            rs = new com.mysql.jdbc.ResultSet(catalog, fields, rows,
+                    this.connection, callingStatement);
 
             if (isBinaryEncoded) {
                 rs.setBinaryEncoded();
@@ -1991,14 +1992,14 @@ class MysqlIO {
             break;
 
         case java.sql.ResultSet.CONCUR_UPDATABLE:
-            rs = com.mysql.jdbc.ResultSet.getInstance(catalog, fields, rows,
-                    this.connection, callingStatement, true);
+            rs = new com.mysql.jdbc.UpdatableResultSet(catalog, fields, rows,
+                    this.connection, callingStatement);
 
             break;
 
         default:
-            return com.mysql.jdbc.ResultSet.getInstance(catalog, fields, rows,
-                this.connection, callingStatement, false);
+            return new com.mysql.jdbc.ResultSet(catalog, fields, rows,
+                this.connection, callingStatement);
         }
 
         rs.setResultSetType(resultSetType);
@@ -2051,7 +2052,7 @@ class MysqlIO {
                  +ex.getClass().getName(), SQLError.SQL_STATE_GENERAL_ERROR, -1);
         }
 
-        ResultSet updateRs = com.mysql.jdbc.ResultSet.getInstance(updateCount,
+        ResultSet updateRs = new com.mysql.jdbc.ResultSet(updateCount,
                 updateID, this.connection, callingStatement);
 
         if (info != null) {

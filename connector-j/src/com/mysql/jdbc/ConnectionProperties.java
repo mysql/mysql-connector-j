@@ -1289,6 +1289,12 @@ public class ConnectionProperties implements Serializable {
 			"Use internal String->Integer conversion routines to avoid excessive object creation?",
 			"3.1.4", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 
+	private BooleanConnectionProperty useFastDateParsing = new BooleanConnectionProperty(
+			"useFastDateParsing",
+			true,
+			"Use internal String->Date/Time/Teimstamp conversion routines to avoid excessive object creation?",
+			"5.0.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty useHostsInPrivileges = new BooleanConnectionProperty(
 			"useHostsInPrivileges",
 			true,
@@ -1430,9 +1436,8 @@ public class ConnectionProperties implements Serializable {
 			MISC_CATEGORY, Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty useJvmCharsetConverters = new BooleanConnectionProperty("useJvmCharsetConverters",
-			true, "Always use the character encoding routines built into the JVM, rather than using "
-			+ "lookup tables for single-byte character sets? (The default of \"true\" for this is appropriate for " 
-			+ "newer JVMs", "5.0.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			false, "Always use the character encoding routines built into the JVM, rather than using "
+			+ "lookup tables for single-byte character sets?", "5.0.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 	
 	private BooleanConnectionProperty useGmtMillisForDatetimes = new BooleanConnectionProperty("useGmtMillisForDatetimes", false, "Convert between session timezone and GMT before creating Date and Timestamp instances (value of \"false\" is legacy behavior, \"true\" leads to more JDBC-compliant behavior.", "3.1.12", MISC_CATEGORY, Integer.MIN_VALUE);
 
@@ -3827,5 +3832,14 @@ public class ConnectionProperties implements Serializable {
 
 	public void setUseSSPSCompatibleTimezoneShift(boolean flag) {
 		this.useSSPSCompatibleTimezoneShift.setValue(flag);
+	}
+	
+
+	public boolean getUseFastDateParsing() {
+		return this.useFastDateParsing.getValueAsBoolean();
+	}
+
+	public void setUseFastDateParsing(boolean flag) {
+		this.useFastDateParsing.setValue(flag);
 	}
 }

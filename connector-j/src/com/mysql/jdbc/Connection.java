@@ -500,6 +500,9 @@ public class Connection extends ConnectionProperties implements
 	/** Are we in read-only mode? */
 	private boolean readOnly = false;
 
+	/** Cache of ResultSet metadata */
+	protected LRUCache resultSetMetadataCache;
+	
 	/** The timezone of the server */
 	private TimeZone serverTimezoneTZ = null;
 
@@ -617,7 +620,8 @@ public class Connection extends ConnectionProperties implements
 
 		// We store this per-connection, due to static synchronization
 		// issues in Java's built-in TimeZone class...
-		this.defaultTimeZone = TimeZone.getDefault();
+		this.defaultTimeZone = Util.getDefaultTimeZone();
+		
 		if ("GMT".equalsIgnoreCase(this.defaultTimeZone.getID())) {
 			this.isClientTzUTC = true;
 		} else {
@@ -3080,6 +3084,15 @@ public class Connection extends ConnectionProperties implements
 			this.parsedCallableStatementCache = new LRUCache(
 					getCallableStatementCacheSize());
 		}
+		
+		if (getAllowMultiQueries()) {
+			setCacheResultSetMetadata(false); // we don't handle this yet
+		}
+		
+		if (getCacheResultSetMetadata()) {
+			this.resultSetMetadataCache = new LRUCache(
+					getMetadataCacheSize());
+		}
 	}
 
 	/**
@@ -4916,5 +4929,72 @@ public class Connection extends ConnectionProperties implements
 		return this.io.versionMeetsMinimum(major, minor, subminor);
 	}
 
+	/**
+	 * Returns cached metadata (or null if not cached) for the given query,
+	 * which must match _exactly_.	 
+	 *  
+	 * This method is synchronized by the caller on getMutex(), so if
+	 * calling this method from internal code in the driver, make sure it's
+	 * synchronized on the mutex that guards communication with the server.
+	 * 
+	 * @param sql
+	 *            the query that is the key to the cache
+	 * 
+	 * @return metadata cached for the given SQL, or none if it doesn't
+	 *                  exist.
+	 */
+	protected CachedResultSetMetaData getCachedMetaData(String sql) {
+		if (this.resultSetMetadataCache != null) {
+			synchronized (this.resultSetMetadataCache) {
+				return (CachedResultSetMetaData) this.resultSetMetadataCache
+						.get(sql);
+			}
+		}
+
+		return null; // no cache exists
+	}
+
+	/**
+	 * Caches CachedResultSetMetaData that has been placed in the cache using
+	 * the given SQL as a key.
+	 * 
+	 * This method is synchronized by the caller on getMutex(), so if
+	 * calling this method from internal code in the driver, make sure it's
+	 * synchronized on the mutex that guards communication with the server.
+	 * 
+	 * @param sql the query that the metadata pertains too.
+	 * @param cachedMetaData metadata (if it exists) to populate the cache.
+	 * @param resultSet the result set to retreive metadata from, or apply to.
+	 *
+	 * @throws SQLException
+	 */
+	protected void initializeResultsMetadataFromCache(String sql,
+			CachedResultSetMetaData cachedMetaData, ResultSet resultSet)
+			throws SQLException {
+
+		if (cachedMetaData == null) {
+			
+			// read from results
+			cachedMetaData = new CachedResultSetMetaData();
+			cachedMetaData.fields = resultSet.fields;
+
+			// assume that users will use named-based
+			// lookups
+			resultSet.buildIndexMapping();
+
+			cachedMetaData.columnNameToIndex = resultSet.columnNameToIndex;
+			cachedMetaData.fullColumnNameToIndex = resultSet.fullColumnNameToIndex;
+
+			cachedMetaData.metadata = resultSet.getMetaData();
+
+			this.resultSetMetadataCache.put(sql, cachedMetaData);
+		} else {
+			// initialize results from cached data
+			resultSet.fields = cachedMetaData.fields;
+			resultSet.columnNameToIndex = cachedMetaData.columnNameToIndex;
+			resultSet.fullColumnNameToIndex = cachedMetaData.fullColumnNameToIndex;
+			resultSet.hasBuiltIndexMapping = true;
+		}
+	}
 	
 }

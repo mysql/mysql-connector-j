@@ -704,13 +704,14 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 */
 	protected com.mysql.jdbc.ResultSet executeInternal(int maxRowsToRetrieve,
 			Buffer sendPacket, boolean createStreamingResultSet,
-			boolean queryIsSelectOnly, boolean unpackFields, boolean isBatch)
+			boolean queryIsSelectOnly, boolean unpackFields, Field[] metadataFromCache,
+			boolean isBatch)
 			throws SQLException {
 		this.numberOfExecutions++;
 
 		// We defer to server-side execution
 		try {
-			return serverExecute(maxRowsToRetrieve, createStreamingResultSet);
+			return serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadataFromCache);
 		} catch (SQLException sqlEx) {
 			// don't wrap SQLExceptions
 			if (this.connection.getEnablePacketDebug()) {
@@ -1030,7 +1031,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 */
 	private com.mysql.jdbc.ResultSet serverExecute(int maxRowsToRetrieve,
-			boolean createStreamingResultSet) throws SQLException {
+			boolean createStreamingResultSet, Field[] metadataFromCache) throws SQLException {
 		synchronized (this.connection.getMutex()) {
 			if (this.detectedLongParameterSwitch) {
 				// Check when values were bound
@@ -1215,8 +1216,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 				com.mysql.jdbc.ResultSet rs = mysql.readAllResults(this,
 						maxRowsToRetrieve, this.resultSetType,
 						this.resultSetConcurrency, createStreamingResultSet,
-						this.currentCatalog, resultPacket, true, this.fieldCount,
-						true);
+						this.currentCatalog, resultPacket, true, this.fieldCount, true, 
+						metadataFromCache);
 	
 				
 				if (!createStreamingResultSet && 
@@ -1916,7 +1917,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 */
 	public void setTime(int parameterIndex, java.sql.Time x)
 			throws SQLException {
-		setTimeInternal(parameterIndex, x, null, TimeZone.getDefault(), false);
+		setTimeInternal(parameterIndex, x, null, Util.getDefaultTimeZone(), false);
 	}
 
 	/**
@@ -1993,7 +1994,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 */
 	public void setTimestamp(int parameterIndex, java.sql.Timestamp x)
 			throws SQLException {
-		setTimestampInternal(parameterIndex, x, null, TimeZone.getDefault(), false);
+		setTimestampInternal(parameterIndex, x, null, Util.getDefaultTimeZone(), false);
 	}
 
 	/**
