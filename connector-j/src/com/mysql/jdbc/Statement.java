@@ -70,7 +70,8 @@ public class Statement implements java.sql.Statement {
 	class CancelTask extends TimerTask {
 
 		long connectionId = 0;
-
+		SQLException caughtWhileCancelling = null;
+		
 		CancelTask() throws SQLException {
 			connectionId = connection.getIO().getThreadId();
 		}
@@ -84,12 +85,21 @@ public class Statement implements java.sql.Statement {
 					java.sql.Statement cancelStmt = null;
 
 					try {
-						cancelConn = connection.duplicate();
-						cancelStmt = cancelConn.createStatement();
-						cancelStmt.execute("KILL QUERY " + connectionId);
-						wasCancelled = true;
+						synchronized (cancelTimeoutMutex) {
+							cancelConn = connection.duplicate();
+							cancelStmt = cancelConn.createStatement();
+							cancelStmt.execute("KILL QUERY " + connectionId);
+							wasCancelled = true;
+						}
 					} catch (SQLException sqlEx) {
-						throw new RuntimeException(sqlEx.toString());
+						caughtWhileCancelling = sqlEx;
+					} catch (NullPointerException npe) {
+						// Case when connection closed while starting to cancel
+						// We can't easily synchronize this, because then one thread
+						// can't cancel() a running query
+						
+						// ignore, we shouldn't re-throw this, because the connection's
+						// already closed, so the statement has been timed out.
 					} finally {
 						if (cancelStmt != null) {
 							try {
@@ -113,6 +123,11 @@ public class Statement implements java.sql.Statement {
 			cancelThread.start();
 		}
 	}
+
+	/** Mutex to prevent race between returning query results and noticing
+    that we're timed-out or cancelled. */
+
+	protected Object cancelTimeoutMutex = new Object();
 
 	/** Used to generate IDs when profiling. */
 	protected static int statementCounter = 1;
@@ -544,11 +559,12 @@ public class Statement implements java.sql.Statement {
 	public boolean execute(String sql) throws SQLException {
 		checkClosed();
 		
-
 		Connection locallyScopedConn = this.connection;
 		
 		synchronized (locallyScopedConn.getMutex()) {
-			this.wasCancelled = false;
+			synchronized (this.cancelTimeoutMutex) {
+				this.wasCancelled = false;
+			}
 	
 			checkNullOrEmptyQuery(sql);
 	
@@ -603,7 +619,9 @@ public class Statement implements java.sql.Statement {
 				rs = createResultSetUsingServerFetch(sql);
 			} else {
 				CancelTask timeoutTask = null;
-
+				
+				String oldCatalog = null;
+				
 				try {
 					if (this.timeoutInMillis != 0
 							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
@@ -612,7 +630,7 @@ public class Statement implements java.sql.Statement {
 								this.timeoutInMillis);
 					}
 
-					String oldCatalog = null;
+					
 
 					if (!locallyScopedConn.getCatalog().equals(
 							this.currentCatalog)) {
@@ -624,7 +642,7 @@ public class Statement implements java.sql.Statement {
 					// Check if we have cached metadata for this query...
 					//
 					if (locallyScopedConn.getCacheResultSetMetadata()) {
-						cachedMetaData = getCachedMetaData(sql);
+						cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
 					}
 
 					//
@@ -682,23 +700,29 @@ public class Statement implements java.sql.Statement {
 								createStreamingResultSet(), 
 								this.currentCatalog, (cachedMetaData == null));
 					}
-
+					
 					if (timeoutTask != null) {
+						if (timeoutTask.caughtWhileCancelling != null) {
+							throw timeoutTask.caughtWhileCancelling;
+						}
+						
 						timeoutTask.cancel();
 						timeoutTask = null;
+					}
+
+					synchronized (this.cancelTimeoutMutex) {
+						if (this.wasCancelled) {
+							this.wasCancelled = false;
+							throw new MySQLTimeoutException();
+						}
+					}
+				} finally {					
+					if (timeoutTask != null) {
+						timeoutTask.cancel();
 					}
 					
 					if (oldCatalog != null) {
 						locallyScopedConn.setCatalog(oldCatalog);
-					}
-
-					if (this.wasCancelled) {
-						this.wasCancelled = false;
-						throw new MySQLTimeoutException();
-					}
-				} finally {
-					if (timeoutTask != null) {
-						timeoutTask.cancel();
 					}
 				}
 			}
@@ -712,11 +736,11 @@ public class Statement implements java.sql.Statement {
 
 				if (rs.reallyResult()) {
 					if (cachedMetaData != null) {
-						initializeResultsMetadataFromCache(sql, cachedMetaData,
+						locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData,
 								this.results);
 					} else {
 						if (this.connection.getCacheResultSetMetadata()) {
-							initializeResultsMetadataFromCache(sql,
+							locallyScopedConn.initializeResultsMetadataFromCache(sql,
 									null /* will be created */, this.results);
 						}
 					}
@@ -726,7 +750,7 @@ public class Statement implements java.sql.Statement {
 			return ((rs != null) && rs.reallyResult());
 		}
 	}
-
+	
 	/**
 	 * @see Statement#execute(String, int)
 	 */
@@ -1049,12 +1073,12 @@ public class Statement implements java.sql.Statement {
 		Connection locallyScopedConn = this.connection;
 		
 		synchronized (locallyScopedConn.getMutex()) {
-			this.wasCancelled = false;
+			synchronized (this.cancelTimeoutMutex) {
+				this.wasCancelled = false;
+			}
 	
 			checkNullOrEmptyQuery(sql);
-	
-			
-	
+
 			if (this.doEscapeProcessing) {
 				Object escapedSqlResult = EscapeProcessor.escapeSQL(sql,
 						locallyScopedConn.serverSupportsConvertFn(), this.connection);
@@ -1092,7 +1116,9 @@ public class Statement implements java.sql.Statement {
 			}
 
 			CancelTask timeoutTask = null;
-
+			
+			String oldCatalog = null;
+			
 			try {
 				if (this.timeoutInMillis != 0
 						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
@@ -1100,8 +1126,6 @@ public class Statement implements java.sql.Statement {
 					Connection.getCancelTimer().schedule(timeoutTask, 
 							this.timeoutInMillis);
 				}
-
-				String oldCatalog = null;
 
 				if (!locallyScopedConn.getCatalog().equals(this.currentCatalog)) {
 					oldCatalog = locallyScopedConn.getCatalog();
@@ -1112,7 +1136,7 @@ public class Statement implements java.sql.Statement {
 				// Check if we have cached metadata for this query...
 				//
 				if (locallyScopedConn.getCacheResultSetMetadata()) {
-					cachedMetaData = getCachedMetaData(sql);
+					cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
 				}
 
 				if (locallyScopedConn.useMaxRows()) {
@@ -1166,45 +1190,42 @@ public class Statement implements java.sql.Statement {
 				}
 
 				if (timeoutTask != null) {
+					if (timeoutTask.caughtWhileCancelling != null) {
+						throw timeoutTask.caughtWhileCancelling;
+					}
+					
 					timeoutTask.cancel();
 					timeoutTask = null;
 				}
 				
-				if (oldCatalog != null) {
-					locallyScopedConn.setCatalog(oldCatalog);
-				}
-
-				if (this.wasCancelled) {
-					this.wasCancelled = false;
-
-					throw new MySQLTimeoutException();
+				synchronized (this.cancelTimeoutMutex) {
+					if (this.wasCancelled) {
+						this.wasCancelled = false;
+						throw new MySQLTimeoutException();
+					}
 				}
 			} finally {
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
 				}
+				
+				if (oldCatalog != null) {
+					locallyScopedConn.setCatalog(oldCatalog);
+				}
 			}
 
 			this.lastInsertId = this.results.getUpdateID();
 
-			/*
-			 * if (!this.results.reallyResult()) { if
-			 * (!this.connection.getAutoCommit()) { this.connection.rollback(); }
-			 * 
-			 * throw
-			 * SQLError.createSQLException(Messages.getString("Statement.40"),
-			 * //$NON-NLS-1$ SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ }
-			 */
 			if (cachedMetaData != null) {
-				initializeResultsMetadataFromCache(sql, cachedMetaData,
+				locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData,
 						this.results);
 			} else {
 				if (this.connection.getCacheResultSetMetadata()) {
-					initializeResultsMetadataFromCache(sql,
+					locallyScopedConn.initializeResultsMetadataFromCache(sql,
 							null /* will be created */, this.results);
 				}
 			}
-
+			
 			return this.results;
 		}
 	}
@@ -1229,18 +1250,20 @@ public class Statement implements java.sql.Statement {
 	}
 
 	protected int executeUpdate(String sql, boolean isBatch)
-			throws SQLException {
+		throws SQLException {
 		checkClosed();
-		
+
 		Connection locallyScopedConn = this.connection;
-		
+
 		char firstStatementChar = StringUtils.firstNonWsCharUc(sql);
 
 		ResultSet rs = null;
 
 		synchronized (locallyScopedConn.getMutex()) {
-			this.wasCancelled = false;
-	
+			synchronized (this.cancelTimeoutMutex) {
+				this.wasCancelled = false;
+			}
+
 			checkNullOrEmptyQuery(sql);
 
 			if (this.doEscapeProcessing) {
@@ -1253,31 +1276,33 @@ public class Statement implements java.sql.Statement {
 					sql = ((EscapeProcessorResult) escapedSqlResult).escapedSql;
 				}
 			}
-			
+
 			if (locallyScopedConn.isReadOnly()) {
 				throw SQLError.createSQLException(Messages
 						.getString("Statement.42") //$NON-NLS-1$
 						+ Messages.getString("Statement.43"), //$NON-NLS-1$
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 			}
-	
+
 			if (StringUtils.startsWithIgnoreCaseAndWs(sql, "select")) { //$NON-NLS-1$
 				throw SQLError.createSQLException(Messages
 						.getString("Statement.46"), //$NON-NLS-1$
-						"01S03"); //$NON-NLS-1$
+				"01S03"); //$NON-NLS-1$
 			}
-	
+
 			if (this.results != null) {
 				if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
 					this.results.realClose(false);
 				}
 			}
-	
+
 			// The checking and changing of catalogs
 			// must happen in sequence, so synchronize
 			// on the same mutex that _conn is using
-		
+
 			CancelTask timeoutTask = null;
+
+			String oldCatalog = null;
 
 			try {
 				if (this.timeoutInMillis != 0
@@ -1286,8 +1311,6 @@ public class Statement implements java.sql.Statement {
 					Connection.getCancelTimer().schedule(timeoutTask, 
 							this.timeoutInMillis);
 				}
-
-				String oldCatalog = null;
 
 				if (!locallyScopedConn.getCatalog().equals(this.currentCatalog)) {
 					oldCatalog = locallyScopedConn.getCatalog();
@@ -1312,23 +1335,29 @@ public class Statement implements java.sql.Statement {
 						this.currentCatalog,
 						true /* force read of field info on DML */,
 						isBatch);
-				
+
 				if (timeoutTask != null) {
+					if (timeoutTask.caughtWhileCancelling != null) {
+						throw timeoutTask.caughtWhileCancelling;
+					}
+
 					timeoutTask.cancel();
 					timeoutTask = null;
 				}
 
-				if (oldCatalog != null) {
-					locallyScopedConn.setCatalog(oldCatalog);
-				}
-
-				if (this.wasCancelled) {
-					this.wasCancelled = false;
-					throw new MySQLTimeoutException();
+				synchronized (this.cancelTimeoutMutex) {
+					if (this.wasCancelled) {
+						this.wasCancelled = false;
+						throw new MySQLTimeoutException();
+					}
 				}
 			} finally {
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+				}
+
+				if (oldCatalog != null) {
+					locallyScopedConn.setCatalog(oldCatalog);
 				}
 			}
 		}
@@ -1351,6 +1380,7 @@ public class Statement implements java.sql.Statement {
 
 		return truncatedUpdateCount;
 	}
+
 
 	/**
 	 * @see Statement#executeUpdate(String, int)
@@ -2041,12 +2071,14 @@ public class Statement implements java.sql.Statement {
 			}
 		}
 
+		this.isClosed = true;
+		
 		this.results = null;
 		this.connection = null;
 		this.warningChain = null;
 		this.openResults = null;
 		this.batchedGeneratedKeys = null;
-		this.isClosed = true;
+		this.cancelTimeoutMutex = null;
 	}
 
 	/**

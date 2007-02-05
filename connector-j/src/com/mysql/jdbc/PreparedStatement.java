@@ -1253,7 +1253,9 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			boolean queryIsSelectOnly, boolean unpackFields, Field[] metadataFromCache,
 			boolean isBatch)
 			throws SQLException {
-		this.wasCancelled = false;
+		synchronized (this.cancelTimeoutMutex) {
+			this.wasCancelled = false;
+		}
 		
 		Connection locallyScopedConnection= this.connection;
 		
@@ -1278,12 +1280,19 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			
 			if (timeoutTask != null) {
 				timeoutTask.cancel();
+				
+				if (timeoutTask.caughtWhileCancelling != null) {
+					throw timeoutTask.caughtWhileCancelling;
+				}
+				
 				timeoutTask = null;
 			}
 		
-			if (this.wasCancelled) {
-				this.wasCancelled = false;
-				throw new MySQLTimeoutException();
+			synchronized (this.cancelTimeoutMutex) {
+				if (this.wasCancelled) {
+					this.wasCancelled = false;
+					throw new MySQLTimeoutException();
+				}
 			}
 		} finally {
 			if (timeoutTask != null) {

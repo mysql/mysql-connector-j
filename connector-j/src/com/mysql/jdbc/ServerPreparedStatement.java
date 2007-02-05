@@ -1175,7 +1175,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 				begin = System.currentTimeMillis();
 			}
 
-			this.wasCancelled = false;
+			synchronized (this.cancelTimeoutMutex) {
+				this.wasCancelled = false;
+			}
 			
 			CancelTask timeoutTask = null;
 
@@ -1192,12 +1194,19 @@ public class ServerPreparedStatement extends PreparedStatement {
 				
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+					
+					if (timeoutTask.caughtWhileCancelling != null) {
+						throw timeoutTask.caughtWhileCancelling;
+					}
+					
 					timeoutTask = null;
 				}
 				
-				if (this.wasCancelled) {
-					this.wasCancelled = false;
-					throw new MySQLTimeoutException();
+				synchronized (this.cancelTimeoutMutex) {
+					if (this.wasCancelled) {
+						this.wasCancelled = false;
+						throw new MySQLTimeoutException();
+					}
 				}
 			
 				this.connection.incrementNumberOfPreparedExecutes();

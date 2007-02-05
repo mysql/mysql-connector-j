@@ -111,7 +111,17 @@ nn-nn-06 - Version 5.0.5
 	  all reserved words for current MySQL version. The current fix/implementation
 	  returns keywords for MySQL-5.1, and doesn't distinguish between different
 	  versions of the server.
-	  	  	  	  
+	  
+	- When using cached metadata, skip field-level metadata packets coming from
+	  the server, rather than reading them and discarding them without creating
+	  com.mysql.jdbc.Field instances.
+	 
+	- Fixed BUG#25836 - Statement execution which timed out doesn't always 
+	  throw MySQLTimeoutException.
+	  
+	- Throw exceptions encountered during timeout to thread 
+	  calling Statement.execute*(), rather than RuntimeException.
+	  	  	  	  	  	  
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 

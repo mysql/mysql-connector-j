@@ -366,21 +366,22 @@ class MysqlIO {
         Buffer packet; // The packet from the server
         Field[] fields = null;
 
+        // Read in the column information
+        
         if (unpackFieldInfo) {
             fields = new Field[(int) columnCount];
-        }
-
-        // Read in the column information
-        for (int i = 0; i < columnCount; i++) {
-            Buffer fieldPacket = null;
-
-            fieldPacket = readPacket();
             
-            if (unpackFieldInfo) {
+            for (int i = 0; i < columnCount; i++) {
+            	Buffer fieldPacket = null;
+            
+                fieldPacket = readPacket();
                 fields[i] = unpackField(fieldPacket, false);
             }
+        } else {
+        	for (int i = 0; i < columnCount; i++) {
+        		skipPacket();
+        	}
         }
-
         packet = reuseAndReadPacket(this.reusablePacket);
 
         readServerStatusForResultSets(packet);
@@ -486,6 +487,64 @@ class MysqlIO {
         }
     }
 
+    /**
+     * Reads and discards a single MySQL packet from the input stream.
+     * 
+     * @throws SQLException if the network fails while skipping the 
+     * packet.
+     */
+    protected final void skipPacket() throws SQLException {
+		try {
+
+			int lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf,
+					0, 4);
+
+			if (lengthRead < 4) {
+				forceClose();
+				throw new IOException(Messages.getString("MysqlIO.1")); //$NON-NLS-1$
+			}
+
+			int packetLength = (this.packetHeaderBuf[0] & 0xff)
+					+ ((this.packetHeaderBuf[1] & 0xff) << 8)
+					+ ((this.packetHeaderBuf[2] & 0xff) << 16);
+
+			if (this.traceProtocol) {
+				StringBuffer traceMessageBuf = new StringBuffer();
+
+				traceMessageBuf.append(Messages.getString("MysqlIO.2")); //$NON-NLS-1$
+				traceMessageBuf.append(packetLength);
+				traceMessageBuf.append(Messages.getString("MysqlIO.3")); //$NON-NLS-1$
+				traceMessageBuf.append(StringUtils.dumpAsHex(
+						this.packetHeaderBuf, 4));
+
+				this.connection.getLog().logTrace(traceMessageBuf.toString());
+			}
+
+			byte multiPacketSeq = this.packetHeaderBuf[3];
+
+			if (!this.packetSequenceReset) {
+				if (this.enablePacketDebug && this.checkPacketSequence) {
+					checkPacketSequencing(multiPacketSeq);
+				}
+			} else {
+				this.packetSequenceReset = false;
+			}
+
+			this.readPacketSequence = multiPacketSeq;
+
+			this.mysqlInput.skip(packetLength);
+		} catch (IOException ioEx) {
+			throw new CommunicationsException(this.connection,
+					this.lastPacketSentTimeMs, ioEx);
+		} catch (OutOfMemoryError oom) {
+			try {
+				this.connection.realClose(false, false, true, oom);
+			} finally {
+				throw oom;
+			}
+		}
+	}
+    
     /**
      * Read one packet from the MySQL server
      *
