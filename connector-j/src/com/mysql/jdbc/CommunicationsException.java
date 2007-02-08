@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -153,19 +153,25 @@ public class CommunicationsException extends SQLException {
 			//
 
 			if (underlyingException instanceof BindException) {
-				// too many client connections???
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.14")); //$NON-NLS-1$
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.15")); //$NON-NLS-1$
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.16")); //$NON-NLS-1$
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.17")); //$NON-NLS-1$
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.18")); //$NON-NLS-1$
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.19")); //$NON-NLS-1$
+				if (conn.getLocalSocketAddress() != null && 
+						!Util.interfaceExists(conn.getLocalSocketAddress())) {
+					exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.19a")); //$NON-NLS-1$
+				} else {
+					// too many client connections???
+					exceptionMessageBuf.append(Messages
+							.getString("CommunicationsException.14")); //$NON-NLS-1$
+					exceptionMessageBuf.append(Messages
+							.getString("CommunicationsException.15")); //$NON-NLS-1$
+					exceptionMessageBuf.append(Messages
+							.getString("CommunicationsException.16")); //$NON-NLS-1$
+					exceptionMessageBuf.append(Messages
+							.getString("CommunicationsException.17")); //$NON-NLS-1$
+					exceptionMessageBuf.append(Messages
+							.getString("CommunicationsException.18")); //$NON-NLS-1$
+					exceptionMessageBuf.append(Messages
+							.getString("CommunicationsException.19")); //$NON-NLS-1$
+				}
 			}
 		}
 

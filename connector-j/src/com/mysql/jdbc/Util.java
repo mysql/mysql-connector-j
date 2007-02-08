@@ -344,4 +344,20 @@ public class Util {
 			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
 		}
 	}
+	
+	/**
+	 * Does a network interface exist locally with the given hostname?
+	 * 
+	 * @param hostname the hostname (or IP address in string form) to check
+	 * @return true if it exists, false if no, or unable to determine due to VM version support
+	 *         of java.net.NetworkInterface
+	 */
+	public static boolean interfaceExists(String hostname) {
+		try {
+			Class networkInterfaceClass = Class.forName("java.net.NetworkInterface");
+			return networkInterfaceClass.getMethod("getByName", null).invoke(networkInterfaceClass, new Object[] { hostname }) != null;
+		} catch (Throwable t) {
+			return false;
+		}
+	}
 }

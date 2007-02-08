@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -42,8 +42,6 @@ import java.util.Properties;
  * @author Mark Matthews
  */
 public class StandardSocketFactory implements SocketFactory {
-	// ~ Instance fields
-	// --------------------------------------------------------
 
 	/** The hostname to connect to */
 	protected String host = null;
@@ -53,9 +51,6 @@ public class StandardSocketFactory implements SocketFactory {
 
 	/** The underlying TCP/IP socket to use */
 	protected Socket rawSocket = null;
-
-	// ~ Methods
-	// ----------------------------------------------------------------
 
 	/**
 	 * Called by the driver after issuing the MySQL protocol handshake and
@@ -98,42 +93,67 @@ public class StandardSocketFactory implements SocketFactory {
 
 			this.port = portNumber;
 
-			boolean hasConnectTimeoutMethod = false;
-
 			Method connectWithTimeoutMethod = null;
+			Method socketBindMethod = null;
+			Class socketAddressClass = null;
 
-			try {
-				// Have to do this with reflection, otherwise older JVMs croak
-				Class socketAddressClass = Class
-						.forName("java.net.SocketAddress");
-
-				connectWithTimeoutMethod = Socket.class.getMethod("connect",
-						new Class[] { socketAddressClass, Integer.TYPE });
-
-				hasConnectTimeoutMethod = true;
-			} catch (NoClassDefFoundError noClassDefFound) {
-				hasConnectTimeoutMethod = false;
-			} catch (NoSuchMethodException noSuchMethodEx) {
-				hasConnectTimeoutMethod = false;
-			} catch (Throwable catchAll) {
-				hasConnectTimeoutMethod = false;
-			}
-
-			int connectTimeout = 0;
+			String localSocketHostname = props
+					.getProperty("localSocketAddress");
 
 			String connectTimeoutStr = props.getProperty("connectTimeout");
 
-			if (connectTimeoutStr != null) {
+			int connectTimeout = 0;
+
+			boolean wantsTimeout = (connectTimeoutStr != null && connectTimeoutStr
+					.length() > 0);
+			boolean wantsLocalBind = (localSocketHostname != null && localSocketHostname
+					.length() > 0);
+
+			if (wantsTimeout || wantsLocalBind) {
+
+				if (connectTimeoutStr != null) {
+					try {
+						connectTimeout = Integer.parseInt(connectTimeoutStr);
+					} catch (NumberFormatException nfe) {
+						throw new SocketException("Illegal value '"
+								+ connectTimeoutStr + "' for connectTimeout");
+					}
+				}
+
 				try {
-					connectTimeout = Integer.parseInt(connectTimeoutStr);
-				} catch (NumberFormatException nfe) {
-					throw new SocketException("Illegal value '"
-							+ connectTimeoutStr + "' for connectTimeout");
+					// Have to do this with reflection, otherwise older JVMs
+					// croak
+					socketAddressClass = Class
+							.forName("java.net.SocketAddress");
+
+					connectWithTimeoutMethod = Socket.class.getMethod(
+							"connect", new Class[] { socketAddressClass,
+									Integer.TYPE });
+
+					socketBindMethod = Socket.class.getMethod("bind",
+							new Class[] { socketAddressClass });
+
+				} catch (NoClassDefFoundError noClassDefFound) {
+					// ignore, we give a better error below if needed
+				} catch (NoSuchMethodException noSuchMethodEx) {
+					// ignore, we give a better error below if needed
+				} catch (Throwable catchAll) {
+					// ignore, we give a better error below if needed
+				}
+
+				if (wantsLocalBind && socketBindMethod == null) {
+					throw new SocketException(
+							"Can't specify \"localSocketAddress\" on JVMs older than 1.4");
+				}
+
+				if (wantsTimeout && connectWithTimeoutMethod == null) {
+					throw new SocketException(
+							"Can't specify \"connectTimeout\" on JVMs older than 1.4");
 				}
 			}
 
 			if (this.host != null) {
-				if (!hasConnectTimeoutMethod || (connectTimeout == 0)) {
+				if (!(wantsLocalBind || wantsTimeout)) {
 					InetAddress[] possibleAddresses = InetAddress
 							.getAllByName(this.host);
 
@@ -159,16 +179,37 @@ public class StandardSocketFactory implements SocketFactory {
 					// must explicitly state this due to classloader issues
 					// when running on older JVMs :(
 					try {
-						Class inetSocketAddressClass = Class
-								.forName("java.net.InetSocketAddress");
-						Constructor addrConstructor = inetSocketAddressClass
-								.getConstructor(new Class[] {
-										InetAddress.class, Integer.TYPE });
 
 						InetAddress[] possibleAddresses = InetAddress
 								.getAllByName(this.host);
 
 						Throwable caughtWhileConnecting = null;
+
+						Object localSockAddr = null;
+
+						Class inetSocketAddressClass = null;
+
+						Constructor addrConstructor = null;
+
+						try {
+							inetSocketAddressClass = Class
+									.forName("java.net.InetSocketAddress");
+
+							addrConstructor = inetSocketAddressClass
+									.getConstructor(new Class[] {
+											InetAddress.class, Integer.TYPE });
+
+							if (wantsLocalBind) {
+								localSockAddr = addrConstructor
+										.newInstance(new Object[] {
+												InetAddress
+														.getByName(localSocketHostname),
+												new Integer(0 /* use ephemeral port */) });
+
+							}
+						} catch (Throwable ex) {
+							unwrapExceptionToProperClassAndThrowIt(ex);
+						}
 
 						// Need to loop through all possible addresses, in case
 						// someone has IPV6 configured (SuSE, for example...)
@@ -176,17 +217,22 @@ public class StandardSocketFactory implements SocketFactory {
 						for (int i = 0; i < possibleAddresses.length; i++) {
 
 							try {
+								rawSocket = new Socket();
+
 								Object sockAddr = addrConstructor
 										.newInstance(new Object[] {
 												possibleAddresses[i],
 												new Integer(port) });
+								// bind to the local port, null is 'ok', it
+								// means
+								// use the ephemeral port
+								socketBindMethod.invoke(rawSocket,
+										new Object[] { localSockAddr });
 
-								rawSocket = new Socket();
 								connectWithTimeoutMethod.invoke(rawSocket,
 										new Object[] { sockAddr,
 												new Integer(connectTimeout) });
 
-								break;
 							} catch (Exception ex) {
 								rawSocket = null;
 

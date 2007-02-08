@@ -922,6 +922,11 @@ public class ConnectionProperties implements Serializable {
 
 	private boolean jdbcCompliantTruncationForReads = 
 		this.jdbcCompliantTruncation.getValueAsBoolean();
+
+	private StringConnectionProperty localSocketAddress = new StringConnectionProperty("localSocketAddress",
+			null, "Hostname or IP address given to explicitly configure the interface that "
+			+ "the driver will bind the client side of the TCP/IP connection to when connecting.",
+			"5.0.5", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
 	
 	private MemorySizeConnectionProperty locatorFetchBufferSize = new MemorySizeConnectionProperty(
 			"locatorFetchBufferSize",
@@ -3841,5 +3846,13 @@ public class ConnectionProperties implements Serializable {
 
 	public void setUseFastDateParsing(boolean flag) {
 		this.useFastDateParsing.setValue(flag);
+	}
+	
+	public String getLocalSocketAddress() {
+		return this.localSocketAddress.getValueAsString();
+	}
+
+	public void setLocalSocketAddress(String address) {
+		this.localSocketAddress.setValue(address);
 	}
 }

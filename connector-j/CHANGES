@@ -121,7 +121,16 @@ nn-nn-06 - Version 5.0.5
 	  
 	- Throw exceptions encountered during timeout to thread 
 	  calling Statement.execute*(), rather than RuntimeException.
-	  	  	  	  	  	  
+	  
+	- Added configuration property "localSocketAddress",which is the hostname or 
+	  IP address given to explicitly configure the interface that the driver will 
+	  bind the client side of the TCP/IP connection to when connecting.
+	  
+	- Take "localSocketAddress" property into account when creating instances
+	  of CommunicationsException when the underyling exception is a 
+	  java.net.BindException, so that a friendlier error message is given with
+	  a little internal diagnostics.
+	   	  	  	  	  
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 

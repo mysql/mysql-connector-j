@@ -28,6 +28,8 @@ import testsuite.BaseTestCase;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -37,6 +39,10 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
@@ -1197,5 +1203,123 @@ public class ConnectionTest extends BaseTestCase {
         rs1.getString(1);
         stmt1.close();
         conn1.close();
+    }
+    
+    /**
+     * Tests feature of "localSocketAddress", by enumerating local IF's and
+     * trying each one in turn. This test might take a long time to run, since
+     * we can't set timeouts if we're using localSocketAddress. We try and keep
+     * the time down on the testcase by spawning the checking of each interface
+     * off into separate threads.
+     * 
+     * @throws Exception if the test can't use at least one of the local machine's
+     *                   interfaces to make an outgoing connection to the server.
+     */
+    public void testLocalSocketAddress() throws Exception {
+    	if (isRunningOnJdk131()) { 
+    		return;
+    	}
+    	
+    	Enumeration allInterfaces = NetworkInterface.getNetworkInterfaces();
+    	
+    	
+    	SpawnedWorkerCounter counter = new SpawnedWorkerCounter();
+    	
+    	List allChecks = new ArrayList();
+    	
+    	while (allInterfaces.hasMoreElements()) {
+    		NetworkInterface intf = (NetworkInterface)allInterfaces.nextElement();
+    		
+    		Enumeration allAddresses = intf.getInetAddresses();
+
+    		allChecks.add(new LocalSocketAddressCheckThread(allAddresses, counter));
+    	}
+    	
+    	counter.setWorkerCount(allChecks.size());
+    	
+    	for (Iterator it = allChecks.iterator(); it.hasNext();) {
+    		LocalSocketAddressCheckThread t = (LocalSocketAddressCheckThread)it.next();
+    		t.start();
+    	}
+    	
+    	// Wait for tests to complete....
+    	synchronized (counter) {
+    	
+    		while (counter.workerCount > 0 /* safety valve */) {
+    		
+    			counter.wait();
+
+    			if (counter.workerCount == 0) {
+    				System.out.println("Done!");
+    				break;
+    			}
+    		}
+    	}
+    	
+    	boolean didOneWork = false;
+    	boolean didOneFail = false;
+    	
+    	for (Iterator it = allChecks.iterator(); it.hasNext();) {
+    		LocalSocketAddressCheckThread t = (LocalSocketAddressCheckThread)it.next();
+
+    		if (t.atLeastOneWorked) {
+    			didOneWork = true;
+    			
+    			break;
+    		} else {
+    			if (!didOneFail) {
+    				didOneFail = true;
+    			}
+    		}
+    	}
+    	
+    	assertTrue("At least one connection was made with the localSocketAddress set", didOneWork);
+    	assertTrue("At least one connection failed with localSocketAddress set", didOneFail);
+    }
+    
+    class SpawnedWorkerCounter {
+    	private int workerCount = 0;
+    	
+    	synchronized void setWorkerCount(int i) {
+    		workerCount = i;
+    	}
+    	
+    	synchronized void decrementWorkerCount() {
+    		workerCount--;
+    		notify();
+    	}
+    }
+    
+    class LocalSocketAddressCheckThread extends Thread {
+    	boolean atLeastOneWorked = false;
+    	Enumeration allAddresses = null;
+    	SpawnedWorkerCounter counter = null;
+    	
+    	LocalSocketAddressCheckThread(Enumeration e, SpawnedWorkerCounter c) {
+    		allAddresses = e;
+    		counter = c;
+    	}
+    	
+    	public void run() {
+    		
+    		while (allAddresses.hasMoreElements()) {
+    			InetAddress addr = (InetAddress)allAddresses.nextElement();
+    			
+    			try {
+    				Properties props = new Properties();
+    				props.setProperty("localSocketAddress", addr.getHostAddress());
+    				props.setProperty("connectTimeout", "2000");
+    				getConnectionWithProps(props).close();
+    				
+    				atLeastOneWorked = true;
+    				
+    				break;
+    			} catch (SQLException sqlEx) {
+    				// ignore, we're only seeing if one of these tests succeeds
+    			}
+    		}
+    		
+    		counter.decrementWorkerCount();
+    	}
     }
 }
