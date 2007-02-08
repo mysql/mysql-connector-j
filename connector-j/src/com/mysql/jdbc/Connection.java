@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 import java.sql.Blob;
@@ -181,7 +182,22 @@ public class Connection extends ConnectionProperties implements
 		mapTransIsolationNameToValue.put("SERIALIZABLE", new Integer(
 				TRANSACTION_SERIALIZABLE));
 		
-		cancelTimer = new Timer(true);
+		boolean createdNamedTimer = false;
+		
+		// Use reflection magic to try this on JDK's 1.5 and newer, fallback to non-named
+		// timer on older VMs.
+		try {
+			Constructor ctr = Timer.class.getConstructor(new Class[] {String.class, Boolean.TYPE});
+			
+			cancelTimer = (Timer)ctr.newInstance(new Object[] { "MySQL Statement Cancellation Timer", Boolean.TRUE});
+			createdNamedTimer = true;
+		} catch (Throwable t) {
+			createdNamedTimer = false;
+		}
+		
+		if (!createdNamedTimer) {
+			cancelTimer = new Timer(true);
+		}
 	}
 
 	protected static SQLException appendMessageToException(SQLException sqlEx,
