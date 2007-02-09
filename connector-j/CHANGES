@@ -1,7 +1,11 @@
 # Changelog
 # $Id$
 
-nn-nn-06 - Version 5.0.5
+nn-nn-07 - Version 5.1.0 Alpha
+	
+	- Bumped JDBC Specification version number in jar-file manifest.
+	
+02-nn-06 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"
 	  (specifically cias variants of existing character sets), and inability to override
@@ -356,7 +360,7 @@ nn-nn-06 - Version 5.0.5
       for a cancel request to block other cancel requests if all run from the
       same thread.
       
-nn-nn-06 - Version 3.1.15
+nn-nn-07 - Version 3.1.15
 
 	- Fixed BUG#23281 - Downed slave caused round-robin load balance to
 	  not cycle back to first host in list.
@@ -365,7 +369,13 @@ nn-nn-06 - Version 3.1.15
 	
 	- Handle YYYY-MM-DD hh:mm:ss format of timestamp in 
 	  ResultSet.getTimeFromString().
-	
+
+	- Fixed BUG#24840 - character encoding of "US-ASCII" doesn't map correctly 
+	  for 4.1 or newer
+	  
+	- Added Implementation-Vendor-Id attribute to jar manifest per request
+	  in BUG#15641.
+	  	
 10-19-06 - Version 3.1.14
 
     - Fixed BUG#20479 - Updatable result set throws ClassCastException

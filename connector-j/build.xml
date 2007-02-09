@@ -315,10 +315,11 @@
 
 			<section name="common">
 				<attribute name="Specification-Title" value="JDBC" />
-				<attribute name="Specification-Version" value="3.0" />
+				<attribute name="Specification-Version" value="4.0" />
 				<attribute name="Specification-Vendor" value="Sun Microsystems Inc." />
 				<attribute name="Implementation-Title" value="MySQL Connector/J" />
 				<attribute name="Implementation-Version" value="${full.version}" />
+				<attribute name="Implementation-Vendor-Id" value="com.mysql" />
 				<attribute name="Implementation-Vendor" value="MySQL AB" />
 			</section>
 		</manifest>
