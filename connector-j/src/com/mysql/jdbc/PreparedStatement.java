@@ -50,6 +50,7 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import com.mysql.jdbc.Statement.CancelTask;
 import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.jdbc4.MysqlSQLXML;
@@ -973,7 +974,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * 
 	 * @throws SQLException
 	 */
-	private int[] executeBatchedInserts() throws SQLException {
+	protected int[] executeBatchedInserts() throws SQLException {
 		String valuesClause = extractValuesClause();
 
 		Connection locallyScopedConn = this.connection;
@@ -1011,8 +1012,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 						.prepareStatement(generateBatchedInsertSQL(valuesClause,
 								numValuesPerBatch));
 			}
-	
-	
+
 			if (numBatchedArgs < numValuesPerBatch) {
 				numberToExecuteAsMultiValue = numBatchedArgs;
 			} else {
@@ -1031,11 +1031,9 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	
 				}
 	
-				BatchParams paramArg = (BatchParams) this.batchedArgs
-						.get(batchCounter++);
-	
 				batchedParamIndex = setOneBatchedParameterSet(batchedStatement,
-						batchedParamIndex, paramArg);
+						batchedParamIndex, this.batchedArgs
+						.get(batchCounter++));
 			}
 	
 			updateCountRunningTotal += batchedStatement.executeUpdate();
@@ -1051,17 +1049,21 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		try {
 			if (numValuesPerBatch > 0) {
 	
-				batchedStatement = locallyScopedConn.prepareStatement(
+				if (this.retrieveGeneratedKeys) {
+					batchedStatement = locallyScopedConn.prepareStatement(
 						generateBatchedInsertSQL(valuesClause, numValuesPerBatch),
 						RETURN_GENERATED_KEYS);
+				} else {
+					batchedStatement = locallyScopedConn.prepareStatement(
+							generateBatchedInsertSQL(valuesClause, numValuesPerBatch));
+				}
+				
 				batchedParamIndex = 1;
 	
 				while (batchCounter < numBatchedArgs) {
-	
-					BatchParams paramArg = (BatchParams) this.batchedArgs
-							.get(batchCounter++);
 					batchedParamIndex = setOneBatchedParameterSet(batchedStatement,
-							batchedParamIndex, paramArg);
+							batchedParamIndex, this.batchedArgs
+							.get(batchCounter++));
 				}
 	
 				updateCountRunningTotal += batchedStatement.executeUpdate();
@@ -1082,7 +1084,33 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		}
 	}
 
+	/**
+	 * Computes the optimum number of batched parameter lists to send
+	 * without overflowing max_allowed_packet.
+	 * 
+	 * @param numBatchedArgs
+	 * @return
+	 */
 	protected int computeBatchSize(int numBatchedArgs) {
+		long[] combinedValues = computeMaxParameterSetSizeAndBatchSize(numBatchedArgs);
+		
+		long maxSizeOfParameterSet = combinedValues[0];
+		long sizeOfEntireBatch = combinedValues[1];
+		
+		int maxAllowedPacket = this.connection.getMaxAllowedPacket();
+		
+		if (sizeOfEntireBatch < maxAllowedPacket - this.originalSql.length()) {
+			return numBatchedArgs;
+		}
+		
+		return (int)Math.max(1, (maxAllowedPacket - this.originalSql.length()) / maxSizeOfParameterSet);
+	}
+
+	/** 
+	 *  Computes the maximum parameter set size, and entire batch size given 
+	 *  the number of arguments in the batch.
+	 */
+	protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) {
 		long sizeOfEntireBatch = 0;
 		long maxSizeOfParameterSet = 0;
 		
@@ -1108,8 +1136,10 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 							sizeOfParameterSet += paramLength;
 						}
 					} else {
-						sizeOfParameterSet += 4; // for NULL literal in SQL 
+						sizeOfParameterSet += paramArg.parameterStrings[j].length;
 					}
+				} else {
+					sizeOfParameterSet += 4; // for NULL literal in SQL 
 				}
 			}
 			
@@ -1127,16 +1157,11 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			if (sizeOfParameterSet > maxSizeOfParameterSet) {
 				maxSizeOfParameterSet = sizeOfParameterSet;
 			}
-		}
+		}	
 		
-		int maxAllowedPacket = this.connection.getMaxAllowedPacket();
-		
-		if (sizeOfEntireBatch < maxAllowedPacket - this.originalSql.length()) {
-			return numBatchedArgs;
-		}
-		
-		return (int)Math.max(1, (maxAllowedPacket - this.originalSql.length()) / maxSizeOfParameterSet);
+		return new long[] {maxSizeOfParameterSet, sizeOfEntireBatch};
 	}
+
 
 	/**
 	 * Executes the current batch of statements by executing them one-by-one.
@@ -1253,54 +1278,63 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			boolean queryIsSelectOnly, boolean unpackFields, Field[] metadataFromCache,
 			boolean isBatch)
 			throws SQLException {
-		synchronized (this.cancelTimeoutMutex) {
-			this.wasCancelled = false;
-		}
-		
-		Connection locallyScopedConnection= this.connection;
-		
-		this.numberOfExecutions++;
-
-		ResultSet rs;
-		
-		CancelTask timeoutTask = null;
-
 		try {
-			if (this.timeoutInMillis != 0
-					&& locallyScopedConnection.versionMeetsMinimum(5, 0, 0)) {
-				timeoutTask = new CancelTask();
-				Connection.getCancelTimer().schedule(timeoutTask, 
-						this.timeoutInMillis);
-			}
 			
-			rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket,
-				this.resultSetType, this.resultSetConcurrency,
-				createStreamingResultSet, this.currentCatalog,
-				unpackFields, isBatch);
-			
-			if (timeoutTask != null) {
-				timeoutTask.cancel();
-				
-				if (timeoutTask.caughtWhileCancelling != null) {
-					throw timeoutTask.caughtWhileCancelling;
-				}
-				
-				timeoutTask = null;
-			}
-		
 			synchronized (this.cancelTimeoutMutex) {
-				if (this.wasCancelled) {
-					this.wasCancelled = false;
-					throw new MySQLTimeoutException();
+				this.wasCancelled = false;
+			}
+			
+			Connection locallyScopedConnection= this.connection;
+			
+			this.numberOfExecutions++;
+	
+			ResultSet rs;
+			
+			CancelTask timeoutTask = null;
+	
+			try {
+				if (this.timeoutInMillis != 0
+						&& locallyScopedConnection.versionMeetsMinimum(5, 0, 0)) {
+					timeoutTask = new CancelTask();
+					Connection.getCancelTimer().schedule(timeoutTask, 
+							this.timeoutInMillis);
+				}
+				
+				rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket,
+					this.resultSetType, this.resultSetConcurrency,
+					createStreamingResultSet, this.currentCatalog,
+					unpackFields, isBatch);
+				
+				if (timeoutTask != null) {
+					timeoutTask.cancel();
+					
+					if (timeoutTask.caughtWhileCancelling != null) {
+						throw timeoutTask.caughtWhileCancelling;
+					}
+					
+					timeoutTask = null;
+				}
+			
+				synchronized (this.cancelTimeoutMutex) {
+					if (this.wasCancelled) {
+						this.wasCancelled = false;
+						throw new MySQLTimeoutException();
+					}
+				}
+			} finally {
+				if (timeoutTask != null) {
+					timeoutTask.cancel();
 				}
 			}
-		} finally {
-			if (timeoutTask != null) {
-				timeoutTask.cancel();
-			}
+			
+			return rs;
+		} catch (NullPointerException npe) {
+			checkClosed(); // we can't synchronize ourselves against async connection-close
+			               // due to deadlock issues, so this is the next best thing for
+			 			   // this particular corner case.
+			
+			throw npe;
 		}
-
-		return rs;
 	}
 
 	/**
@@ -3236,9 +3270,11 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		}
 	}
 
-	private int setOneBatchedParameterSet(
+	protected int setOneBatchedParameterSet(
 			java.sql.PreparedStatement batchedStatement, int batchedParamIndex,
-			BatchParams paramArg) throws SQLException {
+			Object paramSet) throws SQLException {
+		BatchParams paramArg = (BatchParams)paramSet;
+		
 		boolean[] isNullBatch = paramArg.isNull;
 		boolean[] isStreamBatch = paramArg.isStream;
 
@@ -3260,7 +3296,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 
 		return batchedParamIndex;
 	}
-
+	
 	/**
 	 * JDBC 2.0 Set a REF(&lt;structured-type&gt;) parameter.
 	 * 

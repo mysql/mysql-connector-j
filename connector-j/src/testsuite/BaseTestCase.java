@@ -593,4 +593,16 @@ public abstract class BaseTestCase extends TestCase {
 		return (vmVendor != null && vmVendor.toUpperCase(Locale.US).startsWith(
 				"BEA"));
 	}
+
+	protected String randomString() {
+		int length = (int)(Math.random() * 32);
+		
+		StringBuffer buf = new StringBuffer(length);
+		
+		for (int i = 0; i < length; i++) {
+			buf.append((char)((Math.random() * 26) + 'a'));
+		}
+		
+		return buf.toString();
+	}
 }

@@ -711,7 +711,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 		// We defer to server-side execution
 		try {
-			return serverExecute(maxRowsToRetrieve, createStreamingResultSet, metadataFromCache);
+			return serverExecute(maxRowsToRetrieve, createStreamingResultSet, 
+					unpackFields, metadataFromCache);
 		} catch (SQLException sqlEx) {
 			// don't wrap SQLExceptions
 			if (this.connection.getEnablePacketDebug()) {
@@ -772,7 +773,16 @@ public class ServerPreparedStatement extends PreparedStatement {
 		return null; // we don't use this type of packet
 	}
 
-	protected BindValue getBinding(int parameterIndex, boolean forLongData)
+	/**
+	 * Returns the structure representing the value that (can be)/(is)
+	 * bound at the given parameter index.
+	 * 
+	 * @param parameterIndex 1-based
+	 * @param forLongData is this for a stream?
+	 * @return
+	 * @throws SQLException
+	 */
+	private BindValue getBinding(int parameterIndex, boolean forLongData)
 			throws SQLException {
 		checkClosed();
 		
@@ -1031,7 +1041,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 */
 	private com.mysql.jdbc.ResultSet serverExecute(int maxRowsToRetrieve,
-			boolean createStreamingResultSet, Field[] metadataFromCache) throws SQLException {
+			boolean createStreamingResultSet, boolean unpackFields, 
+			Field[] metadataFromCache) throws SQLException {
 		synchronized (this.connection.getMutex()) {
 			if (this.detectedLongParameterSwitch) {
 				// Check when values were bound
@@ -1225,8 +1236,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 				com.mysql.jdbc.ResultSet rs = mysql.readAllResults(this,
 						maxRowsToRetrieve, this.resultSetType,
 						this.resultSetConcurrency, createStreamingResultSet,
-						this.currentCatalog, resultPacket, true, this.fieldCount, true, 
-						metadataFromCache);
+						this.currentCatalog, resultPacket, true, this.fieldCount,
+						unpackFields, metadataFromCache);
 	
 				
 				if (!createStreamingResultSet && 
@@ -1926,7 +1937,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 */
 	public void setTime(int parameterIndex, java.sql.Time x)
 			throws SQLException {
-		setTimeInternal(parameterIndex, x, null, Util.getDefaultTimeZone(), false);
+		setTimeInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false);
 	}
 
 	/**
@@ -2003,7 +2014,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 */
 	public void setTimestamp(int parameterIndex, java.sql.Timestamp x)
 			throws SQLException {
-		setTimestampInternal(parameterIndex, x, null, Util.getDefaultTimeZone(), false);
+		setTimestampInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false);
 	}
 
 	/**
@@ -2247,12 +2258,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 				byte length = (byte) 7;
 
-				intoBuf.ensureCapacity(length);
-
 				if (dt instanceof java.sql.Timestamp) {
 					length = (byte) 11;
 				}
 
+				intoBuf.ensureCapacity(length);
+				
 				intoBuf.writeByte(length); // length
 
 				int year = sessionCalendar.get(Calendar.YEAR);

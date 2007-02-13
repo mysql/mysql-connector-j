@@ -25,23 +25,33 @@
 package testsuite.simple;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.CharArrayReader;
+import java.io.InputStream;
 import java.io.Reader;
+import java.io.StringReader;
+import java.math.BigDecimal;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.sql.Types;
+import java.text.SimpleDateFormat;
 
+import java.util.Locale;
 import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.NotImplemented;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.StringUtils;
 
 /**
  * DOCUMENT ME!
@@ -1289,108 +1299,243 @@ public class StatementsTest extends BaseTestCase {
 				.getString(7));
 	}
 
-	// Server-side prepared statements can only reset streamed data
-	// in-toto, not piecemiel.
+	public void testStatementRewriteBatch() throws Exception {
+		for (int j = 0; j < 2; j++) {
+			Properties props = new Properties();
 
-	public void testStatementRewriteBatch() throws SQLException {
-		Properties props = new Properties();
-		props.setProperty("rewriteBatchedStatements", "true");
-		Connection multiConn = getConnectionWithProps(props);
-		createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
-		Statement multiStmt = multiConn.createStatement();
-		multiStmt.addBatch("INSERT INTO testStatementRewriteBatch(field1) VALUES (1)");
-		multiStmt.addBatch("INSERT INTO testStatementRewriteBatch(field1) VALUES (2)");
-		multiStmt.addBatch("INSERT INTO testStatementRewriteBatch(field1) VALUES (3)");
-		multiStmt.addBatch("INSERT INTO testStatementRewriteBatch(field1) VALUES (4)");
-		multiStmt.addBatch("UPDATE testStatementRewriteBatch SET field1=5 WHERE field1=1");
-		multiStmt.addBatch("UPDATE testStatementRewriteBatch SET field1=6 WHERE field1=2 OR field1=3");
-		
-		int[] counts = multiStmt.executeBatch();
-		ResultSet genKeys = multiStmt.getGeneratedKeys();
-		
-		for (int i = 1; i < 5; i++) {
-			genKeys.next();
-			assertEquals(i, genKeys.getInt(1));
-		}
-		
-		assertEquals(counts.length, 6);
-		assertEquals(counts[0], 1);
-		assertEquals(counts[1], 1);
-		assertEquals(counts[2], 1);
-		assertEquals(counts[3], 1);
-		assertEquals(counts[4], 1);
-		assertEquals(counts[5], 2);
-		
-		this.rs = multiStmt.executeQuery("SELECT field1 FROM testStatementRewriteBatch ORDER BY field1");
-		assertTrue(this.rs.next());
-		assertEquals(this.rs.getInt(1), 4);
-		assertTrue(this.rs.next());
-		assertEquals(this.rs.getInt(1), 5);
-		assertTrue(this.rs.next());
-		assertEquals(this.rs.getInt(1), 6);
-		assertTrue(this.rs.next());
-		assertEquals(this.rs.getInt(1), 6);
+			if (j == 0) {
+				props.setProperty("useServerPrepStmts", "true");
+			}
 
-		createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
-		props.clear();
-		props.setProperty("rewriteBatchedStatements", "true");
-		props.setProperty("sessionVariables", "max_allowed_packet=1024");
-		multiConn = getConnectionWithProps(props);
-		multiStmt = multiConn.createStatement();
-		
-		for (int i = 0; i < 1000; i++) {
-			multiStmt.addBatch("INSERT INTO testStatementRewriteBatch(field1) VALUES (" + i + ")");
-		}
-		
-		multiStmt.executeBatch();
-		genKeys = multiStmt.getGeneratedKeys();
-		
-		for (int i = 1; i < 1000; i++) {
-			genKeys.next();
-			assertEquals(i, genKeys.getInt(1));
-		}
-		
-		createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
-		
-		props.clear();
-		props.setProperty("useServerPrepStmts", "false");
-		props.setProperty("rewriteBatchedStatements", "true");
-		multiConn = getConnectionWithProps(props);
-		PreparedStatement pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", 
-				Statement.RETURN_GENERATED_KEYS);
-		
-		for (int i = 0; i < 1000; i++) {
-			pStmt.setInt(1, i);
-			pStmt.addBatch();
-		}
-		
-		pStmt.executeBatch();
-		genKeys = pStmt.getGeneratedKeys();
-		
-		for (int i = 1; i < 1000; i++) {
-			genKeys.next();
-			assertEquals(i, genKeys.getInt(1));
-		}
-		
-		createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
-		props.setProperty("useServerPrepStmts", "false");
-		props.setProperty("rewriteBatchedStatements", "true");
-		props.setProperty("sessionVariables", "max_allowed_packet=1024");
-		multiConn = getConnectionWithProps(props);
-		pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", 
-				Statement.RETURN_GENERATED_KEYS);
-		
-		for (int i = 0; i < 1000; i++) {
-			pStmt.setInt(1, i);
-			pStmt.addBatch();
-		}
-		
-		pStmt.executeBatch();
-		genKeys = pStmt.getGeneratedKeys();
-		
-		for (int i = 1; i < 1000; i++) {
-			genKeys.next();
-			assertEquals(i, genKeys.getInt(1));
+			props.setProperty("rewriteBatchedStatements", "true");
+			Connection multiConn = getConnectionWithProps(props);
+			createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
+			Statement multiStmt = multiConn.createStatement();
+			multiStmt.addBatch("INSERT INTO testStatementRewriteBatch(field1) VALUES (1)");
+			multiStmt.addBatch("INSERT INTO testStatementRewriteBatch(field1) VALUES (2)");
+			multiStmt.addBatch("INSERT INTO testStatementRewriteBatch(field1) VALUES (3)");
+			multiStmt.addBatch("INSERT INTO testStatementRewriteBatch(field1) VALUES (4)");
+			multiStmt.addBatch("UPDATE testStatementRewriteBatch SET field1=5 WHERE field1=1");
+			multiStmt.addBatch("UPDATE testStatementRewriteBatch SET field1=6 WHERE field1=2 OR field1=3");
+
+			int[] counts = multiStmt.executeBatch();
+			ResultSet genKeys = multiStmt.getGeneratedKeys();
+
+			for (int i = 1; i < 5; i++) {
+				genKeys.next();
+				assertEquals(i, genKeys.getInt(1));
+			}
+
+			assertEquals(counts.length, 6);
+			assertEquals(counts[0], 1);
+			assertEquals(counts[1], 1);
+			assertEquals(counts[2], 1);
+			assertEquals(counts[3], 1);
+			assertEquals(counts[4], 1);
+			assertEquals(counts[5], 2);
+
+			this.rs = multiStmt.executeQuery("SELECT field1 FROM testStatementRewriteBatch ORDER BY field1");
+			assertTrue(this.rs.next());
+			assertEquals(this.rs.getInt(1), 4);
+			assertTrue(this.rs.next());
+			assertEquals(this.rs.getInt(1), 5);
+			assertTrue(this.rs.next());
+			assertEquals(this.rs.getInt(1), 6);
+			assertTrue(this.rs.next());
+			assertEquals(this.rs.getInt(1), 6);
+
+			createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
+			props.clear();
+			props.setProperty("rewriteBatchedStatements", "true");
+			props.setProperty("sessionVariables", "max_allowed_packet=1024");
+			multiConn = getConnectionWithProps(props);
+			multiStmt = multiConn.createStatement();
+
+			for (int i = 0; i < 1000; i++) {
+				multiStmt.addBatch("INSERT INTO testStatementRewriteBatch(field1) VALUES (" + i + ")");
+			}
+
+			multiStmt.executeBatch();
+			genKeys = multiStmt.getGeneratedKeys();
+
+			for (int i = 1; i < 1000; i++) {
+				genKeys.next();
+				assertEquals(i, genKeys.getInt(1));
+			}
+
+			createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
+
+			props.clear();
+			props.setProperty("useServerPrepStmts", j == 0 ? "true" : "false");
+			props.setProperty("rewriteBatchedStatements", "true");
+			multiConn = getConnectionWithProps(props);
+			PreparedStatement pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", 
+					Statement.RETURN_GENERATED_KEYS);
+
+			for (int i = 0; i < 1000; i++) {
+				pStmt.setInt(1, i);
+				pStmt.addBatch();
+			}
+
+			pStmt.executeBatch();
+			genKeys = pStmt.getGeneratedKeys();
+
+			for (int i = 1; i < 1000; i++) {
+				genKeys.next();
+				assertEquals(i, genKeys.getInt(1));
+			}
+
+			createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
+			props.setProperty("useServerPrepStmts", j == 0 ? "true" : "false");
+			props.setProperty("rewriteBatchedStatements", "true");
+			props.setProperty("sessionVariables", "max_allowed_packet=1024");
+			multiConn = getConnectionWithProps(props);
+			pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", 
+					Statement.RETURN_GENERATED_KEYS);
+
+			for (int i = 0; i < 1000; i++) {
+				pStmt.setInt(1, i);
+				pStmt.addBatch();
+			}
+
+			pStmt.executeBatch();
+			genKeys = pStmt.getGeneratedKeys();
+
+			for (int i = 1; i < 1000; i++) {
+				genKeys.next();
+				assertEquals(i, genKeys.getInt(1));
+			}
+			
+			Object[][] differentTypes = new Object[1000][14];
+			
+			createTable("rewriteBatchTypes", "(internalOrder int, f1 tinyint null, "
+					+ "f2 smallint null, f3 int null, f4 bigint null, "
+					+ "f5 decimal(8, 2) null, f6 float null, f7 double null, "
+					+ "f8 varchar(255) null, f9 text null, f10 blob null, " 
+					+ "f11 blob null, f12 datetime null, f13 time null, f14 date null)");
+			
+			for (int i = 0; i < 1000; i++) {
+				differentTypes[i][0] = Math.random() < .5 ? null : new Byte((byte)(Math.random() * 127));
+				differentTypes[i][1] = Math.random() < .5 ? null : new Short((short)(Math.random() * Short.MAX_VALUE));
+				differentTypes[i][2] = Math.random() < .5 ? null : new Integer((int)(Math.random() * Integer.MAX_VALUE));
+				differentTypes[i][3] = Math.random() < .5 ? null : new Long((long)(Math.random() * Long.MAX_VALUE));
+				differentTypes[i][4] = Math.random() < .5 ? null : new BigDecimal("19.95");
+				differentTypes[i][5] = Math.random() < .5 ? null : new Float(3 + ((float)(Math.random())));
+				differentTypes[i][6] = Math.random() < .5 ? null : new Double(3 + (Math.random()));
+				differentTypes[i][7] = Math.random() < .5 ? null : randomString();
+				differentTypes[i][8] = Math.random() < .5 ? null : randomString();
+				differentTypes[i][9] = Math.random() < .5 ? null : randomString().getBytes();
+				differentTypes[i][10] = Math.random() < .5 ? null : randomString().getBytes();
+				differentTypes[i][11] = Math.random() < .5 ? null : new Timestamp(System.currentTimeMillis());
+				differentTypes[i][12] = Math.random() < .5 ? null : new Time(System.currentTimeMillis());
+				differentTypes[i][13] = Math.random() < .5 ? null : new Date(System.currentTimeMillis());
+			}
+			
+			props.setProperty("useServerPrepStmts", j == 0 ? "true" : "false");
+			props.setProperty("rewriteBatchedStatements", "true");
+			props.setProperty("sessionVariables", "max_allowed_packet=1024");
+			multiConn = getConnectionWithProps(props);
+			pStmt = multiConn.prepareStatement("INSERT INTO rewriteBatchTypes(internalOrder,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			
+			for (int i = 0; i < 1000; i++) {
+				pStmt.setInt(1, i);
+				for (int k = 0; k < 14; k++) {
+					if (k == 8) {
+						String asString = (String)differentTypes[i][k];
+						
+						if (asString == null) {
+							pStmt.setObject(k + 2, null);
+						} else {
+							pStmt.setCharacterStream(k + 2, new StringReader(asString), asString.length());
+						}
+					} else if (k == 9) {
+						byte[] asBytes = (byte[])differentTypes[i][k];
+						
+						if (asBytes == null) {
+							pStmt.setObject(k + 2, null);
+						} else {
+							pStmt.setBinaryStream(k + 2, new ByteArrayInputStream(asBytes), asBytes.length);
+						}
+					} else {
+						pStmt.setObject(k + 2, differentTypes[i][k]);
+					}
+				}
+				pStmt.addBatch();
+			}
+			
+			pStmt.executeBatch();
+			
+			this.rs = this.stmt.executeQuery("SELECT f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14 FROM rewriteBatchTypes ORDER BY internalOrder");
+			
+			int idx = 0;
+			
+			// We need to format this ourselves, since we have to strip the nanos off of
+			// TIMESTAMPs, so .equals() doesn't really work...
+			
+			SimpleDateFormat sdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US);
+			
+			while (this.rs.next()) {
+				for (int k = 0; k < 14; k++) {
+					if (differentTypes[idx][k] == null) {
+						assertTrue("On row " + idx + " expected NULL, found " + this.rs.getObject(k + 1) 
+								+ " in column " + (k + 1), this.rs.getObject(k + 1) == null);
+					} else {
+						String className = differentTypes[idx][k].getClass().getName();
+					
+						if (className.equals("java.io.StringReader")) {
+							StringReader reader = (StringReader)differentTypes[idx][k];
+							StringBuffer buf = new StringBuffer();
+							
+							int c = 0;
+							
+							while ((c = reader.read()) != -1) {
+								buf.append((char)c);
+							}
+							
+							String asString = this.rs.getString(k + 1);
+							
+							assertEquals("On row " + idx + ", column " + (k + 1), buf.toString(), asString);
+							
+						} else if (differentTypes[idx][k] instanceof java.io.InputStream) {
+							ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+							
+							int bytesRead = 0;
+							
+							byte[] buf = new byte[128];
+							InputStream in = (InputStream)differentTypes[idx][k];
+							
+							while ((bytesRead = in.read(buf)) != -1) {
+								bOut.write(buf, 0, bytesRead);
+							}
+							
+							byte[] expected = bOut.toByteArray();
+							byte[] actual = this.rs.getBytes(k + 1);
+							
+							assertEquals("On row " + idx + ", column " + (k + 1), StringUtils.dumpAsHex(expected, expected.length), StringUtils.dumpAsHex(actual, actual.length));
+						} else if (differentTypes[idx][k] instanceof byte[]) {
+							byte[] expected = (byte[])differentTypes[idx][k];
+							byte[] actual = this.rs.getBytes(k + 1);
+							assertEquals("On row " + idx + ", column " + (k + 1), StringUtils.dumpAsHex(expected, expected.length), StringUtils.dumpAsHex(actual, actual.length));
+						} else if (differentTypes[idx][k] instanceof Timestamp) {
+							assertEquals("On row " + idx + ", column " + (k + 1), sdf.format(differentTypes[idx][k]), sdf.format(this.rs.getObject(k + 1)));
+						} else if (differentTypes[idx][k] instanceof Double) {
+							assertEquals("On row " + idx + ", column " + (k + 1), ((Double)differentTypes[idx][k]).doubleValue(), this.rs.getDouble(k + 1), .1);
+						} else if (differentTypes[idx][k] instanceof Float) {
+							assertEquals("On row " + idx + ", column " + (k + 1), ((Float)differentTypes[idx][k]).floatValue(), this.rs.getFloat(k + 1), .1);	
+						} else if (className.equals("java.lang.Byte")) {
+							// special mapping in JDBC for ResultSet.getObject()
+							assertEquals("On row " + idx + ", column " + (k + 1), new Integer(((Byte)differentTypes[idx][k]).byteValue()), this.rs.getObject(k + 1)); 
+						} else if (className.equals("java.lang.Short")) {
+							// special mapping in JDBC for ResultSet.getObject()
+							assertEquals("On row " + idx + ", column " + (k + 1), new Integer(((Short)differentTypes[idx][k]).shortValue()), this.rs.getObject(k + 1)); 
+						} else {
+							assertEquals("On row " + idx + ", column " + (k + 1) + " (" + differentTypes[idx][k].getClass() + "/" + this.rs.getObject(k + 1).getClass(), differentTypes[idx][k].toString(), this.rs.getObject(k + 1).toString());
+						}
+					}
+				}
+				
+				idx++;
+			}
 		}
 	}
 

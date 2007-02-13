@@ -1251,6 +1251,19 @@ public class Connection extends ConnectionProperties implements
 	}
 
 	/**
+	 * @see Connection#prepareStatement(String, int)
+	 */
+	public java.sql.PreparedStatement clientPrepareStatement(String sql,
+			int autoGenKeyIndex) throws SQLException {
+		java.sql.PreparedStatement pStmt = clientPrepareStatement(sql);
+
+		((com.mysql.jdbc.PreparedStatement) pStmt)
+				.setRetrieveGeneratedKeys(autoGenKeyIndex == java.sql.Statement.RETURN_GENERATED_KEYS);
+
+		return pStmt;
+	}
+
+	/**
 	 * DOCUMENT ME!
 	 * 
 	 * @param sql
@@ -4997,6 +5010,11 @@ public class Connection extends ConnectionProperties implements
 			// assume that users will use named-based
 			// lookups
 			resultSet.buildIndexMapping();
+			resultSet.initializeWithMetadata();
+
+			if (resultSet instanceof UpdatableResultSet) {
+				((UpdatableResultSet)resultSet).checkUpdatability();
+			}
 
 			cachedMetaData.columnNameToIndex = resultSet.columnNameToIndex;
 			cachedMetaData.fullColumnNameToIndex = resultSet.fullColumnNameToIndex;
@@ -5010,6 +5028,11 @@ public class Connection extends ConnectionProperties implements
 			resultSet.columnNameToIndex = cachedMetaData.columnNameToIndex;
 			resultSet.fullColumnNameToIndex = cachedMetaData.fullColumnNameToIndex;
 			resultSet.hasBuiltIndexMapping = true;
+			resultSet.initializeWithMetadata();
+			
+			if (resultSet instanceof UpdatableResultSet) {
+				((UpdatableResultSet)resultSet).checkUpdatability();
+			}
 		}
 	}
 	
