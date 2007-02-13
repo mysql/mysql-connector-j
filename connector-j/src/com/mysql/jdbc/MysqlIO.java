@@ -24,11 +24,6 @@
  */
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.profiler.ProfileEventSink;
-import com.mysql.jdbc.profiler.ProfilerEvent;
-import com.mysql.jdbc.util.ReadAheadInputStream;
-import com.mysql.jdbc.util.ResultSetUtil;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -37,21 +32,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-
 import java.lang.ref.SoftReference;
-
 import java.math.BigInteger;
-
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
-
 import java.nio.ByteBuffer;
-
 import java.security.NoSuchAlgorithmException;
-
 import java.sql.SQLException;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -59,6 +47,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.Deflater;
+
+import com.mysql.jdbc.profiler.ProfileEventSink;
+import com.mysql.jdbc.profiler.ProfilerEvent;
+import com.mysql.jdbc.util.ReadAheadInputStream;
+import com.mysql.jdbc.util.ResultSetUtil;
 
 
 /**
@@ -532,7 +525,7 @@ class MysqlIO {
 
 			this.readPacketSequence = multiPacketSeq;
 
-			this.mysqlInput.skip(packetLength);
+			skipFully(this.mysqlInput, packetLength);
 		} catch (IOException ioEx) {
 			throw new CommunicationsException(this.connection,
 					this.lastPacketSentTimeMs, ioEx);
@@ -1971,6 +1964,26 @@ class MysqlIO {
         return n;
     }
 
+    private final long skipFully(InputStream in, long len) throws IOException {
+    	if (len < 0) {
+    		throw new IOException("Negative skip length not allowed");
+    	}
+    	
+    	long n = 0;
+    	
+    	while (n < len) {
+    		long count = in.skip(len - n);
+    		
+    		if (count < 0) {
+    			throw new EOFException();
+    		}
+    		
+    		n += count;
+    	}
+    	
+    	return n;
+    }
+
     /**
      * Reads one result set off of the wire, if the result is actually an
      * update count, creates an update-count only result set.
@@ -3080,7 +3093,7 @@ class MysqlIO {
     
     void scanForAndThrowDataTruncation() throws SQLException {
         if ((this.streamingData == null) && versionMeetsMinimum(4, 1, 0) &&
-                this.connection.getJdbcCompliantTruncation()) {
+                this.connection.getJdbcCompliantTruncation() && this.warningCount > 0) {
             SQLError.convertShowWarningsToSQLWarnings(this.connection,
                 this.warningCount, true);
         }
