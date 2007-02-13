@@ -263,8 +263,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		}
 
 		try {
-			Connection newConn = com.mysql.jdbc.Connection.getInstance(host(props),
-					port(props), props, database(props), url);
+			Connection newConn = com.mysql.jdbc.Connection.getInstance(
+					host(props), port(props), props, database(props), url);
 
 			return newConn;
 		} catch (SQLException sqlEx) {
@@ -418,19 +418,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		return false;
 	}
 
-	/**
-	 * 
-	 * 
-	 * @param url
-	 *            ...
-	 * @param defaults
-	 *            ...
-	 * 
-	 * @return ...
-	 * 
-	 * @throws java.sql.SQLException
-	 *             ...
-	 */
 	public Properties parseURL(String url, Properties defaults)
 			throws java.sql.SQLException {
 		Properties urlProps = (defaults != null) ? new Properties(defaults)
@@ -440,21 +427,22 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			return null;
 		}
 
-		if (!StringUtils.startsWithIgnoreCase(url, "jdbc:mysql://") && 
-				!StringUtils.startsWithIgnoreCase(url, "jdbc:mysql:mxj://")) { //$NON-NLS-1$
+		if (!StringUtils.startsWithIgnoreCase(url, "jdbc:mysql://")
+				&& !StringUtils.startsWithIgnoreCase(url, "jdbc:mysql:mxj://")) { //$NON-NLS-1$
 
 			return null;
 		}
 
 		int beginningOfSlashes = 13;
-		
+
 		if (StringUtils.startsWithIgnoreCase(url, "jdbc:mysql:mxj://")) {
 			beginningOfSlashes = 17;
-			
-			urlProps.setProperty("socketFactory", 
-				"com.mysql.management.driverlaunched.ServerLauncherSocketFactory");
+
+			urlProps
+					.setProperty("socketFactory",
+							"com.mysql.management.driverlaunched.ServerLauncherSocketFactory");
 		}
-		
+
 		/*
 		 * Parse parameters after the ? in the URL and remove them from the
 		 * original URL.
@@ -494,7 +482,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 						urlProps.put(parameter, URLDecoder.decode(value));
 					} catch (NoSuchMethodError nsme) {
 						// punt again
-						urlProps.put(parameter,  URLDecoder.decode(value));
+						urlProps.put(parameter, URLDecoder.decode(value));
 					}
 				}
 			}
@@ -514,7 +502,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 						url.substring((slashIndex + 1), url.length()));
 			}
 		} else {
-			return null;
+			hostStuff = url;
 		}
 
 		if ((hostStuff != null) && (hostStuff.length() > 0)) {
@@ -583,10 +571,11 @@ public class NonRegisteringDriver implements java.sql.Driver {
 									"configs/" + configName + ".properties");
 
 					if (configAsStream == null) {
-						throw SQLError.createSQLException(
-								"Can't find configuration template named '"
-										+ configName + "'",
-								SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+						throw SQLError
+								.createSQLException(
+										"Can't find configuration template named '"
+												+ configName + "'",
+										SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
 					}
 					configProps.load(configAsStream);
 				} catch (IOException ioEx) {

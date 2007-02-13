@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -26,6 +26,7 @@ package testsuite.regression;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.DriverPropertyInfo;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -38,6 +39,7 @@ import java.util.Properties;
 import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.Driver;
+import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
 
 /**
@@ -1636,7 +1638,28 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 	}
 
-
+	/**
+	 * Fix for BUG#22628 - Driver.getPropertyInfo() throws NullPointerException for URL that only specifies
+	 * host and/or port.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug22628() throws Exception {
+		DriverPropertyInfo[] dpi = new NonRegisteringDriver().getPropertyInfo("jdbc:mysql://bogus:9999", 
+				new Properties());
+		
+		boolean foundHost = false;
+		
+		for (int i = 0; i < dpi.length; i++) {
+			if ("bogus:9999".equals(dpi[i].value)) {
+				foundHost = true;
+				break;
+			}
+		}
+		
+		assertTrue(foundHost);
+	}
+	
 	private void testAbsenceOfMetadataForQuery(String query) throws Exception {
 		try {
 			this.pstmt = this.conn.prepareStatement(query);

@@ -152,7 +152,10 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  false by default, as (1) We already had specific behavior to treat 
 	  java.util.Date as a java.sql.Timestamp because it's useful to many folks, 
 	  and (2) that behavior will very likely be required for drivers JDBC-post-4.0.
-	  	  	  
+
+    - Fixed BUG#22628 - Driver.getPropertyInfo() throws NullPointerException for 
+      URL that only specifies host and/or port.
+      
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 
