@@ -1504,7 +1504,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			assertTrue(0 == this.rs.getInt("field3"));
 
 			assertTrue(this.rs.next());
-			assertTrue(this.rs.getString("field1").equals("2004-11-20"));
+			assertEquals("2004-11-20", this.rs.getString("field1"));
 			assertTrue(null == this.rs.getObject("field2"));
 			assertTrue(0 == this.rs.getInt("field3"));
 
@@ -2651,7 +2651,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		} finally {
 		}
 	}
-
+	
 	public void testAllTypesForNull() throws Exception {
 		if (!isRunningOnJdk131()) {
 			Properties props = new Properties();
@@ -3505,7 +3505,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
-
+	
 	public void testBooleans() throws Exception {
 		if (versionMeetsMinimum(5, 0)) {
 			try {
@@ -3746,6 +3746,43 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}
 	}
 	
+	/**
+	 * Tests fix for BUG#25787 - java.util.Date should be serialized for PreparedStatement.setObject().
+	 * 
+	 * We add a new configuration option "treatUtilDateAsTimestamp", which is false by default,
+	 * as (1) We already had specific behavior to treat java.util.Date as a java.sql.Timestamp because
+	 * it's useful to many folks, and (2) that behavior will very likely be in JDBC-post-4.0 as a 
+	 * requirement.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug25787() throws Exception {
+		createTable("testBug25787", "(MY_OBJECT_FIELD BLOB)");
+		
+		Connection deserializeConn = null;
+		
+		Properties props = new Properties();
+		props.setProperty("autoDeserialize", "true");
+		props.setProperty("treatUtilDateAsTimestamp", "false");
+		
+		try {
+			deserializeConn = getConnectionWithProps(props);
+			
+			this.pstmt = deserializeConn.prepareStatement("INSERT INTO testBug25787 (MY_OBJECT_FIELD) VALUES (?)");
+			java.util.Date dt = new java.util.Date();
+			
+			this.pstmt.setObject(1, dt);
+			this.pstmt.execute();
+			
+			this.rs = deserializeConn.createStatement().executeQuery("SELECT MY_OBJECT_FIELD FROM testBug25787");
+			this.rs.next();
+			assertEquals("java.util.Date", this.rs.getObject(1).getClass().getName());
+			assertEquals(dt, this.rs.getObject(1));
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+	
 	public void testTruncationDisable() throws Exception {
 		Properties props = new Properties();
 		props.setProperty("jdbcCompliantTruncation", "false");
@@ -3759,6 +3796,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		} finally {
 			closeMemberJDBCResources();
 		}
+		
 	}
 	
 	public void testUsageAdvisorOnZeroRowResultSet() throws Exception {
@@ -3826,4 +3864,51 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	public void testBug25894() throws Exception {
+    	createTable("bug25894", "("+
+    		    "tinyInt_type TINYINT DEFAULT 1,"+
+    		    "tinyIntU_type TINYINT UNSIGNED DEFAULT 1,"+
+    		    "smallInt_type SMALLINT DEFAULT 1,"+
+    		    "smallIntU_type SMALLINT UNSIGNED DEFAULT 1,"+
+    		    "mediumInt_type MEDIUMINT DEFAULT 1,"+
+    		    "mediumIntU_type MEDIUMINT UNSIGNED DEFAULT 1,"+
+    		    "int_type INT DEFAULT 1,"+
+    		    "intU_type INT UNSIGNED DEFAULT 1,"+
+    		    "bigInt_type BIGINT DEFAULT 1,"+
+    		    "bigIntU_type BIGINT UNSIGNED DEFAULT 1"+
+   			");");    
+	    	try {
+	    		this.stmt.executeUpdate("INSERT INTO bug25894 VALUES (-1,1,-1,1,-1,1,-1,1,-1,1)"); 
+	    		this.rs = this.stmt.executeQuery("SELECT * FROM bug25894");
+	    		java.sql.ResultSetMetaData tblMD = this.rs.getMetaData();
+	    		this.rs.first();
+	    		for (int i=1; i<tblMD.getColumnCount()+1; i++)
+	    		{	
+	    			String typesName = "";
+	    			switch (tblMD.getColumnType(i)) {
+	    			case Types.INTEGER:
+	    				typesName = "Types.INTEGER";
+	    				break;
+	    			case Types.TINYINT:
+	    				typesName = "Types.TINYINT";
+	    				break;
+	    			case Types.BIGINT:
+	    				typesName = "Types.BIGINT";
+	    				break;
+	    			case Types.SMALLINT:
+	    				typesName = "Types.SMALLINT";
+	    				break;
+	    			}
+	    			
+	    			System.out.println(i + " .fld: " + tblMD.getColumnName(i) + "T: " + typesName + ", MDC: " +
+	    					tblMD.getColumnClassName(i) + " " + tblMD.getColumnTypeName(i) + " " +
+	    					 ", getObj: " + this.rs.getObject(i).getClass());
+	    		}    		
+			
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+
 }

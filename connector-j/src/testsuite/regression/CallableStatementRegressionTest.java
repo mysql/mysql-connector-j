@@ -27,6 +27,7 @@ package testsuite.regression;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Properties;
@@ -475,8 +476,10 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				cStmt.setInt(3, 1);
 				cStmt.setInt(4, 1);
 				
-				assertEquals(4, cStmt.getParameterMetaData().getParameterCount());
-				assertEquals(Types.OTHER, cStmt.getParameterMetaData().getParameterType(1));
+				if (!isRunningOnJdk131()) {
+					assertEquals(4, cStmt.getParameterMetaData().getParameterCount());
+					assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(1));
+				}
 				
 				assertFalse(cStmt.execute());
 				assertEquals(2f, cStmt.getInt(1), .001);
@@ -488,19 +491,21 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
 						.getName());
 
-				cStmt.setFloat("a", 4);
-				cStmt.setInt("b", 1);
-				cStmt.setInt("c", 1);
-				
-				assertFalse(cStmt.execute());
-				assertEquals(4f, cStmt.getInt(1), .001);
-				assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
-						.getName());
-				
-				assertEquals(-1, cStmt.executeUpdate());
-				assertEquals(4f, cStmt.getInt(1), .001);
-				assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
-						.getName());
+				if (!isRunningOnJdk131()) {
+					cStmt.setFloat("a", 4);
+					cStmt.setInt("b", 1);
+					cStmt.setInt("c", 1);
+					
+					assertFalse(cStmt.execute());
+					assertEquals(4f, cStmt.getInt(1), .001);
+					assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
+							.getName());
+					
+					assertEquals(-1, cStmt.executeUpdate());
+					assertEquals(4f, cStmt.getInt(1), .001);
+					assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
+							.getName());
+				}
 				
 				// Check metadata while we're at it
 
@@ -545,9 +550,11 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
 						.getName());
 				
-				assertEquals(2, cStmt.getParameterMetaData().getParameterCount());
-				assertEquals(Types.OTHER, cStmt.getParameterMetaData().getParameterType(1));
-				assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(2));
+				if (!isRunningOnJdk131()) {
+					assertEquals(2, cStmt.getParameterMetaData().getParameterCount());
+					assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(1));
+					assertEquals(Types.INTEGER, cStmt.getParameterMetaData().getParameterType(2));
+				}
 			} finally {
 				if (this.rs != null) {
 					this.rs.close();
@@ -562,7 +569,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
-
+	
 	/**
 	 * Tests fix for Bug#12417 - stored procedure catalog name is case-sensitive
 	 * on Windows (this is actually a server bug, but we have a workaround in
@@ -698,6 +705,132 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Tests fix for BUG#21462 - JDBC (and ODBC) specifications allow no-parenthesis
+	 * CALL statements for procedures with no arguments, MySQL server does not.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug21462() throws Exception {
+		if (versionMeetsMinimum(5, 0)) {
+			CallableStatement cstmt = null;
+			
+			try {
+				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug21462");
+				this.stmt.executeUpdate("CREATE PROCEDURE testBug21462() BEGIN SELECT 1; END");
+				cstmt = this.conn.prepareCall("{CALL testBug21462}");
+				cstmt.execute();
+			} finally {
+				if (cstmt != null) {
+					cstmt.close();
+				}
+				
+				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug21462");
+			}
+		}
+	}
+	
+	/** 
+	 * Tests fix for BUG#22024 - Newlines causing whitespace to span confuse
+	 * procedure parser when getting parameter metadata for stored procedures.
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug22024() throws Exception {
+		if (versionMeetsMinimum(5, 0)) {
+			CallableStatement cstmt = null;
+			
+			try {
+				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22024");
+				this.stmt.executeUpdate("CREATE PROCEDURE testBug22024(\r\n)\r\n BEGIN SELECT 1; END");
+				cstmt = this.conn.prepareCall("{CALL testBug22024()}");
+				cstmt.execute();
+				
+				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22024");
+				this.stmt.executeUpdate("CREATE PROCEDURE testBug22024(\r\na INT)\r\n BEGIN SELECT 1; END");
+				cstmt = this.conn.prepareCall("{CALL testBug22024(?)}");
+				cstmt.setInt(1, 1);
+				cstmt.execute();
+			} finally {
+				if (cstmt != null) {
+					cstmt.close();
+				}
+				
+				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22024");
+			}
+		}
+	}
+	
+	/**
+	 * Tests workaround for server crash when calling stored procedures
+	 * via a server-side prepared statement (driver now detects 
+	 * prepare(stored procedure) and substitutes client-side prepared statement).
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug22297() throws Exception {
+		if (versionMeetsMinimum(5, 0)) {
+			this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22297");
+			
+			createTable("tblTestBug2297_1", "("
+					+ "id varchar(20) NOT NULL default '',"
+					+ "Income double(19,2) default NULL)");	
+			
+			createTable("tblTestBug2297_2", "("
+					+ "id varchar(20) NOT NULL default ''," 
+					+ "CreatedOn datetime default NULL)");
+			
+			this.stmt.executeUpdate("CREATE PROCEDURE testBug22297(pcaseid INT)"
+					+ "BEGIN"
+					+ "\nSET @sql = \"DROP TEMPORARY TABLE IF EXISTS tmpOrders\";"
+					+ " PREPARE stmt FROM @sql;"
+					+ " EXECUTE stmt;"
+					+ " DEALLOCATE PREPARE stmt;"
+					+ "\nSET @sql = \"CREATE TEMPORARY TABLE tmpOrders SELECT id, 100 AS Income FROM tblTestBug2297_1 GROUP BY id\";"
+					+ " PREPARE stmt FROM @sql;"
+					+ " EXECUTE stmt;"
+					+ " DEALLOCATE PREPARE stmt;"
+					+ "\n SELECT id, Income FROM (SELECT e.id AS id ,COALESCE(prof.Income,0) AS Income"
+					+ "\n FROM tblTestBug2297_2 e LEFT JOIN tmpOrders prof ON e.id = prof.id"
+					+ "\n WHERE e.CreatedOn > '2006-08-01') AS Final ORDER BY id;" 
+					+ "\nEND");
+
+			this.stmt.executeUpdate("INSERT INTO tblTestBug2297_1 (`id`,`Income`) VALUES "
+					+ "('a',4094.00),"
+					+ "('b',500.00),"
+					+ "('c',3462.17),"
+					+ " ('d',500.00),"
+					+ " ('e',600.00)");
+			
+			this.stmt.executeUpdate("INSERT INTO tblTestBug2297_2 (`id`,`CreatedOn`) VALUES "
+					+ "('d','2006-08-31 00:00:00'),"
+					+ "('e','2006-08-31 00:00:00'),"
+				+ "('b','2006-08-31 00:00:00'),"
+				+ "('c','2006-08-31 00:00:00'),"
+				+ "('a','2006-08-31 00:00:00')");
+			
+			try {
+				this.pstmt = this.conn.prepareStatement("{CALL testBug22297(?)}");
+				this.pstmt.setInt(1, 1);
+				this.rs =this.pstmt.executeQuery();
+                
+				String[] ids = new String[] { "a", "b", "c", "d", "e"};
+                int pos = 0;
+                
+                while (this.rs.next()) {
+                	assertEquals(ids[pos++], rs.getString(1));
+                	assertEquals(100, rs.getInt(2));
+                }
+                
+                assertEquals(this.pstmt.getClass().getName(),
+                		com.mysql.jdbc.PreparedStatement.class.getName());
+
+			} finally {
+				closeMemberJDBCResources();
+			}
+		}
+	}
+	
 	public void testHugeNumberOfParameters() throws Exception {
 		if (versionMeetsMinimum(5, 0)) {
 			this.stmt
@@ -772,131 +905,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
-
-	/**
-	 * Tests fix for BUG#21462 - JDBC (and ODBC) specifications allow no-parenthesis
-	 * CALL statements for procedures with no arguments, MySQL server does not.
-	 * 
-	 * @throws Exception if the test fails.
-	 */
-	public void testBug21462() throws Exception {
-		if (versionMeetsMinimum(5, 0)) {
-			CallableStatement cstmt = null;
-			
-			try {
-				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug21462");
-				this.stmt.executeUpdate("CREATE PROCEDURE testBug21462() BEGIN SELECT 1; END");
-				cstmt = this.conn.prepareCall("{CALL testBug21462}");
-				cstmt.execute();
-			} finally {
-				if (cstmt != null) {
-					cstmt.close();
-				}
-				
-				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug21462");
-			}
-		}
-	}
-
-	/** 
-	 * Tests fix for BUG#22024 - Newlines causing whitespace to span confuse
-	 * procedure parser when getting parameter metadata for stored procedures.
-	 * 
-	 * @throws Exception if the test fails
-	 */
-	public void testBug22024() throws Exception {
-		if (versionMeetsMinimum(5, 0)) {
-			CallableStatement cstmt = null;
-			
-			try {
-				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22024");
-				this.stmt.executeUpdate("CREATE PROCEDURE testBug22024(\r\n)\r\n BEGIN SELECT 1; END");
-				cstmt = this.conn.prepareCall("{CALL testBug22024()}");
-				cstmt.execute();
-				
-				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22024");
-				this.stmt.executeUpdate("CREATE PROCEDURE testBug22024(\r\na INT)\r\n BEGIN SELECT 1; END");
-				cstmt = this.conn.prepareCall("{CALL testBug22024(?)}");
-				cstmt.setInt(1, 1);
-				cstmt.execute();
-			} finally {
-				if (cstmt != null) {
-					cstmt.close();
-				}
-				
-				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22024");
-			}
-		}
-	}
-
-	/**
-	 * Tests workaround for server crash when calling stored procedures
-	 * via a server-side prepared statement (driver now detects 
-	 * prepare(stored procedure) and substitutes client-side prepared statement).
-	 * 
-	 * @throws Exception if the test fails
-	 */
-	public void testBug22297() throws Exception {
-		if (versionMeetsMinimum(5, 0)) {
-			this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug22297");
-			
-			createTable("tblTestBug2297_1", "("
-					+ "id varchar(20) NOT NULL default '',"
-					+ "Income double(19,2) default NULL)");	
-			
-			createTable("tblTestBug2297_2", "("
-					+ "id varchar(20) NOT NULL default ''," 
-					+ "CreatedOn datetime default NULL)");
-			
-			this.stmt.executeUpdate("CREATE PROCEDURE testBug22297(pcaseid INT)"
-					+ "BEGIN"
-					+ "\nSET @sql = \"DROP TEMPORARY TABLE IF EXISTS tmpOrders\";"
-					+ " PREPARE stmt FROM @sql;"
-					+ " EXECUTE stmt;"
-					+ " DEALLOCATE PREPARE stmt;"
-					+ "\nSET @sql = \"CREATE TEMPORARY TABLE tmpOrders SELECT id, 100 AS Income FROM tblTestBug2297_1 GROUP BY id\";"
-					+ " PREPARE stmt FROM @sql;"
-					+ " EXECUTE stmt;"
-					+ " DEALLOCATE PREPARE stmt;"
-					+ "\n SELECT id, Income FROM (SELECT e.id AS id ,COALESCE(prof.Income,0) AS Income"
-					+ "\n FROM tblTestBug2297_2 e LEFT JOIN tmpOrders prof ON e.id = prof.id"
-					+ "\n WHERE e.CreatedOn > '2006-08-01') AS Final ORDER BY id;" 
-					+ "\nEND");
-	
-			this.stmt.executeUpdate("INSERT INTO tblTestBug2297_1 (`id`,`Income`) VALUES "
-					+ "('a',4094.00),"
-					+ "('b',500.00),"
-					+ "('c',3462.17),"
-					+ " ('d',500.00),"
-					+ " ('e',600.00)");
-			
-			this.stmt.executeUpdate("INSERT INTO tblTestBug2297_2 (`id`,`CreatedOn`) VALUES "
-					+ "('d','2006-08-31 00:00:00'),"
-					+ "('e','2006-08-31 00:00:00'),"
-				+ "('b','2006-08-31 00:00:00'),"
-				+ "('c','2006-08-31 00:00:00'),"
-				+ "('a','2006-08-31 00:00:00')");
-			
-			try {
-				this.pstmt = this.conn.prepareStatement("{CALL testBug22297(?)}");
-				this.pstmt.setInt(1, 1);
-				this.rs =this.pstmt.executeQuery();
-	            
-				String[] ids = new String[] { "a", "b", "c", "d", "e"};
-	            int pos = 0;
-	            
-	            while (this.rs.next()) {
-	            	assertEquals(ids[pos++], rs.getString(1));
-	            	assertEquals(100, rs.getInt(2));
-	            }
-
-                assertEquals(this.pstmt.getClass().getName(),
-                		com.mysql.jdbc.PreparedStatement.class.getName());
-			} finally {
-				closeMemberJDBCResources();
-			}
-		}
-	}
 	
 	/**
 	 * Tests fix for BUG#25379 - INOUT parameters in CallableStatements get doubly-escaped.
@@ -926,5 +934,20 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 		} finally {
 			this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS sp_testBug25379");
 		}
+	}
+	
+	public void testBug26143() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return; // no stored procedure support
+		}
+		
+		this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBug26143");
+
+		this.stmt.executeUpdate("CREATE DEFINER=CURRENT_USER PROCEDURE testBug26143(I INT) COMMENT 'abcdefg'"
+				+ "\nBEGIN\n"
+				+ "SELECT I * 10;"
+				+ "\nEND");
+		
+		this.conn.prepareCall("{call testBug26143(?)").close();
 	}
 }

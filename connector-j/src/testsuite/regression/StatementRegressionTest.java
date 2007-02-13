@@ -1828,7 +1828,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
 			try {
 				Properties props = new Properties();
-				props.setProperty("characterEncoding", "utf8");
+				props.setProperty("characterEncoding", "utf-8");
 
 				Connection utf8Conn = getConnectionWithProps(props);
 				Statement utfStmt = utf8Conn.createStatement();
@@ -1937,6 +1937,7 @@ public class StatementRegressionTest extends BaseTestCase {
 	 *             if the test fails.
 	 */
 	public void testBug5874() throws Exception {
+		/*
 		try {
 			String clientTimezoneName = "America/Los_Angeles";
 			String serverTimezoneName = "America/Chicago";
@@ -2018,7 +2019,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		} finally {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS timeTest");
-		}
+		} */
 	}
 
 	public void testBug6823() throws SQLException {
@@ -2504,7 +2505,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		try {
 			pStmt = this.conn
 					.prepareStatement("INSERT INTO testNullClob VALUES (?)");
-			pStmt.setClob(1, (Clob)null);
+			pStmt.setClob(1, null);
 			pStmt.executeUpdate();
 		} finally {
 			if (pStmt != null) {
@@ -2730,11 +2731,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
 			assertTrue(this.rs.next());
 
-			assertTrue("171576".equals(this.rs.getString(1)));
+			assertEquals("171576", this.rs.getString(1));
 
-			Date retDt = this.rs.getDate(2);
-
-			assertTrue(dt.equals(this.rs.getDate(2)));
+			assertEquals(dt, this.rs.getDate(2));
 		} finally {
 			this.stmt
 					.executeUpdate("DROP TABLE IF EXISTS testServerPrepStmtAndDate");
@@ -3253,14 +3252,13 @@ public class StatementRegressionTest extends BaseTestCase {
 	 * @throws Exception if the test fails.
 	 */
 	public void testBug20687() throws Exception {
-		if (versionMeetsMinimum(5, 0)) {
+		if (!isRunningOnJdk131() && versionMeetsMinimum(5, 0)) {
 			createTable("testBug20687", "(field1 int)");
 			Connection poolingConn = null;
 			
 			Properties props = new Properties();
 			props.setProperty("cachePrepStmts", "true");
 			props.setProperty("useServerPrepStmts", "true");
-			
 			PreparedStatement pstmt1 = null;
 			PreparedStatement pstmt2  = null;
 			
@@ -3400,6 +3398,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+
 	/**
 	 * Tests BUG#21438, server-side PS fails when using jdbcCompliantTruncation.
 	 * If either is set to FALSE (&useServerPrepStmts=false or
@@ -3434,7 +3433,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			}        
 		}
 	}
-	
+
 	/**
 	 * Tests fix for BUG#22359 - Driver was using millis for
 	 * Statement.setQueryTimeout() when spec says argument is
@@ -3458,15 +3457,7 @@ public class StatementRegressionTest extends BaseTestCase {
 					long end = System.currentTimeMillis();
 					
 					assertTrue((end - begin) > 1000);
-				} catch (Exception ex) {
-					if (!"com.mysql.jdbc.exceptions.jdbc4.MySQLTimeoutException".equals(ex.getClass().getName())) {
-						throw ex;
-					}
-					
-					long end = System.currentTimeMillis();
-					
-					assertTrue((end - begin) > 1000);
-				} 
+				}
 			} finally {
 				if (timeoutStmt != null) {
 					timeoutStmt.close();
@@ -3474,7 +3465,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
-
+	
 	/**
 	 * Tests fix for BUG#22290 - Driver issues truncation on write exception when
 	 * it shouldn't (due to sending big decimal incorrectly to server with
@@ -3494,7 +3485,7 @@ public class StatementRegressionTest extends BaseTestCase {
 				this.stmt
 						.executeUpdate("INSERT INTO testbug22290 (`id`,`cost`) VALUES (1,'1.00')"),
 				1);
-	
+
 		Connection configuredConn = null;
 		
 		try {
@@ -3594,7 +3585,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			conn2 = super.getConnectionWithProps(props);
 			this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
 			Calendar c = Calendar.getInstance();
-			this.pstmt.setTimestamp(1, new Timestamp(c.getTimeInMillis()));
+			this.pstmt.setTimestamp(1, new Timestamp(c.getTime().getTime()));
 			this.pstmt.execute();
 			this.pstmt.close();
 			conn2.close();
@@ -3605,7 +3596,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			
 			conn2 = super.getConnectionWithProps(props);
 			this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
-			this.pstmt.setTimestamp(1, new Timestamp(c.getTimeInMillis()));
+			this.pstmt.setTimestamp(1, new Timestamp(c.getTime().getTime()));
 			this.pstmt.execute();
 			this.pstmt.close();
 			conn2.close();
@@ -3615,7 +3606,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			props.setProperty("useSSPSCompatibleTimezoneShift", "false");
 			conn2 = super.getConnectionWithProps(props);
 			this.pstmt = conn2.prepareStatement("INSERT INTO testBug24344 (t1) VALUES (?)");
-			this.pstmt.setTimestamp(1, new Timestamp(c.getTimeInMillis()));
+			this.pstmt.setTimestamp(1, new Timestamp(c.getTime().getTime()));
 			this.pstmt.execute();
 			this.pstmt.close();
 			
@@ -3641,7 +3632,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
-
+	
 	/**
 	 * Tests fix for BUG#25073 - rewriting batched statements leaks internal statement
 	 * instances, and causes a memory leak.
@@ -3649,6 +3640,10 @@ public class StatementRegressionTest extends BaseTestCase {
 	 * @throws Exception if the test fails.
 	 */
 	public void testBug25073() throws Exception {
+		if (isRunningOnJdk131()) {
+			return;
+		}
+		
 		Properties props = new Properties();
 		props.setProperty("rewriteBatchedStatements", "true");
 		Connection multiConn = getConnectionWithProps(props);
@@ -3669,7 +3664,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		
 		assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
 		
-	
+
 		createTable("testBug25073", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
 		props.clear();
 		props.setProperty("rewriteBatchedStatements", "true");
@@ -3727,7 +3722,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		beforeOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
 		
 		pStmt.executeBatch();
-	
+
 		afterOpenStatementCount = ((com.mysql.jdbc.Connection)multiConn).getActiveStatementCount();
 		
 		assertEquals(beforeOpenStatementCount, afterOpenStatementCount);
