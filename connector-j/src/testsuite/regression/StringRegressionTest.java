@@ -917,5 +917,4 @@ public class StringRegressionTest extends BaseTestCase {
 				StringUtils.indexOfIgnoreCaseRespectQuotes(0, 
 						"insert into Test (TestID) VALUES (?)", "values", '`', false));
 	}
-	}
 }
