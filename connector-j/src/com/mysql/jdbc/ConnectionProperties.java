@@ -851,13 +851,6 @@ public class ConnectionProperties implements Serializable {
 					+ "replace them with client-side emulated versions?",
 			"3.1.7", MISC_CATEGORY, Integer.MIN_VALUE);
 
-	private BooleanConnectionProperty enableDeprecatedAutoreconnect = new BooleanConnectionProperty(
-			"enableDeprecatedAutoreconnect",
-			false,
-			"Auto-reconnect functionality is deprecated starting with version 3.2, and will be removed in version 3.3. Set this "
-					+ "property to 'true' to disable the check for the feature being configured.",
-			"3.2.1", HA_CATEGORY, Integer.MIN_VALUE);
-
 	private BooleanConnectionProperty enablePacketDebug = new BooleanConnectionProperty(
 			"enablePacketDebug",
 			false,
@@ -1261,6 +1254,11 @@ public class ConnectionProperties implements Serializable {
 			"Should trace-level network protocol be logged?", "3.1.2",
 			DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 
+	private BooleanConnectionProperty treatUtilDateAsTimestamp = new BooleanConnectionProperty(
+			"treatUtilDateAsTimestamp", true,
+			"Should the driver treat java.util.Date as a TIMESTAMP for the purposes of PreparedStatement.setObject()?",
+			"5.0.5", MISC_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty transformedBitIsBoolean = new BooleanConnectionProperty(
 			"transformedBitIsBoolean",
 			false,
@@ -1274,7 +1272,7 @@ public class ConnectionProperties implements Serializable {
 			"Use zlib compression when communicating with the server (true/false)? Defaults to 'false'.",
 			"3.0.17", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
 
-	private StringConnectionProperty useConfig = new StringConnectionProperty(
+	private StringConnectionProperty useConfigs = new StringConnectionProperty(
 			"useConfigs",
 			null,
 			"Load the comma-delimited list of configuration properties before parsing the "
@@ -3713,6 +3711,26 @@ public class ConnectionProperties implements Serializable {
 	 * from datasources easier.
 	 */
 	
+	public void setGatherPerfMetrics(boolean flag) {
+		setGatherPerformanceMetrics(flag);
+	}
+	
+	public boolean getGatherPerfMetrics() {
+		return getGatherPerformanceMetrics();
+	}
+	
+	public void setUltraDevHack(boolean flag) {
+		setUseUltraDevWorkAround(flag);
+	}
+	
+	public boolean getUltraDevHack() {
+		return getUseUltraDevWorkAround();
+	}
+	
+	public void setInteractiveClient(boolean property) {
+		setIsInteractiveClient(property);
+	}
+	
 	public void setSocketFactory(String name) {
 		setSocketFactoryClassName(name);
 	}
@@ -3848,6 +3866,10 @@ public class ConnectionProperties implements Serializable {
 	}
 	
 
+	public void setTreatUtilDateAsTimestamp(boolean flag) {
+		this.treatUtilDateAsTimestamp.setValue(flag);
+	}
+
 	public boolean getUseFastDateParsing() {
 		return this.useFastDateParsing.getValueAsBoolean();
 	}
@@ -3863,4 +3885,13 @@ public class ConnectionProperties implements Serializable {
 	public void setLocalSocketAddress(String address) {
 		this.localSocketAddress.setValue(address);
 	}
+	
+	public void setUseConfigs(String configs) {
+		this.useConfigs.setValue(configs);
+}
+	
+	public String getUseConfigs() {
+		return this.useConfigs.getValueAsString();
+	}
+	
 }

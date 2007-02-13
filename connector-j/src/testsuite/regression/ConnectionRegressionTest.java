@@ -30,6 +30,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -1898,5 +1899,69 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 			
 		}
+	}
+	
+	/**
+	 * Ensures that we don't miss getters/setters for driver properties in
+	 * ConnectionProperties so that names given in documentation work with 
+	 * DataSources which will use JavaBean-style names and reflection to 
+	 * set the values (and often fail silently! when the method isn't available).
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug23626() throws Exception {
+		Class clazz = this.conn.getClass();
+		
+		DriverPropertyInfo[] dpi = new NonRegisteringDriver().getPropertyInfo(dbUrl, null);
+		StringBuffer missingSettersBuf = new StringBuffer();
+		StringBuffer missingGettersBuf = new StringBuffer();
+		
+		Class[][] argTypes = {new Class[] { String.class }, new Class[] {Integer.TYPE}, new Class[] {Boolean.TYPE}};
+		
+		for (int i = 0; i < dpi.length; i++) {
+			
+			String propertyName = dpi[i].name;
+		
+			if (propertyName.equals("HOST") || propertyName.equals("PORT") 
+					|| propertyName.equals("DBNAME") || propertyName.equals("user") ||
+					propertyName.equals("password")) {
+				continue;
+			}
+					
+			StringBuffer mutatorName = new StringBuffer("set");
+			mutatorName.append(Character.toUpperCase(propertyName.charAt(0)));
+			mutatorName.append(propertyName.substring(1));
+				
+			StringBuffer accessorName = new StringBuffer("get");
+			accessorName.append(Character.toUpperCase(propertyName.charAt(0)));
+			accessorName.append(propertyName.substring(1));
+			
+			try {
+				clazz.getMethod(accessorName.toString(), null);
+			} catch (NoSuchMethodException nsme) {
+				missingGettersBuf.append(accessorName);
+				missingGettersBuf.append("\n");
+			}
+			
+			boolean foundMethod = false;
+			
+			for (int j = 0; j < argTypes.length; j++) {
+				try {
+					clazz.getMethod(mutatorName.toString(), argTypes[j]);
+					foundMethod = true;
+					break;
+				} catch (NoSuchMethodException nsme) {
+					
+				}
+			}
+			
+			if (!foundMethod) {
+				missingSettersBuf.append(mutatorName);
+				missingSettersBuf.append("\n");
+			}
+		}
+		
+		assertEquals("Missing setters for listed configuration properties.", "", missingSettersBuf.toString());
+		assertEquals("Missing getters for listed configuration properties.", "", missingSettersBuf.toString());
 	}
 }
