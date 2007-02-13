@@ -134,7 +134,12 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  of CommunicationsException when the underyling exception is a 
 	  java.net.BindException, so that a friendlier error message is given with
 	  a little internal diagnostics.
-	   	  	  	  	  
+	  
+	- Fixed some NPEs when cached metadata was used with UpdatableResultSets.
+	
+	- The "rewriteBatchedStatements" feature can now be used with server-side
+	  prepared statements.
+	  
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 
