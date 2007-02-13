@@ -227,7 +227,17 @@ public class UpdatableResultSet extends ResultSet {
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	private void checkUpdatability() throws SQLException {
+	protected void checkUpdatability() throws SQLException {
+		if (this.fields == null) {
+			// we've been created to be populated with cached
+			// metadata, and we don't have the metadata yet,
+			// we'll be called again by 
+			// Connection.initializeResultsMetadataFromCache()
+			// when the metadata has been made available
+			
+			return;
+		}
+		
 		String singleTableName = null;
 		String catalogName = null;
 

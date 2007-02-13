@@ -423,6 +423,19 @@ public class ResultSet implements java.sql.ResultSet {
 
 		this.rowData.setOwner(this);
 
+		if (this.fields != null) {
+			initializeWithMetadata();
+		} // else called by Connection.initializeResultsMetadataFromCache() when cached
+
+		this.retainOwningStatement = false;
+		
+		if (this.connection != null) {
+			retainOwningStatement = 
+				this.connection.getRetainStatementAfterResultSetClose();
+		}
+	}
+
+	protected void initializeWithMetadata() throws SQLException {
 		if (this.profileSql || this.connection.getUseUsageAdvisor()) {
 			this.columnUsed = new boolean[this.fields.length];
 			this.pointOfOrigin = new Throwable();
@@ -456,13 +469,6 @@ public class ResultSet implements java.sql.ResultSet {
 			}
 
 			this.connection.reportNumberOfTablesAccessed(tableNamesMap.size());
-		}
-		
-		this.retainOwningStatement = false;
-		
-		if (this.connection != null) {
-			retainOwningStatement = 
-				this.connection.getRetainStatementAfterResultSetClose();
 		}
 	}
 
