@@ -3713,6 +3713,14 @@ public class ConnectionProperties implements Serializable {
 	 * from datasources easier.
 	 */
 	
+	public void setSocketFactory(String name) {
+		setSocketFactoryClassName(name);
+	}
+	
+	public String getSocketFactory() {
+		return getSocketFactoryClassName();
+	}
+	
 	public void setUseServerPrepStmts(boolean flag) {
 		setUseServerPreparedStmts(flag);
 	}

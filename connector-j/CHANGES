@@ -5,7 +5,7 @@ nn-nn-07 - Version 5.1.0 Alpha
 	
 	- Bumped JDBC Specification version number in jar-file manifest.
 	
-02-nn-06 - Version 5.0.5
+02-nn-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"
 	  (specifically cias variants of existing character sets), and inability to override
@@ -140,6 +140,11 @@ nn-nn-07 - Version 5.1.0 Alpha
 	- The "rewriteBatchedStatements" feature can now be used with server-side
 	  prepared statements.
 	  
+	- Fixed BUG#26326 - Connection property "socketFactory" wasn't exposed via
+	  correctly named mutator/accessor, causing data source implementations that
+	  use JavaBean naming conventions to set properties to fail to set the property
+	  (and in the case of SJAS, fail silently when trying to set this parameter).
+	  	  
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 
