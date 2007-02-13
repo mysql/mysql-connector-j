@@ -3015,9 +3015,10 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 				setBlob(parameterIndex, (java.sql.Blob) parameterObj);
 			} else if (parameterObj instanceof java.sql.Clob) {
 				setClob(parameterIndex, (java.sql.Clob) parameterObj);
-			} else if (parameterObj instanceof java.util.Date) {
+			} else if (this.connection.getTreatUtilDateAsTimestamp() && 
+				parameterObj instanceof java.util.Date) {
 				setTimestamp(parameterIndex, new Timestamp(
-						((java.util.Date) parameterObj).getTime()));
+				((java.util.Date) parameterObj).getTime()));
 			} else if (parameterObj instanceof BigInteger) {
 				setString(parameterIndex, parameterObj.toString());
 			} else {
