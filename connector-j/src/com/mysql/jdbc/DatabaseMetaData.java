@@ -1118,7 +1118,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						quoteChar).append(catalog).append(quoteChar)
 						.append(".").append(quoteChar).append(tableToExtract)
 						.append(quoteChar).toString();
-				rs = stmt.executeQuery(query);
+				
+				try {
+					rs = stmt.executeQuery(query);
+				} catch (SQLException sqlEx) {
+					// Table might've disappeared on us, not really an error
+					String sqlState = sqlEx.getSQLState();
+					
+					if (!"42S02".equals(sqlState) && 
+							sqlEx.getErrorCode() != MysqlErrorNumbers.ER_NO_SUCH_TABLE) {
+						throw sqlEx;
+					}
+				}
 
 				while (rs.next()) {
 					extractForeignKeyForTable(rows, rs, catalog);

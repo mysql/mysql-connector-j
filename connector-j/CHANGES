@@ -155,7 +155,12 @@ nn-nn-07 - Version 5.1.0 Alpha
 
     - Fixed BUG#22628 - Driver.getPropertyInfo() throws NullPointerException for 
       URL that only specifies host and/or port.
-      
+
+	- When extracting foreign key information from "SHOW CREATE TABLE " in 
+	  DatabaseMetaData, ignore exceptions relating to tables being missing
+	  (which could happen for cross-reference or imported-key requests, as 
+	  the list of tables is generated first, then iterated).
+	       
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 
