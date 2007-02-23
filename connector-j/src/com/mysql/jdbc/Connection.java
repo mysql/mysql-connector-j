@@ -2663,7 +2663,8 @@ public class Connection extends ConnectionProperties implements
 			try {
 				charsetName = this.indexToCharsetMapping[charsetIndex];
 
-				if ("sjis".equalsIgnoreCase(charsetName)) {
+				if ("sjis".equalsIgnoreCase(charsetName) || 
+						"MS932".equalsIgnoreCase(charsetName) /* for JDK6 */) {
 					// Use our encoding so that code pages like Cp932 work
 					if (CharsetMapping.isAliasForSjis(getEncoding())) {
 						charsetName = getEncoding();
