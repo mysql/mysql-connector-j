@@ -2027,13 +2027,17 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 */
 	public ParameterMetaData getParameterMetaData() 
 		throws SQLException {
-		if (this.parameterMetaData == null) {
+	if (this.parameterMetaData == null) {
+		if (this.connection.getGenerateSimpleParameterMetadata()) {
+			this.parameterMetaData = new MysqlParameterMetadata(this.parameterCount);
+		} else {
 			this.parameterMetaData = new MysqlParameterMetadata(
-					null, this.parameterCount);
+				null, this.parameterCount);
 		}
-		
-		return this.parameterMetaData;
 	}
+	
+	return this.parameterMetaData;
+}
 
 	ParseInfo getParseInfo() {
 		return this.parseInfo;

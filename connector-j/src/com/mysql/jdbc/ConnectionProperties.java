@@ -877,6 +877,12 @@ public class ConnectionProperties implements Serializable {
 			"Should the driver gather performance metrics, and report them via the configured logger every 'reportMetricsIntervalMillis' milliseconds?",
 			"3.1.2", DEBUGING_PROFILING_CATEGORY, 1);
 
+	private BooleanConnectionProperty generateSimpleParameterMetadata = new BooleanConnectionProperty(
+			"generateSimpleParameterMetadata", false, "Should the driver generate simplified parameter metadata for PreparedStatements when "
+			+ "no metadata is available either because the server couldn't support preparing the statement, or server-side prepared statements" +
+					" are disabled?"
+			, "5.0.5", MISC_CATEGORY, Integer.MIN_VALUE);
+	
 	private boolean highAvailabilityAsBoolean = false;
 
 	private BooleanConnectionProperty holdResultsOpenOverStatementClose = new BooleanConnectionProperty(
@@ -3865,6 +3871,9 @@ public class ConnectionProperties implements Serializable {
 		this.useSSPSCompatibleTimezoneShift.setValue(flag);
 	}
 	
+	public boolean getTreatUtilDateAsTimestamp() {
+		return this.treatUtilDateAsTimestamp.getValueAsBoolean();
+	}
 
 	public void setTreatUtilDateAsTimestamp(boolean flag) {
 		this.treatUtilDateAsTimestamp.setValue(flag);
@@ -3888,10 +3897,18 @@ public class ConnectionProperties implements Serializable {
 	
 	public void setUseConfigs(String configs) {
 		this.useConfigs.setValue(configs);
-}
+	}
 	
 	public String getUseConfigs() {
 		return this.useConfigs.getValueAsString();
 	}
 	
+	
+	public boolean getGenerateSimpleParameterMetadata() {
+		return this.generateSimpleParameterMetadata.getValueAsBoolean();
+	}
+	
+	public void setGenerateSimpleParameterMetadata(boolean flag) {
+		this.generateSimpleParameterMetadata.setValue(flag);
+	}	
 }

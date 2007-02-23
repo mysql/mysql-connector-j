@@ -1885,4 +1885,48 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Tests fix for BUG#21267, ParameterMetaData throws NullPointerException
+	 * when prepared SQL actually has a syntax error
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug21267() throws Exception {
+		if (isRunningOnJdk131()) {
+			return; // no parameter metadata on JDK-1.3.1
+		}
+		
+		createTable(
+				"bug21267",
+				"(`Col1` int(11) NOT NULL,`Col2` varchar(45) default NULL,`Col3` varchar(45) default NULL,PRIMARY KEY  (`Col1`))");
+	
+		try {
+			this.pstmt = this.conn
+					.prepareStatement("SELECT Col1, Col2,Col4 FROM bug21267 WHERE Col1=?");
+			this.pstmt.setInt(1, 1);
+	
+			java.sql.ParameterMetaData psMeta = this.pstmt
+					.getParameterMetaData();
+	
+			try {
+				assertEquals(0, psMeta.getParameterType(1));
+			} catch (SQLException sqlEx) {
+				assertEquals(SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, sqlEx.getSQLState());
+			}
+			
+			this.pstmt.close();
+			
+			Properties props = new Properties();
+			props.setProperty("generateSimpleParameterMetadata", "true");
+			
+			this.pstmt = getConnectionWithProps(props).prepareStatement("SELECT Col1, Col2,Col4 FROM bug21267 WHERE Col1=?");
+			
+			psMeta = this.pstmt.getParameterMetaData();
+			
+			assertEquals(Types.VARCHAR, psMeta.getParameterType(1));
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+
 }
