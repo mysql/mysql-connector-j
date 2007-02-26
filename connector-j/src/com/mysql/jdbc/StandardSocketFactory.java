@@ -105,7 +105,8 @@ public class StandardSocketFactory implements SocketFactory {
 			int connectTimeout = 0;
 
 			boolean wantsTimeout = (connectTimeoutStr != null && connectTimeoutStr
-					.length() > 0);
+					.length() > 0 && !connectTimeoutStr.equals("0"));
+			
 			boolean wantsLocalBind = (localSocketHostname != null && localSocketHostname
 					.length() > 0);
 
