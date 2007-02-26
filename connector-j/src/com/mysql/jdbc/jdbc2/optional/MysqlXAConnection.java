@@ -67,6 +67,8 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 
 	private Log log;
 
+	protected boolean logXaCommands;
+	
 	static {
 		HashMap temp = new HashMap();
 
@@ -83,11 +85,12 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 	/**
 	 * @param connection
 	 */
-	public MysqlXAConnection(com.mysql.jdbc.Connection connection)
+	public MysqlXAConnection(com.mysql.jdbc.Connection connection, boolean logXaCommands)
 			throws SQLException {
 		super(connection);
 		this.underlyingConnection = connection;
 		this.log = connection.getLog();
+		this.logXaCommands = logXaCommands;
 	}
 
 	/**
@@ -528,7 +531,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 		Statement stmt = null;
 
 		try {
-			if (this.log.isDebugEnabled()) {
+			if (this.logXaCommands) {
 				this.log.logDebug("Executing XA statement: " + command);
 			}
 

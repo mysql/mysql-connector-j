@@ -70,6 +70,6 @@ public class MysqlXADataSource extends MysqlDataSource implements
 			return new SuspendableXAConnection((com.mysql.jdbc.Connection) conn);
 		}
 		
-		return new MysqlXAConnection((com.mysql.jdbc.Connection) conn);
+		return new MysqlXAConnection((com.mysql.jdbc.Connection) conn, getLogXaCommands());
 	}
 }

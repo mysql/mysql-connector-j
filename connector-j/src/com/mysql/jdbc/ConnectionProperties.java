@@ -950,6 +950,13 @@ public class ConnectionProperties implements Serializable {
 			"Should queries that take longer than 'slowQueryThresholdMillis' be logged?",
 			"3.1.2", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 
+	private BooleanConnectionProperty logXaCommands = new BooleanConnectionProperty(
+			"logXaCommands",
+			false,
+			"Should the driver log XA commands sent by MysqlXaConnection to the server," +
+			" at the DEBUG level of logging?",
+			"5.0.5", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty maintainTimeStats = new BooleanConnectionProperty(
 			"maintainTimeStats",
 			true,
@@ -3911,4 +3918,12 @@ public class ConnectionProperties implements Serializable {
 	public void setGenerateSimpleParameterMetadata(boolean flag) {
 		this.generateSimpleParameterMetadata.setValue(flag);
 	}	
+
+	public boolean getLogXaCommands() {
+		return this.logXaCommands.getValueAsBoolean();
+	}
+
+	public void setLogXaCommands(boolean flag) {
+		this.logXaCommands.setValue(flag);
+	}
 }

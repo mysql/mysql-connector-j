@@ -40,7 +40,8 @@ XAConnection, XAResource {
 		XAConnection conn = (XAConnection)XIDS_TO_PHYSICAL_CONNECTIONS.get(xid);
 
 		if (conn == null) {
-			conn = new MysqlXAConnection(connectionToWrap);
+			conn = new MysqlXAConnection(connectionToWrap,
+					connectionToWrap.getLogXaCommands());
 		}
 		
 		return conn;
