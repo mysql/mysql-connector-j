@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2006 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -51,6 +51,12 @@ public class MysqlDataSourceFactory implements ObjectFactory {
 	protected final static String POOL_DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource";
 
 	/**
+	 * The class name for a MysqlXADataSource
+	 */
+	 
+	protected final static String XA_DATA_SOURCE_CLASS_NAME = "com.mysql.jdbc.jdbc2.optional.MysqlXADataSource";
+	
+	/**
 	 * DOCUMENT ME!
 	 * 
 	 * @param refObj
@@ -72,7 +78,8 @@ public class MysqlDataSourceFactory implements ObjectFactory {
 
 		if ((className != null)
 				&& (className.equals(DATA_SOURCE_CLASS_NAME) || className
-						.equals(POOL_DATA_SOURCE_CLASS_NAME))) {
+						.equals(POOL_DATA_SOURCE_CLASS_NAME) ||
+						className.equals(XA_DATA_SOURCE_CLASS_NAME))) {
 			MysqlDataSource dataSource = null;
 
 			try {
