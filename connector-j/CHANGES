@@ -170,7 +170,11 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  
 	- Fixed logging of XA commands sent to server, it's now configurable
 	  via "logXaCommands" property (defaults to "false").
-	  
+
+	- Fixed issue where XADataSources couldn't be bound into JNDI,
+	  as the DataSourceFactory didn't know how to create instances
+	  of them.
+	  	  
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 

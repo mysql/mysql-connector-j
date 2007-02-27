@@ -43,6 +43,7 @@ import javax.sql.DataSource;
 import javax.sql.PooledConnection;
 
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 
 /**
  * 
@@ -201,7 +202,25 @@ public class DataSourceTest extends BaseTestCase {
 			pooledConnection.getConnection().close();
 		}
 	}
+	
+	/**
+	 * Tests whether XADataSources can be bound into JNDI
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testXADataSource() throws Exception {
+	
+		MysqlXADataSource ds = new MysqlXADataSource();
+		ds.setUrl(dbUrl);
+		
+		String name = "XA";
+		this.ctx.rebind(name, ds);
 
+		Object result = this.ctx.lookup(name);
+
+		assertNotNull("XADataSource not bound into JNDI", result);
+	}
+	
 	/**
 	 * This method is separated from the rest of the example since you normally
 	 * would NOT register a JDBC driver in your code. It would likely be
