@@ -31,7 +31,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.math.BigDecimal;
-
+import java.rmi.server.UID;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Date;
@@ -43,7 +43,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
-
 import java.util.Locale;
 import java.util.Properties;
 
@@ -1319,11 +1318,14 @@ public class StatementsTest extends BaseTestCase {
 			multiStmt.addBatch("UPDATE testStatementRewriteBatch SET field1=6 WHERE field1=2 OR field1=3");
 
 			int[] counts = multiStmt.executeBatch();
-			ResultSet genKeys = multiStmt.getGeneratedKeys();
+			
+			if (!isRunningOnJdk131()) {
+				ResultSet genKeys = multiStmt.getGeneratedKeys();
 
-			for (int i = 1; i < 5; i++) {
-				genKeys.next();
-				assertEquals(i, genKeys.getInt(1));
+				for (int i = 1; i < 5; i++) {
+					genKeys.next();
+					assertEquals(i, genKeys.getInt(1));
+				}
 			}
 
 			assertEquals(counts.length, 6);
@@ -1356,11 +1358,14 @@ public class StatementsTest extends BaseTestCase {
 			}
 
 			multiStmt.executeBatch();
-			genKeys = multiStmt.getGeneratedKeys();
+			
+			if (!isRunningOnJdk131()) {
+				ResultSet genKeys = multiStmt.getGeneratedKeys();
 
-			for (int i = 1; i < 1000; i++) {
-				genKeys.next();
-				assertEquals(i, genKeys.getInt(1));
+				for (int i = 1; i < 1000; i++) {
+					genKeys.next();
+					assertEquals(i, genKeys.getInt(1));
+				}
 			}
 
 			createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
@@ -1369,20 +1374,26 @@ public class StatementsTest extends BaseTestCase {
 			props.setProperty("useServerPrepStmts", j == 0 ? "true" : "false");
 			props.setProperty("rewriteBatchedStatements", "true");
 			multiConn = getConnectionWithProps(props);
-			PreparedStatement pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", 
-					Statement.RETURN_GENERATED_KEYS);
+			
+			PreparedStatement pStmt = null;
+			
+			if (!isRunningOnJdk131()) {
+				pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", 
+						Statement.RETURN_GENERATED_KEYS);
+	
+				for (int i = 0; i < 1000; i++) {
+					pStmt.setInt(1, i);
+					pStmt.addBatch();
+				}
+	
+				pStmt.executeBatch();
+			
+				ResultSet genKeys = pStmt.getGeneratedKeys();
 
-			for (int i = 0; i < 1000; i++) {
-				pStmt.setInt(1, i);
-				pStmt.addBatch();
-			}
-
-			pStmt.executeBatch();
-			genKeys = pStmt.getGeneratedKeys();
-
-			for (int i = 1; i < 1000; i++) {
-				genKeys.next();
-				assertEquals(i, genKeys.getInt(1));
+				for (int i = 1; i < 1000; i++) {
+					genKeys.next();
+					assertEquals(i, genKeys.getInt(1));
+				}
 			}
 
 			createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
@@ -1390,20 +1401,26 @@ public class StatementsTest extends BaseTestCase {
 			props.setProperty("rewriteBatchedStatements", "true");
 			props.setProperty("sessionVariables", "max_allowed_packet=1024");
 			multiConn = getConnectionWithProps(props);
-			pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", 
+			
+			if (!isRunningOnJdk131()) {
+				
+				pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", 
 					Statement.RETURN_GENERATED_KEYS);
 
-			for (int i = 0; i < 1000; i++) {
-				pStmt.setInt(1, i);
-				pStmt.addBatch();
-			}
+				for (int i = 0; i < 1000; i++) {
+					pStmt.setInt(1, i);
+					pStmt.addBatch();
+				}
 
-			pStmt.executeBatch();
-			genKeys = pStmt.getGeneratedKeys();
+				pStmt.executeBatch();
+			
+			
+				ResultSet genKeys = pStmt.getGeneratedKeys();
 
-			for (int i = 1; i < 1000; i++) {
-				genKeys.next();
-				assertEquals(i, genKeys.getInt(1));
+				for (int i = 1; i < 1000; i++) {
+					genKeys.next();
+					assertEquals(i, genKeys.getInt(1));
+				}
 			}
 			
 			Object[][] differentTypes = new Object[1000][14];
@@ -1731,6 +1748,4 @@ public class StatementsTest extends BaseTestCase {
 		}
 
 	}
-
-
 }

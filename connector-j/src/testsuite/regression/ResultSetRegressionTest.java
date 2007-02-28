@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as
@@ -51,6 +51,7 @@ import testsuite.BaseTestCase;
 import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.NotUpdatable;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.log.StandardLogger;
 
 /**
@@ -3741,6 +3742,60 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			} catch (SQLException sqlEx) {
 				assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());	
 			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+	
+	/**
+	 * Tests for a server bug - needs to be revisited when the server is fixed.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug24710() throws Exception {
+		if (!versionMeetsMinimum(6, 0)) {
+			return;
+		}
+
+		createTable("testBug24710", "(x varbinary(256))");
+
+		try {
+			this.stmt
+					.executeUpdate("insert into testBug24710(x) values(0x0000000000),"
+							+ "(0x1111111111),"
+							+ "(0x2222222222),"
+							+ "(0x3333333333),"
+							+ "(0x4444444444),"
+							+ "(0x5555555555),"
+							+ "(0x6666666666),"
+							+ "(0x7777777777),"
+							+ "(0x8888888888),"
+							+ "(0x9999999999),"
+							+ "(0xaaaaaaaaaa),"
+							+ "(0xbbbbbbbbbb),"
+							+ "(0xcccccccccc),"
+							+ "(0xdddddddddd),"
+							+ "(0xeeeeeeeeee),"
+							+ "(0xffffffffff)");
+
+			this.rs = this.stmt
+					.executeQuery("select t1.x t1x,(select x from testBug24710 t2 where t2.x=t1.x) t2x from testBug24710 t1");
+
+			assertEquals(Types.VARBINARY, this.rs.getMetaData()
+					.getColumnType(1));
+			assertEquals(Types.VARBINARY, this.rs.getMetaData()
+					.getColumnType(2));
+
+			this.rs = ((com.mysql.jdbc.Connection) this.conn)
+					.serverPrepare(
+							"select t1.x t1x,(select x from testBug24710 t2 where t2.x=t1.x) t2x from testBug24710 t1")
+					.executeQuery();
+
+			assertEquals(Types.VARBINARY, this.rs.getMetaData()
+					.getColumnType(1));
+			assertEquals(Types.VARBINARY, this.rs.getMetaData()
+					.getColumnType(2));
 		} finally {
 			closeMemberJDBCResources();
 		}

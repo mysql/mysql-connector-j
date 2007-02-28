@@ -3132,14 +3132,33 @@ public class StatementRegressionTest extends BaseTestCase {
 						+ "(10003, 'data3')," + "(10004999, 'data4'),"
 						+ "(10005, 'data5')");
 			} catch (SQLException sqlEx) {
-				assertEquals("01004", sqlEx.getSQLState());
-				assertEquals("01004", sqlEx.getNextException().getSQLState());
+				String sqlStateToCompare = "01004";
+				
+				if (isJdbc4()) {
+					sqlStateToCompare = "22001";
+				}
+
+				assertEquals(sqlStateToCompare, sqlEx.getSQLState());
+				assertEquals(sqlStateToCompare, sqlEx.getNextException().getSQLState());
 
 				SQLWarning sqlWarn = this.stmt.getWarnings();
 				assertEquals("01000", sqlWarn.getSQLState());
 				assertEquals("01000", sqlWarn.getNextWarning().getSQLState());
 			}
 		}
+	}
+
+	protected boolean isJdbc4() {
+		boolean isJdbc4;
+		
+		try {
+			Class.forName("java.sql.Wrapper");
+			isJdbc4 = true;
+		} catch (Throwable t) {
+			isJdbc4 = false;
+		}
+		
+		return isJdbc4;
 	}
 
 	/**
@@ -3573,6 +3592,10 @@ public class StatementRegressionTest extends BaseTestCase {
 	 */
 	public void testBug24344() throws Exception {
 		
+		if (!versionMeetsMinimum(4, 1)) {
+			return; // need SSPS
+		}
+		
 		super.createTable("testBug24344", 
 				"(i INT AUTO_INCREMENT, t1 DATETIME, PRIMARY KEY (i)) ENGINE = MyISAM");
 		
@@ -3817,6 +3840,96 @@ public class StatementRegressionTest extends BaseTestCase {
 			if (multiConn != null) {
 				multiConn.close();
 			}
+		}
+	}
+
+	public void testBug25606() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
+		createTable("testtable", "(c0 int not null) engine=myisam");
+		this.stmt
+				.execute("alter table testtable add unique index testtable_i(c0)");
+
+		Properties props = new Properties();
+		props.setProperty("allowMultiQueries", "true");
+
+		Connection multiConn = getConnectionWithProps(props);
+
+		multiConn
+				.createStatement()
+				.execute(
+						"create temporary table testtable_td(_batch int not null,c0 int not null)");
+		multiConn.createStatement().execute(
+				"create unique index testtable_td_b on testtable_td(_batch)");
+
+		PreparedStatement ps;
+		int num_changes = 0;
+
+		ps = multiConn.prepareStatement("insert into testtable(c0) values(?)");
+		while (num_changes < 10000) {
+			ps.setInt(1, num_changes);
+
+			ps.addBatch();
+
+			num_changes++;
+
+			if ((num_changes % 1000) == 0) {
+				ps.executeBatch();
+			}
+		}
+
+		ps.close();
+
+		int num_deletes = 3646;
+
+		int i = 0;
+		ps = multiConn
+				.prepareStatement("insert into testtable_td(_batch,c0) values(?,?)");
+		while (i < num_deletes) {
+			ps.setInt(1, i);
+			ps.setInt(2, i);
+
+			ps.addBatch();
+
+			i++;
+
+			if ((i % 1000) == 0) {
+				ps.executeBatch();
+			}
+		}
+
+		ps.executeBatch();
+
+		ps.close();
+
+		String sql = "lock tables testtable write;\n"
+				+ "delete testtable from testtable_td force index(testtable_td_b) straight_join testtable on testtable.c0=testtable_td.c0 where testtable_td._batch>=? and testtable_td._batch<?;\n"
+				+ "unlock tables;";
+
+		ps = multiConn.prepareStatement(sql);
+
+		int bsize = 100;
+
+		for (int start_index = 0, end_index = Math.min(bsize, num_deletes); start_index < num_changes && start_index < 3646; start_index = end_index, end_index = Math
+				.min(start_index + bsize, num_deletes)) {
+			ps.clearParameters();
+			ps.setInt(1, start_index);
+			ps.setInt(2, end_index);
+			ps.execute();
+
+			//ignore the results from the "lock_tables"
+			int c1 = ps.getUpdateCount();
+			boolean b1 = ps.getMoreResults();
+
+			//should always be the results from the "delete"
+			int nrows_changed = ps.getUpdateCount();
+
+			if (nrows_changed == -1)
+				throw new SQLException("nrows_changed==-1"); //????
+
+			bsize *= 4;
 		}
 	}
 }
