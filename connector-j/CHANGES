@@ -5,7 +5,7 @@ nn-nn-07 - Version 5.1.0 Alpha
 	
 	- Bumped JDBC Specification version number in jar-file manifest.
 	
-02-nn-07 - Version 5.0.5
+03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"
 	  (specifically cias variants of existing character sets), and inability to override
@@ -175,6 +175,10 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  as the DataSourceFactory didn't know how to create instances
 	  of them.
 	  	  
+	- Fixed issue where XADataSources couldn't be bound into JNDI,
+	  as the DataSourceFactory didn't know how to create instances
+	  of them.
+	  
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 

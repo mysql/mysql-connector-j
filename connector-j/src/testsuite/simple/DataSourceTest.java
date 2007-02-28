@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -202,7 +202,7 @@ public class DataSourceTest extends BaseTestCase {
 			pooledConnection.getConnection().close();
 		}
 	}
-	
+
 	/**
 	 * Tests whether XADataSources can be bound into JNDI
 	 * 
