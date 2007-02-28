@@ -1150,6 +1150,10 @@ public class ConnectionProperties implements Serializable {
 			"5.0.1",
 			HA_CATEGORY,
 			Integer.MIN_VALUE);
+	
+	private IntegerConnectionProperty resultSetSizeThreshold = new IntegerConnectionProperty("resultSetSizeThreshold", 100,
+			"If the usage advisor is enabled, how many rows should a result set contain before the driver warns that it "
+			+ " is suspiciously large?", "5.0.5", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 			
 	private BooleanConnectionProperty retainStatementAfterResultSetClose = new BooleanConnectionProperty(
 			"retainStatementAfterResultSetClose",
@@ -3926,4 +3930,13 @@ public class ConnectionProperties implements Serializable {
 	public void setLogXaCommands(boolean flag) {
 		this.logXaCommands.setValue(flag);
 	}
+
+	public int getResultSetSizeThreshold() {
+		return this.resultSetSizeThreshold.getValueAsInt();
+	}
+
+	public void setResultSetSizeThreshold(int threshold) {
+		this.resultSetSizeThreshold.setValue(threshold);
+	}
+	
 }

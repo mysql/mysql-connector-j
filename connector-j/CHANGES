@@ -179,6 +179,10 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  as the DataSourceFactory didn't know how to create instances
 	  of them.
 	  
+	- Usage advisor will now issue warnings for result sets with large numbers
+	  of rows (size configured by "resultSetSizeThreshold" property, default
+	  value is 100).
+	  	  
 10-20-06 - Version 5.0.4
 
     - Fixed BUG#21379 - column names don't match metadata in cases 

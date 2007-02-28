@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -27,7 +27,9 @@ package testsuite.simple;
 import testsuite.BaseTestCase;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.sql.Connection;
@@ -46,6 +48,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import com.mysql.jdbc.ConnectionPropertiesTransform;
+import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
@@ -657,7 +661,7 @@ public class ConnectionTest extends BaseTestCase {
 	public void testNonStandardConnectionCollation() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
 			String collationToSet = "utf8_bin";
-			String characterSet = "utf8";
+			String characterSet = "utf-8";
 
 			Properties props = new Properties();
 			props.setProperty("connectionCollation", collationToSet);
@@ -1274,7 +1278,35 @@ public class ConnectionTest extends BaseTestCase {
     	}
     	
     	assertTrue("At least one connection was made with the localSocketAddress set", didOneWork);
-    	assertTrue("At least one connection failed with localSocketAddress set", didOneFail);
+    	
+    	NonRegisteringDriver d = new NonRegisteringDriver();
+    	
+    	String hostname = d.host(d.parseURL(dbUrl, null));
+    	
+    	if (!hostname.startsWith(":") && !hostname.startsWith("localhost")) {
+    		
+    		int indexOfColon = hostname.indexOf(":");
+    		
+    		if (indexOfColon != -1) {
+    			hostname = hostname.substring(0, indexOfColon);
+    		}
+    		
+    		boolean isLocalIf = false;
+    		
+    		isLocalIf = (null != NetworkInterface.getByName(hostname));
+    		
+    		if (!isLocalIf) {
+    			try {
+    				isLocalIf = (null != NetworkInterface.getByInetAddress(InetAddress.getByName(hostname)));
+    			} catch (Throwable t) {
+    				isLocalIf = false;
+    			}
+    		}
+    		
+    		if (!isLocalIf) {
+    			assertTrue("At least one connection didn't fail with localSocketAddress set", didOneFail);
+    		}
+    	}
     }
     
     class SpawnedWorkerCounter {
@@ -1320,6 +1352,36 @@ public class ConnectionTest extends BaseTestCase {
     		}
     		
     		counter.decrementWorkerCount();
+    	}
+    }
+    
+    public void testUsageAdvisorTooLargeResultSet() throws Exception {
+    	Connection uaConn = null;
+    	
+    	PrintStream stderr = System.err;
+    	
+    	StringBuffer logBuf = new StringBuffer();
+    	
+    	StandardLogger.bufferedLog = logBuf;
+    	
+    	try {
+    		Properties props = new Properties();
+    		props.setProperty("useUsageAdvisor", "true");
+    		props.setProperty("resultSetSizeThreshold", "4");
+    		props.setProperty("logger", "StandardLogger");
+    		
+    		uaConn = getConnectionWithProps(props);
+    		
+    		assertTrue("Result set threshold message not present", 
+    				logBuf.toString().indexOf("larger than \"resultSetSizeThreshold\" of 4 rows") != -1);
+    	} finally {
+    		System.setErr(stderr);
+    		
+    		closeMemberJDBCResources();
+    		
+    		if (uaConn != null) {
+    			uaConn.close();
+    		}
     	}
     }
 }

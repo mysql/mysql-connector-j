@@ -7681,13 +7681,11 @@ public class ResultSet implements java.sql.ResultSet {
 		}
 
 		try {
-			if (this.useUsageAdvisor) {
-				if (!calledExplicitly) {
-					String message = Messages
-							.getString("ResultSet.ResultSet_implicitly_closed_by_driver._150") //$NON-NLS-1$
-							+ Messages
-									.getString("ResultSet._n_nYou_should_close_ResultSets_explicitly_from_your_code_to_free_up_resources_in_a_more_efficient_manner._151"); //$NON-NLS-1$
-
+if (this.useUsageAdvisor) {
+				
+				// Report on result set closed by driver instead of application
+				
+				if (!calledExplicitly) {		
 					this.eventSink.consumeEvent(new ProfilerEvent(
 							ProfilerEvent.TYPE_WARN, "",
 							(this.owningStatement == null) ? "N/A"
@@ -7696,49 +7694,69 @@ public class ResultSet implements java.sql.ResultSet {
 							(this.owningStatement == null) ? (-1)
 									: this.owningStatement.getId(),
 							this.resultId, System.currentTimeMillis(), 0, null,
-							this.pointOfOrigin, message));
+							this.pointOfOrigin, Messages.getString(
+									"ResultSet.ResultSet_implicitly_closed_by_driver"))); //$NON-NLS-1$
 				}
 
-				if (this.rowData instanceof RowDataStatic && !isLast()
-						&& !isAfterLast() && (this.rowData.size() != 0)) {
-					StringBuffer messageBuf = new StringBuffer(
-							Messages
-									.getString("ResultSet.Possible_incomplete_traversal_of_result_set._Cursor_was_left_on_row__154")); //$NON-NLS-1$
-					messageBuf.append(getRow());
-					messageBuf.append(Messages.getString("ResultSet._of__155")); //$NON-NLS-1$
-					messageBuf.append(this.rowData.size());
-					messageBuf
-							.append(Messages
-									.getString("ResultSet._rows_when_it_was_closed._156")); //$NON-NLS-1$
-					messageBuf
-							.append(Messages
-									.getString("ResultSet._n_nYou_should_consider_re-formulating_your_query_to_return_only_the_rows_you_are_interested_in_using._157")); //$NON-NLS-1$
+				if (this.rowData instanceof RowDataStatic) {
+					
+					// Report on possibly too-large result sets
+					
+					if (this.rowData.size() > this.connection
+							.getResultSetSizeThreshold()) {
+						this.eventSink
+								.consumeEvent(new ProfilerEvent(
+										ProfilerEvent.TYPE_WARN,
+										"",
+										(this.owningStatement == null) ? Messages
+												.getString("ResultSet.N/A_159")
+												: this.owningStatement.currentCatalog, //$NON-NLS-1$
+										this.connectionId,
+										(this.owningStatement == null) ? (-1)
+												: this.owningStatement.getId(),
+										this.resultId,
+										System.currentTimeMillis(),
+										0,
+										null,
+										this.pointOfOrigin,
+										Messages
+												.getString(
+														"ResultSet.Too_Large_Result_Set",
+														new Object[] {
+																new Integer(
+																		this.rowData
+																				.size()),
+																new Integer(
+																		this.connection
+																				.getResultSetSizeThreshold()) })));
+					}
+					
+					if (!isLast() && !isAfterLast() && (this.rowData.size() != 0)) {
 
-					this.eventSink.consumeEvent(new ProfilerEvent(
-							ProfilerEvent.TYPE_WARN, "",
-							(this.owningStatement == null) ? Messages
-									.getString("ResultSet.N/A_159")
-									: this.owningStatement.currentCatalog, //$NON-NLS-1$
-							this.connectionId,
-							(this.owningStatement == null) ? (-1)
-									: this.owningStatement.getId(),
-							this.resultId, System.currentTimeMillis(), 0, null,
-							this.pointOfOrigin, messageBuf.toString()));
+						this.eventSink.consumeEvent(new ProfilerEvent(
+								ProfilerEvent.TYPE_WARN, "",
+								(this.owningStatement == null) ? Messages
+										.getString("ResultSet.N/A_159")
+										: this.owningStatement.currentCatalog, //$NON-NLS-1$
+								this.connectionId,
+								(this.owningStatement == null) ? (-1)
+										: this.owningStatement.getId(),
+								this.resultId, System.currentTimeMillis(), 0, null,
+								this.pointOfOrigin, Messages.getString(
+										"ResultSet.Possible_incomplete_traversal_of_result_set", //$NON-NLS-1$
+										new Object[] {new Integer(getRow()), new Integer(this.rowData.size())})));
+					}
 				}
 
 				//
 				// Report on any columns that were selected but
 				// not referenced
 				//
+				
 				if (this.columnUsed.length > 0 && !this.rowData.wasEmpty()) {
 					StringBuffer buf = new StringBuffer(
 							Messages
-									.getString("ResultSet.The_following_columns_were__160")); //$NON-NLS-1$
-					buf
-							.append(Messages
-									.getString("ResultSet._part_of_the_SELECT_statement_for_this_result_set,_but_were_161")); //$NON-NLS-1$
-					buf.append(Messages
-							.getString("ResultSet._never_referenced___162")); //$NON-NLS-1$
+									.getString("ResultSet.The_following_columns_were_never_referenced")); //$NON-NLS-1$
 
 					boolean issueWarn = false;
 
