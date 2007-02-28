@@ -1129,6 +1129,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							sqlEx.getErrorCode() != MysqlErrorNumbers.ER_NO_SUCH_TABLE) {
 						throw sqlEx;
 					}
+					
+					continue;
 				}
 
 				while (rs.next()) {
