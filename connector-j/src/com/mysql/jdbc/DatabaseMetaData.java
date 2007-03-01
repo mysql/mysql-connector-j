@@ -258,10 +258,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				} else if (typeInfo.indexOf(",") != -1) {
 					// Numeric with decimals
 					this.columnSize = new Integer(typeInfo.substring((typeInfo
-							.indexOf("(") + 1), (typeInfo.indexOf(","))));
+							.indexOf("(") + 1), (typeInfo.indexOf(","))).trim());
 					this.decimalDigits = new Integer(typeInfo.substring(
 							(typeInfo.indexOf(",") + 1),
-							(typeInfo.indexOf(")"))));
+							(typeInfo.indexOf(")"))).trim());
 				} else {
 					this.columnSize = null;
 					this.decimalDigits = null;
@@ -281,7 +281,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						}
 
 						this.columnSize = new Integer(typeInfo.substring(
-								(typeInfo.indexOf("(") + 1), endParenIndex));
+								(typeInfo.indexOf("(") + 1), endParenIndex).trim());
 
 						// Adjust for pseudo-boolean
 						if (conn.getTinyInt1isBit()
