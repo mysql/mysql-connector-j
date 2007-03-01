@@ -11,6 +11,9 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  leading to stored procedures not being able to return results. Thanks
 	  to Don Cohen for the bug report, testcase and patch.
 	  
+	- Fixed BUG#26592 - PreparedStatement is not closed in 
+	  BlobFromLocator.getBytes().
+	  	  
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

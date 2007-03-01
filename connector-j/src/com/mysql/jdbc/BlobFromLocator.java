@@ -273,7 +273,6 @@ public class BlobFromLocator implements java.sql.Blob {
 	 *             if a database error occurs
 	 */
 	public byte[] getBytes(long pos, int length) throws SQLException {
-		java.sql.ResultSet blobRs = null;
 		java.sql.PreparedStatement pStmt = null;
 
 		try {
@@ -282,18 +281,18 @@ public class BlobFromLocator implements java.sql.Blob {
 
 			return getBytesInternal(pStmt, pos, length);
 		} finally {
-			if (blobRs != null) {
+			if (pStmt != null) {
 				try {
-					blobRs.close();
+					pStmt.close();
 				} catch (SQLException sqlEx) {
 					; // do nothing
 				}
 
-				blobRs = null;
+				pStmt = null;
 			}
 		}
 	}
-
+	
 	/**
 	 * Returns the number of bytes in the BLOB value designated by this Blob
 	 * object.
