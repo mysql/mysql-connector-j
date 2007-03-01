@@ -444,6 +444,7 @@
 
 		<junit printSummary="yes" 
 			fork="on" 
+			forkmode="once"
 			jvm="${com.mysql.jdbc.testsuite.jvm}"
 			errorProperty="tests.failed"
 			failureProperty="tests.failed">
@@ -468,7 +469,7 @@
 
 			<formatter type="xml"/>
 
-			<batchtest fork="yes" todir="${junit.unitregress.results}">
+			<batchtest todir="${junit.unitregress.results}" >
 				<fileset dir="${buildDir}/${fullProdName}">
 					<include name="**/*Test.java" />
 					<exclude name="**/perf/*.java"/>
@@ -559,7 +560,8 @@
 		<mkdir dir="${junit.compliance.results}"/>
 		<mkdir dir="${junit.compliance.results}/report"/>
 
-		<junit printsummary="yes" jvm="${com.mysql.jdbc.testsuite.jvm}"
+		<junit fork="on" forkmode="once"
+		    printsummary="yes" jvm="${com.mysql.jdbc.testsuite.jvm}"
 			errorProperty="tests.compliance.failed"
 			failureProperty="tests.compliance.failed">
 			<jvmarg value="-Xmx256m"/>
@@ -584,21 +586,21 @@
 
 			<formatter type="xml"/>
 
-			<test fork="yes" todir="${junit.compliance.results}" 
+			<test todir="${junit.compliance.results}" 
 		    		name="com.mysql.jdbc.compliance.tests.BatchUpdateTest"/>
-			<test fork="yes" todir="${junit.compliance.results}" 
+			<test todir="${junit.compliance.results}" 
 		    		name="com.mysql.jdbc.compliance.tests.ConnectionTest"/>
-			<test fork="yes" todir="${junit.compliance.results}" 
+			<test todir="${junit.compliance.results}" 
 		    		name="com.mysql.jdbc.compliance.tests.DatabaseMetaDataTest"/>
-			<test fork="yes" todir="${junit.compliance.results}" 
+			<test todir="${junit.compliance.results}" 
 		    		name="com.mysql.jdbc.compliance.tests.EscapeSyntaxTest"/>
-			<test fork="yes" todir="${junit.compliance.results}" 
+			<test todir="${junit.compliance.results}" 
 		    		name="com.mysql.jdbc.compliance.tests.PreparedStatementTest"/>
-			<test fork="yes" todir="${junit.compliance.results}" 
+			<test todir="${junit.compliance.results}" 
 		    		name="com.mysql.jdbc.compliance.tests.ResultSetMetadataTest"/>
-			<test fork="yes" todir="${junit.compliance.results}" 
+			<test todir="${junit.compliance.results}" 
 		    		name="com.mysql.jdbc.compliance.tests.ResultSetTest"/>
-			<test fork="yes" todir="${junit.compliance.results}" 
+			<test todir="${junit.compliance.results}" 
 		    		name="com.mysql.jdbc.compliance.tests.StatementTest"/>
 		</junit>
 
