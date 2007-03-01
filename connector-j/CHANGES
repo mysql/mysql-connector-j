@@ -5,6 +5,12 @@ nn-nn-07 - Version 5.1.0 Alpha
 	
 	- Bumped JDBC Specification version number in jar-file manifest.
 	
+03-nn-07 - Version 5.0.6
+
+	- Fixed BUG#25545 - Client options not sent correctly when using SSL,
+	  leading to stored procedures not being able to return results. Thanks
+	  to Don Cohen for the bug report, testcase and patch.
+	  
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

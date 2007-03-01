@@ -3885,7 +3885,7 @@ class MysqlIO {
 
         Buffer packet = new Buffer(packLength);
 
-        if ((this.clientParam & CLIENT_RESERVED) != 0) {
+        if (this.use41Extensions) {
             packet.writeLong(this.clientParam);
         } else {
             packet.writeInt((int) this.clientParam);
@@ -3904,7 +3904,7 @@ class MysqlIO {
                 secureAuth411(null, packLength, user, password, database, true);
             }
         } else {
-            if ((this.clientParam & CLIENT_RESERVED) != 0) {
+            if (this.use41Extensions) {
                 packet.writeLong(this.clientParam);
                 packet.writeLong(this.maxThreeBytes);
             } else {

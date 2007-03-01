@@ -1986,4 +1986,48 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		assertEquals("Missing setters for listed configuration properties.", "", missingSettersBuf.toString());
 		assertEquals("Missing getters for listed configuration properties.", "", missingSettersBuf.toString());
 	}
+	
+	/**
+	 * Tests fix for BUG#25545 - Client flags not sent correctly during handshake
+	 * when using SSL.
+	 * 
+	 * Requires test certificates from testsuite/ssl-test-certs to be installed
+	 * on the server being tested.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug25545() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
+		if (isRunningOnJdk131()) {
+			return;
+		}
+	
+		createProcedure("testBug25545", "() BEGIN SELECT 1; END");
+		
+		String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+		
+		System.setProperty("javax.net.ssl.keyStore", trustStorePath);
+		System.setProperty("javax.net.ssl.keyStorePassword","password");
+		System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+		System.setProperty("javax.net.ssl.trustStorePassword","password");
+		
+		
+		Connection sslConn = null;
+		
+		try {
+			Properties props = new Properties();
+			props.setProperty("useSSL", "true");
+			props.setProperty("requireSSL", "true");
+			
+			sslConn = getConnectionWithProps(props);
+			sslConn.prepareCall("{ call testBug25545()}").execute();
+		} finally {
+			if (sslConn != null) {
+				sslConn.close();
+			}
+		}
+	}
 }
