@@ -3966,4 +3966,49 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Tests fix for BUG#26173 - fetching rows via cursor retrieves
+	 * corrupted data.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug26173() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+	
+		 createTable("testBug26173", 
+				 "(fkey int, fdate date, fprice decimal(15, 2), fdiscount decimal(5,3))");
+         this.stmt.executeUpdate("insert into testBug26173 values (1, '2007-02-23', 99.9, 0.02)");
+		 
+         Connection fetchConn = null;
+         Statement stmtRead = null;
+         
+         Properties props = new Properties();
+         props.setProperty("useServerPrepStmts", "true");
+         props.setProperty("useCursorFetch", "true");
+         
+         try {
+        	 
+        	 fetchConn = getConnectionWithProps(props);
+        	 stmtRead = fetchConn.createStatement();
+             stmtRead.setFetchSize(1000);
+          
+             this.rs = stmtRead.executeQuery("select extract(year from fdate) as fyear, fprice * (1 - fdiscount) as fvalue from testBug26173");
+            
+             assertTrue(this.rs.next());
+             assertEquals(2007, this.rs.getInt(1));
+             assertEquals("97.90200", this.rs.getString(1));          
+         } finally {
+        	 if (stmtRead != null) {
+        		 stmtRead.close();
+        	 }
+        	 
+        	 if (fetchConn != null) {
+        		 fetchConn.close();
+        	 }
+        	 
+        	 closeMemberJDBCResources();
+         }
+	}
 }

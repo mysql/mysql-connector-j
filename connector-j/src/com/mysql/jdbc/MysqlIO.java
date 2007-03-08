@@ -410,12 +410,12 @@ class MysqlIO {
 				RowData rows = new CursorRowProvider(
 					this,
 					prepStmt,
-					((com.mysql.jdbc.ResultSetMetaData) prepStmt.getMetaData()).fields);
+					fields);
 
 				ResultSet rs = buildResultSetWithRows(
 					callingStatement,
 					catalog,
-					((com.mysql.jdbc.ResultSetMetaData) prepStmt.getMetaData()).fields,
+					fields,
 					rows, resultSetType, resultSetConcurrency, isBinaryEncoded);
 				
 				if (usingCursor) {

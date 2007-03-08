@@ -18,7 +18,13 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  stored procedure parameters declaration causes NumberFormatException to 
 	  be thrown when calling stored procedure on JDK-1.5 or newer, as the Number
 	  classes in JDK-1.5+ are whitespace intolerant.
-	 	  
+	  
+    - Fixed BUG#26173 - When useCursorFetch=true, sometimes server would return
+	  new, more exact metadata during the execution of the server-side prepared
+	  statement that enables this functionality, which the driver ignored (using
+	  the original metadata returned during prepare()), causing corrupt reading
+	  of data due to type mismatch when the actual rows were returned.
+	  	 	  
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"
