@@ -47,10 +47,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
-import com.mysql.jdbc.jdbc4.NClob;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 /**
  * Representation of stored procedures for JDBC
@@ -61,7 +59,7 @@ import com.mysql.jdbc.jdbc4.NClob;
  */
 public class CallableStatement extends PreparedStatement implements
 		java.sql.CallableStatement {
-	class CallableStatementParam {
+	protected class CallableStatementParam {
 		int desiredJdbcType;
 
 		int index;
@@ -110,7 +108,7 @@ public class CallableStatement extends PreparedStatement implements
 		}
 	}
 
-	class CallableStatementParamInfo {
+	protected class CallableStatementParamInfo {
 		String catalogInUse;
 
 		boolean isFunctionCall;
@@ -338,7 +336,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * quite a bit out there in the wild (Websphere, FreeBSD, anyone?)
 	 */
 
-	class CallableStatementParamInfoJDBC3 extends CallableStatementParamInfo
+	protected class CallableStatementParamInfoJDBC3 extends CallableStatementParamInfo
 			implements ParameterMetaData {
 
 		CallableStatementParamInfoJDBC3(java.sql.ResultSet paramTypesRs)
@@ -351,11 +349,11 @@ public class CallableStatement extends PreparedStatement implements
 		}
 		
 		public boolean isWrapperFor(Class arg0) throws SQLException {
-			throw new JDBC40NotYetImplementedException();
+			throw new NotYetImplementedException();
 		}
 
 		public Object unwrap(Class arg0) throws SQLException {
-			throw new JDBC40NotYetImplementedException();
+			throw new NotYetImplementedException();
 		}
 	}
 
@@ -896,7 +894,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @throws SQLException
 	 *             if the parameter name is null or empty.
 	 */
-	private String fixParameterName(String paramNameIn) throws SQLException {
+	protected String fixParameterName(String paramNameIn) throws SQLException {
 		if ((paramNameIn == null) || (paramNameIn.length() == 0)) {
 			throw SQLError.createSQLException(
 					((Messages.getString("CallableStatement.0") + paramNameIn) == null) //$NON-NLS-1$
@@ -1322,7 +1320,7 @@ public class CallableStatement extends PreparedStatement implements
 		return retValue;
 	}
 
-	private int getNamedParamIndex(String paramName, boolean forOut)
+	protected int getNamedParamIndex(String paramName, boolean forOut)
 	throws SQLException {
 		if (this.connection.getNoAccessToProcedureBodies()) {
 			throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
@@ -1439,7 +1437,7 @@ public class CallableStatement extends PreparedStatement implements
 	 *             if no output parameters were defined, or if no output
 	 *             parameters were returned.
 	 */
-	private ResultSet getOutputParameters(int paramIndex) throws SQLException {
+	protected ResultSet getOutputParameters(int paramIndex) throws SQLException {
 		this.outputParamWasNull = false;
 
 		if (paramIndex == 1 && this.callingStoredFunction
@@ -1706,7 +1704,7 @@ public class CallableStatement extends PreparedStatement implements
 		return retValue;
 	}
 
-	private int mapOutputParameterIndexToRsIndex(int paramIndex)
+	protected int mapOutputParameterIndexToRsIndex(int paramIndex)
 			throws SQLException {
 
 		if (this.returnValueParam != null && paramIndex == 1) {
@@ -2179,4 +2177,75 @@ public class CallableStatement extends PreparedStatement implements
 		
 		return super.getParameterIndexOffset();
 	}
+	
+	public void setAsciiStream(String parameterName, InputStream x) throws SQLException {
+		setAsciiStream(getNamedParamIndex(parameterName, false), x);
+		
+	}
+
+	public void setAsciiStream(String parameterName, InputStream x, long length) throws SQLException {
+		setAsciiStream(getNamedParamIndex(parameterName, false), x, length);
+		
+	}
+
+	public void setBinaryStream(String parameterName, InputStream x) throws SQLException {
+		setBinaryStream(getNamedParamIndex(parameterName, false), x);
+		
+	}
+
+	public void setBinaryStream(String parameterName, InputStream x, long length) throws SQLException {
+		setBinaryStream(getNamedParamIndex(parameterName, false), x, length);
+		
+	}
+
+	public void setBlob(String parameterName, Blob x) throws SQLException {
+		setBlob(getNamedParamIndex(parameterName, false), x);
+		
+	}
+
+	public void setBlob(String parameterName, InputStream inputStream) throws SQLException {
+		setBlob(getNamedParamIndex(parameterName, false), inputStream);
+		
+	}
+
+	public void setBlob(String parameterName, InputStream inputStream, long length) throws SQLException {
+		setBlob(getNamedParamIndex(parameterName, false), inputStream, length);
+		
+	}
+
+	public void setCharacterStream(String parameterName, Reader reader) throws SQLException {
+		setCharacterStream(getNamedParamIndex(parameterName, false), reader);
+		
+	}
+
+	public void setCharacterStream(String parameterName, Reader reader, long length) throws SQLException {
+		setCharacterStream(getNamedParamIndex(parameterName, false), reader, length);
+		
+	}
+
+	public void setClob(String parameterName, Clob x) throws SQLException {
+		setClob(getNamedParamIndex(parameterName, false), x);
+		
+	}
+
+	public void setClob(String parameterName, Reader reader) throws SQLException {
+		setClob(getNamedParamIndex(parameterName, false), reader);
+		
+	}
+
+	public void setClob(String parameterName, Reader reader, long length) throws SQLException {
+		setClob(getNamedParamIndex(parameterName, false), reader, length);
+		
+	}
+
+	public void setNCharacterStream(String parameterName, Reader value) throws SQLException {
+		setNCharacterStream(getNamedParamIndex(parameterName, false), value);
+		
+	}
+
+	public void setNCharacterStream(String parameterName, Reader value, long length) throws SQLException {
+		setNCharacterStream(getNamedParamIndex(parameterName, false), value, length);
+		
+	}
+
 }

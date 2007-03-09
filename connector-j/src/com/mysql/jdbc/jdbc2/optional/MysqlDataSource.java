@@ -26,7 +26,7 @@ package com.mysql.jdbc.jdbc2.optional;
 
 import com.mysql.jdbc.ConnectionProperties;
 import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -427,10 +427,10 @@ public class MysqlDataSource extends ConnectionProperties implements
 	}
 //
 //	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-//		throw new JDBC40NotYetImplementedException();
+//		throw new NotYetImplementedException();
 //	}
 //
 //	public <T> T unwrap(Class<T> iface) throws SQLException {
-//		throw new JDBC40NotYetImplementedException();
+//		throw new NotYetImplementedException();
 //	}
 }

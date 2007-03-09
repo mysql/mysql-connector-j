@@ -44,7 +44,7 @@ import java.util.Calendar;
 import java.util.Map;
 
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 /**
  * Wraps callable statements created by pooled connections.
@@ -2592,11 +2592,11 @@ public class CallableStatementWrapper extends PreparedStatementWrapper
 //	}
 //
 //	public boolean isWrapperFor(Class arg0) throws SQLException {
-//		throw new JDBC40NotYetImplementedException();
+//		throw new NotYetImplementedException();
 //	}
 //
 //	public Object unwrap(Class arg0) throws SQLException {
-//		throw new JDBC40NotYetImplementedException();
+//		throw new NotYetImplementedException();
 //	}
 
 }

@@ -39,7 +39,7 @@ import java.util.Properties;
 
 import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 /**
  * This class serves as a wrapper for the org.gjt.mm.mysql.jdbc2.Connection
@@ -954,10 +954,10 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 //	}
 //
 //	public boolean isWrapperFor(Class arg0) throws SQLException {
-//		throw new JDBC40NotYetImplementedException();
+//		throw new NotYetImplementedException();
 //	}
 //
 //	public Object unwrap(Class arg0) throws SQLException {
-//		throw new JDBC40NotYetImplementedException();
+//		throw new NotYetImplementedException();
 //	}
 }

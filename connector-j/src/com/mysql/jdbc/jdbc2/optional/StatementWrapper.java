@@ -25,7 +25,7 @@
 package com.mysql.jdbc.jdbc2.optional;
 
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -872,10 +872,10 @@ public class StatementWrapper extends WrapperBase implements Statement {
 //	}
 //
 //	public boolean isWrapperFor(Class arg0) throws SQLException {
-//		throw new JDBC40NotYetImplementedException();
+//		throw new NotYetImplementedException();
 //	}
 //
 //	public Object unwrap(Class arg0) throws SQLException {
-//		throw new JDBC40NotYetImplementedException();
+//		throw new NotYetImplementedException();
 //	}
 }

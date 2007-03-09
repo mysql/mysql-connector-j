@@ -24,8 +24,7 @@
  */
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
-import com.mysql.jdbc.jdbc4.MysqlSQLXML;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
@@ -3676,12 +3675,8 @@ public class ResultSet implements java.sql.ResultSet {
 				} catch (NumberFormatException ex) {
 					throw SQLError.createSQLException(
 							Messages
-									.getString("ResultSet.Bad_format_for_BigDecimal____86") //$NON-NLS-1$
-									+ stringVal
-									+ Messages
-											.getString("ResultSet.___in_column__87")
-									+ columnIndex + "(" //$NON-NLS-1$
-									+ this.fields[columnIndex - 1] + ").",
+									.getString("ResultSet.Bad_format_for_BigDecimal", 
+											new Object[] {stringVal, new Integer(columnIndex)}),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 				}
 

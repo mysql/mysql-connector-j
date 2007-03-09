@@ -34,7 +34,7 @@ import javax.sql.ConnectionEventListener;
 import javax.sql.PooledConnection;
 
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 /**
  * This class is used to wrap and return a physical connection within a logical
@@ -222,7 +222,7 @@ public class MysqlPooledConnection implements PooledConnection {
 //	 * @since 1.6
 //	 */
 //	public void addStatementEventListener(StatementEventListener listener) {
-//		throw new JDBC40NotYetImplementedException();
+//		throw new NotYetImplementedException();
 //	}
 //	
 //	/**
@@ -237,7 +237,7 @@ public class MysqlPooledConnection implements PooledConnection {
 //	 * @since 1.6
 //	 */
 //	public void removeStatementEventListener(StatementEventListener listener) {
-//		throw new JDBC40NotYetImplementedException();
+//		throw new NotYetImplementedException();
 //	}
 
 

@@ -30,13 +30,13 @@ package com.mysql.jdbc;
  * @author Tetsuro Ikeda
  * @version $Id: NClob.java 4963 2006-02-21 13:28:14Z tikeda $
  */
-public class NClob extends Clob implements java.sql.NClob {
+public class JDBC4NClob extends Clob implements java.sql.NClob {
 
-	NClob() {
+	JDBC4NClob() {
         super();
     }
 	
-    NClob(String charDataInit) {
+	JDBC4NClob(String charDataInit) {
         super(charDataInit);
     }
 }

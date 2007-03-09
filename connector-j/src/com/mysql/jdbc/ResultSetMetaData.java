@@ -27,7 +27,7 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 /**
  * A ResultSetMetaData object can be used to find out about the types and
@@ -807,10 +807,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 	}
 
 	public boolean isWrapperFor(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
+		throw new NotYetImplementedException();
 	}
 
 	public Object unwrap(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
+		throw new NotYetImplementedException();
 	}
 }

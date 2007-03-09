@@ -27,7 +27,7 @@ import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 public class MysqlParameterMetadata implements ParameterMetaData {
 	boolean returnSimpleMetadata = false;
@@ -165,10 +165,10 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 	}
 	
 	public boolean isWrapperFor(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
+		throw new NotYetImplementedException();
 	}
 
 	public Object unwrap(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
+		throw new NotYetImplementedException();
 	}
 }

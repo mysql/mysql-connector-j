@@ -594,7 +594,7 @@ public class Connection extends ConnectionProperties implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	private Connection(String hostToConnectTo, int portToConnectTo, Properties info,
+	protected Connection(String hostToConnectTo, int portToConnectTo, Properties info,
 			String databaseToConnectTo, String url)
 			throws SQLException {
 		this.charsetToNumBytesMap = new HashMap();

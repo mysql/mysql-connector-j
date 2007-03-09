@@ -5,6 +5,9 @@ nn-nn-07 - Version 5.1.0 Alpha
 	
 	- Bumped JDBC Specification version number in jar-file manifest.
 	
+	- Re-worked Ant buildfile to build JDBC-4.0 classes separately, as well
+	  as support building under Eclipse (since Eclipse can't mix/match JDKs).
+	
 03-nn-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,
@@ -24,7 +27,12 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  statement that enables this functionality, which the driver ignored (using
 	  the original metadata returned during prepare()), causing corrupt reading
 	  of data due to type mismatch when the actual rows were returned.
-	  	 	  
+
+	- Fixed BUG#26959 - comments in DDL of stored procedures/functions confuse 
+	  procedure parser, and thus metadata about them can not be created, leading to
+	  inability to retrieve said metadata, or execute procedures that have certain
+	  comments in them.
+	  	  	 	  
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

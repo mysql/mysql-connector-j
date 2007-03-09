@@ -33,7 +33,7 @@ import java.io.Writer;
 
 import java.sql.SQLException;
 
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 /**
  * Simplistic implementation of java.sql.Clob for MySQL Connector/J
@@ -295,10 +295,10 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 	}
 
 	public void free() throws SQLException {
-		throw new JDBC40NotYetImplementedException();
+		throw new NotYetImplementedException();
 	}
 
 	public Reader getCharacterStream(long pos, long length) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
+		throw new NotYetImplementedException();
 	}
 }

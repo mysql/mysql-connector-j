@@ -1,0 +1,244 @@
+/*
+ Copyright (C) 2002-2007 MySQL AB
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of version 2 of the GNU General Public License as 
+ published by the Free Software Foundation.
+
+ There are special exceptions to the terms and conditions of the GPL 
+ as it is applied to this software. View the full text of the 
+ exception in file EXCEPTIONS-CONNECTOR-J in the directory of this 
+ software distribution.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+ */
+
+package com.mysql.jdbc;
+
+import java.io.InputStream;
+import java.io.Reader;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.SQLException;
+import java.sql.RowId;
+import java.sql.SQLXML;
+import java.sql.NClob;
+
+import com.mysql.jdbc.CallableStatement;
+import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.ResultSet;
+import com.mysql.jdbc.CallableStatement.CallableStatementParamInfo;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
+
+public class JDBC4CallableStatement extends CallableStatement {
+
+	public JDBC4CallableStatement(Connection conn, CallableStatementParamInfo paramInfo) throws SQLException {
+		super(conn, paramInfo);
+		// TODO Auto-generated constructor stub
+	}
+
+	public void setRowId(String parameterName, RowId x) throws SQLException {
+		JDBC4PreparedStatementHelper.setRowId(this, getNamedParamIndex(parameterName, false), x);
+	}
+
+	public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
+		JDBC4PreparedStatementHelper.setSQLXML(this, getNamedParamIndex(parameterName, false), xmlObject);
+		
+	}
+	
+	public SQLXML getSQLXML(int parameterIndex) throws SQLException {
+		ResultSet rs = getOutputParameters(parameterIndex);
+
+		SQLXML retValue = ((com.mysql.jdbc.JDBC4ResultSet)rs)
+				.getSQLXML(mapOutputParameterIndexToRsIndex(parameterIndex));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+		
+	}
+
+	public SQLXML getSQLXML(String parameterName) throws SQLException {
+		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		// from ?=
+
+		SQLXML retValue = ((com.mysql.jdbc.JDBC4ResultSet)rs).getSQLXML(fixParameterName(parameterName));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+	
+	public RowId getRowId(int parameterIndex) throws SQLException {
+		ResultSet rs = getOutputParameters(parameterIndex);
+
+		RowId retValue = ((com.mysql.jdbc.JDBC4ResultSet)rs)
+				.getRowId(mapOutputParameterIndexToRsIndex(parameterIndex));
+
+		this.outputParamWasNull = rs.wasNull();
+
+		return retValue;
+	}
+
+	public RowId getRowId(String parameterName) throws SQLException {
+		ResultSet rs = getOutputParameters(0); // definitely not going to be
+	    // from ?=
+	
+	    RowId retValue = ((com.mysql.jdbc.JDBC4ResultSet)rs).getRowId(fixParameterName(parameterName));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+	
+	public void setNClob(String parameterName, NClob value) throws SQLException {
+		JDBC4PreparedStatementHelper.setNClob(this, getNamedParamIndex(parameterName, false), value);
+		
+	}
+
+	public void setNClob(String parameterName, Reader reader) throws SQLException {
+		setNClob(getNamedParamIndex(parameterName, false), reader);
+		
+	}
+
+	public void setNClob(String parameterName, Reader reader, long length) throws SQLException {
+		setNClob(getNamedParamIndex(parameterName, false), reader, length);
+		
+	}
+
+	public void setNString(String parameterName, String value) throws SQLException {
+		setNString(getNamedParamIndex(parameterName, false), value);
+	}
+
+
+
+	public boolean isWrapperFor(Class arg0) throws SQLException {
+		throw new NotYetImplementedException();
+		
+	}
+
+	public Object unwrap(Class arg0) throws SQLException {
+		throw new NotYetImplementedException();
+		
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getCharacterStream(int)
+	 */
+	public Reader getCharacterStream(int parameterIndex) throws SQLException {
+	    ResultSet rs = getOutputParameters(parameterIndex);
+	
+	    Reader retValue = rs
+	            .getCharacterStream(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getCharacterStream(java.lang.String)
+	 */
+	public Reader getCharacterStream(String parameterName) throws SQLException {
+	    ResultSet rs = getOutputParameters(0); // definitely not going to be
+	    // from ?=
+	
+	    Reader retValue = rs.getCharacterStream(fixParameterName(parameterName));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNCharacterStream(int)
+	 */
+	public Reader getNCharacterStream(int parameterIndex) throws SQLException {
+	    ResultSet rs = getOutputParameters(parameterIndex);
+	
+	    Reader retValue = ((com.mysql.jdbc.JDBC4ResultSet)rs)
+	            .getNCharacterStream(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNCharacterStream(java.lang.String)
+	 */
+	public Reader getNCharacterStream(String parameterName) throws SQLException {
+	    ResultSet rs = getOutputParameters(0); // definitely not going to be
+	    // from ?=
+	
+	    Reader retValue = ((com.mysql.jdbc.JDBC4ResultSet)rs).getNCharacterStream(fixParameterName(parameterName));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNClob(int)
+	 */
+	public NClob getNClob(int parameterIndex) throws SQLException {
+	    ResultSet rs = getOutputParameters(parameterIndex);
+	
+	    NClob retValue = ((com.mysql.jdbc.JDBC4ResultSet)rs)
+	            .getNClob(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNClob(java.lang.String)
+	 */
+	public NClob getNClob(String parameterName) throws SQLException {
+	    ResultSet rs = getOutputParameters(0); // definitely not going to be
+	    // from ?=
+	
+	    NClob retValue = ((com.mysql.jdbc.JDBC4ResultSet)rs).getNClob(fixParameterName(parameterName));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNString(int)
+	 */
+	public String getNString(int parameterIndex) throws SQLException {
+	    ResultSet rs = getOutputParameters(parameterIndex);
+	
+	    String retValue = ((com.mysql.jdbc.JDBC4ResultSet)rs)
+	            .getNString(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+
+	/**
+	 * @see java.sql.CallableStatement#getNString(java.lang.String)
+	 */
+	public String getNString(String parameterName) throws SQLException {
+	    ResultSet rs = getOutputParameters(0); // definitely not going to be
+	    // from ?=
+	
+	    String retValue = ((com.mysql.jdbc.JDBC4ResultSet)rs).getNString(fixParameterName(parameterName));
+	
+	    this.outputParamWasNull = rs.wasNull();
+	
+	    return retValue;
+	}
+}

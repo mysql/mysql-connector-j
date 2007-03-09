@@ -24,7 +24,7 @@
  */
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
@@ -2345,10 +2345,10 @@ public class Statement implements java.sql.Statement {
 	}
 
 	public boolean isWrapperFor(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
+		throw new NotYetImplementedException();
 	}
 
 	public Object unwrap(Class arg0) throws SQLException {
-		throw new JDBC40NotYetImplementedException();
+		throw new NotYetImplementedException();
 	}
 }

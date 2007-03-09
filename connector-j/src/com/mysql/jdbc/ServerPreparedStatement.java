@@ -782,7 +782,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @return
 	 * @throws SQLException
 	 */
-	private BindValue getBinding(int parameterIndex, boolean forLongData)
+	protected BindValue getBinding(int parameterIndex, boolean forLongData)
 			throws SQLException {
 		checkClosed();
 		

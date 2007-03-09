@@ -39,9 +39,14 @@
 	<property name="distDir" value="./dist"/>
 	<property name="junit.results" value="${buildDir}/junit"/>
 	<property name="debug.enable" value="on" />
+	
+	<!-- Send class files to correct location if running in eclipse -->
+	
+	 <condition property="compiler.output" value="bin" else="${buildDir}/${fullProdName}">
+	    <isset property="eclipse.pdebuild.home" />
+	 </condition>
 
 	<!-- 
-	
 	     The following property is needed for building the docs. It's
 	     set to the defaults for my development environment, but can be passed
 	     on the command line to ant via -D switches. 
@@ -49,6 +54,15 @@
 
 	<property name="com.mysql.jdbc.docs.sourceDir" value="/home/mmatthew/work/docs/prebuilt"/>
 
+	<!-- 
+		The following properties are needed for finding JDK6, set to the defaults
+		for my development environment, but can be passed on the command line
+		to ant via -D switches
+	-->
+	
+	<property name="com.mysql.jdbc.java6.javac" value="C:\jvms\jdk1.6.0\bin\javac.exe" />
+	<property name="com.mysql.jdbc.java6.rtjar" value="C:\jvms\jdk1.6.0\jre\lib\rt.jar" />
+	
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="${sourceDir}/lib/ant-contrib.jar"/>
@@ -113,7 +127,7 @@
 			<fileset dir="${sourceDir}/" excludes="**/CVS">
 				<patternset id="classjar" >
 					<exclude name="**/*.class*"/>
-					<exclude name="**/*.jar"/>
+					<exclude name="**/*.jar"/>	
 				</patternset>
 			</fileset>
 
@@ -633,16 +647,40 @@
 
 	<!-- Compiles the driver itself -->
 
-	<target name="compile-driver" depends="init, -clean-output">
-		<javac srcdir="${buildDir}/${fullProdName}" 
-			destdir="${buildDir}/${fullProdName}" 
+	<target name="compile-driver" depends="compile-driver-jdbc3, compile-driver-jdbc4" />
+	
+	<target name="compile-driver-jdbc3" depends="init, -clean-output">
+		<javac sourcepath="" srcdir="${buildDir}/${fullProdName}" 
+			destdir="${compiler.output}" 
 			deprecation="off" 
-			debug="${debug.enable}" 
-			excludes="testsuite/**, 
-			   com/mysql/jdbc/integration/**,
-			   com/mysql/jdbc/log/Log4JLogger.java">
+			debug="${debug.enable}">
+			<include name="**/*.java" />
+			<exclude name="testsuite/**" />
+			<exclude name="com/mysql/jdbc/integration/**" />
+			<exclude name="com/mysql/jdbc/log/Log4JLogger.java" />
+			<exclude name="com/mysql/jdbc/JDBC4*.java" />
+			<exclude name="com/mysql/jdbc/exceptions/jdbc4/*" />
+			
 			<classpath refid="project.build.classpath" />
 		</javac>
+	</target>
+	
+	<target name="compile-driver-jdbc4" depends="compile-driver-jdbc3">
+		
+		<javac destdir="${compiler.output}" 
+			deprecation="off" 
+			debug="${debug.enable}"
+			fork="yes"
+			executable="${com.mysql.jdbc.java6.javac}"
+			compiler="modern"
+			sourcepath="" srcdir="${buildDir}/${fullProdName}"
+			bootclasspath="${com.mysql.jdbc.java6.rtjar}">
+			<include name="**/JDBC4*.java" />
+			<include name="com/mysql/jdbc/exceptions/jdbc4/*" />
+			
+			<classpath refid="project.build.classpath" />
+		</javac>
+		
 	</target>
 
 	<!-- Compiles a version of the driver with AspectJ tracing -->
@@ -656,7 +694,7 @@
 		</taskdef>
 
 
-		<iajc destDir="${buildDir}/${fullProdName}">
+		<iajc destdir="${compiler.output}">
 			<sourceroots>
 				<pathelement location="${buildDir}/${fullProdName}/org"/>
 				<pathelement location="${buildDir}/${fullProdName}/com"/>
@@ -679,7 +717,7 @@
 		depends="compile-driver"
 		if="com.mysql.jdbc.c3p0Present">
 		<javac srcdir="${buildDir}/${fullProdName}" 
-				destdir="${buildDir}/${fullProdName}" 
+				destdir="${compiler.output}" 
 				deprecation="off" 
 				debug="${debug.enable}" 
 				includes="com/mysql/jdbc/integration/c3p0/**">
@@ -691,7 +729,7 @@
 			depends="compile-driver"
 			if="com.mysql.jdbc.jbossPresent">
 		<javac srcdir="${buildDir}/${fullProdName}" 
-					destdir="${buildDir}/${fullProdName}" 
+					destdir="${compiler.output}" 
 					deprecation="off" 
 					debug="${debug.enable}" 
 					includes="com/mysql/jdbc/integration/jboss/**">
@@ -703,7 +741,7 @@
 			depends="compile-driver"
 			if="com.mysql.jdbc.log4jPresent">
 		<javac srcdir="${buildDir}/${fullProdName}" 
-				destdir="${buildDir}/${fullProdName}" 
+				destdir="${compiler.output}" 
 				deprecation="off" 
 				debug="${debug.enable}" 
 				includes="com/mysql/jdbc/log/Log4JLogger.java">
@@ -716,13 +754,26 @@
 	<target name="compile-testsuite" depends="init, compile-driver">
 		<javac 
 			srcdir="${buildDir}/${fullProdName}" 
-			destdir="${buildDir}/${fullProdName}" 
+			destdir="${compiler.output}" 
 			deprecation="off" 
 			debug="${debug.enable}"
 			includes="testsuite/**"
-			excludes="testsuite/requiresNonRedists/**">
+			excludes="testsuite/requiresNonRedists/**, testsuite/**/jdbc4/**">
 			<classpath refid="project.build.classpath"/>
 		</javac>
+		
+		<javac destdir="${compiler.output}" 
+					deprecation="off" 
+					debug="${debug.enable}"
+					fork="yes"
+					executable="${com.mysql.jdbc.java6.javac}"
+					compiler="modern"
+					sourcepath="" srcdir="${buildDir}/${fullProdName}"
+					bootclasspath="${com.mysql.jdbc.java6.rtjar}">
+					<include name="testsuite/**/jdbc4/**" />
+					
+					<classpath refid="project.build.classpath" />
+				</javac>
 	</target>
 
 	<target name="real-clean">
@@ -797,7 +848,7 @@
 
 		<emma enabled="${emma.enabled}" >
 			<instr instrpathref="built.driver.only.classpath"
-	             destdir="${buildDir}/${fullProdName}"	
+	             destdir="${compiler.output}"	
 	             metadatafile="${emma.coverage.dir}/metadata.emma"
 	             merge="true"
 	      		 mode="overwrite">

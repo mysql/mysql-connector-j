@@ -21,7 +21,7 @@
 
  */
 
-package com.mysql.jdbc.jdbc4;
+package com.mysql.jdbc;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -59,9 +59,9 @@ import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
-import com.mysql.jdbc.exceptions.JDBC40NotYetImplementedException;
+import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
-public class MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatcher {
+public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatcher {
 
 	private XMLInputFactory inputFactory;
 
@@ -81,13 +81,13 @@ public class MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatcher {
 
 	private DOMResult asDOMResult;
 
-	protected MysqlSQLXML(ResultSet owner, int index) {
+	protected JDBC4MysqlSQLXML(ResultSet owner, int index) {
 		this.owningResultSet = owner;
 		this.columnIndexOfXml = index;
 		this.fromResultSet = true;
 	}
 
-	protected MysqlSQLXML() {
+	protected JDBC4MysqlSQLXML() {
 		this.fromResultSet = false;
 	}
 
