@@ -950,4 +950,117 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 		
 		this.conn.prepareCall("{call testBug26143(?)").close();
 	}
+	
+	/**
+	 * Tests fix for BUG#26959 - comments confuse procedure parser.
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug26959() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+
+		createProcedure(
+				"testBug26959",
+				"(_ACTION varchar(20),"
+						+ "\n`/*dumb-identifier-1*/` int,"
+						+ "\n`#dumb-identifier-2` int,"
+						+ "\n`--dumb-identifier-3` int,"
+						+ "\n_CLIENT_ID int, -- ABC"
+						+ "\n_LOGIN_ID  int, # DEF"
+						+ "\n_WHERE varchar(2000),"
+						+ "\n_SORT varchar(2000),"
+						+ "\n out _SQL varchar(/* inline right here - oh my gosh! */ 8000),"
+						+ "\n _SONG_ID int,"
+						+ "\n  _NOTES varchar(2000),"
+						+ "\n out _RESULT varchar(10)"
+						+ "\n /*"
+						+ "\n ,    -- Generic result parameter"
+						+ "\n out _PERIOD_ID int,         -- Returns the period_id. Useful when using @PREDEFLINK to return which is the last period"
+						+ "\n   _SONGS_LIST varchar(8000),"
+						+ "\n  _COMPOSERID int,"
+						+ "\n  _PUBLISHERID int,"
+						+ "\n   _PREDEFLINK int        -- If the user is accessing through a predefined link: 0=none  1=last period"
+						+ "\n */) BEGIN SELECT 1; END");
+
+		createProcedure(
+				"testBug26959_1",
+				"(`/*id*/` /* before type 1 */ varchar(20),"
+						+ "/* after type 1 */ OUT result2 DECIMAL(/*size1*/10,/*size2*/2) /* p2 */)"
+						+ "BEGIN SELECT action, result; END");
+
+		try {
+			this.conn.prepareCall(
+					"{call testBug26959(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")
+					.close();
+			this.rs = this.conn.getMetaData().getProcedureColumns(
+					this.conn.getCatalog(), null, "testBug26959", "%");
+
+			String[] parameterNames = new String[] { "_ACTION",
+					"/*dumb-identifier-1*/", "#dumb-identifier-2",
+					"--dumb-identifier-3", "_CLIENT_ID", "_LOGIN_ID", "_WHERE",
+					"_SORT", "_SQL", "_SONG_ID", "_NOTES", "_RESULT" };
+
+			int[] parameterTypes = new int[] { Types.VARCHAR, Types.INTEGER,
+					Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.INTEGER,
+					Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.INTEGER,
+					Types.VARCHAR, Types.VARCHAR };
+
+			int[] direction = new int[] { DatabaseMetaData.procedureColumnIn,
+					DatabaseMetaData.procedureColumnIn,
+					DatabaseMetaData.procedureColumnIn,
+					DatabaseMetaData.procedureColumnIn,
+					DatabaseMetaData.procedureColumnIn,
+					DatabaseMetaData.procedureColumnIn,
+					DatabaseMetaData.procedureColumnIn,
+					DatabaseMetaData.procedureColumnIn,
+					DatabaseMetaData.procedureColumnOut,
+					DatabaseMetaData.procedureColumnIn,
+					DatabaseMetaData.procedureColumnIn,
+					DatabaseMetaData.procedureColumnOut };
+
+			int[] precision = new int[] { 20, 10, 10, 10, 10, 10, 2000, 2000,
+					8000, 10, 2000, 10 };
+
+			int index = 0;
+
+			while (this.rs.next()) {
+				assertEquals(parameterNames[index], this.rs
+						.getString("COLUMN_NAME"));
+				assertEquals(parameterTypes[index], this.rs.getInt("DATA_TYPE"));
+				assertEquals(precision[index], this.rs.getInt("PRECISION"));
+				assertEquals(direction[index], this.rs.getInt("COLUMN_TYPE"));
+				index++;
+			}
+
+			this.rs.close();
+
+			index = 0;
+			parameterNames = new String[] { "/*id*/", "result2" };
+			parameterTypes = new int[] { Types.VARCHAR, Types.DECIMAL };
+			precision = new int[] { 20, 10 };
+			direction = new int[] { DatabaseMetaData.procedureColumnIn,
+					DatabaseMetaData.procedureColumnOut };
+			int[] scale = new int[] { 0, 2 };
+
+			this.conn.prepareCall("{call testBug26959_1(?, ?)}").close();
+
+			this.rs = this.conn.getMetaData().getProcedureColumns(
+					this.conn.getCatalog(), null, "testBug26959_1", "%");
+
+			while (this.rs.next()) {
+				assertEquals(parameterNames[index], this.rs
+						.getString("COLUMN_NAME"));
+				assertEquals(parameterTypes[index], this.rs.getInt("DATA_TYPE"));
+				assertEquals(precision[index], this.rs.getInt("PRECISION"));
+				assertEquals(scale[index], this.rs.getInt("SCALE"));
+				assertEquals(direction[index], this.rs.getInt("COLUMN_TYPE"));
+
+				index++;
+			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

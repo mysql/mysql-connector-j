@@ -431,7 +431,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	
 	private static String mysqlKeywordsThatArentSQL92;
 	
-	private static final int MAX_IDENTIFIER_LENGTH = 64;
+	protected static final int MAX_IDENTIFIER_LENGTH = 64;
 	
 	private static final int DEFERRABILITY = 13;
 
@@ -1431,11 +1431,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		String quoteChar = getIdentifierQuoteString();
 
-		String storageDefnDelims = "(" + quoteChar;
-		String storageDefnClosures = ")" + quoteChar;
-
-		// First try 'select from mysql.proc, as this is easier to parse...
 		String parameterDef = null;
+
+		boolean isProcedureInAnsiMode = false;
+		String storageDefnDelims = null;
+		String storageDefnClosures = null;
 		
 		try {
 			paramRetrievalStmt = this.conn.getMetadataSafeStatement();
@@ -1542,6 +1542,25 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							"to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
 							SQLError.SQL_STATE_GENERAL_ERROR);		
 				}
+
+				try {
+					String sqlMode = paramRetrievalRs.getString("sql_mode");
+					
+					if (StringUtils.indexOfIgnoreCase(sqlMode, "ANSI") != -1) {
+						isProcedureInAnsiMode = true;
+					}
+				} catch (SQLException sqlEx) {
+					// doesn't exist
+				}
+
+				String identifierMarkers = isProcedureInAnsiMode ? "`\"" : "`";
+				String identifierAndStringMarkers = "'" + identifierMarkers;
+				storageDefnDelims = "(" + identifierMarkers;
+				storageDefnClosures = ")" + identifierMarkers;
+				
+				// sanitize/normalize by stripping out comments
+				procedureDef = StringUtils.stripComments(procedureDef, 
+						identifierAndStringMarkers, identifierAndStringMarkers, true, false, true, true);
 				
 				int openParenIndex = StringUtils
 				.indexOfIgnoreCaseRespectQuotes(0, procedureDef, "(",
@@ -1705,6 +1724,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						throw SQLError.createSQLException(
 								"Internal error when parsing callable statement metadata (missing parameter type)",
 								SQLError.SQL_STATE_GENERAL_ERROR);
+					}
+
+					if ((paramName.startsWith("`") && paramName.endsWith("`")) || 
+							(isProcedureInAnsiMode && paramName.startsWith("\"") && paramName.endsWith("\""))) {
+						paramName = paramName.substring(1, paramName.length() - 1);
 					}
 
 					int wildCompareRes = StringUtils.wildCompare(paramName,
