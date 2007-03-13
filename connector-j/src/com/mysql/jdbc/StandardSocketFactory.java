@@ -234,6 +234,7 @@ public class StandardSocketFactory implements SocketFactory {
 										new Object[] { sockAddr,
 												new Integer(connectTimeout) });
 
+								break;
 							} catch (Exception ex) {
 								rawSocket = null;
 
