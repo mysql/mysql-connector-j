@@ -337,7 +337,13 @@ public class Util {
 		} catch (IllegalAccessException e) {
 			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
 		} catch (InvocationTargetException e) {
-			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+			Throwable target = e.getTargetException(); 
+			
+			if (target instanceof SQLException) {
+				throw (SQLException)target;
+			}
+			
+			throw new SQLException(target.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
 		} catch (NoSuchMethodException e) {
 			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
 		} catch (ClassNotFoundException e) {

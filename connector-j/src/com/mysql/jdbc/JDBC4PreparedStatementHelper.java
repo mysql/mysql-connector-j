@@ -70,7 +70,8 @@ public class JDBC4PreparedStatementHelper {
 		if (xmlObject == null) {
 			pstmt.setNull(parameterIndex, Types.SQLXML);
 		} else {
-			pstmt.setCharacterStream(parameterIndex, xmlObject.getCharacterStream());	
+			// FIXME: Won't work for Non-MYSQL SQLXMLs
+			pstmt.setCharacterStream(parameterIndex, ((JDBC4MysqlSQLXML)xmlObject).serializeAsCharacterStream());	
 		}
 	}
 }

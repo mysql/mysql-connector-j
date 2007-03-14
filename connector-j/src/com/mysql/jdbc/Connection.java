@@ -273,7 +273,7 @@ public class Connection extends ConnectionProperties implements
 		}
 
 		return (Connection) Util.getInstance(
-				"com.mysql.jdbc.jdbc4.JDBC4Connection", new Class[] {
+				"com.mysql.jdbc.JDBC4Connection", new Class[] {
 						String.class, Integer.TYPE, Properties.class,
 						String.class, String.class }, new Object[] {
 						hostToConnectTo, new Integer(portToConnectTo), info,

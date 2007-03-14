@@ -32,8 +32,10 @@ import java.sql.SQLException;
 import java.sql.SQLXML;
 
 import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.Field;
 import com.mysql.jdbc.NotUpdatable;
 import com.mysql.jdbc.ResultSet;
+import com.mysql.jdbc.RowData;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
@@ -42,7 +44,11 @@ public class JDBC4ResultSet extends ResultSet {
 
 	public JDBC4ResultSet(long updateCount, long updateID, Connection conn, Statement creatorStmt) {
 		super(updateCount, updateID, conn, creatorStmt);
-		// TODO Auto-generated constructor stub
+	}
+	
+	public JDBC4ResultSet(String catalog, Field[] fields, RowData tuples,
+			Connection conn, Statement creatorStmt) throws SQLException {
+		super(catalog, fields, tuples, conn, creatorStmt);
 	}
 	
 	/**

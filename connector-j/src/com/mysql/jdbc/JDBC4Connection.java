@@ -38,7 +38,7 @@ import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 public class JDBC4Connection extends Connection {
 
-	JDBC4Connection(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url) throws SQLException {
+	public JDBC4Connection(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url) throws SQLException {
 		super(hostToConnectTo, portToConnectTo, info, databaseToConnectTo, url);
 		// TODO Auto-generated constructor stub
 	}

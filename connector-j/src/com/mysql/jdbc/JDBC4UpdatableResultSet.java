@@ -122,10 +122,72 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 		
 	}
 	
-	
-	
 	public void updateRowId(int columnIndex, RowId x) throws SQLException {
 		throw new NotUpdatable();
+	}
+
+	public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {
+		updateAsciiStream(findColumn(columnLabel), x);	
+	}
+
+	public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException {
+		updateAsciiStream(findColumn(columnLabel), x, length);
+	}
+
+	public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {
+		updateBinaryStream(findColumn(columnLabel), x);
+	}
+
+	public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException {
+		updateBinaryStream(findColumn(columnLabel), x, length);
+	}
+
+	public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {
+		updateBlob(findColumn(columnLabel), inputStream);
+	}
+
+	public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException {
+		updateBlob(findColumn(columnLabel), inputStream, length);
+	}
+
+	public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {
+		updateCharacterStream(findColumn(columnLabel), reader);
+	}
+
+	public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
+		updateCharacterStream(findColumn(columnLabel), reader, length);
+	}
+	
+	public void updateClob(String columnLabel, Reader reader) throws SQLException {
+		updateClob(findColumn(columnLabel), reader);
+	}
+
+	public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {
+		updateClob(findColumn(columnLabel), reader, length);
+	}
+	
+	public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {
+		updateNCharacterStream(findColumn(columnLabel), reader);
+		
+	}
+
+	public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException {
+		updateNCharacterStream(findColumn(columnLabel), reader, length);
+	}
+
+
+	public void updateNClob(String columnLabel, Reader reader) throws SQLException {
+		updateNClob(findColumn(columnLabel), reader);
+		
+	}
+
+	public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {
+		updateNClob(findColumn(columnLabel), reader, length);
+	}
+
+	public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {
+		updateSQLXML(findColumn(columnLabel), xmlObject);
+		
 	}
 
 	/**

@@ -294,7 +294,7 @@ public class ResultSet implements java.sql.ResultSet {
 		}
 
 		return (ResultSet) Util.getInstance(
-				"com.mysql.jdbc.jdbc4.JDBC4ResultSet", new Class[] {
+				"com.mysql.jdbc.JDBC4ResultSet", new Class[] {
 						Long.TYPE, Long.TYPE,
 						com.mysql.jdbc.Connection.class,
 						com.mysql.jdbc.Statement.class }, new Object[] {
@@ -320,7 +320,7 @@ public class ResultSet implements java.sql.ResultSet {
 			return new UpdatableResultSet(catalog, fields, tuples, conn, creatorStmt);
 		}
 
-		String className = isUpdatable ? "com.mysql.jdbc.jdbc4.JDBC4UpdatableResultSet" : "com.mysql.jdbc.jdbc4.JDBC4ResultSet";
+		String className = isUpdatable ? "com.mysql.jdbc.JDBC4UpdatableResultSet" : "com.mysql.jdbc.JDBC4ResultSet";
 		
 		return (ResultSet) Util.getInstance(
 				className, new Class[] {

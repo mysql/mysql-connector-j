@@ -622,14 +622,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				&& connToSet.versionMeetsMinimum(5, 0, 7)) {
 			return (DatabaseMetaData) Util
 					.getInstance(
-							"com.mysql.jdbc.jdbc4.JDBC4DatabaseMetaDataUsingInfoSchema",
+							"com.mysql.jdbc.JDBC4DatabaseMetaDataUsingInfoSchema",
 							new Class[] { com.mysql.jdbc.Connection.class,
 									String.class }, new Object[] { connToSet,
 									databaseToSet });
 		}
 
 		return (DatabaseMetaData) Util.getInstance(
-				"com.mysql.jdbc.jdbc4.JDBC4DatabaseMetaData", new Class[] {
+				"com.mysql.jdbc.JDBC4DatabaseMetaData", new Class[] {
 						com.mysql.jdbc.Connection.class, String.class },
 				new Object[] { connToSet, databaseToSet });
 	}

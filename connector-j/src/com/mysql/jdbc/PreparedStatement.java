@@ -447,7 +447,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			return new PreparedStatement(conn, sql, catalog);
 		}
 
-		return (PreparedStatement)Util.getInstance("com.mysql.jdbc.jdbc4.JDBC4PreparedStatement", 
+		return (PreparedStatement)Util.getInstance("com.mysql.jdbc.JDBC4PreparedStatement", 
 				new Class[] {Connection.class, String.class, String.class}, 
 				new Object[] {conn, sql, catalog});
 	}
@@ -465,7 +465,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			return new PreparedStatement(conn, sql, catalog, cachedParseInfo);
 		}
 		
-		return (PreparedStatement)Util.getInstance("com.mysql.jdbc.jdbc4.JDBC4PreparedStatement", 
+		return (PreparedStatement)Util.getInstance("com.mysql.jdbc.JDBC4PreparedStatement", 
 				new Class[] {Connection.class, String.class, String.class, ParseInfo.class}, 
 				new Object[] {conn, sql, catalog, cachedParseInfo});
 	}
@@ -481,7 +481,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	protected PreparedStatement(Connection conn, String catalog)
+	public PreparedStatement(Connection conn, String catalog)
 			throws SQLException {
 		super(conn, catalog);
 	}
@@ -499,7 +499,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * @throws SQLException
 	 *             if a database error occurs.
 	 */
-	protected PreparedStatement(Connection conn, String sql, String catalog)
+	public PreparedStatement(Connection conn, String sql, String catalog)
 			throws SQLException {
 		super(conn, catalog);
 
@@ -535,7 +535,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	protected PreparedStatement(Connection conn, String sql, String catalog,
+	public PreparedStatement(Connection conn, String sql, String catalog,
 			ParseInfo cachedParseInfo) throws SQLException {
 		super(conn, catalog);
 
@@ -957,7 +957,9 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	public synchronized boolean canRewriteAsMultivalueInsertStatement() {
 		if (!this.hasCheckedForRewrite) {
 			this.canRewrite = StringUtils.startsWithIgnoreCaseAndWs(
-					this.originalSql, "INSERT", this.statementAfterCommentsPos);
+					this.originalSql, "INSERT", this.statementAfterCommentsPos)
+					|| StringUtils.startsWithIgnoreCaseAndWs(this.originalSql,
+							"REPLACE", this.statementAfterCommentsPos);
 			this.hasCheckedForRewrite = true;
 		}
 

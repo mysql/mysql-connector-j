@@ -33,19 +33,29 @@ import java.sql.Types;
 
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.PreparedStatement;
+import com.mysql.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 public class JDBC4PreparedStatement extends PreparedStatement {
 
-	protected JDBC4PreparedStatement(Connection conn, String catalog) throws SQLException {
+	public JDBC4PreparedStatement(Connection conn, String catalog) throws SQLException {
 		super(conn, catalog);
 	}
 	
+	public JDBC4PreparedStatement(Connection conn, String sql, String catalog)
+		throws SQLException {
+		super(conn, sql, catalog);
+	}
+	
+	public JDBC4PreparedStatement(Connection conn, String sql, String catalog,
+			ParseInfo cachedParseInfo) throws SQLException {
+		super(conn, sql, catalog, cachedParseInfo);
+	}
+
 	public void setRowId(int parameterIndex, RowId x) throws SQLException {
 		JDBC4PreparedStatementHelper.setRowId(this, parameterIndex, x);
 	}
-
-
+	
 	/**
 	 * JDBC 4.0 Set a NCLOB parameter.
 	 * 

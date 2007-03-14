@@ -916,7 +916,7 @@ public class SQLError {
 								.getInstance(
 										"com.mysql.jdbc.exceptions.jdbc4.MySQLTransientConnectionException",
 										new Class[] { String.class,
-												String.class, Integer.class },
+												String.class, Integer.TYPE },
 										new Object[] { message, sqlState,
 												new Integer(vendorErrorCode) });
 					}
@@ -930,7 +930,7 @@ public class SQLError {
 							.getInstance(
 									"com.mysql.jdbc.exceptions.jdbc4.MySQLNonTransientConnectionException",
 									new Class[] { String.class, String.class,
-											Integer.class }, new Object[] {
+											Integer.TYPE  }, new Object[] {
 											message, sqlState,
 											new Integer(vendorErrorCode) });
 				}
@@ -945,7 +945,7 @@ public class SQLError {
 							.getInstance(
 									"com.mysql.jdbc.exceptions.jdbc4.MySQLDataException",
 									new Class[] { String.class, String.class,
-											Integer.class }, new Object[] {
+											Integer.TYPE  }, new Object[] {
 											message, sqlState,
 											new Integer(vendorErrorCode) });
 				}
@@ -961,7 +961,7 @@ public class SQLError {
 							.getInstance(
 									"com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException",
 									new Class[] { String.class, String.class,
-											Integer.class }, new Object[] {
+											Integer.TYPE  }, new Object[] {
 											message, sqlState,
 											new Integer(vendorErrorCode) });
 				}
@@ -976,7 +976,7 @@ public class SQLError {
 							.getInstance(
 									"com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException",
 									new Class[] { String.class, String.class,
-											Integer.class }, new Object[] {
+											Integer.TYPE  }, new Object[] {
 											message, sqlState,
 											new Integer(vendorErrorCode) });
 				}
@@ -991,7 +991,7 @@ public class SQLError {
 							.getInstance(
 									"com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException",
 									new Class[] { String.class, String.class,
-											Integer.class }, new Object[] {
+											Integer.TYPE  }, new Object[] {
 											message, sqlState,
 											new Integer(vendorErrorCode) });
 				}
