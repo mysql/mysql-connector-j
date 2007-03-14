@@ -24,16 +24,20 @@
 package com.mysql.jdbc;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLXML;
 
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.FactoryConfigurationError;
@@ -57,11 +61,14 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
+import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
+import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.SAXException;
 
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
-public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatcher {
+public class JDBC4MysqlSQLXML implements SQLXML {
 
 	private XMLInputFactory inputFactory;
 
@@ -81,6 +88,14 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 
 	private DOMResult asDOMResult;
 
+	private SAXResult asSAXResult;
+
+	private SimpleSaxToReader saxToReaderConverter;
+
+	private StringWriter asStringWriter;
+
+	private ByteArrayOutputStream asByteArrayOutputStream;
+
 	protected JDBC4MysqlSQLXML(ResultSet owner, int index) {
 		this.owningResultSet = owner;
 		this.columnIndexOfXml = index;
@@ -92,35 +107,41 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 	}
 
 	public synchronized void free() throws SQLException {
+		this.stringRep = null;
+		this.asDOMResult = null;
+		this.asSAXResult = null;
 		this.inputFactory = null;
 		this.outputFactory = null;
 		this.owningResultSet = null;
 		this.workingWithResult = false;
 		this.isClosed = true;
-		
+
 	}
 
 	public synchronized String getString() throws SQLException {
 		checkClosed();
 		checkWorkingWithResult();
-		
+
 		if (this.fromResultSet) {
 			return this.owningResultSet.getString(this.columnIndexOfXml);
 		}
-		
+
 		return this.stringRep;
 	}
 
 	private synchronized void checkClosed() throws SQLException {
 		if (this.isClosed) {
-			throw SQLError.createSQLException("SQLXMLInstance has been free()d");
+			throw SQLError
+					.createSQLException("SQLXMLInstance has been free()d");
 		}
 	}
 
 	private synchronized void checkWorkingWithResult() throws SQLException {
 		if (this.workingWithResult) {
-			throw SQLError.createSQLException("Can't perform requested operation after getResult() has been called to write XML data",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			throw SQLError
+					.createSQLException(
+							"Can't perform requested operation after getResult() has been called to write XML data",
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
 	}
 
@@ -153,7 +174,7 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 	public synchronized void setString(String str) throws SQLException {
 		checkClosed();
 		checkWorkingWithResult();
-		
+
 		this.stringRep = str;
 		this.fromResultSet = false;
 	}
@@ -161,18 +182,18 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 	public synchronized boolean isEmpty() throws SQLException {
 		checkClosed();
 		checkWorkingWithResult();
-		
+
 		if (!this.fromResultSet) {
 			return this.stringRep == null || this.stringRep.length() == 0;
 		}
-		
+
 		return false;
 	}
 
 	public synchronized InputStream getBinaryStream() throws SQLException {
 		checkClosed();
 		checkWorkingWithResult();
-		
+
 		return this.owningResultSet.getBinaryStream(this.columnIndexOfXml);
 	}
 
@@ -204,7 +225,7 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 	public synchronized Reader getCharacterStream() throws SQLException {
 		checkClosed();
 		checkWorkingWithResult();
-		
+
 		return this.owningResultSet.getCharacterStream(this.columnIndexOfXml);
 	}
 
@@ -235,8 +256,8 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 	 *            The class of the source, or null. If the class is null, a
 	 *            vendor specifc Source implementation will be returned. The
 	 *            following classes are supported at a minimum:
-	 *            
-	 *            (MySQL returns a SAXSource if sourceClass == null)
+	 * 
+	 * (MySQL returns a SAXSource if sourceClass == null)
 	 * 
 	 * <pre>
 	 *    javax.xml.transform.dom.DOMSource - returns a DOMSource
@@ -259,23 +280,22 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 	public synchronized Source getSource(Class clazz) throws SQLException {
 		checkClosed();
 		checkWorkingWithResult();
-		
+
 		// Note that we try and use streams here wherever possible
 		// for the day that the server actually supports streaming
 		// from server -> client (futureproofing)
 
 		if (clazz == null || clazz.equals(SAXSource.class)) {
-			
+
 			InputSource inputSource = null;
-			
+
 			if (this.fromResultSet) {
-				inputSource = new InputSource(
-						this.owningResultSet
+				inputSource = new InputSource(this.owningResultSet
 						.getCharacterStream(this.columnIndexOfXml));
 			} else {
 				inputSource = new InputSource(new StringReader(this.stringRep));
 			}
-			
+
 			return new SAXSource(inputSource);
 		} else if (clazz.equals(DOMSource.class)) {
 			try {
@@ -285,13 +305,13 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 				DocumentBuilder builder = builderFactory.newDocumentBuilder();
 
 				InputSource inputSource = null;
-				
+
 				if (this.fromResultSet) {
-					inputSource = new InputSource(
-							this.owningResultSet
+					inputSource = new InputSource(this.owningResultSet
 							.getCharacterStream(this.columnIndexOfXml));
 				} else {
-					inputSource = new InputSource(new StringReader(this.stringRep));
+					inputSource = new InputSource(new StringReader(
+							this.stringRep));
 				}
 
 				return new DOMSource(builder.parse(inputSource));
@@ -303,26 +323,26 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 
 		} else if (clazz.equals(StreamSource.class)) {
 			Reader reader = null;
-			
+
 			if (this.fromResultSet) {
 				reader = this.owningResultSet
-							.getCharacterStream(this.columnIndexOfXml);
+						.getCharacterStream(this.columnIndexOfXml);
 			} else {
 				reader = new StringReader(this.stringRep);
 			}
-			
+
 			return new StreamSource(reader);
 		} else if (clazz.equals(StAXSource.class)) {
 			try {
 				Reader reader = null;
-				
+
 				if (this.fromResultSet) {
 					reader = this.owningResultSet
-								.getCharacterStream(this.columnIndexOfXml);
+							.getCharacterStream(this.columnIndexOfXml);
 				} else {
 					reader = new StringReader(this.stringRep);
 				}
-				
+
 				return new StAXSource(this.inputFactory
 						.createXMLStreamReader(reader));
 			} catch (XMLStreamException ex) {
@@ -360,19 +380,19 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 	public synchronized OutputStream setBinaryStream() throws SQLException {
 		checkClosed();
 		checkWorkingWithResult();
-		
+
 		this.workingWithResult = true;
-		
+
 		return setBinaryStreamInternal();
 	}
 
-	private OutputStream setBinaryStreamInternal() throws SQLException {
-		WatchableOutputStream bytesOut = new WatchableOutputStream();
-		bytesOut.setWatcher(this);
+	private synchronized OutputStream setBinaryStreamInternal()
+			throws SQLException {
+		this.asByteArrayOutputStream = new ByteArrayOutputStream();
 
-		return bytesOut;
+		return this.asByteArrayOutputStream;
 	}
-	
+
 	/**
 	 * Retrieves a stream to be used to write the XML value that this SQLXML
 	 * instance represents. The format of this stream is defined by
@@ -401,19 +421,19 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 	public synchronized Writer setCharacterStream() throws SQLException {
 		checkClosed();
 		checkWorkingWithResult();
-		
+
 		this.workingWithResult = true;
-		
+
 		return setCharacterStreamInternal();
 	}
 
-	private Writer setCharacterStreamInternal() throws SQLException {
-		WatchableWriter writer = new WatchableWriter();
-		writer.setWatcher(this);
+	private synchronized Writer setCharacterStreamInternal()
+			throws SQLException {
+		this.asStringWriter = new StringWriter();
 
-		return writer;
+		return this.asStringWriter;
 	}
-	
+
 	/**
 	 * Returns a Result for setting the XML value designated by this SQLXML
 	 * instance.
@@ -462,17 +482,23 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 	public synchronized Result setResult(Class clazz) throws SQLException {
 		checkClosed();
 		checkWorkingWithResult();
-		
+
 		this.workingWithResult = true;
 		this.asDOMResult = null;
+		this.asSAXResult = null;
+		this.saxToReaderConverter = null;
 		this.stringRep = null;
-		
+		this.asStringWriter = null;
+		this.asByteArrayOutputStream = null;
+
 		if (clazz == null || clazz.equals(SAXResult.class)) {
-			
-			// TODO: Need to flesh this out
-			return new SAXResult(null);
+			this.saxToReaderConverter = new SimpleSaxToReader();
+
+			this.asSAXResult = new SAXResult(this.saxToReaderConverter);
+
+			return this.asSAXResult;
 		} else if (clazz.equals(DOMResult.class)) {
-			
+
 			this.asDOMResult = new DOMResult();
 			return this.asDOMResult;
 
@@ -480,8 +506,12 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 			return new StreamResult(setCharacterStreamInternal());
 		} else if (clazz.equals(StAXResult.class)) {
 			try {
-				return new StAXResult(this.outputFactory.createXMLEventWriter(
-						setCharacterStreamInternal()));
+				if (this.outputFactory == null) {
+					this.outputFactory = XMLOutputFactory.newInstance();
+				}
+
+				return new StAXResult(this.outputFactory
+						.createXMLEventWriter(setCharacterStreamInternal()));
 			} catch (XMLStreamException ex) {
 				SQLException sqlEx = SQLError.createSQLException(ex
 						.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
@@ -495,31 +525,22 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 		}
 	}
 
-	/**
-	 * @see com.mysql.jdbc.WriterWatcher#writerClosed(char[])
-	 */
-	public void writerClosed(WatchableWriter out) {
-		try {
-			setString(out.toString());
-		} catch (SQLException sqlEx) {
-			// never actually thrown in our impl
-		}
-	}
+	private Reader binaryInputStreamStreamToReader(ByteArrayOutputStream out) {
 
-	public void streamClosed(WatchableOutputStream out) {
-		
 		try {
 			// There's got to be an easier way to do this, but
 			// I don't feel like coding up Appendix F of the XML Spec
 			// myself, when there's a reusable way to do it, and we
 			// can warn folks away from BINARY xml streams that have
 			// to be parsed to determine the character encoding :P
-			
+
 			String encoding = "UTF-8";
 
 			try {
-				ByteArrayInputStream bIn = new ByteArrayInputStream(out.toByteArray());
-				XMLStreamReader reader = this.inputFactory.createXMLStreamReader(bIn);
+				ByteArrayInputStream bIn = new ByteArrayInputStream(out
+						.toByteArray());
+				XMLStreamReader reader = this.inputFactory
+						.createXMLStreamReader(bIn);
 
 				int eventType = 0;
 
@@ -539,14 +560,48 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 				// into valid XML
 			}
 
-			setString(new String(out.toByteArray(), encoding));
+			return new StringReader(new String(out.toByteArray(), encoding));
 		} catch (UnsupportedEncodingException badEnc) {
 			throw new RuntimeException(badEnc);
-		} catch (SQLException sqlEx) {
-			// never actually thrown in our impl
 		}
 	}
-	
+
+	protected synchronized Reader serializeAsCharacterStream()
+			throws SQLException {
+		checkClosed();
+		if (this.workingWithResult) {
+			// figure out what kind of result
+			if (this.stringRep != null) {
+				return new StringReader(this.stringRep);
+			}
+
+			if (this.asDOMResult != null) {
+				try {
+					DOMSource source = new DOMSource(this.asDOMResult.getNode());
+					Transformer identity = TransformerFactory.newInstance()
+							.newTransformer();
+					StringWriter stringOut = new StringWriter();
+					Result result = new StreamResult(stringOut);
+					identity.transform(source, result);
+
+					return new StringReader(stringOut.toString());
+				} catch (Throwable t) {
+					throw new SQLException(t.toString());
+				}
+			}
+
+			if (this.asSAXResult != null) {
+				return this.saxToReaderConverter.toReader();
+			}
+
+			if (this.asByteArrayOutputStream != null) {
+				return binaryInputStreamStreamToReader(this.asByteArrayOutputStream);
+			}
+		}
+
+		return this.owningResultSet.getCharacterStream(this.columnIndexOfXml);
+	}
+
 	protected synchronized String serializeAsString() throws SQLException {
 		checkClosed();
 		if (this.workingWithResult) {
@@ -554,12 +609,152 @@ public class JDBC4MysqlSQLXML implements SQLXML, WriterWatcher, OutputStreamWatc
 			if (this.stringRep != null) {
 				return this.stringRep;
 			}
-			
+
 			if (this.asDOMResult != null) {
 				// serialize from DOM
 			}
 		}
+
+		return this.owningResultSet.getString(this.columnIndexOfXml);
+	}
+
+	class SimpleSaxToReader extends DefaultHandler {
+		StringBuffer buf = new StringBuffer();
+
+		public void startDocument() throws SAXException {
+			buf.append("<?xml version='1.0' encoding='UTF-8'?>");
+		}
+
+		public void endDocument() throws SAXException {
+			// Do we need to override this?
+		}
+
+		public void startElement(String namespaceURI, String sName,
+				String qName, Attributes attrs) throws SAXException {
+
+			this.buf.append("<");
+			this.buf.append(qName);
+
+			if (attrs != null) {
+				for (int i = 0; i < attrs.getLength(); i++) {
+					this.buf.append(" ");
+					this.buf.append(attrs.getQName(i)).append("=\"");
+					escapeCharsForXml(attrs.getValue(i), true);
+					this.buf.append("\"");
+				}
+			}
+
+			this.buf.append(">");
+		}
+
+		public void characters(char buf[], int offset, int len)
+				throws SAXException {
+			if (!this.inCDATA) {
+				escapeCharsForXml(buf, offset, len, false);
+			} else {
+				this.buf.append(buf, offset, len);
+			}
+		}
+
+		public void ignorableWhitespace(char ch[], int start, int length)
+				throws SAXException {
+			characters(ch, start, length);
+		}
+
+		private boolean inCDATA = false;
+
+		public void startCDATA() throws SAXException {
+			this.buf.append("<![CDATA[");
+			this.inCDATA = true;
+		}
+
+		public void endCDATA() throws SAXException {
+			this.inCDATA = false;
+			this.buf.append("]]>");
+		}
+
+		public void comment(char ch[], int start, int length)
+				throws SAXException {
+			// if (!fCanonical && fElementDepth > 0) {
+			this.buf.append("<!--");
+			for (int i = 0; i < length; ++i) {
+				this.buf.append(ch[start + i]);
+			}
+			this.buf.append("-->");
+			// }
+		}
+
+		Reader toReader() {
+			return new StringReader(this.buf.toString());
+		}
+
+		private void escapeCharsForXml(String str, boolean isAttributeData) {
+			if (str == null) {
+				return;
+			}
+
+			int strLen = str.length();
+
+			for (int i = 0; i < strLen; i++) {
+				escapeCharsForXml(str.charAt(i), isAttributeData);
+			}
+		}
+
+		private void escapeCharsForXml(char[] buf, int offset, int len,
+				boolean isAttributeData) {
+
+			if (buf == null) {
+				return;
+			}
+
+			for (int i = 0; i < len; i++) {
+				escapeCharsForXml(buf[offset + i], isAttributeData);
+			}
+		}
+
+		private void escapeCharsForXml(char c, boolean isAttributeData) {
+			switch (c) {
+			case '<': 
+				this.buf.append("&lt;");
+				break;
+			
+			case '>': 
+				this.buf.append("&gt;");
+				break;
+			
+			case '&':
+				this.buf.append("&amp;");
+				break;
+			
+			case '"': 
+
+				if (!isAttributeData) {
+					this.buf.append("\"");
+				}
+				else {
+					this.buf.append("&quot;");
+				}
+
+				break;
 		
-		return getString(); 
+			case '\r': 
+				this.buf.append("&#xD;");
+				break;
+			
+
+			default: 
+
+				if (((c >= 0x01 && c <= 0x1F && c != 0x09 && c != 0x0A) 
+						|| (c >= 0x7F && c <= 0x9F) || c == 0x2028)
+						|| isAttributeData && (c == 0x09 || c == 0x0A)) {
+					this.buf.append("&#x");
+					this.buf.append(Integer.toHexString(c).toUpperCase());
+					this.buf.append(";");
+				}
+				else {
+					this.buf.append(c);
+				}        		
+			}
+		}
 	}
 }
