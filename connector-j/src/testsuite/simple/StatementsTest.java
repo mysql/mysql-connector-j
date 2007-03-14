@@ -540,7 +540,7 @@ public class StatementsTest extends BaseTestCase {
 			Connection cancelConn = null;
 	
 			try {
-				cancelConn = getConnectionWithProps(null);
+				cancelConn = getConnectionWithProps((String)null);
 				final Statement cancelStmt = cancelConn.createStatement();
 			
 				cancelStmt.setQueryTimeout(1);

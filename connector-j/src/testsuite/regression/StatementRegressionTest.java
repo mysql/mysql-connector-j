@@ -440,7 +440,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		Statement stmt2 = null;
 
 		try {
-			conn2 = getConnectionWithProps(null);
+			conn2 = getConnectionWithProps((String)null);
 			stmt2 = conn2.createStatement();
 
 			conn2.close();
@@ -2742,7 +2742,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
 	public void testServerPrepStmtDeadlock() throws Exception {
 
-		Connection c = getConnectionWithProps(null);
+		Connection c = getConnectionWithProps((String)null);
 
 		Thread testThread1 = new PrepareThread(c);
 		Thread testThread2 = new PrepareThread(c);
@@ -3364,7 +3364,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		Statement cancelStmt = null;
 		
 		try {
-			closedConn = getConnectionWithProps(null);
+			closedConn = getConnectionWithProps((String)null);
 			cancelStmt = closedConn.createStatement();
 		
 			closedConn.close();

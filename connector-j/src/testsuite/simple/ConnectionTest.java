@@ -1099,7 +1099,7 @@ public class ConnectionTest extends BaseTestCase {
 	}
 
 	public void testPing() throws SQLException {
-		Connection conn2 = getConnectionWithProps(null);
+		Connection conn2 = getConnectionWithProps((String)null);
 
 		((com.mysql.jdbc.Connection) conn2).ping();
 		conn2.close();

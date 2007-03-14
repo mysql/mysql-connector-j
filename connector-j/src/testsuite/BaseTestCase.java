@@ -36,11 +36,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
 import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.jdbc.StringUtils;
 
 import junit.framework.TestCase;
 
@@ -199,6 +201,28 @@ public abstract class BaseTestCase extends TestCase {
 		}
 	}
 
+	protected Connection getConnectionWithProps(String propsList) throws SQLException {
+		return getConnectionWithProps(dbUrl, propsList);
+	}
+
+	protected Connection getConnectionWithProps(String url, String propsList) throws SQLException {
+		Properties props = new Properties();
+		
+		if (propsList != null) {
+			List keyValuePairs = StringUtils.split(propsList, ",", false);
+			
+			Iterator iter = keyValuePairs.iterator();
+			
+			while (iter.hasNext()) {
+				String kvp = (String)iter.next();
+				List splitUp = StringUtils.split(kvp, "=", false);
+				props.setProperty(splitUp.get(0).toString().trim(), splitUp.get(1).toString());
+			}
+		}
+		
+		return getConnectionWithProps(url, props);
+	}
+	
 	/**
 	 * Returns a new connection with the given properties
 	 * 

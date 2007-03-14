@@ -311,7 +311,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 		boolean isReadOnly = reconnectableConn.isReadOnly();
 
-		Connection killConn = getConnectionWithProps(null);
+		Connection killConn = getConnectionWithProps((String)null);
 
 		killConn.createStatement().executeUpdate("KILL " + connectionId);
 		Thread.sleep(2000);
@@ -710,7 +710,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		props.setProperty("maxReconnects", "1");
 
 		Connection failoverConnection = null;
-		Connection killerConnection = getConnectionWithProps(null);
+		Connection killerConnection = getConnectionWithProps((String)null);
 
 		try {
 			failoverConnection = getConnectionWithProps("jdbc:mysql://"
@@ -1877,7 +1877,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	public void testBug25514() throws Exception {
 
 		for (int i = 0; i < 10; i++) {
-			getConnectionWithProps(null).close();
+			getConnectionWithProps((String)null).close();
 		}
 		
 		ThreadGroup root = Thread.currentThread().getThreadGroup().getParent();
