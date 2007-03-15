@@ -52,6 +52,8 @@ public class CommunicationsException extends SQLException {
 
 	private String exceptionMessage;
 
+	private boolean streamingResultSetInPlay = false;
+
 	public CommunicationsException(Connection conn, long lastPacketSentTimeMs,
 			Exception underlyingException) {
 
@@ -93,84 +95,90 @@ public class CommunicationsException extends SQLException {
 
 		StringBuffer timeoutMessageBuf = null;
 
-		if (serverTimeoutSeconds != 0) {
-			if (timeSinceLastPacket > serverTimeoutSeconds) {
-				dueToTimeout = DUE_TO_TIMEOUT_TRUE;
+		if (this.streamingResultSetInPlay) {
+			exceptionMessageBuf.append(Messages
+					.getString("CommunicationsException.ClientWasStreaming")); //$NON-NLS-1$
+		} else {
+			if (serverTimeoutSeconds != 0) {
+				if (timeSinceLastPacket > serverTimeoutSeconds) {
+					dueToTimeout = DUE_TO_TIMEOUT_TRUE;
+
+					timeoutMessageBuf = new StringBuffer();
+
+					timeoutMessageBuf.append(Messages
+							.getString("CommunicationsException.2")); //$NON-NLS-1$
+
+					if (!isInteractiveClient) {
+						timeoutMessageBuf.append(Messages
+								.getString("CommunicationsException.3")); //$NON-NLS-1$
+					} else {
+						timeoutMessageBuf.append(Messages
+								.getString("CommunicationsException.4")); //$NON-NLS-1$
+					}
+
+				}
+			} else if (timeSinceLastPacket > DEFAULT_WAIT_TIMEOUT_SECONDS) {
+				dueToTimeout = DUE_TO_TIMEOUT_MAYBE;
 
 				timeoutMessageBuf = new StringBuffer();
 
 				timeoutMessageBuf.append(Messages
-						.getString("CommunicationsException.2")); //$NON-NLS-1$
+						.getString("CommunicationsException.5")); //$NON-NLS-1$
+				timeoutMessageBuf.append(Messages
+						.getString("CommunicationsException.6")); //$NON-NLS-1$
+				timeoutMessageBuf.append(Messages
+						.getString("CommunicationsException.7")); //$NON-NLS-1$
+				timeoutMessageBuf.append(Messages
+						.getString("CommunicationsException.8")); //$NON-NLS-1$
+			}
 
-				if (!isInteractiveClient) {
-					timeoutMessageBuf.append(Messages
-							.getString("CommunicationsException.3")); //$NON-NLS-1$
-				} else {
-					timeoutMessageBuf.append(Messages
-							.getString("CommunicationsException.4")); //$NON-NLS-1$
+			if (dueToTimeout == DUE_TO_TIMEOUT_TRUE
+					|| dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
+
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.9")); //$NON-NLS-1$
+				exceptionMessageBuf.append(timeSinceLastPacket);
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.10")); //$NON-NLS-1$
+
+				if (timeoutMessageBuf != null) {
+					exceptionMessageBuf.append(timeoutMessageBuf);
 				}
 
-			}
-		} else if (timeSinceLastPacket > DEFAULT_WAIT_TIMEOUT_SECONDS) {
-			dueToTimeout = DUE_TO_TIMEOUT_MAYBE;
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.11")); //$NON-NLS-1$
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.12")); //$NON-NLS-1$
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.13")); //$NON-NLS-1$
 
-			timeoutMessageBuf = new StringBuffer();
+			} else {
+				//
+				// Attempt to determine the reason for the underlying exception
+				// (we can only make a best-guess here)
+				//
 
-			timeoutMessageBuf.append(Messages
-					.getString("CommunicationsException.5")); //$NON-NLS-1$
-			timeoutMessageBuf.append(Messages
-					.getString("CommunicationsException.6")); //$NON-NLS-1$
-			timeoutMessageBuf.append(Messages
-					.getString("CommunicationsException.7")); //$NON-NLS-1$
-			timeoutMessageBuf.append(Messages
-					.getString("CommunicationsException.8")); //$NON-NLS-1$
-		}
-
-		if (dueToTimeout == DUE_TO_TIMEOUT_TRUE
-				|| dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
-
-			exceptionMessageBuf.append(Messages
-					.getString("CommunicationsException.9")); //$NON-NLS-1$
-			exceptionMessageBuf.append(timeSinceLastPacket);
-			exceptionMessageBuf.append(Messages
-					.getString("CommunicationsException.10")); //$NON-NLS-1$
-
-			if (timeoutMessageBuf != null) {
-				exceptionMessageBuf.append(timeoutMessageBuf);
-			}
-
-			exceptionMessageBuf.append(Messages
-					.getString("CommunicationsException.11")); //$NON-NLS-1$
-			exceptionMessageBuf.append(Messages
-					.getString("CommunicationsException.12")); //$NON-NLS-1$
-			exceptionMessageBuf.append(Messages
-					.getString("CommunicationsException.13")); //$NON-NLS-1$
-
-		} else {
-			//
-			// Attempt to determine the reason for the underlying exception
-			// (we can only make a best-guess here)
-			//
-
-			if (underlyingException instanceof BindException) {
-				if (conn.getLocalSocketAddress() != null && 
-						!Util.interfaceExists(conn.getLocalSocketAddress())) {
-					exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.19a")); //$NON-NLS-1$
-				} else {
-					// too many client connections???
-					exceptionMessageBuf.append(Messages
-							.getString("CommunicationsException.14")); //$NON-NLS-1$
-					exceptionMessageBuf.append(Messages
-							.getString("CommunicationsException.15")); //$NON-NLS-1$
-					exceptionMessageBuf.append(Messages
-							.getString("CommunicationsException.16")); //$NON-NLS-1$
-					exceptionMessageBuf.append(Messages
-							.getString("CommunicationsException.17")); //$NON-NLS-1$
-					exceptionMessageBuf.append(Messages
-							.getString("CommunicationsException.18")); //$NON-NLS-1$
-					exceptionMessageBuf.append(Messages
-							.getString("CommunicationsException.19")); //$NON-NLS-1$
+				if (underlyingException instanceof BindException) {
+					if (conn.getLocalSocketAddress() != null
+							&& !Util.interfaceExists(conn
+									.getLocalSocketAddress())) {
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.19a")); //$NON-NLS-1$
+					} else {
+						// too many client connections???
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.14")); //$NON-NLS-1$
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.15")); //$NON-NLS-1$
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.16")); //$NON-NLS-1$
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.17")); //$NON-NLS-1$
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.18")); //$NON-NLS-1$
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.19")); //$NON-NLS-1$
+					}
 				}
 			}
 		}
@@ -186,11 +194,13 @@ public class CommunicationsException extends SQLException {
 				exceptionMessageBuf.append(Util
 						.stackTraceToString(underlyingException));
 			}
-			
-			if (conn != null && conn.getMaintainTimeStats() && 
-					!conn.getParanoid()) {
-				exceptionMessageBuf.append("\n\nLast packet sent to the server was ");
-				exceptionMessageBuf.append(System.currentTimeMillis() - lastPacketSentTimeMs);
+
+			if (conn != null && conn.getMaintainTimeStats()
+					&& !conn.getParanoid()) {
+				exceptionMessageBuf
+						.append("\n\nLast packet sent to the server was ");
+				exceptionMessageBuf.append(System.currentTimeMillis()
+						- lastPacketSentTimeMs);
 				exceptionMessageBuf.append(" ms ago.");
 			}
 		}
@@ -214,6 +224,10 @@ public class CommunicationsException extends SQLException {
 	 */
 	public String getSQLState() {
 		return SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE;
+	}
+
+	protected void setWasStreamingResults() {
+		this.streamingResultSetInPlay = true;
 	}
 
 }

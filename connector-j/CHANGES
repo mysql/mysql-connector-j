@@ -32,7 +32,11 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  procedure parser, and thus metadata about them can not be created, leading to
 	  inability to retrieve said metadata, or execute procedures that have certain
 	  comments in them.
-	  	  	 	  
+	  
+    - Give better error message when "streaming" result sets, and the connection
+	  gets clobbered because of exceeding net_write_timeout on the server. (which is
+	  basically what the error message says too).
+	    	  	 	  
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"
