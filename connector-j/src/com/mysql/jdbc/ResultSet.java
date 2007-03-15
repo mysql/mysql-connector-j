@@ -24,6 +24,7 @@
  */
 package com.mysql.jdbc;
 
+import com.mysql.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
@@ -36,6 +37,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 
+import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -120,6 +122,44 @@ import java.util.TreeMap;
  */
 public class ResultSet implements java.sql.ResultSet {
 
+	private static final Constructor JDBC_4_RS_4_ARG_CTOR;
+	private static final Constructor JDBC_4_RS_6_ARG_CTOR;;
+	private static final Constructor JDBC_4_UPD_RS_6_ARG_CTOR;
+	
+	static {
+		if (Util.isJdbc4()) {
+			try {
+				JDBC_4_RS_4_ARG_CTOR = Class.forName(
+						"com.mysql.jdbc.JDBC4ResultSet").getConstructor(
+						new Class[] { Long.TYPE, Long.TYPE,
+								com.mysql.jdbc.Connection.class,
+								com.mysql.jdbc.Statement.class });
+				JDBC_4_RS_6_ARG_CTOR = Class.forName(
+						"com.mysql.jdbc.JDBC4ResultSet").getConstructor(
+						new Class[] { String.class, Field[].class,
+								RowData.class, com.mysql.jdbc.Connection.class,
+								com.mysql.jdbc.Statement.class });
+				JDBC_4_UPD_RS_6_ARG_CTOR = Class.forName(
+						"com.mysql.jdbc.JDBC4UpdatableResultSet")
+						.getConstructor(
+								new Class[] { String.class, Field[].class,
+										RowData.class,
+										com.mysql.jdbc.Connection.class,
+										com.mysql.jdbc.Statement.class });
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			JDBC_4_RS_4_ARG_CTOR = null;
+			JDBC_4_RS_6_ARG_CTOR = null;
+			JDBC_4_UPD_RS_6_ARG_CTOR = null;
+		}
+	}
+	
 	/**
 	 * Epsillon between Float.MIN_VALUE and the double representation of said value.
 	 */
@@ -293,42 +333,39 @@ public class ResultSet implements java.sql.ResultSet {
 			return new ResultSet(updateCount, updateID, conn, creatorStmt);
 		}
 
-		return (ResultSet) Util.getInstance(
-				"com.mysql.jdbc.JDBC4ResultSet", new Class[] {
-						Long.TYPE, Long.TYPE,
-						com.mysql.jdbc.Connection.class,
-						com.mysql.jdbc.Statement.class }, new Object[] {
-						new Long(updateCount), new Long(updateID), conn,
+		return (ResultSet) Util.handleNewInstance(JDBC_4_RS_4_ARG_CTOR,
+				new Object[] { new Long(updateCount), new Long(updateID), conn,
 						creatorStmt });
 	}
-	
+
 	/**
-	 * Creates a result set instance that represents a query result -- We need to
-	 * provide factory-style methods so we can support both JDBC3 (and older)
+	 * Creates a result set instance that represents a query result -- We need
+	 * to provide factory-style methods so we can support both JDBC3 (and older)
 	 * and JDBC4 runtimes, otherwise the class verifier complains when it tries
 	 * to load JDBC4-only interface classes that are present in JDBC4 method
 	 * signatures.
 	 */
 
-	protected static ResultSet getInstance(String catalog, Field[] fields, RowData tuples,
-			Connection conn, Statement creatorStmt, boolean isUpdatable) throws SQLException {
+	protected static ResultSet getInstance(String catalog, Field[] fields,
+			RowData tuples, Connection conn, Statement creatorStmt,
+			boolean isUpdatable) throws SQLException {
 		if (!Util.isJdbc4()) {
 			if (!isUpdatable) {
 				return new ResultSet(catalog, fields, tuples, conn, creatorStmt);
 			}
-			
-			return new UpdatableResultSet(catalog, fields, tuples, conn, creatorStmt);
+
+			return new UpdatableResultSet(catalog, fields, tuples, conn,
+					creatorStmt);
 		}
 
-		String className = isUpdatable ? "com.mysql.jdbc.JDBC4UpdatableResultSet" : "com.mysql.jdbc.JDBC4ResultSet";
-		
-		return (ResultSet) Util.getInstance(
-				className, new Class[] {
-						String.class, Field[].class,
-						RowData.class,
-						com.mysql.jdbc.Connection.class,
-						com.mysql.jdbc.Statement.class }, new Object[] {
-						catalog, fields, tuples, conn, creatorStmt });
+		if (!isUpdatable) {
+			return (ResultSet) Util
+					.handleNewInstance(JDBC_4_RS_6_ARG_CTOR, new Object[] {
+							catalog, fields, tuples, conn, creatorStmt });
+		}
+
+		return (ResultSet) Util.handleNewInstance(JDBC_4_UPD_RS_6_ARG_CTOR,
+				new Object[] { catalog, fields, tuples, conn, creatorStmt });
 	}
 
 	/**

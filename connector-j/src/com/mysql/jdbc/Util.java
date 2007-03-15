@@ -27,6 +27,7 @@ package com.mysql.jdbc;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.TimeZone;
@@ -322,15 +323,28 @@ public class Util {
 		return traceBuf.toString();
 	}
 	
-	
 	public static Object getInstance(String className, Class[] argTypes, Object[] args) throws SQLException {
-		try {
-			Class c = Class.forName(className);
 		
-			return c.getConstructor(argTypes).newInstance(args);
+			try {
+				return handleNewInstance(Class.forName(className).getConstructor(argTypes), args);
+			} catch (SecurityException e) {
+				throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+			} catch (NoSuchMethodException e) {
+				throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+			} catch (ClassNotFoundException e) {
+				throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+			}
+	}
+	
+	/**
+	 * Handles constructing new instance with the given constructor and wrapping
+	 * (or not, as required) the exceptions that could possibly be generated
+	 */
+	public static final Object handleNewInstance(Constructor ctor, Object[] args) throws SQLException {
+		try {
+			
+			return ctor.newInstance(args);
 		} catch (IllegalArgumentException e) {
-			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
-		} catch (SecurityException e) {
 			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
 		} catch (InstantiationException e) {
 			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
@@ -343,11 +357,11 @@ public class Util {
 				throw (SQLException)target;
 			}
 			
+			if (target instanceof ExceptionInInitializerError) {
+				target = ((ExceptionInInitializerError)target).getException();
+			}
+			
 			throw new SQLException(target.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
-		} catch (NoSuchMethodException e) {
-			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
-		} catch (ClassNotFoundException e) {
-			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
 		}
 	}
 	

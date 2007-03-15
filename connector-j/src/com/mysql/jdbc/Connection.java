@@ -29,6 +29,7 @@ import java.io.UnsupportedEncodingException;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.sql.Blob;
@@ -168,7 +169,8 @@ public class Connection extends ConnectionProperties implements
 	private static final Map serverConfigByUrl = new HashMap();
 
 	private static Timer cancelTimer;
-
+	private static final Constructor JDBC_4_CONNECTION_CTOR;
+	
 	static {
 		mapTransIsolationNameToValue = new HashMap(8);
 		mapTransIsolationNameToValue.put("READ-UNCOMMITED", new Integer(
@@ -197,6 +199,23 @@ public class Connection extends ConnectionProperties implements
 		
 		if (!createdNamedTimer) {
 			cancelTimer = new Timer(true);
+		}
+		
+		if (Util.isJdbc4()) {
+			try {
+				JDBC_4_CONNECTION_CTOR = Class.forName(
+						"com.mysql.jdbc.JDBC4Connection").getConstructor(
+						new Class[] { String.class, Integer.TYPE,
+								Properties.class, String.class, String.class });
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			JDBC_4_CONNECTION_CTOR = null;
 		}
 	}
 
@@ -257,6 +276,7 @@ public class Connection extends ConnectionProperties implements
 		return cancelTimer;
 	}
 
+	
 	/**
 	 * Creates a connection instance -- We need to provide factory-style methods
 	 * so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise
@@ -272,12 +292,10 @@ public class Connection extends ConnectionProperties implements
 					databaseToConnectTo, url);
 		}
 
-		return (Connection) Util.getInstance(
-				"com.mysql.jdbc.JDBC4Connection", new Class[] {
-						String.class, Integer.TYPE, Properties.class,
-						String.class, String.class }, new Object[] {
-						hostToConnectTo, new Integer(portToConnectTo), info,
-						databaseToConnectTo, url });
+		return (Connection) Util.handleNewInstance(JDBC_4_CONNECTION_CTOR,
+				new Object[] {
+							hostToConnectTo, new Integer(portToConnectTo), info,
+							databaseToConnectTo, url });
 	}
 
 	private static synchronized int getNextRoundRobinHostIndex(String url,
@@ -1046,7 +1064,7 @@ public class Connection extends ConnectionProperties implements
 		}
 	}
 
-	private void checkClosed() throws SQLException {
+	protected void checkClosed() throws SQLException {
 		if (this.isClosed) {
 			StringBuffer messageBuf = new StringBuffer(
 					"No operations allowed after connection closed.");

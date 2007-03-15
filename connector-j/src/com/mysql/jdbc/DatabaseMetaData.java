@@ -25,6 +25,8 @@
 package com.mysql.jdbc;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -472,7 +474,34 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 	private static final byte[] VIEW_AS_BYTES = "VIEW".getBytes();
 	
+	private static final Constructor JDBC_4_DBMD_SHOW_CTOR;
+	
+	private static final Constructor JDBC_4_DBMD_IS_CTOR;
+	
 	static {
+		if (Util.isJdbc4()) {
+			try {
+				JDBC_4_DBMD_SHOW_CTOR = Class.forName(
+						"com.mysql.jdbc.JDBC4DatabaseMetaData").getConstructor(
+						new Class[] { com.mysql.jdbc.Connection.class,
+								String.class });
+				JDBC_4_DBMD_IS_CTOR = Class.forName(
+						"com.mysql.jdbc.JDBC4DatabaseMetaDataUsingInfoSchema")
+						.getConstructor(
+								new Class[] { com.mysql.jdbc.Connection.class,
+										String.class });
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			JDBC_4_DBMD_IS_CTOR = null;
+			JDBC_4_DBMD_SHOW_CTOR = null;
+		}
+		
 		// Current as-of MySQL-5.1.16
 		String[] allMySQLKeywords = new String[] { "ACCESSIBLE", "ADD", "ALL",
 				"ALTER", "ANALYZE", "AND", "AS", "ASC", "ASENSITIVE", "BEFORE",
@@ -620,17 +649,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		if (connToSet != null && connToSet.getUseInformationSchema()
 				&& connToSet.versionMeetsMinimum(5, 0, 7)) {
-			return (DatabaseMetaData) Util
-					.getInstance(
-							"com.mysql.jdbc.JDBC4DatabaseMetaDataUsingInfoSchema",
-							new Class[] { com.mysql.jdbc.Connection.class,
-									String.class }, new Object[] { connToSet,
-									databaseToSet });
+
+			return (DatabaseMetaData) Util.handleNewInstance(
+					JDBC_4_DBMD_IS_CTOR, new Object[] { connToSet,
+							databaseToSet });
 		}
 
-		return (DatabaseMetaData) Util.getInstance(
-				"com.mysql.jdbc.JDBC4DatabaseMetaData", new Class[] {
-						com.mysql.jdbc.Connection.class, String.class },
+		return (DatabaseMetaData) Util.handleNewInstance(JDBC_4_DBMD_SHOW_CTOR,
 				new Object[] { connToSet, databaseToSet });
 	}
 	

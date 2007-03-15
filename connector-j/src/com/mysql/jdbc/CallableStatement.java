@@ -26,6 +26,8 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 
 import java.net.URL;
@@ -47,6 +49,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
@@ -59,6 +62,37 @@ import com.mysql.jdbc.exceptions.NotYetImplementedException;
  */
 public class CallableStatement extends PreparedStatement implements
 		java.sql.CallableStatement {
+	protected final static Constructor JDBC_4_CSTMT_2_ARGS_CTOR;
+	
+	protected final static Constructor JDBC_4_CSTMT_4_ARGS_CTOR;
+	
+	static {
+		if (Util.isJdbc4()) {
+			try {
+				JDBC_4_CSTMT_2_ARGS_CTOR = Class.forName(
+						"com.mysql.jdbc.jdbc4.JDBC4CallableStatement")
+						.getConstructor(
+								new Class[] { com.mysql.jdbc.Connection.class,
+										CallableStatementParamInfo.class });
+				JDBC_4_CSTMT_4_ARGS_CTOR = Class.forName(
+						"com.mysql.jdbc.jdbc4.JDBC4CallableStatement")
+						.getConstructor(
+								new Class[] { com.mysql.jdbc.Connection.class,
+										String.class, String.class,
+										Boolean.TYPE });
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			JDBC_4_CSTMT_4_ARGS_CTOR = null;
+			JDBC_4_CSTMT_2_ARGS_CTOR = null;
+		}
+	}
+	
 	protected class CallableStatementParam {
 		int desiredJdbcType;
 
@@ -348,13 +382,53 @@ public class CallableStatement extends PreparedStatement implements
 			super(paramInfo);
 		}
 		
-		public boolean isWrapperFor(Class arg0) throws SQLException {
-			throw new NotYetImplementedException();
+		/**
+	     * Returns true if this either implements the interface argument or is directly or indirectly a wrapper
+	     * for an object that does. Returns false otherwise. If this implements the interface then return true,
+	     * else if this is a wrapper then return the result of recursively calling <code>isWrapperFor</code> on the wrapped
+	     * object. If this does not implement the interface and is not a wrapper, return false.
+	     * This method should be implemented as a low-cost operation compared to <code>unwrap</code> so that
+	     * callers can use this method to avoid expensive <code>unwrap</code> calls that may fail. If this method
+	     * returns true then calling <code>unwrap</code> with the same argument should succeed.
+	     *
+	     * @param interfaces a Class defining an interface.
+	     * @return true if this implements the interface or directly or indirectly wraps an object that does.
+	     * @throws java.sql.SQLException  if an error occurs while determining whether this is a wrapper
+	     * for an object with the given interface.
+	     * @since 1.6
+	     */
+		public boolean isWrapperFor(Class iface) throws SQLException {
+			checkClosed();
+			
+			// This works for classes that aren't actually wrapping
+			// anything
+			return iface.isInstance(this);
 		}
 
-		public Object unwrap(Class arg0) throws SQLException {
-			throw new NotYetImplementedException();
-		}
+	    /**
+	     * Returns an object that implements the given interface to allow access to non-standard methods,
+	     * or standard methods not exposed by the proxy.
+	     * The result may be either the object found to implement the interface or a proxy for that object.
+	     * If the receiver implements the interface then that is the object. If the receiver is a wrapper
+	     * and the wrapped object implements the interface then that is the object. Otherwise the object is
+	     *  the result of calling <code>unwrap</code> recursively on the wrapped object. If the receiver is not a
+	     * wrapper and does not implement the interface, then an <code>SQLException</code> is thrown.
+	     *
+	     * @param iface A Class defining an interface that the result must implement.
+	     * @return an object that implements the interface. May be a proxy for the actual implementing object.
+	     * @throws java.sql.SQLException If no object found that implements the interface 
+	     * @since 1.6
+	     */
+		public Object unwrap(Class iface) throws java.sql.SQLException {
+	    	try {
+	    		// This works for classes that aren't actually wrapping
+	    		// anything
+	            return iface.cast(this);
+	        } catch (ClassCastException cce) {
+	            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
+	            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+	        }
+	    }
 	}
 
 	private final static int NOT_OUTPUT_PARAMETER_INDICATOR = Integer.MIN_VALUE;
@@ -430,17 +504,15 @@ public class CallableStatement extends PreparedStatement implements
 	 * classes that are present in JDBC4 method signatures.
 	 */
 
-	protected static CallableStatement getInstance(Connection conn, String sql, String catalog,
-			boolean isFunctionCall) throws SQLException {
+	protected static CallableStatement getInstance(Connection conn, String sql,
+			String catalog, boolean isFunctionCall) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new CallableStatement(conn, sql, catalog, isFunctionCall);
 		}
 
-		return (CallableStatement) Util.getInstance(
-				"com.mysql.jdbc.jdbc4.JDBC4CallableStatement", new Class[] {
-						com.mysql.jdbc.Connection.class, String.class, String.class,
-						Boolean.TYPE }, new Object[] {
-						conn, sql, catalog, new Boolean(isFunctionCall) });
+		return (CallableStatement) Util.handleNewInstance(
+				JDBC_4_CSTMT_4_ARGS_CTOR, new Object[] { conn, sql, catalog,
+						new Boolean(isFunctionCall) });
 	}
 	
 	/**
@@ -456,10 +528,9 @@ public class CallableStatement extends PreparedStatement implements
 			return new CallableStatement(conn, paramInfo);
 		}
 
-		return (CallableStatement) Util.getInstance(
-				"com.mysql.jdbc.jdbc4.JDBC4CallableStatement", new Class[] {
-						com.mysql.jdbc.Connection.class, CallableStatementParamInfo.class }, 
-						new Object[] {conn, conn, paramInfo });
+		return (CallableStatement) Util.handleNewInstance(
+				JDBC_4_CSTMT_2_ARGS_CTOR, new Object[] { conn, paramInfo });
+
 	}
 	
 	private int[] placeholderToParameterIndexMap;

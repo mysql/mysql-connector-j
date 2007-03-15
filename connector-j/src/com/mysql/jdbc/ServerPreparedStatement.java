@@ -34,6 +34,8 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 
 import java.net.URL;
@@ -51,6 +53,7 @@ import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Properties;
 import java.util.TimeZone;
 
 /**
@@ -61,6 +64,27 @@ import java.util.TimeZone;
  *          mmatthews Exp $
  */
 public class ServerPreparedStatement extends PreparedStatement {
+	private static final Constructor JDBC_4_SPS_CTOR;
+	
+	static {
+		if (Util.isJdbc4()) {
+			try {
+				JDBC_4_SPS_CTOR = Class.forName("com.mysql.jdbc.jdbc4.JDBC4ServerPreparedStatement")
+				.getConstructor(
+				new Class[] { Connection.class, String.class, String.class,
+						Integer.TYPE, Integer.TYPE});
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			} 
+		} else {
+			JDBC_4_SPS_CTOR = null;
+		}
+	}
+	
 	protected static final int BLOB_STREAM_READ_BUF_SIZE = 8192;
 
 	static class BatchedBindValues {
@@ -283,12 +307,25 @@ public class ServerPreparedStatement extends PreparedStatement {
 					resultSetType, resultSetConcurrency);
 		}
 
-		return (ServerPreparedStatement) Util.getInstance(
-				"com.mysql.jdbc.jdbc4.JDBC4ServerPreparedStatement",
-				new Class[] { Connection.class, String.class, String.class,
-						Integer.TYPE, Integer.TYPE }, new Object[] { conn,
-						sql, catalog, new Integer(resultSetType),
-						new Integer(resultSetConcurrency) });
+		try {
+			return (ServerPreparedStatement) JDBC_4_SPS_CTOR.newInstance(new Object[] { conn,
+					sql, catalog, new Integer(resultSetType),
+					new Integer(resultSetConcurrency) });
+		} catch (IllegalArgumentException e) {
+			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+		} catch (InstantiationException e) {
+			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+		} catch (IllegalAccessException e) {
+			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+		} catch (InvocationTargetException e) {
+			Throwable target = e.getTargetException(); 
+			
+			if (target instanceof SQLException) {
+				throw (SQLException)target;
+			}
+			
+			throw new SQLException(target.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+		}
 	}
 
 	/**

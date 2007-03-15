@@ -32,6 +32,8 @@ import java.io.ObjectOutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
@@ -48,6 +50,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.TimeZone;
 
 import com.mysql.jdbc.Statement.CancelTask;
@@ -81,6 +84,41 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
  */
 public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		java.sql.PreparedStatement {
+	private static final Constructor JDBC_4_PSTMT_2_ARG_CTOR;
+	private static final Constructor JDBC_4_PSTMT_3_ARG_CTOR;
+	private static final Constructor JDBC_4_PSTMT_4_ARG_CTOR;
+	
+	static {
+		if (Util.isJdbc4()) {
+			try {
+				JDBC_4_PSTMT_2_ARG_CTOR = Class.forName(
+						"com.mysql.jdbc.JDBC4PreparedStatement")
+						.getConstructor(
+								new Class[] { Connection.class, String.class });
+				JDBC_4_PSTMT_3_ARG_CTOR = Class.forName(
+						"com.mysql.jdbc.JDBC4PreparedStatement")
+						.getConstructor(
+								new Class[] { Connection.class, String.class,
+										String.class });
+				JDBC_4_PSTMT_4_ARG_CTOR = Class.forName(
+						"com.mysql.jdbc.JDBC4PreparedStatement")
+						.getConstructor(
+								new Class[] { Connection.class, String.class,
+										String.class, ParseInfo.class });
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			JDBC_4_PSTMT_2_ARG_CTOR = null;
+			JDBC_4_PSTMT_3_ARG_CTOR = null;
+			JDBC_4_PSTMT_4_ARG_CTOR = null;
+		}
+	}
+	
 	class BatchParams {
 		boolean[] isNull = null;
 
@@ -435,39 +473,55 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	private boolean canRewrite = false;
 	
 	/**
-	 * Creates a prepared statement instance -- We need to provide factory-style methods
-	 * so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise
-	 * the class verifier complains when it tries to load JDBC4-only interface
-	 * classes that are present in JDBC4 method signatures.
+	 * Creates a prepared statement instance -- We need to provide factory-style
+	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
+	 * otherwise the class verifier complains when it tries to load JDBC4-only
+	 * interface classes that are present in JDBC4 method signatures.
 	 */
-	
+
+	protected static PreparedStatement getInstance(Connection conn,
+			String catalog) throws SQLException {
+		if (!Util.isJdbc4()) {
+			return new PreparedStatement(conn, catalog);
+		}
+
+		return (PreparedStatement) Util.handleNewInstance(
+				JDBC_4_PSTMT_2_ARG_CTOR, new Object[] { conn, catalog });
+	}
+
+	/**
+	 * Creates a prepared statement instance -- We need to provide factory-style
+	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
+	 * otherwise the class verifier complains when it tries to load JDBC4-only
+	 * interface classes that are present in JDBC4 method signatures.
+	 */
+
 	protected static PreparedStatement getInstance(Connection conn, String sql,
 			String catalog) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new PreparedStatement(conn, sql, catalog);
 		}
 
-		return (PreparedStatement)Util.getInstance("com.mysql.jdbc.JDBC4PreparedStatement", 
-				new Class[] {Connection.class, String.class, String.class}, 
-				new Object[] {conn, sql, catalog});
+		return (PreparedStatement) Util.handleNewInstance(
+				JDBC_4_PSTMT_3_ARG_CTOR, new Object[] { conn, sql, catalog });
 	}
 
 	/**
-	 * Creates a prepared statement instance -- We need to provide factory-style methods
-	 * so we can support both JDBC3 (and older) and JDBC4 runtimes, otherwise
-	 * the class verifier complains when it tries to load JDBC4-only interface
-	 * classes that are present in JDBC4 method signatures.
+	 * Creates a prepared statement instance -- We need to provide factory-style
+	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
+	 * otherwise the class verifier complains when it tries to load JDBC4-only
+	 * interface classes that are present in JDBC4 method signatures.
 	 */
-	
+
 	protected static PreparedStatement getInstance(Connection conn, String sql,
 			String catalog, ParseInfo cachedParseInfo) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new PreparedStatement(conn, sql, catalog, cachedParseInfo);
 		}
-		
-		return (PreparedStatement)Util.getInstance("com.mysql.jdbc.JDBC4PreparedStatement", 
-				new Class[] {Connection.class, String.class, String.class, ParseInfo.class}, 
-				new Object[] {conn, sql, catalog, cachedParseInfo});
+
+		return (PreparedStatement) Util.handleNewInstance(
+				JDBC_4_PSTMT_4_ARG_CTOR, new Object[] { conn, sql, catalog,
+						cachedParseInfo });
 	}
 	
 	/**
@@ -2106,10 +2160,6 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 
 	boolean isNull(int paramIndex) {
 		return this.isNull[paramIndex];
-	}
-
-	public boolean isWrapperFor(Class arg0) throws SQLException {
-		throw new NotYetImplementedException();
 	}
 
 	private final int readblock(InputStream i, byte[] b) throws SQLException {

@@ -30,13 +30,13 @@ import java.sql.Types;
 
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.DatabaseMetaData;
+import com.mysql.jdbc.DatabaseMetaDataUsingInfoSchema;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
-public class JDBC4DatabaseMetaData extends DatabaseMetaData {
-	public JDBC4DatabaseMetaData(Connection connToSet, String databaseToSet) {
+public class JDBC4DatabaseMetaDataUsingInfoSchema extends DatabaseMetaDataUsingInfoSchema {
+	public JDBC4DatabaseMetaDataUsingInfoSchema(Connection connToSet, String databaseToSet) {
 		super(connToSet, databaseToSet);
-		// TODO Auto-generated constructor stub
 	}
 
 	public boolean autoCommitFailureClosesAllResultSets() throws SQLException {

@@ -75,12 +75,4 @@ public class JDBC4PreparedStatement extends PreparedStatement {
 			throws SQLException {
 		JDBC4PreparedStatementHelper.setSQLXML(this, parameterIndex, xmlObject);
 	}
-
-	public Object unwrap(Class arg0) throws SQLException {
-		throw new NotYetImplementedException();
-	}
-
-	public void setPoolable(boolean poolable) throws SQLException {
-		throw new NotYetImplementedException();
-	}
 }
