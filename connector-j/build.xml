@@ -462,7 +462,7 @@
 			jvm="${com.mysql.jdbc.testsuite.jvm}"
 			errorProperty="tests.failed"
 			failureProperty="tests.failed">
-			<jvmarg value="-Xmx256m" />
+			<jvmarg value="-Xmx128m" />
 
 			<!-- For java.sql.SavePoint on old JVMs -->
 
@@ -578,7 +578,7 @@
 		    printsummary="yes" jvm="${com.mysql.jdbc.testsuite.jvm}"
 			errorProperty="tests.compliance.failed"
 			failureProperty="tests.compliance.failed">
-			<jvmarg value="-Xmx256m"/>
+			<jvmarg value="-Xmx128m"/>
 			
 			<!-- For java.sql.SavePoint on old JVMs -->
 				
@@ -899,7 +899,7 @@
 		<mkdir dir="${junit.unitregress.results}/report"/>
 
 		<junit printSummary="yes" fork="on" jvm="${com.mysql.jdbc.testsuite.jvm}">
-			<jvmarg value="-Xmx256m" />
+			<jvmarg value="-Xmx128m" />
 			<jvmarg value="-Xverify:none" />
 			<!-- For java.sql.SavePoint on old JVMs -->
 			<jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
@@ -950,7 +950,7 @@
 		<mkdir dir="${junit.compliance.results}/report"/>
 
 		<junit printsummary="yes" jvm="${com.mysql.jdbc.testsuite.jvm}">
-			<jvmarg value="-Xmx256m"/>
+			<jvmarg value="-Xmx128m"/>
 			<jvmarg value="-Xverify:none"/>
 			<!-- For java.sql.SavePoint on old JVMs -->
 			<jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
@@ -1010,7 +1010,7 @@
 		<sequential>
 			<java fork="true" jvm="@{jvm}" classname="com.mysql.jdbc.util.VersionFSHierarchyMaker">
 
-				<jvmarg value="-Xmx256m" />
+				<jvmarg value="-Xmx128m" />
 				<jvmarg value="-Xverify:none" />
 				<!-- For java.sql.SavePoint on old JVMs -->
 				<jvmarg value="-Demma.coverage.out.file=${emma.coverage.dir}/coverage.emma" />
