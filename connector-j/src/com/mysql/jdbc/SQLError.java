@@ -24,6 +24,9 @@
  */
 package com.mysql.jdbc;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.net.BindException;
 import java.sql.DataTruncation;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -136,9 +139,43 @@ public class SQLError {
 
 	private static Map sqlStateMessages;
 
-	static {
-		
+	private static final long DEFAULT_WAIT_TIMEOUT_SECONDS = 28800;
 
+	private static final int DUE_TO_TIMEOUT_FALSE = 0;
+
+	private static final int DUE_TO_TIMEOUT_MAYBE = 2;
+
+	private static final int DUE_TO_TIMEOUT_TRUE = 1;
+	
+	private static final Constructor JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR;
+	
+	private static Method THROWABLE_INIT_CAUSE_METHOD;
+	
+	static {
+		if (Util.isJdbc4()) {
+			try {
+				JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR = Class.forName(
+						"com.mysql.jdbc.exceptions.jdbc4.CommunicationsException")
+						.getConstructor(
+								new Class[] { Connection.class, Long.TYPE, Exception.class });
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR = null;
+		}
+		
+		try {
+			THROWABLE_INIT_CAUSE_METHOD = Throwable.class.getMethod("initCause", new Class[] {Throwable.class});
+		} catch (Throwable t) {
+			// we're not on a VM that has it
+			THROWABLE_INIT_CAUSE_METHOD = null;
+		}
+		
 		sqlStateMessages = new HashMap();
 		sqlStateMessages.put(SQL_STATE_DISCONNECT_ERROR, Messages
 				.getString("SQLError.35")); //$NON-NLS-1$
@@ -1004,5 +1041,201 @@ public class SQLError {
 							+ Util.stackTraceToString(sqlEx),
 					SQL_STATE_GENERAL_ERROR);
 		}
+	}
+	
+	public static SQLException createCommunicationsException(Connection conn, long lastPacketSentTimeMs,
+			Exception underlyingException) {
+		SQLException exToReturn = null;
+		
+		if (!Util.isJdbc4()) {
+			exToReturn = new CommunicationsException(conn, lastPacketSentTimeMs, underlyingException);
+		} else {
+		
+			try {
+				exToReturn = (SQLException) Util.handleNewInstance(JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR, new Object[] {
+					conn, new Long(lastPacketSentTimeMs), underlyingException});
+			} catch (SQLException sqlEx) {
+				// We should _never_ get this, but let's not swallow it either
+				
+				return sqlEx;
+			}
+		}
+		
+		if (THROWABLE_INIT_CAUSE_METHOD != null && underlyingException != null) {
+			try {
+				THROWABLE_INIT_CAUSE_METHOD.invoke(exToReturn, new Object[] {underlyingException});
+			} catch (Throwable t) {
+				// we're not going to muck with that here, since it's
+				// an error condition anyway!
+			}
+		}
+		
+		return exToReturn;
+	}
+	
+	/**
+	 * Creates a communications link failure message to be used
+	 * in CommunicationsException that (hopefully) has some better
+	 * information and suggestions based on heuristics.
+	 *  
+	 * @param conn
+	 * @param lastPacketSentTimeMs
+	 * @param underlyingException
+	 * @param streamingResultSetInPlay
+	 * @return
+	 */
+	public static String createLinkFailureMessageBasedOnHeuristics(Connection conn,
+			long lastPacketSentTimeMs, Exception underlyingException,
+			boolean streamingResultSetInPlay) {
+		long serverTimeoutSeconds = 0;
+		boolean isInteractiveClient = false;
+
+		if (conn != null) {
+			isInteractiveClient = conn.getInteractiveClient();
+
+			String serverTimeoutSecondsStr = null;
+
+			if (isInteractiveClient) {
+				serverTimeoutSecondsStr = conn
+						.getServerVariable("interactive_timeout"); //$NON-NLS-1$
+			} else {
+				serverTimeoutSecondsStr = conn
+						.getServerVariable("wait_timeout"); //$NON-NLS-1$
+			}
+
+			if (serverTimeoutSecondsStr != null) {
+				try {
+					serverTimeoutSeconds = Long
+							.parseLong(serverTimeoutSecondsStr);
+				} catch (NumberFormatException nfe) {
+					serverTimeoutSeconds = 0;
+				}
+			}
+		}
+
+		StringBuffer exceptionMessageBuf = new StringBuffer();
+
+		if (lastPacketSentTimeMs == 0) {
+			lastPacketSentTimeMs = System.currentTimeMillis();
+		}
+
+		long timeSinceLastPacket = (System.currentTimeMillis() - lastPacketSentTimeMs) / 1000;
+
+		int dueToTimeout = DUE_TO_TIMEOUT_FALSE;
+
+		StringBuffer timeoutMessageBuf = null;
+
+		if (streamingResultSetInPlay) {
+			exceptionMessageBuf.append(Messages
+					.getString("CommunicationsException.ClientWasStreaming")); //$NON-NLS-1$
+		} else {
+			if (serverTimeoutSeconds != 0) {
+				if (timeSinceLastPacket > serverTimeoutSeconds) {
+					dueToTimeout = DUE_TO_TIMEOUT_TRUE;
+
+					timeoutMessageBuf = new StringBuffer();
+
+					timeoutMessageBuf.append(Messages
+							.getString("CommunicationsException.2")); //$NON-NLS-1$
+
+					if (!isInteractiveClient) {
+						timeoutMessageBuf.append(Messages
+								.getString("CommunicationsException.3")); //$NON-NLS-1$
+					} else {
+						timeoutMessageBuf.append(Messages
+								.getString("CommunicationsException.4")); //$NON-NLS-1$
+					}
+
+				}
+			} else if (timeSinceLastPacket > DEFAULT_WAIT_TIMEOUT_SECONDS) {
+				dueToTimeout = DUE_TO_TIMEOUT_MAYBE;
+
+				timeoutMessageBuf = new StringBuffer();
+
+				timeoutMessageBuf.append(Messages
+						.getString("CommunicationsException.5")); //$NON-NLS-1$
+				timeoutMessageBuf.append(Messages
+						.getString("CommunicationsException.6")); //$NON-NLS-1$
+				timeoutMessageBuf.append(Messages
+						.getString("CommunicationsException.7")); //$NON-NLS-1$
+				timeoutMessageBuf.append(Messages
+						.getString("CommunicationsException.8")); //$NON-NLS-1$
+			}
+
+			if (dueToTimeout == DUE_TO_TIMEOUT_TRUE
+					|| dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
+
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.9")); //$NON-NLS-1$
+				exceptionMessageBuf.append(timeSinceLastPacket);
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.10")); //$NON-NLS-1$
+
+				if (timeoutMessageBuf != null) {
+					exceptionMessageBuf.append(timeoutMessageBuf);
+				}
+
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.11")); //$NON-NLS-1$
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.12")); //$NON-NLS-1$
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.13")); //$NON-NLS-1$
+
+			} else {
+				//
+				// Attempt to determine the reason for the underlying exception
+				// (we can only make a best-guess here)
+				//
+
+				if (underlyingException instanceof BindException) {
+					if (conn.getLocalSocketAddress() != null
+							&& !Util.interfaceExists(conn
+									.getLocalSocketAddress())) {
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.19a")); //$NON-NLS-1$
+					} else {
+						// too many client connections???
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.14")); //$NON-NLS-1$
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.15")); //$NON-NLS-1$
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.16")); //$NON-NLS-1$
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.17")); //$NON-NLS-1$
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.18")); //$NON-NLS-1$
+						exceptionMessageBuf.append(Messages
+								.getString("CommunicationsException.19")); //$NON-NLS-1$
+					}
+				}
+			}
+		}
+
+		if (exceptionMessageBuf.length() == 0) {
+			// We haven't figured out a good reason, so copy it.
+			exceptionMessageBuf.append(Messages
+					.getString("CommunicationsException.20")); //$NON-NLS-1$
+
+			if (THROWABLE_INIT_CAUSE_METHOD == null && 
+					underlyingException != null) {
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.21")); //$NON-NLS-1$
+				exceptionMessageBuf.append(Util
+						.stackTraceToString(underlyingException));
+			}
+
+			if (conn != null && conn.getMaintainTimeStats()
+					&& !conn.getParanoid()) {
+				exceptionMessageBuf
+						.append("\n\nLast packet sent to the server was ");
+				exceptionMessageBuf.append(System.currentTimeMillis()
+						- lastPacketSentTimeMs);
+				exceptionMessageBuf.append(" ms ago.");
+			}
+		}
+		
+		return exceptionMessageBuf.toString();
 	}
 }

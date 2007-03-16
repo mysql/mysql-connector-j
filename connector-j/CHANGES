@@ -14,7 +14,18 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  has been consumed. (configuration property is named 
 	  "netTimeoutForStreamingResults", value has unit of seconds, 
 	  the value '0' means the driver will not try and adjust this value).
-	  	
+	  
+	- Refactored CommunicationsException into a JDBC3 version, and a JDBC4
+	  version (which extends SQLRecoverableException, now that it exists).
+	  
+	  This change means that if you were catching 
+	  com.mysql.jdbc.CommunicationsException in your applications instead
+	  of looking at the SQLState class of "08", and are moving to Java 6 
+	  (or newer), you need to change your imports to that exception
+	  to be com.mysql.jdbc.exceptions.jdbc4.CommunicationsException, as
+	  the old class will not be instantiated for communications link-related
+	  errors under Java 6.
+	  
 03-nn-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,

@@ -408,12 +408,11 @@ public class RowDataDynamic implements RowData {
 			} else {
 				this.isAfterEnd = true;
 			}
-		} catch (CommunicationsException comEx) {
-			// Give a better error message
-			comEx.setWasStreamingResults();
-			
-			throw comEx;
 		} catch (SQLException sqlEx) {
+			if (sqlEx instanceof StreamingNotifiable) {
+				((StreamingNotifiable)sqlEx).setWasStreamingResults();
+			}
+			
 			// don't wrap SQLExceptions
 			throw sqlEx;
 		} catch (Exception ex) {

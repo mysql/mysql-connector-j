@@ -40,16 +40,9 @@ import java.sql.SQLException;
  * @version $Id: CommunicationsException.java,v 1.1.2.1 2005/05/13 18:58:37
  *          mmatthews Exp $
  */
-public class CommunicationsException extends SQLException {
+public class CommunicationsException extends SQLException implements StreamingNotifiable {
 
-	private static final long DEFAULT_WAIT_TIMEOUT_SECONDS = 28800;
-
-	private static final int DUE_TO_TIMEOUT_FALSE = 0;
-
-	private static final int DUE_TO_TIMEOUT_MAYBE = 2;
-
-	private static final int DUE_TO_TIMEOUT_TRUE = 1;
-
+	
 	private String exceptionMessage;
 
 	private boolean streamingResultSetInPlay = false;
@@ -57,156 +50,11 @@ public class CommunicationsException extends SQLException {
 	public CommunicationsException(Connection conn, long lastPacketSentTimeMs,
 			Exception underlyingException) {
 
-		long serverTimeoutSeconds = 0;
-		boolean isInteractiveClient = false;
-
-		if (conn != null) {
-			isInteractiveClient = conn.getInteractiveClient();
-
-			String serverTimeoutSecondsStr = null;
-
-			if (isInteractiveClient) {
-				serverTimeoutSecondsStr = conn
-						.getServerVariable("interactive_timeout"); //$NON-NLS-1$
-			} else {
-				serverTimeoutSecondsStr = conn
-						.getServerVariable("wait_timeout"); //$NON-NLS-1$
-			}
-
-			if (serverTimeoutSecondsStr != null) {
-				try {
-					serverTimeoutSeconds = Long
-							.parseLong(serverTimeoutSecondsStr);
-				} catch (NumberFormatException nfe) {
-					serverTimeoutSeconds = 0;
-				}
-			}
-		}
-
-		StringBuffer exceptionMessageBuf = new StringBuffer();
-
-		if (lastPacketSentTimeMs == 0) {
-			lastPacketSentTimeMs = System.currentTimeMillis();
-		}
-
-		long timeSinceLastPacket = (System.currentTimeMillis() - lastPacketSentTimeMs) / 1000;
-
-		int dueToTimeout = DUE_TO_TIMEOUT_FALSE;
-
-		StringBuffer timeoutMessageBuf = null;
-
-		if (this.streamingResultSetInPlay) {
-			exceptionMessageBuf.append(Messages
-					.getString("CommunicationsException.ClientWasStreaming")); //$NON-NLS-1$
-		} else {
-			if (serverTimeoutSeconds != 0) {
-				if (timeSinceLastPacket > serverTimeoutSeconds) {
-					dueToTimeout = DUE_TO_TIMEOUT_TRUE;
-
-					timeoutMessageBuf = new StringBuffer();
-
-					timeoutMessageBuf.append(Messages
-							.getString("CommunicationsException.2")); //$NON-NLS-1$
-
-					if (!isInteractiveClient) {
-						timeoutMessageBuf.append(Messages
-								.getString("CommunicationsException.3")); //$NON-NLS-1$
-					} else {
-						timeoutMessageBuf.append(Messages
-								.getString("CommunicationsException.4")); //$NON-NLS-1$
-					}
-
-				}
-			} else if (timeSinceLastPacket > DEFAULT_WAIT_TIMEOUT_SECONDS) {
-				dueToTimeout = DUE_TO_TIMEOUT_MAYBE;
-
-				timeoutMessageBuf = new StringBuffer();
-
-				timeoutMessageBuf.append(Messages
-						.getString("CommunicationsException.5")); //$NON-NLS-1$
-				timeoutMessageBuf.append(Messages
-						.getString("CommunicationsException.6")); //$NON-NLS-1$
-				timeoutMessageBuf.append(Messages
-						.getString("CommunicationsException.7")); //$NON-NLS-1$
-				timeoutMessageBuf.append(Messages
-						.getString("CommunicationsException.8")); //$NON-NLS-1$
-			}
-
-			if (dueToTimeout == DUE_TO_TIMEOUT_TRUE
-					|| dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
-
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.9")); //$NON-NLS-1$
-				exceptionMessageBuf.append(timeSinceLastPacket);
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.10")); //$NON-NLS-1$
-
-				if (timeoutMessageBuf != null) {
-					exceptionMessageBuf.append(timeoutMessageBuf);
-				}
-
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.11")); //$NON-NLS-1$
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.12")); //$NON-NLS-1$
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.13")); //$NON-NLS-1$
-
-			} else {
-				//
-				// Attempt to determine the reason for the underlying exception
-				// (we can only make a best-guess here)
-				//
-
-				if (underlyingException instanceof BindException) {
-					if (conn.getLocalSocketAddress() != null
-							&& !Util.interfaceExists(conn
-									.getLocalSocketAddress())) {
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.19a")); //$NON-NLS-1$
-					} else {
-						// too many client connections???
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.14")); //$NON-NLS-1$
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.15")); //$NON-NLS-1$
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.16")); //$NON-NLS-1$
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.17")); //$NON-NLS-1$
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.18")); //$NON-NLS-1$
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.19")); //$NON-NLS-1$
-					}
-				}
-			}
-		}
-
-		if (exceptionMessageBuf.length() == 0) {
-			// We haven't figured out a good reason, so copy it.
-			exceptionMessageBuf.append(Messages
-					.getString("CommunicationsException.20")); //$NON-NLS-1$
-
-			if (underlyingException != null) {
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.21")); //$NON-NLS-1$
-				exceptionMessageBuf.append(Util
-						.stackTraceToString(underlyingException));
-			}
-
-			if (conn != null && conn.getMaintainTimeStats()
-					&& !conn.getParanoid()) {
-				exceptionMessageBuf
-						.append("\n\nLast packet sent to the server was ");
-				exceptionMessageBuf.append(System.currentTimeMillis()
-						- lastPacketSentTimeMs);
-				exceptionMessageBuf.append(" ms ago.");
-			}
-		}
-
-		this.exceptionMessage = exceptionMessageBuf.toString();
+		this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn,
+				lastPacketSentTimeMs, underlyingException, this.streamingResultSetInPlay);
 	}
+
+	
 
 	/*
 	 * (non-Javadoc)
@@ -226,7 +74,10 @@ public class CommunicationsException extends SQLException {
 		return SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE;
 	}
 
-	protected void setWasStreamingResults() {
+	/* (non-Javadoc)
+	 * @see com.mysql.jdbc.StreamingNotifiable#setWasStreamingResults()
+	 */
+	public void setWasStreamingResults() {
 		this.streamingResultSetInPlay = true;
 	}
 

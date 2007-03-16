@@ -99,7 +99,7 @@ public class ExportControlled {
 
 			mysqlIO.mysqlOutput.flush();
 		} catch (IOException ioEx) {
-			throw new CommunicationsException(mysqlIO.connection,
+			throw SQLError.createCommunicationsException(mysqlIO.connection,
 					mysqlIO.lastPacketSentTimeMs, ioEx);
 		}
 	}

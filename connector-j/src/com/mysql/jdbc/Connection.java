@@ -1215,6 +1215,19 @@ public class Connection extends ConnectionProperties implements
 	}
 
 	/**
+	 * Clobbers the physical network connection and marks
+	 * this connection as closed.
+	 * 
+	 * @throws SQLException
+	 */
+	protected void abortInternal() throws SQLException {
+		io.forceClose();
+		io = null;
+		isClosed = true;
+		cleanup(null);
+	}
+	
+	/**
 	 * Destroys this connection and any underlying resources
 	 * 
 	 * @param fromWhere
@@ -1981,7 +1994,7 @@ public class Connection extends ConnectionProperties implements
 							hostIndex = getNextRoundRobinHostIndex(getURL(),
 									this.hostList) - 1 /* incremented by for loop next time around */;
 						} else if ((this.hostListSize - 1) == hostIndex) {
-							throw new CommunicationsException(this,
+							throw SQLError.createCommunicationsException(this,
 									(this.io != null) ? this.io
 											.getLastPacketSentTimeMs() : 0,
 											EEE);
@@ -3677,7 +3690,7 @@ public class Connection extends ConnectionProperties implements
 		pingInternal(true);
 	}
 
-	private void pingInternal(boolean checkForClosedConnection)
+	protected void pingInternal(boolean checkForClosedConnection)
 			throws SQLException {
 		if (checkForClosedConnection) {
 			checkClosed();

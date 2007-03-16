@@ -31,6 +31,7 @@ import java.sql.SQLXML;
 import java.sql.NClob;
 import java.sql.Struct;
 import java.util.Properties;
+import java.util.TimerTask;
 
 
 import com.mysql.jdbc.Connection;
@@ -63,8 +64,79 @@ public class JDBC4Connection extends Connection {
 		throw new NotYetImplementedException();
 	}
 
-	public boolean isValid(int timeout) throws SQLException {
-		throw new NotYetImplementedException();
+	/**
+	 * Returns true if the connection has not been closed and is still valid.  
+	 * The driver shall submit a query on the connection or use some other 
+	 * mechanism that positively verifies the connection is still valid when 
+	 * this method is called.
+	 * <p>
+	 * The query submitted by the driver to validate the connection shall be 
+	 * executed in the context of the current transaction.
+	 * 
+	 * @param timeout -		The time in seconds to wait for the database operation 
+	 * 						used to validate the connection to complete.  If 
+	 * 						the timeout period expires before the operation 
+	 * 						completes, this method returns false.  A value of 
+	 * 						0 indicates a timeout is not applied to the 
+	 * 						database operation.
+	 * <p>
+	 * @return true if the connection is valid, false otherwise
+         * @exception SQLException if the value supplied for <code>timeout</code> 
+         * is less then 0
+         * @since 1.6
+	 */
+	public synchronized boolean isValid(int timeout) throws SQLException {
+		if (isClosed()) {
+			return false;
+		}
+		
+		TimerTask timeoutTask = null;
+		
+		if (timeout != 0) {
+			getCancelTimer().schedule(new TimerTask() { 
+				public void run() {
+					new Thread() {
+						public void run() {
+							try {
+								abortInternal();
+							} catch (Throwable t) {
+								throw new RuntimeException(t);
+							}
+						}
+					}.start();	
+				}
+				}, timeout * 1000);
+		}
+		
+		try {
+			synchronized (getMutex()) {
+				try {
+					pingInternal(false);
+					
+					if (timeoutTask != null) {
+						timeoutTask.cancel();
+					}
+					
+					timeoutTask = null;
+				} catch (Throwable t) {
+					try {
+						abortInternal();
+					} catch (Throwable ignoreThrown) {
+						// we're dead now anyway
+					}
+					
+					return false;
+				} finally {
+					if (timeoutTask != null) {
+						timeoutTask.cancel();
+					}
+				}
+			}
+		} catch (Throwable t) {
+			return false;
+		}
+		
+		return true;
 	}
 
 	public void setClientInfo(Properties properties) throws SQLClientInfoException {
