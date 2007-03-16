@@ -143,71 +143,85 @@ public class RowDataDynamic implements RowData {
 	 *             if a database error occurs
 	 */
 	public void close() throws SQLException {
+		// Belt and suspenders here - if we don't
+		// have a reference to the connection
+		// it's more than likely dead/gone and we
+		// won't be able to consume rows anyway
+
+		Object mutex = this;
+
+		Connection conn = null;
+
+		if (this.owner != null) {
+			conn = this.owner.connection;
+
+			if (conn != null) {
+				mutex = conn.getMutex();
+			}
+		}
 
 		boolean hadMore = false;
 		int howMuchMore = 0;
 
-		// drain the rest of the records.
-		while (this.hasNext()) {
-			this.next();
-			hadMore = true;
-			howMuchMore++;
+		synchronized (mutex) {
+			// drain the rest of the records.
+			while (this.hasNext()) {
+				this.next();
+				hadMore = true;
+				howMuchMore++;
 
-			if (howMuchMore % 100 == 0) {
-				Thread.yield();
+				if (howMuchMore % 100 == 0) {
+					Thread.yield();
+				}
 			}
-		}
-
-		if (this.owner != null) {
-			Connection conn = this.owner.connection;
 
 			if (conn != null) {
 
 				if (conn.getNetTimeoutForStreamingResults() > 0) {
 					String oldValue = conn
-							.getServerVariable("net_write_timeout");
+					.getServerVariable("net_write_timeout");
 
 					if (oldValue == null || oldValue.length() == 0) {
 						oldValue = "60"; // the current default
 					}
 
-					conn.execSQL(this.owner.owningStatement, 
-							"SET net_write_timeout=" + oldValue, -1,
-							null, ResultSet.TYPE_FORWARD_ONLY,
+					conn.execSQL(this.owner.owningStatement,
+							"SET net_write_timeout=" + oldValue, -1, null,
+							ResultSet.TYPE_FORWARD_ONLY,
 							ResultSet.CONCUR_READ_ONLY, false, conn
-									.getCatalog(), true, false);
+							.getCatalog(), true, false);
 				}
 
 				if (conn.getUseUsageAdvisor()) {
 					if (hadMore) {
 
 						ProfileEventSink eventSink = ProfileEventSink
-								.getInstance(conn);
+						.getInstance(conn);
 
 						eventSink
-								.consumeEvent(new ProfilerEvent(
-										ProfilerEvent.TYPE_WARN,
-										"", //$NON-NLS-1$
-										this.owner.owningStatement == null ? "N/A" : this.owner.owningStatement.currentCatalog, //$NON-NLS-1$
+						.consumeEvent(new ProfilerEvent(
+								ProfilerEvent.TYPE_WARN,
+								"", //$NON-NLS-1$
+								this.owner.owningStatement == null ? "N/A" : this.owner.owningStatement.currentCatalog, //$NON-NLS-1$
 										this.owner.connectionId,
 										this.owner.owningStatement == null ? -1
 												: this.owner.owningStatement
-														.getId(),
-										-1,
-										System.currentTimeMillis(),
-										0,
-										null,
-										null,
-										Messages.getString("RowDataDynamic.2") //$NON-NLS-1$
+												.getId(),
+												-1,
+												System.currentTimeMillis(),
+												0,
+												null,
+												null,
+												Messages.getString("RowDataDynamic.2") //$NON-NLS-1$
 												+ howMuchMore
 												+ Messages
-														.getString("RowDataDynamic.3") //$NON-NLS-1$
+												.getString("RowDataDynamic.3") //$NON-NLS-1$
 												+ Messages
-														.getString("RowDataDynamic.4") //$NON-NLS-1$
+												.getString("RowDataDynamic.4") //$NON-NLS-1$
 												+ Messages
-														.getString("RowDataDynamic.5") //$NON-NLS-1$
+												.getString("RowDataDynamic.5") //$NON-NLS-1$
 												+ Messages
-														.getString("RowDataDynamic.6") //$NON-NLS-1$
+												.getString("RowDataDynamic.6") //$NON-NLS-1$
 												+ this.owner.pointOfOrigin));
 					}
 				}
