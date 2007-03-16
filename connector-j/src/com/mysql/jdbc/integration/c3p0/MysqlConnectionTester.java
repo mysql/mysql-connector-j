@@ -97,7 +97,9 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
 	 *      java.lang.Throwable)
 	 */
 	public int statusOnException(Connection arg0, Throwable throwable) {
-		if (throwable instanceof CommunicationsException) {
+		if (throwable instanceof CommunicationsException
+				|| "com.mysql.jdbc.exceptions.jdbc4.CommunicationsException"
+						.equals(throwable.getClass().getName())) {
 			return CONNECTION_IS_INVALID;
 		}
 
