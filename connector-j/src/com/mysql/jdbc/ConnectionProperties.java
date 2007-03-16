@@ -1001,7 +1001,14 @@ public class ConnectionProperties implements Serializable {
 			"The number of queries to cache"
 					+ "ResultSetMetadata for if cacheResultSetMetaData is set to 'true' (default 50)",
 			"3.1.1", PERFORMANCE_CATEGORY, 5);
-
+	
+	private IntegerConnectionProperty netTimeoutForStreamingResults = new IntegerConnectionProperty(
+			"netTimeoutForStreamingResults", 600,
+			0, Integer.MAX_VALUE,
+			"What value should the driver automatically set the server setting 'net_write_timeout' to when" +
+			"the streaming result sets feature is in use? (value has unit of seconds, the value '0' means the driver will not try and adjust this value)",
+			"5.1.0", MISC_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty noAccessToProcedureBodies = new BooleanConnectionProperty(
 			"noAccessToProcedureBodies",
 			false,
@@ -3938,5 +3945,12 @@ public class ConnectionProperties implements Serializable {
 	public void setResultSetSizeThreshold(int threshold) {
 		this.resultSetSizeThreshold.setValue(threshold);
 	}
-	
+
+	public int getNetTimeoutForStreamingResults() {
+		return this.netTimeoutForStreamingResults.getValueAsInt();
+	}
+
+	public void setNetTimeoutForStreamingResults(int value) {
+		this.netTimeoutForStreamingResults.setValue(value);
+	}
 }
