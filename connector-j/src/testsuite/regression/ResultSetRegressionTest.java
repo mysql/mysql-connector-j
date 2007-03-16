@@ -3998,7 +3998,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
             
              assertTrue(this.rs.next());
              assertEquals(2007, this.rs.getInt(1));
-             assertEquals("97.90200", this.rs.getString(1));          
+             assertEquals("97.90200", this.rs.getString(2));          
          } finally {
         	 if (stmtRead != null) {
         		 stmtRead.close();
