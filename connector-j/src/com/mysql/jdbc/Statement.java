@@ -585,6 +585,25 @@ public class Statement implements java.sql.Statement {
 				}
 			}
 	
+			boolean doStreaming = createStreamingResultSet();
+			
+			// Adjust net_write_timeout to a higher value if we're
+			// streaming result sets. More often than not, someone runs into
+			// an issue where they blow net_write_timeout when using this
+			// feature, and if they're willing to hold a result set open
+			// for 30 seconds or more, one more round-trip isn't going to hurt
+			//
+			// This is reset by RowDataDynamic.close().
+			
+			if (doStreaming
+					&& this.connection.getNetTimeoutForStreamingResults() > 0) {
+				locallyScopedConn.execSQL(this, "SET net_write_timeout="
+						+ this.connection.getNetTimeoutForStreamingResults(),
+						-1, null, ResultSet.TYPE_FORWARD_ONLY,
+						ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog,
+						true, false);
+			}
+			
 			if (this.doEscapeProcessing) {
 				Object escapedSqlResult = EscapeProcessor.escapeSQL(sql,
 						locallyScopedConn.serverSupportsConvertFn(), locallyScopedConn);
@@ -692,12 +711,12 @@ public class Statement implements java.sql.Statement {
 						// Finally, execute the query
 						rs = locallyScopedConn.execSQL(this, sql, rowLimit, null,
 								this.resultSetType, this.resultSetConcurrency,
-								createStreamingResultSet(), 
+								doStreaming, 
 								this.currentCatalog, (cachedMetaData == null));
 					} else {
 						rs = locallyScopedConn.execSQL(this, sql, -1, null,
 								this.resultSetType, this.resultSetConcurrency,
-								createStreamingResultSet(), 
+								doStreaming, 
 								this.currentCatalog, (cachedMetaData == null));
 					}
 					
@@ -1079,6 +1098,25 @@ public class Statement implements java.sql.Statement {
 	
 			checkNullOrEmptyQuery(sql);
 
+			boolean doStreaming = createStreamingResultSet();
+			
+			// Adjust net_write_timeout to a higher value if we're
+			// streaming result sets. More often than not, someone runs into
+			// an issue where they blow net_write_timeout when using this
+			// feature, and if they're willing to hold a result set open
+			// for 30 seconds or more, one more round-trip isn't going to hurt
+			//
+			// This is reset by RowDataDynamic.close().
+			
+			if (doStreaming
+					&& this.connection.getNetTimeoutForStreamingResults() > 0) {
+				locallyScopedConn.execSQL(this, "SET net_write_timeout="
+						+ this.connection.getNetTimeoutForStreamingResults(),
+						-1, null, ResultSet.TYPE_FORWARD_ONLY,
+						ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog,
+						true, false);
+			}
+			
 			if (this.doEscapeProcessing) {
 				Object escapedSqlResult = EscapeProcessor.escapeSQL(sql,
 						locallyScopedConn.serverSupportsConvertFn(), this.connection);
@@ -1148,7 +1186,7 @@ public class Statement implements java.sql.Statement {
 						this.results = locallyScopedConn.execSQL(this, sql,
 								this.maxRows, null, this.resultSetType,
 								this.resultSetConcurrency,
-								createStreamingResultSet(),
+								doStreaming,
 								this.currentCatalog, (cachedMetaData == null));
 					} else {
 						if (this.maxRows <= 0) {
@@ -1175,7 +1213,7 @@ public class Statement implements java.sql.Statement {
 						this.results = locallyScopedConn.execSQL(this, sql, -1,
 								null, this.resultSetType,
 								this.resultSetConcurrency,
-								createStreamingResultSet(),
+								doStreaming,
 								this.currentCatalog, (cachedMetaData == null));
 
 						if (oldCatalog != null) {
@@ -1185,7 +1223,7 @@ public class Statement implements java.sql.Statement {
 				} else {
 					this.results = locallyScopedConn.execSQL(this, sql, -1, null,
 							this.resultSetType, this.resultSetConcurrency,
-							createStreamingResultSet(),
+							doStreaming,
 							this.currentCatalog, (cachedMetaData == null));
 				}
 

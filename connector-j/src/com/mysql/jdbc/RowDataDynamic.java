@@ -161,37 +161,55 @@ public class RowDataDynamic implements RowData {
 		if (this.owner != null) {
 			Connection conn = this.owner.connection;
 
-			if (conn != null && conn.getUseUsageAdvisor()) {
-				if (hadMore) {
+			if (conn != null) {
 
-					ProfileEventSink eventSink = ProfileEventSink
-							.getInstance(conn);
+				if (conn.getNetTimeoutForStreamingResults() > 0) {
+					String oldValue = conn
+							.getServerVariable("net_write_timeout");
 
-					eventSink
-							.consumeEvent(new ProfilerEvent(
-									ProfilerEvent.TYPE_WARN,
-									"", //$NON-NLS-1$
-									this.owner.owningStatement == null ? "N/A" : this.owner.owningStatement.currentCatalog, //$NON-NLS-1$
-									this.owner.connectionId,
-									this.owner.owningStatement == null ? -1
-											: this.owner.owningStatement
-													.getId(),
-									-1,
-									System.currentTimeMillis(),
-									0,
-									null,
-									null,
-									Messages.getString("RowDataDynamic.2") //$NON-NLS-1$
-											+ howMuchMore
-											+ Messages
-													.getString("RowDataDynamic.3") //$NON-NLS-1$
-											+ Messages
-													.getString("RowDataDynamic.4") //$NON-NLS-1$
-											+ Messages
-													.getString("RowDataDynamic.5") //$NON-NLS-1$
-											+ Messages
-													.getString("RowDataDynamic.6") //$NON-NLS-1$
-											+ this.owner.pointOfOrigin));
+					if (oldValue == null || oldValue.length() == 0) {
+						oldValue = "60"; // the current default
+					}
+
+					conn.execSQL(this.owner.owningStatement, 
+							"SET net_write_timeout=" + oldValue, -1,
+							null, ResultSet.TYPE_FORWARD_ONLY,
+							ResultSet.CONCUR_READ_ONLY, false, conn
+									.getCatalog(), true, false);
+				}
+
+				if (conn.getUseUsageAdvisor()) {
+					if (hadMore) {
+
+						ProfileEventSink eventSink = ProfileEventSink
+								.getInstance(conn);
+
+						eventSink
+								.consumeEvent(new ProfilerEvent(
+										ProfilerEvent.TYPE_WARN,
+										"", //$NON-NLS-1$
+										this.owner.owningStatement == null ? "N/A" : this.owner.owningStatement.currentCatalog, //$NON-NLS-1$
+										this.owner.connectionId,
+										this.owner.owningStatement == null ? -1
+												: this.owner.owningStatement
+														.getId(),
+										-1,
+										System.currentTimeMillis(),
+										0,
+										null,
+										null,
+										Messages.getString("RowDataDynamic.2") //$NON-NLS-1$
+												+ howMuchMore
+												+ Messages
+														.getString("RowDataDynamic.3") //$NON-NLS-1$
+												+ Messages
+														.getString("RowDataDynamic.4") //$NON-NLS-1$
+												+ Messages
+														.getString("RowDataDynamic.5") //$NON-NLS-1$
+												+ Messages
+														.getString("RowDataDynamic.6") //$NON-NLS-1$
+												+ this.owner.pointOfOrigin));
+					}
 				}
 			}
 		}

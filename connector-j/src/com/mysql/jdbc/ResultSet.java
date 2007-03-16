@@ -7713,7 +7713,7 @@ public class ResultSet implements java.sql.ResultSet {
 		}
 
 		try {
-if (this.useUsageAdvisor) {
+			if (this.useUsageAdvisor) {
 				
 				// Report on result set closed by driver instead of application
 				

@@ -7,7 +7,14 @@ nn-nn-07 - Version 5.1.0 Alpha
 	
 	- Re-worked Ant buildfile to build JDBC-4.0 classes separately, as well
 	  as support building under Eclipse (since Eclipse can't mix/match JDKs).
-	
+
+	- New feature - driver will automatically adjust session variable
+	  "net_write_timeout" when it determines its been asked for a "streaming"
+	  result, and resets it to the previous value when the result set
+	  has been consumed. (configuration property is named 
+	  "netTimeoutForStreamingResults", value has unit of seconds, 
+	  the value '0' means the driver will not try and adjust this value).
+	  	
 03-nn-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,

@@ -851,8 +851,27 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		CachedResultSetMetaData cachedMetadata = null;
 
 		synchronized (locallyScopedConn.getMutex()) {
+			boolean doStreaming = createStreamingResultSet();
+			
 			clearWarnings();
 
+			// Adjust net_write_timeout to a higher value if we're
+			// streaming result sets. More often than not, someone runs into
+			// an issue where they blow net_write_timeout when using this
+			// feature, and if they're willing to hold a result set open
+			// for 30 seconds or more, one more round-trip isn't going to hurt
+			//
+			// This is reset by RowDataDynamic.close().
+			
+			if (doStreaming
+					&& this.connection.getNetTimeoutForStreamingResults() > 0) {
+				locallyScopedConn.execSQL(this, "SET net_write_timeout="
+						+ this.connection.getNetTimeoutForStreamingResults(),
+						-1, null, ResultSet.TYPE_FORWARD_ONLY,
+						ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog,
+						true, false);
+			}
+			
 			this.batchedGeneratedKeys = null;
 
 			Buffer sendPacket = fillSendPacket();
@@ -928,11 +947,11 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 
 				// Finally, execute the query
 				rs = executeInternal(rowLimit, sendPacket,
-						createStreamingResultSet(),
+						doStreaming,
 						(this.firstCharOfStmt == 'S'), true, metadataFromCache, false);
 			} else {
 				rs = executeInternal(-1, sendPacket,
-						createStreamingResultSet(),
+						doStreaming,
 						(this.firstCharOfStmt == 'S'), true, metadataFromCache, false);
 			}
 
@@ -1417,8 +1436,27 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		synchronized (locallyScopedConn.getMutex()) {
 			clearWarnings();
 
+			boolean doStreaming = createStreamingResultSet();
+			
 			this.batchedGeneratedKeys = null;
 
+			// Adjust net_write_timeout to a higher value if we're
+			// streaming result sets. More often than not, someone runs into
+			// an issue where they blow net_write_timeout when using this
+			// feature, and if they're willing to hold a result set open
+			// for 30 seconds or more, one more round-trip isn't going to hurt
+			//
+			// This is reset by RowDataDynamic.close().
+			
+			if (doStreaming
+					&& this.connection.getNetTimeoutForStreamingResults() > 0) {
+				locallyScopedConn.execSQL(this, "SET net_write_timeout="
+						+ this.connection.getNetTimeoutForStreamingResults(),
+						-1, null, ResultSet.TYPE_FORWARD_ONLY,
+						ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog,
+						true, false);
+			}
+			
 			Buffer sendPacket = fillSendPacket();
 
 			if (this.results != null) {
@@ -1482,7 +1520,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 					
 					
 					this.results = executeInternal(-1, sendPacket,
-							createStreamingResultSet(), true,
+							doStreaming, true,
 							(cachedMetadata == null), metadataFromCache, false);
 
 					if (oldCatalog != null) {
@@ -1491,7 +1529,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 				}
 			} else {
 				this.results = executeInternal(-1, sendPacket,
-						createStreamingResultSet(), true,
+						doStreaming, true,
 						(cachedMetadata == null), metadataFromCache, false);
 			}
 
