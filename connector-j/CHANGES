@@ -58,6 +58,9 @@ nn-nn-07 - Version 5.1.0 Alpha
  	- Fixed BUG#26789 - fast date/time parsing doesn't take into
 	  account 00:00:00 as a legal value.
 	  
+	- Fixed BUG#27137 - ResultSet.get*() with a column index < 1 returns 
+	  misleading error message.
+	   
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

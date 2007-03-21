@@ -750,9 +750,15 @@ public class ResultSet implements java.sql.ResultSet {
 	 *             if the index is out of bounds
 	 */
 	protected final void checkColumnBounds(int columnIndex) throws SQLException {
-		if ((columnIndex < 1) || (columnIndex > this.fields.length)) {
+		if ((columnIndex < 1)) {
 			throw SQLError.createSQLException(Messages.getString(
-					"ResultSet.Column_Index_out_of_range", new Object[] {
+					"ResultSet.Column_Index_out_of_range_low", new Object[] {
+							new Integer(columnIndex),
+							new Integer(this.fields.length) }),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+		} else if ((columnIndex > this.fields.length)) {
+			throw SQLError.createSQLException(Messages.getString(
+					"ResultSet.Column_Index_out_of_range_high", new Object[] {
 							new Integer(columnIndex),
 							new Integer(this.fields.length) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
@@ -1480,14 +1486,6 @@ public class ResultSet implements java.sql.ResultSet {
 			checkRowPos();
 
 			checkColumnBounds(columnIndex);
-			
-			if ((columnIndex < 1) || (columnIndex > this.fields.length)) {
-				throw SQLError.createSQLException(Messages.getString(
-						"ResultSet.Column_Index_out_of_range", new Object[] {
-								new Integer(columnIndex),
-								new Integer(this.fields.length) }),
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
-			}
 
 			try {
 				if (this.thisRow[columnIndex - 1] == null) {
@@ -1798,12 +1796,6 @@ public class ResultSet implements java.sql.ResultSet {
 				}
 			} catch (NullPointerException E) {
 				this.wasNullFlag = true;
-			} catch (ArrayIndexOutOfBoundsException aioobEx) {
-				throw SQLError.createSQLException(Messages.getString(
-						"ResultSet.Column_Index_out_of_range", new Object[] {
-								new Integer(columnIndex),
-								new Integer(this.fields.length) }),
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 			}
 
 			if (this.wasNullFlag) {
@@ -2052,6 +2044,8 @@ public class ResultSet implements java.sql.ResultSet {
 			
 			return getDateFromString(stringVal, columnIndex);
 		} else {
+			checkColumnBounds(columnIndex);
+			
 			return getDateFromBytes(((byte[][])this.thisRow)[columnIndex - 1], columnIndex);
 		}
 	}
@@ -2712,12 +2706,6 @@ public class ResultSet implements java.sql.ResultSet {
 					}
 				} catch (NullPointerException E) {
 					this.wasNullFlag = true;
-				} catch (ArrayIndexOutOfBoundsException aioobEx) {
-					throw SQLError.createSQLException(Messages.getString(
-							"ResultSet.Column_Index_out_of_range",
-							new Object[] { new Integer(columnIndex),
-									new Integer(this.fields.length) }),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 				}
 
 				if (this.wasNullFlag) {
@@ -2955,12 +2943,6 @@ public class ResultSet implements java.sql.ResultSet {
 					}
 				} catch (NullPointerException E) {
 					this.wasNullFlag = true;
-				} catch (ArrayIndexOutOfBoundsException aioobEx) {
-					throw SQLError.createSQLException(Messages.getString(
-							"ResultSet.Column_Index_out_of_range",
-							new Object[] { new Integer(columnIndex),
-									new Integer(this.fields.length) }),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 				}
 
 				if (this.wasNullFlag) {
@@ -4929,21 +4911,14 @@ public class ResultSet implements java.sql.ResultSet {
 	 */
 	public Object getObject(int columnIndex) throws SQLException {
 		checkRowPos();
+		checkColumnBounds(columnIndex);
+		
+		if (this.thisRow[columnIndex - 1] == null) {
+			this.wasNullFlag = true;
 
-		try {
-			if (this.thisRow[columnIndex - 1] == null) {
-				this.wasNullFlag = true;
-
-				return null;
-			}
-		} catch (ArrayIndexOutOfBoundsException aioobEx) {
-			throw SQLError.createSQLException(Messages.getString(
-					"ResultSet.Column_Index_out_of_range", new Object[] {
-							new Integer(columnIndex),
-							new Integer(this.fields.length) }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+			return null;
 		}
-
+		
 		this.wasNullFlag = false;
 
 		Field field;
@@ -5219,21 +5194,14 @@ public class ResultSet implements java.sql.ResultSet {
 	protected Object getObjectStoredProc(int columnIndex, int desiredSqlType)
 			throws SQLException {
 		checkRowPos();
+		checkColumnBounds(columnIndex);
 
-		try {
-			if (this.thisRow[columnIndex - 1] == null) {
-				this.wasNullFlag = true;
+		if (this.thisRow[columnIndex - 1] == null) {
+			this.wasNullFlag = true;
 
-				return null;
-			}
-		} catch (ArrayIndexOutOfBoundsException aioobEx) {
-			throw SQLError.createSQLException(Messages.getString(
-					"ResultSet.Column_Index_out_of_range", new Object[] {
-							new Integer(columnIndex),
-							new Integer(this.fields.length) }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+			return null;
 		}
-
+		
 		this.wasNullFlag = false;
 
 		Field field;
@@ -5499,14 +5467,8 @@ public class ResultSet implements java.sql.ResultSet {
 					}
 				} catch (NullPointerException E) {
 					this.wasNullFlag = true;
-				} catch (ArrayIndexOutOfBoundsException aioobEx) {
-					throw SQLError.createSQLException(Messages.getString(
-							"ResultSet.Column_Index_out_of_range",
-							new Object[] { new Integer(columnIndex),
-									new Integer(this.fields.length) }),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 				}
-
+				
 				if (this.wasNullFlag) {
 					return 0;
 				}
@@ -6339,6 +6301,8 @@ public class ResultSet implements java.sql.ResultSet {
 			return getTimeFromString(timeAsString, targetCalendar,
 				columnIndex, tz, rollForward);
 		} else {
+			checkColumnBounds(columnIndex);
+			
 			return getTimeFromBytes(((byte[][])this.thisRow)[columnIndex - 1], targetCalendar,
 					columnIndex, tz, rollForward);
 		}
@@ -6357,6 +6321,8 @@ public class ResultSet implements java.sql.ResultSet {
 	 *                if a database access error occurs
 	 */
 	public Timestamp getTimestamp(int columnIndex) throws java.sql.SQLException {
+		checkColumnBounds(columnIndex);
+		
 		return getTimestampInternal(columnIndex, null, this.getDefaultTimeZone(),
 				false);
 	}

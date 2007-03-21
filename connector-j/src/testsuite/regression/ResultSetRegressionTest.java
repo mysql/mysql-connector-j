@@ -25,6 +25,8 @@
 package testsuite.regression;
 
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Clob;
@@ -4053,6 +4055,80 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			} catch (SQLException sqlEx) {
 				assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx
 						.getSQLState());
+			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+	
+	/**
+	 * Tests fix for BUG#27137 - column index < 1 returns misleading
+	 * error message.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug27317() throws Exception {
+		try {
+			this.rs = this.stmt.executeQuery("SELECT NULL");
+			this.rs.next();
+			String messageLowBound = null;
+
+			Method[] getterMethods = ResultSet.class.getMethods();
+			Integer zeroIndex = new Integer(0);
+			Integer twoIndex = new Integer(2);
+
+			for (int i = 0; i < getterMethods.length; i++) {
+				Class[] parameterTypes = getterMethods[i].getParameterTypes();
+
+				if (getterMethods[i].getName().startsWith("get")
+						&& parameterTypes.length == 1
+						&& (parameterTypes[0].equals(Integer.TYPE) || parameterTypes[0]
+								.equals(Integer.class))) {
+					try {
+						getterMethods[i].invoke(this.rs,
+								new Object[] { zeroIndex });
+					} catch (InvocationTargetException invokeEx) {
+						Throwable ex = invokeEx.getTargetException();
+
+						if (ex != null && ex instanceof SQLException) {
+							SQLException sqlEx = (SQLException) ex;
+
+							assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+									sqlEx.getSQLState());
+
+							messageLowBound = sqlEx.getMessage();
+						} else {
+							throw new RuntimeException(ex);
+						}
+					}
+
+					String messageHighBound = null;
+
+					try {
+						getterMethods[i].invoke(this.rs,
+								new Object[] { twoIndex });
+					} catch (InvocationTargetException invokeEx) {
+						Throwable ex = invokeEx.getTargetException();
+
+						if (ex != null && ex instanceof SQLException) {
+							SQLException sqlEx = (SQLException) ex;
+
+							assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+									sqlEx.getSQLState());
+
+							messageHighBound = sqlEx.getMessage();
+						} else {
+							throw new RuntimeException(ex);
+						}
+					}
+
+					assertNotNull("Exception message null for method "
+							+ getterMethods[i], messageHighBound);
+					assertNotNull("Exception message null for method "
+							+ getterMethods[i], messageLowBound);
+
+					assertTrue(!messageHighBound.equals(messageLowBound));
+				}
 			}
 		} finally {
 			closeMemberJDBCResources();
