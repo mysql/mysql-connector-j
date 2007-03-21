@@ -54,7 +54,10 @@ nn-nn-07 - Version 5.1.0 Alpha
     - Give better error message when "streaming" result sets, and the connection
 	  gets clobbered because of exceeding net_write_timeout on the server. (which is
 	  basically what the error message says too).
-	    	  	 	  
+
+ 	- Fixed BUG#26789 - fast date/time parsing doesn't take into
+	  account 00:00:00 as a legal value.
+	  
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

@@ -4011,4 +4011,51 @@ public class ResultSetRegressionTest extends BaseTestCase {
         	 closeMemberJDBCResources();
          }
 	}
+	
+	/**
+	 * Tests fix for BUG#26789 - fast date/time parsing doesn't take into
+	 * account 00:00:00 as a legal value.
+	 * 
+	 * @throws Exception
+	 *             if the test fails
+	 */
+	public void testBug26789() throws Exception {
+		try {
+			this.rs = this.stmt.executeQuery("SELECT '00:00:00'");
+			this.rs.next();
+			this.rs.getTime(1);
+			assertEquals("00:00:00", this.rs.getTime(1).toString());
+			assertEquals("1970-01-01 00:00:00.0", this.rs.getTimestamp(1)
+					.toString());
+			assertEquals("1970-01-01", this.rs.getDate(1).toString());
+
+			this.rs.close();
+
+			this.rs = this.stmt.executeQuery("SELECT '00/00/0000 00:00:00'");
+			this.rs.next();
+
+			try {
+				this.rs.getTime(1);
+			} catch (SQLException sqlEx) {
+				assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx
+						.getSQLState());
+			}
+
+			try {
+				this.rs.getTimestamp(1);
+			} catch (SQLException sqlEx) {
+				assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx
+						.getSQLState());
+			}
+
+			try {
+				this.rs.getDate(1);
+			} catch (SQLException sqlEx) {
+				assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx
+						.getSQLState());
+			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

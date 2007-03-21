@@ -2221,6 +2221,10 @@ public class ResultSet implements java.sql.ResultSet {
 				return fastDateCreate(null, 1970, 1, 1); // Return EPOCH
 			} else {
 				if (stringVal.length() < 10) {
+					if (stringVal.length() == 8) {
+						return fastDateCreate(null, 1970, 1, 1); // Return EPOCH for TIME
+					}
+					
 					throw SQLError.createSQLException(Messages.getString(
 							"ResultSet.Bad_format_for_Date", new Object[] {
 									stringVal, new Integer(columnIndex) }),
@@ -2252,7 +2256,7 @@ public class ResultSet implements java.sql.ResultSet {
 		}
 	}
 
-	private final java.sql.Date getDateFromBytes(byte[] fromServer,
+	private final java.sql.Date getDateFromBytes(byte[] dateAsBytes,
 			int columnIndex) throws SQLException {
 		checkColumnBounds(columnIndex);
 		
@@ -2263,27 +2267,35 @@ public class ResultSet implements java.sql.ResultSet {
 		try {
 			this.wasNullFlag = false;
 
-			if (fromServer == null) {
+			if (dateAsBytes == null) {
 				this.wasNullFlag = true;
 
 				return null;
 			}
+			
 
 			boolean allZeroDate = true;
 			
-			for (int i = 0; i < fromServer.length; i++) {
-				if (fromServer[i] != '0' && 
-						fromServer[i] != ' ' && 
-						fromServer[i] != ':' &&
-						fromServer[i] != '-' && 
-						fromServer[i] != '/') {
+			boolean onlyTimePresent = true;
+			
+			int length = dateAsBytes.length;
+			
+			for (int i = 0; i < length; i++) {
+				byte b = dateAsBytes[i];
+
+				if (b == ' ' || b == '-' || b == '/') {
+					onlyTimePresent = false;
+				}
+
+				if (b != '0' && b != ' ' && b != ':' && b != '-' && b != '/'
+						&& b != '.') {
 					allZeroDate = false;
-					
+
 					break;
 				}
 			}
 
-			if (allZeroDate) {
+			if (!onlyTimePresent && allZeroDate) {
 
 				if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 						.equals(this.connection.getZeroDateTimeBehavior())) {
@@ -2292,7 +2304,7 @@ public class ResultSet implements java.sql.ResultSet {
 					return null;
 				} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 						.equals(this.connection.getZeroDateTimeBehavior())) {
-					throw SQLError.createSQLException("Value '" + new String(fromServer)
+					throw SQLError.createSQLException("Value '" + new String(dateAsBytes)
 							+ "' can not be represented as java.sql.Date",
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 				}
@@ -2303,21 +2315,21 @@ public class ResultSet implements java.sql.ResultSet {
 
 			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
 				// Convert from TIMESTAMP
-				switch (fromServer.length) {
+				switch (length) {
 				case 21:
 				case 19: { // java.sql.Timestamp format
-					year = StringUtils.getInt(fromServer, 0, 4);
-					month = StringUtils.getInt(fromServer, 5, 7);
-					day = StringUtils.getInt(fromServer, 8, 10);
+					year = StringUtils.getInt(dateAsBytes, 0, 4);
+					month = StringUtils.getInt(dateAsBytes, 5, 7);
+					day = StringUtils.getInt(dateAsBytes, 8, 10);
 
 					return fastDateCreate(null, year, month, day);
 				}
 
 				case 14:
 				case 8: {
-					year = StringUtils.getInt(fromServer, 0, 4);
-					month = StringUtils.getInt(fromServer, 4, 6);
-					day = StringUtils.getInt(fromServer, 6, 8);
+					year = StringUtils.getInt(dateAsBytes, 0, 4);
+					month = StringUtils.getInt(dateAsBytes, 4, 6);
+					day = StringUtils.getInt(dateAsBytes, 6, 8);
 
 					return fastDateCreate(null, year, month, day);
 				}
@@ -2325,32 +2337,32 @@ public class ResultSet implements java.sql.ResultSet {
 				case 12:
 				case 10:
 				case 6: {
-					year = StringUtils.getInt(fromServer, 0, 2);
+					year = StringUtils.getInt(dateAsBytes, 0, 2);
 
 					if (year <= 69) {
 						year = year + 100;
 					}
 
-					month = StringUtils.getInt(fromServer, 2, 4);
-					day = StringUtils.getInt(fromServer, 4, 6);
+					month = StringUtils.getInt(dateAsBytes, 2, 4);
+					day = StringUtils.getInt(dateAsBytes, 4, 6);
 
 					return fastDateCreate(null, year + 1900, month, day);
 				}
 
 				case 4: {
-					year = StringUtils.getInt(fromServer, 0, 4);
+					year = StringUtils.getInt(dateAsBytes, 0, 4);
 
 					if (year <= 69) {
 						year = year + 100;
 					}
 
-					month = StringUtils.getInt(fromServer, 2, 4);
+					month = StringUtils.getInt(dateAsBytes, 2, 4);
 
 					return fastDateCreate(null, year + 1900, month, 1);
 				}
 
 				case 2: {
-					year = StringUtils.getInt(fromServer, 0, 2);
+					year = StringUtils.getInt(dateAsBytes, 0, 2);
 
 					if (year <= 69) {
 						year = year + 100;
@@ -2362,13 +2374,13 @@ public class ResultSet implements java.sql.ResultSet {
 				default:
 					throw SQLError.createSQLException(Messages.getString(
 							"ResultSet.Bad_format_for_Date", new Object[] {
-									new String(fromServer), new Integer(columnIndex) }),
+									new String(dateAsBytes), new Integer(columnIndex) }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 				} /* endswitch */
 			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 
-				if (fromServer.length == 2 || fromServer.length == 1) {
-					year = StringUtils.getInt(fromServer);
+				if (length == 2 || length == 1) {
+					year = StringUtils.getInt(dateAsBytes);
 
 					if (year <= 69) {
 						year = year + 100;
@@ -2376,27 +2388,31 @@ public class ResultSet implements java.sql.ResultSet {
 
 					year += 1900;
 				} else {
-					year = StringUtils.getInt(fromServer, 0, 4);
+					year = StringUtils.getInt(dateAsBytes, 0, 4);
 				}
 
 				return fastDateCreate(null, year, 1, 1);
 			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIME) {
 				return fastDateCreate(null, 1970, 1, 1); // Return EPOCH
 			} else {
-				if (fromServer.length < 10) {
+				if (length < 10) {
+					if (length == 8) {
+						return fastDateCreate(null, 1970, 1, 1); // Return EPOCH for TIME
+					}
+					
 					throw SQLError.createSQLException(Messages.getString(
 							"ResultSet.Bad_format_for_Date", new Object[] {
-									new String(fromServer), new Integer(columnIndex) }),
+									new String(dateAsBytes), new Integer(columnIndex) }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 				}
 
-				if (fromServer.length != 18) {
-					year = StringUtils.getInt(fromServer, 0, 4);
-					month = StringUtils.getInt(fromServer, 5, 7);
-					day = StringUtils.getInt(fromServer, 8, 10);
+				if (length != 18) {
+					year = StringUtils.getInt(dateAsBytes, 0, 4);
+					month = StringUtils.getInt(dateAsBytes, 5, 7);
+					day = StringUtils.getInt(dateAsBytes, 8, 10);
 				} else {
 					// JDK-1.3 timestamp format, not real easy to parse positionally :p
-					StringTokenizer st = new StringTokenizer(new String(fromServer), "- ");
+					StringTokenizer st = new StringTokenizer(new String(dateAsBytes), "- ");
 					
 					year = Integer.parseInt(st.nextToken());
 					month = Integer.parseInt(st.nextToken());
@@ -2409,7 +2425,7 @@ public class ResultSet implements java.sql.ResultSet {
 			throw sqlEx; // don't re-wrap
 		} catch (Exception e) {
 			throw SQLError.createSQLException(Messages.getString(
-					"ResultSet.Bad_format_for_Date", new Object[] { new String(fromServer),
+					"ResultSet.Bad_format_for_Date", new Object[] { new String(dateAsBytes),
 							new Integer(columnIndex) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 		}
@@ -6002,7 +6018,7 @@ public class ResultSet implements java.sql.ResultSet {
 				} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException("Value '" + timeAsString
-							+ " can not be represented as java.sql.Time",
+							+ "' can not be represented as java.sql.Time",
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 				}
 
@@ -6021,16 +6037,16 @@ public class ResultSet implements java.sql.ResultSet {
 
 				switch (length) {
 				case 19: { // YYYY-MM-DD hh:mm:ss
-					 
-					hr = Integer.parseInt(timeAsString.substring(length - 8,
-							length - 6));
-					min = Integer.parseInt(timeAsString.substring(length - 5,
-							length - 3));
-					sec = Integer.parseInt(timeAsString.substring(length - 2,
-							length));
+				 
+						hr = Integer.parseInt(timeAsString.substring(length - 8,
+								length - 6));
+						min = Integer.parseInt(timeAsString.substring(length - 5,
+								length - 3));
+						sec = Integer.parseInt(timeAsString.substring(length - 2,
+								length));
 				}
-				
-					break;
+
+						break;
 				case 14:
 				case 12: {
 					hr = Integer.parseInt(timeAsString.substring(length - 6,
@@ -6148,20 +6164,24 @@ public class ResultSet implements java.sql.ResultSet {
 			int length = timeAsBytes.length;
 			
 			boolean allZeroTime = true;
+			boolean onlyTimePresent = true;
 			
 			for (int i = 0; i < length; i++) {
-				if (timeAsBytes[i] != '0' && 
-						timeAsBytes[i] != ' ' && 
-						timeAsBytes[i] != ':' &&
-						timeAsBytes[i] != '-' && 
-						timeAsBytes[i] != '/') {
+				byte b = timeAsBytes[i];
+
+				if (b == ' ' || b == '-' || b == '/') {
+					onlyTimePresent = false;
+				}
+
+				if (b != '0' && b != ' ' && b != ':' && b != '-' && b != '/'
+						&& b != '.') {
 					allZeroTime = false;
-					
+
 					break;
 				}
 			}
 
-			if (allZeroTime) {
+			if (!onlyTimePresent && allZeroTime) {
 				if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					this.wasNullFlag = true;
@@ -6170,7 +6190,7 @@ public class ResultSet implements java.sql.ResultSet {
 				} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException("Value '" + new String(timeAsBytes)
-							+ " can not be represented as java.sql.Time",
+							+ "' can not be represented as java.sql.Time",
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 				}
 
@@ -6444,7 +6464,7 @@ public class ResultSet implements java.sql.ResultSet {
 					} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 							.equals(this.connection.getZeroDateTimeBehavior())) {
 						throw SQLError.createSQLException("Value '" + timestampValue
-								+ " can not be represented as java.sql.Timestamp",
+								+ "' can not be represented as java.sql.Timestamp",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 					}
 					
@@ -6615,7 +6635,7 @@ public class ResultSet implements java.sql.ResultSet {
 							.changeTimezone(this.connection,
 									sessionCalendar,
 									targetCalendar,
-									fastTimestampCreate(sessionCalendar, 70, 0, 1,
+									fastTimestampCreate(sessionCalendar, 1970, 1, 1,
 											hour, minutes, seconds, 0),
 											this.connection.getServerTimezoneTZ(),
 											tz, rollForward);
@@ -6705,22 +6725,20 @@ public class ResultSet implements java.sql.ResultSet {
 
 	private Timestamp getTimestampFromBytes(int columnIndex,
 			Calendar targetCalendar,
-			byte[] timestampValue, TimeZone tz, boolean rollForward)
+			byte[] timestampAsBytes, TimeZone tz, boolean rollForward)
 	throws java.sql.SQLException {
 		checkColumnBounds(columnIndex);
 		
 		try {
 			this.wasNullFlag = false;
 			
-			if (timestampValue == null) {
+			if (timestampAsBytes == null) {
 				this.wasNullFlag = true;
 				
 				return null;
 			}
-			
-			
-			
-			int length = timestampValue.length;
+
+			int length = timestampAsBytes.length;
 			
 			Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
 					this.connection.getUtcCalendar() : 
@@ -6729,19 +6747,24 @@ public class ResultSet implements java.sql.ResultSet {
 			synchronized (sessionCalendar) {
 				boolean allZeroTimestamp = true;
 				
+				boolean onlyTimePresent = true;
+				
 				for (int i = 0; i < length; i++) {
-					if (timestampValue[i] != '0' && 
-							timestampValue[i] != ' ' && 
-							timestampValue[i] != ':' &&
-							timestampValue[i] != '-' && 
-							timestampValue[i] != '/') {
+					byte b = timestampAsBytes[i];
+
+					if (b == ' ' || b == '-' || b == '/') {
+						onlyTimePresent = false;
+					}
+
+					if (b != '0' && b != ' ' && b != ':' && b != '-' && b != '/'
+							&& b != '.') {
 						allZeroTimestamp = false;
-						
+
 						break;
 					}
 				}
 
-				if (allZeroTimestamp) {
+				if (!onlyTimePresent && allZeroTimestamp) {
 					
 					if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 							.equals(this.connection.getZeroDateTimeBehavior())) {
@@ -6750,8 +6773,8 @@ public class ResultSet implements java.sql.ResultSet {
 						return null;
 					} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 							.equals(this.connection.getZeroDateTimeBehavior())) {
-						throw SQLError.createSQLException("Value '" + timestampValue
-								+ " can not be represented as java.sql.Timestamp",
+						throw SQLError.createSQLException("Value '" + timestampAsBytes
+								+ "' can not be represented as java.sql.Timestamp",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 					}
 					
@@ -6765,12 +6788,12 @@ public class ResultSet implements java.sql.ResultSet {
 							sessionCalendar, 
 							targetCalendar,
 							fastTimestampCreate(sessionCalendar, 
-									StringUtils.getInt(timestampValue, 0, 4), 1,
+									StringUtils.getInt(timestampAsBytes, 0, 4), 1,
 									1, 0, 0, 0, 0), this.connection
 									.getServerTimezoneTZ(), tz, rollForward);
 					
 				} else {
-					if (timestampValue[length - 1] == '.') {
+					if (timestampAsBytes[length - 1] == '.') {
 						length--;
 					}
 					
@@ -6784,21 +6807,21 @@ public class ResultSet implements java.sql.ResultSet {
 					case 21:
 					case 20:
 					case 19: {
-						int year = StringUtils.getInt(timestampValue, 0, 4);
-						int month = StringUtils.getInt(timestampValue, 5, 7);
-						int day = StringUtils.getInt(timestampValue, 8, 10);
-						int hour = StringUtils.getInt(timestampValue, 11, 13);
-						int minutes = StringUtils.getInt(timestampValue, 14, 16);
-						int seconds = StringUtils.getInt(timestampValue, 17, 19);
+						int year = StringUtils.getInt(timestampAsBytes, 0, 4);
+						int month = StringUtils.getInt(timestampAsBytes, 5, 7);
+						int day = StringUtils.getInt(timestampAsBytes, 8, 10);
+						int hour = StringUtils.getInt(timestampAsBytes, 11, 13);
+						int minutes = StringUtils.getInt(timestampAsBytes, 14, 16);
+						int seconds = StringUtils.getInt(timestampAsBytes, 17, 19);
 						
 						int nanos = 0;
 						
 						if (length > 19) {
-							int decimalIndex = StringUtils.lastIndexOf(timestampValue, '.');
+							int decimalIndex = StringUtils.lastIndexOf(timestampAsBytes, '.');
 							
 							if (decimalIndex != -1) {
 								if ((decimalIndex + 2) <= length) {
-									nanos = StringUtils.getInt(timestampValue, decimalIndex + 1, length);
+									nanos = StringUtils.getInt(timestampAsBytes, decimalIndex + 1, length);
 								} else {
 									throw new IllegalArgumentException(); // re-thrown
 									// further
@@ -6819,12 +6842,12 @@ public class ResultSet implements java.sql.ResultSet {
 					}
 					
 					case 14: {
-						int year = StringUtils.getInt(timestampValue, 0, 4);
-						int month = StringUtils.getInt(timestampValue, 4, 6);
-						int day = StringUtils.getInt(timestampValue, 6, 8);
-						int hour = StringUtils.getInt(timestampValue, 8, 10);
-						int minutes = StringUtils.getInt(timestampValue, 10, 12);
-						int seconds = StringUtils.getInt(timestampValue, 12, 14);
+						int year = StringUtils.getInt(timestampAsBytes, 0, 4);
+						int month = StringUtils.getInt(timestampAsBytes, 4, 6);
+						int day = StringUtils.getInt(timestampAsBytes, 6, 8);
+						int hour = StringUtils.getInt(timestampAsBytes, 8, 10);
+						int minutes = StringUtils.getInt(timestampAsBytes, 10, 12);
+						int seconds = StringUtils.getInt(timestampAsBytes, 12, 14);
 						
 						return TimeUtil.changeTimezone(this.connection,
 								sessionCalendar, 
@@ -6835,17 +6858,17 @@ public class ResultSet implements java.sql.ResultSet {
 					}
 					
 					case 12: {
-						int year = StringUtils.getInt(timestampValue, 0, 2);
+						int year = StringUtils.getInt(timestampAsBytes, 0, 2);
 						
 						if (year <= 69) {
 							year = (year + 100);
 						}
 						
-						int month = StringUtils.getInt(timestampValue, 2, 4);
-						int day = StringUtils.getInt(timestampValue, 4, 6);
-						int hour = StringUtils.getInt(timestampValue, 6, 8);
-						int minutes = StringUtils.getInt(timestampValue, 8,	10);
-						int seconds = StringUtils.getInt(timestampValue, 10, 12);
+						int month = StringUtils.getInt(timestampAsBytes, 2, 4);
+						int day = StringUtils.getInt(timestampAsBytes, 4, 6);
+						int hour = StringUtils.getInt(timestampAsBytes, 6, 8);
+						int minutes = StringUtils.getInt(timestampAsBytes, 8,	10);
+						int seconds = StringUtils.getInt(timestampAsBytes, 10, 12);
 						
 						return TimeUtil.changeTimezone(this.connection,
 								sessionCalendar,
@@ -6863,23 +6886,23 @@ public class ResultSet implements java.sql.ResultSet {
 						int minutes;
 						
 						if ((this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_DATE)
-								|| (StringUtils.indexOf(timestampValue, '-') != -1)) {
-							year = StringUtils.getInt(timestampValue, 0, 4);
-							month = StringUtils.getInt(timestampValue, 5, 7);
-							day = StringUtils.getInt(timestampValue, 8, 10);
+								|| (StringUtils.indexOf(timestampAsBytes, '-') != -1)) {
+							year = StringUtils.getInt(timestampAsBytes, 0, 4);
+							month = StringUtils.getInt(timestampAsBytes, 5, 7);
+							day = StringUtils.getInt(timestampAsBytes, 8, 10);
 							hour = 0;
 							minutes = 0;
 						} else {
-							year = StringUtils.getInt(timestampValue, 0, 2);
+							year = StringUtils.getInt(timestampAsBytes, 0, 2);
 							
 							if (year <= 69) {
 								year = (year + 100);
 							}
 							
-							month = StringUtils.getInt(timestampValue, 2, 4);
-							day = StringUtils.getInt(timestampValue, 4, 6);
-							hour = StringUtils.getInt(timestampValue, 6, 8);
-							minutes = StringUtils.getInt(timestampValue, 8, 10);
+							month = StringUtils.getInt(timestampAsBytes, 2, 4);
+							day = StringUtils.getInt(timestampAsBytes, 4, 6);
+							hour = StringUtils.getInt(timestampAsBytes, 6, 8);
+							minutes = StringUtils.getInt(timestampAsBytes, 8, 10);
 							
 							year += 1900; // two-digit year
 						}
@@ -6893,25 +6916,25 @@ public class ResultSet implements java.sql.ResultSet {
 					}
 					
 					case 8: {
-						if (StringUtils.indexOf(timestampValue, ':') != -1) {
-							int hour = StringUtils.getInt(timestampValue, 0, 2);
-							int minutes = StringUtils.getInt(timestampValue, 3, 5);
-							int seconds = StringUtils.getInt(timestampValue, 6, 8);
+						if (StringUtils.indexOf(timestampAsBytes, ':') != -1) {
+							int hour = StringUtils.getInt(timestampAsBytes, 0, 2);
+							int minutes = StringUtils.getInt(timestampAsBytes, 3, 5);
+							int seconds = StringUtils.getInt(timestampAsBytes, 6, 8);
 							
 							return TimeUtil
 							.changeTimezone(this.connection,
 									sessionCalendar,
 									targetCalendar,
-									fastTimestampCreate(sessionCalendar, 70, 0, 1,
+									fastTimestampCreate(sessionCalendar, 1970, 1, 1,
 											hour, minutes, seconds, 0),
 											this.connection.getServerTimezoneTZ(),
 											tz, rollForward);
 							
 						}
 						
-						int year = StringUtils.getInt(timestampValue, 0, 4);
-						int month = StringUtils.getInt(timestampValue, 4, 6);
-						int day = StringUtils.getInt(timestampValue, 6, 8);
+						int year = StringUtils.getInt(timestampAsBytes, 0, 4);
+						int month = StringUtils.getInt(timestampAsBytes, 4, 6);
+						int day = StringUtils.getInt(timestampAsBytes, 6, 8);
 						
 						return TimeUtil.changeTimezone(this.connection,
 								sessionCalendar,
@@ -6922,14 +6945,14 @@ public class ResultSet implements java.sql.ResultSet {
 					}
 					
 					case 6: {
-						int year = StringUtils.getInt(timestampValue, 0, 2);
+						int year = StringUtils.getInt(timestampAsBytes, 0, 2);
 						
 						if (year <= 69) {
 							year = (year + 100);
 						}
 						
-						int month = StringUtils.getInt(timestampValue, 2, 4);
-						int day = StringUtils.getInt(timestampValue, 4, 6);
+						int month = StringUtils.getInt(timestampAsBytes, 2, 4);
+						int day = StringUtils.getInt(timestampAsBytes, 4, 6);
 						
 						return TimeUtil.changeTimezone(this.connection,
 								sessionCalendar,
@@ -6940,13 +6963,13 @@ public class ResultSet implements java.sql.ResultSet {
 					}
 					
 					case 4: {
-						int year = StringUtils.getInt(timestampValue, 0, 2);
+						int year = StringUtils.getInt(timestampAsBytes, 0, 2);
 						
 						if (year <= 69) {
 							year = (year + 100);
 						}
 						
-						int month = StringUtils.getInt(timestampValue, 2, 4);
+						int month = StringUtils.getInt(timestampAsBytes, 2, 4);
 						
 						return TimeUtil.changeTimezone(this.connection,
 								sessionCalendar,
@@ -6957,7 +6980,7 @@ public class ResultSet implements java.sql.ResultSet {
 					}
 					
 					case 2: {
-						int year = StringUtils.getInt(timestampValue, 0, 2);
+						int year = StringUtils.getInt(timestampAsBytes, 0, 2);
 						
 						if (year <= 69) {
 							year = (year + 100);
@@ -6973,7 +6996,7 @@ public class ResultSet implements java.sql.ResultSet {
 					
 					default:
 						throw new java.sql.SQLException(
-								"Bad format for Timestamp '" + new String(timestampValue)
+								"Bad format for Timestamp '" + new String(timestampAsBytes)
 								+ "' in column " + columnIndex + ".",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 					}
@@ -6981,7 +7004,7 @@ public class ResultSet implements java.sql.ResultSet {
 			}
 		} catch (Exception e) {
 			throw new java.sql.SQLException("Cannot convert value '"
-					+ new String(timestampValue) + "' from column " + columnIndex
+					+ new String(timestampAsBytes) + "' from column " + columnIndex
 					+ " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}	
 	}
