@@ -746,9 +746,9 @@ public class Statement implements java.sql.Statement {
 				}
 			}
 
-			this.lastInsertId = rs.getUpdateID();
-
 			if (rs != null) {
+				this.lastInsertId = rs.getUpdateID();
+				
 				this.results = rs;
 
 				rs.setFirstCharOfQuery(firstNonWsChar);
@@ -1584,7 +1584,7 @@ public class Statement implements java.sql.Statement {
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	public java.sql.ResultSet getGeneratedKeys()
+	public synchronized java.sql.ResultSet getGeneratedKeys()
 			throws SQLException {
 		if (this.batchedGeneratedKeys == null) {
 			return getGeneratedKeysInternal();
@@ -2234,7 +2234,7 @@ public class Statement implements java.sql.Statement {
 		if (max > maxBuf) {
 			throw SQLError.createSQLException(Messages.getString(
 					"Statement.13", //$NON-NLS-1$
-					new Object[] { new Long(maxBuf) }), //$NON-NLS-1$
+					new Object[] { Long.valueOf(maxBuf) }), //$NON-NLS-1$
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 		}
 

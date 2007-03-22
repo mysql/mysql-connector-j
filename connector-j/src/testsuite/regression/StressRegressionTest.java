@@ -147,7 +147,7 @@ public class StressRegressionTest extends BaseTestCase {
 	 *             ...
 	 */
 	public void testCreateConnections() throws Exception {
-		new CreateThread().run();
+		new CreateThread().start();
 	}
 
 	/**
@@ -157,7 +157,7 @@ public class StressRegressionTest extends BaseTestCase {
 	 *             ...
 	 */
 	public void testCreateConnectionsUnderLoad() throws Exception {
-		new CreateThread(new BusyThread()).run();
+		new CreateThread(new BusyThread()).start();
 	}
 
 	void contentiousWork(Connection threadConn, Statement threadStmt,

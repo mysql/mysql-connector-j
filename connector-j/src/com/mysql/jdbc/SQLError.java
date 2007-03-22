@@ -135,8 +135,6 @@ public class SQLError {
 
 	public static final String SQL_STATE_INVALID_TRANSACTION_TERMINATION = "2D000"; // $NON_NLS-1$
 
-	private static boolean isJdbc4;
-
 	private static Map sqlStateMessages;
 
 	private static final long DEFAULT_WAIT_TIMEOUT_SECONDS = 28800;
@@ -259,25 +257,25 @@ public class SQLError {
 		// ER_UNKNOWN_COM_ERROR 1047
 		// ER_IPSOCK_ERROR 1081
 		//
-		mysqlToSqlState.put(new Integer(1040), SQL_STATE_CONNECTION_REJECTED);
-		mysqlToSqlState.put(new Integer(1042), SQL_STATE_CONNECTION_REJECTED);
-		mysqlToSqlState.put(new Integer(1043), SQL_STATE_CONNECTION_REJECTED);
-		mysqlToSqlState.put(new Integer(1047),
+		mysqlToSqlState.put(Integer.valueOf(1040), SQL_STATE_CONNECTION_REJECTED);
+		mysqlToSqlState.put(Integer.valueOf(1042), SQL_STATE_CONNECTION_REJECTED);
+		mysqlToSqlState.put(Integer.valueOf(1043), SQL_STATE_CONNECTION_REJECTED);
+		mysqlToSqlState.put(Integer.valueOf(1047),
 				SQL_STATE_COMMUNICATION_LINK_FAILURE);
-		mysqlToSqlState.put(new Integer(1081),
+		mysqlToSqlState.put(Integer.valueOf(1081),
 				SQL_STATE_COMMUNICATION_LINK_FAILURE);
 
 		// ER_HOST_IS_BLOCKED 1129
 		// ER_HOST_NOT_PRIVILEGED 1130
-		mysqlToSqlState.put(new Integer(1129), SQL_STATE_CONNECTION_REJECTED);
-		mysqlToSqlState.put(new Integer(1130), SQL_STATE_CONNECTION_REJECTED);
+		mysqlToSqlState.put(Integer.valueOf(1129), SQL_STATE_CONNECTION_REJECTED);
+		mysqlToSqlState.put(Integer.valueOf(1130), SQL_STATE_CONNECTION_REJECTED);
 
 		//
 		// Authentication Errors
 		//
 		// ER_ACCESS_DENIED_ERROR 1045
 		//
-		mysqlToSqlState.put(new Integer(1045), SQL_STATE_INVALID_AUTH_SPEC);
+		mysqlToSqlState.put(Integer.valueOf(1045), SQL_STATE_INVALID_AUTH_SPEC);
 
 		//
 		// Resource errors
@@ -294,9 +292,9 @@ public class SQLError {
 		// ER_OUTOFMEMORY 1037
 		// ER_OUT_OF_SORTMEMORY 1038
 		//
-		mysqlToSqlState.put(new Integer(1037),
+		mysqlToSqlState.put(Integer.valueOf(1037),
 				SQL_STATE_MEMORY_ALLOCATION_FAILURE);
-		mysqlToSqlState.put(new Integer(1038),
+		mysqlToSqlState.put(Integer.valueOf(1038),
 				SQL_STATE_MEMORY_ALLOCATION_FAILURE);
 
 		//
@@ -305,8 +303,8 @@ public class SQLError {
 		// ER_PARSE_ERROR 1064
 		// ER_EMPTY_QUERY 1065
 		//
-		mysqlToSqlState.put(new Integer(1064), SQL_STATE_SYNTAX_ERROR);
-		mysqlToSqlState.put(new Integer(1065), SQL_STATE_SYNTAX_ERROR);
+		mysqlToSqlState.put(Integer.valueOf(1064), SQL_STATE_SYNTAX_ERROR);
+		mysqlToSqlState.put(Integer.valueOf(1065), SQL_STATE_SYNTAX_ERROR);
 
 		//
 		// Invalid argument errors
@@ -333,32 +331,32 @@ public class SQLError {
 		// ER_WRONG_FIELD_TERMINATORS 1083
 		// ER_BLOBS_AND_NO_TERMINATED 1084
 		//
-		mysqlToSqlState.put(new Integer(1055), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1056), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1057), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1059), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1060), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1061), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1062), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1063), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1066), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1067), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1068), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1069), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1070), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1071), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1072), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1073), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1074), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1075), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1082), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1083), SQL_STATE_ILLEGAL_ARGUMENT);
-		mysqlToSqlState.put(new Integer(1084), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1055), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1056), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1057), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1059), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1060), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1061), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1062), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1063), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1066), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1067), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1068), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1069), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1070), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1071), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1072), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1073), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1074), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1075), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1082), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1083), SQL_STATE_ILLEGAL_ARGUMENT);
+		mysqlToSqlState.put(Integer.valueOf(1084), SQL_STATE_ILLEGAL_ARGUMENT);
 
 		//
 		// ER_WRONG_VALUE_COUNT 1058
 		//
-		mysqlToSqlState.put(new Integer(1058),
+		mysqlToSqlState.put(Integer.valueOf(1058),
 				SQL_STATE_INSERT_VALUE_LIST_NO_MATCH_COL_LIST);
 
 		// ER_CANT_CREATE_DB 1006
@@ -394,12 +392,12 @@ public class SQLError {
 		// ER_BAD_DB_ERROR 1049
 		// ER_TABLE_EXISTS_ERROR 1050
 		// ER_BAD_TABLE_ERROR 1051
-		mysqlToSqlState.put(new Integer(1051),
+		mysqlToSqlState.put(Integer.valueOf(1051),
 				SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND);
 
 		// ER_NON_UNIQ_ERROR 1052
 		// ER_BAD_FIELD_ERROR 1054
-		mysqlToSqlState.put(new Integer(1054), SQL_STATE_COLUMN_NOT_FOUND);
+		mysqlToSqlState.put(Integer.valueOf(1054), SQL_STATE_COLUMN_NOT_FOUND);
 
 		// ER_TEXTFILE_NOT_READABLE 1085
 		// ER_FILE_EXISTS_ERROR 1086
@@ -411,274 +409,274 @@ public class SQLError {
 		// ER_INSERT_INFO 1092
 		// ER_INSERT_TABLE_USED 1093
 		// ER_LOCK_DEADLOCK 1213
-		mysqlToSqlState.put(new Integer(1205), SQL_STATE_DEADLOCK);
-		mysqlToSqlState.put(new Integer(1213), SQL_STATE_DEADLOCK);
+		mysqlToSqlState.put(Integer.valueOf(1205), SQL_STATE_DEADLOCK);
+		mysqlToSqlState.put(Integer.valueOf(1213), SQL_STATE_DEADLOCK);
 
 		mysqlToSql99State = new HashMap();
 
-		mysqlToSql99State.put(new Integer(1205), SQL_STATE_DEADLOCK);
-		mysqlToSql99State.put(new Integer(1213), SQL_STATE_DEADLOCK);
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_DUP_KEY),
+		mysqlToSql99State.put(Integer.valueOf(1205), SQL_STATE_DEADLOCK);
+		mysqlToSql99State.put(Integer.valueOf(1213), SQL_STATE_DEADLOCK);
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_DUP_KEY),
 				"23000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_OUTOFMEMORY),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_OUTOFMEMORY),
 				"HY001");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_OUT_OF_SORTMEMORY), "HY001");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_CON_COUNT_ERROR), "08004");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_BAD_HOST_ERROR),
+				Integer.valueOf(MysqlErrorNumbers.ER_CON_COUNT_ERROR), "08004");
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_BAD_HOST_ERROR),
 				"08S01");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_HANDSHAKE_ERROR), "08S01");
-		mysqlToSql99State.put(new Integer(
+				Integer.valueOf(MysqlErrorNumbers.ER_HANDSHAKE_ERROR), "08S01");
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_DBACCESS_DENIED_ERROR), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_ACCESS_DENIED_ERROR), "28000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_TABLE_EXISTS_ERROR), "42S01");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_BAD_TABLE_ERROR), "42S02");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_NON_UNIQ_ERROR),
+				Integer.valueOf(MysqlErrorNumbers.ER_BAD_TABLE_ERROR), "42S02");
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_NON_UNIQ_ERROR),
 				"23000");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_SERVER_SHUTDOWN), "08S01");
+				Integer.valueOf(MysqlErrorNumbers.ER_SERVER_SHUTDOWN), "08S01");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_BAD_FIELD_ERROR), "42S22");
-		mysqlToSql99State.put(new Integer(
+				Integer.valueOf(MysqlErrorNumbers.ER_BAD_FIELD_ERROR), "42S22");
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_FIELD_WITH_GROUP), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_GROUP_FIELD), "42000");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_WRONG_SUM_SELECT), "42000");
-		mysqlToSql99State.put(new Integer(
+				Integer.valueOf(MysqlErrorNumbers.ER_WRONG_SUM_SELECT), "42000");
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_VALUE_COUNT), "21S01");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_TOO_LONG_IDENT),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_TOO_LONG_IDENT),
 				"42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_DUP_FIELDNAME),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_DUP_FIELDNAME),
 				"42S21");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_DUP_KEYNAME),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_DUP_KEYNAME),
 				"42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_DUP_ENTRY),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_DUP_ENTRY),
 				"23000");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_WRONG_FIELD_SPEC), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_PARSE_ERROR),
+				Integer.valueOf(MysqlErrorNumbers.ER_WRONG_FIELD_SPEC), "42000");
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_PARSE_ERROR),
 				"42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_EMPTY_QUERY),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_EMPTY_QUERY),
 				"42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_NONUNIQ_TABLE),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_NONUNIQ_TABLE),
 				"42000");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_INVALID_DEFAULT), "42000");
+				Integer.valueOf(MysqlErrorNumbers.ER_INVALID_DEFAULT), "42000");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_MULTIPLE_PRI_KEY), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_TOO_MANY_KEYS),
+				Integer.valueOf(MysqlErrorNumbers.ER_MULTIPLE_PRI_KEY), "42000");
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_TOO_MANY_KEYS),
 				"42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_TOO_MANY_KEY_PARTS), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_TOO_LONG_KEY),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_TOO_LONG_KEY),
 				"42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_KEY_COLUMN_DOES_NOT_EXITS), "42000");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_BLOB_USED_AS_KEY), "42000");
-		mysqlToSql99State.put(new Integer(
+				Integer.valueOf(MysqlErrorNumbers.ER_BLOB_USED_AS_KEY), "42000");
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_TOO_BIG_FIELDLENGTH), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_WRONG_AUTO_KEY),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_WRONG_AUTO_KEY),
 				"42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_FORCING_CLOSE),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_FORCING_CLOSE),
 				"08S01");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_IPSOCK_ERROR),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_IPSOCK_ERROR),
 				"08S01");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_NO_SUCH_INDEX),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_NO_SUCH_INDEX),
 				"42S12");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_FIELD_TERMINATORS), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_BLOBS_AND_NO_TERMINATED), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_CANT_REMOVE_ALL_FIELDS), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_CANT_DROP_FIELD_OR_KEY), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_BLOB_CANT_HAVE_DEFAULT), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_WRONG_DB_NAME),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_WRONG_DB_NAME),
 				"42000");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_WRONG_TABLE_NAME), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_TOO_BIG_SELECT),
+				Integer.valueOf(MysqlErrorNumbers.ER_WRONG_TABLE_NAME), "42000");
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_TOO_BIG_SELECT),
 				"42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_UNKNOWN_PROCEDURE), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_PARAMCOUNT_TO_PROCEDURE), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_UNKNOWN_TABLE),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_UNKNOWN_TABLE),
 				"42S02");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_FIELD_SPECIFIED_TWICE), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_UNSUPPORTED_EXTENSION), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_TABLE_MUST_HAVE_COLUMNS), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_UNKNOWN_CHARACTER_SET), "42000");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_TOO_BIG_ROWSIZE), "42000");
+				Integer.valueOf(MysqlErrorNumbers.ER_TOO_BIG_ROWSIZE), "42000");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_WRONG_OUTER_JOIN), "42000");
-		mysqlToSql99State.put(new Integer(
+				Integer.valueOf(MysqlErrorNumbers.ER_WRONG_OUTER_JOIN), "42000");
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NULL_COLUMN_IN_INDEX), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_PASSWORD_ANONYMOUS_USER), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_PASSWORD_NOT_ALLOWED), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_PASSWORD_NO_MATCH), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_VALUE_COUNT_ON_ROW), "21S01");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_INVALID_USE_OF_NULL), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_REGEXP_ERROR),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_REGEXP_ERROR),
 				"42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_MIX_OF_GROUP_FUNC_AND_FIELDS), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NONEXISTING_GRANT), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_TABLEACCESS_DENIED_ERROR), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_COLUMNACCESS_DENIED_ERROR), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_ILLEGAL_GRANT_FOR_TABLE), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_GRANT_WRONG_HOST_OR_USER), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_NO_SUCH_TABLE),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_NO_SUCH_TABLE),
 				"42S02");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NONEXISTING_TABLE_GRANT), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NOT_ALLOWED_COMMAND), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_SYNTAX_ERROR),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_SYNTAX_ERROR),
 				"42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_ABORTING_CONNECTION), "08S01");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NET_PACKET_TOO_LARGE), "08S01");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NET_READ_ERROR_FROM_PIPE), "08S01");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_NET_FCNTL_ERROR), "08S01");
-		mysqlToSql99State.put(new Integer(
+				Integer.valueOf(MysqlErrorNumbers.ER_NET_FCNTL_ERROR), "08S01");
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NET_PACKETS_OUT_OF_ORDER), "08S01");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NET_UNCOMPRESS_ERROR), "08S01");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_NET_READ_ERROR),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_NET_READ_ERROR),
 				"08S01");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NET_READ_INTERRUPTED), "08S01");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NET_ERROR_ON_WRITE), "08S01");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NET_WRITE_INTERRUPTED), "08S01");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_TOO_LONG_STRING), "42000");
-		mysqlToSql99State.put(new Integer(
+				Integer.valueOf(MysqlErrorNumbers.ER_TOO_LONG_STRING), "42000");
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_TABLE_CANT_HANDLE_BLOB), "42000");
 		mysqlToSql99State
-				.put(new Integer(
+				.put(Integer.valueOf(
 						MysqlErrorNumbers.ER_TABLE_CANT_HANDLE_AUTO_INCREMENT),
 						"42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_COLUMN_NAME), "42000");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_WRONG_KEY_COLUMN), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_DUP_UNIQUE),
+				Integer.valueOf(MysqlErrorNumbers.ER_WRONG_KEY_COLUMN), "42000");
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_DUP_UNIQUE),
 				"23000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_BLOB_KEY_WITHOUT_LENGTH), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_PRIMARY_CANT_HAVE_NULL), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_TOO_MANY_ROWS),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_TOO_MANY_ROWS),
 				"42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_REQUIRES_PRIMARY_KEY), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_CHECK_NO_SUCH_TABLE), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_CHECK_NOT_IMPLEMENTED), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_CANT_DO_THIS_DURING_AN_TRANSACTION),
 				"25000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NEW_ABORTING_CONNECTION), "08S01");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_MASTER_NET_READ), "08S01");
+				Integer.valueOf(MysqlErrorNumbers.ER_MASTER_NET_READ), "08S01");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_MASTER_NET_WRITE), "08S01");
-		mysqlToSql99State.put(new Integer(
+				Integer.valueOf(MysqlErrorNumbers.ER_MASTER_NET_WRITE), "08S01");
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_TOO_MANY_USER_CONNECTIONS), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_READ_ONLY_TRANSACTION), "25000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NO_PERMISSION_TO_CREATE_USER), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_LOCK_DEADLOCK),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_LOCK_DEADLOCK),
 				"40001");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NO_REFERENCED_ROW), "23000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_ROW_IS_REFERENCED), "23000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_CONNECT_TO_MASTER), "08S01");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_NUMBER_OF_COLUMNS_IN_SELECT),
 				"21000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_USER_LIMIT_REACHED), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_NO_DEFAULT),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_NO_DEFAULT),
 				"42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_VALUE_FOR_VAR), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_TYPE_FOR_VAR), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_CANT_USE_OPTION_HERE), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NOT_SUPPORTED_YET), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_WRONG_FK_DEF),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_WRONG_FK_DEF),
 				"42000");
 		mysqlToSql99State.put(
-				new Integer(MysqlErrorNumbers.ER_OPERAND_COLUMNS), "21000");
-		mysqlToSql99State.put(new Integer(
+				Integer.valueOf(MysqlErrorNumbers.ER_OPERAND_COLUMNS), "21000");
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_SUBQUERY_NO_1_ROW), "21000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_ILLEGAL_REFERENCE), "42S22");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_DERIVED_MUST_HAVE_ALIAS), "42000");
-		mysqlToSql99State.put(new Integer(MysqlErrorNumbers.ER_SELECT_REDUCED),
+		mysqlToSql99State.put(Integer.valueOf(MysqlErrorNumbers.ER_SELECT_REDUCED),
 				"01000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_TABLENAME_NOT_ALLOWED_HERE), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_NOT_SUPPORTED_AUTH_MODE), "08004");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_SPATIAL_CANT_HAVE_NULL), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_COLLATION_CHARSET_MISMATCH), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WARN_TOO_FEW_RECORDS), "01000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WARN_TOO_MANY_RECORDS), "01000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WARN_NULL_TO_NOTNULL), "01000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WARN_DATA_OUT_OF_RANGE), "01000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WARN_DATA_TRUNCATED), "01000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_NAME_FOR_INDEX), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_WRONG_NAME_FOR_CATALOG), "42000");
-		mysqlToSql99State.put(new Integer(
+		mysqlToSql99State.put(Integer.valueOf(
 				MysqlErrorNumbers.ER_UNKNOWN_STORAGE_ENGINE), "42000");
 	}
 
@@ -878,7 +876,7 @@ public class SQLError {
 	}
 
 	private static String mysqlToSql99(int errno) {
-		Integer err = new Integer(errno);
+		Integer err = Integer.valueOf(errno);
 
 		if (mysqlToSql99State.containsKey(err)) {
 			return (String) mysqlToSql99State.get(err);
@@ -904,7 +902,7 @@ public class SQLError {
 	}
 
 	private static String mysqlToXOpen(int errno) {
-		Integer err = new Integer(errno);
+		Integer err = Integer.valueOf(errno);
 
 		if (mysqlToSqlState.containsKey(err)) {
 			return (String) mysqlToSqlState.get(err);
@@ -955,7 +953,7 @@ public class SQLError {
 										new Class[] { String.class,
 												String.class, Integer.TYPE },
 										new Object[] { message, sqlState,
-												new Integer(vendorErrorCode) });
+												Integer.valueOf(vendorErrorCode) });
 					}
 
 					if (!Util.isJdbc4()) {
@@ -969,7 +967,7 @@ public class SQLError {
 									new Class[] { String.class, String.class,
 											Integer.TYPE  }, new Object[] {
 											message, sqlState,
-											new Integer(vendorErrorCode) });
+											Integer.valueOf(vendorErrorCode) });
 				}
 
 				if (sqlState.startsWith("22")) {
@@ -984,7 +982,7 @@ public class SQLError {
 									new Class[] { String.class, String.class,
 											Integer.TYPE  }, new Object[] {
 											message, sqlState,
-											new Integer(vendorErrorCode) });
+											Integer.valueOf(vendorErrorCode) });
 				}
 
 				if (sqlState.startsWith("23")) {
@@ -1000,7 +998,7 @@ public class SQLError {
 									new Class[] { String.class, String.class,
 											Integer.TYPE  }, new Object[] {
 											message, sqlState,
-											new Integer(vendorErrorCode) });
+											Integer.valueOf(vendorErrorCode) });
 				}
 
 				if (sqlState.startsWith("42")) {
@@ -1015,7 +1013,7 @@ public class SQLError {
 									new Class[] { String.class, String.class,
 											Integer.TYPE  }, new Object[] {
 											message, sqlState,
-											new Integer(vendorErrorCode) });
+											Integer.valueOf(vendorErrorCode) });
 				}
 
 				if (sqlState.startsWith("40")) {
@@ -1030,7 +1028,7 @@ public class SQLError {
 									new Class[] { String.class, String.class,
 											Integer.TYPE  }, new Object[] {
 											message, sqlState,
-											new Integer(vendorErrorCode) });
+											Integer.valueOf(vendorErrorCode) });
 				}
 			}
 
@@ -1053,7 +1051,7 @@ public class SQLError {
 		
 			try {
 				exToReturn = (SQLException) Util.handleNewInstance(JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR, new Object[] {
-					conn, new Long(lastPacketSentTimeMs), underlyingException});
+					conn, Long.valueOf(lastPacketSentTimeMs), underlyingException});
 			} catch (SQLException sqlEx) {
 				// We should _never_ get this, but let's not swallow it either
 				

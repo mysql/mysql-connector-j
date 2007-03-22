@@ -173,15 +173,15 @@ public class Connection extends ConnectionProperties implements
 	
 	static {
 		mapTransIsolationNameToValue = new HashMap(8);
-		mapTransIsolationNameToValue.put("READ-UNCOMMITED", new Integer(
+		mapTransIsolationNameToValue.put("READ-UNCOMMITED", Integer.valueOf(
 				TRANSACTION_READ_UNCOMMITTED));
-		mapTransIsolationNameToValue.put("READ-UNCOMMITTED", new Integer(
+		mapTransIsolationNameToValue.put("READ-UNCOMMITTED", Integer.valueOf(
 				TRANSACTION_READ_UNCOMMITTED));
-		mapTransIsolationNameToValue.put("READ-COMMITTED", new Integer(
+		mapTransIsolationNameToValue.put("READ-COMMITTED", Integer.valueOf(
 				TRANSACTION_READ_COMMITTED));
-		mapTransIsolationNameToValue.put("REPEATABLE-READ", new Integer(
+		mapTransIsolationNameToValue.put("REPEATABLE-READ", Integer.valueOf(
 				TRANSACTION_REPEATABLE_READ));
-		mapTransIsolationNameToValue.put("SERIALIZABLE", new Integer(
+		mapTransIsolationNameToValue.put("SERIALIZABLE", Integer.valueOf(
 				TRANSACTION_SERIALIZABLE));
 		
 		boolean createdNamedTimer = false;
@@ -294,7 +294,7 @@ public class Connection extends ConnectionProperties implements
 
 		return (Connection) Util.handleNewInstance(JDBC_4_CONNECTION_CTOR,
 				new Object[] {
-							hostToConnectTo, new Integer(portToConnectTo), info,
+							hostToConnectTo, Integer.valueOf(portToConnectTo), info,
 							databaseToConnectTo, url });
 	}
 
@@ -826,7 +826,7 @@ public class Connection extends ConnectionProperties implements
 
 					while (results.next()) {
 						String charsetName = results.getString(2);
-						Integer charsetIndex = new Integer(results.getInt(3));
+						Integer charsetIndex = Integer.valueOf(results.getInt(3));
 
 						sortedCollationMap.put(charsetIndex, charsetName);
 					}
@@ -1861,9 +1861,7 @@ public class Connection extends ConnectionProperties implements
 			throws SQLException {
 		MysqlIO newIo = null;
 
-		Properties mergedProps = new Properties();
-
-		mergedProps = exposeAsProperties(this.props);
+		Properties mergedProps  = exposeAsProperties(this.props);
 
 		long queriesIssuedFailedOverCopy = this.queriesIssuedFailedOver;
 		this.queriesIssuedFailedOver = 0;
@@ -2820,7 +2818,7 @@ public class Connection extends ConnectionProperties implements
 	
 						while (rs.next()) {
 							this.charsetToNumBytesMap.put(rs.getString("Charset"),
-									new Integer(rs.getInt("Maxlen")));
+									Integer.valueOf(rs.getInt("Maxlen")));
 						}
 	
 						rs.close();
@@ -2966,7 +2964,7 @@ public class Connection extends ConnectionProperties implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public int getTransactionIsolation() throws SQLException {
+	public synchronized int getTransactionIsolation() throws SQLException {
 
 		if (this.hasIsolationLevels && !getUseLocalSessionState()) {
 			java.sql.Statement stmt = null;

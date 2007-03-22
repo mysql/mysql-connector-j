@@ -105,11 +105,6 @@ class MysqlIO {
     private static String jvmPlatformCharset = null;
     
     /**
-     * Are we using packed or unpacked binary result set rows?
-     */
-    private boolean binaryResultsAreUnpacked = true;
-
-    /**
      * We need to have a 'marker' for all-zero datetimes so that ResultSet
      * can decide what to do based on connection setting
      */
@@ -223,7 +218,6 @@ class MysqlIO {
     protected long lastPacketSentTimeMs = 0;
     private boolean traceProtocol = false;
     private boolean enablePacketDebug = false;
-    private ByteBuffer channelClearBuf;
     private Calendar sessionCalendar;
 	private boolean useConnectWithDb;
 	private boolean needToGrabQueryFromPacket;
@@ -1589,7 +1583,7 @@ class MysqlIO {
                                 this.connection.parserKnowsUnicode(), this.connection);
                         }
                     } else if (command == MysqlDefs.PROCESS_KILL) {
-                        long id = new Long(extraData).longValue();
+                        long id = Long.valueOf(extraData).longValue();
                         this.sendPacket.writeLong(id);
                     }
 
@@ -2136,7 +2130,9 @@ class MysqlIO {
 
     private void checkForOutstandingStreamingData() throws SQLException {
         if (this.streamingData != null) {
-            if (!this.connection.getClobberStreamingResults()) {
+        	boolean shouldClobber = this.connection.getClobberStreamingResults();
+        	
+            if (!shouldClobber) {
                 throw SQLError.createSQLException(Messages.getString("MysqlIO.39") //$NON-NLS-1$
                      +this.streamingData +
                     Messages.getString("MysqlIO.40") //$NON-NLS-1$

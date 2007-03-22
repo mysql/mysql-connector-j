@@ -109,6 +109,8 @@ public final class MysqlValidConnectionChecker implements
 		Statement pingStatement = null;
 
 		try {
+			pingStatement = conn.createStatement();
+			
 			pingStatement.executeQuery("SELECT 1").close();
 
 			return null;

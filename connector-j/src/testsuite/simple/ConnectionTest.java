@@ -1092,7 +1092,7 @@ public class ConnectionTest extends BaseTestCase {
 				noTrackStatement.close();
 			}
 
-			if (noTrackConn != null & !noTrackConn.isClosed()) {
+			if (noTrackConn != null && !noTrackConn.isClosed()) {
 				noTrackConn.close();
 			}
 		}

@@ -303,7 +303,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		try {
 			Properties props = new Properties();
 			props.setProperty("clobberStreamingResults", "true");
-
+			
 			Connection clobberConn = getConnectionWithProps(props);
 
 			Statement clobberStmt = clobberConn.createStatement();

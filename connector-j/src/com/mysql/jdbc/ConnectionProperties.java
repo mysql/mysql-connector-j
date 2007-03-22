@@ -74,7 +74,7 @@ public class ConnectionProperties implements Serializable {
 		BooleanConnectionProperty(String propertyNameToSet,
 				boolean defaultValueToSet, String descriptionToSet,
 				String sinceVersionToSet, String category, int orderInCategory) {
-			super(propertyNameToSet, new Boolean(defaultValueToSet), null, 0,
+			super(propertyNameToSet, Boolean.valueOf(defaultValueToSet), null, 0,
 					0, descriptionToSet, sinceVersionToSet, category,
 					orderInCategory);
 		}
@@ -104,7 +104,7 @@ public class ConnectionProperties implements Serializable {
 			if (extractedValue != null) {
 				validateStringValues(extractedValue);
 
-				this.valueAsObject = new Boolean(extractedValue
+				this.valueAsObject = Boolean.valueOf(extractedValue
 						.equalsIgnoreCase("TRUE")
 						|| extractedValue.equalsIgnoreCase("YES"));
 			} else {
@@ -120,7 +120,7 @@ public class ConnectionProperties implements Serializable {
 		}
 
 		void setValue(boolean valueFlag) {
-			this.valueAsObject = new Boolean(valueFlag);
+			this.valueAsObject = Boolean.valueOf(valueFlag);
 		}
 	}
 
@@ -326,7 +326,7 @@ public class ConnectionProperties implements Serializable {
 				int defaultValueToSet, int lowerBoundToSet,
 				int upperBoundToSet, String descriptionToSet,
 				String sinceVersionToSet, String category, int orderInCategory) {
-			super(propertyNameToSet, new Integer(defaultValueToSet), null,
+			super(propertyNameToSet, Integer.valueOf(defaultValueToSet), null,
 					lowerBoundToSet, upperBoundToSet, descriptionToSet,
 					sinceVersionToSet, category, orderInCategory);
 		}
@@ -398,7 +398,7 @@ public class ConnectionProperties implements Serializable {
 					 * the value '" + extractedValue + "' exceeds this range.",
 					 * SQLError.SQL_STATE_ILLEGAL_ARGUMENT); } }
 					 */
-					this.valueAsObject = new Integer(intValue * multiplier);
+					this.valueAsObject = Integer.valueOf(intValue * multiplier);
 				} catch (NumberFormatException nfe) {
 					throw SQLError.createSQLException("The connection property '"
 							+ getPropertyName()
@@ -420,7 +420,7 @@ public class ConnectionProperties implements Serializable {
 		}
 
 		void setValue(int valueFlag) {
-			this.valueAsObject = new Integer(valueFlag);
+			this.valueAsObject = Integer.valueOf(valueFlag);
 		}
 	}
 
@@ -1611,8 +1611,8 @@ public class ConnectionProperties implements Serializable {
 
 		Map[] connectionSortMaps = (Map[]) propertyListByCategory
 				.get(CONNECTION_AND_AUTH_CATEGORY);
-		connectionSortMaps[0].put(new Integer(userProp.getOrder()), userProp);
-		connectionSortMaps[0].put(new Integer(passwordProp.getOrder()),
+		connectionSortMaps[0].put(Integer.valueOf(userProp.getOrder()), userProp);
+		connectionSortMaps[0].put(Integer.valueOf(passwordProp.getOrder()),
 				passwordProp);
 
 		try {
@@ -1628,7 +1628,7 @@ public class ConnectionProperties implements Serializable {
 				if (orderInCategory == Integer.MIN_VALUE) {
 					sortMaps[1].put(propToGet.getPropertyName(), propToGet);
 				} else {
-					sortMaps[0].put(new Integer(orderInCategory), propToGet);
+					sortMaps[0].put(Integer.valueOf(orderInCategory), propToGet);
 				}
 			}
 
@@ -2623,7 +2623,7 @@ public class ConnectionProperties implements Serializable {
 		if (this.getMaxRows() == 0) {
 			// adjust so that it will become MysqlDefs.MAX_ROWS
 			// in execSQL()
-			this.maxRows.setValueAsObject(new Integer(-1));
+			this.maxRows.setValueAsObject(Integer.valueOf(-1));
 		}
 
 		//

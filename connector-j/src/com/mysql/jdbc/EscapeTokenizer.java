@@ -139,7 +139,7 @@ public class EscapeTokenizer {
 				tokenBuf.append(c);
 			} else if (c == '-') {
 				if ((this.lastChar == '-')
-						&& ((this.lastLastChar != '\\') & !this.inQuotes)) {
+						&& ((this.lastLastChar != '\\') && !this.inQuotes)) {
 					this.inComment = true;
 				}
 

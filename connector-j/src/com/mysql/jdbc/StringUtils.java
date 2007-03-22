@@ -143,8 +143,10 @@ public class StringUtils {
 			outputBuf.append("    "); //$NON-NLS-1$
 
 			for (int j = 0; j < 8; j++) {
-				if ((byteBuffer[p] > 32) && (byteBuffer[p] < 127)) {
-					outputBuf.append((char) byteBuffer[p] + " "); //$NON-NLS-1$
+				int b = 0xff & byteBuffer[p];
+				
+				if (b > 32 && b < 127) {
+					outputBuf.append((char) b + " "); //$NON-NLS-1$
 				} else {
 					outputBuf.append(". "); //$NON-NLS-1$
 				}
@@ -175,8 +177,10 @@ public class StringUtils {
 		outputBuf.append("    "); //$NON-NLS-1$
 
 		for (int i = p; i < length; i++) {
-			if ((byteBuffer[i] > 32) && (byteBuffer[i] < 127)) {
-				outputBuf.append((char) byteBuffer[i] + " "); //$NON-NLS-1$
+			int b = 0xff & byteBuffer[i];
+			
+			if (b > 32 && b < 127) {
+				outputBuf.append((char) b + " "); //$NON-NLS-1$
 			} else {
 				outputBuf.append(". "); //$NON-NLS-1$
 			}

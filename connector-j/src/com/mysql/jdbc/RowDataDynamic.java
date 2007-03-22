@@ -176,8 +176,8 @@ public class RowDataDynamic implements RowData {
 			}
 
 			if (conn != null) {
-
-				if (conn.getNetTimeoutForStreamingResults() > 0) {
+				if (!conn.getClobberStreamingResults() && 
+						conn.getNetTimeoutForStreamingResults() > 0) {
 					String oldValue = conn
 					.getServerVariable("net_write_timeout");
 
@@ -185,13 +185,20 @@ public class RowDataDynamic implements RowData {
 						oldValue = "60"; // the current default
 					}
 
-					conn.execSQL(this.owner.owningStatement,
-							"SET net_write_timeout=" + oldValue, -1, null,
-							ResultSet.TYPE_FORWARD_ONLY,
-							ResultSet.CONCUR_READ_ONLY, false, conn
-							.getCatalog(), true, false);
+					this.io.clearInputStream();
+					
+					java.sql.Statement stmt = null;
+					
+					try {
+						stmt = conn.createStatement();
+						stmt.executeUpdate("SET net_write_timeout=" + oldValue);
+					} finally {
+						if (stmt != null) {
+							stmt.close();
+						}
+					}
 				}
-
+				
 				if (conn.getUseUsageAdvisor()) {
 					if (hadMore) {
 

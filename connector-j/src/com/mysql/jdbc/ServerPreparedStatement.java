@@ -309,8 +309,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 		try {
 			return (ServerPreparedStatement) JDBC_4_SPS_CTOR.newInstance(new Object[] { conn,
-					sql, catalog, new Integer(resultSetType),
-					new Integer(resultSetConcurrency) });
+					sql, catalog, Integer.valueOf(resultSetType),
+					Integer.valueOf(resultSetConcurrency) });
 		} catch (IllegalArgumentException e) {
 			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
 		} catch (InstantiationException e) {

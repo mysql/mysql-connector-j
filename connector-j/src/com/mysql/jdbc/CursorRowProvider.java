@@ -335,7 +335,13 @@ public class CursorRowProvider implements RowData {
 	 *             if a database error occurs
 	 */
 	public Object[] next() throws SQLException {
-
+		if (this.fetchedRows == null) {
+			throw SQLError.createSQLException(
+					Messages
+							.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"), //$NON-NLS-1$
+					SQLError.SQL_STATE_GENERAL_ERROR);
+		}
+		
 		this.currentPositionInEntireResult++;
 		this.currentPositionInFetchedRows++;
 

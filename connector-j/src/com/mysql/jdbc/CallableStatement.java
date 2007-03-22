@@ -512,7 +512,7 @@ public class CallableStatement extends PreparedStatement implements
 
 		return (CallableStatement) Util.handleNewInstance(
 				JDBC_4_CSTMT_4_ARGS_CTOR, new Object[] { conn, sql, catalog,
-						new Boolean(isFunctionCall) });
+						Boolean.valueOf(isFunctionCall) });
 	}
 	
 	/**
@@ -536,6 +536,10 @@ public class CallableStatement extends PreparedStatement implements
 	private int[] placeholderToParameterIndexMap;
 	
 	private void generateParameterMap() throws SQLException {
+		if (this.paramInfo == null) {
+			return;
+		}
+		
 		// if the user specified some parameters as literals, we need to
 		// provide a map from the specified placeholders to the actual
 		// parameter numbers
@@ -1403,14 +1407,14 @@ public class CallableStatement extends PreparedStatement implements
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
 
-		CallableStatementParam namedParamInfo = this.paramInfo
-		.getParameter(paramName);
-
 		if (this.paramInfo == null) {
 			throw SQLError.createSQLException(
 					Messages.getString("CallableStatement.3") + paramName + Messages.getString("CallableStatement.4"), //$NON-NLS-1$ //$NON-NLS-2$
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
+
+		CallableStatementParam namedParamInfo = this.paramInfo
+			.getParameter(paramName);
 
 		if (forOut && !namedParamInfo.isOut) {
 			throw SQLError.createSQLException(
