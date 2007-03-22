@@ -291,6 +291,14 @@ public class CursorRowProvider implements RowData {
 			return false;
 		}
 
+		if (this.owner != null && this.owner.owningStatement != null) {
+			int maxRows = this.owner.owningStatement.maxRows;
+			
+			if (maxRows != -1 && this.currentPositionInEntireResult + 1 > maxRows) {
+				return false;
+			}	
+		}
+		
 		if (this.currentPositionInEntireResult != BEFORE_START_OF_ROWS) {
 			// Case, we've fetched some rows, but are not at end of fetched
 			// block

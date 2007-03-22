@@ -502,6 +502,10 @@ public class Statement implements java.sql.Statement {
 
 		pStmt.setFetchSize(this.fetchSize);
 
+		if (this.maxRows > -1) {
+			pStmt.setMaxRows(this.maxRows);
+		}
+		
 		pStmt.execute();
 
 		//

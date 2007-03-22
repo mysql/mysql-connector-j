@@ -3804,6 +3804,106 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	}
 	
 	/**
+	 * Tests fix for BUG#25517 - Statement.setMaxRows() is not effective
+	 * on result sets materialized from cursors.
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug25517() throws Exception {
+		Connection fetchConn = null;
+		Statement fetchStmt = null;
+		
+		createTable("testBug25517", "(field1 int)");
+		
+		StringBuffer insertBuf = new StringBuffer("INSERT INTO testBug25517 VALUES (1)");
+		
+		for (int i = 0; i < 100; i++) {
+			insertBuf.append(",(" + i + ")");
+		}
+		
+		this.stmt.executeUpdate(insertBuf.toString());
+		
+		try {
+			Properties props = new Properties();
+			props.setProperty("useServerPrepStmts", "true");
+			props.setProperty("useCursorFetch", "true");
+		
+			fetchConn = getConnectionWithProps(props);
+			fetchStmt = fetchConn.createStatement();
+			
+			//int[] maxRows = new int[] {1, 4, 5, 11, 12, 13, 16, 50, 51, 52, 100};
+			int[] fetchSizes = new int[] {1, 4, 10, 25, 100};
+			List maxRows = new ArrayList();
+			maxRows.add(new Integer(1));
+			
+			for (int i = 0; i < fetchSizes.length; i++) {
+				if (fetchSizes[i] != 1) {
+					maxRows.add(new Integer(fetchSizes[i] - 1));
+				}
+				
+				maxRows.add(new Integer(fetchSizes[i]));
+				
+				if (i != fetchSizes.length - 1) {
+					maxRows.add(new Integer(fetchSizes[i] + 1));
+				}
+			}
+			
+			for (int fetchIndex = 0; fetchIndex < fetchSizes.length; fetchIndex++) {
+				fetchStmt.setFetchSize(fetchSizes[fetchIndex]);
+				
+				for (int maxRowIndex = 0; maxRowIndex < maxRows.size(); maxRowIndex++) {
+					
+					int maxRowsToExpect = ((Integer)maxRows.get(maxRowIndex)).intValue();
+					fetchStmt.setMaxRows(maxRowsToExpect);
+					
+					int rowCount = 0;
+					
+					this.rs = fetchStmt.executeQuery("SELECT * FROM testBug25517");
+					
+					while (this.rs.next()) {
+						rowCount++;
+					}
+					
+					assertEquals(maxRowsToExpect, rowCount);
+				}
+			}
+			
+			this.pstmt = fetchConn.prepareStatement("SELECT * FROM testBug25517");
+			
+			for (int fetchIndex = 0; fetchIndex < fetchSizes.length; fetchIndex++) {
+				this.pstmt.setFetchSize(fetchSizes[fetchIndex]);
+				
+				for (int maxRowIndex = 0; maxRowIndex < maxRows.size(); maxRowIndex++) {
+					
+					int maxRowsToExpect = ((Integer)maxRows.get(maxRowIndex)).intValue();
+					this.pstmt.setMaxRows(maxRowsToExpect);
+					
+					int rowCount = 0;
+					
+					this.rs = this.pstmt.executeQuery();
+					
+					while (this.rs.next()) {
+						rowCount++;
+					}
+					
+					assertEquals(maxRowsToExpect, rowCount);
+				}
+			}
+			
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (fetchStmt != null) {
+				fetchStmt.close();
+			}
+			
+			if (fetchConn != null) {
+				fetchConn.close();
+			}
+		}
+	}
+	
+	/**
 	 * Tests fix for BUG#25787 - java.util.Date should be serialized for PreparedStatement.setObject().
 	 * 
 	 * We add a new configuration option "treatUtilDateAsTimestamp", which is false by default,
