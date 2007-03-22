@@ -4062,7 +4062,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	}
 	
 	/**
-	 * Tests fix for BUG#27137 - column index < 1 returns misleading
+	 * Tests fix for BUG#27317 - column index < 1 returns misleading
 	 * error message.
 	 * 
 	 * @throws Exception if the test fails.
