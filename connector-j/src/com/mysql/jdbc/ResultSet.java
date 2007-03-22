@@ -1487,16 +1487,12 @@ public class ResultSet implements java.sql.ResultSet {
 
 			checkColumnBounds(columnIndex);
 
-			try {
-				if (this.thisRow[columnIndex - 1] == null) {
-					this.wasNullFlag = true;
-				} else {
-					this.wasNullFlag = false;
-				}
-			} catch (NullPointerException ex) {
+			if (this.thisRow[columnIndex - 1] == null) {
 				this.wasNullFlag = true;
+			} else {
+				this.wasNullFlag = false;
 			}
-
+			
 			if (this.wasNullFlag) {
 				return null;
 			}
@@ -1787,15 +1783,11 @@ public class ResultSet implements java.sql.ResultSet {
 			checkRowPos();
 			
 			checkColumnBounds(columnIndex);
-			
-			try {
-				if (this.thisRow[columnIndex - 1] == null) {
-					this.wasNullFlag = true;
-				} else {
-					this.wasNullFlag = false;
-				}
-			} catch (NullPointerException E) {
+
+			if (this.thisRow[columnIndex - 1] == null) {
 				this.wasNullFlag = true;
+			} else {
+				this.wasNullFlag = false;
 			}
 
 			if (this.wasNullFlag) {
@@ -2697,17 +2689,13 @@ public class ResultSet implements java.sql.ResultSet {
 		if (!this.isBinaryEncoded) {
 			if (this.connection.getUseFastIntParsing()) {
 				checkColumnBounds(columnIndex);
-				
-				try {
-					if (this.thisRow[columnIndex - 1] == null) {
-						this.wasNullFlag = true;
-					} else {
-						this.wasNullFlag = false;
-					}
-				} catch (NullPointerException E) {
-					this.wasNullFlag = true;
-				}
 
+				if (this.thisRow[columnIndex - 1] == null) {
+					this.wasNullFlag = true;
+				} else {
+					this.wasNullFlag = false;
+				}
+		
 				if (this.wasNullFlag) {
 					return 0;
 				}
@@ -2934,17 +2922,13 @@ public class ResultSet implements java.sql.ResultSet {
 			if (this.connection.getUseFastIntParsing()) {
 			
 				checkColumnBounds(columnIndex);
-				
-				try {
-					if (this.thisRow[columnIndex - 1] == null) {
-						this.wasNullFlag = true;
-					} else {
-						this.wasNullFlag = false;
-					}
-				} catch (NullPointerException E) {
-					this.wasNullFlag = true;
-				}
 
+				if (this.thisRow[columnIndex - 1] == null) {
+					this.wasNullFlag = true;
+				} else {
+					this.wasNullFlag = false;
+				}
+				
 				if (this.wasNullFlag) {
 					return 0;
 				}
@@ -3258,14 +3242,10 @@ public class ResultSet implements java.sql.ResultSet {
 
 		checkColumnBounds(columnIndex);
 
-		try {
-			if (this.thisRow[columnIndex - 1] == null) {
-				this.wasNullFlag = true;
-			} else {
-				this.wasNullFlag = false;
-			}
-		} catch (NullPointerException ex) {
+		if (this.thisRow[columnIndex - 1] == null) {
 			this.wasNullFlag = true;
+		} else {
+			this.wasNullFlag = false;
 		}
 
 		if (this.wasNullFlag) {
@@ -3339,16 +3319,12 @@ public class ResultSet implements java.sql.ResultSet {
 			return 0;
 		}
 
-		try {
-			if (this.thisRow[columnIndex - 1] == null) {
-				this.wasNullFlag = true;
-			} else {
-				this.wasNullFlag = false;
-			}
-		} catch (NullPointerException E) {
+		if (this.thisRow[columnIndex - 1] == null) {
 			this.wasNullFlag = true;
+		} else {
+			this.wasNullFlag = false;
 		}
-
+			
 		if (this.wasNullFlag) {
 			return 0;
 		}
@@ -3492,14 +3468,10 @@ public class ResultSet implements java.sql.ResultSet {
 
 		checkColumnBounds(columnIndex);
 
-		try {
-			if (this.thisRow[columnIndex - 1] == null) {
-				this.wasNullFlag = true;
-			} else {
-				this.wasNullFlag = false;
-			}
-		} catch (NullPointerException E) {
+		if (this.thisRow[columnIndex - 1] == null) {
 			this.wasNullFlag = true;
+		} else {
+			this.wasNullFlag = false;
 		}
 
 		if (this.wasNullFlag) {
@@ -4607,19 +4579,13 @@ public class ResultSet implements java.sql.ResultSet {
 					SQLError.SQL_STATE_INVALID_COLUMN_NUMBER);
 		}
 
-		try {
-			if (this.thisRow[columnIndex - 1] == null) {
-				this.wasNullFlag = true;
-
-				return null;
-			}
-
-			this.wasNullFlag = false;
-		} catch (NullPointerException E) {
+		if (this.thisRow[columnIndex - 1] == null) {
 			this.wasNullFlag = true;
 
 			return null;
 		}
+
+		this.wasNullFlag = false;
 
 		String stringVal = null;
 
@@ -5458,15 +5424,11 @@ public class ResultSet implements java.sql.ResultSet {
 			if (this.connection.getUseFastIntParsing()) {
 				
 				checkColumnBounds(columnIndex);
-				
-				try {
-					if (this.thisRow[columnIndex - 1] == null) {
-						this.wasNullFlag = true;
-					} else {
-						this.wasNullFlag = false;
-					}
-				} catch (NullPointerException E) {
+
+				if (this.thisRow[columnIndex - 1] == null) {
 					this.wasNullFlag = true;
+				} else {
+					this.wasNullFlag = false;
 				}
 				
 				if (this.wasNullFlag) {
@@ -5733,19 +5695,13 @@ public class ResultSet implements java.sql.ResultSet {
 						SQLError.SQL_STATE_INVALID_COLUMN_NUMBER);
 			}
 
-			try {
-				if (this.thisRow[columnIndex - 1] == null) {
-					this.wasNullFlag = true;
-
-					return null;
-				}
-
-				this.wasNullFlag = false;
-			} catch (NullPointerException E) {
+			if (this.thisRow[columnIndex - 1] == null) {
 				this.wasNullFlag = true;
 
 				return null;
 			}
+
+			this.wasNullFlag = false;
 
 			String stringVal = null;
 			columnIndex--; // JDBC is 1-based, Java is not !?
