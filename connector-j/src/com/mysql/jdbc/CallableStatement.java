@@ -922,13 +922,16 @@ public class CallableStatement extends PreparedStatement implements
 	}
 
 	private String extractProcedureName() throws SQLException {
+		String sanitizedSql = StringUtils.stripComments(this.originalSql, 
+				"`\"'", "`\"'", true, false, true, true);
+		
 		// TODO: Do this with less memory allocation
-		int endCallIndex = StringUtils.indexOfIgnoreCase(this.originalSql,
+		int endCallIndex = StringUtils.indexOfIgnoreCase(sanitizedSql,
 				"CALL "); //$NON-NLS-1$
 		int offset = 5;
 
 		if (endCallIndex == -1) {
-			endCallIndex = StringUtils.indexOfIgnoreCase(this.originalSql,
+			endCallIndex = StringUtils.indexOfIgnoreCase(sanitizedSql,
 					"SELECT ");
 			offset = 7;
 		}
@@ -936,7 +939,7 @@ public class CallableStatement extends PreparedStatement implements
 		if (endCallIndex != -1) {
 			StringBuffer nameBuf = new StringBuffer();
 
-			String trimmedStatement = this.originalSql.substring(
+			String trimmedStatement = sanitizedSql.substring(
 					endCallIndex + offset).trim();
 
 			int statementLength = trimmedStatement.length();
@@ -953,9 +956,9 @@ public class CallableStatement extends PreparedStatement implements
 
 			return nameBuf.toString();
 		}
+		
 		throw SQLError.createSQLException(Messages.getString("CallableStatement.1"), //$NON-NLS-1$
 				SQLError.SQL_STATE_GENERAL_ERROR);
-
 	}
 
 	/**

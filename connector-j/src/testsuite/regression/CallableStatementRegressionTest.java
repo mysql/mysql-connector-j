@@ -1063,4 +1063,29 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#27400 - CALL [comment] some_proc() doesn't work
+	 */
+	public void testBug27400() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return; // SPs not supported
+		}
+		
+		createProcedure("testBug27400", "(a INT, b VARCHAR(32)) BEGIN SELECT 1; END");
+		
+		CallableStatement cStmt = null;
+		
+		try {
+			cStmt = this.conn.prepareCall("{CALL /* SOME COMMENT */ testBug27400( /* does this work too? */ ?, ?)} # and a commented ? here too");
+			assertTrue(cStmt.toString().indexOf("/*") != -1); // we don't want to strip the comments
+			cStmt.setInt(1, 1);
+			cStmt.setString(2, "bleh");
+			cStmt.execute();
+		} finally {
+			if (cStmt != null) {
+				cStmt.close();
+			}
+		}
+	}
 }

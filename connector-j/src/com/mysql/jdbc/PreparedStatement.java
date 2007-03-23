@@ -180,7 +180,10 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		byte[][] staticSql = null;
 
 		/**
-		 * 
+		 * Represents the "parsed" state of a client-side
+		 * prepared statement, with the statement broken up into
+		 * it's static and dynamic (where parameters are bound) 
+		 * parts.
 		 */
 		public ParseInfo(String sql, Connection conn,
 				java.sql.DatabaseMetaData dbmd, String encoding,
@@ -270,9 +273,30 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 							quoteChar = 0;
 						}
 					} else {
-						if ((c == '\'') || (c == '"')) {
-							inQuotes = true;
-							quoteChar = c;
+						if (c == '#') {
+							// run out to end of line
+							i = this.statementLength - 1;
+							continue;
+						} else if (c == '/' && (i + 1) < this.statementLength) {
+							// Comment?
+							c = sql.charAt(i + 1);
+							
+							if (c == '*') {
+								i+= 2;
+								
+								for (int j = i; j < this.statementLength; j++) {
+									i++;
+									c = sql.charAt(j);
+									
+									if (c == '*' && (j + 1) < this.statementLength) {
+										if (sql.charAt(j + 1) == '/') {
+											i++;
+											c = sql.charAt(i);
+											break; // comment done
+										}
+									}
+								}
+							}
 						} else if ((c == '\'') || (c == '"')) {
 							inQuotes = true;
 							quoteChar = c;

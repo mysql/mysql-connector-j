@@ -73,7 +73,19 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  hadn't been cancelled by the driver. High-load environments 
 	  might want to consider disabling this functionality. (this configuration 
 	  property is part of the "maxPerformance" configuration bundle).
-	  	     
+	  
+	- Fixed BUG#27400 - CALL /* ... */ some_proc() doesn't work. As a side effect
+	  of this fix, you can now use /* */ and # comments when preparing statements using
+	  client-side prepared statement emulation.
+	  
+	  If the comments happen to contain parameter markers '?', they will be treated
+	  as belonging to the comment (i.e. not recognized) rather than being a parameter
+	  of the statement.
+	  
+	  Note that the statement when sent to the server will contain the comments
+	  as-is, they're not stripped during the process of preparing the PreparedStatement
+	  or CallableStatement.
+	      
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"
