@@ -205,9 +205,6 @@ public class Statement implements java.sql.Statement {
 	/** The concurrency for this result set (updatable or not) */
 	protected int resultSetConcurrency = 0;
 
-	/** Cache of ResultSet metadata */
-	protected LRUCache resultSetMetadataCache;
-
 	/** The type of this result set (scroll sensitive or in-sensitive) */
 	protected int resultSetType = 0;
 
@@ -1512,26 +1509,6 @@ public class Statement implements java.sql.Statement {
 	}
 
 	/**
-	 * Returns cached metadata (or null if not cached) for the given query,
-	 * which must match _exactly_. Note this method is guarded against
-	 * concurrent access via the synchronized{} block in execute() and
-	 * executeQuery().
-	 * 
-	 * @param sql
-	 *            the query that is the key to the cache
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	protected CachedResultSetMetaData getCachedMetaData(String sql) {
-		if (this.resultSetMetadataCache != null) {
-			return (CachedResultSetMetaData) this.resultSetMetadataCache
-					.get(sql);
-		}
-
-		return null; // no cache exists (yet)
-	}
-
-	/**
 	 * Optimization to only use one calendar per-session, or calculate it for
 	 * each call, depending on user configuration
 	 */
@@ -2005,56 +1982,6 @@ public class Statement implements java.sql.Statement {
 		}
 
 		return this.warningChain;
-	}
-
-	/**
-	 * Caches CachedResultSetMetaData that has been placed in the cache using
-	 * the given SQL as a key.
-	 * 
-	 * @param sql
-	 *            DOCUMENT ME!
-	 * @param cachedMetaData
-	 *            DOCUMENT ME!
-	 * @param resultSet
-	 *            DOCUMENT ME!
-	 * 
-	 * @throws SQLException
-	 *             DOCUMENT ME!
-	 */
-	protected void initializeResultsMetadataFromCache(String sql,
-			CachedResultSetMetaData cachedMetaData, ResultSet resultSet)
-			throws SQLException {
-		synchronized (resultSet) {
-			if (cachedMetaData == null) {
-				// read from results
-				cachedMetaData = new CachedResultSetMetaData();
-				cachedMetaData.fields = this.results.fields;
-
-				// assume that users will use named-based
-				// lookups
-				resultSet.buildIndexMapping();
-
-				cachedMetaData.columnNameToIndex = resultSet.columnNameToIndex;
-				cachedMetaData.fullColumnNameToIndex = resultSet.fullColumnNameToIndex;
-
-				cachedMetaData.metadata = resultSet.getMetaData();
-
-				if (this.resultSetMetadataCache == null) {
-					this.resultSetMetadataCache = new LRUCache(this.connection
-							.getMetadataCacheSize());
-				}
-
-				this.resultSetMetadataCache.put(sql, cachedMetaData);
-			} else {
-				// initialize results from cached data
-				resultSet.fields = cachedMetaData.fields;
-				resultSet.columnNameToIndex = cachedMetaData.columnNameToIndex;
-				resultSet.fullColumnNameToIndex = cachedMetaData.fullColumnNameToIndex;
-				resultSet.hasBuiltIndexMapping = true;
-
-				// results.resultSetMetaData = cachedMetaData.metadata;
-			}
-		}
 	}
 
 	/**
