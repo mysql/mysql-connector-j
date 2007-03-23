@@ -1230,7 +1230,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 			CancelTask timeoutTask = null;
 
 			try {
-				if (this.timeoutInMillis != 0
+				if (this.connection.getEnableQueryTimeouts() &&
+						this.timeoutInMillis != 0
 						&& this.connection.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask();
 					this.connection.getCancelTimer().schedule(timeoutTask, 

@@ -1367,7 +1367,8 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			CancelTask timeoutTask = null;
 	
 			try {
-				if (this.timeoutInMillis != 0
+				if (locallyScopedConnection.getEnableQueryTimeouts() &&
+						this.timeoutInMillis != 0
 						&& locallyScopedConnection.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask();
 					Connection.getCancelTimer().schedule(timeoutTask, 

@@ -63,7 +63,17 @@ nn-nn-07 - Version 5.1.0 Alpha
 	
 	- Fixed BUG#25517 - Statement.setMaxRows() is not effective on result 
 	  sets materialized from cursors.
-	     
+	  
+    - New configuration property, "enableQueryTimeouts" (default "true"). 
+	  When enabled, query timeouts set via Statement.setQueryTimeout() use a 
+	  shared java.util.Timer instance for scheduling. Even if the timeout 
+	  doesn't expire before the query is processed, there will be 
+	  memory used by the TimerTask for the given timeout which won't be 
+	  reclaimed until the time the timeout would have expired if it 
+	  hadn't been cancelled by the driver. High-load environments 
+	  might want to consider disabling this functionality. (this configuration 
+	  property is part of the "maxPerformance" configuration bundle).
+	  	     
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

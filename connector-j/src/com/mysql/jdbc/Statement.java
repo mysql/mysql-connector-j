@@ -643,7 +643,8 @@ public class Statement implements java.sql.Statement {
 				String oldCatalog = null;
 				
 				try {
-					if (this.timeoutInMillis != 0
+					if (locallyScopedConn.getEnableQueryTimeouts() &&
+							this.timeoutInMillis != 0
 							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 						timeoutTask = new CancelTask();
 						Connection.getCancelTimer().schedule(timeoutTask, 
@@ -1159,7 +1160,8 @@ public class Statement implements java.sql.Statement {
 			String oldCatalog = null;
 			
 			try {
-				if (this.timeoutInMillis != 0
+				if (locallyScopedConn.getEnableQueryTimeouts() &&
+						this.timeoutInMillis != 0
 						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask();
 					Connection.getCancelTimer().schedule(timeoutTask, 
@@ -1344,7 +1346,8 @@ public class Statement implements java.sql.Statement {
 			String oldCatalog = null;
 
 			try {
-				if (this.timeoutInMillis != 0
+				if (locallyScopedConn.getEnableQueryTimeouts() &&
+						this.timeoutInMillis != 0
 						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask();
 					Connection.getCancelTimer().schedule(timeoutTask, 

@@ -857,6 +857,17 @@ public class ConnectionProperties implements Serializable {
 			"When enabled, a ring-buffer of 'packetDebugBufferSize' packets will be kept, and dumped when exceptions are thrown in key areas in the driver's code",
 			"3.1.3", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 
+	private BooleanConnectionProperty enableQueryTimeouts = new BooleanConnectionProperty(
+			"enableQueryTimeouts",
+			true,
+			"When enabled, query timeouts set via Statement.setQueryTimeout() use a shared "
+			+ "java.util.Timer instance for scheduling. Even if the timeout doesn't expire before the query is processed, there will be "
+			+ "memory used by the TimerTask for the given timeout which won't be reclaimed until "
+			+ "the time the timeout would have expired if it hadn't been cancelled by the driver. High-load environments "
+			+ "might want to consider disabling this functionality.",
+			"5.0.6",
+			PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			
 	private BooleanConnectionProperty explainSlowQueries = new BooleanConnectionProperty(
 			"explainSlowQueries",
 			false,
@@ -3952,5 +3963,13 @@ public class ConnectionProperties implements Serializable {
 
 	public void setNetTimeoutForStreamingResults(int value) {
 		this.netTimeoutForStreamingResults.setValue(value);
+	}
+	
+	public boolean getEnableQueryTimeouts() {
+		return this.enableQueryTimeouts.getValueAsBoolean();
+	}
+
+	public void setEnableQueryTimeouts(boolean flag) {
+		this.enableQueryTimeouts.setValue(flag);
 	}
 }
