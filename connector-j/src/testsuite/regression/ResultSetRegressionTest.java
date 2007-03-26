@@ -3804,6 +3804,33 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	}
 	
 	/**
+	 * Tests fix for BUG#25328 - BIT(> 1) is returned as java.lang.String
+	 * from ResultSet.getObject() rather than byte[].
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testbug25328() throws Exception {
+		createTable("testBug25382", "(BINARY_VAL BIT(64) NULL)");
+
+		byte[] bytearr = new byte[8];
+
+		this.pstmt = this.conn
+				.prepareStatement("INSERT INTO testBug25382 VALUES(?)");
+		try {
+
+			this.pstmt.setObject(1, bytearr, java.sql.Types.BINARY);
+			assertEquals(1, this.pstmt.executeUpdate());
+			this.pstmt.clearParameters();
+
+			this.rs = this.stmt.executeQuery("Select BINARY_VAL from testBug25382");
+			this.rs.next();
+			assertEquals(this.rs.getObject(1).getClass(), bytearr.getClass());
+		} finally {
+			closeMemberJDBCResources();
+		}        
+	}
+	
+	/**
 	 * Tests fix for BUG#25517 - Statement.setMaxRows() is not effective
 	 * on result sets materialized from cursors.
 	 * 

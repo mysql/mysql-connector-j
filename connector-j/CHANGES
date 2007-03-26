@@ -85,7 +85,10 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  Note that the statement when sent to the server will contain the comments
 	  as-is, they're not stripped during the process of preparing the PreparedStatement
 	  or CallableStatement.
-	      
+	  
+	- Fixed BUG#25328 - BIT(> 1) is returned as java.lang.String from ResultSet.getObject()
+	  rather than byte[].
+	  	      
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

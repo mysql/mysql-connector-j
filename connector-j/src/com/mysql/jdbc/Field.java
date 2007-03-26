@@ -237,6 +237,7 @@ public class Field {
 					this.sqlType = Types.VARBINARY;
 					this.colFlag |= 128; // we need to pretend this is a full
 					this.colFlag |= 16; // binary blob
+					isBinary = true;
 				}
 			}
 	
