@@ -88,7 +88,11 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  
 	- Fixed BUG#25328 - BIT(> 1) is returned as java.lang.String from ResultSet.getObject()
 	  rather than byte[].
-	  	      
+	  
+	- Fixed BUG#25715 - CallableStatements with OUT/INOUT parameters that
+	  are "binary" (blobs, bits, (var)binary, java_object) have extra 7 bytes 
+	  (which happens to be the _binary introducer!)
+	  	  	      
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

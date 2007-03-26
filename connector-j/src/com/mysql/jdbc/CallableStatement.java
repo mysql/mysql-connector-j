@@ -2057,8 +2057,8 @@ public class CallableStatement extends PreparedStatement implements
 						setPstmt = this.connection
 								.clientPrepareStatement(queryBuf.toString());
 
-						byte[] parameterAsBytes = this
-								.getBytesRepresentation(inParamInfo.index);
+						byte[] parameterAsBytes = getBytesRepresentation(
+								inParamInfo.index);
 
 						if (parameterAsBytes != null) {
 							if (parameterAsBytes.length > 8
@@ -2073,7 +2073,22 @@ public class CallableStatement extends PreparedStatement implements
 								setPstmt.setBytesNoEscapeNoQuotes(1,
 										parameterAsBytes);
 							} else {
-								setPstmt.setBytesNoEscape(1, parameterAsBytes);
+								int sqlType = inParamInfo.desiredJdbcType;
+								
+								switch (sqlType) {
+								case Types.BIT:
+								case Types.BINARY: 
+								case Types.BLOB: 
+								case Types.JAVA_OBJECT:
+								case Types.LONGVARBINARY: 
+								case Types.VARBINARY:
+									setPstmt.setBytes(1, parameterAsBytes);
+									break;
+								default:
+									// the inherited PreparedStatement methods
+									// have already escaped and quoted these parameters
+									setPstmt.setBytesNoEscape(1, parameterAsBytes);
+								}
 							}
 						} else {
 							setPstmt.setNull(1, Types.NULL);
