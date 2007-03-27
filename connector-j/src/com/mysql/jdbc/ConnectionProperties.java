@@ -620,7 +620,7 @@ public class ConnectionProperties implements Serializable {
 	private BooleanConnectionProperty allowMultiQueries = new BooleanConnectionProperty(
 			"allowMultiQueries",
 			false,
-			"Allow the use of ';' to delimit multiple queries during one statement (true/false, defaults to 'false'",
+			"Allow the use of ';' to delimit multiple queries during one statement (true/false), defaults to 'false'",
 			"3.1.1", SECURITY_CATEGORY, 1);
 
 	private BooleanConnectionProperty allowNanAndInf = new BooleanConnectionProperty(
@@ -1622,9 +1622,16 @@ public class ConnectionProperties implements Serializable {
 
 		Map[] connectionSortMaps = (Map[]) propertyListByCategory
 				.get(CONNECTION_AND_AUTH_CATEGORY);
-		connectionSortMaps[0].put(Integer.valueOf(userProp.getOrder()), userProp);
-		connectionSortMaps[0].put(Integer.valueOf(passwordProp.getOrder()),
-				passwordProp);
+		TreeMap userMap = new TreeMap();
+		userMap.put(userProp.getPropertyName(), userProp);
+		
+		connectionSortMaps[0].put(new Integer(userProp.getOrder()), userMap);
+		
+		TreeMap passwordMap = new TreeMap();
+		passwordMap.put(passwordProp.getPropertyName(), passwordProp);
+		
+		connectionSortMaps[0]
+				.put(new Integer(passwordProp.getOrder()), passwordMap);
 
 		try {
 			for (int i = 0; i < numPropertiesToSet; i++) {
@@ -1639,7 +1646,16 @@ public class ConnectionProperties implements Serializable {
 				if (orderInCategory == Integer.MIN_VALUE) {
 					sortMaps[1].put(propToGet.getPropertyName(), propToGet);
 				} else {
-					sortMaps[0].put(Integer.valueOf(orderInCategory), propToGet);
+					Integer order = new Integer(orderInCategory);
+					
+					Map orderMap = (Map)sortMaps[0].get(order);
+					
+					if (orderMap == null) {
+						orderMap = new TreeMap();
+						sortMaps[0].put(order, orderMap);
+					}
+					
+					orderMap.put(propToGet.getPropertyName(), propToGet);
 				}
 			}
 
@@ -1654,28 +1670,32 @@ public class ConnectionProperties implements Serializable {
 				xmlBuf.append("\">");
 
 				while (orderedIter.hasNext()) {
-					ConnectionProperty propToGet = (ConnectionProperty) orderedIter
-							.next();
+					Iterator orderedAlphaIter = ((Map)orderedIter.next()).values().iterator();
 					
-					xmlBuf.append("\n  <Property name=\"");
-					xmlBuf.append(propToGet.getPropertyName());
-					xmlBuf.append("\" required=\"");
-					xmlBuf.append(propToGet.required ? "Yes" : "No");
-
-					xmlBuf.append("\" default=\"");
-
-					if (propToGet.getDefaultValue() != null) {
-						xmlBuf.append(propToGet.getDefaultValue());
+					while (orderedAlphaIter.hasNext()) {
+						ConnectionProperty propToGet = (ConnectionProperty) orderedAlphaIter
+								.next();
+						
+						xmlBuf.append("\n  <Property name=\"");
+						xmlBuf.append(propToGet.getPropertyName());
+						xmlBuf.append("\" required=\"");
+						xmlBuf.append(propToGet.required ? "Yes" : "No");
+	
+						xmlBuf.append("\" default=\"");
+	
+						if (propToGet.getDefaultValue() != null) {
+							xmlBuf.append(propToGet.getDefaultValue());
+						}
+	
+						xmlBuf.append("\" sortOrder=\"");
+						xmlBuf.append(propToGet.getOrder());
+						xmlBuf.append("\" since=\"");
+						xmlBuf.append(propToGet.sinceVersion);
+						xmlBuf.append("\">\n");
+						xmlBuf.append("    ");
+						xmlBuf.append(propToGet.description);
+						xmlBuf.append("\n  </Property>");
 					}
-
-					xmlBuf.append("\" sortOrder=\"");
-					xmlBuf.append(propToGet.getOrder());
-					xmlBuf.append("\" since=\"");
-					xmlBuf.append(propToGet.sinceVersion);
-					xmlBuf.append("\">\n");
-					xmlBuf.append("    ");
-					xmlBuf.append(propToGet.description);
-					xmlBuf.append("\n  </Property>");
 				}
 
 				while (alphaIter.hasNext()) {
