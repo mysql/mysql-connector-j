@@ -92,6 +92,11 @@ nn-nn-07 - Version 5.1.0 Alpha
 	- Fixed BUG#25715 - CallableStatements with OUT/INOUT parameters that
 	  are "binary" (blobs, bits, (var)binary, java_object) have extra 7 bytes 
 	  (which happens to be the _binary introducer!)
+	
+	- Added configuration property "padCharsWithSpace" (defaults to "false"). If set
+	  to "true", and a result set column has the CHAR type and the value does not 
+	  fill the amount of characters specified in the DDL for the column, the driver 
+	  will pad the remaining characters with space (for ANSI compliance).
 	  	  	      
 03-01-07 - Version 5.0.5
 

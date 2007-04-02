@@ -1062,6 +1062,16 @@ public class ConnectionProperties implements Serializable {
 			Integer.MAX_VALUE,
 			"The maximum number of packets to retain when 'enablePacketDebug' is true",
 			"3.1.3", DEBUGING_PROFILING_CATEGORY, 7);
+	
+	private BooleanConnectionProperty padCharsWithSpace = new BooleanConnectionProperty(
+			"padCharsWithSpace",
+			false,
+			"If a result set column has the CHAR type and the value does not fill the "
+			+ "amount of characters specified in the DDL for the column, should the driver "
+			+ "pad the remaining characters with space (for ANSI compliance)?",
+			"5.0.6",
+			MISC_CATEGORY,
+			Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty paranoid = new BooleanConnectionProperty(
 			"paranoid",
@@ -3991,5 +4001,13 @@ public class ConnectionProperties implements Serializable {
 
 	public void setEnableQueryTimeouts(boolean flag) {
 		this.enableQueryTimeouts.setValue(flag);
+	}
+
+	public boolean getPadCharsWithSpace() {
+		return this.padCharsWithSpace.getValueAsBoolean();
+	}
+
+	public void setPadCharsWithSpace(boolean flag) {
+		this.padCharsWithSpace.setValue(flag);
 	}
 }

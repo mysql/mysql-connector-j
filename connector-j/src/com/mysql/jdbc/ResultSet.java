@@ -327,6 +327,16 @@ public class ResultSet implements java.sql.ResultSet {
 
 	protected boolean useFastDateParsing = false;
 
+	private boolean padCharsWithSpace = false;
+
+	protected final static char[] EMPTY_SPACE = new char[255];
+	
+	static {
+		for (int i = 0; i < EMPTY_SPACE.length; i++) {
+			EMPTY_SPACE[i] = ' ';
+		}
+	}
+	
 	protected static ResultSet getInstance(long updateCount, long updateID,
 			Connection conn, Statement creatorStmt) throws SQLException {
 		if (!Util.isJdbc4()) {
@@ -5630,7 +5640,29 @@ public class ResultSet implements java.sql.ResultSet {
 	 *                if a database access error occurs
 	 */
 	public String getString(int columnIndex) throws SQLException {
-		return getStringInternal(columnIndex, true);
+		String stringVal = getStringInternal(columnIndex, true);
+		
+		if (this.padCharsWithSpace) {
+			Field f = this.fields[columnIndex - 1];
+			
+			if (f.getMysqlType() == MysqlDefs.FIELD_TYPE_STRING ) {
+				int fieldLength = (int)f.getLength(); // safe, CHAR <= 255
+				int currentLength = stringVal.length();
+				
+				if (currentLength < fieldLength) {
+					StringBuffer paddedBuf = new StringBuffer(fieldLength);
+					paddedBuf.append(stringVal);
+					
+					int difference = fieldLength - currentLength;
+					
+					paddedBuf.append(EMPTY_SPACE, 0, difference);
+					
+					stringVal = paddedBuf.toString();
+				}
+			}
+		}
+		
+		return stringVal;
 	}
 
 	/**
