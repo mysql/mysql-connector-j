@@ -344,7 +344,7 @@ public class ResultSet implements java.sql.ResultSet {
 		}
 
 		return (ResultSet) Util.handleNewInstance(JDBC_4_RS_4_ARG_CTOR,
-				new Object[] { Long.valueOf(updateCount), Long.valueOf(updateID), conn,
+				new Object[] { Constants.longValueOf(updateCount), Constants.longValueOf(updateID), conn,
 						creatorStmt });
 	}
 
@@ -699,7 +699,7 @@ public class ResultSet implements java.sql.ResultSet {
 		// matching column will be returned. "
 		//
 		for (int i = numFields - 1; i >= 0; i--) {
-			Integer index = Integer.valueOf(i);
+			Integer index = Constants.integerValueOf(i);
 			String columnName = this.fields[i].getName();
 			String fullColumnName = this.fields[i].getFullName();
 
@@ -760,14 +760,14 @@ public class ResultSet implements java.sql.ResultSet {
 		if ((columnIndex < 1)) {
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Column_Index_out_of_range_low", new Object[] {
-							Integer.valueOf(columnIndex),
-							Integer.valueOf(this.fields.length) }),
+							Constants.integerValueOf(columnIndex),
+							Constants.integerValueOf(this.fields.length) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 		} else if ((columnIndex > this.fields.length)) {
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Column_Index_out_of_range_high", new Object[] {
-							Integer.valueOf(columnIndex),
-							Integer.valueOf(this.fields.length) }),
+							Constants.integerValueOf(columnIndex),
+							Constants.integerValueOf(this.fields.length) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 		}
 
@@ -1222,7 +1222,7 @@ public class ResultSet implements java.sql.ResultSet {
 					throw SQLError.createSQLException(Messages
 							.getString("ResultSet.Bad_format_for_BigDecimal",
 									new Object[] { stringVal,
-											Integer.valueOf(columnIndex) }),
+											Constants.integerValueOf(columnIndex) }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 				}
 			}
@@ -1292,7 +1292,7 @@ public class ResultSet implements java.sql.ResultSet {
 					} else {
 						throw SQLError.createSQLException(Messages
 							.getString("ResultSet.Bad_format_for_BigDecimal",
-									new Object[] { Integer.valueOf(columnIndex),
+									new Object[] { Constants.integerValueOf(columnIndex),
 											stringVal }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 						}
@@ -1306,7 +1306,7 @@ public class ResultSet implements java.sql.ResultSet {
 					} catch (ArithmeticException arithEx) {
 						throw SQLError.createSQLException(Messages.getString(
 								"ResultSet.Bad_format_for_BigDecimal",
-								new Object[] { Integer.valueOf(columnIndex),
+								new Object[] { Constants.integerValueOf(columnIndex),
 										stringVal }),
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 					}
@@ -1372,7 +1372,7 @@ public class ResultSet implements java.sql.ResultSet {
 						throw new SQLException(Messages
 								.getString("ResultSet.Bad_format_for_BigDecimal",
 										new Object[] { stringVal,
-												Integer.valueOf(columnIndex) }),
+												Constants.integerValueOf(columnIndex) }),
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 					}
 				}
@@ -1389,7 +1389,7 @@ public class ResultSet implements java.sql.ResultSet {
 						throw new SQLException(Messages
 								.getString("ResultSet.Bad_format_for_BigDecimal",
 										new Object[] { stringVal,
-												Integer.valueOf(columnIndex) }),
+												Constants.integerValueOf(columnIndex) }),
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 					}
 				}
@@ -1407,7 +1407,7 @@ public class ResultSet implements java.sql.ResultSet {
 							throw new SQLException(Messages
 									.getString("ResultSet.Bad_format_for_BigDecimal",
 											new Object[] { stringVal,
-													Integer.valueOf(columnIndex) }),
+													Constants.integerValueOf(columnIndex) }),
 									SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 						}
 					}
@@ -1421,7 +1421,7 @@ public class ResultSet implements java.sql.ResultSet {
 				throw new SQLException(Messages
 						.getString("ResultSet.Bad_format_for_BigDecimal",
 								new Object[] { stringVal,
-										Integer.valueOf(columnIndex) }),
+										Constants.integerValueOf(columnIndex) }),
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 			}
 		}
@@ -2196,7 +2196,7 @@ public class ResultSet implements java.sql.ResultSet {
 				default:
 					throw SQLError.createSQLException(Messages.getString(
 							"ResultSet.Bad_format_for_Date", new Object[] {
-									stringVal, Integer.valueOf(columnIndex) }),
+									stringVal, Constants.integerValueOf(columnIndex) }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 				} /* endswitch */
 			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
@@ -2224,7 +2224,7 @@ public class ResultSet implements java.sql.ResultSet {
 					
 					throw SQLError.createSQLException(Messages.getString(
 							"ResultSet.Bad_format_for_Date", new Object[] {
-									stringVal, Integer.valueOf(columnIndex) }),
+									stringVal, Constants.integerValueOf(columnIndex) }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 				}
 
@@ -2248,7 +2248,7 @@ public class ResultSet implements java.sql.ResultSet {
 		} catch (Exception e) {
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_Date", new Object[] { stringVal,
-							Integer.valueOf(columnIndex) }),
+							Constants.integerValueOf(columnIndex) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 		}
 	}
@@ -2371,7 +2371,7 @@ public class ResultSet implements java.sql.ResultSet {
 				default:
 					throw SQLError.createSQLException(Messages.getString(
 							"ResultSet.Bad_format_for_Date", new Object[] {
-									new String(dateAsBytes), Integer.valueOf(columnIndex) }),
+									new String(dateAsBytes), Constants.integerValueOf(columnIndex) }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 				} /* endswitch */
 			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
@@ -2399,7 +2399,7 @@ public class ResultSet implements java.sql.ResultSet {
 					
 					throw SQLError.createSQLException(Messages.getString(
 							"ResultSet.Bad_format_for_Date", new Object[] {
-									new String(dateAsBytes), Integer.valueOf(columnIndex) }),
+									new String(dateAsBytes), Constants.integerValueOf(columnIndex) }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 				}
 
@@ -2423,7 +2423,7 @@ public class ResultSet implements java.sql.ResultSet {
 		} catch (Exception e) {
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_Date", new Object[] { new String(dateAsBytes),
-							Integer.valueOf(columnIndex) }),
+							Constants.integerValueOf(columnIndex) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 		}
 	}
@@ -2547,7 +2547,7 @@ public class ResultSet implements java.sql.ResultSet {
 			
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_number", new Object[] {
-							stringVal, Integer.valueOf(colIndex) }),
+							stringVal, Constants.integerValueOf(colIndex) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
 	}
@@ -3694,7 +3694,7 @@ public class ResultSet implements java.sql.ResultSet {
 					throw SQLError.createSQLException(
 							Messages
 									.getString("ResultSet.Bad_format_for_BigDecimal", 
-											new Object[] {stringVal, Integer.valueOf(columnIndex)}),
+											new Object[] {stringVal, Constants.integerValueOf(columnIndex)}),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 				}
 
@@ -4948,28 +4948,28 @@ public class ResultSet implements java.sql.ResultSet {
 
 		case Types.TINYINT:
 			if (!field.isUnsigned()) {
-				return Integer.valueOf(getByte(columnIndex));
+				return Constants.integerValueOf(getByte(columnIndex));
 			}
 
-			return Integer.valueOf(getInt(columnIndex));
+			return Constants.integerValueOf(getInt(columnIndex));
 
 		case Types.SMALLINT:
 
-			return Integer.valueOf(getInt(columnIndex));
+			return Constants.integerValueOf(getInt(columnIndex));
 
 		case Types.INTEGER:
 
 			if (!field.isUnsigned() || 
 					field.getMysqlType() == MysqlDefs.FIELD_TYPE_INT24) {
-				return Integer.valueOf(getInt(columnIndex));
+				return Constants.integerValueOf(getInt(columnIndex));
 			}
 
-			return Long.valueOf(getLong(columnIndex));
+			return Constants.longValueOf(getLong(columnIndex));
 			
 		case Types.BIGINT:
 
 			if (!field.isUnsigned()) {
-				return Long.valueOf(getLong(columnIndex));
+				return Constants.longValueOf(getLong(columnIndex));
 			}
 
 			String stringVal = getString(columnIndex);
@@ -4983,7 +4983,7 @@ public class ResultSet implements java.sql.ResultSet {
 			} catch (NumberFormatException nfe) {
 				throw SQLError.createSQLException(Messages.getString(
 						"ResultSet.Bad_format_for_BigInteger", new Object[] {
-								Integer.valueOf(columnIndex), stringVal }),
+								Constants.integerValueOf(columnIndex), stringVal }),
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 			}
 
@@ -5082,11 +5082,13 @@ public class ResultSet implements java.sql.ResultSet {
 
 				return data;
 			}
+			
+			return getBytes(columnIndex); 
 
 		case Types.DATE:
 			if (field.getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR
 					&& !this.connection.getYearIsDateType()) {
-				return Short.valueOf(getShort(columnIndex));
+				return Constants.shortValueOf(getShort(columnIndex));
 			}
 
 			return getDate(columnIndex);
@@ -5193,19 +5195,19 @@ public class ResultSet implements java.sql.ResultSet {
 			return Boolean.valueOf(getBoolean(columnIndex));
 
 		case Types.TINYINT:
-			return Integer.valueOf(getInt(columnIndex));
+			return Constants.integerValueOf(getInt(columnIndex));
 
 		case Types.SMALLINT:
-			return Integer.valueOf(getInt(columnIndex));
+			return Constants.integerValueOf(getInt(columnIndex));
 
 		case Types.INTEGER:
 
 			if (!field.isUnsigned() || 
 					field.getMysqlType() == MysqlDefs.FIELD_TYPE_INT24) {
-				return Integer.valueOf(getInt(columnIndex));
+				return Constants.integerValueOf(getInt(columnIndex));
 			}
 
-			return Long.valueOf(getLong(columnIndex));
+			return Constants.longValueOf(getLong(columnIndex));
 
 		case Types.BIGINT:
 
@@ -5213,7 +5215,7 @@ public class ResultSet implements java.sql.ResultSet {
 				return getBigDecimal(columnIndex);
 			}
 
-			return Long.valueOf(getLong(columnIndex));
+			return Constants.longValueOf(getLong(columnIndex));
 
 		case Types.DECIMAL:
 		case Types.NUMERIC:
@@ -5277,7 +5279,7 @@ public class ResultSet implements java.sql.ResultSet {
 		case Types.DATE:
 			if (field.getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR
 					&& !this.connection.getYearIsDateType()) {
-				return Short.valueOf(getShort(columnIndex));
+				return Constants.shortValueOf(getShort(columnIndex));
 			}
 
 			return getDate(columnIndex);
@@ -7727,10 +7729,10 @@ public class ResultSet implements java.sql.ResultSet {
 												.getString(
 														"ResultSet.Too_Large_Result_Set",
 														new Object[] {
-																Integer.valueOf(
+																Constants.integerValueOf(
 																		this.rowData
 																				.size()),
-																Integer.valueOf(
+																Constants.integerValueOf(
 																		this.connection
 																				.getResultSetSizeThreshold()) })));
 					}
@@ -7748,7 +7750,7 @@ public class ResultSet implements java.sql.ResultSet {
 								this.resultId, System.currentTimeMillis(), 0, null,
 								this.pointOfOrigin, Messages.getString(
 										"ResultSet.Possible_incomplete_traversal_of_result_set", //$NON-NLS-1$
-										new Object[] {Integer.valueOf(getRow()), Integer.valueOf(this.rowData.size())})));
+										new Object[] {Constants.integerValueOf(getRow()), Constants.integerValueOf(this.rowData.size())})));
 					}
 				}
 

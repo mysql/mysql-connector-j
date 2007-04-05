@@ -1983,16 +1983,16 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		ArrayList vecRemovelist = new ArrayList();
 		Object[] nv = new Object[3];
 		Object[] v;
-		nv[0] = Character.valueOf('y');
+		nv[0] = Constants.characterValueOf('y');
 		nv[1] = new StringBuffer();
-		nv[2] = Integer.valueOf(0);
+		nv[2] = Constants.integerValueOf(0);
 		vec.add(nv);
 
 		if (toTime) {
 			nv = new Object[3];
-			nv[0] = Character.valueOf('h');
+			nv[0] = Constants.characterValueOf('h');
 			nv[1] = new StringBuffer();
-			nv[2] = Integer.valueOf(0);
+			nv[2] = Constants.integerValueOf(0);
 			vec.add(nv);
 		}
 
@@ -2012,7 +2012,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 						((StringBuffer) v[1]).append(separator);
 
 						if ((c == 'X') || (c == 'Y')) {
-							v[2] = Integer.valueOf(4);
+							v[2] = Constants.integerValueOf(4);
 						}
 					}
 				} else {
@@ -2021,26 +2021,26 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 						nv = new Object[3];
 						nv[1] = (new StringBuffer(((StringBuffer) v[1])
 								.toString())).append('M');
-						nv[0] = Character.valueOf('M');
-						nv[2] = Integer.valueOf(1);
+						nv[0] = Constants.characterValueOf('M');
+						nv[2] = Constants.integerValueOf(1);
 						vec.add(nv);
 					} else if (c == 'Y') {
 						c = 'M';
 						nv = new Object[3];
 						nv[1] = (new StringBuffer(((StringBuffer) v[1])
 								.toString())).append('d');
-						nv[0] = Character.valueOf('d');
-						nv[2] = Integer.valueOf(1);
+						nv[0] = Constants.characterValueOf('d');
+						nv[2] = Constants.integerValueOf(1);
 						vec.add(nv);
 					}
 
 					((StringBuffer) v[1]).append(c);
 
 					if (c == ((Character) v[0]).charValue()) {
-						v[2] = Integer.valueOf(n + 1);
+						v[2] = Constants.integerValueOf(n + 1);
 					} else {
-						v[0] = Character.valueOf(c);
-						v[2] = Integer.valueOf(1);
+						v[0] = Constants.characterValueOf(c);
+						v[2] = Constants.integerValueOf(1);
 					}
 				}
 			}
@@ -2992,7 +2992,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 
 		if (parameterObj instanceof Boolean) {
 			parameterAsNum = ((Boolean) parameterObj)
-					.booleanValue() ? Integer.valueOf(1) : Integer.valueOf(
+					.booleanValue() ? Constants.integerValueOf(1) : Constants.integerValueOf(
 					0);
 		} else if (parameterObj instanceof String) {
 			switch (targetSqlType) {
@@ -3000,8 +3000,8 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 				boolean parameterAsBoolean = "true"
 						.equalsIgnoreCase((String) parameterObj);
 
-				parameterAsNum = parameterAsBoolean ? Integer.valueOf(1)
-						: Integer.valueOf(0);
+				parameterAsNum = parameterAsBoolean ? Constants.integerValueOf(1)
+						: Constants.integerValueOf(0);
 
 				break;
 

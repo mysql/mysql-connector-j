@@ -2168,7 +2168,7 @@ public class Statement implements java.sql.Statement {
 		if (max > maxBuf) {
 			throw SQLError.createSQLException(Messages.getString(
 					"Statement.13", //$NON-NLS-1$
-					new Object[] { Long.valueOf(maxBuf) }), //$NON-NLS-1$
+					new Object[] { Constants.longValueOf(maxBuf) }), //$NON-NLS-1$
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 		}
 
@@ -2357,7 +2357,7 @@ public class Statement implements java.sql.Statement {
     	try {
     		// This works for classes that aren't actually wrapping
     		// anything
-            return iface.cast(this);
+            return Util.cast(iface, this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
             		SQLError.SQL_STATE_ILLEGAL_ARGUMENT);

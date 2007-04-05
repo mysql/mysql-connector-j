@@ -607,7 +607,7 @@ public class UpdatableResultSet extends ResultSet {
 			}
 
 			if (this.fields[i].isPrimaryKey()) {
-				this.primaryKeyIndicies.add(Integer.valueOf(i));
+				this.primaryKeyIndicies.add(Constants.integerValueOf(i));
 
 				if (!keysFirstTime) {
 					keyValues.append(" AND "); //$NON-NLS-1$

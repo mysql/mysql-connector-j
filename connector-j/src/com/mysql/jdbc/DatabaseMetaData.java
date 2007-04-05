@@ -240,7 +240,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							.length() - 2));
 				}
 
-				this.columnSize = Integer.valueOf(maxLength);
+				this.columnSize = Constants.integerValueOf(maxLength);
 				this.decimalDigits = null;
 			} else if (StringUtils.startsWithIgnoreCase(typeInfo, "set")) {
 				String temp = typeInfo.substring(typeInfo.indexOf("("),
@@ -260,7 +260,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					}
 				}
 
-				this.columnSize = Integer.valueOf(maxLength);
+				this.columnSize = Constants.integerValueOf(maxLength);
 				this.decimalDigits = null;
 			} else if (typeInfo.indexOf(",") != -1) {
 				// Numeric with decimals
@@ -314,54 +314,54 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							this.typeName = "BIT";
 						}
 					} else {
-						this.columnSize = Integer.valueOf(3);
-						this.decimalDigits = Integer.valueOf(0);
+						this.columnSize = Constants.integerValueOf(3);
+						this.decimalDigits = Constants.integerValueOf(0);
 					}
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"smallint")) {
-					this.columnSize = Integer.valueOf(5);
-					this.decimalDigits = Integer.valueOf(0);
+					this.columnSize = Constants.integerValueOf(5);
+					this.decimalDigits = Constants.integerValueOf(0);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"mediumint")) {
-					this.columnSize = Integer.valueOf(7);
-					this.decimalDigits = Integer.valueOf(0);
+					this.columnSize = Constants.integerValueOf(7);
+					this.decimalDigits = Constants.integerValueOf(0);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"int")) {
-					this.columnSize = Integer.valueOf(10);
-					this.decimalDigits = Integer.valueOf(0);
+					this.columnSize = Constants.integerValueOf(10);
+					this.decimalDigits = Constants.integerValueOf(0);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"integer")) {
-					this.columnSize = Integer.valueOf(10);
-					this.decimalDigits = Integer.valueOf(0);
+					this.columnSize = Constants.integerValueOf(10);
+					this.decimalDigits = Constants.integerValueOf(0);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"bigint")) {
-					this.columnSize = Integer.valueOf(19);
-					this.decimalDigits = Integer.valueOf(0);
+					this.columnSize = Constants.integerValueOf(19);
+					this.decimalDigits = Constants.integerValueOf(0);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"int24")) {
-					this.columnSize = Integer.valueOf(19);
-					this.decimalDigits = Integer.valueOf(0);
+					this.columnSize = Constants.integerValueOf(19);
+					this.decimalDigits = Constants.integerValueOf(0);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"real")) {
-					this.columnSize = Integer.valueOf(12);
+					this.columnSize = Constants.integerValueOf(12);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"float")) {
-					this.columnSize = Integer.valueOf(12);
+					this.columnSize = Constants.integerValueOf(12);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"decimal")) {
-					this.columnSize = Integer.valueOf(12);
+					this.columnSize = Constants.integerValueOf(12);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"numeric")) {
-					this.columnSize = Integer.valueOf(12);
+					this.columnSize = Constants.integerValueOf(12);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"double")) {
-					this.columnSize = Integer.valueOf(22);
+					this.columnSize = Constants.integerValueOf(22);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"char")) {
-					this.columnSize = Integer.valueOf(1);
+					this.columnSize = Constants.integerValueOf(1);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"varchar")) {
-					this.columnSize = Integer.valueOf(255);
+					this.columnSize = Constants.integerValueOf(255);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"date")) {
 					this.columnSize = null;
@@ -376,34 +376,34 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					this.columnSize = null;
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"tinyblob")) {
-					this.columnSize = Integer.valueOf(255);
+					this.columnSize = Constants.integerValueOf(255);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"blob")) {
-					this.columnSize = Integer.valueOf(65535);
+					this.columnSize = Constants.integerValueOf(65535);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"mediumblob")) {
-					this.columnSize = Integer.valueOf(16777215);
+					this.columnSize = Constants.integerValueOf(16777215);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"longblob")) {
-					this.columnSize = Integer.valueOf(Integer.MAX_VALUE);
+					this.columnSize = Constants.integerValueOf(Integer.MAX_VALUE);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"tinytext")) {
-					this.columnSize = Integer.valueOf(255);
+					this.columnSize = Constants.integerValueOf(255);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"text")) {
-					this.columnSize = Integer.valueOf(65535);
+					this.columnSize = Constants.integerValueOf(65535);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"mediumtext")) {
-					this.columnSize = Integer.valueOf(16777215);
+					this.columnSize = Constants.integerValueOf(16777215);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"longtext")) {
-					this.columnSize = Integer.valueOf(Integer.MAX_VALUE);
+					this.columnSize = Constants.integerValueOf(Integer.MAX_VALUE);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"enum")) {
-					this.columnSize = Integer.valueOf(255);
+					this.columnSize = Constants.integerValueOf(255);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"set")) {
-					this.columnSize = Integer.valueOf(255);
+					this.columnSize = Constants.integerValueOf(255);
 				}
 
 			}
@@ -2429,7 +2429,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 											.getString("Field");
 
 									ordinalFixUpMap.put(fullOrdColName,
-											Integer.valueOf(fullOrdinalPos++));
+											Constants.integerValueOf(fullOrdinalPos++));
 								}
 							}
 

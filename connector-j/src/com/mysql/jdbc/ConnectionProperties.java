@@ -326,7 +326,7 @@ public class ConnectionProperties implements Serializable {
 				int defaultValueToSet, int lowerBoundToSet,
 				int upperBoundToSet, String descriptionToSet,
 				String sinceVersionToSet, String category, int orderInCategory) {
-			super(propertyNameToSet, Integer.valueOf(defaultValueToSet), null,
+			super(propertyNameToSet, Constants.integerValueOf(defaultValueToSet), null,
 					lowerBoundToSet, upperBoundToSet, descriptionToSet,
 					sinceVersionToSet, category, orderInCategory);
 		}
@@ -398,7 +398,7 @@ public class ConnectionProperties implements Serializable {
 					 * the value '" + extractedValue + "' exceeds this range.",
 					 * SQLError.SQL_STATE_ILLEGAL_ARGUMENT); } }
 					 */
-					this.valueAsObject = Integer.valueOf(intValue * multiplier);
+					this.valueAsObject = Constants.integerValueOf(intValue * multiplier);
 				} catch (NumberFormatException nfe) {
 					throw SQLError.createSQLException("The connection property '"
 							+ getPropertyName()
@@ -420,7 +420,7 @@ public class ConnectionProperties implements Serializable {
 		}
 
 		void setValue(int valueFlag) {
-			this.valueAsObject = Integer.valueOf(valueFlag);
+			this.valueAsObject = Constants.integerValueOf(valueFlag);
 		}
 	}
 
@@ -2679,7 +2679,7 @@ public class ConnectionProperties implements Serializable {
 		if (this.getMaxRows() == 0) {
 			// adjust so that it will become MysqlDefs.MAX_ROWS
 			// in execSQL()
-			this.maxRows.setValueAsObject(Integer.valueOf(-1));
+			this.maxRows.setValueAsObject(Constants.integerValueOf(-1));
 		}
 
 		//

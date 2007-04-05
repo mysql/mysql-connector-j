@@ -205,7 +205,7 @@ public class StandardSocketFactory implements SocketFactory {
 										.newInstance(new Object[] {
 												InetAddress
 														.getByName(localSocketHostname),
-												Integer.valueOf(0 /* use ephemeral port */) });
+												Constants.integerValueOf(0 /* use ephemeral port */) });
 
 							}
 						} catch (Throwable ex) {
@@ -223,7 +223,7 @@ public class StandardSocketFactory implements SocketFactory {
 								Object sockAddr = addrConstructor
 										.newInstance(new Object[] {
 												possibleAddresses[i],
-												Integer.valueOf(port) });
+												Constants.integerValueOf(port) });
 								// bind to the local port, null is 'ok', it
 								// means
 								// use the ephemeral port
@@ -232,7 +232,7 @@ public class StandardSocketFactory implements SocketFactory {
 
 								connectWithTimeoutMethod.invoke(rawSocket,
 										new Object[] { sockAddr,
-												Integer.valueOf(connectTimeout) });
+												Constants.integerValueOf(connectTimeout) });
 
 								break;
 							} catch (Exception ex) {
