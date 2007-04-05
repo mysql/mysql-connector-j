@@ -754,7 +754,14 @@ public class ConnectionProperties implements Serializable {
 			"characterSetResults", null,
 			"Character set to tell the server to return results as.", "3.0.13",
 			MISC_CATEGORY, 6);
-
+	
+	private StringConnectionProperty clientInfoProvider = new StringConnectionProperty(
+			"clientInfoProvider", "com.mysql.jdbc.JDBC4CommentClientInfoProvider",
+			"The name of a class that implements the com.mysql.jdbc.JDBC4ClientInfoProvider "+
+			"interface in order to support JDBC-4.0's Connection.get/setClientInfo() methods",
+			"5.1.0",
+			DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty clobberStreamingResults = new BooleanConnectionProperty(
 			"clobberStreamingResults",
 			false,
@@ -1330,6 +1337,14 @@ public class ConnectionProperties implements Serializable {
 			"If connected to MySQL > 5.0.2, and setFetchSize() > 0 on a statement, should "
 			+ " that statement use cursor-based fetching to retrieve rows?",
 			"5.0.0", PERFORMANCE_CATEGORY, Integer.MAX_VALUE);
+	
+	private BooleanConnectionProperty useDynamicCharsetInfo = new BooleanConnectionProperty(
+			"useDynamicCharsetInfo",
+			true,
+			"Should the driver use a per-connection cache of character set information queried from the "
+			+ " server when necessary, or use a built-in static mapping that is more efficient, but isn't "
+			+ " aware of custom character sets or character sets implemented after the release of the JDBC driver?"
+			, "5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 	
 	private BooleanConnectionProperty useFastIntParsing = new BooleanConnectionProperty(
 			"useFastIntParsing",
@@ -4009,5 +4024,21 @@ public class ConnectionProperties implements Serializable {
 
 	public void setPadCharsWithSpace(boolean flag) {
 		this.padCharsWithSpace.setValue(flag);
+	}
+
+	public boolean getUseDynamicCharsetInfo() {
+		return this.useDynamicCharsetInfo.getValueAsBoolean();
+	}
+
+	public void setUseDynamicCharsetInfo(boolean flag) {
+		this.useDynamicCharsetInfo.setValue(flag);
+	}
+
+	public String getClientInfoProvider() {
+		return this.clientInfoProvider.getValueAsString();
+	}
+
+	public void setClientInfoProvider(String classname) {
+		this.clientInfoProvider.setValue(classname);
 	}
 }
