@@ -1647,13 +1647,26 @@ class MysqlIO {
         long queryEndTime = 0;
 
         if (query != null) {
-        	
-        	
+
             // We don't know exactly how many bytes we're going to get
             // from the query. Since we're dealing with Unicode, the
             // max is 2, so pad it (2 * query) + space for headers
             int packLength = HEADER_LENGTH + 1 + (query.length() * 2) + 2;
 
+            String statementComment = this.connection.getStatementComment();
+    		
+    		byte[] commentAsBytes = null;
+    		
+    		if (statementComment != null) {
+    			commentAsBytes = StringUtils.getBytes(statementComment, null,
+    				characterEncoding, this.connection
+    				.getServerCharacterEncoding(), 
+    				this.connection.parserKnowsUnicode());
+
+    			packLength += commentAsBytes.length;
+    			packLength += 6; // for /*[space] [space]*/
+    		}
+    		
             if (this.sendPacket == null) {
             	this.sendPacket = new Buffer(packLength);
             } else {
@@ -1662,6 +1675,12 @@ class MysqlIO {
 
             this.sendPacket.writeByte((byte) MysqlDefs.QUERY);
 
+            if (commentAsBytes != null) {
+            	this.sendPacket.writeBytesNoNull(Constants.SLASH_STAR_SPACE_AS_BYTES);
+    			this.sendPacket.writeBytesNoNull(commentAsBytes);
+    			this.sendPacket.writeBytesNoNull(Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
+            }
+            
             if (characterEncoding != null) {
                 if (this.platformDbCharsetMatches) {
                     this.sendPacket.writeStringNoNull(query, characterEncoding,
@@ -1689,8 +1708,6 @@ class MysqlIO {
         byte[] queryBuf = null;
         int oldPacketPosition = 0;
 
-        
-        
         if (needToGrabQueryFromPacket) {
             queryBuf = queryPacket.getByteBuffer();
 

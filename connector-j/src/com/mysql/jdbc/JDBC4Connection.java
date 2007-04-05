@@ -35,10 +35,13 @@ import java.util.TimerTask;
 
 
 import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.Messages;
+import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 public class JDBC4Connection extends Connection {
-
+	private JDBC4ClientInfoProvider infoProvider;
+	
 	public JDBC4Connection(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url) throws SQLException {
 		super(hostToConnectTo, portToConnectTo, info, databaseToConnectTo, url);
 		// TODO Auto-generated constructor stub
@@ -57,11 +60,11 @@ public class JDBC4Connection extends Connection {
 	}
 
 	public Properties getClientInfo() throws SQLException {
-		throw new NotYetImplementedException();
+		return getClientInfoProviderImpl().getClientInfo(this);
 	}
 
 	public String getClientInfo(String name) throws SQLException {
-		throw new NotYetImplementedException();
+		return getClientInfoProviderImpl().getClientInfo(this, name);
 	}
 
 	/**
@@ -140,11 +143,29 @@ public class JDBC4Connection extends Connection {
 	}
 
 	public void setClientInfo(Properties properties) throws SQLClientInfoException {
-		throw new NotYetImplementedException();
+		try {
+			getClientInfoProviderImpl().setClientInfo(this, properties);
+		} catch (SQLClientInfoException ciEx) {
+			throw ciEx;
+		} catch (SQLException sqlEx) {
+			SQLClientInfoException clientInfoEx = new SQLClientInfoException();
+			clientInfoEx.initCause(sqlEx);
+
+			throw clientInfoEx;
+		}
 	}
 
 	public void setClientInfo(String name, String value) throws SQLClientInfoException {
-		throw new NotYetImplementedException();
+		try {
+			getClientInfoProviderImpl().setClientInfo(this, name, value);
+		} catch (SQLClientInfoException ciEx) {
+			throw ciEx;
+		} catch (SQLException sqlEx) {
+			SQLClientInfoException clientInfoEx = new SQLClientInfoException();
+			clientInfoEx.initCause(sqlEx);
+
+			throw clientInfoEx;
+		}
 	}
 
     /**
@@ -214,5 +235,31 @@ public class JDBC4Connection extends Connection {
 	 */
 	public NClob createNClob() {
 	    return new com.mysql.jdbc.JDBC4NClob();
+	}
+	
+	protected synchronized JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+		if (this.infoProvider == null) {
+			try {
+				try {
+					this.infoProvider = (JDBC4ClientInfoProvider)Util.getInstance(getClientInfoProvider(), 
+							new Class[0], new Object[0]);
+				} catch (SQLException sqlEx) {
+					if (sqlEx.getCause() instanceof ClassCastException) {
+						// try with package name prepended
+						this.infoProvider = (JDBC4ClientInfoProvider)Util.getInstance(
+								"com.mysql.jdbc." + getClientInfoProvider(), 
+								new Class[0], new Object[0]);
+					}
+				}
+			} catch (ClassCastException cce) {
+				throw SQLError.createSQLException(Messages
+						.getString("JDBC4Connection.ClientInfoNotImplemented", new Object[] {getClientInfoProvider()}), 
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			}
+			
+			this.infoProvider.initialize(this, this.props);
+		}
+		
+		return this.infoProvider;
 	}
 }

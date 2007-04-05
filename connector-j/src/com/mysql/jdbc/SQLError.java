@@ -931,6 +931,27 @@ public class SQLError {
 		return new SQLException(message);
 	}
 
+	public static SQLException createSQLException(String message, String sqlState, Throwable cause) {
+		if (THROWABLE_INIT_CAUSE_METHOD == null) {
+			if (cause != null) {
+				message = message + " due to " + cause.toString();
+			}
+		}
+		
+		SQLException sqlEx = createSQLException(message, sqlState);
+		
+		if (cause != null && THROWABLE_INIT_CAUSE_METHOD != null) {
+			try {
+				THROWABLE_INIT_CAUSE_METHOD.invoke(sqlEx, new Object[] {cause});
+			} catch (Throwable t) {
+				// we're not going to muck with that here, since it's
+				// an error condition anyway!
+			}
+		}
+		
+		return sqlEx;
+	}
+	
 	public static SQLException createSQLException(String message,
 			String sqlState, int vendorErrorCode) {
 		return createSQLException(message, sqlState, vendorErrorCode, false);

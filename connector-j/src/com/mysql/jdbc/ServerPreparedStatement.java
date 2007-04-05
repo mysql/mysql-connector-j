@@ -362,7 +362,10 @@ public class ServerPreparedStatement extends PreparedStatement {
 		this.useTrueBoolean = this.connection.versionMeetsMinimum(3, 21, 23);
 		this.hasLimitClause = (StringUtils.indexOfIgnoreCase(sql, "LIMIT") != -1); //$NON-NLS-1$
 		this.firstCharOfStmt = StringUtils.firstNonWsCharUc(sql);
-		this.originalSql = sql;
+		String statementComment = this.connection.getStatementComment();
+
+		this.originalSql = (statementComment == null) ? sql : "/* "
+				+ statementComment + " */ " + sql;
 
 		if (this.connection.versionMeetsMinimum(4, 1, 2)) {
 			this.stringTypeCode = MysqlDefs.FIELD_TYPE_VAR_STRING;
@@ -1619,7 +1622,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 				setType(binding, this.stringTypeCode);
 			}
 
-			binding.value = StringUtils.fixDecimalExponent(x.toString());
+			binding.value = StringUtils
+				.fixDecimalExponent(StringUtils.consistentToString(x));
 			binding.isNull = false;
 			binding.isLongData = false;
 		}

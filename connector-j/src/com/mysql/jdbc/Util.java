@@ -328,11 +328,11 @@ public class Util {
 			try {
 				return handleNewInstance(Class.forName(className).getConstructor(argTypes), args);
 			} catch (SecurityException e) {
-				throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+				throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
 			} catch (NoSuchMethodException e) {
-				throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+				throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
 			} catch (ClassNotFoundException e) {
-				throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+				throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
 			}
 	}
 	
@@ -345,11 +345,11 @@ public class Util {
 			
 			return ctor.newInstance(args);
 		} catch (IllegalArgumentException e) {
-			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+			throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
 		} catch (InstantiationException e) {
-			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+			throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
 		} catch (IllegalAccessException e) {
-			throw new SQLException(e.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+			throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
 		} catch (InvocationTargetException e) {
 			Throwable target = e.getTargetException(); 
 			
@@ -361,7 +361,7 @@ public class Util {
 				target = ((ExceptionInInitializerError)target).getException();
 			}
 			
-			throw new SQLException(target.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+			throw SQLError.createSQLException(target.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
 		}
 	}
 	

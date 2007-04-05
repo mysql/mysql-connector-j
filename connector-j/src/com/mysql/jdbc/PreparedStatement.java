@@ -1811,6 +1811,24 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		//
 		int ensurePacketSize = 0;
 
+		String statementComment = this.connection.getStatementComment();
+		
+		byte[] commentAsBytes = null;
+		
+		if (statementComment != null) {
+			if (this.charConverter != null) {
+				commentAsBytes = this.charConverter.toBytes(statementComment);
+			} else {
+				commentAsBytes = StringUtils.getBytes(statementComment, this.charConverter,
+						this.charEncoding, this.connection
+								.getServerCharacterEncoding(), this.connection
+								.parserKnowsUnicode());
+			}
+			
+			ensurePacketSize += commentAsBytes.length;
+			ensurePacketSize += 6; // for /*[space] [space]*/
+		}
+	
 		for (int i = 0; i < batchedParameterStrings.length; i++) {
 			if (batchedIsStream[i] && useStreamLengths) {
 				ensurePacketSize += batchedStreamLengths[i];
@@ -1821,6 +1839,12 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			sendPacket.ensureCapacity(ensurePacketSize);
 		}
 
+		if (commentAsBytes != null) {
+			sendPacket.writeBytesNoNull(Constants.SLASH_STAR_SPACE_AS_BYTES);
+			sendPacket.writeBytesNoNull(commentAsBytes);
+			sendPacket.writeBytesNoNull(Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
+		}
+		
 		for (int i = 0; i < batchedParameterStrings.length; i++) {
 			if ((batchedParameterStrings[i] == null)
 					&& (batchedParameterStreams[i] == null)) {
