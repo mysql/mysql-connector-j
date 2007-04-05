@@ -173,15 +173,15 @@ public class Connection extends ConnectionProperties implements
 	
 	static {
 		mapTransIsolationNameToValue = new HashMap(8);
-		mapTransIsolationNameToValue.put("READ-UNCOMMITED", Integer.valueOf(
+		mapTransIsolationNameToValue.put("READ-UNCOMMITED", Constants.integerValueOf(
 				TRANSACTION_READ_UNCOMMITTED));
-		mapTransIsolationNameToValue.put("READ-UNCOMMITTED", Integer.valueOf(
+		mapTransIsolationNameToValue.put("READ-UNCOMMITTED", Constants.integerValueOf(
 				TRANSACTION_READ_UNCOMMITTED));
-		mapTransIsolationNameToValue.put("READ-COMMITTED", Integer.valueOf(
+		mapTransIsolationNameToValue.put("READ-COMMITTED", Constants.integerValueOf(
 				TRANSACTION_READ_COMMITTED));
-		mapTransIsolationNameToValue.put("REPEATABLE-READ", Integer.valueOf(
+		mapTransIsolationNameToValue.put("REPEATABLE-READ", Constants.integerValueOf(
 				TRANSACTION_REPEATABLE_READ));
-		mapTransIsolationNameToValue.put("SERIALIZABLE", Integer.valueOf(
+		mapTransIsolationNameToValue.put("SERIALIZABLE", Constants.integerValueOf(
 				TRANSACTION_SERIALIZABLE));
 		
 		boolean createdNamedTimer = false;
@@ -294,7 +294,7 @@ public class Connection extends ConnectionProperties implements
 
 		return (Connection) Util.handleNewInstance(JDBC_4_CONNECTION_CTOR,
 				new Object[] {
-							hostToConnectTo, Integer.valueOf(portToConnectTo), info,
+							hostToConnectTo, Constants.integerValueOf(portToConnectTo), info,
 							databaseToConnectTo, url });
 	}
 
@@ -523,7 +523,7 @@ public class Connection extends ConnectionProperties implements
 	private boolean preferSlaveDuringFailover = false;
 
 	/** Properties for this connection specified by user */
-	private Properties props = null;
+	protected Properties props = null;
 
 	/** Number of queries we've issued since the master failed */
 	private long queriesIssuedFailedOver = 0;
@@ -593,6 +593,12 @@ public class Connection extends ConnectionProperties implements
 	 * For testing failover scenarios
 	 */
 	private boolean hasTriedMasterFlag = false;
+
+	/**
+	 * The comment (if any) that we'll prepend to all statements
+	 * sent to the server (to show up in "SHOW PROCESSLIST")
+	 */
+	private String statementComment = null;
 
 	/**
 	 * Creates a connection to a MySQL Server.
@@ -826,7 +832,7 @@ public class Connection extends ConnectionProperties implements
 
 					while (results.next()) {
 						String charsetName = results.getString(2);
-						Integer charsetIndex = Integer.valueOf(results.getInt(3));
+						Integer charsetIndex = Constants.integerValueOf(results.getInt(3));
 
 						sortedCollationMap.put(charsetIndex, charsetName);
 					}
@@ -2799,58 +2805,65 @@ public class Connection extends ConnectionProperties implements
 	}
 
 	protected int getMaxBytesPerChar(String javaCharsetName)
-			throws SQLException {
+	throws SQLException {
 		// TODO: Check if we can actually run this query at this point in time
 		String charset = CharsetMapping.getMysqlEncodingForJavaEncoding(
 				javaCharsetName, this);
-
+		
 		if (versionMeetsMinimum(4, 1, 0)) {
-			synchronized (this.charsetToNumBytesMap) {
-				if (this.charsetToNumBytesMap.isEmpty()) {
-					
-					java.sql.Statement stmt = null;
-					java.sql.ResultSet rs = null;
-	
-					try {
-						stmt = getMetadataSafeStatement();
-	
-						rs = stmt.executeQuery("SHOW CHARACTER SET");
-	
-						while (rs.next()) {
-							this.charsetToNumBytesMap.put(rs.getString("Charset"),
-									Integer.valueOf(rs.getInt("Maxlen")));
-						}
-	
-						rs.close();
-						rs = null;
-	
-						stmt.close();
-	
-						stmt = null;
-					} finally {
-						if (rs != null) {
+			Map mapToCheck = null;
+			
+			if (!getUseDynamicCharsetInfo()) {
+				mapToCheck = CharsetMapping.STATIC_CHARSET_TO_NUM_BYTES_MAP;
+			} else {
+				mapToCheck = this.charsetToNumBytesMap;
+			
+				synchronized (this.charsetToNumBytesMap) {
+					if (this.charsetToNumBytesMap.isEmpty()) {
+						
+						java.sql.Statement stmt = null;
+						java.sql.ResultSet rs = null;
+		
+						try {
+							stmt = getMetadataSafeStatement();
+		
+							rs = stmt.executeQuery("SHOW CHARACTER SET");
+		
+							while (rs.next()) {
+								this.charsetToNumBytesMap.put(rs.getString("Charset"),
+										Constants.integerValueOf(rs.getInt("Maxlen")));
+							}
+		
 							rs.close();
 							rs = null;
-						}
-	
-						if (stmt != null) {
+		
 							stmt.close();
+		
 							stmt = null;
+						} finally {
+							if (rs != null) {
+								rs.close();
+								rs = null;
+							}
+		
+							if (stmt != null) {
+								stmt.close();
+								stmt = null;
+							}
 						}
 					}
 				}
 			}
-
-			Integer mbPerChar = (Integer) this.charsetToNumBytesMap
-					.get(charset);
-
+		
+			Integer mbPerChar = (Integer) mapToCheck.get(charset);
+		
 			if (mbPerChar != null) {
 				return mbPerChar.intValue();
 			}
-
+		
 			return 1; // we don't know
 		}
-
+		
 		return 1; // we don't know
 	}
 
@@ -5064,4 +5077,26 @@ public class Connection extends ConnectionProperties implements
 		}
 	}
 	
+	/**
+	 * Returns the comment that will be prepended to all statements
+	 * sent to the server.
+	 * 
+	 * @return the comment that will be prepended to all statements
+	 * sent to the server.
+	 */
+	public String getStatementComment() {
+		return this.statementComment;
+	}
+
+	/**
+	 * Sets the comment that will be prepended to all statements
+	 * sent to the server. Do not use slash-star or star-slash tokens 
+	 * in the comment as these will be added by the driver itself.
+	 * 
+	 * @param comment  the comment that will be prepended to all statements
+	 * sent to the server.
+	 */
+	public void setStatementComment(String comment) {
+		this.statementComment = comment;
+	}
 }

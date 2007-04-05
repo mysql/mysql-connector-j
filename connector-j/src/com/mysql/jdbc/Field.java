@@ -115,6 +115,8 @@ public class Field {
 
 	private boolean isSingleBit;
 
+	private int maxBytesPerChar;
+
 	// ~ Constructors
 	// -----------------------------------------------------------
 
@@ -480,8 +482,12 @@ public class Field {
 		return this.length;
 	}
 
-	public int getMaxBytesPerCharacter() throws SQLException {
-		return this.connection.getMaxBytesPerChar(getCharacterSet());
+	public synchronized int getMaxBytesPerCharacter() throws SQLException {
+		if (this.maxBytesPerChar == 0) {
+			this.maxBytesPerChar = this.connection.getMaxBytesPerChar(getCharacterSet());
+		}
+		
+		return this.maxBytesPerChar;
 	}
 
 	/**

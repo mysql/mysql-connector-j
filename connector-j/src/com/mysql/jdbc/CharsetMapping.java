@@ -34,6 +34,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Mapping between MySQL charset names and Java charset names. I've investigated
@@ -65,8 +66,51 @@ public class CharsetMapping {
 	
 	private static final String NOT_USED = "ISO8859_1"; // punting for not-used character sets
 
+	public static final Map STATIC_CHARSET_TO_NUM_BYTES_MAP;
+
 	static {	
+		HashMap tempNumBytesMap = new HashMap();
 		
+		tempNumBytesMap.put("big5", Constants.integerValueOf(2));
+		tempNumBytesMap.put("dec8" , Constants.integerValueOf(1));
+		tempNumBytesMap.put("cp850", Constants.integerValueOf(1));
+		tempNumBytesMap.put("hp8", Constants.integerValueOf(1));
+		tempNumBytesMap.put("koi8r", Constants.integerValueOf(1));
+		tempNumBytesMap.put("latin1", Constants.integerValueOf(1));
+		tempNumBytesMap.put("latin2", Constants.integerValueOf(1));
+		tempNumBytesMap.put("swe7", Constants.integerValueOf(1));
+		tempNumBytesMap.put("ascii", Constants.integerValueOf(1));
+		tempNumBytesMap.put("ujis", Constants.integerValueOf(3));
+		tempNumBytesMap.put("sjis", Constants.integerValueOf(2));
+		tempNumBytesMap.put("hebrew", Constants.integerValueOf(1));
+		tempNumBytesMap.put("tis620", Constants.integerValueOf(1));
+		tempNumBytesMap.put("euckr", Constants.integerValueOf(2));
+		tempNumBytesMap.put("koi8u", Constants.integerValueOf(1));
+		tempNumBytesMap.put("gb2312", Constants.integerValueOf(2));
+		tempNumBytesMap.put("greek", Constants.integerValueOf(1));
+		tempNumBytesMap.put("cp1250", Constants.integerValueOf(1));
+		tempNumBytesMap.put("gbk", Constants.integerValueOf(2));
+		tempNumBytesMap.put("latin5", Constants.integerValueOf(1));
+		tempNumBytesMap.put("armscii8", Constants.integerValueOf(1));
+		tempNumBytesMap.put("utf8", Constants.integerValueOf(3));
+		tempNumBytesMap.put("ucs2", Constants.integerValueOf(2));
+		tempNumBytesMap.put("cp866", Constants.integerValueOf(1));
+		tempNumBytesMap.put("keybcs2", Constants.integerValueOf(1));
+		tempNumBytesMap.put("macce", Constants.integerValueOf(1));
+		tempNumBytesMap.put("macroman", Constants.integerValueOf(1));
+		tempNumBytesMap.put("cp852" , Constants.integerValueOf(1));
+		tempNumBytesMap.put("latin7", Constants.integerValueOf(1));
+		tempNumBytesMap.put("cp1251", Constants.integerValueOf(1));
+		tempNumBytesMap.put("cp1256" , Constants.integerValueOf(1));
+		tempNumBytesMap.put("cp1257", Constants.integerValueOf(1));
+		tempNumBytesMap.put("binary", Constants.integerValueOf(1));
+		tempNumBytesMap.put("geostd8", Constants.integerValueOf(1));
+		tempNumBytesMap.put("cp932", Constants.integerValueOf(2));
+		tempNumBytesMap.put("eucjpms", Constants.integerValueOf(3));
+		
+		STATIC_CHARSET_TO_NUM_BYTES_MAP = Collections.unmodifiableMap(
+				tempNumBytesMap);
+
 		CHARSET_CONFIG.setProperty("javaToMysqlMappings",
 			//
 			// Note: This used to be stored in Charsets.properties,
@@ -180,7 +224,7 @@ public class CharsetMapping {
 
 		MYSQL_TO_JAVA_CHARSET_MAP = Collections.unmodifiableMap(mysqlToJavaMap);
 
-		HashMap ucMap = new HashMap(JAVA_TO_MYSQL_CHARSET_MAP.size());
+		TreeMap ucMap = new TreeMap(String.CASE_INSENSITIVE_ORDER);
 
 		Iterator javaNamesKeys = JAVA_TO_MYSQL_CHARSET_MAP.keySet().iterator();
 

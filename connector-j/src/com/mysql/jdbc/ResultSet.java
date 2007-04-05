@@ -5648,7 +5648,9 @@ public class ResultSet implements java.sql.ResultSet {
 			Field f = this.fields[columnIndex - 1];
 			
 			if (f.getMysqlType() == MysqlDefs.FIELD_TYPE_STRING ) {
-				int fieldLength = (int)f.getLength(); // safe, CHAR <= 255
+				int fieldLength = (int)f.getLength() /* safe, bytes in a CHAR <= 1024 */ / 
+					f.getMaxBytesPerCharacter(); /* safe, this will never be 0 */
+				
 				int currentLength = stringVal.length();
 				
 				if (currentLength < fieldLength) {
