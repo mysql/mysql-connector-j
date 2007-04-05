@@ -97,7 +97,10 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  to "true", and a result set column has the CHAR type and the value does not 
 	  fill the amount of characters specified in the DDL for the column, the driver 
 	  will pad the remaining characters with space (for ANSI compliance).
-	  	  	      
+	
+	- Fixed BUG#27655 - Connection.getTransactionIsolation() uses
+	  "SHOW VARIABLES LIKE" which is very inefficient on MySQL-5.0+
+	  	  	  	      
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

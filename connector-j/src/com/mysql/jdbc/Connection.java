@@ -3030,9 +3030,7 @@ public class Connection extends ConnectionProperties implements
 			}
 		}
 
-		synchronized (this) {
-			return this.isolationLevel;
-		}
+		return this.isolationLevel;
 	}
 
 	/**

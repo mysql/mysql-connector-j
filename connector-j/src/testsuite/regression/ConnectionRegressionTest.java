@@ -2030,4 +2030,33 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#27655 - getTransactionIsolation() uses
+	 * "SHOW VARIABLES LIKE" which is very inefficient on MySQL-5.0+
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug27655() throws Exception {
+		StringBuffer logBuf = new StringBuffer();
+		Properties props = new Properties();
+		props.setProperty("profileSQL", "true");
+		props.setProperty("logger", "StandardLogger");
+		StandardLogger.bufferedLog = logBuf;
+		
+		Connection loggedConn = null;
+		
+		try {
+			loggedConn = getConnectionWithProps(props);
+			loggedConn.getTransactionIsolation();
+			
+			if (versionMeetsMinimum(4, 0, 3)) {
+				assertEquals(-1, logBuf.indexOf("SHOW VARIABLES LIKE 'tx_isolation'"));
+			}
+		} finally {
+			if (loggedConn != null) {
+				loggedConn.close();
+			}
+		}
+	}
 }
