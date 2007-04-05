@@ -604,7 +604,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				.executeUpdate("DROP PROCEDURE IF EXISTS testBug12417");
 				this.stmt.executeUpdate("CREATE PROCEDURE testBug12417()\n"
 						+ "BEGIN\n" + "SELECT 1;" + "end\n");
-				ucCatalogConn = getConnectionWithProps(null);
+				ucCatalogConn = getConnectionWithProps((String)null);
 				ucCatalogConn.setCatalog(this.conn.getCatalog().toUpperCase());
 				ucCatalogConn.prepareCall("{call testBug12417()}");
 			} finally {
