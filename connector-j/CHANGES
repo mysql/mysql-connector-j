@@ -7,6 +7,12 @@ nn-nn-07 - Version 5.1.0 Alpha
 	
 	- Re-worked Ant buildfile to build JDBC-4.0 classes separately, as well
 	  as support building under Eclipse (since Eclipse can't mix/match JDKs).
+	  
+	  To build, you must set JAVA_HOME to J2SDK-1.4.2 or Java-5, and set
+	  the following properties on your Ant commandline:
+	  
+	  com.mysql.jdbc.java6.javac - full path to your Java-6 javac executable
+	  com.mysql.jdbc.java6.rtjar - full path to your Java-6 rt.jar file
 
 	- New feature - driver will automatically adjust session variable
 	  "net_write_timeout" when it determines its been asked for a "streaming"
@@ -25,6 +31,20 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  to be com.mysql.jdbc.exceptions.jdbc4.CommunicationsException, as
 	  the old class will not be instantiated for communications link-related
 	  errors under Java 6.
+	  
+	- Added support for JDBC-4.0's client information. The backend storage
+	  of information provided via Connection.setClientInfo() and retrieved
+	  by Connection.getClientInfo() is pluggable by any class that implements
+	  the com.mysql.jdbc.JDBC4ClientInfoProvider interface and has a no-args
+	  constructor. 
+	  
+	  The implementation used by the driver is configured using the 
+	  "clientInfoProvider" configuration property (with a default of value 
+	  of "com.mysql.jdbc.JDBC4CommentClientInfoProvider", an implementation
+	  which lists the client info as a comment prepended to every query
+	  sent to the server).
+	  
+	  This functionality is only available when using Java-6 or newer.
 	  
 03-nn-07 - Version 5.0.6
 
@@ -97,9 +117,19 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  to "true", and a result set column has the CHAR type and the value does not 
 	  fill the amount of characters specified in the DDL for the column, the driver 
 	  will pad the remaining characters with space (for ANSI compliance).
-	
+	  
 	- Fixed BUG#27655 - Connection.getTransactionIsolation() uses
 	  "SHOW VARIABLES LIKE" which is very inefficient on MySQL-5.0+
+	  
+	- Added configuration property "useDynamicCharsetInfo". If set to "false"
+	  (the default), the driver will use a per-connection cache of character set 
+	  information queried from the server when necessary, or when set to "true",
+	  use a built-in static mapping that is more efficient, but isn't aware of 
+	  custom character sets or character sets implemented after the release of 
+	  the JDBC driver.
+	  
+	  Note: this only affects the "padCharsWithSpace" configuration property and the 
+            ResultSetMetaData.getColumnDisplayWidth() method.
 	  	  	  	      
 03-01-07 - Version 5.0.5
 
