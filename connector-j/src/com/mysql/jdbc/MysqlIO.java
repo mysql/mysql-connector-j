@@ -67,6 +67,7 @@ class MysqlIO {
     protected static final int COMP_HEADER_LENGTH = 3;
     protected static final int MIN_COMPRESS_LEN = 50;
     protected static final int HEADER_LENGTH = 4;
+    protected static final int AUTH_411_OVERHEAD = 33;
     private static int maxBufferSize = 65535;
     private static final int CLIENT_COMPRESS = 32; /* Can use compression
     protcol */
@@ -97,7 +98,7 @@ class MysqlIO {
     private static final String FALSE_SCRAMBLE = "xxxxxxxx"; //$NON-NLS-1$
     protected static final int MAX_QUERY_SIZE_TO_LOG = 1024; // truncate logging of queries at 1K
     protected static final int MAX_QUERY_SIZE_TO_EXPLAIN = 1024 * 1024; // don't explain queries above 1MB
-
+    protected static final int INITIAL_PACKET_SIZE = 1024;
     /**
      * We store the platform 'encoding' here, only used to avoid munging
      * filenames for LOAD DATA LOCAL INFILE...
@@ -249,8 +250,8 @@ class MysqlIO {
 
         this.logSlowQueries = this.connection.getLogSlowQueries();
 
-        this.reusablePacket = new Buffer(
-        		this.connection.getNetBufferLength());
+        this.reusablePacket = new Buffer(INITIAL_PACKET_SIZE);
+        this.sendPacket = new Buffer(INITIAL_PACKET_SIZE);
 
         this.port = port;
         this.host = host;
@@ -796,13 +797,10 @@ class MysqlIO {
         this.packetSequence = -1;
 
         int passwordLength = 16;
-        int userLength = 0;
+        int userLength = (userName != null) ? userName.length() : 0;
+        int databaseLength = (database != null) ? database.length() : 0;
 
-        if (userName != null) {
-            userLength = userName.length();
-        }
-
-        int packLength = (userLength + passwordLength) + 7 + HEADER_LENGTH;
+        int packLength = ((userLength + passwordLength + databaseLength) * 2) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
 
         if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
             Buffer changeUserPacket = new Buffer(packLength + 1);
@@ -1204,19 +1202,11 @@ class MysqlIO {
         }
 
         int passwordLength = 16;
-        int userLength = 0;
-        int databaseLength = 0;
+        int userLength = (user != null) ? user.length() : 0;
+        int databaseLength = (database != null) ? database.length() : 0;
 
-        if (user != null) {
-            userLength = user.length();
-        }
+        int packLength = ((userLength + passwordLength + databaseLength) * 2) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
 
-        if (database != null) {
-            databaseLength = database.length();
-        }
-
-        int packLength = (userLength + passwordLength + databaseLength) + 7 +
-            HEADER_LENGTH;
         Buffer packet = null;
 
         if (!this.connection.getUseSSL()) {
@@ -1399,8 +1389,7 @@ class MysqlIO {
      */
     Buffer getSharedSendPacket() {
         if (this.sharedSendPacket == null) {
-        	this.sharedSendPacket = new Buffer(
-        			this.connection.getNetBufferLength());
+        	this.sharedSendPacket = new Buffer(INITIAL_PACKET_SIZE);
         }
 
         return this.sharedSendPacket;
@@ -2360,7 +2349,7 @@ class MysqlIO {
     private void reclaimLargeReusablePacket() {
         if ((this.reusablePacket != null) &&
                 (this.reusablePacket.getCapacity() > 1048576)) {
-            this.reusablePacket = new Buffer(this.connection.getNetBufferLength());
+            this.reusablePacket = new Buffer(INITIAL_PACKET_SIZE);
         }
     }
 
@@ -3096,7 +3085,7 @@ class MysqlIO {
     private void reclaimLargeSharedSendPacket() {
         if ((this.sharedSendPacket != null) &&
                 (this.sharedSendPacket.getCapacity() > 1048576)) {
-            this.sharedSendPacket = new Buffer(this.connection.getNetBufferLength());
+            this.sharedSendPacket = new Buffer(INITIAL_PACKET_SIZE);
         }
     }
 

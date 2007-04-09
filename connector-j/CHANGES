@@ -130,7 +130,11 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  
 	  Note: this only affects the "padCharsWithSpace" configuration property and the 
             ResultSetMetaData.getColumnDisplayWidth() method.
-	  	  	  	      
+	 
+	- More intelligent initial packet sizes for the "shared" packets are used 
+	  (512 bytes, rather than 16K), and initial packets used during handshake are
+	  now sized appropriately as to not require reallocation.
+	  	  	  	  	      
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"
