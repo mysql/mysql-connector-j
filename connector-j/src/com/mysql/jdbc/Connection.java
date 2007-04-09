@@ -2977,7 +2977,7 @@ public class Connection extends ConnectionProperties implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized int getTransactionIsolation() throws SQLException {
+	public int getTransactionIsolation() throws SQLException {
 
 		if (this.hasIsolationLevels && !getUseLocalSessionState()) {
 			java.sql.Statement stmt = null;
@@ -2988,16 +2988,20 @@ public class Connection extends ConnectionProperties implements
 
 				String query = null;
 
+				int offset = 0;
+				
 				if (versionMeetsMinimum(4, 0, 3)) {
-					query = "SHOW VARIABLES LIKE 'tx_isolation'";
+					query = "SELECT @@session.tx_isolation";
+					offset = 1;
 				} else {
 					query = "SHOW VARIABLES LIKE 'transaction_isolation'";
+					offset = 2;
 				}
 
 				rs = stmt.executeQuery(query);
 
 				if (rs.next()) {
-					String s = rs.getString(2);
+					String s = rs.getString(offset);
 
 					if (s != null) {
 						Integer intTI = (Integer) mapTransIsolationNameToValue
