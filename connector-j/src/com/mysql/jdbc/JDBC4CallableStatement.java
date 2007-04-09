@@ -32,17 +32,17 @@ import java.sql.RowId;
 import java.sql.SQLXML;
 import java.sql.NClob;
 
-import com.mysql.jdbc.CallableStatement;
-import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.ResultSet;
-import com.mysql.jdbc.CallableStatement.CallableStatementParamInfo;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 public class JDBC4CallableStatement extends CallableStatement {
 
 	public JDBC4CallableStatement(Connection conn, CallableStatementParamInfo paramInfo) throws SQLException {
 		super(conn, paramInfo);
-		// TODO Auto-generated constructor stub
+	}
+	
+	public JDBC4CallableStatement(Connection conn, String sql, String catalog,
+			boolean isFunctionCall) throws SQLException {
+		super(conn, sql, catalog, isFunctionCall);
 	}
 
 	public void setRowId(String parameterName, RowId x) throws SQLException {
