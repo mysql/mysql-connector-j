@@ -54,6 +54,7 @@ import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.NotUpdatable;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
+import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.StandardLogger;
 
 /**
@@ -3810,6 +3811,10 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 * @throws Exception if the test fails.
 	 */
 	public void testbug25328() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
 		createTable("testBug25382", "(BINARY_VAL BIT(64) NULL)");
 
 		byte[] bytearr = new byte[8];
@@ -4211,6 +4216,10 @@ public class ResultSetRegressionTest extends BaseTestCase {
 						&& parameterTypes.length == 1
 						&& (parameterTypes[0].equals(Integer.TYPE) || parameterTypes[0]
 								.equals(Integer.class))) {
+					if (getterMethods[i].getName().equals("getRowId")) {
+						continue; // we don't support this yet, ever?
+					}
+					
 					try {
 						getterMethods[i].invoke(this.rs,
 								new Object[] { zeroIndex });
@@ -4225,7 +4234,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 							messageLowBound = sqlEx.getMessage();
 						} else {
-							throw new RuntimeException(ex);
+							throw new RuntimeException(Util.stackTraceToString(ex), ex);
 						}
 					}
 
