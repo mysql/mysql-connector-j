@@ -70,12 +70,12 @@ public class CallableStatement extends PreparedStatement implements
 		if (Util.isJdbc4()) {
 			try {
 				JDBC_4_CSTMT_2_ARGS_CTOR = Class.forName(
-						"com.mysql.jdbc.jdbc4.JDBC4CallableStatement")
+						"com.mysql.jdbc.JDBC4CallableStatement")
 						.getConstructor(
 								new Class[] { com.mysql.jdbc.Connection.class,
 										CallableStatementParamInfo.class });
 				JDBC_4_CSTMT_4_ARGS_CTOR = Class.forName(
-						"com.mysql.jdbc.jdbc4.JDBC4CallableStatement")
+						"com.mysql.jdbc.JDBC4CallableStatement")
 						.getConstructor(
 								new Class[] { com.mysql.jdbc.Connection.class,
 										String.class, String.class,
