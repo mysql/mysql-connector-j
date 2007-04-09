@@ -852,8 +852,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				assertEquals(100, rs.getInt(2));
 			}
 
-			assertEquals(this.pstmt.getClass().getName(),
-					com.mysql.jdbc.PreparedStatement.class.getName());
+			assertEquals(-1, this.pstmt.getClass().getName().indexOf("Server"));
 
 		} finally {
 			closeMemberJDBCResources();
