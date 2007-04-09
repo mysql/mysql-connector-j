@@ -4106,17 +4106,17 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 
 			int lengthLeftToRead = streamLength - bc;
 
-			if (this.connection.versionMeetsMinimum(4, 1, 0)) {
-				bytesOut.write('_');
-				bytesOut.write('b');
-				bytesOut.write('i');
-				bytesOut.write('n');
-				bytesOut.write('a');
-				bytesOut.write('r');
-				bytesOut.write('y');
-			}
-
 			if (escape) {
+				if (this.connection.versionMeetsMinimum(4, 1, 0)) {
+					bytesOut.write('_');
+					bytesOut.write('b');
+					bytesOut.write('i');
+					bytesOut.write('n');
+					bytesOut.write('a');
+					bytesOut.write('r');
+					bytesOut.write('y');
+				}
+				
 				bytesOut.write('\'');
 			}
 
@@ -4155,7 +4155,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			}
 		}
 	}
-
+	
 	/**
 	 * Returns this PreparedStatement represented as a string.
 	 * 
