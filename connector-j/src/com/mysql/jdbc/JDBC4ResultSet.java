@@ -67,6 +67,8 @@ public class JDBC4ResultSet extends ResultSet {
 	 *             if an error occurs
 	 */
 	public Reader getNCharacterStream(int columnIndex) throws SQLException {
+		checkColumnBounds(columnIndex);
+		
 		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
 		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 			throw new SQLException(
@@ -106,6 +108,8 @@ public class JDBC4ResultSet extends ResultSet {
 	 *             if an error occurs
 	 */
 	public NClob getNClob(int columnIndex) throws SQLException {
+		checkColumnBounds(columnIndex);
+		
 		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
 		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 			throw new SQLException(
@@ -205,6 +209,8 @@ public class JDBC4ResultSet extends ResultSet {
 	 *                if a database access error occurs
 	 */
 	public String getNString(int columnIndex) throws SQLException {
+		checkColumnBounds(columnIndex);
+		
 		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
 		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 			throw new SQLException(
@@ -305,6 +311,8 @@ public class JDBC4ResultSet extends ResultSet {
 	}
 
 	public SQLXML getSQLXML(int columnIndex) throws SQLException {
+		checkColumnBounds(columnIndex);
+		
 		return new JDBC4MysqlSQLXML(this, columnIndex);
 	}
 
