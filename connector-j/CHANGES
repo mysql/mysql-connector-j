@@ -1,7 +1,7 @@
 # Changelog
 # $Id$
 
-nn-nn-07 - Version 5.1.0 Alpha
+04-11-07 - Version 5.1.0 Alpha
 	
 	- Bumped JDBC Specification version number in jar-file manifest.
 	
@@ -21,6 +21,8 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  "netTimeoutForStreamingResults", value has unit of seconds, 
 	  the value '0' means the driver will not try and adjust this value).
 	  
+    - Added support for JDBC-4.0 categorized SQLExceptions.
+    
 	- Refactored CommunicationsException into a JDBC3 version, and a JDBC4
 	  version (which extends SQLRecoverableException, now that it exists).
 	  
@@ -46,7 +48,13 @@ nn-nn-07 - Version 5.1.0 Alpha
 	  
 	  This functionality is only available when using Java-6 or newer.
 	  
-03-nn-07 - Version 5.0.6
+	- Added support for JDBC-4.0's SQLXML interfaces.
+	
+	- Added support for JDBC-4.0's Wrapper interface.
+	
+	- Added support for JDBC-4.0's NCLOB, and NCHAR/NVARCHAR types.
+	  
+04-nn-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,
 	  leading to stored procedures not being able to return results. Thanks
@@ -134,7 +142,11 @@ nn-nn-07 - Version 5.1.0 Alpha
 	- More intelligent initial packet sizes for the "shared" packets are used 
 	  (512 bytes, rather than 16K), and initial packets used during handshake are
 	  now sized appropriately as to not require reallocation.
-	  	  	  	  	      
+	
+	- Fixed issue where calling getGeneratedKeys() on a prepared statement after 
+	  calling execute() didn't always return the generated keys (executeUpdate() 
+	  worked fine however).
+	    	  	  	      
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

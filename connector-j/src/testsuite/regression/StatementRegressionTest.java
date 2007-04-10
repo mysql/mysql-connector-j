@@ -3932,4 +3932,33 @@ public class StatementRegressionTest extends BaseTestCase {
 			bsize *= 4;
 		}
 	}
+	
+	public void testBustedGGKWithPSExecute() throws Exception {
+		createTable("sequence", "(sequence_name VARCHAR(255) NOT NULL PRIMARY KEY, next_val BIGINT NOT NULL)");
+		
+		// Populate with the initial value
+		stmt.executeUpdate("INSERT INTO sequence VALUES ('test-sequence', 1234)");
+		
+		// Atomic operation to increment and return next value
+		PreparedStatement pStmt = null;
+		
+		try {
+			pStmt = this.conn.prepareStatement("UPDATE sequence SET next_val=LAST_INSERT_ID(next_val + ?) WHERE sequence_name = ?",
+				Statement.RETURN_GENERATED_KEYS);
+
+			pStmt.setInt(1, 4);
+			pStmt.setString(2, "test-sequence");
+			pStmt.execute();
+		
+			this.rs = pStmt.getGeneratedKeys();
+			this.rs.next();
+			assertEquals(1238, this.rs.getLong(1));
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (pStmt != null) {
+				pStmt.close();
+			}
+		}
+	}
 }

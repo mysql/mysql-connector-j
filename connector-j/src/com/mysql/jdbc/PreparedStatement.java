@@ -991,7 +991,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 			
 			if (this.retrieveGeneratedKeys) {
 				locallyScopedConn.setReadInfoMsgEnabled(oldInfoMsgState);
-				rs.setFirstCharOfQuery('R');
+				rs.setFirstCharOfQuery(this.firstCharOfStmt);
 			}
 
 			if (oldCatalog != null) {
