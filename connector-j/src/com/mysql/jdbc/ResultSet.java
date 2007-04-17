@@ -132,19 +132,20 @@ public class ResultSet implements java.sql.ResultSet {
 				JDBC_4_RS_4_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4ResultSet").getConstructor(
 						new Class[] { Long.TYPE, Long.TYPE,
-								com.mysql.jdbc.Connection.class,
+								ConnectionImpl.class,
 								com.mysql.jdbc.Statement.class });
 				JDBC_4_RS_6_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4ResultSet").getConstructor(
 						new Class[] { String.class, Field[].class,
-								RowData.class, com.mysql.jdbc.Connection.class,
+								RowData.class, 
+								ConnectionImpl.class,
 								com.mysql.jdbc.Statement.class });
 				JDBC_4_UPD_RS_6_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4UpdatableResultSet")
 						.getConstructor(
 								new Class[] { String.class, Field[].class,
 										RowData.class,
-										com.mysql.jdbc.Connection.class,
+										ConnectionImpl.class,
 										com.mysql.jdbc.Statement.class });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
@@ -203,8 +204,8 @@ public class ResultSet implements java.sql.ResultSet {
 	protected boolean[] columnUsed = null;
 
 	/** The Connection instance that created us */
-	protected com.mysql.jdbc.Connection connection; // The connection that
-													// created us
+	protected ConnectionImpl connection; // The connection that
+				   					     // created us
 
 	protected long connectionId = 0;
 	
@@ -338,7 +339,7 @@ public class ResultSet implements java.sql.ResultSet {
 	}
 	
 	protected static ResultSet getInstance(long updateCount, long updateID,
-			Connection conn, Statement creatorStmt) throws SQLException {
+			ConnectionImpl conn, Statement creatorStmt) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new ResultSet(updateCount, updateID, conn, creatorStmt);
 		}
@@ -357,7 +358,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 */
 
 	protected static ResultSet getInstance(String catalog, Field[] fields,
-			RowData tuples, Connection conn, Statement creatorStmt,
+			RowData tuples, ConnectionImpl conn, Statement creatorStmt,
 			boolean isUpdatable) throws SQLException {
 		if (!Util.isJdbc4()) {
 			if (!isUpdatable) {
@@ -390,7 +391,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 * @param creatorStmt
 	 *            DOCUMENT ME!
 	 */
-	public ResultSet(long updateCount, long updateID, Connection conn,
+	public ResultSet(long updateCount, long updateID, ConnectionImpl conn,
 			Statement creatorStmt) {
 		this.updateCount = updateCount;
 		this.updateId = updateID;
@@ -428,7 +429,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 *             if an error occurs
 	 */
 	public ResultSet(String catalog, Field[] fields, RowData tuples,
-			Connection conn, Statement creatorStmt) throws SQLException {
+			ConnectionImpl conn, Statement creatorStmt) throws SQLException {
 		this.connection = conn;
 
 		this.retainOwningStatement = false;
@@ -2119,12 +2120,12 @@ public class ResultSet implements java.sql.ResultSet {
 					|| stringVal.equals("00000000000000")
 					|| stringVal.equals("0")) {
 
-				if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					this.wasNullFlag = true;
 
 					return null;
-				} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException("Value '" + stringVal
 							+ "' can not be represented as java.sql.Date",
@@ -2294,12 +2295,12 @@ public class ResultSet implements java.sql.ResultSet {
 
 			if (!onlyTimePresent && allZeroDate) {
 
-				if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					this.wasNullFlag = true;
 
 					return null;
-				} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException("Value '" + new String(dateAsBytes)
 							+ "' can not be represented as java.sql.Date",
@@ -3886,12 +3887,12 @@ public class ResultSet implements java.sql.ResultSet {
 			}
 
 			if ((year == 0) && (month == 0) && (day == 0)) {
-				if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					this.wasNullFlag = true;
 
 					return null;
-				} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException(
 							"Value '0000-00-00' can not be represented as java.sql.Date",
@@ -4750,12 +4751,12 @@ public class ResultSet implements java.sql.ResultSet {
 			}
 
 			if ((year == 0) && (month == 0) && (day == 0)) {
-				if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					this.wasNullFlag = true;
 
 					return null;
-				} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException(
 							"Value '0000-00-00' can not be represented as java.sql.Timestamp",
@@ -5965,12 +5966,12 @@ public class ResultSet implements java.sql.ResultSet {
 					|| timeAsString.equals("0000-00-00")
 					|| timeAsString.equals("0000-00-00 00:00:00")
 					|| timeAsString.equals("00000000000000")) {
-				if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					this.wasNullFlag = true;
 
 					return null;
-				} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException("Value '" + timeAsString
 							+ "' can not be represented as java.sql.Time",
@@ -6137,12 +6138,12 @@ public class ResultSet implements java.sql.ResultSet {
 			}
 
 			if (!onlyTimePresent && allZeroTime) {
-				if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					this.wasNullFlag = true;
 
 					return null;
-				} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException("Value '" + new String(timeAsBytes)
 							+ "' can not be represented as java.sql.Time",
@@ -6415,12 +6416,12 @@ public class ResultSet implements java.sql.ResultSet {
 								|| timestampValue.equals("00000000000000") || timestampValue
 								.equals("0"))) {
 					
-					if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+					if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 							.equals(this.connection.getZeroDateTimeBehavior())) {
 						this.wasNullFlag = true;
 						
 						return null;
-					} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 							.equals(this.connection.getZeroDateTimeBehavior())) {
 						throw SQLError.createSQLException("Value '" + timestampValue
 								+ "' can not be represented as java.sql.Timestamp",
@@ -6725,12 +6726,12 @@ public class ResultSet implements java.sql.ResultSet {
 
 				if (!onlyTimePresent && allZeroTimestamp) {
 					
-					if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+					if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 							.equals(this.connection.getZeroDateTimeBehavior())) {
 						this.wasNullFlag = true;
 						
 						return null;
-					} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 							.equals(this.connection.getZeroDateTimeBehavior())) {
 						throw SQLError.createSQLException("Value '" + timestampAsBytes
 								+ "' can not be represented as java.sql.Timestamp",
@@ -9109,12 +9110,12 @@ public class ResultSet implements java.sql.ResultSet {
 		case Types.DATE:
 			if (populatedFromDateTimeValue) {
 				if ((year == 0) && (month == 0) && (day == 0)) {
-					if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+					if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 							.equals(this.connection.getZeroDateTimeBehavior())) {
 						this.wasNullFlag = true;
 
 						return null;
-					} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 							.equals(this.connection.getZeroDateTimeBehavior())) {
 						throw new SQLException(
 								"Value '0000-00-00' can not be represented as java.sql.Date",
@@ -9134,12 +9135,12 @@ public class ResultSet implements java.sql.ResultSet {
 		case Types.TIMESTAMP:
 			if (populatedFromDateTimeValue) {
 				if ((year == 0) && (month == 0) && (day == 0)) {
-					if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+					if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 							.equals(this.connection.getZeroDateTimeBehavior())) {
 						this.wasNullFlag = true;
 
 						return null;
-					} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 							.equals(this.connection.getZeroDateTimeBehavior())) {
 						throw new SQLException(
 								"Value '0000-00-00' can not be represented as java.sql.Timestamp",

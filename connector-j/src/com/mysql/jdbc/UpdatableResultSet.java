@@ -110,7 +110,7 @@ public class UpdatableResultSet extends ResultSet {
 	 *             DOCUMENT ME!
 	 */
 	protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples,
-			Connection conn, Statement creatorStmt) throws SQLException {
+			ConnectionImpl conn, Statement creatorStmt) throws SQLException {
 		super(catalog, fields, tuples, conn, creatorStmt);
 		checkUpdatability();
 	}

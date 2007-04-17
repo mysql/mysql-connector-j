@@ -28,7 +28,7 @@ import java.net.BindException;
 
 import java.sql.SQLRecoverableException;
 
-import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StreamingNotifiable;
 
@@ -50,7 +50,7 @@ public class CommunicationsException extends SQLRecoverableException implements 
 
 	private boolean streamingResultSetInPlay = false;
 
-	public CommunicationsException(Connection conn, long lastPacketSentTimeMs,
+	public CommunicationsException(ConnectionImpl conn, long lastPacketSentTimeMs,
 			Exception underlyingException) {
 
 		this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn,

@@ -651,7 +651,7 @@ public class CharsetMapping {
 	 * @return the Java encoding name that error messages use
 	 * @throws SQLException if determination of the character encoding fails
 	 */
-	final static String getCharacterEncodingForErrorMessages(Connection conn) throws SQLException {
+	final static String getCharacterEncodingForErrorMessages(ConnectionImpl conn) throws SQLException {
 		String errorMessageFile = conn.getServerVariable("language");
 		
 		if (errorMessageFile == null || errorMessageFile.length() == 0) {

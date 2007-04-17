@@ -33,6 +33,8 @@ import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
 import javax.sql.PooledConnection;
 
+import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.Constants;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
@@ -142,10 +144,12 @@ public class MysqlPooledConnection implements PooledConnection {
 			}
 
 			if (resetServerState) {
-				((com.mysql.jdbc.Connection) this.physicalConn).resetServerState();
+				this.physicalConn.resetServerState();
 			}
 
-			this.logicalHandle = new ConnectionWrapper(this, this.physicalConn, forXa);
+			this.logicalHandle = ConnectionWrapper.getInstance(this, 
+					(ConnectionImpl)this.physicalConn, 
+					forXa);
 		} catch (SQLException sqlException) {
 			callListener(CONNECTION_ERROR_EVENT, sqlException);
 

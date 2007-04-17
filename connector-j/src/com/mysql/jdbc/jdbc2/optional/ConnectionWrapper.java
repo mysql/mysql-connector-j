@@ -24,22 +24,16 @@
  */
 package com.mysql.jdbc.jdbc2.optional;
 
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
+import java.lang.reflect.Constructor;
 import java.sql.Connection;
-//import java.sql.NClob;
-//import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
-//import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
-import java.sql.Struct;
-import java.util.Properties;
 
+import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
+import com.mysql.jdbc.Util;
 
 /**
  * This class serves as a wrapper for the org.gjt.mm.mysql.jdbc2.Connection
@@ -64,7 +58,7 @@ import com.mysql.jdbc.exceptions.NotYetImplementedException;
  * @see org.gjt.mm.mysql.jdbc2.optional.MysqlPooledConnection
  */
 public class ConnectionWrapper extends WrapperBase implements Connection {
-	private com.mysql.jdbc.Connection mc = null;
+	protected com.mysql.jdbc.ConnectionImpl mc = null;
 
 	private MysqlPooledConnection mpc = null;
 
@@ -72,6 +66,44 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
 	private boolean closed;
 	private boolean isForXa;
+	
+	private static final Constructor JDBC_4_CONNECTION_WRAPPER_CTOR;
+	
+	static {
+		if (Util.isJdbc4()) {
+			try {
+				JDBC_4_CONNECTION_WRAPPER_CTOR = Class.forName(
+						"com.mysql.jdbc.jdbc2.optional.JDBC4ConnectionWrapper").getConstructor(
+						new Class[] { MysqlPooledConnection.class, 
+								ConnectionImpl.class,
+								Boolean.TYPE });
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			JDBC_4_CONNECTION_WRAPPER_CTOR = null;
+		}
+	}
+	
+	protected static ConnectionWrapper getInstance(
+			MysqlPooledConnection mysqlPooledConnection,
+			ConnectionImpl mysqlConnection,
+			boolean forXa
+			) throws SQLException {
+		if (!Util.isJdbc4()) {
+			return new ConnectionWrapper(mysqlPooledConnection, 
+					mysqlConnection, forXa);
+		}
+
+		return (ConnectionWrapper) Util.handleNewInstance(
+				JDBC_4_CONNECTION_WRAPPER_CTOR,
+				new Object[] { mysqlPooledConnection, 
+						mysqlConnection, Boolean.valueOf(forXa) });
+	}
 	
 	/**
 	 * Construct a new LogicalHandle and set instance variables
@@ -85,7 +117,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	 *             if an error occurs.
 	 */
 	public ConnectionWrapper(MysqlPooledConnection mysqlPooledConnection,
-			com.mysql.jdbc.Connection mysqlConnection,
+			ConnectionImpl mysqlConnection,
 			boolean forXa) throws SQLException {
 		this.mpc = mysqlPooledConnection;
 		this.mc = mysqlConnection;
@@ -827,7 +859,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		}
 	}
 
-	private void checkClosed() throws SQLException {
+	protected void checkClosed() throws SQLException {
 		if (this.closed) {
 			throw SQLError.createSQLException(this.invalidHandleStr);
 		}
@@ -846,118 +878,4 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 			this.mc.ping();
 		}
 	}
-//
-//	public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-//		checkClosed();
-//
-//		try {
-//			return this.mc.createArrayOf(typeName, elements);
-//		} catch (SQLException sqlException) {
-//			checkAndFireConnectionError(sqlException);
-//		}
-//
-//		return null; // we don't reach this code, compiler can't tell
-//	}
-//
-//	public Blob createBlob() throws SQLException {
-//		checkClosed();
-//		
-//		return this.mc.createBlob();
-//	}
-//
-//	public Clob createClob() throws SQLException {
-//		return this.mc.createClob();
-//	}
-//
-//	public NClob createNClob() throws SQLException {
-//		return this.mc.createNClob();
-//	}
-//
-//	public SQLXML createSQLXML() throws SQLException {
-//		checkClosed();
-//
-//		try {
-//			return this.mc.createSQLXML();
-//		} catch (SQLException sqlException) {
-//			checkAndFireConnectionError(sqlException);
-//		}
-//
-//		return null; // we don't reach this code, compiler can't tell
-//	}
-//
-//	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-//		checkClosed();
-//
-//		try {
-//			return this.mc.createStruct(typeName, attributes);
-//		} catch (SQLException sqlException) {
-//			checkAndFireConnectionError(sqlException);
-//		}
-//
-//		return null; // we don't reach this code, compiler can't tell
-//	}
-//
-//	public Properties getClientInfo() throws SQLException {
-//		checkClosed();
-//
-//		try {
-//			return this.mc.getClientInfo();
-//		} catch (SQLException sqlException) {
-//			checkAndFireConnectionError(sqlException);
-//		}
-//
-//		return null; // we don't reach this code, compiler can't tell
-//	}
-//
-//	public String getClientInfo(String name) throws SQLException {
-//		checkClosed();
-//
-//		try {
-//			return this.mc.getClientInfo(name);
-//		} catch (SQLException sqlException) {
-//			checkAndFireConnectionError(sqlException);
-//		}
-//
-//		return null; // we don't reach this code, compiler can't tell
-//	}
-//
-//	public boolean isValid(int timeout) throws SQLException {
-//		checkClosed();
-//
-//		try {
-//			return this.mc.isValid(timeout);
-//		} catch (SQLException sqlException) {
-//			checkAndFireConnectionError(sqlException);
-//		}
-//
-//		return false; // we don't reach this code, compiler can't tell
-//	}
-//
-//	public void setClientInfo(Properties properties) throws SQLClientInfoException {
-//		//checkClosed();
-//
-//		try {
-//			this.mc.setClientInfo(properties);
-//		} catch (SQLException sqlException) {
-//			//checkAndFireConnectionError(sqlException);
-//		}	
-//	}
-//
-//	public void setClientInfo(String name, String value) throws SQLClientInfoException {
-//		//checkClosed();
-//
-//		try {
-//			this.mc.setClientInfo(name, value);
-//		} catch (SQLException sqlException) {
-//			//checkAndFireConnectionError(sqlException);
-//		}
-//	}
-//
-//	public boolean isWrapperFor(Class arg0) throws SQLException {
-//		throw new NotYetImplementedException();
-//	}
-//
-//	public Object unwrap(Class arg0) throws SQLException {
-//		throw new NotYetImplementedException();
-//	}
 }

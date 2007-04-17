@@ -35,7 +35,7 @@ import java.sql.Types;
  */
 public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
-	protected DatabaseMetaDataUsingInfoSchema(Connection connToSet,
+	protected DatabaseMetaDataUsingInfoSchema(ConnectionImpl connToSet,
 			String databaseToSet) {
 		super(connToSet, databaseToSet);
 	}

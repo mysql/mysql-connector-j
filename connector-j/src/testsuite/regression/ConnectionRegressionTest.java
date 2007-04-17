@@ -44,6 +44,7 @@ import java.util.StringTokenizer;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
@@ -1237,8 +1238,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 			try {
 				replConn = getMasterSlaveReplicationConnection();
-				assertTrue(!((ReplicationConnection) replConn)
-						.getMasterConnection().hasSameProperties(
+				assertTrue(!((ConnectionImpl) ((ReplicationConnection) replConn)
+						.getMasterConnection()).hasSameProperties(
 								((ReplicationConnection) replConn)
 										.getSlavesConnection()));
 			} finally {

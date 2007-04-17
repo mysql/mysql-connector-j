@@ -101,7 +101,7 @@ class EscapeProcessor {
 	 */
 	public static final Object escapeSQL(String sql,
 			boolean serverSupportsConvertFn, 
-			Connection conn) throws java.sql.SQLException {
+			ConnectionImpl conn) throws java.sql.SQLException {
 		boolean replaceEscapeSequence = false;
 		String escapeSequence = null;
 

@@ -484,12 +484,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			try {
 				JDBC_4_DBMD_SHOW_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4DatabaseMetaData").getConstructor(
-						new Class[] { com.mysql.jdbc.Connection.class,
+						new Class[] { com.mysql.jdbc.ConnectionImpl.class,
 								String.class });
 				JDBC_4_DBMD_IS_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4DatabaseMetaDataUsingInfoSchema")
 						.getConstructor(
-								new Class[] { com.mysql.jdbc.Connection.class,
+								new Class[] { com.mysql.jdbc.ConnectionImpl.class,
 										String.class });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
@@ -624,7 +624,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 	
 	/** The connection to the database */
-	protected Connection conn;
+	protected ConnectionImpl conn;
 
 	/** The 'current' database name being used */
 	protected String database = null;
@@ -636,7 +636,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	// and JDBC4 runtimes, otherwise the class verifier complains...
 	
 	protected static DatabaseMetaData getInstance(
-			com.mysql.jdbc.Connection connToSet, String databaseToSet)
+			ConnectionImpl connToSet, String databaseToSet)
 			throws SQLException {
 		if (!Util.isJdbc4()) {
 			if (connToSet != null && connToSet.getUseInformationSchema()
@@ -668,7 +668,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * @param databaseToSet
 	 *            DOCUMENT ME!
 	 */
-	protected DatabaseMetaData(Connection connToSet, String databaseToSet) {
+	protected DatabaseMetaData(ConnectionImpl connToSet, String databaseToSet) {
 		this.conn = connToSet;
 		this.database = databaseToSet;
 
@@ -712,7 +712,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 	
 	static java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields,
-			java.util.ArrayList rows, Connection c) throws SQLException {
+			java.util.ArrayList rows, ConnectionImpl c) throws SQLException {
 		int fieldsLength = fields.length;
 
 		for (int i = 0; i < fieldsLength; i++) {

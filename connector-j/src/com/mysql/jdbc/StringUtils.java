@@ -449,7 +449,8 @@ public class StringUtils {
 	}
 
 	public static final byte[] getBytes(char[] c, String encoding,
-			String serverEncoding, boolean parserKnowsUnicode, Connection conn)
+			String serverEncoding, boolean parserKnowsUnicode, 
+			ConnectionImpl conn)
 			throws SQLException {
 		try {
 			
@@ -606,7 +607,8 @@ public class StringUtils {
 	 *             if an encoding unsupported by the JVM is supplied.
 	 */
 	public static final byte[] getBytes(String s, String encoding,
-			String serverEncoding, boolean parserKnowsUnicode, Connection conn)
+			String serverEncoding, boolean parserKnowsUnicode, 
+			ConnectionImpl conn)
 			throws SQLException {
 		try {
 			SingleByteCharsetConverter converter = null;
@@ -1430,7 +1432,7 @@ public class StringUtils {
 				: WILD_COMPARE_MATCH_NO_WILD);
 	}
 	
-	static byte[] s2b(String s, Connection conn) throws SQLException {
+	static byte[] s2b(String s, ConnectionImpl conn) throws SQLException {
 		if (s == null) {
 			return null;
 		}

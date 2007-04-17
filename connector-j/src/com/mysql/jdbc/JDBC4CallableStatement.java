@@ -36,11 +36,11 @@ import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 public class JDBC4CallableStatement extends CallableStatement {
 
-	public JDBC4CallableStatement(Connection conn, CallableStatementParamInfo paramInfo) throws SQLException {
+	public JDBC4CallableStatement(ConnectionImpl conn, CallableStatementParamInfo paramInfo) throws SQLException {
 		super(conn, paramInfo);
 	}
 	
-	public JDBC4CallableStatement(Connection conn, String sql, String catalog,
+	public JDBC4CallableStatement(ConnectionImpl conn, String sql, String catalog,
 			boolean isFunctionCall) throws SQLException {
 		super(conn, sql, catalog, isFunctionCall);
 	}

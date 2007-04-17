@@ -150,7 +150,7 @@ public class RowDataDynamic implements RowData {
 
 		Object mutex = this;
 
-		Connection conn = null;
+		ConnectionImpl conn = null;
 
 		if (this.owner != null) {
 			conn = this.owner.connection;

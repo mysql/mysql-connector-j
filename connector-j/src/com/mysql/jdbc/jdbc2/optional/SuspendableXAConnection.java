@@ -11,11 +11,12 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.ConnectionImpl;
 
 public class SuspendableXAConnection extends MysqlPooledConnection implements
 XAConnection, XAResource {
 
-	public SuspendableXAConnection(Connection connection) {
+	public SuspendableXAConnection(ConnectionImpl connection) {
 		super(connection);
 		this.underlyingConnection = connection;
 	}
@@ -28,9 +29,9 @@ XAConnection, XAResource {
 	private XAConnection currentXAConnection;
 	private XAResource currentXAResource;
 	
-	private Connection underlyingConnection;
+	private ConnectionImpl underlyingConnection;
 	
-	private static synchronized XAConnection findConnectionForXid(Connection connectionToWrap, Xid xid) 
+	private static synchronized XAConnection findConnectionForXid(ConnectionImpl connectionToWrap, Xid xid) 
 		throws SQLException {
 		// TODO: check for same GTRID, but different BQUALs...MySQL doesn't allow this yet
 		

@@ -34,12 +34,12 @@ import java.util.Properties;
 import java.util.TimerTask;
 
 
-import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
-public class JDBC4Connection extends Connection {
+public class JDBC4Connection extends ConnectionImpl {
 	private JDBC4ClientInfoProvider infoProvider;
 	
 	public JDBC4Connection(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url) throws SQLException {

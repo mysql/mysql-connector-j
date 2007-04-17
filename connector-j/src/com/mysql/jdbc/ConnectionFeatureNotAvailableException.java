@@ -42,7 +42,7 @@ public class ConnectionFeatureNotAvailableException extends
 	 * @param lastPacketSentTimeMs
 	 * @param underlyingException
 	 */
-	public ConnectionFeatureNotAvailableException(Connection conn,
+	public ConnectionFeatureNotAvailableException(ConnectionImpl conn,
 			long lastPacketSentTimeMs, Exception underlyingException) {
 		super(conn, lastPacketSentTimeMs, underlyingException);
 	}

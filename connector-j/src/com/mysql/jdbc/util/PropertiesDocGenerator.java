@@ -26,13 +26,13 @@ package com.mysql.jdbc.util;
 
 import java.sql.SQLException;
 
-import com.mysql.jdbc.ConnectionProperties;
+import com.mysql.jdbc.ConnectionPropertiesImpl;
 
 /**
  * Creates docbook table of connection properties from ConnectionProperties
  * class.
  */
-public class PropertiesDocGenerator extends ConnectionProperties {
+public class PropertiesDocGenerator extends ConnectionPropertiesImpl {
 
 	public static void main(String[] args) throws SQLException {
 		System.out.println(new PropertiesDocGenerator().exposeAsXml());

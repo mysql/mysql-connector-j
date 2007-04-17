@@ -71,7 +71,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			try {
 				JDBC_4_SPS_CTOR = Class.forName("com.mysql.jdbc.JDBC4ServerPreparedStatement")
 				.getConstructor(
-				new Class[] { Connection.class, String.class, String.class,
+				new Class[] { ConnectionImpl.class, String.class, String.class,
 						Integer.TYPE, Integer.TYPE});
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
@@ -299,7 +299,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * interface classes that are present in JDBC4 method signatures.
 	 */
 
-	protected static ServerPreparedStatement getInstance(Connection conn,
+	protected static ServerPreparedStatement getInstance(ConnectionImpl conn,
 			String sql, String catalog, int resultSetType,
 			int resultSetConcurrency) throws SQLException {
 		if (!Util.isJdbc4()) {
@@ -341,7 +341,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 *             If an error occurs
 	 */
-	protected ServerPreparedStatement(Connection conn, String sql, String catalog,
+	protected ServerPreparedStatement(ConnectionImpl conn, String sql, String catalog,
 			int resultSetType, int resultSetConcurrency)
 			throws SQLException {
 		super(conn, catalog);
@@ -767,7 +767,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 						.append("\n\nQuery being executed when exception was thrown:\n\n");
 				messageBuf.append(extractedSql);
 
-				sqlEx = Connection.appendMessageToException(sqlEx, messageBuf
+				sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf
 						.toString());
 			}
 
@@ -788,7 +788,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 						.append("\n\nQuery being executed when exception was thrown:\n\n");
 				messageBuf.append(extractedSql);
 
-				sqlEx = Connection.appendMessageToException(sqlEx, messageBuf
+				sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf
 						.toString());
 			}
 
@@ -1514,7 +1514,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 							.append("\n\nQuery being prepared when exception was thrown:\n\n");
 					messageBuf.append(this.originalSql);
 
-					sqlEx = Connection.appendMessageToException(sqlEx,
+					sqlEx = ConnectionImpl.appendMessageToException(sqlEx,
 							messageBuf.toString());
 				}
 

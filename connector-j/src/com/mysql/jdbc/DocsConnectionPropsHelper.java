@@ -12,7 +12,7 @@ package com.mysql.jdbc;
  * To change the template for this generated type comment go to Window -
  * Preferences - Java - Code Generation - Code and Comments
  */
-public class DocsConnectionPropsHelper extends ConnectionProperties {
+public class DocsConnectionPropsHelper extends ConnectionPropertiesImpl {
 
 	public static void main(String[] args) throws Exception {
 		System.out.println(new DocsConnectionPropsHelper().exposeAsXml());

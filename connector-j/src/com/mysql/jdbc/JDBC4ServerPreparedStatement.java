@@ -36,7 +36,7 @@ import com.mysql.jdbc.ServerPreparedStatement.BindValue;
 
 public class JDBC4ServerPreparedStatement extends ServerPreparedStatement {
 
-	public JDBC4ServerPreparedStatement(Connection conn, String sql, String catalog, int resultSetType, int resultSetConcurrency) throws SQLException {
+	public JDBC4ServerPreparedStatement(ConnectionImpl conn, String sql, String catalog, int resultSetType, int resultSetConcurrency) throws SQLException {
 		super(conn, sql, catalog, resultSetType, resultSetConcurrency);
 		// TODO Auto-generated constructor stub
 	}

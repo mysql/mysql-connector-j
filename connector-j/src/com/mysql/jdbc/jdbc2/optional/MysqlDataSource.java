@@ -24,7 +24,7 @@
  */
 package com.mysql.jdbc.jdbc2.optional;
 
-import com.mysql.jdbc.ConnectionProperties;
+import com.mysql.jdbc.ConnectionPropertiesImpl;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
@@ -47,7 +47,7 @@ import javax.sql.DataSource;
  * 
  * @author Mark Matthews
  */
-public class MysqlDataSource extends ConnectionProperties implements
+public class MysqlDataSource extends ConnectionPropertiesImpl implements
 		DataSource, Referenceable, Serializable  {
 	/** The driver to create connections with */
 	protected static com.mysql.jdbc.Driver mysqlDriver = null;

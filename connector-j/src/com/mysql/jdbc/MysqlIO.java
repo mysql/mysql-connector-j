@@ -150,7 +150,7 @@ class MysqlIO {
 
     /** Data to the server */
     protected BufferedOutputStream mysqlOutput = null;
-    protected com.mysql.jdbc.Connection connection;
+    protected ConnectionImpl connection;
     private Deflater deflater = null;
     protected InputStream mysqlInput = null;
     private LinkedList packetDebugRingBuffer = null;
@@ -240,7 +240,7 @@ class MysqlIO {
      * @throws SQLException if a database access error occurs.
      */
     public MysqlIO(String host, int port, Properties props,
-        String socketFactoryClassName, com.mysql.jdbc.Connection conn,
+        String socketFactoryClassName, ConnectionImpl conn,
         int socketTimeout) throws IOException, SQLException {
         this.connection = conn;
 
@@ -3651,12 +3651,12 @@ class MysqlIO {
     		}
     		
     		if ((year == 0) && (month == 0) && (day == 0)) {
-    			if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(
+    			if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(
     					this.connection.getZeroDateTimeBehavior())) {
     				unpackedRowData[columnIndex] = null;
     				
     				break;
-    			} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(
+    			} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(
     					this.connection.getZeroDateTimeBehavior())) {
     				throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Date",
     						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
@@ -3733,12 +3733,12 @@ class MysqlIO {
     		}
     		
     		if ((year == 0) && (month == 0) && (day == 0)) {
-    			if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(
+    			if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL.equals(
     					this.connection.getZeroDateTimeBehavior())) {
     				unpackedRowData[columnIndex] = null;
     				
     				break;
-    			} else if (ConnectionProperties.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(
+    			} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(
     					this.connection.getZeroDateTimeBehavior())) {
     				throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Timestamp",
     						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);

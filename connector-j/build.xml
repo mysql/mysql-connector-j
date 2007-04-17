@@ -658,7 +658,7 @@
 			<exclude name="testsuite/**" />
 			<exclude name="com/mysql/jdbc/integration/**" />
 			<exclude name="com/mysql/jdbc/log/Log4JLogger.java" />
-			<exclude name="com/mysql/jdbc/JDBC4*.java" />
+			<exclude name="**/JDBC4*.java" />
 			<exclude name="com/mysql/jdbc/exceptions/jdbc4/*" />
 			
 			<classpath refid="project.build.classpath" />

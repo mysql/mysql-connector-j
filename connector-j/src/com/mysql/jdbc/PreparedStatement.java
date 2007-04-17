@@ -94,16 +94,16 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 				JDBC_4_PSTMT_2_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4PreparedStatement")
 						.getConstructor(
-								new Class[] { Connection.class, String.class });
+								new Class[] { ConnectionImpl.class, String.class });
 				JDBC_4_PSTMT_3_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4PreparedStatement")
 						.getConstructor(
-								new Class[] { Connection.class, String.class,
+								new Class[] { ConnectionImpl.class, String.class,
 										String.class });
 				JDBC_4_PSTMT_4_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4PreparedStatement")
 						.getConstructor(
-								new Class[] { Connection.class, String.class,
+								new Class[] { ConnectionImpl.class, String.class,
 										String.class, ParseInfo.class });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
@@ -185,7 +185,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 		 * it's static and dynamic (where parameters are bound) 
 		 * parts.
 		 */
-		public ParseInfo(String sql, Connection conn,
+		public ParseInfo(String sql, ConnectionImpl conn,
 				java.sql.DatabaseMetaData dbmd, String encoding,
 				SingleByteCharsetConverter converter) throws SQLException {
 			if (sql == null) {
@@ -503,7 +503,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * interface classes that are present in JDBC4 method signatures.
 	 */
 
-	protected static PreparedStatement getInstance(Connection conn,
+	protected static PreparedStatement getInstance(ConnectionImpl conn,
 			String catalog) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new PreparedStatement(conn, catalog);
@@ -520,7 +520,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * interface classes that are present in JDBC4 method signatures.
 	 */
 
-	protected static PreparedStatement getInstance(Connection conn, String sql,
+	protected static PreparedStatement getInstance(ConnectionImpl conn, String sql,
 			String catalog) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new PreparedStatement(conn, sql, catalog);
@@ -537,7 +537,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * interface classes that are present in JDBC4 method signatures.
 	 */
 
-	protected static PreparedStatement getInstance(Connection conn, String sql,
+	protected static PreparedStatement getInstance(ConnectionImpl conn, String sql,
 			String catalog, ParseInfo cachedParseInfo) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new PreparedStatement(conn, sql, catalog, cachedParseInfo);
@@ -559,7 +559,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public PreparedStatement(Connection conn, String catalog)
+	public PreparedStatement(ConnectionImpl conn, String catalog)
 			throws SQLException {
 		super(conn, catalog);
 	}
@@ -577,7 +577,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * @throws SQLException
 	 *             if a database error occurs.
 	 */
-	public PreparedStatement(Connection conn, String sql, String catalog)
+	public PreparedStatement(ConnectionImpl conn, String sql, String catalog)
 			throws SQLException {
 		super(conn, catalog);
 
@@ -613,7 +613,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	public PreparedStatement(Connection conn, String sql, String catalog,
+	public PreparedStatement(ConnectionImpl conn, String sql, String catalog,
 			ParseInfo cachedParseInfo) throws SQLException {
 		super(conn, catalog);
 
@@ -862,7 +862,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	public boolean execute() throws SQLException {
 		checkClosed();
 		
-		Connection locallyScopedConn = this.connection;
+		ConnectionImpl locallyScopedConn = this.connection;
 		
 		if (locallyScopedConn.isReadOnly() && (this.firstCharOfStmt != 'S')) {
 			throw SQLError.createSQLException(Messages.getString("PreparedStatement.20") //$NON-NLS-1$
@@ -1382,7 +1382,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 				this.wasCancelled = false;
 			}
 			
-			Connection locallyScopedConnection= this.connection;
+			ConnectionImpl locallyScopedConnection = this.connection;
 			
 			this.numberOfExecutions++;
 	
@@ -1395,7 +1395,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 						this.timeoutInMillis != 0
 						&& locallyScopedConnection.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask();
-					Connection.getCancelTimer().schedule(timeoutTask, 
+					ConnectionImpl.getCancelTimer().schedule(timeoutTask, 
 							this.timeoutInMillis);
 				}
 				
@@ -1448,7 +1448,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	public java.sql.ResultSet executeQuery() throws SQLException {
 		checkClosed();
 		
-		Connection locallyScopedConn = this.connection;
+		ConnectionImpl locallyScopedConn = this.connection;
 		
 		checkForDml(this.originalSql, this.firstCharOfStmt);
 
@@ -1635,7 +1635,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 
 		checkClosed();
 
-		Connection locallyScopedConn = this.connection;
+		ConnectionImpl locallyScopedConn = this.connection;
 		
 		if (locallyScopedConn.isReadOnly()) {
 			throw SQLError.createSQLException(Messages.getString("PreparedStatement.34") //$NON-NLS-1$

@@ -1062,7 +1062,7 @@ public class SQLError {
 		}
 	}
 	
-	public static SQLException createCommunicationsException(Connection conn, long lastPacketSentTimeMs,
+	public static SQLException createCommunicationsException(ConnectionImpl conn, long lastPacketSentTimeMs,
 			Exception underlyingException) {
 		SQLException exToReturn = null;
 		
@@ -1103,7 +1103,8 @@ public class SQLError {
 	 * @param streamingResultSetInPlay
 	 * @return
 	 */
-	public static String createLinkFailureMessageBasedOnHeuristics(Connection conn,
+	public static String createLinkFailureMessageBasedOnHeuristics(
+			ConnectionImpl conn,
 			long lastPacketSentTimeMs, Exception underlyingException,
 			boolean streamingResultSetInPlay) {
 		long serverTimeoutSeconds = 0;

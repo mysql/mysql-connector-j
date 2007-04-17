@@ -1,6 +1,24 @@
 # Changelog
 # $Id$
+04-nn-07 - Version 5.1.1 Alpha
 
+    - Pulled vendor-extension methods of Connection implementation out
+      into an interface to support java.sql.Wrapper functionality from
+      ConnectionPoolDataSource. The vendor extensions are javadoc'd in
+      the com.mysql.jdbc.Connection interface.
+      
+      For those looking further into the driver implementation, it is not
+      an API that is used for plugability of implementations inside our driver
+      (which is why there are still references to ConnectionImpl throughout the
+      code).
+      
+      Incompatible change: Connection.serverPrepare(String) has been re-named
+      to Connection.serverPrepareStatement() for consistency with 
+      Connection.clientPrepareStatement().
+      
+      We've also added server and client prepareStatement() methods that cover
+      all of the variants in the JDBC API.
+      
 04-11-07 - Version 5.1.0 Alpha
 	
 	- Bumped JDBC Specification version number in jar-file manifest.

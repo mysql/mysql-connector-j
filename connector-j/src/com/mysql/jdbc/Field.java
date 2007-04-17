@@ -57,7 +57,7 @@ public class Field {
 
 	private String collationName = null;
 
-	private Connection connection = null;
+	private ConnectionImpl connection = null;
 
 	private String databaseName = null;
 
@@ -123,7 +123,7 @@ public class Field {
 	/**
 	 * Constructor used when communicating with 4.1 and newer servers
 	 */
-	Field(Connection conn, byte[] buffer, int databaseNameStart,
+	Field(ConnectionImpl conn, byte[] buffer, int databaseNameStart,
 			int databaseNameLength, int tableNameStart, int tableNameLength,
 			int originalTableNameStart, int originalTableNameLength,
 			int nameStart, int nameLength, int originalColumnNameStart,
@@ -287,7 +287,7 @@ public class Field {
 	/**
 	 * Constructor used when communicating with pre 4.1 servers
 	 */
-	Field(Connection conn, byte[] buffer, int nameStart, int nameLength,
+	Field(ConnectionImpl conn, byte[] buffer, int nameStart, int nameLength,
 			int tableNameStart, int tableNameLength, int length, int mysqlType,
 			short colFlag, int colDecimals) throws SQLException {
 		this(conn, buffer, -1, -1, tableNameStart, tableNameLength, -1, -1,
@@ -845,7 +845,7 @@ public class Field {
 	 * @param conn
 	 *            DOCUMENT ME!
 	 */
-	public void setConnection(Connection conn) {
+	public void setConnection(ConnectionImpl conn) {
 		this.connection = conn;
 
 		this.charsetName = this.connection.getEncoding();

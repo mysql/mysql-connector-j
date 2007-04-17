@@ -263,7 +263,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		}
 
 		try {
-			Connection newConn = com.mysql.jdbc.Connection.getInstance(
+			Connection newConn = com.mysql.jdbc.ConnectionImpl.getInstance(
 					host(props), port(props), props, database(props), url);
 
 			return newConn;
@@ -373,7 +373,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		passwordProp.description = Messages
 				.getString("NonRegisteringDriver.16"); //$NON-NLS-1$
 
-		DriverPropertyInfo[] dpi = ConnectionProperties
+		DriverPropertyInfo[] dpi = ConnectionPropertiesImpl
 				.exposeAsDriverPropertyInfo(info, 5);
 
 		dpi[0] = hostProp;

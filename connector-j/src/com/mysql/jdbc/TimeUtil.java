@@ -808,7 +808,7 @@ public class TimeUtil {
 	 * 
 	 * @return the times changed to the timezone 'toTz'
 	 */
-	public static Time changeTimezone(Connection conn,
+	public static Time changeTimezone(ConnectionImpl conn,
 			Calendar sessionCalendar, 
 			Calendar targetCalendar, 
 			Time t, 
@@ -870,7 +870,7 @@ public class TimeUtil {
 	 * 
 	 * @return the timestamp changed to the timezone 'toTz'
 	 */
-	public static Timestamp changeTimezone(Connection conn, 
+	public static Timestamp changeTimezone(ConnectionImpl conn, 
 			Calendar sessionCalendar, 
 			Calendar targetCalendar, 
 			Timestamp tstamp,

@@ -38,16 +38,16 @@ import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 public class JDBC4PreparedStatement extends PreparedStatement {
 
-	public JDBC4PreparedStatement(Connection conn, String catalog) throws SQLException {
+	public JDBC4PreparedStatement(ConnectionImpl conn, String catalog) throws SQLException {
 		super(conn, catalog);
 	}
 	
-	public JDBC4PreparedStatement(Connection conn, String sql, String catalog)
+	public JDBC4PreparedStatement(ConnectionImpl conn, String sql, String catalog)
 		throws SQLException {
 		super(conn, sql, catalog);
 	}
 	
-	public JDBC4PreparedStatement(Connection conn, String sql, String catalog,
+	public JDBC4PreparedStatement(ConnectionImpl conn, String sql, String catalog,
 			ParseInfo cachedParseInfo) throws SQLException {
 		super(conn, sql, catalog, cachedParseInfo);
 	}

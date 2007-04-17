@@ -150,7 +150,7 @@ public class Statement implements java.sql.Statement {
 	protected String charEncoding = null;
 
 	/** The connection that created us */
-	protected Connection connection = null;
+	protected ConnectionImpl connection = null;
 	
 	protected long connectionId = 0;
 
@@ -246,7 +246,7 @@ public class Statement implements java.sql.Statement {
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	public Statement(Connection c, String catalog) throws SQLException {
+	public Statement(ConnectionImpl c, String catalog) throws SQLException {
 		if ((c == null) || c.isClosed()) {
 			throw SQLError.createSQLException(
 					Messages.getString("Statement.0"), //$NON-NLS-1$
@@ -560,7 +560,7 @@ public class Statement implements java.sql.Statement {
 	public boolean execute(String sql) throws SQLException {
 		checkClosed();
 		
-		Connection locallyScopedConn = this.connection;
+		ConnectionImpl locallyScopedConn = this.connection;
 		
 		synchronized (locallyScopedConn.getMutex()) {
 			synchronized (this.cancelTimeoutMutex) {
@@ -647,7 +647,7 @@ public class Statement implements java.sql.Statement {
 							this.timeoutInMillis != 0
 							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 						timeoutTask = new CancelTask();
-						Connection.getCancelTimer().schedule(timeoutTask, 
+						ConnectionImpl.getCancelTimer().schedule(timeoutTask, 
 								this.timeoutInMillis);
 					}
 
@@ -782,7 +782,7 @@ public class Statement implements java.sql.Statement {
 		if (returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS) {
 			checkClosed();
 			
-			Connection locallyScopedConn = this.connection;
+			ConnectionImpl locallyScopedConn = this.connection;
 			
 			synchronized (locallyScopedConn.getMutex()) {
 				// If this is a 'REPLACE' query, we need to be able to parse
@@ -811,7 +811,7 @@ public class Statement implements java.sql.Statement {
 		if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
 			checkClosed();
 			
-			Connection locallyScopedConn = this.connection;
+			ConnectionImpl locallyScopedConn = this.connection;
 			
 			synchronized (locallyScopedConn.getMutex()) {
 				// If this is a 'REPLACE' query, we need to be able to parse
@@ -840,7 +840,7 @@ public class Statement implements java.sql.Statement {
 		if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
 			checkClosed();
 
-			Connection locallyScopedConn = this.connection;
+			ConnectionImpl locallyScopedConn = this.connection;
 			
 			synchronized (locallyScopedConn.getMutex()) {
 				// If this is a 'REPLACE' query, we need to be able to parse
@@ -878,7 +878,7 @@ public class Statement implements java.sql.Statement {
 	public synchronized int[] executeBatch() throws SQLException {
 		checkClosed();
 		
-		Connection locallyScopedConn = this.connection;
+		ConnectionImpl locallyScopedConn = this.connection;
 		
 		if (locallyScopedConn.isReadOnly()) {
 			throw SQLError.createSQLException(Messages
@@ -972,7 +972,7 @@ public class Statement implements java.sql.Statement {
 	private int[] executeBatchUsingMultiQueries(boolean multiQueriesEnabled,
 			int nbrCommands) throws SQLException {
 
-		Connection locallyScopedConn = this.connection;
+		ConnectionImpl locallyScopedConn = this.connection;
 		
 		if (!multiQueriesEnabled) {
 			locallyScopedConn.getIO().enableMultiQueries();
@@ -1091,7 +1091,7 @@ public class Statement implements java.sql.Statement {
 			throws SQLException {
 		checkClosed();
 		
-		Connection locallyScopedConn = this.connection;
+		ConnectionImpl locallyScopedConn = this.connection;
 		
 		synchronized (locallyScopedConn.getMutex()) {
 			synchronized (this.cancelTimeoutMutex) {
@@ -1164,7 +1164,7 @@ public class Statement implements java.sql.Statement {
 						this.timeoutInMillis != 0
 						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask();
-					Connection.getCancelTimer().schedule(timeoutTask, 
+					ConnectionImpl.getCancelTimer().schedule(timeoutTask, 
 							this.timeoutInMillis);
 				}
 
@@ -1294,7 +1294,7 @@ public class Statement implements java.sql.Statement {
 		throws SQLException {
 		checkClosed();
 
-		Connection locallyScopedConn = this.connection;
+		ConnectionImpl locallyScopedConn = this.connection;
 
 		char firstStatementChar = StringUtils.firstNonWsCharUc(sql);
 
@@ -1350,7 +1350,7 @@ public class Statement implements java.sql.Statement {
 						this.timeoutInMillis != 0
 						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask();
-					Connection.getCancelTimer().schedule(timeoutTask, 
+					ConnectionImpl.getCancelTimer().schedule(timeoutTask, 
 							this.timeoutInMillis);
 				}
 
@@ -1432,7 +1432,7 @@ public class Statement implements java.sql.Statement {
 		if (returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS) {
 			checkClosed();
 
-			Connection locallyScopedConn = this.connection;
+			ConnectionImpl locallyScopedConn = this.connection;
 			
 			synchronized (locallyScopedConn.getMutex()) {
 				// If this is a 'REPLACE' query, we need to be able to parse
@@ -1461,7 +1461,7 @@ public class Statement implements java.sql.Statement {
 		if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
 			checkClosed();
 			
-			Connection locallyScopedConn = this.connection;
+			ConnectionImpl locallyScopedConn = this.connection;
 			
 			synchronized (locallyScopedConn.getMutex()) {
 				// If this is a 'REPLACE' query, we need to be able to parse
@@ -1490,7 +1490,7 @@ public class Statement implements java.sql.Statement {
 		if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
 			checkClosed();
 
-			Connection locallyScopedConn = this.connection;
+			ConnectionImpl locallyScopedConn = this.connection;
 			
 			synchronized (locallyScopedConn.getMutex()) {
 				// If this is a 'REPLACE' query, we need to be able to parse

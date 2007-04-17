@@ -35,7 +35,7 @@ import com.mysql.jdbc.Field;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 public class JDBC4DatabaseMetaDataUsingInfoSchema extends DatabaseMetaDataUsingInfoSchema {
-	public JDBC4DatabaseMetaDataUsingInfoSchema(Connection connToSet, String databaseToSet) {
+	public JDBC4DatabaseMetaDataUsingInfoSchema(ConnectionImpl connToSet, String databaseToSet) {
 		super(connToSet, databaseToSet);
 	}
 

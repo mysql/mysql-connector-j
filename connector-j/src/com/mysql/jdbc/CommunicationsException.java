@@ -47,7 +47,7 @@ public class CommunicationsException extends SQLException implements StreamingNo
 
 	private boolean streamingResultSetInPlay = false;
 
-	public CommunicationsException(Connection conn, long lastPacketSentTimeMs,
+	public CommunicationsException(ConnectionImpl conn, long lastPacketSentTimeMs,
 			Exception underlyingException) {
 
 		this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn,

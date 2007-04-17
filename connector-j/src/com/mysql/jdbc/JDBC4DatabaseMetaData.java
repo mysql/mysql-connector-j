@@ -34,9 +34,8 @@ import com.mysql.jdbc.Field;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 public class JDBC4DatabaseMetaData extends DatabaseMetaData {
-	public JDBC4DatabaseMetaData(Connection connToSet, String databaseToSet) {
+	public JDBC4DatabaseMetaData(ConnectionImpl connToSet, String databaseToSet) {
 		super(connToSet, databaseToSet);
-		// TODO Auto-generated constructor stub
 	}
 
 	public boolean autoCommitFailureClosesAllResultSets() throws SQLException {

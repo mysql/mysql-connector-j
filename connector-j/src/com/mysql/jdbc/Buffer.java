@@ -564,7 +564,7 @@ class Buffer {
 	// encoding
 	final void writeLenString(String s, String encoding, String serverEncoding,
 			SingleByteCharsetConverter converter, boolean parserKnowsUnicode,
-			Connection conn)
+			ConnectionImpl conn)
 			throws UnsupportedEncodingException, SQLException {
 		byte[] b = null;
 
@@ -623,7 +623,7 @@ class Buffer {
 	}
 	
 	//	 Write null-terminated string in the given encoding
-	final void writeString(String s, String encoding, Connection conn) throws SQLException {
+	final void writeString(String s, String encoding, ConnectionImpl conn) throws SQLException {
 		ensureCapacity((s.length() * 2) + 1);
 		try {
 			writeStringNoNull(s, encoding, encoding, false, conn);
@@ -650,7 +650,7 @@ class Buffer {
 	// Write a String using the specified character
 	// encoding
 	final void writeStringNoNull(String s, String encoding,
-			String serverEncoding, boolean parserKnowsUnicode, Connection conn)
+			String serverEncoding, boolean parserKnowsUnicode, ConnectionImpl conn)
 			throws UnsupportedEncodingException, SQLException {
 		byte[] b = StringUtils.getBytes(s, encoding, serverEncoding,
 				parserKnowsUnicode, conn);
