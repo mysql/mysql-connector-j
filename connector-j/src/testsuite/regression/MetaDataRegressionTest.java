@@ -1690,7 +1690,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	}
 	
 	public void testCharacterSetForDBMD() throws Exception {
-		if (versionMeetsMinimum(5, 1)) {
+		if (versionMeetsMinimum(5, 0)) {
 			// server is broken, fixed in 5.2/6.0?
 			
 			if (!versionMeetsMinimum(5, 2)) {

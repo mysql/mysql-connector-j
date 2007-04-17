@@ -3434,7 +3434,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		
 		if (this.versionMeetsMinimum(4, 1)) {
 			this.pstmt = ((com.mysql.jdbc.Connection)this.conn)
-			.serverPrepare("UPDATE testBug21438 SET test_date=ADDDATE(?,INTERVAL 1 YEAR) WHERE t_id=1;");
+			.serverPrepareStatement("UPDATE testBug21438 SET test_date=ADDDATE(?,INTERVAL 1 YEAR) WHERE t_id=1;");
 	    	
 			try {
 	    		Timestamp ts = new Timestamp(System.currentTimeMillis());

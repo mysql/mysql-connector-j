@@ -3791,7 +3791,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 					.getColumnType(2));
 
 			this.rs = ((com.mysql.jdbc.Connection) this.conn)
-					.serverPrepare(
+					.serverPrepareStatement(
 							"select t1.x t1x,(select x from testBug24710 t2 where t2.x=t1.x) t2x from testBug24710 t1")
 					.executeQuery();
 

@@ -165,7 +165,7 @@ public class ResultSetTest extends BaseTestCase {
 		}
 
 		if (versionMeetsMinimum(4, 1)) {
-			this.rs = ((com.mysql.jdbc.Connection) paddedConn).serverPrepare(
+			this.rs = ((com.mysql.jdbc.Connection) paddedConn).serverPrepareStatement(
 					query).executeQuery();
 
 			while (this.rs.next()) {
@@ -231,7 +231,7 @@ public class ResultSetTest extends BaseTestCase {
 		}
 
 		if (versionMeetsMinimum(4, 1)) {
-			this.rs = ((com.mysql.jdbc.Connection) this.conn).serverPrepare(
+			this.rs = ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement(
 					query).executeQuery();
 
 			while (this.rs.next()) {
