@@ -39,5 +39,5 @@ class EscapeProcessorResult {
 
 	String escapedSql;
 
-	byte usesVariables = Statement.USES_VARIABLES_FALSE;
+	byte usesVariables = StatementImpl.USES_VARIABLES_FALSE;
 }

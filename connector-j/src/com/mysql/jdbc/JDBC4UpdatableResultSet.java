@@ -42,7 +42,8 @@ import com.mysql.jdbc.UpdatableResultSet;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 public class JDBC4UpdatableResultSet extends UpdatableResultSet {
-	public JDBC4UpdatableResultSet(String catalog, Field[] fields, RowData tuples, ConnectionImpl conn, Statement creatorStmt) throws SQLException {
+	public JDBC4UpdatableResultSet(String catalog, Field[] fields, RowData tuples, 
+			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
 		super(catalog, fields, tuples, conn, creatorStmt);
 	}
 

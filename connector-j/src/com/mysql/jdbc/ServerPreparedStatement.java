@@ -396,7 +396,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 * 
-	 * @see Statement#addBatch
+	 * @see StatementImpl#addBatch
 	 */
 	public synchronized void addBatch() throws SQLException {
 		checkClosed();

@@ -19,6 +19,14 @@
       We've also added server and client prepareStatement() methods that cover
       all of the variants in the JDBC API.
       
+    - Similar to Connection, we pulled out vendor extensions to Statement
+      into an interface named "com.mysql.Statement", and moved the Statement
+      class into com.mysql.StatementImpl. The two methods (javadoc'd in 
+      "com.mysql.Statement" are enableStreamingResults(), which already existed,
+      and disableStreamingResults() which sets the statement instance back to
+      the fetch size and result set type it had before enableStreamingResults() 
+      was called.
+      
 04-11-07 - Version 5.1.0 Alpha
 	
 	- Bumped JDBC Specification version number in jar-file manifest.

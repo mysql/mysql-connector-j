@@ -125,7 +125,7 @@ class EscapeProcessor {
 
 		EscapeTokenizer escapeTokenizer = new EscapeTokenizer(sql);
 
-		byte usesVariables = Statement.USES_VARIABLES_FALSE;
+		byte usesVariables = StatementImpl.USES_VARIABLES_FALSE;
 		boolean callingStoredFunction = false;
 
 		while (escapeTokenizer.hasMoreTokens()) {
@@ -157,7 +157,7 @@ class EscapeProcessor {
 							} else {
 								remaining = ((EscapeProcessorResult) remainingResults).escapedSql;
 
-								if (usesVariables != Statement.USES_VARIABLES_TRUE) {
+								if (usesVariables != StatementImpl.USES_VARIABLES_TRUE) {
 									usesVariables = ((EscapeProcessorResult) remainingResults).usesVariables;
 								}
 							}
@@ -500,11 +500,11 @@ class EscapeProcessor {
 		epr.escapedSql = escapedSql;
 		epr.callingStoredFunction = callingStoredFunction;
 
-		if (usesVariables != Statement.USES_VARIABLES_TRUE) {
+		if (usesVariables != StatementImpl.USES_VARIABLES_TRUE) {
 			if (escapeTokenizer.sawVariableUse()) {
-				epr.usesVariables = Statement.USES_VARIABLES_TRUE;
+				epr.usesVariables = StatementImpl.USES_VARIABLES_TRUE;
 			} else {
-				epr.usesVariables = Statement.USES_VARIABLES_FALSE;
+				epr.usesVariables = StatementImpl.USES_VARIABLES_FALSE;
 			}
 		}
 

@@ -133,20 +133,20 @@ public class ResultSet implements java.sql.ResultSet {
 						"com.mysql.jdbc.JDBC4ResultSet").getConstructor(
 						new Class[] { Long.TYPE, Long.TYPE,
 								ConnectionImpl.class,
-								com.mysql.jdbc.Statement.class });
+								com.mysql.jdbc.StatementImpl.class });
 				JDBC_4_RS_6_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4ResultSet").getConstructor(
 						new Class[] { String.class, Field[].class,
 								RowData.class, 
 								ConnectionImpl.class,
-								com.mysql.jdbc.Statement.class });
+								com.mysql.jdbc.StatementImpl.class });
 				JDBC_4_UPD_RS_6_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4UpdatableResultSet")
 						.getConstructor(
 								new Class[] { String.class, Field[].class,
 										RowData.class,
 										ConnectionImpl.class,
-										com.mysql.jdbc.Statement.class });
+										com.mysql.jdbc.StatementImpl.class });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
 			} catch (NoSuchMethodException e) {
@@ -257,7 +257,7 @@ public class ResultSet implements java.sql.ResultSet {
 	protected boolean onInsertRow = false;
 
 	/** The statement that created us */
-	protected com.mysql.jdbc.Statement owningStatement;
+	protected com.mysql.jdbc.StatementImpl owningStatement;
 
 	/**
 	 * StackTrace generated where ResultSet was created... used when profiling
@@ -339,7 +339,7 @@ public class ResultSet implements java.sql.ResultSet {
 	}
 	
 	protected static ResultSet getInstance(long updateCount, long updateID,
-			ConnectionImpl conn, Statement creatorStmt) throws SQLException {
+			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new ResultSet(updateCount, updateID, conn, creatorStmt);
 		}
@@ -358,7 +358,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 */
 
 	protected static ResultSet getInstance(String catalog, Field[] fields,
-			RowData tuples, ConnectionImpl conn, Statement creatorStmt,
+			RowData tuples, ConnectionImpl conn, StatementImpl creatorStmt,
 			boolean isUpdatable) throws SQLException {
 		if (!Util.isJdbc4()) {
 			if (!isUpdatable) {
@@ -392,7 +392,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 *            DOCUMENT ME!
 	 */
 	public ResultSet(long updateCount, long updateID, ConnectionImpl conn,
-			Statement creatorStmt) {
+			StatementImpl creatorStmt) {
 		this.updateCount = updateCount;
 		this.updateId = updateID;
 		this.reallyResult = false;
@@ -429,7 +429,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 *             if an error occurs
 	 */
 	public ResultSet(String catalog, Field[] fields, RowData tuples,
-			ConnectionImpl conn, Statement creatorStmt) throws SQLException {
+			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
 		this.connection = conn;
 
 		this.retainOwningStatement = false;
@@ -8045,7 +8045,7 @@ public class ResultSet implements java.sql.ResultSet {
 		this.nextResultSet = nextResultSet;
 	}
 
-	protected void setOwningStatement(com.mysql.jdbc.Statement owningStatement) {
+	protected void setOwningStatement(com.mysql.jdbc.StatementImpl owningStatement) {
 		this.owningStatement = owningStatement;
 	}
 

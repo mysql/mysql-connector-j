@@ -53,7 +53,7 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
 
-import com.mysql.jdbc.Statement.CancelTask;
+import com.mysql.jdbc.StatementImpl.CancelTask;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
@@ -82,7 +82,7 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
  * @see java.sql.ResultSet
  * @see java.sql.PreparedStatement
  */
-public class PreparedStatement extends com.mysql.jdbc.Statement implements
+public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		java.sql.PreparedStatement {
 	private static final Constructor JDBC_4_PSTMT_2_ARG_CTOR;
 	private static final Constructor JDBC_4_PSTMT_3_ARG_CTOR;
@@ -641,7 +641,7 @@ public class PreparedStatement extends com.mysql.jdbc.Statement implements
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 * 
-	 * @see Statement#addBatch
+	 * @see StatementImpl#addBatch
 	 */
 	public void addBatch() throws SQLException {
 		if (this.batchedArgs == null) {

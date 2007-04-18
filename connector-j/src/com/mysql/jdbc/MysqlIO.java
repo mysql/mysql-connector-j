@@ -346,7 +346,7 @@ class MysqlIO {
      *
      * @throws SQLException if a database access error occurs
      */
-    protected ResultSet getResultSet(Statement callingStatement,
+    protected ResultSet getResultSet(StatementImpl callingStatement,
         long columnCount, int maxRows, int resultSetType,
         int resultSetConcurrency, boolean streamResults, String catalog,
         boolean isBinaryEncoded, boolean unpackFieldInfo, Field[] metadataFromCache)
@@ -1411,7 +1411,7 @@ class MysqlIO {
         this.streamingData = null;
     }
 
-    ResultSet readAllResults(Statement callingStatement, int maxRows,
+    ResultSet readAllResults(StatementImpl callingStatement, int maxRows,
         int resultSetType, int resultSetConcurrency, boolean streamResults,
         String catalog, Buffer resultPacket, boolean isBinaryEncoded,
         long preSentColumnCount, boolean unpackFieldInfo, Field[] metadataFromCache)
@@ -1627,7 +1627,7 @@ class MysqlIO {
      *
      * @throws Exception DOCUMENT ME!
      */
-    final ResultSet sqlQueryDirect(Statement callingStatement, String query,
+    final ResultSet sqlQueryDirect(StatementImpl callingStatement, String query,
         String characterEncoding, Buffer queryPacket, int maxRows,
         Connection conn, int resultSetType, int resultSetConcurrency,
         boolean streamResults, String catalog, boolean unpackFieldInfo)
@@ -2005,7 +2005,7 @@ class MysqlIO {
      * @throws SQLException if an error occurs while reading the rows
      */
     private final ResultSet readResultsForQueryOrUpdate(
-        Statement callingStatement, int maxRows, int resultSetType,
+        StatementImpl callingStatement, int maxRows, int resultSetType,
         int resultSetConcurrency, boolean streamResults, String catalog,
         Buffer resultPacket, boolean isBinaryEncoded, long preSentColumnCount,
         boolean unpackFieldInfo, Field[] metadataFromCache) throws SQLException {
@@ -2046,7 +2046,7 @@ class MysqlIO {
     }
 
     private com.mysql.jdbc.ResultSet buildResultSetWithRows(
-        Statement callingStatement, String catalog,
+        StatementImpl callingStatement, String catalog,
         com.mysql.jdbc.Field[] fields, RowData rows, int resultSetType,
         int resultSetConcurrency, boolean isBinaryEncoded)
         throws SQLException {
@@ -2081,7 +2081,7 @@ class MysqlIO {
     }
 
     private com.mysql.jdbc.ResultSet buildResultSetWithUpdates(
-        Statement callingStatement, Buffer resultPacket)
+        StatementImpl callingStatement, Buffer resultPacket)
         throws SQLException {
         long updateCount = -1;
         long updateID = -1;
@@ -2732,7 +2732,7 @@ class MysqlIO {
      *
      * @throws SQLException DOCUMENT ME!
      */
-    private final ResultSet sendFileToServer(Statement callingStatement,
+    private final ResultSet sendFileToServer(StatementImpl callingStatement,
         String fileName) throws SQLException {
     	
         Buffer filePacket = (this.loadFileBufRef == null) ? null

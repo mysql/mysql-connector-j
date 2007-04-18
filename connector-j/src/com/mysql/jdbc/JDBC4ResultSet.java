@@ -42,12 +42,13 @@ import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 public class JDBC4ResultSet extends ResultSet {
 
-	public JDBC4ResultSet(long updateCount, long updateID, ConnectionImpl conn, Statement creatorStmt) {
+	public JDBC4ResultSet(long updateCount, long updateID, 
+			ConnectionImpl conn, StatementImpl creatorStmt) {
 		super(updateCount, updateID, conn, creatorStmt);
 	}
 	
 	public JDBC4ResultSet(String catalog, Field[] fields, RowData tuples,
-			ConnectionImpl conn, Statement creatorStmt) throws SQLException {
+			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
 		super(catalog, fields, tuples, conn, creatorStmt);
 	}
 	
