@@ -2060,4 +2060,82 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	/**
+	 * Tests fix for issue where a failed-over connection would let
+	 * an application call setReadOnly(false), when that call 
+	 * should be ignored until the connection is reconnected to a 
+	 * writable master.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testFailoverReadOnly() throws Exception {
+		Properties props = getMasterSlaveProps();
+		props.setProperty("autoReconnect", "true");
+		
+		
+		Connection failoverConn = null;
+		
+		
+		((com.mysql.jdbc.Connection)failoverConn).setPreferSlaveDuringFailover(true);
+		Statement failoverStmt = 
+			null;
+		
+		try {
+			failoverConn = getConnectionWithProps(getMasterSlaveUrl(), props);
+			failoverStmt = failoverConn.createStatement();
+			
+			String masterConnectionId = getSingleIndexedValueWithQuery(failoverConn, 1, "SELECT connection_id()").toString();
+			
+			failoverStmt.execute("KILL " + masterConnectionId);
+			
+			// die trying, so we get the next host
+			for (int i = 0; i < 100; i++) {
+				try {
+					failoverStmt.executeQuery("SELECT 1");
+				} catch (SQLException sqlEx) {
+					break;
+				}
+			}
+			
+			String slaveConnectionId = getSingleIndexedValueWithQuery(failoverConn, 1, "SELECT connection_id()").toString();
+			
+			assertTrue("Didn't get a new physical connection",
+					!masterConnectionId.equals(slaveConnectionId));
+			
+			failoverConn.setReadOnly(false); // this should be ignored
+			
+			assertTrue(failoverConn.isReadOnly());
+			
+			((com.mysql.jdbc.Connection)failoverConn).setPreferSlaveDuringFailover(false);
+			
+			this.stmt.execute("KILL " + slaveConnectionId); // we can't issue this on our own connection :p
+			
+			// die trying, so we get the next host
+			for (int i = 0; i < 100; i++) {
+				try {
+					failoverStmt.executeQuery("SELECT 1");
+				} catch (SQLException sqlEx) {
+					break;
+				}
+			}
+			
+			String newMasterId = getSingleIndexedValueWithQuery(failoverConn, 1, "SELECT connection_id()").toString();
+			
+			assertTrue("Didn't get a new physical connection",
+					!slaveConnectionId.equals(newMasterId));
+			
+			failoverConn.setReadOnly(false);
+			
+			assertTrue(!failoverConn.isReadOnly());
+		} finally {
+			if (failoverStmt != null) {
+				failoverStmt.close();
+			}
+			
+			if (failoverConn != null) {
+				failoverConn.close();
+			}
+		}
+	}
 }

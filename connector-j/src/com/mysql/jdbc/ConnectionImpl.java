@@ -820,14 +820,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			}
 
-			com.mysql.jdbc.Statement stmt = null;
+			com.mysql.jdbc.StatementImpl stmt = null;
 			com.mysql.jdbc.ResultSet results = null;
 
 			try {
 				if (sortedCollationMap == null) {
 					sortedCollationMap = new TreeMap();
 
-					stmt = (com.mysql.jdbc.Statement) createStatement();
+					stmt = (com.mysql.jdbc.StatementImpl) createStatement();
 
 					if (stmt.getMaxRows() != 0) {
 						stmt.setMaxRows(0);
@@ -1457,7 +1457,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			int numStmts = currentlyOpenStatements.size();
 
 			for (int i = 0; i < numStmts; i++) {
-				Statement stmt = (Statement) currentlyOpenStatements.get(i);
+				StatementImpl stmt = (StatementImpl) currentlyOpenStatements.get(i);
 
 				try {
 					stmt.realClose(false, true);
@@ -1998,9 +1998,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							queriesIssuedFailedOverCopy = 0;
 
 							if (this.hostListSize > 1) {
-								setReadOnly(false);
+								setReadOnlyInternal(false);
 							} else {
-								setReadOnly(oldReadOnly);
+								setReadOnlyInternal(oldReadOnly);
 							}
 						}
 
@@ -2150,9 +2150,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								queriesIssuedFailedOverCopy = 0;
 
 								if (this.hostListSize > 1) {
-									setReadOnly(false);
+									setReadOnlyInternal(false);
 								} else {
-									setReadOnly(oldReadOnly);
+									setReadOnlyInternal(oldReadOnly);
 								}
 							}
 
@@ -2310,7 +2310,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			int resultSetConcurrency) throws SQLException {
 		checkClosed();
 
-		Statement stmt = new com.mysql.jdbc.Statement(this, this.database);
+		StatementImpl stmt = new com.mysql.jdbc.StatementImpl(this, this.database);
 		stmt.setResultSetType(resultSetType);
 		stmt.setResultSetConcurrency(resultSetConcurrency);
 
@@ -2389,7 +2389,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	// resultSetConcurrency, streamResults, queryIsSelectOnly, catalog,
 	// unpackFields);
 	// }
-	ResultSet execSQL(Statement callingStatement, String sql, int maxRows,
+	ResultSet execSQL(StatementImpl callingStatement, String sql, int maxRows,
 			Buffer packet, int resultSetType, int resultSetConcurrency,
 			boolean streamResults, String catalog,
 			boolean unpackFields) throws SQLException {
@@ -2398,7 +2398,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				catalog, unpackFields, false);
 	}
 
-	ResultSet execSQL(Statement callingStatement, String sql, int maxRows,
+	ResultSet execSQL(StatementImpl callingStatement, String sql, int maxRows,
 			Buffer packet, int resultSetType, int resultSetConcurrency,
 			boolean streamResults, String catalog,
 			boolean unpackFields,
@@ -2436,7 +2436,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								&& this.hostList.get(0).equals(connectedHost)) {
 							this.failedOver = false;
 							this.queriesIssuedFailedOver = 0;
-							setReadOnly(false);
+							setReadOnlyInternal(false);
 						}
 					} finally {
 						this.executingFailoverReconnect = false;
@@ -3605,11 +3605,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 		}
 
-		com.mysql.jdbc.Statement stmt = null;
+		com.mysql.jdbc.StatementImpl stmt = null;
 		com.mysql.jdbc.ResultSet results = null;
 
 		try {
-			stmt = (com.mysql.jdbc.Statement) createStatement();
+			stmt = (com.mysql.jdbc.StatementImpl) createStatement();
 			stmt.setEscapeProcessing(false);
 
 			results = (com.mysql.jdbc.ResultSet) stmt
@@ -3661,7 +3661,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @param stmt
 	 *            DOCUMENT ME!
 	 */
-	void maxRowsChanged(Statement stmt) {
+	void maxRowsChanged(StatementImpl stmt) {
 		synchronized (this.mutex) {
 			if (this.statementsUsingMaxRows == null) {
 				this.statementsUsingMaxRows = new HashMap();
@@ -4141,7 +4141,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @param stmt
 	 *            the Statement instance to remove
 	 */
-	void registerStatement(Statement stmt) {
+	void registerStatement(StatementImpl stmt) {
 		synchronized (this.openStatements) {
 			this.openStatements.put(stmt, stmt);
 		}
@@ -4738,7 +4738,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	private void setFailedOverState() throws SQLException {
 		if (getFailOverReadOnly()) {
-			setReadOnly(true);
+			setReadOnlyInternal(true);
 		}
 
 		this.queriesIssuedFailedOver = 0;
@@ -4782,9 +4782,20 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public void setReadOnly(boolean readOnlyFlag) throws SQLException {
 		checkClosed();
+		
+		// Ignore calls to this method if we're failed over and
+		// we're configured to fail over read-only.
+		if (this.failedOver && getFailOverReadOnly() && !readOnlyFlag) {
+			return;
+		}
+	
+		setReadOnlyInternal(readOnlyFlag);
+	}
+	
+	protected void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
 		this.readOnly = readOnlyFlag;
 	}
-
+	
 	/**
 	 * @see Connection#setSavepoint()
 	 */
@@ -5051,7 +5062,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @param stmt
 	 *            the Statement instance to remove
 	 */
-	void unregisterStatement(Statement stmt) {
+	void unregisterStatement(StatementImpl stmt) {
 		if (this.openStatements != null) {
 			synchronized (this.openStatements) {
 				this.openStatements.remove(stmt);
@@ -5069,7 +5080,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *             if a database error occurs issuing the statement that sets
 	 *             the limit default.
 	 */
-	void unsetMaxRows(Statement stmt) throws SQLException {
+	void unsetMaxRows(StatementImpl stmt) throws SQLException {
 		synchronized (this.mutex) {
 			if (this.statementsUsingMaxRows != null) {
 				Object found = this.statementsUsingMaxRows.remove(stmt);

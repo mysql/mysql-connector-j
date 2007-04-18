@@ -164,7 +164,12 @@
 	- Fixed issue where calling getGeneratedKeys() on a prepared statement after 
 	  calling execute() didn't always return the generated keys (executeUpdate() 
 	  worked fine however).
-	    	  	  	      
+	  
+	- Fixed issue where a failed-over connection would let an application call 
+	  setReadOnly(false), when that call should be ignored until the connection 
+	  is reconnected to a writable master unless "failoverReadOnly" had been set
+	  to "false".
+	  	    	  	  	      
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"
