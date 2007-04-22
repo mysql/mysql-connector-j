@@ -25,7 +25,6 @@
 package com.mysql.jdbc.jdbc2.optional;
 
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -827,55 +826,4 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			checkAndFireConnectionError(sqlEx);
 		}
 	}
-//
-//	public boolean isClosed() throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return this.wrappedStmt.isClosed();
-//			} else {
-//				throw SQLError.createSQLException("Statement already closed",
-//						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return true;
-//	}
-//
-//	public boolean isPoolable() throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				return this.wrappedStmt.isPoolable();
-//			} else {
-//				throw SQLError.createSQLException("Statement already closed",
-//						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//		
-//		return true;
-//	}
-//
-//	public void setPoolable(boolean poolable) throws SQLException {
-//		try {
-//			if (this.wrappedStmt != null) {
-//				this.wrappedStmt.setPoolable(poolable);
-//			} else {
-//				throw SQLError.createSQLException("Statement already closed",
-//						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-//			}
-//		} catch (SQLException sqlEx) {
-//			checkAndFireConnectionError(sqlEx);
-//		}
-//	}
-//
-//	public boolean isWrapperFor(Class arg0) throws SQLException {
-//		throw new NotYetImplementedException();
-//	}
-//
-//	public Object unwrap(Class arg0) throws SQLException {
-//		throw new NotYetImplementedException();
-//	}
 }

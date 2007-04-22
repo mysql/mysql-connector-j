@@ -291,8 +291,6 @@ public class JDBC4ConnectionWrapper extends ConnectionWrapper {
 		}
 	}
 	
-	private Map unwrappedInterfaces = null;
-
 	/**
 	 * @see java.sql.Connection#createBlob()
 	 */
@@ -336,67 +334,5 @@ public class JDBC4ConnectionWrapper extends ConnectionWrapper {
 		}
 
 		return null; // never reached, but compiler can't tell
-	}
-	
-	private static final SQLException SQL_EXCEPTION_INSTANCE = new SQLException();
-	
-	class ConnectionErrorFiringInvocationHandler implements InvocationHandler {
-		Object invokeOn = null;
-		
-		public ConnectionErrorFiringInvocationHandler(Object toInvokeOn) {
-			invokeOn = toInvokeOn;
-		}
-		
-		public Object invoke(Object proxy, Method method,
-				Object[] args) throws Throwable {
-			Object result = null;
-
-			try {
-				result = method.invoke(invokeOn, args);
-				
-				if (result != null) {
-					Class[] interfaces = result.getClass().getInterfaces();
-					
-					if (interfaces.length > 0) {
-						
-						// TODO: Cache this
-						Method[] resultMethods = result.getClass().getMethods();
-						
-						for (int i = 0; i < resultMethods.length; i++) {
-							Class[] exceptionTypes = resultMethods[i].getExceptionTypes();
-							
-							boolean needsWrapped = false;
-							
-							for (int j = 0; j < exceptionTypes.length; j++) {
-								if (exceptionTypes[j].isInstance(SQL_EXCEPTION_INSTANCE)) {
-									// Needs to be wrapped too - to catch SQLExceptions
-									// and fire events if needed
-									
-									needsWrapped = true;
-									
-									break;
-								}
-							}
-							
-							if (needsWrapped) {
-								result = Proxy.newProxyInstance(result.getClass()
-										.getClassLoader(), interfaces,
-										new ConnectionErrorFiringInvocationHandler(result));
-								break;
-							}
-						}
-					}
-				}
-			} catch (InvocationTargetException e) {
-				if (e.getTargetException() instanceof SQLException) {
-					checkAndFireConnectionError((SQLException) e
-							.getTargetException());
-				} else {
-					throw e;
-				}
-			}
-
-			return result;
-		}
 	}
 }

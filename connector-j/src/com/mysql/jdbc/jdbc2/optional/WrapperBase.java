@@ -24,7 +24,12 @@
  */
 package com.mysql.jdbc.jdbc2.optional;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.sql.SQLException;
+import java.util.Map;
 
 import com.mysql.jdbc.SQLError;
 
@@ -57,5 +62,51 @@ abstract class WrapperBase {
 		}
 
 		throw sqlEx;
+	}
+	
+	protected Map unwrappedInterfaces = null;
+
+	protected class ConnectionErrorFiringInvocationHandler implements InvocationHandler {
+		Object invokeOn = null;
+		
+		public ConnectionErrorFiringInvocationHandler(Object toInvokeOn) {
+			invokeOn = toInvokeOn;
+		}
+		
+		public Object invoke(Object proxy, Method method,
+				Object[] args) throws Throwable {
+			Object result = null;
+
+			try {
+				result = method.invoke(invokeOn, args);
+				
+				if (result != null) {
+					Class[] interfaces = result.getClass().getInterfaces();
+					
+					for (int i = 0; i < interfaces.length; i++) {
+						String packageName = interfaces[i].getPackage().getName();
+						
+						if ("java.sql".equals(packageName) || 
+								"javax.sql".equals(packageName)) {
+							// needs wrapped
+							
+							result = Proxy.newProxyInstance(result.getClass()
+									.getClassLoader(), interfaces,
+									new ConnectionErrorFiringInvocationHandler(result));
+							break;
+						}
+					}
+				}
+			} catch (InvocationTargetException e) {
+				if (e.getTargetException() instanceof SQLException) {
+					checkAndFireConnectionError((SQLException) e
+							.getTargetException());
+				} else {
+					throw e;
+				}
+			}
+
+			return result;
+		}
 	}
 }
