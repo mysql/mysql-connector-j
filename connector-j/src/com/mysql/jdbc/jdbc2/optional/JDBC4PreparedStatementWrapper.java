@@ -453,10 +453,12 @@ public class JDBC4PreparedStatementWrapper extends PreparedStatementWrapper {
 			return true;
 		}
 
-		return (iface.isInstance(com.mysql.jdbc.Statement.class) 
-				|| iface.isInstance(java.sql.Statement.class) 
-				|| iface.isInstance(java.sql.PreparedStatement.class)
-				|| iface.isInstance(java.sql.Wrapper.class));
+		String interfaceClassName = iface.getName();
+		
+		return (interfaceClassName.equals("com.mysql.jdbc.Statement")
+				|| interfaceClassName.equals("java.sql.Statement")
+				|| interfaceClassName.equals("java.sql.PreparedStatement")
+				|| interfaceClassName.equals("java.sql.Wrapper"));
 	}
 
 	/**

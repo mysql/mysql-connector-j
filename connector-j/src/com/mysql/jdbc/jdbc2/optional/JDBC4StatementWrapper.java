@@ -79,6 +79,8 @@ public class JDBC4StatementWrapper extends StatementWrapper {
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
+		
+		return false; // We never get here, compiler can't tell
 	}
 	
 	public void setPoolable(boolean poolable) throws SQLException {
@@ -105,6 +107,8 @@ public class JDBC4StatementWrapper extends StatementWrapper {
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
+		
+		return false; // We never get here, compiler can't tell
 	}
     
 	/**
@@ -137,9 +141,11 @@ public class JDBC4StatementWrapper extends StatementWrapper {
 			return true;
 		}
 
-		return (iface.isInstance(com.mysql.jdbc.Statement.class)
-				|| iface.isInstance(java.sql.Statement.class)
-				|| iface.isInstance(java.sql.Wrapper.class));
+		String interfaceClassName = iface.getName();
+		
+		return (interfaceClassName.equals("com.mysql.jdbc.Statement")
+				|| interfaceClassName.equals("java.sql.Statement")
+				|| interfaceClassName.equals("java.sql.Wrapper"));
 	}
 
 	/**

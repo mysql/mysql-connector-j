@@ -240,8 +240,8 @@ public class JDBC4ConnectionWrapper extends ConnectionWrapper {
 			return true;
 		}
 
-		return (iface.isInstance(com.mysql.jdbc.Connection.class) || iface
-				.isInstance(com.mysql.jdbc.ConnectionProperties.class));
+		return (iface.getName().equals("com.mysql.jdbc.Connection") || 
+				iface.getName().equals("com.mysql.jdbc.ConnectionProperties"));
 	}
 
 	/**

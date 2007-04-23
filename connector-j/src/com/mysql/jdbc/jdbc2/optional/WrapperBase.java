@@ -81,21 +81,8 @@ abstract class WrapperBase {
 				result = method.invoke(invokeOn, args);
 				
 				if (result != null) {
-					Class[] interfaces = result.getClass().getInterfaces();
-					
-					for (int i = 0; i < interfaces.length; i++) {
-						String packageName = interfaces[i].getPackage().getName();
-						
-						if ("java.sql".equals(packageName) || 
-								"javax.sql".equals(packageName)) {
-							// needs wrapped
-							
-							result = Proxy.newProxyInstance(result.getClass()
-									.getClassLoader(), interfaces,
-									new ConnectionErrorFiringInvocationHandler(result));
-							break;
-						}
-					}
+					result = proxyIfInterfaceIsJdbc(result, 
+							result.getClass());
 				}
 			} catch (InvocationTargetException e) {
 				if (e.getTargetException() instanceof SQLException) {
@@ -107,6 +94,33 @@ abstract class WrapperBase {
 			}
 
 			return result;
+		}
+		
+		/**
+		 * Recursively checks for interfaces on the given object to determine
+		 * if it implements a java.sql interface, and if so, proxies the 
+		 * instance so that we can catch and fire SQL errors.
+		 * @param toProxy
+		 * @param clazz
+		 * @return
+		 */
+		private Object proxyIfInterfaceIsJdbc(Object toProxy, Class clazz) {
+			Class[] interfaces = clazz.getInterfaces();
+			
+			for (int i = 0; i < interfaces.length; i++) {
+				String packageName = interfaces[i].getPackage().getName();
+				
+				if ("java.sql".equals(packageName) || 
+						"javax.sql".equals(packageName)) {
+					return Proxy.newProxyInstance(toProxy.getClass()
+							.getClassLoader(), interfaces,
+							new ConnectionErrorFiringInvocationHandler(toProxy));
+				}
+				
+				return proxyIfInterfaceIsJdbc(toProxy, interfaces[i]);
+			}
+			
+			return toProxy;
 		}
 	}
 }

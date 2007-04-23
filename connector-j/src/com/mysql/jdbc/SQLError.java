@@ -155,7 +155,7 @@ public class SQLError {
 				JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR = Class.forName(
 						"com.mysql.jdbc.exceptions.jdbc4.CommunicationsException")
 						.getConstructor(
-								new Class[] { Connection.class, Long.TYPE, Exception.class });
+								new Class[] { ConnectionImpl.class, Long.TYPE, Exception.class });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
 			} catch (NoSuchMethodException e) {
