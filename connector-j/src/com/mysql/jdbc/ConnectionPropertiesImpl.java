@@ -24,7 +24,6 @@
  */
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.log.Jdk14Logger;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.StandardLogger;
 
@@ -1096,6 +1095,16 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			+ " operations on a given XID are always routed to the same physical connection? This allows the XAConnection"
 			+ " to support \"XA START ... JOIN\" after \"XA END\" has been called",
 			"5.0.1", MISC_CATEGORY, Integer.MIN_VALUE);
+	
+	private BooleanConnectionProperty populateInsertRowWithDefaultValues = new BooleanConnectionProperty(
+			"populateInsertRowWithDefaultValues", false,
+			"When using ResultSets that are CONCUR_UPDATABLE, should the driver pre-poulate " +
+			"the \"insert\" row with default values from the DDL for the table used in the query " +
+			" so those values are immediately available for ResultSet accessors? This functionality requires a " +
+			" call to the database for metadata each time a result set of this type is created. " +
+			" If disabled (the default), the default values will be populated by the an internal" +
+			" call to refreshRow() which pulls back default values and/or values changed by triggers.",
+			"5.0.5", MISC_CATEGORY, Integer.MIN_VALUE);
 	
 	private IntegerConnectionProperty preparedStatementCacheSize = new IntegerConnectionProperty(
 			"prepStmtCacheSize", 25, 0, Integer.MAX_VALUE,
@@ -4035,5 +4044,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	 */
 	public void setClientInfoProvider(String classname) {
 		this.clientInfoProvider.setValue(classname);
+	}
+	
+	public boolean getPopulateInsertRowWithDefaultValues() {
+		return this.populateInsertRowWithDefaultValues.getValueAsBoolean();
+	}
+
+	public void setPopulateInsertRowWithDefaultValues(boolean flag) {
+		this.populateInsertRowWithDefaultValues.setValue(flag);
 	}
 }

@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -32,8 +32,8 @@ import java.sql.SQLException;
  * @author Mark Matthews
  */
 public class NotUpdatable extends SQLException {
-	// ~ Static fields/initializers
-	// ---------------------------------------------
+
+	private static final long serialVersionUID = 8084742846039782258L;
 
 	/**
 	 * The message to use when result set is not updatable.
@@ -49,13 +49,24 @@ public class NotUpdatable extends SQLException {
 			+ Messages.getString("NotUpdatable.4") //$NON-NLS-1$
 			+ Messages.getString("NotUpdatable.5"); //$NON-NLS-1$
 
-	// ~ Constructors
-	// -----------------------------------------------------------
-
 	/**
 	 * Creates a new NotUpdatable exception.
 	 */
 	public NotUpdatable() {
-		super(NOT_UPDATEABLE_MESSAGE, SQLError.SQL_STATE_GENERAL_ERROR);
+		this(NOT_UPDATEABLE_MESSAGE);
+	}
+
+	/**
+	 * Append the given reason to the not updatable message if the reason is not
+	 * null.
+	 */
+	public NotUpdatable(String reason) {
+		super(reason
+				+ Messages.getString("NotUpdatable.1")
+				+ Messages.getString("NotUpdatable.2")
+				+ Messages.getString("NotUpdatable.3")
+				+ Messages.getString("NotUpdatable.4")
+				+ Messages.getString("NotUpdatable.5"),
+				SQLError.SQL_STATE_GENERAL_ERROR);
 	}
 }

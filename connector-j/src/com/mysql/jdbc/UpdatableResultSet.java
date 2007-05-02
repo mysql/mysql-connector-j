@@ -69,6 +69,9 @@ public class UpdatableResultSet extends ResultSet {
 	/** Is this result set updateable? */
 	private boolean isUpdatable = false;
 
+	/** Reason the result set is not updatable */
+	private String notUpdatableReason = null;
+
 	/** List of primary keys */
 	private List primaryKeyIndicies = null;
 
@@ -91,6 +94,8 @@ public class UpdatableResultSet extends ResultSet {
 
 	/** SQL for in-place modifcation */
 	private String updateSQL = null;
+
+	private boolean populateInserterWithDefaultValues = false;
 
 	/**
 	 * Creates a new ResultSet object.
@@ -243,6 +248,21 @@ public class UpdatableResultSet extends ResultSet {
 
 		int primaryKeyCount = 0;
 
+		// We can only do this if we know that there is a currently
+		// selected database, or if we're talking to a > 4.1 version
+		// of MySQL server (as it returns database names in field
+		// info)
+		//
+		if ((this.catalog == null) || (this.catalog.length() == 0)) {
+			this.catalog = this.fields[0].getDatabaseName();
+
+			if ((this.catalog == null) || (this.catalog.length() == 0)) {
+				throw SQLError.createSQLException(Messages
+						.getString("UpdatableResultSet.43") //$NON-NLS-1$
+						, SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+		}
+
 		if (this.fields.length > 0) {
 			singleTableName = this.fields[0].getOriginalTableName();
 			catalogName = this.fields[0].getDatabaseName();
@@ -252,6 +272,13 @@ public class UpdatableResultSet extends ResultSet {
 				catalogName = this.catalog;
 			}
 
+			if (singleTableName != null && singleTableName.length() == 0) {
+				this.isUpdatable = false;
+				this.notUpdatableReason = Messages.getString("NotUpdatableReason.3");
+
+				return;
+			}
+			
 			if (this.fields[0].isPrimaryKey()) {
 				primaryKeyCount++;
 			}
@@ -268,9 +295,17 @@ public class UpdatableResultSet extends ResultSet {
 					otherCatalogName = this.catalog;
 				}
 
+				if (otherTableName != null && otherTableName.length() == 0) {
+					this.isUpdatable = false;
+					this.notUpdatableReason = Messages.getString("NotUpdatableReason.3");
+
+					return;
+				}
+				
 				if ((singleTableName == null)
 						|| !otherTableName.equals(singleTableName)) {
 					this.isUpdatable = false;
+					this.notUpdatableReason = Messages.getString("NotUpdatableReason.0");
 
 					return;
 				}
@@ -279,6 +314,7 @@ public class UpdatableResultSet extends ResultSet {
 				if ((catalogName == null)
 						|| !otherCatalogName.equals(catalogName)) {
 					this.isUpdatable = false;
+					this.notUpdatableReason = Messages.getString("NotUpdatableReason.1");
 
 					return;
 				}
@@ -290,39 +326,17 @@ public class UpdatableResultSet extends ResultSet {
 
 			if ((singleTableName == null) || (singleTableName.length() == 0)) {
 				this.isUpdatable = false;
+				this.notUpdatableReason = Messages.getString("NotUpdatableReason.2");
 
 				return;
 			}
 		} else {
 			this.isUpdatable = false;
+			this.notUpdatableReason = Messages.getString("NotUpdatableReason.3");
 
 			return;
 		}
-
-		// 
-		// Must have at least one primary key
-		//
-		if (primaryKeyCount == 0) {
-			this.isUpdatable = false;
-
-			return;
-		}
-
-		// We can only do this if we know that there is a currently
-		// selected database, or if we're talking to a > 4.1 version
-		// of MySQL server (as it returns database names in field
-		// info)
-		//
-		if ((this.catalog == null) || (this.catalog.length() == 0)) {
-			this.catalog = this.fields[0].getDatabaseName();
-
-			if ((this.catalog == null) || (this.catalog.length() == 0)) {
-				throw SQLError.createSQLException(Messages
-						.getString("UpdatableResultSet.43") //$NON-NLS-1$
-						, SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-		}
-
+		
 		if (this.connection.getStrictUpdates()) {
 			java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
 
@@ -349,8 +363,11 @@ public class UpdatableResultSet extends ResultSet {
 				}
 			}
 
-			if (primaryKeyNames.size() == 0) {
+			int existingPrimaryKeysCount = primaryKeyNames.size();
+			
+			if (existingPrimaryKeysCount == 0) {
 				this.isUpdatable = false;
+				this.notUpdatableReason = Messages.getString("NotUpdatableReason.5");
 
 				return; // we can't update tables w/o keys
 			}
@@ -372,6 +389,8 @@ public class UpdatableResultSet extends ResultSet {
 									.toUpperCase()) == null) {
 								// we don't know about this key, so give up :(
 								this.isUpdatable = false;
+								this.notUpdatableReason = Messages.getString("NotUpdatableReason.6", 
+										new Object[] {originalName});
 
 								return;
 							}
@@ -381,11 +400,30 @@ public class UpdatableResultSet extends ResultSet {
 			}
 
 			this.isUpdatable = primaryKeyNames.isEmpty();
+			
+			if (!this.isUpdatable) {
+				if (existingPrimaryKeysCount > 1) {
+					this.notUpdatableReason = Messages.getString("NotUpdatableReason.7");
+				} else {
+					this.notUpdatableReason = Messages.getString("NotUpdatableReason.4");
+				}
+				
+				return;
+			}
+		}
+		
+		// 
+		// Must have at least one primary key
+		//
+		if (primaryKeyCount == 0) {
+			this.isUpdatable = false;
+			this.notUpdatableReason = Messages.getString("NotUpdatableReason.4");
 
 			return;
 		}
 
 		this.isUpdatable = true;
+		this.notUpdatableReason = null;
 
 		return;
 	}
@@ -404,7 +442,7 @@ public class UpdatableResultSet extends ResultSet {
 		checkClosed();
 
 		if (!this.isUpdatable) {
-			throw new NotUpdatable();
+			throw new NotUpdatable(this.notUpdatableReason);
 		}
 
 		if (this.onInsertRow) {
@@ -546,7 +584,7 @@ public class UpdatableResultSet extends ResultSet {
 			this.doingUpdates = false;
 			this.onInsertRow = false;
 
-			throw new NotUpdatable();
+			throw new NotUpdatable(this.notUpdatableReason);
 		}
 
 		String quotedId = getQuotedIdChar();
@@ -736,9 +774,12 @@ public class UpdatableResultSet extends ResultSet {
 			//
 			if (this.fields[i].isAutoIncrement() && autoIncrementId > 0) {
 				newRow[i] = String.valueOf(autoIncrementId).getBytes();
+				this.inserter.setBytesNoEscapeNoQuotes(i + 1, newRow[i]);
 			}
 		}
-
+		
+		refreshRow(this.inserter, newRow);
+		
 		this.rowData.addRow(newRow);
 		resetInserter();
 	}
@@ -847,7 +888,7 @@ public class UpdatableResultSet extends ResultSet {
 		checkClosed();
 
 		if (!this.isUpdatable) {
-			throw new NotUpdatable();
+			throw new NotUpdatable(this.notUpdatableReason);
 		}
 
 		if (this.onInsertRow) {
@@ -877,7 +918,7 @@ public class UpdatableResultSet extends ResultSet {
 		checkClosed();
 
 		if (!this.isUpdatable) {
-			throw new NotUpdatable();
+			throw new NotUpdatable(this.notUpdatableReason);
 		}
 
 		if (this.inserter == null) {
@@ -887,7 +928,10 @@ public class UpdatableResultSet extends ResultSet {
 
 			this.inserter = this.connection
 					.clientPrepareStatement(this.insertSQL);
-			extractDefaultValues();
+			if (this.populateInserterWithDefaultValues) {
+				extractDefaultValues();
+			}
+			
 			resetInserter();
 		} else {
 			resetInserter();
@@ -901,44 +945,50 @@ public class UpdatableResultSet extends ResultSet {
 		this.thisRow = new byte[numFields][];
 
 		for (int i = 0; i < numFields; i++) {
-			if (this.defaultColumnValue[i] != null) {
-				Field f = this.fields[i];
-
-				switch (f.getMysqlType()) {
-				case MysqlDefs.FIELD_TYPE_DATE:
-				case MysqlDefs.FIELD_TYPE_DATETIME:
-				case MysqlDefs.FIELD_TYPE_NEWDATE:
-				case MysqlDefs.FIELD_TYPE_TIME:
-				case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-
-					if (this.defaultColumnValue[i].length > 7
-							&& this.defaultColumnValue[i][0] == (byte) 'C'
-							&& this.defaultColumnValue[i][1] == (byte) 'U'
-							&& this.defaultColumnValue[i][2] == (byte) 'R'
-							&& this.defaultColumnValue[i][3] == (byte) 'R'
-							&& this.defaultColumnValue[i][4] == (byte) 'E'
-							&& this.defaultColumnValue[i][5] == (byte) 'N'
-							&& this.defaultColumnValue[i][6] == (byte) 'T'
-							&& this.defaultColumnValue[i][7] == (byte) '_') {
-						this.inserter.setBytesNoEscapeNoQuotes(i + 1,
-								this.defaultColumnValue[i]);
-
-						break;
-					}
-				default:
-					this.inserter.setBytes(i + 1, this.defaultColumnValue[i],
-							false, false);
-				}
-
-				// This value _could_ be changed from a getBytes(), so we
-				// need a copy....
-				byte[] defaultValueCopy = new byte[this.defaultColumnValue[i].length];
-				System.arraycopy(defaultColumnValue[i], 0, defaultValueCopy, 0,
-						defaultValueCopy.length);
-				this.thisRow[i] = defaultValueCopy;
-			} else {
-				this.inserter.setNull(i + 1, java.sql.Types.NULL);
+			if (!this.populateInserterWithDefaultValues) {
+				this.inserter.setBytesNoEscapeNoQuotes(i + 1, 
+						"DEFAULT".getBytes());
 				this.thisRow[i] = null;
+			} else {
+				if (this.defaultColumnValue[i] != null) {
+					Field f = this.fields[i];
+	
+					switch (f.getMysqlType()) {
+					case MysqlDefs.FIELD_TYPE_DATE:
+					case MysqlDefs.FIELD_TYPE_DATETIME:
+					case MysqlDefs.FIELD_TYPE_NEWDATE:
+					case MysqlDefs.FIELD_TYPE_TIME:
+					case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+	
+						if (this.defaultColumnValue[i].length > 7
+								&& this.defaultColumnValue[i][0] == (byte) 'C'
+								&& this.defaultColumnValue[i][1] == (byte) 'U'
+								&& this.defaultColumnValue[i][2] == (byte) 'R'
+								&& this.defaultColumnValue[i][3] == (byte) 'R'
+								&& this.defaultColumnValue[i][4] == (byte) 'E'
+								&& this.defaultColumnValue[i][5] == (byte) 'N'
+								&& this.defaultColumnValue[i][6] == (byte) 'T'
+								&& this.defaultColumnValue[i][7] == (byte) '_') {
+							this.inserter.setBytesNoEscapeNoQuotes(i + 1,
+									this.defaultColumnValue[i]);
+	
+							break;
+						}
+					default:
+						this.inserter.setBytes(i + 1, this.defaultColumnValue[i],
+								false, false);
+					}
+	
+					// This value _could_ be changed from a getBytes(), so we
+					// need a copy....
+					byte[] defaultValueCopy = new byte[this.defaultColumnValue[i].length];
+					System.arraycopy(defaultColumnValue[i], 0, defaultValueCopy, 0,
+							defaultValueCopy.length);
+					this.thisRow[i] = defaultValueCopy;
+				} else {
+					this.inserter.setNull(i + 1, java.sql.Types.NULL);
+					this.thisRow[i] = null;
+				}
 			}
 		}
 	}
@@ -1118,6 +1168,11 @@ public class UpdatableResultSet extends ResultSet {
 			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.11")); //$NON-NLS-1$
 		}
 
+		refreshRow(this.updater, this.thisRow);
+	}
+	
+	private synchronized void refreshRow(PreparedStatement updateInsertStmt, 
+			Object[] rowToRefresh) throws SQLException {
 		if (this.refresher == null) {
 			if (this.refreshSQL == null) {
 				generateStatements();
@@ -1135,14 +1190,14 @@ public class UpdatableResultSet extends ResultSet {
 			byte[] dataFrom = null;
 			int index = ((Integer) this.primaryKeyIndicies.get(0)).intValue();
 
-			if (!this.doingUpdates) {
-				dataFrom = (byte[]) this.thisRow[index];
+			if (!this.doingUpdates && !this.onInsertRow) {
+				dataFrom = (byte[]) rowToRefresh[index];
 			} else {
-				dataFrom = this.updater.getBytesRepresentation(index);
+				dataFrom = updateInsertStmt.getBytesRepresentation(index);
 
 				// Primary keys not set?
-				if (this.updater.isNull(index) || (dataFrom.length == 0)) {
-					dataFrom = (byte[]) this.thisRow[index];
+				if (updateInsertStmt.isNull(index) || (dataFrom.length == 0)) {
+					dataFrom = (byte[]) rowToRefresh[index];
 				} else {
 					dataFrom = stripBinaryPrefix(dataFrom);
 				}
@@ -1155,13 +1210,13 @@ public class UpdatableResultSet extends ResultSet {
 				int index = ((Integer) this.primaryKeyIndicies.get(i))
 						.intValue();
 
-				if (!this.doingUpdates) {
-					dataFrom = (byte[]) this.thisRow[index];
+				if (!this.doingUpdates && !this.onInsertRow) {
+					dataFrom = (byte[]) rowToRefresh[index];
 				} else {
-					dataFrom = this.updater.getBytesRepresentation(index);
+					dataFrom = updateInsertStmt.getBytesRepresentation(index);
 
 					// Primary keys not set?
-					if (this.updater.isNull(index) || (dataFrom.length == 0)) {
+					if (updateInsertStmt.isNull(index) || (dataFrom.length == 0)) {
 						dataFrom = (byte[]) this.thisRow[index];
 					} else {
 						dataFrom = stripBinaryPrefix(dataFrom);
@@ -1184,9 +1239,9 @@ public class UpdatableResultSet extends ResultSet {
 					byte[] val = rs.getBytes(i + 1);
 
 					if ((val == null) || rs.wasNull()) {
-						this.thisRow[i] = null;
+						rowToRefresh[i] = null;
 					} else {
-						this.thisRow[i] = rs.getBytes(i + 1);
+						rowToRefresh[i] = rs.getBytes(i + 1);
 					}
 				}
 			} else {
@@ -2203,7 +2258,7 @@ public class UpdatableResultSet extends ResultSet {
 	 */
 	public synchronized void updateRow() throws SQLException {
 		if (!this.isUpdatable) {
-			throw new NotUpdatable();
+			throw new NotUpdatable(this.notUpdatableReason);
 		}
 
 		if (this.doingUpdates) {

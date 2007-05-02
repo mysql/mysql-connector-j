@@ -1233,7 +1233,13 @@ public class StatementRegressionTest extends BaseTestCase {
 	 *             if test fails.
 	 */
 	public void testBug3557() throws Exception {
+		boolean populateDefaults = ((com.mysql.jdbc.ConnectionProperties) this.conn)
+				.getPopulateInsertRowWithDefaultValues();
+
 		try {
+			((com.mysql.jdbc.ConnectionProperties) this.conn)
+					.setPopulateInsertRowWithDefaultValues(true);
+
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
 
 			this.stmt.executeUpdate("CREATE TABLE testBug3557 ( "
@@ -1253,6 +1259,9 @@ public class StatementRegressionTest extends BaseTestCase {
 			assertEquals("XYZ", this.rs.getObject(1));
 			assertEquals("123", this.rs.getObject(2));
 		} finally {
+			((com.mysql.jdbc.ConnectionProperties) this.conn)
+					.setPopulateInsertRowWithDefaultValues(populateDefaults);
+
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3557");
 		}
 	}

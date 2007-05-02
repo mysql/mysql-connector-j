@@ -50,6 +50,7 @@ import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.NotUpdatable;
 import com.mysql.jdbc.SQLError;
@@ -4269,5 +4270,102 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		} finally {
 			closeMemberJDBCResources();
 		}
+	}
+
+	/**
+	 * Tests fix for BUG#28085 - Need more useful error messages for diagnostics
+	 * when the driver thinks a result set isn't updatable.
+	 * 
+	 * @throws Exception if the tests fail.
+	 */
+	public void testBug28085() throws Exception {
+
+		Statement updStmt = null;
+		
+		try {
+			createTable("testBug28085_oneKey", 
+				"(pk int primary key not null, field2 varchar(3))");
+			
+			this.stmt.executeUpdate("INSERT INTO testBug28085_oneKey (pk, field2) VALUES (1, 'abc')");
+			
+			createTable("testBug28085_multiKey", 
+				"(pk1 int not null, pk2 int not null, field2 varchar(3), primary key (pk1, pk2))");
+			
+			this.stmt.executeUpdate("INSERT INTO testBug28085_multiKey VALUES (1,2,'abc')");
+			
+			createTable("testBug28085_noKey", 
+					"(field1 varchar(3) not null)");
+	
+			this.stmt.executeUpdate("INSERT INTO testBug28085_noKey VALUES ('abc')");
+			
+			updStmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY,
+					ResultSet.CONCUR_UPDATABLE);
+			
+			this.rs = updStmt.executeQuery("SELECT field2 FROM testBug28085_oneKey");
+			exerciseUpdatableResultSet(1, "NotUpdatableReason.4");
+			
+			this.rs = updStmt.executeQuery("SELECT pk1, field2 FROM testBug28085_multiKey");
+			this.rs.next();
+			exerciseUpdatableResultSet(1, "NotUpdatableReason.7");
+			
+			this.rs = updStmt.executeQuery("SELECT t1.field2, t1.pk, t2.pk1 FROM testBug28085_oneKey t1 INNER JOIN testBug28085_multiKey t2 ON t1.pk = t2.pk1");
+			exerciseUpdatableResultSet(1, "NotUpdatableReason.0");
+			
+			this.rs = updStmt.executeQuery("SELECT field1 FROM testBug28085_noKey");
+			exerciseUpdatableResultSet(1, "NotUpdatableReason.5");
+			
+			this.rs = updStmt.executeQuery("SELECT 1");
+			exerciseUpdatableResultSet(1, "NotUpdatableReason.3");
+			
+			this.rs = updStmt.executeQuery("SELECT pk1, pk2, LEFT(field2, 2) FROM testBug28085_multiKey");
+			this.rs.next();
+			exerciseUpdatableResultSet(1, "NotUpdatableReason.3");
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (updStmt != null) {
+				updStmt.close();
+			}
+		}
+	}
+	
+	private void exerciseUpdatableResultSet(int columnUpdateIndex,
+			String messageToCheck) throws Exception {
+		this.rs.next();
+		
+		try {
+			this.rs.updateString(columnUpdateIndex, "def");
+		} catch (SQLException sqlEx) {
+			checkUpdatabilityMessage(sqlEx, 
+					messageToCheck);
+		}
+		
+		try {
+			this.rs.moveToInsertRow();
+		} catch (SQLException sqlEx) {
+			checkUpdatabilityMessage(sqlEx, 
+					messageToCheck);
+		}
+		
+		try {
+			this.rs.deleteRow();
+		} catch (SQLException sqlEx) {
+			checkUpdatabilityMessage(sqlEx, 
+					messageToCheck);
+		}
+	}
+	
+	private void checkUpdatabilityMessage(SQLException sqlEx,
+			String messageToCheck) throws Exception {
+
+		String message = sqlEx.getMessage();
+
+		assertNotNull(message);
+
+		String localizedMessage = Messages.getString(messageToCheck);
+
+		assertTrue("Didn't find required message component '"
+				+ localizedMessage + "', instead found:\n\n" + message,
+				message.indexOf(localizedMessage) != -1);
 	}
 }

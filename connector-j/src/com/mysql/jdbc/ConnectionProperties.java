@@ -1471,5 +1471,9 @@ public interface ConnectionProperties {
 	public abstract String getClientInfoProvider();
 
 	public abstract void setClientInfoProvider(String classname);
+	
+	public abstract boolean getPopulateInsertRowWithDefaultValues();
+
+	public abstract void setPopulateInsertRowWithDefaultValues(boolean flag);
 
 }

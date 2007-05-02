@@ -177,6 +177,22 @@
 	  setReadOnly(false), when that call should be ignored until the connection 
 	  is reconnected to a writable master unless "failoverReadOnly" had been set
 	  to "false".
+	  	    
+	- Fixed BUG#28085 - Generate more useful error messages for diagnostics
+	  when the driver thinks a result set isn't updatable. (Thanks to Ashley Martens
+	  for the patch).
+	  
+	- Driver will now use INSERT INTO ... VALUES (DEFAULT) form of statement
+	  for updatable result sets for ResultSet.insertRow(), rather than 
+	  pre-populating the insert row with values from DatabaseMetaData.getColumns()
+	  (which results in a "SHOW FULL COLUMNS" on the server for every result
+	  set). If an application requires access to the default values before
+	  insertRow() has been called, the JDBC URL should be configured with 
+	  "populateInsertRowWithDefaultValues" set to "true".
+	  
+	  This fix specifically targets performance issues with ColdFusion and the 
+	  fact that it seems to ask for updatable result sets no matter what the 
+	  application does with them.
 	  	    	  	  	      
 03-01-07 - Version 5.0.5
 
