@@ -1401,11 +1401,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			"option is exclusive of the \"useTimezone=true\" configuration option.)",
 			"5.0.0",
 			MISC_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty useLocalSessionState = new BooleanConnectionProperty(
 			"useLocalSessionState",
 			false,
 			"Should the driver refer to the internal values of autocommit and transaction isolation that are set "
-					+ " by Connection.setAutoCommit() and Connection.setTransactionIsolation(), rather than querying the database?",
+					+ "by Connection.setAutoCommit() and Connection.setTransactionIsolation() and transaction state "
+					+ "as maintained by the protocol, rather than querying the database or blindly "
+					+ "sending commands to the database for commit() or rollback() method calls?",
 			"3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty useOldAliasMetadataBehavior = new BooleanConnectionProperty(

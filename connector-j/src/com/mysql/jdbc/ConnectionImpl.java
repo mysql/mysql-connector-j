@@ -1508,6 +1508,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				if (this.autoCommit && !getRelaxAutoCommit()) {
 					throw SQLError.createSQLException("Can't call commit when autocommit=true");
 				} else if (this.transactionsSupported) {
+					if (getUseLocalSessionState() && versionMeetsMinimum(5, 0, 0)) {
+						if (!this.io.inTransactionOnServer()) {
+							return; // effectively a no-op
+						}
+					}
+					
 					execSQL(null, "commit", -1, null,
 							java.sql.ResultSet.TYPE_FORWARD_ONLY,
 							java.sql.ResultSet.CONCUR_READ_ONLY, false,
@@ -4491,6 +4497,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	}
 
 	private void rollbackNoChecks() throws SQLException {
+		if (getUseLocalSessionState() && versionMeetsMinimum(5, 0, 0)) {
+			if (!this.io.inTransactionOnServer()) {
+				return; // effectively a no-op
+			}
+		}
+		
 		execSQL(null, "rollback", -1, null,
 				java.sql.ResultSet.TYPE_FORWARD_ONLY,
 				java.sql.ResultSet.CONCUR_READ_ONLY, false,

@@ -767,7 +767,7 @@ class MysqlIO {
             boolean autoCommitModeOnServer = ((this.serverStatus &
                 SERVER_STATUS_AUTOCOMMIT) != 0);
 
-            if (!autoCommitFlag) {
+            if (!autoCommitFlag && versionMeetsMinimum(5, 0, 0)) {
                 // Just to be safe, check if a transaction is in progress on the server....
                 // if so, then we must be in autoCommit == false
                 // therefore return the opposite of transaction status
@@ -781,6 +781,10 @@ class MysqlIO {
         }
 
         return true;
+    }
+    
+    protected boolean inTransactionOnServer() {
+    	return (this.serverStatus & SERVER_STATUS_IN_TRANS) != 0;
     }
 
     /**
@@ -3933,7 +3937,7 @@ class MysqlIO {
     }
 
 	protected int getServerStatus() {
-		return serverStatus;
+		return this.serverStatus;
 	}
 
 	protected List fetchRowsViaCursor(List fetchedRows, long statementId,

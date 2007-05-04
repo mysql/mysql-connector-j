@@ -237,7 +237,16 @@
         
       * "bestResponseTime" - the driver will route the request to the host that had
         the best response time for the previous transaction.
-        	  	    	  	  	      
+
+	- When "useLocalSessionState" is set to "true" and connected to a MySQL-5.0 or 
+      later server, the JDBC driver will now determine whether an actual "commit" or 
+      "rollback" statement needs to be sent to the database when Connection.commit() 
+      or Connection.rollback() is called.
+      
+      This is especially helpful for high-load situations with connection pools that
+      always call Connection.rollback() on connection check-in/check-out because it
+      avoids a round-trip to the server.
+              	  	    	  	  	      
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

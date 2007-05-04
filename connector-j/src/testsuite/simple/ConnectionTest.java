@@ -1384,4 +1384,77 @@ public class ConnectionTest extends BaseTestCase {
     		}
     	}
     }
+    
+    public void testUseLocalSessionStateRollback() throws Exception {
+    	if (!versionMeetsMinimum(5, 0, 0)) {
+    		return;
+    	}
+    	
+    	Properties props = new Properties();
+    	props.setProperty("useLocalSessionState", "true");
+    	props.setProperty("profileSQL", "true");
+    	
+    	StringBuffer buf = new StringBuffer();
+    	StandardLogger.bufferedLog = buf;
+    	
+    	createTable("testUseLocalSessionState", "(field1 varchar(32)) ENGINE=InnoDB");
+    	
+    	Connection localStateConn = null;
+    	Statement localStateStmt = null;
+    	
+    	try {
+    		localStateConn = getConnectionWithProps(props);
+        	localStateStmt = localStateConn.createStatement();
+        	
+	    	localStateConn.setAutoCommit(false);
+	    	localStateStmt.executeUpdate("INSERT INTO testUseLocalSessionState VALUES ('abc')");
+	    	localStateConn.rollback();
+	    	localStateConn.rollback();
+	    	localStateStmt.executeUpdate("INSERT INTO testUseLocalSessionState VALUES ('abc')");
+	    	localStateConn.commit();
+	    	localStateConn.commit();
+	    	localStateStmt.close();
+    	} finally {
+    		StandardLogger.bufferedLog = null;
+    		 
+    		if (localStateStmt != null) {
+    			localStateStmt.close();
+    		}
+    		
+    		if (localStateConn != null) {
+    			localStateConn.close();
+    		}
+    	}
+    	
+    	int rollbackCount = 0;
+    	int rollbackPos = 0;
+    	
+    	String searchIn = buf.toString();
+    	
+    	while (rollbackPos != -1) {
+    		rollbackPos = searchIn.indexOf("rollback", rollbackPos);
+    		
+    		if (rollbackPos != -1) {
+    			rollbackPos += "rollback".length();
+    			rollbackCount++;
+    		}
+    	}
+    	
+    	assertEquals(1, rollbackCount);
+    	
+    	int commitCount = 0;
+    	int commitPos = 0;
+    	
+    	// space is important here, we don't want to count "autocommit"
+    	while (commitPos != -1) {
+    		commitPos = searchIn.indexOf(" commit", commitPos);
+    		
+    		if (commitPos != -1) {
+    			commitPos += " commit".length();
+    			commitCount++;
+    		}
+    	}
+    	
+    	assertEquals(1, commitCount);
+    }
 }
