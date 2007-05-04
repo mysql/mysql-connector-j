@@ -609,7 +609,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			}
 		}
 
-		url = url.substring(beginningOfSlashes);
+		url = url.substring(beginningOfSlashes + 2);
 
 		String hostStuff = null;
 
