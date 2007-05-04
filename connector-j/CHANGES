@@ -193,7 +193,51 @@
 	  This fix specifically targets performance issues with ColdFusion and the 
 	  fact that it seems to ask for updatable result sets no matter what the 
 	  application does with them.
-	  	    	  	  	      
+	  
+	- com.mysql.jdbc.[NonRegistering]Driver now understands URLs of the format
+	  "jdbc:mysql:replication://" and "jdbc:mysql:loadbalance://" which will
+	  create a ReplicationConnection (exactly like when 
+	  using [NonRegistering]ReplicationDriver) and an experimenal load-balanced
+	  connection designed for use with SQL nodes in a MySQL Cluster/NDB environment, 
+	  respectively.
+	  
+	  In an effort to simplify things, we're working on deprecating multiple 
+	  drivers, and instead specifying different core behavior based upon JDBC URL 
+	  prefixes, so watch for [NonRegistering]ReplicationDriver to eventually 
+	  disappear, to be replaced with com.mysql.jdbc[NonRegistering]Driver with 
+	  the new URL prefix.
+	  
+	- Added an experimental load-balanced connection designed for use with SQL nodes
+      in a MySQL Cluster/NDB environment (This is not for master-slave replication.
+      For that, we suggest you look at ReplicationConnection or "lbpool").
+	  
+	  If the JDBC URL starts with "jdbc:mysql:loadbalance://host-1,host-2,...host-n", 
+	  the driver will create an implementation of java.sql.Connection that load 
+	  balances requests across a series of MySQL JDBC connections to the given hosts, 
+	  where the balancing takes place after transaction commit.
+ 
+      Therefore, for this to work (at all), you must use transactions, even if only
+      reading data.
+ 
+      Physical connections to the given hosts will not be created until needed.
+      
+      The driver will invalidate connections that it detects have had
+      communication errors when processing a request. A new connection to the
+      problematic host will be attempted the next time it is selected by the load
+      balancing algorithm.
+      
+      There are two choices for load balancing algorithms, which may be specified
+      by the "loadBalanceStrategy" JDBC URL configuration property:
+      
+      * "random" - the driver will pick a random host for each request. This tends
+        to work better than round-robin, as the randomness will somewhat account for
+        spreading loads where requests vary in response time, while round-robin
+        can sometimes lead to overloaded nodes if there are variations in response times
+        across the workload.
+        
+      * "bestResponseTime" - the driver will route the request to the host that had
+        the best response time for the previous transaction.
+        	  	    	  	  	      
 03-01-07 - Version 5.0.5
 
     - Fixed BUG#23645 - Some collations/character sets reported as "unknown"

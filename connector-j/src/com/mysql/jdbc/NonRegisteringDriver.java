@@ -31,11 +31,11 @@ import java.net.URLDecoder;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
-
 /**
  * The Java SQL framework allows for multiple database drivers. Each driver
  * should supply a class that implements the Driver interface
@@ -66,6 +66,14 @@ import java.util.StringTokenizer;
  * @see java.sql.Driver
  */
 public class NonRegisteringDriver implements java.sql.Driver {
+	private static final String REPLICATION_URL_PREFIX = "jdbc:mysql:replication://";
+
+	private static final String URL_PREFIX = "jdbc:mysql://";
+
+	private static final String MXJ_URL_PREFIX = "jdbc:mysql:mxj://";
+
+	private static final String LOADBALANCE_URL_PREFIX = "jdbc:mysql:loadbalance://";
+
 	/**
 	 * Key used to retreive the database value from the properties instance
 	 * passed to the driver.
@@ -256,6 +264,15 @@ public class NonRegisteringDriver implements java.sql.Driver {
 	 */
 	public java.sql.Connection connect(String url, Properties info)
 			throws SQLException {
+		if (url != null) {
+			if (StringUtils.startsWithIgnoreCase(url, LOADBALANCE_URL_PREFIX)) {
+				return connectLoadBalanced(url, info);
+			} else if (StringUtils.startsWithIgnoreCase(url,
+					REPLICATION_URL_PREFIX)) {
+				return connectReplicationConnection(url, info);
+			}
+		}
+
 		Properties props = null;
 
 		if ((props = parseURL(url, info)) == null) {
@@ -278,6 +295,107 @@ public class NonRegisteringDriver implements java.sql.Driver {
 					+ Messages.getString("NonRegisteringDriver.18"), //$NON-NLS-1$
 					SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
 		}
+	}
+
+	private java.sql.Connection connectLoadBalanced(String url, Properties info)
+			throws SQLException {
+		Properties parsedProps = parseURL(url, info);
+
+		if (parsedProps == null) {
+			return null;
+		}
+
+		String hostValues = parsedProps.getProperty(HOST_PROPERTY_KEY);
+
+		List hostList = null;
+
+		if (hostValues != null) {
+			hostList = StringUtils.split(hostValues, ",", true);
+		}
+
+		if (hostList == null) {
+			hostList = new ArrayList();
+			hostList.add("localhost:3306");
+		}
+
+		LoadBalancingConnectionProxy proxyBal = new LoadBalancingConnectionProxy(
+				hostList, parsedProps);
+
+		return (Connection) java.lang.reflect.Proxy.newProxyInstance(this
+				.getClass().getClassLoader(),
+				new Class[] { java.sql.Connection.class }, proxyBal);
+	}
+
+	private java.sql.Connection connectReplicationConnection(String url, Properties info)
+			throws SQLException {
+		Properties parsedProps = parseURL(url, info);
+
+		if (parsedProps == null) {
+			return null;
+		}
+
+		Properties masterProps = (Properties) parsedProps.clone();
+		Properties slavesProps = (Properties) parsedProps.clone();
+
+		// Marker used for further testing later on, also when
+		// debugging
+		slavesProps.setProperty("com.mysql.jdbc.ReplicationConnection.isSlave",
+				"true");
+
+		String hostValues = parsedProps.getProperty(HOST_PROPERTY_KEY);
+
+		if (hostValues != null) {
+			StringTokenizer st = new StringTokenizer(hostValues, ",");
+
+			StringBuffer masterHost = new StringBuffer();
+			StringBuffer slaveHosts = new StringBuffer();
+
+			if (st.hasMoreTokens()) {
+				String[] hostPortPair = parseHostPortPair(st.nextToken());
+
+				if (hostPortPair[HOST_NAME_INDEX] != null) {
+					masterHost.append(hostPortPair[HOST_NAME_INDEX]);
+				}
+
+				if (hostPortPair[PORT_NUMBER_INDEX] != null) {
+					masterHost.append(":");
+					masterHost.append(hostPortPair[PORT_NUMBER_INDEX]);
+				}
+			}
+
+			boolean firstSlaveHost = true;
+
+			while (st.hasMoreTokens()) {
+				String[] hostPortPair = parseHostPortPair(st.nextToken());
+
+				if (!firstSlaveHost) {
+					slaveHosts.append(",");
+				} else {
+					firstSlaveHost = false;
+				}
+
+				if (hostPortPair[HOST_NAME_INDEX] != null) {
+					slaveHosts.append(hostPortPair[HOST_NAME_INDEX]);
+				}
+
+				if (hostPortPair[PORT_NUMBER_INDEX] != null) {
+					slaveHosts.append(":");
+					slaveHosts.append(hostPortPair[PORT_NUMBER_INDEX]);
+				}
+			}
+
+			if (slaveHosts.length() == 0) {
+				throw SQLError
+						.createSQLException(
+								"Must specify at least one slave host to connect to for master/slave replication load-balancing functionality",
+								SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+			}
+
+			masterProps.setProperty(HOST_PROPERTY_KEY, masterHost.toString());
+			slavesProps.setProperty(HOST_PROPERTY_KEY, slaveHosts.toString());
+		}
+
+		return new ReplicationConnection(masterProps, slavesProps);
 	}
 
 	/**
@@ -342,7 +460,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			info = new Properties();
 		}
 
-		if ((url != null) && url.startsWith("jdbc:mysql://")) { //$NON-NLS-1$
+		if ((url != null) && url.startsWith(URL_PREFIX)) { //$NON-NLS-1$
 			info = parseURL(url, info);
 		}
 
@@ -427,17 +545,20 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			return null;
 		}
 
-		if (!StringUtils.startsWithIgnoreCase(url, "jdbc:mysql://")
-				&& !StringUtils.startsWithIgnoreCase(url, "jdbc:mysql:mxj://")) { //$NON-NLS-1$
+		if (!StringUtils.startsWithIgnoreCase(url, URL_PREFIX)
+				&& !StringUtils.startsWithIgnoreCase(url, MXJ_URL_PREFIX)
+				&& !StringUtils.startsWithIgnoreCase(url,
+						LOADBALANCE_URL_PREFIX)
+				&& !StringUtils.startsWithIgnoreCase(url,
+						REPLICATION_URL_PREFIX)) { //$NON-NLS-1$
 
 			return null;
 		}
 
-		int beginningOfSlashes = 13;
+		int beginningOfSlashes = url.indexOf("//");
 
-		if (StringUtils.startsWithIgnoreCase(url, "jdbc:mysql:mxj://")) {
-			beginningOfSlashes = 17;
-
+		if (StringUtils.startsWithIgnoreCase(url, MXJ_URL_PREFIX)) {
+			
 			urlProps
 					.setProperty("socketFactory",
 							"com.mysql.management.driverlaunched.ServerLauncherSocketFactory");

@@ -24,6 +24,7 @@
  */
 package com.mysql.jdbc;
 
+import com.mysql.jdbc.ConnectionProperties.StringConnectionProperty;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.StandardLogger;
 
@@ -938,7 +939,21 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	private boolean jdbcCompliantTruncationForReads = 
 		this.jdbcCompliantTruncation.getValueAsBoolean();
-
+	
+	private StringConnectionProperty loadBalanceStrategy = new StringConnectionProperty(
+			"loadBalanceStrategy",
+			"random",
+			new String[] {"random", "bestResponseTime"},
+			"If using a load-balanced connection to connect to SQL nodes in a MySQL Cluster/NDB configuration" +
+			"(by using the URL prefix \"jdbc:mysql:loadbalance://\"), which load balancin algorithm should the driver " +
+			"use: (1) \"random\" - the driver will pick a random host for each request. This tends " +
+			"to work better than round-robin, as the randomness will somewhat account for " +
+			"spreading loads where requests vary in response time, while round-robin " +
+			"can sometimes lead to overloaded nodes if there are variations in response times " +
+			"across the workload. (2) \"bestResponseTime\" - the driver will route the request to the host that had " +
+			"the best response time for the previous transaction.",
+			"5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+	
 	private StringConnectionProperty localSocketAddress = new StringConnectionProperty("localSocketAddress",
 			null, "Hostname or IP address given to explicitly configure the interface that "
 			+ "the driver will bind the client side of the TCP/IP connection to when connecting.",
@@ -4052,5 +4067,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setPopulateInsertRowWithDefaultValues(boolean flag) {
 		this.populateInsertRowWithDefaultValues.setValue(flag);
+	}
+	
+	public String getLoadBalanceStrategy() {
+		return this.loadBalanceStrategy.getValueAsString();
+	}
+
+	public void setLoadBalanceStrategy(String strategy) {
+		this.loadBalanceStrategy.setValue(strategy);
 	}
 }

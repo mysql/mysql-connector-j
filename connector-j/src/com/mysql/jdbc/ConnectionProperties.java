@@ -1475,5 +1475,8 @@ public interface ConnectionProperties {
 	public abstract boolean getPopulateInsertRowWithDefaultValues();
 
 	public abstract void setPopulateInsertRowWithDefaultValues(boolean flag);
+	
+	public abstract String getLoadBalanceStrategy();
 
+	public abstract void setLoadBalanceStrategy(String strategy);
 }
