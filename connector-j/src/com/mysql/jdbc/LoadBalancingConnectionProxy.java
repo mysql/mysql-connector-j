@@ -229,7 +229,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 		connProps.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY,
 				hostPortPair[1]);
 
-		Connection conn = new Connection(hostPortSpec, Integer
+		Connection conn = new ConnectionImpl(hostPortSpec, Integer
 				.parseInt(hostPortPair[1]), connProps, connProps
 				.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY),
 				"jdbc:mysql://" + hostPortPair[0] + ":" + hostPortPair[1] + "/");
