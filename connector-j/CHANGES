@@ -80,21 +80,21 @@
 	
 	- Added support for JDBC-4.0's NCLOB, and NCHAR/NVARCHAR types.
 	  
-04-nn-07 - Version 5.0.6
+05-15-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,
 	  leading to stored procedures not being able to return results. Thanks
 	  to Don Cohen for the bug report, testcase and patch.
-	  
+
 	- Fixed BUG#26592 - PreparedStatement is not closed in 
 	  BlobFromLocator.getBytes().
-	  
+
 	- Fixed BUG#25624 - Whitespace surrounding storage/size specifiers in 
 	  stored procedure parameters declaration causes NumberFormatException to 
 	  be thrown when calling stored procedure on JDK-1.5 or newer, as the Number
-	  classes in JDK-1.5+ are whitespace intolerant.
+	  classes in JDK-1.5+ are whitespace intolerant.	  
 	  
-    - Fixed BUG#26173 - When useCursorFetch=true, sometimes server would return
+	- Fixed BUG#26173 - When useCursorFetch=true, sometimes server would return
 	  new, more exact metadata during the execution of the server-side prepared
 	  statement that enables this functionality, which the driver ignored (using
 	  the original metadata returned during prepare()), causing corrupt reading
@@ -105,20 +105,20 @@
 	  inability to retrieve said metadata, or execute procedures that have certain
 	  comments in them.
 	  
-    - Give better error message when "streaming" result sets, and the connection
+	- Give better error message when "streaming" result sets, and the connection
 	  gets clobbered because of exceeding net_write_timeout on the server. (which is
 	  basically what the error message says too).
 
- 	- Fixed BUG#26789 - fast date/time parsing doesn't take into
+	- Fixed BUG#26789 - fast date/time parsing doesn't take into
 	  account 00:00:00 as a legal value.
-	  
+	 
 	- Fixed BUG#27317 - ResultSet.get*() with a column index < 1 returns 
 	  misleading error message.
-	
+	  
 	- Fixed BUG#25517 - Statement.setMaxRows() is not effective on result 
 	  sets materialized from cursors.
 	  
-    - New configuration property, "enableQueryTimeouts" (default "true"). 
+	- New configuration property, "enableQueryTimeouts" (default "true"). 
 	  When enabled, query timeouts set via Statement.setQueryTimeout() use a 
 	  shared java.util.Timer instance for scheduling. Even if the timeout 
 	  doesn't expire before the query is processed, there will be 
@@ -127,7 +127,7 @@
 	  hadn't been cancelled by the driver. High-load environments 
 	  might want to consider disabling this functionality. (this configuration 
 	  property is part of the "maxPerformance" configuration bundle).
-	  
+	
 	- Fixed BUG#27400 - CALL /* ... */ some_proc() doesn't work. As a side effect
 	  of this fix, you can now use /* */ and # comments when preparing statements using
 	  client-side prepared statement emulation.
@@ -172,12 +172,12 @@
 	- Fixed issue where calling getGeneratedKeys() on a prepared statement after 
 	  calling execute() didn't always return the generated keys (executeUpdate() 
 	  worked fine however).
-	  
+	
 	- Fixed issue where a failed-over connection would let an application call 
 	  setReadOnly(false), when that call should be ignored until the connection 
 	  is reconnected to a writable master unless "failoverReadOnly" had been set
 	  to "false".
-	  	    
+	    
 	- Fixed BUG#28085 - Generate more useful error messages for diagnostics
 	  when the driver thinks a result set isn't updatable. (Thanks to Ashley Martens
 	  for the patch).
@@ -237,8 +237,8 @@
         
       * "bestResponseTime" - the driver will route the request to the host that had
         the best response time for the previous transaction.
-
-	- When "useLocalSessionState" is set to "true" and connected to a MySQL-5.0 or 
+        
+    - When "useLocalSessionState" is set to "true" and connected to a MySQL-5.0 or 
       later server, the JDBC driver will now determine whether an actual "commit" or 
       "rollback" statement needs to be sent to the database when Connection.commit() 
       or Connection.rollback() is called.
