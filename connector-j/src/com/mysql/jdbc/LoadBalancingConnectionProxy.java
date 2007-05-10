@@ -56,10 +56,23 @@ import java.util.Properties;
  */
 public class LoadBalancingConnectionProxy implements InvocationHandler {
 
+	private static Method getLocalTimeMethod;
+
+	static {
+		try {
+			getLocalTimeMethod = System.class.getMethod("nanoTime",
+					new Class[0]);
+		} catch (SecurityException e) {
+			// ignore
+		} catch (NoSuchMethodException e) {
+			// ignore
+		}
+	}
+
 	interface BalanceStrategy {
 		abstract Connection pickConnection() throws SQLException;
 	}
-	
+
 	class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 
 		public Connection pickConnection() throws SQLException {
@@ -93,7 +106,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 			return conn;
 		}
 	}
-	
+
 	// Lifted from C/J 5.1's JDBC-2.0 connection pool classes, let's merge this
 	// if/when this gets into 5.1
 	protected class ConnectionErrorFiringInvocationHandler implements
@@ -121,7 +134,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 			return result;
 		}
 	}
-	
+
 	class RandomBalanceStrategy implements BalanceStrategy {
 
 		public Connection pickConnection() throws SQLException {
@@ -142,13 +155,19 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 			return conn;
 		}
 	}
+
 	private Connection currentConn;
+
 	private List hostList;
 
 	private Map liveConnections;
+
 	private Map connectionsToHostsMap;
+
 	private long[] responseTimes;
+
 	private Map hostsToListIndexMap;
+
 	boolean inTransaction = false;
 
 	long transactionStartTime = 0;
@@ -180,8 +199,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 		this.hostsToListIndexMap = new HashMap(numHosts);
 
 		for (int i = 0; i < numHosts; i++) {
-			this.hostsToListIndexMap.put(this.hostList.get(i), Integer
-					.valueOf(i));
+			this.hostsToListIndexMap.put(this.hostList.get(i), new Integer(i));
 		}
 
 		this.localProps = (Properties) props.clone();
@@ -189,19 +207,19 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 		this.localProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
 		this.localProps.setProperty("useLocalSessionState", "true");
 
-		String strategy = this.localProps.getProperty("loadBalanceStrategy", "random");
-		
+		String strategy = this.localProps.getProperty("loadBalanceStrategy",
+				"random");
+
 		if ("random".equals(strategy)) {
 			this.balancer = new RandomBalanceStrategy();
 		} else if ("bestResponseTime".equals(strategy)) {
 			this.balancer = new BestResponseTimeBalanceStrategy();
 		} else {
-			throw SQLError.createSQLException(
-					Messages.getString("InvalidLoadBalanceStrategy",
-					new Object[] { strategy }),
+			throw SQLError.createSQLException(Messages.getString(
+					"InvalidLoadBalanceStrategy", new Object[] { strategy }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
-		
+
 		pickNewConnection();
 	}
 
@@ -326,7 +344,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 
 		if (!inTransaction) {
 			this.inTransaction = true;
-			this.transactionStartTime = System.nanoTime();
+			this.transactionStartTime = getLocalTimeBestResolution();
 		}
 
 		Object result = null;
@@ -348,7 +366,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 						.get(this.connectionsToHostsMap.get(this.currentConn)))
 						.intValue();
 
-				this.responseTimes[hostIndex] = System.nanoTime()
+				this.responseTimes[hostIndex] = getLocalTimeBestResolution()
 						- this.transactionStartTime;
 
 				pickNewConnection();
@@ -405,5 +423,26 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 		}
 
 		return toProxy;
+	}
+
+	/**
+	 * Returns best-resolution representation of local time, using nanoTime() if
+	 * availble, otherwise defaulting to currentTimeMillis().
+	 */
+	private static long getLocalTimeBestResolution() {
+		if (getLocalTimeMethod != null) {
+			try {
+				return ((Long) getLocalTimeMethod.invoke(null, null))
+						.longValue();
+			} catch (IllegalArgumentException e) {
+				// ignore - we fall through to currentTimeMillis()
+			} catch (IllegalAccessException e) {
+				// ignore - we fall through to currentTimeMillis()
+			} catch (InvocationTargetException e) {
+				// ignore - we fall through to currentTimeMillis()
+			}
+		}
+
+		return System.currentTimeMillis();
 	}
 }

@@ -24,7 +24,6 @@
  */
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.ConnectionProperties.StringConnectionProperty;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.StandardLogger;
 
