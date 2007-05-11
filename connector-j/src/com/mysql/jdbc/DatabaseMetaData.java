@@ -431,7 +431,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 		}
 	}
-	
+       
 	private static String mysqlKeywordsThatArentSQL92;
 	
 	protected static final int MAX_IDENTIFIER_LENGTH = 64;
@@ -823,14 +823,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 	private byte[][] convertTypeDescriptorToProcedureRow(
 			byte[] procNameAsBytes, String paramName, boolean isOutParam,
-			boolean isInParam, boolean isReturnParam, TypeDescriptor typeDesc)
+			boolean isInParam, boolean isReturnParam, TypeDescriptor typeDesc,
+			boolean forGetFunctionColumns,
+			int ordinal)
 			throws SQLException {
-		byte[][] row = new byte[14][];
+		byte[][] row = forGetFunctionColumns ? new byte[17][] : new byte[14][];
 		row[0] = null; // PROCEDURE_CAT
 		row[1] = null; // PROCEDURE_SCHEM
 		row[2] = procNameAsBytes; // PROCEDURE/NAME
 		row[3] = s2b(paramName); // COLUMN_NAME
 		// COLUMN_TYPE
+		
+		// NOTE: For JDBC-4.0, we luck out here for functions
+		// because the values are the same for functionColumn....
+		// and they're not using Enumerations....
+		
 		if (isInParam && isOutParam) {
 			row[4] = s2b(String.valueOf(procedureColumnInOut));
 		} else if (isInParam) {
@@ -851,17 +858,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		// Map 'column****' to 'procedure****'
 		switch (typeDesc.nullability) {
 		case columnNoNulls:
-			row[11] = s2b(Integer.toString(procedureNoNulls)); // NULLABLE
+			row[11] = s2b(String.valueOf(procedureNoNulls)); // NULLABLE
 
 			break;
 
 		case columnNullable:
-			row[11] = s2b(Integer.toString(procedureNullable)); // NULLABLE
+			row[11] = s2b(String.valueOf(procedureNullable)); // NULLABLE
 
 			break;
 
 		case columnNullableUnknown:
-			row[11] = s2b(Integer.toString(procedureNullableUnknown)); // nullable
+			row[11] = s2b(String.valueOf(procedureNullableUnknown)); // nullable
 
 			break;
 
@@ -870,7 +877,22 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					"Internal error while parsing callable statement metadata (unknown nullability value fount)",
 					SQLError.SQL_STATE_GENERAL_ERROR);
 		}
+		
 		row[12] = null;
+		
+		if (forGetFunctionColumns) {
+			// CHAR_OCTECT_LENGTH
+			row[13] = null;
+			
+			// ORDINAL_POSITION
+			row[14] = s2b(String.valueOf(ordinal));
+			
+			// IS_NULLABLE
+			row[15] = Constants.EMPTY_BYTE_ARRAY;
+			
+			row[16] = s2b(paramName);
+		}
+		
 		return row;
 	}
 
@@ -1432,6 +1454,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 */
 	private void getCallStmtParameterTypes(String catalog, String procName,
 			String parameterNamePattern, List resultRows) throws SQLException {
+		getCallStmtParameterTypes(catalog, procName, 
+				parameterNamePattern, resultRows, false);
+	}
+	
+	private void getCallStmtParameterTypes(String catalog, String procName,
+			String parameterNamePattern, List resultRows, 
+			boolean forGetFunctionColumns) throws SQLException {
 		java.sql.Statement paramRetrievalStmt = null;
 		java.sql.ResultSet paramRetrievalRs = null;
 
@@ -1458,7 +1487,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		String quoteChar = getIdentifierQuoteString();
 
 		String parameterDef = null;
-
+	
 		boolean isProcedureInAnsiMode = false;
 		String storageDefnDelims = null;
 		String storageDefnClosures = null;
@@ -1627,7 +1656,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 					resultRows.add(convertTypeDescriptorToProcedureRow(
 							procNameAsBytes, "", false, false, true,
-							returnDescriptor));
+							returnDescriptor, forGetFunctionColumns, 0));
 				}
 
 				if ((openParenIndex == -1)
@@ -1671,6 +1700,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 
 		if (parameterDef != null) {
+			int ordinal = 1;
+			
 			List parseList = StringUtils.split(parameterDef, ",",
 					storageDefnDelims, storageDefnClosures, true);
 
@@ -1763,7 +1794,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					if (wildCompareRes != StringUtils.WILD_COMPARE_NO_MATCH) {
 						byte[][] row = convertTypeDescriptorToProcedureRow(
 								procNameAsBytes, paramName, isOutParam,
-								isInParam, false, typeDesc);
+								isInParam, false, typeDesc, forGetFunctionColumns,
+								ordinal++);
 
 						resultRows.add(row);
 					}
@@ -3986,7 +4018,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	public java.sql.ResultSet getProcedureColumns(String catalog,
 			String schemaPattern, String procedureNamePattern,
 			String columnNamePattern) throws SQLException {
-
 		Field[] fields = new Field[13];
 
 		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
@@ -4002,21 +4033,36 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[10] = new Field("", "RADIX", Types.SMALLINT, 0);
 		fields[11] = new Field("", "NULLABLE", Types.SMALLINT, 0);
 		fields[12] = new Field("", "REMARKS", Types.CHAR, 0);
+		
+		return getProcedureOrFunctionColumns(
+				fields, catalog, schemaPattern,
+				procedureNamePattern, columnNamePattern,
+				true, true);
+	}
+	
+	protected java.sql.ResultSet getProcedureOrFunctionColumns(
+			Field[] fields, String catalog, String schemaPattern,
+			String procedureOrFunctionNamePattern,
+			String columnNamePattern, boolean returnProcedures,
+			boolean returnFunctions) throws SQLException {
 
 		List proceduresToExtractList = new ArrayList();
 
 		if (supportsStoredProcedures()) {
-			if ((procedureNamePattern.indexOf("%") == -1)
-					&& (procedureNamePattern.indexOf("?") == -1)) {
-				proceduresToExtractList.add(procedureNamePattern);
+			if ((procedureOrFunctionNamePattern.indexOf("%") == -1)
+					&& (procedureOrFunctionNamePattern.indexOf("?") == -1)) {
+				proceduresToExtractList.add(procedureOrFunctionNamePattern);
 			} else {
 				
 				ResultSet procedureNameRs = null;
 
 				try {
 
-					procedureNameRs = getProcedures(catalog, schemaPattern,
-							procedureNamePattern);
+					procedureNameRs = getProceduresAndOrFunctions(
+							createFieldMetadataForGetProcedures(),
+							catalog, schemaPattern,
+							procedureOrFunctionNamePattern, returnProcedures,
+							returnFunctions);
 
 					while (procedureNameRs.next()) {
 						proceduresToExtractList.add(procedureNameRs
@@ -4052,7 +4098,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			String procName = (String) iter.next();
 
 			getCallStmtParameterTypes(catalog, procName, columnNamePattern,
-					resultRows);
+					resultRows, 
+					fields.length == 17 /* for getFunctionColumns */);
 		}
 
 		return buildResultSet(fields, resultRows);
@@ -4101,6 +4148,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	public java.sql.ResultSet getProcedures(String catalog,
 			String schemaPattern, String procedureNamePattern)
 			throws SQLException {
+		Field[] fields = createFieldMetadataForGetProcedures();
+		
+		return getProceduresAndOrFunctions(fields, catalog, schemaPattern,
+				procedureNamePattern, true, true);
+	}
+
+	private Field[] createFieldMetadataForGetProcedures() {
 		Field[] fields = new Field[8];
 		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
 		fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 0);
@@ -4110,9 +4164,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[5] = new Field("", "reserved3", Types.CHAR, 0);
 		fields[6] = new Field("", "REMARKS", Types.CHAR, 0);
 		fields[7] = new Field("", "PROCEDURE_TYPE", Types.SMALLINT, 0);
-		
-		return getProceduresAndOrFunctions(fields, catalog, schemaPattern,
-				procedureNamePattern, true, true);
+		return fields;
 	}
 	
 	protected java.sql.ResultSet getProceduresAndOrFunctions(
@@ -6690,7 +6742,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *            DOCUMENT ME!
 	 * @return DOCUMENT ME!
 	 */
-	private byte[] s2b(String s) throws SQLException {
+	protected byte[] s2b(String s) throws SQLException {
 		return StringUtils.s2b(s, this.conn);
 	}
 	
@@ -7765,5 +7817,61 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 */
 	public boolean usesLocalFiles() throws SQLException {
 		return false;
+	}
+	
+	//
+	// JDBC-4.0 functions that aren't reliant on Java6
+    /**
+     * Retrieves a description of the given catalog's system or user 
+     * function parameters and return type.
+     *
+ 	 * @see java.sql.DatabaseMetaData#getFunctionColumns(String, String, String, String)
+     * @since 1.6
+     */
+    public ResultSet getFunctionColumns(String catalog, 
+    		String schemaPattern, 
+    		String functionNamePattern, 
+    		String columnNamePattern) throws SQLException {
+    	Field[] fields = {
+    			new Field("", "FUNCTION_CAT", Types.VARCHAR, 0),
+    			new Field("", "FUNCTION_SCHEM", Types.VARCHAR, 0),
+    			new Field("", "FUNCTION_NAME", Types.VARCHAR, 0),
+    			new Field("", "COLUMN_NAME", Types.VARCHAR, 0),
+    			new Field("", "COLUMN_TYPE", Types.VARCHAR, 0),
+    			new Field("", "DATA_TYPE", Types.SMALLINT, 0),
+    			new Field("", "TYPE_NAME", Types.VARCHAR, 0),
+    			new Field("", "PRECISION", Types.INTEGER, 0),
+    			new Field("", "LENGTH", Types.INTEGER, 0),
+    			new Field("", "SCALE", Types.SMALLINT, 0),
+    			new Field("", "RADIX", Types.SMALLINT, 0),
+    			new Field("", "NULLABLE", Types.SMALLINT, 0),
+    			new Field("", "REMARKS", Types.VARCHAR, 0),
+    			new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, 0),
+    			new Field("", "ORDINAL_POSITION", Types.INTEGER, 0),
+    			new Field("", "IS_NULLABLE", Types.VARCHAR, 3),
+    			new Field("", "SPECIFIC_NAME", Types.VARCHAR, 0)};
+
+		return getProcedureOrFunctionColumns(
+				fields, catalog, schemaPattern,
+				functionNamePattern, columnNamePattern,
+				false, true);
+	}
+
+	public boolean providesQueryObjectGenerator() throws SQLException {
+		return false;
+	}
+	
+	public ResultSet getSchemas(String catalog, 
+			String schemaPattern) throws SQLException {
+		Field[] fields = {
+				new Field("", "TABLE_SCHEM", Types.VARCHAR, 255),
+				new Field("", "TABLE_CATALOG", Types.VARCHAR, 255)
+		};
+		
+		return buildResultSet(fields, new ArrayList());
+	}
+
+	public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
+		return true;
 	}
 }
