@@ -26,6 +26,7 @@ package com.mysql.jdbc;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
@@ -316,9 +317,11 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 
 				return new DOMSource(builder.parse(inputSource));
 			} catch (Throwable t) {
-				// FIXME - need to use factory method and set cause here
-
-				throw new SQLException(t);
+				SQLException sqlEx = SQLError.createSQLException(t
+						.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+				sqlEx.initCause(t);
+				
+				throw sqlEx;
 			}
 
 		} else if (clazz.equals(StreamSource.class)) {
@@ -348,7 +351,8 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 			} catch (XMLStreamException ex) {
 				SQLException sqlEx = SQLError.createSQLException(ex
 						.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-				// perhaps setCause here w/ ex?
+				sqlEx.initCause(ex);
+				
 				throw sqlEx;
 			}
 		} else {
@@ -515,7 +519,8 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 			} catch (XMLStreamException ex) {
 				SQLException sqlEx = SQLError.createSQLException(ex
 						.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-				// perhaps setCause here w/ ex?
+				sqlEx.initCause(ex);
+				
 				throw sqlEx;
 			}
 		} else {
@@ -566,6 +571,28 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 		}
 	}
 
+	protected String readerToString(Reader reader) throws SQLException {
+		StringBuffer buf = new StringBuffer();
+		
+		int charsRead = 0;
+		
+		char[] charBuf = new char[512];
+		
+		try {
+			while ((charsRead = reader.read(charBuf)) != -1) {
+				buf.append(charBuf, 0, charsRead);
+			}
+		} catch (IOException ioEx) {
+			SQLException sqlEx = SQLError.createSQLException(ioEx
+					.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			sqlEx.initCause(ioEx);
+			
+			throw sqlEx;
+		}
+		
+		return buf.toString();
+	}
+	
 	protected synchronized Reader serializeAsCharacterStream()
 			throws SQLException {
 		checkClosed();
@@ -576,20 +603,13 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 			}
 
 			if (this.asDOMResult != null) {
-				try {
-					DOMSource source = new DOMSource(this.asDOMResult.getNode());
-					Transformer identity = TransformerFactory.newInstance()
-							.newTransformer();
-					StringWriter stringOut = new StringWriter();
-					Result result = new StreamResult(stringOut);
-					identity.transform(source, result);
-
-					return new StringReader(stringOut.toString());
-				} catch (Throwable t) {
-					throw new SQLException(t.toString());
-				}
+				return new StringReader(domSourceToString());
 			}
 
+			if (this.asStringWriter != null) { // stax result
+				return new StringReader(this.asStringWriter.toString());
+			}
+			
 			if (this.asSAXResult != null) {
 				return this.saxToReaderConverter.toReader();
 			}
@@ -602,6 +622,25 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 		return this.owningResultSet.getCharacterStream(this.columnIndexOfXml);
 	}
 
+	protected String domSourceToString() throws SQLException {
+		try {
+			DOMSource source = new DOMSource(this.asDOMResult.getNode());
+			Transformer identity = TransformerFactory.newInstance()
+					.newTransformer();
+			StringWriter stringOut = new StringWriter();
+			Result result = new StreamResult(stringOut);
+			identity.transform(source, result);
+	
+			return stringOut.toString();
+		} catch (Throwable t) {
+			SQLException sqlEx = SQLError.createSQLException(t
+					.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			sqlEx.initCause(t);
+			
+			throw sqlEx;
+		}
+	}
+	
 	protected synchronized String serializeAsString() throws SQLException {
 		checkClosed();
 		if (this.workingWithResult) {
@@ -611,7 +650,20 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 			}
 
 			if (this.asDOMResult != null) {
-				// serialize from DOM
+				return domSourceToString();
+			}
+			
+			if (this.asStringWriter != null) { // stax result
+				return this.asStringWriter.toString();
+			}
+			
+			if (this.asSAXResult != null) {
+				return readerToString(this.saxToReaderConverter.toReader());
+			}
+
+			if (this.asByteArrayOutputStream != null) {
+				return readerToString(
+						binaryInputStreamStreamToReader(this.asByteArrayOutputStream));
 			}
 		}
 
