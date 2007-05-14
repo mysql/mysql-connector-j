@@ -1278,6 +1278,12 @@ public class StatementRegressionTest extends BaseTestCase {
 			return;
 		}
 		
+		if (isRunningOnJdk131()) {
+			// bug with timezones, no update
+			// for new DST in USA
+			return;
+		}
+		
 		long epsillon = 3000; // 3 seconds time difference
 
 		try {
