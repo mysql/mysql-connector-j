@@ -2087,7 +2087,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			
 			String masterConnectionId = getSingleIndexedValueWithQuery(failoverConn, 1, "SELECT connection_id()").toString();
 			
-			failoverStmt.execute("KILL " + masterConnectionId);
+			this.stmt.execute("KILL " + masterConnectionId);
 			
 			// die trying, so we get the next host
 			for (int i = 0; i < 100; i++) {
