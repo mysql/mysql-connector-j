@@ -1457,4 +1457,30 @@ public class ConnectionTest extends BaseTestCase {
     	
     	assertEquals(1, commitCount);
     }
+    
+    /**
+     * Checks if setting useCursorFetch to "true" automatically
+     * enables server-side prepared statements.
+     */
+     
+    public void testCouplingOfCursorFetch() throws Exception {
+    	if (!versionMeetsMinimum(5, 0)) {
+    		return;
+    	}
+    	
+    	Connection fetchConn = null;
+    	
+    	try {
+    		Properties props = new Properties();
+    		props.setProperty("useServerPrepStmts", "false"); // force the issue
+    		props.setProperty("useCursorFetch", "true");
+    		fetchConn = getConnectionWithProps(props);
+    		assertEquals("com.mysql.jdbc.ServerPreparedStatement",
+    				fetchConn.prepareStatement("SELECT 1").getClass().getName());
+    	} finally {
+    		if (fetchConn != null) {
+    			fetchConn.close();
+    		}
+    	}
+    }
 }

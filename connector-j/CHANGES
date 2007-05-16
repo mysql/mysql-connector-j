@@ -79,7 +79,17 @@
 	- Added support for JDBC-4.0's Wrapper interface.
 	
 	- Added support for JDBC-4.0's NCLOB, and NCHAR/NVARCHAR types.
-	  
+	
+nn-nn-07 - Version 5.0.7
+
+    - The configuration "useCursorFetch" (for MySQL-5.0+, which enables
+      the use of cursors that allow Connector/J to save memory by fetching 
+      result set rows in chunks, set by Statement.setFetchSize() by using 
+      fully-materialized cursors on the server) will now automatically 
+      set "useServerPrepStmts" to "true" when it has been set to "true", 
+      since it requires server-side prepared statements in order to 
+      function correctly.
+        
 05-15-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,

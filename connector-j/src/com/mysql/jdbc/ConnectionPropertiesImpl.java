@@ -2655,6 +2655,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		this.maintainTimeStatsAsBoolean = this.maintainTimeStats
 				.getValueAsBoolean();
 		this.jdbcCompliantTruncationForReads = getJdbcCompliantTruncation();
+		
+		if (getUseCursorFetch()) {
+			// assume they want to use server-side prepared statements
+			// because they're required for this functionality
+			setDetectServerPreparedStmts(true);
+		}
 	}
 
 	/* (non-Javadoc)
