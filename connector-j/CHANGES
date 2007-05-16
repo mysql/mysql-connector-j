@@ -82,14 +82,23 @@
 	
 nn-nn-07 - Version 5.0.7
 
-    - The configuration "useCursorFetch" (for MySQL-5.0+, which enables
-      the use of cursors that allow Connector/J to save memory by fetching 
-      result set rows in chunks, set by Statement.setFetchSize() by using 
-      fully-materialized cursors on the server) will now automatically 
-      set "useServerPrepStmts" to "true" when it has been set to "true", 
-      since it requires server-side prepared statements in order to 
-      function correctly.
-        
+    - Setting the configuration parameter "useCursorFetch" to "true" for 
+      MySQL-5.0+ enables the use of cursors that allow Connector/J to save 
+      memory by fetching result set rows in chunks (where the chunk size 
+      is set by calling setFetchSize() on a Statement or ResultSet) by 
+      using fully-materialized cursors on the server. 
+      
+      The driver will will now automatically set "useServerPrepStmts" to 
+      "true" when "useCursorFetch" has been set to "true", since the feature 
+      requires server-side prepared statements in order to function.
+ 
+	- Fixed BUG#28469 - PreparedStatement.getMetaData() for statements 
+	  containing leading one-line comments is not returned correctly.
+	 
+	  As part of this fix, we also overhauled detection of DML for 
+	  executeQuery() and SELECTs for executeUpdate() in plain and 
+	  prepared statements to be aware of the same  types of comments.
+	       
 05-15-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,

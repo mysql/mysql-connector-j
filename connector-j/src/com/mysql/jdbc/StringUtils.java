@@ -320,13 +320,17 @@ public class StringUtils {
 	 * @return the first non-whitespace character, upper cased.
 	 */
 	public static char firstNonWsCharUc(String searchIn) {
+		return firstNonWsCharUc(searchIn, 0);
+	}
+	
+	public static char firstNonWsCharUc(String searchIn, int startAt) {
 		if (searchIn == null) {
 			return 0;
 		}
 
 		int length = searchIn.length();
 
-		for (int i = 0; i < length; i++) {
+		for (int i = startAt; i < length; i++) {
 			char c = searchIn.charAt(i);
 
 			if (!Character.isWhitespace(c)) {

@@ -3976,4 +3976,75 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#28469 - PreparedStatement.getMetaData()
+	 * for statements containing leading one-line comments
+	 * is not returned correctly.
+	 * 
+	 * As part of this fix, we also overhauled detection of
+	 * DML for executeQuery() and SELECTs for executeUpdate() in
+	 * plain and prepared statements to be aware of the same 
+	 * types of comments.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug28469() throws Exception {
+		PreparedStatement commentStmt = null;
+		
+		try {
+			String[] statementsToTest = {"-- COMMENT\nSELECT 1",
+					"# COMMENT\nSELECT 1",
+					"/* comment */ SELECT 1"};
+			
+			for (int i = 0; i < statementsToTest.length; i++) {
+				commentStmt = this.conn.prepareStatement(statementsToTest[i]);
+				
+				assertNotNull(commentStmt.getMetaData());
+				
+				try {
+					commentStmt.executeUpdate();
+					fail("Should not be able to call executeUpdate() on a SELECT statement!");
+				} catch (SQLException sqlEx) {
+					// expected
+				}
+
+				this.rs = commentStmt.executeQuery();
+				this.rs.next();
+				assertEquals(1, this.rs.getInt(1));
+			}
+			
+			createTable("testBug28469", "(field1 INT)");
+			
+			String[] updatesToTest = {"-- COMMENT\nUPDATE testBug28469 SET field1 = 2",
+					"# COMMENT\nUPDATE testBug28469 SET field1 = 2",
+				"/* comment */ UPDATE testBug28469 SET field1 = 2"};
+			
+			for (int i = 0; i < updatesToTest.length; i++) {
+				commentStmt = this.conn.prepareStatement(updatesToTest[i]);
+				
+				assertNull(commentStmt.getMetaData());
+				
+				try {
+					commentStmt.executeQuery();
+					fail("Should not be able to call executeQuery() on a SELECT statement!");
+				} catch (SQLException sqlEx) {
+					// expected
+				}
+				
+				try {
+					this.stmt.executeQuery(updatesToTest[i]);
+					fail("Should not be able to call executeQuery() on a SELECT statement!");
+				} catch (SQLException sqlEx) {
+					// expected
+				}
+			}
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (commentStmt != null) {
+				commentStmt.close();
+			}
+		}
+	}
 }

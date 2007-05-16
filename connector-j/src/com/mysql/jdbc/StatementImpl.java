@@ -389,12 +389,15 @@ public class StatementImpl implements Statement {
 		if ((firstStatementChar == 'I') || (firstStatementChar == 'U')
 				|| (firstStatementChar == 'D') || (firstStatementChar == 'A')
 				|| (firstStatementChar == 'C')) {
-			if (StringUtils.startsWithIgnoreCaseAndWs(sql, "INSERT") //$NON-NLS-1$
-					|| StringUtils.startsWithIgnoreCaseAndWs(sql, "UPDATE") //$NON-NLS-1$
-					|| StringUtils.startsWithIgnoreCaseAndWs(sql, "DELETE") //$NON-NLS-1$
-					|| StringUtils.startsWithIgnoreCaseAndWs(sql, "DROP") //$NON-NLS-1$
-					|| StringUtils.startsWithIgnoreCaseAndWs(sql, "CREATE") //$NON-NLS-1$
-					|| StringUtils.startsWithIgnoreCaseAndWs(sql, "ALTER")) { //$NON-NLS-1$
+			String noCommentSql = StringUtils.stripComments(sql,
+					"'\"", "'\"", true, false, true, true);
+			
+			if (StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "INSERT") //$NON-NLS-1$
+					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "UPDATE") //$NON-NLS-1$
+					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "DELETE") //$NON-NLS-1$
+					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "DROP") //$NON-NLS-1$
+					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "CREATE") //$NON-NLS-1$
+					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "ALTER")) { //$NON-NLS-1$
 				throw SQLError.createSQLException(Messages
 						.getString("Statement.57"), //$NON-NLS-1$
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
@@ -1141,7 +1144,8 @@ public class StatementImpl implements Statement {
 				}
 			}
 	
-			char firstStatementChar = StringUtils.firstNonWsCharUc(sql);
+			char firstStatementChar = StringUtils.firstNonWsCharUc(sql, 
+					findStartOfStatement(sql));
 	
 			checkForDml(sql, firstStatementChar);
 	
@@ -1307,7 +1311,8 @@ public class StatementImpl implements Statement {
 
 		ConnectionImpl locallyScopedConn = this.connection;
 
-		char firstStatementChar = StringUtils.firstNonWsCharUc(sql);
+		char firstStatementChar = StringUtils.firstNonWsCharUc(sql,
+				findStartOfStatement(sql));
 
 		ResultSet rs = null;
 
@@ -2374,4 +2379,31 @@ public class StatementImpl implements Statement {
             		SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
         }
     }
+	
+	protected int findStartOfStatement(String sql) {
+		int statementStartPos = 0;
+		
+		if (StringUtils.startsWithIgnoreCaseAndWs(sql, "/*")) {
+			statementStartPos = sql.indexOf("*/");
+			
+			if (statementStartPos == -1) {
+				statementStartPos = 0;
+			} else {
+				statementStartPos += 2;
+			}
+		} else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "--")
+			|| StringUtils.startsWithIgnoreCaseAndWs(sql, "#")) {
+			statementStartPos = sql.indexOf('\n');
+			
+			if (statementStartPos == -1) {
+				statementStartPos = sql.indexOf('\r');
+				
+				if (statementStartPos == -1) {
+					statementStartPos = 0;
+				}
+			}
+		}
+		
+		return statementStartPos;
+	}
 }

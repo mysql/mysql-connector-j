@@ -225,16 +225,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			// skip comments at the beginning of statements, as frameworks
 			// such as Hibernate use them to aid in debugging
 			
-			if (StringUtils.startsWithIgnoreCaseAndWs(sql, "/*")) {
-				statementStartPos = sql.indexOf("*/");
-				
-				if (statementStartPos == -1) {
-					statementStartPos = 0;
-				} else {
-					statementStartPos += 2;
-				}
-			}
-			
+			statementStartPos = findStartOfStatement(sql);
 			
 			for (i = statementStartPos; i < this.statementLength; ++i) {
 				char c = sql.charAt(i);
@@ -1644,8 +1635,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 
 		if ((this.firstCharOfStmt == 'S')
-				&& StringUtils.startsWithIgnoreCaseAndWs(this.originalSql,
-						"SELECT")) { //$NON-NLS-1$
+				&& isSelectQuery()) { //$NON-NLS-1$
 			throw SQLError.createSQLException(Messages.getString("PreparedStatement.37"), //$NON-NLS-1$
 					"01S03"); //$NON-NLS-1$
 		}
@@ -2100,8 +2090,18 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public java.sql.ResultSetMetaData getMetaData()
 			throws SQLException {
 
-		if (!StringUtils.startsWithIgnoreCaseAndNonAlphaNumeric(
-				this.originalSql, "SELECT")) {
+		//
+		// We could just tack on a LIMIT 0 here no matter what the 
+		// statement, and check if a result set was returned or not,
+		// but I'm not comfortable with that, myself, so we take
+		// the "safer" road, and only allow metadata for _actual_
+		// SELECTS (but not SHOWs).
+		// 
+		// CALL's are trapped further up and you end up with a 
+		// CallableStatement anyway.
+		//
+		
+		if (!isSelectQuery()) {
 			return null;
 		}
 
@@ -2162,6 +2162,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 
 		return this.pstmtResultMetaData;
+	}
+
+	protected boolean isSelectQuery() {
+		return StringUtils.startsWithIgnoreCaseAndWs(
+				StringUtils.stripComments(this.originalSql,
+						"'\"", "'\"", true, false, true, true), 
+						"SELECT");
 	}
 
 	/**
