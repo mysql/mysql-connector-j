@@ -671,8 +671,9 @@ public class BlobFromLocator implements java.sql.Blob {
 	}
 
 	public void free() throws SQLException {
-		throw new NotYetImplementedException();
-		
+		this.creatorResultSet = null;
+		this.primaryKeyColumns = null;
+		this.primaryKeyValues = null;
 	}
 
 	public InputStream getBinaryStream(long pos, long length) throws SQLException {
