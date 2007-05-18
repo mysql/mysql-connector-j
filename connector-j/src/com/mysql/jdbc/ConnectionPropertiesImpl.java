@@ -1391,6 +1391,42 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				+ "contains much more than just foreign key support (one such application being OpenOffice)?",
 				"3.1.12", MISC_CATEGORY, Integer.MIN_VALUE);
 	
+	private BooleanConnectionProperty tcpNoDelay = new BooleanConnectionProperty(
+			StandardSocketFactory.TCP_NO_DELAY_PROPERTY_NAME,
+			Boolean.valueOf(StandardSocketFactory.TCP_NO_DELAY_DEFAULT_VALUE).booleanValue(),
+			"If connecting using TCP/IP, should the driver set SO_TCP_NODELAY (disabling the Nagle Algorithm)?",
+			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE);
+	
+	private BooleanConnectionProperty tcpKeepAlive = new BooleanConnectionProperty(
+			StandardSocketFactory.TCP_KEEP_ALIVE_PROPERTY_NAME,
+			Boolean.valueOf(StandardSocketFactory.TCP_KEEP_ALIVE_DEFAULT_VALUE).booleanValue(),
+			"If connecting using TCP/IP, should the driver set SO_KEEPALIVE?",
+			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE);
+	
+	private IntegerConnectionProperty tcpRcvBuf = new IntegerConnectionProperty(
+			StandardSocketFactory.TCP_RCV_BUF_PROPERTY_NAME,
+			Integer.parseInt(StandardSocketFactory.TCP_RCV_BUF_DEFAULT_VALUE),
+			0, Integer.MAX_VALUE,
+			"If connecting using TCP/IP, should the driver set SO_RCV_BUF to the given value? "
+			+ "The default value of '0', means use the platform default value for this property)",
+			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE);
+	
+	private IntegerConnectionProperty tcpSndBuf = new IntegerConnectionProperty(
+			StandardSocketFactory.TCP_SND_BUF_PROPERTY_NAME,
+			Integer.parseInt(StandardSocketFactory.TCP_SND_BUF_DEFAULT_VALUE),
+			0, Integer.MAX_VALUE,
+			"If connecting using TCP/IP, shuold the driver set SO_SND_BUF to the given value? "
+			+ "The default value of '0', means use the platform default value for this property)",
+			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE);
+			
+	private IntegerConnectionProperty tcpTrafficClass = new IntegerConnectionProperty(
+			StandardSocketFactory.TCP_TRAFFIC_CLASS_PROPERTY_NAME,
+			Integer.parseInt(StandardSocketFactory.TCP_TRAFFIC_CLASS_DEFAULT_VALUE),
+			0, 255,
+			"If connecting using TCP/IP, should the driver set traffic class or type-of-service fields ?" + 
+			" See the documentation for java.net.Socket.setTrafficClass() for more information.",
+			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty tinyInt1isBit = new BooleanConnectionProperty(
 			"tinyInt1isBit",
 			true,
@@ -4166,7 +4202,47 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	public void setLoadBalanceStrategy(String strategy) {
 		this.loadBalanceStrategy.setValue(strategy);
 	}
+	
+	public boolean getTcpNoDelay() {
+		return this.tcpNoDelay.getValueAsBoolean();
+	}
 
+	public void setTcpNoDelay(boolean flag) {
+		this.tcpNoDelay.setValue(flag);
+	}
+
+	public boolean getTcpKeepAlive() {
+		return this.tcpKeepAlive.getValueAsBoolean();
+	}
+
+	public void setTcpKeepAlive(boolean flag) {
+		this.tcpKeepAlive.setValue(flag);
+	}
+
+	public int getTcpRcvBuf() {
+		return this.tcpRcvBuf.getValueAsInt();
+	}
+
+	public void setTcpRcvBuf(int bufSize) {
+		this.tcpRcvBuf.setValue(bufSize);
+	}
+
+	public int getTcpSndBuf() {
+		return this.tcpSndBuf.getValueAsInt();
+	}
+
+	public void setTcpSndBuf(int bufSize) {
+		this.tcpSndBuf.setValue(bufSize);
+	}
+
+	public int getTcpTrafficClass() {
+		return this.tcpTrafficClass.getValueAsInt();
+	}
+
+	public void setTcpTrafficClass(int classFlags) {
+		this.tcpTrafficClass.setValue(classFlags);
+	}
+	
 	public boolean getUseNanosForElapsedTime() {
 		return this.useNanosForElapsedTime.getValueAsBoolean();
 	}

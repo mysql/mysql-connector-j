@@ -43,6 +43,41 @@ import java.util.Properties;
  */
 public class StandardSocketFactory implements SocketFactory {
 
+	public static final String TCP_NO_DELAY_PROPERTY_NAME = "tcpNoDelay";
+
+	public static final String TCP_KEEP_ALIVE_DEFAULT_VALUE = "true";
+
+	public static final String TCP_KEEP_ALIVE_PROPERTY_NAME = "tcpKeepAlive";
+
+	public static final String TCP_RCV_BUF_PROPERTY_NAME = "tcpRcvBuf";
+
+	public static final String TCP_SND_BUF_PROPERTY_NAME = "tcpSndBuf";
+
+	public static final String TCP_TRAFFIC_CLASS_PROPERTY_NAME = "tcpTrafficClass";
+
+	public static final String TCP_RCV_BUF_DEFAULT_VALUE = "0";
+
+	public static final String TCP_SND_BUF_DEFAULT_VALUE = "0";
+
+	public static final String TCP_TRAFFIC_CLASS_DEFAULT_VALUE = "0";
+
+	public static final String TCP_NO_DELAY_DEFAULT_VALUE = "true";
+
+	/** Use reflection for pre-1.4 VMs */
+
+	private static Method setTraficClassMethod;
+
+	static {
+		try {
+			setTraficClassMethod = Socket.class.getMethod("setTrafficClass",
+					new Class[] { Integer.TYPE });
+		} catch (SecurityException e) {
+			setTraficClassMethod = null;
+		} catch (NoSuchMethodException e) {
+			setTraficClassMethod = null;
+		}
+	}
+
 	/** The hostname to connect to */
 	protected String host = null;
 
@@ -83,6 +118,56 @@ public class StandardSocketFactory implements SocketFactory {
 	}
 
 	/**
+	 * Configures socket properties based on properties from the connection
+	 * (tcpNoDelay, snd/rcv buf, traffic class, etc).
+	 * 
+	 * @param props
+	 * @throws SocketException
+	 * @throws IOException
+	 */
+	private void configureSocket(Socket sock, Properties props) throws SocketException,
+			IOException {
+		try {
+			sock.setTcpNoDelay(Boolean.valueOf(
+					props.getProperty(TCP_NO_DELAY_PROPERTY_NAME,
+							TCP_NO_DELAY_DEFAULT_VALUE)).booleanValue());
+
+			String keepAlive = props.getProperty(TCP_KEEP_ALIVE_PROPERTY_NAME,
+					TCP_KEEP_ALIVE_DEFAULT_VALUE);
+
+			if (keepAlive != null && keepAlive.length() > 0) {
+				sock.setKeepAlive(Boolean.valueOf(keepAlive)
+						.booleanValue());
+			}
+
+			int receiveBufferSize = Integer.parseInt(props.getProperty(
+					TCP_RCV_BUF_PROPERTY_NAME, TCP_RCV_BUF_DEFAULT_VALUE));
+
+			if (receiveBufferSize > 0) {
+				sock.setReceiveBufferSize(receiveBufferSize);
+			}
+
+			int sendBufferSize = Integer.parseInt(props.getProperty(
+					TCP_SND_BUF_PROPERTY_NAME, TCP_SND_BUF_DEFAULT_VALUE));
+
+			if (sendBufferSize > 0) {
+				sock.setSendBufferSize(sendBufferSize);
+			}
+
+			int trafficClass = Integer.parseInt(props.getProperty(
+					TCP_TRAFFIC_CLASS_PROPERTY_NAME,
+					TCP_TRAFFIC_CLASS_DEFAULT_VALUE));
+
+			if (trafficClass > 0 && setTraficClassMethod != null) {
+				setTraficClassMethod.invoke(sock,
+						new Object[] { new Integer(trafficClass) });
+			}
+		} catch (Throwable t) {
+			unwrapExceptionToProperClassAndThrowIt(t);
+		}
+	}
+
+	/**
 	 * @see com.mysql.jdbc.SocketFactory#createSocket(Properties)
 	 */
 	public Socket connect(String hostname, int portNumber, Properties props)
@@ -104,13 +189,16 @@ public class StandardSocketFactory implements SocketFactory {
 
 			int connectTimeout = 0;
 
-			boolean wantsTimeout = (connectTimeoutStr != null && connectTimeoutStr
-					.length() > 0 && !connectTimeoutStr.equals("0"));
-			
+			boolean wantsTimeout = (connectTimeoutStr != null
+					&& connectTimeoutStr.length() > 0 && !connectTimeoutStr
+					.equals("0"));
+
 			boolean wantsLocalBind = (localSocketHostname != null && localSocketHostname
 					.length() > 0);
 
-			if (wantsTimeout || wantsLocalBind) {
+			boolean needsConfigurationBeforeConnect = socketNeedsConfigurationBeforeConnect(props);
+			
+			if (wantsTimeout || wantsLocalBind || needsConfigurationBeforeConnect) {
 
 				if (connectTimeoutStr != null) {
 					try {
@@ -154,7 +242,7 @@ public class StandardSocketFactory implements SocketFactory {
 			}
 
 			if (this.host != null) {
-				if (!(wantsLocalBind || wantsTimeout)) {
+				if (!(wantsLocalBind || wantsTimeout || needsConfigurationBeforeConnect)) {
 					InetAddress[] possibleAddresses = InetAddress
 							.getAllByName(this.host);
 
@@ -165,7 +253,10 @@ public class StandardSocketFactory implements SocketFactory {
 
 					for (int i = 0; i < possibleAddresses.length; i++) {
 						try {
-							rawSocket = new Socket(possibleAddresses[i], port);
+							this.rawSocket = new Socket(possibleAddresses[i],
+									port);
+
+							configureSocket(this.rawSocket, props);
 
 							break;
 						} catch (Exception ex) {
@@ -205,7 +296,10 @@ public class StandardSocketFactory implements SocketFactory {
 										.newInstance(new Object[] {
 												InetAddress
 														.getByName(localSocketHostname),
-												Constants.integerValueOf(0 /* use ephemeral port */) });
+												new Integer(0 /*
+																 * use ephemeral
+																 * port
+																 */) });
 
 							}
 						} catch (Throwable ex) {
@@ -218,12 +312,14 @@ public class StandardSocketFactory implements SocketFactory {
 						for (int i = 0; i < possibleAddresses.length; i++) {
 
 							try {
-								rawSocket = new Socket();
+								this.rawSocket = new Socket();
+
+								configureSocket(this.rawSocket, props);
 
 								Object sockAddr = addrConstructor
 										.newInstance(new Object[] {
 												possibleAddresses[i],
-												Constants.integerValueOf(port) });
+												new Integer(port) });
 								// bind to the local port, null is 'ok', it
 								// means
 								// use the ephemeral port
@@ -232,17 +328,19 @@ public class StandardSocketFactory implements SocketFactory {
 
 								connectWithTimeoutMethod.invoke(rawSocket,
 										new Object[] { sockAddr,
-												Constants.integerValueOf(connectTimeout) });
+												new Integer(connectTimeout) });
 
 								break;
 							} catch (Exception ex) {
-								rawSocket = null;
+								ex.printStackTrace();
+								
+								this.rawSocket = null;
 
 								caughtWhileConnecting = ex;
 							}
 						}
 
-						if (rawSocket == null) {
+						if (this.rawSocket == null) {
 							unwrapExceptionToProperClassAndThrowIt(caughtWhileConnecting);
 						}
 
@@ -251,18 +349,42 @@ public class StandardSocketFactory implements SocketFactory {
 					}
 				}
 
-				try {
-					this.rawSocket.setTcpNoDelay(true);
-				} catch (Exception ex) {
-					/* Ignore */
-					;
-				}
-
 				return this.rawSocket;
 			}
 		}
 
 		throw new SocketException("Unable to create socket");
+	}
+
+	/**
+	 * Does the configureSocket() need to be called before the socket is
+	 * connect()d based on the properties supplied?
+	 * 
+	 */
+	private boolean socketNeedsConfigurationBeforeConnect(Properties props) {
+		int receiveBufferSize = Integer.parseInt(props.getProperty(
+				TCP_RCV_BUF_PROPERTY_NAME, TCP_RCV_BUF_DEFAULT_VALUE));
+
+		if (receiveBufferSize > 0) {
+			return true;
+		}
+
+		int sendBufferSize = Integer.parseInt(props.getProperty(
+				TCP_SND_BUF_PROPERTY_NAME, TCP_SND_BUF_DEFAULT_VALUE));
+
+		if (sendBufferSize > 0) {
+			return true;
+		}
+
+		int trafficClass = Integer.parseInt(props.getProperty(
+				TCP_TRAFFIC_CLASS_PROPERTY_NAME,
+				TCP_TRAFFIC_CLASS_DEFAULT_VALUE));
+
+		if (trafficClass > 0 && setTraficClassMethod != null) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private void unwrapExceptionToProperClassAndThrowIt(

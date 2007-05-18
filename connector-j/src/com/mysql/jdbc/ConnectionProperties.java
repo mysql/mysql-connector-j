@@ -1480,6 +1480,26 @@ public interface ConnectionProperties {
 
 	public abstract void setLoadBalanceStrategy(String strategy);
 	
+	public abstract boolean getTcpNoDelay();
+
+	public abstract void setTcpNoDelay(boolean flag);
+
+	public abstract boolean getTcpKeepAlive();
+
+	public abstract void setTcpKeepAlive(boolean flag);
+
+	public abstract int getTcpRcvBuf();
+
+	public abstract void setTcpRcvBuf(int bufSize);
+
+	public abstract int getTcpSndBuf();
+	
+	public abstract void setTcpSndBuf(int bufSize);
+
+	public abstract int getTcpTrafficClass();
+
+	public abstract void setTcpTrafficClass(int classFlags);
+	
 	public abstract boolean getUseNanosForElapsedTime();
 
 	public abstract void setUseNanosForElapsedTime(boolean flag);

@@ -116,7 +116,27 @@ nn-nn-07 - Version 5.0.7
       threshold will be converted from milliseconds to nanoseconds, and thus
       have an upper bound of approximately 2000 millesconds (as that threshold
       is represented as an integer, not a long).
-      	       
+      
+	- Added configuration properties to allow tuning of TCP/IP socket
+	  parameters:
+	  
+	  	"tcpNoDelay" - Should the driver set SO_TCP_NODELAY (disabling the 
+	  	               Nagle Algorithm, default "true")?
+	
+		"tcpKeepAlive" - Should the driver set SO_KEEPALIVE (default "true")?
+	
+		"tcpRcvBuf" - Should the driver set SO_RCV_BUF to the given value?
+		              The default value of '0', means use the platform default 
+		              value for this property.
+		
+		"tcpSndBuf" - Should the driver set SO_SND_BUF to the given value?
+		              The default value of '0', means use the platform default 
+		              value for this property.
+	
+		"tcpTrafficClass" - Should the driver set traffic class or 
+		                    type-of-service fields? See the documentation 
+		                    for java.net.Socket.setTrafficClass() for more 
+		                    information.      	       
 05-15-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,
