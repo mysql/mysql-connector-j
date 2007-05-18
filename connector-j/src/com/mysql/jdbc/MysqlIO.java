@@ -227,6 +227,7 @@ class MysqlIO {
 	private boolean useNanosForElapsedTime;
 	private long slowQueryThreshold;
 	private String queryTimingUnits;
+	private List statementInterceptors;
 
     /**
      * Constructor:  Connect to the MySQL server and setup a stream connection.
@@ -1648,238 +1649,293 @@ class MysqlIO {
      * @throws Exception DOCUMENT ME!
      */
     final ResultSet sqlQueryDirect(StatementImpl callingStatement, String query,
-        String characterEncoding, Buffer queryPacket, int maxRows,
-        Connection conn, int resultSetType, int resultSetConcurrency,
-        boolean streamResults, String catalog, boolean unpackFieldInfo)
-        throws Exception {
-        long queryStartTime = 0;
-        long queryEndTime = 0;
+    		String characterEncoding, Buffer queryPacket, int maxRows,
+    		Connection conn, int resultSetType, int resultSetConcurrency,
+    		boolean streamResults, String catalog, boolean unpackFieldInfo)
+    throws Exception {
+    	long queryStartTime = 0;
+    	long queryEndTime = 0;
 
-        if (query != null) {
+    	if (query != null) {
 
-            // We don't know exactly how many bytes we're going to get
-            // from the query. Since we're dealing with Unicode, the
-            // max is 2, so pad it (2 * query) + space for headers
-            int packLength = HEADER_LENGTH + 1 + (query.length() * 2) + 2;
+    		// We don't know exactly how many bytes we're going to get
+    		// from the query. Since we're dealing with Unicode, the
+    		// max is 2, so pad it (2 * query) + space for headers
+    		int packLength = HEADER_LENGTH + 1 + (query.length() * 2) + 2;
 
-            String statementComment = this.connection.getStatementComment();
-    		
+    		String statementComment = this.connection.getStatementComment();
+
     		byte[] commentAsBytes = null;
-    		
+
     		if (statementComment != null) {
     			commentAsBytes = StringUtils.getBytes(statementComment, null,
-    				characterEncoding, this.connection
-    				.getServerCharacterEncoding(), 
-    				this.connection.parserKnowsUnicode());
+    					characterEncoding, this.connection
+    					.getServerCharacterEncoding(), 
+    					this.connection.parserKnowsUnicode());
 
     			packLength += commentAsBytes.length;
     			packLength += 6; // for /*[space] [space]*/
     		}
-    		
-            if (this.sendPacket == null) {
-            	this.sendPacket = new Buffer(packLength);
-            } else {
-                this.sendPacket.clear();
-            }
 
-            this.sendPacket.writeByte((byte) MysqlDefs.QUERY);
+    		if (this.sendPacket == null) {
+    			this.sendPacket = new Buffer(packLength);
+    		} else {
+    			this.sendPacket.clear();
+    		}
 
-            if (commentAsBytes != null) {
-            	this.sendPacket.writeBytesNoNull(Constants.SLASH_STAR_SPACE_AS_BYTES);
+    		this.sendPacket.writeByte((byte) MysqlDefs.QUERY);
+
+    		if (commentAsBytes != null) {
+    			this.sendPacket.writeBytesNoNull(Constants.SLASH_STAR_SPACE_AS_BYTES);
     			this.sendPacket.writeBytesNoNull(commentAsBytes);
     			this.sendPacket.writeBytesNoNull(Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
-            }
-            
-            if (characterEncoding != null) {
-                if (this.platformDbCharsetMatches) {
-                    this.sendPacket.writeStringNoNull(query, characterEncoding,
-                        this.connection.getServerCharacterEncoding(),
-                        this.connection.parserKnowsUnicode(),
-                        this.connection);
-                } else {
-                    if (StringUtils.startsWithIgnoreCaseAndWs(query, "LOAD DATA")) { //$NON-NLS-1$
-                        this.sendPacket.writeBytesNoNull(query.getBytes());
-                    } else {
-                        this.sendPacket.writeStringNoNull(query,
-                            characterEncoding,
-                            this.connection.getServerCharacterEncoding(),
-                            this.connection.parserKnowsUnicode(),
-                            this.connection);
-                    }
-                }
-            } else {
-                this.sendPacket.writeStringNoNull(query);
-            }
+    		}
 
-            queryPacket = this.sendPacket;
-        }
+    		if (characterEncoding != null) {
+    			if (this.platformDbCharsetMatches) {
+    				this.sendPacket.writeStringNoNull(query, characterEncoding,
+    						this.connection.getServerCharacterEncoding(),
+    						this.connection.parserKnowsUnicode(),
+    						this.connection);
+    			} else {
+    				if (StringUtils.startsWithIgnoreCaseAndWs(query, "LOAD DATA")) { //$NON-NLS-1$
+    					this.sendPacket.writeBytesNoNull(query.getBytes());
+    				} else {
+    					this.sendPacket.writeStringNoNull(query,
+    							characterEncoding,
+    							this.connection.getServerCharacterEncoding(),
+    							this.connection.parserKnowsUnicode(),
+    							this.connection);
+    				}
+    			}
+    		} else {
+    			this.sendPacket.writeStringNoNull(query);
+    		}
 
-        byte[] queryBuf = null;
-        int oldPacketPosition = 0;
+    		queryPacket = this.sendPacket;
+    	}
 
-        if (needToGrabQueryFromPacket) {
-            queryBuf = queryPacket.getByteBuffer();
+    	byte[] queryBuf = null;
+    	int oldPacketPosition = 0;
 
-            // save the packet position
-            oldPacketPosition = queryPacket.getPosition();
+    	if (needToGrabQueryFromPacket) {
+    		queryBuf = queryPacket.getByteBuffer();
 
-            queryStartTime = getCurrentTimeNanosOrMillis();
-        }
+    		// save the packet position
+    		oldPacketPosition = queryPacket.getPosition();
 
-        // Send query command and sql query string
-        Buffer resultPacket = sendCommand(MysqlDefs.QUERY, null, queryPacket,
-                false, null);
+    		queryStartTime = getCurrentTimeNanosOrMillis();
+    	}
 
-        long fetchBeginTime = 0;
-        long fetchEndTime = 0;
+    	if (this.statementInterceptors != null) {
+    		ResultSet interceptedResults = 
+    			invokeStatementInterceptorsPre(query, callingStatement);
 
-        String profileQueryToLog = null;
+    		if (interceptedResults != null) {
+    			return interceptedResults;
+    		}
+    	}
 
-        boolean queryWasSlow = false;
+    	// Send query command and sql query string
+    	Buffer resultPacket = sendCommand(MysqlDefs.QUERY, null, queryPacket,
+    			false, null);
 
-        if (this.profileSql || this.logSlowQueries) {
-            queryEndTime = System.currentTimeMillis();
+    	long fetchBeginTime = 0;
+    	long fetchEndTime = 0;
 
-            boolean shouldExtractQuery = false;
+    	String profileQueryToLog = null;
 
-            if (this.profileSql) {
-                shouldExtractQuery = true;
-            } else if (this.logSlowQueries &&
-                    ((queryEndTime - queryStartTime) > this.connection.getSlowQueryThresholdMillis())) {
-                shouldExtractQuery = true;
-                queryWasSlow = true;
-            }
+    	boolean queryWasSlow = false;
 
-            if (shouldExtractQuery) {
-                // Extract the actual query from the network packet 
-                boolean truncated = false;
+    	if (this.profileSql || this.logSlowQueries) {
+    		queryEndTime = System.currentTimeMillis();
 
-                int extractPosition = oldPacketPosition;
+    		boolean shouldExtractQuery = false;
 
-                if (oldPacketPosition > this.connection.getMaxQuerySizeToLog()) {
-                    extractPosition = this.connection.getMaxQuerySizeToLog() + 5;
-                    truncated = true;
-                }
+    		if (this.profileSql) {
+    			shouldExtractQuery = true;
+    		} else if (this.logSlowQueries &&
+    				((queryEndTime - queryStartTime) > this.connection.getSlowQueryThresholdMillis())) {
+    			shouldExtractQuery = true;
+    			queryWasSlow = true;
+    		}
 
-                profileQueryToLog = new String(queryBuf, 5,
-                        (extractPosition - 5));
+    		if (shouldExtractQuery) {
+    			// Extract the actual query from the network packet 
+    			boolean truncated = false;
 
-                if (truncated) {
-                    profileQueryToLog += Messages.getString("MysqlIO.25"); //$NON-NLS-1$
-                }
-            }
+    			int extractPosition = oldPacketPosition;
 
-            fetchBeginTime = queryEndTime;
-        }
-        
-        if (this.autoGenerateTestcaseScript) {
-        	String testcaseQuery = null;
-        	
-        	if (query != null) {
-        		testcaseQuery = query;
-        	} else {
-        		testcaseQuery = new String(queryBuf, 5,
-                        (oldPacketPosition - 5));
-        	}
-        	
+    			if (oldPacketPosition > this.connection.getMaxQuerySizeToLog()) {
+    				extractPosition = this.connection.getMaxQuerySizeToLog() + 5;
+    				truncated = true;
+    			}
+
+    			profileQueryToLog = new String(queryBuf, 5,
+    					(extractPosition - 5));
+
+    			if (truncated) {
+    				profileQueryToLog += Messages.getString("MysqlIO.25"); //$NON-NLS-1$
+    			}
+    		}
+
+    		fetchBeginTime = queryEndTime;
+    	}
+
+    	if (this.autoGenerateTestcaseScript) {
+    		String testcaseQuery = null;
+
+    		if (query != null) {
+    			testcaseQuery = query;
+    		} else {
+    			testcaseQuery = new String(queryBuf, 5,
+    					(oldPacketPosition - 5));
+    		}
+
     		StringBuffer debugBuf = new StringBuffer(testcaseQuery.length() + 32);
     		this.connection.generateConnectionCommentBlock(debugBuf);
     		debugBuf.append(testcaseQuery);
     		debugBuf.append(';');
     		this.connection.dumpTestcaseQuery(debugBuf.toString());
     	}
-        
-        ResultSet rs = readAllResults(callingStatement, maxRows, resultSetType,
-                resultSetConcurrency, streamResults, catalog, resultPacket,
-                false, -1L, unpackFieldInfo, null /* we don't need metadata for cached MD in this case */);
 
-        if (queryWasSlow) {
-            StringBuffer mesgBuf = new StringBuffer(48 +
-                    profileQueryToLog.length());
-            
-			mesgBuf.append(Messages.getString("MysqlIO.SlowQuery",
-            		new Object[] {new Long(this.slowQueryThreshold),
-            						queryTimingUnits,
-            						new Long(queryEndTime - queryStartTime)}));
-            mesgBuf.append(profileQueryToLog);
+    	ResultSet rs = readAllResults(callingStatement, maxRows, resultSetType,
+    			resultSetConcurrency, streamResults, catalog, resultPacket,
+    			false, -1L, unpackFieldInfo, null /* we don't need metadata for cached MD in this case */);
 
-            ProfileEventSink eventSink = ProfileEventSink.getInstance(this.connection);
+    	if (queryWasSlow) {
+    		StringBuffer mesgBuf = new StringBuffer(48 +
+    				profileQueryToLog.length());
 
-            eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY,
-                    "", catalog, this.connection.getId(), //$NON-NLS-1$
-                    (callingStatement != null) ? callingStatement.getId() : 999,
-                    rs.resultId, System.currentTimeMillis(),
-                    (int) (queryEndTime - queryStartTime), queryTimingUnits, null,
-                    new Throwable(), mesgBuf.toString()));
+    		mesgBuf.append(Messages.getString("MysqlIO.SlowQuery",
+    				new Object[] {new Long(this.slowQueryThreshold),
+    				queryTimingUnits,
+    				new Long(queryEndTime - queryStartTime)}));
+    		mesgBuf.append(profileQueryToLog);
 
-            if (this.connection.getExplainSlowQueries()) {
-                if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
-                    explainSlowQuery(queryPacket.getBytes(5,
-                            (oldPacketPosition - 5)), profileQueryToLog);
-                } else {
-                    this.connection.getLog().logWarn(Messages.getString(
-                            "MysqlIO.28") //$NON-NLS-1$
-                         +MAX_QUERY_SIZE_TO_EXPLAIN +
-                        Messages.getString("MysqlIO.29")); //$NON-NLS-1$
-                }
-            }
-        }
+    		ProfileEventSink eventSink = ProfileEventSink.getInstance(this.connection);
 
-        if (this.profileSql) {
-            fetchEndTime = getCurrentTimeNanosOrMillis();
+    		eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY,
+    				"", catalog, this.connection.getId(), //$NON-NLS-1$
+    				(callingStatement != null) ? callingStatement.getId() : 999,
+    						rs.resultId, System.currentTimeMillis(),
+    						(int) (queryEndTime - queryStartTime), queryTimingUnits, null,
+    						new Throwable(), mesgBuf.toString()));
 
-            ProfileEventSink eventSink = ProfileEventSink.getInstance(this.connection);
+    		if (this.connection.getExplainSlowQueries()) {
+    			if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
+    				explainSlowQuery(queryPacket.getBytes(5,
+    						(oldPacketPosition - 5)), profileQueryToLog);
+    			} else {
+    				this.connection.getLog().logWarn(Messages.getString(
+    						"MysqlIO.28") //$NON-NLS-1$
+    						+MAX_QUERY_SIZE_TO_EXPLAIN +
+    						Messages.getString("MysqlIO.29")); //$NON-NLS-1$
+    			}
+    		}
+    	}
 
-            eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_QUERY,
-                    "", catalog, this.connection.getId(), //$NON-NLS-1$
-                    (callingStatement != null) ? callingStatement.getId() : 999,
-                    rs.resultId, System.currentTimeMillis(),
-                    (queryEndTime - queryStartTime), this.queryTimingUnits, 
-                    null,
-                    new Throwable(), profileQueryToLog));
+    	if (this.profileSql) {
+    		fetchEndTime = getCurrentTimeNanosOrMillis();
 
-            eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_FETCH,
-                    "", catalog, this.connection.getId(), //$NON-NLS-1$
-                    (callingStatement != null) ? callingStatement.getId() : 999,
-                    rs.resultId, System.currentTimeMillis(),
-                    (fetchEndTime - fetchBeginTime), this.queryTimingUnits,
-                    null,
-                    new Throwable(), null));
+    		ProfileEventSink eventSink = ProfileEventSink.getInstance(this.connection);
 
-            if (this.queryBadIndexUsed) {
-                eventSink.consumeEvent(new ProfilerEvent(
-                        ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, //$NON-NLS-1$
-                        this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId()
-                                                   : 999, rs.resultId,
-                        System.currentTimeMillis(),
-                        (queryEndTime - queryStartTime), this.queryTimingUnits,
-                        null,
-                        new Throwable(),
-                        Messages.getString("MysqlIO.33") //$NON-NLS-1$
-                         +profileQueryToLog));
-            }
+    		eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_QUERY,
+    				"", catalog, this.connection.getId(), //$NON-NLS-1$
+    				(callingStatement != null) ? callingStatement.getId() : 999,
+    						rs.resultId, System.currentTimeMillis(),
+    						(queryEndTime - queryStartTime), this.queryTimingUnits, 
+    						null,
+    						new Throwable(), profileQueryToLog));
 
-            if (this.queryNoIndexUsed) {
-                eventSink.consumeEvent(new ProfilerEvent(
-                        ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, //$NON-NLS-1$
-                        this.connection.getId(),
-                        (callingStatement != null) ? callingStatement.getId()
-                                                   : 999, rs.resultId,
-                        System.currentTimeMillis(),
-                        (queryEndTime - queryStartTime), this.queryTimingUnits,
-                        null,
-                        new Throwable(),
-                        Messages.getString("MysqlIO.35") //$NON-NLS-1$
-                         +profileQueryToLog));
-            }
-        }
+    		eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_FETCH,
+    				"", catalog, this.connection.getId(), //$NON-NLS-1$
+    				(callingStatement != null) ? callingStatement.getId() : 999,
+    						rs.resultId, System.currentTimeMillis(),
+    						(fetchEndTime - fetchBeginTime), this.queryTimingUnits,
+    						null,
+    						new Throwable(), null));
 
-        if (this.hadWarnings) {
-            scanForAndThrowDataTruncation();
-        }
+    		if (this.queryBadIndexUsed) {
+    			eventSink.consumeEvent(new ProfilerEvent(
+    					ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, //$NON-NLS-1$
+    					this.connection.getId(),
+    					(callingStatement != null) ? callingStatement.getId()
+    							: 999, rs.resultId,
+    							System.currentTimeMillis(),
+    							(queryEndTime - queryStartTime), this.queryTimingUnits,
+    							null,
+    							new Throwable(),
+    							Messages.getString("MysqlIO.33") //$NON-NLS-1$
+    							+profileQueryToLog));
+    		}
 
-        return rs;
+    		if (this.queryNoIndexUsed) {
+    			eventSink.consumeEvent(new ProfilerEvent(
+    					ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, //$NON-NLS-1$
+    					this.connection.getId(),
+    					(callingStatement != null) ? callingStatement.getId()
+    							: 999, rs.resultId,
+    							System.currentTimeMillis(),
+    							(queryEndTime - queryStartTime), this.queryTimingUnits,
+    							null,
+    							new Throwable(),
+    							Messages.getString("MysqlIO.35") //$NON-NLS-1$
+    							+profileQueryToLog));
+    		}
+    	}
+
+    	if (this.hadWarnings) {
+    		scanForAndThrowDataTruncation();
+    	}
+
+    	if (this.statementInterceptors != null) {
+    		ResultSet interceptedResults = invokeStatementInterceptorsPost(
+    				query, callingStatement, rs);
+
+    		if (interceptedResults != null) {
+    			rs = interceptedResults;
+    		}
+    	}
+
+    	return rs;
+    }
+
+    private ResultSet invokeStatementInterceptorsPre(String sql,
+    		Statement interceptedStatement) throws SQLException {
+    	ResultSet previousResultSet = null;
+
+    	Iterator interceptors = this.statementInterceptors.iterator();
+
+    	while (interceptors.hasNext()) {
+    		ResultSet interceptedResultSet = ((StatementInterceptor) interceptors
+    				.next()).preProcess(sql, interceptedStatement,
+    						this.connection);
+
+    		if (interceptedResultSet != null) {
+    			previousResultSet = interceptedResultSet;
+    		}
+    	}
+
+    	return previousResultSet;
+    }
+
+    private ResultSet invokeStatementInterceptorsPost(
+    		String sql, 
+    		Statement interceptedStatement, 
+    		ResultSet originalResultSet) throws SQLException {
+    	Iterator interceptors = this.statementInterceptors.iterator();
+
+    	while (interceptors.hasNext()) {
+    		ResultSet interceptedResultSet = ((StatementInterceptor)interceptors.next()).postProcess(sql, interceptedStatement, originalResultSet, this.connection);
+
+    		if (interceptedResultSet != null) {
+    			originalResultSet = interceptedResultSet;		
+    		}
+
+    	}
+
+    	return originalResultSet;
     }
 
 	private void calculateSlowQueryThreshold() {
