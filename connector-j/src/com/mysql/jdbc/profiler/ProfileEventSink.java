@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -19,9 +19,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
-
  */
+
 package com.mysql.jdbc.profiler;
 
 import com.mysql.jdbc.Connection;
@@ -89,5 +88,4 @@ public class ProfileEventSink {
 			throw new RuntimeException("Unable to get logger from connection");
 		}
 	}
-
 }

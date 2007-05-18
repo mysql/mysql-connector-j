@@ -1479,4 +1479,12 @@ public interface ConnectionProperties {
 	public abstract String getLoadBalanceStrategy();
 
 	public abstract void setLoadBalanceStrategy(String strategy);
+	
+	public abstract boolean getUseNanosForElapsedTime();
+
+	public abstract void setUseNanosForElapsedTime(boolean flag);
+
+	public abstract long getSlowQueryThresholdNanos();
+
+	public abstract void setSlowQueryThresholdNanos(long nanos);
 }

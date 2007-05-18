@@ -2299,7 +2299,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				this.eventSink.consumeEvent(new ProfilerEvent(
 						ProfilerEvent.TYPE_WARN, "", this.currentCatalog, //$NON-NLS-1$
 						this.connectionId, this.getId(), -1, System
-								.currentTimeMillis(), 0, null,
+								.currentTimeMillis(), 0, Constants.MILLIS_I18N,
+								null,
 						this.pointOfOrigin, message));
 			}
 		}

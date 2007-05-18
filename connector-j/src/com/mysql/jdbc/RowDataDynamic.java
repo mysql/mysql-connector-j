@@ -210,26 +210,27 @@ public class RowDataDynamic implements RowData {
 								ProfilerEvent.TYPE_WARN,
 								"", //$NON-NLS-1$
 								this.owner.owningStatement == null ? "N/A" : this.owner.owningStatement.currentCatalog, //$NON-NLS-1$
-										this.owner.connectionId,
-										this.owner.owningStatement == null ? -1
-												: this.owner.owningStatement
+								this.owner.connectionId,
+								this.owner.owningStatement == null ? -1
+										: this.owner.owningStatement
 												.getId(),
-												-1,
-												System.currentTimeMillis(),
-												0,
-												null,
-												null,
-												Messages.getString("RowDataDynamic.2") //$NON-NLS-1$
-												+ howMuchMore
-												+ Messages
+								-1,
+								System.currentTimeMillis(),
+								0,
+								Constants.MILLIS_I18N,
+								null,
+								null,
+								Messages.getString("RowDataDynamic.2") //$NON-NLS-1$
+										+ howMuchMore
+										+ Messages
 												.getString("RowDataDynamic.3") //$NON-NLS-1$
-												+ Messages
+										+ Messages
 												.getString("RowDataDynamic.4") //$NON-NLS-1$
-												+ Messages
+										+ Messages
 												.getString("RowDataDynamic.5") //$NON-NLS-1$
-												+ Messages
+										+ Messages
 												.getString("RowDataDynamic.6") //$NON-NLS-1$
-												+ this.owner.pointOfOrigin));
+										+ this.owner.pointOfOrigin));
 					}
 				}
 			}

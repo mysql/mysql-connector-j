@@ -24,7 +24,6 @@
  */
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
@@ -1220,10 +1219,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 			long begin = 0;
 
-			if (this.connection.getProfileSql()
-					|| this.connection.getLogSlowQueries()
-					|| this.connection.getGatherPerformanceMetrics()) {
-				begin = System.currentTimeMillis();
+			boolean logSlowQueries = this.connection.getLogSlowQueries();
+			boolean gatherPerformanceMetrics = this.connection
+					.getGatherPerformanceMetrics();
+
+			if (this.profileSQL || logSlowQueries || gatherPerformanceMetrics) {
+				begin = mysql.getCurrentTimeNanosOrMillis();
 			}
 
 			synchronized (this.cancelTimeoutMutex) {
@@ -1244,6 +1245,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 				Buffer resultPacket = mysql.sendCommand(MysqlDefs.COM_EXECUTE,
 					null, packet, false, null);
 				
+				long queryEndTime = 0L;
+				
+				if (logSlowQueries || gatherPerformanceMetrics || this.profileSQL) {
+					queryEndTime = mysql.getCurrentTimeNanosOrMillis();
+				}
+				
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
 					
@@ -1260,18 +1267,61 @@ public class ServerPreparedStatement extends PreparedStatement {
 						throw new MySQLTimeoutException();
 					}
 				}
-			
+
+				boolean queryWasSlow = false;
+				
+				if (logSlowQueries || gatherPerformanceMetrics) {
+					long elapsedTime = queryEndTime - begin;
+
+					if (logSlowQueries
+							&& (elapsedTime >= mysql.getSlowQueryThreshold())) {
+						queryWasSlow = true;
+						
+						StringBuffer mesgBuf = new StringBuffer(
+								48 + this.originalSql.length());
+						mesgBuf.append(Messages
+								.getString("ServerPreparedStatement.15")); //$NON-NLS-1$
+						mesgBuf.append(mysql.getSlowQueryThreshold());
+						mesgBuf.append(Messages
+								.getString("ServerPreparedStatement.15a")); //$NON-NLS-1$
+						mesgBuf.append(elapsedTime);
+						mesgBuf.append(Messages
+								.getString("ServerPreparedStatement.16")); //$NON-NLS-1$
+
+						mesgBuf.append("as prepared: ");
+						mesgBuf.append(this.originalSql);
+						mesgBuf.append("\n\n with parameters bound:\n\n");
+						mesgBuf.append(asSql(true));
+
+						this.eventSink
+								.consumeEvent(new ProfilerEvent(
+										ProfilerEvent.TYPE_SLOW_QUERY,
+										"", this.currentCatalog, this.connection.getId(), //$NON-NLS-1$
+										getId(), 0, System.currentTimeMillis(),
+										elapsedTime, mysql
+												.getQueryTimingUnits(), null,
+										new Throwable(), mesgBuf.toString()));
+					}
+
+					if (gatherPerformanceMetrics) {
+						this.connection.registerQueryExecutionTime(elapsedTime);
+					}
+				}
+
 				this.connection.incrementNumberOfPreparedExecutes();
-	
-				if (this.connection.getProfileSql()) {
-					this.eventSink = ProfileEventSink.getInstance(this.connection);
-	
+
+				if (this.profileSQL) {
+					this.eventSink = ProfileEventSink
+							.getInstance(this.connection);
+
 					this.eventSink.consumeEvent(new ProfilerEvent(
-							ProfilerEvent.TYPE_EXECUTE, "", this.currentCatalog, //$NON-NLS-1$
+							ProfilerEvent.TYPE_EXECUTE,
+							"", this.currentCatalog, //$NON-NLS-1$
 							this.connectionId, this.statementId, -1, System
-									.currentTimeMillis(), (int) (System
-									.currentTimeMillis() - begin), null,
-							new Throwable(), truncateQueryToLog(asSql(true))));
+									.currentTimeMillis(), (int) (mysql
+									.getCurrentTimeNanosOrMillis() - begin),
+							mysql.getQueryTimingUnits(), null, new Throwable(),
+							truncateQueryToLog(asSql(true))));
 				}
 	
 				com.mysql.jdbc.ResultSet rs = mysql.readAllResults(this,
@@ -1279,55 +1329,35 @@ public class ServerPreparedStatement extends PreparedStatement {
 						this.resultSetConcurrency, createStreamingResultSet,
 						this.currentCatalog, resultPacket, true, this.fieldCount,
 						unpackFields, metadataFromCache);
+				
+				if (this.profileSQL) {
+					long fetchEndTime = mysql.getCurrentTimeNanosOrMillis();
+
+					this.eventSink.consumeEvent(new ProfilerEvent(
+							ProfilerEvent.TYPE_FETCH,
+							"", this.currentCatalog, this.connection.getId(), //$NON-NLS-1$
+							getId(), rs.resultId, System.currentTimeMillis(),
+							(fetchEndTime - queryEndTime), mysql
+									.getQueryTimingUnits(), null,
+							new Throwable(), null));
+				}
 	
+				if (queryWasSlow && this.connection.getExplainSlowQueries()) {
+					String queryAsString = asSql(true);
+
+					mysql.explainSlowQuery(queryAsString.getBytes(),
+							queryAsString);
+				}
 				
 				if (!createStreamingResultSet && 
 						this.serverNeedsResetBeforeEachExecution) {
 					serverResetStatement(); // clear any long data...
 				}
 	
+				
 				this.sendTypesToServer = false;
 				this.results = rs;
 	
-				if (this.connection.getLogSlowQueries()
-						|| this.connection.getGatherPerformanceMetrics()) {
-					long elapsedTime = System.currentTimeMillis() - begin;
-	
-					if (this.connection.getLogSlowQueries()
-							&& (elapsedTime >= this.connection
-									.getSlowQueryThresholdMillis())) {
-						StringBuffer mesgBuf = new StringBuffer(
-								48 + this.originalSql.length());
-						mesgBuf.append(Messages
-								.getString("ServerPreparedStatement.15")); //$NON-NLS-1$
-						mesgBuf.append(this.connection
-								.getSlowQueryThresholdMillis());
-						mesgBuf.append(Messages
-								.getString("ServerPreparedStatement.15a")); //$NON-NLS-1$
-						mesgBuf.append(elapsedTime);
-						mesgBuf.append(Messages
-								.getString("ServerPreparedStatement.16")); //$NON-NLS-1$
-						
-						mesgBuf.append("as prepared: ");
-						mesgBuf.append(this.originalSql);
-						mesgBuf.append("\n\n with parameters bound:\n\n");
-						mesgBuf.append(asSql(true));
-	
-						this.connection.getLog().logWarn(mesgBuf.toString());
-	
-						if (this.connection.getExplainSlowQueries()) {
-							String queryAsString = asSql(true);
-	
-							mysql.explainSlowQuery(queryAsString.getBytes(),
-									queryAsString);
-						}
-					}
-	
-					if (this.connection.getGatherPerformanceMetrics()) {
-						this.connection.registerQueryExecutionTime(elapsedTime);
-					}
-				}
-				
 				if (mysql.hadWarnings()) {
 		            mysql.scanForAndThrowDataTruncation();
 		        }
@@ -1340,7 +1370,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 			}
 		}
 	}
-
 
 	/**
 	 * Sends stream-type data parameters to the server.
@@ -1460,16 +1489,14 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 				this.connection.incrementNumberOfPrepares();
 
-				if (this.connection.getProfileSql()) {
-					this.eventSink = ProfileEventSink
-							.getInstance(this.connection);
-
+				if (this.profileSQL) {
 					this.eventSink.consumeEvent(new ProfilerEvent(
 							ProfilerEvent.TYPE_PREPARE,
 							"", this.currentCatalog, //$NON-NLS-1$
 							this.connectionId, this.statementId, -1,
-							System.currentTimeMillis(), (int) (System
-									.currentTimeMillis() - begin), null,
+							System.currentTimeMillis(), 
+							mysql.getCurrentTimeNanosOrMillis() - begin, 
+							mysql.getQueryTimingUnits(), null,
 							new Throwable(), truncateQueryToLog(sql)));
 				}
 

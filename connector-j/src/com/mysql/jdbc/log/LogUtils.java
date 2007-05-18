@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2005 MySQL AB
+ Copyright (C) 2005-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -83,7 +83,13 @@ public class LogUtils {
 				appendLocationInfo = true;
 				
 				break;
-
+				
+			case ProfilerEvent.TYPE_SLOW_QUERY:
+				msgBuf.append("SLOW QUERY");
+				appendLocationInfo = false;
+				
+				break;
+				
 			default:
 				msgBuf.append("UNKNOWN");
 			}
@@ -91,8 +97,10 @@ public class LogUtils {
 			msgBuf.append("] ");
 			msgBuf.append(findCallingClassAndMethod(locationException));
 			msgBuf.append(" duration: ");
-			msgBuf.append(evt.getEventDurationMillis());
-			msgBuf.append(" ms, connection-id: ");
+			msgBuf.append(evt.getEventDuration());
+			msgBuf.append(" ");
+			msgBuf.append(evt.getDurationUnits());
+			msgBuf.append(", connection-id: ");
 			msgBuf.append(evt.getConnectionId());
 			msgBuf.append(", statement-id: ");
 			msgBuf.append(evt.getStatementId());
@@ -117,9 +125,8 @@ public class LogUtils {
 		}
 		
 		return possibleProfilerEvent;
-
 	}
-
+	
 	public static String findCallingClassAndMethod(Throwable t) {
 		String stackTraceAsString = Util.stackTraceToString(t);
 

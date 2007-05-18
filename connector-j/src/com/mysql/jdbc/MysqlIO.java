@@ -224,6 +224,9 @@ class MysqlIO {
 	private boolean needToGrabQueryFromPacket;
 	private boolean autoGenerateTestcaseScript;
 	private long threadId;
+	private boolean useNanosForElapsedTime;
+	private long slowQueryThreshold;
+	private String queryTimingUnits;
 
     /**
      * Constructor:  Connect to the MySQL server and setup a stream connection.
@@ -296,6 +299,19 @@ class MysqlIO {
         this.needToGrabQueryFromPacket = (this.profileSql || 
         		this.logSlowQueries || 
         		this.autoGenerateTestcaseScript);
+        
+        if (this.connection.getUseNanosForElapsedTime()
+				&& Util.nanoTimeAvailable()) {
+			this.useNanosForElapsedTime = true;
+
+			this.queryTimingUnits = Messages.getString("Nanoseconds");
+		} else {
+			this.queryTimingUnits = Messages.getString("Milliseconds");
+		}
+
+		if (this.connection.getLogSlowQueries()) {
+			calculateSlowQueryThreshold();
+		}
     }
 
     /**
@@ -1707,7 +1723,7 @@ class MysqlIO {
             // save the packet position
             oldPacketPosition = queryPacket.getPosition();
 
-            queryStartTime = System.currentTimeMillis();
+            queryStartTime = getCurrentTimeNanosOrMillis();
         }
 
         // Send query command and sql query string
@@ -1780,23 +1796,21 @@ class MysqlIO {
         if (queryWasSlow) {
             StringBuffer mesgBuf = new StringBuffer(48 +
                     profileQueryToLog.length());
-            mesgBuf.append(Messages.getString("MysqlIO.26")); //$NON-NLS-1$
-            mesgBuf.append(this.connection.getSlowQueryThresholdMillis());
-            mesgBuf.append(Messages.getString("MysqlIO.26a"));
-            mesgBuf.append((queryEndTime - queryStartTime));
-            mesgBuf.append(Messages.getString("MysqlIO.27")); //$NON-NLS-1$
+            
+			mesgBuf.append(Messages.getString("MysqlIO.SlowQuery",
+            		new Object[] {new Long(this.slowQueryThreshold),
+            						queryTimingUnits,
+            						new Long(queryEndTime - queryStartTime)}));
             mesgBuf.append(profileQueryToLog);
 
             ProfileEventSink eventSink = ProfileEventSink.getInstance(this.connection);
 
-            eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_QUERY,
+            eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY,
                     "", catalog, this.connection.getId(), //$NON-NLS-1$
                     (callingStatement != null) ? callingStatement.getId() : 999,
                     rs.resultId, System.currentTimeMillis(),
-                    (int) (queryEndTime - queryStartTime), null,
-                    new Throwable(), profileQueryToLog));
-            
-            //this.connection.getLog().logWarn(mesgBuf.toString());
+                    (int) (queryEndTime - queryStartTime), queryTimingUnits, null,
+                    new Throwable(), mesgBuf.toString()));
 
             if (this.connection.getExplainSlowQueries()) {
                 if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
@@ -1812,7 +1826,7 @@ class MysqlIO {
         }
 
         if (this.profileSql) {
-            fetchEndTime = System.currentTimeMillis();
+            fetchEndTime = getCurrentTimeNanosOrMillis();
 
             ProfileEventSink eventSink = ProfileEventSink.getInstance(this.connection);
 
@@ -1820,24 +1834,27 @@ class MysqlIO {
                     "", catalog, this.connection.getId(), //$NON-NLS-1$
                     (callingStatement != null) ? callingStatement.getId() : 999,
                     rs.resultId, System.currentTimeMillis(),
-                    (int) (queryEndTime - queryStartTime), null,
+                    (queryEndTime - queryStartTime), this.queryTimingUnits, 
+                    null,
                     new Throwable(), profileQueryToLog));
 
             eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_FETCH,
                     "", catalog, this.connection.getId(), //$NON-NLS-1$
                     (callingStatement != null) ? callingStatement.getId() : 999,
                     rs.resultId, System.currentTimeMillis(),
-                    (int) (fetchEndTime - fetchBeginTime), null,
+                    (fetchEndTime - fetchBeginTime), this.queryTimingUnits,
+                    null,
                     new Throwable(), null));
 
             if (this.queryBadIndexUsed) {
                 eventSink.consumeEvent(new ProfilerEvent(
-                        ProfilerEvent.TYPE_WARN, "", catalog, //$NON-NLS-1$
+                        ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, //$NON-NLS-1$
                         this.connection.getId(),
                         (callingStatement != null) ? callingStatement.getId()
                                                    : 999, rs.resultId,
                         System.currentTimeMillis(),
-                        (int) (queryEndTime - queryStartTime), null,
+                        (queryEndTime - queryStartTime), this.queryTimingUnits,
+                        null,
                         new Throwable(),
                         Messages.getString("MysqlIO.33") //$NON-NLS-1$
                          +profileQueryToLog));
@@ -1845,12 +1862,13 @@ class MysqlIO {
 
             if (this.queryNoIndexUsed) {
                 eventSink.consumeEvent(new ProfilerEvent(
-                        ProfilerEvent.TYPE_WARN, "", catalog, //$NON-NLS-1$
+                        ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, //$NON-NLS-1$
                         this.connection.getId(),
                         (callingStatement != null) ? callingStatement.getId()
                                                    : 999, rs.resultId,
                         System.currentTimeMillis(),
-                        (int) (queryEndTime - queryStartTime), null,
+                        (queryEndTime - queryStartTime), this.queryTimingUnits,
+                        null,
                         new Throwable(),
                         Messages.getString("MysqlIO.35") //$NON-NLS-1$
                          +profileQueryToLog));
@@ -1864,6 +1882,28 @@ class MysqlIO {
         return rs;
     }
 
+	private void calculateSlowQueryThreshold() {
+		this.slowQueryThreshold = this.connection.getSlowQueryThresholdMillis();
+		
+		if (this.connection.getUseNanosForElapsedTime()) {
+			long nanosThreshold = this.connection.getSlowQueryThresholdNanos();
+			
+			if (nanosThreshold != 0) {
+				this.slowQueryThreshold = nanosThreshold;
+			} else {
+				this.slowQueryThreshold *= 1000000; // 1 million millis in a nano
+			}
+		}
+	}
+	
+	protected long getCurrentTimeNanosOrMillis() {
+		if (this.useNanosForElapsedTime) {
+			return Util.getCurrentTimeNanosOrMillis();
+		}
+		
+		return System.currentTimeMillis();
+	}
+	
     /**
      * Returns the host this IO is connected to
      *
@@ -3969,6 +4009,18 @@ class MysqlIO {
 	}
 
 	protected long getThreadId() {
-		return threadId;
+		return this.threadId;
+	}
+
+	protected boolean useNanosForElapsedTime() {
+		return this.useNanosForElapsedTime;
+	}
+
+	protected long getSlowQueryThreshold() {
+		return this.slowQueryThreshold;
+	}
+
+	protected String getQueryTimingUnits() {
+		return this.queryTimingUnits;
 	}
 }

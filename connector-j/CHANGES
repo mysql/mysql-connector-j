@@ -98,7 +98,25 @@ nn-nn-07 - Version 5.0.7
 	  As part of this fix, we also overhauled detection of DML for 
 	  executeQuery() and SELECTs for executeUpdate() in plain and 
 	  prepared statements to be aware of the same  types of comments.
-	       
+
+    - Added configuration property "useNanosForElapsedTime" - for 
+      profiling/debugging functionality that measures elapsed time, 
+      should the driver try to use nanoseconds resolution if available 
+      (requires JDK >= 1.5)?
+    
+    - Added configuration property "slowQueryThresholdNanos" - if 
+      "useNanosForElapsedTime" is set to "true", and this property 
+      is set to a non-zero value the driver will use this threshold 
+      (in nanosecond units) to determine if a query was slow, instead
+      of using millisecond units.
+      
+      Note, that if "useNanosForElapsedTime" is set to "true", and this 
+      property is set to "0" (or left default), then elapsed times will 
+      still be measured in nanoseconds (if possible), but the slow query 
+      threshold will be converted from milliseconds to nanoseconds, and thus
+      have an upper bound of approximately 2000 millesconds (as that threshold
+      is represented as an integer, not a long).
+      	       
 05-15-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,

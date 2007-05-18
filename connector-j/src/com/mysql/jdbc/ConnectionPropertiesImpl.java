@@ -316,16 +316,26 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	}
 
 	class IntegerConnectionProperty extends ConnectionProperty implements Serializable {
-	
-		private static final long serialVersionUID = -8147538210820248187L;
-		
+
+		private static final long serialVersionUID = -3004305481796850832L;
+
+		public IntegerConnectionProperty(String propertyNameToSet,
+				Object defaultValueToSet, String[] allowableValuesToSet,
+				int lowerBoundToSet, int upperBoundToSet,
+				String descriptionToSet, String sinceVersionToSet,
+				String category, int orderInCategory) {
+			super(propertyNameToSet, defaultValueToSet, allowableValuesToSet,
+					lowerBoundToSet, upperBoundToSet, descriptionToSet, sinceVersionToSet,
+					category, orderInCategory);
+		}
+
 		int multiplier = 1;
 
 		IntegerConnectionProperty(String propertyNameToSet,
 				int defaultValueToSet, int lowerBoundToSet,
 				int upperBoundToSet, String descriptionToSet,
 				String sinceVersionToSet, String category, int orderInCategory) {
-			super(propertyNameToSet, Constants.integerValueOf(defaultValueToSet), null,
+			super(propertyNameToSet, new Integer(defaultValueToSet), null,
 					lowerBoundToSet, upperBoundToSet, descriptionToSet,
 					sinceVersionToSet, category, orderInCategory);
 		}
@@ -348,21 +358,21 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 
 		/**
-		 * @see com.mysql.jdbc.ConnectionPropertiesImpl.ConnectionProperty#getAllowableValues()
+		 * @see com.mysql.jdbc.ConnectionProperties.ConnectionProperty#getAllowableValues()
 		 */
 		String[] getAllowableValues() {
 			return null;
 		}
 
 		/**
-		 * @see com.mysql.jdbc.ConnectionPropertiesImpl.ConnectionProperty#getLowerBound()
+		 * @see com.mysql.jdbc.ConnectionProperties.ConnectionProperty#getLowerBound()
 		 */
 		int getLowerBound() {
 			return this.lowerBound;
 		}
 
 		/**
-		 * @see com.mysql.jdbc.ConnectionPropertiesImpl.ConnectionProperty#getUpperBound()
+		 * @see com.mysql.jdbc.ConnectionProperties.ConnectionProperty#getUpperBound()
 		 */
 		int getUpperBound() {
 			return this.upperBound;
@@ -373,14 +383,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 
 		/**
-		 * @see com.mysql.jdbc.ConnectionPropertiesImpl.ConnectionProperty#hasValueConstraints()
+		 * @see com.mysql.jdbc.ConnectionProperties.ConnectionProperty#hasValueConstraints()
 		 */
 		boolean hasValueConstraints() {
 			return false;
 		}
 
 		/**
-		 * @see com.mysql.jdbc.ConnectionPropertiesImpl.ConnectionProperty#initializeFrom(java.lang.String)
+		 * @see com.mysql.jdbc.ConnectionProperties.ConnectionProperty#initializeFrom(java.lang.String)
 		 */
 		void initializeFrom(String extractedValue) throws SQLException {
 			if (extractedValue != null) {
@@ -397,7 +407,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					 * the value '" + extractedValue + "' exceeds this range.",
 					 * SQLError.SQL_STATE_ILLEGAL_ARGUMENT); } }
 					 */
-					this.valueAsObject = Constants.integerValueOf(intValue * multiplier);
+					this.valueAsObject = new Integer(intValue * multiplier);
 				} catch (NumberFormatException nfe) {
 					throw SQLError.createSQLException("The connection property '"
 							+ getPropertyName()
@@ -412,17 +422,69 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 
 		/**
-		 * @see com.mysql.jdbc.ConnectionPropertiesImpl.ConnectionProperty#isRangeBased()
+		 * @see com.mysql.jdbc.ConnectionProperties.ConnectionProperty#isRangeBased()
 		 */
 		boolean isRangeBased() {
 			return getUpperBound() != getLowerBound();
 		}
 
 		void setValue(int valueFlag) {
-			this.valueAsObject = Constants.integerValueOf(valueFlag);
+			this.valueAsObject = new Integer(valueFlag);
 		}
 	}
+	
+	public class LongConnectionProperty extends IntegerConnectionProperty {
 
+		private static final long serialVersionUID = 6068572984340480895L;
+
+		LongConnectionProperty(String propertyNameToSet,
+				long defaultValueToSet, long lowerBoundToSet,
+				long upperBoundToSet, String descriptionToSet,
+				String sinceVersionToSet, String category, int orderInCategory) {
+			super(propertyNameToSet, new Long(defaultValueToSet), null,
+					(int)lowerBoundToSet, (int)upperBoundToSet, descriptionToSet,
+					sinceVersionToSet, category, orderInCategory);
+		}
+		
+
+		LongConnectionProperty(String propertyNameToSet,
+				long defaultValueToSet, String descriptionToSet,
+				String sinceVersionToSet, String category, int orderInCategory) {
+			this(propertyNameToSet,
+				defaultValueToSet, 0,
+				0, descriptionToSet,
+				sinceVersionToSet, category, orderInCategory);
+		}
+		
+		void setValue(long value) {
+			this.valueAsObject = new Long(value);
+		}
+		
+		long getValueAsLong() {
+			return ((Long) this.valueAsObject).longValue();
+		}
+		
+		void initializeFrom(String extractedValue) throws SQLException {
+			if (extractedValue != null) {
+				try {
+					// Parse decimals, too
+					long longValue = Double.valueOf(extractedValue).longValue();
+
+					this.valueAsObject = new Long(longValue);
+				} catch (NumberFormatException nfe) {
+					throw SQLError.createSQLException("The connection property '"
+							+ getPropertyName()
+							+ "' only accepts long integer values. The value '"
+							+ extractedValue
+							+ "' can not be converted to a long integer.",
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+				}
+			} else {
+				this.valueAsObject = this.defaultValue;
+			}
+		}
+	}
+	
 	class MemorySizeConnectionProperty extends IntegerConnectionProperty implements Serializable {
 
 		private static final long serialVersionUID = 7351065128998572656L;
@@ -547,6 +609,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	private static final String CONNECTION_AND_AUTH_CATEGORY = "Connection/Authentication";
 
+	private static final String NETWORK_CATEGORY = "Networking";
+	
 	private static final String DEBUGING_PROFILING_CATEGORY = "Debuging/Profiling";
 
 	private static final String HA_CATEGORY = "High Availability and Clustering";
@@ -558,9 +622,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	private static final String SECURITY_CATEGORY = "Security";
 	
 	private static final String[] PROPERTY_CATEGORIES = new String[] {
-		CONNECTION_AND_AUTH_CATEGORY, HA_CATEGORY, SECURITY_CATEGORY,
+		CONNECTION_AND_AUTH_CATEGORY, NETWORK_CATEGORY,
+		HA_CATEGORY, SECURITY_CATEGORY,
 		PERFORMANCE_CATEGORY, DEBUGING_PROFILING_CATEGORY, MISC_CATEGORY };
-
+	
 	private static final ArrayList PROPERTY_LIST = new ArrayList();
 
 	//
@@ -1282,7 +1347,16 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Integer.MAX_VALUE,
 			"If 'logSlowQueries' is enabled, how long should a query (in ms) before it is logged as 'slow'?",
 			"3.1.2", DEBUGING_PROFILING_CATEGORY, 9);
-
+	
+	private LongConnectionProperty slowQueryThresholdNanos = new LongConnectionProperty(
+			"slowQueryThresholdNanos",
+			0,
+			"If 'useNanosForElapsedTime' is set to true, and this property is set to a non-zero value," 
+			+ " the driver will use this threshold (in nanosecond units) to determine if a query was slow.",
+			"5.0.7",
+			DEBUGING_PROFILING_CATEGORY,
+			10);
+	
 	private StringConnectionProperty socketFactoryClassName = new StringConnectionProperty(
 			"socketFactory",
 			StandardSocketFactory.class.getName(),
@@ -1409,7 +1483,15 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					+ "as maintained by the protocol, rather than querying the database or blindly "
 					+ "sending commands to the database for commit() or rollback() method calls?",
 			"3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
-
+	
+	private BooleanConnectionProperty useNanosForElapsedTime = new BooleanConnectionProperty(
+			"useNanosForElapsedTime",
+			false,
+			"For profiling/debugging functionality that measures elapsed time, should the driver "
+			+ "try to use nanoseconds resolution if available (JDK >= 1.5)?",
+			"5.0.7",
+			DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty useOldAliasMetadataBehavior = new BooleanConnectionProperty(
 			"useOldAliasMetadataBehavior",
 			false,
@@ -4083,5 +4165,21 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setLoadBalanceStrategy(String strategy) {
 		this.loadBalanceStrategy.setValue(strategy);
+	}
+
+	public boolean getUseNanosForElapsedTime() {
+		return this.useNanosForElapsedTime.getValueAsBoolean();
+	}
+
+	public void setUseNanosForElapsedTime(boolean flag) {
+		this.useNanosForElapsedTime.setValue(flag);
+	}
+
+	public long getSlowQueryThresholdNanos() {
+		return this.slowQueryThresholdNanos.getValueAsLong();
+	}
+
+	public void setSlowQueryThresholdNanos(long nanos) {
+		this.slowQueryThresholdNanos.setValue(nanos);
 	}
 }

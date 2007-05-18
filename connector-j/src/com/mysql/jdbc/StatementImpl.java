@@ -2026,9 +2026,10 @@ public class StatementImpl implements Statement {
 				this.eventSink.consumeEvent(new ProfilerEvent(
 						ProfilerEvent.TYPE_WARN,
 						"", //$NON-NLS-1$
-						this.currentCatalog, this.connectionId, this
-								.getId(), -1, System.currentTimeMillis(), 0,
-						null, this.pointOfOrigin, message));
+						this.currentCatalog, this.connectionId, this.getId(),
+						-1, System.currentTimeMillis(), 0,
+						Constants.MILLIS_I18N, null, this.pointOfOrigin,
+						message));
 			}
 		}
 

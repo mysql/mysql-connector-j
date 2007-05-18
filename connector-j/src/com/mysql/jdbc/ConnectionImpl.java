@@ -4062,7 +4062,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						this.eventSink.consumeEvent(new ProfilerEvent(
 								ProfilerEvent.TYPE_WARN, "", //$NON-NLS-1$
 								this.getCatalog(), this.getId(), -1, -1, System
-										.currentTimeMillis(), 0, null,
+										.currentTimeMillis(), 0, Constants.MILLIS_I18N,
+										null,
 								this.pointOfOrigin, message));
 					}
 
@@ -4075,7 +4076,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						this.eventSink.consumeEvent(new ProfilerEvent(
 								ProfilerEvent.TYPE_WARN, "", //$NON-NLS-1$
 								this.getCatalog(), this.getId(), -1, -1, System
-										.currentTimeMillis(), 0, null,
+										.currentTimeMillis(), 0, Constants.MILLIS_I18N,
+										null,
 								this.pointOfOrigin, message));
 					}
 				}

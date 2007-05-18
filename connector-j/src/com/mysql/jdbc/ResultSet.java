@@ -7234,55 +7234,48 @@ public class ResultSet implements java.sql.ResultSet {
 	private void issueConversionViaParsingWarning(String methodName,
 			int columnIndex, Object value, Field fieldInfo,
 			int[] typesWithNoParseConversion) throws SQLException {
-		StringBuffer message = new StringBuffer();
-		message
-				.append("ResultSet type conversion via parsing detected when calling ");
-		message.append(methodName);
-		message.append(" for column ");
-		message.append((columnIndex + 1));
-		message.append(", (column named '");
-		message.append(fieldInfo.getOriginalName());
-		message.append("' in table '");
-		message.append(fieldInfo.getOriginalTableName());
+		
+		StringBuffer originalQueryBuf = new StringBuffer();
+		
 		if (this.owningStatement != null
 				&& this.owningStatement instanceof com.mysql.jdbc.PreparedStatement) {
-			message.append("' created from query:\n\n");
-			message
+			originalQueryBuf.append(Messages.getString("ResultSet.CostlyConversionCreatedFromQuery"));
+			originalQueryBuf
 					.append(((com.mysql.jdbc.PreparedStatement) this.owningStatement).originalSql);
-			message.append("\n\n");
+			originalQueryBuf.append("\n\n");
 		} else {
-			message.append(". ");
-		}
-
-		message.append("Java class of column type is '");
-		
-		if (value != null) {
-			message.append(value.getClass().getName());
-		} else {
-			message.append(ResultSetMetaData.getClassNameForJavaType(fieldInfo.getSQLType(), 
-					fieldInfo.isUnsigned(), 
-					fieldInfo.getMysqlType(), 
-					fieldInfo.isBinary() || fieldInfo.isBlob(),
-					fieldInfo.isOpaqueBinary()));
+			originalQueryBuf.append(".");
 		}
 		
-		message.append("', MySQL field type is ");
-		message.append(MysqlDefs.typeToName(fieldInfo.getMysqlType()));
-		message
-				.append(".\n\nTypes that could be converted directly without parsing are:\n");
-
+		StringBuffer convertibleTypesBuf = new StringBuffer();
+		
 		for (int i = 0; i < typesWithNoParseConversion.length; i++) {
-			message.append(MysqlDefs.typeToName(typesWithNoParseConversion[i]));
-			message.append("\n");
+			convertibleTypesBuf.append(MysqlDefs.typeToName(typesWithNoParseConversion[i]));
+			convertibleTypesBuf.append("\n");
 		}
-
+		
+		String message = Messages.getString("ResultSet.CostlyConversion", new Object[] {
+				methodName,
+				new Integer(columnIndex + 1),
+				fieldInfo.getOriginalName(),
+				fieldInfo.getOriginalTableName(),
+				originalQueryBuf.toString(),
+				value != null ? value.getClass().getName() : ResultSetMetaData.getClassNameForJavaType(
+						fieldInfo.getSQLType(), 
+						fieldInfo.isUnsigned(), 
+						fieldInfo.getMysqlType(), 
+						fieldInfo.isBinary() || fieldInfo.isBlob(),
+						fieldInfo.isOpaqueBinary()),
+				MysqlDefs.typeToName(fieldInfo.getMysqlType()),
+				convertibleTypesBuf.toString()});
+				
 		this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN,
 				"", (this.owningStatement == null) ? "N/A"
-						: this.owningStatement.currentCatalog, 
-						this.connectionId, (this.owningStatement == null) ? (-1)
+						: this.owningStatement.currentCatalog,
+				this.connectionId, (this.owningStatement == null) ? (-1)
 						: this.owningStatement.getId(), this.resultId, System
-						.currentTimeMillis(), 0, null, this.pointOfOrigin,
-				message.toString()));
+						.currentTimeMillis(), 0, Constants.MILLIS_I18N, null,
+				this.pointOfOrigin, message));
 
 	}
 	
@@ -7695,16 +7688,23 @@ public class ResultSet implements java.sql.ResultSet {
 				// Report on result set closed by driver instead of application
 				
 				if (!calledExplicitly) {		
-					this.eventSink.consumeEvent(new ProfilerEvent(
-							ProfilerEvent.TYPE_WARN, "",
-							(this.owningStatement == null) ? "N/A"
-									: this.owningStatement.currentCatalog,
-							this.connectionId,
-							(this.owningStatement == null) ? (-1)
-									: this.owningStatement.getId(),
-							this.resultId, System.currentTimeMillis(), 0, null,
-							this.pointOfOrigin, Messages.getString(
-									"ResultSet.ResultSet_implicitly_closed_by_driver"))); //$NON-NLS-1$
+					this.eventSink
+							.consumeEvent(new ProfilerEvent(
+									ProfilerEvent.TYPE_WARN,
+									"",
+									(this.owningStatement == null) ? "N/A"
+											: this.owningStatement.currentCatalog,
+									this.connectionId,
+									(this.owningStatement == null) ? (-1)
+											: this.owningStatement.getId(),
+									this.resultId,
+									System.currentTimeMillis(),
+									0,
+									Constants.MILLIS_I18N,
+									null,
+									this.pointOfOrigin,
+									Messages
+											.getString("ResultSet.ResultSet_implicitly_closed_by_driver"))); //$NON-NLS-1$
 				}
 
 				if (this.rowData instanceof RowDataStatic) {
@@ -7726,34 +7726,48 @@ public class ResultSet implements java.sql.ResultSet {
 										this.resultId,
 										System.currentTimeMillis(),
 										0,
+										Constants.MILLIS_I18N,
 										null,
 										this.pointOfOrigin,
 										Messages
 												.getString(
 														"ResultSet.Too_Large_Result_Set",
 														new Object[] {
-																Constants.integerValueOf(
+																new Integer(
 																		this.rowData
 																				.size()),
-																Constants.integerValueOf(
+																new Integer(
 																		this.connection
 																				.getResultSetSizeThreshold()) })));
 					}
 					
 					if (!isLast() && !isAfterLast() && (this.rowData.size() != 0)) {
 
-						this.eventSink.consumeEvent(new ProfilerEvent(
-								ProfilerEvent.TYPE_WARN, "",
-								(this.owningStatement == null) ? Messages
-										.getString("ResultSet.N/A_159")
-										: this.owningStatement.currentCatalog, //$NON-NLS-1$
-								this.connectionId,
-								(this.owningStatement == null) ? (-1)
-										: this.owningStatement.getId(),
-								this.resultId, System.currentTimeMillis(), 0, null,
-								this.pointOfOrigin, Messages.getString(
-										"ResultSet.Possible_incomplete_traversal_of_result_set", //$NON-NLS-1$
-										new Object[] {Constants.integerValueOf(getRow()), Constants.integerValueOf(this.rowData.size())})));
+						this.eventSink
+								.consumeEvent(new ProfilerEvent(
+										ProfilerEvent.TYPE_WARN,
+										"",
+										(this.owningStatement == null) ? Messages
+												.getString("ResultSet.N/A_159")
+												: this.owningStatement.currentCatalog, //$NON-NLS-1$
+										this.connectionId,
+										(this.owningStatement == null) ? (-1)
+												: this.owningStatement.getId(),
+										this.resultId,
+										System.currentTimeMillis(),
+										0,
+										Constants.MILLIS_I18N,
+										null,
+										this.pointOfOrigin,
+										Messages
+												.getString(
+														"ResultSet.Possible_incomplete_traversal_of_result_set", //$NON-NLS-1$
+														new Object[] {
+																new Integer(
+																		getRow()),
+																new Integer(
+																		this.rowData
+																				.size()) })));
 					}
 				}
 
@@ -7789,7 +7803,8 @@ public class ResultSet implements java.sql.ResultSet {
 								this.connectionId,
 								(this.owningStatement == null) ? (-1)
 										: this.owningStatement.getId(), 0,
-								System.currentTimeMillis(), 0, null,
+								System.currentTimeMillis(), 0,
+								Constants.MILLIS_I18N, null,
 								this.pointOfOrigin, buf.toString()));
 					}
 				}

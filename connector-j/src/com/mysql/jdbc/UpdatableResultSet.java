@@ -1081,14 +1081,15 @@ public class UpdatableResultSet extends ResultSet {
 				String message = Messages.getString("UpdatableResultSet.34"); //$NON-NLS-1$
 
 				this.eventSink.consumeEvent(new ProfilerEvent(
-						ProfilerEvent.TYPE_WARN, "", //$NON-NLS-1$
+						ProfilerEvent.TYPE_WARN,
+						"", //$NON-NLS-1$
 						(this.owningStatement == null) ? "N/A" //$NON-NLS-1$
 								: this.owningStatement.currentCatalog, //$NON-NLS-1$
 						this.connectionId,
 						(this.owningStatement == null) ? (-1)
 								: this.owningStatement.getId(), this.resultId,
-						System.currentTimeMillis(), 0, null,
-						this.pointOfOrigin, message));
+						System.currentTimeMillis(), 0, Constants.MILLIS_I18N,
+						null, this.pointOfOrigin, message));
 			}
 		}
 

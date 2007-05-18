@@ -1939,7 +1939,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		StringBuffer missingSettersBuf = new StringBuffer();
 		StringBuffer missingGettersBuf = new StringBuffer();
 		
-		Class[][] argTypes = {new Class[] { String.class }, new Class[] {Integer.TYPE}, new Class[] {Boolean.TYPE}};
+		Class[][] argTypes = {new Class[] { String.class }, new Class[] {Integer.TYPE}, new Class[] {Long.TYPE}, new Class[] {Boolean.TYPE}};
 		
 		for (int i = 0; i < dpi.length; i++) {
 			

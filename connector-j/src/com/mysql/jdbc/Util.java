@@ -39,7 +39,22 @@ import java.util.TimeZone;
  * @author Mark Matthews
  */
 public class Util {
-
+	protected static Method systemNanoTimeMethod;
+    
+	static {
+		try {
+			systemNanoTimeMethod = System.class.getMethod("nanoTime", null);
+		} catch (SecurityException e) {
+			systemNanoTimeMethod = null;
+		} catch (NoSuchMethodException e) {
+			systemNanoTimeMethod = null;
+		}
+	}
+	
+	protected static boolean nanoTimeAvailable() {
+		return systemNanoTimeMethod != null;
+	}
+	
 	private static Method CAST_METHOD;
 	
 	// cache this ourselves, as the method call is statically-synchronized in all but JDK6!
@@ -406,5 +421,21 @@ public class Util {
 		}
 		
 		return null;
+	}
+	
+	public static long getCurrentTimeNanosOrMillis() {
+		if (systemNanoTimeMethod != null) {
+			try {
+				return ((Long)systemNanoTimeMethod.invoke(null, null)).longValue();
+			} catch (IllegalArgumentException e) {
+				// ignore - fall through to currentTimeMillis()
+			} catch (IllegalAccessException e) {
+				// ignore - fall through to currentTimeMillis()
+			} catch (InvocationTargetException e) {
+				// ignore - fall through to currentTimeMillis()
+			}
+		}
+		
+		return System.currentTimeMillis();
 	}
 }

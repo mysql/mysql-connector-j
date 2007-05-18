@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -19,9 +19,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
-
  */
+
 package com.mysql.jdbc.profiler;
 
 import java.util.Date;
@@ -64,6 +63,11 @@ public class ProfilerEvent {
 	public static final byte TYPE_FETCH = 5;
 
 	/**
+	 * Profiler event for slow query
+	 */
+	public static final byte TYPE_SLOW_QUERY = 6;
+	
+	/**
 	 * Type of event
 	 */
 	protected byte eventType;
@@ -91,8 +95,13 @@ public class ProfilerEvent {
 	/**
 	 * How long did the event last?
 	 */
-	protected int eventDurationMillis;
+	protected long eventDuration;
 
+	/**
+	 * What units was the duration measured in?
+	 */
+	protected String durationUnits;
+	
 	/**
 	 * The hostname the event occurred on (as an index into a dictionary, used
 	 * by 'remote' profilers for efficiency)?
@@ -165,7 +174,7 @@ public class ProfilerEvent {
 	 */
 	public ProfilerEvent(byte eventType, String hostName, String catalog,
 			long connectionId, int statementId, int resultSetId,
-			long eventCreationTime, int eventDurationMillis,
+			long eventCreationTime, long eventDuration, String durationUnits,
 			String eventCreationPointDesc, Throwable eventCreationPoint,
 			String message) {
 		this.eventType = eventType;
@@ -173,7 +182,8 @@ public class ProfilerEvent {
 		this.statementId = statementId;
 		this.resultSetId = resultSetId;
 		this.eventCreationTime = eventCreationTime;
-		this.eventDurationMillis = eventDurationMillis;
+		this.eventDuration = eventDuration;
+		this.durationUnits = durationUnits;
 		this.eventCreationPoint = eventCreationPoint;
 		this.eventCreationPointDesc = eventCreationPointDesc;
 		this.message = message;
@@ -225,6 +235,9 @@ public class ProfilerEvent {
 		case TYPE_WARN:
 			buf.append("WARN");
 			break;
+		case TYPE_SLOW_QUERY:
+			buf.append("SLOW QUERY");
+			break;
 		default:
 			buf.append("UNKNOWN");
 		}
@@ -232,7 +245,7 @@ public class ProfilerEvent {
 		buf.append(" created: ");
 		buf.append(new Date(this.eventCreationTime));
 		buf.append(" duration: ");
-		buf.append(this.eventDurationMillis);
+		buf.append(this.eventDuration);
 		buf.append(" connection: ");
 		buf.append(this.connectionId);
 		buf.append(" statement: ");
@@ -275,8 +288,16 @@ public class ProfilerEvent {
 		pos += 4;
 		long eventCreationTime = readLong(buf, pos);
 		pos += 8;
-		int eventDurationMillis = readInt(buf, pos);
+		long eventDuration = readLong(buf, pos);
 		pos += 4;
+		
+		byte[] eventDurationUnits = readBytes(buf, pos);
+		pos += 4;
+		
+		if (eventDurationUnits != null) {
+			pos += eventDurationUnits.length;
+		}
+		
 		int eventCreationPointIndex = readInt(buf, pos);
 		pos += 4;
 		byte[] eventCreationAsBytes = readBytes(buf, pos);
@@ -294,7 +315,8 @@ public class ProfilerEvent {
 		}
 
 		return new ProfilerEvent(eventType, "", "", connectionId, statementId,
-				resultSetId, eventCreationTime, eventDurationMillis,
+				resultSetId, eventCreationTime, eventDuration,
+				new String(eventDurationUnits, "ISO8859_1"),
 				new String(eventCreationAsBytes, "ISO8859_1"), null,
 				new String(message, "ISO8859_1"));
 	}
@@ -330,6 +352,15 @@ public class ProfilerEvent {
 		} else {
 			len += 4;
 		}
+		
+		byte[] durationUnitsAsBytes = null;
+		
+		if (durationUnits != null) {
+			durationUnitsAsBytes = this.durationUnits.getBytes("ISO8859_1");
+			len += (4 + durationUnitsAsBytes.length);
+		} else {
+			len += 4;
+		}
 
 		byte[] buf = new byte[len];
 
@@ -340,7 +371,8 @@ public class ProfilerEvent {
 		pos = writeInt(this.statementId, buf, pos);
 		pos = writeInt(this.resultSetId, buf, pos);
 		pos = writeLong(this.eventCreationTime, buf, pos);
-		pos = writeInt(this.eventDurationMillis, buf, pos);
+		pos = writeLong(this.eventDuration, buf, pos);
+		pos = writeBytes(durationUnitsAsBytes, buf, pos);
 		pos = writeInt(this.eventCreationPointIndex, buf, pos);
 
 		if (eventCreationAsBytes != null) {
@@ -459,10 +491,17 @@ public class ProfilerEvent {
 	 * 
 	 * @return the duration of the event in milliseconds
 	 */
-	public int getEventDurationMillis() {
-		return this.eventDurationMillis;
+	public long getEventDuration() {
+		return this.eventDuration;
 	}
 
+	/**
+	 * Returns the units for getEventDuration()
+	 */
+	public String getDurationUnits() {
+		return this.durationUnits;
+	}
+	
 	/**
 	 * Returns the event type flag
 	 * 
