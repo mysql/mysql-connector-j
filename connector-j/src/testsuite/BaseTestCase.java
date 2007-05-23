@@ -27,6 +27,7 @@ package testsuite;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.sql.Blob;
 import java.sql.Connection;
@@ -375,7 +376,7 @@ public abstract class BaseTestCase extends TestCase {
 	protected Object getSingleValue(String tableName, String columnName,
 			String whereClause) throws SQLException {
 		return getSingleValueWithQuery("SELECT " + columnName + " FROM "
-				+ tableName + ((whereClause == null) ? "" : whereClause));
+				+ tableName + ((whereClause == null) ? "" : " " + whereClause));
 	}
 
 	protected Object getSingleValueWithQuery(String query) throws SQLException {
@@ -399,6 +400,9 @@ public abstract class BaseTestCase extends TestCase {
 	protected File newTempBinaryFile(String name, long size) throws IOException {
 		File tempFile = File.createTempFile(name, "tmp");
 		tempFile.deleteOnExit();
+		
+		cleanupTempFiles(tempFile, name);
+		
 		FileOutputStream fos = new FileOutputStream(tempFile);
 		BufferedOutputStream bos = new BufferedOutputStream(fos);
 		for (long i = 0; i < size; i++) {
@@ -628,5 +632,25 @@ public abstract class BaseTestCase extends TestCase {
 		}
 		
 		return buf.toString();
+	}
+
+	protected void cleanupTempFiles(final File exampleTempFile, final String tempfilePrefix) {
+	
+		File tempfilePath = exampleTempFile.getParentFile();
+		
+		File[] possibleFiles = tempfilePath.listFiles(new FilenameFilter() {
+	
+			public boolean accept(File dir, String name) {
+				return (name.indexOf(tempfilePrefix) != -1 
+						&& !exampleTempFile.getName().equals(name));
+			}});
+		
+		for (int i = 0; i < possibleFiles.length; i++) {
+			try {
+				possibleFiles[i].delete();
+			} catch (Throwable t) {
+				// ignore, we're only making a best effort cleanup attempt here
+			}
+		}
 	}
 }
