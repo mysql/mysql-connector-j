@@ -62,7 +62,7 @@ public class RowDataDynamic implements RowData {
 
 	private Object[] nextRow;
 
-	private ResultSet owner;
+	private ResultSetImpl owner;
 
 	private boolean streamerClosed = false;
 	
@@ -271,7 +271,7 @@ public class RowDataDynamic implements RowData {
 	/**
 	 * @see com.mysql.jdbc.RowData#getOwner()
 	 */
-	public ResultSet getOwner() {
+	public ResultSetInternalMethods getOwner() {
 		return this.owner;
 	}
 
@@ -469,9 +469,9 @@ public class RowDataDynamic implements RowData {
 	}
 
 	/**
-	 * @see com.mysql.jdbc.RowData#setOwner(com.mysql.jdbc.ResultSet)
+	 * @see com.mysql.jdbc.RowData#setOwner(com.mysql.jdbc.ResultSetInternalMethods)
 	 */
-	public void setOwner(ResultSet rs) {
+	public void setOwner(ResultSetImpl rs) {
 		this.owner = rs;
 	}
 

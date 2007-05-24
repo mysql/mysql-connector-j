@@ -815,7 +815,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 				ResultSet rs = ((PreparedStatement) this.wrappedStmt)
 						.executeQuery();
 
-				((com.mysql.jdbc.ResultSet) rs).setWrapperStatement(this);
+				((com.mysql.jdbc.ResultSetInternalMethods) rs).setWrapperStatement(this);
 
 				return rs;
 			}

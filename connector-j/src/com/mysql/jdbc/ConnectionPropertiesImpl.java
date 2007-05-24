@@ -19,9 +19,8 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
-
  */
+
 package com.mysql.jdbc;
 
 import com.mysql.jdbc.log.Log;
@@ -1370,7 +1369,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Integer.MAX_VALUE,
 			"Timeout on network socket operations (0, the default means no timeout).",
 			"3.0.1", CONNECTION_AND_AUTH_CATEGORY, 10);
-
+	
+	private StringConnectionProperty statementInterceptors = new StringConnectionProperty("statementInterceptors",
+			null, "", "5.1.1", MISC_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty strictFloatingPoint = new BooleanConnectionProperty(
 			"strictFloatingPoint", false,
 			"Used only in older versions of compliance test", "3.0.0",
@@ -4257,5 +4259,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setSlowQueryThresholdNanos(long nanos) {
 		this.slowQueryThresholdNanos.setValue(nanos);
+	}
+
+	public String getStatementInterceptors() {
+		return this.statementInterceptors.getValueAsString();
+	}
+
+	public void setStatementInterceptors(String value) {
+		this.statementInterceptors.setValue(value);
 	}
 }

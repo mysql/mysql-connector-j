@@ -26,18 +26,14 @@ package com.mysql.jdbc;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
 import java.sql.Blob;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Savepoint;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -681,7 +677,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		if (hostToConnectTo == null) {
 			this.host = "localhost";
 			this.hostList.add(this.host);
-		} else if (hostToConnectTo.indexOf(",") != -1) {
+		} else if (hostToConnectTo.indexOf(',') != -1) {
 			// multiple hosts separated by commas (failover)
 			StringTokenizer hostTokenizer = new StringTokenizer(
 					hostToConnectTo, ",", false);
@@ -730,7 +726,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		} catch (Exception ex) {
 			cleanup(ex);
 
-			StringBuffer mesg = new StringBuffer();
+			StringBuffer mesg = new StringBuffer(128);
 
 			if (getParanoid()) {
 				mesg.append("Cannot connect to MySQL server on ");
@@ -820,20 +816,20 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			}
 
-			com.mysql.jdbc.StatementImpl stmt = null;
-			com.mysql.jdbc.ResultSet results = null;
+			java.sql.Statement stmt = null;
+			java.sql.ResultSet results = null;
 
 			try {
 				if (sortedCollationMap == null) {
 					sortedCollationMap = new TreeMap();
 
-					stmt = (com.mysql.jdbc.StatementImpl) createStatement();
+					stmt = createStatement();
 
 					if (stmt.getMaxRows() != 0) {
 						stmt.setMaxRows(0);
 					}
 
-					results = (com.mysql.jdbc.ResultSet) stmt
+					results = stmt
 							.executeQuery("SHOW COLLATION");
 
 					while (results.next()) {
@@ -884,7 +880,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					try {
 						results.close();
 					} catch (java.sql.SQLException sqlE) {
-						;
+						// ignore
 					}
 				}
 
@@ -892,7 +888,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					try {
 						stmt.close();
 					} catch (java.sql.SQLException sqlE) {
-						;
+						// ignore
 					}
 				}
 			}
@@ -1087,9 +1083,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 			
 			if (this.forcedClosedLocation != null) {
-				messageBuf.append("\n\n");
-				messageBuf
-						.append(" at (stack trace):\n");
+				messageBuf.append("\n\n at (stack trace):\n");
 				messageBuf.append(Util
 						.stackTraceToString(this.forcedClosedLocation));
 			}
@@ -1906,10 +1900,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws CommunicationsException
 	 *             DOCUMENT ME!
 	 */
-	protected com.mysql.jdbc.MysqlIO createNewIO(boolean isForReconnect)
+	protected void createNewIO(boolean isForReconnect)
 			throws SQLException {
-		MysqlIO newIo = null;
-
 		Properties mergedProps  = exposeAsProperties(this.props);
 
 		long queriesIssuedFailedOverCopy = this.queriesIssuedFailedOver;
@@ -1949,7 +1941,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								.parseHostPortPair(newHostPortPair);
 						String newHost = hostPortPair[NonRegisteringDriver.HOST_NAME_INDEX];
 
-						if (newHost == null || newHost.trim().length() == 0) {
+						if (newHost == null || StringUtils.isEmptyOrWhitespaceOnly(newHost)) {
 							newHost = "localhost";
 						}
 
@@ -2098,7 +2090,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 									.parseHostPortPair(newHostPortPair);
 							String newHost = hostPortPair[NonRegisteringDriver.HOST_NAME_INDEX];
 
-							if (newHost == null || newHost.trim().length() == 0) {
+							if (newHost == null || StringUtils.isEmptyOrWhitespaceOnly(newHost)) {
 								newHost = "localhost";
 							}
 
@@ -2182,7 +2174,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							try {
 								Thread.sleep((long) timeout * 1000);
 							} catch (InterruptedException IE) {
-								;
+								// ignore
 							}
 						}
 					} // end attempts for a single host
@@ -2246,10 +2238,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					}
 				}
 			}
-
-			return newIo;
 		} finally {
 			this.queriesIssuedFailedOver = queriesIssuedFailedOverCopy;
+			
+			if (this.io != null && getStatementInterceptors() != null) {
+				this.io.initializeStatementInterceptors(
+						getStatementInterceptors(), mergedProps);
+			}
 		}
 	}
 
@@ -2395,7 +2390,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	// resultSetConcurrency, streamResults, queryIsSelectOnly, catalog,
 	// unpackFields);
 	// }
-	ResultSet execSQL(StatementImpl callingStatement, String sql, int maxRows,
+	ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows,
 			Buffer packet, int resultSetType, int resultSetConcurrency,
 			boolean streamResults, String catalog,
 			boolean unpackFields) throws SQLException {
@@ -2404,7 +2399,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				catalog, unpackFields, false);
 	}
 
-	ResultSet execSQL(StatementImpl callingStatement, String sql, int maxRows,
+	ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows,
 			Buffer packet, int resultSetType, int resultSetConcurrency,
 			boolean streamResults, String catalog,
 			boolean unpackFields,
@@ -2471,13 +2466,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					}
 
 					return this.io.sqlQueryDirect(callingStatement, sql,
-							encoding, null, maxRows, this, resultSetType,
+							encoding, null, maxRows, resultSetType,
 							resultSetConcurrency, streamResults, catalog,
 							unpackFields);
 				}
 
 				return this.io.sqlQueryDirect(callingStatement, null, null,
-						packet, maxRows, this, resultSetType,
+						packet, maxRows, resultSetType,
 						resultSetConcurrency, streamResults, catalog,
 						unpackFields);
 			} catch (java.sql.SQLException sqlE) {
@@ -2597,6 +2592,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	protected void finalize() throws Throwable {
 		cleanup(null);
+		
+		super.finalize();
 	}
 
 	protected StringBuffer generateConnectionCommentBlock(StringBuffer buf) {
@@ -3552,8 +3549,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		if (!nullSafeCompare(otherHost, this.origHostToConnectTo)) {
 			directCompare = false;
-		} else if (otherHost != null && otherHost.indexOf(",") == -1 && 
-				otherHost.indexOf(":") == -1) {
+		} else if (otherHost != null && otherHost.indexOf(',') == -1 && 
+				otherHost.indexOf(':') == -1) {
 			// need to check port numbers
 			directCompare = (((ConnectionImpl)otherConnection).origPortToConnectTo == 
 				this.origPortToConnectTo);
@@ -3611,15 +3608,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 		}
 
-		com.mysql.jdbc.StatementImpl stmt = null;
-		com.mysql.jdbc.ResultSet results = null;
+		java.sql.Statement stmt = null;
+		java.sql.ResultSet results = null;
 
 		try {
-			stmt = (com.mysql.jdbc.StatementImpl) createStatement();
+			stmt = createStatement();
 			stmt.setEscapeProcessing(false);
 
-			results = (com.mysql.jdbc.ResultSet) stmt
-					.executeQuery("SHOW VARIABLES");
+			results = stmt.executeQuery("SHOW VARIABLES");
 
 			while (results.next()) {
 				this.serverVariables.put(results.getString(1), results
@@ -4170,14 +4166,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			oldHistBreakpoints = new long[histBreakpoints.length];
 		}
 
-		for (int i = 0; i < histCounts.length; i++) {
-			oldHistCounts[i] = histCounts[i];
-		}
-
-		for (int i = 0; i < oldHistBreakpoints.length; i++) {
-			oldHistBreakpoints[i] = histBreakpoints[i];
-		}
-
+		System.arraycopy(histCounts, 0, oldHistCounts, 0, histCounts.length);
+		
+		System.arraycopy(histBreakpoints, 0, oldHistBreakpoints, 0,
+				histBreakpoints.length);
+	
 		createInitialHistogram(histBreakpoints, currentLowerBound,
 				currentUpperBound);
 
@@ -5174,14 +5167,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 */
 	protected void initializeResultsMetadataFromCache(String sql,
-			CachedResultSetMetaData cachedMetaData, ResultSet resultSet)
+			CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet)
 			throws SQLException {
 
 		if (cachedMetaData == null) {
 			
 			// read from results
 			cachedMetaData = new CachedResultSetMetaData();
-			cachedMetaData.fields = resultSet.fields;
 
 			// assume that users will use named-based
 			// lookups
@@ -5192,18 +5184,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				((UpdatableResultSet)resultSet).checkUpdatability();
 			}
 
-			cachedMetaData.columnNameToIndex = resultSet.columnNameToIndex;
-			cachedMetaData.fullColumnNameToIndex = resultSet.fullColumnNameToIndex;
-
-			cachedMetaData.metadata = resultSet.getMetaData();
+			resultSet.populateCachedMetaData(cachedMetaData);
 
 			this.resultSetMetadataCache.put(sql, cachedMetaData);
 		} else {
-			// initialize results from cached data
-			resultSet.fields = cachedMetaData.fields;
-			resultSet.columnNameToIndex = cachedMetaData.columnNameToIndex;
-			resultSet.fullColumnNameToIndex = cachedMetaData.fullColumnNameToIndex;
-			resultSet.hasBuiltIndexMapping = true;
+			resultSet.initializeFromCachedMetaData(cachedMetaData);
 			resultSet.initializeWithMetadata();
 			
 			if (resultSet instanceof UpdatableResultSet) {

@@ -42,7 +42,7 @@ import java.util.List;
  * 
  * @author Mark Matthews
  */
-public class UpdatableResultSet extends ResultSet {
+public class UpdatableResultSet extends ResultSetImpl {
 	/** Marker for 'stream' data when doing INSERT rows */
 	protected final static byte[] STREAM_DATA_MARKER = "** STREAM DATA **" //$NON-NLS-1$
 	.getBytes();
@@ -118,6 +118,8 @@ public class UpdatableResultSet extends ResultSet {
 			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
 		super(catalog, fields, tuples, conn, creatorStmt);
 		checkUpdatability();
+		this.populateInserterWithDefaultValues = 
+			this.connection.getPopulateInsertRowWithDefaultValues();
 	}
 
 	/**
@@ -1066,7 +1068,7 @@ public class UpdatableResultSet extends ResultSet {
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	protected void realClose(boolean calledExplicitly) throws SQLException {
+	public void realClose(boolean calledExplicitly) throws SQLException {
 		if (this.isClosed) {
 			return;
 		}
@@ -1595,7 +1597,7 @@ public class UpdatableResultSet extends ResultSet {
 	}
 
 	/**
-	 * @see ResultSet#updateBlob(int, Blob)
+	 * @see ResultSetInternalMethods#updateBlob(int, Blob)
 	 */
 	public synchronized void updateBlob(int columnIndex, java.sql.Blob blob)
 			throws SQLException {
@@ -1618,7 +1620,7 @@ public class UpdatableResultSet extends ResultSet {
 	}
 
 	/**
-	 * @see ResultSet#updateBlob(String, Blob)
+	 * @see ResultSetInternalMethods#updateBlob(String, Blob)
 	 */
 	public synchronized void updateBlob(String columnName, java.sql.Blob blob)
 			throws SQLException {
@@ -1834,7 +1836,7 @@ public class UpdatableResultSet extends ResultSet {
 	}
 
 	/**
-	 * @see ResultSet#updateClob(int, Clob)
+	 * @see ResultSetInternalMethods#updateClob(int, Clob)
 	 */
 	public void updateClob(int columnIndex, java.sql.Clob clob)
 			throws SQLException {

@@ -45,6 +45,7 @@ import java.sql.Clob;
 import java.sql.Date;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -741,7 +742,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @see com.mysql.jdbc.PreparedStatement#executeInternal(int,
 	 *      com.mysql.jdbc.Buffer, boolean, boolean)
 	 */
-	protected com.mysql.jdbc.ResultSet executeInternal(int maxRowsToRetrieve,
+	protected com.mysql.jdbc.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve,
 			Buffer sendPacket, boolean createStreamingResultSet,
 			boolean queryIsSelectOnly, boolean unpackFields, Field[] metadataFromCache,
 			boolean isBatch)
@@ -1079,7 +1080,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * 
 	 * @throws SQLException
 	 */
-	private com.mysql.jdbc.ResultSet serverExecute(int maxRowsToRetrieve,
+	private com.mysql.jdbc.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve,
 			boolean createStreamingResultSet, boolean unpackFields, 
 			Field[] metadataFromCache) throws SQLException {
 		synchronized (this.connection.getMutex()) {
@@ -1324,7 +1325,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 							truncateQueryToLog(asSql(true))));
 				}
 	
-				com.mysql.jdbc.ResultSet rs = mysql.readAllResults(this,
+				com.mysql.jdbc.ResultSetInternalMethods rs = mysql.readAllResults(this,
 						maxRowsToRetrieve, this.resultSetType,
 						this.resultSetConcurrency, createStreamingResultSet,
 						this.currentCatalog, resultPacket, true, this.fieldCount,
@@ -1336,7 +1337,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 					this.eventSink.consumeEvent(new ProfilerEvent(
 							ProfilerEvent.TYPE_FETCH,
 							"", this.currentCatalog, this.connection.getId(), //$NON-NLS-1$
-							getId(), rs.resultId, System.currentTimeMillis(),
+							getId(), 0 /* FIXME rs.resultId */, System.currentTimeMillis(),
 							(fetchEndTime - queryEndTime), mysql
 									.getQueryTimingUnits(), null,
 							new Throwable(), null));

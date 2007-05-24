@@ -2072,17 +2072,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	public void testFailoverReadOnly() throws Exception {
 		Properties props = getMasterSlaveProps();
 		props.setProperty("autoReconnect", "true");
-		
-		
+	
 		Connection failoverConn = null;
-		
-		
-		((com.mysql.jdbc.Connection)failoverConn).setPreferSlaveDuringFailover(true);
+
 		Statement failoverStmt = 
 			null;
 		
 		try {
 			failoverConn = getConnectionWithProps(getMasterSlaveUrl(), props);
+			
+			((com.mysql.jdbc.Connection)failoverConn).setPreferSlaveDuringFailover(true);
+			
 			failoverStmt = failoverConn.createStatement();
 			
 			String masterConnectionId = getSingleIndexedValueWithQuery(failoverConn, 1, "SELECT connection_id()").toString();

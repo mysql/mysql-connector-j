@@ -44,14 +44,23 @@ import java.sql.SQLException;
  * @version $Id$
  */
 public class BlobTest extends BaseTestCase {
-	// ~ Static fields/initializers
-	// ---------------------------------------------
 
 	private static File testBlobFile;
 
-	// ~ Constructors
-	// -----------------------------------------------------------
-
+	static {
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				for (int i = 0; i < 5; i++) {
+					try {
+						if (testBlobFile.delete()) {
+							break;
+						}
+					} catch (Throwable t) {
+					}
+				}
+			}
+		});
+	}
 	/**
 	 * Creates a new BlobTest object.
 	 * 
@@ -61,9 +70,6 @@ public class BlobTest extends BaseTestCase {
 	public BlobTest(String name) {
 		super(name);
 	}
-
-	// ~ Methods
-	// ----------------------------------------------------------------
 
 	/**
 	 * Runs all test cases in this test suite
@@ -259,13 +265,17 @@ public class BlobTest extends BaseTestCase {
 				passed);
 	}
 
+	private final static String TEST_BLOB_FILE_PREFIX = "cmj-testblob";
+	
 	private void createBlobFile(int size) throws Exception {
 		if (testBlobFile != null && testBlobFile.length() != size) {
 			testBlobFile.delete();
 		}
 
-		testBlobFile = File.createTempFile("testblob", ".dat");
+		testBlobFile = File.createTempFile(TEST_BLOB_FILE_PREFIX, ".dat");
 		testBlobFile.deleteOnExit();
+		
+		cleanupTempFiles(testBlobFile, TEST_BLOB_FILE_PREFIX);
 
 		BufferedOutputStream bOut = new BufferedOutputStream(
 				new FileOutputStream(testBlobFile));

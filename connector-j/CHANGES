@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-04-nn-07 - Version 5.1.1 Alpha
+06-nn-07 - Version 5.1.1 Alpha
 
     - Pulled vendor-extension methods of Connection implementation out
       into an interface to support java.sql.Wrapper functionality from
@@ -26,6 +26,22 @@
       and disableStreamingResults() which sets the statement instance back to
       the fetch size and result set type it had before enableStreamingResults() 
       was called.
+      
+    - Added experimental support for statement "interceptors" via the
+      com.mysql.jdbc.StatementInterceptor interface, examples are
+      in com/mysql/jdbc/interceptors.
+      
+      Implement this interface to be placed "in between" query execution, so that
+      you can influence it. (currently experimental).
+ 
+      StatementInterceptors are "chainable" when configured by the user, the
+      results returned by the "current" interceptor will be passed on to the next
+      on in the chain, from left-to-right order, as specified by the user in the 
+      JDBC configuration property "statementInterceptors".
+      
+      See the sources (fully javadoc'd) for com.mysql.jdbc.StatementInterceptor
+      for more details until we iron out the API and get it documented in the
+      manual. 
       
 04-11-07 - Version 5.1.0 Alpha
 	

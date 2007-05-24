@@ -458,13 +458,13 @@ public class CallableStatement extends PreparedStatement implements
 
 	private boolean callingStoredFunction = false;
 
-	private ResultSet functionReturnValueResults;
+	private ResultSetInternalMethods functionReturnValueResults;
 
 	private boolean hasOutputParams = false;
 
 	// private List parameterList;
 	// private Map parameterMap;
-	private ResultSet outputParameterResults;
+	private ResultSetInternalMethods outputParameterResults;
 
 	protected boolean outputParamWasNull = false;
 
@@ -999,7 +999,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getArray(int)
 	 */
 	public synchronized Array getArray(int i) throws SQLException {
-		ResultSet rs = getOutputParameters(i);
+		ResultSetInternalMethods rs = getOutputParameters(i);
 
 		Array retValue = rs.getArray(mapOutputParameterIndexToRsIndex(i));
 
@@ -1013,7 +1013,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Array getArray(String parameterName)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Array retValue = rs.getArray(fixParameterName(parameterName));
@@ -1028,7 +1028,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized BigDecimal getBigDecimal(int parameterIndex)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		BigDecimal retValue = rs
 				.getBigDecimal(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1056,7 +1056,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized BigDecimal getBigDecimal(int parameterIndex, int scale)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		BigDecimal retValue = rs.getBigDecimal(
 				mapOutputParameterIndexToRsIndex(parameterIndex), scale);
@@ -1071,7 +1071,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized BigDecimal getBigDecimal(String parameterName)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		BigDecimal retValue = rs.getBigDecimal(fixParameterName(parameterName));
@@ -1085,7 +1085,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getBlob(int)
 	 */
 	public synchronized Blob getBlob(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		Blob retValue = rs
 				.getBlob(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1099,7 +1099,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getBlob(java.lang.String)
 	 */
 	public synchronized Blob getBlob(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Blob retValue = rs.getBlob(fixParameterName(parameterName));
@@ -1114,7 +1114,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized boolean getBoolean(int parameterIndex)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		boolean retValue = rs
 				.getBoolean(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1129,7 +1129,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized boolean getBoolean(String parameterName)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		boolean retValue = rs.getBoolean(fixParameterName(parameterName));
@@ -1143,7 +1143,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getByte(int)
 	 */
 	public synchronized byte getByte(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		byte retValue = rs
 				.getByte(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1157,7 +1157,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getByte(java.lang.String)
 	 */
 	public synchronized byte getByte(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		byte retValue = rs.getByte(fixParameterName(parameterName));
@@ -1171,7 +1171,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getBytes(int)
 	 */
 	public synchronized byte[] getBytes(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		byte[] retValue = rs
 				.getBytes(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1186,7 +1186,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized byte[] getBytes(String parameterName)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		byte[] retValue = rs.getBytes(fixParameterName(parameterName));
@@ -1200,7 +1200,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getClob(int)
 	 */
 	public synchronized Clob getClob(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		Clob retValue = rs
 				.getClob(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1214,7 +1214,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getClob(java.lang.String)
 	 */
 	public synchronized Clob getClob(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Clob retValue = rs.getClob(fixParameterName(parameterName));
@@ -1228,7 +1228,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getDate(int)
 	 */
 	public synchronized Date getDate(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		Date retValue = rs
 				.getDate(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1243,7 +1243,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Date getDate(int parameterIndex, Calendar cal)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		Date retValue = rs.getDate(
 				mapOutputParameterIndexToRsIndex(parameterIndex), cal);
@@ -1257,7 +1257,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getDate(java.lang.String)
 	 */
 	public synchronized Date getDate(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Date retValue = rs.getDate(fixParameterName(parameterName));
@@ -1273,7 +1273,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Date getDate(String parameterName, Calendar cal)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Date retValue = rs.getDate(fixParameterName(parameterName), cal);
@@ -1288,7 +1288,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized double getDouble(int parameterIndex)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		double retValue = rs
 				.getDouble(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1303,7 +1303,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized double getDouble(String parameterName)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		double retValue = rs.getDouble(fixParameterName(parameterName));
@@ -1317,7 +1317,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getFloat(int)
 	 */
 	public synchronized float getFloat(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		float retValue = rs
 				.getFloat(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1332,7 +1332,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized float getFloat(String parameterName)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		float retValue = rs.getFloat(fixParameterName(parameterName));
@@ -1346,7 +1346,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getInt(int)
 	 */
 	public synchronized int getInt(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		int retValue = rs
 				.getInt(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1360,7 +1360,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getInt(java.lang.String)
 	 */
 	public synchronized int getInt(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		int retValue = rs.getInt(fixParameterName(parameterName));
@@ -1374,7 +1374,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getLong(int)
 	 */
 	public synchronized long getLong(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		long retValue = rs
 				.getLong(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1388,7 +1388,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getLong(java.lang.String)
 	 */
 	public synchronized long getLong(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		long retValue = rs.getLong(fixParameterName(parameterName));
@@ -1448,7 +1448,7 @@ public class CallableStatement extends PreparedStatement implements
 			throws SQLException {
 		CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
 
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		Object retVal = rs.getObjectStoredProc(
 				mapOutputParameterIndexToRsIndex(parameterIndex),
@@ -1464,7 +1464,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Object getObject(int parameterIndex, Map map)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		Object retVal = rs.getObject(
 				mapOutputParameterIndexToRsIndex(parameterIndex), map);
@@ -1479,7 +1479,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Object getObject(String parameterName)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Object retValue = rs.getObject(fixParameterName(parameterName));
@@ -1495,7 +1495,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Object getObject(String parameterName, Map map)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Object retValue = rs.getObject(fixParameterName(parameterName), map);
@@ -1515,7 +1515,7 @@ public class CallableStatement extends PreparedStatement implements
 	 *             if no output parameters were defined, or if no output
 	 *             parameters were returned.
 	 */
-	protected ResultSet getOutputParameters(int paramIndex) throws SQLException {
+	protected ResultSetInternalMethods getOutputParameters(int paramIndex) throws SQLException {
 		this.outputParamWasNull = false;
 
 		if (paramIndex == 1 && this.callingStoredFunction
@@ -1550,7 +1550,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getRef(int)
 	 */
 	public synchronized Ref getRef(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		Ref retValue = rs
 				.getRef(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1564,7 +1564,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getRef(java.lang.String)
 	 */
 	public synchronized Ref getRef(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Ref retValue = rs.getRef(fixParameterName(parameterName));
@@ -1578,7 +1578,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getShort(int)
 	 */
 	public synchronized short getShort(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		short retValue = rs
 				.getShort(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1593,7 +1593,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized short getShort(String parameterName)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		short retValue = rs.getShort(fixParameterName(parameterName));
@@ -1608,7 +1608,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized String getString(int parameterIndex)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		String retValue = rs
 				.getString(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1623,7 +1623,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized String getString(String parameterName)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		String retValue = rs.getString(fixParameterName(parameterName));
@@ -1637,7 +1637,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getTime(int)
 	 */
 	public synchronized Time getTime(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		Time retValue = rs
 				.getTime(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1652,7 +1652,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Time getTime(int parameterIndex, Calendar cal)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		Time retValue = rs.getTime(
 				mapOutputParameterIndexToRsIndex(parameterIndex), cal);
@@ -1666,7 +1666,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getTime(java.lang.String)
 	 */
 	public synchronized Time getTime(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Time retValue = rs.getTime(fixParameterName(parameterName));
@@ -1682,7 +1682,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Time getTime(String parameterName, Calendar cal)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Time retValue = rs.getTime(fixParameterName(parameterName), cal);
@@ -1697,7 +1697,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Timestamp getTimestamp(int parameterIndex)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		Timestamp retValue = rs
 				.getTimestamp(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1712,7 +1712,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Timestamp getTimestamp(int parameterIndex, Calendar cal)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		Timestamp retValue = rs.getTimestamp(
 				mapOutputParameterIndexToRsIndex(parameterIndex), cal);
@@ -1727,7 +1727,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Timestamp getTimestamp(String parameterName)
 			throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Timestamp retValue = rs.getTimestamp(fixParameterName(parameterName));
@@ -1743,7 +1743,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public synchronized Timestamp getTimestamp(String parameterName,
 			Calendar cal) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		Timestamp retValue = rs.getTimestamp(fixParameterName(parameterName),
@@ -1758,7 +1758,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getURL(int)
 	 */
 	public synchronized URL getURL(int parameterIndex) throws SQLException {
-		ResultSet rs = getOutputParameters(parameterIndex);
+		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
 		URL retValue = rs
 				.getURL(mapOutputParameterIndexToRsIndex(parameterIndex));
@@ -1772,7 +1772,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getURL(java.lang.String)
 	 */
 	public synchronized URL getURL(String parameterName) throws SQLException {
-		ResultSet rs = getOutputParameters(0); // definitely not going to be
+		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
 
 		URL retValue = rs.getURL(fixParameterName(parameterName));
@@ -1922,7 +1922,7 @@ public class CallableStatement extends PreparedStatement implements
 					outParameterStmt = this.connection.createStatement();
 					outParamRs = outParameterStmt
 							.executeQuery(outParameterQuery.toString());
-					this.outputParameterResults = ((com.mysql.jdbc.ResultSet) outParamRs)
+					this.outputParameterResults = ((com.mysql.jdbc.ResultSetInternalMethods) outParamRs)
 							.copy();
 
 					if (!this.outputParameterResults.next()) {

@@ -87,7 +87,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
 	 * @param columnIndexToSet
 	 *            DOCUMENT ME!
 	 */
-	Blob(byte[] data, ResultSet creatorResultSetToSet, int columnIndexToSet) {
+	Blob(byte[] data, ResultSetInternalMethods creatorResultSetToSet, int columnIndexToSet) {
 		setBinaryData(data);
 	}
 

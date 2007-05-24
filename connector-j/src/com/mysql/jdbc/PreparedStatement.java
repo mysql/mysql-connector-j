@@ -41,6 +41,7 @@ import java.sql.Array;
 import java.sql.Clob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -861,7 +862,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
 		
-		ResultSet rs = null;
+		ResultSetInternalMethods rs = null;
 
 		CachedResultSetMetaData cachedMetadata = null;
 
@@ -880,11 +881,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			
 			if (doStreaming
 					&& this.connection.getNetTimeoutForStreamingResults() > 0) {
-				locallyScopedConn.execSQL(this, "SET net_write_timeout="
-						+ this.connection.getNetTimeoutForStreamingResults(),
-						-1, null, ResultSet.TYPE_FORWARD_ONLY,
-						ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog,
-						true, false);
+				executeSimpleNonQuery(locallyScopedConn,
+						"SET net_write_timeout="
+								+ this.connection
+										.getNetTimeoutForStreamingResults());
 			}
 			
 			this.batchedGeneratedKeys = null;
@@ -935,29 +935,17 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						rowLimit = this.maxRows;
 					} else {
 						if (this.maxRows <= 0) {
-							locallyScopedConn.execSQL(this,
-									"SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, //$NON-NLS-1$
-									null, java.sql.ResultSet.TYPE_FORWARD_ONLY,
-									java.sql.ResultSet.CONCUR_READ_ONLY, false,
-									this.currentCatalog, true);
+							executeSimpleNonQuery(locallyScopedConn,
+									"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
 						} else {
-							locallyScopedConn
-									.execSQL(
-											this,
-											"SET OPTION SQL_SELECT_LIMIT=" + this.maxRows, -1, //$NON-NLS-1$
-											null,
-											java.sql.ResultSet.TYPE_FORWARD_ONLY,
-											java.sql.ResultSet.CONCUR_READ_ONLY,
-											false, this.currentCatalog,
-											true);
+							executeSimpleNonQuery(locallyScopedConn,
+									"SET OPTION SQL_SELECT_LIMIT="
+											+ this.maxRows);
 						}
 					}
 				} else {
-					locallyScopedConn.execSQL(this,
-							"SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, null, //$NON-NLS-1$
-							java.sql.ResultSet.TYPE_FORWARD_ONLY,
-							java.sql.ResultSet.CONCUR_READ_ONLY, false,
-							this.currentCatalog, true);
+					executeSimpleNonQuery(locallyScopedConn,
+							"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
 				}
 
 				// Finally, execute the query
@@ -1362,7 +1350,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	protected ResultSet executeInternal(int maxRowsToRetrieve,
+	protected ResultSetInternalMethods executeInternal(int maxRowsToRetrieve,
 			Buffer sendPacket, boolean createStreamingResultSet,
 			boolean queryIsSelectOnly, boolean unpackFields, Field[] metadataFromCache,
 			boolean isBatch)
@@ -1377,7 +1365,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			
 			this.numberOfExecutions++;
 	
-			ResultSet rs;
+			ResultSetInternalMethods rs;
 			
 			CancelTask timeoutTask = null;
 	
@@ -1516,25 +1504,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 							(cachedMetadata == null), metadataFromCache, false);
 				} else {
 					if (this.maxRows <= 0) {
-						locallyScopedConn
-								.execSQL(
-										this,
-										"SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, null, //$NON-NLS-1$
-										java.sql.ResultSet.TYPE_FORWARD_ONLY,
-										java.sql.ResultSet.CONCUR_READ_ONLY,
-										false, this.currentCatalog, true);
+						executeSimpleNonQuery(locallyScopedConn,
+								"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
 					} else {
-						locallyScopedConn
-								.execSQL(
-										this,
-										"SET OPTION SQL_SELECT_LIMIT=" + this.maxRows, -1, null, //$NON-NLS-1$
-										java.sql.ResultSet.TYPE_FORWARD_ONLY,
-										java.sql.ResultSet.CONCUR_READ_ONLY,
-										false, this.currentCatalog, true);
+						executeSimpleNonQuery(locallyScopedConn,
+								"SET OPTION SQL_SELECT_LIMIT=" + this.maxRows);
 					}
 
-					
-					
 					this.results = executeInternal(-1, sendPacket,
 							doStreaming, true,
 							(cachedMetadata == null), metadataFromCache, false);
@@ -1646,7 +1622,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			}
 		}
 
-		ResultSet rs = null;
+		ResultSetInternalMethods rs = null;
 
 		// The checking and changing of catalogs
 		// must happen in sequence, so synchronize
@@ -1667,11 +1643,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			// Only apply max_rows to selects
 			//
 			if (locallyScopedConn.useMaxRows()) {
-				locallyScopedConn.execSQL(this,
-						"SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, null, //$NON-NLS-1$
-						java.sql.ResultSet.TYPE_FORWARD_ONLY,
-						java.sql.ResultSet.CONCUR_READ_ONLY, false,
-						this.currentCatalog, true);
+				executeSimpleNonQuery(locallyScopedConn,
+						"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
 			}
 
 			boolean oldInfoMsgState = false;

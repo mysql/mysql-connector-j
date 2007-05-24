@@ -30,6 +30,7 @@ import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.util.LRUCache;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Types;
@@ -59,7 +60,7 @@ import java.util.TimerTask;
  *          2005) mmatthews $
  * 
  * @see java.sql.Statement
- * @see ResultSet
+ * @see ResultSetInternalMethods
  */
 public class StatementImpl implements Statement {
 	/**
@@ -200,7 +201,7 @@ public class StatementImpl implements Statement {
 	protected boolean profileSQL = false;
 
 	/** The current results */
-	protected ResultSet results = null;
+	protected ResultSetInternalMethods results = null;
 
 	/** The concurrency for this result set (updatable or not) */
 	protected int resultSetConcurrency = 0;
@@ -478,7 +479,7 @@ public class StatementImpl implements Statement {
 	protected void closeAllOpenResults() {
 		if (this.openResults != null) {
 			for (Iterator iter = this.openResults.iterator(); iter.hasNext();) {
-				ResultSet element = (ResultSet) iter.next();
+				ResultSetInternalMethods element = (ResultSetInternalMethods) iter.next();
 
 				try {
 					element.realClose(false);
@@ -495,7 +496,7 @@ public class StatementImpl implements Statement {
 	 * @param sql
 	 * @return
 	 */
-	private ResultSet createResultSetUsingServerFetch(String sql)
+	private ResultSetInternalMethods createResultSetUsingServerFetch(String sql)
 			throws SQLException {
 		java.sql.PreparedStatement pStmt = this.connection.prepareStatement(
 				sql, this.resultSetType, this.resultSetConcurrency);
@@ -512,7 +513,7 @@ public class StatementImpl implements Statement {
 		// Need to be able to get resultset irrespective if we issued DML or
 		// not to make this work.
 		//
-		ResultSet rs = ((com.mysql.jdbc.StatementImpl) pStmt)
+		ResultSetInternalMethods rs = ((com.mysql.jdbc.StatementImpl) pStmt)
 				.getResultSetInternal();
 
 		rs
@@ -612,11 +613,8 @@ public class StatementImpl implements Statement {
 			
 			if (doStreaming
 					&& this.connection.getNetTimeoutForStreamingResults() > 0) {
-				locallyScopedConn.execSQL(this, "SET net_write_timeout="
-						+ this.connection.getNetTimeoutForStreamingResults(),
-						-1, null, ResultSet.TYPE_FORWARD_ONLY,
-						ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog,
-						true, false);
+				executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout="
+						+ this.connection.getNetTimeoutForStreamingResults());
 			}
 			
 			if (this.doEscapeProcessing) {
@@ -638,7 +636,7 @@ public class StatementImpl implements Statement {
 	
 			CachedResultSetMetaData cachedMetaData = null;
 	
-			ResultSet rs = null;
+			ResultSetInternalMethods rs = null;
 	
 			// If there isn't a limit clause in the SQL
 			// then limit the number of rows to return in
@@ -691,37 +689,17 @@ public class StatementImpl implements Statement {
 								rowLimit = this.maxRows;
 							} else {
 								if (this.maxRows <= 0) {
-									locallyScopedConn
-											.execSQL(
-													this,
-													"SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, //$NON-NLS-1$
-													null,
-													java.sql.ResultSet.TYPE_FORWARD_ONLY,
-													java.sql.ResultSet.CONCUR_READ_ONLY,
-													false, 
-													this.currentCatalog, true); //$NON-NLS-1$
+									executeSimpleNonQuery(locallyScopedConn,
+											"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
 								} else {
-									locallyScopedConn
-											.execSQL(
-													this,
-													"SET OPTION SQL_SELECT_LIMIT=" + this.maxRows, //$NON-NLS-1$
-													-1,
-													null,
-													java.sql.ResultSet.TYPE_FORWARD_ONLY,
-													java.sql.ResultSet.CONCUR_READ_ONLY,
-													false, 
-													this.currentCatalog, true); //$NON-NLS-1$
+									executeSimpleNonQuery(locallyScopedConn,
+											"SET OPTION SQL_SELECT_LIMIT="
+													+ this.maxRows);
 								}
 							}
 						} else {
-							locallyScopedConn
-									.execSQL(
-											this,
-											"SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, null, //$NON-NLS-1$
-											java.sql.ResultSet.TYPE_FORWARD_ONLY,
-											java.sql.ResultSet.CONCUR_READ_ONLY,
-											false, this.currentCatalog,
-											true); //$NON-NLS-1$
+							executeSimpleNonQuery(locallyScopedConn,
+									"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
 						}
 
 						// Finally, execute the query
@@ -1126,11 +1104,8 @@ public class StatementImpl implements Statement {
 			
 			if (doStreaming
 					&& this.connection.getNetTimeoutForStreamingResults() > 0) {
-				locallyScopedConn.execSQL(this, "SET net_write_timeout="
-						+ this.connection.getNetTimeoutForStreamingResults(),
-						-1, null, ResultSet.TYPE_FORWARD_ONLY,
-						ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog,
-						true, false);
+				executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout="
+						+ this.connection.getNetTimeoutForStreamingResults());
 			}
 			
 			if (this.doEscapeProcessing) {
@@ -1208,24 +1183,11 @@ public class StatementImpl implements Statement {
 								this.currentCatalog, (cachedMetaData == null));
 					} else {
 						if (this.maxRows <= 0) {
-							locallyScopedConn
-									.execSQL(
-											this,
-											"SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1, null, //$NON-NLS-1$
-											java.sql.ResultSet.TYPE_FORWARD_ONLY,
-											java.sql.ResultSet.CONCUR_READ_ONLY,
-											false, this.currentCatalog,
-											true); //$NON-NLS-1$
+							executeSimpleNonQuery(locallyScopedConn, 
+									"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
 						} else {
-							locallyScopedConn
-									.execSQL(
-											this,
-											"SET OPTION SQL_SELECT_LIMIT=" + this.maxRows, -1, //$NON-NLS-1$
-											null,
-											java.sql.ResultSet.TYPE_FORWARD_ONLY,
-											java.sql.ResultSet.CONCUR_READ_ONLY,
-											false, this.currentCatalog,
-											true); //$NON-NLS-1$
+							executeSimpleNonQuery(locallyScopedConn, 
+											"SET OPTION SQL_SELECT_LIMIT=" + this.maxRows);
 						}
 
 						this.results = locallyScopedConn.execSQL(this, sql, -1,
@@ -1286,6 +1248,14 @@ public class StatementImpl implements Statement {
 		}
 	}
 
+	protected void executeSimpleNonQuery(ConnectionImpl c, String nonQuery)
+			throws SQLException {
+		c.execSQL(this, nonQuery,
+				-1, null, ResultSet.TYPE_FORWARD_ONLY,
+				ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog,
+				true, false).close();
+	}
+
 	/**
 	 * Execute a SQL INSERT, UPDATE or DELETE statement. In addition SQL
 	 * statements that return nothing such as SQL DDL statements can be executed
@@ -1314,7 +1284,7 @@ public class StatementImpl implements Statement {
 		char firstStatementChar = StringUtils.firstNonWsCharUc(sql,
 				findStartOfStatement(sql));
 
-		ResultSet rs = null;
+		ResultSetInternalMethods rs = null;
 
 		synchronized (locallyScopedConn.getMutex()) {
 			synchronized (this.cancelTimeoutMutex) {
@@ -1379,12 +1349,8 @@ public class StatementImpl implements Statement {
 				// Only apply max_rows to selects
 				//
 				if (locallyScopedConn.useMaxRows()) {
-					locallyScopedConn.execSQL(
-							this,
-							"SET OPTION SQL_SELECT_LIMIT=DEFAULT", //$NON-NLS-1$
-							-1, null, java.sql.ResultSet.TYPE_FORWARD_ONLY,
-							java.sql.ResultSet.CONCUR_READ_ONLY, false,
-							this.currentCatalog, true);
+					executeSimpleNonQuery(locallyScopedConn, 
+							"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
 				}
 
 				rs = locallyScopedConn.execSQL(this, sql, -1, null,
@@ -1594,7 +1560,7 @@ public class StatementImpl implements Statement {
 		fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17); //$NON-NLS-1$ //$NON-NLS-2$
 		fields[0].setConnection(this.connection);
 
-		return com.mysql.jdbc.ResultSet.getInstance(this.currentCatalog, fields,
+		return com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields,
 				new RowDataStatic(this.batchedGeneratedKeys), this.connection,
 				this, false);
 	}
@@ -1636,7 +1602,7 @@ public class StatementImpl implements Statement {
 			}
 		}
 
-		return com.mysql.jdbc.ResultSet.getInstance(this.currentCatalog, fields,
+		return com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields,
 				new RowDataStatic(rowSet), this.connection, this, false);
 	}
 
@@ -1745,7 +1711,7 @@ public class StatementImpl implements Statement {
 			return false;
 		}
 
-		ResultSet nextResultSet = this.results.getNextResultSet();
+		ResultSetInternalMethods nextResultSet = this.results.getNextResultSet();
 
 		switch (current) {
 		case java.sql.Statement.CLOSE_CURRENT_RESULT:
@@ -1916,7 +1882,7 @@ public class StatementImpl implements Statement {
 		return java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT;
 	}
 
-	protected ResultSet getResultSetInternal() {
+	protected ResultSetInternalMethods getResultSetInternal() {
 		return this.results;
 	}
 

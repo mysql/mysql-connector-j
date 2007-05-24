@@ -34,13 +34,13 @@ import java.sql.SQLXML;
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.Field;
 import com.mysql.jdbc.NotUpdatable;
-import com.mysql.jdbc.ResultSet;
+import com.mysql.jdbc.ResultSetImpl;
 import com.mysql.jdbc.RowData;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
-public class JDBC4ResultSet extends ResultSet {
+public class JDBC4ResultSet extends ResultSetImpl {
 
 	public JDBC4ResultSet(long updateCount, long updateID, 
 			ConnectionImpl conn, StatementImpl creatorStmt) {

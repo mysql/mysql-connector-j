@@ -36,7 +36,7 @@ import java.util.List;
 public class RowDataStatic implements RowData {
 	private int index;
 
-	ResultSet owner;
+	ResultSetImpl owner;
 
 	private List rows;
 
@@ -116,7 +116,7 @@ public class RowDataStatic implements RowData {
 	/**
 	 * @see com.mysql.jdbc.RowData#getOwner()
 	 */
-	public ResultSet getOwner() {
+	public ResultSetInternalMethods getOwner() {
 		return this.owner;
 	}
 
@@ -239,9 +239,9 @@ public class RowDataStatic implements RowData {
 	}
 
 	/**
-	 * @see com.mysql.jdbc.RowData#setOwner(com.mysql.jdbc.ResultSet)
+	 * @see com.mysql.jdbc.RowData#setOwner(com.mysql.jdbc.ResultSetInternalMethods)
 	 */
-	public void setOwner(ResultSet rs) {
+	public void setOwner(ResultSetImpl rs) {
 		this.owner = rs;
 	}
 

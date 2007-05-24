@@ -1507,4 +1507,8 @@ public interface ConnectionProperties {
 	public abstract long getSlowQueryThresholdNanos();
 
 	public abstract void setSlowQueryThresholdNanos(long nanos);
+	
+	public abstract String getStatementInterceptors();
+
+	public abstract void setStatementInterceptors(String value);
 }

@@ -77,7 +77,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 
 	private String stringRep;
 
-	private ResultSet owningResultSet;
+	private ResultSetInternalMethods owningResultSet;
 
 	private int columnIndexOfXml;
 
@@ -97,7 +97,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 
 	private ByteArrayOutputStream asByteArrayOutputStream;
 
-	protected JDBC4MysqlSQLXML(ResultSet owner, int index) {
+	protected JDBC4MysqlSQLXML(ResultSetInternalMethods owner, int index) {
 		this.owningResultSet = owner;
 		this.columnIndexOfXml = index;
 		this.fromResultSet = true;

@@ -120,7 +120,7 @@ import java.util.TreeMap;
  * @see ResultSetMetaData
  * @see java.sql.ResultSet
  */
-public class ResultSet implements java.sql.ResultSet {
+public class ResultSetImpl implements ResultSetInternalMethods {
 
 	private static final Constructor JDBC_4_RS_4_ARG_CTOR;
 	private static final Constructor JDBC_4_RS_6_ARG_CTOR;;
@@ -212,14 +212,14 @@ public class ResultSet implements java.sql.ResultSet {
 	/** The current row #, -1 == before start of result set */
 	protected int currentRow = -1; // Cursor to current row;
 
-	private TimeZone defaultTimeZone;
+	TimeZone defaultTimeZone;
 
 	/** Are we in the middle of doing updates to the current row? */
 	protected boolean doingUpdates = false;
 
 	protected ProfileEventSink eventSink = null;
 
-	private Calendar fastDateCal = null;
+	Calendar fastDateCal = null;
 
 	/** The direction to fetch rows (always FETCH_FORWARD) */
 	protected int fetchDirection = FETCH_FORWARD;
@@ -251,7 +251,7 @@ public class ResultSet implements java.sql.ResultSet {
 	/** Has this result set been closed? */
 	protected boolean isClosed = false;
 
-	protected ResultSet nextResultSet = null;
+	protected ResultSetInternalMethods nextResultSet = null;
 
 	/** Are we on the insert row? */
 	protected boolean onInsertRow = false;
@@ -291,7 +291,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 */
 	protected String serverInfo = null;
 
-	private PreparedStatement statementUsedForFetchingRows;
+	PreparedStatement statementUsedForFetchingRows;
 
 	/** Pointer to current row data */
 	protected Object[] thisRow = null; // Values for current row
@@ -338,13 +338,13 @@ public class ResultSet implements java.sql.ResultSet {
 		}
 	}
 	
-	protected static ResultSet getInstance(long updateCount, long updateID,
+	protected static ResultSetImpl getInstance(long updateCount, long updateID,
 			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
 		if (!Util.isJdbc4()) {
-			return new ResultSet(updateCount, updateID, conn, creatorStmt);
+			return new ResultSetImpl(updateCount, updateID, conn, creatorStmt);
 		}
 
-		return (ResultSet) Util.handleNewInstance(JDBC_4_RS_4_ARG_CTOR,
+		return (ResultSetImpl) Util.handleNewInstance(JDBC_4_RS_4_ARG_CTOR,
 				new Object[] { Constants.longValueOf(updateCount), Constants.longValueOf(updateID), conn,
 						creatorStmt });
 	}
@@ -357,12 +357,12 @@ public class ResultSet implements java.sql.ResultSet {
 	 * signatures.
 	 */
 
-	protected static ResultSet getInstance(String catalog, Field[] fields,
+	protected static ResultSetImpl getInstance(String catalog, Field[] fields,
 			RowData tuples, ConnectionImpl conn, StatementImpl creatorStmt,
 			boolean isUpdatable) throws SQLException {
 		if (!Util.isJdbc4()) {
 			if (!isUpdatable) {
-				return new ResultSet(catalog, fields, tuples, conn, creatorStmt);
+				return new ResultSetImpl(catalog, fields, tuples, conn, creatorStmt);
 			}
 
 			return new UpdatableResultSet(catalog, fields, tuples, conn,
@@ -370,12 +370,12 @@ public class ResultSet implements java.sql.ResultSet {
 		}
 
 		if (!isUpdatable) {
-			return (ResultSet) Util
+			return (ResultSetImpl) Util
 					.handleNewInstance(JDBC_4_RS_6_ARG_CTOR, new Object[] {
 							catalog, fields, tuples, conn, creatorStmt });
 		}
 
-		return (ResultSet) Util.handleNewInstance(JDBC_4_UPD_RS_6_ARG_CTOR,
+		return (ResultSetImpl) Util.handleNewInstance(JDBC_4_UPD_RS_6_ARG_CTOR,
 				new Object[] { catalog, fields, tuples, conn, creatorStmt });
 	}
 
@@ -391,7 +391,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 * @param creatorStmt
 	 *            DOCUMENT ME!
 	 */
-	public ResultSet(long updateCount, long updateID, ConnectionImpl conn,
+	public ResultSetImpl(long updateCount, long updateID, ConnectionImpl conn,
 			StatementImpl creatorStmt) {
 		this.updateCount = updateCount;
 		this.updateId = updateID;
@@ -428,7 +428,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public ResultSet(String catalog, Field[] fields, RowData tuples,
+	public ResultSetImpl(String catalog, Field[] fields, RowData tuples,
 			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
 		this.connection = conn;
 
@@ -479,7 +479,7 @@ public class ResultSet implements java.sql.ResultSet {
 		} // else called by Connection.initializeResultsMetadataFromCache() when cached
 	}
 
-	protected void initializeWithMetadata() throws SQLException {
+	public void initializeWithMetadata() throws SQLException {
 		if (this.profileSql || this.connection.getUseUsageAdvisor()) {
 			this.columnUsed = new boolean[this.fields.length];
 			this.pointOfOrigin = new Throwable();
@@ -681,7 +681,7 @@ public class ResultSet implements java.sql.ResultSet {
 	/**
 	 * Builds a hash between column names and their indices for fast retrieval.
 	 */
-	protected void buildIndexMapping() throws SQLException {
+	public void buildIndexMapping() throws SQLException {
 		int numFields = this.fields.length;
 		this.columnNameToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
 		this.fullColumnNameToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
@@ -811,7 +811,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 * We can't do this ourselves, otherwise the contract for
 	 * Statement.getMoreResults() won't work correctly.
 	 */
-	protected void clearNextResult() {
+	public void clearNextResult() {
 		this.nextResultSet = null;
 	}
 
@@ -873,14 +873,14 @@ public class ResultSet implements java.sql.ResultSet {
 	//
 	// Note, row data is linked between these two result sets
 	//
-	protected final ResultSet copy() throws SQLException {
-		ResultSet rs = ResultSet.getInstance(this.catalog, this.fields, this.rowData,
+	public ResultSetInternalMethods copy() throws SQLException {
+		ResultSetInternalMethods rs = ResultSetImpl.getInstance(this.catalog, this.fields, this.rowData,
 				this.connection, this.owningStatement, false); // note, doesn't work for updatable result sets
 
 		return rs;
 	}
 
-	protected void redefineFieldsForDBMD(Field[] f) {
+	public void redefineFieldsForDBMD(Field[] f) {
 		this.fields = f;
 		
 		for (int i = 0; i < this.fields.length; i++) {
@@ -888,6 +888,22 @@ public class ResultSet implements java.sql.ResultSet {
 			this.fields[i].setConnection(this.connection);
 		}
 	}
+	
+	public void populateCachedMetaData(CachedResultSetMetaData cachedMetaData)
+		throws SQLException {
+		cachedMetaData.fields = this.fields;
+		cachedMetaData.columnNameToIndex = this.columnNameToIndex;
+		cachedMetaData.fullColumnNameToIndex = this.fullColumnNameToIndex;
+		cachedMetaData.metadata = getMetaData();
+	}
+	
+	public void initializeFromCachedMetaData(CachedResultSetMetaData cachedMetaData) {
+		this.fields = cachedMetaData.fields;
+		this.columnNameToIndex = cachedMetaData.columnNameToIndex;
+		this.fullColumnNameToIndex = cachedMetaData.fullColumnNameToIndex;
+		this.hasBuiltIndexMapping = true;
+	}
+	
 
 	/**
 	 * JDBC 2.0 Delete the current row from the result set and the underlying
@@ -2583,7 +2599,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 * 
 	 * @return the first character of the query...uppercased
 	 */
-	protected char getFirstCharOfQuery() {
+	public char getFirstCharOfQuery() {
 		return this.firstCharOfQuery;
 	}
 
@@ -4837,7 +4853,7 @@ public class ResultSet implements java.sql.ResultSet {
 	}
 
 	/**
-	 * @see ResultSet#getURL(int)
+	 * @see ResultSetInternalMethods#getURL(int)
 	 */
 	protected URL getNativeURL(int colIndex) throws SQLException {
 		String val = getString(colIndex);
@@ -4860,7 +4876,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 * 
 	 * @return Returns the nextResultSet, if any, null if none exists.
 	 */
-	protected ResultSet getNextResultSet() {
+	public ResultSetInternalMethods getNextResultSet() {
 		return this.nextResultSet;
 	}
 
@@ -5171,7 +5187,7 @@ public class ResultSet implements java.sql.ResultSet {
 		return getObject(findColumn(colName), map);
 	}
 
-	protected Object getObjectStoredProc(int columnIndex, int desiredSqlType)
+	public Object getObjectStoredProc(int columnIndex, int desiredSqlType)
 			throws SQLException {
 		checkRowPos();
 		checkColumnBounds(columnIndex);
@@ -5296,17 +5312,17 @@ public class ResultSet implements java.sql.ResultSet {
 		}
 	}
 
-	protected Object getObjectStoredProc(int i, java.util.Map map,
+	public Object getObjectStoredProc(int i, java.util.Map map,
 			int desiredSqlType) throws SQLException {
 		return getObjectStoredProc(i, desiredSqlType);
 	}
 
-	protected Object getObjectStoredProc(String columnName, int desiredSqlType)
+	public Object getObjectStoredProc(String columnName, int desiredSqlType)
 			throws SQLException {
 		return getObjectStoredProc(findColumn(columnName), desiredSqlType);
 	}
 
-	protected Object getObjectStoredProc(String colName, java.util.Map map,
+	public Object getObjectStoredProc(String colName, java.util.Map map,
 			int desiredSqlType) throws SQLException {
 		return getObjectStoredProc(findColumn(colName), map, desiredSqlType);
 	}
@@ -5387,7 +5403,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 * 
 	 * @return server info created for this ResultSet
 	 */
-	protected String getServerInfo() {
+	public String getServerInfo() {
 		return this.serverInfo;
 	}
 
@@ -7062,16 +7078,16 @@ public class ResultSet implements java.sql.ResultSet {
 		return getUnicodeStream(findColumn(columnName));
 	}
 
-	long getUpdateCount() {
+	public long getUpdateCount() {
 		return this.updateCount;
 	}
 
-	long getUpdateID() {
+	public long getUpdateID() {
 		return this.updateId;
 	}
 
 	/**
-	 * @see ResultSet#getURL(int)
+	 * @see ResultSetInternalMethods#getURL(int)
 	 */
 	public URL getURL(int colIndex) throws SQLException {
 		String val = getString(colIndex);
@@ -7090,7 +7106,7 @@ public class ResultSet implements java.sql.ResultSet {
 	}
 
 	/**
-	 * @see ResultSet#getURL(String)
+	 * @see ResultSetInternalMethods#getURL(String)
 	 */
 	public URL getURL(String colName) throws SQLException {
 		String val = getString(colName);
@@ -7677,7 +7693,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	protected void realClose(boolean calledExplicitly) throws SQLException {
+	public void realClose(boolean calledExplicitly) throws SQLException {
 		if (this.isClosed) {
 			return;
 		}
@@ -7846,7 +7862,7 @@ public class ResultSet implements java.sql.ResultSet {
 		}
 	}
 
-	boolean reallyResult() {
+	public boolean reallyResult() {
 		if (this.rowData != null) {
 			return true;
 		}
@@ -8045,7 +8061,7 @@ public class ResultSet implements java.sql.ResultSet {
 	 * @param c
 	 *            the first character of the query...uppercased
 	 */
-	protected void setFirstCharOfQuery(char c) {
+	public void setFirstCharOfQuery(char c) {
 		this.firstCharOfQuery = c;
 	}
 
@@ -8056,11 +8072,11 @@ public class ResultSet implements java.sql.ResultSet {
 	 *            Sets the next result set in the result set chain for multiple
 	 *            result sets.
 	 */
-	protected void setNextResultSet(ResultSet nextResultSet) {
+	protected void setNextResultSet(ResultSetInternalMethods nextResultSet) {
 		this.nextResultSet = nextResultSet;
 	}
 
-	protected void setOwningStatement(com.mysql.jdbc.StatementImpl owningStatement) {
+	public void setOwningStatement(com.mysql.jdbc.StatementImpl owningStatement) {
 		this.owningStatement = owningStatement;
 	}
 
@@ -8095,7 +8111,7 @@ public class ResultSet implements java.sql.ResultSet {
 		this.serverInfo = info;
 	}
 
-	void setStatementUsedForFetchingRows(PreparedStatement stmt) {
+	public void setStatementUsedForFetchingRows(PreparedStatement stmt) {
 		this.statementUsedForFetchingRows = stmt;
 	}
 
@@ -8159,14 +8175,14 @@ public class ResultSet implements java.sql.ResultSet {
 	}
 
 	/**
-	 * @see ResultSet#updateArray(int, Array)
+	 * @see ResultSetInternalMethods#updateArray(int, Array)
 	 */
 	public void updateArray(int arg0, Array arg1) throws SQLException {
 		throw new NotImplemented();
 	}
 
 	/**
-	 * @see ResultSet#updateArray(String, Array)
+	 * @see ResultSetInternalMethods#updateArray(String, Array)
 	 */
 	public void updateArray(String arg0, Array arg1) throws SQLException {
 		throw new NotImplemented();
@@ -8305,14 +8321,14 @@ public class ResultSet implements java.sql.ResultSet {
 	}
 
 	/**
-	 * @see ResultSet#updateBlob(int, Blob)
+	 * @see ResultSetInternalMethods#updateBlob(int, Blob)
 	 */
 	public void updateBlob(int arg0, java.sql.Blob arg1) throws SQLException {
 		throw new NotUpdatable();
 	}
 
 	/**
-	 * @see ResultSet#updateBlob(String, Blob)
+	 * @see ResultSetInternalMethods#updateBlob(String, Blob)
 	 */
 	public void updateBlob(String arg0, java.sql.Blob arg1) throws SQLException {
 		throw new NotUpdatable();
@@ -8479,14 +8495,14 @@ public class ResultSet implements java.sql.ResultSet {
 	}
 
 	/**
-	 * @see ResultSet#updateClob(int, Clob)
+	 * @see ResultSetInternalMethods#updateClob(int, Clob)
 	 */
 	public void updateClob(int arg0, java.sql.Clob arg1) throws SQLException {
 		throw new NotImplemented();
 	}
 
 	/**
-	 * @see ResultSet#updateClob(String, Clob)
+	 * @see ResultSetInternalMethods#updateClob(String, Clob)
 	 */
 	public void updateClob(String columnName, java.sql.Clob clob)
 			throws SQLException {
@@ -8806,14 +8822,14 @@ public class ResultSet implements java.sql.ResultSet {
 	}
 
 	/**
-	 * @see ResultSet#updateRef(int, Ref)
+	 * @see ResultSetInternalMethods#updateRef(int, Ref)
 	 */
 	public void updateRef(int arg0, Ref arg1) throws SQLException {
 		throw new NotImplemented();
 	}
 
 	/**
-	 * @see ResultSet#updateRef(String, Ref)
+	 * @see ResultSetInternalMethods#updateRef(String, Ref)
 	 */
 	public void updateRef(String arg0, Ref arg1) throws SQLException {
 		throw new NotImplemented();

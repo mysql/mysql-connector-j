@@ -1627,4 +1627,20 @@ public class StringUtils {
 
 		return buf.toString();
 	}
+	
+	public static final boolean isEmptyOrWhitespaceOnly(String str) {
+		if (str == null || str.length() == 0) {
+			return true;
+		}
+		
+		int length = str.length();
+		
+		for (int i = 0; i < length; i++) {
+			if (!Character.isWhitespace(str.charAt(i))) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
 }

@@ -384,7 +384,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			if (this.wrappedStmt != null) {
 				ResultSet rs = this.wrappedStmt.getResultSet();
 
-				((com.mysql.jdbc.ResultSet) rs).setWrapperStatement(this);
+				((com.mysql.jdbc.ResultSetInternalMethods) rs).setWrapperStatement(this);
 
 				return rs;
 			}
@@ -703,7 +703,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			if (this.wrappedStmt != null) {
 
 				ResultSet rs = this.wrappedStmt.executeQuery(sql);
-				((com.mysql.jdbc.ResultSet) rs).setWrapperStatement(this);
+				((com.mysql.jdbc.ResultSetInternalMethods) rs).setWrapperStatement(this);
 
 				return rs;
 			}

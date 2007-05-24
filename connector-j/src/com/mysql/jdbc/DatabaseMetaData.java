@@ -720,7 +720,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			fields[i].setUseOldNameMetadata(true);
 		}
 
-		return com.mysql.jdbc.ResultSet.getInstance(c.getCatalog(), fields,
+		return com.mysql.jdbc.ResultSetImpl.getInstance(c.getCatalog(), fields,
 				new RowDataStatic(rows), c, null, false);
 	}
 

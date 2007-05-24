@@ -59,7 +59,7 @@ public class BlobFromLocator implements java.sql.Blob {
 	private List primaryKeyValues = null;
 
 	/** The ResultSet that created this BLOB */
-	private ResultSet creatorResultSet;
+	private ResultSetImpl creatorResultSet;
 
 	private String blobColumnName = null;
 
@@ -74,7 +74,7 @@ public class BlobFromLocator implements java.sql.Blob {
 	/**
 	 * Creates an updatable BLOB that can update in-place
 	 */
-	BlobFromLocator(ResultSet creatorResultSetToSet, int blobColumnIndex)
+	BlobFromLocator(ResultSetImpl creatorResultSetToSet, int blobColumnIndex)
 			throws SQLException {
 		this.creatorResultSet = creatorResultSetToSet;
 
@@ -546,7 +546,7 @@ public class BlobFromLocator implements java.sql.Blob {
 			blobRs = pStmt.executeQuery();
 
 			if (blobRs.next()) {
-				return ((com.mysql.jdbc.ResultSet) blobRs).getBytes(1, true);
+				return ((com.mysql.jdbc.ResultSetImpl) blobRs).getBytes(1, true);
 			}
 
 			throw SQLError.createSQLException(

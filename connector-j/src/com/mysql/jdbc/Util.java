@@ -30,7 +30,12 @@ import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.TimeZone;
 
 /**
@@ -40,7 +45,7 @@ import java.util.TimeZone;
  */
 public class Util {
 	protected static Method systemNanoTimeMethod;
-    
+
 	static {
 		try {
 			systemNanoTimeMethod = System.class.getMethod("nanoTime", null);
@@ -50,21 +55,22 @@ public class Util {
 			systemNanoTimeMethod = null;
 		}
 	}
-	
+
 	protected static boolean nanoTimeAvailable() {
 		return systemNanoTimeMethod != null;
 	}
-	
+
 	private static Method CAST_METHOD;
-	
-	// cache this ourselves, as the method call is statically-synchronized in all but JDK6!
-	
+
+	// cache this ourselves, as the method call is statically-synchronized in
+	// all but JDK6!
+
 	private static final TimeZone DEFAULT_TIMEZONE = TimeZone.getDefault();
-	
+
 	static final TimeZone getDefaultTimeZone() {
-		return (TimeZone)DEFAULT_TIMEZONE.clone();
+		return (TimeZone) DEFAULT_TIMEZONE.clone();
 	}
-	
+
 	class RandStructcture {
 		long maxValue;
 
@@ -75,19 +81,18 @@ public class Util {
 		long seed2;
 	}
 
-
 	private static Util enclosingInstance = new Util();
-	
+
 	private static boolean isJdbc4 = false;
-	
 
 	static {
 		try {
-			CAST_METHOD = Class.class.getMethod("cast", new Class[] {Object.class});
+			CAST_METHOD = Class.class.getMethod("cast",
+					new Class[] { Object.class });
 		} catch (Throwable t) {
 			// ignore - not available in this VM
 		}
-		
+
 		try {
 			Class.forName("java.sql.NClob");
 			isJdbc4 = true;
@@ -344,68 +349,87 @@ public class Util {
 
 		return traceBuf.toString();
 	}
-	
-	public static Object getInstance(String className, Class[] argTypes, Object[] args) throws SQLException {
-		
-			try {
-				return handleNewInstance(Class.forName(className).getConstructor(argTypes), args);
-			} catch (SecurityException e) {
-				throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
-			} catch (NoSuchMethodException e) {
-				throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
-			} catch (ClassNotFoundException e) {
-				throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
-			}
+
+	public static Object getInstance(String className, Class[] argTypes,
+			Object[] args) throws SQLException {
+
+		try {
+			return handleNewInstance(Class.forName(className).getConstructor(
+					argTypes), args);
+		} catch (SecurityException e) {
+			throw SQLError.createSQLException(
+					"Can't instantiate required class",
+					SQLError.SQL_STATE_GENERAL_ERROR, e);
+		} catch (NoSuchMethodException e) {
+			throw SQLError.createSQLException(
+					"Can't instantiate required class",
+					SQLError.SQL_STATE_GENERAL_ERROR, e);
+		} catch (ClassNotFoundException e) {
+			throw SQLError.createSQLException(
+					"Can't instantiate required class",
+					SQLError.SQL_STATE_GENERAL_ERROR, e);
+		}
 	}
-	
+
 	/**
 	 * Handles constructing new instance with the given constructor and wrapping
 	 * (or not, as required) the exceptions that could possibly be generated
 	 */
-	public static final Object handleNewInstance(Constructor ctor, Object[] args) throws SQLException {
+	public static final Object handleNewInstance(Constructor ctor, Object[] args)
+			throws SQLException {
 		try {
-			
+
 			return ctor.newInstance(args);
 		} catch (IllegalArgumentException e) {
-			throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
+			throw SQLError.createSQLException(
+					"Can't instantiate required class",
+					SQLError.SQL_STATE_GENERAL_ERROR, e);
 		} catch (InstantiationException e) {
-			throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
+			throw SQLError.createSQLException(
+					"Can't instantiate required class",
+					SQLError.SQL_STATE_GENERAL_ERROR, e);
 		} catch (IllegalAccessException e) {
-			throw SQLError.createSQLException("Can't instantiate required class", SQLError.SQL_STATE_GENERAL_ERROR, e);
+			throw SQLError.createSQLException(
+					"Can't instantiate required class",
+					SQLError.SQL_STATE_GENERAL_ERROR, e);
 		} catch (InvocationTargetException e) {
-			Throwable target = e.getTargetException(); 
-			
+			Throwable target = e.getTargetException();
+
 			if (target instanceof SQLException) {
-				throw (SQLException)target;
+				throw (SQLException) target;
 			}
-			
+
 			if (target instanceof ExceptionInInitializerError) {
-				target = ((ExceptionInInitializerError)target).getException();
+				target = ((ExceptionInInitializerError) target).getException();
 			}
-			
-			throw SQLError.createSQLException(target.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+
+			throw SQLError.createSQLException(target.toString(),
+					SQLError.SQL_STATE_GENERAL_ERROR);
 		}
 	}
-	
+
 	/**
 	 * Does a network interface exist locally with the given hostname?
 	 * 
-	 * @param hostname the hostname (or IP address in string form) to check
-	 * @return true if it exists, false if no, or unable to determine due to VM version support
-	 *         of java.net.NetworkInterface
+	 * @param hostname
+	 *            the hostname (or IP address in string form) to check
+	 * @return true if it exists, false if no, or unable to determine due to VM
+	 *         version support of java.net.NetworkInterface
 	 */
 	public static boolean interfaceExists(String hostname) {
 		try {
-			Class networkInterfaceClass = Class.forName("java.net.NetworkInterface");
-			return networkInterfaceClass.getMethod("getByName", null).invoke(networkInterfaceClass, new Object[] { hostname }) != null;
+			Class networkInterfaceClass = Class
+					.forName("java.net.NetworkInterface");
+			return networkInterfaceClass.getMethod("getByName", null).invoke(
+					networkInterfaceClass, new Object[] { hostname }) != null;
 		} catch (Throwable t) {
 			return false;
 		}
 	}
-	
+
 	/**
-	 * Reflexive access on JDK-1.5's Class.cast() method so we don't have
-	 * to move that out into separate classes built for JDBC-4.0.
+	 * Reflexive access on JDK-1.5's Class.cast() method so we don't have to
+	 * move that out into separate classes built for JDBC-4.0.
 	 * 
 	 * @param invokeOn
 	 * @param toCast
@@ -414,19 +438,20 @@ public class Util {
 	public static Object cast(Object invokeOn, Object toCast) {
 		if (CAST_METHOD != null) {
 			try {
-				return CAST_METHOD.invoke(invokeOn, new Object[] {toCast});
+				return CAST_METHOD.invoke(invokeOn, new Object[] { toCast });
 			} catch (Throwable t) {
 				return null;
 			}
 		}
-		
+
 		return null;
 	}
-	
+
 	public static long getCurrentTimeNanosOrMillis() {
 		if (systemNanoTimeMethod != null) {
 			try {
-				return ((Long)systemNanoTimeMethod.invoke(null, null)).longValue();
+				return ((Long) systemNanoTimeMethod.invoke(null, null))
+						.longValue();
 			} catch (IllegalArgumentException e) {
 				// ignore - fall through to currentTimeMillis()
 			} catch (IllegalAccessException e) {
@@ -435,7 +460,77 @@ public class Util {
 				// ignore - fall through to currentTimeMillis()
 			}
 		}
-		
+
 		return System.currentTimeMillis();
+	}
+
+	public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs)
+			throws SQLException {
+		while (rs.next()) {
+			mappedValues.put(rs.getObject(1), rs.getObject(2));
+		}
+	}
+
+	public static Map calculateDifferences(Map map1, Map map2) {
+		Map diffMap = new HashMap();
+
+		Iterator map1Entries = map1.entrySet().iterator();
+
+		while (map1Entries.hasNext()) {
+			Map.Entry entry = (Map.Entry) map1Entries.next();
+			Object key = entry.getKey();
+
+			Number value1 = null;
+			Number value2 = null;
+
+			if (entry.getValue() instanceof Number) {
+
+				value1 = (Number) entry.getValue();
+				value2 = (Number) map2.get(key);
+			} else {
+				try {
+					value1 = new Double(entry.getValue().toString());
+					value2 = new Double(map2.get(key).toString());
+				} catch (NumberFormatException nfe) {
+					continue;
+				}
+			}
+
+			if (value1.equals(value2)) {
+				continue;
+			}
+			
+			if (value1 instanceof Byte) {
+				diffMap.put(key, new Byte(
+						(byte) (((Byte) value2).byteValue() - ((Byte) value1)
+								.byteValue())));
+			} else if (value1 instanceof Short) {
+				diffMap.put(key, new Short((short) (((Short) value2)
+						.shortValue() - ((Short) value1).shortValue())));
+			} else if (value1 instanceof Integer) {
+				diffMap.put(key, new Integer(
+						(((Integer) value2).intValue() - ((Integer) value1)
+								.intValue())));
+			} else if (value1 instanceof Long) {
+				diffMap.put(key, new Long(
+						(((Long) value2).longValue() - ((Long) value1)
+								.longValue())));
+			} else if (value1 instanceof Float) {
+				diffMap.put(key, new Float(((Float) value2).floatValue()
+						- ((Float) value1).floatValue()));
+			} else if (value1 instanceof Double) {
+				diffMap.put(key, new Double(
+						(((Double) value2).shortValue() - ((Double) value1)
+								.shortValue())));
+			} else if (value1 instanceof BigDecimal) {
+				diffMap.put(key, ((BigDecimal) value2)
+						.subtract((BigDecimal) value1));
+			} else if (value1 instanceof BigInteger) {
+				diffMap.put(key, ((BigInteger) value2)
+						.subtract((BigInteger) value1));
+			}
+		}
+
+		return diffMap;
 	}
 }

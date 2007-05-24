@@ -34,17 +34,12 @@ import java.sql.SQLException;
  * @author dgan
  */
 public interface RowData {
-	// ~ Static fields/initializers
-	// ---------------------------------------------
 
 	/**
 	 * What's returned for the size of a result set when its size can not be
 	 * determined.
 	 */
 	public static final int RESULT_SET_SIZE_UNKNOWN = -1;
-
-	// ~ Methods
-	// ----------------------------------------------------------------
 
 	/**
 	 * Adds a row to this row data.
@@ -111,7 +106,7 @@ public interface RowData {
 	/**
 	 * Returns the result set that 'owns' this RowData
 	 */
-	ResultSet getOwner();
+	ResultSetInternalMethods getOwner();
 
 	/**
 	 * Returns true if another row exsists.
@@ -224,7 +219,7 @@ public interface RowData {
 	 * @param rs
 	 *            the result set that 'owns' this RowData
 	 */
-	void setOwner(ResultSet rs);
+	void setOwner(ResultSetImpl rs);
 
 	/**
 	 * Only works on non dynamic result sets.

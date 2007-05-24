@@ -4,7 +4,7 @@ import java.sql.SQLException;
 
 class RowDataKeyset implements RowData {
 
-	private ResultSet keyset;
+	private ResultSetInternalMethods keyset;
 	
 	private void buildKeysetColumnsClause(Field[] originalQueryMetadata) 
 		throws SQLException {
@@ -92,7 +92,7 @@ class RowDataKeyset implements RowData {
 		return 0;
 	}
 
-	public ResultSet getOwner() {
+	public ResultSetInternalMethods getOwner() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -152,7 +152,7 @@ class RowDataKeyset implements RowData {
 
 	}
 
-	public void setOwner(ResultSet rs) {
+	public void setOwner(ResultSetImpl rs) {
 		// TODO Auto-generated method stub
 
 	}

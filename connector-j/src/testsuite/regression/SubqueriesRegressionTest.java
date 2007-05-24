@@ -49,8 +49,9 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 	 * @see junit.framework.TestCase#setUp()
 	 */
 	public void setUp() throws Exception {
-		// TODO Auto-generated method stub
 		super.setUp();
+
+		createTables();
 	}
 
 	/*
@@ -59,7 +60,8 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 	 * @see junit.framework.TestCase#tearDown()
 	 */
 	public void tearDown() throws Exception {
-		// TODO Auto-generated method stub
+		dropTables();
+		
 		super.tearDown();
 	}
 
@@ -81,7 +83,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 	public void testSubQuery1() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
 			for (int i = 0; i < REPETITIONS; i++) {
-				createTables();
 
 				try {
 					this.rs = this.stmt
@@ -90,12 +91,8 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 					assertTrue("bbbb".equals(this.rs.getString(1)));
 					assertTrue(!this.rs.next());
 				} finally {
-					try {
-						if (this.rs != null) {
-							this.rs.close();
-						}
-					} finally {
-						dropTables();
+					if (this.rs != null) {
+						this.rs.close();
 					}
 				}
 			}
@@ -111,8 +108,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 	public void testSubQuery2() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
 			for (int i = 0; i < REPETITIONS; i++) {
-				createTables();
-
 				try {
 					this.rs = this.stmt
 							.executeQuery("select t3.colA from t3, t1 where t3.colA = 'bbbb' and t3.colB = t1.colA and exists (select 'X' from t2 where t2.colB = 2)");
@@ -120,12 +115,8 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 					assertTrue("bbbb".equals(this.rs.getString(1)));
 					assertTrue(!this.rs.next());
 				} finally {
-					try {
-						if (this.rs != null) {
-							this.rs.close();
-						}
-					} finally {
-						dropTables();
+					if (this.rs != null) {
+						this.rs.close();
 					}
 				}
 			}
@@ -141,8 +132,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 	public void testSubQuery3() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
 			for (int i = 0; i < REPETITIONS; i++) {
-				createTables();
-
 				try {
 					this.rs = this.stmt
 							.executeQuery("select * from t1 where t1.colA = 'efgh' and exists (select 'X' from t2 where t2.colB = t1.colB)");
@@ -151,13 +140,10 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 					assertTrue("2".equals(this.rs.getString(2)));
 					assertTrue(!this.rs.next());
 				} finally {
-					try {
-						if (this.rs != null) {
-							this.rs.close();
-						}
-					} finally {
-						dropTables();
+					if (this.rs != null) {
+						this.rs.close();
 					}
+
 				}
 			}
 		}
@@ -173,8 +159,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 		// not really a subquery, but we want to have this in our testsuite
 		if (versionMeetsMinimum(4, 1)) {
 			for (int i = 0; i < REPETITIONS; i++) {
-				createTables();
-
 				try {
 					this.rs = this.stmt
 							.executeQuery("select colA, '' from t2 union select colA, colB from t3");
@@ -209,12 +193,8 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 
 					assertTrue(!this.rs.next());
 				} finally {
-					try {
-						if (this.rs != null) {
-							this.rs.close();
-						}
-					} finally {
-						dropTables();
+					if (this.rs != null) {
+						this.rs.close();
 					}
 				}
 			}
@@ -230,7 +210,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 	public void testSubQuery5() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
 			for (int i = 0; i < REPETITIONS; i++) {
-				createTables();
 
 				try {
 					this.rs = this.stmt
@@ -243,12 +222,8 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 					assertTrue("ijkl".equals(this.rs.getString(1)));
 					assertTrue(!this.rs.next());
 				} finally {
-					try {
-						if (this.rs != null) {
-							this.rs.close();
-						}
-					} finally {
-						dropTables();
+					if (this.rs != null) {
+						this.rs.close();
 					}
 				}
 			}

@@ -57,7 +57,7 @@ public class CursorRowProvider implements RowData {
 	/**
 	 * The result set that we 'belong' to.
 	 */
-	private ResultSet owner;
+	private ResultSetImpl owner;
 
 	/**
 	 * Have we been told from the server that we have seen the last row?
@@ -446,7 +446,7 @@ public class CursorRowProvider implements RowData {
 	 * 
 	 * @see com.mysql.jdbc.RowProvider#setOwner(com.mysql.jdbc.ResultSet)
 	 */
-	public void setOwner(ResultSet rs) {
+	public void setOwner(ResultSetImpl rs) {
 		this.owner = rs;
 	}
 
@@ -455,7 +455,7 @@ public class CursorRowProvider implements RowData {
 	 * 
 	 * @see com.mysql.jdbc.RowProvider#getOwner()
 	 */
-	public ResultSet getOwner() {
+	public ResultSetInternalMethods getOwner() {
 		return this.owner;
 	}
 

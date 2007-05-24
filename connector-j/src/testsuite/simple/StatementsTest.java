@@ -1748,4 +1748,40 @@ public class StatementsTest extends BaseTestCase {
 		}
 
 	}
+	
+	public void testStatementInterceptors() throws Exception {
+		Connection interceptedConn = null;
+		
+		/*
+		try {
+			Properties props = new Properties();
+			props.setProperty("statementInterceptors", "com.mysql.jdbc.interceptors.ResultSetScannerInterceptor");
+			props.setProperty("resultSetScannerRegex", ".*");
+			interceptedConn = getConnectionWithProps(props);
+			this.rs = interceptedConn.createStatement().executeQuery("SELECT 'abc'");
+			this.rs.next();
+			this.rs.getString(1);
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (interceptedConn != null) {
+				interceptedConn.close();
+			}
+		}
+		*/
+		
+		try {
+			Properties props = new Properties();
+			props.setProperty("statementInterceptors", "com.mysql.jdbc.interceptors.ServerStatusDiffInterceptor");
+			
+			interceptedConn = getConnectionWithProps(props);
+			this.rs = interceptedConn.createStatement().executeQuery("SELECT 'abc'");
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (interceptedConn != null) {
+				interceptedConn.close();
+			}
+		}
+	}
 }

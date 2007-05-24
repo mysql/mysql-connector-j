@@ -43,7 +43,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	private ResultSet executeMetadataQuery(PreparedStatement pStmt)
 			throws SQLException {
 		ResultSet rs = pStmt.executeQuery();
-		((com.mysql.jdbc.ResultSet) rs).setOwningStatement(null);
+		((com.mysql.jdbc.ResultSetInternalMethods) rs).setOwningStatement(null);
 
 		return rs;
 	}
@@ -124,7 +124,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			pStmt.setString(3, columnNamePattern);
 			
 			ResultSet rs = executeMetadataQuery(pStmt);
-			((com.mysql.jdbc.ResultSet) rs).redefineFieldsForDBMD(new Field[] {
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
 					new Field("", "TABLE_CAT", Types.CHAR, 64),
 					new Field("", "TABLE_SCHEM", Types.CHAR, 1),
 					new Field("", "TABLE_NAME", Types.CHAR, 64),
@@ -253,7 +253,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 			ResultSet rs = executeMetadataQuery(pStmt);
 
-			((com.mysql.jdbc.ResultSet) rs).redefineFieldsForDBMD(new Field[] {
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
 					new Field("", "TABLE_CAT", Types.CHAR, 255),
 					new Field("", "TABLE_SCHEM", Types.CHAR, 0),
 					new Field("", "TABLE_NAME", Types.CHAR, 255),
@@ -436,7 +436,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			pStmt.setString(4, foreignTable);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
-			((com.mysql.jdbc.ResultSet) rs).redefineFieldsForDBMD(new Field[] {
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
 					new Field("", "PKTABLE_CAT", Types.CHAR, 255),
 					new Field("", "PKTABLE_SCHEM", Types.CHAR, 0),
 					new Field("", "PKTABLE_NAME", Types.CHAR, 255),
@@ -577,7 +577,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 			ResultSet rs = executeMetadataQuery(pStmt);
 
-			((com.mysql.jdbc.ResultSet) rs).redefineFieldsForDBMD(new Field[] {
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
 					new Field("", "PKTABLE_CAT", Types.CHAR, 255),
 					new Field("", "PKTABLE_SCHEM", Types.CHAR, 0),
 					new Field("", "PKTABLE_NAME", Types.CHAR, 255),
@@ -744,7 +744,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 			ResultSet rs = executeMetadataQuery(pStmt);
 
-			((com.mysql.jdbc.ResultSet) rs).redefineFieldsForDBMD(new Field[] {
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
 					new Field("", "PKTABLE_CAT", Types.CHAR, 255),
 					new Field("", "PKTABLE_SCHEM", Types.CHAR, 0),
 					new Field("", "PKTABLE_NAME", Types.CHAR, 255),
@@ -866,7 +866,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 			ResultSet rs = executeMetadataQuery(pStmt);
 
-			((com.mysql.jdbc.ResultSet) rs).redefineFieldsForDBMD(new Field[] {
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
 					new Field("", "TABLE_CAT", Types.CHAR, 255),
 					new Field("", "TABLE_SCHEM", Types.CHAR, 0),
 					new Field("", "TABLE_NAME", Types.CHAR, 255),
@@ -947,7 +947,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			pStmt.setString(2, table);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
-			((com.mysql.jdbc.ResultSet) rs).redefineFieldsForDBMD(new Field[] {
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
 					new Field("", "TABLE_CAT", Types.CHAR, 255),
 					new Field("", "TABLE_SCHEM", Types.CHAR, 0),
 					new Field("", "TABLE_NAME", Types.CHAR, 255),
@@ -1052,7 +1052,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			pStmt.setString(2, procedureNamePattern);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
-			((com.mysql.jdbc.ResultSet) rs).redefineFieldsForDBMD(new Field[] {
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
 					new Field("", "PROCEDURE_CAT", Types.CHAR, 0),
 					new Field("", "PROCEDURE_SCHEM", Types.CHAR, 0),
 					new Field("", "PROCEDURE_NAME", Types.CHAR, 0),
@@ -1172,7 +1172,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 			ResultSet rs = executeMetadataQuery(pStmt);
 
-			((com.mysql.jdbc.ResultSet) rs).redefineFieldsForDBMD(new Field[] {
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
 					new Field("", "TABLE_CAT", java.sql.Types.VARCHAR,
 							(catalog == null) ? 0 : catalog.length()),
 					new Field("", "TABLE_SCHEM", java.sql.Types.VARCHAR, 0),
