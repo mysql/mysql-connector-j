@@ -189,187 +189,198 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		public ParseInfo(String sql, ConnectionImpl conn,
 				java.sql.DatabaseMetaData dbmd, String encoding,
 				SingleByteCharsetConverter converter) throws SQLException {
-			if (sql == null) {
-				throw SQLError.createSQLException(Messages
-						.getString("PreparedStatement.61"), //$NON-NLS-1$
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-			}
-
-			this.lastUsed = System.currentTimeMillis();
-
-			String quotedIdentifierString = dbmd.getIdentifierQuoteString();
-
-			char quotedIdentifierChar = 0;
-
-			if ((quotedIdentifierString != null)
-					&& !quotedIdentifierString.equals(" ") //$NON-NLS-1$
-					&& (quotedIdentifierString.length() > 0)) {
-				quotedIdentifierChar = quotedIdentifierString.charAt(0);
-			}
-
-			this.statementLength = sql.length();
-
-			ArrayList endpointList = new ArrayList();
-			boolean inQuotes = false;
-			char quoteChar = 0;
-			boolean inQuotedId = false;
-			int lastParmEnd = 0;
-			int i;
-
-			int stopLookingForLimitClause = this.statementLength - 5;
-
-			this.foundLimitClause = false;
-			
-			boolean noBackslashEscapes = connection.isNoBackslashEscapesSet();
-			
-			// we're not trying to be real pedantic here, but we'd like to 
-			// skip comments at the beginning of statements, as frameworks
-			// such as Hibernate use them to aid in debugging
-			
-			statementStartPos = findStartOfStatement(sql);
-			
-			for (i = statementStartPos; i < this.statementLength; ++i) {
-				char c = sql.charAt(i);
-
-				if ((this.firstStmtChar == 0) && !Character.isWhitespace(c)) {
-					// Determine what kind of statement we're doing (_S_elect,
-					// _I_nsert, etc.)
-					this.firstStmtChar = Character.toUpperCase(c);
+			try {
+				if (sql == null) {
+					throw SQLError.createSQLException(Messages
+							.getString("PreparedStatement.61"), //$NON-NLS-1$
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 				}
 
-				if (!noBackslashEscapes &&
-						c == '\\' && i < (this.statementLength - 1)) {
-					i++;
-					continue; // next character is escaped
+				this.lastUsed = System.currentTimeMillis();
+
+				String quotedIdentifierString = dbmd.getIdentifierQuoteString();
+
+				char quotedIdentifierChar = 0;
+
+				if ((quotedIdentifierString != null)
+						&& !quotedIdentifierString.equals(" ") //$NON-NLS-1$
+						&& (quotedIdentifierString.length() > 0)) {
+					quotedIdentifierChar = quotedIdentifierString.charAt(0);
 				}
-				
-				// are we in a quoted identifier?
-				// (only valid when the id is not inside a 'string')
-				if (!inQuotes && (quotedIdentifierChar != 0)
-						&& (c == quotedIdentifierChar)) {
-					inQuotedId = !inQuotedId;
-				} else if (!inQuotedId) {
-					//	only respect quotes when not in a quoted identifier
-					
-					if (inQuotes) {
-						if (((c == '\'') || (c == '"')) && c == quoteChar) {
-							if (i < (this.statementLength - 1) && sql.charAt(i + 1) == quoteChar) {
-								i++; 
-								continue; // inline quote escape
+
+				this.statementLength = sql.length();
+
+				ArrayList endpointList = new ArrayList();
+				boolean inQuotes = false;
+				char quoteChar = 0;
+				boolean inQuotedId = false;
+				int lastParmEnd = 0;
+				int i;
+
+				int stopLookingForLimitClause = this.statementLength - 5;
+
+				this.foundLimitClause = false;
+
+				boolean noBackslashEscapes = connection.isNoBackslashEscapesSet();
+
+				// we're not trying to be real pedantic here, but we'd like to 
+				// skip comments at the beginning of statements, as frameworks
+				// such as Hibernate use them to aid in debugging
+
+				statementStartPos = findStartOfStatement(sql);
+
+				for (i = statementStartPos; i < this.statementLength; ++i) {
+					char c = sql.charAt(i);
+
+					if ((this.firstStmtChar == 0) && !Character.isWhitespace(c)) {
+						// Determine what kind of statement we're doing (_S_elect,
+						// _I_nsert, etc.)
+						this.firstStmtChar = Character.toUpperCase(c);
+					}
+
+					if (!noBackslashEscapes &&
+							c == '\\' && i < (this.statementLength - 1)) {
+						i++;
+						continue; // next character is escaped
+					}
+
+					// are we in a quoted identifier?
+					// (only valid when the id is not inside a 'string')
+					if (!inQuotes && (quotedIdentifierChar != 0)
+							&& (c == quotedIdentifierChar)) {
+						inQuotedId = !inQuotedId;
+					} else if (!inQuotedId) {
+						//	only respect quotes when not in a quoted identifier
+
+						if (inQuotes) {
+							if (((c == '\'') || (c == '"')) && c == quoteChar) {
+								if (i < (this.statementLength - 1) && sql.charAt(i + 1) == quoteChar) {
+									i++; 
+									continue; // inline quote escape
+								}
+
+								inQuotes = !inQuotes;
+								quoteChar = 0;
+							} else if (((c == '\'') || (c == '"')) && c == quoteChar) {
+								inQuotes = !inQuotes;
+								quoteChar = 0;
 							}
-							
-							inQuotes = !inQuotes;
-							quoteChar = 0;
-						} else if (((c == '\'') || (c == '"')) && c == quoteChar) {
-							inQuotes = !inQuotes;
-							quoteChar = 0;
+						} else {
+							if (c == '#') {
+								// run out to end of line
+								i = this.statementLength - 1;
+								continue;
+							} else if (c == '/' && (i + 1) < this.statementLength) {
+								// Comment?
+								c = sql.charAt(i + 1);
+
+								if (c == '*') {
+									i+= 2;
+
+									for (int j = i; j < this.statementLength; j++) {
+										i++;
+										c = sql.charAt(j);
+
+										if (c == '*' && (j + 1) < this.statementLength) {
+											if (sql.charAt(j + 1) == '/') {
+												i++;
+												
+												if (i < this.statementLength) {
+													c = sql.charAt(i);
+												}
+												
+												break; // comment done
+											}
+										}
+									}
+								}
+							} else if ((c == '\'') || (c == '"')) {
+								inQuotes = true;
+								quoteChar = c;
+							}
 						}
-					} else {
-						if (c == '#') {
-							// run out to end of line
-							i = this.statementLength - 1;
-							continue;
-						} else if (c == '/' && (i + 1) < this.statementLength) {
-							// Comment?
-							c = sql.charAt(i + 1);
-							
-							if (c == '*') {
-								i+= 2;
-								
-								for (int j = i; j < this.statementLength; j++) {
-									i++;
-									c = sql.charAt(j);
-									
-									if (c == '*' && (j + 1) < this.statementLength) {
-										if (sql.charAt(j + 1) == '/') {
-											i++;
-											c = sql.charAt(i);
-											break; // comment done
+					}
+
+					if ((c == '?') && !inQuotes && !inQuotedId) {
+						endpointList.add(new int[] { lastParmEnd, i });
+						lastParmEnd = i + 1;
+					}
+
+					if (!inQuotes && (i < stopLookingForLimitClause)) {
+						if ((c == 'L') || (c == 'l')) {
+							char posI1 = sql.charAt(i + 1);
+
+							if ((posI1 == 'I') || (posI1 == 'i')) {
+								char posM = sql.charAt(i + 2);
+
+								if ((posM == 'M') || (posM == 'm')) {
+									char posI2 = sql.charAt(i + 3);
+
+									if ((posI2 == 'I') || (posI2 == 'i')) {
+										char posT = sql.charAt(i + 4);
+
+										if ((posT == 'T') || (posT == 't')) {
+											foundLimitClause = true;
 										}
 									}
 								}
 							}
-						} else if ((c == '\'') || (c == '"')) {
-							inQuotes = true;
-							quoteChar = c;
 						}
 					}
 				}
 
-				if ((c == '?') && !inQuotes && !inQuotedId) {
-					endpointList.add(new int[] { lastParmEnd, i });
-					lastParmEnd = i + 1;
-				}
-
-				if (!inQuotes && (i < stopLookingForLimitClause)) {
-					if ((c == 'L') || (c == 'l')) {
-						char posI1 = sql.charAt(i + 1);
-
-						if ((posI1 == 'I') || (posI1 == 'i')) {
-							char posM = sql.charAt(i + 2);
-
-							if ((posM == 'M') || (posM == 'm')) {
-								char posI2 = sql.charAt(i + 3);
-
-								if ((posI2 == 'I') || (posI2 == 'i')) {
-									char posT = sql.charAt(i + 4);
-
-									if ((posT == 'T') || (posT == 't')) {
-										foundLimitClause = true;
-									}
-								}
-							}
-						}
+				if (this.firstStmtChar == 'L') {
+					if (StringUtils.startsWithIgnoreCaseAndWs(sql, "LOAD DATA")) { //$NON-NLS-1$
+						this.foundLoadData = true;
+					} else {
+						this.foundLoadData = false;
 					}
-				}
-			}
-
-			if (this.firstStmtChar == 'L') {
-				if (StringUtils.startsWithIgnoreCaseAndWs(sql, "LOAD DATA")) { //$NON-NLS-1$
-					this.foundLoadData = true;
 				} else {
 					this.foundLoadData = false;
 				}
-			} else {
-				this.foundLoadData = false;
-			}
 
-			endpointList.add(new int[] { lastParmEnd, this.statementLength });
-			this.staticSql = new byte[endpointList.size()][];
-			char[] asCharArray = sql.toCharArray();
+				endpointList.add(new int[] { lastParmEnd, this.statementLength });
+				this.staticSql = new byte[endpointList.size()][];
+				char[] asCharArray = sql.toCharArray();
 
-			for (i = 0; i < this.staticSql.length; i++) {
-				int[] ep = (int[]) endpointList.get(i);
-				int end = ep[1];
-				int begin = ep[0];
-				int len = end - begin;
+				for (i = 0; i < this.staticSql.length; i++) {
+					int[] ep = (int[]) endpointList.get(i);
+					int end = ep[1];
+					int begin = ep[0];
+					int len = end - begin;
 
-				if (this.foundLoadData) {
-					String temp = new String(asCharArray, begin, len);
-					this.staticSql[i] = temp.getBytes();
-				} else if (encoding == null) {
-					byte[] buf = new byte[len];
-
-					for (int j = 0; j < len; j++) {
-						buf[j] = (byte) sql.charAt(begin + j);
-					}
-
-					this.staticSql[i] = buf;
-				} else {
-					if (converter != null) {
-						this.staticSql[i] = StringUtils.getBytes(sql,
-								converter, encoding, connection
-										.getServerCharacterEncoding(), begin,
-								len, connection.parserKnowsUnicode());
-					} else {
+					if (this.foundLoadData) {
 						String temp = new String(asCharArray, begin, len);
+						this.staticSql[i] = temp.getBytes();
+					} else if (encoding == null) {
+						byte[] buf = new byte[len];
 
-						this.staticSql[i] = StringUtils.getBytes(temp,
-								encoding, connection
-										.getServerCharacterEncoding(),
-								connection.parserKnowsUnicode(), conn);
+						for (int j = 0; j < len; j++) {
+							buf[j] = (byte) sql.charAt(begin + j);
+						}
+
+						this.staticSql[i] = buf;
+					} else {
+						if (converter != null) {
+							this.staticSql[i] = StringUtils.getBytes(sql,
+									converter, encoding, connection
+									.getServerCharacterEncoding(), begin,
+									len, connection.parserKnowsUnicode());
+						} else {
+							String temp = new String(asCharArray, begin, len);
+
+							this.staticSql[i] = StringUtils.getBytes(temp,
+									encoding, connection
+									.getServerCharacterEncoding(),
+									connection.parserKnowsUnicode(), conn);
+						}
 					}
 				}
+			} catch (StringIndexOutOfBoundsException oobEx) {
+				SQLException sqlEx = new SQLException("Parse error for " + sql);
+				sqlEx.initCause(oobEx);
+
+				throw sqlEx;
 			}
 		}
 	}

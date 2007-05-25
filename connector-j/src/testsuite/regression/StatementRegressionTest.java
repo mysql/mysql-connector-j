@@ -4047,4 +4047,19 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	/**
+	 * Tests error with slash-star comment at EOL
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testCommentParsing() throws Exception {
+		createTable("PERSON", "(NAME VARCHAR(32), PERID VARCHAR(32))");
+		
+		try {
+			this.pstmt = this.conn.prepareStatement("SELECT NAME AS name2749_0_, PERID AS perid2749_0_ FROM PERSON WHERE PERID=? /*FOR UPDATE*/");
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }
