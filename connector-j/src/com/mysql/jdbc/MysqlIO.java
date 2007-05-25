@@ -1954,8 +1954,16 @@ class MysqlIO {
 					|| (!executeTopLevelOnly);
 
 			if (shouldExecute) {
+				String sqlToInterceptor = sql;
+				
+				if (interceptedStatement instanceof PreparedStatement) {
+					sqlToInterceptor = ((PreparedStatement) interceptedStatement)
+							.asSql();
+				}
+				
 				ResultSetInternalMethods interceptedResultSet = interceptor
-						.preProcess(sql, interceptedStatement, this.connection);
+						.preProcess(sqlToInterceptor, interceptedStatement,
+								this.connection);
 
 				if (interceptedResultSet != null) {
 					previousResultSet = interceptedResultSet;
@@ -1980,8 +1988,15 @@ class MysqlIO {
 					|| (!executeTopLevelOnly);
 
 			if (shouldExecute) {
+				String sqlToInterceptor = sql;
+				
+				if (interceptedStatement instanceof PreparedStatement) {
+					sqlToInterceptor = ((PreparedStatement) interceptedStatement)
+							.asSql();
+				}
+				
 				ResultSetInternalMethods interceptedResultSet = interceptor
-						.postProcess(sql, interceptedStatement,
+						.postProcess(sqlToInterceptor, interceptedStatement,
 								originalResultSet, this.connection);
 
 				if (interceptedResultSet != null) {
@@ -2110,7 +2125,8 @@ class MysqlIO {
             int count = in.read(b, off + n, len - n);
 
             if (count < 0) {
-                throw new EOFException();
+                throw new EOFException(Messages.getString("MysqlIO.EOF", 
+                		new Object[] {new Integer(len), new Integer(n)}));
             }
 
             n += count;
@@ -2130,7 +2146,8 @@ class MysqlIO {
     		long count = in.skip(len - n);
     		
     		if (count < 0) {
-    			throw new EOFException();
+    			throw new EOFException(Messages.getString("MysqlIO.EOF", 
+                		new Object[] {new Long(len), new Long(n)}));
     		}
     		
     		n += count;

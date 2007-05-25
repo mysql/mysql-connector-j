@@ -152,7 +152,12 @@ nn-nn-07 - Version 5.0.7
 		"tcpTrafficClass" - Should the driver set traffic class or 
 		                    type-of-service fields? See the documentation 
 		                    for java.net.Socket.setTrafficClass() for more 
-		                    information.      	       
+		                    information.  
+
+	- Give more information in EOFExceptions thrown out of MysqlIO (how many
+	  bytes the driver expected to read, how many it actually read, say that
+	  communications with the server were unexpectedly lost).
+    
 05-15-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,
