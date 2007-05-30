@@ -716,7 +716,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		try {
 			createNewIO(false);
-			this.connectionId = this.io.getThreadId();
 			this.dbmd = getMetaData();
 		} catch (SQLException ex) {
 			cleanup(ex);
@@ -1964,6 +1963,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 						this.io.doHandshake(this.user, this.password,
 								this.database);
+						this.connectionId = this.io.getThreadId();
 						this.isClosed = false;
 
 						// save state from old connection
@@ -2112,8 +2112,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 									this, getSocketTimeout());
 							this.io.doHandshake(this.user, this.password,
 									this.database);
-
 							pingInternal(false);
+							this.connectionId = this.io.getThreadId();
 							this.isClosed = false;
 
 							// save state from old connection
