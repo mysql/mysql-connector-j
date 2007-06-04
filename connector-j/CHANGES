@@ -157,7 +157,13 @@ nn-nn-07 - Version 5.0.7
 	- Give more information in EOFExceptions thrown out of MysqlIO (how many
 	  bytes the driver expected to read, how many it actually read, say that
 	  communications with the server were unexpectedly lost).
-    
+	  
+	- Setting "useDynamicCharsetInfo" to "false" now causes driver to use
+	  static lookups for collations as well (makes 
+	  ResultSetMetadata.isCaseSensitive() much more efficient, which leads
+	  to performance increase for ColdFusion, which calls this method for
+	  every column on every table it sees, it appears).
+	      
 05-15-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,

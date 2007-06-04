@@ -51,7 +51,12 @@ public class CharsetMapping {
 	 * Map of MySQL-4.1 charset indexes to Java encoding names
 	 */
 	public static final String[] INDEX_TO_CHARSET;
-
+	
+	/**
+	 * Map of MySQL-4.1 collation index to collation names
+	 */
+	public static final String[] INDEX_TO_COLLATION;
+	
 	/** Mapping of Java charset names to MySQL charset names */
 	private static final Map JAVA_TO_MYSQL_CHARSET_MAP;
 
@@ -63,6 +68,8 @@ public class CharsetMapping {
 	private static final Map MULTIBYTE_CHARSETS;
 
 	private static final Map MYSQL_TO_JAVA_CHARSET_MAP;
+	
+	private static final Map MYSQL_ENCODING_NAME_TO_CHARSET_INDEX_MAP;
 	
 	private static final String NOT_USED = "ISO8859_1"; // punting for not-used character sets
 
@@ -545,6 +552,148 @@ public class CharsetMapping {
 			// ignore, it won't happen in this case
 		}
 		
+		INDEX_TO_COLLATION = new String[211];
+		
+		INDEX_TO_COLLATION[1] = "big5_chinese_ci";
+		INDEX_TO_COLLATION[2] = "latin2_czech_cs";
+		INDEX_TO_COLLATION[3] = "dec8_swedish_ci";
+		INDEX_TO_COLLATION[4] = "cp850_general_ci";
+		INDEX_TO_COLLATION[5] = "latin1_german1_ci";
+		INDEX_TO_COLLATION[6] = "hp8_english_ci";
+		INDEX_TO_COLLATION[7] = "koi8r_general_ci";
+		INDEX_TO_COLLATION[8] = "latin1_swedish_ci";
+		INDEX_TO_COLLATION[9] = "latin2_general_ci";
+		INDEX_TO_COLLATION[10] = "swe7_swedish_ci";
+		INDEX_TO_COLLATION[11] = "ascii_general_ci";
+		INDEX_TO_COLLATION[12] = "ujis_japanese_ci";
+		INDEX_TO_COLLATION[13] = "sjis_japanese_ci";
+		INDEX_TO_COLLATION[14] = "cp1251_bulgarian_ci";
+		INDEX_TO_COLLATION[15] = "latin1_danish_ci";
+		INDEX_TO_COLLATION[16] = "hebrew_general_ci";
+		INDEX_TO_COLLATION[18] = "tis620_thai_ci";
+		INDEX_TO_COLLATION[19] = "euckr_korean_ci";
+		INDEX_TO_COLLATION[20] = "latin7_estonian_cs";
+		INDEX_TO_COLLATION[21] = "latin2_hungarian_ci";
+		INDEX_TO_COLLATION[22] = "koi8u_general_ci";
+		INDEX_TO_COLLATION[23] = "cp1251_ukrainian_ci";
+		INDEX_TO_COLLATION[24] = "gb2312_chinese_ci";
+		INDEX_TO_COLLATION[25] = "greek_general_ci";
+		INDEX_TO_COLLATION[26] = "cp1250_general_ci";
+		INDEX_TO_COLLATION[27] = "latin2_croatian_ci";
+		INDEX_TO_COLLATION[28] = "gbk_chinese_ci";
+		INDEX_TO_COLLATION[29] = "cp1257_lithuanian_ci";
+		INDEX_TO_COLLATION[30] = "latin5_turkish_ci";
+		INDEX_TO_COLLATION[31] = "latin1_german2_ci";
+		INDEX_TO_COLLATION[32] = "armscii8_general_ci";
+		INDEX_TO_COLLATION[33] = "utf8_general_ci";
+		INDEX_TO_COLLATION[34] = "cp1250_czech_cs";
+		INDEX_TO_COLLATION[35] = "ucs2_general_ci";
+		INDEX_TO_COLLATION[36] = "cp866_general_ci";
+		INDEX_TO_COLLATION[37] = "keybcs2_general_ci";
+		INDEX_TO_COLLATION[38] = "macce_general_ci";
+		INDEX_TO_COLLATION[39] = "macroman_general_ci";
+		INDEX_TO_COLLATION[40] = "cp852_general_ci";
+		INDEX_TO_COLLATION[41] = "latin7_general_ci";
+		INDEX_TO_COLLATION[42] = "latin7_general_cs";
+		INDEX_TO_COLLATION[43] = "macce_bin";
+		INDEX_TO_COLLATION[44] = "cp1250_croatian_ci";
+		INDEX_TO_COLLATION[47] = "latin1_bin";
+		INDEX_TO_COLLATION[48] = "latin1_general_ci";
+		INDEX_TO_COLLATION[49] = "latin1_general_cs";
+		INDEX_TO_COLLATION[50] = "cp1251_bin";
+		INDEX_TO_COLLATION[51] = "cp1251_general_ci";
+		INDEX_TO_COLLATION[52] = "cp1251_general_cs";
+		INDEX_TO_COLLATION[53] = "macroman_bin";
+		INDEX_TO_COLLATION[57] = "cp1256_general_ci";
+		INDEX_TO_COLLATION[58] = "cp1257_bin";
+		INDEX_TO_COLLATION[59] = "cp1257_general_ci";
+		INDEX_TO_COLLATION[63] = "binary";
+		INDEX_TO_COLLATION[64] = "armscii8_bin";
+		INDEX_TO_COLLATION[65] = "ascii_bin";
+		INDEX_TO_COLLATION[66] = "cp1250_bin";
+		INDEX_TO_COLLATION[67] = "cp1256_bin";
+		INDEX_TO_COLLATION[68] = "cp866_bin";
+		INDEX_TO_COLLATION[69] = "dec8_bin";
+		INDEX_TO_COLLATION[70] = "greek_bin";
+		INDEX_TO_COLLATION[71] = "hebrew_bin";
+		INDEX_TO_COLLATION[72] = "hp8_bin";
+		INDEX_TO_COLLATION[73] = "keybcs2_bin";
+		INDEX_TO_COLLATION[74] = "koi8r_bin";
+		INDEX_TO_COLLATION[75] = "koi8u_bin";
+		INDEX_TO_COLLATION[77] = "latin2_bin";
+		INDEX_TO_COLLATION[78] = "latin5_bin";
+		INDEX_TO_COLLATION[79] = "latin7_bin";
+		INDEX_TO_COLLATION[80] = "cp850_bin";
+		INDEX_TO_COLLATION[81] = "cp852_bin";
+		INDEX_TO_COLLATION[82] = "swe7_bin";
+		INDEX_TO_COLLATION[83] = "utf8_bin";
+		INDEX_TO_COLLATION[84] = "big5_bin";
+		INDEX_TO_COLLATION[85] = "euckr_bin";
+		INDEX_TO_COLLATION[86] = "gb2312_bin";
+		INDEX_TO_COLLATION[87] = "gbk_bin";
+		INDEX_TO_COLLATION[88] = "sjis_bin";
+		INDEX_TO_COLLATION[89] = "tis620_bin";
+		INDEX_TO_COLLATION[90] = "ucs2_bin";
+		INDEX_TO_COLLATION[91] = "ujis_bin";
+		INDEX_TO_COLLATION[92] = "geostd8_general_ci";
+		INDEX_TO_COLLATION[93] = "geostd8_bin";
+		INDEX_TO_COLLATION[94] = "latin1_spanish_ci";
+		INDEX_TO_COLLATION[95] = "cp932_japanese_ci";
+		INDEX_TO_COLLATION[96] = "cp932_bin";
+		INDEX_TO_COLLATION[97] = "eucjpms_japanese_ci";
+		INDEX_TO_COLLATION[98] = "eucjpms_bin";
+		INDEX_TO_COLLATION[99] = "cp1250_polish_ci";
+		INDEX_TO_COLLATION[128] = "ucs2_unicode_ci";
+		INDEX_TO_COLLATION[129] = "ucs2_icelandic_ci";
+		INDEX_TO_COLLATION[130] = "ucs2_latvian_ci";
+		INDEX_TO_COLLATION[131] = "ucs2_romanian_ci";
+		INDEX_TO_COLLATION[132] = "ucs2_slovenian_ci";
+		INDEX_TO_COLLATION[133] = "ucs2_polish_ci";
+		INDEX_TO_COLLATION[134] = "ucs2_estonian_ci";
+		INDEX_TO_COLLATION[135] = "ucs2_spanish_ci";
+		INDEX_TO_COLLATION[136] = "ucs2_swedish_ci";
+		INDEX_TO_COLLATION[137] = "ucs2_turkish_ci";
+		INDEX_TO_COLLATION[138] = "ucs2_czech_ci";
+		INDEX_TO_COLLATION[139] = "ucs2_danish_ci";
+		INDEX_TO_COLLATION[140] = "ucs2_lithuanian_ci ";
+		INDEX_TO_COLLATION[141] = "ucs2_slovak_ci";
+		INDEX_TO_COLLATION[142] = "ucs2_spanish2_ci";
+		INDEX_TO_COLLATION[143] = "ucs2_roman_ci";
+		INDEX_TO_COLLATION[144] = "ucs2_persian_ci";
+		INDEX_TO_COLLATION[145] = "ucs2_esperanto_ci";
+		INDEX_TO_COLLATION[146] = "ucs2_hungarian_ci";
+		INDEX_TO_COLLATION[192] = "utf8_unicode_ci";
+		INDEX_TO_COLLATION[193] = "utf8_icelandic_ci";
+		INDEX_TO_COLLATION[194] = "utf8_latvian_ci";
+		INDEX_TO_COLLATION[195] = "utf8_romanian_ci";
+		INDEX_TO_COLLATION[196] = "utf8_slovenian_ci";
+		INDEX_TO_COLLATION[197] = "utf8_polish_ci";
+		INDEX_TO_COLLATION[198] = "utf8_estonian_ci";
+		INDEX_TO_COLLATION[199] = "utf8_spanish_ci";
+		INDEX_TO_COLLATION[200] = "utf8_swedish_ci";
+		INDEX_TO_COLLATION[201] = "utf8_turkish_ci";
+		INDEX_TO_COLLATION[202] = "utf8_czech_ci";
+		INDEX_TO_COLLATION[203] = "utf8_danish_ci";
+		INDEX_TO_COLLATION[204] = "utf8_lithuanian_ci ";
+		INDEX_TO_COLLATION[205] = "utf8_slovak_ci";
+		INDEX_TO_COLLATION[206] = "utf8_spanish2_ci";
+		INDEX_TO_COLLATION[207] = "utf8_roman_ci";
+		INDEX_TO_COLLATION[208] = "utf8_persian_ci";
+		INDEX_TO_COLLATION[209] = "utf8_esperanto_ci";
+		INDEX_TO_COLLATION[210] = "utf8_hungarian_ci";
+		
+		Map indexMap = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+		
+		for (int i = 0; i < INDEX_TO_CHARSET.length; i++) {
+			String mysqlEncodingName = INDEX_TO_CHARSET[i];
+			
+			if (mysqlEncodingName != null) {
+				indexMap.put(INDEX_TO_CHARSET[i], Constants.integerValueOf(i));
+			}
+		}
+		
+		MYSQL_ENCODING_NAME_TO_CHARSET_INDEX_MAP = Collections.unmodifiableMap(indexMap);
+		
 		Map tempMap = new HashMap();
 		
 		tempMap.put("czech", "latin2");
@@ -786,6 +935,20 @@ public class CharsetMapping {
 					+ "\"" + configKey + "\" in Charsets.properties resource");
 		}
 	}
+	
+	public static int getCharsetIndexForMysqlEncodingName(String name) {
+		if (name == null) {
+			return 0;
+		}
+		
+		Integer asInt = (Integer)MYSQL_ENCODING_NAME_TO_CHARSET_INDEX_MAP.get(name);
+		
+		if (asInt == null) {
+			return 0;
+		}
+		
+		return asInt.intValue();
+	}
 }
 
 class VersionedStringProperty {
@@ -854,6 +1017,7 @@ class VersionedStringProperty {
 				subminorVersion);
 	}
 
+	
 	public String toString() {
 		return propertyInfo;
 	}

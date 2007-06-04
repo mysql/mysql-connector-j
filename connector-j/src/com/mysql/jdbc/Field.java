@@ -35,15 +35,10 @@ import java.sql.Types;
  * @version $Id$
  */
 public class Field {
-	// ~ Static fields/initializers
-	// ---------------------------------------------
 
 	private static final int AUTO_INCREMENT_FLAG = 512;
 
 	private static final int NO_CHARSET_INFO = -1;
-
-	// ~ Instance fields
-	// --------------------------------------------------------
 
 	private byte[] buffer;
 
@@ -116,9 +111,6 @@ public class Field {
 	private boolean isSingleBit;
 
 	private int maxBytesPerChar;
-
-	// ~ Constructors
-	// -----------------------------------------------------------
 
 	/**
 	 * Constructor used when communicating with 4.1 and newer servers
@@ -306,10 +298,7 @@ public class Field {
 		this.colFlag = 0;
 		this.colDecimals = 0;
 	}
-
-	// ~ Methods
-	// ----------------------------------------------------------------
-
+	
 	private void checkForImplicitTemporaryTable() {
 		this.isImplicitTempTable = this.tableNameLength > 5
 				&& this.buffer[tableNameStart] == (byte) '#'
@@ -332,75 +321,76 @@ public class Field {
 		if (this.collationName == null) {
 			if (this.connection != null) {
 				if (this.connection.versionMeetsMinimum(4, 1, 0)) {
-					java.sql.DatabaseMetaData dbmd = this.connection
-							.getMetaData();
-
-					String quotedIdStr = dbmd.getIdentifierQuoteString();
-
-					if (" ".equals(quotedIdStr)) { //$NON-NLS-1$
-						quotedIdStr = ""; //$NON-NLS-1$
-					}
-
-					String csCatalogName = getDatabaseName();
-					String csTableName = getOriginalTableName();
-					String csColumnName = getOriginalName();
-
-					if (csCatalogName != null && csCatalogName.length() != 0
-							&& csTableName != null && csTableName.length() != 0
-							&& csColumnName != null
-							&& csColumnName.length() != 0) {
-						StringBuffer queryBuf = new StringBuffer(csCatalogName
-								.length()
-								+ csTableName.length() + 28);
-						queryBuf.append("SHOW FULL COLUMNS FROM "); //$NON-NLS-1$
-						queryBuf.append(quotedIdStr);
-						queryBuf.append(csCatalogName);
-						queryBuf.append(quotedIdStr);
-						queryBuf.append("."); //$NON-NLS-1$
-						queryBuf.append(quotedIdStr);
-						queryBuf.append(csTableName);
-						queryBuf.append(quotedIdStr);
-
-						java.sql.Statement collationStmt = null;
-						java.sql.ResultSet collationRs = null;
-
-						try {
-							collationStmt = this.connection.createStatement();
-
-							collationRs = collationStmt.executeQuery(queryBuf
-									.toString());
-
-							while (collationRs.next()) {
-								if (csColumnName.equals(collationRs
-										.getString("Field"))) { //$NON-NLS-1$
-									this.collationName = collationRs
-											.getString("Collation"); //$NON-NLS-1$
-
-									break;
+					if (this.connection.getUseDynamicCharsetInfo()) {
+						java.sql.DatabaseMetaData dbmd = this.connection
+								.getMetaData();
+	
+						String quotedIdStr = dbmd.getIdentifierQuoteString();
+	
+						if (" ".equals(quotedIdStr)) { //$NON-NLS-1$
+							quotedIdStr = ""; //$NON-NLS-1$
+						}
+	
+						String csCatalogName = getDatabaseName();
+						String csTableName = getOriginalTableName();
+						String csColumnName = getOriginalName();
+	
+						if (csCatalogName != null && csCatalogName.length() != 0
+								&& csTableName != null && csTableName.length() != 0
+								&& csColumnName != null
+								&& csColumnName.length() != 0) {
+							StringBuffer queryBuf = new StringBuffer(csCatalogName
+									.length()
+									+ csTableName.length() + 28);
+							queryBuf.append("SHOW FULL COLUMNS FROM "); //$NON-NLS-1$
+							queryBuf.append(quotedIdStr);
+							queryBuf.append(csCatalogName);
+							queryBuf.append(quotedIdStr);
+							queryBuf.append("."); //$NON-NLS-1$
+							queryBuf.append(quotedIdStr);
+							queryBuf.append(csTableName);
+							queryBuf.append(quotedIdStr);
+	
+							java.sql.Statement collationStmt = null;
+							java.sql.ResultSet collationRs = null;
+	
+							try {
+								collationStmt = this.connection.createStatement();
+	
+								collationRs = collationStmt.executeQuery(queryBuf
+										.toString());
+	
+								while (collationRs.next()) {
+									if (csColumnName.equals(collationRs
+											.getString("Field"))) { //$NON-NLS-1$
+										this.collationName = collationRs
+												.getString("Collation"); //$NON-NLS-1$
+	
+										break;
+									}
+								}
+							} finally {
+								if (collationRs != null) {
+									collationRs.close();
+									collationRs = null;
+								}
+	
+								if (collationStmt != null) {
+									collationStmt.close();
+									collationStmt = null;
 								}
 							}
-						} finally {
-							if (collationRs != null) {
-								collationRs.close();
-								collationRs = null;
-							}
-
-							if (collationStmt != null) {
-								collationStmt.close();
-								collationStmt = null;
-							}
 						}
-
+					} else {
+						this.collationName = CharsetMapping.INDEX_TO_COLLATION[charsetIndex];
 					}
 				}
-
 			}
-
 		}
 
 		return this.collationName;
 	}
-
+	
 	public String getColumnLabel() throws SQLException {
 		return getName(); // column name if not aliased, alias if used
 	}
