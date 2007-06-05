@@ -81,7 +81,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		 * @see com.mysql.jdbc.ConnectionPropertiesImpl.ConnectionProperty#getAllowableValues()
 		 */
 		String[] getAllowableValues() {
-			return new String[] { "true", "false", "yes", "no" };
+			return new String[] { "true", "false", "yes", "no" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 		}
 
 		boolean getValueAsBoolean() {
@@ -103,8 +103,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				validateStringValues(extractedValue);
 
 				this.valueAsObject = Boolean.valueOf(extractedValue
-						.equalsIgnoreCase("TRUE")
-						|| extractedValue.equalsIgnoreCase("YES"));
+						.equalsIgnoreCase("TRUE") //$NON-NLS-1$
+						|| extractedValue.equalsIgnoreCase("YES")); //$NON-NLS-1$
 			} else {
 				this.valueAsObject = this.defaultValue;
 			}
@@ -283,31 +283,31 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 			StringBuffer errorMessageBuf = new StringBuffer();
 
-			errorMessageBuf.append("The connection property '");
+			errorMessageBuf.append("The connection property '"); //$NON-NLS-1$
 			errorMessageBuf.append(getPropertyName());
-			errorMessageBuf.append("' only accepts values of the form: ");
+			errorMessageBuf.append("' only accepts values of the form: "); //$NON-NLS-1$
 
 			if (validateAgainst.length != 0) {
-				errorMessageBuf.append("'");
+				errorMessageBuf.append("'"); //$NON-NLS-1$
 				errorMessageBuf.append(validateAgainst[0]);
-				errorMessageBuf.append("'");
+				errorMessageBuf.append("'"); //$NON-NLS-1$
 
 				for (int i = 1; i < (validateAgainst.length - 1); i++) {
-					errorMessageBuf.append(", ");
-					errorMessageBuf.append("'");
+					errorMessageBuf.append(", "); //$NON-NLS-1$
+					errorMessageBuf.append("'"); //$NON-NLS-1$
 					errorMessageBuf.append(validateAgainst[i]);
-					errorMessageBuf.append("'");
+					errorMessageBuf.append(Messages.getString("'")); //$NON-NLS-1$
 				}
 
-				errorMessageBuf.append(" or '");
+				errorMessageBuf.append(" or '"); //$NON-NLS-1$
 				errorMessageBuf
 						.append(validateAgainst[validateAgainst.length - 1]);
-				errorMessageBuf.append("'");
+				errorMessageBuf.append("'"); //$NON-NLS-1$
 			}
 
-			errorMessageBuf.append(". The value '");
+			errorMessageBuf.append(". The value '"); //$NON-NLS-1$
 			errorMessageBuf.append(valueToValidate);
-			errorMessageBuf.append("' is not in this set.");
+			errorMessageBuf.append("' is not in this set."); //$NON-NLS-1$
 
 			throw SQLError.createSQLException(errorMessageBuf.toString(),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
@@ -408,11 +408,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					 */
 					this.valueAsObject = new Integer(intValue * multiplier);
 				} catch (NumberFormatException nfe) {
-					throw SQLError.createSQLException("The connection property '"
+					throw SQLError.createSQLException("The connection property '" //$NON-NLS-1$
 							+ getPropertyName()
-							+ "' only accepts integer values. The value '"
+							+ "' only accepts integer values. The value '" //$NON-NLS-1$
 							+ extractedValue
-							+ "' can not be converted to an integer.",
+							+ "' can not be converted to an integer.", //$NON-NLS-1$
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 				}
 			} else {
@@ -471,11 +471,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 					this.valueAsObject = new Long(longValue);
 				} catch (NumberFormatException nfe) {
-					throw SQLError.createSQLException("The connection property '"
+					throw SQLError.createSQLException("The connection property '" //$NON-NLS-1$
 							+ getPropertyName()
-							+ "' only accepts long integer values. The value '"
+							+ "' only accepts long integer values. The value '" //$NON-NLS-1$
 							+ extractedValue
-							+ "' can not be converted to a long integer.",
+							+ "' can not be converted to a long integer.", //$NON-NLS-1$
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 				}
 			} else {
@@ -500,33 +500,33 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 		void initializeFrom(String extractedValue) throws SQLException {
 			if (extractedValue != null) {
-				if (extractedValue.endsWith("k")
-						|| extractedValue.endsWith("K")
-						|| extractedValue.endsWith("kb")
-						|| extractedValue.endsWith("Kb")
-						|| extractedValue.endsWith("kB")) {
+				if (extractedValue.endsWith("k") //$NON-NLS-1$
+						|| extractedValue.endsWith("K") //$NON-NLS-1$
+						|| extractedValue.endsWith("kb") //$NON-NLS-1$
+						|| extractedValue.endsWith("Kb") //$NON-NLS-1$
+						|| extractedValue.endsWith("kB")) { //$NON-NLS-1$
 					multiplier = 1024;
 					int indexOfK = StringUtils.indexOfIgnoreCase(
-							extractedValue, "k");
+							extractedValue, "k"); //$NON-NLS-1$
 					extractedValue = extractedValue.substring(0, indexOfK);
-				} else if (extractedValue.endsWith("m")
-						|| extractedValue.endsWith("M")
-						|| extractedValue.endsWith("G")
-						|| extractedValue.endsWith("mb")
-						|| extractedValue.endsWith("Mb")
-						|| extractedValue.endsWith("mB")) {
+				} else if (extractedValue.endsWith("m") //$NON-NLS-1$
+						|| extractedValue.endsWith("M") //$NON-NLS-1$
+						|| extractedValue.endsWith("G") //$NON-NLS-1$
+						|| extractedValue.endsWith("mb") //$NON-NLS-1$
+						|| extractedValue.endsWith("Mb") //$NON-NLS-1$
+						|| extractedValue.endsWith("mB")) { //$NON-NLS-1$
 					multiplier = 1024 * 1024;
 					int indexOfM = StringUtils.indexOfIgnoreCase(
-							extractedValue, "m");
+							extractedValue, "m"); //$NON-NLS-1$
 					extractedValue = extractedValue.substring(0, indexOfM);
-				} else if (extractedValue.endsWith("g")
-						|| extractedValue.endsWith("G")
-						|| extractedValue.endsWith("gb")
-						|| extractedValue.endsWith("Gb")
-						|| extractedValue.endsWith("gB")) {
+				} else if (extractedValue.endsWith("g") //$NON-NLS-1$
+						|| extractedValue.endsWith("G") //$NON-NLS-1$
+						|| extractedValue.endsWith("gb") //$NON-NLS-1$
+						|| extractedValue.endsWith("Gb") //$NON-NLS-1$
+						|| extractedValue.endsWith("gB")) { //$NON-NLS-1$
 					multiplier = 1024 * 1024 * 1024;
 					int indexOfG = StringUtils.indexOfIgnoreCase(
-							extractedValue, "g");
+							extractedValue, "g"); //$NON-NLS-1$
 					extractedValue = extractedValue.substring(0, indexOfG);
 				}
 			}
@@ -606,19 +606,19 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 	}
 
-	private static final String CONNECTION_AND_AUTH_CATEGORY = "Connection/Authentication";
+	private static final String CONNECTION_AND_AUTH_CATEGORY = Messages.getString("ConnectionProperties.categoryConnectionAuthentication"); //$NON-NLS-1$
 
-	private static final String NETWORK_CATEGORY = "Networking";
+	private static final String NETWORK_CATEGORY = Messages.getString("ConnectionProperties.categoryNetworking"); //$NON-NLS-1$
 	
-	private static final String DEBUGING_PROFILING_CATEGORY = "Debuging/Profiling";
+	private static final String DEBUGING_PROFILING_CATEGORY = Messages.getString("ConnectionProperties.categoryDebuggingProfiling"); //$NON-NLS-1$
 
-	private static final String HA_CATEGORY = "High Availability and Clustering";
+	private static final String HA_CATEGORY = Messages.getString("ConnectionProperties.categorryHA"); //$NON-NLS-1$
 
-	private static final String MISC_CATEGORY = "Miscellaneous";
+	private static final String MISC_CATEGORY = Messages.getString("ConnectionProperties.categoryMisc"); //$NON-NLS-1$
 
-	private static final String PERFORMANCE_CATEGORY = "Performance Extensions";
+	private static final String PERFORMANCE_CATEGORY = Messages.getString("ConnectionProperties.categoryPerformance"); //$NON-NLS-1$
 	
-	private static final String SECURITY_CATEGORY = "Security";
+	private static final String SECURITY_CATEGORY = Messages.getString("ConnectionProperties.categorySecurity"); //$NON-NLS-1$
 	
 	private static final String[] PROPERTY_CATEGORIES = new String[] {
 		CONNECTION_AND_AUTH_CATEGORY, NETWORK_CATEGORY,
@@ -632,11 +632,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	//
 	private static final String STANDARD_LOGGER_NAME = StandardLogger.class.getName();
 
-	protected static final String ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL = "convertToNull";
+	protected static final String ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL = "convertToNull"; //$NON-NLS-1$
 
-	protected static final String ZERO_DATETIME_BEHAVIOR_EXCEPTION = "exception";
+	protected static final String ZERO_DATETIME_BEHAVIOR_EXCEPTION = "exception"; //$NON-NLS-1$
 
-	protected static final String ZERO_DATETIME_BEHAVIOR_ROUND = "round";
+	protected static final String ZERO_DATETIME_BEHAVIOR_ROUND = "round"; //$NON-NLS-1$
 
 	static {
 		try {
@@ -675,1019 +675,877 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	}
 
 	private BooleanConnectionProperty allowLoadLocalInfile = new BooleanConnectionProperty(
-			"allowLoadLocalInfile",
+			"allowLoadLocalInfile", //$NON-NLS-1$
 			true,
-			"Should the driver allow use of 'LOAD DATA LOCAL INFILE...' (defaults to 'true').",
-			"3.0.3", SECURITY_CATEGORY, Integer.MAX_VALUE);
+			Messages.getString("ConnectionProperties.loadDataLocal"), //$NON-NLS-1$
+			"3.0.3", SECURITY_CATEGORY, Integer.MAX_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty allowMultiQueries = new BooleanConnectionProperty(
-			"allowMultiQueries",
+			"allowMultiQueries", //$NON-NLS-1$
 			false,
-			"Allow the use of ';' to delimit multiple queries during one statement (true/false), defaults to 'false'",
-			"3.1.1", SECURITY_CATEGORY, 1);
+			Messages.getString("ConnectionProperties.allowMultiQueries"), //$NON-NLS-1$
+			"3.1.1", SECURITY_CATEGORY, 1); //$NON-NLS-1$
 
 	private BooleanConnectionProperty allowNanAndInf = new BooleanConnectionProperty(
-			"allowNanAndInf",
+			"allowNanAndInf", //$NON-NLS-1$
 			false,
-			"Should the driver allow NaN or +/- INF values in PreparedStatement.setDouble()?",
-			"3.1.5", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.allowNANandINF"), //$NON-NLS-1$
+			"3.1.5", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty allowUrlInLocalInfile = new BooleanConnectionProperty(
-			"allowUrlInLocalInfile",
+			"allowUrlInLocalInfile", //$NON-NLS-1$
 			false,
-			"Should the driver allow URLs in 'LOAD DATA LOCAL INFILE' statements?",
-			"3.1.4", SECURITY_CATEGORY, Integer.MAX_VALUE);
+			Messages.getString("ConnectionProperties.allowUrlInLoadLocal"), //$NON-NLS-1$
+			"3.1.4", SECURITY_CATEGORY, Integer.MAX_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty alwaysSendSetIsolation = new BooleanConnectionProperty(
-			"alwaysSendSetIsolation",
+			"alwaysSendSetIsolation", //$NON-NLS-1$
 			true,
-			"Should the driver always communicate with the database when "
-					+ " Connection.setTransactionIsolation() is called? "
-					+ "If set to false, the driver will only communicate with the "
-					+ "database when the requested transaction isolation is different "
-					+ "than the whichever is newer, the last value that was set via "
-					+ "Connection.setTransactionIsolation(), or the value that was read from "
-					+ "the server when the connection was established.",
-			"3.1.7", PERFORMANCE_CATEGORY, Integer.MAX_VALUE);
+			Messages.getString("ConnectionProperties.alwaysSendSetIsolation"), //$NON-NLS-1$
+			"3.1.7", PERFORMANCE_CATEGORY, Integer.MAX_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty autoClosePStmtStreams = new BooleanConnectionProperty(
-			"autoClosePStmtStreams", 
+			"autoClosePStmtStreams",  //$NON-NLS-1$
 			false,
-			"Should the driver automatically call .close() on streams/readers passed as "
-			+ "arguments via set*() methods?",
-			"3.1.12",
+			Messages.getString("ConnectionProperties.autoClosePstmtStreams"), //$NON-NLS-1$
+			"3.1.12", //$NON-NLS-1$
 			MISC_CATEGORY,
 			Integer.MIN_VALUE);
 	
 	private BooleanConnectionProperty autoDeserialize = new BooleanConnectionProperty(
-			"autoDeserialize",
+			"autoDeserialize", //$NON-NLS-1$
 			false,
-			"Should the driver automatically detect and de-serialize objects stored in BLOB fields?",
-			"3.1.5", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.autoDeserialize"), //$NON-NLS-1$
+			"3.1.5", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty autoGenerateTestcaseScript = new BooleanConnectionProperty(
-			"autoGenerateTestcaseScript", false,
-			"Should the driver dump the SQL it is executing, including server-side "
-					+ "prepared statements to STDERR?", "3.1.9",
+			"autoGenerateTestcaseScript", false, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.autoGenerateTestcaseScript"), "3.1.9", //$NON-NLS-1$ //$NON-NLS-2$
 			DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 
 	private boolean autoGenerateTestcaseScriptAsBoolean = false;
 
 	private BooleanConnectionProperty autoReconnect = new BooleanConnectionProperty(
-			"autoReconnect",
+			"autoReconnect", //$NON-NLS-1$
 			false,
-			"Should the driver try to re-establish stale and/or dead connections? "
-					+ "  If enabled the driver will throw an exception for a queries issued on a stale or dead connection, "
-					+ " which belong to the current transaction, but will attempt reconnect before the next query issued on the "
-					+ "connection in a new transaction. The use of this feature "
-					+ "is not recommended, because it has side effects related to session state and data consistency when applications don't"
-					+ "handle SQLExceptions properly, and is only designed to be used "
-					+ "when you are unable to configure your application to handle SQLExceptions resulting from dead and"
-					+ "stale connections properly. Alternatively, investigate setting the MySQL server variable \"wait_timeout\""
-					+ "to some high value rather than the default of 8 hours.",
-			"1.1", HA_CATEGORY, 0);
+			Messages.getString("ConnectionProperties.autoReconnect"), //$NON-NLS-1$
+			"1.1", HA_CATEGORY, 0); //$NON-NLS-1$
 
 	private BooleanConnectionProperty autoReconnectForPools = new BooleanConnectionProperty(
-			"autoReconnectForPools",
+			"autoReconnectForPools", //$NON-NLS-1$
 			false,
-			"Use a reconnection strategy appropriate for connection pools (defaults to 'false')",
-			"3.1.3", HA_CATEGORY, 1);
+			Messages.getString("ConnectionProperties.autoReconnectForPools"), //$NON-NLS-1$
+			"3.1.3", HA_CATEGORY, 1); //$NON-NLS-1$
 
 	private boolean autoReconnectForPoolsAsBoolean = false;
 
 	private MemorySizeConnectionProperty blobSendChunkSize = new MemorySizeConnectionProperty(
-			"blobSendChunkSize",
+			"blobSendChunkSize", //$NON-NLS-1$
 			1024 * 1024,
 			1,
 			Integer.MAX_VALUE,
-			"Chunk to use when sending BLOB/CLOBs via ServerPreparedStatements",
-			"3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.blobSendChunkSize"), //$NON-NLS-1$
+			"3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty cacheCallableStatements = new BooleanConnectionProperty(
-			"cacheCallableStmts", false,
-			"Should the driver cache the parsing stage of CallableStatements",
-			"3.1.2", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			"cacheCallableStmts", false, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.cacheCallableStatements"), //$NON-NLS-1$
+			"3.1.2", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty cachePreparedStatements = new BooleanConnectionProperty(
-			"cachePrepStmts",
+			"cachePrepStmts", //$NON-NLS-1$
 			false,
-			"Should the driver cache the parsing stage of PreparedStatements of client-side "
-					+ "prepared statements, the \"check\" for suitability of server-side prepared "
-					+ " and server-side prepared statements themselves?",
-			"3.0.10", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.cachePrepStmts"), //$NON-NLS-1$
+			"3.0.10", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty cacheResultSetMetadata = new BooleanConnectionProperty(
-			"cacheResultSetMetadata",
+			"cacheResultSetMetadata", //$NON-NLS-1$
 			false,
-			"Should the driver cache ResultSetMetaData for Statements and PreparedStatements? (Req. JDK-1.4+, true/false, default 'false')",
-			"3.1.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.cacheRSMetadata"), //$NON-NLS-1$
+			"3.1.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private boolean cacheResultSetMetaDataAsBoolean;
 
 	private BooleanConnectionProperty cacheServerConfiguration = new BooleanConnectionProperty(
-			"cacheServerConfiguration",
+			"cacheServerConfiguration", //$NON-NLS-1$
 			false,
-			"Should the driver cache the results of "
-					+ "'SHOW VARIABLES' and 'SHOW COLLATION' on a per-URL basis?",
-			"3.1.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.cacheServerConfiguration"), //$NON-NLS-1$
+			"3.1.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private IntegerConnectionProperty callableStatementCacheSize = new IntegerConnectionProperty(
-			"callableStmtCacheSize",
+			"callableStmtCacheSize", //$NON-NLS-1$
 			100,
 			0,
 			Integer.MAX_VALUE,
-			"If 'cacheCallableStmts' is enabled, how many callable statements should be cached?",
-			"3.1.2", PERFORMANCE_CATEGORY, 5);
+			Messages.getString("ConnectionProperties.callableStmtCacheSize"), //$NON-NLS-1$
+			"3.1.2", PERFORMANCE_CATEGORY, 5); //$NON-NLS-1$
 
 	private BooleanConnectionProperty capitalizeTypeNames = new BooleanConnectionProperty(
-			"capitalizeTypeNames",
+			"capitalizeTypeNames", //$NON-NLS-1$
 			false,
-			"Capitalize type names in DatabaseMetaData? (usually only useful when using WebObjects, true/false, defaults to 'false')",
-			"2.0.7", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.capitalizeTypeNames"), //$NON-NLS-1$
+			"2.0.7", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private StringConnectionProperty characterEncoding = new StringConnectionProperty(
-			"characterEncoding",
+			"characterEncoding", //$NON-NLS-1$
 			null,
-			"If 'useUnicode' is set to true, what character encoding should the driver use when dealing with strings? (defaults is to 'autodetect')",
-			"1.1g", MISC_CATEGORY, 5);
+			Messages.getString("ConnectionProperties.characterEncoding"), //$NON-NLS-1$
+			"1.1g", MISC_CATEGORY, 5); //$NON-NLS-1$
 
 	private String characterEncodingAsString = null;
 
 	private StringConnectionProperty characterSetResults = new StringConnectionProperty(
-			"characterSetResults", null,
-			"Character set to tell the server to return results as.", "3.0.13",
+			"characterSetResults", null, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.characterSetResults"), "3.0.13", //$NON-NLS-1$ //$NON-NLS-2$
 			MISC_CATEGORY, 6);
 	
 	private StringConnectionProperty clientInfoProvider = new StringConnectionProperty(
-			"clientInfoProvider", "com.mysql.jdbc.JDBC4CommentClientInfoProvider",
-			"The name of a class that implements the com.mysql.jdbc.JDBC4ClientInfoProvider "+
-			"interface in order to support JDBC-4.0's Connection.get/setClientInfo() methods",
-			"5.1.0",
+			"clientInfoProvider", "com.mysql.jdbc.JDBC4CommentClientInfoProvider", //$NON-NLS-1$ //$NON-NLS-2$
+			Messages.getString("ConnectionProperties.clientInfoProvider"), //$NON-NLS-1$
+			"5.1.0", //$NON-NLS-1$
 			DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 	
 	private BooleanConnectionProperty clobberStreamingResults = new BooleanConnectionProperty(
-			"clobberStreamingResults",
+			"clobberStreamingResults", //$NON-NLS-1$
 			false,
-			"This will cause a 'streaming' ResultSet to be automatically closed, "
-					+ "and any outstanding data still streaming from the server to be discarded if another query is executed "
-					+ "before all the data has been read from the server.",
-			"3.0.9", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.clobberStreamingResults"), //$NON-NLS-1$
+			"3.0.9", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private StringConnectionProperty clobCharacterEncoding = new StringConnectionProperty(
-			"clobCharacterEncoding",
+			"clobCharacterEncoding", //$NON-NLS-1$
 			null,
-			"The character encoding to use for sending and retrieving TEXT, MEDIUMTEXT " +
-			"and LONGTEXT values instead of the configured connection characterEncoding",
-			"5.0.0", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.clobCharacterEncoding"), //$NON-NLS-1$
+			"5.0.0", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private StringConnectionProperty connectionCollation = new StringConnectionProperty(
-			"connectionCollation",
+			"connectionCollation", //$NON-NLS-1$
 			null,
-			"If set, tells the server to use this collation via 'set collation_connection'",
-			"3.0.13", MISC_CATEGORY, 7);
+			Messages.getString("ConnectionProperties.connectionCollation"), //$NON-NLS-1$
+			"3.0.13", MISC_CATEGORY, 7); //$NON-NLS-1$
 
 	private IntegerConnectionProperty connectTimeout = new IntegerConnectionProperty(
-			"connectTimeout", 0, 0, Integer.MAX_VALUE,
-			"Timeout for socket connect (in milliseconds), with 0 being no timeout. "
-					+ "Only works on JDK-1.4 or newer. Defaults to '0'.",
-			"3.0.1", CONNECTION_AND_AUTH_CATEGORY, 9);
+			"connectTimeout", 0, 0, Integer.MAX_VALUE, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.connectTimeout"), //$NON-NLS-1$
+			"3.0.1", CONNECTION_AND_AUTH_CATEGORY, 9); //$NON-NLS-1$
 
 	private BooleanConnectionProperty continueBatchOnError = new BooleanConnectionProperty(
-			"continueBatchOnError",
+			"continueBatchOnError", //$NON-NLS-1$
 			true,
-			"Should the driver continue processing batch commands if "
-					+ "one statement fails. The JDBC spec allows either way (defaults to 'true').",
-			"3.0.3", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.continueBatchOnError"), //$NON-NLS-1$
+			"3.0.3", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty createDatabaseIfNotExist = new BooleanConnectionProperty(
-			"createDatabaseIfNotExist",
+			"createDatabaseIfNotExist", //$NON-NLS-1$
 			false,
-			"Creates the database given in the URL if it doesn't yet exist. Assumes "
-					+ " the configured user has permissions to create databases.",
-			"3.1.9", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.createDatabaseIfNotExist"), //$NON-NLS-1$
+			"3.1.9", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
-	private IntegerConnectionProperty defaultFetchSize = new IntegerConnectionProperty("defaultFetchSize", 0, "The driver will call setFetchSize(n) with this value on all newly-created Statements", "3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+	private IntegerConnectionProperty defaultFetchSize = new IntegerConnectionProperty("defaultFetchSize", 0, Messages.getString("ConnectionProperties.defaultFetchSize"), "3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
 	private BooleanConnectionProperty detectServerPreparedStmts = new BooleanConnectionProperty(
-			"useServerPrepStmts",
+			"useServerPrepStmts", //$NON-NLS-1$
 			false,
-			"Use server-side prepared statements if the server supports them?",
-			"3.1.0", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useServerPrepStmts"), //$NON-NLS-1$
+			"3.1.0", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty dontTrackOpenResources = new BooleanConnectionProperty(
-			"dontTrackOpenResources",
+			"dontTrackOpenResources", //$NON-NLS-1$
 			false,
-			"The JDBC specification requires the driver to automatically track and close resources, "
-					+ "however if your application doesn't do a good job of "
-					+ "explicitly calling close() on statements or result sets, "
-					+ "this can cause memory leakage. Setting this property to true "
-					+ "relaxes this constraint, and can be more memory efficient for "
-					+ "some applications.", "3.1.7", PERFORMANCE_CATEGORY,
+			Messages.getString("ConnectionProperties.dontTrackOpenResources"), "3.1.7", PERFORMANCE_CATEGORY, //$NON-NLS-1$ //$NON-NLS-2$
 			Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty dumpQueriesOnException = new BooleanConnectionProperty(
-			"dumpQueriesOnException",
+			"dumpQueriesOnException", //$NON-NLS-1$
 			false,
-			"Should the driver dump the contents of the query sent to the server in the message for SQLExceptions?",
-			"3.1.3", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.dumpQueriesOnException"), //$NON-NLS-1$
+			"3.1.3", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty dynamicCalendars = new BooleanConnectionProperty(
-			"dynamicCalendars",
+			"dynamicCalendars", //$NON-NLS-1$
 			false,
-			"Should the driver retrieve the default"
-					+ " calendar when required, or cache it per connection/session?",
-			"3.1.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.dynamicCalendars"), //$NON-NLS-1$
+			"3.1.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty elideSetAutoCommits = new BooleanConnectionProperty(
-			"elideSetAutoCommits",
+			"elideSetAutoCommits", //$NON-NLS-1$
 			false,
-			"If using MySQL-4.1 or newer, should the driver only issue 'set autocommit=n' queries when the server's state doesn't match the requested state by Connection.setAutoCommit(boolean)?",
-			"3.1.3", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.eliseSetAutoCommit"), //$NON-NLS-1$
+			"3.1.3", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty emptyStringsConvertToZero = new BooleanConnectionProperty(
-			"emptyStringsConvertToZero", true,
-			"Should the driver allow conversions from empty string "
-					+ "fields to numeric values of '0'?", "3.1.8",
+			"emptyStringsConvertToZero", true, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.emptyStringsConvertToZero"), "3.1.8", //$NON-NLS-1$ //$NON-NLS-2$
 			MISC_CATEGORY, Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty emulateLocators = new BooleanConnectionProperty(
-			"emulateLocators", false, "N/A", "3.1.0", MISC_CATEGORY,
+			"emulateLocators", false, Messages.getString("ConnectionProperties.emulateLocators"), "3.1.0", MISC_CATEGORY, //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty emulateUnsupportedPstmts = new BooleanConnectionProperty(
-			"emulateUnsupportedPstmts",
+			"emulateUnsupportedPstmts", //$NON-NLS-1$
 			true,
-			"Should the driver detect prepared statements that are not supported by the server, and "
-					+ "replace them with client-side emulated versions?",
-			"3.1.7", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.emulateUnsupportedPstmts"), //$NON-NLS-1$
+			"3.1.7", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty enablePacketDebug = new BooleanConnectionProperty(
-			"enablePacketDebug",
+			"enablePacketDebug", //$NON-NLS-1$
 			false,
-			"When enabled, a ring-buffer of 'packetDebugBufferSize' packets will be kept, and dumped when exceptions are thrown in key areas in the driver's code",
-			"3.1.3", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.enablePacketDebug"), //$NON-NLS-1$
+			"3.1.3", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty enableQueryTimeouts = new BooleanConnectionProperty(
-			"enableQueryTimeouts",
+			"enableQueryTimeouts", //$NON-NLS-1$
 			true,
-			"When enabled, query timeouts set via Statement.setQueryTimeout() use a shared "
-			+ "java.util.Timer instance for scheduling. Even if the timeout doesn't expire before the query is processed, there will be "
-			+ "memory used by the TimerTask for the given timeout which won't be reclaimed until "
-			+ "the time the timeout would have expired if it hadn't been cancelled by the driver. High-load environments "
-			+ "might want to consider disabling this functionality.",
-			"5.0.6",
+			Messages.getString("ConnectionProperties.enableQueryTimeouts"), //$NON-NLS-1$
+			"5.0.6", //$NON-NLS-1$
 			PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 			
 	private BooleanConnectionProperty explainSlowQueries = new BooleanConnectionProperty(
-			"explainSlowQueries",
+			"explainSlowQueries", //$NON-NLS-1$
 			false,
-			"If 'logSlowQueries' is enabled, should the driver automatically issue an 'EXPLAIN' on the"
-					+ " server and send the results to the configured log at a WARN level?",
-			"3.1.2", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.explainSlowQueries"), //$NON-NLS-1$
+			"3.1.2", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	/** When failed-over, set connection to read-only? */
 	private BooleanConnectionProperty failOverReadOnly = new BooleanConnectionProperty(
-			"failOverReadOnly",
+			"failOverReadOnly", //$NON-NLS-1$
 			true,
-			"When failing over in autoReconnect mode, should the connection be set to 'read-only'?",
-			"3.0.12", HA_CATEGORY, 2);
+			Messages.getString("ConnectionProperties.failoverReadOnly"), //$NON-NLS-1$
+			"3.0.12", HA_CATEGORY, 2); //$NON-NLS-1$
 
 	private BooleanConnectionProperty gatherPerformanceMetrics = new BooleanConnectionProperty(
-			"gatherPerfMetrics",
+			"gatherPerfMetrics", //$NON-NLS-1$
 			false,
-			"Should the driver gather performance metrics, and report them via the configured logger every 'reportMetricsIntervalMillis' milliseconds?",
-			"3.1.2", DEBUGING_PROFILING_CATEGORY, 1);
+			Messages.getString("ConnectionProperties.gatherPerfMetrics"), //$NON-NLS-1$
+			"3.1.2", DEBUGING_PROFILING_CATEGORY, 1); //$NON-NLS-1$
 
 	private BooleanConnectionProperty generateSimpleParameterMetadata = new BooleanConnectionProperty(
-			"generateSimpleParameterMetadata", false, "Should the driver generate simplified parameter metadata for PreparedStatements when "
-			+ "no metadata is available either because the server couldn't support preparing the statement, or server-side prepared statements" +
-					" are disabled?"
-			, "5.0.5", MISC_CATEGORY, Integer.MIN_VALUE);
+			"generateSimpleParameterMetadata", false, Messages.getString("ConnectionProperties.generateSimpleParameterMetadata"), "5.0.5", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private boolean highAvailabilityAsBoolean = false;
 
 	private BooleanConnectionProperty holdResultsOpenOverStatementClose = new BooleanConnectionProperty(
-			"holdResultsOpenOverStatementClose",
+			"holdResultsOpenOverStatementClose", //$NON-NLS-1$
 			false,
-			"Should the driver close result sets on Statement.close() as required by the JDBC specification?",
-			"3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.holdRSOpenOverStmtClose"), //$NON-NLS-1$
+			"3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty ignoreNonTxTables = new BooleanConnectionProperty(
-			"ignoreNonTxTables",
+			"ignoreNonTxTables", //$NON-NLS-1$
 			false,
-			"Ignore non-transactional table warning for rollback? (defaults to 'false').",
-			"3.0.9", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.ignoreNonTxTables"), //$NON-NLS-1$
+			"3.0.9", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private IntegerConnectionProperty initialTimeout = new IntegerConnectionProperty(
-			"initialTimeout", 2, 1, Integer.MAX_VALUE,
-			"If autoReconnect is enabled, the"
-					+ " initial time to wait between"
-					+ " re-connect attempts (in seconds, defaults to '2').",
-			"1.1", HA_CATEGORY, 5);
+			"initialTimeout", 2, 1, Integer.MAX_VALUE, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.initialTimeout"), //$NON-NLS-1$
+			"1.1", HA_CATEGORY, 5); //$NON-NLS-1$
 
 	private BooleanConnectionProperty isInteractiveClient = new BooleanConnectionProperty(
-			"interactiveClient",
+			"interactiveClient", //$NON-NLS-1$
 			false,
-			"Set the CLIENT_INTERACTIVE flag, which tells MySQL "
-					+ "to timeout connections based on INTERACTIVE_TIMEOUT instead of WAIT_TIMEOUT",
-			"3.1.0", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.interactiveClient"), //$NON-NLS-1$
+			"3.1.0", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty jdbcCompliantTruncation = new BooleanConnectionProperty(
-			"jdbcCompliantTruncation",
+			"jdbcCompliantTruncation", //$NON-NLS-1$
 			true,
-			"Should the driver throw java.sql.DataTruncation"
-					+ " exceptions when data is truncated as is required by the JDBC specification when connected to a server that supports warnings"
-					+ "(MySQL 4.1.0 and newer)?", "3.1.2", MISC_CATEGORY,
+			Messages.getString("ConnectionProperties.jdbcCompliantTruncation"), "3.1.2", MISC_CATEGORY, //$NON-NLS-1$ //$NON-NLS-2$
 			Integer.MIN_VALUE);
 
 	private boolean jdbcCompliantTruncationForReads = 
 		this.jdbcCompliantTruncation.getValueAsBoolean();
 	
 	private StringConnectionProperty loadBalanceStrategy = new StringConnectionProperty(
-			"loadBalanceStrategy",
-			"random",
-			new String[] {"random", "bestResponseTime"},
-			"If using a load-balanced connection to connect to SQL nodes in a MySQL Cluster/NDB configuration" +
-			"(by using the URL prefix \"jdbc:mysql:loadbalance://\"), which load balancin algorithm should the driver " +
-			"use: (1) \"random\" - the driver will pick a random host for each request. This tends " +
-			"to work better than round-robin, as the randomness will somewhat account for " +
-			"spreading loads where requests vary in response time, while round-robin " +
-			"can sometimes lead to overloaded nodes if there are variations in response times " +
-			"across the workload. (2) \"bestResponseTime\" - the driver will route the request to the host that had " +
-			"the best response time for the previous transaction.",
-			"5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			"loadBalanceStrategy", //$NON-NLS-1$
+			"random", //$NON-NLS-1$
+			new String[] {"random", "bestResponseTime"}, //$NON-NLS-1$ //$NON-NLS-2$
+			Messages.getString("ConnectionProperties.loadBalanceStrategy"), //$NON-NLS-1$
+			"5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
-	private StringConnectionProperty localSocketAddress = new StringConnectionProperty("localSocketAddress",
-			null, "Hostname or IP address given to explicitly configure the interface that "
-			+ "the driver will bind the client side of the TCP/IP connection to when connecting.",
-			"5.0.5", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
+	private StringConnectionProperty localSocketAddress = new StringConnectionProperty("localSocketAddress", //$NON-NLS-1$
+			null, Messages.getString("ConnectionProperties.localSocketAddress"), //$NON-NLS-1$
+			"5.0.5", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private MemorySizeConnectionProperty locatorFetchBufferSize = new MemorySizeConnectionProperty(
-			"locatorFetchBufferSize",
+			"locatorFetchBufferSize", //$NON-NLS-1$
 			1024 * 1024,
 			0,
 			Integer.MAX_VALUE,
-			"If 'emulateLocators' is configured to 'true', what size "
-					+ " buffer should be used when fetching BLOB data for getBinaryInputStream?",
-			"3.2.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.locatorFetchBufferSize"), //$NON-NLS-1$
+			"3.2.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private StringConnectionProperty loggerClassName = new StringConnectionProperty(
-			"logger", STANDARD_LOGGER_NAME,
-			"The name of a class that implements '" + Log.class.getName()
-					+ "' that will be used to log messages to."
-					+ "(default is '" + STANDARD_LOGGER_NAME + "', which "
-					+ "logs to STDERR)", "3.1.1", DEBUGING_PROFILING_CATEGORY,
+			"logger", STANDARD_LOGGER_NAME, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.logger", new Object[] {Log.class.getName(), STANDARD_LOGGER_NAME}), //$NON-NLS-1$
+					 "3.1.1", DEBUGING_PROFILING_CATEGORY, //$NON-NLS-1$ //$NON-NLS-2$
 			0);
 
 	private BooleanConnectionProperty logSlowQueries = new BooleanConnectionProperty(
-			"logSlowQueries",
+			"logSlowQueries", //$NON-NLS-1$
 			false,
-			"Should queries that take longer than 'slowQueryThresholdMillis' be logged?",
-			"3.1.2", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.logSlowQueries"), //$NON-NLS-1$
+			"3.1.2", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty logXaCommands = new BooleanConnectionProperty(
-			"logXaCommands",
+			"logXaCommands", //$NON-NLS-1$
 			false,
-			"Should the driver log XA commands sent by MysqlXaConnection to the server," +
-			" at the DEBUG level of logging?",
-			"5.0.5", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.logXaCommands"), //$NON-NLS-1$
+			"5.0.5", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty maintainTimeStats = new BooleanConnectionProperty(
-			"maintainTimeStats",
+			"maintainTimeStats", //$NON-NLS-1$
 			true,
-			"Should the driver maintain various internal timers to enable "
-					+ "idle time calculations as well as more verbose error messages when "
-					+ "the connection to the server fails? Setting this property to "
-					+ "false removes at least two calls to System.getCurrentTimeMillis() "
-					+ "per query.", "3.1.9", PERFORMANCE_CATEGORY,
+			Messages.getString("ConnectionProperties.maintainTimeStats"), "3.1.9", PERFORMANCE_CATEGORY, //$NON-NLS-1$ //$NON-NLS-2$
 			Integer.MAX_VALUE);
 
 	private boolean maintainTimeStatsAsBoolean = true;
 
 	private IntegerConnectionProperty maxQuerySizeToLog = new IntegerConnectionProperty(
-			"maxQuerySizeToLog",
+			"maxQuerySizeToLog", //$NON-NLS-1$
 			2048,
 			0,
 			Integer.MAX_VALUE,
-			"Controls the maximum length/size of a query that will get logged when profiling or tracing",
-			"3.1.3", DEBUGING_PROFILING_CATEGORY, 4);
+			Messages.getString("ConnectionProperties.maxQuerySizeToLog"), //$NON-NLS-1$
+			"3.1.3", DEBUGING_PROFILING_CATEGORY, 4); //$NON-NLS-1$
 
 	private IntegerConnectionProperty maxReconnects = new IntegerConnectionProperty(
-			"maxReconnects",
+			"maxReconnects", //$NON-NLS-1$
 			3,
 			1,
 			Integer.MAX_VALUE,
-			"Maximum number of reconnects to attempt if autoReconnect is true, default is '3'.",
-			"1.1", HA_CATEGORY, 4);
+			Messages.getString("ConnectionProperties.maxReconnects"), //$NON-NLS-1$
+			"1.1", HA_CATEGORY, 4); //$NON-NLS-1$
 
 	private IntegerConnectionProperty maxRows = new IntegerConnectionProperty(
-			"maxRows", -1, -1, Integer.MAX_VALUE,
-			"The maximum number of rows to return "
-					+ " (0, the default means return all rows).",
-			"all versions", MISC_CATEGORY, Integer.MIN_VALUE);
+			"maxRows", -1, -1, Integer.MAX_VALUE, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.maxRows"), //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.allVersions"), MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private int maxRowsAsInt = -1;
 
 	private IntegerConnectionProperty metadataCacheSize = new IntegerConnectionProperty(
-			"metadataCacheSize",
+			"metadataCacheSize", //$NON-NLS-1$
 			50,
 			1,
 			Integer.MAX_VALUE,
-			"The number of queries to cache"
-					+ "ResultSetMetadata for if cacheResultSetMetaData is set to 'true' (default 50)",
-			"3.1.1", PERFORMANCE_CATEGORY, 5);
+			Messages.getString("ConnectionProperties.metadataCacheSize"), //$NON-NLS-1$
+			"3.1.1", PERFORMANCE_CATEGORY, 5); //$NON-NLS-1$
 	
 	private IntegerConnectionProperty netTimeoutForStreamingResults = new IntegerConnectionProperty(
-			"netTimeoutForStreamingResults", 600,
+			"netTimeoutForStreamingResults", 600, //$NON-NLS-1$
 			0, Integer.MAX_VALUE,
-			"What value should the driver automatically set the server setting 'net_write_timeout' to when" +
-			"the streaming result sets feature is in use? (value has unit of seconds, the value '0' means the driver will not try and adjust this value)",
-			"5.1.0", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.netTimeoutForStreamingResults"), //$NON-NLS-1$
+			"5.1.0", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty noAccessToProcedureBodies = new BooleanConnectionProperty(
-			"noAccessToProcedureBodies",
+			"noAccessToProcedureBodies", //$NON-NLS-1$
 			false,
-			"When determining procedure parameter types for CallableStatements, and the connected user "
-			+ " can't access procedure bodies through \"SHOW CREATE PROCEDURE\" or select on mysql.proc "
-			+ " should the driver instead create basic metadata (all parameters reported as INOUT VARCHARs) instead "
-			+ " of throwing an exception?",
-			"5.0.3", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.noAccessToProcedureBodies"), //$NON-NLS-1$
+			"5.0.3", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 			
 	private BooleanConnectionProperty noDatetimeStringSync = new BooleanConnectionProperty(
-			"noDatetimeStringSync",
+			"noDatetimeStringSync", //$NON-NLS-1$
 			false,
-			"Don't ensure that ResultSet.getDatetimeType().toString().equals(ResultSet.getString())",
-			"3.1.7", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.noDatetimeStringSync"), //$NON-NLS-1$
+			"3.1.7", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty noTimezoneConversionForTimeType = new BooleanConnectionProperty(
-			"noTimezoneConversionForTimeType",
+			"noTimezoneConversionForTimeType", //$NON-NLS-1$
 			false,
-			"Don't convert TIME values using the server timezone if 'useTimezone'='true'",
-			"5.0.0", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.noTzConversionForTimeType"), //$NON-NLS-1$
+			"5.0.0", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty nullCatalogMeansCurrent = new BooleanConnectionProperty(
-			"nullCatalogMeansCurrent",
+			"nullCatalogMeansCurrent", //$NON-NLS-1$
 			true,
-			"When DatabaseMetadataMethods ask for a 'catalog' parameter, does the value null mean use the current catalog? "
-					+ "(this is not JDBC-compliant, but follows legacy behavior from earlier versions of the driver)",
-			"3.1.8", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.nullCatalogMeansCurrent"), //$NON-NLS-1$
+			"3.1.8", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty nullNamePatternMatchesAll = new BooleanConnectionProperty(
-			"nullNamePatternMatchesAll",
+			"nullNamePatternMatchesAll", //$NON-NLS-1$
 			true,
-			"Should DatabaseMetaData methods that accept *pattern parameters treat null the same as '%' "
-					+ " (this is not JDBC-compliant, however older versions of the driver accepted this departure from the specification)",
-			"3.1.8", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.nullNamePatternMatchesAll"), //$NON-NLS-1$
+			"3.1.8", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private IntegerConnectionProperty packetDebugBufferSize = new IntegerConnectionProperty(
-			"packetDebugBufferSize",
+			"packetDebugBufferSize", //$NON-NLS-1$
 			20,
 			0,
 			Integer.MAX_VALUE,
-			"The maximum number of packets to retain when 'enablePacketDebug' is true",
-			"3.1.3", DEBUGING_PROFILING_CATEGORY, 7);
+			Messages.getString("ConnectionProperties.packetDebugBufferSize"), //$NON-NLS-1$
+			"3.1.3", DEBUGING_PROFILING_CATEGORY, 7); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty padCharsWithSpace = new BooleanConnectionProperty(
-			"padCharsWithSpace",
+			"padCharsWithSpace", //$NON-NLS-1$
 			false,
-			"If a result set column has the CHAR type and the value does not fill the "
-			+ "amount of characters specified in the DDL for the column, should the driver "
-			+ "pad the remaining characters with space (for ANSI compliance)?",
-			"5.0.6",
+			Messages.getString("ConnectionProperties.padCharsWithSpace"), //$NON-NLS-1$
+			"5.0.6", //$NON-NLS-1$
 			MISC_CATEGORY,
 			Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty paranoid = new BooleanConnectionProperty(
-			"paranoid",
+			"paranoid", //$NON-NLS-1$
 			false,
-			"Take measures to prevent exposure sensitive information in error messages and clear "
-					+ "data structures holding sensitive data when possible? (defaults to 'false')",
-			"3.0.1", SECURITY_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.paranoid"), //$NON-NLS-1$
+			"3.0.1", SECURITY_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty pedantic = new BooleanConnectionProperty(
-			"pedantic", false, "Follow the JDBC spec to the letter.", "3.0.0",
+			"pedantic", false, Messages.getString("ConnectionProperties.pedantic"), "3.0.0", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			MISC_CATEGORY, Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty pinGlobalTxToPhysicalConnection = new BooleanConnectionProperty(
-			"pinGlobalTxToPhysicalConnection", false, "When using XAConnections, should the driver ensure that "
-			+ " operations on a given XID are always routed to the same physical connection? This allows the XAConnection"
-			+ " to support \"XA START ... JOIN\" after \"XA END\" has been called",
-			"5.0.1", MISC_CATEGORY, Integer.MIN_VALUE);
+			"pinGlobalTxToPhysicalConnection", false, Messages.getString("ConnectionProperties.pinGlobalTxToPhysicalConnection"), //$NON-NLS-1$
+			"5.0.1", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty populateInsertRowWithDefaultValues = new BooleanConnectionProperty(
-			"populateInsertRowWithDefaultValues", false,
-			"When using ResultSets that are CONCUR_UPDATABLE, should the driver pre-poulate " +
-			"the \"insert\" row with default values from the DDL for the table used in the query " +
-			" so those values are immediately available for ResultSet accessors? This functionality requires a " +
-			" call to the database for metadata each time a result set of this type is created. " +
-			" If disabled (the default), the default values will be populated by the an internal" +
-			" call to refreshRow() which pulls back default values and/or values changed by triggers.",
-			"5.0.5", MISC_CATEGORY, Integer.MIN_VALUE);
+			"populateInsertRowWithDefaultValues", false, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.populateInsertRowWithDefaultValues"), //$NON-NLS-1$
+			"5.0.5", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private IntegerConnectionProperty preparedStatementCacheSize = new IntegerConnectionProperty(
-			"prepStmtCacheSize", 25, 0, Integer.MAX_VALUE,
-			"If prepared statement caching is enabled, "
-					+ "how many prepared statements should be cached?",
-			"3.0.10", PERFORMANCE_CATEGORY, 10);
+			"prepStmtCacheSize", 25, 0, Integer.MAX_VALUE, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.prepStmtCacheSize"), //$NON-NLS-1$
+			"3.0.10", PERFORMANCE_CATEGORY, 10); //$NON-NLS-1$
 
 	private IntegerConnectionProperty preparedStatementCacheSqlLimit = new IntegerConnectionProperty(
-			"prepStmtCacheSqlLimit",
+			"prepStmtCacheSqlLimit", //$NON-NLS-1$
 			256,
 			1,
 			Integer.MAX_VALUE,
-			"If prepared statement caching is enabled, "
-					+ "what's the largest SQL the driver will cache the parsing for?",
-			"3.0.10", PERFORMANCE_CATEGORY, 11);
+			Messages.getString("ConnectionProperties.prepStmtCacheSqlLimit"), //$NON-NLS-1$
+			"3.0.10", PERFORMANCE_CATEGORY, 11); //$NON-NLS-1$
 
 	private BooleanConnectionProperty processEscapeCodesForPrepStmts = 
-		new BooleanConnectionProperty("processEscapeCodesForPrepStmts",
+		new BooleanConnectionProperty("processEscapeCodesForPrepStmts", //$NON-NLS-1$
 				true,
-				"Should the driver process escape codes in queries that are prepared?",
-				"3.1.12",
+				Messages.getString("ConnectionProperties.processEscapeCodesForPrepStmts"), //$NON-NLS-1$
+				"3.1.12", //$NON-NLS-1$
 				MISC_CATEGORY, Integer.MIN_VALUE);
 	
 	private StringConnectionProperty profileSql = new StringConnectionProperty(
-			"profileSql",
+			"profileSql", //$NON-NLS-1$
 			null,
-			"Deprecated, use 'profileSQL' instead. Trace queries and their execution/fetch times on STDERR (true/false) defaults to 'false'",
-			"2.0.14", DEBUGING_PROFILING_CATEGORY, 3);
+			Messages.getString("ConnectionProperties.profileSqlDeprecated"), //$NON-NLS-1$
+			"2.0.14", DEBUGING_PROFILING_CATEGORY, 3); //$NON-NLS-1$
 
 	private BooleanConnectionProperty profileSQL = new BooleanConnectionProperty(
-			"profileSQL",
+			"profileSQL", //$NON-NLS-1$
 			false,
-			"Trace queries and their execution/fetch times to the configured logger (true/false) defaults to 'false'",
-			"3.1.0", DEBUGING_PROFILING_CATEGORY, 1);
+			Messages.getString("ConnectionProperties.profileSQL"), //$NON-NLS-1$
+			"3.1.0", DEBUGING_PROFILING_CATEGORY, 1); //$NON-NLS-1$
 
 	private boolean profileSQLAsBoolean = false;
 
 	private StringConnectionProperty propertiesTransform = new StringConnectionProperty(
 			NonRegisteringDriver.PROPERTIES_TRANSFORM_KEY,
 			null,
-			"An implementation of com.mysql.jdbc.ConnectionPropertiesTransform that the driver will use to modify URL properties passed to the driver before attempting a connection",
-			"3.1.4", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.connectionPropertiesTransform"), //$NON-NLS-1$
+			"3.1.4", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private IntegerConnectionProperty queriesBeforeRetryMaster = new IntegerConnectionProperty(
-			"queriesBeforeRetryMaster",
+			"queriesBeforeRetryMaster", //$NON-NLS-1$
 			50,
 			1,
 			Integer.MAX_VALUE,
-			"Number of queries to issue before falling back to master when failed over "
-					+ "(when using multi-host failover). Whichever condition is met first, "
-					+ "'queriesBeforeRetryMaster' or 'secondsBeforeRetryMaster' will cause an "
-					+ "attempt to be made to reconnect to the master. Defaults to 50.",
-			"3.0.2", HA_CATEGORY, 7);
+			Messages.getString("ConnectionProperties.queriesBeforeRetryMaster"), //$NON-NLS-1$
+			"3.0.2", HA_CATEGORY, 7); //$NON-NLS-1$
 
 	private BooleanConnectionProperty reconnectAtTxEnd = new BooleanConnectionProperty(
-			"reconnectAtTxEnd", false,
-			"If autoReconnect is set to true, should the driver attempt reconnections"
-					+ "at the end of every transaction?", "3.0.10",
+			"reconnectAtTxEnd", false, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.reconnectAtTxEnd"), "3.0.10", //$NON-NLS-1$ //$NON-NLS-2$
 			HA_CATEGORY, 4);
 
 	private boolean reconnectTxAtEndAsBoolean = false;
 
 	private BooleanConnectionProperty relaxAutoCommit = new BooleanConnectionProperty(
-			"relaxAutoCommit",
+			"relaxAutoCommit", //$NON-NLS-1$
 			false,
-			"If the version of MySQL the driver connects to does not support transactions, still allow calls to commit(), rollback() and setAutoCommit() (true/false, defaults to 'false')?",
-			"2.0.13", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.relaxAutoCommit"), //$NON-NLS-1$
+			"2.0.13", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private IntegerConnectionProperty reportMetricsIntervalMillis = new IntegerConnectionProperty(
-			"reportMetricsIntervalMillis",
+			"reportMetricsIntervalMillis", //$NON-NLS-1$
 			30000,
 			0,
 			Integer.MAX_VALUE,
-			"If 'gatherPerfMetrics' is enabled, how often should they be logged (in ms)?",
-			"3.1.2", DEBUGING_PROFILING_CATEGORY, 3);
+			Messages.getString("ConnectionProperties.reportMetricsIntervalMillis"), //$NON-NLS-1$
+			"3.1.2", DEBUGING_PROFILING_CATEGORY, 3); //$NON-NLS-1$
 
 	private BooleanConnectionProperty requireSSL = new BooleanConnectionProperty(
-			"requireSSL", false,
-			"Require SSL connection if useSSL=true? (defaults to 'false').",
-			"3.1.0", SECURITY_CATEGORY, 3);
+			"requireSSL", false, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.requireSSL"), //$NON-NLS-1$
+			"3.1.0", SECURITY_CATEGORY, 3); //$NON-NLS-1$
 
 	private StringConnectionProperty resourceId = new StringConnectionProperty(
-			"resourceId",
-			null, "A globally unique name that identifies the resource that this datasource or connection is " +
-			"connected to, used for XAResource.isSameRM() when the driver can't determine this value based on " +
-			"hostnames used in the URL",
-			"5.0.1",
+			"resourceId", //$NON-NLS-1$
+			null, Messages.getString("ConnectionProperties.resourceId"), //$NON-NLS-1$
+			"5.0.1", //$NON-NLS-1$
 			HA_CATEGORY,
 			Integer.MIN_VALUE);
 	
-	private IntegerConnectionProperty resultSetSizeThreshold = new IntegerConnectionProperty("resultSetSizeThreshold", 100,
-			"If the usage advisor is enabled, how many rows should a result set contain before the driver warns that it "
-			+ " is suspiciously large?", "5.0.5", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+	private IntegerConnectionProperty resultSetSizeThreshold = new IntegerConnectionProperty("resultSetSizeThreshold", 100, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.resultSetSizeThreshold"), "5.0.5", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$ //$NON-NLS-2$
 			
 	private BooleanConnectionProperty retainStatementAfterResultSetClose = new BooleanConnectionProperty(
-			"retainStatementAfterResultSetClose",
+			"retainStatementAfterResultSetClose", //$NON-NLS-1$
 			false,
-			"Should the driver retain the Statement reference in a ResultSet after ResultSet.close()"
-					+ " has been called. This is not JDBC-compliant after JDBC-4.0.",
-			"3.1.11", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.retainStatementAfterResultSetClose"), //$NON-NLS-1$
+			"3.1.11", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty rewriteBatchedStatements = new BooleanConnectionProperty(
-			"rewriteBatchedStatements",
+			"rewriteBatchedStatements", //$NON-NLS-1$
 			false, 
-			"Should the driver use multiqueries (irregardless of the setting of \"allowMultiQueries\") as well as "
-			+ "rewriting of prepared statements for INSERT into multi-value inserts when executeBatch() is called? Notice that this has the potential "
-			+ "for SQL injection if using plain java.sql.Statements and your code doesn't sanitize input correctly.\n\n"
-			+ "Notice that for prepared statements, server-side prepared statements can not currently take advantage of "
-			+ "this rewrite option, and that if you don't specify stream lengths when using PreparedStatement.set*Stream()," 
-			+ "the driver won't be able to determine the optimium number of parameters per batch and you might receive an" 
-			+ "an error from the driver that the resultant packet is too large.\n\n"
-			+ "Statement.getGeneratedKeys() for these rewritten statements only works when the entire " 
-			+ "batch includes INSERT statements.",
-			"3.1.13", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.rewriteBatchedStatements"), //$NON-NLS-1$
+			"3.1.13", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty rollbackOnPooledClose = new BooleanConnectionProperty(
-			"rollbackOnPooledClose",
+			"rollbackOnPooledClose", //$NON-NLS-1$
 			true,
-			"Should the driver issue a rollback() when the logical connection in a pool is closed?",
-			"3.0.15", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.rollbackOnPooledClose"), //$NON-NLS-1$
+			"3.0.15", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty roundRobinLoadBalance = new BooleanConnectionProperty(
-			"roundRobinLoadBalance",
+			"roundRobinLoadBalance", //$NON-NLS-1$
 			false,
-			"When autoReconnect is enabled, and failoverReadonly is false, should we pick hosts to connect to on a round-robin basis?",
-			"3.1.2", HA_CATEGORY, 5);
+			Messages.getString("ConnectionProperties.roundRobinLoadBalance"), //$NON-NLS-1$
+			"3.1.2", HA_CATEGORY, 5); //$NON-NLS-1$
 
 	private BooleanConnectionProperty runningCTS13 = new BooleanConnectionProperty(
-			"runningCTS13",
+			"runningCTS13", //$NON-NLS-1$
 			false,
-			"Enables workarounds for bugs in Sun's JDBC compliance testsuite version 1.3",
-			"3.1.7", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.runningCTS13"), //$NON-NLS-1$
+			"3.1.7", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private IntegerConnectionProperty secondsBeforeRetryMaster = new IntegerConnectionProperty(
-			"secondsBeforeRetryMaster",
+			"secondsBeforeRetryMaster", //$NON-NLS-1$
 			30,
 			1,
 			Integer.MAX_VALUE,
-			"How long should the driver wait, when failed over, before attempting "
-					+ "to reconnect to the master server? Whichever condition is met first, "
-					+ "'queriesBeforeRetryMaster' or 'secondsBeforeRetryMaster' will cause an "
-					+ "attempt to be made to reconnect to the master. Time in seconds, defaults to 30",
-			"3.0.2", HA_CATEGORY, 8);
+			Messages.getString("ConnectionProperties.secondsBeforeRetryMaster"), //$NON-NLS-1$
+			"3.0.2", HA_CATEGORY, 8); //$NON-NLS-1$
 
 	private StringConnectionProperty serverTimezone = new StringConnectionProperty(
-			"serverTimezone",
+			"serverTimezone", //$NON-NLS-1$
 			null,
-			"Override detection/mapping of timezone. Used when timezone from server doesn't map to Java timezone",
-			"3.0.2", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.serverTimezone"), //$NON-NLS-1$
+			"3.0.2", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private StringConnectionProperty sessionVariables = new StringConnectionProperty(
-			"sessionVariables", null,
-			"A comma-separated list of name/value pairs to be sent as SET SESSION ... to "
-					+ " the server when the driver connects.", "3.1.8",
+			"sessionVariables", null, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.sessionVariables"), "3.1.8", //$NON-NLS-1$ //$NON-NLS-2$
 			MISC_CATEGORY, Integer.MAX_VALUE);
 
 	private IntegerConnectionProperty slowQueryThresholdMillis = new IntegerConnectionProperty(
-			"slowQueryThresholdMillis",
+			"slowQueryThresholdMillis", //$NON-NLS-1$
 			2000,
 			0,
 			Integer.MAX_VALUE,
-			"If 'logSlowQueries' is enabled, how long should a query (in ms) before it is logged as 'slow'?",
-			"3.1.2", DEBUGING_PROFILING_CATEGORY, 9);
+			Messages.getString("ConnectionProperties.slowQueryThresholdMillis"), //$NON-NLS-1$
+			"3.1.2", DEBUGING_PROFILING_CATEGORY, 9); //$NON-NLS-1$
 	
 	private LongConnectionProperty slowQueryThresholdNanos = new LongConnectionProperty(
-			"slowQueryThresholdNanos",
+			"slowQueryThresholdNanos", //$NON-NLS-1$
 			0,
-			"If 'useNanosForElapsedTime' is set to true, and this property is set to a non-zero value," 
-			+ " the driver will use this threshold (in nanosecond units) to determine if a query was slow.",
-			"5.0.7",
+			Messages.getString("ConnectionProperties.slowQueryThresholdNanos"), //$NON-NLS-1$
+			"5.0.7", //$NON-NLS-1$
 			DEBUGING_PROFILING_CATEGORY,
 			10);
 	
 	private StringConnectionProperty socketFactoryClassName = new StringConnectionProperty(
-			"socketFactory",
+			"socketFactory", //$NON-NLS-1$
 			StandardSocketFactory.class.getName(),
-			"The name of the class that the driver should use for creating socket connections to the server. This class must implement the interface 'com.mysql.jdbc.SocketFactory' and have public no-args constructor.",
-			"3.0.3", CONNECTION_AND_AUTH_CATEGORY, 4);
+			Messages.getString("ConnectionProperties.socketFactory"), //$NON-NLS-1$
+			"3.0.3", CONNECTION_AND_AUTH_CATEGORY, 4); //$NON-NLS-1$
 
 	private IntegerConnectionProperty socketTimeout = new IntegerConnectionProperty(
-			"socketTimeout",
+			"socketTimeout", //$NON-NLS-1$
 			0,
 			0,
 			Integer.MAX_VALUE,
-			"Timeout on network socket operations (0, the default means no timeout).",
-			"3.0.1", CONNECTION_AND_AUTH_CATEGORY, 10);
+			Messages.getString("ConnectionProperties.socketTimeout"), //$NON-NLS-1$
+			"3.0.1", CONNECTION_AND_AUTH_CATEGORY, 10); //$NON-NLS-1$
 	
-	private StringConnectionProperty statementInterceptors = new StringConnectionProperty("statementInterceptors",
-			null, "", "5.1.1", MISC_CATEGORY, Integer.MIN_VALUE);
+	private StringConnectionProperty statementInterceptors = new StringConnectionProperty("statementInterceptors", //$NON-NLS-1$
+			null, Messages.getString("ConnectionProperties.statementInterceptors"), "5.1.1", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$ //$NON-NLS-2$
 	
 	private BooleanConnectionProperty strictFloatingPoint = new BooleanConnectionProperty(
-			"strictFloatingPoint", false,
-			"Used only in older versions of compliance test", "3.0.0",
+			"strictFloatingPoint", false, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.strictFloatingPoint"), "3.0.0", //$NON-NLS-1$ //$NON-NLS-2$
 			MISC_CATEGORY, Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty strictUpdates = new BooleanConnectionProperty(
-			"strictUpdates",
+			"strictUpdates", //$NON-NLS-1$
 			true,
-			"Should the driver do strict checking (all primary keys selected) of updatable result sets (true, false, defaults to 'true')?",
-			"3.0.4", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.strictUpdates"), //$NON-NLS-1$
+			"3.0.4", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty overrideSupportsIntegrityEnhancementFacility =
-		new BooleanConnectionProperty("overrideSupportsIntegrityEnhancementFacility",
+		new BooleanConnectionProperty("overrideSupportsIntegrityEnhancementFacility", //$NON-NLS-1$
 				false,
-				"Should the driver return \"true\" for DatabaseMetaData.supportsIntegrityEnhancementFacility() "
-				+ "even if the database doesn't support it to workaround applications that require this method to return "
-				+ "\"true\" to signal support of foreign keys, even though the SQL specification states that this facility "
-				+ "contains much more than just foreign key support (one such application being OpenOffice)?",
-				"3.1.12", MISC_CATEGORY, Integer.MIN_VALUE);
+				Messages.getString("ConnectionProperties.overrideSupportsIEF"), //$NON-NLS-1$
+				"3.1.12", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty tcpNoDelay = new BooleanConnectionProperty(
 			StandardSocketFactory.TCP_NO_DELAY_PROPERTY_NAME,
 			Boolean.valueOf(StandardSocketFactory.TCP_NO_DELAY_DEFAULT_VALUE).booleanValue(),
-			"If connecting using TCP/IP, should the driver set SO_TCP_NODELAY (disabling the Nagle Algorithm)?",
-			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.tcpNoDelay"), //$NON-NLS-1$
+			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty tcpKeepAlive = new BooleanConnectionProperty(
 			StandardSocketFactory.TCP_KEEP_ALIVE_PROPERTY_NAME,
 			Boolean.valueOf(StandardSocketFactory.TCP_KEEP_ALIVE_DEFAULT_VALUE).booleanValue(),
-			"If connecting using TCP/IP, should the driver set SO_KEEPALIVE?",
-			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.tcpKeepAlive"), //$NON-NLS-1$
+			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private IntegerConnectionProperty tcpRcvBuf = new IntegerConnectionProperty(
 			StandardSocketFactory.TCP_RCV_BUF_PROPERTY_NAME,
 			Integer.parseInt(StandardSocketFactory.TCP_RCV_BUF_DEFAULT_VALUE),
 			0, Integer.MAX_VALUE,
-			"If connecting using TCP/IP, should the driver set SO_RCV_BUF to the given value? "
-			+ "The default value of '0', means use the platform default value for this property)",
-			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.tcpSoRcvBuf"), //$NON-NLS-1$
+			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private IntegerConnectionProperty tcpSndBuf = new IntegerConnectionProperty(
 			StandardSocketFactory.TCP_SND_BUF_PROPERTY_NAME,
 			Integer.parseInt(StandardSocketFactory.TCP_SND_BUF_DEFAULT_VALUE),
 			0, Integer.MAX_VALUE,
-			"If connecting using TCP/IP, shuold the driver set SO_SND_BUF to the given value? "
-			+ "The default value of '0', means use the platform default value for this property)",
-			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.tcpSoSndBuf"), //$NON-NLS-1$
+			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 			
 	private IntegerConnectionProperty tcpTrafficClass = new IntegerConnectionProperty(
 			StandardSocketFactory.TCP_TRAFFIC_CLASS_PROPERTY_NAME,
 			Integer.parseInt(StandardSocketFactory.TCP_TRAFFIC_CLASS_DEFAULT_VALUE),
 			0, 255,
-			"If connecting using TCP/IP, should the driver set traffic class or type-of-service fields ?" + 
-			" See the documentation for java.net.Socket.setTrafficClass() for more information.",
-			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.tcpTrafficClass"), //$NON-NLS-1$
+			"5.0.7", NETWORK_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty tinyInt1isBit = new BooleanConnectionProperty(
-			"tinyInt1isBit",
+			"tinyInt1isBit", //$NON-NLS-1$
 			true,
-			"Should the driver treat the datatype TINYINT(1) as the BIT type "
-					+ "(because the server silently converts BIT -> TINYINT(1) when creating tables)?",
-			"3.0.16", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.tinyInt1isBit"), //$NON-NLS-1$
+			"3.0.16", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty traceProtocol = new BooleanConnectionProperty(
-			"traceProtocol", false,
-			"Should trace-level network protocol be logged?", "3.1.2",
+			"traceProtocol", false, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.traceProtocol"), "3.1.2", //$NON-NLS-1$ //$NON-NLS-2$
 			DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty treatUtilDateAsTimestamp = new BooleanConnectionProperty(
-			"treatUtilDateAsTimestamp", true,
-			"Should the driver treat java.util.Date as a TIMESTAMP for the purposes of PreparedStatement.setObject()?",
-			"5.0.5", MISC_CATEGORY, Integer.MIN_VALUE);
+			"treatUtilDateAsTimestamp", true, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.treatUtilDateAsTimestamp"), //$NON-NLS-1$
+			"5.0.5", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty transformedBitIsBoolean = new BooleanConnectionProperty(
-			"transformedBitIsBoolean",
+			"transformedBitIsBoolean", //$NON-NLS-1$
 			false,
-			"If the driver converts TINYINT(1) to a different type, should it use BOOLEAN instead of BIT "
-					+ " for future compatibility with MySQL-5.0, as MySQL-5.0 has a BIT type?",
-			"3.1.9", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.transformedBitIsBoolean"), //$NON-NLS-1$
+			"3.1.9", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty useCompression = new BooleanConnectionProperty(
-			"useCompression",
+			"useCompression", //$NON-NLS-1$
 			false,
-			"Use zlib compression when communicating with the server (true/false)? Defaults to 'false'.",
-			"3.0.17", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useCompression"), //$NON-NLS-1$
+			"3.0.17", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private StringConnectionProperty useConfigs = new StringConnectionProperty(
-			"useConfigs",
+			"useConfigs", //$NON-NLS-1$
 			null,
-			"Load the comma-delimited list of configuration properties before parsing the "
-					+ "URL or applying user-specified properties. These configurations are explained in the 'Configurations' of the documentation.",
-			"3.1.5", CONNECTION_AND_AUTH_CATEGORY, Integer.MAX_VALUE);
+			Messages.getString("ConnectionProperties.useConfigs"), //$NON-NLS-1$
+			"3.1.5", CONNECTION_AND_AUTH_CATEGORY, Integer.MAX_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty useCursorFetch = new BooleanConnectionProperty(
-			"useCursorFetch",
+			"useCursorFetch", //$NON-NLS-1$
 			false,
-			"If connected to MySQL > 5.0.2, and setFetchSize() > 0 on a statement, should "
-			+ " that statement use cursor-based fetching to retrieve rows?",
-			"5.0.0", PERFORMANCE_CATEGORY, Integer.MAX_VALUE);
+			Messages.getString("ConnectionProperties.useCursorFetch"), //$NON-NLS-1$
+			"5.0.0", PERFORMANCE_CATEGORY, Integer.MAX_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty useDynamicCharsetInfo = new BooleanConnectionProperty(
-			"useDynamicCharsetInfo",
+			"useDynamicCharsetInfo", //$NON-NLS-1$
 			true,
-			"Should the driver use a per-connection cache of character set information queried from the "
-			+ " server when necessary, or use a built-in static mapping that is more efficient, but isn't "
-			+ " aware of custom character sets or character sets implemented after the release of the JDBC driver?"
-			, "5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useDynamicCharsetInfo") //$NON-NLS-1$
+			, "5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty useFastIntParsing = new BooleanConnectionProperty(
-			"useFastIntParsing",
+			"useFastIntParsing", //$NON-NLS-1$
 			true,
-			"Use internal String->Integer conversion routines to avoid excessive object creation?",
-			"3.1.4", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useFastIntParsing"), //$NON-NLS-1$
+			"3.1.4", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty useFastDateParsing = new BooleanConnectionProperty(
-			"useFastDateParsing",
+			"useFastDateParsing", //$NON-NLS-1$
 			true,
-			"Use internal String->Date/Time/Teimstamp conversion routines to avoid excessive object creation?",
-			"5.0.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useFastDateParsing"), //$NON-NLS-1$
+			"5.0.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty useHostsInPrivileges = new BooleanConnectionProperty(
-			"useHostsInPrivileges",
+			"useHostsInPrivileges", //$NON-NLS-1$
 			true,
-			"Add '@hostname' to users in DatabaseMetaData.getColumn/TablePrivileges() (true/false), defaults to 'true'.",
-			"3.0.2", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useHostsInPrivileges"), //$NON-NLS-1$
+			"3.0.2", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	private BooleanConnectionProperty useInformationSchema = new BooleanConnectionProperty(
-			"useInformationSchema",
+			"useInformationSchema", //$NON-NLS-1$
 			false,
-			"When connected to MySQL-5.0.7 or newer, should the driver use the INFORMATION_SCHEMA to " 
-			+ " derive information used by DatabaseMetaData?",
-			"5.0.0", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useInformationSchema"), //$NON-NLS-1$
+			"5.0.0", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	private BooleanConnectionProperty useJDBCCompliantTimezoneShift = new BooleanConnectionProperty(
-			"useJDBCCompliantTimezoneShift",
+			"useJDBCCompliantTimezoneShift", //$NON-NLS-1$
 			false,
-			"Should the driver use JDBC-compliant rules when converting TIME/TIMESTAMP/DATETIME values' timezone information " +
-			"for those JDBC arguments which take a java.util.Calendar argument? (Notice that this " +
-			"option is exclusive of the \"useTimezone=true\" configuration option.)",
-			"5.0.0",
+			Messages.getString("ConnectionProperties.useJDBCCompliantTimezoneShift"), //$NON-NLS-1$
+			"5.0.0", //$NON-NLS-1$
 			MISC_CATEGORY, Integer.MIN_VALUE);
 	
 	private BooleanConnectionProperty useLocalSessionState = new BooleanConnectionProperty(
-			"useLocalSessionState",
+			"useLocalSessionState", //$NON-NLS-1$
 			false,
-			"Should the driver refer to the internal values of autocommit and transaction isolation that are set "
-					+ "by Connection.setAutoCommit() and Connection.setTransactionIsolation() and transaction state "
-					+ "as maintained by the protocol, rather than querying the database or blindly "
-					+ "sending commands to the database for commit() or rollback() method calls?",
-			"3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useLocalSessionState"), //$NON-NLS-1$
+			"3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty useNanosForElapsedTime = new BooleanConnectionProperty(
-			"useNanosForElapsedTime",
+			"useNanosForElapsedTime", //$NON-NLS-1$
 			false,
-			"For profiling/debugging functionality that measures elapsed time, should the driver "
-			+ "try to use nanoseconds resolution if available (JDK >= 1.5)?",
-			"5.0.7",
+			Messages.getString("ConnectionProperties.useNanosForElapsedTime"), //$NON-NLS-1$
+			"5.0.7", //$NON-NLS-1$
 			DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 	
 	private BooleanConnectionProperty useOldAliasMetadataBehavior = new BooleanConnectionProperty(
-			"useOldAliasMetadataBehavior",
+			"useOldAliasMetadataBehavior", //$NON-NLS-1$
 			false,
-			"Should the driver use the legacy behavior for \"AS\" clauses on columns and tables, and only "
-		    + "return aliases (if any) for ResultSetMetaData.getColumnName() or ResultSetMetaData.getTableName() "
-		    + "rather than the original column/table name?",
-		    "5.0.4",
+			Messages.getString("ConnectionProperties.useOldAliasMetadataBehavior"), //$NON-NLS-1$
+		    "5.0.4", //$NON-NLS-1$
 		    MISC_CATEGORY,
 		    Integer.MIN_VALUE);
 	
 	private BooleanConnectionProperty useOldUTF8Behavior = new BooleanConnectionProperty(
-			"useOldUTF8Behavior",
+			"useOldUTF8Behavior", //$NON-NLS-1$
 			false,
-			"Use the UTF-8 behavior the driver did when communicating with 4.0 and older servers",
-			"3.1.6", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useOldUtf8Behavior"), //$NON-NLS-1$
+			"3.1.6", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private boolean useOldUTF8BehaviorAsBoolean = false;
 
 	private BooleanConnectionProperty useOnlyServerErrorMessages = new BooleanConnectionProperty(
-			"useOnlyServerErrorMessages",
+			"useOnlyServerErrorMessages", //$NON-NLS-1$
 			true,
-			"Don't prepend 'standard' SQLState error messages to error messages returned by the server.",
-			"3.0.15", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useOnlyServerErrorMessages"), //$NON-NLS-1$
+			"3.0.15", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty useReadAheadInput = new BooleanConnectionProperty(
-			"useReadAheadInput",
+			"useReadAheadInput", //$NON-NLS-1$
 			true,
-			"Use newer, optimized non-blocking, buffered input stream when reading from the server?",
-			"3.1.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useReadAheadInput"), //$NON-NLS-1$
+			"3.1.5", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty useSqlStateCodes = new BooleanConnectionProperty(
-			"useSqlStateCodes",
+			"useSqlStateCodes", //$NON-NLS-1$
 			true,
-			"Use SQL Standard state codes instead of 'legacy' X/Open/SQL state codes (true/false), default is 'true'",
-			"3.1.3", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useSqlStateCodes"), //$NON-NLS-1$
+			"3.1.3", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty useSSL = new BooleanConnectionProperty(
-			"useSSL",
+			"useSSL", //$NON-NLS-1$
 			false,
-			"Use SSL when communicating with the server (true/false), defaults to 'false'",
-			"3.0.2", SECURITY_CATEGORY, 2);
+			Messages.getString("ConnectionProperties.useSSL"), //$NON-NLS-1$
+			"3.0.2", SECURITY_CATEGORY, 2); //$NON-NLS-1$
 
 	private BooleanConnectionProperty useSSPSCompatibleTimezoneShift = new BooleanConnectionProperty(
-			"useSSPSCompatibleTimezoneShift",
+			"useSSPSCompatibleTimezoneShift", //$NON-NLS-1$
 			false,
-			"If migrating from an environment that was using server-side prepared statements, and the"
-			+ " configuration property \"useJDBCCompliantTimeZoneShift\" set to \"true\", use compatible behavior"
-			+ " when not using server-side prepared statements when sending TIMESTAMP values to the MySQL server.",
-			"5.0.5", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useSSPSCompatibleTimezoneShift"), //$NON-NLS-1$
+			"5.0.5", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty useStreamLengthsInPrepStmts = new BooleanConnectionProperty(
-			"useStreamLengthsInPrepStmts",
+			"useStreamLengthsInPrepStmts", //$NON-NLS-1$
 			true,
-			"Honor stream length parameter in "
-					+ "PreparedStatement/ResultSet.setXXXStream() method calls (true/false, defaults to 'true')?",
-			"3.0.2", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useStreamLengthsInPrepStmts"), //$NON-NLS-1$
+			"3.0.2", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty useTimezone = new BooleanConnectionProperty(
-			"useTimezone",
+			"useTimezone", //$NON-NLS-1$
 			false,
-			"Convert time/date types between client and server timezones (true/false, defaults to 'false')?",
-			"3.0.2", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.useTimezone"), //$NON-NLS-1$
+			"3.0.2", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty useUltraDevWorkAround = new BooleanConnectionProperty(
-			"ultraDevHack",
+			"ultraDevHack", //$NON-NLS-1$
 			false,
-			"Create PreparedStatements for prepareCall() when required, because UltraDev "
-					+ " is broken and issues a prepareCall() for _all_ statements? (true/false, defaults to 'false')",
-			"2.0.3", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.ultraDevHack"), //$NON-NLS-1$
+			"2.0.3", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty useUnbufferedInput = new BooleanConnectionProperty(
-			"useUnbufferedInput", true,
-			"Don't use BufferedInputStream for reading data from the server",
-			"3.0.11", MISC_CATEGORY, Integer.MIN_VALUE);
+			"useUnbufferedInput", true, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.useUnbufferedInput"), //$NON-NLS-1$
+			"3.0.11", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private BooleanConnectionProperty useUnicode = new BooleanConnectionProperty(
-			"useUnicode",
+			"useUnicode", //$NON-NLS-1$
 			true,
-			"Should the driver use Unicode character encodings when handling strings? Should only be used when the driver can't determine the character set mapping, or you are trying to 'force' the driver to use a character set that MySQL either doesn't natively support (such as UTF-8), true/false, defaults to 'true'",
-			"1.1g", MISC_CATEGORY, 0);
+			Messages.getString("ConnectionProperties.useUnicode"), //$NON-NLS-1$
+			"1.1g", MISC_CATEGORY, 0); //$NON-NLS-1$
 
 	// Cache these values, they are 'hot'
 	private boolean useUnicodeAsBoolean = true;
 
 	private BooleanConnectionProperty useUsageAdvisor = new BooleanConnectionProperty(
-			"useUsageAdvisor",
+			"useUsageAdvisor", //$NON-NLS-1$
 			false,
-			"Should the driver issue 'usage' warnings advising proper and efficient usage of JDBC and MySQL Connector/J to the log (true/false, defaults to 'false')?",
-			"3.1.1", DEBUGING_PROFILING_CATEGORY, 10);
+			Messages.getString("ConnectionProperties.useUsageAdvisor"), //$NON-NLS-1$
+			"3.1.1", DEBUGING_PROFILING_CATEGORY, 10); //$NON-NLS-1$
 
 	private boolean useUsageAdvisorAsBoolean = false;
 
 	private BooleanConnectionProperty yearIsDateType = new BooleanConnectionProperty(
-			"yearIsDateType",
+			"yearIsDateType", //$NON-NLS-1$
 			true,
-			"Should the JDBC driver treat the MySQL type \"YEAR\" as a java.sql.Date, or as a SHORT?",
-			"3.1.9", MISC_CATEGORY, Integer.MIN_VALUE);
+			Messages.getString("ConnectionProperties.yearIsDateType"), //$NON-NLS-1$
+			"3.1.9", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
 	private StringConnectionProperty zeroDateTimeBehavior = new StringConnectionProperty(
-			"zeroDateTimeBehavior",
+			"zeroDateTimeBehavior", //$NON-NLS-1$
 			ZERO_DATETIME_BEHAVIOR_EXCEPTION,
 			new String[] { ZERO_DATETIME_BEHAVIOR_EXCEPTION,
 					ZERO_DATETIME_BEHAVIOR_ROUND,
 					ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL },
-			"What should happen when the driver encounters DATETIME values that are composed "
-					+ "entirely of zeroes (used by MySQL to represent invalid dates)? "
-					+ "Valid values are '"
-					+ ZERO_DATETIME_BEHAVIOR_EXCEPTION
-					+ "', '"
-					+ ZERO_DATETIME_BEHAVIOR_ROUND
-					+ "' and '"
-					+ ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL + "'.", "3.1.4",
+			Messages.getString("ConnectionProperties.zeroDateTimeBehavior", new Object[] {ZERO_DATETIME_BEHAVIOR_EXCEPTION, ZERO_DATETIME_BEHAVIOR_ROUND,ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL}),  //$NON-NLS-1$
+			"3.1.4", //$NON-NLS-1$ //$NON-NLS-2$
 			MISC_CATEGORY, Integer.MIN_VALUE);
 
-	private BooleanConnectionProperty useJvmCharsetConverters = new BooleanConnectionProperty("useJvmCharsetConverters",
-			false, "Always use the character encoding routines built into the JVM, rather than using "
-			+ "lookup tables for single-byte character sets?", "5.0.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+	private BooleanConnectionProperty useJvmCharsetConverters = new BooleanConnectionProperty("useJvmCharsetConverters", //$NON-NLS-1$
+			false, Messages.getString("ConnectionProperties.useJvmCharsetConverters"), "5.0.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$ //$NON-NLS-2$
 	
-	private BooleanConnectionProperty useGmtMillisForDatetimes = new BooleanConnectionProperty("useGmtMillisForDatetimes", false, "Convert between session timezone and GMT before creating Date and Timestamp instances (value of \"false\" is legacy behavior, \"true\" leads to more JDBC-compliant behavior.", "3.1.12", MISC_CATEGORY, Integer.MIN_VALUE);
+	private BooleanConnectionProperty useGmtMillisForDatetimes = new BooleanConnectionProperty("useGmtMillisForDatetimes", false, Messages.getString("ConnectionProperties.useGmtMillisForDatetimes"), "3.1.12", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-	private BooleanConnectionProperty dumpMetadataOnColumnNotFound = new BooleanConnectionProperty("dumpMetadataOnColumnNotFound", false, "Should the driver dump the field-level metadata of a result set into " + "the exception message when ResultSet.findColumn() fails?", "3.1.13", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+	private BooleanConnectionProperty dumpMetadataOnColumnNotFound = new BooleanConnectionProperty("dumpMetadataOnColumnNotFound", false, Messages.getString("ConnectionProperties.dumpMetadataOnColumnNotFound"), "3.1.13", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
 	// SSL Options
 	
 	private StringConnectionProperty clientCertificateKeyStoreUrl = new StringConnectionProperty(
-			"clientCertificateKeyStoreUrl", null,
-			"URL to the client certificate KeyStore (if not specified, use defaults)", "5.1.0",
+			"clientCertificateKeyStoreUrl", null, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.clientCertificateKeyStoreUrl"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
 			SECURITY_CATEGORY, Integer.MAX_VALUE);
 	
 	private StringConnectionProperty trustCertificateKeyStoreUrl = new StringConnectionProperty(
-			"trustCertificateKeyStoreUrl", null,
-			"URL to the trusted root certificate KeyStore (if not specified, use defaults)", "5.1.0",
+			"trustCertificateKeyStoreUrl", null, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.trustCertificateKeyStoreUrl"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
 			SECURITY_CATEGORY, Integer.MAX_VALUE);
 	
 	private StringConnectionProperty clientCertificateKeyStoreType = new StringConnectionProperty(
-			"clientCertificateKeyStoreType", null,
-			"KeyStore type for client certificates (NULL or empty means use default, "
-			+ " standard keystore types supported by the JVM are \"JKS\" and \"PKCS12\", your "
-			+ "environment may have more available depending on what security products are "
-			+ "installed and available to the JVM.", "5.1.0",
+			"clientCertificateKeyStoreType", null, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.clientCertificateKeyStoreType"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
 			SECURITY_CATEGORY, Integer.MAX_VALUE);
 	
 	private StringConnectionProperty clientCertificateKeyStorePassword = new StringConnectionProperty(
-			"clientCertificateKeyStorePassword", null,
-			"Password for the client certificates KeyStore", "5.1.0",
+			"clientCertificateKeyStorePassword", null, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.clientCertificateKeyStorePassword"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
 			SECURITY_CATEGORY, Integer.MAX_VALUE);
 	
 	private StringConnectionProperty trustCertificateKeyStoreType = new StringConnectionProperty(
-			"trustCertificateKeyStoreType", null,
-			"KeyStore type for trusted root certificates (NULL or empty means use default, "
-			+ " standard keystore types supported by the JVM are \"JKS\" and \"PKCS12\", your "
-			+ "environment may have more available depending on what security products are "
-			+ "installed and available to the JVM.", "5.1.0",
+			"trustCertificateKeyStoreType", null, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.trustCertificateKeyStoreType"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
 			SECURITY_CATEGORY, Integer.MAX_VALUE);
 	
 	private StringConnectionProperty trustCertificateKeyStorePassword = new StringConnectionProperty(
-			"trustCertificateKeyStorePassword", null,
-			"Password for the trusted root certificates KeyStore", "5.1.0",
+			"trustCertificateKeyStorePassword", null, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.trustCertificateKeyStorePassword"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
 			SECURITY_CATEGORY, Integer.MAX_VALUE);
 	
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
@@ -1715,7 +1573,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				
 				driverProperties[i] = propToExpose.getAsDriverPropertyInfo();
 			} catch (IllegalAccessException iae) {
-				throw SQLError.createSQLException("Internal properties failure",
+				throw SQLError.createSQLException(Messages.getString("ConnectionProperties.InternalPropertiesFailure"), //$NON-NLS-1$
 						SQLError.SQL_STATE_GENERAL_ERROR);
 			}
 		}
@@ -1746,7 +1604,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 							.toString());
 				}
 			} catch (IllegalAccessException iae) {
-				throw SQLError.createSQLException("Internal properties failure",
+				throw SQLError.createSQLException("Internal properties failure", //$NON-NLS-1$
 						SQLError.SQL_STATE_GENERAL_ERROR);
 			}
 		}
@@ -1759,7 +1617,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	 */
 	public String exposeAsXml() throws SQLException {
 		StringBuffer xmlBuf = new StringBuffer();
-		xmlBuf.append("<ConnectionProperties>");
+		xmlBuf.append("<ConnectionProperties>"); //$NON-NLS-1$
 
 		int numPropertiesToSet = PROPERTY_LIST.size();
 
@@ -1780,11 +1638,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		//
 		StringConnectionProperty userProp = new StringConnectionProperty(
 				NonRegisteringDriver.USER_PROPERTY_KEY, null,
-				"The user to connect as", "all", CONNECTION_AND_AUTH_CATEGORY,
+				Messages.getString("ConnectionProperties.Username"), Messages.getString("ConnectionProperties.allVersions"), CONNECTION_AND_AUTH_CATEGORY, //$NON-NLS-1$ //$NON-NLS-2$
 				Integer.MIN_VALUE + 1);
 		StringConnectionProperty passwordProp = new StringConnectionProperty(
 				NonRegisteringDriver.PASSWORD_PROPERTY_KEY, null,
-				"The password to use when connecting", "all",
+				Messages.getString("ConnectionProperties.Password"), Messages.getString("ConnectionProperties.allVersions"), //$NON-NLS-1$ //$NON-NLS-2$
 				CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE + 2);
 
 		Map[] connectionSortMaps = (Map[]) propertyListByCategory
@@ -1832,9 +1690,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				Iterator orderedIter = sortMaps[0].values().iterator();
 				Iterator alphaIter = sortMaps[1].values().iterator();
 
-				xmlBuf.append("\n <PropertyCategory name=\"");
+				xmlBuf.append("\n <PropertyCategory name=\""); //$NON-NLS-1$
 				xmlBuf.append(PROPERTY_CATEGORIES[j]);
-				xmlBuf.append("\">");
+				xmlBuf.append("\">"); //$NON-NLS-1$
 
 				while (orderedIter.hasNext()) {
 					Iterator orderedAlphaIter = ((Map)orderedIter.next()).values().iterator();
@@ -1843,25 +1701,25 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 						ConnectionProperty propToGet = (ConnectionProperty) orderedAlphaIter
 								.next();
 						
-						xmlBuf.append("\n  <Property name=\"");
+						xmlBuf.append("\n  <Property name=\""); //$NON-NLS-1$
 						xmlBuf.append(propToGet.getPropertyName());
-						xmlBuf.append("\" required=\"");
-						xmlBuf.append(propToGet.required ? "Yes" : "No");
+						xmlBuf.append("\" required=\""); //$NON-NLS-1$
+						xmlBuf.append(propToGet.required ? "Yes" : "No"); //$NON-NLS-1$ //$NON-NLS-2$
 	
-						xmlBuf.append("\" default=\"");
+						xmlBuf.append("\" default=\""); //$NON-NLS-1$
 	
 						if (propToGet.getDefaultValue() != null) {
 							xmlBuf.append(propToGet.getDefaultValue());
 						}
 	
-						xmlBuf.append("\" sortOrder=\"");
+						xmlBuf.append("\" sortOrder=\""); //$NON-NLS-1$
 						xmlBuf.append(propToGet.getOrder());
-						xmlBuf.append("\" since=\"");
+						xmlBuf.append("\" since=\""); //$NON-NLS-1$
 						xmlBuf.append(propToGet.sinceVersion);
-						xmlBuf.append("\">\n");
-						xmlBuf.append("    ");
+						xmlBuf.append("\">\n"); //$NON-NLS-1$
+						xmlBuf.append("    "); //$NON-NLS-1$
 						xmlBuf.append(propToGet.description);
-						xmlBuf.append("\n  </Property>");
+						xmlBuf.append("\n  </Property>"); //$NON-NLS-1$
 					}
 				}
 
@@ -1869,33 +1727,33 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					ConnectionProperty propToGet = (ConnectionProperty) alphaIter
 							.next();
 					
-					xmlBuf.append("\n  <Property name=\"");
+					xmlBuf.append("\n  <Property name=\""); //$NON-NLS-1$
 					xmlBuf.append(propToGet.getPropertyName());
-					xmlBuf.append("\" required=\"");
-					xmlBuf.append(propToGet.required ? "Yes" : "No");
+					xmlBuf.append("\" required=\""); //$NON-NLS-1$
+					xmlBuf.append(propToGet.required ? "Yes" : "No"); //$NON-NLS-1$ //$NON-NLS-2$
 
-					xmlBuf.append("\" default=\"");
+					xmlBuf.append("\" default=\""); //$NON-NLS-1$
 
 					if (propToGet.getDefaultValue() != null) {
 						xmlBuf.append(propToGet.getDefaultValue());
 					}
 
-					xmlBuf.append("\" sortOrder=\"alpha\" since=\"");
+					xmlBuf.append("\" sortOrder=\"alpha\" since=\""); //$NON-NLS-1$
 					xmlBuf.append(propToGet.sinceVersion);
-					xmlBuf.append("\">\n");
-					xmlBuf.append("    ");
+					xmlBuf.append("\">\n"); //$NON-NLS-1$
+					xmlBuf.append("    "); //$NON-NLS-1$
 					xmlBuf.append(propToGet.description);
-					xmlBuf.append("\n  </Property>");
+					xmlBuf.append("\n  </Property>"); //$NON-NLS-1$
 				}
 
-				xmlBuf.append("\n </PropertyCategory>");
+				xmlBuf.append("\n </PropertyCategory>"); //$NON-NLS-1$
 			}
 		} catch (IllegalAccessException iae) {
-			throw SQLError.createSQLException("Internal properties failure",
+			throw SQLError.createSQLException("Internal properties failure", //$NON-NLS-1$
 					SQLError.SQL_STATE_GENERAL_ERROR);
 		}
 
-		xmlBuf.append("\n</ConnectionProperties>");
+		xmlBuf.append("\n</ConnectionProperties>"); //$NON-NLS-1$
 
 		return xmlBuf.toString();
 	}
@@ -2634,7 +2492,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					propToSet.initializeFrom(ref);
 				}
 			} catch (IllegalAccessException iae) {
-				throw SQLError.createSQLException("Internal properties failure",
+				throw SQLError.createSQLException("Internal properties failure", //$NON-NLS-1$
 						SQLError.SQL_STATE_GENERAL_ERROR);
 			}
 		}
@@ -2654,10 +2512,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	protected void initializeProperties(Properties info) throws SQLException {
 		if (info != null) {
 			// For backwards-compatibility
-			String profileSqlLc = info.getProperty("profileSql");
+			String profileSqlLc = info.getProperty("profileSql"); //$NON-NLS-1$
 
 			if (profileSqlLc != null) {
-				info.put("profileSQL", profileSqlLc);
+				info.put("profileSQL", profileSqlLc); //$NON-NLS-1$
 			}
 
 			Properties infoCopy = (Properties) info.clone();
@@ -2667,7 +2525,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			infoCopy.remove(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
 			infoCopy.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 			infoCopy.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
-			infoCopy.remove("profileSql");
+			infoCopy.remove("profileSql"); //$NON-NLS-1$
 
 			int numPropertiesToSet = PROPERTY_LIST.size();
 
@@ -2682,7 +2540,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					propToSet.initializeFrom(infoCopy);
 				} catch (IllegalAccessException iae) {
 					throw SQLError.createSQLException(
-							"Unable to initialize driver properties due to "
+							Messages.getString("ConnectionProperties.unableToInitDriverProperties") //$NON-NLS-1$
 									+ iae.toString(),
 							SQLError.SQL_STATE_GENERAL_ERROR);
 				}
@@ -2735,11 +2593,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			// Attempt to use the encoding, and bail out if it
 			// can't be used
 			try {
-				String testString = "abc";
+				String testString = "abc"; //$NON-NLS-1$
 				testString.getBytes(testEncoding);
 			} catch (UnsupportedEncodingException UE) {
-				throw SQLError.createSQLException("Unsupported character " + "encoding '"
-						+ testEncoding + "'.", "0S100");
+				throw SQLError.createSQLException(Messages.getString("ConnectionProperties.unsupportedCharacterEncoding") + Messages.getString("ConnectionProperties.unsupportedCharacterEncoding.1") //$NON-NLS-1$ //$NON-NLS-2$
+						+ testEncoding + Messages.getString("ConnectionProperties.unsupportedCharacterEncoding.2"), "0S100"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 
@@ -2749,7 +2607,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		if (((Boolean) this.cacheResultSetMetadata.getValueAsObject())
 				.booleanValue()) {
 			try {
-				Class.forName("java.util.LinkedHashMap");
+				Class.forName("java.util.LinkedHashMap"); //$NON-NLS-1$
 			} catch (ClassNotFoundException cnfe) {
 				this.cacheResultSetMetadata.setValue(false);
 			}
@@ -3555,7 +3413,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					propToStore.storeTo(ref);
 				}
 			} catch (IllegalAccessException iae) {
-				throw SQLError.createSQLException("Huh?");
+				throw SQLError.createSQLException(Messages.getString("ConnectionProperties.errorNotExpected")); //$NON-NLS-1$
 			}
 		}
 	}

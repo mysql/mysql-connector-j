@@ -2138,4 +2138,25 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	public void testPropertiesDescriptionsKeys() throws Exception {
+		DriverPropertyInfo[] dpi = new NonRegisteringDriver().getPropertyInfo(
+				dbUrl, null);
+
+		for (int i = 0; i < dpi.length; i++) {
+			String description = dpi[i].description;
+			String propertyName = dpi[i].name;
+
+			if (description.indexOf("Missing error message for key '") != -1
+					|| description.startsWith("!")) {
+				fail("Missing message for configuration property "
+						+ propertyName);
+			}
+
+			if (description.length() < 10) {
+				fail("Suspiciously short description for configuration property "
+						+ propertyName);
+			}
+		}
+	}
 }
