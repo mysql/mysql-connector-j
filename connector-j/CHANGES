@@ -43,6 +43,8 @@
       for more details until we iron out the API and get it documented in the
       manual. 
       
+    - Externalized the descriptions of connection properties.
+      
 04-11-07 - Version 5.1.0 Alpha
 	
 	- Bumped JDBC Specification version number in jar-file manifest.
@@ -749,7 +751,12 @@ nn-nn-07 - Version 3.1.15
 	  
 	- Added Implementation-Vendor-Id attribute to jar manifest per request
 	  in BUG#15641.
-	  	
+		  
+	- C3P0 >= version 0.9.1 passes non-proxied connections to 
+	  MysqlConnectionTester,  thus it began throwing ClassCastExceptions.  
+	  MysqlConnectionTester now checks if it has a plain Connection and uses
+	  that if possible. Thanks to Brian Skrab for the fix.
+	    	
 10-19-06 - Version 3.1.14
 
     - Fixed BUG#20479 - Updatable result set throws ClassCastException

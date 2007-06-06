@@ -65,12 +65,18 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
 	 * @see com.mchange.v2.c3p0.ConnectionTester#activeCheckConnection(java.sql.Connection)
 	 */
 	public int activeCheckConnection(Connection con) {
-		C3P0ProxyConnection castCon = (C3P0ProxyConnection) con;
-
 		try {
 			if (pingMethod != null) {
-				castCon.rawConnectionOperation(pingMethod,
-						C3P0ProxyConnection.RAW_CONNECTION, NO_ARGS_ARRAY);
+				if (con instanceof com.mysql.jdbc.Connection) {
+					// We've been passed an instance of a MySQL connection --
+					// no need for reflection
+					((com.mysql.jdbc.Connection) con).ping();
+				} else {
+					// Assume the connection is a C3P0 proxy
+					C3P0ProxyConnection castCon = (C3P0ProxyConnection) con;
+					castCon.rawConnectionOperation(pingMethod,
+							C3P0ProxyConnection.RAW_CONNECTION, NO_ARGS_ARRAY);
+				}
 			} else {
 				Statement pingStatement = null;
 
