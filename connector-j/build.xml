@@ -795,6 +795,9 @@
 		</delete>
 	</target>
 
+	<target name="docs-generate-dynamic-docs" 
+		depends="docs-generate-properties-table, docs-generate-error-mapping-table"/>
+	
 	<target name="docs-generate-properties-table" depends="compile-driver">
 		<tempfile property="properties-xml" suffix=".xml" />
 
