@@ -388,6 +388,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 		
 		setResultSetType(resultSetType);
 		setResultSetConcurrency(resultSetConcurrency);
+		
+		this.parameterTypes = new int[this.parameterCount];
 	}
 
 	/**
@@ -694,8 +696,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 										while (rs.next()) {
 											this.batchedGeneratedKeys
-													.add(new byte[][] { rs
-															.getBytes(1) });
+													.add(new ByteArrayRowHolder(new byte[][] { rs
+															.getBytes(1) }));
 										}
 									} finally {
 										if (rs != null) {
@@ -949,52 +951,49 @@ public class ServerPreparedStatement extends PreparedStatement {
 			if (this.connection.getAutoGenerateTestcaseScript()) {
 				dumpCloseForTestcase();
 			}
-			
-			synchronized (this.connection.getMutex()) {
-	
-				//
-				// Don't communicate with the server if we're being
-				// called from the finalizer...
-				// 
-				// This will leak server resources, but if we don't do this,
-				// we'll deadlock (potentially, because there's no guarantee
-				// when, what order, and what concurrency finalizers will be
-				// called with). Well-behaved programs won't rely on finalizers
-				// to clean up their statements.
-				//
-				
-				SQLException exceptionDuringClose = null;
-				
 
-				if (calledExplicitly) {
+			//
+			// Don't communicate with the server if we're being
+			// called from the finalizer...
+			// 
+			// This will leak server resources, but if we don't do this,
+			// we'll deadlock (potentially, because there's no guarantee
+			// when, what order, and what concurrency finalizers will be
+			// called with). Well-behaved programs won't rely on finalizers
+			// to clean up their statements.
+			//
+
+			SQLException exceptionDuringClose = null;
+
+			if (calledExplicitly && !this.connection.isClosed()) {
+				synchronized (this.connection.getMutex()) {
 					try {
-						
+
 						MysqlIO mysql = this.connection.getIO();
-						
+
 						Buffer packet = mysql.getSharedSendPacket();
-						
+
 						packet.writeByte((byte) MysqlDefs.COM_CLOSE_STATEMENT);
 						packet.writeLong(this.serverStatementId);
-						
+
 						mysql.sendCommand(MysqlDefs.COM_CLOSE_STATEMENT, null,
 								packet, true, null);
 					} catch (SQLException sqlEx) {
 						exceptionDuringClose = sqlEx;
 					}
-					
 				}
+			}
 
-				super.realClose(calledExplicitly, closeOpenResults);
+			super.realClose(calledExplicitly, closeOpenResults);
 
-				clearParametersInternal(false);
-				this.parameterBindings = null;
-				
-				this.parameterFields = null;
-				this.resultFields = null;
-				
-				if (exceptionDuringClose != null) {
-					throw exceptionDuringClose;
-				}
+			clearParametersInternal(false);
+			this.parameterBindings = null;
+
+			this.parameterFields = null;
+			this.resultFields = null;
+
+			if (exceptionDuringClose != null) {
+				throw exceptionDuringClose;
 			}
 		}
 	}

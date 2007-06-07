@@ -35,9 +35,14 @@ import java.sql.Types;
  */
 public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
+	private boolean hasReferentialConstraintsView;
+
 	protected DatabaseMetaDataUsingInfoSchema(ConnectionImpl connToSet,
-			String databaseToSet) {
+			String databaseToSet) throws SQLException {
 		super(connToSet, databaseToSet);
+		
+		this.hasReferentialConstraintsView = 
+			this.conn.versionMeetsMinimum(5, 1, 10);
 	}
 
 	private ResultSet executeMetadataQuery(PreparedStatement pStmt)
@@ -396,21 +401,26 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "A.TABLE_NAME AS FKTABLE_NAME, "
 				+ "A.COLUMN_NAME AS FKCOLUMN_NAME, "
 				+ "A.ORDINAL_POSITION AS KEY_SEQ,"
-				+ importedKeyRestrict
+				+ generateUpdateRuleClause()
 				+ " AS UPDATE_RULE,"
-				+ importedKeyRestrict
+				+ generateDeleteRuleClause()
 				+ " AS DELETE_RULE,"
 				+ "A.CONSTRAINT_NAME AS FK_NAME,"
-				+ "NULL AS PK_NAME,"
+				+ "(SELECT CONSTRAINT_NAME FROM"
+				+ " INFORMATION_SCHEMA.TABLE_CONSTRAINTS"
+				+ " WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
+				+ " TABLE_NAME = REFERENCED_TABLE_NAME AND"
+				+ " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)"
+				+ " AS PK_NAME,"
 				+ importedKeyNotDeferrable
 				+ " AS DEFERRABILITY "
 				+ "FROM "
-				+ "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A,"
+				+ "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN "
 				+ "INFORMATION_SCHEMA.TABLE_CONSTRAINTS B "
+				+ "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) "
+				+ generateOptionalRefContraintsJoin()
 				+ "WHERE "
-				+ "A.TABLE_SCHEMA=B.TABLE_SCHEMA AND A.TABLE_NAME=B.TABLE_NAME "
-				+ "AND "
-				+ "A.CONSTRAINT_NAME=B.CONSTRAINT_NAME AND B.CONSTRAINT_TYPE IS NOT NULL "
+				+ "B.CONSTRAINT_TYPE = 'FOREIGN KEY' "
 				+ "AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=? "
 				+ "AND A.TABLE_SCHEMA LIKE ? AND A.TABLE_NAME=? " + "ORDER BY "
 				+ "A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
@@ -533,6 +543,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				catalog = this.database;
 			}	
 		}
+		
+		//CASCADE, SET NULL, SET DEFAULT, RESTRICT, NO ACTION
 
 		String sql = "SELECT "
 				+ "A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,"
@@ -544,21 +556,26 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "A.TABLE_NAME AS FKTABLE_NAME,"
 				+ "A.COLUMN_NAME AS FKCOLUMN_NAME, "
 				+ "A.ORDINAL_POSITION AS KEY_SEQ,"
-				+ importedKeyRestrict
+				+ generateUpdateRuleClause()
 				+ " AS UPDATE_RULE,"
-				+ importedKeyRestrict
+				+ generateDeleteRuleClause()
 				+ " AS DELETE_RULE,"
 				+ "A.CONSTRAINT_NAME AS FK_NAME,"
-				+ "NULL AS PK_NAME,"
+				+ "(SELECT CONSTRAINT_NAME FROM"
+				+ " INFORMATION_SCHEMA.TABLE_CONSTRAINTS"
+				+ " WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
+				+ " TABLE_NAME = REFERENCED_TABLE_NAME AND"
+				+ " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)"
+				+ " AS PK_NAME,"
 				+ importedKeyNotDeferrable
 				+ " AS DEFERRABILITY "
 				+ "FROM "
-				+ "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A,"
+				+ "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A JOIN "
 				+ "INFORMATION_SCHEMA.TABLE_CONSTRAINTS B "
+				+ "USING (TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME) "
+				+ generateOptionalRefContraintsJoin()
 				+ "WHERE "
-				+ "A.TABLE_SCHEMA=B.TABLE_SCHEMA AND A.TABLE_NAME=B.TABLE_NAME "
-				+ "AND "
-				+ "A.CONSTRAINT_NAME=B.CONSTRAINT_NAME AND B.CONSTRAINT_TYPE IS NOT NULL "
+				+ "B.CONSTRAINT_TYPE = 'FOREIGN KEY' "
 				+ "AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=? "
 				+ "ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
 
@@ -602,31 +619,33 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 	}
 
-	/*
-	 * 
-	 * getTablePrivileges
-	 * 
-	 * if (getMysqlVersion() > 49999) { if (!strcasecmp("localhost",
-	 * m_pSettings->pConnection->host)) { sprintf(user, "A.GRANTEE =
-	 * \"'%s'@'localhost'\" OR A.GRANTEE LIKE \"'%'@'localhost'\"",
-	 * m_pSettings->pConnection->user, m_pSettings->pConnection->user); } else {
-	 * sprintf(user, "\"'%s'@'%s'\" LIKE A.GRANTEE",
-	 * m_pSettings->pConnection->user, m_pSettings->pConnection->host); }
-	 * 
-	 * sprintf(query, "SELECT DISTINCT A.TABLE_CATALOG, B.TABLE_SCHEMA,
-	 * B.TABLE_NAME, CURRENT_USER(), " \ "A.PRIVILEGE_TYPE FROM
-	 * INFORMATION_SCHEMA.USER_PRIVILEGES A, INFORMATION_SCHEMA.TABLES B " \
-	 * "WHERE B.TABLE_SCHEMA LIKE '%s' AND B.TABLE_NAME LIKE '%s' AND (%s) " \
-	 * "UNION " \ "SELECT DISTINCT A.TABLE_CATALOG, B.TABLE_SCHEMA,
-	 * B.TABLE_NAME, CURRENT_USER(), A.PRIVILEGE_TYPE " \ "FROM
-	 * INFORMATION_SCHEMA.SCHEMA_PRIVILEGES A, INFORMATION_SCHEMA.TABLES B WHERE " \
-	 * "B.TABLE_SCHEMA LIKE '%s' AND B.TABLE_NAME LIKE '%s' AND (%s) " \ "UNION "\
-	 * "SELECT DISTINCT A.TABLE_CATALOG, A.TABLE_SCHEMA, A.TABLE_NAME,
-	 * CURRENT_USER, A.PRIVILEGE_TYPE FROM " \
-	 * "INFORMATION_SCHEMA.TABLE_PRIVILEGES A WHERE A.TABLE_SCHEMA LIKE '%s' AND
-	 * A.TABLE_NAME LIKE '%s' " \ "AND (%s)", schemaName, tableName, user,
-	 * schemaName, tableName, user, schemaName, tableName, user );
-	 */
+	private String generateOptionalRefContraintsJoin() {
+		return ((this.hasReferentialConstraintsView) ? "JOIN " 
+				+ "INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R "
+				+ "ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME "
+				+ "AND R.TABLE_NAME = B.TABLE_NAME AND "
+				+ "R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA) " : "");
+	}
+
+	private String generateDeleteRuleClause() {
+		return ((this.hasReferentialConstraintsView) ? 
+				"CASE WHEN R.DELETE_RULE='CASCADE' THEN " + String.valueOf(importedKeyCascade) 
+				+ " WHEN R.DELETE_RULE='SET NULL' THEN " + String.valueOf(importedKeySetNull)  
+				+ " WHEN R.DELETE_RULE='SET DEFAULT' THEN " + String.valueOf(importedKeySetDefault) 
+				+ " WHEN R.DELETE_RULE='RESTRICT' THEN " + String.valueOf(importedKeyRestrict)
+				+ " WHEN R.DELETE_RULE='NO ACTION' THEN " + String.valueOf(importedKeyNoAction)
+				+ " ELSE " + String.valueOf(importedKeyNoAction) + " END " : String.valueOf(importedKeyRestrict));
+	}
+
+	private String generateUpdateRuleClause() {
+		return ((this.hasReferentialConstraintsView) ? 
+				"CASE WHEN R.UPDATE_RULE='CASCADE' THEN " + String.valueOf(importedKeyCascade) 
+				+ " WHEN R.UPDATE_RULE='SET NULL' THEN " + String.valueOf(importedKeySetNull)  
+				+ " WHEN R.UPDATE_RULE='SET DEFAULT' THEN " + String.valueOf(importedKeySetDefault) 
+				+ " WHEN R.UPDATE_RULE='RESTRICT' THEN " + String.valueOf(importedKeyRestrict)
+				+ " WHEN R.UPDATE_RULE='NO ACTION' THEN " + String.valueOf(importedKeyNoAction)
+				+ " ELSE " + String.valueOf(importedKeyNoAction) + " END " : String.valueOf(importedKeyRestrict));
+	}
 
 	/**
 	 * Get a description of the primary key columns that are referenced by a
@@ -710,21 +729,30 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "A.TABLE_NAME AS FKTABLE_NAME, "
 				+ "A.COLUMN_NAME AS FKCOLUMN_NAME, "
 				+ "A.ORDINAL_POSITION AS KEY_SEQ,"
-				+ importedKeyRestrict
+				+ generateUpdateRuleClause()
 				+ " AS UPDATE_RULE,"
-				+ importedKeyRestrict
+				+ generateDeleteRuleClause()
 				+ " AS DELETE_RULE,"
 				+ "A.CONSTRAINT_NAME AS FK_NAME,"
-				+ "NULL AS PK_NAME, "
+				+ "(SELECT CONSTRAINT_NAME FROM"
+				+ " INFORMATION_SCHEMA.TABLE_CONSTRAINTS"
+				+ " WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
+				+ " TABLE_NAME = REFERENCED_TABLE_NAME AND"
+				+ " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)"
+				+ " AS PK_NAME,"
 				+ importedKeyNotDeferrable
 				+ " AS DEFERRABILITY "
 				+ "FROM "
-				+ "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A, "
-				+ "INFORMATION_SCHEMA.TABLE_CONSTRAINTS B WHERE A.TABLE_SCHEMA LIKE ? "
-				+ "AND A.CONSTRAINT_NAME=B.CONSTRAINT_NAME AND A.TABLE_NAME=? "
-				+ "AND "
-				+ "B.TABLE_NAME=? AND A.REFERENCED_TABLE_SCHEMA IS NOT NULL "
-				+ " ORDER BY "
+				+ "INFORMATION_SCHEMA.KEY_COLUMN_USAGE A "
+				+ "JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B USING "
+				+ "(CONSTRAINT_NAME, TABLE_NAME) "
+				+ generateOptionalRefContraintsJoin()
+				+ "WHERE "
+				+ "B.CONSTRAINT_TYPE = 'FOREIGN KEY' "
+				+ "AND A.TABLE_SCHEMA LIKE ? "
+				+ "AND A.TABLE_NAME=? "
+				+ "AND A.REFERENCED_TABLE_SCHEMA IS NOT NULL "
+				+ "ORDER BY "
 				+ "A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, "
 				+ "A.ORDINAL_POSITION";
 
@@ -740,7 +768,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			}
 			
 			pStmt.setString(2, table);
-			pStmt.setString(3, table);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
 

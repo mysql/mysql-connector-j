@@ -1597,7 +1597,7 @@ public class StatementImpl implements Statement {
 				for (int i = 0; i < numKeys; i++) {
 					byte[][] row = new byte[1][];
 					row[0] = Long.toString(beginAt++).getBytes();
-					rowSet.add(row);
+					rowSet.add(new ByteArrayRowHolder(row));
 				}
 			}
 		}

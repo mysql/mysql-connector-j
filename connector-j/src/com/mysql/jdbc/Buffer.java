@@ -174,9 +174,19 @@ class Buffer {
 
 		this.position += len;
 
-		return (int) len; // this is safe, as this is only
+		return (int) len;
 	}
 
+	public void fastSkipLenByteArray() {
+		long len = this.readFieldLength();
+
+		if (len == NULL_LENGTH || len == 0) {
+			return;
+		}
+		
+		this.position += len;
+	}
+	
 	protected final byte[] getBufferSource() {
 		return this.byteBuffer;
 	}

@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2006 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -49,7 +49,7 @@ public interface RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	void addRow(byte[][] row) throws SQLException;
+	void addRow(RowHolder row) throws SQLException;
 
 	/**
 	 * Moves to after last.
@@ -92,7 +92,7 @@ public interface RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	Object[] getAt(int index) throws SQLException;
+	RowHolder getAt(int index) throws SQLException;
 
 	/**
 	 * Returns the current position in the result set as a row number.
@@ -191,7 +191,7 @@ public interface RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	Object[] next() throws SQLException;
+	RowHolder next() throws SQLException;
 
 	/**
 	 * Removes the row at the given index.
@@ -234,4 +234,13 @@ public interface RowData {
 	 * Did this result set have no rows?
 	 */
 	boolean wasEmpty();
+	
+	/**
+	 * Sometimes the driver doesn't have metadata until after
+	 * the statement has the result set in-hand (because it's cached), 
+	 * so it can call this to set it after the fact.
+	 * 
+	 * @param metadata field-level metadata for the result set
+	 */
+	void setMetadata(Field[] metadata);
 }

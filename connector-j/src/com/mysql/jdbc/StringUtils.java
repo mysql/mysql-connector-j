@@ -711,16 +711,20 @@ public class StringUtils {
 	}
 
 	public static long getLong(byte[] buf) throws NumberFormatException {
+		return getLong(buf, 0, buf.length);
+	}
+	
+	public static long getLong(byte[] buf, int offset, int endpos) throws NumberFormatException {
 		int base = 10;
 
-		int s = 0;
+		int s = offset;
 
 		/* Skip white space. */
-		while (Character.isWhitespace((char) buf[s]) && (s < buf.length)) {
+		while (Character.isWhitespace((char) buf[s]) && (s < endpos)) {
 			++s;
 		}
 
-		if (s == buf.length) {
+		if (s == endpos) {
 			throw new NumberFormatException(new String(buf));
 		}
 
@@ -747,7 +751,7 @@ public class StringUtils {
 		boolean overflow = false;
 		long i = 0;
 
-		for (; s < buf.length; s++) {
+		for (; s < endpos; s++) {
 			char c = (char) buf[s];
 
 			if (Character.isDigit(c)) {

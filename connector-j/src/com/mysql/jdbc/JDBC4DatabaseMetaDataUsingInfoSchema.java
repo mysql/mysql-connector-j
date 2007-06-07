@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JDBC4DatabaseMetaDataUsingInfoSchema extends DatabaseMetaDataUsingInfoSchema {
-	public JDBC4DatabaseMetaDataUsingInfoSchema(ConnectionImpl connToSet, String databaseToSet) {
+	public JDBC4DatabaseMetaDataUsingInfoSchema(ConnectionImpl connToSet, String databaseToSet) throws SQLException {
 		super(connToSet, databaseToSet);
 	}
 

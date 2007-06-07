@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2006 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -36,8 +36,6 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
  * @version $Id$
  */
 public class RowDataDynamic implements RowData {
-	// ~ Instance fields
-	// --------------------------------------------------------
 
 	class OperationNotSupportedException extends SQLException {
 		OperationNotSupportedException() {
@@ -60,16 +58,13 @@ public class RowDataDynamic implements RowData {
 
 	private boolean isBinaryEncoded = false;
 
-	private Object[] nextRow;
+	private RowHolder nextRow;
 
 	private ResultSetImpl owner;
 
 	private boolean streamerClosed = false;
 	
 	private boolean wasEmpty = false; // we don't know until we attempt to traverse
-
-	// ~ Methods
-	// ----------------------------------------------------------------
 
 	/**
 	 * Creates a new RowDataDynamic object.
@@ -91,7 +86,7 @@ public class RowDataDynamic implements RowData {
 		this.columnCount = colCount;
 		this.isBinaryEncoded = isBinaryEncoded;
 		this.fields = fields;
-		nextRecord();
+		//nextRecord();
 	}
 
 	/**
@@ -102,7 +97,7 @@ public class RowDataDynamic implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public void addRow(byte[][] row) throws SQLException {
+	public void addRow(RowHolder row) throws SQLException {
 		notSupported();
 	}
 
@@ -165,8 +160,7 @@ public class RowDataDynamic implements RowData {
 
 		synchronized (mutex) {
 			// drain the rest of the records.
-			while (this.hasNext()) {
-				this.next();
+			while (next() != null) {
 				hadMore = true;
 				howMuchMore++;
 
@@ -249,7 +243,7 @@ public class RowDataDynamic implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public Object[] getAt(int ind) throws SQLException {
+	public RowHolder getAt(int ind) throws SQLException {
 		notSupported();
 
 		return null;
@@ -385,15 +379,23 @@ public class RowDataDynamic implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public Object[] next() throws SQLException {
-		if (this.index != Integer.MAX_VALUE) {
-			this.index++;
-		}
+	public RowHolder next() throws SQLException {
+		
 
-		Object[] ret = this.nextRow;
 		nextRecord();
 
-		return ret;
+		if (this.nextRow == null && !this.streamerClosed) {
+			this.io.closeStreamer(this);
+			this.streamerClosed = true;
+		}
+		
+		if (this.nextRow != null) {
+			if (this.index != Integer.MAX_VALUE) {
+				this.index++;
+			}
+		}
+		
+		return this.nextRow;
 	}
 
 
@@ -404,7 +406,7 @@ public class RowDataDynamic implements RowData {
 
 				this.nextRow = this.io.nextRow(this.fields, this.columnCount,
 						this.isBinaryEncoded,
-						java.sql.ResultSet.CONCUR_READ_ONLY);
+						java.sql.ResultSet.CONCUR_READ_ONLY, true, true);
 
 				if (this.nextRow == null) {
 					this.isAtEnd = true;
@@ -453,9 +455,6 @@ public class RowDataDynamic implements RowData {
 		notSupported();
 	}
 
-	// ~ Inner Classes
-	// ----------------------------------------------------------
-
 	/**
 	 * Moves the current position in the result set to the given row number.
 	 * 
@@ -487,7 +486,8 @@ public class RowDataDynamic implements RowData {
 	public boolean wasEmpty() {
 		return this.wasEmpty;
 	}
-	
-	
 
+	public void setMetadata(Field[] metadata) {
+		this.fields = metadata;
+	}
 }

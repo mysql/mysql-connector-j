@@ -85,7 +85,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	private String refreshSQL = null;
 
 	/** The binary data for the 'current' row */
-	private Object[] savedCurrentRow;
+	private RowHolder savedCurrentRow;
 
 	private String tableOnlyName;
 
@@ -484,16 +484,16 @@ public class UpdatableResultSet extends ResultSetImpl {
 				int index = ((Integer) this.primaryKeyIndicies.get(0))
 						.intValue();
 				String currentVal = ((characterEncoding == null) ? new String(
-						(byte[]) this.thisRow[index]) : new String(
-						(byte[]) this.thisRow[index], characterEncoding));
+						(byte[]) this.thisRow.getColumnValue(index)) : new String(
+						(byte[]) this.thisRow.getColumnValue(index), characterEncoding));
 				this.deleter.setString(1, currentVal);
 			} else {
 				for (int i = 0; i < numKeys; i++) {
 					int index = ((Integer) this.primaryKeyIndicies.get(i))
 							.intValue();
 					String currentVal = ((characterEncoding == null) ? new String(
-							(byte[]) this.thisRow[index])
-							: new String((byte[]) this.thisRow[index],
+							(byte[]) this.thisRow.getColumnValue(index))
+							: new String((byte[]) this.thisRow.getColumnValue(index),
 									characterEncoding));
 					this.deleter.setString(i + 1, currentVal);
 				}
@@ -780,9 +780,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 			}
 		}
 		
-		refreshRow(this.inserter, newRow);
+		RowHolder rowHolder = new ByteArrayRowHolder(newRow);
 		
-		this.rowData.addRow(newRow);
+		refreshRow(this.inserter, rowHolder);
+		
+		this.rowData.addRow(rowHolder);
 		resetInserter();
 	}
 
@@ -944,13 +946,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 		this.onInsertRow = true;
 		this.doingUpdates = false;
 		this.savedCurrentRow = this.thisRow;
-		this.thisRow = new byte[numFields][];
+		byte[][] newRowData = new byte[numFields][];
+		this.thisRow = new ByteArrayRowHolder(newRowData);
 
 		for (int i = 0; i < numFields; i++) {
 			if (!this.populateInserterWithDefaultValues) {
 				this.inserter.setBytesNoEscapeNoQuotes(i + 1, 
 						"DEFAULT".getBytes());
-				this.thisRow[i] = null;
+				newRowData = null;
 			} else {
 				if (this.defaultColumnValue[i] != null) {
 					Field f = this.fields[i];
@@ -986,10 +989,10 @@ public class UpdatableResultSet extends ResultSetImpl {
 					byte[] defaultValueCopy = new byte[this.defaultColumnValue[i].length];
 					System.arraycopy(defaultColumnValue[i], 0, defaultValueCopy, 0,
 							defaultValueCopy.length);
-					this.thisRow[i] = defaultValueCopy;
+					newRowData[i] = defaultValueCopy;
 				} else {
 					this.inserter.setNull(i + 1, java.sql.Types.NULL);
-					this.thisRow[i] = null;
+					newRowData[i] = null;
 				}
 			}
 		}
@@ -1175,7 +1178,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	}
 	
 	private synchronized void refreshRow(PreparedStatement updateInsertStmt, 
-			Object[] rowToRefresh) throws SQLException {
+			RowHolder rowToRefresh) throws SQLException {
 		if (this.refresher == null) {
 			if (this.refreshSQL == null) {
 				generateStatements();
@@ -1194,13 +1197,13 @@ public class UpdatableResultSet extends ResultSetImpl {
 			int index = ((Integer) this.primaryKeyIndicies.get(0)).intValue();
 
 			if (!this.doingUpdates && !this.onInsertRow) {
-				dataFrom = (byte[]) rowToRefresh[index];
+				dataFrom = (byte[]) rowToRefresh.getColumnValue(index);
 			} else {
 				dataFrom = updateInsertStmt.getBytesRepresentation(index);
 
 				// Primary keys not set?
 				if (updateInsertStmt.isNull(index) || (dataFrom.length == 0)) {
-					dataFrom = (byte[]) rowToRefresh[index];
+					dataFrom = (byte[]) rowToRefresh.getColumnValue(index);
 				} else {
 					dataFrom = stripBinaryPrefix(dataFrom);
 				}
@@ -1214,13 +1217,13 @@ public class UpdatableResultSet extends ResultSetImpl {
 						.intValue();
 
 				if (!this.doingUpdates && !this.onInsertRow) {
-					dataFrom = (byte[]) rowToRefresh[index];
+					dataFrom = (byte[]) rowToRefresh.getColumnValue(index);
 				} else {
 					dataFrom = updateInsertStmt.getBytesRepresentation(index);
 
 					// Primary keys not set?
 					if (updateInsertStmt.isNull(index) || (dataFrom.length == 0)) {
-						dataFrom = (byte[]) this.thisRow[index];
+						dataFrom = (byte[]) rowToRefresh.getColumnValue(index);
 					} else {
 						dataFrom = stripBinaryPrefix(dataFrom);
 					}
@@ -1242,9 +1245,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 					byte[] val = rs.getBytes(i + 1);
 
 					if ((val == null) || rs.wasNull()) {
-						rowToRefresh[i] = null;
+						rowToRefresh.setColumnValue(i, null);
 					} else {
-						rowToRefresh[i] = rs.getBytes(i + 1);
+						rowToRefresh.setColumnValue(i, rs.getBytes(i + 1));
 					}
 				}
 			} else {
@@ -1401,8 +1404,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		this.updater.clearParameters();
 
 		for (int i = 0; i < numFields; i++) {
-			if (this.thisRow[i] != null) {
-				this.updater.setBytes(i + 1, (byte[]) this.thisRow[i],
+			if (this.thisRow.getColumnValue(i) != null) {
+				this.updater.setBytes(i + 1, (byte[]) this.thisRow.getColumnValue(i),
 						this.fields[i].isBinary(), false);
 			} else {
 				this.updater.setNull(i + 1, 0);
@@ -1413,12 +1416,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 		if (numKeys == 1) {
 			int index = ((Integer) this.primaryKeyIndicies.get(0)).intValue();
-			byte[] keyData = (byte[]) this.thisRow[index];
+			byte[] keyData = (byte[]) this.thisRow.getColumnValue(index);
 			this.updater.setBytes(numFields + 1, keyData, false, false);
 		} else {
 			for (int i = 0; i < numKeys; i++) {
-				byte[] currentVal = (byte[]) this.thisRow[((Integer) this.primaryKeyIndicies
-						.get(i)).intValue()];
+				byte[] currentVal = (byte[]) this.thisRow.getColumnValue(((Integer) this.primaryKeyIndicies
+						.get(i)).intValue());
 
 				if (currentVal != null) {
 					this.updater.setBytes(numFields + i + 1, currentVal, false,
@@ -1458,7 +1461,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 			this.updater.setAsciiStream(columnIndex, x, length);
 		} else {
 			this.inserter.setAsciiStream(columnIndex, x, length);
-			this.thisRow[columnIndex - 1] = STREAM_DATA_MARKER;
+			this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
 		}
 	}
 
@@ -1511,9 +1514,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 			this.inserter.setBigDecimal(columnIndex, x);
 
 			if (x == null) {
-				this.thisRow[columnIndex - 1] = null;
+				this.thisRow.setColumnValue(columnIndex - 1, null);
 			} else {
-				this.thisRow[columnIndex - 1] = x.toString().getBytes();
+				this.thisRow.setColumnValue(columnIndex - 1, x.toString().getBytes());
 			}
 		}
 	}
@@ -1567,9 +1570,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 			this.inserter.setBinaryStream(columnIndex, x, length);
 
 			if (x == null) {
-				this.thisRow[columnIndex - 1] = null;
+				this.thisRow.setColumnValue(columnIndex - 1, null);
 			} else {
-				this.thisRow[columnIndex - 1] = STREAM_DATA_MARKER;
+				this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
 			}
 		}
 	}
@@ -1612,9 +1615,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 			this.inserter.setBlob(columnIndex, blob);
 
 			if (blob == null) {
-				this.thisRow[columnIndex - 1] = null;
+				this.thisRow.setColumnValue(columnIndex - 1, null);
 			} else {
-				this.thisRow[columnIndex - 1] = STREAM_DATA_MARKER;
+				this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
 			}
 		}
 	}
@@ -1653,8 +1656,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setBoolean(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 
@@ -1703,8 +1706,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setByte(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 
@@ -1753,7 +1756,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setBytes(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = x;
+			this.thisRow.setColumnValue(columnIndex - 1, x);
 		}
 	}
 
@@ -1806,9 +1809,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 			this.inserter.setCharacterStream(columnIndex, x, length);
 
 			if (x == null) {
-				this.thisRow[columnIndex - 1] = null;
+				this.thisRow.setColumnValue(columnIndex - 1, null);
 			} else {
-				this.thisRow[columnIndex - 1] = STREAM_DATA_MARKER;
+				this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
 			}
 		}
 	}
@@ -1874,8 +1877,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setDate(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 
@@ -1924,8 +1927,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setDouble(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 
@@ -1974,8 +1977,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setFloat(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 
@@ -2024,8 +2027,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setInt(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 
@@ -2074,8 +2077,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setLong(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 
@@ -2121,7 +2124,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setNull(columnIndex, 0);
 
-			this.thisRow[columnIndex - 1] = null;
+			this.thisRow.setColumnValue(columnIndex - 1, null);
 		}
 	}
 
@@ -2167,8 +2170,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setObject(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 
@@ -2202,8 +2205,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setObject(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 
@@ -2302,8 +2305,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setShort(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 
@@ -2355,15 +2358,15 @@ public class UpdatableResultSet extends ResultSetImpl {
 			this.inserter.setString(columnIndex, x);
 
 			if (x == null) {
-				this.thisRow[columnIndex - 1] = null;
+				this.thisRow.setColumnValue(columnIndex - 1, null);
 			} else {
 				if (getCharConverter() != null) {
-					this.thisRow[columnIndex - 1] = StringUtils.getBytes(x,
+					this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x,
 							this.charConverter, this.charEncoding,
 							this.connection.getServerCharacterEncoding(),
-							this.connection.parserKnowsUnicode());
+							this.connection.parserKnowsUnicode()));
 				} else {
-					this.thisRow[columnIndex - 1] = x.getBytes();
+					this.thisRow.setColumnValue(columnIndex - 1, x.getBytes());
 				}
 			}
 		}
@@ -2414,8 +2417,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setTime(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 
@@ -2464,8 +2467,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			this.inserter.setTimestamp(columnIndex, x);
 
-			this.thisRow[columnIndex - 1] = this.inserter
-					.getBytesRepresentation(columnIndex - 1);
+			this.thisRow.setColumnValue(columnIndex - 1, this.inserter
+					.getBytesRepresentation(columnIndex - 1));
 		}
 	}
 

@@ -299,6 +299,33 @@ public class Field {
 		this.colDecimals = 0;
 	}
 	
+	/**
+	 * Used by prepared statements to re-use result set data conversion methods
+	 * when generating bound parmeter retrieval instance for statement
+	 * interceptors.
+	 * 
+	 * @param tableName
+	 *            not used
+	 * @param columnName
+	 *            not used
+	 * @param charsetIndex
+	 *            the MySQL collation/character set index
+	 * @param jdbcType
+	 *            from java.sql.Types
+	 * @param length
+	 *            length in characters or bytes (for BINARY data).
+	 */
+	Field(String tableName, String columnName, int charsetIndex, int jdbcType,
+			int length) {
+		this.tableName = tableName;
+		this.name = columnName;
+		this.length = length;
+		this.sqlType = jdbcType;
+		this.colFlag = 0;
+		this.colDecimals = 0;
+		this.charsetIndex = charsetIndex;
+	}
+	
 	private void checkForImplicitTemporaryTable() {
 		this.isImplicitTempTable = this.tableNameLength > 5
 				&& this.buffer[tableNameStart] == (byte) '#'

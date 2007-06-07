@@ -294,7 +294,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	PreparedStatement statementUsedForFetchingRows;
 
 	/** Pointer to current row data */
-	protected Object[] thisRow = null; // Values for current row
+	protected RowHolder thisRow = null; // Values for current row
 
 	// These are longs for
 	// recent versions of the MySQL server.
@@ -480,6 +480,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	}
 
 	public void initializeWithMetadata() throws SQLException {
+		this.rowData.setMetadata(this.fields);
+		
 		if (this.profileSql || this.connection.getUseUsageAdvisor()) {
 			this.columnUsed = new boolean[this.fields.length];
 			this.pointOfOrigin = new Throwable();
@@ -932,56 +934,21 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		this.wasNullFlag = false;
 		
-		if (this.thisRow[columnIndexMinusOne] instanceof String) {
-			return (String) this.thisRow[columnIndexMinusOne];
-		}
-
-		if (this.thisRow[columnIndexMinusOne] == null) {
+		if (this.thisRow.isNull(columnIndexMinusOne)) {
 			this.wasNullFlag = true;
 			
 			return null;
 		}
 
 		this.wasNullFlag = false;
+
+		String encoding = this.fields[columnIndexMinusOne]
+		      						.getCharacterSet();
 		
-		String stringVal = null;
-
-		if ((this.connection != null) && this.connection.getUseUnicode()) {
-			try {
-				String encoding = this.fields[columnIndexMinusOne]
-						.getCharacterSet();
-
-				if (encoding == null) {
-					stringVal = new String(
-							(byte[]) this.thisRow[columnIndexMinusOne]);
-				} else {
-					SingleByteCharsetConverter converter = this.connection
-							.getCharsetConverter(encoding);
-
-					if (converter != null) {
-						stringVal = converter
-								.toString((byte[]) this.thisRow[columnIndexMinusOne]);
-					} else {
-						stringVal = new String(
-								(byte[]) this.thisRow[columnIndexMinusOne],
-								encoding);
-					}
-				}
-			} catch (java.io.UnsupportedEncodingException E) {
-				throw SQLError.createSQLException(
-						Messages
-								.getString("ResultSet.Unsupported_character_encoding____138") //$NON-NLS-1$
-								+ this.connection.getEncoding() + "'.", "0S100");
-			}
-		} else {
-			stringVal = StringUtils
-					.toAsciiString((byte[]) this.thisRow[columnIndexMinusOne]);
-		}
-		
-		return stringVal;
+		return this.thisRow.getString(columnIndex - 1, encoding, this.connection);
 	}
 
-	private synchronized Date fastDateCreate(Calendar cal, int year, int month,
+	protected synchronized Date fastDateCreate(Calendar cal, int year, int month,
 			int day) {
 		if (cal == null) {
 			createCalendarIfNeeded();
@@ -995,7 +962,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				cal, year, month, day);
 	}
 
-	private synchronized Time fastTimeCreate(Calendar cal, int hour,
+	protected synchronized Time fastTimeCreate(Calendar cal, int hour,
 			int minute, int second) throws SQLException {
 		if (cal == null) {
 			createCalendarIfNeeded();
@@ -1005,7 +972,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return TimeUtil.fastTimeCreate(cal, hour, minute, second);
 	}
 
-	private synchronized Timestamp fastTimestampCreate(Calendar cal, int year,
+	protected synchronized Timestamp fastTimestampCreate(Calendar cal, int year,
 			int month, int day, int hour, int minute, int seconds,
 			int secondsPart) {
 		if (cal == null) {
@@ -1511,7 +1478,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 			checkColumnBounds(columnIndex);
 
-			if (this.thisRow[columnIndex - 1] == null) {
+			int columnIndexMinusOne = columnIndex - 1;
+			
+			if (this.thisRow.isNull(columnIndexMinusOne)) {
 				this.wasNullFlag = true;
 			} else {
 				this.wasNullFlag = false;
@@ -1522,7 +1491,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			}
 
 			if (!this.connection.getEmulateLocators()) {
-				return new Blob((byte[]) this.thisRow[columnIndex - 1]);
+				return new Blob(this.thisRow.getColumnValue(columnIndexMinusOne));
 			}
 
 			return new BlobFromLocator(this, columnIndex);
@@ -1624,7 +1593,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			if (this.useUsageAdvisor) {
 				issueConversionViaParsingWarning("getBoolean()", columnIndex,
-						this.thisRow[columnIndex], this.fields[columnIndex],
+						this.thisRow.getColumnValue(columnIndexMinusOne), this.fields[columnIndex],
 						new int[] {
 								MysqlDefs.FIELD_TYPE_BIT,
 								MysqlDefs.FIELD_TYPE_DOUBLE,
@@ -1641,8 +1610,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 	}
 
-	private boolean byteArrayToBoolean(int columnIndexMinusOne) {
-		if (this.thisRow[columnIndexMinusOne] == null) {
+	private boolean byteArrayToBoolean(int columnIndexMinusOne) throws SQLException {
+		Object value = this.thisRow.getColumnValue(columnIndexMinusOne);
+		
+		if (value == null) {
 			this.wasNullFlag = true;
 
 			return false;
@@ -1650,11 +1621,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		this.wasNullFlag = false;
 
-		if (((byte[]) this.thisRow[columnIndexMinusOne]).length == 0) {
+		if (((byte[]) value).length == 0) {
 			return false;
 		}
 
-		byte boolVal = ((byte[]) this.thisRow[columnIndexMinusOne])[0];
+		byte boolVal = ((byte[]) value)[0];
 
 		return (boolVal == -1 || boolVal > 0);
 	}
@@ -1811,8 +1782,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			checkRowPos();
 			
 			checkColumnBounds(columnIndex);
+			
+			int columnIndexMinusOne = columnIndex - 1;
 
-			if (this.thisRow[columnIndex - 1] == null) {
+			if (this.thisRow.isNull(columnIndexMinusOne)) {
 				this.wasNullFlag = true;
 			} else {
 				this.wasNullFlag = false;
@@ -1822,7 +1795,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				return null;
 			}
 
-			return (byte[]) this.thisRow[columnIndex - 1];
+			return this.thisRow.getColumnValue(columnIndexMinusOne);
 		}
 
 		return getNativeBytes(columnIndex, noConversion);
@@ -1860,7 +1833,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * Optimization to only use one calendar per-session, or calculate it for
 	 * each call, depending on user configuration
 	 */
-	private Calendar getCalendarInstanceForSessionOrNew() {
+	protected Calendar getCalendarInstanceForSessionOrNew() {
 		if (this.connection != null) {
 			return this.connection.getCalendarInstanceForSessionOrNew();
 		} else {
@@ -2066,7 +2039,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		} else {
 			checkColumnBounds(columnIndex);
 			
-			return getDateFromBytes(((byte[][])this.thisRow)[columnIndex - 1], columnIndex);
+			return getDateFromBytes((byte[])this.thisRow.getColumnValue(columnIndex - 1), columnIndex);
 		}
 	}
 
@@ -2713,70 +2686,70 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	public int getInt(int columnIndex) throws SQLException {
 		checkRowPos();
-		
+
 		if (!this.isBinaryEncoded) {
+			int columnIndexMinusOne = columnIndex - 1;
 			if (this.connection.getUseFastIntParsing()) {
 				checkColumnBounds(columnIndex);
 
-				if (this.thisRow[columnIndex - 1] == null) {
+				if (this.thisRow.isNull(columnIndexMinusOne)) {
 					this.wasNullFlag = true;
 				} else {
 					this.wasNullFlag = false;
 				}
-		
+
 				if (this.wasNullFlag) {
 					return 0;
 				}
 
-				byte[] intAsBytes = (byte[]) this.thisRow[columnIndex - 1];
-
-				if (intAsBytes.length == 0) {
+				if (this.thisRow.length(columnIndexMinusOne) == 0) {
 					return convertToZeroWithEmptyCheck();
 				}
 
-				boolean needsFullParse = false;
-
-				for (int i = 0; i < intAsBytes.length; i++) {
-					if (((char) intAsBytes[i] == 'e')
-							|| ((char) intAsBytes[i] == 'E')) {
-						needsFullParse = true;
-
-						break;
-					}
-				}
+				boolean needsFullParse = this.thisRow
+						.isFloatingPointNumber(columnIndexMinusOne);
 
 				if (!needsFullParse) {
 					try {
-						return parseIntWithOverflowCheck(columnIndex,
-								intAsBytes, null);
+						return getIntWithOverflowCheck(columnIndexMinusOne);
 					} catch (NumberFormatException nfe) {
 						try {
 
-							return parseIntAsDouble(columnIndex, new String(
-									intAsBytes));
+							return parseIntAsDouble(columnIndex, this.thisRow
+									.getString(columnIndexMinusOne,
+											this.fields[columnIndexMinusOne]
+													.getCharacterSet(),
+											this.connection));
 						} catch (NumberFormatException newNfe) {
-							; // ignore, it's not a number
+							// ignore, it's not a number
 						}
 
-						if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
+						if (this.fields[columnIndexMinusOne].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
 							long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
-							
-							if (this.connection.getJdbcCompliantTruncationForReads() &&
-									(valueAsLong < Integer.MIN_VALUE
-											|| valueAsLong > Integer.MAX_VALUE)) {
-								throwRangeException(String.valueOf(valueAsLong), columnIndex,
-										Types.INTEGER);
+
+							if (this.connection
+									.getJdbcCompliantTruncationForReads()
+									&& (valueAsLong < Integer.MIN_VALUE || valueAsLong > Integer.MAX_VALUE)) {
+								throwRangeException(
+										String.valueOf(valueAsLong),
+										columnIndex, Types.INTEGER);
 							}
-							
-							return (int)valueAsLong;
+
+							return (int) valueAsLong;
 						}
-						
-						throw SQLError.createSQLException(
-								Messages
-										.getString("ResultSet.Invalid_value_for_getInt()_-____74")
-										+ new String(intAsBytes) //$NON-NLS-1$
-										+ "'",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+
+						throw SQLError
+								.createSQLException(
+										Messages
+												.getString("ResultSet.Invalid_value_for_getInt()_-____74")
+												+ this.thisRow
+														.getString(
+																columnIndexMinusOne,
+																this.fields[columnIndexMinusOne]
+																		.getCharacterSet(),
+																this.connection) //$NON-NLS-1$
+												+ "'",
+										SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 					}
 				}
 			}
@@ -2793,11 +2766,19 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 					if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1)
 							&& (val.indexOf(".") == -1)) {
-						return Integer.parseInt(val);
+						int intVal = Integer.parseInt(val);
+						
+						checkForIntegerTruncation(columnIndex, null, val, intVal);
+						
+						return intVal;
 					}
 
 					// Convert floating point
-					return parseIntAsDouble(columnIndex, val);
+					int intVal =  parseIntAsDouble(columnIndex, val);
+					
+					checkForIntegerTruncation(columnIndex, null, val, intVal);
+					
+					return intVal;
 				}
 
 				return 0;
@@ -2808,24 +2789,25 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					; // ignore, it's not a number
 				}
 
-				if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
+				if (this.fields[columnIndexMinusOne].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
 					long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
-					
-					if (this.connection.getJdbcCompliantTruncationForReads() &&
-							(valueAsLong < Integer.MIN_VALUE
-									|| valueAsLong > Integer.MAX_VALUE)) {
-						throwRangeException(String.valueOf(valueAsLong), columnIndex,
-								Types.INTEGER);
+
+					if (this.connection.getJdbcCompliantTruncationForReads()
+							&& (valueAsLong < Integer.MIN_VALUE || valueAsLong > Integer.MAX_VALUE)) {
+						throwRangeException(String.valueOf(valueAsLong),
+								columnIndex, Types.INTEGER);
 					}
-					
-					return (int)valueAsLong;
+
+					return (int) valueAsLong;
 				}
-				
-				throw SQLError.createSQLException(
-						Messages
-								.getString("ResultSet.Invalid_value_for_getInt()_-____74")
-								+ val //$NON-NLS-1$
-								+ "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+
+				throw SQLError
+						.createSQLException(
+								Messages
+										.getString("ResultSet.Invalid_value_for_getInt()_-____74")
+										+ val //$NON-NLS-1$
+										+ "'",
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 			}
 		}
 
@@ -2947,11 +2929,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (!this.isBinaryEncoded) {
 			checkRowPos();
 			
+			int columnIndexMinusOne = columnIndex - 1;
+			
 			if (this.connection.getUseFastIntParsing()) {
 			
 				checkColumnBounds(columnIndex);
 
-				if (this.thisRow[columnIndex - 1] == null) {
+				if (this.thisRow.isNull(columnIndexMinusOne)) {
 					this.wasNullFlag = true;
 				} else {
 					this.wasNullFlag = false;
@@ -2961,44 +2945,39 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					return 0;
 				}
 
-				byte[] longAsBytes = (byte[]) this.thisRow[columnIndex - 1];
-
-				if (longAsBytes.length == 0) {
+				if (this.thisRow.length(columnIndexMinusOne) == 0) {
 					return convertToZeroWithEmptyCheck();
 				}
 
-				boolean needsFullParse = false;
-
-				for (int i = 0; i < longAsBytes.length; i++) {
-					if (((char) longAsBytes[i] == 'e')
-							|| ((char) longAsBytes[i] == 'E')) {
-						needsFullParse = true;
-
-						break;
-					}
-				}
+				boolean needsFullParse = this.thisRow.isFloatingPointNumber(columnIndexMinusOne);
 
 				if (!needsFullParse) {
 					try {
-						return parseLongWithOverflowCheck(columnIndex,
-								longAsBytes, null, overflowCheck);
+						return getLongWithOverflowCheck(columnIndexMinusOne, overflowCheck);
 					} catch (NumberFormatException nfe) {
 						try {
 							// To do: Warn of over/underflow???
-							return parseLongAsDouble(columnIndex, new String(
-									longAsBytes));
+							return parseLongAsDouble(columnIndex, this.thisRow
+									.getString(columnIndexMinusOne,
+											this.fields[columnIndexMinusOne]
+													.getCharacterSet(),
+											this.connection));
 						} catch (NumberFormatException newNfe) {
 							// ; // ignore, it's not a number
 						}
 
-						if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
+						if (this.fields[columnIndexMinusOne].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
 							return getNumericRepresentationOfSQLBitType(columnIndex);
 						}
 						
 						throw SQLError.createSQLException(
 								Messages
 										.getString("ResultSet.Invalid_value_for_getLong()_-____79")
-										+ new String(longAsBytes) //$NON-NLS-1$
+										+ this.thisRow
+										.getString(columnIndexMinusOne,
+												this.fields[columnIndexMinusOne]
+														.getCharacterSet(),
+												this.connection) //$NON-NLS-1$
 										+ "'",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 					}
@@ -3203,7 +3182,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		
 		Field f = this.fields[columnIndex - 1];
 		
-		if (this.thisRow[columnIndex - 1] == null) {
+		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		
+		if (value == null) {
 			this.wasNullFlag = true;
 			
 			return null;
@@ -3215,7 +3196,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			case Types.DECIMAL:
 			case Types.NUMERIC:
 				stringVal = StringUtils
-						.toAsciiString((byte[]) this.thisRow[columnIndex - 1]);
+						.toAsciiString((byte[]) value);
 				break;
 			default:
 				stringVal = getNativeString(columnIndex);
@@ -3225,7 +3206,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	}
 
 	/**
-	 * A column value can also be retrieved as a binary strea. This method is
+	 * A column value can also be retrieved as a binary stream. This method is
 	 * suitable for retrieving LONGVARBINARY values.
 	 * 
 	 * @param columnIndex
@@ -3270,7 +3251,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		checkColumnBounds(columnIndex);
 
-		if (this.thisRow[columnIndex - 1] == null) {
+		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		
+		if (value == null) {
 			this.wasNullFlag = true;
 		} else {
 			this.wasNullFlag = false;
@@ -3289,7 +3272,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
 		case MysqlDefs.FIELD_TYPE_LONG_BLOB:
 		case MysqlDefs.FIELD_TYPE_BLOB:
-			dataAsBytes = (byte[]) this.thisRow[columnIndex - 1];
+			dataAsBytes = (byte[]) value;
 			break;
 
 		default:
@@ -3341,13 +3324,15 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		checkColumnBounds(columnIndex);
 
-		if (this.thisRow[columnIndex - 1] == null) {
+		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		
+		if (value == null) {
 			this.wasNullFlag = true;
 
 			return 0;
 		}
 
-		if (this.thisRow[columnIndex - 1] == null) {
+		if (value == null) {
 			this.wasNullFlag = true;
 		} else {
 			this.wasNullFlag = false;
@@ -3374,7 +3359,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			return (byte)valueAsLong;
 		case MysqlDefs.FIELD_TYPE_TINY:
-			byte valueAsByte = ((byte[]) this.thisRow[columnIndex])[0];
+			byte valueAsByte = ((byte[]) value)[0];
 			
 			if (!field.isUnsigned()) {
 				return valueAsByte;
@@ -3461,7 +3446,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		default:
 			if (this.useUsageAdvisor) {
 				issueConversionViaParsingWarning("getByte()", columnIndex,
-						this.thisRow[columnIndex], this.fields[columnIndex],
+						this.thisRow.getColumnValue(columnIndex - 1), this.fields[columnIndex],
 						new int[] { MysqlDefs.FIELD_TYPE_DOUBLE,
 								MysqlDefs.FIELD_TYPE_TINY,
 								MysqlDefs.FIELD_TYPE_SHORT,
@@ -3496,7 +3481,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		checkColumnBounds(columnIndex);
 
-		if (this.thisRow[columnIndex - 1] == null) {
+		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		
+		if (value == null) {
 			this.wasNullFlag = true;
 		} else {
 			this.wasNullFlag = false;
@@ -3522,13 +3509,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_LONG_BLOB:
 		case MysqlDefs.FIELD_TYPE_BLOB:
 		case MysqlDefs.FIELD_TYPE_BIT:
-			return (byte[]) this.thisRow[columnIndex - 1];
+			return (byte[]) value;
 
 		default:
 			int sqlType = field.getSQLType();
 		
 			if (sqlType == Types.VARBINARY || sqlType == Types.BINARY) {
-				return (byte[]) this.thisRow[columnIndex - 1];
+				return (byte[]) value;
 			}
 		
 			return getBytesFromString(getNativeString(columnIndex), columnIndex);
@@ -3692,7 +3679,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case Types.DECIMAL:
 		case Types.NUMERIC:
 			String stringVal = StringUtils
-					.toAsciiString((byte[]) this.thisRow[columnIndex - 1]);
+					.toAsciiString((byte[]) this.thisRow.getColumnValue(columnIndex - 1));
 
 			BigDecimal val;
 
@@ -3875,7 +3862,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		int mysqlType = this.fields[columnIndex - 1].getMysqlType();
 		
 		if (mysqlType == MysqlDefs.FIELD_TYPE_DATE) {
-			byte[] bits = (byte[]) this.thisRow[columnIndex - 1];
+			byte[] bits = (byte[]) this.thisRow.getColumnValue(columnIndex - 1);
 
 			if (bits == null) {
 				this.wasNullFlag = true;
@@ -3933,7 +3920,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	private java.sql.Date getNativeDateViaParseConversion(int columnIndex) throws SQLException {
 		if (this.useUsageAdvisor) {
 			issueConversionViaParsingWarning("getDate()", columnIndex,
-					this.thisRow[columnIndex - 1], this.fields[columnIndex - 1],
+					this.thisRow.getColumnValue(columnIndex - 1), this.fields[columnIndex - 1],
 					new int[] { MysqlDefs.FIELD_TYPE_DATE });
 		}
 
@@ -3959,7 +3946,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		columnIndex--; // / JDBC is 1-based
 
-		if (this.thisRow[columnIndex] == null) {
+		if (this.thisRow.isNull(columnIndex)) {
 			this.wasNullFlag = true;
 
 			return 0;
@@ -3971,18 +3958,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		
 		switch (f.getMysqlType()) {
 		case MysqlDefs.FIELD_TYPE_DOUBLE:
-			byte[] bits = (byte[]) this.thisRow[columnIndex];
-
-			long valueAsLong = (bits[0] & 0xff)
-					| ((long) (bits[1] & 0xff) << 8)
-					| ((long) (bits[2] & 0xff) << 16)
-					| ((long) (bits[3] & 0xff) << 24)
-					| ((long) (bits[4] & 0xff) << 32)
-					| ((long) (bits[5] & 0xff) << 40)
-					| ((long) (bits[6] & 0xff) << 48)
-					| ((long) (bits[7] & 0xff) << 56);
-
-			return Double.longBitsToDouble(valueAsLong);
+			return this.thisRow.getNativeDouble(columnIndex);
 		case MysqlDefs.FIELD_TYPE_TINY:
 			if (!f.isUnsigned()) {
 				return (double) getNativeByte(columnIndex + 1);
@@ -4004,7 +3980,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			return (double) getNativeLong(columnIndex + 1);
 		case MysqlDefs.FIELD_TYPE_LONGLONG:
-			valueAsLong = getNativeLong(columnIndex + 1);
+			long valueAsLong = getNativeLong(columnIndex + 1);
 			
 			if (!f.isUnsigned()) {
 				return (double) valueAsLong;
@@ -4020,10 +3996,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_BIT:
 			return getNumericRepresentationOfSQLBitType(columnIndex + 1);
 		default:
+			String stringVal = getNativeString(columnIndex + 1);
 
 			if (this.useUsageAdvisor) {
 				issueConversionViaParsingWarning("getDouble()", columnIndex,
-						this.thisRow[columnIndex], this.fields[columnIndex],
+						stringVal, this.fields[columnIndex],
 						new int[] { MysqlDefs.FIELD_TYPE_DOUBLE,
 								MysqlDefs.FIELD_TYPE_TINY,
 								MysqlDefs.FIELD_TYPE_SHORT,
@@ -4031,8 +4008,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 								MysqlDefs.FIELD_TYPE_LONGLONG,
 								MysqlDefs.FIELD_TYPE_FLOAT });
 			}
-
-			String stringVal = getNativeString(columnIndex + 1);
 
 			return getDoubleFromString(stringVal, columnIndex + 1);
 		}
@@ -4055,7 +4030,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		columnIndex--; // / JDBC is 1-based
 
-		if (this.thisRow[columnIndex] == null) {
+		if (this.thisRow.isNull(columnIndex)) {
 			this.wasNullFlag = true;
 
 			return 0;
@@ -4121,18 +4096,15 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			return asBigInt.floatValue();
 		case MysqlDefs.FIELD_TYPE_FLOAT:
-			byte[] bits = (byte[]) this.thisRow[columnIndex];
-
-			int asInt = (bits[0] & 0xff) | ((bits[1] & 0xff) << 8)
-					| ((bits[2] & 0xff) << 16) | ((bits[3] & 0xff) << 24);
-
-			return Float.intBitsToFloat(asInt);
+			
+			return this.thisRow.getNativeFloat(columnIndex);
 
 		default:
-
+			String stringVal = getNativeString(columnIndex + 1);
+		
 			if (this.useUsageAdvisor) {
 				issueConversionViaParsingWarning("getFloat()", columnIndex,
-						this.thisRow[columnIndex], this.fields[columnIndex],
+						stringVal, this.fields[columnIndex],
 						new int[] { MysqlDefs.FIELD_TYPE_DOUBLE,
 								MysqlDefs.FIELD_TYPE_TINY,
 								MysqlDefs.FIELD_TYPE_SHORT,
@@ -4140,8 +4112,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 								MysqlDefs.FIELD_TYPE_LONGLONG,
 								MysqlDefs.FIELD_TYPE_FLOAT });
 			}
-
-			String stringVal = getNativeString(columnIndex + 1);
 
 			return getFloatFromString(stringVal, columnIndex + 1);
 		}
@@ -4168,7 +4138,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		columnIndex--; // / JDBC is 1-based
 
-		if (this.thisRow[columnIndex] == null) {
+		if (this.thisRow.isNull(columnIndex)) {
 			this.wasNullFlag = true;
 
 			return 0;
@@ -4209,10 +4179,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return asShort + 65536;
 		case MysqlDefs.FIELD_TYPE_INT24:
 		case MysqlDefs.FIELD_TYPE_LONG:
-			byte[] bits = (byte[]) this.thisRow[columnIndex];
-
-			int valueAsInt = (bits[0] & 0xff) | ((bits[1] & 0xff) << 8)
-					| ((bits[2] & 0xff) << 16) | ((bits[3] & 0xff) << 24);
+			
+			int valueAsInt = this.thisRow.getNativeInt(columnIndex);
 
 			if (!f.isUnsigned()) {	
 				return valueAsInt;
@@ -4266,10 +4234,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return (int) valueAsDouble;
 
 		default:
-
+			String stringVal = getNativeString(columnIndex + 1);
+		
 			if (this.useUsageAdvisor) {
 				issueConversionViaParsingWarning("getInt()", columnIndex,
-						this.thisRow[columnIndex], this.fields[columnIndex],
+						stringVal, this.fields[columnIndex],
 						new int[] { MysqlDefs.FIELD_TYPE_DOUBLE,
 								MysqlDefs.FIELD_TYPE_TINY,
 								MysqlDefs.FIELD_TYPE_SHORT,
@@ -4277,8 +4246,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 								MysqlDefs.FIELD_TYPE_LONGLONG,
 								MysqlDefs.FIELD_TYPE_FLOAT });
 			}
-
-			String stringVal = getNativeString(columnIndex + 1);
 
 			return getIntFromString(stringVal, columnIndex + 1);
 		}
@@ -4306,7 +4273,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		columnIndex--; // / JDBC is 1-based
 
-		if (this.thisRow[columnIndex] == null) {
+		if (this.thisRow.isNull(columnIndex)) {
 			this.wasNullFlag = true;
 
 			return 0;
@@ -4344,17 +4311,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 			return asInt + 4294967296L;
 		case MysqlDefs.FIELD_TYPE_LONGLONG:
-
-			byte[] bits = (byte[]) this.thisRow[columnIndex];
-
-			long valueAsLong = (bits[0] & 0xff)
-					| ((long) (bits[1] & 0xff) << 8)
-					| ((long) (bits[2] & 0xff) << 16)
-					| ((long) (bits[3] & 0xff) << 24)
-					| ((long) (bits[4] & 0xff) << 32)
-					| ((long) (bits[5] & 0xff) << 40)
-					| ((long) (bits[6] & 0xff) << 48)
-					| ((long) (bits[7] & 0xff) << 56);
+			long valueAsLong = this.thisRow.getNativeLong(columnIndex);
 
 			if (!f.isUnsigned() || !expandUnsignedLong) {
 				return valueAsLong;
@@ -4396,10 +4353,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 			return (long) valueAsDouble;
 		default:
-
+			String stringVal = getNativeString(columnIndex + 1);
+		
 			if (this.useUsageAdvisor) {
 				issueConversionViaParsingWarning("getLong()", columnIndex,
-						this.thisRow[columnIndex], this.fields[columnIndex],
+						stringVal, this.fields[columnIndex],
 						new int[] { MysqlDefs.FIELD_TYPE_DOUBLE,
 								MysqlDefs.FIELD_TYPE_TINY,
 								MysqlDefs.FIELD_TYPE_SHORT,
@@ -4407,8 +4365,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 								MysqlDefs.FIELD_TYPE_LONGLONG,
 								MysqlDefs.FIELD_TYPE_FLOAT });
 			}
-
-			String stringVal = getNativeString(columnIndex + 1);
 
 			return getLongFromString(stringVal, columnIndex + 1);
 		}
@@ -4452,7 +4408,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		columnIndex--; // / JDBC is 1-based
 
-		if (this.thisRow[columnIndex] == null) {
+		
+		if (this.thisRow.isNull(columnIndex)) {
 			this.wasNullFlag = true;
 
 			return 0;
@@ -4474,9 +4431,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return (short)(tinyintVal + (short)256);
 		case MysqlDefs.FIELD_TYPE_SHORT:
 		case MysqlDefs.FIELD_TYPE_YEAR:
-			byte[] bits = (byte[]) this.thisRow[columnIndex];
 			
-			short asShort = (short) ((bits[0] & 0xff) | ((bits[1] & 0xff) << 8));
+			short asShort = this.thisRow.getNativeShort(columnIndex);
 
 			if (!f.isUnsigned()) {
 				return asShort;
@@ -4567,10 +4523,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 			return (short) valueAsFloat;
 		default:
-
+			String stringVal = getNativeString(columnIndex + 1);
+		
 			if (this.useUsageAdvisor) {
 				issueConversionViaParsingWarning("getShort()", columnIndex,
-						this.thisRow[columnIndex], this.fields[columnIndex],
+						stringVal, this.fields[columnIndex],
 						new int[] { MysqlDefs.FIELD_TYPE_DOUBLE,
 								MysqlDefs.FIELD_TYPE_TINY,
 								MysqlDefs.FIELD_TYPE_SHORT,
@@ -4578,8 +4535,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 								MysqlDefs.FIELD_TYPE_LONGLONG,
 								MysqlDefs.FIELD_TYPE_FLOAT });
 			}
-
-			String stringVal = getNativeString(columnIndex + 1);
 
 			return getShortFromString(stringVal, columnIndex + 1);
 		}
@@ -4606,8 +4561,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							.getString("ResultSet.Query_generated_no_fields_for_ResultSet_133"), //$NON-NLS-1$
 					SQLError.SQL_STATE_INVALID_COLUMN_NUMBER);
 		}
-
-		if (this.thisRow[columnIndex - 1] == null) {
+		
+		if (this.thisRow.isNull(columnIndex - 1)) {
 			this.wasNullFlag = true;
 
 			return null;
@@ -4616,10 +4571,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		this.wasNullFlag = false;
 
 		String stringVal = null;
-
-		if (this.thisRow[columnIndex - 1] instanceof String) {
-			return (String) this.thisRow[columnIndex - 1];
-		}
 
 		Field field = this.fields[columnIndex - 1];
 
@@ -4643,7 +4594,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 
 		return stringVal;
-		// }
 	}
 
 	private Time getNativeTime(int columnIndex, Calendar targetCalendar,
@@ -4652,7 +4602,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkRowPos();
 		checkColumnBounds(columnIndex);
 
-		if (this.thisRow[columnIndex - 1] == null) {
+		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		
+		if (value == null) {
 			this.wasNullFlag = true;
 
 			return null;
@@ -4664,7 +4616,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		if (mysqlType == MysqlDefs.FIELD_TYPE_TIME) {
 
-			byte[] bits = (byte[]) this.thisRow[columnIndex - 1];
+			byte[] bits = (byte[]) value;
 
 			int length = bits.length;
 			int hour = 0;
@@ -4705,7 +4657,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			TimeZone tz, boolean rollForward) throws SQLException {
 		if (this.useUsageAdvisor) {
 			issueConversionViaParsingWarning("getTime()", columnIndex,
-					this.thisRow[columnIndex - 1], this.fields[columnIndex - 1],
+					this.thisRow.getColumnValue(columnIndex - 1), this.fields[columnIndex - 1],
 					new int[] { MysqlDefs.FIELD_TYPE_TIME });
 		}
 	
@@ -4721,7 +4673,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkRowPos();
 		checkColumnBounds(columnIndex);
 
-		if (this.thisRow[columnIndex - 1] == null) {
+		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		
+		if (value == null) {
 			this.wasNullFlag = true;
 
 			return null;
@@ -4734,73 +4688,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		switch (mysqlType) {
 		case MysqlDefs.FIELD_TYPE_DATETIME:
 		case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-			byte[] bits = (byte[]) this.thisRow[columnIndex - 1];
-
-			int length = bits.length;
-
-			int year = 0;
-			int month = 0;
-			int day = 0;
-
-			int hour = 0;
-			int minute = 0;
-			int seconds = 0;
-
-			int nanos = 0;
-
-			if (length != 0) {
-				year = (bits[0] & 0xff) | ((bits[1] & 0xff) << 8);
-				month = bits[2];
-				day = bits[3];
-
-				if (length > 4) {
-					hour = bits[4];
-					minute = bits[5];
-					seconds = bits[6];
-				}
-
-				if (length > 7) {
-					nanos = (bits[7] & 0xff) | ((bits[8] & 0xff) << 8)
-							| ((bits[9] & 0xff) << 16)
-							| ((bits[10] & 0xff) << 24);
-				}
-			}
-
-			if ((year == 0) && (month == 0) && (day == 0)) {
-				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
-						.equals(this.connection.getZeroDateTimeBehavior())) {
-					this.wasNullFlag = true;
-
-					return null;
-				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
-						.equals(this.connection.getZeroDateTimeBehavior())) {
-					throw SQLError.createSQLException(
-							"Value '0000-00-00' can not be represented as java.sql.Timestamp",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-				}
-
-				year = 1;
-				month = 1;
-				day = 1;
-			}
-
-			Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
-					this.connection.getUtcCalendar() : 
-						getCalendarInstanceForSessionOrNew();
-			
-			synchronized (sessionCalendar) {
-				Timestamp ts = fastTimestampCreate(
-						sessionCalendar, year, month, day,
-						hour, minute, seconds, nanos);
-	
-				Timestamp adjustedTs = TimeUtil.changeTimezone(
-						this.connection, sessionCalendar,
-						targetCalendar,
-						ts,
-						this.connection.getServerTimezoneTZ(), tz, rollForward);
-				
-				return adjustedTs;
-			}
+			return this.thisRow.getNativeTimestamp(columnIndex - 1,
+					targetCalendar, tz, rollForward, this.connection, this);
 
 		default:
 			return (Timestamp)getNativeDateTimeValue(columnIndex, targetCalendar,
@@ -4813,7 +4702,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			TimeZone tz, boolean rollForward) throws SQLException {
 		if (this.useUsageAdvisor) {
 			issueConversionViaParsingWarning("getTimestamp()", columnIndex,
-					this.thisRow[columnIndex - 1], this.fields[columnIndex - 1],
+					this.thisRow.getColumnValue(columnIndex - 1), this.fields[columnIndex - 1],
 					new int[] { MysqlDefs.FIELD_TYPE_TIMESTAMP,
 							MysqlDefs.FIELD_TYPE_DATETIME });
 		}
@@ -4907,7 +4796,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkRowPos();
 		checkColumnBounds(columnIndex);
 		
-		if (this.thisRow[columnIndex - 1] == null) {
+		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		
+		if (value == null) {
 			this.wasNullFlag = true;
 
 			return null;
@@ -4925,7 +4816,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		// a byte[], which means it could be a string or blob.
 		//
 		if (this.isBinaryEncoded
-				&& !(this.thisRow[columnIndex - 1] instanceof byte[])) {
+				&& !(value instanceof byte[])) {
 
 			//
 			// Special case here...If this is a 'bit' type, it will actually
@@ -4939,7 +4830,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				return Boolean.valueOf(getBoolean(columnIndex));
 			}
 
-			Object columnValue = this.thisRow[columnIndex - 1];
+			Object columnValue = value;
 
 			if (columnValue == null) {
 				this.wasNullFlag = true;
@@ -5192,7 +5083,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkRowPos();
 		checkColumnBounds(columnIndex);
 
-		if (this.thisRow[columnIndex - 1] == null) {
+		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		
+		if (value == null) {
 			this.wasNullFlag = true;
 
 			return null;
@@ -5409,13 +5302,15 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 	private long getNumericRepresentationOfSQLBitType(int columnIndex) throws SQLException {
 		
+		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		
 		if (this.fields[columnIndex - 1].isSingleBit() || 
-				((byte[])this.thisRow[columnIndex - 1]).length == 1) {
-			return ((byte[])this.thisRow[columnIndex - 1])[0];
+				((byte[])value).length == 1) {
+			return ((byte[])value)[0];
 		}
 		
 		
-		byte[] asBytes = (byte[])this.thisRow[columnIndex - 1];
+		byte[] asBytes = (byte[])value;
 		
 		
 		int shift = 0;
@@ -5455,7 +5350,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				
 				checkColumnBounds(columnIndex);
 
-				if (this.thisRow[columnIndex - 1] == null) {
+				Object value = this.thisRow.getColumnValue(columnIndex - 1);
+				
+				if (value == null) {
 					this.wasNullFlag = true;
 				} else {
 					this.wasNullFlag = false;
@@ -5465,7 +5362,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					return 0;
 				}
 
-				byte[] shortAsBytes = (byte[]) this.thisRow[columnIndex - 1];
+				byte[] shortAsBytes = (byte[]) value;
 
 				if (shortAsBytes.length == 0) {
 					return (short) convertToZeroWithEmptyCheck();
@@ -5749,7 +5646,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						SQLError.SQL_STATE_INVALID_COLUMN_NUMBER);
 			}
 
-			if (this.thisRow[columnIndex - 1] == null) {
+			// JDBC is 1-based, Java is not !?
+			
+			int internalColumnIndex = columnIndex - 1;
+			
+			if (this.thisRow.isNull(internalColumnIndex)) {
 				this.wasNullFlag = true;
 
 				return null;
@@ -5757,65 +5658,40 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 			this.wasNullFlag = false;
 
+			
+			Field metadata = this.fields[internalColumnIndex];
+			
 			String stringVal = null;
-			columnIndex--; // JDBC is 1-based, Java is not !?
-
-			if (this.fields[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
-				if (this.fields[columnIndex].isSingleBit()) {
-					byte[] asBytes = (byte[])this.thisRow[columnIndex];
+			
+			if (metadata.getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
+				if (metadata.isSingleBit()) {
+					byte[] value = this.thisRow.getColumnValue(internalColumnIndex);
 					
-					if (asBytes.length == 0) {
+					if (value.length == 0) {
 						return String.valueOf(convertToZeroWithEmptyCheck());
 					}
 					
-					return String.valueOf(asBytes[0]);
+					return String.valueOf(value[0]);
 				}
 				
-				return String.valueOf(getNumericRepresentationOfSQLBitType(columnIndex + 1));
+				return String.valueOf(getNumericRepresentationOfSQLBitType(columnIndex));
 			}
 			
-			String encoding = this.fields[columnIndex].getCharacterSet();
+			String encoding = metadata.getCharacterSet();
 
-			if ((this.connection != null) && this.connection.getUseUnicode()) {
-				try {
-					if (encoding == null) {
-						stringVal = new String(
-								(byte[]) this.thisRow[columnIndex]);
-					} else {
-						SingleByteCharsetConverter converter = this.connection
-								.getCharsetConverter(encoding);
-
-						if (converter != null) {
-							stringVal = converter
-									.toString((byte[]) this.thisRow[columnIndex]);
-						} else {
-							stringVal = new String(
-									(byte[]) this.thisRow[columnIndex],
-									encoding);
-						}
-					}
-				} catch (java.io.UnsupportedEncodingException E) {
-					throw SQLError.createSQLException(
-							Messages
-									.getString("ResultSet.Unsupported_character_encoding____101") //$NON-NLS-1$
-									+ encoding + "'.", "0S100");
-				}
-			} else {
-				stringVal = StringUtils
-						.toAsciiString((byte[]) this.thisRow[columnIndex]);
-			}
+			stringVal = this.thisRow.getString(internalColumnIndex, encoding, this.connection);
 
 			//
 			// Special handling for YEAR type from mysql, some people
 			// want it as a DATE, others want to treat it as a SHORT
 			//
 
-			if (this.fields[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
+			if (metadata.getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 				if (!this.connection.getYearIsDateType()) {
 					return stringVal;
 				}
 
-				Date dt = getDateFromString(stringVal, columnIndex + 1);
+				Date dt = getDateFromString(stringVal, columnIndex);
 
 				if (dt == null) {
 					this.wasNullFlag = true;
@@ -5831,9 +5707,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			// Handles timezone conversion and zero-date behavior
 
 			if (checkDateTypes && !this.connection.getNoDatetimeStringSync()) {
-				switch (this.fields[columnIndex].getSQLType()) {
+				switch (metadata.getSQLType()) {
 				case Types.TIME:
-					Time tm = getTimeFromString(stringVal, null, columnIndex + 1,
+					Time tm = getTimeFromString(stringVal, null, columnIndex,
 							this.getDefaultTimeZone(), false);
 
 					if (tm == null) {
@@ -5847,7 +5723,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					return tm.toString();
 				case Types.DATE:
 
-					Date dt = getDateFromString(stringVal, columnIndex + 1);
+					Date dt = getDateFromString(stringVal, columnIndex);
 
 					if (dt == null) {
 						this.wasNullFlag = true;
@@ -5859,7 +5735,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 					return dt.toString();
 				case Types.TIMESTAMP:
-					Timestamp ts = getTimestampFromString(columnIndex + 1,
+					Timestamp ts = getTimestampFromString(columnIndex,
 							null, stringVal, this.getDefaultTimeZone(), false);
 
 					if (ts == null) {
@@ -6313,7 +6189,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		} else {
 			checkColumnBounds(columnIndex);
 			
-			return getTimeFromBytes(((byte[][])this.thisRow)[columnIndex - 1], targetCalendar,
+			return getTimeFromBytes((byte[])this.thisRow.getColumnValue(columnIndex - 1), targetCalendar,
 					columnIndex, tz, rollForward);
 		}
 	}
@@ -7012,11 +6888,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return getTimestampFromString(columnIndex, targetCalendar, 
 					timestampValue, tz,
 					rollForward);
-		} else {
-			return getTimestampFromBytes(columnIndex, targetCalendar, 
-					((byte[][])this.thisRow)[columnIndex - 1], tz,
-					rollForward);
-		}
+		} 
+		
+		return this.thisRow.getTimestampFast(columnIndex - 1, 
+			this.connection, this, targetCalendar, tz, rollForward);
 	}
 
 	/**
@@ -7410,6 +7285,18 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (this.rowData.size() == 0) {
 			b = false;
 		} else {
+			this.thisRow = this.rowData.next();
+			
+			if (this.thisRow == null) {
+				b = false;
+			} else {
+				clearWarnings();
+				
+				b = true;
+				
+			}
+			
+			/*
 			if (!this.rowData.hasNext()) {
 				// force scroll past end
 				this.rowData.next();
@@ -7418,7 +7305,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				clearWarnings();
 				this.thisRow = this.rowData.next();
 				b = true;
-			}
+			} */
 		}
 
 		return b;
@@ -7443,31 +7330,20 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return (int) valueAsDouble;
 	}
 
-	private int parseIntWithOverflowCheck(int columnIndex, byte[] valueAsBytes,
-			String valueAsString) throws NumberFormatException, SQLException {
+	private int getIntWithOverflowCheck(int columnIndex) throws SQLException {
+		int intValue = this.thisRow.getInt(columnIndex);
 
-		int intValue = 0;
+		checkForIntegerTruncation(columnIndex + 1 /* only reported in errors */, 
+				null, this.thisRow.getString(
+				columnIndex, this.fields[columnIndex].getCharacterSet(),
+				this.connection), intValue);
 
-		if (valueAsBytes == null && valueAsString == null) {
-			return 0;
-		}
-
-		if (valueAsBytes != null) {
-			intValue = StringUtils.getInt(valueAsBytes);
-		} else {
-			//
-			// JDK-6 doesn't like trailing whitespace
-			//
-			// Note this isn't a performance issue, other
-			// than the iteration over the string, as String.trim()
-			// will return a new string only if whitespace is present
-			//
-			
-			valueAsString = valueAsString.trim(); 
-			
-			intValue = Integer.parseInt(valueAsString);
-		}
-
+		return intValue;
+	}
+	
+	private void checkForIntegerTruncation(int columnIndex,
+			byte[] valueAsBytes, String valueAsString, int intValue)
+			throws SQLException {
 		if (this.connection.getJdbcCompliantTruncationForReads()) {
 			if (intValue == Integer.MIN_VALUE || intValue == Integer.MAX_VALUE) {
 				long valueAsLong = Long
@@ -7482,8 +7358,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				}
 			}
 		}
-
-		return intValue;
 	}
 
 	private long parseLongAsDouble(int columnIndex, String val)
@@ -7504,6 +7378,19 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return (long) valueAsDouble;
 	}
 
+	private long getLongWithOverflowCheck(int columnIndex, boolean doOverflowCheck) throws SQLException {
+		long longValue = this.thisRow.getLong(columnIndex);
+
+		if (doOverflowCheck) {
+			checkForLongTruncation(columnIndex + 1 /* only reported in errors */, 
+					null, this.thisRow.getString(
+					columnIndex, this.fields[columnIndex].getCharacterSet(),
+					this.connection), longValue);
+		}
+
+		return longValue;
+	}
+	
 	private long parseLongWithOverflowCheck(int columnIndex,
 			byte[] valueAsBytes, String valueAsString, boolean doCheck)
 			throws NumberFormatException, SQLException {
@@ -7531,22 +7418,28 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 
 		if (doCheck && this.connection.getJdbcCompliantTruncationForReads()) {
-			if (longValue == Long.MIN_VALUE
-					|| longValue == Long.MAX_VALUE) {
-				double valueAsDouble = Double
-						.parseDouble(valueAsString == null ? new String(
-								valueAsBytes) : valueAsString);
-
-				if (valueAsDouble < Long.MIN_VALUE
-						|| valueAsDouble > Long.MAX_VALUE) {
-					throwRangeException(valueAsString == null ? new String(
-							valueAsBytes) : valueAsString, columnIndex,
-							Types.BIGINT);
-				}
-			}
+			checkForLongTruncation(columnIndex, valueAsBytes, valueAsString,
+					longValue);
 		}
 
 		return longValue;
+	}
+
+	private void checkForLongTruncation(int columnIndex, byte[] valueAsBytes,
+			String valueAsString, long longValue) throws SQLException {
+		if (longValue == Long.MIN_VALUE
+				|| longValue == Long.MAX_VALUE) {
+			double valueAsDouble = Double
+					.parseDouble(valueAsString == null ? new String(
+							valueAsBytes) : valueAsString);
+
+			if (valueAsDouble < Long.MIN_VALUE
+					|| valueAsDouble > Long.MAX_VALUE) {
+				throwRangeException(valueAsString == null ? new String(
+						valueAsBytes) : valueAsString, columnIndex,
+						Types.BIGINT);
+			}
+		}
 	}
 
 	private short parseShortAsDouble(int columnIndex, String val)
@@ -9047,7 +8940,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		int nanos = 0;
 
-		byte[] bits = (byte[]) this.thisRow[columnIndex - 1];
+		byte[] bits = (byte[]) this.thisRow.getColumnValue(columnIndex - 1);
 
 		if (bits == null) {
 			this.wasNullFlag = true;

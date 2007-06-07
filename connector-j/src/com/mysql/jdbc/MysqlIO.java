@@ -1368,8 +1368,10 @@ class MysqlIO {
     *
     * @throws SQLException DOCUMENT ME!
     */
-    final Object[] nextRow(Field[] fields, int columnCount,
-        boolean isBinaryEncoded, int resultSetConcurrency)
+    final RowHolder nextRow(Field[] fields, int columnCount,
+        boolean isBinaryEncoded, int resultSetConcurrency, 
+        boolean useBufferRowHolderIfPossible,
+        boolean reuseRowPacket)
         throws SQLException {
         // Get the next incoming packet, re-using the packet because
         // all the data we need gets copied out of it.
@@ -1383,15 +1385,24 @@ class MysqlIO {
             rowPacket.setPosition(rowPacket.getPosition() - 1);
 
             if (!rowPacket.isLastDataPacket()) {
-                byte[][] rowData = new byte[columnCount][];
+            	if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE 
+            			|| !useBufferRowHolderIfPossible) {
+            	
+            		byte[][] rowData = new byte[columnCount][];
 
-                int offset = 0;
+            		for (int i = 0; i < columnCount; i++) {
+            			rowData[i] = rowPacket.readLenByteArray(0);
+            		}
 
-                for (int i = 0; i < columnCount; i++) {
-                    rowData[i] = rowPacket.readLenByteArray(offset);
-                }
+            		return new ByteArrayRowHolder(rowData);
+            	}
+            		
+            	if (!reuseRowPacket) {
+            		this.reusablePacket = new Buffer(rowPacket.getBufLength());
+            	}
+            	
+            	return new BufferRowHolder(rowPacket, fields, false);
 
-                return rowData;
             }
 
             readServerStatusForResultSets(rowPacket);
@@ -1404,8 +1415,17 @@ class MysqlIO {
         // PreparedStatements...
         //
         if (!rowPacket.isLastDataPacket()) {
-            return unpackBinaryResultSetRow(fields, rowPacket,
-                resultSetConcurrency);
+        	if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE 
+        			|| !useBufferRowHolderIfPossible) {
+        		return unpackBinaryResultSetRow(fields, rowPacket,
+        				resultSetConcurrency);
+        	}
+        	
+        	if (!reuseRowPacket) {
+        		this.reusablePacket = new Buffer(rowPacket.getBufLength());
+        	}
+            	
+            return new BufferRowHolder(rowPacket, fields, true);
         }
 
         rowPacket.setPosition(rowPacket.getPosition() - 1);
@@ -2489,7 +2509,7 @@ class MysqlIO {
 
         // Now read the data
         Object rowBytes = nextRow(fields, (int) columnCount, isBinaryEncoded,
-                resultSetConcurrency);
+                resultSetConcurrency, false, true);
         
         int rowCount = 0;
 
@@ -2500,7 +2520,7 @@ class MysqlIO {
 
         while (rowBytes != null) {
             rowBytes = nextRow(fields, (int) columnCount, isBinaryEncoded,
-                    resultSetConcurrency);
+                    resultSetConcurrency, false, true);
 
             if (rowBytes != null) {
             	if ((maxRows == -1) || (rowCount < maxRows)) {
@@ -3536,11 +3556,11 @@ class MysqlIO {
      *
      * @throws SQLException DOCUMENT ME!
      */
-    private final Object[] unpackBinaryResultSetRow(Field[] fields,
+    private final RowHolder unpackBinaryResultSetRow(Field[] fields,
         Buffer binaryData, int resultSetConcurrency) throws SQLException {
         int numFields = fields.length;
 
-        Object[] unpackedRowData = new Object[numFields];
+        byte[][] unpackedRowData = new byte[numFields][];
 
         //
         // Unpack the null bitmask, first
@@ -3583,12 +3603,12 @@ class MysqlIO {
         	}
         }
 
-        return unpackedRowData;
+        return new ByteArrayRowHolder(unpackedRowData);
     }
 
         
     private final void extractNativeEncodedColumn(Buffer binaryData, 
-    		Field[] fields, int columnIndex, Object[] unpackedRowData) throws SQLException {
+    		Field[] fields, int columnIndex, byte[][] unpackedRowData) throws SQLException {
     	Field curField = fields[columnIndex];
     	
     	switch (curField.getMysqlType()) {
@@ -3670,7 +3690,7 @@ class MysqlIO {
     }
 
     private final void unpackNativeEncodedColumn(Buffer binaryData, 
-    		Field[] fields, int columnIndex, Object[] unpackedRowData) 
+    		Field[] fields, int columnIndex, byte[][] unpackedRowData) 
     throws SQLException {
     	Field curField = fields[columnIndex];
     	
@@ -4114,10 +4134,10 @@ class MysqlIO {
 		sendCommand(MysqlDefs.COM_FETCH, null, this.sharedSendPacket, true,
 				null);
 	
-		Object[] row = null;
+		RowHolder row = null;
 	
 		while ((row = nextRow(columnTypes, columnTypes.length, true,
-				ResultSet.CONCUR_READ_ONLY)) != null) {
+				ResultSet.CONCUR_READ_ONLY, false, true)) != null) {
 			fetchedRows.add(row);
 		}
 	

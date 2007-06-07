@@ -69,7 +69,7 @@ public class CursorRowProvider implements RowData {
 	 * sent for each batch of rows, but we need the metadata to unpack the
 	 * results for each field.
 	 */
-	private Field[] fields;
+	private Field[] metadata;
 
 	/**
 	 * Communications channel to the server
@@ -112,7 +112,7 @@ public class CursorRowProvider implements RowData {
 	public CursorRowProvider(MysqlIO ioChannel,
 			ServerPreparedStatement creatingStatement, Field[] metadata) {
 		this.currentPositionInEntireResult = BEFORE_START_OF_ROWS;
-		this.fields = metadata;
+		this.metadata = metadata;
 		this.mysql = ioChannel;
 		this.statementIdOnServer = creatingStatement.getServerStatementId();
 		this.prepStmt = creatingStatement;
@@ -137,7 +137,7 @@ public class CursorRowProvider implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public Object[] getAt(int ind) throws SQLException {
+	public RowHolder getAt(int ind) throws SQLException {
 		notSupported();
 
 		return null;
@@ -232,7 +232,7 @@ public class CursorRowProvider implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public void addRow(byte[][] row) throws SQLException {
+	public void addRow(RowHolder row) throws SQLException {
 		notSupported();
 	}
 
@@ -274,7 +274,7 @@ public class CursorRowProvider implements RowData {
 	 */
 	public void close() throws SQLException {
 
-		this.fields = null;
+		this.metadata = null;
 		this.owner = null;
 	}
 
@@ -342,12 +342,16 @@ public class CursorRowProvider implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public Object[] next() throws SQLException {
-		if (this.fetchedRows == null) {
+	public RowHolder next() throws SQLException {
+		if (this.fetchedRows == null && this.currentPositionInEntireResult != BEFORE_START_OF_ROWS) {
 			throw SQLError.createSQLException(
 					Messages
 							.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"), //$NON-NLS-1$
 					SQLError.SQL_STATE_GENERAL_ERROR);
+		}
+		
+		if (!hasNext()) {
+			return null;
 		}
 		
 		this.currentPositionInEntireResult++;
@@ -363,9 +367,11 @@ public class CursorRowProvider implements RowData {
 			this.currentPositionInFetchedRows = 0;
 		}
 
-		Object[] row = (Object[]) this.fetchedRows
+		RowHolder row = (RowHolder) this.fetchedRows
 				.get(this.currentPositionInFetchedRows);
 
+		row.setMetadata(this.metadata);
+		
 		return row;
 	}
 
@@ -399,7 +405,7 @@ public class CursorRowProvider implements RowData {
 			}
 
 			this.fetchedRows = this.mysql.fetchRowsViaCursor(this.fetchedRows,
-					this.statementIdOnServer, this.fields, numRowsToFetch);
+					this.statementIdOnServer, this.metadata, numRowsToFetch);
 			this.currentPositionInFetchedRows = BEFORE_START_OF_ROWS;
 
 			if ((this.mysql.getServerStatus() & SERVER_STATUS_LAST_ROW_SENT) != 0) {
@@ -461,6 +467,10 @@ public class CursorRowProvider implements RowData {
 
 	public boolean wasEmpty() {
 		return this.wasEmpty;
+	}
+	
+	public void setMetadata(Field[] metadata) {
+		this.metadata = metadata;
 	}
 
 }

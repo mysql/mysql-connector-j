@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2006 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -24,6 +24,7 @@
  */
 package com.mysql.jdbc;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +35,8 @@ import java.util.List;
  * @version $Id$
  */
 public class RowDataStatic implements RowData {
+	private Field[] metadata;
+	
 	private int index;
 
 	ResultSetImpl owner;
@@ -46,7 +49,7 @@ public class RowDataStatic implements RowData {
 	 * @param rows
 	 *            DOCUMENT ME!
 	 */
-	public RowDataStatic(ArrayList rows) {
+	public RowDataStatic(List rows) {
 		this.index = -1;
 		this.rows = rows;
 	}
@@ -57,7 +60,7 @@ public class RowDataStatic implements RowData {
 	 * @param row
 	 *            DOCUMENT ME!
 	 */
-	public void addRow(byte[][] row) {
+	public void addRow(RowHolder row) {
 		this.rows.add(row);
 	}
 
@@ -96,12 +99,12 @@ public class RowDataStatic implements RowData {
 	 * 
 	 * @return DOCUMENT ME!
 	 */
-	public Object[] getAt(int atIndex) {
+	public RowHolder getAt(int atIndex) {
 		if ((atIndex < 0) || (atIndex >= this.rows.size())) {
 			return null;
 		}
 
-		return (Object[]) this.rows.get(atIndex);
+		return (RowHolder) this.rows.get(atIndex);
 	}
 
 	/**
@@ -208,11 +211,14 @@ public class RowDataStatic implements RowData {
 	 * 
 	 * @return DOCUMENT ME!
 	 */
-	public Object[] next() {
+	public RowHolder next() throws SQLException {
 		this.index++;
 
 		if (this.index < this.rows.size()) {
-			return (Object[]) this.rows.get(this.index);
+			RowHolder row = (RowHolder) this.rows.get(this.index);
+			row.setMetadata(this.metadata);
+			
+			return row; 
 		}
 
 		return null;
@@ -256,5 +262,9 @@ public class RowDataStatic implements RowData {
 
 	public boolean wasEmpty() {
 		return (this.rows != null && this.rows.size() == 0);
+	}
+
+	public void setMetadata(Field[] metadata) {
+		this.metadata = metadata;
 	}
 }

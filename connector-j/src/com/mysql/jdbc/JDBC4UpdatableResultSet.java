@@ -226,9 +226,9 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	    	((com.mysql.jdbc.JDBC4PreparedStatement)this.inserter).setNCharacterStream(columnIndex, x, length);
 	
 	        if (x == null) {
-	            this.thisRow[columnIndex - 1] = null;
+	            this.thisRow.setColumnValue(columnIndex, null);
 	        } else {
-	            this.thisRow[columnIndex - 1] = STREAM_DATA_MARKER;
+	        	 this.thisRow.setColumnValue(columnIndex, STREAM_DATA_MARKER);
 	        }
 	    }
 	}
@@ -313,12 +313,12 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	    	((com.mysql.jdbc.JDBC4PreparedStatement)this.inserter).setNString(columnIndex, x);
 	
 	        if (x == null) {
-	            this.thisRow[columnIndex - 1] = null;
+	        	 this.thisRow.setColumnValue(columnIndex, null);
 	        } else {
-	            this.thisRow[columnIndex - 1] = StringUtils.getBytes(x,
+	        	 this.thisRow.setColumnValue(columnIndex, StringUtils.getBytes(x,
 	                        this.charConverter, fieldEncoding,
 	                        this.connection.getServerCharacterEncoding(),
-	                        this.connection.parserKnowsUnicode());
+	                        this.connection.parserKnowsUnicode()));
 	        }
 	    }
 	}
@@ -389,6 +389,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 			throw new SQLException(
 					"Can not call getNCharacterStream() when field's charset isn't UTF-8");
 		}
+		
 		return getCharacterStream(columnIndex);
 	}
 
@@ -424,10 +425,12 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	 */
 	public NClob getNClob(int columnIndex) throws SQLException {
 		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+		
 		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 			throw new SQLException(
 					"Can not call getNClob() when field's charset isn't UTF-8");
 		}
+		
 		if (!this.isBinaryEncoded) {
 			String asString = getStringForNClob(columnIndex);
 	
@@ -476,10 +479,12 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	 */
 	public String getNString(int columnIndex) throws SQLException {
 		String fieldEncoding = this.fields[columnIndex - 1].getCharacterSet();
+		
 		if (fieldEncoding == null || !fieldEncoding.equals("UTF-8")) {
 			throw new SQLException(
 					"Can not call getNString() when field's charset isn't UTF-8");
 		}
+		
 		return getString(columnIndex);
 	}
 
