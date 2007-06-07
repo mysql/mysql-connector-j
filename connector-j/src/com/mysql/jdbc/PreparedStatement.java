@@ -39,6 +39,7 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.sql.Array;
 import java.sql.Clob;
+import java.sql.Date;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
 import java.sql.ResultSet;
@@ -50,6 +51,7 @@ import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
@@ -463,6 +465,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 	private byte[][] parameterValues = null;
 
+	/**
+	 * Only used by statement interceptors at the moment to
+	 * provide introspection of bound values
+	 */
+	protected int[] parameterTypes = null;
+	
 	private ParseInfo parseInfo;
 
 	private java.sql.ResultSetMetaData pstmtResultMetaData;
@@ -761,6 +769,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			this.parameterStreams[i] = null;
 			this.isStream[i] = false;
 			this.isNull[i] = false;
+			this.parameterTypes[i] = Types.NULL;
 		}
 	}
 
@@ -1306,7 +1315,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 								while (rs.next()) {
 									this.batchedGeneratedKeys
-											.add(new byte[][] { rs.getBytes(1) });
+											.add(new ByteArrayRowHolder(new byte[][] { rs.getBytes(1) }));
 								}
 							} finally {
 								if (rs != null) {
@@ -2226,6 +2235,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		this.isStream = new boolean[this.parameterCount];
 		this.streamLengths = new int[this.parameterCount];
 		this.isNull = new boolean[this.parameterCount];
+		this.parameterTypes = new int[this.parameterCount];
 
 		clearParameters();
 
@@ -2300,6 +2310,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		this.streamLengths = null;
 		this.isNull = null;
 		this.streamConvertBuf = null;
+		this.parameterTypes = null;
 	}
 
 	/**
@@ -2369,6 +2380,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		} else {
 			setInternal(parameterIndex, StringUtils
 					.fixDecimalExponent(StringUtils.consistentToString(x)));
+			
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DECIMAL;
 		}
 	}
 
@@ -2416,6 +2429,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			this.isStream[parameterIndex - 1 + parameterIndexOffset] = true;
 			this.streamLengths[parameterIndex - 1 + parameterIndexOffset] = length;
 			this.isNull[parameterIndex - 1 + parameterIndexOffset] = false;
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BLOB;
 		}
 	}
 
@@ -2447,6 +2461,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			bytesOut.write('\'');
 
 			setInternal(i, bytesOut.toByteArray());
+			
+			this.parameterTypes[i - 1 + getParameterIndexOffset()] = Types.BLOB;
 		}
 	}
 
@@ -2467,6 +2483,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			setInternal(parameterIndex, x ? "1" : "0"); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
 			setInternal(parameterIndex, x ? "'t'" : "'f'"); //$NON-NLS-1$ //$NON-NLS-2$
+			
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BOOLEAN;
 		}
 	}
 
@@ -2484,6 +2502,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setByte(int parameterIndex, byte x) throws SQLException {
 		setInternal(parameterIndex, String.valueOf(x));
+		
+		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TINYINT;
 	}
 
 	/**
@@ -2501,6 +2521,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setBytes(int parameterIndex, byte[] x) throws SQLException {
 		setBytes(parameterIndex, x, true, true);
+		
+		if (x != null) {
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BINARY;
+		}
 	}
 
 	protected void setBytes(int parameterIndex, byte[] x,
@@ -2727,6 +2751,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						}
 					}
 				}
+				
+				this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.CLOB;
 			}
 		} catch (java.io.IOException ioEx) {
 			throw SQLError.createSQLException(ioEx.toString(),
@@ -2748,22 +2774,23 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public void setClob(int i, Clob x) throws SQLException {
 		if (x == null) {
 			setNull(i, Types.CLOB);
-
-			return;
-		}
-
-		String forcedEncoding = this.connection.getClobCharacterEncoding();
-		
-		if (forcedEncoding == null) {
-			setString(i, x.getSubString(1L, (int) x.length()));
 		} else {
-			try {
-				setBytes(i, x.getSubString(1L, 
-						(int)x.length()).getBytes(forcedEncoding));
-			} catch (UnsupportedEncodingException uee) {
-				throw SQLError.createSQLException("Unsupported character encoding " + 
-						forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+
+			String forcedEncoding = this.connection.getClobCharacterEncoding();
+			
+			if (forcedEncoding == null) {
+				setString(i, x.getSubString(1L, (int) x.length()));
+			} else {
+				try {
+					setBytes(i, x.getSubString(1L, 
+							(int)x.length()).getBytes(forcedEncoding));
+				} catch (UnsupportedEncodingException uee) {
+					throw SQLError.createSQLException("Unsupported character encoding " + 
+							forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+				}
 			}
+		
+			this.parameterTypes[i - 1 + getParameterIndexOffset()] = Types.CLOB;
 		}
 	}
 
@@ -2789,6 +2816,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			SimpleDateFormat dateFormatter = new SimpleDateFormat(
 					"''yyyy-MM-dd''", Locale.US); //$NON-NLS-1$
 			setInternal(parameterIndex, dateFormatter.format(x));
+			
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DATE;
 		}
 	}
 
@@ -2836,6 +2865,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 		setInternal(parameterIndex, StringUtils.fixDecimalExponent(String
 				.valueOf(x)));
+		
+		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DOUBLE;
 	}
 
 	/**
@@ -2853,6 +2884,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public void setFloat(int parameterIndex, float x) throws SQLException {
 		setInternal(parameterIndex, StringUtils.fixDecimalExponent(String
 				.valueOf(x)));
+		
+		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.FLOAT;
 	}
 
 	/**
@@ -2869,6 +2902,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setInt(int parameterIndex, int x) throws SQLException {
 		setInternal(parameterIndex, String.valueOf(x));
+		
+		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.INTEGER;
 	}
 
 	protected final void setInternal(int paramIndex, byte[] val)
@@ -2880,6 +2915,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 		int parameterIndexOffset = getParameterIndexOffset();
 		
+		checkBounds(paramIndex, parameterIndexOffset);
+
+		this.isStream[paramIndex - 1 + parameterIndexOffset] = false;
+		this.isNull[paramIndex - 1 + parameterIndexOffset] = false;
+		this.parameterStreams[paramIndex - 1 + parameterIndexOffset] = null;
+		this.parameterValues[paramIndex - 1 + parameterIndexOffset] = val;
+	}
+
+	private void checkBounds(int paramIndex, int parameterIndexOffset)
+			throws SQLException {
 		if ((paramIndex < 1)) {
 			throw SQLError.createSQLException(
 					Messages.getString("PreparedStatement.49") //$NON-NLS-1$
@@ -2895,11 +2940,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			throw SQLError.createSQLException("Can't set IN parameter for return value of stored function call.", 
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
-
-		this.isStream[paramIndex - 1 + parameterIndexOffset] = false;
-		this.isNull[paramIndex - 1 + parameterIndexOffset] = false;
-		this.parameterStreams[paramIndex - 1 + parameterIndexOffset] = null;
-		this.parameterValues[paramIndex - 1 + parameterIndexOffset] = val;
 	}
 
 	protected final void setInternal(int paramIndex, String val)
@@ -2934,6 +2974,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setLong(int parameterIndex, long x) throws SQLException {
 		setInternal(parameterIndex, String.valueOf(x));
+		
+		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BIGINT;
 	}
 
 	/**
@@ -2955,6 +2997,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public void setNull(int parameterIndex, int sqlType) throws SQLException {
 		setInternal(parameterIndex, "null"); //$NON-NLS-1$
 		this.isNull[parameterIndex - 1] = true;
+		
+		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.NULL;
 	}
 
 	/**
@@ -2977,6 +3021,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public void setNull(int parameterIndex, int sqlType, String arg)
 			throws SQLException {
 		setNull(parameterIndex, sqlType);
+		
+		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.NULL;
 	}
 
 	private void setNumericObject(int parameterIndex, Object parameterObj, int targetSqlType, int scale) throws SQLException {
@@ -3506,6 +3552,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			byte[] buf = bytesOut.toByteArray();
 			ByteArrayInputStream bytesIn = new ByteArrayInputStream(buf);
 			setBinaryStream(parameterIndex, bytesIn, buf.length);
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.JAVA_OBJECT;
 		} catch (Exception ex) {
 			throw SQLError.createSQLException(Messages.getString("PreparedStatement.54") //$NON-NLS-1$
 					+ ex.getClass().getName(),
@@ -3527,6 +3574,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setShort(int parameterIndex, short x) throws SQLException {
 		setInternal(parameterIndex, String.valueOf(x));
+		
+		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.SMALLINT;
 	}
 
 	/**
@@ -3720,6 +3769,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			}
 
 			setInternal(parameterIndex, parameterAsBytes);
+			
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.VARCHAR;
 		}
 	}
 
@@ -3793,6 +3844,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			}
 			
 			setInternal(parameterIndex, "'" + x.toString() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+			
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIME;
 		}
 	}
 
@@ -3881,6 +3934,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				setInternal(parameterIndex, timestampString); // SimpleDateFormat is not
 															  // thread-safe
 			}
+			
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIMESTAMP;
 		}
 	}
 
@@ -3989,6 +4044,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			setNull(parameterIndex, java.sql.Types.VARCHAR);
 		} else {
 			setBinaryStream(parameterIndex, x, length);
+			
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.CLOB;
 		}
 	}
 
@@ -3998,6 +4055,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public void setURL(int parameterIndex, URL arg) throws SQLException {
 		if (arg != null) {
 			setString(parameterIndex, arg.toString());
+			
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DATALINK;
 		} else {
 			setNull(parameterIndex, Types.CHAR);
 		}
@@ -4186,32 +4245,27 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 	public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
 		setAsciiStream(parameterIndex, x, -1);
-		
 	}
 
 	public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
 		setAsciiStream(parameterIndex, x, (int)length);
-		
+		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.CLOB;
 	}
 
 	public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
 		setBinaryStream(parameterIndex, x, -1);
-		
 	}
 
 	public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
-		setBinaryStream(parameterIndex, x, (int)length);
-		
+		setBinaryStream(parameterIndex, x, (int)length);	
 	}
 
 	public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
 		setBinaryStream(parameterIndex, inputStream);
-		
 	}
 
 	public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
 		setCharacterStream(parameterIndex, reader, -1);
-		
 	}
 
 	public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
@@ -4231,7 +4285,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 	public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
 		setNCharacterStream(parameterIndex, value, -1);
-		
 	}
 	
 	/**
@@ -4345,6 +4398,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	        }
 	
 	        setInternal(parameterIndex, parameterAsBytes);
+	        
+	        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = -9; /* Types.NVARCHAR */
 	    }
 	}
 	
@@ -4405,6 +4460,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 	                setNString(parameterIndex, buf.toString());
 	            }
+	            
+	            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = 2011; /* Types.NCLOB */
 	        }
 	    } catch (java.io.IOException ioEx) {
 	        throw SQLError.createSQLException(ioEx.toString(),
@@ -4436,5 +4493,185 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	    } else {
 	        setNCharacterStream(parameterIndex, reader, length);
 	    }
+	}
+	
+	public ParameterBindings getParameterBindings() throws SQLException {
+		return new EmulatedPreparedStatementBindings();
+	}
+	
+	class EmulatedPreparedStatementBindings implements ParameterBindings {
+
+		private ResultSetImpl bindingsAsRs;
+		private boolean[] parameterIsNull;
+		
+		public EmulatedPreparedStatementBindings() throws SQLException {
+			List rows = new ArrayList();
+			parameterIsNull = new boolean[parameterCount];
+			System
+					.arraycopy(isNull, 0, this.parameterIsNull, 0,
+							parameterCount);
+			byte[][] rowData = new byte[parameterCount][];
+			Field[] typeMetadata = new Field[parameterCount];
+
+			for (int i = 0; i < parameterCount; i++) {
+				rowData[i] = getBytesRepresentation(i);
+
+				int charsetIndex = 0;
+
+				if (parameterTypes[i] == Types.BINARY
+						|| parameterTypes[i] == Types.BLOB) {
+					charsetIndex = 63;
+				} else {
+					String mysqlEncodingName = CharsetMapping
+							.getMysqlEncodingForJavaEncoding(connection
+									.getEncoding(), connection);
+					charsetIndex = CharsetMapping
+							.getCharsetIndexForMysqlEncodingName(mysqlEncodingName);
+				}
+
+				Field parameterMetadata = new Field(null, "parameter_"
+						+ (i + 1), charsetIndex, parameterTypes[i],
+						rowData[i].length);
+				parameterMetadata.setConnection(connection);
+				typeMetadata[i] = parameterMetadata;
+			}
+
+			rows.add(new ByteArrayRowHolder(rowData));
+
+			this.bindingsAsRs = new ResultSetImpl(connection.getCatalog(),
+					typeMetadata, new RowDataStatic(rows), connection, null);
+			this.bindingsAsRs.next();
+		}
+		
+		public Array getArray(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getArray(parameterIndex);
+		}
+
+		public InputStream getAsciiStream(int parameterIndex)
+				throws SQLException {
+			return this.bindingsAsRs.getAsciiStream(parameterIndex);
+		}
+
+		public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getBigDecimal(parameterIndex);
+		}
+
+		public InputStream getBinaryStream(int parameterIndex)
+				throws SQLException {
+			return this.bindingsAsRs.getBinaryStream(parameterIndex);
+		}
+
+		public java.sql.Blob getBlob(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getBlob(parameterIndex);
+		}
+
+		public boolean getBoolean(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getBoolean(parameterIndex);
+		}
+
+		public byte getByte(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getByte(parameterIndex);
+		}
+
+		public byte[] getBytes(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getBytes(parameterIndex);
+		}
+
+		public Reader getCharacterStream(int parameterIndex)
+				throws SQLException {
+			return this.bindingsAsRs.getCharacterStream(parameterIndex);
+		}
+
+		public java.sql.Clob getClob(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getClob(parameterIndex);
+		}
+
+		public Date getDate(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getDate(parameterIndex);
+		}
+
+		public double getDouble(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getDouble(parameterIndex);
+		}
+
+		public float getFloat(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getFloat(parameterIndex);
+		}
+
+		public int getInt(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getInt(parameterIndex);
+		}
+
+		public long getLong(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getLong(parameterIndex);
+		}
+
+		public Reader getNCharacterStream(int parameterIndex)
+				throws SQLException {
+			return this.bindingsAsRs.getCharacterStream(parameterIndex);
+		}
+
+		public Reader getNClob(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getCharacterStream(parameterIndex);
+		}
+
+		public Object getObject(int parameterIndex) throws SQLException {
+			checkBounds(parameterIndex, 0);
+			
+			if (parameterIsNull[parameterIndex - 1]) {
+				return null;
+			}
+			
+			// we can't rely on the default mapping for JDBC's 
+			// ResultSet.getObject() for numerics, they're not one-to-one with
+			// PreparedStatement.setObject
+			
+			switch (parameterTypes[parameterIndex - 1]) {
+			case Types.TINYINT:
+				return new Byte(getByte(parameterIndex));
+			case Types.SMALLINT:
+				return new Short(getShort(parameterIndex));
+			case Types.INTEGER:
+				return new Integer(getInt(parameterIndex));
+			case Types.BIGINT:
+				return new Long(getLong(parameterIndex));
+			case Types.FLOAT:
+				return new Float(getFloat(parameterIndex));
+			case Types.DOUBLE: 
+				return new Double(getDouble(parameterIndex));
+			default:
+				return this.bindingsAsRs.getObject(parameterIndex);
+			}
+		}
+
+		public Ref getRef(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getRef(parameterIndex);
+		}
+
+		public short getShort(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getShort(parameterIndex);
+		}
+
+		public String getString(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getString(parameterIndex);
+		}
+
+		public Time getTime(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getTime(parameterIndex);
+		}
+
+		public Timestamp getTimestamp(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getTimestamp(parameterIndex);
+		}
+
+		public URL getURL(int parameterIndex) throws SQLException {
+			return this.bindingsAsRs.getURL(parameterIndex);
+		}
+
+		public boolean isNull(int parameterIndex) throws SQLException {
+			checkBounds(parameterIndex, 0);
+			
+			return this.parameterIsNull[parameterIndex -1];
+		}	
 	}
 }
