@@ -49,6 +49,7 @@ import java.util.Properties;
 import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.NotImplemented;
+import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
 
@@ -1782,6 +1783,43 @@ public class StatementsTest extends BaseTestCase {
 			if (interceptedConn != null) {
 				interceptedConn.close();
 			}
+		}
+	}
+	
+	public void testParameterBindings() throws Exception {
+		// Need to check character set stuff, so need a new connection
+		Connection utfConn = getConnectionWithProps("characterEncoding=utf-8");
+		
+		java.util.Date now = new java.util.Date();
+
+		Object[] valuesToTest = new Object[] {
+				new Byte(Byte.MIN_VALUE),
+				new Short(Short.MIN_VALUE),
+				new Integer(Integer.MIN_VALUE),
+				new Long(Long.MIN_VALUE),
+				new Double(Double.MIN_VALUE),
+				"\u4E2D\u6587",
+				new BigDecimal(Math.PI), 
+				null, // to test isNull
+				now // to test serialization
+		};
+		
+		StringBuffer statementText = new StringBuffer("SELECT ?");
+		
+		for (int i = 1; i < valuesToTest.length; i++) {
+			statementText.append(",?");
+		}
+		
+		this.pstmt = utfConn.prepareStatement(statementText.toString());
+		
+		for (int i = 0; i < valuesToTest.length; i++) {
+			this.pstmt.setObject(i + 1, valuesToTest[i]);
+		}
+		
+		ParameterBindings bindings = ((com.mysql.jdbc.PreparedStatement)this.pstmt).getParameterBindings();
+		
+		for (int i = 0; i < valuesToTest.length; i++) {
+			assertEquals(bindings.getObject(i + 1), valuesToTest[i]);
 		}
 	}
 }
