@@ -44,6 +44,14 @@
       manual. 
       
     - Externalized the descriptions of connection properties.
+    
+    - The data (and how it's stored) for ResultSet rows are now behind an
+      interface which allows us (in some cases) to allocate less memory
+      per row, in that for "streaming" result sets, we re-use the packet
+      used to read rows, since only one row at a time is ever active.
+      
+    - Made it possible to retrieve prepared statement parameter bindings
+      (to be used in StatementInterceptors, primarily). 
       
 04-11-07 - Version 5.1.0 Alpha
 	
