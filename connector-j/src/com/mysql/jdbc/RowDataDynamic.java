@@ -406,7 +406,7 @@ public class RowDataDynamic implements RowData {
 
 				this.nextRow = this.io.nextRow(this.fields, this.columnCount,
 						this.isBinaryEncoded,
-						java.sql.ResultSet.CONCUR_READ_ONLY, true, true);
+						java.sql.ResultSet.CONCUR_READ_ONLY, true, true, null);
 
 				if (this.nextRow == null) {
 					this.isAtEnd = true;

@@ -1511,4 +1511,8 @@ public interface ConnectionProperties {
 	public abstract String getStatementInterceptors();
 
 	public abstract void setStatementInterceptors(String value);
+	
+	public abstract boolean getUseDirectRowUnpack();
+
+	public abstract void setUseDirectRowUnpack(boolean flag);
 }

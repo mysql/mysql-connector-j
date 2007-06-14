@@ -229,6 +229,7 @@ class MysqlIO {
 	private long slowQueryThreshold;
 	private String queryTimingUnits;
 	private List statementInterceptors;
+	private boolean useDirectRowUnpack = true;
 
     /**
      * Constructor:  Connect to the MySQL server and setup a stream connection.
@@ -253,6 +254,8 @@ class MysqlIO {
             this.packetDebugRingBuffer = new LinkedList();
         }
 
+        this.useDirectRowUnpack = this.connection.getUseDirectRowUnpack();
+        
         this.logSlowQueries = this.connection.getLogSlowQueries();
 
         this.reusablePacket = new Buffer(INITIAL_PACKET_SIZE);
@@ -412,6 +415,7 @@ class MysqlIO {
         		skipPacket();
         	}
         }
+        
         packet = reuseAndReadPacket(this.reusablePacket);
 
         readServerStatusForResultSets(packet);
@@ -1371,11 +1375,29 @@ class MysqlIO {
     final RowHolder nextRow(Field[] fields, int columnCount,
         boolean isBinaryEncoded, int resultSetConcurrency, 
         boolean useBufferRowHolderIfPossible,
-        boolean reuseRowPacket)
+        boolean reuseRowPacket,
+        Buffer existingRowPacket)
         throws SQLException {
-        // Get the next incoming packet, re-using the packet because
-        // all the data we need gets copied out of it.
-        Buffer rowPacket = checkErrorPacket();
+    	
+    	if (this.useDirectRowUnpack && existingRowPacket == null
+				&& !isBinaryEncoded && !useBufferRowHolderIfPossible
+				&& reuseRowPacket) {
+			return nextRowFast(fields, columnCount, isBinaryEncoded, resultSetConcurrency,
+					useBufferRowHolderIfPossible, reuseRowPacket);
+		}
+    	
+        Buffer rowPacket = null;
+        
+        if (existingRowPacket == null) {
+        	// Get the next incoming packet, re-using the packet because
+            // all the data we need gets copied out of it.
+        	rowPacket = checkErrorPacket();
+        } else {
+        	// We attempted to do nextRowFast(), but the packet was a
+        	// multipacket, so we couldn't unpack it directly
+        	rowPacket = existingRowPacket;
+        	checkErrorPacket(existingRowPacket);
+        }
 
         if (!isBinaryEncoded) {
             //
@@ -1433,6 +1455,147 @@ class MysqlIO {
 
         return null;
     }
+    
+    final RowHolder nextRowFast(Field[] fields, int columnCount,
+            boolean isBinaryEncoded, int resultSetConcurrency, 
+            boolean useBufferRowHolderIfPossible,
+            boolean reuseRowPacket)
+			throws SQLException {
+		try {
+			int lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf,
+					0, 4);
+
+			if (lengthRead < 4) {
+				forceClose();
+				throw new RuntimeException(Messages.getString("MysqlIO.43")); //$NON-NLS-1$
+			}
+
+			int packetLength = (this.packetHeaderBuf[0] & 0xff)
+					+ ((this.packetHeaderBuf[1] & 0xff) << 8)
+					+ ((this.packetHeaderBuf[2] & 0xff) << 16);
+
+			// Have we stumbled upon a multi-packet?
+			if (packetLength == this.maxThreeBytes) {
+				reuseAndReadPacket(this.reusablePacket, packetLength);
+				
+				// Go back to "old" way which uses packets
+				return nextRow(fields, columnCount, isBinaryEncoded, resultSetConcurrency,
+						useBufferRowHolderIfPossible, reuseRowPacket, this.reusablePacket);
+			}
+			
+			int remaining = packetLength;
+			
+			boolean firstTime = true;
+
+			byte[][] rowData = null;
+
+			for (int i = 0; i < columnCount; i++) {
+
+				int sw = this.mysqlInput.read() & 0xff;
+				remaining--;
+
+				if (firstTime) {
+					if (sw == 255) {
+						// error packet
+						Buffer errorPacket = new Buffer(packetLength);
+						errorPacket.writeByte((byte)sw);
+						readFully(this.mysqlInput, errorPacket.getByteBuffer(), 1, packetLength - 1);
+						
+						checkErrorPacket(errorPacket);
+					}
+					
+					if (sw == 254 && packetLength < 9) {
+						this.warningCount = (this.mysqlInput.read() & 0xff)
+						| ((this.mysqlInput.read() & 0xff) << 8);
+						remaining -= 2;
+
+			            if (this.warningCount > 0) {
+			                this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
+			            }
+
+			            this.serverStatus = (this.mysqlInput.read() & 0xff)
+						| ((this.mysqlInput.read() & 0xff) << 8);
+						remaining -= 2;
+						
+						if (remaining > 0) {
+							skipFully(this.mysqlInput, remaining);
+						}
+			            
+						return null; // last data packet
+					}
+
+					rowData = new byte[columnCount][];
+
+					firstTime = false;
+				}
+
+				int len = 0;
+
+				switch (sw) {
+				case 251:
+					len = NULL_LENGTH;
+					break;
+
+				case 252:
+					len = (this.mysqlInput.read() & 0xff)
+							| ((this.mysqlInput.read() & 0xff) << 8);
+					remaining -= 2;
+					break;
+
+				case 253:
+					len = (this.mysqlInput.read() & 0xff)
+							| ((this.mysqlInput.read() & 0xff) << 8)
+							| ((this.mysqlInput.read() & 0xff) << 16);
+
+					remaining -= 3;
+					break;
+
+				case 254:
+					len = (int) ((this.mysqlInput.read() & 0xff)
+							| ((long) (this.mysqlInput.read() & 0xff) << 8)
+							| ((long) (this.mysqlInput.read() & 0xff) << 16)
+							| ((long) (this.mysqlInput.read() & 0xff) << 24)
+							| ((long) (this.mysqlInput.read() & 0xff) << 32)
+							| ((long) (this.mysqlInput.read() & 0xff) << 40)
+							| ((long) (this.mysqlInput.read() & 0xff) << 48) 
+							| ((long) (this.mysqlInput.read() & 0xff) << 56));
+					remaining -= 8;
+					break;
+
+				default:
+					len = sw;
+				}
+
+				if (len == NULL_LENGTH) {
+					rowData[i] = null;
+				} else if (len == 0) {
+					rowData[i] = Constants.EMPTY_BYTE_ARRAY;
+				} else {
+					rowData[i] = new byte[len];
+
+					int bytesRead = readFully(this.mysqlInput, rowData[i], 0,
+							len);
+
+					if (bytesRead != len) {
+						throw SQLError.createCommunicationsException(this.connection,
+			    				this.lastPacketSentTimeMs, 
+			    				new IOException(Messages.getString("MysqlIO.43")));
+					}
+					
+					remaining -= bytesRead;
+				}
+			}
+			
+			if (remaining > 0) {
+				skipFully(this.mysqlInput, remaining);
+			}
+
+			return new ByteArrayRowHolder(rowData);
+		} catch (IOException ioEx) {
+			throw SQLError.createCommunicationsException(this.connection,
+    				this.lastPacketSentTimeMs, ioEx);
+		}
+	}
 
     /**
      * Log-off of the MySQL server and close the socket.
@@ -2509,7 +2672,7 @@ class MysqlIO {
 
         // Now read the data
         Object rowBytes = nextRow(fields, (int) columnCount, isBinaryEncoded,
-                resultSetConcurrency, false, true);
+                resultSetConcurrency, false, true, null);
         
         int rowCount = 0;
 
@@ -2520,7 +2683,7 @@ class MysqlIO {
 
         while (rowBytes != null) {
             rowBytes = nextRow(fields, (int) columnCount, isBinaryEncoded,
-                    resultSetConcurrency, false, true);
+                    resultSetConcurrency, false, true, null);
 
             if (rowBytes != null) {
             	if ((maxRows == -1) || (rowCount < maxRows)) {
@@ -2555,23 +2718,32 @@ class MysqlIO {
      * @throws SQLException DOCUMENT ME!
      * @throws SQLException DOCUMENT ME!
      */
-    private final Buffer reuseAndReadPacket(Buffer reuse)
+    private final Buffer reuseAndReadPacket(Buffer reuse) throws SQLException {
+    	return reuseAndReadPacket(reuse, -1);
+    }
+    
+    private final Buffer reuseAndReadPacket(Buffer reuse, int existingPacketLength)
         throws SQLException {
         
     	try {
     		reuse.setWasMultiPacket(false);
+    		int packetLength = 0;
     		
-    		int lengthRead = readFully(this.mysqlInput,
-    				this.packetHeaderBuf, 0, 4);
-    		
-    		if (lengthRead < 4) {
-    			forceClose();
-    			throw new IOException(Messages.getString("MysqlIO.43")); //$NON-NLS-1$
+    		if (existingPacketLength == -1) {
+	    		int lengthRead = readFully(this.mysqlInput,
+	    				this.packetHeaderBuf, 0, 4);
+	    		
+	    		if (lengthRead < 4) {
+	    			forceClose();
+	    			throw new IOException(Messages.getString("MysqlIO.43")); //$NON-NLS-1$
+	    		}
+	    		
+	    		packetLength = (this.packetHeaderBuf[0] & 0xff) +
+	    		((this.packetHeaderBuf[1] & 0xff) << 8) +
+	    		((this.packetHeaderBuf[2] & 0xff) << 16);
+    		} else {
+    			packetLength = existingPacketLength;
     		}
-    		
-    		int packetLength = (this.packetHeaderBuf[0] & 0xff) +
-    		((this.packetHeaderBuf[1] & 0xff) << 8) +
-    		((this.packetHeaderBuf[2] & 0xff) << 16);
     		
     		if (this.traceProtocol) {
     			StringBuffer traceMessageBuf = new StringBuffer();
@@ -2647,123 +2819,8 @@ class MysqlIO {
     			// it's multi-packet
     			isMultiPacket = true;
     			
-    			lengthRead = readFully(this.mysqlInput,
-    					this.packetHeaderBuf, 0, 4);
-    			
-    			if (lengthRead < 4) {
-    				forceClose();
-    				throw new IOException(Messages.getString("MysqlIO.47")); //$NON-NLS-1$
-    			}
-    			
-    			packetLength = (this.packetHeaderBuf[0] & 0xff) +
-    				((this.packetHeaderBuf[1] & 0xff) << 8) +
-    				((this.packetHeaderBuf[2] & 0xff) << 16);
-    			
-    			Buffer multiPacket = new Buffer(packetLength);
-    			boolean firstMultiPkt = true;
-    			
-    			while (true) {
-    				if (!firstMultiPkt) {
-    					lengthRead = readFully(this.mysqlInput,
-    							this.packetHeaderBuf, 0, 4);
-    					
-    					if (lengthRead < 4) {
-    						forceClose();
-    						throw new IOException(Messages.getString(
-    						"MysqlIO.48")); //$NON-NLS-1$
-    					}
-    					
-    					packetLength = (this.packetHeaderBuf[0] & 0xff) +
-    					((this.packetHeaderBuf[1] & 0xff) << 8) +
-    					((this.packetHeaderBuf[2] & 0xff) << 16);
-    				} else {
-    					firstMultiPkt = false;
-    				}
-    				
-    				if (!this.useNewLargePackets && (packetLength == 1)) {
-    					clearInputStream();
-    					
-    					break;
-    				} else if (packetLength < this.maxThreeBytes) {
-    					byte newPacketSeq = this.packetHeaderBuf[3];
-    					
-    					if (newPacketSeq != (multiPacketSeq + 1)) {
-    						throw new IOException(Messages.getString(
-    						"MysqlIO.49")); //$NON-NLS-1$
-    					}
-    					
-    					multiPacketSeq = newPacketSeq;
-    					
-    					// Set the Buffer to it's original state
-    					multiPacket.setPosition(0);
-    					
-    					// Set the new length
-    					multiPacket.setBufLength(packetLength);
-    					
-    					// Read the data from the server
-    					byte[] byteBuf = multiPacket.getByteBuffer();
-    					int lengthToWrite = packetLength;
-    					
-    					int bytesRead = readFully(this.mysqlInput, byteBuf,
-    							0, packetLength);
-    					
-    					if (bytesRead != lengthToWrite) {
-    						throw SQLError.createCommunicationsException(this.connection,
-    								this.lastPacketSentTimeMs,
-    								SQLError.createSQLException(Messages.getString(
-    								"MysqlIO.50") //$NON-NLS-1$
-    								+lengthToWrite +
-    								Messages.getString("MysqlIO.51") +
-    								bytesRead //$NON-NLS-1$
-    								+".")); //$NON-NLS-1$
-    					}
-    					
-    					reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
-    					
-    					packetEndPoint += lengthToWrite;
-    					
-    					break; // end of multipacket sequence
-    				}
-    				
-    				byte newPacketSeq = this.packetHeaderBuf[3];
-    				
-    				if (newPacketSeq != (multiPacketSeq + 1)) {
-    					throw new IOException(Messages.getString(
-    					"MysqlIO.53")); //$NON-NLS-1$
-    				}
-    				
-    				multiPacketSeq = newPacketSeq;
-    				
-    				// Set the Buffer to it's original state
-    				multiPacket.setPosition(0);
-    				
-    				// Set the new length
-    				multiPacket.setBufLength(packetLength);
-    				
-    				// Read the data from the server
-    				byte[] byteBuf = multiPacket.getByteBuffer();
-    				int lengthToWrite = packetLength;
-    				
-    				int bytesRead = readFully(this.mysqlInput, byteBuf, 0,
-    						packetLength);
-    				
-    				if (bytesRead != lengthToWrite) {
-    					throw SQLError.createCommunicationsException(this.connection,
-    							this.lastPacketSentTimeMs,
-    							SQLError.createSQLException(Messages.getString(
-    							"MysqlIO.54") //$NON-NLS-1$
-    							+lengthToWrite +
-    							Messages.getString("MysqlIO.55") //$NON-NLS-1$
-    							+bytesRead + ".")); //$NON-NLS-1$
-    				}
-    				
-    				reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
-    				
-    				packetEndPoint += lengthToWrite;
-    			}
-    			
-    			reuse.setPosition(0);
-    			reuse.setWasMultiPacket(true);
+    			packetLength = readRemainingMultiPackets(reuse, multiPacketSeq,
+						packetEndPoint);
     		}
     		
     		if (!isMultiPacket) {
@@ -2788,6 +2845,130 @@ class MysqlIO {
     	}
     	
     }
+
+	private int readRemainingMultiPackets(Buffer reuse, byte multiPacketSeq,
+			int packetEndPoint) throws IOException, SQLException {
+		int lengthRead;
+		int packetLength;
+		lengthRead = readFully(this.mysqlInput,
+				this.packetHeaderBuf, 0, 4);
+		
+		if (lengthRead < 4) {
+			forceClose();
+			throw new IOException(Messages.getString("MysqlIO.47")); //$NON-NLS-1$
+		}
+		
+		packetLength = (this.packetHeaderBuf[0] & 0xff) +
+			((this.packetHeaderBuf[1] & 0xff) << 8) +
+			((this.packetHeaderBuf[2] & 0xff) << 16);
+		
+		Buffer multiPacket = new Buffer(packetLength);
+		boolean firstMultiPkt = true;
+		
+		while (true) {
+			if (!firstMultiPkt) {
+				lengthRead = readFully(this.mysqlInput,
+						this.packetHeaderBuf, 0, 4);
+				
+				if (lengthRead < 4) {
+					forceClose();
+					throw new IOException(Messages.getString(
+					"MysqlIO.48")); //$NON-NLS-1$
+				}
+				
+				packetLength = (this.packetHeaderBuf[0] & 0xff) +
+				((this.packetHeaderBuf[1] & 0xff) << 8) +
+				((this.packetHeaderBuf[2] & 0xff) << 16);
+			} else {
+				firstMultiPkt = false;
+			}
+			
+			if (!this.useNewLargePackets && (packetLength == 1)) {
+				clearInputStream();
+				
+				break;
+			} else if (packetLength < this.maxThreeBytes) {
+				byte newPacketSeq = this.packetHeaderBuf[3];
+				
+				if (newPacketSeq != (multiPacketSeq + 1)) {
+					throw new IOException(Messages.getString(
+					"MysqlIO.49")); //$NON-NLS-1$
+				}
+				
+				multiPacketSeq = newPacketSeq;
+				
+				// Set the Buffer to it's original state
+				multiPacket.setPosition(0);
+				
+				// Set the new length
+				multiPacket.setBufLength(packetLength);
+				
+				// Read the data from the server
+				byte[] byteBuf = multiPacket.getByteBuffer();
+				int lengthToWrite = packetLength;
+				
+				int bytesRead = readFully(this.mysqlInput, byteBuf,
+						0, packetLength);
+				
+				if (bytesRead != lengthToWrite) {
+					throw SQLError.createCommunicationsException(this.connection,
+							this.lastPacketSentTimeMs,
+							SQLError.createSQLException(Messages.getString(
+							"MysqlIO.50") //$NON-NLS-1$
+							+lengthToWrite +
+							Messages.getString("MysqlIO.51") +
+							bytesRead //$NON-NLS-1$
+							+".")); //$NON-NLS-1$
+				}
+				
+				reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
+				
+				packetEndPoint += lengthToWrite;
+				
+				break; // end of multipacket sequence
+			}
+			
+			byte newPacketSeq = this.packetHeaderBuf[3];
+			
+			if (newPacketSeq != (multiPacketSeq + 1)) {
+				throw new IOException(Messages.getString(
+				"MysqlIO.53")); //$NON-NLS-1$
+			}
+			
+			multiPacketSeq = newPacketSeq;
+			
+			// Set the Buffer to it's original state
+			multiPacket.setPosition(0);
+			
+			// Set the new length
+			multiPacket.setBufLength(packetLength);
+			
+			// Read the data from the server
+			byte[] byteBuf = multiPacket.getByteBuffer();
+			int lengthToWrite = packetLength;
+			
+			int bytesRead = readFully(this.mysqlInput, byteBuf, 0,
+					packetLength);
+			
+			if (bytesRead != lengthToWrite) {
+				throw SQLError.createCommunicationsException(this.connection,
+						this.lastPacketSentTimeMs,
+						SQLError.createSQLException(Messages.getString(
+						"MysqlIO.54") //$NON-NLS-1$
+						+lengthToWrite +
+						Messages.getString("MysqlIO.55") //$NON-NLS-1$
+						+bytesRead + ".")); //$NON-NLS-1$
+			}
+			
+			reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
+			
+			packetEndPoint += lengthToWrite;
+		}
+		
+		reuse.setPosition(0);
+		reuse.setWasMultiPacket(true);
+		return packetLength;
+	}
 
     /**
          * @param multiPacketSeq
@@ -3061,7 +3242,6 @@ class MysqlIO {
             // exception chain and let someone higher up decide
             // what to do (barf, reconnect, etc).
             resultPacket = reuseAndReadPacket(this.reusablePacket);
-            statusCode = resultPacket.readByte();
         } catch (SQLException sqlEx) {
             // Don't wrap SQL Exceptions
             throw sqlEx;
@@ -3070,6 +3250,15 @@ class MysqlIO {
                 this.lastPacketSentTimeMs, fallThru);
         }
 
+        checkErrorPacket(resultPacket);
+        
+        return resultPacket;
+    }
+    
+    private void checkErrorPacket(Buffer resultPacket) throws SQLException {
+
+        int statusCode = resultPacket.readByte();
+      
         // Error handling
         if (statusCode == (byte) 0xff) {
             String serverErrorMessage;
@@ -3152,8 +3341,6 @@ class MysqlIO {
                     SQLError.SQL_STATE_GENERAL_ERROR) + ", " //$NON-NLS-1$
                  +errorBuf.toString(), SQLError.SQL_STATE_GENERAL_ERROR, -1);
         }
-
-        return resultPacket;
     }
 
     /**
@@ -4137,7 +4324,7 @@ class MysqlIO {
 		RowHolder row = null;
 	
 		while ((row = nextRow(columnTypes, columnTypes.length, true,
-				ResultSet.CONCUR_READ_ONLY, false, true)) != null) {
+				ResultSet.CONCUR_READ_ONLY, false, true, null)) != null) {
 			fetchedRows.add(row);
 		}
 	

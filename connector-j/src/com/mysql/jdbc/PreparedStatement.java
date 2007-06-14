@@ -2236,7 +2236,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		this.streamLengths = new int[this.parameterCount];
 		this.isNull = new boolean[this.parameterCount];
 		this.parameterTypes = new int[this.parameterCount];
-
+	
 		clearParameters();
 
 		for (int j = 0; j < this.parameterCount; j++) {
@@ -3603,52 +3603,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			if (this.connection.isNoBackslashEscapesSet()) {
 				// Scan for any nasty chars
 
-				boolean needsHexEscape = false;
-
-				for (int i = 0; i < stringLength; ++i) {
-					char c = x.charAt(i);
-
-					switch (c) {
-					case 0: /* Must be escaped for 'mysql' */
-
-						needsHexEscape = true;
-						break;
-
-					case '\n': /* Must be escaped for logs */
-						needsHexEscape = true;
-
-						break;
-
-					case '\r':
-						needsHexEscape = true;
-						break;
-
-					case '\\':
-						needsHexEscape = true;
-
-						break;
-
-					case '\'':
-						needsHexEscape = true;
-
-						break;
-
-					case '"': /* Better safe than sorry */
-						needsHexEscape = true;
-
-						break;
-
-					case '\032': /* This gives problems on Win32 */
-						needsHexEscape = true;
-						break;
-					}
-
-					if (needsHexEscape) {
-						break; // no need to scan more
-					}
-				}
-
-				
+				boolean needsHexEscape = isEscapeNeededForString(x,
+						stringLength);
 
 				if (!needsHexEscape) {
 					byte[] parameterAsBytes = null;
@@ -3688,81 +3644,96 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				return;
 			}
 
-			StringBuffer buf = new StringBuffer((int) (x.length() * 1.1));
-			buf.append('\'');
-
-			//
-			// Note: buf.append(char) is _faster_ than
-			// appending in blocks, because the block
-			// append requires a System.arraycopy()....
-			// go figure...
-			//
-
-			for (int i = 0; i < stringLength; ++i) {
-				char c = x.charAt(i);
-
-				switch (c) {
-				case 0: /* Must be escaped for 'mysql' */
-					buf.append('\\');
-					buf.append('0');
-
-					break;
-
-				case '\n': /* Must be escaped for logs */
-					buf.append('\\');
-					buf.append('n');
-
-					break;
-
-				case '\r':
-					buf.append('\\');
-					buf.append('r');
-
-					break;
-
-				case '\\':
-					buf.append('\\');
-					buf.append('\\');
-
-					break;
-
-				case '\'':
-					buf.append('\\');
-					buf.append('\'');
-
-					break;
-
-				case '"': /* Better safe than sorry */
-					if (this.usingAnsiMode) {
+			String parameterAsString = x;
+			boolean needsQuoted = true;
+			
+			if (this.isLoadDataQuery || isEscapeNeededForString(x, stringLength)) {
+				needsQuoted = false; // saves an allocation later
+				
+				StringBuffer buf = new StringBuffer((int) (x.length() * 1.1));
+				
+				buf.append('\'');
+	
+				//
+				// Note: buf.append(char) is _faster_ than
+				// appending in blocks, because the block
+				// append requires a System.arraycopy()....
+				// go figure...
+				//
+	
+				for (int i = 0; i < stringLength; ++i) {
+					char c = x.charAt(i);
+	
+					switch (c) {
+					case 0: /* Must be escaped for 'mysql' */
 						buf.append('\\');
+						buf.append('0');
+	
+						break;
+	
+					case '\n': /* Must be escaped for logs */
+						buf.append('\\');
+						buf.append('n');
+	
+						break;
+	
+					case '\r':
+						buf.append('\\');
+						buf.append('r');
+	
+						break;
+	
+					case '\\':
+						buf.append('\\');
+						buf.append('\\');
+	
+						break;
+	
+					case '\'':
+						buf.append('\\');
+						buf.append('\'');
+	
+						break;
+	
+					case '"': /* Better safe than sorry */
+						if (this.usingAnsiMode) {
+							buf.append('\\');
+						}
+	
+						buf.append('"');
+	
+						break;
+	
+					case '\032': /* This gives problems on Win32 */
+						buf.append('\\');
+						buf.append('Z');
+	
+						break;
+	
+					default:
+						buf.append(c);
 					}
-
-					buf.append('"');
-
-					break;
-
-				case '\032': /* This gives problems on Win32 */
-					buf.append('\\');
-					buf.append('Z');
-
-					break;
-
-				default:
-					buf.append(c);
 				}
+	
+				buf.append('\'');
+	
+				parameterAsString = buf.toString();
 			}
-
-			buf.append('\'');
-
-			String parameterAsString = buf.toString();
 
 			byte[] parameterAsBytes = null;
 
 			if (!this.isLoadDataQuery) {
-				parameterAsBytes = StringUtils.getBytes(parameterAsString,
-						this.charConverter, this.charEncoding, this.connection
+				if (needsQuoted) {
+					parameterAsBytes = StringUtils.getBytesWrapped(parameterAsString,
+						'\'', '\'', this.charConverter, this.charEncoding, this.connection
 								.getServerCharacterEncoding(), this.connection
 								.parserKnowsUnicode());
+				} else {
+					parameterAsBytes = StringUtils.getBytes(parameterAsString,
+							this.charConverter, this.charEncoding, this.connection
+									.getServerCharacterEncoding(), this.connection
+									.parserKnowsUnicode());
+				}
 			} else {
 				// Send with platform character encoding
 				parameterAsBytes = parameterAsString.getBytes();
@@ -3772,6 +3743,54 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			
 			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.VARCHAR;
 		}
+	}
+
+	private boolean isEscapeNeededForString(String x, int stringLength) {
+		boolean needsHexEscape = false;
+
+		for (int i = 0; i < stringLength; ++i) {
+			char c = x.charAt(i);
+
+			switch (c) {
+			case 0: /* Must be escaped for 'mysql' */
+
+				needsHexEscape = true;
+				break;
+
+			case '\n': /* Must be escaped for logs */
+				needsHexEscape = true;
+
+				break;
+
+			case '\r':
+				needsHexEscape = true;
+				break;
+
+			case '\\':
+				needsHexEscape = true;
+
+				break;
+
+			case '\'':
+				needsHexEscape = true;
+
+				break;
+
+			case '"': /* Better safe than sorry */
+				needsHexEscape = true;
+
+				break;
+
+			case '\032': /* This gives problems on Win32 */
+				needsHexEscape = true;
+				break;
+			}
+
+			if (needsHexEscape) {
+				break; // no need to scan more
+			}
+		}
+		return needsHexEscape;
 	}
 
 	/**

@@ -178,6 +178,26 @@ public class SingleByteCharsetConverter {
 
 		return bytes;
 	}
+	
+	public final byte[] toBytesWrapped(char[] c, char beginWrap, char endWrap) {
+		if (c == null) {
+			return null;
+		}
+
+		int length = c.length + 2;
+		int charLength = c.length;
+		
+		byte[] bytes = new byte[length];
+		bytes[0] = this.charToByteMap[beginWrap];
+		
+		for (int i = 0; i < charLength; i++) {
+			bytes[i + 1] = this.charToByteMap[c[i]];
+		}
+		
+		bytes[length - 1] = this.charToByteMap[endWrap];
+
+		return bytes;
+	}
 
 	public final byte[] toBytes(char[] chars, int offset, int length) {
 		if (chars == null) {
@@ -216,6 +236,28 @@ public class SingleByteCharsetConverter {
 			bytes[i] = this.charToByteMap[s.charAt(i)];
 		}
 
+		return bytes;
+	}
+	
+	public final byte[] toBytesWrapped(String s, char beginWrap, char endWrap) {
+		if (s == null) {
+			return null;
+		}
+
+		int stringLength = s.length();
+		
+		int length = stringLength + 2;
+		
+		byte[] bytes = new byte[length];
+		
+		bytes[0] = this.charToByteMap[beginWrap];
+		
+		for (int i = 0; i < stringLength; i++) {
+			bytes[i + 1] = this.charToByteMap[s.charAt(i)];
+		}
+
+		bytes[length - 1] = this.charToByteMap[endWrap];
+		
 		return bytes;
 	}
 

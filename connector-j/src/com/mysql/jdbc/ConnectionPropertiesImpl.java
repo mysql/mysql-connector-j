@@ -1365,6 +1365,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.useDynamicCharsetInfo") //$NON-NLS-1$
 			, "5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
+	private BooleanConnectionProperty useDirectRowUnpack = new BooleanConnectionProperty(
+			"useDirectRowUnpack",
+			true, "Use newer result set row unpacking code that skips a copy from network buffers "
+			+ " to a MySQL packet instance and instead reads directly into the result set row data buffers.",
+			"5.1.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty useFastIntParsing = new BooleanConnectionProperty(
 			"useFastIntParsing", //$NON-NLS-1$
 			true,
@@ -4125,5 +4131,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setStatementInterceptors(String value) {
 		this.statementInterceptors.setValue(value);
+	}
+
+	public boolean getUseDirectRowUnpack() {
+		return this.useDirectRowUnpack.getValueAsBoolean();
+	}
+
+	public void setUseDirectRowUnpack(boolean flag) {
+		this.useDirectRowUnpack.setValue(flag);
 	}
 }

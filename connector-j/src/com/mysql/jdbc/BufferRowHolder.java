@@ -22,10 +22,21 @@
  */
 package com.mysql.jdbc;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.sql.Date;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Calendar;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.TimeZone;
 
 /**
@@ -77,6 +88,8 @@ public class BufferRowHolder extends RowHolder {
 	 */
 	private boolean[] isNull;
 
+	private List openStreams;
+
 	public BufferRowHolder(Buffer buf, Field[] fields, boolean isBinaryEncoded)
 			throws SQLException {
 		this.rowFromServer = buf;
@@ -89,145 +102,26 @@ public class BufferRowHolder extends RowHolder {
 		}
 	}
 
-	public void setMetadata(Field[] f) throws SQLException {
-		super.setMetadata(f);
+	public synchronized void closeOpenStreams() {
+		if (this.openStreams != null) {
+			// This would've looked slicker in a "for" loop
+			// but we want to skip over streams that fail to
+			// close (they probably won't ever)
+			// to be more robust and close everything we _can_
 
-		if (this.isBinaryEncoded) {
-			setupIsNullBitmask();
-		}
-	}
+			Iterator iter = this.openStreams.iterator();
 
-	/**
-	 * Unpacks the bitmask at the head of the row packet that tells us what
-	 * columns hold null values, and sets the "home" position directly after the
-	 * bitmask.
-	 */
-	private void setupIsNullBitmask() throws SQLException {
-		int nullCount = (this.metadata.length + 9) / 8;
+			while (iter.hasNext()) {
 
-		byte[] nullBitMask = new byte[nullCount];
-
-		for (int i = 0; i < nullCount; i++) {
-			nullBitMask[i] = this.rowFromServer.readByte();
-		}
-
-		this.homePosition = this.rowFromServer.getPosition();
-
-		this.isNull = new boolean[this.metadata.length];
-
-		int nullMaskPos = 0;
-		int bit = 4; // first two bits are reserved for future use
-
-		for (int i = 0; i < this.metadata.length; i++) {
-
-			this.isNull[i] = ((nullBitMask[nullMaskPos] & bit) != 0);
-
-			if (((bit <<= 1) & 255) == 0) {
-				bit = 1; /* To next byte */
-
-				nullMaskPos++;
+				try {
+					((InputStream) iter.next()).close();
+				} catch (IOException e) {
+					// ignore - it can't really happen in this case
+				}
 			}
+
+			this.openStreams.clear();
 		}
-	}
-
-	public byte[] getColumnValue(int index) throws SQLException {
-		findAndSeekToOffset(index);
-
-		if (!this.isBinaryEncoded) {
-			return this.rowFromServer.readLenByteArray(0);
-		}
-
-		if (this.isNull[index]) {
-			return null;
-		}
-
-		switch (this.metadata[index].getMysqlType()) {
-		case MysqlDefs.FIELD_TYPE_NULL:
-			return null;
-
-		case MysqlDefs.FIELD_TYPE_TINY:
-			return new byte[] { this.rowFromServer.readByte() };
-
-		case MysqlDefs.FIELD_TYPE_SHORT:
-		case MysqlDefs.FIELD_TYPE_YEAR:
-			return this.rowFromServer.getBytes(2);
-
-		case MysqlDefs.FIELD_TYPE_LONG:
-		case MysqlDefs.FIELD_TYPE_INT24:
-			return this.rowFromServer.getBytes(4);
-
-		case MysqlDefs.FIELD_TYPE_LONGLONG:
-			return this.rowFromServer.getBytes(8);
-
-		case MysqlDefs.FIELD_TYPE_FLOAT:
-			return this.rowFromServer.getBytes(4);
-
-		case MysqlDefs.FIELD_TYPE_DOUBLE:
-			return this.rowFromServer.getBytes(8);
-
-		case MysqlDefs.FIELD_TYPE_TIME:
-		case MysqlDefs.FIELD_TYPE_DATE:
-		case MysqlDefs.FIELD_TYPE_DATETIME:
-		case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-		case MysqlDefs.FIELD_TYPE_TINY_BLOB:
-		case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
-		case MysqlDefs.FIELD_TYPE_LONG_BLOB:
-		case MysqlDefs.FIELD_TYPE_BLOB:
-		case MysqlDefs.FIELD_TYPE_VAR_STRING:
-		case MysqlDefs.FIELD_TYPE_VARCHAR:
-		case MysqlDefs.FIELD_TYPE_STRING:
-		case MysqlDefs.FIELD_TYPE_DECIMAL:
-		case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
-		case MysqlDefs.FIELD_TYPE_GEOMETRY:
-		case MysqlDefs.FIELD_TYPE_BIT:
-			return this.rowFromServer.readLenByteArray(0);
-
-		default:
-			throw SQLError.createSQLException(Messages.getString("MysqlIO.97") //$NON-NLS-1$
-					+ this.metadata[index].getMysqlType()
-					+ Messages.getString("MysqlIO.98")
-					+ (index + 1)
-					+ Messages.getString("MysqlIO.99") //$NON-NLS-1$ //$NON-NLS-2$
-					+ this.metadata.length + Messages.getString("MysqlIO.100"), //$NON-NLS-1$
-					SQLError.SQL_STATE_GENERAL_ERROR);
-		}
-	}
-
-	public String getString(int index, String encoding, ConnectionImpl conn)
-			throws SQLException {
-		findAndSeekToOffset(index);
-
-		long length = this.rowFromServer.readFieldLength();
-
-		if (length == Buffer.NULL_LENGTH) {
-			return null;
-		}
-
-		if (length == 0) {
-			return "";
-		}
-
-		// TODO: I don't like this, would like to push functionality back
-		// to the buffer class somehow
-
-		int offset = this.rowFromServer.getPosition();
-
-		return getString(encoding, conn, this.rowFromServer.getByteBuffer(),
-				offset, (int) length);
-	}
-
-	public boolean isNull(int index) throws SQLException {
-		if (!this.isBinaryEncoded) {
-			findAndSeekToOffset(index);
-
-			return this.rowFromServer.readFieldLength() == Buffer.NULL_LENGTH;
-		}
-
-		return this.isNull[index];
-	}
-
-	public void setColumnValue(int index, byte[] value) throws SQLException {
-		throw new OperationNotSupportedException();
 	}
 
 	private int findAndSeekToOffset(int index) throws SQLException {
@@ -379,52 +273,87 @@ public class BufferRowHolder extends RowHolder {
 		return this.lastRequestedPos;
 	}
 
-	public boolean isFloatingPointNumber(int index) throws SQLException {
-		if (this.isBinaryEncoded) {
-			switch (this.metadata[index].getSQLType()) {
-			case Types.FLOAT:
-			case Types.DOUBLE:
-			case Types.DECIMAL:
-			case Types.NUMERIC:
-				return true;
-			default:
-				return false;
-			}
-		}
-
-		findAndSeekToOffset(index);
+	public synchronized InputStream getBinaryInputStream(int columnIndex)
+			throws SQLException {
+		int offset = findAndSeekToOffset(columnIndex);
 
 		long length = this.rowFromServer.readFieldLength();
 
 		if (length == Buffer.NULL_LENGTH) {
-			return false;
+			return null;
 		}
 
-		if (length == 0) {
-			return false;
+		InputStream stream = new ByteArrayInputStream(this.rowFromServer
+				.getByteBuffer(), offset, (int) length);
+
+		if (this.openStreams == null) {
+			this.openStreams = new LinkedList();
 		}
 
-		for (int i = 0; i < (int) length; i++) {
-			char c = (char) this.rowFromServer.readByte();
-
-			if ((c == 'e') || (c == 'E')) {
-				return true;
-			}
-		}
-
-		return false;
+		return stream;
 	}
 
-	public long length(int index) throws SQLException {
+	public byte[] getColumnValue(int index) throws SQLException {
 		findAndSeekToOffset(index);
 
-		long length = this.rowFromServer.readFieldLength();
-
-		if (length == Buffer.NULL_LENGTH) {
-			return 0;
+		if (!this.isBinaryEncoded) {
+			return this.rowFromServer.readLenByteArray(0);
 		}
 
-		return length;
+		if (this.isNull[index]) {
+			return null;
+		}
+
+		switch (this.metadata[index].getMysqlType()) {
+		case MysqlDefs.FIELD_TYPE_NULL:
+			return null;
+
+		case MysqlDefs.FIELD_TYPE_TINY:
+			return new byte[] { this.rowFromServer.readByte() };
+
+		case MysqlDefs.FIELD_TYPE_SHORT:
+		case MysqlDefs.FIELD_TYPE_YEAR:
+			return this.rowFromServer.getBytes(2);
+
+		case MysqlDefs.FIELD_TYPE_LONG:
+		case MysqlDefs.FIELD_TYPE_INT24:
+			return this.rowFromServer.getBytes(4);
+
+		case MysqlDefs.FIELD_TYPE_LONGLONG:
+			return this.rowFromServer.getBytes(8);
+
+		case MysqlDefs.FIELD_TYPE_FLOAT:
+			return this.rowFromServer.getBytes(4);
+
+		case MysqlDefs.FIELD_TYPE_DOUBLE:
+			return this.rowFromServer.getBytes(8);
+
+		case MysqlDefs.FIELD_TYPE_TIME:
+		case MysqlDefs.FIELD_TYPE_DATE:
+		case MysqlDefs.FIELD_TYPE_DATETIME:
+		case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+		case MysqlDefs.FIELD_TYPE_TINY_BLOB:
+		case MysqlDefs.FIELD_TYPE_MEDIUM_BLOB:
+		case MysqlDefs.FIELD_TYPE_LONG_BLOB:
+		case MysqlDefs.FIELD_TYPE_BLOB:
+		case MysqlDefs.FIELD_TYPE_VAR_STRING:
+		case MysqlDefs.FIELD_TYPE_VARCHAR:
+		case MysqlDefs.FIELD_TYPE_STRING:
+		case MysqlDefs.FIELD_TYPE_DECIMAL:
+		case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
+		case MysqlDefs.FIELD_TYPE_GEOMETRY:
+		case MysqlDefs.FIELD_TYPE_BIT:
+			return this.rowFromServer.readLenByteArray(0);
+
+		default:
+			throw SQLError.createSQLException(Messages.getString("MysqlIO.97") //$NON-NLS-1$
+					+ this.metadata[index].getMysqlType()
+					+ Messages.getString("MysqlIO.98")
+					+ (index + 1)
+					+ Messages.getString("MysqlIO.99") //$NON-NLS-1$ //$NON-NLS-2$
+					+ this.metadata.length + Messages.getString("MysqlIO.100"), //$NON-NLS-1$
+					SQLError.SQL_STATE_GENERAL_ERROR);
+		}
 	}
 
 	public int getInt(int columnIndex) throws SQLException {
@@ -442,8 +371,6 @@ public class BufferRowHolder extends RowHolder {
 	}
 
 	public long getLong(int columnIndex) throws SQLException {
-		// TODO: Server-side prepared statements
-
 		int offset = findAndSeekToOffset(columnIndex);
 
 		long length = this.rowFromServer.readFieldLength();
@@ -454,22 +381,6 @@ public class BufferRowHolder extends RowHolder {
 
 		return StringUtils.getLong(this.rowFromServer.getByteBuffer(), offset,
 				offset + (int) length);
-	}
-
-	public Timestamp getTimestampFast(int columnIndex, ConnectionImpl conn,
-			ResultSetImpl rs, Calendar targetCalendar, TimeZone tz,
-			boolean rollForward) throws SQLException {
-		if (isNull(columnIndex)) {
-			return null;
-		}
-
-		int offset = findAndSeekToOffset(columnIndex);
-
-		int length = (int) this.rowFromServer.readFieldLength();
-
-		return getTimestampFast(this.rowFromServer.getByteBuffer(),
-				columnIndex, conn, rs, targetCalendar, tz, rollForward, offset,
-				length);
 	}
 
 	public double getNativeDouble(int columnIndex) throws SQLException {
@@ -545,5 +456,241 @@ public class BufferRowHolder extends RowHolder {
 
 		return getNativeTimestamp(this.rowFromServer.getByteBuffer(), offset,
 				(int) length, targetCalendar, tz, rollForward, conn, rs);
+	}
+
+	public Reader getReader(int columnIndex) throws SQLException {
+		InputStream stream = getBinaryInputStream(columnIndex);
+
+		if (stream == null) {
+			return null;
+		}
+
+		try {
+			return new InputStreamReader(stream, this.metadata[columnIndex]
+					.getCharacterSet());
+		} catch (UnsupportedEncodingException e) {
+			SQLException sqlEx = SQLError.createSQLException("");
+
+			sqlEx.initCause(e);
+
+			throw sqlEx;
+		}
+	}
+
+	public String getString(int index, String encoding, ConnectionImpl conn)
+			throws SQLException {
+		findAndSeekToOffset(index);
+
+		long length = this.rowFromServer.readFieldLength();
+
+		if (length == Buffer.NULL_LENGTH) {
+			return null;
+		}
+
+		if (length == 0) {
+			return "";
+		}
+
+		// TODO: I don't like this, would like to push functionality back
+		// to the buffer class somehow
+
+		int offset = this.rowFromServer.getPosition();
+
+		return getString(encoding, conn, this.rowFromServer.getByteBuffer(),
+				offset, (int) length);
+	}
+
+	public Time getTimeFast(int columnIndex, Calendar targetCalendar,
+			TimeZone tz, boolean rollForward, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
+		if (isNull(columnIndex)) {
+			return null;
+		}
+
+		int offset = findAndSeekToOffset(columnIndex);
+
+		int length = (int) this.rowFromServer.readFieldLength();
+
+		return getTimeFast(columnIndex, this.rowFromServer.getByteBuffer(),
+				offset, length, targetCalendar, tz, rollForward, conn, rs);
+	}
+
+	public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar,
+			TimeZone tz, boolean rollForward, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
+		if (isNull(columnIndex)) {
+			return null;
+		}
+
+		int offset = findAndSeekToOffset(columnIndex);
+
+		int length = (int) this.rowFromServer.readFieldLength();
+
+		return getTimestampFast(columnIndex,
+				this.rowFromServer.getByteBuffer(), offset, length, targetCalendar, tz,
+				rollForward, conn, rs);
+	}
+
+	public boolean isFloatingPointNumber(int index) throws SQLException {
+		if (this.isBinaryEncoded) {
+			switch (this.metadata[index].getSQLType()) {
+			case Types.FLOAT:
+			case Types.DOUBLE:
+			case Types.DECIMAL:
+			case Types.NUMERIC:
+				return true;
+			default:
+				return false;
+			}
+		}
+
+		findAndSeekToOffset(index);
+
+		long length = this.rowFromServer.readFieldLength();
+
+		if (length == Buffer.NULL_LENGTH) {
+			return false;
+		}
+
+		if (length == 0) {
+			return false;
+		}
+
+		for (int i = 0; i < (int) length; i++) {
+			char c = (char) this.rowFromServer.readByte();
+
+			if ((c == 'e') || (c == 'E')) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public boolean isNull(int index) throws SQLException {
+		if (!this.isBinaryEncoded) {
+			findAndSeekToOffset(index);
+
+			return this.rowFromServer.readFieldLength() == Buffer.NULL_LENGTH;
+		}
+
+		return this.isNull[index];
+	}
+
+	public long length(int index) throws SQLException {
+		findAndSeekToOffset(index);
+
+		long length = this.rowFromServer.readFieldLength();
+
+		if (length == Buffer.NULL_LENGTH) {
+			return 0;
+		}
+
+		return length;
+	}
+
+	public void setColumnValue(int index, byte[] value) throws SQLException {
+		throw new OperationNotSupportedException();
+	}
+
+	public void setMetadata(Field[] f) throws SQLException {
+		super.setMetadata(f);
+
+		if (this.isBinaryEncoded) {
+			setupIsNullBitmask();
+		}
+	}
+
+	/**
+	 * Unpacks the bitmask at the head of the row packet that tells us what
+	 * columns hold null values, and sets the "home" position directly after the
+	 * bitmask.
+	 */
+	private void setupIsNullBitmask() throws SQLException {
+		int nullCount = (this.metadata.length + 9) / 8;
+
+		byte[] nullBitMask = new byte[nullCount];
+
+		for (int i = 0; i < nullCount; i++) {
+			nullBitMask[i] = this.rowFromServer.readByte();
+		}
+
+		this.homePosition = this.rowFromServer.getPosition();
+
+		this.isNull = new boolean[this.metadata.length];
+
+		int nullMaskPos = 0;
+		int bit = 4; // first two bits are reserved for future use
+
+		for (int i = 0; i < this.metadata.length; i++) {
+
+			this.isNull[i] = ((nullBitMask[nullMaskPos] & bit) != 0);
+
+			if (((bit <<= 1) & 255) == 0) {
+				bit = 1; /* To next byte */
+
+				nullMaskPos++;
+			}
+		}
+	}
+
+	public Date getDateFast(int columnIndex, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
+		if (isNull(columnIndex)) {
+			return null;
+		}
+
+		int offset = findAndSeekToOffset(columnIndex);
+
+		int length = (int) this.rowFromServer.readFieldLength();
+
+		return getDateFast(columnIndex, this.rowFromServer.getByteBuffer(),
+				offset, length, conn, rs);
+	}
+
+	public java.sql.Date getNativeDate(int columnIndex, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
+		int offset = findAndSeekToOffset(columnIndex);
+
+		long length = this.rowFromServer.readFieldLength();
+
+		if (length == Buffer.NULL_LENGTH) {
+			return null;
+		}
+
+		return getNativeDate(columnIndex, this.rowFromServer.getByteBuffer(),
+				offset, (int) length, conn, rs);
+	}
+
+	public Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar,
+			int jdbcType, int mysqlType, TimeZone tz,
+			boolean rollForward, ConnectionImpl conn, ResultSetImpl rs)
+			throws SQLException {
+		int offset = findAndSeekToOffset(columnIndex);
+
+		long length = this.rowFromServer.readFieldLength();
+
+		if (length == Buffer.NULL_LENGTH) {
+			return null;
+		}
+
+		return getNativeDateTimeValue(columnIndex, this.rowFromServer
+				.getByteBuffer(), offset, (int) length, targetCalendar, jdbcType,
+				mysqlType, tz, rollForward, conn, rs);
+	}
+
+	public Time getNativeTime(int columnIndex, Calendar targetCalendar,
+			TimeZone tz, boolean rollForward, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
+		int offset = findAndSeekToOffset(columnIndex);
+
+		long length = this.rowFromServer.readFieldLength();
+
+		if (length == Buffer.NULL_LENGTH) {
+			return null;
+		}
+
+		return getNativeTime(columnIndex, this.rowFromServer.getByteBuffer(),
+				offset, (int) length, targetCalendar, tz, rollForward, conn, rs);
 	}
 }

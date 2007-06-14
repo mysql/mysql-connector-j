@@ -527,6 +527,48 @@ public class StringUtils {
 		}
 	}
 
+	public static final byte[] getBytesWrapped(String s, char beginWrap, char endWrap,
+			SingleByteCharsetConverter converter, String encoding,
+			String serverEncoding, boolean parserKnowsUnicode)
+			throws SQLException {
+		try {
+			byte[] b = null;
+
+			if (converter != null) {
+				b = converter.toBytesWrapped(s, beginWrap, endWrap);
+			} else if (encoding == null) {
+				StringBuffer buf = new StringBuffer(s.length() + 2);
+				buf.append(beginWrap);
+				buf.append(s);
+				buf.append(endWrap);
+				
+				b = buf.toString().getBytes();
+			} else {
+				StringBuffer buf = new StringBuffer(s.length() + 2);
+				buf.append(beginWrap);
+				buf.append(s);
+				buf.append(endWrap);
+				
+				b = buf.toString().getBytes(encoding);
+
+				if (!parserKnowsUnicode && (encoding.equalsIgnoreCase("SJIS") //$NON-NLS-1$
+						|| encoding.equalsIgnoreCase("BIG5") //$NON-NLS-1$
+				|| encoding.equalsIgnoreCase("GBK"))) { //$NON-NLS-1$
+
+					if (!encoding.equalsIgnoreCase(serverEncoding)) {
+						b = escapeEasternUnicodeByteStream(b, s, 0, s.length());
+					}
+				}
+			}
+
+			return b;
+		} catch (UnsupportedEncodingException uee) {
+			throw SQLError.createSQLException(Messages.getString("StringUtils.5") //$NON-NLS-1$
+					+ encoding + Messages.getString("StringUtils.6"),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+		}
+	}
+	
 	/**
 	 * DOCUMENT ME!
 	 * 

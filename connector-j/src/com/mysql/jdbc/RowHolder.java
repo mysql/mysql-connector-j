@@ -22,15 +22,22 @@
  */
 package com.mysql.jdbc;
 
+import java.io.InputStream;
+import java.io.Reader;
+import java.sql.Date;
 import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Calendar;
+import java.util.StringTokenizer;
 import java.util.TimeZone;
 
 /**
  * Classes that implement this interface represent one row of data from the
  * MySQL server that might be stored in different ways depending on whether the
- * result set was streaming (so they wrap a reuseable packet), or whether the
+ * result set was streaming (so they wrap a reusable packet), or whether the
  * result set was cached or via a server-side cursor (so they represent a
  * byte[][]).
  * 
@@ -45,6 +52,11 @@ public abstract class RowHolder {
 	 */
 	protected Field[] metadata;
 
+	public abstract void closeOpenStreams();
+
+	public abstract InputStream getBinaryInputStream(int columnIndex)
+			throws SQLException;
+
 	/**
 	 * Returns the value at the given column (index starts at 0) "raw" (i.e.
 	 * as-returned by the server).
@@ -56,6 +68,220 @@ public abstract class RowHolder {
 	 *             if an error occurs while retrieving the value.
 	 */
 	public abstract byte[] getColumnValue(int index) throws SQLException;
+
+	protected final java.sql.Date getDateFast(int columnIndex,
+			byte[] dateAsBytes, int offset, int length, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
+
+		int year = 0;
+		int month = 0;
+		int day = 0;
+
+		try {
+			if (dateAsBytes == null) {
+				return null;
+			}
+
+			boolean allZeroDate = true;
+
+			boolean onlyTimePresent = false;
+
+			for (int i = 0; i < length; i++) {
+				if (dateAsBytes[offset + i] == ':') {
+					onlyTimePresent = true;
+					break;
+				}
+			}
+
+			for (int i = 0; i < length; i++) {
+				byte b = dateAsBytes[offset + i];
+
+				if (b == ' ' || b == '-' || b == '/') {
+					onlyTimePresent = false;
+				}
+
+				if (b != '0' && b != ' ' && b != ':' && b != '-' && b != '/'
+						&& b != '.') {
+					allZeroDate = false;
+
+					break;
+				}
+			}
+
+			if (!onlyTimePresent && allZeroDate) {
+
+				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+						.equals(conn.getZeroDateTimeBehavior())) {
+
+					return null;
+				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+						.equals(conn.getZeroDateTimeBehavior())) {
+					throw SQLError.createSQLException("Value '"
+							+ new String(dateAsBytes)
+							+ "' can not be represented as java.sql.Date",
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+				}
+
+				// We're left with the case of 'round' to a date Java _can_
+				// represent, which is '0001-01-01'.
+				return rs.fastDateCreate(null, 1, 1, 1);
+
+			} else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
+				// Convert from TIMESTAMP
+				switch (length) {
+				case 21:
+				case 19: { // java.sql.Timestamp format
+					year = StringUtils.getInt(dateAsBytes, offset + 0,
+							offset + 4);
+					month = StringUtils.getInt(dateAsBytes, offset + 5,
+							offset + 7);
+					day = StringUtils.getInt(dateAsBytes, offset + 8,
+							offset + 10);
+
+					return rs.fastDateCreate(null, year, month, day);
+				}
+
+				case 14:
+				case 8: {
+					year = StringUtils.getInt(dateAsBytes, offset + 0,
+							offset + 4);
+					month = StringUtils.getInt(dateAsBytes, offset + 4,
+							offset + 6);
+					day = StringUtils.getInt(dateAsBytes, offset + 6,
+							offset + 8);
+
+					return rs.fastDateCreate(null, year, month, day);
+				}
+
+				case 12:
+				case 10:
+				case 6: {
+					year = StringUtils.getInt(dateAsBytes, offset + 0,
+							offset + 2);
+
+					if (year <= 69) {
+						year = year + 100;
+					}
+
+					month = StringUtils.getInt(dateAsBytes, offset + 2,
+							offset + 4);
+					day = StringUtils.getInt(dateAsBytes, offset + 4,
+							offset + 6);
+
+					return rs.fastDateCreate(null, year + 1900, month, day);
+				}
+
+				case 4: {
+					year = StringUtils.getInt(dateAsBytes, offset + 0,
+							offset + 4);
+
+					if (year <= 69) {
+						year = year + 100;
+					}
+
+					month = StringUtils.getInt(dateAsBytes, offset + 2,
+							offset + 4);
+
+					return rs.fastDateCreate(null, year + 1900, month, 1);
+				}
+
+				case 2: {
+					year = StringUtils.getInt(dateAsBytes, offset + 0,
+							offset + 2);
+
+					if (year <= 69) {
+						year = year + 100;
+					}
+
+					return rs.fastDateCreate(null, year + 1900, 1, 1);
+				}
+
+				default:
+					throw SQLError
+							.createSQLException(
+									Messages
+											.getString(
+													"ResultSet.Bad_format_for_Date",
+													new Object[] {
+															new String(
+																	dateAsBytes),
+															Constants
+																	.integerValueOf(columnIndex + 1) }),
+									SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+				} /* endswitch */
+			} else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
+
+				if (length == 2 || length == 1) {
+					year = StringUtils.getInt(dateAsBytes, offset, offset
+							+ length);
+
+					if (year <= 69) {
+						year = year + 100;
+					}
+
+					year += 1900;
+				} else {
+					year = StringUtils.getInt(dateAsBytes, offset + 0,
+							offset + 4);
+				}
+
+				return rs.fastDateCreate(null, year, 1, 1);
+			} else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_TIME) {
+				return rs.fastDateCreate(null, 1970, 1, 1); // Return EPOCH
+			} else {
+				if (length < 10) {
+					if (length == 8) {
+						return rs.fastDateCreate(null, 1970, 1, 1); // Return
+						// EPOCH for
+						// TIME
+					}
+
+					throw SQLError
+							.createSQLException(
+									Messages
+											.getString(
+													"ResultSet.Bad_format_for_Date",
+													new Object[] {
+															new String(
+																	dateAsBytes),
+															Constants
+																	.integerValueOf(columnIndex + 1) }),
+									SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+				}
+
+				if (length != 18) {
+					year = StringUtils.getInt(dateAsBytes, offset + 0,
+							offset + 4);
+					month = StringUtils.getInt(dateAsBytes, offset + 5,
+							offset + 7);
+					day = StringUtils.getInt(dateAsBytes, offset + 8,
+							offset + 10);
+				} else {
+					// JDK-1.3 timestamp format, not real easy to parse
+					// positionally :p
+					StringTokenizer st = new StringTokenizer(new String(
+							dateAsBytes, offset, length, "ISO8859_1"), "- ");
+
+					year = Integer.parseInt(st.nextToken());
+					month = Integer.parseInt(st.nextToken());
+					day = Integer.parseInt(st.nextToken());
+				}
+			}
+
+			return rs.fastDateCreate(null, year, month, day);
+		} catch (SQLException sqlEx) {
+			throw sqlEx; // don't re-wrap
+		} catch (Exception e) {
+			throw SQLError.createSQLException(Messages.getString(
+					"ResultSet.Bad_format_for_Date", new Object[] {
+							new String(dateAsBytes),
+							Constants.integerValueOf(columnIndex + 1) }),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+		}
+	}
+
+	public abstract java.sql.Date getDateFast(int columnIndex,
+			ConnectionImpl conn, ResultSetImpl rs) throws SQLException;
 
 	/**
 	 * Returns the value at the given column (index starts at 0) as an int. *
@@ -80,6 +306,216 @@ public abstract class RowHolder {
 	 *             if an error occurs while retrieving the value.
 	 */
 	public abstract long getLong(int columnIndex) throws SQLException;
+
+	protected java.sql.Date getNativeDate(int columnIndex, byte[] bits,
+			int offset, int length, ConnectionImpl conn, ResultSetImpl rs)
+			throws SQLException {
+
+		int year = 0;
+		int month = 0;
+		int day = 0;
+
+		if (length != 0) {
+			year = (bits[offset + 0] & 0xff) | ((bits[offset + 1] & 0xff) << 8);
+
+			month = bits[offset + 2];
+			day = bits[offset + 3];
+		}
+
+		if ((year == 0) && (month == 0) && (day == 0)) {
+			if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+					.equals(conn.getZeroDateTimeBehavior())) {
+				return null;
+			} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+					.equals(conn.getZeroDateTimeBehavior())) {
+				throw SQLError
+						.createSQLException(
+								"Value '0000-00-00' can not be represented as java.sql.Date",
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			}
+
+			year = 1;
+			month = 1;
+			day = 1;
+		}
+
+		return rs.fastDateCreate(rs.getCalendarInstanceForSessionOrNew(), year,
+				month, day);
+	}
+
+	public abstract Date getNativeDate(int columnIndex, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException;
+
+	protected Object getNativeDateTimeValue(int columnIndex, byte[] bits,
+			int offset, int length, Calendar targetCalendar, int jdbcType,
+			int mysqlType, TimeZone tz, boolean rollForward, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
+
+		int year = 0;
+		int month = 0;
+		int day = 0;
+
+		int hour = 0;
+		int minute = 0;
+		int seconds = 0;
+
+		int nanos = 0;
+
+		if (bits == null) {
+
+			return null;
+		}
+
+		Calendar sessionCalendar = conn.getUseJDBCCompliantTimezoneShift() ? conn
+				.getUtcCalendar()
+				: rs.getCalendarInstanceForSessionOrNew();
+
+		boolean populatedFromDateTimeValue = false;
+
+		switch (mysqlType) {
+		case MysqlDefs.FIELD_TYPE_DATETIME:
+		case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+			populatedFromDateTimeValue = true;
+
+			if (length != 0) {
+				year = (bits[offset + 0] & 0xff)
+						| ((bits[offset + 1] & 0xff) << 8);
+				month = bits[offset + 2];
+				day = bits[offset + 3];
+
+				if (length > 4) {
+					hour = bits[offset + 4];
+					minute = bits[offset + 5];
+					seconds = bits[offset + 6];
+				}
+
+				if (length > 7) {
+					// MySQL uses microseconds
+					nanos = ((bits[offset + 7] & 0xff)
+							| ((bits[offset + 8] & 0xff) << 8)
+							| ((bits[offset + 9] & 0xff) << 16) | ((bits[offset + 10] & 0xff) << 24)) * 1000;
+				}
+			}
+
+			break;
+		case MysqlDefs.FIELD_TYPE_DATE:
+			populatedFromDateTimeValue = true;
+
+			if (bits.length != 0) {
+				year = (bits[offset + 0] & 0xff)
+						| ((bits[offset + 1] & 0xff) << 8);
+				month = bits[offset + 2];
+				day = bits[offset + 3];
+			}
+
+			break;
+		case MysqlDefs.FIELD_TYPE_TIME:
+			populatedFromDateTimeValue = true;
+
+			if (bits.length != 0) {
+				// bits[0] // skip tm->neg
+				// binaryData.readLong(); // skip daysPart
+				hour = bits[offset + 5];
+				minute = bits[offset + 6];
+				seconds = bits[offset + 7];
+			}
+
+			year = 1970;
+			month = 1;
+			day = 1;
+
+			break;
+		default:
+			populatedFromDateTimeValue = false;
+		}
+
+		switch (jdbcType) {
+		case Types.TIME:
+			if (populatedFromDateTimeValue) {
+				Time time = TimeUtil.fastTimeCreate(rs
+						.getCalendarInstanceForSessionOrNew(), hour, minute,
+						seconds);
+
+				Time adjustedTime = TimeUtil.changeTimezone(conn,
+						sessionCalendar, targetCalendar, time, conn
+								.getServerTimezoneTZ(), tz, rollForward);
+
+				return adjustedTime;
+			}
+
+			return rs.getNativeTimeViaParseConversion(columnIndex + 1,
+					targetCalendar, tz, rollForward);
+
+		case Types.DATE:
+			if (populatedFromDateTimeValue) {
+				if ((year == 0) && (month == 0) && (day == 0)) {
+					if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+							.equals(conn.getZeroDateTimeBehavior())) {
+
+						return null;
+					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+							.equals(conn.getZeroDateTimeBehavior())) {
+						throw new SQLException(
+								"Value '0000-00-00' can not be represented as java.sql.Date",
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					}
+
+					year = 1;
+					month = 1;
+					day = 1;
+				}
+
+				return rs
+						.fastDateCreate(
+								rs.getCalendarInstanceForSessionOrNew(), year,
+								month, day);
+			}
+
+			return rs.getNativeDateViaParseConversion(columnIndex + 1);
+		case Types.TIMESTAMP:
+			if (populatedFromDateTimeValue) {
+				if ((year == 0) && (month == 0) && (day == 0)) {
+					if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+							.equals(conn.getZeroDateTimeBehavior())) {
+
+						return null;
+					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+							.equals(conn.getZeroDateTimeBehavior())) {
+						throw new SQLException(
+								"Value '0000-00-00' can not be represented as java.sql.Timestamp",
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					}
+
+					year = 1;
+					month = 1;
+					day = 1;
+				}
+
+				Timestamp ts = rs.fastTimestampCreate(rs
+						.getCalendarInstanceForSessionOrNew(), year, month,
+						day, hour, minute, seconds, nanos);
+
+				Timestamp adjustedTs = TimeUtil.changeTimezone(conn,
+						sessionCalendar, targetCalendar, ts, conn
+								.getServerTimezoneTZ(), tz, rollForward);
+
+				return adjustedTs;
+			}
+
+			return rs.getNativeTimestampViaParseConversion(columnIndex + 1,
+					targetCalendar, tz, rollForward);
+
+		default:
+			throw new SQLException(
+					"Internal error - conversion method doesn't support this type",
+					SQLError.SQL_STATE_GENERAL_ERROR);
+		}
+	}
+
+	public abstract Object getNativeDateTimeValue(int columnIndex,
+			Calendar targetCalendar, int jdbcType, int mysqlType,
+			TimeZone tz, boolean rollForward, ConnectionImpl conn, ResultSetImpl rs)
+			throws SQLException;
 
 	protected double getNativeDouble(byte[] bits, int offset) {
 		long valueAsLong = (bits[offset + 0] & 0xff)
@@ -141,6 +577,113 @@ public abstract class RowHolder {
 	}
 
 	public abstract short getNativeShort(int columnIndex) throws SQLException;
+
+	protected Time getNativeTime(int columnIndex, byte[] bits, int offset,
+			int length, Calendar targetCalendar, TimeZone tz,
+			boolean rollForward, ConnectionImpl conn, ResultSetImpl rs)
+			throws SQLException {
+
+		int hour = 0;
+		int minute = 0;
+		int seconds = 0;
+
+		if (length != 0) {
+			// bits[0] // skip tm->neg
+			// binaryData.readLong(); // skip daysPart
+			hour = bits[offset + 5];
+			minute = bits[offset + 6];
+			seconds = bits[offset + 7];
+		}
+
+		Calendar sessionCalendar = rs.getCalendarInstanceForSessionOrNew();
+
+		synchronized (sessionCalendar) {
+			Time time = TimeUtil.fastTimeCreate(sessionCalendar, hour, minute,
+					seconds);
+
+			Time adjustedTime = TimeUtil.changeTimezone(conn, sessionCalendar,
+					targetCalendar, time, conn.getServerTimezoneTZ(), tz,
+					rollForward);
+
+			return adjustedTime;
+		}
+	}
+
+	public abstract Time getNativeTime(int columnIndex,
+			Calendar targetCalendar, TimeZone tz, boolean rollForward,
+			ConnectionImpl conn, ResultSetImpl rs) throws SQLException;
+
+	protected Timestamp getNativeTimestamp(byte[] bits, int offset, int length,
+			Calendar targetCalendar, TimeZone tz, boolean rollForward,
+			ConnectionImpl conn, ResultSetImpl rs) throws SQLException {
+		int year = 0;
+		int month = 0;
+		int day = 0;
+
+		int hour = 0;
+		int minute = 0;
+		int seconds = 0;
+
+		int nanos = 0;
+
+		if (length != 0) {
+			year = (bits[offset + 0] & 0xff) | ((bits[offset + 1] & 0xff) << 8);
+			month = bits[2];
+			day = bits[3];
+
+			if (length > 4) {
+				hour = bits[offset + 4];
+				minute = bits[offset + 5];
+				seconds = bits[offset + 6];
+			}
+
+			if (length > 7) {
+				// MySQL uses microseconds
+				nanos = ((bits[offset + 7] & 0xff)
+						| ((bits[offset + 8] & 0xff) << 8)
+						| ((bits[offset + 9] & 0xff) << 16) | ((bits[offset + 10] & 0xff) << 24)) * 1000;
+			}
+		}
+
+		if ((year == 0) && (month == 0) && (day == 0)) {
+			if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+					.equals(conn.getZeroDateTimeBehavior())) {
+
+				return null;
+			} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+					.equals(conn.getZeroDateTimeBehavior())) {
+				throw SQLError
+						.createSQLException(
+								"Value '0000-00-00' can not be represented as java.sql.Timestamp",
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			}
+
+			year = 1;
+			month = 1;
+			day = 1;
+		}
+
+		Calendar sessionCalendar = conn.getUseJDBCCompliantTimezoneShift() ? conn
+				.getUtcCalendar()
+				: rs.getCalendarInstanceForSessionOrNew();
+
+		synchronized (sessionCalendar) {
+			Timestamp ts = rs.fastTimestampCreate(sessionCalendar, year, month,
+					day, hour, minute, seconds, nanos);
+
+			Timestamp adjustedTs = TimeUtil.changeTimezone(conn,
+					sessionCalendar, targetCalendar, ts, conn
+							.getServerTimezoneTZ(), tz, rollForward);
+
+			return adjustedTs;
+		}
+	}
+
+	public abstract Timestamp getNativeTimestamp(int columnIndex,
+			Calendar targetCalendar, TimeZone tz, boolean rollForward,
+			ConnectionImpl conn, ResultSetImpl rs) throws SQLException;
+
+	public abstract Reader getReader(int columnIndex) throws SQLException;
 
 	/**
 	 * Returns the value at the given column (index starts at 0) as a
@@ -216,10 +759,179 @@ public abstract class RowHolder {
 		return stringVal;
 	}
 
-	protected Timestamp getTimestampFast(byte[] timestampAsBytes,
-			int columnIndex, ConnectionImpl conn, ResultSetImpl rs,
+	protected Time getTimeFast(int columnIndex, byte[] timeAsBytes, int offset,
+			int length, Calendar targetCalendar, TimeZone tz,
+			boolean rollForward, ConnectionImpl conn, ResultSetImpl rs)
+			throws SQLException {
+
+		int hr = 0;
+		int min = 0;
+		int sec = 0;
+
+		try {
+
+			if (timeAsBytes == null) {
+				return null;
+			}
+
+			boolean allZeroTime = true;
+			boolean onlyTimePresent = false;
+
+			for (int i = 0; i < length; i++) {
+				if (timeAsBytes[offset + i] == ':') {
+					onlyTimePresent = true;
+					break;
+				}
+			}
+
+			for (int i = 0; i < length; i++) {
+				byte b = timeAsBytes[offset + i];
+
+				if (b == ' ' || b == '-' || b == '/') {
+					onlyTimePresent = false;
+				}
+
+				if (b != '0' && b != ' ' && b != ':' && b != '-' && b != '/'
+						&& b != '.') {
+					allZeroTime = false;
+
+					break;
+				}
+			}
+
+			if (!onlyTimePresent && allZeroTime) {
+				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+						.equals(conn.getZeroDateTimeBehavior())) {
+					return null;
+				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+						.equals(conn.getZeroDateTimeBehavior())) {
+					throw SQLError.createSQLException("Value '"
+							+ new String(timeAsBytes)
+							+ "' can not be represented as java.sql.Time",
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+				}
+
+				// We're left with the case of 'round' to a time Java _can_
+				// represent, which is '00:00:00'
+				return rs.fastTimeCreate(null, 0, 0, 0);
+			}
+
+			Field timeColField = this.metadata[columnIndex];
+
+			if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
+
+				switch (length) {
+				case 19: { // YYYY-MM-DD hh:mm:ss
+
+					hr = StringUtils.getInt(timeAsBytes, offset + length - 8,
+							offset + length - 6);
+					min = StringUtils.getInt(timeAsBytes, offset + length - 5,
+							offset + length - 3);
+					sec = StringUtils.getInt(timeAsBytes, offset + length - 2,
+							offset + length);
+				}
+
+					break;
+				case 14:
+				case 12: {
+					hr = StringUtils.getInt(timeAsBytes, offset + length - 6,
+							offset + length - 4);
+					min = StringUtils.getInt(timeAsBytes, offset + length - 4,
+							offset + length - 2);
+					sec = StringUtils.getInt(timeAsBytes, offset + length - 2,
+							offset + length);
+				}
+
+					break;
+
+				case 10: {
+					hr = StringUtils
+							.getInt(timeAsBytes, offset + 6, offset + 8);
+					min = StringUtils.getInt(timeAsBytes, offset + 8,
+							offset + 10);
+					sec = 0;
+				}
+
+					break;
+
+				default:
+					throw SQLError
+							.createSQLException(
+									Messages
+											.getString("ResultSet.Timestamp_too_small_to_convert_to_Time_value_in_column__257") //$NON-NLS-1$
+											+ (columnIndex + 1)
+											+ "("
+											+ timeColField + ").",
+									SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+				} /* endswitch */
+
+				SQLWarning precisionLost = new SQLWarning(
+						Messages
+								.getString("ResultSet.Precision_lost_converting_TIMESTAMP_to_Time_with_getTime()_on_column__261") //$NON-NLS-1$
+								+ columnIndex + "(" + timeColField + ").");
+				/*
+				 * if (this.warningChain == null) { this.warningChain =
+				 * precisionLost; } else {
+				 * this.warningChain.setNextWarning(precisionLost); }
+				 */
+			} else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATETIME) {
+				hr = StringUtils.getInt(timeAsBytes, offset + 11, offset + 13);
+				min = StringUtils.getInt(timeAsBytes, offset + 14, offset + 16);
+				sec = StringUtils.getInt(timeAsBytes, offset + 17, offset + 19);
+
+				SQLWarning precisionLost = new SQLWarning(
+						Messages
+								.getString("ResultSet.Precision_lost_converting_DATETIME_to_Time_with_getTime()_on_column__264") //$NON-NLS-1$
+								+ (columnIndex + 1) + "(" + timeColField + ").");
+
+				/*
+				 * if (this.warningChain == null) { this.warningChain =
+				 * precisionLost; } else {
+				 * this.warningChain.setNextWarning(precisionLost); }
+				 */
+			} else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATE) {
+				return rs.fastTimeCreate(null, 0, 0, 0); // midnight on the
+				// given
+				// date
+			} else {
+				// convert a String to a Time
+				if ((length != 5) && (length != 8)) {
+					throw SQLError.createSQLException(Messages
+							.getString("ResultSet.Bad_format_for_Time____267") //$NON-NLS-1$
+							+ new String(timeAsBytes)
+							+ Messages.getString("ResultSet.___in_column__268")
+							+ (columnIndex + 1),
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+				}
+
+				hr = StringUtils.getInt(timeAsBytes, offset + 0, offset + 2);
+				min = StringUtils.getInt(timeAsBytes, offset + 3, offset + 5);
+				sec = (length == 5) ? 0 : StringUtils.getInt(timeAsBytes,
+						offset + 6, offset + 8);
+			}
+
+			Calendar sessionCalendar = rs.getCalendarInstanceForSessionOrNew();
+
+			synchronized (sessionCalendar) {
+				return TimeUtil.changeTimezone(conn, sessionCalendar,
+						targetCalendar, rs.fastTimeCreate(sessionCalendar, hr,
+								min, sec), conn.getServerTimezoneTZ(), tz,
+						rollForward);
+			}
+		} catch (Exception ex) {
+			throw SQLError.createSQLException(ex.toString(),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+		}
+	}
+
+	public abstract Time getTimeFast(int columnIndex, Calendar targetCalendar,
+			TimeZone tz, boolean rollForward, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException;
+
+	protected Timestamp getTimestampFast(int columnIndex,
+			byte[] timestampAsBytes, int offset, int length,
 			Calendar targetCalendar, TimeZone tz, boolean rollForward,
-			int offset, int length) throws SQLException {
+			ConnectionImpl conn, ResultSetImpl rs) throws SQLException {
 
 		try {
 			Calendar sessionCalendar = conn.getUseJDBCCompliantTimezoneShift() ? conn
@@ -231,15 +943,15 @@ public abstract class RowHolder {
 
 				boolean onlyTimePresent = false;
 
-				for (int i = offset; i < length; i++) {
-					if (timestampAsBytes[i] == ':') {
+				for (int i = 0; i < length; i++) {
+					if (timestampAsBytes[offset + i] == ':') {
 						onlyTimePresent = true;
 						break;
 					}
 				}
 
 				for (int i = 0; i < length; i++) {
-					byte b = timestampAsBytes[i + offset];
+					byte b = timestampAsBytes[offset + i];
 
 					if (b == ' ' || b == '-' || b == '/') {
 						onlyTimePresent = false;
@@ -283,7 +995,7 @@ public abstract class RowHolder {
 							tz, rollForward);
 
 				} else {
-					if (timestampAsBytes[length - 1] == '.') {
+					if (timestampAsBytes[offset + length - 1] == '.') {
 						length--;
 					}
 
@@ -298,29 +1010,34 @@ public abstract class RowHolder {
 					case 20:
 					case 19: {
 						int year = StringUtils.getInt(timestampAsBytes,
-								offset + 0, 4);
+								offset + 0, offset + 4);
 						int month = StringUtils.getInt(timestampAsBytes,
-								offset + 5, 7);
+								offset + 5, offset + 7);
 						int day = StringUtils.getInt(timestampAsBytes,
-								offset + 8, 10);
+								offset + 8, offset + 10);
 						int hour = StringUtils.getInt(timestampAsBytes,
-								offset + 11, 13);
+								offset + 11, offset + 13);
 						int minutes = StringUtils.getInt(timestampAsBytes,
-								offset + 14, 16);
+								offset + 14, offset + 16);
 						int seconds = StringUtils.getInt(timestampAsBytes,
-								offset + 17, 19);
+								offset + 17, offset + 19);
 
 						int nanos = 0;
 
 						if (length > 19) {
-							int decimalIndex = StringUtils.lastIndexOf(
-									timestampAsBytes, '.');
+							int decimalIndex = -1;
+
+							for (int i = 0; i < length; i++) {
+								if (timestampAsBytes[offset + i] == '.') {
+									decimalIndex = i;
+								}
+							}
 
 							if (decimalIndex != -1) {
 								if ((decimalIndex + 2) <= length) {
 									nanos = StringUtils.getInt(
 											timestampAsBytes, decimalIndex + 1,
-											length);
+											offset + length);
 								} else {
 									throw new IllegalArgumentException(); // re-thrown
 									// further
@@ -404,8 +1121,8 @@ public abstract class RowHolder {
 
 						boolean hasDash = false;
 
-						for (int i = offset; i < length; i++) {
-							if (timestampAsBytes[i] == '-') {
+						for (int i = 0; i < length; i++) {
+							if (timestampAsBytes[offset + i] == '-') {
 								hasDash = true;
 								break;
 							}
@@ -453,14 +1170,14 @@ public abstract class RowHolder {
 					case 8: {
 						boolean hasColon = false;
 
-						for (int i = offset; i < length; i++) {
-							if (timestampAsBytes[i] == ':') {
+						for (int i = 0; i < length; i++) {
+							if (timestampAsBytes[offset + i] == ':') {
 								hasColon = true;
 								break;
 							}
 						}
 
-						if (StringUtils.indexOf(timestampAsBytes, ':') != -1) {
+						if (hasColon) {
 							int hour = StringUtils.getInt(timestampAsBytes,
 									offset + 0, offset + 2);
 							int minutes = StringUtils.getInt(timestampAsBytes,
@@ -519,7 +1236,7 @@ public abstract class RowHolder {
 
 					case 4: {
 						int year = StringUtils.getInt(timestampAsBytes,
-								offset + 0, 2);
+								offset + 0, offset + 2);
 
 						if (year <= 69) {
 							year = (year + 100);
@@ -556,7 +1273,8 @@ public abstract class RowHolder {
 						throw new java.sql.SQLException(
 								"Bad format for Timestamp '"
 										+ new String(timestampAsBytes)
-										+ "' in column " + columnIndex + ".",
+										+ "' in column " + (columnIndex + 1)
+										+ ".",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 					}
 				}
@@ -570,8 +1288,8 @@ public abstract class RowHolder {
 	}
 
 	public abstract Timestamp getTimestampFast(int columnIndex,
-			ConnectionImpl conn, ResultSetImpl rs, Calendar targetCalendar,
-			TimeZone tz, boolean rollForward) throws SQLException;
+			Calendar targetCalendar, TimeZone tz, boolean rollForward,
+			ConnectionImpl conn, ResultSetImpl rs) throws SQLException;
 
 	/**
 	 * Could the column value at the given index (which starts at 0) be
@@ -634,75 +1352,5 @@ public abstract class RowHolder {
 
 	public void setMetadata(Field[] f) throws SQLException {
 		this.metadata = f;
-	}
-
-	public abstract Timestamp getNativeTimestamp(int columnIndex,
-			Calendar targetCalendar, TimeZone tz, boolean rollForward,
-			ConnectionImpl conn, ResultSetImpl rs) throws SQLException;
-	
-	protected Timestamp getNativeTimestamp(byte[] bits, int offset, int length,
-			Calendar targetCalendar, TimeZone tz, boolean rollForward,
-			ConnectionImpl conn, ResultSetImpl rs) throws SQLException {
-		int year = 0;
-		int month = 0;
-		int day = 0;
-
-		int hour = 0;
-		int minute = 0;
-		int seconds = 0;
-
-		int nanos = 0;
-
-		if (length != 0) {
-			year = (bits[offset + 0] & 0xff) | ((bits[offset + 1] & 0xff) << 8);
-			month = bits[2];
-			day = bits[3];
-
-			if (length > 4) {
-				hour = bits[offset + 4];
-				minute = bits[offset + 5];
-				seconds = bits[offset + 6];
-			}
-
-			if (length > 7) {
-				nanos = (bits[offset + 7] & 0xff)
-						| ((bits[offset + 8] & 0xff) << 8)
-						| ((bits[offset + 9] & 0xff) << 16)
-						| ((bits[offset + 10] & 0xff) << 24);
-			}
-		}
-
-		if ((year == 0) && (month == 0) && (day == 0)) {
-			if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
-					.equals(conn.getZeroDateTimeBehavior())) {
-
-				return null;
-			} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
-					.equals(conn.getZeroDateTimeBehavior())) {
-				throw SQLError
-						.createSQLException(
-								"Value '0000-00-00' can not be represented as java.sql.Timestamp",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-			}
-
-			year = 1;
-			month = 1;
-			day = 1;
-		}
-
-		Calendar sessionCalendar = conn.getUseJDBCCompliantTimezoneShift() ? conn
-				.getUtcCalendar()
-				: rs.getCalendarInstanceForSessionOrNew();
-
-		synchronized (sessionCalendar) {
-			Timestamp ts = rs.fastTimestampCreate(sessionCalendar, year, month,
-					day, hour, minute, seconds, nanos);
-
-			Timestamp adjustedTs = TimeUtil.changeTimezone(conn,
-					sessionCalendar, targetCalendar, ts, conn
-							.getServerTimezoneTZ(), tz, rollForward);
-
-			return adjustedTs;
-		}
 	}
 }

@@ -1434,13 +1434,19 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkRowPos();
 
 		if (!this.isBinaryEncoded) {
-			byte[] b = getBytes(columnIndex);
-
-			if (b != null) {
-				return new ByteArrayInputStream(b);
+			checkColumnBounds(columnIndex);
+			
+			int columnIndexMinusOne = columnIndex - 1;
+			
+			if (this.thisRow.isNull(columnIndexMinusOne)) {
+				this.wasNullFlag = true;
+				
+				return null;
 			}
-
-			return null;
+			
+			this.wasNullFlag = false;
+			
+			return this.thisRow.getBinaryInputStream(columnIndexMinusOne);
 		}
 
 		return getNativeBinaryStream(columnIndex);
@@ -1860,13 +1866,19 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public java.io.Reader getCharacterStream(int columnIndex)
 			throws SQLException {
 		if (!this.isBinaryEncoded) {
-			String asString = getStringForClob(columnIndex);
-
-			if (asString == null) {
+			checkColumnBounds(columnIndex);
+			
+			int columnIndexMinusOne = columnIndex - 1;
+			
+			if (this.thisRow.isNull(columnIndexMinusOne)) {
+				this.wasNullFlag = true;
+				
 				return null;
 			}
-
-			return new StringReader(asString);
+			
+			this.wasNullFlag = false;
+			
+			return this.thisRow.getReader(columnIndexMinusOne);
 		}
 
 		return getNativeCharacterStream(columnIndex);
@@ -2036,11 +2048,21 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			}
 			
 			return getDateFromString(stringVal, columnIndex);
-		} else {
-			checkColumnBounds(columnIndex);
-			
-			return getDateFromBytes((byte[])this.thisRow.getColumnValue(columnIndex - 1), columnIndex);
 		}
+		
+		checkColumnBounds(columnIndex);
+		
+		int columnIndexMinusOne = columnIndex - 1;
+		
+		if (this.thisRow.isNull(columnIndexMinusOne)) {
+			this.wasNullFlag = true;
+			
+			return null;
+		}
+		
+		this.wasNullFlag = false;
+		
+		return this.thisRow.getDateFast(columnIndexMinusOne, this.connection, this);
 	}
 
 	/**
@@ -2238,181 +2260,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		} catch (Exception e) {
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_Date", new Object[] { stringVal,
-							Constants.integerValueOf(columnIndex) }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
-		}
-	}
-
-	private final java.sql.Date getDateFromBytes(byte[] dateAsBytes,
-			int columnIndex) throws SQLException {
-		checkColumnBounds(columnIndex);
-		
-		int year = 0;
-		int month = 0;
-		int day = 0;
-
-		try {
-			this.wasNullFlag = false;
-
-			if (dateAsBytes == null) {
-				this.wasNullFlag = true;
-
-				return null;
-			}
-			
-
-			boolean allZeroDate = true;
-			
-			boolean onlyTimePresent = StringUtils.indexOf(dateAsBytes, ':') != -1;
-			
-			int length = dateAsBytes.length;
-			
-			for (int i = 0; i < length; i++) {
-				byte b = dateAsBytes[i];
-
-				if (b == ' ' || b == '-' || b == '/') {
-					onlyTimePresent = false;
-				}
-
-				if (b != '0' && b != ' ' && b != ':' && b != '-' && b != '/'
-						&& b != '.') {
-					allZeroDate = false;
-
-					break;
-				}
-			}
-
-			if (!onlyTimePresent && allZeroDate) {
-
-				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
-						.equals(this.connection.getZeroDateTimeBehavior())) {
-					this.wasNullFlag = true;
-
-					return null;
-				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
-						.equals(this.connection.getZeroDateTimeBehavior())) {
-					throw SQLError.createSQLException("Value '" + new String(dateAsBytes)
-							+ "' can not be represented as java.sql.Date",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-				}
-
-				// We're left with the case of 'round' to a date Java _can_
-				// represent, which is '0001-01-01'.
-				return fastDateCreate(null, 1, 1, 1);
-
-			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
-				// Convert from TIMESTAMP
-				switch (length) {
-				case 21:
-				case 19: { // java.sql.Timestamp format
-					year = StringUtils.getInt(dateAsBytes, 0, 4);
-					month = StringUtils.getInt(dateAsBytes, 5, 7);
-					day = StringUtils.getInt(dateAsBytes, 8, 10);
-
-					return fastDateCreate(null, year, month, day);
-				}
-
-				case 14:
-				case 8: {
-					year = StringUtils.getInt(dateAsBytes, 0, 4);
-					month = StringUtils.getInt(dateAsBytes, 4, 6);
-					day = StringUtils.getInt(dateAsBytes, 6, 8);
-
-					return fastDateCreate(null, year, month, day);
-				}
-
-				case 12:
-				case 10:
-				case 6: {
-					year = StringUtils.getInt(dateAsBytes, 0, 2);
-
-					if (year <= 69) {
-						year = year + 100;
-					}
-
-					month = StringUtils.getInt(dateAsBytes, 2, 4);
-					day = StringUtils.getInt(dateAsBytes, 4, 6);
-
-					return fastDateCreate(null, year + 1900, month, day);
-				}
-
-				case 4: {
-					year = StringUtils.getInt(dateAsBytes, 0, 4);
-
-					if (year <= 69) {
-						year = year + 100;
-					}
-
-					month = StringUtils.getInt(dateAsBytes, 2, 4);
-
-					return fastDateCreate(null, year + 1900, month, 1);
-				}
-
-				case 2: {
-					year = StringUtils.getInt(dateAsBytes, 0, 2);
-
-					if (year <= 69) {
-						year = year + 100;
-					}
-
-					return fastDateCreate(null, year + 1900, 1, 1);
-				}
-
-				default:
-					throw SQLError.createSQLException(Messages.getString(
-							"ResultSet.Bad_format_for_Date", new Object[] {
-									new String(dateAsBytes), Constants.integerValueOf(columnIndex) }),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
-				} /* endswitch */
-			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
-
-				if (length == 2 || length == 1) {
-					year = StringUtils.getInt(dateAsBytes);
-
-					if (year <= 69) {
-						year = year + 100;
-					}
-
-					year += 1900;
-				} else {
-					year = StringUtils.getInt(dateAsBytes, 0, 4);
-				}
-
-				return fastDateCreate(null, year, 1, 1);
-			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIME) {
-				return fastDateCreate(null, 1970, 1, 1); // Return EPOCH
-			} else {
-				if (length < 10) {
-					if (length == 8) {
-						return fastDateCreate(null, 1970, 1, 1); // Return EPOCH for TIME
-					}
-					
-					throw SQLError.createSQLException(Messages.getString(
-							"ResultSet.Bad_format_for_Date", new Object[] {
-									new String(dateAsBytes), Constants.integerValueOf(columnIndex) }),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
-				}
-
-				if (length != 18) {
-					year = StringUtils.getInt(dateAsBytes, 0, 4);
-					month = StringUtils.getInt(dateAsBytes, 5, 7);
-					day = StringUtils.getInt(dateAsBytes, 8, 10);
-				} else {
-					// JDK-1.3 timestamp format, not real easy to parse positionally :p
-					StringTokenizer st = new StringTokenizer(new String(dateAsBytes), "- ");
-					
-					year = Integer.parseInt(st.nextToken());
-					month = Integer.parseInt(st.nextToken());
-					day = Integer.parseInt(st.nextToken());
-				}
-			}
-
-			return fastDateCreate(null, year, month, day);
-		} catch (SQLException sqlEx) {
-			throw sqlEx; // don't re-wrap
-		} catch (Exception e) {
-			throw SQLError.createSQLException(Messages.getString(
-					"ResultSet.Bad_format_for_Date", new Object[] { new String(dateAsBytes),
 							Constants.integerValueOf(columnIndex) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 		}
@@ -3226,6 +3073,25 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			throws SQLException {
 		checkRowPos();
 
+		int columnIndexMinusOne = columnIndex - 1;
+		
+		if (this.thisRow.isNull(columnIndexMinusOne)) {
+			this.wasNullFlag = true;
+			
+			return null;
+		}
+		
+		this.wasNullFlag = false;
+		
+		switch (this.fields[columnIndexMinusOne].getSQLType()) {
+		case Types.BIT:
+		case Types.BINARY:
+		case Types.VARBINARY:
+		case Types.BLOB:
+		case Types.LONGVARBINARY:
+			return this.thisRow.getBinaryInputStream(columnIndexMinusOne);
+		}
+		
 		byte[] b = getNativeBytes(columnIndex, false);
 
 		if (b != null) {
@@ -3539,6 +3405,24 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	protected java.io.Reader getNativeCharacterStream(int columnIndex)
 			throws SQLException {
+		int columnIndexMinusOne = columnIndex - 1;
+		
+		switch (this.fields[columnIndexMinusOne].getSQLType()) {
+		case Types.CHAR:
+		case Types.VARCHAR:
+		case Types.LONGVARCHAR:
+		case Types.CLOB:		
+			if (this.thisRow.isNull(columnIndexMinusOne)) {
+				this.wasNullFlag = true;
+				
+				return null;
+			}
+			
+			this.wasNullFlag = false;
+			
+			return this.thisRow.getReader(columnIndexMinusOne);
+		}
+		
 		String asString = null;
 		
 		asString = getStringForClob(columnIndex);
@@ -3546,6 +3430,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (asString == null) {
 			return null;
 		}
+		
 		return getCharacterStreamFromString(asString, columnIndex);
 	}
 
@@ -3859,65 +3744,45 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkRowPos();
 		checkColumnBounds(columnIndex);
 
-		int mysqlType = this.fields[columnIndex - 1].getMysqlType();
+		int columnIndexMinusOne = columnIndex - 1;
+		
+		int mysqlType = this.fields[columnIndexMinusOne].getMysqlType();
+		
+		java.sql.Date dateToReturn = null;
 		
 		if (mysqlType == MysqlDefs.FIELD_TYPE_DATE) {
-			byte[] bits = (byte[]) this.thisRow.getColumnValue(columnIndex - 1);
 
-			if (bits == null) {
-				this.wasNullFlag = true;
+			dateToReturn = this.thisRow.getNativeDate(columnIndexMinusOne, 
+					this.connection, this);	
+		} else {
 
-				return null;
-			}
+			boolean rollForward = (tz != null && !tz.equals(this.getDefaultTimeZone()));
+			
+			dateToReturn = (Date) this.thisRow.getNativeDateTimeValue(columnIndexMinusOne,
+					null, Types.DATE, mysqlType, tz, rollForward, this.connection,
+					this);
+		}
+		
+		//
+		// normally, we allow ResultSetImpl methods to check for null first,
+		// but with DATETIME values we have this wacky need to support
+		// 0000-00-00 00:00:00 -> NULL, so we have to defer
+		// to the RowHolder implementation, and check the return value.
+		//
 
-			this.wasNullFlag = false;
+		if (dateToReturn == null) {
 
-			java.sql.Date dateToReturn = null;
+			this.wasNullFlag = true;
 
-			int year = 0;
-			int month = 0;
-			int day = 0;
-
-			int hour = 0;
-			int minute = 0;
-			int seconds = 0;
-
-			if (bits.length != 0) {
-				year = (bits[0] & 0xff) | ((bits[1] & 0xff) << 8);
-
-				month = bits[2];
-				day = bits[3];
-			}
-
-			if ((year == 0) && (month == 0) && (day == 0)) {
-				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
-						.equals(this.connection.getZeroDateTimeBehavior())) {
-					this.wasNullFlag = true;
-
-					return null;
-				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
-						.equals(this.connection.getZeroDateTimeBehavior())) {
-					throw SQLError.createSQLException(
-							"Value '0000-00-00' can not be represented as java.sql.Date",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-				}
-
-				year = 1;
-				month = 1;
-				day = 1;
-			}
-
-			return fastDateCreate(
-					getCalendarInstanceForSessionOrNew(), year, month, day);
+			return null;
 		}
 
-		boolean rollForward = (tz != null && !tz.equals(this.getDefaultTimeZone()));
+		this.wasNullFlag = false;
 
-		return (Date)getNativeDateTimeValue(columnIndex, null, Types.DATE, mysqlType, 
-					tz, rollForward);
+		return dateToReturn;
 	}
 
-	private java.sql.Date getNativeDateViaParseConversion(int columnIndex) throws SQLException {
+	java.sql.Date getNativeDateViaParseConversion(int columnIndex) throws SQLException {
 		if (this.useUsageAdvisor) {
 			issueConversionViaParsingWarning("getDate()", columnIndex,
 					this.thisRow.getColumnValue(columnIndex - 1), this.fields[columnIndex - 1],
@@ -4602,58 +4467,42 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkRowPos();
 		checkColumnBounds(columnIndex);
 
-		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		int columnIndexMinusOne = columnIndex - 1;
 		
-		if (value == null) {
+		int mysqlType = this.fields[columnIndexMinusOne].getMysqlType();
+
+		Time timeVal = null;
+		
+		if (mysqlType == MysqlDefs.FIELD_TYPE_TIME) {
+			timeVal = this.thisRow.getNativeTime(columnIndexMinusOne, 
+					targetCalendar, tz, rollForward, this.connection, this);
+			
+		} else {
+			timeVal = (Time) this.thisRow.getNativeDateTimeValue(columnIndexMinusOne,
+					null, Types.TIME, mysqlType, tz, rollForward, this.connection,
+					this);
+		}
+		
+		//
+		// normally, we allow ResultSetImpl methods to check for null first,
+		// but with DATETIME values we have this wacky need to support
+		// 0000-00-00 00:00:00 -> NULL, so we have to defer
+		// to the RowHolder implementation, and check the return value.
+		//
+
+		if (timeVal == null) {
+
 			this.wasNullFlag = true;
 
 			return null;
-		} else {
-			this.wasNullFlag = false;
 		}
 
-		int mysqlType = this.fields[columnIndex - 1].getMysqlType();
+		this.wasNullFlag = false;
 
-		if (mysqlType == MysqlDefs.FIELD_TYPE_TIME) {
-
-			byte[] bits = (byte[]) value;
-
-			int length = bits.length;
-			int hour = 0;
-			int minute = 0;
-			int seconds = 0;
-
-			if (length != 0) {
-				// bits[0] // skip tm->neg
-				// binaryData.readLong(); // skip daysPart
-				hour = bits[5];
-				minute = bits[6];
-				seconds = bits[7];
-			}
-
-			Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
-			
-			synchronized (sessionCalendar) {
-				Time time = TimeUtil
-						.fastTimeCreate(sessionCalendar, hour,
-								minute, seconds);
-	
-				Time adjustedTime = TimeUtil.changeTimezone(this.connection, 
-						sessionCalendar,
-						targetCalendar,
-						time,
-						this.connection.getServerTimezoneTZ(), tz, rollForward);
-
-				return adjustedTime;
-			}
-		}
-
-		return (Time)getNativeDateTimeValue(columnIndex, targetCalendar,
-				Types.TIME, mysqlType, 
-				tz, rollForward);
+		return timeVal;
 	}
 	
-	private Time getNativeTimeViaParseConversion(int columnIndex, Calendar targetCalendar,
+	Time getNativeTimeViaParseConversion(int columnIndex, Calendar targetCalendar,
 			TimeZone tz, boolean rollForward) throws SQLException {
 		if (this.useUsageAdvisor) {
 			issueConversionViaParsingWarning("getTime()", columnIndex,
@@ -4673,9 +4522,36 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkRowPos();
 		checkColumnBounds(columnIndex);
 
-		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		int columnIndexMinusOne = columnIndex - 1;
 		
-		if (value == null) {
+		Timestamp tsVal = null;
+
+		int mysqlType = this.fields[columnIndexMinusOne].getMysqlType();
+
+		switch (mysqlType) {
+		case MysqlDefs.FIELD_TYPE_DATETIME:
+		case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+			tsVal = this.thisRow.getNativeTimestamp(columnIndexMinusOne,
+					targetCalendar, tz, rollForward, this.connection, this);
+			break;
+
+		default:
+			
+
+			tsVal = (Timestamp) this.thisRow.getNativeDateTimeValue(
+					columnIndexMinusOne, null, Types.TIMESTAMP, mysqlType, tz,
+					rollForward, this.connection, this);
+		}
+
+		//
+		// normally, we allow ResultSetImpl methods to check for null first,
+		// but with DATETIME values we have this wacky need to support
+		// 0000-00-00 00:00:00 -> NULL, so we have to defer
+		// to the RowHolder implementation, and check the return value.
+		//
+		
+		if (tsVal == null) {
+
 			this.wasNullFlag = true;
 
 			return null;
@@ -4683,22 +4559,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		this.wasNullFlag = false;
 
-		int mysqlType = this.fields[columnIndex - 1].getMysqlType();
-
-		switch (mysqlType) {
-		case MysqlDefs.FIELD_TYPE_DATETIME:
-		case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-			return this.thisRow.getNativeTimestamp(columnIndex - 1,
-					targetCalendar, tz, rollForward, this.connection, this);
-
-		default:
-			return (Timestamp)getNativeDateTimeValue(columnIndex, targetCalendar,
-					Types.TIMESTAMP, mysqlType, 
-					tz, rollForward);
-		}
+		return tsVal;
 	}
 
-	private Timestamp getNativeTimestampViaParseConversion(int columnIndex, Calendar targetCalendar, 
+	Timestamp getNativeTimestampViaParseConversion(int columnIndex, Calendar targetCalendar, 
 			TimeZone tz, boolean rollForward) throws SQLException {
 		if (this.useUsageAdvisor) {
 			issueConversionViaParsingWarning("getTimestamp()", columnIndex,
@@ -5990,175 +5854,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
 	}
-
-	private Time getTimeFromBytes(byte[] timeAsBytes, Calendar targetCalendar,
-			int columnIndex,
-			TimeZone tz, 
-			boolean rollForward) throws SQLException {
-		checkColumnBounds(columnIndex);
-		
-		int hr = 0;
-		int min = 0;
-		int sec = 0;
-
-		try {
-			
-			if (timeAsBytes == null) {
-				this.wasNullFlag = true;
-
-				return null;
-			} 
-			
-			int length = timeAsBytes.length;
-			
-			boolean allZeroTime = true;
-			boolean onlyTimePresent = StringUtils.indexOf(timeAsBytes, ':') != -1;
-			
-			for (int i = 0; i < length; i++) {
-				byte b = timeAsBytes[i];
-
-				if (b == ' ' || b == '-' || b == '/') {
-					onlyTimePresent = false;
-				}
-
-				if (b != '0' && b != ' ' && b != ':' && b != '-' && b != '/'
-						&& b != '.') {
-					allZeroTime = false;
-
-					break;
-				}
-			}
-
-			if (!onlyTimePresent && allZeroTime) {
-				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
-						.equals(this.connection.getZeroDateTimeBehavior())) {
-					this.wasNullFlag = true;
-
-					return null;
-				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
-						.equals(this.connection.getZeroDateTimeBehavior())) {
-					throw SQLError.createSQLException("Value '" + new String(timeAsBytes)
-							+ "' can not be represented as java.sql.Time",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-				}
-
-				// We're left with the case of 'round' to a time Java _can_
-				// represent, which is '00:00:00'
-				return fastTimeCreate(null, 0, 0, 0);
-			}
-
-			this.wasNullFlag = false;
-
-			Field timeColField = this.fields[columnIndex - 1];
-
-			if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
-				
-				switch (length) {
-				case 19: { // YYYY-MM-DD hh:mm:ss
-				 
-						hr = StringUtils.getInt(timeAsBytes, length - 8,
-								length - 6);
-						min = StringUtils.getInt(timeAsBytes, length - 5,
-								length - 3);
-						sec = StringUtils.getInt(timeAsBytes, length - 2,
-								length);
-				}
-
-						break;
-				case 14:
-				case 12: {
-					hr = StringUtils.getInt(timeAsBytes, length - 6,
-							length - 4);
-					min = StringUtils.getInt(timeAsBytes, length - 4,
-							length - 2);
-					sec = StringUtils.getInt(timeAsBytes, length - 2,
-							length);
-				}
-
-					break;
-
-				case 10: {
-					hr = StringUtils.getInt(timeAsBytes, 6, 8);
-					min = StringUtils.getInt(timeAsBytes, 8, 10);
-					sec = 0;
-				}
-
-					break;
-
-				default:
-					throw SQLError.createSQLException(
-							Messages
-									.getString("ResultSet.Timestamp_too_small_to_convert_to_Time_value_in_column__257") //$NON-NLS-1$
-									+ columnIndex
-									+ "("
-									+ this.fields[columnIndex - 1] + ").",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-				} /* endswitch */
-
-				SQLWarning precisionLost = new SQLWarning(
-						Messages
-								.getString("ResultSet.Precision_lost_converting_TIMESTAMP_to_Time_with_getTime()_on_column__261") //$NON-NLS-1$
-								+ columnIndex
-								+ "("
-								+ this.fields[columnIndex - 1] + ").");
-
-				if (this.warningChain == null) {
-					this.warningChain = precisionLost;
-				} else {
-					this.warningChain.setNextWarning(precisionLost);
-				}
-			} else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATETIME) {
-				hr = StringUtils.getInt(timeAsBytes, 11, 13);
-				min = StringUtils.getInt(timeAsBytes, 14, 16);
-				sec = StringUtils.getInt(timeAsBytes, 17, 19);
-
-				SQLWarning precisionLost = new SQLWarning(
-						Messages
-								.getString("ResultSet.Precision_lost_converting_DATETIME_to_Time_with_getTime()_on_column__264") //$NON-NLS-1$
-								+ columnIndex
-								+ "("
-								+ this.fields[columnIndex - 1] + ").");
-
-				if (this.warningChain == null) {
-					this.warningChain = precisionLost;
-				} else {
-					this.warningChain.setNextWarning(precisionLost);
-				}
-			} else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATE) {
-				return fastTimeCreate(null, 0, 0, 0); // midnight on the given
-														// date
-			} else {
-				// convert a String to a Time
-				if ((length != 5)
-						&& (length != 8)) {
-					throw SQLError.createSQLException(Messages
-							.getString("ResultSet.Bad_format_for_Time____267") //$NON-NLS-1$
-							+ new String(timeAsBytes)
-							+ Messages.getString("ResultSet.___in_column__268")
-							+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-				}
-
-				hr = StringUtils.getInt(timeAsBytes, 0, 2);
-				min = StringUtils.getInt(timeAsBytes, 3, 5);
-				sec = (length == 5) ? 0 : StringUtils.getInt(timeAsBytes, 6, 8);
-			}
-
-			Calendar sessionCalendar = this.getCalendarInstanceForSessionOrNew();
-			
-			synchronized (sessionCalendar) {
-				return TimeUtil.changeTimezone(this.connection, 
-						sessionCalendar,
-						targetCalendar, 
-						fastTimeCreate(
-						sessionCalendar, hr, min, sec), 
-						this.connection.getServerTimezoneTZ(),
-						tz, rollForward);
-			}
-		} catch (Exception ex) {
-			throw SQLError.createSQLException(ex.toString(),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-		}
-	}
 	
 	/**
 	 * Get the value of a column in the current row as a java.sql.Time object in
@@ -6186,12 +5881,22 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 			return getTimeFromString(timeAsString, targetCalendar,
 				columnIndex, tz, rollForward);
-		} else {
-			checkColumnBounds(columnIndex);
-			
-			return getTimeFromBytes((byte[])this.thisRow.getColumnValue(columnIndex - 1), targetCalendar,
-					columnIndex, tz, rollForward);
 		}
+		
+		checkColumnBounds(columnIndex);
+		
+		int columnIndexMinusOne = columnIndex - 1;
+		
+		if (this.thisRow.isNull(columnIndexMinusOne)) {
+			this.wasNullFlag = true;
+			
+			return null;
+		}
+		
+		this.wasNullFlag = false;
+		
+		return this.thisRow.getTimeFast(columnIndexMinusOne, 
+				targetCalendar, tz, rollForward, this.connection, this);
 	}
 
 	/**
@@ -6882,16 +6587,26 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return getNativeTimestamp(columnIndex, targetCalendar, tz, rollForward);
 		}
 
+		Timestamp tsVal = null;
+		
 		if (!this.useFastDateParsing) {
 			String timestampValue = getStringInternal(columnIndex, false);
 
-			return getTimestampFromString(columnIndex, targetCalendar, 
+			tsVal = getTimestampFromString(columnIndex, targetCalendar, 
 					timestampValue, tz,
 					rollForward);
-		} 
+		} else {
+			tsVal = this.thisRow.getTimestampFast(columnIndex - 1, 
+					targetCalendar, tz, rollForward, this.connection, this);
+		}
 		
-		return this.thisRow.getTimestampFast(columnIndex - 1, 
-			this.connection, this, targetCalendar, tz, rollForward);
+		if (tsVal == null) {
+			this.wasNullFlag = true;
+		} else {
+			this.wasNullFlag = false;
+		}
+		
+		return tsVal;
 	}
 
 	/**
@@ -8923,177 +8638,5 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 		
 		return this.gmtCalendar;
-	}
-	
-	private Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar,
-				int jdbcType,
-			int mysqlType, TimeZone tz, boolean rollForward)
-			throws SQLException {
-
-		int year = 0;
-		int month = 0;
-		int day = 0;
-
-		int hour = 0;
-		int minute = 0;
-		int seconds = 0;
-
-		int nanos = 0;
-
-		byte[] bits = (byte[]) this.thisRow.getColumnValue(columnIndex - 1);
-
-		if (bits == null) {
-			this.wasNullFlag = true;
-
-			return null;
-		}
-
-		Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
-				this.connection.getUtcCalendar() : 
-					getCalendarInstanceForSessionOrNew();
-				
-		this.wasNullFlag = false;
-		
-		boolean populatedFromDateTimeValue = false;
-
-		switch (mysqlType) {
-		case MysqlDefs.FIELD_TYPE_DATETIME:
-		case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-			populatedFromDateTimeValue = true;
-
-			int length = bits.length;
-
-			if (length != 0) {
-				year = (bits[0] & 0xff) | ((bits[1] & 0xff) << 8);
-				month = bits[2];
-				day = bits[3];
-
-				if (length > 4) {
-					hour = bits[4];
-					minute = bits[5];
-					seconds = bits[6];
-				}
-
-				if (length > 7) {
-					nanos = (bits[7] & 0xff) | ((bits[8] & 0xff) << 8)
-							| ((bits[9] & 0xff) << 16)
-							| ((bits[10] & 0xff) << 24);
-				}
-			}
-
-			break;
-		case MysqlDefs.FIELD_TYPE_DATE:
-			populatedFromDateTimeValue = true;
-
-			if (bits.length != 0) {
-				year = (bits[0] & 0xff) | ((bits[1] & 0xff) << 8);
-				month = bits[2];
-				day = bits[3];
-			}
-
-			break;
-		case MysqlDefs.FIELD_TYPE_TIME:
-			populatedFromDateTimeValue = true;
-
-			if (bits.length != 0) {
-				// bits[0] // skip tm->neg
-				// binaryData.readLong(); // skip daysPart
-				hour = bits[5];
-				minute = bits[6];
-				seconds = bits[7];
-			}
-
-			year = 1970;
-			month = 1;
-			day = 1;
-			
-			break;
-		default:
-			populatedFromDateTimeValue = false;
-		}
-
-		switch (jdbcType) {
-		case Types.TIME:
-			if (populatedFromDateTimeValue) {
-				Time time = TimeUtil.fastTimeCreate(
-						getCalendarInstanceForSessionOrNew(), hour, minute,
-						seconds);
-
-				Time adjustedTime = TimeUtil.changeTimezone(this.connection,
-						sessionCalendar, 
-						targetCalendar,
-						time, this.connection.getServerTimezoneTZ(), tz,
-						rollForward);
-
-				return adjustedTime;
-			}
-			
-			return getNativeTimeViaParseConversion(columnIndex, targetCalendar,
-					tz, rollForward);
-
-		case Types.DATE:
-			if (populatedFromDateTimeValue) {
-				if ((year == 0) && (month == 0) && (day == 0)) {
-					if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
-							.equals(this.connection.getZeroDateTimeBehavior())) {
-						this.wasNullFlag = true;
-
-						return null;
-					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
-							.equals(this.connection.getZeroDateTimeBehavior())) {
-						throw new SQLException(
-								"Value '0000-00-00' can not be represented as java.sql.Date",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-					}
-
-					year = 1;
-					month = 1;
-					day = 1;
-				}
-
-				return fastDateCreate(getCalendarInstanceForSessionOrNew(),
-						year, month, day);
-			}
-
-			return getNativeDateViaParseConversion(columnIndex);
-		case Types.TIMESTAMP:
-			if (populatedFromDateTimeValue) {
-				if ((year == 0) && (month == 0) && (day == 0)) {
-					if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
-							.equals(this.connection.getZeroDateTimeBehavior())) {
-						this.wasNullFlag = true;
-
-						return null;
-					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
-							.equals(this.connection.getZeroDateTimeBehavior())) {
-						throw new SQLException(
-								"Value '0000-00-00' can not be represented as java.sql.Timestamp",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-					}
-
-					year = 1;
-					month = 1;
-					day = 1;
-				}
-
-				Timestamp ts = fastTimestampCreate(
-						getCalendarInstanceForSessionOrNew(), year, month, day,
-						hour, minute, seconds, nanos);
-
-				Timestamp adjustedTs = TimeUtil.changeTimezone(this.connection,
-						sessionCalendar, 
-						targetCalendar,
-						ts, this.connection.getServerTimezoneTZ(), tz,
-						rollForward);
-
-				return adjustedTs;
-			}
-
-			return getNativeTimestampViaParseConversion(columnIndex, targetCalendar, tz, rollForward);
-			
-		default:
-			throw new SQLException("Internal error - conversion method doesn't support this type", 
-					SQLError.SQL_STATE_GENERAL_ERROR);
-		}
 	}
 }

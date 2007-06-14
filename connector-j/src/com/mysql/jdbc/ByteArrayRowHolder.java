@@ -22,7 +22,14 @@
  */
 package com.mysql.jdbc;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.sql.Date;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -105,18 +112,18 @@ public class ByteArrayRowHolder extends RowHolder {
 		return StringUtils.getLong(this.internalRowData[columnIndex]);
 	}
 
-	public Timestamp getTimestampFast(int columnIndex, ConnectionImpl conn,
-			ResultSetImpl rs, Calendar targetCalendar, TimeZone tz,
-			boolean rollForward) throws SQLException {
+	public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar,
+			TimeZone tz, boolean rollForward, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
 		byte[] columnValue = this.internalRowData[columnIndex];
 
 		if (columnValue == null) {
 			return null;
 		}
 
-		return getTimestampFast(this.internalRowData[columnIndex], columnIndex,
-				conn, rs, targetCalendar, tz, rollForward, 0,
-				columnValue.length);
+		return getTimestampFast(columnIndex, this.internalRowData[columnIndex],
+				0, columnValue.length, targetCalendar, tz, rollForward, conn,
+				rs);
 	}
 
 	public double getNativeDouble(int columnIndex) throws SQLException {
@@ -170,5 +177,102 @@ public class ByteArrayRowHolder extends RowHolder {
 
 		return getNativeTimestamp(bits, 0, bits.length, targetCalendar, tz,
 				rollForward, conn, rs);
+	}
+
+	public void closeOpenStreams() {
+		// no-op for this type
+	}
+
+	public InputStream getBinaryInputStream(int columnIndex)
+			throws SQLException {
+		if (this.internalRowData[columnIndex] == null) {
+			return null;
+		}
+
+		return new ByteArrayInputStream(this.internalRowData[columnIndex]);
+	}
+
+	public Reader getReader(int columnIndex) throws SQLException {
+		InputStream stream = getBinaryInputStream(columnIndex);
+
+		if (stream == null) {
+			return null;
+		}
+
+		try {
+			return new InputStreamReader(stream, this.metadata[columnIndex]
+					.getCharacterSet());
+		} catch (UnsupportedEncodingException e) {
+			SQLException sqlEx = SQLError.createSQLException("");
+
+			sqlEx.initCause(e);
+
+			throw sqlEx;
+		}
+	}
+
+	public Time getTimeFast(int columnIndex, Calendar targetCalendar,
+			TimeZone tz, boolean rollForward, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
+		byte[] columnValue = this.internalRowData[columnIndex];
+
+		if (columnValue == null) {
+			return null;
+		}
+
+		return getTimeFast(columnIndex, this.internalRowData[columnIndex], 0,
+				columnValue.length, targetCalendar, tz, rollForward, conn, rs);
+	}
+
+	public Date getDateFast(int columnIndex, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
+		byte[] columnValue = this.internalRowData[columnIndex];
+
+		if (columnValue == null) {
+			return null;
+		}
+
+		return getDateFast(columnIndex, this.internalRowData[columnIndex], 0,
+				columnValue.length, conn, rs);
+	}
+
+	public Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar,
+			int jdbcType, int mysqlType, TimeZone tz,
+			boolean rollForward, ConnectionImpl conn, ResultSetImpl rs)
+			throws SQLException {
+		byte[] columnValue = this.internalRowData[columnIndex];
+
+		if (columnValue == null) {
+			return null;
+		}
+
+		return getNativeDateTimeValue(columnIndex, columnValue, 0,
+				columnValue.length, targetCalendar, jdbcType, mysqlType, tz,
+				rollForward, conn, rs);
+	}
+
+	public Date getNativeDate(int columnIndex, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
+		byte[] columnValue = this.internalRowData[columnIndex];
+
+		if (columnValue == null) {
+			return null;
+		}
+
+		return getNativeDate(columnIndex, columnValue, 0, columnValue.length,
+				conn, rs);
+	}
+
+	public Time getNativeTime(int columnIndex, Calendar targetCalendar,
+			TimeZone tz, boolean rollForward, ConnectionImpl conn,
+			ResultSetImpl rs) throws SQLException {
+		byte[] columnValue = this.internalRowData[columnIndex];
+
+		if (columnValue == null) {
+			return null;
+		}
+
+		return getNativeTime(columnIndex, columnValue, 0, columnValue.length,
+				targetCalendar, tz, rollForward, conn, rs);
 	}
 }
