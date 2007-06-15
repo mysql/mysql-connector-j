@@ -113,21 +113,29 @@ public class CallableStatementTest extends BaseTestCase {
 
 				storedProc = this.conn.prepareCall("{call testBatch(?)}");
 
-				storedProc.setInt(1, 1);
-				storedProc.addBatch();
-				storedProc.setInt(1, 2);
-				storedProc.addBatch();
+				int numBatches = 300;
+				
+				for (int i = 0; i < numBatches; i++) {
+					storedProc.setInt(1, i + 1);
+					storedProc.addBatch();
+				}
+				
 				int[] counts = storedProc.executeBatch();
 				
-				assertEquals(2, counts.length);
-				assertEquals(1, counts[0]);
-				assertEquals(1, counts[1]);
+				assertEquals(numBatches, counts.length);
 				
+				for (int i = 0; i < numBatches; i++) {
+					assertEquals(1, counts[i]);
+				}
+				
+				/*
 				this.rs = this.stmt.executeQuery("SELECT field1 FROM testBatchTable ORDER BY field1 ASC");
-				assertTrue(this.rs.next());
-				assertEquals(1, this.rs.getInt(1));
-				assertTrue(this.rs.next());
-				assertEquals(2, this.rs.getInt(1));
+				
+				for (int i = 0; i < numBatches; i++) {
+					assertTrue(this.rs.next());
+					assertEquals(i + 1, this.rs.getInt(1));
+				}
+				*/
 			} finally {
 				if (this.rs != null) {
 					this.rs.close();

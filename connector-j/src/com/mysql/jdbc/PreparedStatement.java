@@ -490,7 +490,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 	protected boolean usingAnsiMode;
 
-	private String batchedValuesClause;
+	protected String batchedValuesClause;
 
 	/** Where does the statement text actually start? */
 	
@@ -1248,7 +1248,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			// anyway
 			//
 			
-			sizeOfParameterSet += this.batchedValuesClause.length() + 1; 
+			if (this.batchedValuesClause != null) {
+				sizeOfParameterSet += this.batchedValuesClause.length() + 1;
+			}
+			
 			sizeOfEntireBatch += sizeOfParameterSet;
 			
 			if (sizeOfParameterSet > maxSizeOfParameterSet) {
