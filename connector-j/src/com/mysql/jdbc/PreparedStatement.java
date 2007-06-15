@@ -1318,7 +1318,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 								while (rs.next()) {
 									this.batchedGeneratedKeys
-											.add(new ByteArrayRowHolder(new byte[][] { rs.getBytes(1) }));
+											.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }));
 								}
 							} finally {
 								if (rs != null) {
@@ -4558,7 +4558,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				typeMetadata[i] = parameterMetadata;
 			}
 
-			rows.add(new ByteArrayRowHolder(rowData));
+			rows.add(new ByteArrayRow(rowData));
 
 			this.bindingsAsRs = new ResultSetImpl(connection.getCatalog(),
 					typeMetadata, new RowDataStatic(rows), connection, null);

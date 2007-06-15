@@ -448,7 +448,7 @@ class MysqlIO {
 			}
 			
 			if (usingCursor) {
-				RowData rows = new CursorRowProvider(
+				RowData rows = new RowDataCursor(
 					this,
 					prepStmt,
 					fields);
@@ -1372,7 +1372,7 @@ class MysqlIO {
     *
     * @throws SQLException DOCUMENT ME!
     */
-    final RowHolder nextRow(Field[] fields, int columnCount,
+    final ResultSetRow nextRow(Field[] fields, int columnCount,
         boolean isBinaryEncoded, int resultSetConcurrency, 
         boolean useBufferRowHolderIfPossible,
         boolean reuseRowPacket,
@@ -1416,14 +1416,14 @@ class MysqlIO {
             			rowData[i] = rowPacket.readLenByteArray(0);
             		}
 
-            		return new ByteArrayRowHolder(rowData);
+            		return new ByteArrayRow(rowData);
             	}
             		
             	if (!reuseRowPacket) {
             		this.reusablePacket = new Buffer(rowPacket.getBufLength());
             	}
             	
-            	return new BufferRowHolder(rowPacket, fields, false);
+            	return new BufferRow(rowPacket, fields, false);
 
             }
 
@@ -1447,7 +1447,7 @@ class MysqlIO {
         		this.reusablePacket = new Buffer(rowPacket.getBufLength());
         	}
             	
-            return new BufferRowHolder(rowPacket, fields, true);
+            return new BufferRow(rowPacket, fields, true);
         }
 
         rowPacket.setPosition(rowPacket.getPosition() - 1);
@@ -1456,7 +1456,7 @@ class MysqlIO {
         return null;
     }
     
-    final RowHolder nextRowFast(Field[] fields, int columnCount,
+    final ResultSetRow nextRowFast(Field[] fields, int columnCount,
             boolean isBinaryEncoded, int resultSetConcurrency, 
             boolean useBufferRowHolderIfPossible,
             boolean reuseRowPacket)
@@ -1590,7 +1590,7 @@ class MysqlIO {
 				skipFully(this.mysqlInput, remaining);
 			}
 
-			return new ByteArrayRowHolder(rowData);
+			return new ByteArrayRow(rowData);
 		} catch (IOException ioEx) {
 			throw SQLError.createCommunicationsException(this.connection,
     				this.lastPacketSentTimeMs, ioEx);
@@ -3743,7 +3743,7 @@ class MysqlIO {
      *
      * @throws SQLException DOCUMENT ME!
      */
-    private final RowHolder unpackBinaryResultSetRow(Field[] fields,
+    private final ResultSetRow unpackBinaryResultSetRow(Field[] fields,
         Buffer binaryData, int resultSetConcurrency) throws SQLException {
         int numFields = fields.length;
 
@@ -3790,7 +3790,7 @@ class MysqlIO {
         	}
         }
 
-        return new ByteArrayRowHolder(unpackedRowData);
+        return new ByteArrayRow(unpackedRowData);
     }
 
         
@@ -4321,7 +4321,7 @@ class MysqlIO {
 		sendCommand(MysqlDefs.COM_FETCH, null, this.sharedSendPacket, true,
 				null);
 	
-		RowHolder row = null;
+		ResultSetRow row = null;
 	
 		while ((row = nextRow(columnTypes, columnTypes.length, true,
 				ResultSet.CONCUR_READ_ONLY, false, true, null)) != null) {

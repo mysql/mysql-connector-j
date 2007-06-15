@@ -60,7 +60,7 @@ public class RowDataStatic implements RowData {
 	 * @param row
 	 *            DOCUMENT ME!
 	 */
-	public void addRow(RowHolder row) {
+	public void addRow(ResultSetRow row) {
 		this.rows.add(row);
 	}
 
@@ -99,12 +99,12 @@ public class RowDataStatic implements RowData {
 	 * 
 	 * @return DOCUMENT ME!
 	 */
-	public RowHolder getAt(int atIndex) {
+	public ResultSetRow getAt(int atIndex) {
 		if ((atIndex < 0) || (atIndex >= this.rows.size())) {
 			return null;
 		}
 
-		return (RowHolder) this.rows.get(atIndex);
+		return (ResultSetRow) this.rows.get(atIndex);
 	}
 
 	/**
@@ -211,11 +211,11 @@ public class RowDataStatic implements RowData {
 	 * 
 	 * @return DOCUMENT ME!
 	 */
-	public RowHolder next() throws SQLException {
+	public ResultSetRow next() throws SQLException {
 		this.index++;
 
 		if (this.index < this.rows.size()) {
-			RowHolder row = (RowHolder) this.rows.get(this.index);
+			ResultSetRow row = (ResultSetRow) this.rows.get(this.index);
 			row.setMetadata(this.metadata);
 			
 			return row; 

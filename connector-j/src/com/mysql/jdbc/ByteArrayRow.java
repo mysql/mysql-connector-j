@@ -40,11 +40,11 @@ import java.util.TimeZone;
  * 
  * @version $Id: $
  */
-public class ByteArrayRowHolder extends RowHolder {
+public class ByteArrayRow extends ResultSetRow {
 
 	byte[][] internalRowData;
 
-	public ByteArrayRowHolder(byte[][] internalRowData) {
+	public ByteArrayRow(byte[][] internalRowData) {
 		this.internalRowData = internalRowData;
 	}
 

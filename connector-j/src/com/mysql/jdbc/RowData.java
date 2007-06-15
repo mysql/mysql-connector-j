@@ -49,7 +49,7 @@ public interface RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	void addRow(RowHolder row) throws SQLException;
+	void addRow(ResultSetRow row) throws SQLException;
 
 	/**
 	 * Moves to after last.
@@ -92,7 +92,7 @@ public interface RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	RowHolder getAt(int index) throws SQLException;
+	ResultSetRow getAt(int index) throws SQLException;
 
 	/**
 	 * Returns the current position in the result set as a row number.
@@ -191,7 +191,7 @@ public interface RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	RowHolder next() throws SQLException;
+	ResultSetRow next() throws SQLException;
 
 	/**
 	 * Removes the row at the given index.

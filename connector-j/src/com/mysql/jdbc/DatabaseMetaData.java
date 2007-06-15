@@ -771,7 +771,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					rowData[5] = s2b(functionName);                      // SPECFIC NAME
 				}
 
-				procedureRowsOrderedByName.put(functionName, new ByteArrayRowHolder(rowData));
+				procedureRowsOrderedByName.put(functionName, new ByteArrayRow(rowData));
 			}
 		}
 	}
@@ -816,12 +816,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						.toString(procedureReturnsResult) : Integer
 						.toString(procedureResultUnknown));
 
-				procedureRowsOrderedByName.put(procedureName, new ByteArrayRowHolder(rowData));
+				procedureRowsOrderedByName.put(procedureName, new ByteArrayRow(rowData));
 			}
 		}
 	}
 
-	private RowHolder convertTypeDescriptorToProcedureRow(
+	private ResultSetRow convertTypeDescriptorToProcedureRow(
 			byte[] procNameAsBytes, String paramName, boolean isOutParam,
 			boolean isInParam, boolean isReturnParam, TypeDescriptor typeDesc,
 			boolean forGetFunctionColumns,
@@ -893,7 +893,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			row[16] = s2b(paramName);
 		}
 		
-		return new ByteArrayRowHolder(row);
+		return new ByteArrayRow(row);
 	}
 
 	/**
@@ -1098,7 +1098,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 	
 		row[2] = s2b(commentBuf.toString());
-		rows.add(new ByteArrayRowHolder(row));
+		rows.add(new ByteArrayRow(row));
 	
 		return rows;
 	}
@@ -1390,7 +1390,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 													java.sql.DatabaseMetaData.bestRowNotPseudo)
 											.getBytes();
 
-									rows.add(new ByteArrayRowHolder(rowVal));
+									rows.add(new ByteArrayRow(rowVal));
 								}
 							}
 						}
@@ -1792,7 +1792,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							parameterNamePattern);
 
 					if (wildCompareRes != StringUtils.WILD_COMPARE_NO_MATCH) {
-						RowHolder row = convertTypeDescriptorToProcedureRow(
+						ResultSetRow row = convertTypeDescriptorToProcedureRow(
 								procNameAsBytes, paramName, isOutParam,
 								isInParam, false, typeDesc, forGetFunctionColumns,
 								ordinal++);
@@ -2036,7 +2036,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			while (results.next()) {
 				byte[][] rowVal = new byte[1][];
 				rowVal[0] = results.getBytes(1);
-				tuples.add(new ByteArrayRowHolder(rowVal));
+				tuples.add(new ByteArrayRow(rowVal));
 			}
 
 			return buildResultSet(fields, tuples);
@@ -2210,7 +2210,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						tuple[5] = s2b(fullUser.toString());
 						tuple[6] = s2b(privilege);
 						tuple[7] = null;
-						grantRows.add(new ByteArrayRowHolder(tuple));
+						grantRows.add(new ByteArrayRow(tuple));
 					}
 				}
 			}
@@ -2551,7 +2551,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 								rowVal[17] = s2b(typeDesc.isNullable);
 
-								rows.add(new ByteArrayRowHolder(rowVal));
+								rows.add(new ByteArrayRow(rowVal));
 							}
 						} finally {
 							if (results != null) {
@@ -2808,7 +2808,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 														.toString(
 																java.sql.DatabaseMetaData.importedKeyNotDeferrable)
 														.getBytes();
-												tuples.add(new ByteArrayRowHolder(tuple));
+												tuples.add(new ByteArrayRow(tuple));
 												keySeq++;
 											}
 										}
@@ -3553,11 +3553,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 							if (unique) {
 								if (indexIsUnique) {
-									rows.add(new ByteArrayRowHolder(row));
+									rows.add(new ByteArrayRow(row));
 								}
 							} else {
 								// All rows match
-								rows.add(new ByteArrayRowHolder(row));
+								rows.add(new ByteArrayRow(row));
 							}
 						}
 					} finally {
@@ -3922,7 +3922,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						Iterator sortedIterator = sortMap.values().iterator();
 
 						while (sortedIterator.hasNext()) {
-							rows.add(new ByteArrayRowHolder((byte[][])sortedIterator.next()));
+							rows.add(new ByteArrayRow((byte[][])sortedIterator.next()));
 						}
 
 					} finally {
@@ -4395,7 +4395,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			tuple[PK_NAME] = null; // not available from show table status
 			tuple[DEFERRABILITY] = s2b(Integer
 					.toString(java.sql.DatabaseMetaData.importedKeyNotDeferrable));
-			tuples.add(new ByteArrayRowHolder(tuple));
+			tuples.add(new ByteArrayRow(tuple));
 		}
 	}
 
@@ -4676,7 +4676,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								tuple[4] = s2b(fullUser.toString());
 								tuple[5] = s2b(privilege);
 								tuple[6] = null;
-								grantRows.add(new ByteArrayRowHolder(tuple));
+								grantRows.add(new ByteArrayRow(tuple));
 							}
 						} finally {
 							if (columnResults != null) {
@@ -4934,7 +4934,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									.iterator();
 
 							while (tablesIter.hasNext()) {
-								tuples.add(new ByteArrayRowHolder((byte[][])tablesIter.next()));
+								tuples.add(new ByteArrayRow((byte[][])tablesIter.next()));
 							}
 						}
 
@@ -4943,7 +4943,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									.iterator();
 
 							while (viewsIter.hasNext()) {
-								tuples.add(new ByteArrayRowHolder((byte[][])viewsIter.next()));
+								tuples.add(new ByteArrayRow((byte[][])viewsIter.next()));
 							}
 						}
 
@@ -4996,17 +4996,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		byte[][] tableTypeRow = new byte[1][];
 		tableTypeRow[0] = TABLE_AS_BYTES;
-		tuples.add(new ByteArrayRowHolder(tableTypeRow));
+		tuples.add(new ByteArrayRow(tableTypeRow));
 
 		if (this.conn.versionMeetsMinimum(5, 0, 1)) {
 			byte[][] viewTypeRow = new byte[1][];
 			viewTypeRow[0] = VIEW_AS_BYTES;
-			tuples.add(new ByteArrayRowHolder(viewTypeRow));
+			tuples.add(new ByteArrayRow(viewTypeRow));
 		}
 
 		byte[][] tempTypeRow = new byte[1][];
 		tempTypeRow[0] = s2b("LOCAL TEMPORARY");
-		tuples.add(new ByteArrayRowHolder(tempTypeRow));
+		tuples.add(new ByteArrayRow(tempTypeRow));
 
 		return buildResultSet(fields, tuples);
 	}
@@ -5185,7 +5185,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: BOOL (silently converted to TINYINT(1)) JDBC Type: BIT
@@ -5217,7 +5217,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: TINYINT JDBC Type: TINYINT
@@ -5249,7 +5249,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: BIGINT JDBC Type: BIGINT
@@ -5281,7 +5281,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: LONG VARBINARY JDBC Type: LONGVARBINARY
@@ -5313,7 +5313,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: MEDIUMBLOB JDBC Type: LONGVARBINARY
@@ -5345,7 +5345,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: LONGBLOB JDBC Type: LONGVARBINARY
@@ -5379,7 +5379,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: BLOB JDBC Type: LONGVARBINARY
@@ -5411,7 +5411,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: TINYBLOB JDBC Type: LONGVARBINARY
@@ -5443,7 +5443,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: VARBINARY (sliently converted to VARCHAR(M) BINARY) JDBC
@@ -5476,7 +5476,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: BINARY (silently converted to CHAR(M) BINARY) JDBC Type:
@@ -5509,7 +5509,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: LONG VARCHAR JDBC Type: LONGVARCHAR
@@ -5541,7 +5541,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: MEDIUMTEXT JDBC Type: LONGVARCHAR
@@ -5573,7 +5573,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: LONGTEXT JDBC Type: LONGVARCHAR
@@ -5607,7 +5607,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: TEXT JDBC Type: LONGVARCHAR
@@ -5639,7 +5639,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: TINYTEXT JDBC Type: LONGVARCHAR
@@ -5671,7 +5671,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: CHAR JDBC Type: CHAR
@@ -5703,7 +5703,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: NUMERIC (silently converted to DECIMAL) JDBC Type:
@@ -5736,7 +5736,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: DECIMAL JDBC Type: DECIMAL
@@ -5768,7 +5768,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: INTEGER JDBC Type: INTEGER
@@ -5800,7 +5800,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: INT JDBC Type: INTEGER
@@ -5832,7 +5832,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: MEDIUMINT JDBC Type: INTEGER
@@ -5864,7 +5864,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: SMALLINT JDBC Type: SMALLINT
@@ -5896,7 +5896,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: FLOAT JDBC Type: REAL (this is the SINGLE PERCISION
@@ -5929,7 +5929,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: DOUBLE JDBC Type: DOUBLE
@@ -5961,7 +5961,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: DOUBLE PRECISION JDBC Type: DOUBLE
@@ -5993,7 +5993,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: REAL (does not map to Types.REAL) JDBC Type: DOUBLE
@@ -6025,7 +6025,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: VARCHAR JDBC Type: VARCHAR
@@ -6057,7 +6057,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: ENUM JDBC Type: VARCHAR
@@ -6089,7 +6089,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: SET JDBC Type: VARCHAR
@@ -6121,7 +6121,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: DATE JDBC Type: DATE
@@ -6153,7 +6153,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: TIME JDBC Type: TIME
@@ -6185,7 +6185,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: DATETIME JDBC Type: TIMESTAMP
@@ -6217,7 +6217,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: TIMESTAMP JDBC Type: TIMESTAMP
@@ -6249,7 +6249,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRowHolder(rowVal));
+		tuples.add(new ByteArrayRow(rowVal));
 
 		return buildResultSet(fields, tuples);
 	}

@@ -46,14 +46,29 @@ import java.util.TimeZone;
  * 
  * @version $Id: $
  */
-public abstract class RowHolder {
+public abstract class ResultSetRow {
 	/**
 	 * The metadata of the fields of this result set.
 	 */
 	protected Field[] metadata;
 
+	/**
+	 * Called during navigation to next row to close all open
+	 * streams.
+	 */
 	public abstract void closeOpenStreams();
 
+	/**
+	 * Returns data at the given index as an InputStream with no
+	 * character conversion.
+	 * 
+	 * @param columnIndex
+	 *            of the column value (starting at 0) to return.
+	 * @return the value at the given index as an InputStream or null
+	 *         if null.
+	 *         
+	 * @throws SQLException if an error occurs while retrieving the value.
+	 */
 	public abstract InputStream getBinaryInputStream(int columnIndex)
 			throws SQLException;
 

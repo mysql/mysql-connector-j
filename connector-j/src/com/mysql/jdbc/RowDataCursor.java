@@ -33,7 +33,7 @@ import java.util.List;
  * @version $Id: CursorRowProvider.java,v 1.1.2.1 2005/05/19 18:31:49 mmatthews
  *          Exp $
  */
-public class CursorRowProvider implements RowData {
+public class RowDataCursor implements RowData {
 
 	private final static int BEFORE_START_OF_ROWS = -1;
 
@@ -109,7 +109,7 @@ public class CursorRowProvider implements RowData {
 	 * @param metadata
 	 *            field-level metadata for the results that this cursor covers.
 	 */
-	public CursorRowProvider(MysqlIO ioChannel,
+	public RowDataCursor(MysqlIO ioChannel,
 			ServerPreparedStatement creatingStatement, Field[] metadata) {
 		this.currentPositionInEntireResult = BEFORE_START_OF_ROWS;
 		this.metadata = metadata;
@@ -137,7 +137,7 @@ public class CursorRowProvider implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public RowHolder getAt(int ind) throws SQLException {
+	public ResultSetRow getAt(int ind) throws SQLException {
 		notSupported();
 
 		return null;
@@ -232,7 +232,7 @@ public class CursorRowProvider implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public void addRow(RowHolder row) throws SQLException {
+	public void addRow(ResultSetRow row) throws SQLException {
 		notSupported();
 	}
 
@@ -342,7 +342,7 @@ public class CursorRowProvider implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public RowHolder next() throws SQLException {
+	public ResultSetRow next() throws SQLException {
 		if (this.fetchedRows == null && this.currentPositionInEntireResult != BEFORE_START_OF_ROWS) {
 			throw SQLError.createSQLException(
 					Messages
@@ -367,7 +367,7 @@ public class CursorRowProvider implements RowData {
 			this.currentPositionInFetchedRows = 0;
 		}
 
-		RowHolder row = (RowHolder) this.fetchedRows
+		ResultSetRow row = (ResultSetRow) this.fetchedRows
 				.get(this.currentPositionInFetchedRows);
 
 		row.setMetadata(this.metadata);

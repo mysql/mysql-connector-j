@@ -44,7 +44,7 @@ class RowDataKeyset implements RowData {
 		return canonicalSql.substring(whereClausePos);
 	}
 
-	public void addRow(RowHolder row) throws SQLException {
+	public void addRow(ResultSetRow row) throws SQLException {
 		// TODO Auto-generated method stub
 
 	}
@@ -82,7 +82,7 @@ class RowDataKeyset implements RowData {
 		}
 	}
 
-	public RowHolder getAt(int index) throws SQLException {
+	public ResultSetRow getAt(int index) throws SQLException {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -137,7 +137,7 @@ class RowDataKeyset implements RowData {
 
 	}
 
-	public RowHolder next() throws SQLException {
+	public ResultSetRow next() throws SQLException {
 		// TODO Auto-generated method stub
 		return null;
 	}

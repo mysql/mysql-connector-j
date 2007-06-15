@@ -85,7 +85,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	private String refreshSQL = null;
 
 	/** The binary data for the 'current' row */
-	private RowHolder savedCurrentRow;
+	private ResultSetRow savedCurrentRow;
 
 	private String tableOnlyName;
 
@@ -780,11 +780,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 			}
 		}
 		
-		RowHolder rowHolder = new ByteArrayRowHolder(newRow);
+		ResultSetRow resultSetRow = new ByteArrayRow(newRow);
 		
-		refreshRow(this.inserter, rowHolder);
+		refreshRow(this.inserter, resultSetRow);
 		
-		this.rowData.addRow(rowHolder);
+		this.rowData.addRow(resultSetRow);
 		resetInserter();
 	}
 
@@ -947,7 +947,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 		this.doingUpdates = false;
 		this.savedCurrentRow = this.thisRow;
 		byte[][] newRowData = new byte[numFields][];
-		this.thisRow = new ByteArrayRowHolder(newRowData);
+		this.thisRow = new ByteArrayRow(newRowData);
 
 		for (int i = 0; i < numFields; i++) {
 			if (!this.populateInserterWithDefaultValues) {
@@ -1178,7 +1178,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	}
 	
 	private synchronized void refreshRow(PreparedStatement updateInsertStmt, 
-			RowHolder rowToRefresh) throws SQLException {
+			ResultSetRow rowToRefresh) throws SQLException {
 		if (this.refresher == null) {
 			if (this.refreshSQL == null) {
 				generateStatements();

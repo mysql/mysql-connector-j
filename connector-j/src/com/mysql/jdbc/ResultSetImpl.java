@@ -294,7 +294,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	PreparedStatement statementUsedForFetchingRows;
 
 	/** Pointer to current row data */
-	protected RowHolder thisRow = null; // Values for current row
+	protected ResultSetRow thisRow = null; // Values for current row
 
 	// These are longs for
 	// recent versions of the MySQL server.
@@ -586,6 +586,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				this.doingUpdates = false;
 			}
 
+			if (this.thisRow != null) {
+				this.thisRow.closeOpenStreams();
+			}
+			
 			if (row == 1) {
 				b = first();
 			} else if (row == -1) {
@@ -639,6 +643,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			this.doingUpdates = false;
 		}
 
+		if (this.thisRow != null) {
+			this.thisRow.closeOpenStreams();
+		}
+		
 		if (this.rowData.size() != 0) {
 			this.rowData.afterLast();
 			this.thisRow = null;
@@ -672,6 +680,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return;
 		}
 
+		if (this.thisRow != null) {
+			this.thisRow.closeOpenStreams();
+		}
+		
 		this.rowData.beforeFirst();
 		this.thisRow = null;
 	}
@@ -6913,6 +6925,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			this.doingUpdates = false;
 		}
 
+		if (this.thisRow != null) {
+			this.thisRow.closeOpenStreams();
+		}
+		
 		this.rowData.beforeLast();
 		this.thisRow = this.rowData.next();
 
@@ -6997,6 +7013,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					SQLError.SQL_STATE_GENERAL_ERROR); //$NON-NLS-1$
 		}
 
+		if (this.thisRow != null) {
+			this.thisRow.closeOpenStreams();
+		}
+		
 		if (this.rowData.size() == 0) {
 			b = false;
 		} else {
@@ -7010,17 +7030,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				b = true;
 				
 			}
-			
-			/*
-			if (!this.rowData.hasNext()) {
-				// force scroll past end
-				this.rowData.next();
-				b = false;
-			} else {
-				clearWarnings();
-				this.thisRow = this.rowData.next();
-				b = true;
-			} */
 		}
 
 		return b;
@@ -7245,6 +7254,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		int rowIndex = this.rowData.getCurrentRowNumber();
 
+		if (this.thisRow != null) {
+			this.thisRow.closeOpenStreams();
+		}
+		
 		if ((rowIndex - 1) >= 0) {
 			rowIndex--;
 			this.rowData.setCurrentRow(rowIndex);
@@ -7535,6 +7548,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return false;
 		}
 
+		if (this.thisRow != null) {
+			this.thisRow.closeOpenStreams();
+		}
+		
 		this.rowData.moveRowRelative(rows);
 		this.thisRow = this.rowData.getAt(this.rowData.getCurrentRowNumber());
 

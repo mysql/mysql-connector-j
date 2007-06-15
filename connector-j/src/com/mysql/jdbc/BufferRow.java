@@ -48,7 +48,7 @@ import java.util.TimeZone;
  * 
  * @version $Id: $
  */
-public class BufferRowHolder extends RowHolder {
+public class BufferRow extends ResultSetRow {
 	private Buffer rowFromServer;
 
 	/**
@@ -90,7 +90,7 @@ public class BufferRowHolder extends RowHolder {
 
 	private List openStreams;
 
-	public BufferRowHolder(Buffer buf, Field[] fields, boolean isBinaryEncoded)
+	public BufferRow(Buffer buf, Field[] fields, boolean isBinaryEncoded)
 			throws SQLException {
 		this.rowFromServer = buf;
 		this.metadata = fields;

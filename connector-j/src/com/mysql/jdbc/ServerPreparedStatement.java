@@ -696,7 +696,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 										while (rs.next()) {
 											this.batchedGeneratedKeys
-													.add(new ByteArrayRowHolder(new byte[][] { rs
+													.add(new ByteArrayRow(new byte[][] { rs
 															.getBytes(1) }));
 										}
 									} finally {

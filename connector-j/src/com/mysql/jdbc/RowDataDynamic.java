@@ -58,7 +58,7 @@ public class RowDataDynamic implements RowData {
 
 	private boolean isBinaryEncoded = false;
 
-	private RowHolder nextRow;
+	private ResultSetRow nextRow;
 
 	private ResultSetImpl owner;
 
@@ -97,7 +97,7 @@ public class RowDataDynamic implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public void addRow(RowHolder row) throws SQLException {
+	public void addRow(ResultSetRow row) throws SQLException {
 		notSupported();
 	}
 
@@ -243,7 +243,7 @@ public class RowDataDynamic implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public RowHolder getAt(int ind) throws SQLException {
+	public ResultSetRow getAt(int ind) throws SQLException {
 		notSupported();
 
 		return null;
@@ -379,7 +379,7 @@ public class RowDataDynamic implements RowData {
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public RowHolder next() throws SQLException {
+	public ResultSetRow next() throws SQLException {
 		
 
 		nextRecord();
@@ -402,8 +402,7 @@ public class RowDataDynamic implements RowData {
 	private void nextRecord() throws SQLException {
 
 		try {
-			if (!this.isAtEnd) {
-
+			if (!this.isAtEnd) {				
 				this.nextRow = this.io.nextRow(this.fields, this.columnCount,
 						this.isBinaryEncoded,
 						java.sql.ResultSet.CONCUR_READ_ONLY, true, true, null);
