@@ -53,6 +53,14 @@
     - Made it possible to retrieve prepared statement parameter bindings
       (to be used in StatementInterceptors, primarily). 
       
+    - Row navigation now causes any streams/readers open on the result set
+      to be closed, as in some cases we're reading directly from a shared network
+      packet and it will be overwritten by the "next" row.
+      
+    - Setting "rewriteBatchedStatements" to "true" now causes CallableStatements 
+      with batched arguments to be re-written in the form "CALL (...); CALL (...); ..."
+      to send the batch in as few client-server round trips as possible.
+      
 04-11-07 - Version 5.1.0 Alpha
 	
 	- Bumped JDBC Specification version number in jar-file manifest.
