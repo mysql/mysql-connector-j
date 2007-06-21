@@ -1821,7 +1821,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	 * @throws Exception if the test fails.
 	 */
 	public void testBug24706() throws Exception {
-		if (!versionMeetsMinimum(4, 1)) {
+		if (!versionMeetsMinimum(5, 0)) {
 			return; // server status isn't there to support this feature
 		}
 		
