@@ -971,11 +971,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				// Finally, execute the query
 				rs = executeInternal(rowLimit, sendPacket,
 						doStreaming,
-						(this.firstCharOfStmt == 'S'), true, metadataFromCache, false);
+						(this.firstCharOfStmt == 'S'), metadataFromCache, false);
 			} else {
 				rs = executeInternal(-1, sendPacket,
 						doStreaming,
-						(this.firstCharOfStmt == 'S'), true, metadataFromCache, false);
+						(this.firstCharOfStmt == 'S'), metadataFromCache, false);
 			}
 
 			if (cachedMetadata != null) {
@@ -1375,7 +1375,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected ResultSetInternalMethods executeInternal(int maxRowsToRetrieve,
 			Buffer sendPacket, boolean createStreamingResultSet,
-			boolean queryIsSelectOnly, boolean unpackFields, Field[] metadataFromCache,
+			boolean queryIsSelectOnly, Field[] metadataFromCache,
 			boolean isBatch)
 			throws SQLException {
 		try {
@@ -1404,7 +1404,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket,
 					this.resultSetType, this.resultSetConcurrency,
 					createStreamingResultSet, this.currentCatalog,
-					unpackFields, isBatch);
+					metadataFromCache, isBatch);
 				
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
@@ -1481,7 +1481,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						+ this.connection.getNetTimeoutForStreamingResults(),
 						-1, null, ResultSet.TYPE_FORWARD_ONLY,
 						ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog,
-						true, false);
+						null, false);
 			}
 			
 			Buffer sendPacket = fillSendPacket();
@@ -1524,7 +1524,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				if (this.hasLimitClause) {
 					this.results = executeInternal(this.maxRows, sendPacket,
 							createStreamingResultSet(), true,
-							(cachedMetadata == null), metadataFromCache, false);
+							metadataFromCache, false);
 				} else {
 					if (this.maxRows <= 0) {
 						executeSimpleNonQuery(locallyScopedConn,
@@ -1536,7 +1536,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 					this.results = executeInternal(-1, sendPacket,
 							doStreaming, true,
-							(cachedMetadata == null), metadataFromCache, false);
+							metadataFromCache, false);
 
 					if (oldCatalog != null) {
 						this.connection.setCatalog(oldCatalog);
@@ -1545,7 +1545,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			} else {
 				this.results = executeInternal(-1, sendPacket,
 						doStreaming, true,
-						(cachedMetadata == null), metadataFromCache, false);
+						metadataFromCache, false);
 			}
 
 			if (oldCatalog != null) {
@@ -1677,7 +1677,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				locallyScopedConn.setReadInfoMsgEnabled(true);
 			}
 
-			rs = executeInternal(-1, sendPacket, false, false, true, null, 
+			rs = executeInternal(-1, sendPacket, false, false, null, 
 					isReallyBatch);
 
 			if (this.retrieveGeneratedKeys) {

@@ -1510,7 +1510,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					execSQL(null, "commit", -1, null,
 							java.sql.ResultSet.TYPE_FORWARD_ONLY,
 							java.sql.ResultSet.CONCUR_READ_ONLY, false,
-							this.database, true,
+							this.database, null,
 							false);
 				}
 			} catch (SQLException sqlException) {
@@ -1669,7 +1669,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 									execSQL(null, "SET NAMES utf8", -1, null,
 											java.sql.ResultSet.TYPE_FORWARD_ONLY,
 											java.sql.ResultSet.CONCUR_READ_ONLY,
-											false, this.database, true, false);
+											false, this.database, null, false);
 								}
 							}
 
@@ -1697,7 +1697,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 										-1, null,
 										java.sql.ResultSet.TYPE_FORWARD_ONLY,
 										java.sql.ResultSet.CONCUR_READ_ONLY,
-										false, this.database, true, false);
+										false, this.database, null, false);
 								}
 							}
 
@@ -1718,7 +1718,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							execSQL(null, "SET NAMES " + mysqlEncodingName, -1,
 								null, java.sql.ResultSet.TYPE_FORWARD_ONLY,
 								java.sql.ResultSet.CONCUR_READ_ONLY, false,
-								this.database, true, false);
+								this.database, null, false);
 						}
 
 						realJavaEncoding = getEncoding();
@@ -1743,7 +1743,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						execSQL(null, "SET character_set_results = NULL", -1, null,
 								java.sql.ResultSet.TYPE_FORWARD_ONLY,
 								java.sql.ResultSet.CONCUR_READ_ONLY, false,
-								this.database, true, 
+								this.database, null, 
 								false);
 					}
 				} else {
@@ -1774,7 +1774,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						execSQL(null, setBuf.toString(), -1, null,
 								java.sql.ResultSet.TYPE_FORWARD_ONLY,
 								java.sql.ResultSet.CONCUR_READ_ONLY, false,
-								this.database, true, false);
+								this.database, null, false);
 					}
 				}
 
@@ -1788,7 +1788,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					execSQL(null, setBuf.toString(), -1, null,
 							java.sql.ResultSet.TYPE_FORWARD_ONLY,
 							java.sql.ResultSet.CONCUR_READ_ONLY, false,
-							this.database, true, false);
+							this.database, null, false);
 				}
 			} else {
 				// Use what the server has specified
@@ -1959,7 +1959,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 						this.io = new MysqlIO(newHost, newPort, mergedProps,
 								getSocketFactoryClassName(), this,
-								getSocketTimeout());
+								getSocketTimeout(), 
+								this.largeRowSizeThreshold.getValueAsInt());
 	
 						this.io.doHandshake(this.user, this.password,
 								this.database);
@@ -2109,7 +2110,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 							this.io = new MysqlIO(newHost, newPort,
 									mergedProps, getSocketFactoryClassName(),
-									this, getSocketTimeout());
+									this, getSocketTimeout(),
+									this.largeRowSizeThreshold.getValueAsInt());
 							this.io.doHandshake(this.user, this.password,
 									this.database);
 							pingInternal(false);
@@ -2393,16 +2395,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows,
 			Buffer packet, int resultSetType, int resultSetConcurrency,
 			boolean streamResults, String catalog,
-			boolean unpackFields) throws SQLException {
+			Field[] cachedMetadata) throws SQLException {
 		return execSQL(callingStatement, sql, maxRows, packet, resultSetType,
 				resultSetConcurrency, streamResults,
-				catalog, unpackFields, false);
+				catalog, cachedMetadata, false);
 	}
 
 	ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows,
 			Buffer packet, int resultSetType, int resultSetConcurrency,
 			boolean streamResults, String catalog,
-			boolean unpackFields,
+			Field[] cachedMetadata,
 			boolean isBatch) throws SQLException {
 		//
 		// Fall-back if the master is back online if we've
@@ -2468,13 +2470,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					return this.io.sqlQueryDirect(callingStatement, sql,
 							encoding, null, maxRows, resultSetType,
 							resultSetConcurrency, streamResults, catalog,
-							unpackFields);
+							cachedMetadata);
 				}
 
 				return this.io.sqlQueryDirect(callingStatement, null, null,
 						packet, maxRows, resultSetType,
 						resultSetConcurrency, streamResults, catalog,
-						unpackFields);
+						cachedMetadata);
 			} catch (java.sql.SQLException sqlE) {
 				// don't clobber SQL exceptions
 
@@ -4501,7 +4503,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		execSQL(null, "rollback", -1, null,
 				java.sql.ResultSet.TYPE_FORWARD_ONLY,
 				java.sql.ResultSet.CONCUR_READ_ONLY, false,
-				this.database, true, false);
+				this.database, null, false);
 	}
 
 	/**
@@ -4653,7 +4655,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								: "SET autocommit=0", -1, null,
 								java.sql.ResultSet.TYPE_FORWARD_ONLY,
 								java.sql.ResultSet.CONCUR_READ_ONLY, false,
-								this.database, true, false);
+								this.database, null, false);
 					}
 	
 				} else {
@@ -4723,7 +4725,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			execSQL(null, query.toString(), -1, null,
 					java.sql.ResultSet.TYPE_FORWARD_ONLY,
 					java.sql.ResultSet.CONCUR_READ_ONLY, false,
-					this.database, true, false);
+					this.database, null, false);
 			
 			this.database = catalog;
 		}
@@ -4947,7 +4949,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				execSQL(null, sql, -1, null,
 						java.sql.ResultSet.TYPE_FORWARD_ONLY,
 						java.sql.ResultSet.CONCUR_READ_ONLY,false,
-						this.database, true, false);
+						this.database, null, false);
 
 				this.isolationLevel = level;
 			}
@@ -4993,7 +4995,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					execSQL(null,  commandBuf.toString(), -1, null,
 							java.sql.ResultSet.TYPE_FORWARD_ONLY,
 							java.sql.ResultSet.CONCUR_READ_ONLY, false,
-							this.database, true, false);
+							this.database, null, false);
 					
 					setJdbcCompliantTruncation(false); // server's handling this for us now
 				} else if (strictTransTablesIsSet) {
@@ -5097,7 +5099,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					execSQL(null, "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1,
 							null, java.sql.ResultSet.TYPE_FORWARD_ONLY,
 							java.sql.ResultSet.CONCUR_READ_ONLY, false, 
-							this.database, true, false);
+							this.database, null, false);
 
 					this.maxRowsChanged = false;
 				}

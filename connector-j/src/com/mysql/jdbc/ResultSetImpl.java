@@ -4672,9 +4672,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkRowPos();
 		checkColumnBounds(columnIndex);
 		
-		Object value = this.thisRow.getColumnValue(columnIndex - 1);
+		int columnIndexMinusOne = columnIndex - 1;
 		
-		if (value == null) {
+		if (this.thisRow.isNull(columnIndexMinusOne)) {
 			this.wasNullFlag = true;
 
 			return null;
@@ -4683,39 +4683,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		this.wasNullFlag = false;
 
 		Field field;
-		field = this.fields[columnIndex - 1];
-
-		//
-		// If they come from a binary-encode result set,
-		// no need to create another new object to represent
-		// the value, just return it directly, unless it's
-		// a byte[], which means it could be a string or blob.
-		//
-		if (this.isBinaryEncoded
-				&& !(value instanceof byte[])) {
-
-			//
-			// Special case here...If this is a 'bit' type, it will actually
-			// have
-			// been returned as an Integer by the server...
-			//
-			if (field.getSQLType() == Types.BIT && field.getLength() > 0) {
-				// valueOf would be nicer here, but it isn't
-				// present in JDK-1.3.1, which is what the CTS
-				// uses.
-				return Boolean.valueOf(getBoolean(columnIndex));
-			}
-
-			Object columnValue = value;
-
-			if (columnValue == null) {
-				this.wasNullFlag = true;
-
-				return null;
-			}
-
-			return columnValue;
-		}
+		field = this.fields[columnIndexMinusOne];
 
 		switch (field.getSQLType()) {
 		case Types.BIT:

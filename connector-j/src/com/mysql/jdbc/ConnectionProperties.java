@@ -1515,4 +1515,8 @@ public interface ConnectionProperties {
 	public abstract boolean getUseDirectRowUnpack();
 
 	public abstract void setUseDirectRowUnpack(boolean flag);
+	
+	public abstract String getLargeRowSizeThreshold();
+
+	public abstract void setLargeRowSizeThreshold(String value);
 }

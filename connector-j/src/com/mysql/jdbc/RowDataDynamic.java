@@ -46,7 +46,7 @@ public class RowDataDynamic implements RowData {
 
 	private int columnCount;
 
-	private Field[] fields;
+	private Field[] metadata;
 
 	private int index = -1;
 
@@ -66,13 +66,15 @@ public class RowDataDynamic implements RowData {
 	
 	private boolean wasEmpty = false; // we don't know until we attempt to traverse
 
+	private boolean useBufferRowExplicit;
+
 	/**
 	 * Creates a new RowDataDynamic object.
 	 * 
 	 * @param io
 	 *            the connection to MySQL that this data is coming from
-	 * @param fields
-	 *            the fields that describe this data
+	 * @param metadata
+	 *            the metadata that describe this data
 	 * @param isBinaryEncoded
 	 *            is this data in native format?
 	 * @param colCount
@@ -85,8 +87,9 @@ public class RowDataDynamic implements RowData {
 		this.io = io;
 		this.columnCount = colCount;
 		this.isBinaryEncoded = isBinaryEncoded;
-		this.fields = fields;
-		//nextRecord();
+		this.metadata = fields;
+		
+		this.useBufferRowExplicit = MysqlIO.useBufferRowExplicit(this.metadata);
 	}
 
 	/**
@@ -230,7 +233,7 @@ public class RowDataDynamic implements RowData {
 			}
 		}
 
-		this.fields = null;
+		this.metadata = null;
 		this.owner = null;
 	}
 
@@ -403,9 +406,10 @@ public class RowDataDynamic implements RowData {
 
 		try {
 			if (!this.isAtEnd) {				
-				this.nextRow = this.io.nextRow(this.fields, this.columnCount,
+				this.nextRow = this.io.nextRow(this.metadata, this.columnCount,
 						this.isBinaryEncoded,
-						java.sql.ResultSet.CONCUR_READ_ONLY, true, true, null);
+						java.sql.ResultSet.CONCUR_READ_ONLY, true, 
+						this.useBufferRowExplicit, true, null);
 
 				if (this.nextRow == null) {
 					this.isAtEnd = true;
@@ -487,6 +491,6 @@ public class RowDataDynamic implements RowData {
 	}
 
 	public void setMetadata(Field[] metadata) {
-		this.fields = metadata;
+		this.metadata = metadata;
 	}
 }

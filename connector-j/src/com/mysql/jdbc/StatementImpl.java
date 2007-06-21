@@ -674,8 +674,15 @@ public class StatementImpl implements Statement {
 					//
 					// Check if we have cached metadata for this query...
 					//
+					
+					Field[] cachedFields = null;
+					
 					if (locallyScopedConn.getCacheResultSetMetadata()) {
 						cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
+						
+						if (cachedMetaData != null) {
+							cachedFields = cachedMetaData.fields;
+						}
 					}
 
 					//
@@ -706,12 +713,12 @@ public class StatementImpl implements Statement {
 						rs = locallyScopedConn.execSQL(this, sql, rowLimit, null,
 								this.resultSetType, this.resultSetConcurrency,
 								doStreaming, 
-								this.currentCatalog, (cachedMetaData == null));
+								this.currentCatalog, cachedFields);
 					} else {
 						rs = locallyScopedConn.execSQL(this, sql, -1, null,
 								this.resultSetType, this.resultSetConcurrency,
 								doStreaming, 
-								this.currentCatalog, (cachedMetaData == null));
+								this.currentCatalog, cachedFields);
 					}
 					
 					if (timeoutTask != null) {
@@ -1166,10 +1173,17 @@ public class StatementImpl implements Statement {
 				//
 				// Check if we have cached metadata for this query...
 				//
+				
+				Field[] cachedFields = null;
+				
 				if (locallyScopedConn.getCacheResultSetMetadata()) {
 					cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
+					
+					if (cachedMetaData != null) {
+						cachedFields = cachedMetaData.fields;
+					}
 				}
-
+				
 				if (locallyScopedConn.useMaxRows()) {
 					// We need to execute this all together
 					// So synchronize on the Connection's mutex (because
@@ -1180,7 +1194,7 @@ public class StatementImpl implements Statement {
 								this.maxRows, null, this.resultSetType,
 								this.resultSetConcurrency,
 								doStreaming,
-								this.currentCatalog, (cachedMetaData == null));
+								this.currentCatalog, cachedFields);
 					} else {
 						if (this.maxRows <= 0) {
 							executeSimpleNonQuery(locallyScopedConn, 
@@ -1194,7 +1208,7 @@ public class StatementImpl implements Statement {
 								null, this.resultSetType,
 								this.resultSetConcurrency,
 								doStreaming,
-								this.currentCatalog, (cachedMetaData == null));
+								this.currentCatalog, cachedFields);
 
 						if (oldCatalog != null) {
 							locallyScopedConn.setCatalog(oldCatalog);
@@ -1204,7 +1218,7 @@ public class StatementImpl implements Statement {
 					this.results = locallyScopedConn.execSQL(this, sql, -1, null,
 							this.resultSetType, this.resultSetConcurrency,
 							doStreaming,
-							this.currentCatalog, (cachedMetaData == null));
+							this.currentCatalog, cachedFields);
 				}
 
 				if (timeoutTask != null) {
@@ -1253,7 +1267,7 @@ public class StatementImpl implements Statement {
 		c.execSQL(this, nonQuery,
 				-1, null, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog,
-				true, false).close();
+				null, false).close();
 	}
 
 	/**
@@ -1357,7 +1371,7 @@ public class StatementImpl implements Statement {
 						java.sql.ResultSet.TYPE_FORWARD_ONLY,
 						java.sql.ResultSet.CONCUR_READ_ONLY, false,
 						this.currentCatalog,
-						true /* force read of field info on DML */,
+						null /* force read of field info on DML */,
 						isBatch);
 
 				if (timeoutTask != null) {

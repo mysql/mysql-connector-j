@@ -40,6 +40,7 @@ import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -230,6 +231,7 @@ class MysqlIO {
 	private String queryTimingUnits;
 	private List statementInterceptors;
 	private boolean useDirectRowUnpack = true;
+	private int useBufferRowSizeThreshold;
 
     /**
      * Constructor:  Connect to the MySQL server and setup a stream connection.
@@ -247,13 +249,14 @@ class MysqlIO {
      */
     public MysqlIO(String host, int port, Properties props,
         String socketFactoryClassName, ConnectionImpl conn,
-        int socketTimeout) throws IOException, SQLException {
+        int socketTimeout, int useBufferRowSizeThreshold) throws IOException, SQLException {
         this.connection = conn;
 
         if (this.connection.getEnablePacketDebug()) {
             this.packetDebugRingBuffer = new LinkedList();
         }
 
+        this.useBufferRowSizeThreshold = useBufferRowSizeThreshold;
         this.useDirectRowUnpack = this.connection.getUseDirectRowUnpack();
         
         this.logSlowQueries = this.connection.getLogSlowQueries();
@@ -394,14 +397,14 @@ class MysqlIO {
     protected ResultSetImpl getResultSet(StatementImpl callingStatement,
         long columnCount, int maxRows, int resultSetType,
         int resultSetConcurrency, boolean streamResults, String catalog,
-        boolean isBinaryEncoded, boolean unpackFieldInfo, Field[] metadataFromCache)
+        boolean isBinaryEncoded, Field[] metadataFromCache)
         throws SQLException {
         Buffer packet; // The packet from the server
         Field[] fields = null;
 
         // Read in the column information
         
-        if (unpackFieldInfo) {
+        if (metadataFromCache == null /* we want the metadata from the server */) {
             fields = new Field[(int) columnCount];
             
             for (int i = 0; i < columnCount; i++) {
@@ -432,8 +435,6 @@ class MysqlIO {
 				&& callingStatement.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY) {
 			ServerPreparedStatement prepStmt = (com.mysql.jdbc.ServerPreparedStatement) callingStatement;
 	
-			Field[] fieldMetadata = ((com.mysql.jdbc.ResultSetMetaData) prepStmt.getMetaData()).fields;
-
 			boolean usingCursor = true;
 			
 			//
@@ -471,14 +472,17 @@ class MysqlIO {
        
         if (!streamResults) {
             rowData = readSingleRowSet(columnCount, maxRows,
-                    resultSetConcurrency, isBinaryEncoded, unpackFieldInfo ? fields : metadataFromCache);
+                    resultSetConcurrency, isBinaryEncoded, 
+                    (metadataFromCache == null) ? fields : metadataFromCache);
         } else {
-            rowData = new RowDataDynamic(this, (int) columnCount, unpackFieldInfo ? fields : metadataFromCache,
+            rowData = new RowDataDynamic(this, (int) columnCount, 
+            		(metadataFromCache == null) ? fields : metadataFromCache,
                     isBinaryEncoded);
             this.streamingData = rowData;
         }
 
-        ResultSetImpl rs = buildResultSetWithRows(callingStatement, catalog, fields,
+        ResultSetImpl rs = buildResultSetWithRows(callingStatement, catalog, 
+        		(metadataFromCache == null) ? fields : metadataFromCache,
             rowData, resultSetType, resultSetConcurrency, isBinaryEncoded);
  
         
@@ -1367,6 +1371,7 @@ class MysqlIO {
     * @param columnCount DOCUMENT ME!
     * @param isBinaryEncoded DOCUMENT ME!
     * @param resultSetConcurrency DOCUMENT ME!
+     * @param b 
     *
     * @return DOCUMENT ME!
     *
@@ -1374,24 +1379,28 @@ class MysqlIO {
     */
     final ResultSetRow nextRow(Field[] fields, int columnCount,
         boolean isBinaryEncoded, int resultSetConcurrency, 
-        boolean useBufferRowHolderIfPossible,
-        boolean reuseRowPacket,
-        Buffer existingRowPacket)
+        boolean useBufferRowIfPossible,
+        boolean useBufferRowExplicit,
+        boolean canReuseRowPacketForBufferRow, Buffer existingRowPacket)
         throws SQLException {
     	
     	if (this.useDirectRowUnpack && existingRowPacket == null
-				&& !isBinaryEncoded && !useBufferRowHolderIfPossible
-				&& reuseRowPacket) {
+				&& !isBinaryEncoded && !useBufferRowIfPossible
+				&& !useBufferRowExplicit) {
 			return nextRowFast(fields, columnCount, isBinaryEncoded, resultSetConcurrency,
-					useBufferRowHolderIfPossible, reuseRowPacket);
+					useBufferRowIfPossible, useBufferRowExplicit, canReuseRowPacketForBufferRow);
 		}
     	
         Buffer rowPacket = null;
         
         if (existingRowPacket == null) {
-        	// Get the next incoming packet, re-using the packet because
-            // all the data we need gets copied out of it.
         	rowPacket = checkErrorPacket();
+        	
+        	if (!useBufferRowExplicit && useBufferRowIfPossible) {
+        		if (rowPacket.getBufLength() > this.useBufferRowSizeThreshold) {
+        			useBufferRowExplicit = true;
+        		}
+        	}
         } else {
         	// We attempted to do nextRowFast(), but the packet was a
         	// multipacket, so we couldn't unpack it directly
@@ -1399,6 +1408,7 @@ class MysqlIO {
         	checkErrorPacket(existingRowPacket);
         }
 
+        
         if (!isBinaryEncoded) {
             //
             // Didn't read an error, so re-position to beginning
@@ -1408,7 +1418,7 @@ class MysqlIO {
 
             if (!rowPacket.isLastDataPacket()) {
             	if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE 
-            			|| !useBufferRowHolderIfPossible) {
+            			|| (!useBufferRowIfPossible && !useBufferRowExplicit)) {
             	
             		byte[][] rowData = new byte[columnCount][];
 
@@ -1419,14 +1429,14 @@ class MysqlIO {
             		return new ByteArrayRow(rowData);
             	}
             		
-            	if (!reuseRowPacket) {
+            	if (!canReuseRowPacketForBufferRow) {
             		this.reusablePacket = new Buffer(rowPacket.getBufLength());
             	}
             	
             	return new BufferRow(rowPacket, fields, false);
 
             }
-
+            
             readServerStatusForResultSets(rowPacket);
 
             return null;
@@ -1438,12 +1448,12 @@ class MysqlIO {
         //
         if (!rowPacket.isLastDataPacket()) {
         	if (resultSetConcurrency == ResultSet.CONCUR_UPDATABLE 
-        			|| !useBufferRowHolderIfPossible) {
+        			|| (!useBufferRowIfPossible && !useBufferRowExplicit)) {
         		return unpackBinaryResultSetRow(fields, rowPacket,
         				resultSetConcurrency);
         	}
         	
-        	if (!reuseRowPacket) {
+        	if (!canReuseRowPacketForBufferRow) {
         		this.reusablePacket = new Buffer(rowPacket.getBufLength());
         	}
             	
@@ -1458,8 +1468,8 @@ class MysqlIO {
     
     final ResultSetRow nextRowFast(Field[] fields, int columnCount,
             boolean isBinaryEncoded, int resultSetConcurrency, 
-            boolean useBufferRowHolderIfPossible,
-            boolean reuseRowPacket)
+            boolean useBufferRowIfPossible,
+            boolean useBufferRowExplicit, boolean canReuseRowPacket)
 			throws SQLException {
 		try {
 			int lengthRead = readFully(this.mysqlInput, this.packetHeaderBuf,
@@ -1480,7 +1490,19 @@ class MysqlIO {
 				
 				// Go back to "old" way which uses packets
 				return nextRow(fields, columnCount, isBinaryEncoded, resultSetConcurrency,
-						useBufferRowHolderIfPossible, reuseRowPacket, this.reusablePacket);
+						useBufferRowIfPossible, useBufferRowExplicit, 
+						canReuseRowPacket, this.reusablePacket);
+			}
+			
+			// Does this go over the threshold where we should use a BufferRow?
+			
+			if (packetLength > this.useBufferRowSizeThreshold) {
+				reuseAndReadPacket(this.reusablePacket, packetLength);
+				
+				// Go back to "old" way which uses packets
+				return nextRow(fields, columnCount, isBinaryEncoded, resultSetConcurrency,
+						true, true, 
+						false, this.reusablePacket);
 			}
 			
 			int remaining = packetLength;
@@ -1643,14 +1665,14 @@ class MysqlIO {
     ResultSetImpl readAllResults(StatementImpl callingStatement, int maxRows,
         int resultSetType, int resultSetConcurrency, boolean streamResults,
         String catalog, Buffer resultPacket, boolean isBinaryEncoded,
-        long preSentColumnCount, boolean unpackFieldInfo, Field[] metadataFromCache)
+        long preSentColumnCount, Field[] metadataFromCache)
         throws SQLException {
         resultPacket.setPosition(resultPacket.getPosition() - 1);
 
         ResultSetImpl topLevelResultSet = readResultsForQueryOrUpdate(callingStatement,
                 maxRows, resultSetType, resultSetConcurrency, streamResults,
                 catalog, resultPacket, isBinaryEncoded, preSentColumnCount,
-                unpackFieldInfo, metadataFromCache);
+                metadataFromCache);
 
         ResultSetImpl currentResultSet = topLevelResultSet;
 
@@ -1679,7 +1701,7 @@ class MysqlIO {
             ResultSetImpl newResultSet = readResultsForQueryOrUpdate(callingStatement,
                     maxRows, resultSetType, resultSetConcurrency,
                     streamResults, catalog, fieldPacket, isBinaryEncoded,
-                    preSentColumnCount, unpackFieldInfo, metadataFromCache);
+                    preSentColumnCount, metadataFromCache);
 
             currentResultSet.setNextResultSet(newResultSet);
 
@@ -1861,7 +1883,7 @@ class MysqlIO {
     final ResultSetInternalMethods sqlQueryDirect(StatementImpl callingStatement, String query,
     		String characterEncoding, Buffer queryPacket, int maxRows,
     		int resultSetType, int resultSetConcurrency,
-    		boolean streamResults, String catalog, boolean unpackFieldInfo)
+    		boolean streamResults, String catalog, Field[] cachedMetadata)
     throws Exception {
     	this.statementExecutionDepth++;
     	
@@ -2014,7 +2036,7 @@ class MysqlIO {
 	
 	    	ResultSetInternalMethods rs = readAllResults(callingStatement, maxRows, resultSetType,
 	    			resultSetConcurrency, streamResults, catalog, resultPacket,
-	    			false, -1L, unpackFieldInfo, null /* we don't need metadata for cached MD in this case */);
+	    			false, -1L, cachedMetadata);
 	
 	    	if (queryWasSlow) {
 	    		StringBuffer mesgBuf = new StringBuffer(48 +
@@ -2363,7 +2385,7 @@ class MysqlIO {
         StatementImpl callingStatement, int maxRows, int resultSetType,
         int resultSetConcurrency, boolean streamResults, String catalog,
         Buffer resultPacket, boolean isBinaryEncoded, long preSentColumnCount,
-        boolean unpackFieldInfo, Field[] metadataFromCache) throws SQLException {
+        Field[] metadataFromCache) throws SQLException {
         long columnCount = resultPacket.readFieldLength();
 
         if (columnCount == 0) {
@@ -2389,7 +2411,7 @@ class MysqlIO {
         } else {
             com.mysql.jdbc.ResultSetImpl results = getResultSet(callingStatement,
                     columnCount, maxRows, resultSetType, resultSetConcurrency,
-                    streamResults, catalog, isBinaryEncoded, unpackFieldInfo, 
+                    streamResults, catalog, isBinaryEncoded, 
                     metadataFromCache);
 
             return results;
@@ -2670,24 +2692,26 @@ class MysqlIO {
         RowData rowData;
         ArrayList rows = new ArrayList();
 
+        boolean useBufferRowExplicit = useBufferRowExplicit(fields);
+        
         // Now read the data
-        Object rowBytes = nextRow(fields, (int) columnCount, isBinaryEncoded,
-                resultSetConcurrency, false, true, null);
+        ResultSetRow row = nextRow(fields, (int) columnCount, isBinaryEncoded,
+                resultSetConcurrency, false, useBufferRowExplicit, false, null);
         
         int rowCount = 0;
 
-        if (rowBytes != null) {
-            rows.add(rowBytes);
+        if (row != null) {
+            rows.add(row);
             rowCount = 1;
         }
 
-        while (rowBytes != null) {
-            rowBytes = nextRow(fields, (int) columnCount, isBinaryEncoded,
-                    resultSetConcurrency, false, true, null);
+        while (row != null) {
+        	row = nextRow(fields, (int) columnCount, isBinaryEncoded,
+                    resultSetConcurrency, false, useBufferRowExplicit, false, null);
 
-            if (rowBytes != null) {
+            if (row != null) {
             	if ((maxRows == -1) || (rowCount < maxRows)) {
-            		rows.add(rowBytes);
+            		rows.add(row);
             		rowCount++;
             	}
             }
@@ -2698,7 +2722,25 @@ class MysqlIO {
         return rowData;
     }
 
-    /**
+    public static boolean useBufferRowExplicit(Field[] fields) {
+    	if (fields == null) {
+    		return false;
+    	}
+    	
+		for (int i = 0; i < fields.length; i++) {
+			switch (fields[i].getSQLType()) {
+			case Types.BLOB:
+			case Types.CLOB:
+			case Types.LONGVARBINARY:
+			case Types.LONGVARCHAR:
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	/**
      * Don't hold on to overly-large packets
      */
     private void reclaimLargeReusablePacket() {
@@ -4304,7 +4346,7 @@ class MysqlIO {
 	}
 
 	protected List fetchRowsViaCursor(List fetchedRows, long statementId,
-			Field[] columnTypes, int fetchSize) throws SQLException {
+			Field[] columnTypes, int fetchSize, boolean useBufferRowExplicit) throws SQLException {
 		
 		if (fetchedRows == null) {
 			fetchedRows = new ArrayList(fetchSize);
@@ -4324,7 +4366,7 @@ class MysqlIO {
 		ResultSetRow row = null;
 	
 		while ((row = nextRow(columnTypes, columnTypes.length, true,
-				ResultSet.CONCUR_READ_ONLY, false, true, null)) != null) {
+				ResultSet.CONCUR_READ_ONLY, false, useBufferRowExplicit, false, null)) != null) {
 			fetchedRows.add(row);
 		}
 	

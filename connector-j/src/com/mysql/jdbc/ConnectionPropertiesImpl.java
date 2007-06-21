@@ -488,6 +488,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 		private static final long serialVersionUID = 7351065128998572656L;
 
+		private String valueAsString;
+		
 		MemorySizeConnectionProperty(String propertyNameToSet,
 				int defaultValueToSet, int lowerBoundToSet,
 				int upperBoundToSet, String descriptionToSet,
@@ -499,6 +501,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 
 		void initializeFrom(String extractedValue) throws SQLException {
+			valueAsString = extractedValue;
+			
 			if (extractedValue != null) {
 				if (extractedValue.endsWith("k") //$NON-NLS-1$
 						|| extractedValue.endsWith("K") //$NON-NLS-1$
@@ -536,6 +540,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 		void setValue(String value) throws SQLException {
 			initializeFrom(value);
+		}
+		
+		String getValueAsString() {
+			return valueAsString;
 		}
 	}
 
@@ -955,6 +963,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	private boolean jdbcCompliantTruncationForReads = 
 		this.jdbcCompliantTruncation.getValueAsBoolean();
+	
+	protected MemorySizeConnectionProperty largeRowSizeThreshold = new MemorySizeConnectionProperty("largeRowSizeThreshold",
+			2048, 0, Integer.MAX_VALUE,
+			Messages.getString("ConnectionProperties.largeRowSizeThreshold"),
+			"5.1.1", PERFORMANCE_CATEGORY, Integer.MIN_VALUE);
 	
 	private StringConnectionProperty loadBalanceStrategy = new StringConnectionProperty(
 			"loadBalanceStrategy", //$NON-NLS-1$
@@ -4139,5 +4152,20 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setUseDirectRowUnpack(boolean flag) {
 		this.useDirectRowUnpack.setValue(flag);
+	}
+
+	public String getLargeRowSizeThreshold() {
+		return this.largeRowSizeThreshold.getValueAsString();
+	}
+
+	public void setLargeRowSizeThreshold(String value) {
+		try {
+			this.largeRowSizeThreshold.setValue(value);
+		} catch (SQLException sqlEx) {
+			RuntimeException ex = new RuntimeException(sqlEx.getMessage());
+			ex.initCause(sqlEx);
+			
+			throw ex;
+		}
 	}
 }

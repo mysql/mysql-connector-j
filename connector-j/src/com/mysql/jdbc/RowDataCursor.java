@@ -99,6 +99,8 @@ public class RowDataCursor implements RowData {
 
 	private boolean wasEmpty = false;
 
+	private boolean useBufferRowExplicit = false;
+	
 	/**
 	 * Creates a new cursor-backed row provider.
 	 * 
@@ -116,6 +118,8 @@ public class RowDataCursor implements RowData {
 		this.mysql = ioChannel;
 		this.statementIdOnServer = creatingStatement.getServerStatementId();
 		this.prepStmt = creatingStatement;
+		this.useBufferRowExplicit = MysqlIO.useBufferRowExplicit(this.metadata);
+		
 	}
 
 	/**
@@ -405,7 +409,8 @@ public class RowDataCursor implements RowData {
 			}
 
 			this.fetchedRows = this.mysql.fetchRowsViaCursor(this.fetchedRows,
-					this.statementIdOnServer, this.metadata, numRowsToFetch);
+					this.statementIdOnServer, this.metadata, numRowsToFetch, 
+					this.useBufferRowExplicit);
 			this.currentPositionInFetchedRows = BEFORE_START_OF_ROWS;
 
 			if ((this.mysql.getServerStatus() & SERVER_STATUS_LAST_ROW_SENT) != 0) {

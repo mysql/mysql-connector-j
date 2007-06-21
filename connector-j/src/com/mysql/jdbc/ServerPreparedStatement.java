@@ -746,7 +746,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 */
 	protected com.mysql.jdbc.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve,
 			Buffer sendPacket, boolean createStreamingResultSet,
-			boolean queryIsSelectOnly, boolean unpackFields, Field[] metadataFromCache,
+			boolean queryIsSelectOnly, Field[] metadataFromCache,
 			boolean isBatch)
 			throws SQLException {
 		this.numberOfExecutions++;
@@ -754,7 +754,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		// We defer to server-side execution
 		try {
 			return serverExecute(maxRowsToRetrieve, createStreamingResultSet, 
-					unpackFields, metadataFromCache);
+					metadataFromCache);
 		} catch (SQLException sqlEx) {
 			// don't wrap SQLExceptions
 			if (this.connection.getEnablePacketDebug()) {
@@ -1080,7 +1080,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 */
 	private com.mysql.jdbc.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve,
-			boolean createStreamingResultSet, boolean unpackFields, 
+			boolean createStreamingResultSet, 
 			Field[] metadataFromCache) throws SQLException {
 		synchronized (this.connection.getMutex()) {
 			if (this.detectedLongParameterSwitch) {
@@ -1328,7 +1328,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 						maxRowsToRetrieve, this.resultSetType,
 						this.resultSetConcurrency, createStreamingResultSet,
 						this.currentCatalog, resultPacket, true, this.fieldCount,
-						unpackFields, metadataFromCache);
+						metadataFromCache);
 				
 				if (this.profileSQL) {
 					long fetchEndTime = mysql.getCurrentTimeNanosOrMillis();

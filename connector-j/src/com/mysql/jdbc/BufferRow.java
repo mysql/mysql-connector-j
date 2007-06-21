@@ -55,6 +55,12 @@ public class BufferRow extends ResultSetRow {
 	 * The beginning of the row packet
 	 */
 	private int homePosition = 0;
+	
+	/**
+	 * The home position before the is-null bitmask for server-side
+	 * prepared statement result sets
+	 */
+	private int preNullBitmaskHomePosition = 0;
 
 	/**
 	 * The last-requested index, used as an optimization, if you ask for the
@@ -96,6 +102,7 @@ public class BufferRow extends ResultSetRow {
 		this.metadata = fields;
 		this.isBinaryEncoded = isBinaryEncoded;
 		this.homePosition = this.rowFromServer.getPosition();
+		this.preNullBitmaskHomePosition = this.homePosition;
 
 		if (fields != null) {
 			setMetadata(fields);
@@ -144,7 +151,12 @@ public class BufferRow extends ResultSetRow {
 			int startingIndex = 0;
 
 			if (index > this.lastRequestedIndex) {
-				startingIndex = this.lastRequestedIndex;
+				if (this.lastRequestedIndex >= 0) {
+					startingIndex = this.lastRequestedIndex;
+				} else {
+					startingIndex = 0;
+				}
+				
 				this.rowFromServer.setPosition(this.lastRequestedPos);
 			} else {
 				this.rowFromServer.setPosition(this.homePosition);
@@ -181,7 +193,14 @@ public class BufferRow extends ResultSetRow {
 		int startingIndex = 0;
 
 		if (index > this.lastRequestedIndex) {
-			startingIndex = this.lastRequestedIndex;
+			if (this.lastRequestedIndex >= 0) {
+				startingIndex = this.lastRequestedIndex;
+			} else {
+				// First-time "scan"
+				startingIndex = 0;
+				this.lastRequestedPos = this.homePosition;
+			}
+			
 			this.rowFromServer.setPosition(this.lastRequestedPos);
 		} else {
 			this.rowFromServer.setPosition(this.homePosition);
@@ -275,9 +294,17 @@ public class BufferRow extends ResultSetRow {
 
 	public synchronized InputStream getBinaryInputStream(int columnIndex)
 			throws SQLException {
-		int offset = findAndSeekToOffset(columnIndex);
+		if (this.isBinaryEncoded) {
+			if (isNull(columnIndex)) {
+				return null;
+			}
+		}
+		
+		findAndSeekToOffset(columnIndex);
 
 		long length = this.rowFromServer.readFieldLength();
+		
+		int offset = this.rowFromServer.getPosition();
 
 		if (length == Buffer.NULL_LENGTH) {
 			return null;
@@ -358,9 +385,11 @@ public class BufferRow extends ResultSetRow {
 
 	public int getInt(int columnIndex) throws SQLException {
 
-		int offset = findAndSeekToOffset(columnIndex);
+		findAndSeekToOffset(columnIndex);
 
 		long length = this.rowFromServer.readFieldLength();
+		
+		int offset = this.rowFromServer.getPosition();
 
 		if (length == Buffer.NULL_LENGTH) {
 			return 0;
@@ -371,10 +400,12 @@ public class BufferRow extends ResultSetRow {
 	}
 
 	public long getLong(int columnIndex) throws SQLException {
-		int offset = findAndSeekToOffset(columnIndex);
+		findAndSeekToOffset(columnIndex);
 
 		long length = this.rowFromServer.readFieldLength();
-
+		
+		int offset = this.rowFromServer.getPosition();
+		
 		if (length == Buffer.NULL_LENGTH) {
 			return 0;
 		}
@@ -384,61 +415,61 @@ public class BufferRow extends ResultSetRow {
 	}
 
 	public double getNativeDouble(int columnIndex) throws SQLException {
-		int offset = findAndSeekToOffset(columnIndex);
-
-		long length = this.rowFromServer.readFieldLength();
-
-		if (length == Buffer.NULL_LENGTH) {
+		if (isNull(columnIndex)) {
 			return 0;
 		}
+		
+		findAndSeekToOffset(columnIndex);
+	
+		int offset = this.rowFromServer.getPosition();
 
 		return getNativeDouble(this.rowFromServer.getByteBuffer(), offset);
 	}
 
 	public float getNativeFloat(int columnIndex) throws SQLException {
-		int offset = findAndSeekToOffset(columnIndex);
-
-		long length = this.rowFromServer.readFieldLength();
-
-		if (length == Buffer.NULL_LENGTH) {
+		if (isNull(columnIndex)) {
 			return 0;
 		}
+		
+		findAndSeekToOffset(columnIndex);
+
+		int offset = this.rowFromServer.getPosition();
 
 		return getNativeFloat(this.rowFromServer.getByteBuffer(), offset);
 	}
 
 	public int getNativeInt(int columnIndex) throws SQLException {
-		int offset = findAndSeekToOffset(columnIndex);
-
-		long length = this.rowFromServer.readFieldLength();
-
-		if (length == Buffer.NULL_LENGTH) {
+		if (isNull(columnIndex)) {
 			return 0;
 		}
+		
+		findAndSeekToOffset(columnIndex);
+
+		int offset = this.rowFromServer.getPosition();
 
 		return getNativeInt(this.rowFromServer.getByteBuffer(), offset);
 	}
 
 	public long getNativeLong(int columnIndex) throws SQLException {
-		int offset = findAndSeekToOffset(columnIndex);
-
-		long length = this.rowFromServer.readFieldLength();
-
-		if (length == Buffer.NULL_LENGTH) {
+		if (isNull(columnIndex)) {
 			return 0;
 		}
+		
+		findAndSeekToOffset(columnIndex);
+
+		int offset = this.rowFromServer.getPosition();
 
 		return getNativeLong(this.rowFromServer.getByteBuffer(), offset);
 	}
 
 	public short getNativeShort(int columnIndex) throws SQLException {
-		int offset = findAndSeekToOffset(columnIndex);
-
-		long length = this.rowFromServer.readFieldLength();
-
-		if (length == Buffer.NULL_LENGTH) {
+		if (isNull(columnIndex)) {
 			return 0;
 		}
+		
+		findAndSeekToOffset(columnIndex);
+
+		int offset = this.rowFromServer.getPosition();
 
 		return getNativeShort(this.rowFromServer.getByteBuffer(), offset);
 	}
@@ -446,13 +477,15 @@ public class BufferRow extends ResultSetRow {
 	public Timestamp getNativeTimestamp(int columnIndex,
 			Calendar targetCalendar, TimeZone tz, boolean rollForward,
 			ConnectionImpl conn, ResultSetImpl rs) throws SQLException {
-		int offset = findAndSeekToOffset(columnIndex);
-
-		long length = this.rowFromServer.readFieldLength();
-
-		if (length == Buffer.NULL_LENGTH) {
+		if (isNull(columnIndex)) {
 			return null;
 		}
+		
+		findAndSeekToOffset(columnIndex);
+
+		long length = this.rowFromServer.readFieldLength();
+		
+		int offset = this.rowFromServer.getPosition();
 
 		return getNativeTimestamp(this.rowFromServer.getByteBuffer(), offset,
 				(int) length, targetCalendar, tz, rollForward, conn, rs);
@@ -477,9 +510,15 @@ public class BufferRow extends ResultSetRow {
 		}
 	}
 
-	public String getString(int index, String encoding, ConnectionImpl conn)
+	public String getString(int columnIndex, String encoding, ConnectionImpl conn)
 			throws SQLException {
-		findAndSeekToOffset(index);
+		if (this.isBinaryEncoded) {
+			if (isNull(columnIndex)) {
+				return null;
+			}
+		}
+		
+		findAndSeekToOffset(columnIndex);
 
 		long length = this.rowFromServer.readFieldLength();
 
@@ -507,12 +546,14 @@ public class BufferRow extends ResultSetRow {
 			return null;
 		}
 
-		int offset = findAndSeekToOffset(columnIndex);
+		findAndSeekToOffset(columnIndex);
 
-		int length = (int) this.rowFromServer.readFieldLength();
+		long length = this.rowFromServer.readFieldLength();
+		
+		int offset = this.rowFromServer.getPosition();
 
 		return getTimeFast(columnIndex, this.rowFromServer.getByteBuffer(),
-				offset, length, targetCalendar, tz, rollForward, conn, rs);
+				offset, (int)length, targetCalendar, tz, rollForward, conn, rs);
 	}
 
 	public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar,
@@ -522,12 +563,14 @@ public class BufferRow extends ResultSetRow {
 			return null;
 		}
 
-		int offset = findAndSeekToOffset(columnIndex);
+		findAndSeekToOffset(columnIndex);
 
-		int length = (int) this.rowFromServer.readFieldLength();
+		long length = this.rowFromServer.readFieldLength();
+		
+		int offset = this.rowFromServer.getPosition();
 
 		return getTimestampFast(columnIndex,
-				this.rowFromServer.getByteBuffer(), offset, length, targetCalendar, tz,
+				this.rowFromServer.getByteBuffer(), offset, (int)length, targetCalendar, tz,
 				rollForward, conn, rs);
 	}
 
@@ -607,6 +650,12 @@ public class BufferRow extends ResultSetRow {
 	 * bitmask.
 	 */
 	private void setupIsNullBitmask() throws SQLException {
+		if (this.isNull != null) {
+			return; // we've already done this
+		}
+		
+		this.rowFromServer.setPosition(this.preNullBitmaskHomePosition);
+		
 		int nullCount = (this.metadata.length + 9) / 8;
 
 		byte[] nullBitMask = new byte[nullCount];
@@ -640,24 +689,28 @@ public class BufferRow extends ResultSetRow {
 			return null;
 		}
 
-		int offset = findAndSeekToOffset(columnIndex);
+		findAndSeekToOffset(columnIndex);
 
-		int length = (int) this.rowFromServer.readFieldLength();
+		long length = this.rowFromServer.readFieldLength();
+		
+		int offset = this.rowFromServer.getPosition();
 
 		return getDateFast(columnIndex, this.rowFromServer.getByteBuffer(),
-				offset, length, conn, rs);
+				offset, (int)length, conn, rs);
 	}
 
 	public java.sql.Date getNativeDate(int columnIndex, ConnectionImpl conn,
 			ResultSetImpl rs) throws SQLException {
-		int offset = findAndSeekToOffset(columnIndex);
-
-		long length = this.rowFromServer.readFieldLength();
-
-		if (length == Buffer.NULL_LENGTH) {
+		if (isNull(columnIndex)) {
 			return null;
 		}
+		
+		findAndSeekToOffset(columnIndex);
 
+		long length = this.rowFromServer.readFieldLength();
+		
+		int offset = this.rowFromServer.getPosition();
+		
 		return getNativeDate(columnIndex, this.rowFromServer.getByteBuffer(),
 				offset, (int) length, conn, rs);
 	}
@@ -666,13 +719,15 @@ public class BufferRow extends ResultSetRow {
 			int jdbcType, int mysqlType, TimeZone tz,
 			boolean rollForward, ConnectionImpl conn, ResultSetImpl rs)
 			throws SQLException {
-		int offset = findAndSeekToOffset(columnIndex);
-
-		long length = this.rowFromServer.readFieldLength();
-
-		if (length == Buffer.NULL_LENGTH) {
+		if (isNull(columnIndex)) {
 			return null;
 		}
+		
+		findAndSeekToOffset(columnIndex);
+
+		long length = this.rowFromServer.readFieldLength();
+		
+		int offset = this.rowFromServer.getPosition();
 
 		return getNativeDateTimeValue(columnIndex, this.rowFromServer
 				.getByteBuffer(), offset, (int) length, targetCalendar, jdbcType,
@@ -682,14 +737,16 @@ public class BufferRow extends ResultSetRow {
 	public Time getNativeTime(int columnIndex, Calendar targetCalendar,
 			TimeZone tz, boolean rollForward, ConnectionImpl conn,
 			ResultSetImpl rs) throws SQLException {
-		int offset = findAndSeekToOffset(columnIndex);
-
-		long length = this.rowFromServer.readFieldLength();
-
-		if (length == Buffer.NULL_LENGTH) {
+		if (isNull(columnIndex)) {
 			return null;
 		}
+		
+		findAndSeekToOffset(columnIndex);
 
+		long length = this.rowFromServer.readFieldLength();
+		
+		int offset = this.rowFromServer.getPosition();
+		
 		return getNativeTime(columnIndex, this.rowFromServer.getByteBuffer(),
 				offset, (int) length, targetCalendar, tz, rollForward, conn, rs);
 	}
