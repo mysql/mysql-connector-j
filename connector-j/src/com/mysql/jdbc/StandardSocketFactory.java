@@ -331,9 +331,7 @@ public class StandardSocketFactory implements SocketFactory {
 												new Integer(connectTimeout) });
 
 								break;
-							} catch (Exception ex) {
-								ex.printStackTrace();
-								
+							} catch (Exception ex) {	
 								this.rawSocket = null;
 
 								caughtWhileConnecting = ex;
