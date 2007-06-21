@@ -27,7 +27,7 @@
 	<property name="major_version" value="5"/>
 	<property name="minor_version" value="1"/>
 	<property name="subminor_version" value="1"/>
-	<property name="version_status" value=""/>
+	<property name="version_status" value="alpha"/>
 
 	<property name="version" value="${major_version}.${minor_version}.${subminor_version}${version_status}"/>
 	<property name="prodName" value="mysql-connector-java"/>
