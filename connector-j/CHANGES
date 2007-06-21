@@ -181,7 +181,12 @@ nn-nn-07 - Version 5.0.7
 	  ResultSetMetadata.isCaseSensitive() much more efficient, which leads
 	  to performance increase for ColdFusion, which calls this method for
 	  every column on every table it sees, it appears).
-	      
+  
+	- Driver detects when it is running in a ColdFusion MX server (tested
+	  with version 7), and uses the configuration bundle "coldFusion",
+	  which sets useDynamicCharsetInfo to "false" (see previous entry), and 
+	  sets useLocalSessionState and autoReconnect to "true".
+	  	      
 05-15-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,

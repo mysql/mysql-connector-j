@@ -663,6 +663,22 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			}
 		}
 
+		if (Util.isColdFusion() &&
+				urlProps.getProperty("autoConfigureForColdFusion", "true").equalsIgnoreCase("true")) {
+			String configs = urlProps.getProperty(USE_CONFIG_PROPERTY_KEY);
+			
+			StringBuffer newConfigs = new StringBuffer();
+			
+			if (configs != null) {
+				newConfigs.append(configs);
+				newConfigs.append(",");
+			}
+			
+			newConfigs.append("coldFusion");
+			
+			urlProps.setProperty(USE_CONFIG_PROPERTY_KEY, newConfigs.toString());
+		}
+		
 		// If we use a config, it actually should get overridden by anything in
 		// the URL or passed-in properties
 

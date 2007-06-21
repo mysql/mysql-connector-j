@@ -84,6 +84,8 @@ public class Util {
 	private static Util enclosingInstance = new Util();
 
 	private static boolean isJdbc4 = false;
+	
+	private static boolean isColdFusion = false;
 
 	static {
 		try {
@@ -99,6 +101,21 @@ public class Util {
 		} catch (Throwable t) {
 			isJdbc4 = false;
 		}
+		
+		//
+		// Detect the ColdFusion MX environment
+		// 
+		// Unfortunately, no easy-to-discern classes are available
+		// to our classloader to check...
+		//
+		
+		String loadedFrom = stackTraceToString(new Throwable());
+		
+		if (loadedFrom != null) {
+			isColdFusion = loadedFrom.indexOf("coldfusion") != -1;
+		} else {
+			isColdFusion = false;
+		}
 	}
 
 	// ~ Methods
@@ -106,6 +123,10 @@ public class Util {
 
 	public static boolean isJdbc4() {
 		return isJdbc4;
+	}
+	
+	public static boolean isColdFusion() {
+		return isColdFusion;
 	}
 
 	// Right from Monty's code
