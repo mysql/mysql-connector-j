@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-06-nn-07 - Version 5.1.1 Alpha
+06-22-07 - Version 5.1.1 Alpha
 
     - Pulled vendor-extension methods of Connection implementation out
       into an interface to support java.sql.Wrapper functionality from
@@ -60,6 +60,14 @@
     - Setting "rewriteBatchedStatements" to "true" now causes CallableStatements 
       with batched arguments to be re-written in the form "CALL (...); CALL (...); ..."
       to send the batch in as few client-server round trips as possible.
+      
+    - Driver now picks appropriate internal row representation (whole row in one 
+      buffer, or individual byte[]s for each column value) depending on heuristics, 
+      including whether or not the row has BLOB or TEXT types and the overall
+      row-size. The threshold for row size that will cause the driver to
+      use a buffer rather than individual byte[]s is configured by the 
+      configuration property "largeRowSizeThreshold", which has a default
+      value of 2KB.
       
 04-11-07 - Version 5.1.0 Alpha
 	
