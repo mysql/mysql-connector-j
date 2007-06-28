@@ -3972,4 +3972,61 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#28851 - parser in client-side prepared statements
+	 * eats character following '/' if it's not a multi-line comment.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug28851() throws Exception {
+
+		try {
+			this.pstmt = ((com.mysql.jdbc.Connection) this.conn)
+					.clientPrepareStatement("SELECT 1/?");
+			this.pstmt.setInt(1, 1);
+			this.rs = this.pstmt.executeQuery();
+
+			assertTrue(this.rs.next());
+
+			assertEquals(1, this.rs.getInt(1));
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+
+	/**
+	 * Tests fix for BUG#28596 - parser in client-side prepared statements
+	 * runs to end of statement, rather than end-of-line for '#' comments.
+	 * 
+	 * Also added support for '--' single-line comments
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug28596() throws Exception {
+		String query = "SELECT #\n" + 
+			"?, #\n" + 
+			"? #?\r\n" + 
+			",-- abcdefg \n" +
+			"?";
+
+		try {
+			this.pstmt = ((com.mysql.jdbc.Connection) this.conn)
+					.clientPrepareStatement(query);
+			this.pstmt.setInt(1, 1);
+			this.pstmt.setInt(2, 2);
+			this.pstmt.setInt(3, 3);
+			
+			assertEquals(3, this.pstmt.getParameterMetaData().getParameterCount());
+			this.rs = this.pstmt.executeQuery();
+
+			assertTrue(this.rs.next());
+
+			assertEquals(1, this.rs.getInt(1));
+			assertEquals(2, this.rs.getInt(2));
+			assertEquals(3, this.rs.getInt(3));
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

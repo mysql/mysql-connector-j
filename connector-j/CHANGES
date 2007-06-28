@@ -194,6 +194,14 @@ nn-nn-07 - Version 5.0.7
 	  with version 7), and uses the configuration bundle "coldFusion",
 	  which sets useDynamicCharsetInfo to "false" (see previous entry), and 
 	  sets useLocalSessionState and autoReconnect to "true".
+	  
+	- Fixed BUG#28851 - parser in client-side prepared statements
+	  eats character following '/' if it's not a multi-line comment.
+	  
+	- Fixed BUG#28596 - parser in client-side prepared statements
+	  runs to end of statement, rather than end-of-line for '#' comments.
+	 
+	  Also added support for '--' single-line comments.
 	  	      
 05-15-07 - Version 5.0.6
 

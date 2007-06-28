@@ -268,29 +268,41 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 								quoteChar = 0;
 							}
 						} else {
-							if (c == '#') {
-								// run out to end of line
-								i = this.statementLength - 1;
+							if (c == '#'
+								|| (c == '-' && (i + 1) < this.statementLength && sql
+										.charAt(i + 1) == '-')) {
+								// run out to end of statement, or newline,
+								// whichever comes first
+								int endOfStmt = this.statementLength - 1;
+
+								for (; i < endOfStmt; i++) {
+									c = sql.charAt(i);
+
+									if (c == '\r' || c == '\n') {
+										break;
+									}
+								}
+
 								continue;
 							} else if (c == '/' && (i + 1) < this.statementLength) {
 								// Comment?
-								c = sql.charAt(i + 1);
+								char cNext = sql.charAt(i + 1);
 
-								if (c == '*') {
+								if (cNext == '*') {
 									i+= 2;
 
 									for (int j = i; j < this.statementLength; j++) {
 										i++;
-										c = sql.charAt(j);
+										cNext = sql.charAt(j);
 
-										if (c == '*' && (j + 1) < this.statementLength) {
+										if (cNext == '*' && (j + 1) < this.statementLength) {
 											if (sql.charAt(j + 1) == '/') {
 												i++;
-												
+
 												if (i < this.statementLength) {
 													c = sql.charAt(i);
 												}
-												
+
 												break; // comment done
 											}
 										}
