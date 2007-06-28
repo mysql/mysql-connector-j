@@ -25,6 +25,7 @@
 package testsuite.simple;
 
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.log.StandardLogger;
 
 import testsuite.BaseTestCase;
 
@@ -98,51 +99,68 @@ public class CallableStatementTest extends BaseTestCase {
 
 	public void testBatch() throws Exception {
 		if (versionMeetsMinimum(5, 0)) {
-			CallableStatement storedProc = null;
-
+			Connection batchedConn = null;
+			
 			try {
-				this.stmt
-						.executeUpdate("DROP PROCEDURE IF EXISTS testBatch");
 				createTable("testBatchTable", "(field1 INT)");
-				
-				this.stmt
-						.executeUpdate("create procedure testBatch(IN foo VARCHAR(15))\n"
+				createProcedure("testBatch", "(IN foo VARCHAR(15))\n"
 								+ "begin\n"
 								+ "INSERT INTO testBatchTable VALUES (foo);\n"
 								+ "end\n");
 
-				storedProc = this.conn.prepareCall("{call testBatch(?)}");
-
-				int numBatches = 300;
+				executeBatchedStoredProc(this.conn);
 				
-				for (int i = 0; i < numBatches; i++) {
-					storedProc.setInt(1, i + 1);
-					storedProc.addBatch();
-				}
+				batchedConn = getConnectionWithProps("rewriteBatchedStatements=true,profileSQL=true");
 				
-				int[] counts = storedProc.executeBatch();
-				
-				assertEquals(numBatches, counts.length);
-				
-				for (int i = 0; i < numBatches; i++) {
-					assertEquals(1, counts[i]);
-				}
-				
-				/*
-				this.rs = this.stmt.executeQuery("SELECT field1 FROM testBatchTable ORDER BY field1 ASC");
-				
-				for (int i = 0; i < numBatches; i++) {
-					assertTrue(this.rs.next());
-					assertEquals(i + 1, this.rs.getInt(1));
-				}
-				*/
+				StringBuffer outBuf = new StringBuffer();
+				StandardLogger.bufferedLog = outBuf;
+				executeBatchedStoredProc(batchedConn);
+				String[] log = outBuf.toString().split(";");
+				assertTrue(log.length > 20);
 			} finally {
-				if (this.rs != null) {
-					this.rs.close();
-					this.rs = null;
-				}
+				StandardLogger.bufferedLog = null;
 				
-				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testBatch");
+				closeMemberJDBCResources();
+				
+				if (batchedConn != null) {
+					batchedConn.close();
+				}
+			}
+		}
+	}
+	
+	private void executeBatchedStoredProc(Connection c) throws Exception {
+		this.stmt.executeUpdate("TRUNCATE TABLE testBatchTable");
+		
+		CallableStatement storedProc = c.prepareCall("{call testBatch(?)}");
+
+		try {
+			int numBatches = 300;
+			
+			for (int i = 0; i < numBatches; i++) {
+				storedProc.setInt(1, i + 1);
+				storedProc.addBatch();
+			}
+			
+			int[] counts = storedProc.executeBatch();
+			
+			assertEquals(numBatches, counts.length);
+			
+			for (int i = 0; i < numBatches; i++) {
+				assertEquals(1, counts[i]);
+			}
+	
+			this.rs = this.stmt.executeQuery("SELECT field1 FROM testBatchTable ORDER BY field1 ASC");
+			
+			for (int i = 0; i < numBatches; i++) {
+				assertTrue(this.rs.next());
+				assertEquals(i + 1, this.rs.getInt(1));
+			}
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (storedProc != null) {
+				storedProc.close();
 			}
 		}
 	}

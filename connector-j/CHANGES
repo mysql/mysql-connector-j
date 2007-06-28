@@ -1,5 +1,15 @@
 # Changelog
 # $Id$
+
+06-29-07 - Version 5.1.2 Beta
+
+    - Setting the configuration property "rewriteBatchedStatements" 
+      to "true" will now cause the driver to rewrite batched prepared 
+      statements with more than 3 parameter sets in a batch into 
+      multi-statements (separated by ";") if they are not plain
+      (i.e. without SELECT or ON DUPLICATE KEY UPDATE clauses) INSERT
+      or REPLACE statements.
+      
 06-22-07 - Version 5.1.1 Alpha
 
     - Pulled vendor-extension methods of Connection implementation out

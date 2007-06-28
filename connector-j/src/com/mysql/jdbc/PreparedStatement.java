@@ -1053,6 +1053,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					if (canRewriteAsMultivalueInsertStatement()) {
 						return executeBatchedInserts();
 					}
+					
+					if (this.connection.versionMeetsMinimum(4, 1, 0) 
+							&& !this.batchHasPlainStatements
+							&& this.batchedArgs != null 
+							&& this.batchedArgs.size() > 3 /* cost of option setting rt-wise */) {
+						return executePreparedBatchAsMultiStatement();
+					}
 				}
 
 				return executeBatchSerially();
@@ -1064,16 +1071,176 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 	public synchronized boolean canRewriteAsMultivalueInsertStatement() {
 		if (!this.hasCheckedForRewrite) {
+			// Needs to be INSERT, can't have INSERT ... SELECT or
+			// INSERT ... ON DUPLICATE KEY UPDATE
+			//
+			// We're not smart enough to re-write to
+			//
+			//    INSERT INTO table (a,b,c) VALUES (1,2,3),(4,5,6)
+			//    ON DUPLICATE KEY UPDATE c=VALUES(a)+VALUES(b);
+			//
+			// (yet)
+
 			this.canRewrite = StringUtils.startsWithIgnoreCaseAndWs(
-					this.originalSql, "INSERT", this.statementAfterCommentsPos)
-					|| StringUtils.startsWithIgnoreCaseAndWs(this.originalSql,
-							"REPLACE", this.statementAfterCommentsPos);
+					this.originalSql, "INSERT", this.statementAfterCommentsPos) 
+			&& StringUtils.indexOfIgnoreCaseRespectMarker(this.statementAfterCommentsPos, this.originalSql, "SELECT", "\"'`", "\"'`", false) == -1 
+			&& StringUtils.indexOfIgnoreCaseRespectMarker(this.statementAfterCommentsPos, this.originalSql, "UPDATE", "\"'`", "\"'`", false) == -1;
+			
 			this.hasCheckedForRewrite = true;
 		}
 
 		return this.canRewrite;
 	}
 
+	/**
+	 * Rewrites the already prepared statement into a multi-statement
+	 * query of 'statementsPerBatch' values and executes the entire batch
+	 * using this new statement.
+	 * 
+	 * @return update counts in the same fashion as executeBatch()
+	 * 
+	 * @throws SQLException
+	 */
+	
+	protected int[] executePreparedBatchAsMultiStatement() throws SQLException {
+		synchronized (this.connection.getMutex()) {
+			// This is kind of an abuse, but it gets the job done
+			if (this.batchedValuesClause == null) {
+				this.batchedValuesClause = this.originalSql + ";";
+			}
+			
+			ConnectionImpl locallyScopedConn = this.connection;
+			
+			boolean multiQueriesEnabled = locallyScopedConn.getAllowMultiQueries();
+			
+			try {
+				clearWarnings();
+				
+				int numBatchedArgs = this.batchedArgs.size();
+				
+				if (this.retrieveGeneratedKeys) {
+					this.batchedGeneratedKeys = new ArrayList(numBatchedArgs);
+				}
+
+				int numValuesPerBatch = computeBatchSize(numBatchedArgs);
+
+				if (numBatchedArgs < numValuesPerBatch) {
+					numValuesPerBatch = numBatchedArgs;
+				}
+
+				java.sql.PreparedStatement batchedStatement = null;
+
+				int batchedParamIndex = 1;
+				int updateCountRunningTotal = 0;
+				int numberToExecuteAsMultiValue = 0;
+				int batchCounter = 0;
+				
+				try {
+					if (!multiQueriesEnabled) {
+						locallyScopedConn.getIO().enableMultiQueries();
+					}
+					
+					if (this.retrieveGeneratedKeys) {
+						batchedStatement = locallyScopedConn.prepareStatement(
+								generateMultiStatementForBatch(numValuesPerBatch),
+								RETURN_GENERATED_KEYS);
+					} else {
+						batchedStatement = locallyScopedConn
+								.prepareStatement(generateMultiStatementForBatch(numValuesPerBatch));
+					}
+
+					if (numBatchedArgs < numValuesPerBatch) {
+						numberToExecuteAsMultiValue = numBatchedArgs;
+					} else {
+						numberToExecuteAsMultiValue = numBatchedArgs / numValuesPerBatch;
+					}
+			
+					int numberArgsToExecute = numberToExecuteAsMultiValue * numValuesPerBatch;
+			
+					for (int i = 0; i < numberArgsToExecute; i++) {
+						if (i != 0 && i % numValuesPerBatch == 0) {
+							updateCountRunningTotal += batchedStatement.executeUpdate();
+			
+							getBatchedGeneratedKeys(batchedStatement);
+							batchedStatement.clearParameters();
+							batchedParamIndex = 1;
+						}
+			
+						batchedParamIndex = setOneBatchedParameterSet(batchedStatement,
+								batchedParamIndex, this.batchedArgs
+								.get(batchCounter++));
+					}
+			
+					updateCountRunningTotal += batchedStatement.executeUpdate();
+					getBatchedGeneratedKeys(batchedStatement);
+			
+					numValuesPerBatch = numBatchedArgs - batchCounter;
+				} finally {
+					if (batchedStatement != null) {
+						batchedStatement.close();
+					}
+				}
+				
+				try {
+					if (numValuesPerBatch > 0) {
+			
+						if (this.retrieveGeneratedKeys) {
+							batchedStatement = locallyScopedConn.prepareStatement(
+									generateMultiStatementForBatch(numValuesPerBatch),
+								RETURN_GENERATED_KEYS);
+						} else {
+							batchedStatement = locallyScopedConn.prepareStatement(
+									generateMultiStatementForBatch(numValuesPerBatch));
+						}
+						
+						batchedParamIndex = 1;
+			
+						while (batchCounter < numBatchedArgs) {
+							batchedParamIndex = setOneBatchedParameterSet(batchedStatement,
+									batchedParamIndex, this.batchedArgs
+									.get(batchCounter++));
+						}
+			
+						updateCountRunningTotal += batchedStatement.executeUpdate();
+						getBatchedGeneratedKeys(batchedStatement);
+					}
+			
+					int[] updateCounts = new int[this.batchedArgs.size()];
+			
+					for (int i = 0; i < this.batchedArgs.size(); i++) {
+						updateCounts[i] = 1;
+					}
+			
+					return updateCounts;
+				} finally {
+					if (batchedStatement != null) {
+						batchedStatement.close();
+					}
+				}
+			} finally {
+				if (!multiQueriesEnabled) {
+					locallyScopedConn.getIO().disableMultiQueries();
+				}
+				
+				clearBatch();
+			}
+		}
+	}
+	
+	private String generateMultiStatementForBatch(int numBatches) {
+		StringBuffer newStatementSql = new StringBuffer((this.originalSql
+				.length() + 1) * numBatches);
+				
+		newStatementSql.append(this.originalSql);
+
+		for (int i = 0; i < numBatches - 1; i++) {
+			newStatementSql.append(';');
+			newStatementSql.append(this.originalSql);
+		}
+
+		return newStatementSql.toString();
+	}
+	
 	/**
 	 * Rewrites the already prepared statement into a multi-value insert
 	 * statement of 'statementsPerBatch' values and executes the entire batch
