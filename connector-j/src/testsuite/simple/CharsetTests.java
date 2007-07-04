@@ -23,7 +23,9 @@
 package testsuite.simple;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -289,5 +291,159 @@ public class CharsetTests extends BaseTestCase {
 				}
 			}
 		}
+	}
+	
+	public void testUtf8OutsideBMPInBlob() throws Exception {
+		createTable("utf8Test", "(include_blob BLOB, include_tinyblob TINYBLOB, include_longblob LONGBLOB, exclude_tinyblob TINYBLOB, exclude_blob BLOB, exclude_longblob LONGBLOB)");
+		
+		// We know this gets truncated in MySQL currently, even though it's valid UTF-8, it's just 4 bytes encoded
+		String outsideBmp = new String(new byte[] {(byte) 0xF0, (byte) 0x90, (byte) 0x80, (byte) 0x80}, "UTF-8");
+		byte[] outsideBmpBytes = outsideBmp.getBytes("UTF-8");
+		System.out.println(outsideBmpBytes.length);
+		
+		Connection utf8Conn = getConnectionWithProps("useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8");
+		
+		String insertStatement = "INSERT INTO utf8Test VALUES (?, ?, ?, ?, ?, ?)";
+		
+		this.pstmt = utf8Conn.prepareStatement(insertStatement);
+		
+		this.pstmt.setString(1, outsideBmp);
+		this.pstmt.setString(2, outsideBmp);
+		this.pstmt.setString(3, outsideBmp);
+		this.pstmt.setString(4, outsideBmp);
+		this.pstmt.setString(5, outsideBmp);
+		this.pstmt.setString(6, outsideBmp);
+		this.pstmt.executeUpdate();
+		
+		String query = "SELECT include_blob, include_tinyblob, include_longblob, exclude_tinyblob, exclude_blob, exclude_longblob FROM utf8Test";
+		this.rs = utf8Conn.createStatement().executeQuery(query);
+		this.rs.next();
+		
+		assertEquals(this.rs.getObject(1).toString(), outsideBmp);
+		assertEquals(this.rs.getObject(2).toString(), outsideBmp);
+		assertEquals(this.rs.getObject(3).toString(), outsideBmp);
+		assertEquals(this.rs.getObject(4).toString(), outsideBmp);
+		assertEquals(this.rs.getObject(5).toString(), outsideBmp);
+		assertEquals(this.rs.getObject(6).toString(), outsideBmp);
+		
+		assertEquals("java.lang.String", this.rs.getObject(1).getClass().getName());
+		assertEquals("java.lang.String", this.rs.getMetaData().getColumnClassName(1));
+		assertEquals(Types.VARCHAR, this.rs.getMetaData().getColumnType(1));
+		
+		assertEquals("java.lang.String", this.rs.getObject(2).getClass().getName());
+		assertEquals("java.lang.String", this.rs.getMetaData().getColumnClassName(2));
+		assertEquals(Types.VARCHAR, this.rs.getMetaData().getColumnType(2));
+		
+		assertEquals("java.lang.String", this.rs.getObject(3).getClass().getName());
+		assertEquals("java.lang.String", this.rs.getMetaData().getColumnClassName(3));
+		assertEquals(Types.LONGVARCHAR, this.rs.getMetaData().getColumnType(3));
+		
+		assertEquals("java.lang.String", this.rs.getObject(4).getClass().getName());
+		assertEquals("java.lang.String", this.rs.getMetaData().getColumnClassName(4));
+		assertEquals(Types.VARCHAR, this.rs.getMetaData().getColumnType(4));
+		
+		assertEquals("java.lang.String", this.rs.getObject(5).getClass().getName());
+		assertEquals("java.lang.String", this.rs.getMetaData().getColumnClassName(5));
+		assertEquals(Types.VARCHAR, this.rs.getMetaData().getColumnType(5));
+		
+		assertEquals("java.lang.String", this.rs.getObject(6).getClass().getName());
+		assertEquals("java.lang.String", this.rs.getMetaData().getColumnClassName(6));
+		assertEquals(Types.LONGVARCHAR, this.rs.getMetaData().getColumnType(6));
+		
+		utf8Conn = getConnectionWithProps("useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern=.*include.*,utf8OutsideBmpExcludedColumnNamePattern=.*blob");
+		
+		this.rs = utf8Conn.createStatement().executeQuery(query);
+		this.rs.next();
+		
+		// Should walk/talk like a string, encoded in utf-8 on the server (4-byte)
+		assertEquals(this.rs.getObject(1).toString(), outsideBmp);
+		assertEquals(this.rs.getObject(2).toString(), outsideBmp);
+		assertEquals(this.rs.getObject(3).toString(), outsideBmp);
+		
+		assertEquals("java.lang.String", this.rs.getObject(1).getClass().getName());
+		assertEquals("java.lang.String", this.rs.getMetaData().getColumnClassName(1));
+		assertEquals(Types.VARCHAR, this.rs.getMetaData().getColumnType(1));
+		
+		assertEquals("java.lang.String", this.rs.getObject(2).getClass().getName());
+		assertEquals("java.lang.String", this.rs.getMetaData().getColumnClassName(2));
+		assertEquals(Types.VARCHAR, this.rs.getMetaData().getColumnType(2));
+		
+		assertEquals("java.lang.String", this.rs.getObject(3).getClass().getName());
+		assertEquals("java.lang.String", this.rs.getMetaData().getColumnClassName(3));
+		assertEquals(Types.LONGVARCHAR, this.rs.getMetaData().getColumnType(3));
+		
+		// These should be left as a blob, since it matches the exclusion regex
+		assertTrue(bytesAreSame(this.rs.getBytes(4), outsideBmpBytes));
+		assertEquals("[B", this.rs.getObject(4).getClass().getName());
+		assertEquals("[B", this.rs.getMetaData().getColumnClassName(4));
+		assertEquals(Types.VARBINARY, this.rs.getMetaData().getColumnType(4));
+		
+		// Should behave types-wise just like BLOB, including LONGVARBINARY type mapping
+		assertTrue(bytesAreSame(this.rs.getBytes(5), outsideBmpBytes));
+		assertEquals("[B", this.rs.getObject(5).getClass().getName());
+		assertEquals("[B", this.rs.getMetaData().getColumnClassName(5));
+		assertEquals(Types.LONGVARBINARY, this.rs.getMetaData().getColumnType(5));
+		
+		assertTrue(bytesAreSame(this.rs.getBytes(6), outsideBmpBytes));
+		assertEquals("[B", this.rs.getObject(6).getClass().getName());
+		assertEquals("[B", this.rs.getMetaData().getColumnClassName(6));
+		assertEquals(Types.LONGVARBINARY, this.rs.getMetaData().getColumnType(6));
+		
+		//
+		// Check error handling
+		//
+		
+		utf8Conn = getConnectionWithProps("useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern={{");
+		
+		try {
+			utf8Conn.createStatement().executeQuery(query);
+			fail("Expected an exception");
+		} catch (SQLException sqlEx) {
+			assertNotNull(sqlEx.getCause());
+			assertEquals("java.util.regex.PatternSyntaxException", sqlEx.getCause().getClass().getName());
+		}
+		
+		utf8Conn = getConnectionWithProps("useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern=.*");
+		
+		try {
+			utf8Conn.createStatement().executeQuery(query);
+			fail("Expected an exception");
+		} catch (SQLException sqlEx) {
+			assertNotNull(sqlEx.getCause());
+			assertEquals("java.util.regex.PatternSyntaxException", sqlEx.getCause().getClass().getName());
+		}
+		
+		utf8Conn = getConnectionWithProps("useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern={{,paranoid=true");
+		
+		try {
+			utf8Conn.createStatement().executeQuery(query);
+			fail("Expected an exception");
+		} catch (SQLException sqlEx) {
+			assertNull(sqlEx.getCause());
+		}
+		
+		utf8Conn = getConnectionWithProps("useBlobToStoreUTF8OutsideBMP=true, characterEncoding=UTF-8,utf8OutsideBmpIncludedColumnNamePattern={{,utf8OutsideBmpExcludedColumnNamePattern=.*,paranoid=true");
+		
+		try {
+			utf8Conn.createStatement().executeQuery(query);
+			fail("Expected an exception");
+		} catch (SQLException sqlEx) {
+			assertNull(sqlEx.getCause());
+		}
+		
+	}
+	
+	private boolean bytesAreSame(byte[] byte1, byte[] byte2) {
+		if (byte1.length != byte2.length) {
+			return false;
+		}
+
+		for (int i = 0; i < byte1.length; i++) {
+			if (byte1[i] != byte2[i]) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

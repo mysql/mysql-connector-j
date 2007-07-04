@@ -1,6 +1,23 @@
 # Changelog
 # $Id$
 
+nn-nn-07 - Version 5.1.3 Beta
+	- Setting "useBlobToStoreUTF8OutsideBMP" to "true" tells the 
+	  driver to treat [MEDIUM/LONG]BLOB columns as [LONG]VARCHAR 
+	  columns holding text encoded in UTF-8 that has characters 
+	  outside the BMP (4-byte encodings), which MySQL server 
+	  can't handle natively.
+	  
+	  Set "utf8OutsideBmpExcludedColumnNamePattern" to a regex so that
+	  column names matching the given regex will still be treated 
+	  as BLOBs The regex must follow the patterns used for the 
+	  java.util.regex package. The default is to exclude no columns, 
+	  and include all columns.
+	  
+	  Set "utf8OutsideBmpIncludedColumnNamePattern" to specify exclusion 
+	  rules to "utf8OutsideBmpExcludedColumnNamePattern". The regex must 
+	  follow the patterns used for the java.util.regex package.
+	  
 06-29-07 - Version 5.1.2 Beta
 
     - Setting the configuration property "rewriteBatchedStatements" 

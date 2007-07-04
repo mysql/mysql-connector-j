@@ -1519,4 +1519,16 @@ public interface ConnectionProperties {
 	public abstract String getLargeRowSizeThreshold();
 
 	public abstract void setLargeRowSizeThreshold(String value);
+	
+	public abstract boolean getUseBlobToStoreUTF8OutsideBMP();
+
+	public abstract void setUseBlobToStoreUTF8OutsideBMP(boolean flag);
+	
+	public abstract String getUtf8OutsideBmpExcludedColumnNamePattern();
+
+	public abstract void setUtf8OutsideBmpExcludedColumnNamePattern(String regexPattern);
+
+	public abstract String getUtf8OutsideBmpIncludedColumnNamePattern();
+
+	public abstract void setUtf8OutsideBmpIncludedColumnNamePattern(String regexPattern);
 }

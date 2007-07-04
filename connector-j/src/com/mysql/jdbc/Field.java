@@ -27,6 +27,7 @@ package com.mysql.jdbc;
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Field is a class used to describe fields in a ResultSet
@@ -159,8 +160,13 @@ public class Field {
 		if (this.mysqlType == MysqlDefs.FIELD_TYPE_BLOB) {
 			if (this.charsetIndex == 63 || 
 					!this.connection.versionMeetsMinimum(4, 1, 0)) {
-				setBlobTypeBasedOnLength();
-				this.sqlType = MysqlDefs.mysqlToJavaType(this.mysqlType);
+				if (this.connection.getUseBlobToStoreUTF8OutsideBMP() 
+						&& shouldSetupForUtf8StringInBlob()) {
+					setupForUtf8StringInBlob();
+				} else {
+					setBlobTypeBasedOnLength();
+					this.sqlType = MysqlDefs.mysqlToJavaType(this.mysqlType);
+				}
 			} else {
 				// *TEXT masquerading as blob
 				this.mysqlType = MysqlDefs.FIELD_TYPE_VAR_STRING;
@@ -274,6 +280,67 @@ public class Field {
 				break;
 			}
 		}
+	}
+
+	private boolean shouldSetupForUtf8StringInBlob() throws SQLException {
+		String includePattern = this.connection
+				.getUtf8OutsideBmpIncludedColumnNamePattern();
+		String excludePattern = this.connection
+				.getUtf8OutsideBmpExcludedColumnNamePattern();
+
+		if (excludePattern != null
+				&& !StringUtils.isEmptyOrWhitespaceOnly(excludePattern)) {
+			try {
+				if (getOriginalName().matches(excludePattern)) {
+					if (includePattern != null
+							&& !StringUtils.isEmptyOrWhitespaceOnly(includePattern)) {
+						try {
+							if (getOriginalName().matches(includePattern)) {
+								return true;
+							}
+						} catch (PatternSyntaxException pse) {
+							SQLException sqlEx = SQLError
+									.createSQLException(
+											"Illegal regex specified for \"utf8OutsideBmpIncludedColumnNamePattern\"",
+											SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+
+							if (!this.connection.getParanoid()) {
+								sqlEx.initCause(pse);
+							}
+
+							throw sqlEx;
+						}
+					}
+					
+					return false;
+				}
+			} catch (PatternSyntaxException pse) {
+				SQLException sqlEx = SQLError
+						.createSQLException(
+								"Illegal regex specified for \"utf8OutsideBmpExcludedColumnNamePattern\"",
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+
+				if (!this.connection.getParanoid()) {
+					sqlEx.initCause(pse);
+				}
+
+				throw sqlEx;
+			}
+		}
+
+		return true;
+	}
+
+	private void setupForUtf8StringInBlob() {
+		if (this.length == MysqlDefs.LENGTH_TINYBLOB || this.length == MysqlDefs.LENGTH_BLOB) {
+			this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
+			this.sqlType = Types.VARCHAR;
+		}  else {
+			this.mysqlType = MysqlDefs.FIELD_TYPE_VAR_STRING;
+			this.sqlType = Types.LONGVARCHAR;
+		}
+		
+		this.charsetIndex = 33;	
 	}
 
 	/**

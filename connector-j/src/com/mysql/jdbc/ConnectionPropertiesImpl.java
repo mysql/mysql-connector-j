@@ -1354,6 +1354,24 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.transformedBitIsBoolean"), //$NON-NLS-1$
 			"3.1.9", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
+	private BooleanConnectionProperty useBlobToStoreUTF8OutsideBMP = new BooleanConnectionProperty(
+			"useBlobToStoreUTF8OutsideBMP",
+			false,
+			Messages.getString("ConnectionProperties.useBlobToStoreUTF8OutsideBMP"), //$NON-NLS-1$
+			"5.1.3", MISC_CATEGORY, 128);
+	
+	private StringConnectionProperty utf8OutsideBmpExcludedColumnNamePattern = new StringConnectionProperty(
+			"utf8OutsideBmpExcludedColumnNamePattern",
+			null,
+			Messages.getString("ConnectionProperties.utf8OutsideBmpExcludedColumnNamePattern"), //$NON-NLS-1$
+			"5.1.3", MISC_CATEGORY, 129);
+	
+	private StringConnectionProperty utf8OutsideBmpIncludedColumnNamePattern = new StringConnectionProperty(
+			"utf8OutsideBmpIncludedColumnNamePattern",
+			null,
+			Messages.getString("ConnectionProperties.utf8OutsideBmpIncludedColumnNamePattern"), //$NON-NLS-1$
+			"5.1.3", MISC_CATEGORY, 129);
+	
 	private BooleanConnectionProperty useCompression = new BooleanConnectionProperty(
 			"useCompression", //$NON-NLS-1$
 			false,
@@ -4167,5 +4185,29 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			
 			throw ex;
 		}
+	}
+
+	public boolean getUseBlobToStoreUTF8OutsideBMP() {
+		return this.useBlobToStoreUTF8OutsideBMP.getValueAsBoolean();
+	}
+
+	public void setUseBlobToStoreUTF8OutsideBMP(boolean flag) {
+		this.useBlobToStoreUTF8OutsideBMP.setValue(flag);
+	}
+
+	public String getUtf8OutsideBmpExcludedColumnNamePattern() {
+		return this.utf8OutsideBmpExcludedColumnNamePattern.getValueAsString();
+	}
+
+	public void setUtf8OutsideBmpExcludedColumnNamePattern(String regexPattern) {
+		this.utf8OutsideBmpExcludedColumnNamePattern.setValue(regexPattern);
+	}
+
+	public String getUtf8OutsideBmpIncludedColumnNamePattern() {
+		return this.utf8OutsideBmpIncludedColumnNamePattern.getValueAsString();
+	}
+
+	public void setUtf8OutsideBmpIncludedColumnNamePattern(String regexPattern) {
+		this.utf8OutsideBmpIncludedColumnNamePattern.setValue(regexPattern);
 	}
 }
