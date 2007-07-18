@@ -195,7 +195,10 @@ public class ConnectionTest extends BaseTestCase {
 			this.conn.createStatement().executeQuery(
 					"SELECT * FROM t1 WHERE id=0 FOR UPDATE");
 
-			Connection deadlockConn = getConnectionWithProps(new Properties());
+			Properties props = new Properties();
+			props.setProperty("includeInnodbStatusInDeadlockExceptions", "true");
+			
+			Connection deadlockConn = getConnectionWithProps(props);
 			deadlockConn.setAutoCommit(false);
 
 			// The following query should hang because con1 is locking the page
@@ -216,6 +219,8 @@ public class ConnectionTest extends BaseTestCase {
 			//
 			assertTrue(SQLError.SQL_STATE_DEADLOCK.equals(sqlEx.getSQLState()));
 			assertTrue(sqlEx.getErrorCode() == 1205);
+			// Make sure INNODB Status is getting dumped into error message
+			assertTrue(sqlEx.getMessage().indexOf("INNODB MONITOR") != -1);
 		} finally {
 			this.conn.setAutoCommit(true);
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS t1");
@@ -837,6 +842,36 @@ public class ConnectionTest extends BaseTestCase {
 		}
 	}
 
+	public void testLocalInfileDisabled() throws Exception {
+		createTable("testLocalInfileDisabled", "(field1 varchar(255))");
+		
+		File infile = File.createTempFile("foo", "txt");
+		infile.deleteOnExit();
+		String url = infile.toURL().toExternalForm();
+		FileWriter output = new FileWriter(infile);
+		output.write("Test");
+		output.flush();
+		output.close();
+		
+		Connection loadConn = getConnectionWithProps(new Properties());
+		
+		try {
+			// have to do this after connect, otherwise it's the server
+			// that's enforcing it
+			((com.mysql.jdbc.Connection)loadConn).setAllowLoadLocalInfile(false);
+			try {
+				loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
+				fail("Should've thrown an exception.");
+			} catch (SQLException sqlEx) {
+				assertEquals(SQLError.SQL_STATE_GENERAL_ERROR, sqlEx.getSQLState());
+			}
+			
+			assertFalse(loadConn.createStatement().executeQuery("SELECT * FROM testLocalInfileDisabled").next());
+		} finally {
+			loadConn.close();
+		}
+	}
+	
 	public void testServerConfigurationCache() throws Exception {
 		Properties props = new Properties();
 

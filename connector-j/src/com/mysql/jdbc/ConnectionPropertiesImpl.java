@@ -23,6 +23,7 @@
 
 package com.mysql.jdbc;
 
+import com.mysql.jdbc.ConnectionProperties.BooleanConnectionProperty;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.StandardLogger;
 
@@ -937,7 +938,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			false,
 			Messages.getString("ConnectionProperties.holdRSOpenOverStmtClose"), //$NON-NLS-1$
 			"3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
-
+	
+	private BooleanConnectionProperty includeInnodbStatusInDeadlockExceptions = new BooleanConnectionProperty(
+			"includeInnodbStatusInDeadlockExceptions",
+			false,
+			"Include the output of \"SHOW ENGINE INNODB STATUS\" in exception messages when deadlock exceptions are detected?",
+			"5.0.7", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty ignoreNonTxTables = new BooleanConnectionProperty(
 			"ignoreNonTxTables", //$NON-NLS-1$
 			false,
@@ -4209,5 +4216,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setUtf8OutsideBmpIncludedColumnNamePattern(String regexPattern) {
 		this.utf8OutsideBmpIncludedColumnNamePattern.setValue(regexPattern);
+	}
+	
+	public boolean getIncludeInnodbStatusInDeadlockExceptions() {
+		return this.includeInnodbStatusInDeadlockExceptions.getValueAsBoolean();
+	}
+
+	public void setIncludeInnodbStatusInDeadlockExceptions(boolean flag) {
+		this.includeInnodbStatusInDeadlockExceptions.setValue(flag);
 	}
 }

@@ -149,7 +149,7 @@ nn-nn-07 - Version 5.1.3 Beta
 	
 	- Added support for JDBC-4.0's NCLOB, and NCHAR/NVARCHAR types.
 	
-nn-nn-07 - Version 5.0.7
+07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for 
       MySQL-5.0+ enables the use of cursors that allow Connector/J to save 
@@ -205,8 +205,8 @@ nn-nn-07 - Version 5.0.7
 		"tcpTrafficClass" - Should the driver set traffic class or 
 		                    type-of-service fields? See the documentation 
 		                    for java.net.Socket.setTrafficClass() for more 
-		                    information.  
-
+		                    information.
+		                    
 	- Give more information in EOFExceptions thrown out of MysqlIO (how many
 	  bytes the driver expected to read, how many it actually read, say that
 	  communications with the server were unexpectedly lost).
@@ -216,12 +216,12 @@ nn-nn-07 - Version 5.0.7
 	  ResultSetMetadata.isCaseSensitive() much more efficient, which leads
 	  to performance increase for ColdFusion, which calls this method for
 	  every column on every table it sees, it appears).
-  
+	  
 	- Driver detects when it is running in a ColdFusion MX server (tested
 	  with version 7), and uses the configuration bundle "coldFusion",
 	  which sets useDynamicCharsetInfo to "false" (see previous entry), and 
 	  sets useLocalSessionState and autoReconnect to "true".
-	  
+
 	- Fixed BUG#28851 - parser in client-side prepared statements
 	  eats character following '/' if it's not a multi-line comment.
 	  
@@ -229,7 +229,20 @@ nn-nn-07 - Version 5.0.7
 	  runs to end of statement, rather than end-of-line for '#' comments.
 	 
 	  Also added support for '--' single-line comments.
-	  	      
+	  
+	- Don't send any file data in response to LOAD DATA LOCAL INFILE
+	  if the feature is disabled at the client side. This is to prevent
+	  a malicious server or man-in-the-middle from asking the client for
+	  data that the client is not expecting. Thanks to Jan Kneschke for
+	  discovering the exploit and Andrey "Poohie" Hristov, Konstantin Osipov
+	  and Sergei Golubchik for discussions about implications and possible
+	  fixes. This fixes BUG 29605 for JDBC.
+	 
+	- Added new debugging functionality - Setting configuration property
+	  "includeInnodbStatusInDeadlockExceptions" to "true" will cause the driver
+	  to append the output of "SHOW ENGINE INNODB STATUS" to deadlock-related
+	  exceptions, which will enumerate the current locks held inside InnoDB.
+	     	  	      
 05-15-07 - Version 5.0.6
 
 	- Fixed BUG#25545 - Client options not sent correctly when using SSL,

@@ -3186,6 +3186,12 @@ class MysqlIO {
         BufferedInputStream fileIn = null;
 
         try {
+        	if (!this.connection.getAllowLoadLocalInfile()) {
+        		throw SQLError.createSQLException(
+        				Messages.getString("MysqlIO.LoadDataLocalNotAllowed"), 
+        				SQLError.SQL_STATE_GENERAL_ERROR);
+        	}
+        	
             if (!this.connection.getAllowUrlInLocalInfile()) {
                 fileIn = new BufferedInputStream(new FileInputStream(fileName));
             } else {
@@ -3355,6 +3361,8 @@ class MysqlIO {
                     }
                 }
                 
+                appendInnodbStatusInformation(xOpen, errorBuf);
+                
                 if (xOpen != null && xOpen.startsWith("22")) {
                 	throw new MysqlDataTruncation(errorBuf.toString(), 0, true, false, 0, 0); 
                 } else {
@@ -3385,6 +3393,41 @@ class MysqlIO {
         }
     }
 
+    private void appendInnodbStatusInformation(String xOpen,
+			StringBuffer errorBuf) throws SQLException {
+		if (this.connection.getIncludeInnodbStatusInDeadlockExceptions()
+				&& xOpen != null
+				&& (xOpen.startsWith("40") || xOpen.startsWith("41"))
+				&& this.streamingData == null) {
+			ResultSet rs = null;
+
+			try {
+				rs = sqlQueryDirect(null, "SHOW ENGINE INNODB STATUS",
+						this.connection.getEncoding(), null, -1,
+						ResultSet.TYPE_FORWARD_ONLY,
+						ResultSet.CONCUR_READ_ONLY, false, this.connection
+								.getCatalog(), null);
+				
+				if (rs.next()) {
+					errorBuf.append("\n\n");
+					errorBuf.append(rs.getString(1));
+				} else {
+					errorBuf.append(Messages
+							.getString("MysqlIO.NoInnoDBStatusFound"));
+				}
+			} catch (Exception ex) {
+				errorBuf.append(Messages
+						.getString("MysqlIO.InnoDBStatusFailed"));
+				errorBuf.append("\n\n");
+				errorBuf.append(Util.stackTraceToString(ex));
+			} finally {
+				if (rs != null) {
+					rs.close();
+				}
+			}
+		}
+	}
+    
     /**
      * Sends a large packet to the server as a series of smaller packets
      *
