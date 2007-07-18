@@ -225,7 +225,7 @@ nn-nn-07 - Version 5.1.3 Beta
 	- Fixed BUG#28851 - parser in client-side prepared statements
 	  eats character following '/' if it's not a multi-line comment.
 	  
-	- Fixed BUG#28596 - parser in client-side prepared statements
+	- Fixed BUG#28956 - parser in client-side prepared statements
 	  runs to end of statement, rather than end-of-line for '#' comments.
 	 
 	  Also added support for '--' single-line comments.
