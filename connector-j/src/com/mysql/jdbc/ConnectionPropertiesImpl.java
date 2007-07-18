@@ -23,7 +23,6 @@
 
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.ConnectionProperties.BooleanConnectionProperty;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.StandardLogger;
 
