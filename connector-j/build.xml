@@ -212,29 +212,37 @@
 
 		<checksum file="${distDir}/${fullProdName}.zip" forceOverwrite="yes" fileext=".md5"/>
 		
-		<!-- Build a Maven bundle for upload to their repository -->
-		
-		<checksum file="${distDir}/${fullProdName}.zip" forceOverwrite="yes" fileext=".md5"/>
-		
-		<tempfile destdir="${buildDir}" prefix="maven-bundle-" property="mavenUploadDir" />
-		
-		<mkdir dir="${mavenUploadDir}" />
-		
-		<copy file="${buildDir}/${fullProdName}/${fullProdName}-bin.jar"
-		  	toFile="${mavenUploadDir}/${fullProdName}.jar" />
-		
-		<copy file="${buildDir}/${fullProdName}/doc/sources/pom.xml"
-			toDir="${mavenUploadDir}" filtering="true">
-		</copy>
-		
-		<copy file="./COPYING"
-			toDir="${mavenUploadDir}" />
-		
-		<copy file="./EXCEPTIONS-CONNECTOR-J"
+		<if>
+			<isset property="com.mysql.jdbc.commercialBuild"/>
+			<then>
+				<echo message="Not building maven bundle for commercial build" />
+			</then>
+			<else>
+				<!-- Build a Maven bundle for upload to their repository -->
+				
+				<checksum file="${distDir}/${fullProdName}.zip" forceOverwrite="yes" fileext=".md5"/>
+				
+				<tempfile destdir="${buildDir}" prefix="maven-bundle-" property="mavenUploadDir" />
+				
+				<mkdir dir="${mavenUploadDir}" />
+				
+				<copy file="${buildDir}/${fullProdName}/${fullProdName}-bin.jar"
+				  	toFile="${mavenUploadDir}/${fullProdName}.jar" />
+				
+				<copy file="${buildDir}/${fullProdName}/doc/sources/pom.xml"
+					toDir="${mavenUploadDir}" filtering="true">
+				</copy>
+				
+				<copy file="./COPYING"
 					toDir="${mavenUploadDir}" />
-		
-		<jar jarfile="${distDir}/${fullProdName}.bundle.jar" 
-					basedir="${mavenUploadDir}" />
+				
+				<copy file="./EXCEPTIONS-CONNECTOR-J"
+							toDir="${mavenUploadDir}" />
+				
+				<jar jarfile="${distDir}/${fullProdName}.bundle.jar" 
+							basedir="${mavenUploadDir}" />
+			</else>
+		</if>
 	</target>
 	
 	<target name="-make-packages" depends="dist">
