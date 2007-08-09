@@ -2,12 +2,12 @@
  Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
- it under the terms of version 2 of the GNU General Public License as 
+ it under the terms of version 2 of the GNU General Public License as
  published by the Free Software Foundation.
 
- There are special exceptions to the terms and conditions of the GPL 
- as it is applied to this software. View the full text of the 
- exception in file EXCEPTIONS-CONNECTOR-J in the directory of this 
+ There are special exceptions to the terms and conditions of the GPL
+ as it is applied to this software. View the full text of the
+ exception in file EXCEPTIONS-CONNECTOR-J in the directory of this
  software distribution.
 
  This program is distributed in the hope that it will be useful,
@@ -51,11 +51,12 @@ import testsuite.BaseTestCase;
 import com.mysql.jdbc.NotImplemented;
 import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.StringUtils;
 
 /**
  * DOCUMENT ME!
- * 
+ *
  * @author Mark Matthews
  * @version $Id: StatementsTest.java 4494 2005-10-31 22:30:34 -0600 (Mon, 31 Oct
  *          2005) mmatthews $
@@ -71,7 +72,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * Runs all test cases in this test suite
-	 * 
+	 *
 	 * @param args
 	 */
 	public static void main(String[] args) {
@@ -80,7 +81,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * Creates a new StatementsTest object.
-	 * 
+	 *
 	 * @param name
 	 *            DOCUMENT ME!
 	 */
@@ -90,7 +91,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws Exception
 	 *             DOCUMENT ME!
 	 */
@@ -163,7 +164,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws Exception
 	 *             DOCUMENT ME!
 	 */
@@ -188,7 +189,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -280,7 +281,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -341,7 +342,7 @@ public class StatementsTest extends BaseTestCase {
 	/**
 	 * Tests all variants of numerical types (signed/unsigned) for correct
 	 * operation when used as return values from a prepared statement.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public void testBinaryResultSetNumericTypes() throws Exception {
@@ -459,7 +460,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * Tests stored procedure functionality
-	 * 
+	 *
 	 * @throws Exception
 	 *             if an error occurs.
 	 */
@@ -539,15 +540,15 @@ public class StatementsTest extends BaseTestCase {
 
 		if (versionMeetsMinimum(5, 0)) {
 			Connection cancelConn = null;
-	
+
 			try {
 				cancelConn = getConnectionWithProps((String)null);
 				final Statement cancelStmt = cancelConn.createStatement();
-			
+
 				cancelStmt.setQueryTimeout(1);
-	
+
 				long begin = System.currentTimeMillis();
-	
+
 				try {
 					cancelStmt.execute("SELECT SLEEP(30)");
 				} catch (SQLException sqlEx) {
@@ -555,7 +556,7 @@ public class StatementsTest extends BaseTestCase {
 							.currentTimeMillis()
 							- begin < 30000);
 				}
-	
+
 				for (int i = 0; i < 1000; i++) {
 					try {
 						cancelStmt.executeQuery("SELECT 1");
@@ -563,19 +564,19 @@ public class StatementsTest extends BaseTestCase {
 						break;
 					}
 				}
-				
+
 				// Make sure we can still use the connection...
-	
+
 				cancelStmt.setQueryTimeout(0);
 				this.rs = cancelStmt.executeQuery("SELECT 1");
-	
+
 				assertTrue(this.rs.next());
 				assertEquals(1, this.rs.getInt(1));
-	
+
 				cancelStmt.setQueryTimeout(0);
-	
+
 				new Thread() {
-	
+
 					public void run() {
 						try {
 							try {
@@ -583,17 +584,17 @@ public class StatementsTest extends BaseTestCase {
 							} catch (InterruptedException iEx) {
 								// ignore
 							}
-	
+
 							cancelStmt.cancel();
 						} catch (SQLException sqlEx) {
 							throw new RuntimeException(sqlEx.toString());
 						}
 					}
-	
+
 				}.start();
-	
+
 				begin = System.currentTimeMillis();
-	
+
 				try {
 					cancelStmt.execute("SELECT SLEEP(30)");
 				} catch (SQLException sqlEx) {
@@ -601,7 +602,7 @@ public class StatementsTest extends BaseTestCase {
 							.currentTimeMillis()
 							- begin < 30000);
 				}
-	
+
 				for (int i = 0; i < 1000; i++) {
 					try {
 						cancelStmt.executeQuery("SELECT 1");
@@ -609,20 +610,20 @@ public class StatementsTest extends BaseTestCase {
 						break;
 					}
 				}
-				
+
 				// Make sure we can still use the connection...
-	
+
 				this.rs = cancelStmt.executeQuery("SELECT 1");
-	
+
 				assertTrue(this.rs.next());
 				assertEquals(1, this.rs.getInt(1));
-				
+
 				final PreparedStatement cancelPstmt = cancelConn.prepareStatement("SELECT SLEEP(30)");
-				
+
 				cancelPstmt.setQueryTimeout(1);
-	
+
 				begin = System.currentTimeMillis();
-	
+
 				try {
 					cancelPstmt.execute();
 				} catch (SQLException sqlEx) {
@@ -630,7 +631,7 @@ public class StatementsTest extends BaseTestCase {
 							.currentTimeMillis()
 							- begin < 30000);
 				}
-	
+
 				for (int i = 0; i < 1000; i++) {
 					try {
 						cancelPstmt.executeQuery("SELECT 1");
@@ -638,18 +639,18 @@ public class StatementsTest extends BaseTestCase {
 						break;
 					}
 				}
-				
+
 				// Make sure we can still use the connection...
-	
+
 				this.rs = cancelStmt.executeQuery("SELECT 1");
-	
+
 				assertTrue(this.rs.next());
 				assertEquals(1, this.rs.getInt(1));
-	
+
 				cancelPstmt.setQueryTimeout(0);
-	
+
 				new Thread() {
-	
+
 					public void run() {
 						try {
 							try {
@@ -657,18 +658,18 @@ public class StatementsTest extends BaseTestCase {
 							} catch (InterruptedException iEx) {
 								// ignore
 							}
-	
-							
+
+
 							cancelPstmt.cancel();
 						} catch (SQLException sqlEx) {
 							throw new RuntimeException(sqlEx.toString());
 						}
 					}
-	
+
 				}.start();
-	
+
 				begin = System.currentTimeMillis();
-	
+
 				try {
 					cancelPstmt.execute();
 				} catch (SQLException sqlEx) {
@@ -676,7 +677,7 @@ public class StatementsTest extends BaseTestCase {
 							.currentTimeMillis()
 							- begin < 30000);
 				}
-	
+
 				for (int i = 0; i < 1000; i++) {
 					try {
 						cancelPstmt.executeQuery("SELECT 1");
@@ -684,20 +685,20 @@ public class StatementsTest extends BaseTestCase {
 						break;
 					}
 				}
-				
+
 				// Make sure we can still use the connection...
-	
+
 				this.rs = cancelStmt.executeQuery("SELECT 1");
-	
+
 				assertTrue(this.rs.next());
 				assertEquals(1, this.rs.getInt(1));
-				
+
 				final PreparedStatement cancelClientPstmt = ((com.mysql.jdbc.Connection)cancelConn).clientPrepareStatement("SELECT SLEEP(30)");
-				
+
 				cancelClientPstmt.setQueryTimeout(1);
-	
+
 				begin = System.currentTimeMillis();
-	
+
 				try {
 					cancelClientPstmt.execute();
 				} catch (SQLException sqlEx) {
@@ -705,7 +706,7 @@ public class StatementsTest extends BaseTestCase {
 							.currentTimeMillis()
 							- begin < 30000);
 				}
-	
+
 				for (int i = 0; i < 1000; i++) {
 					try {
 						cancelStmt.executeQuery("SELECT 1");
@@ -713,18 +714,18 @@ public class StatementsTest extends BaseTestCase {
 						break;
 					}
 				}
-				
+
 				// Make sure we can still use the connection...
-	
+
 				this.rs = cancelStmt.executeQuery("SELECT 1");
-	
+
 				assertTrue(this.rs.next());
 				assertEquals(1, this.rs.getInt(1));
-	
+
 				cancelClientPstmt.setQueryTimeout(0);
-	
+
 				new Thread() {
-	
+
 					public void run() {
 						try {
 							try {
@@ -732,18 +733,18 @@ public class StatementsTest extends BaseTestCase {
 							} catch (InterruptedException iEx) {
 								// ignore
 							}
-	
-							
+
+
 							cancelClientPstmt.cancel();
 						} catch (SQLException sqlEx) {
 							throw new RuntimeException(sqlEx.toString());
 						}
 					}
-	
+
 				}.start();
-	
+
 				begin = System.currentTimeMillis();
-	
+
 				try {
 					cancelClientPstmt.execute();
 				} catch (SQLException sqlEx) {
@@ -751,7 +752,7 @@ public class StatementsTest extends BaseTestCase {
 							.currentTimeMillis()
 							- begin < 30000);
 				}
-	
+
 				for (int i = 0; i < 1000; i++) {
 					try {
 						cancelClientPstmt.executeQuery("SELECT 1");
@@ -759,11 +760,11 @@ public class StatementsTest extends BaseTestCase {
 						break;
 					}
 				}
-				
+
 				// Make sure we can still use the connection...
-	
+
 				this.rs = cancelStmt.executeQuery("SELECT 1");
-	
+
 				assertTrue(this.rs.next());
 				assertEquals(1, this.rs.getInt(1));
 			} finally {
@@ -772,7 +773,7 @@ public class StatementsTest extends BaseTestCase {
 					this.rs = null;
 					toClose.close();
 				}
-	
+
 				if (cancelConn != null) {
 					cancelConn.close();
 				}
@@ -782,7 +783,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -905,7 +906,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -981,7 +982,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * Tests multiple statement support
-	 * 
+	 *
 	 * @throws Exception
 	 *             DOCUMENT ME!
 	 */
@@ -1051,7 +1052,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * Tests that NULLs and '' work correctly.
-	 * 
+	 *
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
@@ -1121,7 +1122,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -1155,7 +1156,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -1184,27 +1185,27 @@ public class StatementsTest extends BaseTestCase {
 			this.stmt.executeUpdate("INSERT INTO testRowFetch VALUES (1)");
 
 			Connection fetchConn = null;
-			
+
 			Properties props = new Properties();
 			props.setProperty("useCursorFetch", "true");
-			
-			
+
+
 			try {
 				fetchConn = getConnectionWithProps(props);
-				
+
 				PreparedStatement fetchStmt = fetchConn
 						.prepareStatement("SELECT field1 FROM testRowFetch WHERE field1=1");
 				fetchStmt.setFetchSize(10);
 				this.rs = fetchStmt.executeQuery();
 				assertTrue(this.rs.next());
-	
+
 				this.stmt.executeUpdate("INSERT INTO testRowFetch VALUES (2), (3)");
-	
+
 				fetchStmt = fetchConn
 						.prepareStatement("SELECT field1 FROM testRowFetch ORDER BY field1");
 				fetchStmt.setFetchSize(1);
 				this.rs = fetchStmt.executeQuery();
-	
+
 				assertTrue(this.rs.next());
 				assertEquals(1, this.rs.getInt(1));
 				assertTrue(this.rs.next());
@@ -1212,7 +1213,7 @@ public class StatementsTest extends BaseTestCase {
 				assertTrue(this.rs.next());
 				assertEquals(3, this.rs.getInt(1));
 				assertEquals(false, this.rs.next());
-	
+
 				fetchStmt.executeQuery();
 			} finally {
 				if (fetchConn != null) {
@@ -1225,7 +1226,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -1246,7 +1247,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * Tests for PreparedStatement.setObject()
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public void testSetObject() throws Exception {
@@ -1319,7 +1320,7 @@ public class StatementsTest extends BaseTestCase {
 			multiStmt.addBatch("UPDATE testStatementRewriteBatch SET field1=6 WHERE field1=2 OR field1=3");
 
 			int[] counts = multiStmt.executeBatch();
-			
+
 			if (!isRunningOnJdk131()) {
 				ResultSet genKeys = multiStmt.getGeneratedKeys();
 
@@ -1359,7 +1360,7 @@ public class StatementsTest extends BaseTestCase {
 			}
 
 			multiStmt.executeBatch();
-			
+
 			if (!isRunningOnJdk131()) {
 				ResultSet genKeys = multiStmt.getGeneratedKeys();
 
@@ -1375,20 +1376,20 @@ public class StatementsTest extends BaseTestCase {
 			props.setProperty("useServerPrepStmts", j == 0 ? "true" : "false");
 			props.setProperty("rewriteBatchedStatements", "true");
 			multiConn = getConnectionWithProps(props);
-			
+
 			PreparedStatement pStmt = null;
-			
+
 			if (!isRunningOnJdk131()) {
-				pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", 
+				pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)",
 						Statement.RETURN_GENERATED_KEYS);
-	
+
 				for (int i = 0; i < 1000; i++) {
 					pStmt.setInt(1, i);
 					pStmt.addBatch();
 				}
-	
+
 				pStmt.executeBatch();
-			
+
 				ResultSet genKeys = pStmt.getGeneratedKeys();
 
 				for (int i = 1; i < 1000; i++) {
@@ -1402,10 +1403,10 @@ public class StatementsTest extends BaseTestCase {
 			props.setProperty("rewriteBatchedStatements", "true");
 			props.setProperty("sessionVariables", "max_allowed_packet=1024");
 			multiConn = getConnectionWithProps(props);
-			
+
 			if (!isRunningOnJdk131()) {
-				
-				pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)", 
+
+				pStmt = multiConn.prepareStatement("INSERT INTO testStatementRewriteBatch(field1) VALUES (?)",
 					Statement.RETURN_GENERATED_KEYS);
 
 				for (int i = 0; i < 1000; i++) {
@@ -1414,8 +1415,8 @@ public class StatementsTest extends BaseTestCase {
 				}
 
 				pStmt.executeBatch();
-			
-			
+
+
 				ResultSet genKeys = pStmt.getGeneratedKeys();
 
 				for (int i = 1; i < 1000; i++) {
@@ -1423,15 +1424,15 @@ public class StatementsTest extends BaseTestCase {
 					assertEquals(i, genKeys.getInt(1));
 				}
 			}
-			
+
 			Object[][] differentTypes = new Object[1000][14];
-			
+
 			createTable("rewriteBatchTypes", "(internalOrder int, f1 tinyint null, "
 					+ "f2 smallint null, f3 int null, f4 bigint null, "
 					+ "f5 decimal(8, 2) null, f6 float null, f7 double null, "
-					+ "f8 varchar(255) null, f9 text null, f10 blob null, " 
+					+ "f8 varchar(255) null, f9 text null, f10 blob null, "
 					+ "f11 blob null, f12 datetime null, f13 time null, f14 date null)");
-			
+
 			for (int i = 0; i < 1000; i++) {
 				differentTypes[i][0] = Math.random() < .5 ? null : new Byte((byte)(Math.random() * 127));
 				differentTypes[i][1] = Math.random() < .5 ? null : new Short((short)(Math.random() * Short.MAX_VALUE));
@@ -1448,19 +1449,19 @@ public class StatementsTest extends BaseTestCase {
 				differentTypes[i][12] = Math.random() < .5 ? null : new Time(System.currentTimeMillis());
 				differentTypes[i][13] = Math.random() < .5 ? null : new Date(System.currentTimeMillis());
 			}
-			
+
 			props.setProperty("useServerPrepStmts", j == 0 ? "true" : "false");
 			props.setProperty("rewriteBatchedStatements", "true");
 			props.setProperty("sessionVariables", "max_allowed_packet=1024");
 			multiConn = getConnectionWithProps(props);
 			pStmt = multiConn.prepareStatement("INSERT INTO rewriteBatchTypes(internalOrder,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-			
+
 			for (int i = 0; i < 1000; i++) {
 				pStmt.setInt(1, i);
 				for (int k = 0; k < 14; k++) {
 					if (k == 8) {
 						String asString = (String)differentTypes[i][k];
-						
+
 						if (asString == null) {
 							pStmt.setObject(k + 2, null);
 						} else {
@@ -1468,7 +1469,7 @@ public class StatementsTest extends BaseTestCase {
 						}
 					} else if (k == 9) {
 						byte[] asBytes = (byte[])differentTypes[i][k];
-						
+
 						if (asBytes == null) {
 							pStmt.setObject(k + 2, null);
 						} else {
@@ -1480,55 +1481,55 @@ public class StatementsTest extends BaseTestCase {
 				}
 				pStmt.addBatch();
 			}
-			
+
 			pStmt.executeBatch();
-			
+
 			this.rs = this.stmt.executeQuery("SELECT f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14 FROM rewriteBatchTypes ORDER BY internalOrder");
-			
+
 			int idx = 0;
-			
+
 			// We need to format this ourselves, since we have to strip the nanos off of
 			// TIMESTAMPs, so .equals() doesn't really work...
-			
+
 			SimpleDateFormat sdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US);
-			
+
 			while (this.rs.next()) {
 				for (int k = 0; k < 14; k++) {
 					if (differentTypes[idx][k] == null) {
-						assertTrue("On row " + idx + " expected NULL, found " + this.rs.getObject(k + 1) 
+						assertTrue("On row " + idx + " expected NULL, found " + this.rs.getObject(k + 1)
 								+ " in column " + (k + 1), this.rs.getObject(k + 1) == null);
 					} else {
 						String className = differentTypes[idx][k].getClass().getName();
-					
+
 						if (className.equals("java.io.StringReader")) {
 							StringReader reader = (StringReader)differentTypes[idx][k];
 							StringBuffer buf = new StringBuffer();
-							
+
 							int c = 0;
-							
+
 							while ((c = reader.read()) != -1) {
 								buf.append((char)c);
 							}
-							
+
 							String asString = this.rs.getString(k + 1);
-							
+
 							assertEquals("On row " + idx + ", column " + (k + 1), buf.toString(), asString);
-							
+
 						} else if (differentTypes[idx][k] instanceof java.io.InputStream) {
 							ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-							
+
 							int bytesRead = 0;
-							
+
 							byte[] buf = new byte[128];
 							InputStream in = (InputStream)differentTypes[idx][k];
-							
+
 							while ((bytesRead = in.read(buf)) != -1) {
 								bOut.write(buf, 0, bytesRead);
 							}
-							
+
 							byte[] expected = bOut.toByteArray();
 							byte[] actual = this.rs.getBytes(k + 1);
-							
+
 							assertEquals("On row " + idx + ", column " + (k + 1), StringUtils.dumpAsHex(expected, expected.length), StringUtils.dumpAsHex(actual, actual.length));
 						} else if (differentTypes[idx][k] instanceof byte[]) {
 							byte[] expected = (byte[])differentTypes[idx][k];
@@ -1539,19 +1540,19 @@ public class StatementsTest extends BaseTestCase {
 						} else if (differentTypes[idx][k] instanceof Double) {
 							assertEquals("On row " + idx + ", column " + (k + 1), ((Double)differentTypes[idx][k]).doubleValue(), this.rs.getDouble(k + 1), .1);
 						} else if (differentTypes[idx][k] instanceof Float) {
-							assertEquals("On row " + idx + ", column " + (k + 1), ((Float)differentTypes[idx][k]).floatValue(), this.rs.getFloat(k + 1), .1);	
+							assertEquals("On row " + idx + ", column " + (k + 1), ((Float)differentTypes[idx][k]).floatValue(), this.rs.getFloat(k + 1), .1);
 						} else if (className.equals("java.lang.Byte")) {
 							// special mapping in JDBC for ResultSet.getObject()
-							assertEquals("On row " + idx + ", column " + (k + 1), new Integer(((Byte)differentTypes[idx][k]).byteValue()), this.rs.getObject(k + 1)); 
+							assertEquals("On row " + idx + ", column " + (k + 1), new Integer(((Byte)differentTypes[idx][k]).byteValue()), this.rs.getObject(k + 1));
 						} else if (className.equals("java.lang.Short")) {
 							// special mapping in JDBC for ResultSet.getObject()
-							assertEquals("On row " + idx + ", column " + (k + 1), new Integer(((Short)differentTypes[idx][k]).shortValue()), this.rs.getObject(k + 1)); 
+							assertEquals("On row " + idx + ", column " + (k + 1), new Integer(((Short)differentTypes[idx][k]).shortValue()), this.rs.getObject(k + 1));
 						} else {
 							assertEquals("On row " + idx + ", column " + (k + 1) + " (" + differentTypes[idx][k].getClass() + "/" + this.rs.getObject(k + 1).getClass(), differentTypes[idx][k].toString(), this.rs.getObject(k + 1).toString());
 						}
 					}
 				}
-				
+
 				idx++;
 			}
 		}
@@ -1611,7 +1612,7 @@ public class StatementsTest extends BaseTestCase {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -1624,7 +1625,7 @@ public class StatementsTest extends BaseTestCase {
 			}
 		}
 	}
-	
+
 	public void testTruncationOnRead() throws Exception {
 		this.rs = this.stmt.executeQuery("SELECT '" + Long.MAX_VALUE + "'");
 		this.rs.next();
@@ -1749,10 +1750,10 @@ public class StatementsTest extends BaseTestCase {
 		}
 
 	}
-	
+
 	public void testStatementInterceptors() throws Exception {
 		Connection interceptedConn = null;
-		
+
 		/*
 		try {
 			Properties props = new Properties();
@@ -1764,32 +1765,32 @@ public class StatementsTest extends BaseTestCase {
 			this.rs.getString(1);
 		} finally {
 			closeMemberJDBCResources();
-			
+
 			if (interceptedConn != null) {
 				interceptedConn.close();
 			}
 		}
 		*/
-		
+
 		try {
 			Properties props = new Properties();
 			props.setProperty("statementInterceptors", "com.mysql.jdbc.interceptors.ServerStatusDiffInterceptor");
-			
+
 			interceptedConn = getConnectionWithProps(props);
 			this.rs = interceptedConn.createStatement().executeQuery("SELECT 'abc'");
 		} finally {
 			closeMemberJDBCResources();
-			
+
 			if (interceptedConn != null) {
 				interceptedConn.close();
 			}
 		}
 	}
-	
+
 	public void testParameterBindings() throws Exception {
 		// Need to check character set stuff, so need a new connection
 		Connection utfConn = getConnectionWithProps("characterEncoding=utf-8");
-		
+
 		java.util.Date now = new java.util.Date();
 
 		Object[] valuesToTest = new Object[] {
@@ -1799,27 +1800,48 @@ public class StatementsTest extends BaseTestCase {
 				new Long(Long.MIN_VALUE),
 				new Double(Double.MIN_VALUE),
 				"\u4E2D\u6587",
-				new BigDecimal(Math.PI), 
+				new BigDecimal(Math.PI),
 				null, // to test isNull
 				now // to test serialization
 		};
-		
+
 		StringBuffer statementText = new StringBuffer("SELECT ?");
-		
+
 		for (int i = 1; i < valuesToTest.length; i++) {
 			statementText.append(",?");
 		}
-		
+
 		this.pstmt = utfConn.prepareStatement(statementText.toString());
-		
+
 		for (int i = 0; i < valuesToTest.length; i++) {
 			this.pstmt.setObject(i + 1, valuesToTest[i]);
 		}
-		
+
 		ParameterBindings bindings = ((com.mysql.jdbc.PreparedStatement)this.pstmt).getParameterBindings();
-		
+
 		for (int i = 0; i < valuesToTest.length; i++) {
 			assertEquals(bindings.getObject(i + 1), valuesToTest[i]);
 		}
+	}
+
+	public void testLocalInfileHooked() throws Exception {
+	    createTable("localInfileHooked", "(field1 int, field2 varchar(255))");
+	    String streamData = "1\tabcd\n2\tefgh\n3\tijkl";
+	    InputStream stream = new ByteArrayInputStream(streamData.getBytes());
+	    try {
+	        ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
+	        this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked");
+	        assertEquals(-1, stream.read());
+	        this.rs = this.stmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");
+	        this.rs.next();
+	        assertEquals("abcd", this.rs.getString(1));
+	        this.rs.next();
+            assertEquals("efgh", this.rs.getString(1));
+            this.rs.next();
+            assertEquals("ijkl", this.rs.getString(1));
+	    } finally {
+	        ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(null);
+	        closeMemberJDBCResources();
+	    }
 	}
 }
