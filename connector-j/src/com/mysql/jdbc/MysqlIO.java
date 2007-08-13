@@ -64,6 +64,7 @@ import com.mysql.jdbc.util.ResultSetUtil;
  * @see java.sql.Connection
  */
 class MysqlIO {
+    private static final int UTF8_CHARSET_INDEX = 33;
     private static final String CODE_PAGE_1252 = "Cp1252";
 	protected static final int NULL_LENGTH = ~0;
     protected static final int COMP_HEADER_LENGTH = 3;
@@ -3763,10 +3764,10 @@ class MysqlIO {
                     packet.writeLong(this.clientParam);
                     packet.writeLong(this.maxThreeBytes);
 
-                    // charset, JDBC will connect as 'latin1',
+                    // charset, JDBC will connect as 'utf8',
                     // and use 'SET NAMES' to change to the desired
                     // charset after the connection is established.
-                    packet.writeByte((byte) 8);
+                    packet.writeByte((byte) UTF8_CHARSET_INDEX);
 
                     // Set of bytes reserved for future use.
                     packet.writeBytesNoNull(new byte[23]);
@@ -3781,7 +3782,7 @@ class MysqlIO {
         }
 
         // User/Password data
-        packet.writeString(user);
+        packet.writeString(user, "utf-8", this.connection);
 
         if (password.length() != 0) {
             packet.writeByte((byte) 0x14);
@@ -3799,7 +3800,7 @@ class MysqlIO {
         }
 
         if (this.useConnectWithDb) {
-            packet.writeString(database);
+            packet.writeString(database, "utf-8", this.connection);
         }
 
         send(packet, packet.getPosition());
