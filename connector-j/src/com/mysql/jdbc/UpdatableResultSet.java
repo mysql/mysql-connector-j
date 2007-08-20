@@ -2,12 +2,12 @@
  Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
- it under the terms of version 2 of the GNU General Public License as 
+ it under the terms of version 2 of the GNU General Public License as
  published by the Free Software Foundation.
 
- There are special exceptions to the terms and conditions of the GPL 
- as it is applied to this software. View the full text of the 
- exception in file EXCEPTIONS-CONNECTOR-J in the directory of this 
+ There are special exceptions to the terms and conditions of the GPL
+ as it is applied to this software. View the full text of the
+ exception in file EXCEPTIONS-CONNECTOR-J in the directory of this
  software distribution.
 
  This program is distributed in the hope that it will be useful,
@@ -35,11 +35,14 @@ import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * A result set that is updatable.
- * 
+ *
  * @author Mark Matthews
  */
 public class UpdatableResultSet extends ResultSetImpl {
@@ -87,8 +90,6 @@ public class UpdatableResultSet extends ResultSetImpl {
 	/** The binary data for the 'current' row */
 	private ResultSetRow savedCurrentRow;
 
-	private String tableOnlyName;
-
 	/** PreparedStatement used to delete data */
 	protected com.mysql.jdbc.PreparedStatement updater = null;
 
@@ -97,9 +98,11 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	private boolean populateInserterWithDefaultValues = false;
 
+	private Map databasesUsedToTablesUsed = null;
+
 	/**
 	 * Creates a new ResultSet object.
-	 * 
+	 *
 	 * @param catalog
 	 *            the database in use when we were created
 	 * @param fields
@@ -110,7 +113,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 *            the Connection that created us.
 	 * @param creatorStmt
 	 *            DOCUMENT ME!
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -118,44 +121,44 @@ public class UpdatableResultSet extends ResultSetImpl {
 			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
 		super(catalog, fields, tuples, conn, creatorStmt);
 		checkUpdatability();
-		this.populateInserterWithDefaultValues = 
+		this.populateInserterWithDefaultValues =
 			this.connection.getPopulateInsertRowWithDefaultValues();
 	}
 
 	/**
 	 * JDBC 2.0
-	 * 
+	 *
 	 * <p>
 	 * Move to an absolute row number in the result set.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * If row is positive, moves to an absolute row with respect to the
 	 * beginning of the result set. The first row is row 1, the second is row 2,
 	 * etc.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * If row is negative, moves to an absolute row position with respect to the
 	 * end of result set. For example, calling absolute(-1) positions the cursor
 	 * on the last row, absolute(-2) indicates the next-to-last row, etc.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * An attempt to position the cursor beyond the first/last row in the result
 	 * set, leaves the cursor before/after the first/last row, respectively.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Note: Calling absolute(1) is the same as calling first(). Calling
 	 * absolute(-1) is the same as calling last().
 	 * </p>
-	 * 
+	 *
 	 * @param row
 	 *            DOCUMENT ME!
-	 * 
+	 *
 	 * @return true if on the result set, false if off.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or row is 0, or result
 	 *                set type is TYPE_FORWARD_ONLY.
@@ -166,12 +169,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/**
 	 * JDBC 2.0
-	 * 
+	 *
 	 * <p>
 	 * Moves to the end of the result set, just after the last row. Has no
 	 * effect if the result set contains no rows.
 	 * </p>
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY.
@@ -182,12 +185,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/**
 	 * JDBC 2.0
-	 * 
+	 *
 	 * <p>
 	 * Moves to the front of the result set, just before the first row. Has no
 	 * effect if the result set contains no rows.
 	 * </p>
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY
@@ -201,7 +204,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * updateXXX() method(s) and before calling updateRow() to rollback the
 	 * updates made to a row. If no updates have been made or updateRow() has
 	 * already been called, then this method has no effect.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or if called when on
 	 *                the insert row.
@@ -217,7 +220,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.mysql.jdbc.ResultSet#checkRowPos()
 	 */
 	protected void checkRowPos() throws SQLException {
@@ -230,7 +233,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/**
 	 * Is this ResultSet updateable?
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -238,13 +241,13 @@ public class UpdatableResultSet extends ResultSetImpl {
 		if (this.fields == null) {
 			// we've been created to be populated with cached
 			// metadata, and we don't have the metadata yet,
-			// we'll be called again by 
+			// we'll be called again by
 			// Connection.initializeResultsMetadataFromCache()
 			// when the metadata has been made available
-			
+
 			return;
 		}
-		
+
 		String singleTableName = null;
 		String catalogName = null;
 
@@ -280,7 +283,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 				return;
 			}
-			
+
 			if (this.fields[0].isPrimaryKey()) {
 				primaryKeyCount++;
 			}
@@ -303,7 +306,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 					return;
 				}
-				
+
 				if ((singleTableName == null)
 						|| !otherTableName.equals(singleTableName)) {
 					this.isUpdatable = false;
@@ -338,7 +341,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 			return;
 		}
-		
+
 		if (this.connection.getStrictUpdates()) {
 			java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
 
@@ -366,7 +369,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 			}
 
 			int existingPrimaryKeysCount = primaryKeyNames.size();
-			
+
 			if (existingPrimaryKeysCount == 0) {
 				this.isUpdatable = false;
 				this.notUpdatableReason = Messages.getString("NotUpdatableReason.5");
@@ -391,7 +394,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 									.toUpperCase()) == null) {
 								// we don't know about this key, so give up :(
 								this.isUpdatable = false;
-								this.notUpdatableReason = Messages.getString("NotUpdatableReason.6", 
+								this.notUpdatableReason = Messages.getString("NotUpdatableReason.6",
 										new Object[] {originalName});
 
 								return;
@@ -402,19 +405,19 @@ public class UpdatableResultSet extends ResultSetImpl {
 			}
 
 			this.isUpdatable = primaryKeyNames.isEmpty();
-			
+
 			if (!this.isUpdatable) {
 				if (existingPrimaryKeysCount > 1) {
 					this.notUpdatableReason = Messages.getString("NotUpdatableReason.7");
 				} else {
 					this.notUpdatableReason = Messages.getString("NotUpdatableReason.4");
 				}
-				
+
 				return;
 			}
 		}
-		
-		// 
+
+		//
 		// Must have at least one primary key
 		//
 		if (primaryKeyCount == 0) {
@@ -433,7 +436,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	/**
 	 * JDBC 2.0 Delete the current row from the result set and the underlying
 	 * database. Cannot be called when on the insert row.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or if called when on
 	 *                the insert row.
@@ -512,58 +515,53 @@ public class UpdatableResultSet extends ResultSetImpl {
 		java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
 
 		java.sql.ResultSet columnsResultSet = null;
+		Iterator referencedDbs = this.databasesUsedToTablesUsed.entrySet().iterator();
 
-		try {
-			columnsResultSet = dbmd.getColumns(this.catalog, null,
-					this.tableOnlyName, "%"); //$NON-NLS-1$
+		while (referencedDbs.hasNext()) {
+		    Map.Entry dbEntry = (Map.Entry)referencedDbs.next();
+		    String databaseName = dbEntry.getKey().toString();
 
-			HashMap columnNameToDefaultValueMap = new HashMap(
-					this.fields.length /* at least this big... */);
+		    Iterator referencedTables = ((Map)dbEntry.getValue()).entrySet().iterator();
 
-			while (columnsResultSet.next()) {
-				String columnName = columnsResultSet.getString("COLUMN_NAME"); //$NON-NLS-1$
-				byte[] defaultValue = columnsResultSet.getBytes("COLUMN_DEF"); //$NON-NLS-1$
+		    while (referencedTables.hasNext()) {
+		        Map.Entry tableEntry = (Map.Entry)referencedTables.next();
+		        String tableName = tableEntry.getKey().toString();
+		        Map columnNamesToIndices = (Map)tableEntry.getValue();
 
-				columnNameToDefaultValueMap.put(columnName, defaultValue);
-			}
+        		try {
+        			columnsResultSet = dbmd.getColumns(this.catalog, null,
+        			        tableName, "%"); //$NON-NLS-1$
 
-			int numFields = this.fields.length;
+        			while (columnsResultSet.next()) {
+        				String columnName = columnsResultSet.getString("COLUMN_NAME"); //$NON-NLS-1$
+        				byte[] defaultValue = columnsResultSet.getBytes("COLUMN_DEF"); //$NON-NLS-1$
 
-			this.defaultColumnValue = new byte[numFields][];
+        				if (columnNamesToIndices.containsKey(columnName)) {
+        				    int localColumnIndex = ((Integer)columnNamesToIndices.get(columnName)).intValue();
 
-			for (int i = 0; i < numFields; i++) {
-				String defValTableName = this.fields[i].getOriginalName();
+        				    this.defaultColumnValue[localColumnIndex] = defaultValue;
+        				} // else assert?
+        			}
+        		} finally {
+        			if (columnsResultSet != null) {
+        				columnsResultSet.close();
 
-				if ((defValTableName == null)
-						|| (defValTableName.length() == 0)) {
-					defValTableName = this.fields[i].getName();
-				}
-
-				if (defValTableName != null) {
-					byte[] defaultVal = (byte[]) columnNameToDefaultValueMap
-							.get(defValTableName);
-
-					this.defaultColumnValue[i] = defaultVal;
-				}
-			}
-		} finally {
-			if (columnsResultSet != null) {
-				columnsResultSet.close();
-
-				columnsResultSet = null;
-			}
+        				columnsResultSet = null;
+        			}
+        		}
+		    }
 		}
 	}
 
 	/**
 	 * JDBC 2.0
-	 * 
+	 *
 	 * <p>
 	 * Moves to the first row in the result set.
 	 * </p>
-	 * 
+	 *
 	 * @return true if on a valid row, false if no rows in the result set.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY.
@@ -575,7 +573,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	/**
 	 * Figure out whether or not this ResultSet is updateable, and if so,
 	 * generate the PreparedStatements to support updates.
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 * @throws NotUpdatable
@@ -591,35 +589,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 		String quotedId = getQuotedIdChar();
 
-		if (this.fields[0].getOriginalTableName() != null) {
-			StringBuffer tableNameBuffer = new StringBuffer();
+		Map tableNamesSoFar = null;
 
-			String databaseName = this.fields[0].getDatabaseName();
-
-			if ((databaseName != null) && (databaseName.length() > 0)) {
-				tableNameBuffer.append(quotedId);
-				tableNameBuffer.append(databaseName);
-				tableNameBuffer.append(quotedId);
-				tableNameBuffer.append('.');
-			}
-
-			this.tableOnlyName = this.fields[0].getOriginalTableName();
-
-			tableNameBuffer.append(quotedId);
-			tableNameBuffer.append(this.tableOnlyName);
-			tableNameBuffer.append(quotedId);
-
-			this.qualifiedAndQuotedTableName = tableNameBuffer.toString();
+		if (this.connection.lowerCaseTableNames()) {
+		    tableNamesSoFar = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+		    this.databasesUsedToTablesUsed = new TreeMap(String.CASE_INSENSITIVE_ORDER);
 		} else {
-			StringBuffer tableNameBuffer = new StringBuffer();
-
-			this.tableOnlyName = this.fields[0].getTableName();
-
-			tableNameBuffer.append(quotedId);
-			tableNameBuffer.append(this.tableOnlyName);
-			tableNameBuffer.append(quotedId);
-
-			this.qualifiedAndQuotedTableName = tableNameBuffer.toString();
+		    tableNamesSoFar = new TreeMap();
+		    this.databasesUsedToTablesUsed = new TreeMap();
 		}
 
 		this.primaryKeyIndicies = new ArrayList();
@@ -628,6 +605,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 		StringBuffer keyValues = new StringBuffer();
 		StringBuffer columnNames = new StringBuffer();
 		StringBuffer insertPlaceHolders = new StringBuffer();
+		StringBuffer allTablesBuf = new StringBuffer();
+		Map columnIndicesToTable = new HashMap();
+
 		boolean firstTime = true;
 		boolean keysFirstTime = true;
 
@@ -635,6 +615,66 @@ public class UpdatableResultSet extends ResultSetImpl {
 				: "=";
 
 		for (int i = 0; i < this.fields.length; i++) {
+		    StringBuffer tableNameBuffer = new StringBuffer();
+		    Map columnNameToIndex = null;
+
+		    // FIXME: What about no table?
+		    if (this.fields[i].getOriginalTableName() != null) {
+
+	            String databaseName = this.fields[i].getDatabaseName();
+
+	            if ((databaseName != null) && (databaseName.length() > 0)) {
+	                tableNameBuffer.append(quotedId);
+	                tableNameBuffer.append(databaseName);
+	                tableNameBuffer.append(quotedId);
+	                tableNameBuffer.append('.');
+	            }
+
+	            String tableOnlyName = this.fields[i].getOriginalTableName();
+
+	            tableNameBuffer.append(quotedId);
+	            tableNameBuffer.append(tableOnlyName);
+	            tableNameBuffer.append(quotedId);
+
+	            String fqTableName = tableNameBuffer.toString();
+
+	            if (!tableNamesSoFar.containsKey(fqTableName)) {
+	                if (!tableNamesSoFar.isEmpty()) {
+	                    allTablesBuf.append(',');
+	                }
+
+	                allTablesBuf.append(fqTableName);
+	                tableNamesSoFar.put(fqTableName, fqTableName);
+	            }
+
+	            columnIndicesToTable.put(new Integer(i), fqTableName);
+
+	            columnNameToIndex = getColumnsToIndexMapForTableAndDB(databaseName, tableOnlyName);
+	        } else {
+	            String tableOnlyName = this.fields[i].getTableName();
+
+	            if (tableOnlyName != null) {
+    	            tableNameBuffer.append(quotedId);
+    	            tableNameBuffer.append(tableOnlyName);
+    	            tableNameBuffer.append(quotedId);
+
+    	            String fqTableName = tableNameBuffer.toString();
+
+                    if (!tableNamesSoFar.containsKey(fqTableName)) {
+                        if (!tableNamesSoFar.isEmpty()) {
+                            allTablesBuf.append(',');
+                        }
+
+                        allTablesBuf.append(fqTableName);
+                        tableNamesSoFar.put(fqTableName, fqTableName);
+                    }
+
+                    columnIndicesToTable.put(new Integer(i), fqTableName);
+
+                    columnNameToIndex = getColumnsToIndexMapForTableAndDB(this.catalog, tableOnlyName);
+	            }
+	        }
+
 			String originalColumnName = this.fields[i].getOriginalName();
 			String columnName = null;
 
@@ -646,6 +686,41 @@ public class UpdatableResultSet extends ResultSetImpl {
 				columnName = this.fields[i].getName();
 			}
 
+			if (columnNameToIndex != null && columnName != null) {
+			    columnNameToIndex.put(columnName, new Integer(i));
+			}
+
+			String originalTableName = this.fields[i].getOriginalTableName();
+            String tableName = null;
+
+            if (this.connection.getIO().hasLongColumnInfo()
+                    && (originalTableName != null)
+                    && (originalTableName.length() > 0)) {
+                tableName = originalTableName;
+            } else {
+                tableName = this.fields[i].getTableName();
+            }
+
+            StringBuffer fqcnBuf = new StringBuffer();
+            String databaseName = this.fields[i].getDatabaseName();
+
+            if (databaseName != null && databaseName.length() > 0) {
+                fqcnBuf.append(quotedId);
+                fqcnBuf.append(databaseName);
+                fqcnBuf.append(quotedId);
+                fqcnBuf.append('.');
+            }
+
+            fqcnBuf.append(quotedId);
+            fqcnBuf.append(tableName);
+            fqcnBuf.append(quotedId);
+            fqcnBuf.append('.');
+            fqcnBuf.append(quotedId);
+            fqcnBuf.append(columnName);
+            fqcnBuf.append(quotedId);
+
+            String qualifiedColumnName = fqcnBuf.toString();
+
 			if (this.fields[i].isPrimaryKey()) {
 				this.primaryKeyIndicies.add(Constants.integerValueOf(i));
 
@@ -655,9 +730,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 					keysFirstTime = false;
 				}
 
-				keyValues.append(quotedId);
-				keyValues.append(columnName);
-				keyValues.append(quotedId);
+				keyValues.append(qualifiedColumnName);
 				keyValues.append(equalsStr);
 				keyValues.append("?"); //$NON-NLS-1$
 			}
@@ -673,15 +746,13 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 			insertPlaceHolders.append("?"); //$NON-NLS-1$
 
-			columnNames.append(quotedId);
-			columnNames.append(columnName);
-			columnNames.append(quotedId);
+			columnNames.append(qualifiedColumnName);
 
-			fieldValues.append(quotedId);
-			fieldValues.append(columnName);
-			fieldValues.append(quotedId);
+			fieldValues.append(qualifiedColumnName);
 			fieldValues.append("=?"); //$NON-NLS-1$
 		}
+
+		this.qualifiedAndQuotedTableName = allTablesBuf.toString();
 
 		this.updateSQL = "UPDATE " + this.qualifiedAndQuotedTableName + " " //$NON-NLS-1$ //$NON-NLS-2$
 				+ fieldValues.toString() //$NON-NLS-1$ //$NON-NLS-2$
@@ -696,6 +767,30 @@ public class UpdatableResultSet extends ResultSetImpl {
 				+ " WHERE " //$NON-NLS-1$ //$NON-NLS-2$
 				+ keyValues.toString();
 	}
+
+    private Map getColumnsToIndexMapForTableAndDB(String databaseName, String tableName) {
+        Map nameToIndex;
+        Map tablesUsedToColumnsMap = (Map)this.databasesUsedToTablesUsed.get(databaseName);
+
+        if (tablesUsedToColumnsMap == null) {
+            if (this.connection.lowerCaseTableNames()) {
+                tablesUsedToColumnsMap = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+            } else {
+                tablesUsedToColumnsMap = new TreeMap();
+            }
+
+            this.databasesUsedToTablesUsed.put(databaseName, tablesUsedToColumnsMap);
+        }
+
+        nameToIndex = (Map)tablesUsedToColumnsMap.get(tableName);
+
+        if (nameToIndex == null) {
+            nameToIndex = new HashMap();
+            tablesUsedToColumnsMap.put(tableName, nameToIndex);
+        }
+
+        return nameToIndex;
+    }
 
 	private synchronized SingleByteCharsetConverter getCharConverter()
 			throws SQLException {
@@ -715,9 +810,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 	/**
 	 * JDBC 2.0 Return the concurrency of this result set. The concurrency used
 	 * is determined by the statement that created the result set.
-	 * 
+	 *
 	 * @return the concurrency type, CONCUR_READ_ONLY, etc.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -744,7 +839,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	/**
 	 * JDBC 2.0 Insert the contents of the insert row into the result set and
 	 * the database. Must be on the insert row when this method is called.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, if called when not on
 	 *                the insert row, or if all non-nullable columns in the
@@ -779,25 +874,25 @@ public class UpdatableResultSet extends ResultSetImpl {
 				this.inserter.setBytesNoEscapeNoQuotes(i + 1, newRow[i]);
 			}
 		}
-		
+
 		ResultSetRow resultSetRow = new ByteArrayRow(newRow);
-		
+
 		refreshRow(this.inserter, resultSetRow);
-		
+
 		this.rowData.addRow(resultSetRow);
 		resetInserter();
 	}
 
 	/**
 	 * JDBC 2.0
-	 * 
+	 *
 	 * <p>
 	 * Determine if the cursor is after the last row in the result set.
 	 * </p>
-	 * 
+	 *
 	 * @return true if after the last row, false otherwise. Returns false when
 	 *         the result set contains no rows.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
@@ -807,14 +902,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/**
 	 * JDBC 2.0
-	 * 
+	 *
 	 * <p>
 	 * Determine if the cursor is before the first row in the result set.
 	 * </p>
-	 * 
+	 *
 	 * @return true if before the first row, false otherwise. Returns false when
 	 *         the result set contains no rows.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
@@ -824,13 +919,13 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/**
 	 * JDBC 2.0
-	 * 
+	 *
 	 * <p>
 	 * Determine if the cursor is on the first row of the result set.
 	 * </p>
-	 * 
+	 *
 	 * @return true if on the first row, false otherwise.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
@@ -840,16 +935,16 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/**
 	 * JDBC 2.0
-	 * 
+	 *
 	 * <p>
 	 * Determine if the cursor is on the last row of the result set. Note:
 	 * Calling isLast() may be expensive since the JDBC driver might need to
 	 * fetch ahead one row in order to determine whether the current row is the
 	 * last row in the result set.
 	 * </p>
-	 * 
+	 *
 	 * @return true if on the last row, false otherwise.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
@@ -863,13 +958,13 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/**
 	 * JDBC 2.0
-	 * 
+	 *
 	 * <p>
 	 * Moves to the last row in the result set.
 	 * </p>
-	 * 
+	 *
 	 * @return true if on a valid row, false if no rows in the result set.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY.
@@ -881,7 +976,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	/**
 	 * JDBC 2.0 Move the cursor to the remembered cursor position, usually the
 	 * current row. Has no effect unless the cursor is on the insert row.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or the result set is
 	 *                not updatable
@@ -911,7 +1006,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * cursor is on the insert row. All of the columns in a result set must be
 	 * given a value each time this method is called before calling insertRow().
 	 * UpdateXXX()must be called before getXXX() on a column.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or the result set is
 	 *                not updatable
@@ -935,7 +1030,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 			if (this.populateInserterWithDefaultValues) {
 				extractDefaultValues();
 			}
-			
+
 			resetInserter();
 		} else {
 			resetInserter();
@@ -951,20 +1046,20 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 		for (int i = 0; i < numFields; i++) {
 			if (!this.populateInserterWithDefaultValues) {
-				this.inserter.setBytesNoEscapeNoQuotes(i + 1, 
+				this.inserter.setBytesNoEscapeNoQuotes(i + 1,
 						"DEFAULT".getBytes());
 				newRowData = null;
 			} else {
 				if (this.defaultColumnValue[i] != null) {
 					Field f = this.fields[i];
-	
+
 					switch (f.getMysqlType()) {
 					case MysqlDefs.FIELD_TYPE_DATE:
 					case MysqlDefs.FIELD_TYPE_DATETIME:
 					case MysqlDefs.FIELD_TYPE_NEWDATE:
 					case MysqlDefs.FIELD_TYPE_TIME:
 					case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-	
+
 						if (this.defaultColumnValue[i].length > 7
 								&& this.defaultColumnValue[i][0] == (byte) 'C'
 								&& this.defaultColumnValue[i][1] == (byte) 'U'
@@ -976,14 +1071,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 								&& this.defaultColumnValue[i][7] == (byte) '_') {
 							this.inserter.setBytesNoEscapeNoQuotes(i + 1,
 									this.defaultColumnValue[i]);
-	
+
 							break;
 						}
 					default:
 						this.inserter.setBytes(i + 1, this.defaultColumnValue[i],
 								false, false);
 					}
-	
+
 					// This value _could_ be changed from a getBytes(), so we
 					// need a copy....
 					byte[] defaultValueCopy = new byte[this.defaultColumnValue[i].length];
@@ -1006,14 +1101,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * A ResultSet is initially positioned before its first row, the first call
 	 * to next makes the first row the current row; the second call makes the
 	 * second row the current row, etc.
-	 * 
+	 *
 	 * <p>
 	 * If an input stream from the previous row is open, it is implicitly
 	 * closed. The ResultSet's warning chain is cleared when a new row is read
 	 * </p>
-	 * 
+	 *
 	 * @return true if the new current is valid; false if there are no more rows
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
@@ -1025,14 +1120,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * The prev method is not part of JDBC, but because of the architecture of
 	 * this driver it is possible to move both forward and backward within the
 	 * result set.
-	 * 
+	 *
 	 * <p>
 	 * If an input stream from the previous row is open, it is implicitly
 	 * closed. The ResultSet's warning chain is cleared when a new row is read
 	 * </p>
-	 * 
+	 *
 	 * @return true if the new current is valid; false if there are no more rows
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
@@ -1042,18 +1137,18 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/**
 	 * JDBC 2.0
-	 * 
+	 *
 	 * <p>
 	 * Moves to the previous row in the result set.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Note: previous() is not the same as relative(-1) since it makes sense to
 	 * call previous() when there is no current row.
 	 * </p>
-	 * 
+	 *
 	 * @return true if on a valid row, false if off the result set.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWAR_DONLY.
@@ -1064,10 +1159,10 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/**
 	 * Closes this ResultSet, releasing all resources.
-	 * 
+	 *
 	 * @param calledExplicitly
 	 *            was this called from close()?
-	 * 
+	 *
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
@@ -1075,7 +1170,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 		if (this.isClosed) {
 			return;
 		}
-		
+
 		SQLException sqlEx = null;
 
 		if (this.useUsageAdvisor) {
@@ -1150,7 +1245,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * calling updateXXX(), but before calling updateRow() then the updates made
 	 * to the row are lost. Calling refreshRow() frequently will likely slow
 	 * performance.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or if called when on
 	 *                the insert row.
@@ -1176,8 +1271,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 		refreshRow(this.updater, this.thisRow);
 	}
-	
-	private synchronized void refreshRow(PreparedStatement updateInsertStmt, 
+
+	private synchronized void refreshRow(PreparedStatement updateInsertStmt,
 			ResultSetRow rowToRefresh) throws SQLException {
 		if (this.refresher == null) {
 			if (this.refreshSQL == null) {
@@ -1268,26 +1363,26 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/**
 	 * JDBC 2.0
-	 * 
+	 *
 	 * <p>
 	 * Moves a relative number of rows, either positive or negative. Attempting
 	 * to move beyond the first/last row in the result set positions the cursor
 	 * before/after the the first/last row. Calling relative(0) is valid, but
 	 * does not change the cursor position.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Note: Calling relative(1) is different than calling next() since is makes
 	 * sense to call next() when there is no current row, for example, when the
 	 * cursor is positioned before the first row or after the last row of the
 	 * result set.
 	 * </p>
-	 * 
+	 *
 	 * @param rows
 	 *            DOCUMENT ME!
-	 * 
+	 *
 	 * @return true if on a row, false otherwise.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or there is no current
 	 *                row, or result set type is TYPE_FORWARD_ONLY.
@@ -1309,14 +1404,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * a visible "hole" in a result set. This method can be used to detect holes
 	 * in a result set. The value returned depends on whether or not the result
 	 * set can detect deletions.
-	 * 
+	 *
 	 * @return true if deleted and deletes are detected
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 * @throws NotImplemented
 	 *             DOCUMENT ME!
-	 * 
+	 *
 	 * @see DatabaseMetaData#deletesAreDetected
 	 */
 	public synchronized boolean rowDeleted() throws SQLException {
@@ -1327,14 +1422,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * JDBC 2.0 Determine if the current row has been inserted. The value
 	 * returned depends on whether or not the result set can detect visible
 	 * inserts.
-	 * 
+	 *
 	 * @return true if inserted and inserts are detected
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 * @throws NotImplemented
 	 *             DOCUMENT ME!
-	 * 
+	 *
 	 * @see DatabaseMetaData#insertsAreDetected
 	 */
 	public synchronized boolean rowInserted() throws SQLException {
@@ -1344,15 +1439,15 @@ public class UpdatableResultSet extends ResultSetImpl {
 	/**
 	 * JDBC 2.0 Determine if the current row has been updated. The value
 	 * returned depends on whether or not the result set can detect updates.
-	 * 
+	 *
 	 * @return true if the row has been visibly updated by the owner or another,
 	 *         and updates are detected
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 * @throws NotImplemented
 	 *             DOCUMENT ME!
-	 * 
+	 *
 	 * @see DatabaseMetaData#updatesAreDetected
 	 */
 	public synchronized boolean rowUpdated() throws SQLException {
@@ -1361,7 +1456,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	/**
 	 * Sets the concurrency type of this result set
-	 * 
+	 *
 	 * @param concurrencyFlag
 	 *            the type of concurrency that this ResultSet should support.
 	 */
@@ -1386,7 +1481,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	/**
 	 * Reset UPDATE prepared statement to value in current row. This_Row MUST
 	 * point to current, valid row.
-	 * 
+	 *
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
@@ -1439,14 +1534,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * insert row. The updateXXX() methods do not update the underlying
 	 * database, instead the updateRow() or insertRow() methods are called to
 	 * update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
 	 * @param length
 	 *            the length of the stream
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1471,14 +1566,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * insert row. The updateXXX() methods do not update the underlying
 	 * database, instead the updateRow() or insertRow() methods are called to
 	 * update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
 	 * @param length
 	 *            of the stream
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1492,12 +1587,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1526,12 +1621,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1546,14 +1641,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * insert row. The updateXXX() methods do not update the underlying
 	 * database, instead the updateRow() or insertRow() methods are called to
 	 * update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
 	 * @param length
 	 *            the length of the stream
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1583,14 +1678,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * insert row. The updateXXX() methods do not update the underlying
 	 * database, instead the updateRow() or insertRow() methods are called to
 	 * update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
 	 * @param length
 	 *            of the stream
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1635,12 +1730,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1666,12 +1761,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1685,12 +1780,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1716,12 +1811,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1735,12 +1830,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1765,12 +1860,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1785,14 +1880,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * insert row. The updateXXX() methods do not update the underlying
 	 * database, instead the updateRow() or insertRow() methods are called to
 	 * update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
 	 * @param length
 	 *            the length of the stream
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1822,14 +1917,14 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * insert row. The updateXXX() methods do not update the underlying
 	 * database, instead the updateRow() or insertRow() methods are called to
 	 * update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param reader
 	 *            the new column value
 	 * @param length
 	 *            of the stream
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1856,12 +1951,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1887,12 +1982,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1906,12 +2001,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1937,12 +2032,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1956,12 +2051,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -1987,12 +2082,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2006,12 +2101,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2037,12 +2132,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2056,12 +2151,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2087,12 +2182,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2106,10 +2201,10 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2133,10 +2228,10 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2149,12 +2244,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2180,7 +2275,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
@@ -2189,7 +2284,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 *            For java.sql.Types.DECIMAL or java.sql.Types.NUMERIC types
 	 *            this is the number of digits after the decimal. For all other
 	 *            types this value will be ignored.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2215,12 +2310,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2234,7 +2329,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
@@ -2243,7 +2338,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 *            For java.sql.Types.DECIMAL or java.sql.Types.NUMERIC types
 	 *            this is the number of digits after the decimal. For all other
 	 *            types this value will be ignored.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2255,7 +2350,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	/**
 	 * JDBC 2.0 Update the underlying database with the new contents of the
 	 * current row. Cannot be called when on the insert row.
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs, or if called when on
 	 *                the insert row
@@ -2284,12 +2379,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2315,12 +2410,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2334,19 +2429,19 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
 	public synchronized void updateString(int columnIndex, String x)
 			throws SQLException {
 		checkClosed();
-		
+
 		if (!this.onInsertRow) {
 			if (!this.doingUpdates) {
 				this.doingUpdates = true;
@@ -2377,12 +2472,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2396,12 +2491,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2427,12 +2522,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * used to update column values in the current row, or the insert row. The
 	 * updateXXX() methods do not update the underlying database, instead the
 	 * updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2446,12 +2541,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnIndex
 	 *            the first column is 1, the second is 2, ...
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
@@ -2477,12 +2572,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * are used to update column values in the current row, or the insert row.
 	 * The updateXXX() methods do not update the underlying database, instead
 	 * the updateRow() or insertRow() methods are called to update the database.
-	 * 
+	 *
 	 * @param columnName
 	 *            the name of the column
 	 * @param x
 	 *            the new column value
-	 * 
+	 *
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
