@@ -196,6 +196,9 @@ nn-nn-07 - Version 5.0.8
                                           specifically to work around dubious metadata 
                                           returned by the server for GROUP BY clauses?
 
+    - Fixed BUG#29106 - Connection checker for JBoss didn't use same method parameters
+      via reflection, causing connections to always seem "bad".
+      
 07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for

@@ -77,7 +77,7 @@ public final class MysqlValidConnectionChecker implements
 		if (conn instanceof com.mysql.jdbc.Connection) {
 			if (pingMethod != null) {
 				try {
-					this.pingMethod.invoke(conn, NO_ARGS_OBJECT_ARRAY);
+					this.pingMethod.invoke(conn, null);
 	
 					return null;
 				} catch (Exception ex) {
@@ -91,7 +91,7 @@ public final class MysqlValidConnectionChecker implements
 		} else if (conn instanceof com.mysql.jdbc.jdbc2.optional.ConnectionWrapper) {
 			if (pingMethodWrapped != null) {
 				try {
-					this.pingMethodWrapped.invoke(conn, NO_ARGS_OBJECT_ARRAY);
+					this.pingMethodWrapped.invoke(conn, null);
 	
 					return null;
 				} catch (Exception ex) {
