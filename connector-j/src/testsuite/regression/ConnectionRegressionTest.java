@@ -312,7 +312,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 		boolean isReadOnly = reconnectableConn.isReadOnly();
 
-		Connection killConn = getConnectionWithProps((String)null);
+		Connection killConn = getConnectionWithProps((Properties)null);
 
 		killConn.createStatement().executeUpdate("KILL " + connectionId);
 		Thread.sleep(2000);
@@ -1878,7 +1878,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	public void testBug25514() throws Exception {
 
 		for (int i = 0; i < 10; i++) {
-			getConnectionWithProps((String)null).close();
+			getConnectionWithProps((Properties)null).close();
 		}
 		
 		ThreadGroup root = Thread.currentThread().getThreadGroup().getParent();
@@ -2052,7 +2052,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			loggedConn.getTransactionIsolation();
 			
 			if (versionMeetsMinimum(4, 0, 3)) {
-				assertEquals(-1, logBuf.indexOf("SHOW VARIABLES LIKE 'tx_isolation'"));
+				assertEquals(-1, logBuf.toString().indexOf("SHOW VARIABLES LIKE 'tx_isolation'"));
 			}
 		} finally {
 			if (loggedConn != null) {

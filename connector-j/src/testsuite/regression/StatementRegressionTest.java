@@ -440,7 +440,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		Statement stmt2 = null;
 
 		try {
-			conn2 = getConnectionWithProps((String)null);
+			conn2 = getConnectionWithProps((Properties)null);
 			stmt2 = conn2.createStatement();
 
 			conn2.close();
@@ -2757,7 +2757,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
 	public void testServerPrepStmtDeadlock() throws Exception {
 
-		Connection c = getConnectionWithProps((String)null);
+		Connection c = getConnectionWithProps((Properties)null);
 
 		Thread testThread1 = new PrepareThread(c);
 		Thread testThread2 = new PrepareThread(c);
@@ -4027,6 +4027,52 @@ public class StatementRegressionTest extends BaseTestCase {
 			assertEquals(3, this.rs.getInt(3));
 		} finally {
 			closeMemberJDBCResources();
+		}
+	}
+	
+	/**
+	 * Tests fix for BUG#30550 - executeBatch() on an empty
+	 * batch when there are no elements in the batch causes a
+	 * divide-by-zero error when rewriting is enabled.
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug30550() throws Exception {
+		createTable("testBug30550", "(field1 int)");
+
+		Connection rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true");
+		PreparedStatement batchPStmt = null;
+		Statement batchStmt = null;
+		
+		try {
+			batchStmt = rewriteConn.createStatement();
+			assertEquals(0, batchStmt.executeBatch().length);
+			
+			batchStmt.addBatch("INSERT INTO testBug30550 VALUES (1)");
+			int[] counts = batchStmt.executeBatch();
+			assertEquals(1, counts.length);
+			assertEquals(1, counts[0]);
+			assertEquals(0, batchStmt.executeBatch().length);
+			
+			batchPStmt = rewriteConn.prepareStatement("INSERT INTO testBug30550 VALUES (?)");
+			batchPStmt.setInt(1, 1);
+			assertEquals(0, batchPStmt.executeBatch().length);
+			batchPStmt.addBatch();
+			counts = batchPStmt.executeBatch();
+			assertEquals(1, counts.length);
+			assertEquals(1, counts[0]);
+			assertEquals(0, batchPStmt.executeBatch().length);
+		} finally {
+			if (batchPStmt != null) {
+				batchPStmt.close();
+	}
+			
+			if (batchStmt != null) {
+				batchStmt.close();
+}
+			if (rewriteConn != null) {
+				rewriteConn.close();
+			}
 		}
 	}
 }

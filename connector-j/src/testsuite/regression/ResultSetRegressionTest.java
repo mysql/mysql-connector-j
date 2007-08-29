@@ -25,6 +25,7 @@
 package testsuite.regression;
 
 import java.io.Reader;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -4353,6 +4354,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			checkUpdatabilityMessage(sqlEx, 
 					messageToCheck);
 		}
+
+		this.rs.close();
 	}
 	
 	private void checkUpdatabilityMessage(SQLException sqlEx,
@@ -4367,5 +4370,31 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		assertTrue("Didn't find required message component '"
 				+ localizedMessage + "', instead found:\n\n" + message,
 				message.indexOf(localizedMessage) != -1);
+	}
+
+	public void testBug24886() throws Exception {
+	    Properties props = new Properties();
+	    props.setProperty("blobsAreStrings", "true");
+
+	    Connection noBlobConn = getConnectionWithProps(props);
+
+	    createTable("testBug24886", "(sepallength double,"
+	            + "sepalwidth double,"
+	            + "petallength double,"
+	            + "petalwidth double,"
+	            + "Class mediumtext, "
+	            + "fy TIMESTAMP)");
+
+	    noBlobConn.createStatement().executeUpdate("INSERT INTO testBug24886 VALUES (1,2,3,4,'1234', now()),(5,6,7,8,'12345678', now())");
+	    this.rs = noBlobConn.createStatement().executeQuery("SELECT concat(Class,petallength), COUNT(*) FROM `testBug24886` GROUP BY `concat(Class,petallength)`");
+	    this.rs.next();
+	    assertEquals("java.lang.String", this.rs.getObject(1).getClass().getName());
+
+	    props.clear();
+	    props.setProperty("functionsNeverReturnBlobs", "true");
+	    noBlobConn = getConnectionWithProps(props);
+	    this.rs = noBlobConn.createStatement().executeQuery("SELECT concat(Class,petallength), COUNT(*) FROM `testBug24886` GROUP BY `concat(Class,petallength)`");
+        this.rs.next();
+        assertEquals("java.lang.String", this.rs.getObject(1).getClass().getName());
 	}
 }

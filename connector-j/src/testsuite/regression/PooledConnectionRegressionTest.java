@@ -174,9 +174,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 	/**
 	 * After the test is run.
 	 */
-	public void tearDown() throws Exception {
-		super.tearDown();
-		
+	public void tearDown() {
 		this.cpds = null;
 	}
 

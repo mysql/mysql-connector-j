@@ -604,7 +604,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				.executeUpdate("DROP PROCEDURE IF EXISTS testBug12417");
 				this.stmt.executeUpdate("CREATE PROCEDURE testBug12417()\n"
 						+ "BEGIN\n" + "SELECT 1;" + "end\n");
-				ucCatalogConn = getConnectionWithProps((String)null);
+				ucCatalogConn = getConnectionWithProps((Properties)null);
 				ucCatalogConn.setCatalog(this.conn.getCatalog().toUpperCase());
 				ucCatalogConn.prepareCall("{call testBug12417()}");
 			} finally {
@@ -852,7 +852,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				assertEquals(100, rs.getInt(2));
 			}
 
-			assertEquals(-1, this.pstmt.getClass().getName().indexOf("Server"));
+			assertEquals(this.pstmt.getClass().getName(),
+					com.mysql.jdbc.PreparedStatement.class.getName());
 
 		} finally {
 			closeMemberJDBCResources();
@@ -980,6 +981,10 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 	public void testBug25715() throws Exception {
 		if (!serverSupportsStoredProcedures()) {
 			return; // no stored procs
+		}
+		
+		if (isRunningOnJdk131()) {
+			return; // no such method to test
 		}
 
 		createProcedure("spbug25715", "(INOUT mblob MEDIUMBLOB)" + "BEGIN"
