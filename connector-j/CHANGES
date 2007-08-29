@@ -184,7 +184,18 @@ nn-nn-07 - Version 5.0.8
     - Fixed BUG#30550, executeBatch() would fail with an ArithmeticException
       and/or NullPointerException when the batch had zero members and
       "rewriteBatchedStatements" was set to "true" for the connection.
-      
+    
+    - Added two configuration parameters (both default to "false")
+    
+            * blobsAreStrings  - Should the driver always treat BLOBs as Strings 
+                                 specifically to work around dubious metadata returned 
+                                 by the server for GROUP BY clauses?
+            
+            * functionsNeverReturnBlobs - Should the driver always treat data from 
+                                          functions returning BLOBs as Strings - 
+                                          specifically to work around dubious metadata 
+                                          returned by the server for GROUP BY clauses?
+
 07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for

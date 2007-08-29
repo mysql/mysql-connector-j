@@ -2,12 +2,12 @@
  Copyright (C) 2002-2004 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
- it under the terms of version 2 of the GNU General Public License as 
+ it under the terms of version 2 of the GNU General Public License as
  published by the Free Software Foundation.
 
- There are special exceptions to the terms and conditions of the GPL 
- as it is applied to this software. View the full text of the 
- exception in file EXCEPTIONS-CONNECTOR-J in the directory of this 
+ There are special exceptions to the terms and conditions of the GPL
+ as it is applied to this software. View the full text of the
+ exception in file EXCEPTIONS-CONNECTOR-J in the directory of this
  software distribution.
 
  This program is distributed in the hope that it will be useful,
@@ -31,7 +31,7 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * Field is a class used to describe fields in a ResultSet
- * 
+ *
  * @author Mark Matthews
  * @version $Id$
  */
@@ -106,7 +106,7 @@ public class Field {
 	private int tableNameLength;
 
 	private int tableNameStart;
-	
+
 	private boolean useOldNameMetadata = false;
 
 	private boolean isSingleBit;
@@ -151,14 +151,21 @@ public class Field {
 		// charset
 		this.charsetIndex = charsetIndex;
 
-		
+
 		// Map MySqlTypes to java.sql Types
 		this.sqlType = MysqlDefs.mysqlToJavaType(this.mysqlType);
-		
+
+        checkForImplicitTemporaryTable();
 		// Re-map to 'real' blob type, if we're a BLOB
 
 		if (this.mysqlType == MysqlDefs.FIELD_TYPE_BLOB) {
-			if (this.charsetIndex == 63 || 
+		    boolean isFromFunction = this.originalTableNameLength == 0;
+
+		    if (this.connection != null && this.connection.getBlobsAreStrings() ||
+		            (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
+		        this.sqlType = Types.VARCHAR;
+		        this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
+		    } else if (this.charsetIndex == 63 ||
 					!this.connection.versionMeetsMinimum(4, 1, 0)) {
 				if (this.connection.getUseBlobToStoreUTF8OutsideBMP() 
 						&& shouldSetupForUtf8StringInBlob()) {
@@ -186,28 +193,28 @@ public class Field {
 			}
 
 		}
-		
+
 		if (!isNativeNumericType() && !isNativeDateTimeType()) {
 			this.charsetName = this.connection
 				.getCharsetNameForIndex(this.charsetIndex);
 
-			
+
 			// Handle VARBINARY/BINARY (server doesn't have a different type
 			// for this
-	
+
 			boolean isBinary = isBinary();
-	
+
 			if (this.connection.versionMeetsMinimum(4, 1, 0) &&
-					this.mysqlType == MysqlDefs.FIELD_TYPE_VAR_STRING && 
+					this.mysqlType == MysqlDefs.FIELD_TYPE_VAR_STRING &&
 					isBinary &&
 					this.charsetIndex == 63) {
 				if (this.isOpaqueBinary()) {
 					this.sqlType = Types.VARBINARY;
 				}
-			} 
-			
+			}
+
 			if (this.connection.versionMeetsMinimum(4, 1, 0) &&
-					this.mysqlType == MysqlDefs.FIELD_TYPE_STRING && 
+					this.mysqlType == MysqlDefs.FIELD_TYPE_STRING &&
 					isBinary && this.charsetIndex == 63) {
 				//
 				// Okay, this is a hack, but there's currently no way
@@ -215,22 +222,22 @@ public class Field {
 				// from the "BINARY" column type, other than looking
 				// at the original column name.
 				//
-				
-				if (isOpaqueBinary()) {
+
+				if (isOpaqueBinary() && !this.connection.getBlobsAreStrings()) {
 					this.sqlType = Types.BINARY;
 				}
 			}
-	
-			
-	
+
+
+
 			if (this.mysqlType == MysqlDefs.FIELD_TYPE_BIT) {
 				this.isSingleBit = (this.length == 0);
-				
+
 				if (this.connection != null && (this.connection.versionMeetsMinimum(5, 0, 21) ||
 						this.connection.versionMeetsMinimum(5, 1, 10)) && this.length == 1) {
 					this.isSingleBit = true;
 				}
-				
+
 				if (this.isSingleBit) {
 					this.sqlType = Types.BIT;
 				} else {
@@ -240,7 +247,7 @@ public class Field {
 					isBinary = true;
 				}
 			}
-	
+
 			//
 			// Handle TEXT type (special case), Fix proposed by Peter McKeown
 			//
@@ -249,8 +256,6 @@ public class Field {
 			} else if ((this.sqlType == java.sql.Types.VARBINARY) && !isBinary) {
 				this.sqlType = java.sql.Types.VARCHAR;
 			}
-			
-			checkForImplicitTemporaryTable();
 		} else {
 			this.charsetName = "US-ASCII";
 		}
@@ -404,7 +409,7 @@ public class Field {
 
 	/**
 	 * Returns the character set (if known) for this field.
-	 * 
+	 *
 	 * @return the character set
 	 */
 	public String getCharacterSet() throws SQLException {
@@ -418,17 +423,17 @@ public class Field {
 					if (this.connection.getUseDynamicCharsetInfo()) {
 						java.sql.DatabaseMetaData dbmd = this.connection
 								.getMetaData();
-	
+
 						String quotedIdStr = dbmd.getIdentifierQuoteString();
-	
+
 						if (" ".equals(quotedIdStr)) { //$NON-NLS-1$
 							quotedIdStr = ""; //$NON-NLS-1$
 						}
-	
+
 						String csCatalogName = getDatabaseName();
 						String csTableName = getOriginalTableName();
 						String csColumnName = getOriginalName();
-	
+
 						if (csCatalogName != null && csCatalogName.length() != 0
 								&& csTableName != null && csTableName.length() != 0
 								&& csColumnName != null
@@ -444,22 +449,22 @@ public class Field {
 							queryBuf.append(quotedIdStr);
 							queryBuf.append(csTableName);
 							queryBuf.append(quotedIdStr);
-	
+
 							java.sql.Statement collationStmt = null;
 							java.sql.ResultSet collationRs = null;
-	
+
 							try {
 								collationStmt = this.connection.createStatement();
-	
+
 								collationRs = collationStmt.executeQuery(queryBuf
 										.toString());
-	
+
 								while (collationRs.next()) {
 									if (csColumnName.equals(collationRs
 											.getString("Field"))) { //$NON-NLS-1$
 										this.collationName = collationRs
 												.getString("Collation"); //$NON-NLS-1$
-	
+
 										break;
 									}
 								}
@@ -468,7 +473,7 @@ public class Field {
 									collationRs.close();
 									collationRs = null;
 								}
-	
+
 								if (collationStmt != null) {
 									collationStmt.close();
 									collationStmt = null;
@@ -491,7 +496,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public String getDatabaseName() throws SQLException {
@@ -510,7 +515,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public String getFullName() throws SQLException {
@@ -531,7 +536,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public String getFullOriginalName() throws SQLException {
@@ -559,7 +564,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public long getLength() {
@@ -570,13 +575,13 @@ public class Field {
 		if (this.maxBytesPerChar == 0) {
 			this.maxBytesPerChar = this.connection.getMaxBytesPerChar(getCharacterSet());
 		}
-		
+
 		return this.maxBytesPerChar;
 	}
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public int getMysqlType() {
@@ -585,7 +590,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public String getName() throws SQLException {
@@ -600,18 +605,18 @@ public class Field {
 		if (this.useOldNameMetadata) {
 			return getName();
 		}
-		
-		if (this.connection != null && 
+
+		if (this.connection != null &&
 				this.connection.versionMeetsMinimum(4, 1, 0)) {
 			return getOriginalName();
 		}
-		
+
 		return getName();
 	}
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public String getOriginalName() throws SQLException {
@@ -627,7 +632,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public String getOriginalTableName() throws SQLException {
@@ -644,9 +649,9 @@ public class Field {
 	/**
 	 * Returns amount of correction that should be applied to the precision
 	 * value.
-	 * 
+	 *
 	 * Different versions of MySQL report different precision values.
-	 * 
+	 *
 	 * @return the amount to adjust precision value by.
 	 */
 	public int getPrecisionAdjustFactor() {
@@ -655,7 +660,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public int getSQLType() {
@@ -733,7 +738,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public String getTable() throws SQLException {
@@ -742,7 +747,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public String getTableName() throws SQLException {
@@ -758,13 +763,13 @@ public class Field {
 		if (this.connection.versionMeetsMinimum(4, 1, 0)) {
 			return getOriginalTableName();
 		}
-			
+
 		return getTableName(); // pre-4.1, no aliases returned
 	}
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public boolean isAutoIncrement() {
@@ -773,7 +778,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public boolean isBinary() {
@@ -782,7 +787,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public boolean isBlob() {
@@ -791,7 +796,7 @@ public class Field {
 
 	/**
 	 * Is this field owned by a server-created temporary table?
-	 * 
+	 *
 	 * @return
 	 */
 	private boolean isImplicitTemporaryTable() {
@@ -800,7 +805,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public boolean isMultipleKey() {
@@ -839,7 +844,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public boolean isPrimaryKey() {
@@ -848,7 +853,7 @@ public class Field {
 
 	/**
 	 * Is this field _definitely_ not writable?
-	 * 
+	 *
 	 * @return true if this field can not be written to in an INSERT/UPDATE
 	 *         statement.
 	 */
@@ -866,7 +871,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public boolean isUniqueKey() {
@@ -875,7 +880,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public boolean isUnsigned() {
@@ -884,7 +889,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @return DOCUMENT ME!
 	 */
 	public boolean isZeroFill() {
@@ -907,14 +912,14 @@ public class Field {
 			this.mysqlType = MysqlDefs.FIELD_TYPE_LONG_BLOB;
 		}
 	}
-	
+
 	private boolean isNativeNumericType() {
-		return ((this.mysqlType >= MysqlDefs.FIELD_TYPE_TINY && 
+		return ((this.mysqlType >= MysqlDefs.FIELD_TYPE_TINY &&
 					this.mysqlType <= MysqlDefs.FIELD_TYPE_DOUBLE) ||
 					this.mysqlType == MysqlDefs.FIELD_TYPE_LONGLONG ||
 					this.mysqlType == MysqlDefs.FIELD_TYPE_YEAR);
 	}
-	
+
 	private boolean isNativeDateTimeType() {
 		return (this.mysqlType == MysqlDefs.FIELD_TYPE_DATE ||
 				this.mysqlType == MysqlDefs.FIELD_TYPE_NEWDATE ||
@@ -925,7 +930,7 @@ public class Field {
 
 	/**
 	 * DOCUMENT ME!
-	 * 
+	 *
 	 * @param conn
 	 *            DOCUMENT ME!
 	 */

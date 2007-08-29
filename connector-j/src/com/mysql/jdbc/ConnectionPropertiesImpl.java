@@ -754,7 +754,19 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Integer.MAX_VALUE,
 			Messages.getString("ConnectionProperties.blobSendChunkSize"), //$NON-NLS-1$
 			"3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+	
+	private BooleanConnectionProperty blobsAreStrings = new BooleanConnectionProperty(
+            "blobsAreStrings", false,
+            "Should the driver always treat BLOBs as Strings - specifically to work around dubious metadata "
+            + "returned by the server for GROUP BY clauses?",
+            "5.0.8", MISC_CATEGORY, Integer.MIN_VALUE);
 
+	private BooleanConnectionProperty functionsNeverReturnBlobs = new BooleanConnectionProperty(
+            "functionsNeverReturnBlobs", false,
+            "Should the driver always treat data from functions returning BLOBs as Strings - specifically to work around dubious metadata "
+            + "returned by the server for GROUP BY clauses?",
+            "5.0.8", MISC_CATEGORY, Integer.MIN_VALUE);
+			
 	private BooleanConnectionProperty cacheCallableStatements = new BooleanConnectionProperty(
 			"cacheCallableStmts", false, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.cacheCallableStatements"), //$NON-NLS-1$
@@ -4224,4 +4236,20 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	public void setIncludeInnodbStatusInDeadlockExceptions(boolean flag) {
 		this.includeInnodbStatusInDeadlockExceptions.setValue(flag);
 	}
+	
+	public boolean getBlobsAreStrings() {
+        return this.blobsAreStrings.getValueAsBoolean();
+    }
+
+	public void setBlobsAreStrings(boolean flag) {
+        this.blobsAreStrings.setValue(flag);
+    }
+
+    public boolean getFunctionsNeverReturnBlobs() {
+        return this.functionsNeverReturnBlobs.getValueAsBoolean();
+    }
+
+    public void setFunctionsNeverReturnBlobs(boolean flag) {
+        this.functionsNeverReturnBlobs.setValue(flag);
+    }
 }

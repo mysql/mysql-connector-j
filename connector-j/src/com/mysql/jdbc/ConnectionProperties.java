@@ -1558,4 +1558,12 @@ public interface ConnectionProperties {
 	public abstract boolean getIncludeInnodbStatusInDeadlockExceptions();
 	
 	public abstract void setIncludeInnodbStatusInDeadlockExceptions(boolean flag);
+	
+	public abstract boolean getBlobsAreStrings();
+
+	public abstract void setBlobsAreStrings(boolean flag);
+
+    public abstract boolean getFunctionsNeverReturnBlobs();
+
+    public abstract void setFunctionsNeverReturnBlobs(boolean flag);
 }
