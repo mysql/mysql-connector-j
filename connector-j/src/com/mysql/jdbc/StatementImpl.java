@@ -894,6 +894,10 @@ public class StatementImpl implements Statement {
 		}
 
 		synchronized (locallyScopedConn.getMutex()) {
+			if (this.batchedArgs == null || this.batchedArgs.size() == 0) {
+                return new int[0];
+            }
+			
 			try {
 				this.retrieveGeneratedKeys = true;
 

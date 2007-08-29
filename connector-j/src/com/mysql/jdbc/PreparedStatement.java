@@ -1043,6 +1043,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 
 		synchronized (this.connection.getMutex()) {
+			if (this.batchedArgs == null || this.batchedArgs.size() == 0) {
+                return new int[0];
+            }
+			
 			try {
 				clearWarnings();
 
