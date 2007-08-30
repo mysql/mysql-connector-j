@@ -205,6 +205,10 @@ nn-nn-07 - Version 5.0.8
       subqueries and functions were indistinguishable from each other, 
       leading to type-related bugs.
 
+    - Fixed BUG#28972, DatabaseMetaData.getTypeInfo() for the types DECIMAL
+      and NUMERIC will return a precision of 254 for server versions older than
+      5.0.3, 64 for versions 5.0.3-5.0.5 and 65 for versions newer than 5.0.5.
+       
 07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for

@@ -5705,6 +5705,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
 		tuples.add(new ByteArrayRow(rowVal));
 
+		// The maximum number of digits for DECIMAL or NUMERIC is 65 (64 from MySQL 5.0.3 to 5.0.5). 
+		
+		int decimalPrecision = 254;
+		
+		if (this.conn.versionMeetsMinimum(5,0,3)) {
+			if (this.conn.versionMeetsMinimum(5, 0, 6)) {
+				decimalPrecision = 65;
+			} else {
+				decimalPrecision = 64;
+			}
+		}
+		
 		/*
 		 * MySQL Type: NUMERIC (silently converted to DECIMAL) JDBC Type:
 		 * NUMERIC
@@ -5714,7 +5726,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[1] = Integer.toString(java.sql.Types.NUMERIC).getBytes();
 
 		// JDBC Data type
-		rowVal[2] = s2b("17"); // Precision
+		rowVal[2] = s2b(String.valueOf(decimalPrecision)); // Precision
 		rowVal[3] = s2b(""); // Literal Prefix
 		rowVal[4] = s2b(""); // Literal Suffix
 		rowVal[5] = s2b("[(M[,D])] [ZEROFILL]"); // Create Params
@@ -5746,7 +5758,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[1] = Integer.toString(java.sql.Types.DECIMAL).getBytes();
 
 		// JDBC Data type
-		rowVal[2] = s2b("17"); // Precision
+		rowVal[2] = s2b(String.valueOf(decimalPrecision)); // Precision
 		rowVal[3] = s2b(""); // Literal Prefix
 		rowVal[4] = s2b(""); // Literal Suffix
 		rowVal[5] = s2b("[(M[,D])] [ZEROFILL]"); // Create Params
