@@ -827,7 +827,8 @@ public class Field {
 				&& (this.getMysqlType() == MysqlDefs.FIELD_TYPE_STRING ||
 				this.getMysqlType() == MysqlDefs.FIELD_TYPE_VAR_STRING)) {
 
-			if (this.originalTableNameLength == 0) {
+			if (this.originalTableNameLength == 0 && (
+					this.connection != null && !this.connection.versionMeetsMinimum(5, 0, 25))) {
 				return false; // Probably from function
 			}
 

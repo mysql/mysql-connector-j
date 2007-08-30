@@ -4397,4 +4397,47 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs.next();
         assertEquals("java.lang.String", this.rs.getObject(1).getClass().getName());
 	}
+	
+	/**
+	 * Tests fix for BUG#30664. Note that this fix only works
+	 * for MySQL server 5.0.25 and newer, since earlier versions
+	 * didn't consistently return correct metadata for functions,
+	 * and thus results from subqueries and functions were indistinguishable
+	 * from each other, leading to type-related bugs.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug30664() throws Exception {
+		if (!versionMeetsMinimum(5, 0, 25)) {
+			return;
+		}
+		
+		createTable("testBug30664_1", "(id int)");
+		createTable("testBug30664_2", "(id int, binaryvalue varbinary(10))");
+
+		try {
+			this.stmt
+					.executeUpdate("insert into testBug30664_1 values (1),(2),(3)");
+			this.stmt
+					.executeUpdate("insert into testBug30664_2 values (1,'¢‚¤'),(2,'‚¢‚¤'),(3,' ‚¢¤')");
+			this.rs = this.stmt
+					.executeQuery("select testBug30664_1.id, (select testBug30664_2.binaryvalue from testBug30664_2 where testBug30664_2.id=testBug30664_1.id) as value from testBug30664_1");
+			ResultSetMetaData tblMD = this.rs.getMetaData();
+
+			for (int i = 1; i < tblMD.getColumnCount() + 1; i++) {
+				switch (i) {
+				case 1:
+					assertEquals("INTEGER", tblMD.getColumnTypeName(i)
+							.toUpperCase());
+					break;
+				case 2:
+					assertEquals("VARBINARY", tblMD.getColumnTypeName(i)
+							.toUpperCase());
+					break;
+				}
+			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}	
 }
