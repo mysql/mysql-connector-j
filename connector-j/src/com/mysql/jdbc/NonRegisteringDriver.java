@@ -321,7 +321,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		LoadBalancingConnectionProxy proxyBal = new LoadBalancingConnectionProxy(
 				hostList, parsedProps);
 
-		return (Connection) java.lang.reflect.Proxy.newProxyInstance(this
+		return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this
 				.getClass().getClassLoader(),
 				new Class[] { java.sql.Connection.class }, proxyBal);
 	}

@@ -2159,4 +2159,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	public void testBug29852() throws Exception {
+    	int indexOfHostStart = dbUrl.indexOf("://") + 3;
+    	int indexOfHostEnd = dbUrl.indexOf("/", indexOfHostStart);
+    	
+    	String backHalf = dbUrl.substring(indexOfHostStart, indexOfHostEnd);
+    	
+    	if (backHalf.length() == 0) {
+    		backHalf = "localhost:3306";
+    	}
+    	
+    	String dbAndConfigs = dbUrl.substring(indexOfHostEnd);
+    	
+    	Connection lbConn = DriverManager.getConnection("jdbc:mysql:loadbalance://" + backHalf + "," + backHalf + dbAndConfigs);
+    	assertTrue(!lbConn.getClass().getName().startsWith("com.mysql.jdbc"));
+    	lbConn.close();
+    }
 }

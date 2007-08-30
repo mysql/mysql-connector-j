@@ -318,7 +318,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 		if ("close".equals(methodName)) {
 			synchronized (this.liveConnections) {
 				// close all underlying connections
-				Iterator allConnections = this.liveConnections.entrySet()
+				Iterator allConnections = this.liveConnections.values()
 						.iterator();
 
 				while (allConnections.hasNext()) {

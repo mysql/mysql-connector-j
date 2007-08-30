@@ -199,16 +199,19 @@ nn-nn-07 - Version 5.0.8
     - Fixed BUG#29106 - Connection checker for JBoss didn't use same method parameters
       via reflection, causing connections to always seem "bad".
       
-    - Fixed BUG#30664. Note that this fix only works for MySQL server 
+    - Fixed BUG#30664 - Note that this fix only works for MySQL server 
       versions 5.0.25 and newer, since earlier versions didn't consistently 
       return correct metadata for functions, and thus results from 
       subqueries and functions were indistinguishable from each other, 
       leading to type-related bugs.
 
-    - Fixed BUG#28972, DatabaseMetaData.getTypeInfo() for the types DECIMAL
+    - Fixed BUG#28972 - DatabaseMetaData.getTypeInfo() for the types DECIMAL
       and NUMERIC will return a precision of 254 for server versions older than
       5.0.3, 64 for versions 5.0.3-5.0.5 and 65 for versions newer than 5.0.5.
-       
+    
+    - Fixed BUG#29852 - Closing a load-balanced connection would cause a
+      ClassCastException.
+        
 07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for
