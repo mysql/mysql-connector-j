@@ -72,6 +72,8 @@ import com.mysql.jdbc.util.LRUCache;
  */
 public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		Connection {
+	private static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
+	
 	/**
 	 * Used as a key for caching callable statements which (may) depend on
 	 * current catalog...In 5.0.x, they don't (currently), but stored procedure
@@ -1732,19 +1734,35 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				// if the user hasn't 'forced' a result-set character set
 				//
 
+				String onServer = null;
+				boolean isNullOnServer = false;
+				
+				if (this.serverVariables != null) {
+					onServer = (String)this.serverVariables.get("character_set_results");
+					
+					isNullOnServer = onServer == null || "NULL".equalsIgnoreCase(onServer) || onServer.length() == 0;
+				}
+				
 				if (getCharacterSetResults() == null) {
 					
 					//
-					// Only send if needed
+					// Only send if needed, if we're caching server variables
+					// we -have- to send, because we don't know what it was
+					// before we cached them.
 					//
-					
-					if (this.serverVariables.get("character_set_results") != null) {
-					
+					if (!isNullOnServer) {
 						execSQL(null, "SET character_set_results = NULL", -1, null,
 								java.sql.ResultSet.TYPE_FORWARD_ONLY,
 								java.sql.ResultSet.CONCUR_READ_ONLY, false,
 								this.database, null, 
 								false);
+						if (!this.usingCachedConfig) {
+							this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, null);
+						}
+					} else {
+						if (!this.usingCachedConfig) {
+							this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
+						}
 					}
 				} else {
 					String charsetResults = getCharacterSetResults();
@@ -1775,6 +1793,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								java.sql.ResultSet.TYPE_FORWARD_ONLY,
 								java.sql.ResultSet.CONCUR_READ_ONLY, false,
 								this.database, null, false);
+						
+						if (!this.usingCachedConfig) {
+							this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, 
+								mysqlEncodingName);
+						}
+					} else {
+						if (!this.usingCachedConfig) {
+							this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);
+						}
 					}
 				}
 
@@ -3363,13 +3390,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		// out what character set metadata will be returned in,
 		// and then map that to a Java encoding name.
 		//
+		// We've already set it, and it might be different than what
+		// was originally on the server, which is why we use the
+		// "special" key to retrieve it
 		if (this.io.versionMeetsMinimum(4, 1, 0)) {
 			String characterSetResultsOnServerMysql = (String) this.serverVariables
-					.get("character_set_results");
+					.get(JDBC_LOCAL_CHARACTER_SET_RESULTS);
 
 			if (characterSetResultsOnServerMysql == null
 					|| StringUtils.startsWithIgnoreCaseAndWs(
-							characterSetResultsOnServerMysql, "NULL")) {
+							characterSetResultsOnServerMysql, "NULL")
+					|| characterSetResultsOnServerMysql.length() == 0) {
 				String defaultMetadataCharsetMysql = (String) this.serverVariables
 						.get("character_set_system");
 				String defaultMetadataCharset = null;
@@ -3589,6 +3620,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return this.isServerTzUTC;
 	}
 
+	private boolean usingCachedConfig = false;
+	
 	/**
 	 * Loads the result of 'SHOW VARIABLES' into the serverVariables field so
 	 * that the driver can configure itself.
@@ -3604,6 +3637,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 				if (cachedVariableMap != null) {
 					this.serverVariables = cachedVariableMap;
+					this.usingCachedConfig = true;
 
 					return;
 				}

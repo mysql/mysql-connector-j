@@ -211,7 +211,11 @@ nn-nn-07 - Version 5.0.8
     
     - Fixed BUG#29852 - Closing a load-balanced connection would cause a
       ClassCastException.
-        
+    
+    - Fixed BUG#27867 - Schema objects with identifiers other than
+      the connection character aren't retrieved correctly in 
+      ResultSetMetadata.  
+      
 07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for

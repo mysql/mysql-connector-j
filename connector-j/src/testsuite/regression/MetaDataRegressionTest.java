@@ -1951,4 +1951,29 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 		this.conn.prepareCall("{call testBug25624(?,?)}").close();
 	}
+	
+	/**
+	 * Tests fix for BUG#27867 - Schema objects with identifiers other than
+	 * the connection character aren't retrieved correctly in ResultSetMetadata.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug27867() throws Exception {
+		try {
+			String gbkColumnName = "\u00e4\u00b8\u00ad\u00e6\u2013\u2021\u00e6\u00b5\u2039\u00e8\u00af\u2022";
+			createTable("ColumnNameEncoding", "(" + "`" + gbkColumnName
+					+ "` varchar(1) default NULL,"
+					+ "`ASCIIColumn` varchar(1) default NULL"
+					+ ")ENGINE=MyISAM DEFAULT CHARSET=utf8");
+			
+			this.rs = this.stmt
+					.executeQuery("SELECT * FROM ColumnNameEncoding");
+			java.sql.ResultSetMetaData tblMD = this.rs.getMetaData();
+
+			assertEquals(gbkColumnName, tblMD.getColumnName(1));
+			assertEquals("ASCIIColumn", tblMD.getColumnName(2));
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }
