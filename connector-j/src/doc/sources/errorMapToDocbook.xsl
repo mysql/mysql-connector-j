@@ -12,6 +12,10 @@
 	<xsl:element name="table">
 		<xsl:element name="title">Mapping of MySQL Error Numbers to SQLStates</xsl:element>
     	<xsl:element name="tgroup"><xsl:attribute name="cols">4</xsl:attribute>
+                <xsl:element name="colspec"><xsl:attribute name="colwidth">20</xsl:attribute></xsl:element>
+                <xsl:element name="colspec"><xsl:attribute name="colwidth">40</xsl:attribute></xsl:element>
+                <xsl:element name="colspec"><xsl:attribute name="colwidth">20</xsl:attribute></xsl:element>
+                <xsl:element name="colspec"><xsl:attribute name="colwidth">20</xsl:attribute></xsl:element>
     		<xsl:element name="thead">
     			<xsl:element name="row">
     				<xsl:element name="entry">MySQL Error Number</xsl:element>
