@@ -954,26 +954,65 @@ public class Field {
 		try {
 			StringBuffer asString = new StringBuffer();
 			asString.append(super.toString());
-
-			asString.append("\n  catalog: ");
+			asString.append("[");
+			asString.append("catalog=");
 			asString.append(this.getDatabaseName());
-			asString.append("\n  table name: ");
+			asString.append(",tableName=");
 			asString.append(this.getTableName());
-			asString.append("\n  original table name: ");
+			asString.append(",originalTableName=");
 			asString.append(this.getOriginalTableName());
-			asString.append("\n  column name: ");
+			asString.append(",columnName=");
 			asString.append(this.getName());
-			asString.append("\n  original column name: ");
+			asString.append(",originalColumnName=");
 			asString.append(this.getOriginalName());
-			asString.append("\n  MySQL data type: ");
+			asString.append(",mysqlType=");
 			asString.append(getMysqlType());
-
-			if (this.buffer != null) {
-				asString.append("\n\nData as received from server:\n\n");
-				asString.append(StringUtils.dumpAsHex(this.buffer,
-						this.buffer.length));
+			asString.append("(");
+			asString.append(MysqlDefs.typeToName(getMysqlType()));
+			asString.append(")");
+			asString.append(",flags=");
+			
+			if (isAutoIncrement()) {
+				asString.append(" AUTO_INCREMENT");
+			}
+			
+			if (isPrimaryKey()) {
+				asString.append(" PRIMARY_KEY");
+			}
+			
+			if (isUniqueKey()) {
+				asString.append(" UNIQUE_KEY");
+			}
+			
+			if (isBinary()) {
+				asString.append(" BINARY");
+			}
+			
+			if (isBlob()) {
+				asString.append(" BLOB");
+			}
+			
+			if (isMultipleKey()) {
+				asString.append(" MULTI_KEY");
+			}
+			
+			if (isUnsigned()) {
+				asString.append(" UNSIGNED");
+			}
+			
+			if (isZeroFill()) {
+				asString.append(" ZEROFILL");
 			}
 
+			
+			//if (this.buffer != null) {
+			//	asString.append("\n\nData as received from server:\n\n");
+			//	asString.append(StringUtils.dumpAsHex(this.buffer,
+			//			this.buffer.length));
+			//}
+
+			asString.append("]");
+			
 			return asString.toString();
 		} catch (Throwable t) {
 			return super.toString();
