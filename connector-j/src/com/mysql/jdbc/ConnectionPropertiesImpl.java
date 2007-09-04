@@ -1070,10 +1070,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			"5.1.0", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
 	private BooleanConnectionProperty noAccessToProcedureBodies = new BooleanConnectionProperty(
-			"noAccessToProcedureBodies", //$NON-NLS-1$
+			"noAccessToProcedureBodies",
 			false,
-			Messages.getString("ConnectionProperties.noAccessToProcedureBodies"), //$NON-NLS-1$
-			"5.0.3", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+			"When determining procedure parameter types for CallableStatements, and the connected user "
+			+ " can't access procedure bodies through \"SHOW CREATE PROCEDURE\" or select on mysql.proc "
+			+ " should the driver instead create basic metadata (all parameters reported as IN VARCHARs,"
+			+ " but allowing registerOutParameter() to be called on them anyway) instead "
+			+ " of throwing an exception?",
+			"5.0.3", MISC_CATEGORY, Integer.MIN_VALUE);
 			
 	private BooleanConnectionProperty noDatetimeStringSync = new BooleanConnectionProperty(
 			"noDatetimeStringSync", //$NON-NLS-1$

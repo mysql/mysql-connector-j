@@ -659,7 +659,14 @@ public class CallableStatement extends PreparedStatement implements
 		CallableStatementParam paramDescriptor = this.paramInfo
 				.getParameter(localParamIndex);
 
-		if (!paramDescriptor.isOut) {
+		// We don't have reliable metadata in this case, trust
+		// the caller
+		
+		if (this.connection.getNoAccessToProcedureBodies()) {
+			paramDescriptor.isOut = true;
+			paramDescriptor.isIn = true;
+			paramDescriptor.inOutModifier = DatabaseMetaData.procedureColumnInOut;
+		} else if (!paramDescriptor.isOut) {
 			throw SQLError.createSQLException(
 					Messages.getString("CallableStatement.9") + paramIndex //$NON-NLS-1$
 							+ Messages.getString("CallableStatement.10"), //$NON-NLS-1$
@@ -752,7 +759,7 @@ public class CallableStatement extends PreparedStatement implements
 			row[3] = StringUtils.s2b(String.valueOf(i), this.connection); // COLUMN_NAME
 
 			row[4] = StringUtils.s2b(String
-					.valueOf(DatabaseMetaData.procedureColumnInOut),
+					.valueOf(DatabaseMetaData.procedureColumnIn),
 					this.connection);
 
 			row[5] = StringUtils.s2b(String.valueOf(Types.VARCHAR),

@@ -1194,4 +1194,55 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#28689 - CallableStatement.executeBatch()
+	 * doesn't work when connection property "noAccessToProcedureBodies"
+	 * has been set to "true".
+	 * 
+	 * The fix involves changing the behavior of "noAccessToProcedureBodies",
+	 * in that the driver will now report all paramters as "IN" paramters
+	 * but allow callers to call registerOutParameter() on them.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug28689() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return; // no stored procedures
+		}
+		
+		createTable("testBug28689", "(" +
+				
+				  "`id` int(11) NOT NULL auto_increment,"
+				  + "`usuario` varchar(255) default NULL,"
+				  + "PRIMARY KEY  (`id`)"
+				+ ")"); 
+
+		this.stmt.executeUpdate("INSERT INTO testBug28689 (usuario) VALUES ('AAAAAA')");
+
+		createProcedure("sp_testBug28689", "(tid INT)"
+				+ "\nBEGIN"
+				+ "\nUPDATE testBug28689 SET usuario = 'BBBBBB' WHERE id = tid;"
+				+ "\nEND");
+
+		Connection noProcedureBodiesConn = getConnectionWithProps("noAccessToProcedureBodies=true");
+		CallableStatement cStmt = null;
+		
+		try {
+			cStmt = noProcedureBodiesConn.prepareCall("{CALL sp_testBug28689(?)}");
+			cStmt.setInt(1, 1);
+			cStmt.addBatch();
+			cStmt.executeBatch();
+			
+			assertEquals("BBBBBB", getSingleIndexedValueWithQuery(noProcedureBodiesConn, 1, "SELECT `usuario` FROM testBug28689 WHERE id=1"));
+		} finally {
+			if (cStmt != null) {
+				cStmt.close();
+			}
+			
+			if (noProcedureBodiesConn != null) {
+				noProcedureBodiesConn.close();
+			}
+		}
+	}
 }
