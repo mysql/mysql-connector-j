@@ -123,6 +123,17 @@
 
 		<filter token="VERSION" value="${version}"/>
 
+		<mkdir dir="${buildDir}" />
+		
+		<exec executable="svn" 
+			output="${buildDir}/svn.properties" 
+			failifexecutionfails="false"
+			failonerror="false">
+			  <arg value="info" />
+		</exec>
+		    
+		<property prefix="svn" file="${buildDir}/svn.properties"/>
+		
 		<copy todir="${buildDir}/${fullProdName}" filtering="true">
 			<fileset dir="${sourceDir}/" excludes="**/CVS">
 				<patternset id="classjar" >
@@ -137,6 +148,7 @@
 				<filter token="MYSQL_CJ_SUBMINOR_VERSION" value="${subminor_version}"/>
 				<filter token="MYSQL_CJ_VERSION_STATUS" value="${version_status}"/>
 				<filter token="MYSQL_CJ_VERSION" value="${version}"/>
+				<filter token="MYSQL_CJ_REVISION" value="${svn.Revision}" />
 				<filter token="MYSQL_CJ_FULL_PROD_NAME" value="${fullProdName}"/>
 			</filterset>
 		</copy>
