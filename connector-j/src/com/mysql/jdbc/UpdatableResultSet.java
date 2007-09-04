@@ -513,7 +513,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	private synchronized void extractDefaultValues() throws SQLException {
 		java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
-
+		this.defaultColumnValue = new byte[this.fields.length][];
+		
 		java.sql.ResultSet columnsResultSet = null;
 		Iterator referencedDbs = this.databasesUsedToTablesUsed.entrySet().iterator();
 

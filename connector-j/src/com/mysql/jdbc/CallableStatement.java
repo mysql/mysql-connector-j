@@ -776,7 +776,7 @@ public class CallableStatement extends PreparedStatement implements
 
 			row[12] = null;
 
-			resultRows.add(row);
+			resultRows.add(new ByteArrayRow(row));
 		}
 
 		java.sql.ResultSet paramTypesRs = DatabaseMetaData.buildResultSet(
