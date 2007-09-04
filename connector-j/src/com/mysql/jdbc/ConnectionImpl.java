@@ -2997,7 +2997,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @return the server's character set.
 	 */
 	public String getServerCharacterEncoding() {
-		return (String) this.serverVariables.get("character_set");
+		if (this.io.versionMeetsMinimum(4, 1, 0)) {
+			return (String) this.serverVariables.get("character_set_server");
+		} else {
+			return (String) this.serverVariables.get("character_set");
+		}
 	}
 
 	int getServerMajorVersion() {

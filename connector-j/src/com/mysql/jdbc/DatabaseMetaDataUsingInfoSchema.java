@@ -236,7 +236,12 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 						+ "0 AS SQL_DATETIME_SUB,"
 						+ "CASE WHEN CHARACTER_OCTET_LENGTH > " + Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_OCTET_LENGTH END AS CHAR_OCTET_LENGTH,"
 						+ "ORDINAL_POSITION,"
-						+ "IS_NULLABLE "
+						+ "IS_NULLABLE,"
+						+ "NULL AS SCOPE_CATALOG,"
+						+ "NULL AS SCOPE_SCHEMA,"
+						+ "NULL AS SCOPE_TABLE,"
+						+ "NULL AS SOURCE_DATA_TYPE,"
+						+ "IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT "
 						+ "FROM INFORMATION_SCHEMA.COLUMNS WHERE "
 						+ "TABLE_SCHEMA LIKE ? AND "
 						+ "TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
@@ -278,8 +283,12 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 					new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, Integer
 							.toString(Integer.MAX_VALUE).length()),
 					new Field("", "ORDINAL_POSITION", Types.INTEGER, 10),
-					new Field("", "IS_NULLABLE", Types.CHAR, 3) });
-
+					new Field("", "IS_NULLABLE", Types.CHAR, 3),
+					new Field("", "SCOPE_CATALOG", Types.CHAR, 255),
+					new Field("", "SCOPE_SCHEMA", Types.CHAR, 255),
+					new Field("", "SCOPE_TABLE", Types.CHAR, 255),
+					new Field("", "SOURCE_DATA_TYPE", Types.SMALLINT, 10),
+					new Field("", "IS_AUTOINCREMENT", Types.CHAR, 3) });
 			return rs;
 		} finally {
 			if (pStmt != null) {

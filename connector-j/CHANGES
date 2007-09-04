@@ -223,6 +223,12 @@ nn-nn-07 - Version 5.0.8
       that the driver will now report all paramters as "IN" paramters
       but allow callers to call registerOutParameter() on them without throwing
       an exception.
+      
+    - Fixed BUG#27182 - Connection.getServerCharacterEncoding() doesn't work
+      for servers with version >= 4.1.
+
+    - Fixed BUG#27915 - DatabaseMetaData.getColumns() doesn't
+      contain SCOPE_* or IS_AUTOINCREMENT columns.
 
 07-19-07 - Version 5.0.7
 

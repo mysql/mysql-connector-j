@@ -39,6 +39,7 @@ import java.util.Properties;
 import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.Driver;
+import com.mysql.jdbc.Field;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
 
@@ -1975,5 +1976,52 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		} finally {
 			closeMemberJDBCResources();
 		}
+	}
+	
+	/**
+	 * Fixed BUG#27915 - DatabaseMetaData.getColumns() doesn't
+	 * contain SCOPE_* or IS_AUTOINCREMENT columns.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug27915() throws Exception {
+		createTable("testBug27915",
+				"(field1 int not null primary key auto_increment, field2 int)");
+		DatabaseMetaData dbmd = this.conn.getMetaData();
+
+		try {
+			this.rs = dbmd.getColumns(this.conn.getCatalog(), null,
+					"testBug27915", "%");
+			this.rs.next();
+
+			checkBug27915();
+
+			if (versionMeetsMinimum(5, 0)) {
+				this.rs = getConnectionWithProps("useInformationSchema=true")
+						.getMetaData().getColumns(this.conn.getCatalog(), null,
+								"testBug27915", "%");
+				this.rs.next();
+
+				checkBug27915();
+			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+
+	private void checkBug27915() throws SQLException {
+		assertNull(this.rs.getString("SCOPE_CATALOG"));
+		assertNull(this.rs.getString("SCOPE_SCHEMA"));
+		assertNull(this.rs.getString("SCOPE_TABLE"));
+		assertNull(this.rs.getString("SOURCE_DATA_TYPE"));
+		assertEquals("YES", this.rs.getString("IS_AUTOINCREMENT"));
+
+		this.rs.next();
+		
+		assertNull(this.rs.getString("SCOPE_CATALOG"));
+		assertNull(this.rs.getString("SCOPE_SCHEMA"));
+		assertNull(this.rs.getString("SCOPE_TABLE"));
+		assertNull(this.rs.getString("SOURCE_DATA_TYPE"));
+		assertEquals("NO", this.rs.getString("IS_AUTOINCREMENT"));
 	}
 }

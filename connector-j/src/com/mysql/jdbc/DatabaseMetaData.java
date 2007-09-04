@@ -2312,7 +2312,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		final String colPattern = columnNamePattern;
 
-		Field[] fields = new Field[18];
+		Field[] fields = new Field[23];
 		fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
 		fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
 		fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 255);
@@ -2333,6 +2333,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				.toString(Integer.MAX_VALUE).length());
 		fields[16] = new Field("", "ORDINAL_POSITION", Types.INTEGER, 10);
 		fields[17] = new Field("", "IS_NULLABLE", Types.CHAR, 3);
+		fields[18] = new Field("", "SCOPE_CATALOG", Types.CHAR, 255);
+		fields[19] = new Field("", "SCOPE_SCHEMA", Types.CHAR, 255);
+		fields[20] = new Field("", "SCOPE_TABLE", Types.CHAR, 255);
+		fields[21] = new Field("", "SOURCE_DATA_TYPE", Types.SMALLINT, 10);
+		fields[22] = new Field("", "IS_AUTOINCREMENT", Types.CHAR, 3);
 
 		final ArrayList rows = new ArrayList();
 		final Statement stmt = this.conn.getMetadataSafeStatement();
@@ -2470,7 +2475,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							int ordPos = 1;
 
 							while (results.next()) {
-								byte[][] rowVal = new byte[18][];
+								byte[][] rowVal = new byte[23][];
 								rowVal[0] = s2b(catalog); // TABLE_CAT
 								rowVal[1] = null; // TABLE_SCHEM (No schemas
 								// in MySQL)
@@ -2550,7 +2555,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								}
 
 								rowVal[17] = s2b(typeDesc.isNullable);
-
+								
+								// We don't support REF or DISTINCT types
+								rowVal[18] = null;
+								rowVal[19] = null;
+								rowVal[20] = null;
+								rowVal[21] = null;
+								
+								rowVal[22] = s2b("");
+								
+								String extra = results.getString("Extra");
+								
+								if (extra != null) {
+									rowVal[22] = s2b(StringUtils
+											.indexOfIgnoreCase(extra,
+													"auto_increment") != -1 ? "YES"
+											: "NO");
+								}
+								
 								rows.add(new ByteArrayRow(rowVal));
 							}
 						} finally {
