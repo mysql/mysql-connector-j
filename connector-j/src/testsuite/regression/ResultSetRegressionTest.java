@@ -2154,8 +2154,14 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 					assertEquals("java.lang.Integer", storedProc.getObject(1)
 							.getClass().getName());
-					assertEquals("java.lang.Integer", storedProc.getObject(2)
+					
+					if (versionMeetsMinimum(5, 1)) {
+						assertEquals("java.lang.Long", storedProc.getObject(2)
+								.getClass().getName());
+					} else {
+						assertEquals("java.lang.Integer", storedProc.getObject(2)
 							.getClass().getName());
+					}
 
 				} finally {
 					if (storedProc != null) {

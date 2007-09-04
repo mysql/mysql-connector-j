@@ -422,7 +422,7 @@ public class CallableStatementTest extends BaseTestCase {
 						.executeUpdate("CREATE PROCEDURE testSpParse(IN FOO VARCHAR(15))\n"
 								+ "BEGIN\n" + "SELECT 1;\n" + "end\n");
 
-				int numIterations = 10000;
+				int numIterations = 10;
 
 				long startTime = System.currentTimeMillis();
 
