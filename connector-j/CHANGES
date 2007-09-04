@@ -1,7 +1,7 @@
 # Changelog
 # $Id$
 
-nn-nn-07 - Version 5.1.3 RC
+09-07-07 - Version 5.1.3 RC
 
 	- Setting "useBlobToStoreUTF8OutsideBMP" to "true" tells the
 	  driver to treat [MEDIUM/LONG]BLOB columns as [LONG]VARCHAR
