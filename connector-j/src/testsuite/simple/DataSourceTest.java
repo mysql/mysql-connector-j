@@ -182,7 +182,7 @@ public class DataSourceTest extends BaseTestCase {
 			assertEquals(toCheck, this.rs.getString(1));
 
 			this.rs = connToMySQL.createStatement().executeQuery(
-					"SHOW VARIABLES LIKE 'character_set_client'");
+					"SHOW SESSION VARIABLES LIKE 'character_set_client'");
 			assertTrue(this.rs.next());
 			assertEquals("utf8", this.rs.getString(2));
 
@@ -195,7 +195,7 @@ public class DataSourceTest extends BaseTestCase {
 			assertEquals(toCheck, this.rs.getString(1));
 
 			this.rs = connToMySQL.createStatement().executeQuery(
-					"SHOW VARIABLES LIKE 'character_set_client'");
+					"SHOW SESSION VARIABLES LIKE 'character_set_client'");
 			assertTrue(this.rs.next());
 			assertEquals("utf8", this.rs.getString(2));
 

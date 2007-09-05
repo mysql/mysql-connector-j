@@ -1038,7 +1038,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		this.password = newPassword;
 
 		if (versionMeetsMinimum(4, 1, 0)) {
-			configureClientCharacterSet();
+			configureClientCharacterSet(true);
 		}
 		
 		setupServerForTruncationChecks();
@@ -1584,7 +1584,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *             server, or the server sends character set information that
 	 *             the client doesn't know about.
 	 */
-	private boolean configureClientCharacterSet() throws SQLException {
+	private boolean configureClientCharacterSet(boolean dontCheckServerMatch) throws SQLException {
 		String realJavaEncoding = getEncoding();
 		boolean characterSetAlreadyConfigured = false;
 
@@ -1667,7 +1667,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							// charset names are case-sensitive
 
 							if (!getUseOldUTF8Behavior()) {
-								if (!characterSetNamesMatches("utf8")) {
+								if (dontCheckServerMatch || !characterSetNamesMatches("utf8")) {
 									execSQL(null, "SET NAMES utf8", -1, null,
 											java.sql.ResultSet.TYPE_FORWARD_ONLY,
 											java.sql.ResultSet.CONCUR_READ_ONLY,
@@ -1694,7 +1694,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 							if (mysqlEncodingName != null) {
 								
-								if (!characterSetNamesMatches(mysqlEncodingName)) {
+								if (dontCheckServerMatch || !characterSetNamesMatches(mysqlEncodingName)) {
 									execSQL(null, "SET NAMES " + mysqlEncodingName,
 										-1, null,
 										java.sql.ResultSet.TYPE_FORWARD_ONLY,
@@ -1716,7 +1716,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								.getMysqlEncodingForJavaEncoding(getEncoding()
 										.toUpperCase(Locale.ENGLISH), this);
 
-						if (!characterSetNamesMatches(mysqlEncodingName)) {
+						if (dontCheckServerMatch || !characterSetNamesMatches(mysqlEncodingName)) {
 							execSQL(null, "SET NAMES " + mysqlEncodingName, -1,
 								null, java.sql.ResultSet.TYPE_FORWARD_ONLY,
 								java.sql.ResultSet.CONCUR_READ_ONLY, false,
@@ -3364,7 +3364,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		boolean overrideDefaultAutocommit = isAutoCommitNonDefaultOnServer();
 	
-		configureClientCharacterSet();
+		configureClientCharacterSet(false);
 
 		if (versionMeetsMinimum(3, 23, 15)) {
 			this.transactionsSupported = true;
