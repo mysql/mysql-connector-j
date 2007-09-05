@@ -24,6 +24,7 @@
  */
 package com.mysql.jdbc;
 
+import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfileEventSink;
@@ -31,6 +32,7 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.util.LRUCache;
 
 import java.io.InputStream;
+import java.sql.BatchUpdateException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -73,9 +75,11 @@ public class StatementImpl implements Statement {
 
 		long connectionId = 0;
 		SQLException caughtWhileCancelling = null;
-
-		CancelTask() throws SQLException {
+		StatementImpl toCancel;
+		
+		CancelTask(StatementImpl cancellee) throws SQLException {
 			connectionId = connection.getIO().getThreadId();
+			toCancel = cancellee;
 		}
 
 		public void run() {
@@ -91,7 +95,8 @@ public class StatementImpl implements Statement {
 							cancelConn = connection.duplicate();
 							cancelStmt = cancelConn.createStatement();
 							cancelStmt.execute("KILL QUERY " + connectionId);
-							wasCancelled = true;
+							toCancel.wasCancelled = true;
+							toCancel.wasCancelledByTimeout = true;
 						}
 					} catch (SQLException sqlEx) {
 						caughtWhileCancelling = sqlEx;
@@ -141,6 +146,7 @@ public class StatementImpl implements Statement {
 	public final static byte USES_VARIABLES_UNKNOWN = -1;
 
 	protected boolean wasCancelled = false;
+	protected boolean wasCancelledByTimeout = false;
 
 	/** Holds batched commands */
 	protected List batchedArgs;
@@ -579,9 +585,7 @@ public class StatementImpl implements Statement {
 		ConnectionImpl locallyScopedConn = this.connection;
 
 		synchronized (locallyScopedConn.getMutex()) {
-			synchronized (this.cancelTimeoutMutex) {
-				this.wasCancelled = false;
-			}
+			resetCancelledState();
 
 			checkNullOrEmptyQuery(sql);
 
@@ -659,7 +663,7 @@ public class StatementImpl implements Statement {
 					if (locallyScopedConn.getEnableQueryTimeouts() &&
 							this.timeoutInMillis != 0
 							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
-						timeoutTask = new CancelTask();
+						timeoutTask = new CancelTask(this);
 						ConnectionImpl.getCancelTimer().schedule(timeoutTask,
 								this.timeoutInMillis);
 					}
@@ -733,8 +737,17 @@ public class StatementImpl implements Statement {
 
 					synchronized (this.cancelTimeoutMutex) {
 						if (this.wasCancelled) {
-							this.wasCancelled = false;
-							throw new MySQLTimeoutException();
+							SQLException cause = null;
+							
+							if (this.wasCancelledByTimeout) {
+								cause = new MySQLTimeoutException();
+							} else {
+								cause = new MySQLStatementCancelledException();
+							}
+							
+							resetCancelledState();
+							
+							throw cause;
 						}
 					}
 				} finally {
@@ -769,6 +782,17 @@ public class StatementImpl implements Statement {
 			}
 
 			return ((rs != null) && rs.reallyResult());
+		}
+	}
+
+	protected synchronized void resetCancelledState() {
+		if (this.cancelTimeoutMutex == null) {
+			return;
+		}
+		
+		synchronized (this.cancelTimeoutMutex) {
+			this.wasCancelled = false;
+			this.wasCancelledByTimeout = false;
 		}
 	}
 
@@ -898,11 +922,20 @@ public class StatementImpl implements Statement {
                 return new int[0];
             }
 			
+			// we timeout the entire batch, not individual statements
+			int individualStatementTimeout = this.timeoutInMillis;
+			this.timeoutInMillis = 0;
+			
+			CancelTask timeoutTask = null;
+			
 			try {
+				resetCancelledState();
+
 				this.retrieveGeneratedKeys = true;
 
 				int[] updateCounts = null;
 
+				
 				if (this.batchedArgs != null) {
 					int nbrCommands = this.batchedArgs.size();
 
@@ -914,9 +947,17 @@ public class StatementImpl implements Statement {
 							(multiQueriesEnabled ||
 							(locallyScopedConn.getRewriteBatchedStatements() &&
 									nbrCommands > 4))) {
-						return executeBatchUsingMultiQueries(multiQueriesEnabled, nbrCommands);
+						return executeBatchUsingMultiQueries(multiQueriesEnabled, nbrCommands, individualStatementTimeout);
 					}
 
+					if (locallyScopedConn.getEnableQueryTimeouts() &&
+							individualStatementTimeout != 0
+							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+						timeoutTask = new CancelTask(this);
+						ConnectionImpl.getCancelTimer().schedule(timeoutTask,
+								individualStatementTimeout);
+					}
+					
 					updateCounts = new int[nbrCommands];
 
 					for (int i = 0; i < nbrCommands; i++) {
@@ -935,7 +976,9 @@ public class StatementImpl implements Statement {
 						} catch (SQLException ex) {
 							updateCounts[commandIndex] = EXECUTE_FAILED;
 
-							if (this.continueBatchOnError) {
+							if (this.continueBatchOnError && 
+									!(ex instanceof MySQLTimeoutException) && 
+									!(ex instanceof MySQLStatementCancelledException)) {
 								sqlEx = ex;
 							} else {
 								int[] newUpdateCounts = new int[commandIndex];
@@ -956,8 +999,25 @@ public class StatementImpl implements Statement {
 					}
 				}
 
+				if (timeoutTask != null) {
+					if (timeoutTask.caughtWhileCancelling != null) {
+						throw timeoutTask.caughtWhileCancelling;
+					}
+
+					timeoutTask.cancel();
+					timeoutTask = null;
+				}
+				
 				return (updateCounts != null) ? updateCounts : new int[0];
 			} finally {
+				
+				if (timeoutTask != null) {
+					timeoutTask.cancel();
+				}
+				
+				resetCancelledState();
+				
+				this.timeoutInMillis = individualStatementTimeout;
 				this.retrieveGeneratedKeys = false;
 
 				clearBatch();
@@ -974,7 +1034,7 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 */
 	private int[] executeBatchUsingMultiQueries(boolean multiQueriesEnabled,
-			int nbrCommands) throws SQLException {
+			int nbrCommands, int individualStatementTimeout) throws SQLException {
 
 		ConnectionImpl locallyScopedConn = this.connection;
 
@@ -984,6 +1044,8 @@ public class StatementImpl implements Statement {
 
 		java.sql.Statement batchStmt = null;
 
+		CancelTask timeoutTask = null;
+		
 		try {
 			int[] updateCounts = new int[nbrCommands];
 
@@ -997,6 +1059,14 @@ public class StatementImpl implements Statement {
 
 			batchStmt = locallyScopedConn.createStatement();
 
+			if (locallyScopedConn.getEnableQueryTimeouts() &&
+					individualStatementTimeout != 0
+					&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+				timeoutTask = new CancelTask((StatementImpl)batchStmt);
+				ConnectionImpl.getCancelTimer().schedule(timeoutTask,
+						individualStatementTimeout);
+			}
+			
 			int counter = 0;
 
 			int numberOfBytesPerChar = 1;
@@ -1017,6 +1087,10 @@ public class StatementImpl implements Statement {
 				                     escape processing */
 			}
 
+			SQLException sqlEx = null;
+			
+			int argumentSetsInBatchSoFar = 0;
+			
 			for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
 				String nextQuery = (String) this.batchedArgs.get(commandIndex);
 
@@ -1024,50 +1098,60 @@ public class StatementImpl implements Statement {
 						* numberOfBytesPerChar) + 1 /* for semicolon */
 						+ MysqlIO.HEADER_LENGTH) * escapeAdjust)  + 32 > this.connection
 						.getMaxAllowedPacket()) {
-					batchStmt.execute(queryBuf.toString());
-
-					updateCounts[counter++] = batchStmt.getUpdateCount();
-					long generatedKeyStart = ((com.mysql.jdbc.StatementImpl)batchStmt).getLastInsertID();
-					byte[][] row = new byte[1][];
-					row[0] = Long.toString(generatedKeyStart++).getBytes();
-					this.batchedGeneratedKeys.add(row);
-
-					while (batchStmt.getMoreResults()
-							|| batchStmt.getUpdateCount() != -1) {
-						updateCounts[counter++] = batchStmt.getUpdateCount();
-						row = new byte[1][];
-						row[0] = Long.toString(generatedKeyStart++).getBytes();
-						this.batchedGeneratedKeys.add(row);
+					try {
+						batchStmt.execute(queryBuf.toString());
+					} catch (SQLException ex) {
+						sqlEx = handleExceptionForBatch(commandIndex,
+								argumentSetsInBatchSoFar, updateCounts, ex);
 					}
 
+					counter = processMultiCountsAndKeys((StatementImpl)batchStmt, counter, 
+							updateCounts);
+
 					queryBuf = new StringBuffer();
+					argumentSetsInBatchSoFar = 0;
 				}
 
 				queryBuf.append(nextQuery);
 				queryBuf.append(";");
+				argumentSetsInBatchSoFar++;
 			}
 
 			if (queryBuf.length() > 0) {
-				batchStmt.execute(queryBuf.toString());
-
-				long generatedKeyStart = ((com.mysql.jdbc.StatementImpl)batchStmt).getLastInsertID();
-				byte[][] row = new byte[1][];
-				row[0] = Long.toString(generatedKeyStart++).getBytes();
-				this.batchedGeneratedKeys.add(row);
-
-				updateCounts[counter++] = batchStmt.getUpdateCount();
-
-				while (batchStmt.getMoreResults()
-						|| batchStmt.getUpdateCount() != -1) {
-					updateCounts[counter++] = batchStmt.getUpdateCount();
-					row = new byte[1][];
-					row[0] = Long.toString(generatedKeyStart++).getBytes();
-					this.batchedGeneratedKeys.add(row);
+				try {
+					batchStmt.execute(queryBuf.toString());
+				} catch (SQLException ex) {
+					sqlEx = handleExceptionForBatch(commandIndex - 1,
+							argumentSetsInBatchSoFar, updateCounts, ex);
 				}
+
+				counter = processMultiCountsAndKeys((StatementImpl)batchStmt, counter, 
+						updateCounts);
 			}
 
+			if (timeoutTask != null) {
+				if (timeoutTask.caughtWhileCancelling != null) {
+					throw timeoutTask.caughtWhileCancelling;
+				}
+
+				timeoutTask.cancel();
+				timeoutTask = null;
+			}
+			
+			if (sqlEx != null) {
+				throw new java.sql.BatchUpdateException(sqlEx
+						.getMessage(), sqlEx.getSQLState(), sqlEx
+						.getErrorCode(), updateCounts);
+			}
+			
 			return (updateCounts != null) ? updateCounts : new int[0];
 		} finally {
+			if (timeoutTask != null) {
+				timeoutTask.cancel();
+			}
+			
+			resetCancelledState();
+			
 			try {
 				if (batchStmt != null) {
 					batchStmt.close();
@@ -1079,7 +1163,65 @@ public class StatementImpl implements Statement {
 			}
 		}
 	}
+	
+	protected int processMultiCountsAndKeys(
+			StatementImpl batchedStatement,
+			int updateCountCounter, int[] updateCounts) throws SQLException {
+		updateCounts[updateCountCounter++] = batchedStatement.getUpdateCount();
+		
+		boolean doGenKeys = this.batchedGeneratedKeys != null;
+		
+		long generatedKeyStart = 0;
+		byte[][] row = null;
+		
+		if (doGenKeys) {
+			generatedKeyStart = batchedStatement.getLastInsertID();
+		
+			row = new byte[1][];
+			row[0] = Long.toString(generatedKeyStart++).getBytes();
+			this.batchedGeneratedKeys.add(new ByteArrayRow(row));
+		}
 
+		while (batchedStatement.getMoreResults()
+				|| batchedStatement.getUpdateCount() != -1) {
+			updateCounts[updateCountCounter++] = batchedStatement.getUpdateCount();
+			
+			if (doGenKeys) {
+				row = new byte[1][];
+				row[0] = Long.toString(generatedKeyStart++).getBytes();
+				this.batchedGeneratedKeys.add(new ByteArrayRow(row));
+			}
+		}
+		
+		return updateCountCounter;
+	}
+	
+	protected SQLException handleExceptionForBatch(int endOfBatchIndex,
+			int numValuesPerBatch, int[] updateCounts, SQLException ex)
+			throws BatchUpdateException {
+		SQLException sqlEx;
+	
+		for (int j = endOfBatchIndex; j > endOfBatchIndex - numValuesPerBatch; j--) {
+			updateCounts[j] = EXECUTE_FAILED;
+		}
+
+		if (this.continueBatchOnError && 
+				!(ex instanceof MySQLTimeoutException) && 
+				!(ex instanceof MySQLStatementCancelledException)) {
+			sqlEx = ex;
+		} else {
+			int[] newUpdateCounts = new int[endOfBatchIndex];
+			System.arraycopy(updateCounts, 0,
+					newUpdateCounts, 0, endOfBatchIndex);
+
+			throw new java.sql.BatchUpdateException(ex
+					.getMessage(), ex.getSQLState(), ex
+					.getErrorCode(), newUpdateCounts);
+		}
+		
+		return sqlEx;
+	}
+	
 	/**
 	 * Execute a SQL statement that retruns a single ResultSet
 	 *
@@ -1098,9 +1240,7 @@ public class StatementImpl implements Statement {
 		ConnectionImpl locallyScopedConn = this.connection;
 
 		synchronized (locallyScopedConn.getMutex()) {
-			synchronized (this.cancelTimeoutMutex) {
-				this.wasCancelled = false;
-			}
+			resetCancelledState();
 
 			checkNullOrEmptyQuery(sql);
 
@@ -1165,7 +1305,7 @@ public class StatementImpl implements Statement {
 				if (locallyScopedConn.getEnableQueryTimeouts() &&
 						this.timeoutInMillis != 0
 						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
-					timeoutTask = new CancelTask();
+					timeoutTask = new CancelTask(this);
 					ConnectionImpl.getCancelTimer().schedule(timeoutTask,
 							this.timeoutInMillis);
 				}
@@ -1237,8 +1377,17 @@ public class StatementImpl implements Statement {
 
 				synchronized (this.cancelTimeoutMutex) {
 					if (this.wasCancelled) {
-						this.wasCancelled = false;
-						throw new MySQLTimeoutException();
+						SQLException cause = null;
+						
+						if (this.wasCancelledByTimeout) {
+							cause = new MySQLTimeoutException();
+						} else {
+							cause = new MySQLStatementCancelledException();
+						}
+						
+						resetCancelledState();
+						
+						throw cause;
 					}
 				}
 			} finally {
@@ -1306,9 +1455,7 @@ public class StatementImpl implements Statement {
 		ResultSetInternalMethods rs = null;
 
 		synchronized (locallyScopedConn.getMutex()) {
-			synchronized (this.cancelTimeoutMutex) {
-				this.wasCancelled = false;
-			}
+			resetCancelledState();
 
 			checkNullOrEmptyQuery(sql);
 
@@ -1354,7 +1501,7 @@ public class StatementImpl implements Statement {
 				if (locallyScopedConn.getEnableQueryTimeouts() &&
 						this.timeoutInMillis != 0
 						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
-					timeoutTask = new CancelTask();
+					timeoutTask = new CancelTask(this);
 					ConnectionImpl.getCancelTimer().schedule(timeoutTask,
 							this.timeoutInMillis);
 				}
@@ -1390,8 +1537,17 @@ public class StatementImpl implements Statement {
 
 				synchronized (this.cancelTimeoutMutex) {
 					if (this.wasCancelled) {
-						this.wasCancelled = false;
-						throw new MySQLTimeoutException();
+						SQLException cause = null;
+						
+						if (this.wasCancelledByTimeout) {
+							cause = new MySQLTimeoutException();
+						} else {
+							cause = new MySQLStatementCancelledException();
+						}
+						
+						resetCancelledState();
+						
+						throw cause;
 					}
 				}
 			} finally {
@@ -2266,7 +2422,7 @@ public class StatementImpl implements Statement {
 
 				while (rs.next()) {
 					this.batchedGeneratedKeys
-							.add(new byte[][] { rs.getBytes(1) });
+							.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }));
 				}
 			} finally {
 				if (rs != null) {
@@ -2285,7 +2441,7 @@ public class StatementImpl implements Statement {
 
 				while (rs.next()) {
 					this.batchedGeneratedKeys
-							.add(new byte[][] { rs.getBytes(1) });
+							.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }));
 				}
 			} finally {
 				if (rs != null) {

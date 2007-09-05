@@ -48,6 +48,26 @@
       allow usernames and database names in any character set to
       be used in the JDBC URL.
 
+    - Errors encountered during Statement/PreparedStatement/CallableStatement.executeBatch()
+      when "rewriteBatchStatements" has been set to "true" now return
+      BatchUpdateExceptions according to the setting of "continueBatchOnError".
+      
+      If "continueBatchOnError" is set to "true", the update counts for the
+      "chunk" that were sent as one unit will all be set to EXECUTE_FAILED, but
+      the driver will attempt to process the remainder of the batch. You can determine which
+      "chunk" failed by looking at the update counts returned in the BatchUpdateException.
+      
+      If "continueBatchOnError" is set to "false", the update counts returned
+      will contain the failed "chunk", and stop with the failed chunk, with all 
+      counts for the failed "chunk" set to EXECUTE_FAILED.
+      
+      Since MySQL doesn't return multiple error codes for multiple-statements, or
+      for multi-value INSERT/REPLACE, it is the application's responsibility to handle 
+      determining which item(s) in the "chunk" actually failed.
+      
+    - Statement.setQueryTimeout()s now affect the entire batch for batched 
+      statements, rather than the individual statements that make up the batch.
+      
 06-29-07 - Version 5.1.2 Beta
 
     - Setting the configuration property "rewriteBatchedStatements"

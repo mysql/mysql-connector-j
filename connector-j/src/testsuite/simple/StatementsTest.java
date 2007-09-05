@@ -32,6 +32,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.rmi.server.UID;
+import java.sql.BatchUpdateException;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Date;
@@ -1554,6 +1555,92 @@ public class StatementsTest extends BaseTestCase {
 				}
 
 				idx++;
+			}
+		}
+	}
+	
+	public void testBatchRewriteErrors() throws Exception {
+		createTable("rewriteErrors", "(field1 int not null primary key)");
+
+		Properties props = new Properties();
+		Connection multiConn = null;
+
+		for (int j = 0; j < 2; j++) {
+			props.setProperty("useServerPrepStmts", "false");
+	
+			if (j == 1) {
+				props.setProperty("continueBatchOnError", "false");
+			}
+			
+			props.setProperty("sessionVariables", "max_allowed_packet=1024");
+			props.setProperty("rewriteBatchedStatements", "true");
+			multiConn = getConnectionWithProps(props);
+			this.pstmt = multiConn.prepareStatement("INSERT INTO rewriteErrors VALUES (?)");
+			Statement multiStmt = multiConn.createStatement();
+			
+			for (int i = 0; i < 4096; i++) {
+				multiStmt.addBatch("INSERT INTO rewriteErrors VALUES (" + i + ")");
+				this.pstmt.setInt(1, i);
+				this.pstmt.addBatch();
+			}
+			
+			multiStmt.addBatch("INSERT INTO rewriteErrors VALUES (2048)");
+			
+			this.pstmt.setInt(1, 2048);
+			this.pstmt.addBatch();
+			
+			try {
+				this.pstmt.executeBatch();
+			} catch (BatchUpdateException bUpE) {
+				int[] counts = bUpE.getUpdateCounts();
+	
+				for (int i = 4059; i < counts.length; i++) {
+					assertEquals(counts[i], Statement.EXECUTE_FAILED);
+				}
+				
+				assertEquals(4096, getRowCount("rewriteErrors"));
+			}
+			
+			this.stmt.execute("TRUNCATE TABLE rewriteErrors");
+			
+			try {
+				multiStmt.executeBatch();
+			} catch (BatchUpdateException bUpE) {
+				int[] counts = bUpE.getUpdateCounts();
+	
+				for (int i = 4094; i < counts.length; i++) {
+					assertEquals(counts[i], Statement.EXECUTE_FAILED);
+				}
+				
+				assertEquals(4096, getRowCount("rewriteErrors"));
+			}
+			
+			if (versionMeetsMinimum(5, 0)) {
+				this.stmt.execute("TRUNCATE TABLE rewriteErrors");
+				
+				createProcedure("sp_rewriteErrors", "(param1 INT)\nBEGIN\nINSERT INTO rewriteErrors VALUES (param1);\nEND");
+				
+				CallableStatement cStmt = multiConn.prepareCall("{ CALL sp_rewriteErrors(?)}");
+				
+				for (int i = 0; i < 4096; i++) {
+					cStmt.setInt(1, i);
+					cStmt.addBatch();
+				}
+				
+				cStmt.setInt(1, 2048);
+				cStmt.addBatch();
+				
+				try {
+					cStmt.executeBatch();
+				} catch (BatchUpdateException bUpE) {
+					int[] counts = bUpE.getUpdateCounts();
+	
+					for (int i = 4093; i < counts.length; i++) {
+						assertEquals(counts[i], Statement.EXECUTE_FAILED);
+					}
+					
+					assertEquals(4096, getRowCount("rewriteErrors"));
+				}
 			}
 		}
 	}

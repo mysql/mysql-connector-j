@@ -24,6 +24,7 @@
  */
 package com.mysql.jdbc;
 
+import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfileEventSink;
 import com.mysql.jdbc.profiler.ProfilerEvent;
@@ -1227,9 +1228,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				begin = mysql.getCurrentTimeNanosOrMillis();
 			}
 
-			synchronized (this.cancelTimeoutMutex) {
-				this.wasCancelled = false;
-			}
+			resetCancelledState();
 			
 			CancelTask timeoutTask = null;
 
@@ -1237,7 +1236,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				if (this.connection.getEnableQueryTimeouts() &&
 						this.timeoutInMillis != 0
 						&& this.connection.versionMeetsMinimum(5, 0, 0)) {
-					timeoutTask = new CancelTask();
+					timeoutTask = new CancelTask(this);
 					this.connection.getCancelTimer().schedule(timeoutTask, 
 							this.timeoutInMillis);
 				}
@@ -1263,8 +1262,17 @@ public class ServerPreparedStatement extends PreparedStatement {
 				
 				synchronized (this.cancelTimeoutMutex) {
 					if (this.wasCancelled) {
-						this.wasCancelled = false;
-						throw new MySQLTimeoutException();
+						SQLException cause = null;
+						
+						if (this.wasCancelledByTimeout) {
+							cause = new MySQLTimeoutException();
+						} else {
+							cause = new MySQLStatementCancelledException();
+						}
+						
+						resetCancelledState();
+						
+						throw cause;
 					}
 				}
 
