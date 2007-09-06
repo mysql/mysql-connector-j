@@ -4445,5 +4445,31 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		} finally {
 			closeMemberJDBCResources();
 		}
-	}	
+	}
+	
+	/**
+	 * Tests fix for BUG#30851, NPE with null column values when
+	 * "padCharsWithSpace" is set to "true".
+	 * 
+	 * @throws Exception
+	 */
+	public void testbug30851() throws Exception {
+		Connection padConn = getConnectionWithProps("padCharsWithSpace=true");
+		
+    	try {
+        	createTable("bug30851", "(CharCol CHAR(10) DEFAULT NULL)");
+    		this.stmt.execute("INSERT INTO bug30851 VALUES (NULL)");
+    		this.rs = padConn.createStatement().executeQuery("SELECT * FROM bug30851");
+    		this.rs.first();
+    		String strvar = this.rs.getString(1);
+    		//assertNotNull("Should be null", strvar);
+
+    	} finally {
+			closeMemberJDBCResources();
+			
+			if (padConn != null) {
+				padConn.close();
+			}
+		}        
+	}
 }

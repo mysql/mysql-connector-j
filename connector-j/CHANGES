@@ -250,6 +250,9 @@ nn-nn-07 - Version 5.0.8
     - Fixed BUG#27915 - DatabaseMetaData.getColumns() doesn't
       contain SCOPE_* or IS_AUTOINCREMENT columns.
 
+    - Fixed BUG#30851, NPE with null column values when
+      "padCharsWithSpace" is set to "true".
+      
 07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for

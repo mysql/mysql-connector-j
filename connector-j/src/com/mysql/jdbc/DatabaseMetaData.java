@@ -2954,7 +2954,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public String getDriverVersion() throws java.sql.SQLException {
-		return "@MYSQL_CJ_FULL_PROD_NAME@ ( $Date$, $Revision$ )";
+		return "@MYSQL_CJ_FULL_PROD_NAME@ ( Revision: @MYSQL_CJ_REVISION@ )";
 	}
 
 	/**
