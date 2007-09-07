@@ -54,7 +54,7 @@ import java.util.Properties;
  * @version $Id: $
  * 
  */
-public class LoadBalancingConnectionProxy implements InvocationHandler {
+public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarget {
 
 	private static Method getLocalTimeMethod;
 
@@ -353,6 +353,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 			result = method.invoke(this.currentConn, args);
 
 			if (result != null) {
+				if (result instanceof com.mysql.jdbc.Statement) {
+					((com.mysql.jdbc.Statement)result).setPingTarget(this);
+				}
+				
 				result = proxyIfInterfaceIsJdbc(result, result.getClass());
 			}
 		} catch (InvocationTargetException e) {
@@ -444,5 +448,13 @@ public class LoadBalancingConnectionProxy implements InvocationHandler {
 		}
 
 		return System.currentTimeMillis();
+	}
+
+	public synchronized void doPing() throws SQLException {
+		Iterator allConns = this.liveConnections.values().iterator();
+		
+		while (allConns.hasNext()) {
+			((Connection)allConns.next()).ping();
+		}
 	}
 }

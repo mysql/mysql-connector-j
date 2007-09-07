@@ -252,6 +252,12 @@ nn-nn-07 - Version 5.0.8
 
     - Fixed BUG#30851, NPE with null column values when
       "padCharsWithSpace" is set to "true".
+    
+    - Specifying a "validation query" in your connection pool 
+      that starts with "/* ping */" _exactly_ will cause the driver to 
+      instead send a ping to the server and return a fake result set (much 
+      lighter weight), and when using a ReplicationConnection or a LoadBalancedConnection, 
+      will send the ping across all active connections.
       
 07-19-07 - Version 5.0.7
 

@@ -66,6 +66,7 @@ import java.util.TimerTask;
  * @see ResultSetInternalMethods
  */
 public class StatementImpl implements Statement {
+        protected static final String PING_MARKER = "/* ping */";
 	/**
 	 * Thread used to implement query timeouts...Eventually we could be more
 	 * efficient and have one thread with timers, but this is a straightforward
@@ -243,6 +244,9 @@ public class StatementImpl implements Statement {
 
 	protected boolean continueBatchOnError = false;
 
+	protected PingTarget pingTarget = null;
+	
+	
 	/**
 	 * Constructor for a Statement.
 	 *
@@ -639,6 +643,14 @@ public class StatementImpl implements Statement {
 				}
 			}
 
+			if (firstNonWsChar == '/') {
+				if (sql.startsWith(PING_MARKER)) {
+					doPingInstead();
+				
+					return true;
+				}
+			}
+			
 			CachedResultSetMetaData cachedMetaData = null;
 
 			ResultSetInternalMethods rs = null;
@@ -1274,6 +1286,14 @@ public class StatementImpl implements Statement {
 			char firstStatementChar = StringUtils.firstNonWsCharUc(sql,
 					findStartOfStatement(sql));
 
+			if (sql.charAt(0) == '/') {
+				if (sql.startsWith(PING_MARKER)) {
+					doPingInstead();
+				
+					return this.results;
+				}
+			}
+			
 			checkForDml(sql, firstStatementChar);
 
 			if (this.results != null) {
@@ -1416,6 +1436,28 @@ public class StatementImpl implements Statement {
 		}
 	}
 
+	protected void doPingInstead() throws SQLException {
+		if (this.pingTarget != null) {
+			this.pingTarget.doPing();
+		} else {
+			this.connection.ping();
+		}
+
+		ResultSetInternalMethods fakeSelectOneResultSet = generatePingResultSet();
+		this.results = fakeSelectOneResultSet;
+	}
+
+	protected ResultSetInternalMethods generatePingResultSet() throws SQLException {
+		Field[] fields = { new Field(null, "1", Types.BIGINT, 1) };
+		ArrayList rows = new ArrayList();
+		byte[] colVal = new byte[] { (byte) '1' };
+
+		rows.add(new ByteArrayRow(new byte[][] { colVal }));
+
+		return (ResultSetInternalMethods) DatabaseMetaData.buildResultSet(fields, rows,
+				this.connection);
+	}
+	
 	protected void executeSimpleNonQuery(ConnectionImpl c, String nonQuery)
 			throws SQLException {
 		c.execSQL(this, nonQuery,
@@ -2210,6 +2252,7 @@ public class StatementImpl implements Statement {
 		this.batchedGeneratedKeys = null;
 		this.cancelTimeoutMutex = null;
 		this.localInfileInputStream = null;
+		this.pingTarget = null;
 	}
 
 	/**
@@ -2559,4 +2602,8 @@ public class StatementImpl implements Statement {
     public synchronized void setLocalInfileInputStream(InputStream stream) {
         this.localInfileInputStream = stream;
     }
+    
+    public synchronized void setPingTarget(PingTarget pingTarget) {
+		this.pingTarget = pingTarget;
+	}
 }

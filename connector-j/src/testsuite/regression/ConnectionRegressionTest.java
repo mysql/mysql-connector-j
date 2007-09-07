@@ -32,6 +32,7 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -2161,7 +2162,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	}
 	
 	public void testBug29852() throws Exception {
-    	int indexOfHostStart = dbUrl.indexOf("://") + 3;
+    	Connection lbConn = getLoadBalancedConnection();
+    	assertTrue(!lbConn.getClass().getName().startsWith("com.mysql.jdbc"));
+    	lbConn.close();
+    }
+
+	private Connection getLoadBalancedConnection() throws SQLException {
+		int indexOfHostStart = dbUrl.indexOf("://") + 3;
     	int indexOfHostEnd = dbUrl.indexOf("/", indexOfHostStart);
     	
     	String backHalf = dbUrl.substring(indexOfHostStart, indexOfHostEnd);
@@ -2173,7 +2180,73 @@ public class ConnectionRegressionTest extends BaseTestCase {
     	String dbAndConfigs = dbUrl.substring(indexOfHostEnd);
     	
     	Connection lbConn = DriverManager.getConnection("jdbc:mysql:loadbalance://" + backHalf + "," + backHalf + dbAndConfigs);
-    	assertTrue(!lbConn.getClass().getName().startsWith("com.mysql.jdbc"));
-    	lbConn.close();
-    }
+		return lbConn;
+	}
+	
+	/**
+	 * Test of a new feature to fix BUG 22643, specifying a
+	 * "validation query" in your connection pool that starts
+	 * with "slash-star ping slash-star" _exactly_ will cause the driver to " +
+	 * instead send a ping to the server (much lighter weight), and when using
+	 * a ReplicationConnection or a LoadBalancedConnection, will send
+	 * the ping across all active connections.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug22643() throws Exception {
+		checkPingQuery(this.conn);
+		
+		Connection replConnection = getMasterSlaveReplicationConnection();
+		
+		try {
+			checkPingQuery(replConnection);
+		} finally {
+			if (replConnection != null) {
+				replConnection.close();
+			}
+		}
+		
+		Connection lbConn = getLoadBalancedConnection();
+		
+		try {
+			checkPingQuery(lbConn);
+		} finally {
+			if (lbConn != null) {
+				lbConn.close();
+			}
+		}
+	}
+
+	private void checkPingQuery(Connection c) throws SQLException {
+		// Yes, I know we're sending 2, and looking for 1
+		// that's part of the test, since we don't _really_
+		// send the query to the server!
+		String aPingQuery = "/* ping */ SELECT 2";
+		Statement pingStmt = c.createStatement();
+		PreparedStatement pingPStmt = null;
+		
+		try {
+			this.rs = pingStmt.executeQuery(aPingQuery);
+			assertTrue(this.rs.next());
+			assertEquals(this.rs.getInt(1), 1);
+			
+			assertTrue(pingStmt.execute(aPingQuery));
+			this.rs = pingStmt.getResultSet();
+			assertTrue(this.rs.next());
+			assertEquals(this.rs.getInt(1), 1);
+			
+			pingPStmt = c.prepareStatement(aPingQuery);
+			
+			assertTrue(pingPStmt.execute());
+			this.rs = pingPStmt.getResultSet();
+			assertTrue(this.rs.next());
+			assertEquals(this.rs.getInt(1), 1);
+			
+			this.rs = pingPStmt.executeQuery();
+			assertTrue(this.rs.next());
+			assertEquals(this.rs.getInt(1), 1);
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

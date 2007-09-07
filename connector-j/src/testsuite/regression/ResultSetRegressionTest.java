@@ -4403,6 +4403,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs.next();
         assertEquals("java.lang.String", this.rs.getObject(1).getClass().getName());
 	}
+
 	
 	/**
 	 * Tests fix for BUG#30664. Note that this fix only works

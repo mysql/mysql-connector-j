@@ -520,6 +520,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	/** Can we actually rewrite this statement as a multi-value insert? */
 
 	private boolean canRewrite = false;
+
+	private boolean doPingInstead;
 	
 	/**
 	 * Creates a prepared statement instance -- We need to provide factory-style
@@ -613,6 +615,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 		this.originalSql = sql;
 
+		if (this.originalSql.startsWith(PING_MARKER)) {
+			this.doPingInstead = true;
+		} else {
+			this.doPingInstead = false;
+		}
+		
 		this.dbmd = this.connection.getMetaData();
 
 		this.useTrueBoolean = this.connection.versionMeetsMinimum(3, 21, 23);
@@ -1707,6 +1715,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			
 			this.numberOfExecutions++;
 	
+			if (this.doPingInstead) {
+				doPingInstead();
+				
+				return this.results;
+			}
+			
 			ResultSetInternalMethods rs;
 			
 			CancelTask timeoutTask = null;

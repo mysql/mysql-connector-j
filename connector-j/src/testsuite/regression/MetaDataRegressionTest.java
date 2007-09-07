@@ -1952,6 +1952,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 		this.conn.prepareCall("{call testBug25624(?,?)}").close();
 	}
+
 	
 	/**
 	 * Tests fix for BUG#27867 - Schema objects with identifiers other than
