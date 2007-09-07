@@ -1645,6 +1645,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		byte boolVal = ((byte[]) value)[0];
 
+		if (boolVal == (byte)'1') {
+			return true;
+		} else if (boolVal == (byte)'0') {
+			return false;
+		}
+		
 		return (boolVal == -1 || boolVal > 0);
 	}
 
