@@ -1004,6 +1004,11 @@ public class Field {
 				asString.append(" ZEROFILL");
 			}
 
+			asString.append(", charsetIndex=");
+			asString.append(this.charsetIndex);
+			asString.append(", charsetName=");
+			asString.append(this.charsetName);
+			
 			
 			//if (this.buffer != null) {
 			//	asString.append("\n\nData as received from server:\n\n");
