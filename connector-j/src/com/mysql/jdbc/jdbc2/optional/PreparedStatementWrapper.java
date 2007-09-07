@@ -511,7 +511,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 		try {
 			if (this.wrappedStmt != null) {
 				((PreparedStatement) this.wrappedStmt).setObject(
-						parameterIndex, x, scale);
+						parameterIndex, x, targetSqlType, scale);
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",

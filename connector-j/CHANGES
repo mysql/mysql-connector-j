@@ -259,6 +259,9 @@ nn-nn-07 - Version 5.0.8
       lighter weight), and when using a ReplicationConnection or a LoadBalancedConnection, 
       will send the ping across all active connections.
       
+    - Fixed Bug#30892 setObject(int, Object, int, int) delegate in
+      PreparedStatmentWrapper delegates to wrong method.
+      
 07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for
