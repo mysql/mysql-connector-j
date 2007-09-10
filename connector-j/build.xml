@@ -26,8 +26,8 @@
 <project name="MySQL Connector/J" default="dist" basedir=".">
 	<property name="major_version" value="5"/>
 	<property name="minor_version" value="1"/>
-	<property name="subminor_version" value="3"/>
-	<property name="version_status" value="-rc"/>
+	<property name="subminor_version" value="4"/>
+	<property name="version_status" value=""/>
 
 	<property name="version" value="${major_version}.${minor_version}.${subminor_version}${version_status}"/>
 	<property name="prodName" value="mysql-connector-java"/>
