@@ -330,6 +330,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 	private boolean padCharsWithSpace = false;
 
+	private boolean jdbcCompliantTruncationForReads;
+	
+	private boolean useFastIntParsing = true;
+	
 	protected final static char[] EMPTY_SPACE = new char[255];
 	
 	static {
@@ -443,6 +447,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			this.profileSql = this.connection.getProfileSql();
 			this.retainOwningStatement = 
 				this.connection.getRetainStatementAfterResultSetClose();
+			this.jdbcCompliantTruncationForReads = this.connection.getJdbcCompliantTruncationForReads();
+			this.useFastIntParsing = this.connection.getUseFastIntParsing();
 		}
 
 		this.owningStatement = creatorStmt;
@@ -617,6 +623,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			}
 		}
 
+		setRowPositionValidity();
+		
 		return b;
 	}
 
@@ -651,6 +659,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			this.rowData.afterLast();
 			this.thisRow = null;
 		}
+		
+		setRowPositionValidity();
 	}
 
 	/**
@@ -686,6 +696,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		
 		this.rowData.beforeFirst();
 		this.thisRow = null;
+		
+		setRowPositionValidity();
 	}
 
 	// ---------------------------------------------------------------------
@@ -801,23 +813,31 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	protected void checkRowPos() throws SQLException {
 		checkClosed();
 
-		if (!this.rowData.isDynamic() && (this.rowData.size() == 0)) {
-			throw SQLError.createSQLException(
-					Messages
-							.getString("ResultSet.Illegal_operation_on_empty_result_set"),
+		if (!this.onValidRow) {
+			throw SQLError.createSQLException(this.invalidRowReason, 
 					SQLError.SQL_STATE_GENERAL_ERROR);
 		}
-
-		if (this.rowData.isBeforeFirst()) {
-			throw SQLError.createSQLException(Messages
-					.getString("ResultSet.Before_start_of_result_set_146"),
-					SQLError.SQL_STATE_GENERAL_ERROR); //$NON-NLS-1$
-		}
-
-		if (this.rowData.isAfterLast()) {
-			throw SQLError.createSQLException(Messages
-					.getString("ResultSet.After_end_of_result_set_148"),
-					SQLError.SQL_STATE_GENERAL_ERROR); //$NON-NLS-1$
+	}
+	
+	private boolean onValidRow = false;
+	private String invalidRowReason = null;
+	
+	private void setRowPositionValidity() throws SQLException {
+		if (!this.rowData.isDynamic() && (this.rowData.size() == 0)) {
+			this.invalidRowReason = Messages
+			.getString("ResultSet.Illegal_operation_on_empty_result_set");//$NON-NLS-1$
+			this.onValidRow = false;
+		} else if (this.rowData.isBeforeFirst()) {
+			this.invalidRowReason = Messages
+					.getString("ResultSet.Before_start_of_result_set_146"); //$NON-NLS-1$
+			this.onValidRow = false;
+		} else if (this.rowData.isAfterLast()) {
+			this.invalidRowReason = Messages
+					.getString("ResultSet.After_end_of_result_set_148"); //$NON-NLS-1$
+			this.onValidRow = false;
+		} else {
+			this.onValidRow = true;
+			this.invalidRowReason = null;
 		}
 	}
 
@@ -1079,22 +1099,27 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public boolean first() throws SQLException {
 		checkClosed();
 
+		boolean b = true;
+		
 		if (this.rowData.isEmpty()) {
-			return false;
+			b = false;
+		} else {
+	
+			if (this.onInsertRow) {
+				this.onInsertRow = false;
+			}
+	
+			if (this.doingUpdates) {
+				this.doingUpdates = false;
+			}
+	
+			this.rowData.beforeFirst();
+			this.thisRow = this.rowData.next();
 		}
 
-		if (this.onInsertRow) {
-			this.onInsertRow = false;
-		}
-
-		if (this.doingUpdates) {
-			this.doingUpdates = false;
-		}
-
-		this.rowData.beforeFirst();
-		this.thisRow = this.rowData.next();
-
-		return true;
+		setRowPositionValidity();
+		
+		return b;
 	}
 
 	/**
@@ -1749,7 +1774,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			if (decimalIndex != -1) {
 				double valueAsDouble = Double.parseDouble(stringVal);
 
-				if (this.connection.getJdbcCompliantTruncationForReads()) {
+				if (this.jdbcCompliantTruncationForReads) {
 					if (valueAsDouble < Byte.MIN_VALUE
 							|| valueAsDouble > Byte.MAX_VALUE) {
 						throwRangeException(stringVal, columnIndex,
@@ -1762,7 +1787,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 			long valueAsLong = Long.parseLong(stringVal);
 
-			if (this.connection.getJdbcCompliantTruncationForReads()) {
+			if (this.jdbcCompliantTruncationForReads) {
 				if (valueAsLong < Byte.MIN_VALUE
 						|| valueAsLong > Byte.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsLong),
@@ -2489,7 +2514,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 				float f = Float.parseFloat(val);
 
-				if (this.connection.getJdbcCompliantTruncationForReads()) {
+				if (this.jdbcCompliantTruncationForReads) {
 					if (f == Float.MIN_VALUE || f == Float.MAX_VALUE) {
 						double valAsDouble = Double.parseDouble(val);
 
@@ -2514,9 +2539,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				Double valueAsDouble = new Double(val);
 				float valueAsFloat = valueAsDouble.floatValue();
 				
-				if (this.connection.getJdbcCompliantTruncationForReads()) {
+				if (this.jdbcCompliantTruncationForReads) {
 
-					if (this.connection.getJdbcCompliantTruncationForReads() && 
+					if (this.jdbcCompliantTruncationForReads && 
 							valueAsFloat == Float.NEGATIVE_INFINITY ||
 							valueAsFloat == Float.POSITIVE_INFINITY) {
 						throwRangeException(valueAsDouble.toString(), 
@@ -2554,7 +2579,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		if (!this.isBinaryEncoded) {
 			int columnIndexMinusOne = columnIndex - 1;
-			if (this.connection.getUseFastIntParsing()) {
+			if (this.useFastIntParsing) {
 				checkColumnBounds(columnIndex);
 
 				if (this.thisRow.isNull(columnIndexMinusOne)) {
@@ -2657,7 +2682,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				if (this.fields[columnIndexMinusOne].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
 					long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
 
-					if (this.connection.getJdbcCompliantTruncationForReads()
+					if (this.jdbcCompliantTruncationForReads
 							&& (valueAsLong < Integer.MIN_VALUE || valueAsLong > Integer.MAX_VALUE)) {
 						throwRangeException(String.valueOf(valueAsLong),
 								columnIndex, Types.INTEGER);
@@ -2717,7 +2742,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					
 					int valueAsInt = Integer.parseInt(val);
 
-					if (this.connection.getJdbcCompliantTruncationForReads()) {
+					if (this.jdbcCompliantTruncationForReads) {
 						if (valueAsInt == Integer.MIN_VALUE
 								|| valueAsInt == Integer.MAX_VALUE) {
 							long valueAsLong = Long.parseLong(val);
@@ -2738,7 +2763,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 				double valueAsDouble = Double.parseDouble(val);
 
-				if (this.connection.getJdbcCompliantTruncationForReads()) {
+				if (this.jdbcCompliantTruncationForReads) {
 					if (valueAsDouble < Integer.MIN_VALUE
 							|| valueAsDouble > Integer.MAX_VALUE) {
 						throwRangeException(String.valueOf(valueAsDouble),
@@ -2754,7 +2779,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			try {
 				double valueAsDouble = Double.parseDouble(val);
 
-				if (this.connection.getJdbcCompliantTruncationForReads()) {
+				if (this.jdbcCompliantTruncationForReads) {
 					if (valueAsDouble < Integer.MIN_VALUE
 							|| valueAsDouble > Integer.MAX_VALUE) {
 						throwRangeException(String.valueOf(valueAsDouble),
@@ -2796,7 +2821,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			int columnIndexMinusOne = columnIndex - 1;
 			
-			if (this.connection.getUseFastIntParsing()) {
+			if (this.useFastIntParsing) {
 			
 				checkColumnBounds(columnIndex);
 
@@ -3234,7 +3259,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_BIT:
 			long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex + 1);
 			
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads() &&
+			if (overflowCheck && this.jdbcCompliantTruncationForReads &&
 					(valueAsLong < Byte.MIN_VALUE
 							|| valueAsLong > Byte.MAX_VALUE)) {
 				throwRangeException(String.valueOf(valueAsLong), columnIndex + 1,
@@ -3252,7 +3277,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			short valueAsShort = (valueAsByte >= 0) ? 
 					valueAsByte : (short)(valueAsByte + (short)256);
 			
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsShort > Byte.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsShort),
 							columnIndex + 1, Types.TINYINT);
@@ -3265,7 +3290,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_YEAR:
 			valueAsShort = getNativeShort(columnIndex + 1);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsShort < Byte.MIN_VALUE
 						|| valueAsShort > Byte.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsShort),
@@ -3278,7 +3303,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_LONG:
 			int valueAsInt = getNativeInt(columnIndex + 1, false);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsInt < Byte.MIN_VALUE || valueAsInt > Byte.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsInt),
 							columnIndex + 1, Types.TINYINT);
@@ -3290,7 +3315,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_FLOAT:
 			float valueAsFloat = getNativeFloat(columnIndex + 1);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsFloat < Byte.MIN_VALUE
 						|| valueAsFloat > Byte.MAX_VALUE) {
 
@@ -3304,7 +3329,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_DOUBLE:
 			double valueAsDouble = getNativeDouble(columnIndex + 1);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsDouble < Byte.MIN_VALUE
 						|| valueAsDouble > Byte.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsDouble),
@@ -3317,7 +3342,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_LONGLONG:
 			valueAsLong = getNativeLong(columnIndex + 1, false, true);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsLong < Byte.MIN_VALUE
 						|| valueAsLong > Byte.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsLong),
@@ -3938,7 +3963,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			float valueAsFloat = valueAsDouble.floatValue();
 			
-			if (this.connection.getJdbcCompliantTruncationForReads() && 
+			if (this.jdbcCompliantTruncationForReads && 
 					valueAsFloat == Float.NEGATIVE_INFINITY ||
 					valueAsFloat == Float.POSITIVE_INFINITY) {
 				throwRangeException(valueAsDouble.toString(), 
@@ -4035,7 +4060,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_BIT:
 			long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex + 1);
 			
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads() &&
+			if (overflowCheck && this.jdbcCompliantTruncationForReads &&
 					(valueAsLong < Integer.MIN_VALUE
 							|| valueAsLong > Integer.MAX_VALUE)) {
 				throwRangeException(String.valueOf(valueAsLong), columnIndex + 1,
@@ -4072,7 +4097,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			valueAsLong = (valueAsInt >= 0) ? 
 					valueAsInt : valueAsInt + 4294967296L; 
 			
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads() &&
+			if (overflowCheck && this.jdbcCompliantTruncationForReads &&
 					valueAsLong > Integer.MAX_VALUE) {
 				throwRangeException(String.valueOf(valueAsLong),
 						columnIndex + 1, Types.INTEGER);
@@ -4082,7 +4107,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_LONGLONG:
 			valueAsLong = getNativeLong(columnIndex + 1, false, true);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsLong < Integer.MIN_VALUE
 						|| valueAsLong > Integer.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsLong),
@@ -4094,7 +4119,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_DOUBLE:
 			double valueAsDouble = getNativeDouble(columnIndex + 1);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsDouble < Integer.MIN_VALUE
 						|| valueAsDouble > Integer.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsDouble),
@@ -4106,7 +4131,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_FLOAT:
 			valueAsDouble = getNativeFloat(columnIndex + 1);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsDouble < Integer.MIN_VALUE
 						|| valueAsDouble > Integer.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsDouble),
@@ -4202,7 +4227,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			BigInteger asBigInt = convertLongToUlong(valueAsLong);
 			
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads() && 
+			if (overflowCheck && this.jdbcCompliantTruncationForReads && 
 					((asBigInt.compareTo(new BigInteger(String.valueOf(Long.MAX_VALUE))) > 0 ) ||
 					 (asBigInt.compareTo(new BigInteger(String.valueOf(Long.MIN_VALUE))) < 0))) {
 				throwRangeException(asBigInt.toString(),
@@ -4214,7 +4239,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_DOUBLE:
 			double valueAsDouble = getNativeDouble(columnIndex + 1);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsDouble < Long.MIN_VALUE
 						|| valueAsDouble > Long.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsDouble),
@@ -4226,7 +4251,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_FLOAT:
 			valueAsDouble = getNativeFloat(columnIndex + 1);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsDouble < Long.MIN_VALUE
 						|| valueAsDouble > Long.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsDouble),
@@ -4323,7 +4348,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			int valueAsInt = asShort & 0xffff;
 			
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads() &&
+			if (overflowCheck && this.jdbcCompliantTruncationForReads &&
 					valueAsInt > Short.MAX_VALUE) {
 				throwRangeException(String.valueOf(valueAsInt),
 						columnIndex + 1, Types.SMALLINT);
@@ -4335,7 +4360,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			if (!f.isUnsigned()) {
 				valueAsInt = getNativeInt(columnIndex + 1, false);
 				
-				if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads() &&
+				if (overflowCheck && this.jdbcCompliantTruncationForReads &&
 						valueAsInt > Short.MAX_VALUE ||
 						valueAsInt < Short.MIN_VALUE) {
 					throwRangeException(String.valueOf(valueAsInt),
@@ -4347,7 +4372,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			long valueAsLong = getNativeLong(columnIndex + 1, false, true);
 			
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads() &&
+			if (overflowCheck && this.jdbcCompliantTruncationForReads &&
 					valueAsLong > Short.MAX_VALUE) {
 				throwRangeException(String.valueOf(valueAsLong),
 						columnIndex + 1, Types.SMALLINT);
@@ -4359,7 +4384,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			valueAsLong = getNativeLong(columnIndex + 1, false, false);
 			
 			if (!f.isUnsigned()) {
-				if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+				if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 					if (valueAsLong < Short.MIN_VALUE
 							|| valueAsLong > Short.MAX_VALUE) {
 						throwRangeException(String.valueOf(valueAsLong),
@@ -4372,7 +4397,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			BigInteger asBigInt = convertLongToUlong(valueAsLong);
 			
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads() && 
+			if (overflowCheck && this.jdbcCompliantTruncationForReads && 
 					((asBigInt.compareTo(new BigInteger(String.valueOf(Short.MAX_VALUE))) > 0 ) ||
 					 (asBigInt.compareTo(new BigInteger(String.valueOf(Short.MIN_VALUE))) < 0))) {
 				throwRangeException(asBigInt.toString(),
@@ -4384,7 +4409,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_DOUBLE:
 			double valueAsDouble = getNativeDouble(columnIndex + 1);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsDouble < Short.MIN_VALUE
 						|| valueAsDouble > Short.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsDouble),
@@ -4396,7 +4421,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_FLOAT:
 			float valueAsFloat = getNativeFloat(columnIndex + 1);
 
-			if (overflowCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+			if (overflowCheck && this.jdbcCompliantTruncationForReads) {
 				if (valueAsFloat < Short.MIN_VALUE
 						|| valueAsFloat > Short.MAX_VALUE) {
 					throwRangeException(String.valueOf(valueAsFloat),
@@ -5196,7 +5221,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (!this.isBinaryEncoded) {
 			checkRowPos();
 			
-			if (this.connection.getUseFastIntParsing()) {
+			if (this.useFastIntParsing) {
 				
 				checkColumnBounds(columnIndex);
 
@@ -5245,7 +5270,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
 							long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
 							
-							if (this.connection.getJdbcCompliantTruncationForReads() &&
+							if (this.jdbcCompliantTruncationForReads &&
 									(valueAsLong < Short.MIN_VALUE
 											|| valueAsLong > Short.MAX_VALUE)) {
 								throwRangeException(String.valueOf(valueAsLong), columnIndex,
@@ -5297,7 +5322,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_BIT) {
 					long valueAsLong = getNumericRepresentationOfSQLBitType(columnIndex);
 					
-					if (this.connection.getJdbcCompliantTruncationForReads() &&
+					if (this.jdbcCompliantTruncationForReads &&
 							(valueAsLong < Short.MIN_VALUE
 									|| valueAsLong > Short.MAX_VALUE)) {
 						throwRangeException(String.valueOf(valueAsLong), columnIndex,
@@ -6887,26 +6912,31 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public boolean last() throws SQLException {
 		checkClosed();
 
-		if (this.rowData.size() == 0) {
-			return false;
-		}
-
-		if (this.onInsertRow) {
-			this.onInsertRow = false;
-		}
-
-		if (this.doingUpdates) {
-			this.doingUpdates = false;
-		}
-
-		if (this.thisRow != null) {
-			this.thisRow.closeOpenStreams();
-		}
+		boolean b = true;
 		
-		this.rowData.beforeLast();
-		this.thisRow = this.rowData.next();
+		if (this.rowData.size() == 0) {
+			b = false;
+		} else {
 
-		return true;
+			if (this.onInsertRow) {
+				this.onInsertRow = false;
+			}
+	
+			if (this.doingUpdates) {
+				this.doingUpdates = false;
+			}
+	
+			if (this.thisRow != null) {
+				this.thisRow.closeOpenStreams();
+			}
+			
+			this.rowData.beforeLast();
+			this.thisRow = this.rowData.next();
+		}
+
+		setRowPositionValidity();
+		
+		return b;
 	}
 
 	// /////////////////////////////////////////
@@ -7006,6 +7036,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			}
 		}
 
+		setRowPositionValidity();
+		
 		return b;
 	}
 
@@ -7017,7 +7049,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		double valueAsDouble = Double.parseDouble(val);
 
-		if (this.connection.getJdbcCompliantTruncationForReads()) {
+		if (this.jdbcCompliantTruncationForReads) {
 			if (valueAsDouble < Integer.MIN_VALUE
 					|| valueAsDouble > Integer.MAX_VALUE) {
 				throwRangeException(String.valueOf(valueAsDouble), columnIndex,
@@ -7042,7 +7074,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	private void checkForIntegerTruncation(int columnIndex,
 			byte[] valueAsBytes, String valueAsString, int intValue)
 			throws SQLException {
-		if (this.connection.getJdbcCompliantTruncationForReads()) {
+		if (this.jdbcCompliantTruncationForReads) {
 			if (intValue == Integer.MIN_VALUE || intValue == Integer.MAX_VALUE) {
 				long valueAsLong = Long
 						.parseLong(valueAsString == null ? new String(
@@ -7066,7 +7098,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		double valueAsDouble = Double.parseDouble(val);
 
-		if (this.connection.getJdbcCompliantTruncationForReads()) {
+		if (this.jdbcCompliantTruncationForReads) {
 			if (valueAsDouble < Long.MIN_VALUE
 					|| valueAsDouble > Long.MAX_VALUE) {
 				throwRangeException(val, columnIndex, Types.BIGINT);
@@ -7115,7 +7147,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			longValue = Long.parseLong(valueAsString);
 		}
 
-		if (doCheck && this.connection.getJdbcCompliantTruncationForReads()) {
+		if (doCheck && this.jdbcCompliantTruncationForReads) {
 			checkForLongTruncation(columnIndex, valueAsBytes, valueAsString,
 					longValue);
 		}
@@ -7148,7 +7180,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		double valueAsDouble = Double.parseDouble(val);
 
-		if (this.connection.getJdbcCompliantTruncationForReads()) {
+		if (this.jdbcCompliantTruncationForReads) {
 			if (valueAsDouble < Short.MIN_VALUE
 					|| valueAsDouble > Short.MAX_VALUE) {
 				throwRangeException(String.valueOf(valueAsDouble), columnIndex,
@@ -7185,7 +7217,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			shortValue = Short.parseShort(valueAsString);
 		}
 
-		if (this.connection.getJdbcCompliantTruncationForReads()) {
+		if (this.jdbcCompliantTruncationForReads) {
 			if (shortValue == Short.MIN_VALUE || shortValue == Short.MAX_VALUE) {
 				long valueAsLong = Long
 						.parseLong(valueAsString == null ? new String(
@@ -7232,21 +7264,27 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			this.thisRow.closeOpenStreams();
 		}
 		
+		boolean b = true;
+		
 		if ((rowIndex - 1) >= 0) {
 			rowIndex--;
 			this.rowData.setCurrentRow(rowIndex);
 			this.thisRow = this.rowData.getAt(rowIndex);
 
-			return true;
+			b = true;
 		} else if ((rowIndex - 1) == -1) {
 			rowIndex--;
 			this.rowData.setCurrentRow(rowIndex);
 			this.thisRow = null;
 
-			return false;
+			b = false;
 		} else {
-			return false;
+			b = false;
 		}
+		
+		setRowPositionValidity();
+		
+		return b;
 	}
 
 	/**
@@ -7519,6 +7557,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkClosed();
 
 		if (this.rowData.size() == 0) {
+			setRowPositionValidity();
+			
 			return false;
 		}
 
@@ -7529,6 +7569,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		this.rowData.moveRowRelative(rows);
 		this.thisRow = this.rowData.getAt(this.rowData.getCurrentRowNumber());
 
+		setRowPositionValidity();
+		
 		return (!this.rowData.isAfterLast() && !this.rowData.isBeforeFirst());
 	}
 
