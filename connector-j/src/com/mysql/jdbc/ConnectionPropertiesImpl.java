@@ -755,16 +755,19 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.blobSendChunkSize"), //$NON-NLS-1$
 			"3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
+	private BooleanConnectionProperty autoSlowLog = new BooleanConnectionProperty(
+			"autoSlowLog", true,
+			Messages.getString("ConnectionProperties.autoSlowLog"),
+			"5.1.4", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty blobsAreStrings = new BooleanConnectionProperty(
             "blobsAreStrings", false,
-            "Should the driver always treat BLOBs as Strings - specifically to work around dubious metadata "
-            + "returned by the server for GROUP BY clauses?",
+            Messages.getString("ConnectionProperties.blobsAreStrings"),
             "5.0.8", MISC_CATEGORY, Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty functionsNeverReturnBlobs = new BooleanConnectionProperty(
             "functionsNeverReturnBlobs", false,
-            "Should the driver always treat data from functions returning BLOBs as Strings - specifically to work around dubious metadata "
-            + "returned by the server for GROUP BY clauses?",
+            Messages.getString("ConnectionProperties.functionsNeverReturnBlobs"),
             "5.0.8", MISC_CATEGORY, Integer.MIN_VALUE);
 			
 	private BooleanConnectionProperty cacheCallableStatements = new BooleanConnectionProperty(
@@ -4256,4 +4259,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     public void setFunctionsNeverReturnBlobs(boolean flag) {
         this.functionsNeverReturnBlobs.setValue(flag);
     }
+
+	public boolean getAutoSlowLog() {
+		return this.autoSlowLog.getValueAsBoolean();
+	}
+
+	public void setAutoSlowLog(boolean flag) {
+		this.autoSlowLog.setValue(flag);
+	}
 }

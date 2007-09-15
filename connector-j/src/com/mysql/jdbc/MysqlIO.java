@@ -257,6 +257,8 @@ class MysqlIO {
             this.packetDebugRingBuffer = new LinkedList();
         }
 
+        this.useAutoSlowLog = this.connection.getAutoSlowLog();
+        
         this.useBufferRowSizeThreshold = useBufferRowSizeThreshold;
         this.useDirectRowUnpack = this.connection.getUseDirectRowUnpack();
 
@@ -1861,6 +1863,7 @@ class MysqlIO {
     }
 
     private int statementExecutionDepth = 0;
+	private boolean useAutoSlowLog;
 
     /**
      * Send a query stored in a packet directly to the server.
@@ -1990,10 +1993,23 @@ class MysqlIO {
 
 	    		if (this.profileSql) {
 	    			shouldExtractQuery = true;
-	    		} else if (this.logSlowQueries &&
-	    				((queryEndTime - queryStartTime) > this.connection.getSlowQueryThresholdMillis())) {
-	    			shouldExtractQuery = true;
-	    			queryWasSlow = true;
+	    		} else if (this.logSlowQueries) {
+	    			long queryTime = queryEndTime - queryStartTime;
+	    			
+	    			boolean logSlow = false;
+	    			
+	    			if (this.useAutoSlowLog) {
+	    				logSlow = queryTime > this.connection.getSlowQueryThresholdMillis();
+	    			} else {
+	    				logSlow = this.connection.isAbonormallyLongQuery(queryTime);
+	    				
+	    				this.connection.reportQueryTime(queryTime);
+	    			}
+	    			
+	    			if (logSlow) {
+	    				shouldExtractQuery = true;
+	    				queryWasSlow = true;
+	    			}
 	    		}
 
 	    		if (shouldExtractQuery) {

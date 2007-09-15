@@ -360,6 +360,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				!this.connection.versionMeetsMinimum(4, 1, 10);
 		}
 		
+		this.useAutoSlowLog = this.connection.getAutoSlowLog();
 		this.useTrueBoolean = this.connection.versionMeetsMinimum(3, 21, 23);
 		this.hasLimitClause = (StringUtils.indexOfIgnoreCase(sql, "LIMIT") != -1); //$NON-NLS-1$
 		this.firstCharOfStmt = StringUtils.firstNonWsCharUc(sql);
@@ -522,6 +523,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 	}
 
 	protected boolean isCached = false;
+
+	private boolean useAutoSlowLog;
 
 	protected void setClosed(boolean flag) {
 		this.isClosed = flag;
@@ -1281,9 +1284,17 @@ public class ServerPreparedStatement extends PreparedStatement {
 				if (logSlowQueries || gatherPerformanceMetrics) {
 					long elapsedTime = queryEndTime - begin;
 
-					if (logSlowQueries
-							&& (elapsedTime >= mysql.getSlowQueryThreshold())) {
-						queryWasSlow = true;
+					if (logSlowQueries) {
+		    			if (this.useAutoSlowLog) {
+		    				queryWasSlow = elapsedTime > this.connection.getSlowQueryThresholdMillis();
+		    			} else {
+		    				queryWasSlow = this.connection.isAbonormallyLongQuery(elapsedTime);
+		    				
+		    				this.connection.reportQueryTime(elapsedTime);
+		    			}
+					}
+
+					if (queryWasSlow) {
 						
 						StringBuffer mesgBuf = new StringBuffer(
 								48 + this.originalSql.length());

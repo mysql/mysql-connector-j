@@ -343,5 +343,9 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	 */
 	public abstract boolean versionMeetsMinimum(int major, int minor,
 			int subminor) throws SQLException;
+	
+	public abstract void reportQueryTime(long millisOrNanos);
+	
+	public abstract boolean isAbonormallyLongQuery(long millisOrNanos);
 
 }

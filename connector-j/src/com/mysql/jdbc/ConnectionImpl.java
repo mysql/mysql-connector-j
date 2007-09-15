@@ -166,6 +166,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 	private static final Map serverConfigByUrl = new HashMap();
 
+	private long queryTimeCount;
+	private double queryTimeSum;
+	private double queryTimeSumSquares;
+	private double queryTimeMean;
+	
 	private static Timer cancelTimer;
 	private static final Constructor JDBC_4_CONNECTION_CTOR;
 	
@@ -5258,5 +5263,23 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public void setStatementComment(String comment) {
 		this.statementComment = comment;
+	}
+	
+	public synchronized void reportQueryTime(long millisOrNanos) {
+		this.queryTimeCount++;
+		this.queryTimeSum += millisOrNanos;
+		this.queryTimeSumSquares += (millisOrNanos * millisOrNanos);
+		this.queryTimeMean = ((this.queryTimeMean * (this.queryTimeCount - 1)) + millisOrNanos)
+				/ this.queryTimeCount;
+	}
+	
+	public synchronized boolean isAbonormallyLongQuery(long millisOrNanos) {
+		if (this.queryTimeCount < 15) {
+			return false; // need a minimum amount for this to make sense
+		}
+		
+		double stddev = Math.sqrt((this.queryTimeSumSquares - ((this.queryTimeSum*this.queryTimeSum) / this.queryTimeCount)) / (this.queryTimeCount - 1));
+		
+		return millisOrNanos > (this.queryTimeMean + 5 * stddev);
 	}
 }

@@ -1566,4 +1566,8 @@ public interface ConnectionProperties {
     public abstract boolean getFunctionsNeverReturnBlobs();
 
     public abstract void setFunctionsNeverReturnBlobs(boolean flag);
+    
+	public abstract boolean getAutoSlowLog();
+
+	public abstract void setAutoSlowLog(boolean flag);
 }
