@@ -10,7 +10,7 @@ nn-nn-07 - Version 5.1.4
 09-07-07 - Version 5.1.3 RC
 
 	- Setting "useBlobToStoreUTF8OutsideBMP" to "true" tells the
-	  driver to treat [MEDIUM/LONG]BLOB columns as [LONG]VARCHAR
+	  driver to treat [MEDIUM/LONG/TINY]BLOB columns as [LONG]VARCHAR
 	  columns holding text encoded in UTF-8 that has characters
 	  outside the BMP (4-byte encodings), which MySQL server
 	  can't handle natively.
