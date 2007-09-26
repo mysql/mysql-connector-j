@@ -324,36 +324,18 @@ class MysqlIO {
 		}
     }
 
-    protected void initializeStatementInterceptors(String interceptorClasses, Properties props) throws SQLException {
-    	List interceptorsToCreate = StringUtils.split(interceptorClasses, ",", true);
-
-    	this.statementInterceptors = new LinkedList();
-
-    	Iterator iter = interceptorsToCreate.iterator();
-
-    	String classname = null;
-
-    	try {
-    		while (iter.hasNext()) {
-    			classname = iter.next().toString();
-    			StatementInterceptor interceptorInstance = (StatementInterceptor)Class.forName(classname).newInstance();
-    			interceptorInstance.init(this.connection, props);
-
-    			this.statementInterceptors.add(interceptorInstance);
-    		}
-    	} catch (Throwable t) {
-    		SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIo.BadStatementInterceptor", new Object[] {classname}));
-    		sqlEx.initCause(t);
-
-    		throw sqlEx;
-    	}
-    }
+    protected void initializeStatementInterceptors(String interceptorClasses,
+			Properties props) throws SQLException {
+		this.statementInterceptors = Util.loadExtensions(this.connection, props, 
+				interceptorClasses,
+				"MysqlIo.BadStatementInterceptor");
+	}
 
     /**
-     * Does the server send back extra column info?
-     *
-     * @return true if so
-     */
+	 * Does the server send back extra column info?
+	 * 
+	 * @return true if so
+	 */
     public boolean hasLongColumnInfo() {
         return this.hasLongColumnInfo;
     }

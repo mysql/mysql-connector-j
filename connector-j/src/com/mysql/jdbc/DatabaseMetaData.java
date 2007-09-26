@@ -66,25 +66,6 @@ import java.util.TreeMap;
  *          Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
-	protected abstract class IterateBlock {
-		IteratorWithCleanup iterator;
-
-		IterateBlock(IteratorWithCleanup i) {
-			iterator = i;
-		}
-
-		public void doForAll() throws SQLException {
-			try {
-				while (iterator.hasNext()) {
-					forEach(iterator.next());
-				}
-			} finally {
-				iterator.close();
-			}
-		}
-
-		abstract void forEach(Object each) throws SQLException;
-	}
 
 	protected abstract class IteratorWithCleanup {
 		abstract void close() throws SQLException;

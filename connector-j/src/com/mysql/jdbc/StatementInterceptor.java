@@ -38,7 +38,7 @@ import java.util.Properties;
  * @version $Id: $
  */
 
-public interface StatementInterceptor {
+public interface StatementInterceptor extends Extension {
 
 	/**
 	 * Called once per connection that wants to use the interceptor
@@ -133,4 +133,11 @@ public interface StatementInterceptor {
 	 * executed for the top-level "original" query.
 	 */
 	public abstract boolean executeTopLevelOnly();
+
+	/**
+	 * Called by the driver when this extension should release any resources
+	 * it is holding and cleanup internally before the connection is
+	 * closed.
+	 */
+	public abstract void destroy();
 }

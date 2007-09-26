@@ -846,6 +846,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.connectionCollation"), //$NON-NLS-1$
 			"3.0.13", MISC_CATEGORY, 7); //$NON-NLS-1$
 
+	private StringConnectionProperty connectionLifecycleInterceptors = new StringConnectionProperty(
+			"connectionLifecycleInterceptors", //$NON-NLS-1$
+			null,
+			Messages.getString("ConnectionProperties.connectionLifecycleInterceptors"),
+			"5.1.4", CONNECTION_AND_AUTH_CATEGORY, Integer.MAX_VALUE);
+			
 	private IntegerConnectionProperty connectTimeout = new IntegerConnectionProperty(
 			"connectTimeout", 0, 0, Integer.MAX_VALUE, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.connectTimeout"), //$NON-NLS-1$
@@ -4266,5 +4272,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setAutoSlowLog(boolean flag) {
 		this.autoSlowLog.setValue(flag);
+	}
+
+	public String getConnectionLifecycleInterceptors() {
+		return this.connectionLifecycleInterceptors.getValueAsString();
+	}
+
+	public void setConnectionLifecycleInterceptors(String interceptors) {
+		this.connectionLifecycleInterceptors.setValue(interceptors);
 	}
 }

@@ -99,4 +99,9 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 	public boolean executeTopLevelOnly() {
 		return true;
 	}
+
+	public void destroy() {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -1570,4 +1570,8 @@ public interface ConnectionProperties {
 	public abstract boolean getAutoSlowLog();
 
 	public abstract void setAutoSlowLog(boolean flag);
+	
+	public abstract String getConnectionLifecycleInterceptors();
+
+	public abstract void setConnectionLifecycleInterceptors(String interceptors);
 }

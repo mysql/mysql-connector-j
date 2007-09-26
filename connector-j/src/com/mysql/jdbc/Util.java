@@ -35,7 +35,10 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TimeZone;
 
 /**
@@ -554,4 +557,37 @@ public class Util {
 
 		return diffMap;
 	}
+	
+	public static List loadExtensions(Connection conn,
+			Properties props, String extensionClassNames,
+			String errorMessageKey) throws SQLException {
+		List extensionList = new LinkedList();
+
+		List interceptorsToCreate = StringUtils.split(extensionClassNames, ",",
+				true);
+
+		Iterator iter = interceptorsToCreate.iterator();
+
+		String className = null;
+
+		try {
+			while (iter.hasNext()) {
+				className = iter.next().toString();
+				Extension extensionInstance = (Extension) Class.forName(
+						className).newInstance();
+				extensionInstance.init(conn, props);
+
+				extensionList.add(extensionInstance);
+			}
+		} catch (Throwable t) {
+			SQLException sqlEx = SQLError.createSQLException(Messages
+					.getString(errorMessageKey, new Object[] { className }));
+			sqlEx.initCause(t);
+
+			throw sqlEx;
+		}
+
+		return extensionList;
+	}
+
 }

@@ -39,6 +39,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -172,6 +173,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private double queryTimeMean;
 	
 	private static Timer cancelTimer;
+	
+	private List connectionLifecycleInterceptors;
+	
 	private static final Constructor JDBC_4_CONNECTION_CTOR;
 	
 	static {
@@ -1431,7 +1435,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public void close() throws SQLException {
+	public synchronized void close() throws SQLException {
+		if (this.connectionLifecycleInterceptors != null) {
+			new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+				void forEach(Object each) throws SQLException {
+					((ConnectionLifecycleInterceptor)each).close();
+				}
+			}.doForAll();
+		}
+		
 		realClose(true, true, false, null);
 	}
 
@@ -1502,8 +1514,25 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	public void commit() throws SQLException {
 		synchronized (getMutex()) {
 			checkClosed();
-	
+			
 			try {
+				if (this.connectionLifecycleInterceptors != null) {
+					IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+
+						void forEach(Object each) throws SQLException {
+							if (!((ConnectionLifecycleInterceptor)each).commit()) {
+								this.stopIterating = true;
+							}
+						}
+					};
+					
+					iter.doForAll();
+					
+					if (!iter.fullIteration()) {
+						return;
+					}
+				}
+				
 				// no-op if _relaxAutoCommit == true
 				if (this.autoCommit && !getRelaxAutoCommit()) {
 					throw SQLError.createSQLException("Can't call commit when autocommit=true");
@@ -3257,6 +3286,25 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *             DOCUMENT ME!
 	 */
 	private void initializePropsFromServer() throws SQLException {
+		String connectionInterceptorClasses = getConnectionLifecycleInterceptors();
+		
+		this.connectionLifecycleInterceptors = null;
+		
+		if (connectionInterceptorClasses != null) {
+			this.connectionLifecycleInterceptors = Util.loadExtensions(this, this.props, 
+					connectionInterceptorClasses, 
+					"Connection.badLifecycleInterceptor");
+			
+			Iterator iter = this.connectionLifecycleInterceptors.iterator();
+			
+			new IterateBlock(iter) {
+				void forEach(Object each) throws SQLException {
+					// TODO: Fully initialize, or continue on error?
+					((ConnectionLifecycleInterceptor)each).init(ConnectionImpl.this, props);
+				}
+			}.doForAll();
+		}
+		
 		setSessionVariables();
 
 		//
@@ -3660,7 +3708,33 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			stmt = createStatement();
 			stmt.setEscapeProcessing(false);
 
-			results = stmt.executeQuery("SHOW VARIABLES");
+			String query = "SHOW VARIABLES";
+			
+			if (versionMeetsMinimum(5, 0, 3)) {
+				query = "SHOW VARIABLES WHERE Variable_name ='language'"
+					+ " OR Variable_name = 'net_write_timeout'"
+					+ " OR Variable_name = 'interactive_timeout'"
+					+ " OR Variable_name = 'wait_timeout'"
+					+ " OR Variable_name = 'character_set_client'"
+					+ " OR Variable_name = 'character_set_connection'"
+					+ " OR Variable_name = 'character_set'"
+					+ " OR Variable_name = 'character_set_server'"
+					+ " OR Variable_name = 'tx_isolation'"
+					+ " OR Variable_name = 'transaction_isolation'"
+					+ " OR Variable_name = 'character_set_results'"
+					+ " OR Variable_name = 'timezone'"
+					+ " OR Variable_name = 'time_zone'"
+					+ " OR Variable_name = 'system_time_zone'"
+					+ " OR Variable_name = 'lower_case_table_names'"
+					+ " OR Variable_name = 'max_allowed_packet'"
+					+ " OR Variable_name = 'net_buffer_length'"
+					+ " OR Variable_name = 'sql_mode'"
+					+ " OR Variable_name = 'query_cache_type'"
+					+ " OR Variable_name = 'query_cache_size'"
+					+ " OR Variable_name = 'init_connect'";
+			}
+			
+			results = stmt.executeQuery(query);
 
 			while (results.next()) {
 				this.serverVariables.put(results.getString(1), results
@@ -4438,6 +4512,22 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			checkClosed();
 	
 			try {
+				if (this.connectionLifecycleInterceptors != null) {
+					IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+
+						void forEach(Object each) throws SQLException {
+							if (!((ConnectionLifecycleInterceptor)each).rollback()) {
+								this.stopIterating = true;
+							}
+						}
+					};
+					
+					iter.doForAll();
+					
+					if (!iter.fullIteration()) {
+						return;
+					}
+				}
 				// no-op if _relaxAutoCommit == true
 				if (this.autoCommit && !getRelaxAutoCommit()) {
 					throw SQLError.createSQLException(
@@ -4472,13 +4562,30 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	/**
 	 * @see Connection#rollback(Savepoint)
 	 */
-	public void rollback(Savepoint savepoint) throws SQLException {
+	public void rollback(final Savepoint savepoint) throws SQLException {
 
 		if (versionMeetsMinimum(4, 0, 14) || versionMeetsMinimum(4, 1, 1)) {
 			synchronized (getMutex()) {
 				checkClosed();
 	
 				try {
+					if (this.connectionLifecycleInterceptors != null) {
+						IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+
+							void forEach(Object each) throws SQLException {
+								if (!((ConnectionLifecycleInterceptor)each).rollback(savepoint)) {
+									this.stopIterating = true;
+								}
+							}
+						};
+						
+						iter.doForAll();
+						
+						if (!iter.fullIteration()) {
+							return;
+						}
+					}
+					
 					StringBuffer rollbackQuery = new StringBuffer(
 							"ROLLBACK TO SAVEPOINT ");
 					rollbackQuery.append('`');
@@ -4663,9 +4770,26 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public void setAutoCommit(boolean autoCommitFlag) throws SQLException {
+	public void setAutoCommit(final boolean autoCommitFlag) throws SQLException {
 		synchronized (getMutex()) {
 			checkClosed();
+			
+			if (this.connectionLifecycleInterceptors != null) {
+				IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+
+					void forEach(Object each) throws SQLException {
+						if (!((ConnectionLifecycleInterceptor)each).setAutoCommit(autoCommitFlag)) {
+							this.stopIterating = true;
+						}
+					}
+				};
+				
+				iter.doForAll();
+				
+				if (!iter.fullIteration()) {
+					return;
+				}
+			}
 	
 			if (getAutoReconnectForPools()) {
 				setHighAvailability(true);
@@ -4733,13 +4857,30 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             if a database access error occurs
 	 */
-	public void setCatalog(String catalog) throws SQLException {
+	public void setCatalog(final String catalog) throws SQLException {
 		synchronized (getMutex()) {
 			checkClosed();
 	
 			if (catalog == null) {
 				throw SQLError.createSQLException("Catalog can not be null",
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			}
+			
+			if (this.connectionLifecycleInterceptors != null) {
+				IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+
+					void forEach(Object each) throws SQLException {
+						if (!((ConnectionLifecycleInterceptor)each).setCatalog(catalog)) {
+							this.stopIterating = true;
+						}
+					}
+				};
+				
+				iter.doForAll();
+				
+				if (!iter.fullIteration()) {
+					return;
+				}
 			}
 			
 			if (getUseLocalSessionState()) {

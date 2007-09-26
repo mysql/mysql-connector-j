@@ -104,4 +104,9 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 	public boolean executeTopLevelOnly() {
 		return false;
 	}
+
+	public void destroy() {
+		// TODO Auto-generated method stub
+		
+	}
 }
