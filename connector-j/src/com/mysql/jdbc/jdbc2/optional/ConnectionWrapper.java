@@ -127,7 +127,6 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		
 		if (this.isForXa) {
 			setInGlobalTx(false);
-			setAutoCommit(false);
 		}
 	}
 

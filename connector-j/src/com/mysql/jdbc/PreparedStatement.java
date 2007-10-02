@@ -1006,7 +1006,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			} else {
 				if (rs.reallyResult() && locallyScopedConn.getCacheResultSetMetadata()) {
 					locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql,
-							null /* will be created */, this.results);
+							null /* will be created */, rs);
 				}
 			}
 			

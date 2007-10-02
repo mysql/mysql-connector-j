@@ -268,6 +268,12 @@ nn-nn-07 - Version 5.0.8
     - Fixed Bug#30892 setObject(int, Object, int, int) delegate in
       PreparedStatmentWrapper delegates to wrong method.
       
+    - XAConnections now start in auto-commit mode (as per JDBC-4.0 specification
+      clarification).
+     
+    - Fixed Bug#27412 - cached metadata with PreparedStatement.execute()
+      throws NullPointerException.
+       
 07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for

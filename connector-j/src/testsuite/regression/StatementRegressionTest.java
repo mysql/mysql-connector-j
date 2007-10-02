@@ -47,10 +47,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Properties;
@@ -3176,6 +3174,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		return isJdbc4;
 	}
 
+	
 	/**
 	 * Tests fix for BUG#19615, PreparedStatement.setObject(int, Object, int)
 	 * doesn't respect scale of BigDecimals.
@@ -4073,6 +4072,31 @@ public class StatementRegressionTest extends BaseTestCase {
 			if (rewriteConn != null) {
 				rewriteConn.close();
 			}
+		}
+	}
+	
+	/**
+	 * Tests fix for Bug#27412 - cached metadata with PreparedStatement.execute()
+	 * throws NullPointerException.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug27412() throws Exception {
+		try {
+			Properties props = new Properties();
+			props.put("useServerPrepStmts", "false");
+			props.put("cachePreparedStatements", "true");
+			props.put("cacheResultSetMetadata", "true");
+			Connection conn2 = getConnectionWithProps(props);
+			PreparedStatement pstm = conn2.prepareStatement("SELECT 1");
+			try {
+				assertTrue(pstm.execute());
+			} finally {
+				pstm.close();
+				conn2.close();
+			}
+		} finally {
+			closeMemberJDBCResources();
 		}
 	}
 }
