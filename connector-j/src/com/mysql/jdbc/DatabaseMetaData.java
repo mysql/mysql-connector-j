@@ -5284,7 +5284,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(rowVal);
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: BIGINT JDBC Type: BIGINT
@@ -5345,7 +5345,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(rowVal);
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: LONG VARBINARY JDBC Type: LONGVARBINARY
@@ -5905,7 +5905,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(rowVal);
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: INT JDBC Type: INTEGER
@@ -5966,7 +5966,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(rowVal);
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: MEDIUMINT JDBC Type: INTEGER
@@ -6027,7 +6027,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(rowVal);
+		tuples.add(new ByteArrayRow(rowVal));
 		
 		/*
 		 * MySQL Type: SMALLINT JDBC Type: SMALLINT
@@ -6088,7 +6088,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(rowVal);
+		tuples.add(new ByteArrayRow(rowVal));
 
 		/*
 		 * MySQL Type: FLOAT JDBC Type: REAL (this is the SINGLE PERCISION
