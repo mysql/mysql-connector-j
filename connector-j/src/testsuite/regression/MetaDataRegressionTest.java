@@ -593,7 +593,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	public void testBug4138() throws Exception {
 		try {
 			String[] typesToTest = new String[] { "TINYINT", "SMALLINT",
-					"MEDIUMINT", "INTEGER", "BIGINT", "FLOAT", "DOUBLE",
+					"MEDIUMINT", "INT", "BIGINT", "FLOAT", "DOUBLE",
 					"DECIMAL" };
 
 			short[] jdbcMapping = new short[] { Types.TINYINT, Types.SMALLINT,

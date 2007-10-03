@@ -4434,7 +4434,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			for (int i = 1; i < tblMD.getColumnCount() + 1; i++) {
 				switch (i) {
 				case 1:
-					assertEquals("INTEGER", tblMD.getColumnTypeName(i)
+					assertEquals("INT", tblMD.getColumnTypeName(i)
 							.toUpperCase());
 					break;
 				case 2:
