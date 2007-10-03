@@ -2025,4 +2025,46 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		assertNull(this.rs.getString("SOURCE_DATA_TYPE"));
 		assertEquals("NO", this.rs.getString("IS_AUTOINCREMENT"));
 	}
+	
+	/**
+	 * Tests fix for BUG#27916 - UNSIGNED types not reported
+	 * via DBMD.getTypeInfo(), and capitalization of types is
+	 * not consistent between DBMD.getColumns(), RSMD.getColumnTypeName()
+	 * and DBMD.getTypeInfo().
+	 * 
+	 * This fix also ensures that the precision of UNSIGNED MEDIUMINT
+	 * and UNSIGNED BIGINT is reported correctly via DBMD.getColumns().
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug27916() throws Exception {
+		createTable(
+				"testBug27916",
+				"(field1 TINYINT UNSIGNED, field2 SMALLINT UNSIGNED, field3 INT UNSIGNED, field4 INTEGER UNSIGNED, field5 MEDIUMINT UNSIGNED, field6 BIGINT UNSIGNED)");
+
+		ResultSetMetaData rsmd = this.stmt.executeQuery(
+				"SELECT * FROM testBug27916").getMetaData();
+
+		HashMap typeNameToPrecision = new HashMap();
+		this.rs = this.conn.getMetaData().getTypeInfo();
+
+		while (this.rs.next()) {
+			typeNameToPrecision.put(this.rs.getString("TYPE_NAME"), this.rs
+					.getObject("PRECISION"));
+		}
+
+		this.rs = this.conn.getMetaData().getColumns(this.conn.getCatalog(),
+				null, "testBug27916", "%");
+
+		for (int i = 0; i < rsmd.getColumnCount(); i++) {
+			this.rs.next();
+			String typeName = this.rs.getString("TYPE_NAME");
+
+			assertEquals(typeName, rsmd.getColumnTypeName(i + 1));
+			assertEquals(typeName, this.rs.getInt("COLUMN_SIZE"), rsmd
+					.getPrecision(i + 1));
+			assertEquals(typeName, new Integer(rsmd.getPrecision(i + 1)),
+					typeNameToPrecision.get(typeName));
+		}
+	}
 }

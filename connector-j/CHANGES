@@ -273,7 +273,18 @@ nn-nn-07 - Version 5.0.8
      
     - Fixed Bug#27412 - cached metadata with PreparedStatement.execute()
       throws NullPointerException.
-       
+      
+    - Driver will now fall back to sane defaults for max_allowed_packet and
+      net_buffer_length if the server reports them incorrectly (and will log
+      this situation at WARN level, since it's actually an error condition).
+    
+    - Fixed BUG#27916 - UNSIGNED types not reported via DBMD.getTypeInfo(), and 
+      capitalization of type names is not consistent between DBMD.getColumns(), 
+      RSMD.getColumnTypeName() and DBMD.getTypeInfo().
+
+      This fix also ensures that the precision of UNSIGNED MEDIUMINT
+      and UNSIGNED BIGINT is reported correctly via DBMD.getColumns().
+
 07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for

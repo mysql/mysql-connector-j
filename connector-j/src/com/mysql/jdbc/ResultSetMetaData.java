@@ -303,7 +303,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 			return field.isUnsigned() ? "SMALLINT UNSIGNED" : "SMALLINT";
 
 		case MysqlDefs.FIELD_TYPE_LONG:
-			return field.isUnsigned() ? "INTEGER UNSIGNED" : "INTEGER";
+			return field.isUnsigned() ? "INT UNSIGNED" : "INT";
 
 		case MysqlDefs.FIELD_TYPE_FLOAT:
 			return field.isUnsigned() ? "FLOAT UNSIGNED" : "FLOAT";

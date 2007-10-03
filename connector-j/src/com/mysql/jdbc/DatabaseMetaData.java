@@ -193,8 +193,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			// Add unsigned to typename reported to enduser as 'native type', if
 			// present
 
+			boolean isUnsigned = false;
+			
 			if (StringUtils.indexOfIgnoreCase(typeInfo, "unsigned") != -1) {
 				fullMysqlType = mysqlType + " unsigned";
+				isUnsigned = true;
 			} else {
 				fullMysqlType = mysqlType;
 			}
@@ -304,7 +307,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					this.decimalDigits = Constants.integerValueOf(0);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"mediumint")) {
-					this.columnSize = Constants.integerValueOf(7);
+					this.columnSize = Constants.integerValueOf(isUnsigned ? 8 : 7);
 					this.decimalDigits = Constants.integerValueOf(0);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"int")) {
@@ -316,7 +319,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					this.decimalDigits = Constants.integerValueOf(0);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"bigint")) {
-					this.columnSize = Constants.integerValueOf(19);
+					this.columnSize = Constants.integerValueOf(isUnsigned ? 20 : 19);
 					this.decimalDigits = Constants.integerValueOf(0);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"int24")) {
@@ -5253,6 +5256,35 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
 		tuples.add(new ByteArrayRow(rowVal));
+		
+		rowVal = new byte[18][];
+		rowVal[0] = s2b("TINYINT UNSIGNED");
+		rowVal[1] = Integer.toString(java.sql.Types.TINYINT).getBytes();
+
+		// JDBC Data type
+		rowVal[2] = s2b("3"); // Precision
+		rowVal[3] = s2b(""); // Literal Prefix
+		rowVal[4] = s2b(""); // Literal Suffix
+		rowVal[5] = s2b("[(M)] [UNSIGNED] [ZEROFILL]"); // Create Params
+		rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+				.getBytes();
+
+		// Nullable
+		rowVal[7] = s2b("false"); // Case Sensitive
+		rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+				.getBytes();
+
+		// Searchable
+		rowVal[9] = s2b("true"); // Unsignable
+		rowVal[10] = s2b("false"); // Fixed Prec Scale
+		rowVal[11] = s2b("true"); // Auto Increment
+		rowVal[12] = s2b("TINYINT UNSIGNED"); // Locale Type Name
+		rowVal[13] = s2b("0"); // Minimum Scale
+		rowVal[14] = s2b("0"); // Maximum Scale
+		rowVal[15] = s2b("0"); // SQL Data Type (not used)
+		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
+		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
+		tuples.add(rowVal);
 
 		/*
 		 * MySQL Type: BIGINT JDBC Type: BIGINT
@@ -5285,6 +5317,35 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
 		tuples.add(new ByteArrayRow(rowVal));
+		
+		rowVal = new byte[18][];
+		rowVal[0] = s2b("BIGINT UNSIGNED");
+		rowVal[1] = Integer.toString(java.sql.Types.BIGINT).getBytes();
+
+		// JDBC Data type
+		rowVal[2] = s2b("20"); // Precision
+		rowVal[3] = s2b(""); // Literal Prefix
+		rowVal[4] = s2b(""); // Literal Suffix
+		rowVal[5] = s2b("[(M)] [ZEROFILL]"); // Create Params
+		rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+				.getBytes();
+
+		// Nullable
+		rowVal[7] = s2b("false"); // Case Sensitive
+		rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+				.getBytes();
+
+		// Searchable
+		rowVal[9] = s2b("true"); // Unsignable
+		rowVal[10] = s2b("false"); // Fixed Prec Scale
+		rowVal[11] = s2b("true"); // Auto Increment
+		rowVal[12] = s2b("BIGINT UNSIGNED"); // Locale Type Name
+		rowVal[13] = s2b("0"); // Minimum Scale
+		rowVal[14] = s2b("0"); // Maximum Scale
+		rowVal[15] = s2b("0"); // SQL Data Type (not used)
+		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
+		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
+		tuples.add(rowVal);
 
 		/*
 		 * MySQL Type: LONG VARBINARY JDBC Type: LONGVARBINARY
@@ -5816,6 +5877,35 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
 		tuples.add(new ByteArrayRow(rowVal));
+		
+		rowVal = new byte[18][];
+		rowVal[0] = s2b("INTEGER UNSIGNED");
+		rowVal[1] = Integer.toString(java.sql.Types.INTEGER).getBytes();
+
+		// JDBC Data type
+		rowVal[2] = s2b("10"); // Precision
+		rowVal[3] = s2b(""); // Literal Prefix
+		rowVal[4] = s2b(""); // Literal Suffix
+		rowVal[5] = s2b("[(M)] [ZEROFILL]"); // Create Params
+		rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+				.getBytes();
+
+		// Nullable
+		rowVal[7] = s2b("false"); // Case Sensitive
+		rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+				.getBytes();
+
+		// Searchable
+		rowVal[9] = s2b("true"); // Unsignable
+		rowVal[10] = s2b("false"); // Fixed Prec Scale
+		rowVal[11] = s2b("true"); // Auto Increment
+		rowVal[12] = s2b("INTEGER UNSIGNED"); // Locale Type Name
+		rowVal[13] = s2b("0"); // Minimum Scale
+		rowVal[14] = s2b("0"); // Maximum Scale
+		rowVal[15] = s2b("0"); // SQL Data Type (not used)
+		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
+		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
+		tuples.add(rowVal);
 
 		/*
 		 * MySQL Type: INT JDBC Type: INTEGER
@@ -5848,6 +5938,35 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
 		tuples.add(new ByteArrayRow(rowVal));
+		
+		rowVal = new byte[18][];
+		rowVal[0] = s2b("INT UNSIGNED");
+		rowVal[1] = Integer.toString(java.sql.Types.INTEGER).getBytes();
+
+		// JDBC Data type
+		rowVal[2] = s2b("10"); // Precision
+		rowVal[3] = s2b(""); // Literal Prefix
+		rowVal[4] = s2b(""); // Literal Suffix
+		rowVal[5] = s2b("[(M)] [ZEROFILL]"); // Create Params
+		rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+				.getBytes();
+
+		// Nullable
+		rowVal[7] = s2b("false"); // Case Sensitive
+		rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+				.getBytes();
+
+		// Searchable
+		rowVal[9] = s2b("true"); // Unsignable
+		rowVal[10] = s2b("false"); // Fixed Prec Scale
+		rowVal[11] = s2b("true"); // Auto Increment
+		rowVal[12] = s2b("INT UNSIGNED"); // Locale Type Name
+		rowVal[13] = s2b("0"); // Minimum Scale
+		rowVal[14] = s2b("0"); // Maximum Scale
+		rowVal[15] = s2b("0"); // SQL Data Type (not used)
+		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
+		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
+		tuples.add(rowVal);
 
 		/*
 		 * MySQL Type: MEDIUMINT JDBC Type: INTEGER
@@ -5881,6 +6000,35 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
 		tuples.add(new ByteArrayRow(rowVal));
 
+		rowVal = new byte[18][];
+		rowVal[0] = s2b("MEDIUMINT UNSIGNED");
+		rowVal[1] = Integer.toString(java.sql.Types.INTEGER).getBytes();
+
+		// JDBC Data type
+		rowVal[2] = s2b("8"); // Precision
+		rowVal[3] = s2b(""); // Literal Prefix
+		rowVal[4] = s2b(""); // Literal Suffix
+		rowVal[5] = s2b("[(M)] [ZEROFILL]"); // Create Params
+		rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+				.getBytes();
+
+		// Nullable
+		rowVal[7] = s2b("false"); // Case Sensitive
+		rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+				.getBytes();
+
+		// Searchable
+		rowVal[9] = s2b("true"); // Unsignable
+		rowVal[10] = s2b("false"); // Fixed Prec Scale
+		rowVal[11] = s2b("true"); // Auto Increment
+		rowVal[12] = s2b("MEDIUMINT UNSIGNED"); // Locale Type Name
+		rowVal[13] = s2b("0"); // Minimum Scale
+		rowVal[14] = s2b("0"); // Maximum Scale
+		rowVal[15] = s2b("0"); // SQL Data Type (not used)
+		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
+		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
+		tuples.add(rowVal);
+		
 		/*
 		 * MySQL Type: SMALLINT JDBC Type: SMALLINT
 		 */
@@ -5912,6 +6060,35 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
 		tuples.add(new ByteArrayRow(rowVal));
+		
+		rowVal = new byte[18][];
+		rowVal[0] = s2b("SMALLINT UNSIGNED");
+		rowVal[1] = Integer.toString(java.sql.Types.SMALLINT).getBytes();
+
+		// JDBC Data type
+		rowVal[2] = s2b("5"); // Precision
+		rowVal[3] = s2b(""); // Literal Prefix
+		rowVal[4] = s2b(""); // Literal Suffix
+		rowVal[5] = s2b("[(M)] [ZEROFILL]"); // Create Params
+		rowVal[6] = Integer.toString(java.sql.DatabaseMetaData.typeNullable)
+				.getBytes();
+
+		// Nullable
+		rowVal[7] = s2b("false"); // Case Sensitive
+		rowVal[8] = Integer.toString(java.sql.DatabaseMetaData.typeSearchable)
+				.getBytes();
+
+		// Searchable
+		rowVal[9] = s2b("true"); // Unsignable
+		rowVal[10] = s2b("false"); // Fixed Prec Scale
+		rowVal[11] = s2b("true"); // Auto Increment
+		rowVal[12] = s2b("SMALLINT UNSIGNED"); // Locale Type Name
+		rowVal[13] = s2b("0"); // Minimum Scale
+		rowVal[14] = s2b("0"); // Maximum Scale
+		rowVal[15] = s2b("0"); // SQL Data Type (not used)
+		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
+		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
+		tuples.add(rowVal);
 
 		/*
 		 * MySQL Type: FLOAT JDBC Type: REAL (this is the SINGLE PERCISION

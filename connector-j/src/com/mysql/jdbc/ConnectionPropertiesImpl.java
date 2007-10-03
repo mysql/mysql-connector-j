@@ -755,19 +755,16 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.blobSendChunkSize"), //$NON-NLS-1$
 			"3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
-	private BooleanConnectionProperty autoSlowLog = new BooleanConnectionProperty(
-			"autoSlowLog", true,
-			Messages.getString("ConnectionProperties.autoSlowLog"),
-			"5.1.4", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
-	
 	private BooleanConnectionProperty blobsAreStrings = new BooleanConnectionProperty(
             "blobsAreStrings", false,
-            Messages.getString("ConnectionProperties.blobsAreStrings"),
+            "Should the driver always treat BLOBs as Strings - specifically to work around dubious metadata "
+            + "returned by the server for GROUP BY clauses?",
             "5.0.8", MISC_CATEGORY, Integer.MIN_VALUE);
 
 	private BooleanConnectionProperty functionsNeverReturnBlobs = new BooleanConnectionProperty(
             "functionsNeverReturnBlobs", false,
-            Messages.getString("ConnectionProperties.functionsNeverReturnBlobs"),
+            "Should the driver always treat data from functions returning BLOBs as Strings - specifically to work around dubious metadata "
+            + "returned by the server for GROUP BY clauses?",
             "5.0.8", MISC_CATEGORY, Integer.MIN_VALUE);
 			
 	private BooleanConnectionProperty cacheCallableStatements = new BooleanConnectionProperty(
@@ -805,7 +802,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	private BooleanConnectionProperty capitalizeTypeNames = new BooleanConnectionProperty(
 			"capitalizeTypeNames", //$NON-NLS-1$
-			false,
+			true,
 			Messages.getString("ConnectionProperties.capitalizeTypeNames"), //$NON-NLS-1$
 			"2.0.7", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
@@ -846,12 +843,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.connectionCollation"), //$NON-NLS-1$
 			"3.0.13", MISC_CATEGORY, 7); //$NON-NLS-1$
 
-	private StringConnectionProperty connectionLifecycleInterceptors = new StringConnectionProperty(
-			"connectionLifecycleInterceptors", //$NON-NLS-1$
-			null,
-			Messages.getString("ConnectionProperties.connectionLifecycleInterceptors"),
-			"5.1.4", CONNECTION_AND_AUTH_CATEGORY, Integer.MAX_VALUE);
-			
 	private IntegerConnectionProperty connectTimeout = new IntegerConnectionProperty(
 			"connectTimeout", 0, 0, Integer.MAX_VALUE, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.connectTimeout"), //$NON-NLS-1$
@@ -4265,20 +4256,4 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
     public void setFunctionsNeverReturnBlobs(boolean flag) {
         this.functionsNeverReturnBlobs.setValue(flag);
     }
-
-	public boolean getAutoSlowLog() {
-		return this.autoSlowLog.getValueAsBoolean();
-	}
-
-	public void setAutoSlowLog(boolean flag) {
-		this.autoSlowLog.setValue(flag);
-	}
-
-	public String getConnectionLifecycleInterceptors() {
-		return this.connectionLifecycleInterceptors.getValueAsString();
-	}
-
-	public void setConnectionLifecycleInterceptors(String interceptors) {
-		this.connectionLifecycleInterceptors.setValue(interceptors);
-	}
 }

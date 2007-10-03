@@ -3352,9 +3352,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			configureTimezone();
 
 			if (this.serverVariables.containsKey("max_allowed_packet")) {
-				this.maxAllowedPacket = Integer
-						.parseInt((String) this.serverVariables
-								.get("max_allowed_packet"));
+				this.maxAllowedPacket = getServerVariableAsInt("max_allowed_packet", 1024 * 1024);
 				
 				int preferredBlobSendChunkSize = getBlobSendChunkSize();
 				
@@ -3367,9 +3365,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 
 			if (this.serverVariables.containsKey("net_buffer_length")) {
-				this.netBufferLength = Integer
-						.parseInt((String) this.serverVariables
-								.get("net_buffer_length"));
+				this.netBufferLength = getServerVariableAsInt("net_buffer_length", 16 * 1024);
 			}
 
 			checkTransactionIsolationLevel();
@@ -3499,6 +3495,19 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		//
 		
 		setupServerForTruncationChecks();
+	}
+
+	private int getServerVariableAsInt(String variableName, int fallbackValue)
+			throws SQLException {
+		try {
+			return Integer.parseInt((String) this.serverVariables
+					.get(variableName));
+		} catch (NumberFormatException nfe) {
+			getLog().logWarn(Messages.getString("Connection.BadValueInServerVariables", new Object[] {variableName, 
+					this.serverVariables.get(variableName), new Integer(fallbackValue)}));
+			
+			return fallbackValue;
+		}
 	}
 
 	/**
