@@ -595,7 +595,7 @@ public class StatementImpl implements Statement {
 
 			checkClosed();
 
-			char firstNonWsChar = StringUtils.firstNonWsCharUc(sql);
+			char firstNonWsChar = StringUtils.firstAlphaCharUc(sql, findStartOfStatement(sql));
 
 			boolean isSelect = true;
 
@@ -643,14 +643,14 @@ public class StatementImpl implements Statement {
 				}
 			}
 
-			if (firstNonWsChar == '/') {
+			if (sql.charAt(0) == '/') {
 				if (sql.startsWith(PING_MARKER)) {
 					doPingInstead();
 				
 					return true;
 				}
 			}
-			
+
 			CachedResultSetMetaData cachedMetaData = null;
 
 			ResultSetInternalMethods rs = null;
@@ -1491,7 +1491,7 @@ public class StatementImpl implements Statement {
 
 		ConnectionImpl locallyScopedConn = this.connection;
 
-		char firstStatementChar = StringUtils.firstNonWsCharUc(sql,
+		char firstStatementChar = StringUtils.firstAlphaCharUc(sql,
 				findStartOfStatement(sql));
 
 		ResultSetInternalMethods rs = null;

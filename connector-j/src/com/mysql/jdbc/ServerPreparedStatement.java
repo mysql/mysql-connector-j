@@ -349,8 +349,11 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 		checkNullOrEmptyQuery(sql);
 
-		this.isSelectQuery = StringUtils.startsWithIgnoreCaseAndWs(sql,
-				"SELECT"); //$NON-NLS-1$
+		int startOfStatement = findStartOfStatement(sql);
+		
+		this.firstCharOfStmt = StringUtils.firstAlphaCharUc(sql, startOfStatement);
+		
+		this.isSelectQuery = 'S' == this.firstCharOfStmt;
 		
 		if (this.connection.versionMeetsMinimum(5, 0, 0)) {
 			this.serverNeedsResetBeforeEachExecution = 
@@ -363,7 +366,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		this.useAutoSlowLog = this.connection.getAutoSlowLog();
 		this.useTrueBoolean = this.connection.versionMeetsMinimum(3, 21, 23);
 		this.hasLimitClause = (StringUtils.indexOfIgnoreCase(sql, "LIMIT") != -1); //$NON-NLS-1$
-		this.firstCharOfStmt = StringUtils.firstNonWsCharUc(sql);
+		
 		String statementComment = this.connection.getStatementComment();
 
 		this.originalSql = (statementComment == null) ? sql : "/* "

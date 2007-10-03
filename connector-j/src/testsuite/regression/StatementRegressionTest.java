@@ -3887,6 +3887,24 @@ public class StatementRegressionTest extends BaseTestCase {
 	}
 	
 	/**
+	 * Tests fix for BUG#28256 - When connection is in read-only
+	 * mode, queries that are parentheized incorrectly identified
+	 * as DML.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug28256() throws Exception {
+		try {
+			this.conn.setReadOnly(true);
+			this.stmt.execute("(SELECT 1) UNION (SELECT 2)");
+			this.conn.prepareStatement("(SELECT 1) UNION (SELECT 2)").execute();
+			((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("(SELECT 1) UNION (SELECT 2)").execute();
+		} finally {
+			this.conn.setReadOnly(false);
+		}
+	}
+	
+	/**
 	 * Tests fix for BUG#28469 - PreparedStatement.getMetaData()
 	 * for statements containing leading one-line comments
 	 * is not returned correctly.

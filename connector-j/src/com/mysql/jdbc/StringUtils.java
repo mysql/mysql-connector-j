@@ -341,6 +341,24 @@ public class StringUtils {
 		return 0;
 	}
 
+	public static char firstAlphaCharUc(String searchIn, int startAt) {
+		if (searchIn == null) {
+			return 0;
+		}
+
+		int length = searchIn.length();
+
+		for (int i = startAt; i < length; i++) {
+			char c = searchIn.charAt(i);
+
+			if (Character.isLetter(c)) {
+				return Character.toUpperCase(c);
+			}
+		}
+
+		return 0;
+	}
+	
 	/**
 	 * Adds '+' to decimal numbers that are positive (MySQL doesn't understand
 	 * them otherwise

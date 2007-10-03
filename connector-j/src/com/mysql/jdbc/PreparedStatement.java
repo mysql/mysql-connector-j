@@ -236,7 +236,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				for (i = statementStartPos; i < this.statementLength; ++i) {
 					char c = sql.charAt(i);
 
-					if ((this.firstStmtChar == 0) && !Character.isWhitespace(c)) {
+					if ((this.firstStmtChar == 0) && Character.isLetter(c)) {
 						// Determine what kind of statement we're doing (_S_elect,
 						// _I_nsert, etc.)
 						this.firstStmtChar = Character.toUpperCase(c);
