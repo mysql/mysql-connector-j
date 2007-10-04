@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-nn-nn-07 - Version 5.1.4 
+10-09-07 - Version 5.1.4 
 
     - Added "autoSlowLog" configuration property, overrides 
       "slowQueryThreshold*" properties, driver determines slow
@@ -209,7 +209,7 @@ nn-nn-07 - Version 5.1.4
 
 	- Added support for JDBC-4.0's NCLOB, and NCHAR/NVARCHAR types.
 
-nn-nn-07 - Version 5.0.8
+10-09-07 - Version 5.0.8
 
     - Fixed BUG#30550, executeBatch() would fail with an ArithmeticException
       and/or NullPointerException when the batch had zero members and
