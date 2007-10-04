@@ -1290,7 +1290,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	public PreparedStatement clientPrepareStatement(String sql)
+	public java.sql.PreparedStatement clientPrepareStatement(String sql)
 			throws SQLException {
 		return clientPrepareStatement(sql,
 				java.sql.ResultSet.TYPE_SCROLL_SENSITIVE,
@@ -1323,14 +1323,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	public PreparedStatement clientPrepareStatement(String sql,
+	public java.sql.PreparedStatement clientPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency) throws SQLException {
 		return clientPrepareStatement(sql, resultSetType, resultSetConcurrency, true);
 	}
 
 
 	
-	protected PreparedStatement clientPrepareStatement(String sql,
+	protected java.sql.PreparedStatement clientPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency, 
 			boolean processEscapeCodesIfNeeded) throws SQLException {
 		checkClosed();
@@ -1400,7 +1400,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	public java.sql.PreparedStatement clientPrepareStatement(String sql,
 			int[] autoGenKeyIndexes) throws SQLException {
 		
-		PreparedStatement pStmt = clientPrepareStatement(sql);
+		PreparedStatement pStmt = (PreparedStatement) clientPrepareStatement(sql);
 		
 		pStmt
 				.setRetrieveGeneratedKeys((autoGenKeyIndexes != null)
@@ -1414,7 +1414,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public java.sql.PreparedStatement clientPrepareStatement(String sql,
 			String[] autoGenKeyColNames) throws SQLException {
-		PreparedStatement pStmt = clientPrepareStatement(sql);
+		PreparedStatement pStmt = (PreparedStatement) clientPrepareStatement(sql);
 
 		pStmt
 				.setRetrieveGeneratedKeys((autoGenKeyColNames != null)
@@ -1423,6 +1423,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return pStmt;
 	}
 
+	public java.sql.PreparedStatement clientPrepareStatement(String sql,
+			int resultSetType, int resultSetConcurrency,
+			int resultSetHoldability) throws SQLException {
+		return clientPrepareStatement(sql, resultSetType, resultSetConcurrency, true);
+	}
+	
 	// --------------------------JDBC 2.0-----------------------------
 
 	/**
@@ -4068,7 +4074,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						} catch (SQLException sqlEx) {
 							// Punt, if necessary
 							if (getEmulateUnsupportedPstmts()) {
-								pStmt = clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
+								pStmt = (PreparedStatement) clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
 								
 								if (sql.length() < getPreparedStatementCacheSqlLimit()) {
 									this.serverSideStatementCheckCache.put(sql, Boolean.FALSE);
@@ -4089,14 +4095,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				} catch (SQLException sqlEx) {
 					// Punt, if necessary
 					if (getEmulateUnsupportedPstmts()) {
-						pStmt = clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
+						pStmt = (PreparedStatement) clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
 					} else {
 						throw sqlEx;
 					}
 				}
 			}
 		} else {
-			pStmt = clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
+			pStmt = (PreparedStatement) clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
 		}
 		
 		return pStmt;
@@ -4668,7 +4674,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	/**
 	 * @see java.sql.Connection#prepareStatement(String)
 	 */
-	public ServerPreparedStatement serverPrepareStatement(String sql)
+	public java.sql.PreparedStatement serverPrepareStatement(String sql)
 		throws SQLException {
 
 		String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql;
@@ -4730,7 +4736,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	public java.sql.PreparedStatement serverPrepareStatement(String sql,
 			int[] autoGenKeyIndexes) throws SQLException {
 		
-		PreparedStatement pStmt = serverPrepareStatement(sql);
+		PreparedStatement pStmt = (PreparedStatement) serverPrepareStatement(sql);
 		
 		pStmt
 				.setRetrieveGeneratedKeys((autoGenKeyIndexes != null)
@@ -4744,7 +4750,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public java.sql.PreparedStatement serverPrepareStatement(String sql,
 			String[] autoGenKeyColNames) throws SQLException {
-		PreparedStatement pStmt = serverPrepareStatement(sql);
+		PreparedStatement pStmt = (PreparedStatement) serverPrepareStatement(sql);
 
 		pStmt
 				.setRetrieveGeneratedKeys((autoGenKeyColNames != null)

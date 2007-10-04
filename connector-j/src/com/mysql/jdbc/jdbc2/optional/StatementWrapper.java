@@ -24,8 +24,11 @@
  */
 package com.mysql.jdbc.jdbc2.optional;
 
+import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.Util;
 
+import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -42,11 +45,47 @@ import java.sql.Statement;
  *          Exp $
  */
 public class StatementWrapper extends WrapperBase implements Statement {
+	private static final Constructor JDBC_4_STATEMENT_WRAPPER_CTOR;
+	
+	static {
+		if (Util.isJdbc4()) {
+			try {
+				JDBC_4_STATEMENT_WRAPPER_CTOR = Class.forName(
+						"com.mysql.jdbc.jdbc2.optional.JDBC4StatementWrapper").getConstructor(
+						new Class[] { ConnectionWrapper.class, 
+								MysqlPooledConnection.class, 
+								Statement.class });
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			JDBC_4_STATEMENT_WRAPPER_CTOR = null;
+		}
+	}
+	
+	protected static StatementWrapper getInstance(ConnectionWrapper c, 
+			MysqlPooledConnection conn,
+			Statement toWrap) throws SQLException {
+		if (!Util.isJdbc4()) {
+			return new StatementWrapper(c, 
+					conn, toWrap);
+		}
+
+		return (StatementWrapper) Util.handleNewInstance(
+				JDBC_4_STATEMENT_WRAPPER_CTOR,
+				new Object[] {c, 
+						conn, toWrap });
+	}
+	
 	protected Statement wrappedStmt;
 
 	protected ConnectionWrapper wrappedConn;
 
-	protected StatementWrapper(ConnectionWrapper c, MysqlPooledConnection conn,
+	public StatementWrapper(ConnectionWrapper c, MysqlPooledConnection conn,
 			Statement toWrap) {
 		this.pooledConnection = conn;
 		this.wrappedStmt = toWrap;

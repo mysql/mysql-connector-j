@@ -54,7 +54,7 @@ import com.mysql.jdbc.jdbc2.optional.MysqlPooledConnection;
  */
 public class JDBC4StatementWrapper extends StatementWrapper {
 
-	protected JDBC4StatementWrapper(ConnectionWrapper c, 
+	public JDBC4StatementWrapper(ConnectionWrapper c, 
 			MysqlPooledConnection conn,
 			Statement toWrap) {
 		super(c, conn, toWrap);

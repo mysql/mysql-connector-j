@@ -2061,7 +2061,7 @@ public class CallableStatement extends PreparedStatement implements
 					PreparedStatement setPstmt = null;
 
 					try {
-						setPstmt = this.connection
+						setPstmt = (PreparedStatement) this.connection
 								.clientPrepareStatement(queryBuf.toString());
 
 						byte[] parameterAsBytes = getBytesRepresentation(

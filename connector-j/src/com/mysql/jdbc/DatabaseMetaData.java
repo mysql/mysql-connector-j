@@ -732,7 +732,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				
 				byte[][] rowData = null;
 				
-				if (fields != null && fields.length == 8) {
+				if (fields != null && fields.length == 9) {
 					
 					rowData = new byte[8][];
 					rowData[0] = catalog == null ? null : s2b(catalog);         // PROCEDURE_CAT
@@ -743,6 +743,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					rowData[5] = null;                                          // reserved3
 					rowData[6] = s2b(proceduresRs.getString("comment"));        // REMARKS
 					rowData[7] = s2b(Integer.toString(procedureReturnsResult)); // PROCEDURE_TYPE
+					rowData[8] = s2b(functionName);
 				} else {
 					
 					rowData = new byte[6][];
@@ -784,7 +785,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 			if (shouldAdd) {
 				String procedureName = proceduresRs.getString(nameIndex);
-				byte[][] rowData = new byte[8][];
+				byte[][] rowData = new byte[9][];
 				rowData[0] = catalog == null ? null : s2b(catalog);
 				rowData[1] = null;
 				rowData[2] = s2b(procedureName);
@@ -800,6 +801,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						.toString(procedureReturnsResult) : Integer
 						.toString(procedureResultUnknown));
 
+				rowData[8] = s2b(procedureName);
+				
 				procedureRowsOrderedByName.put(procedureName, new ByteArrayRow(rowData));
 			}
 		}
@@ -4161,15 +4164,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 
 	private Field[] createFieldMetadataForGetProcedures() {
-		Field[] fields = new Field[8];
-		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
-		fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 0);
-		fields[2] = new Field("", "PROCEDURE_NAME", Types.CHAR, 0);
+		Field[] fields = new Field[9];
+		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 255);
+		fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 255);
+		fields[2] = new Field("", "PROCEDURE_NAME", Types.CHAR, 255);
 		fields[3] = new Field("", "reserved1", Types.CHAR, 0);
 		fields[4] = new Field("", "reserved2", Types.CHAR, 0);
 		fields[5] = new Field("", "reserved3", Types.CHAR, 0);
-		fields[6] = new Field("", "REMARKS", Types.CHAR, 0);
-		fields[7] = new Field("", "PROCEDURE_TYPE", Types.SMALLINT, 0);
+		fields[6] = new Field("", "REMARKS", Types.CHAR, 255);
+		fields[7] = new Field("", "PROCEDURE_TYPE", Types.SMALLINT, 6);
+		fields[8] = new Field("", "SPECIFIC_NAME", Types.CHAR, 255);
+		
 		return fields;
 	}
 	
@@ -4205,7 +4210,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					boolean fromSelect = false;
 					ResultSet proceduresRs = null;
 					boolean needsClientFiltering = true;
-					PreparedStatement proceduresStmt = conn
+					PreparedStatement proceduresStmt = (PreparedStatement) conn
 							.clientPrepareStatement("SELECT name, type, comment FROM mysql.proc WHERE name like ? and db <=> ? ORDER BY name");
 
 					try {
@@ -4252,7 +4257,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								nameIndex = 1;
 							}
 
-							proceduresStmt = conn
+							proceduresStmt = (PreparedStatement) conn
 									.clientPrepareStatement("SHOW PROCEDURE STATUS LIKE ?");
 
 							if (proceduresStmt.getMaxRows() != 0) {
@@ -4276,7 +4281,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								proceduresStmt.close();
 							}
 
-							proceduresStmt = conn
+							proceduresStmt = (PreparedStatement) conn
 									.clientPrepareStatement("SHOW FUNCTION STATUS LIKE ?");
 
 							if (proceduresStmt.getMaxRows() != 0) {

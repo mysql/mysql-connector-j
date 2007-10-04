@@ -25,11 +25,13 @@
 package com.mysql.jdbc.jdbc2.optional;
 
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.Util;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 import java.io.InputStream;
 import java.io.Reader;
 
+import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 
 import java.net.URL;
@@ -44,6 +46,7 @@ import java.sql.PreparedStatement;
 import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.Statement;
 //import java.sql.RowId;
 import java.sql.SQLException;
 //import java.sql.SQLXML;
@@ -63,6 +66,42 @@ import java.util.Calendar;
  */
 public class PreparedStatementWrapper extends StatementWrapper implements
 		PreparedStatement {
+	private static final Constructor JDBC_4_PREPARED_STATEMENT_WRAPPER_CTOR;
+	
+	static {
+		if (Util.isJdbc4()) {
+			try {
+				JDBC_4_PREPARED_STATEMENT_WRAPPER_CTOR = Class.forName(
+						"com.mysql.jdbc.jdbc2.optional.JDBC4PreparedStatementWrapper").getConstructor(
+						new Class[] { ConnectionWrapper.class, 
+								MysqlPooledConnection.class, 
+								PreparedStatement.class });
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			JDBC_4_PREPARED_STATEMENT_WRAPPER_CTOR = null;
+		}
+	}
+	
+	protected static PreparedStatementWrapper getInstance(ConnectionWrapper c, 
+			MysqlPooledConnection conn,
+			PreparedStatement toWrap) throws SQLException {
+		if (!Util.isJdbc4()) {
+			return new PreparedStatementWrapper(c, 
+					conn, toWrap);
+		}
+
+		return (PreparedStatementWrapper) Util.handleNewInstance(
+				JDBC_4_PREPARED_STATEMENT_WRAPPER_CTOR,
+				new Object[] {c, 
+						conn, toWrap });
+	}
+	
 	PreparedStatementWrapper(ConnectionWrapper c, MysqlPooledConnection conn,
 			PreparedStatement toWrap) {
 		super(c, conn, toWrap);

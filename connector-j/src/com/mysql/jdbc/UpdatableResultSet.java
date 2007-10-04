@@ -465,7 +465,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 				generateStatements();
 			}
 
-			this.deleter = this.connection
+			this.deleter = (PreparedStatement) this.connection
 					.clientPrepareStatement(this.deleteSQL);
 		}
 
@@ -1026,7 +1026,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 				generateStatements();
 			}
 
-			this.inserter = this.connection
+			this.inserter = (PreparedStatement) this.connection
 					.clientPrepareStatement(this.insertSQL);
 			if (this.populateInserterWithDefaultValues) {
 				extractDefaultValues();
@@ -1280,7 +1280,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 				generateStatements();
 			}
 
-			this.refresher = this.connection
+			this.refresher = (PreparedStatement) this.connection
 					.clientPrepareStatement(this.refreshSQL);
 		}
 
@@ -1492,7 +1492,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 				generateStatements();
 			}
 
-			this.updater = this.connection
+			this.updater = (PreparedStatement) this.connection
 					.clientPrepareStatement(this.updateSQL);
 		}
 

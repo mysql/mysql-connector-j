@@ -30,10 +30,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -53,6 +57,7 @@ import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
+import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.log.StandardLogger;
 
 /**
@@ -1518,4 +1523,71 @@ public class ConnectionTest extends BaseTestCase {
     		}
     	}
     }
+    
+    public void testInterfaceImplementation() throws Exception {
+    	testInterfaceImplementation(getConnectionWithProps((Properties)null));
+    	MysqlConnectionPoolDataSource cpds = new MysqlConnectionPoolDataSource();
+    	cpds.setUrl(dbUrl);
+    	testInterfaceImplementation(cpds.getPooledConnection().getConnection());
+    }
+    
+    private void testInterfaceImplementation(Connection connToCheck) throws Exception {
+    	Method[] dbmdMethods = java.sql.DatabaseMetaData.class.getMethods();
+    	
+    	// can't do this statically, as we return different
+    	// implementations depending on JDBC version
+    	DatabaseMetaData dbmd = connToCheck.getMetaData();
+    	
+    	checkInterfaceImplemented(dbmdMethods, dbmd.getClass(), dbmd);
+    	
+    	Statement stmtToCheck = connToCheck.createStatement();
+    	
+    	checkInterfaceImplemented(java.sql.Statement.class.getMethods(), stmtToCheck.getClass(), stmtToCheck);
+    	
+    	PreparedStatement pStmtToCheck = connToCheck.prepareStatement("SELECT 1");
+    	ParameterMetaData paramMd = pStmtToCheck.getParameterMetaData();
+    	
+    	checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
+    	checkInterfaceImplemented(java.sql.ParameterMetaData.class.getMethods(), paramMd.getClass(), paramMd);
+    	
+    	pStmtToCheck = ((com.mysql.jdbc.Connection) connToCheck).serverPrepareStatement("SELECT 1");
+    	
+    	checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
+    	ResultSet toCheckRs = connToCheck.createStatement().executeQuery("SELECT 1");
+    	checkInterfaceImplemented(java.sql.ResultSet.class.getMethods(), toCheckRs.getClass(), toCheckRs);
+    	toCheckRs = connToCheck.createStatement().executeQuery("SELECT 1");
+    	checkInterfaceImplemented(java.sql.ResultSetMetaData.class.getMethods(), toCheckRs.getMetaData().getClass(), toCheckRs.getMetaData());
+    	
+    	if (versionMeetsMinimum(5, 0, 0)) {
+    		createProcedure("interfaceImpl", "(IN p1 INT)\nBEGIN\nSELECT 1;\nEND");
+    		
+    		CallableStatement cstmt = connToCheck.prepareCall("{CALL interfaceImpl(?)}");
+    		
+    		checkInterfaceImplemented(java.sql.CallableStatement.class.getMethods(), cstmt.getClass(), cstmt);
+    	}
+    	checkInterfaceImplemented(java.sql.Connection.class.getMethods(), connToCheck.getClass(), connToCheck);
+    }
+
+	private void checkInterfaceImplemented(Method[] interfaceMethods,
+			Class implementingClass, Object invokeOn) throws NoSuchMethodException {
+		for (int i = 0; i < interfaceMethods.length; i++) {
+    		Method toFind = interfaceMethods[i];
+    		Method toMatch = implementingClass.getMethod(toFind.getName(), toFind.getParameterTypes());
+    		assertNotNull(toFind.toString(), toMatch);
+
+    		Object[] args = new Object[toFind.getParameterTypes().length];
+    		
+    		try {
+				toMatch.invoke(invokeOn, args);
+			} catch (IllegalArgumentException e) {
+				
+			} catch (IllegalAccessException e) {
+				
+			} catch (InvocationTargetException e) {
+				
+			} catch (java.lang.AbstractMethodError e) {
+				throw e;
+			}
+    	}
+	}
 }

@@ -1228,7 +1228,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			throws SQLException {
 		// Can't use server-side here as we coerce a lot of types to match
 		// the spec.
-		PreparedStatement pStmt = this.conn.clientPrepareStatement(sql);
+		PreparedStatement pStmt = (PreparedStatement) this.conn.clientPrepareStatement(sql);
 
 		if (pStmt.getMaxRows() != 0) {
 			pStmt.setMaxRows(0);

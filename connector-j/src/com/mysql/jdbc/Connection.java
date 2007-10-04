@@ -68,7 +68,7 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	 * 
 	 * @see java.sql.Connection#prepareStatement(String)
 	 */
-	public abstract PreparedStatement clientPrepareStatement(String sql)
+	public abstract java.sql.PreparedStatement clientPrepareStatement(String sql)
 			throws SQLException;
 
 	/**
@@ -90,7 +90,7 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	 * 
 	 * @see java.sql.Connection#prepareStatement(String, int, int)
 	 */
-	public abstract PreparedStatement clientPrepareStatement(String sql,
+	public abstract java.sql.PreparedStatement clientPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency) throws SQLException;
 
 	/**
@@ -104,6 +104,18 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	public abstract java.sql.PreparedStatement clientPrepareStatement(String sql,
 			int[] autoGenKeyIndexes) throws SQLException;
 
+	/**
+	 * Prepares a statement on the client, using client-side emulation 
+	 * (irregardless of the configuration property 'useServerPrepStmts') 
+	 * with the same semantics as the java.sql.Connection.prepareStatement() 
+	 * method with the same argument types.
+	 * 
+	 * @see java.sql.Connection#prepareStatement(String, int, int, int)
+	 */
+	public abstract java.sql.PreparedStatement clientPrepareStatement(String sql,
+			int resultSetType, int resultSetConcurrency,
+			int resultSetHoldability) throws SQLException;
+	
 	/**
 	 * Prepares a statement on the client, using client-side emulation 
 	 * (irregardless of the configuration property 'useServerPrepStmts') 
@@ -231,7 +243,7 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	 * 
 	 * @see java.sql.Connection#prepareStatement(String)
 	 */
-	public abstract ServerPreparedStatement serverPrepareStatement(String sql)
+	public abstract java.sql.PreparedStatement serverPrepareStatement(String sql)
 		throws SQLException;
 
 	/**

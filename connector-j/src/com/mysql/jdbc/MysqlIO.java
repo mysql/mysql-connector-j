@@ -968,7 +968,7 @@ class MysqlIO {
             java.sql.ResultSet rs = null;
 
             try {
-                stmt = this.connection.clientPrepareStatement("EXPLAIN ?"); //$NON-NLS-1$
+                stmt = (PreparedStatement) this.connection.clientPrepareStatement("EXPLAIN ?"); //$NON-NLS-1$
                 stmt.setBytesNoEscapeNoQuotes(1, querySQL);
                 rs = stmt.executeQuery();
 
