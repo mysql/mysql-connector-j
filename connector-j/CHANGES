@@ -289,6 +289,16 @@
       This fix also ensures that the precision of UNSIGNED MEDIUMINT
       and UNSIGNED BIGINT is reported correctly via DBMD.getColumns().
 
+    - Fixed BUG#31053 - Connections established using URLs of the form
+      "jdbc:mysql:loadbalance://" weren't doing failover if they tried to 
+      connect to a MySQL server that was down. The driver now attempts
+      connections to the next "best" (depending on the load balance strategy
+      in use) server, and continues to attempt connecting to the next "best"
+      server every 250 milliseconds until one is found that is up and running 
+      or 5 minutes has passed.
+      
+      If the driver gives up, it will throw the last-received SQLException.
+      
 07-19-07 - Version 5.0.7
 
     - Setting the configuration parameter "useCursorFetch" to "true" for

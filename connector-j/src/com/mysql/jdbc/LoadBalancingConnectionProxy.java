@@ -80,30 +80,73 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
 			int bestHostIndex = 0;
 
-			for (int i = 0; i < responseTimes.length; i++) {
-				long candidateResponseTime = responseTimes[i];
-
-				if (candidateResponseTime < minResponseTime) {
-					if (candidateResponseTime == 0) {
+			long[] localResponseTimes = new long[responseTimes.length];
+			
+			synchronized (responseTimes) {
+				System.arraycopy(responseTimes, 0, localResponseTimes, 0, responseTimes.length);
+			}
+			
+			SQLException ex = null;
+			
+			for (int attempts = 0; attempts < 1200 /* 5 minutes */; attempts++) {
+				for (int i = 0; i < localResponseTimes.length; i++) {
+					long candidateResponseTime = localResponseTimes[i];
+	
+					if (candidateResponseTime < minResponseTime) {
+						if (candidateResponseTime == 0) {
+							bestHostIndex = i;
+	
+							break;
+						}
+	
 						bestHostIndex = i;
-
-						break;
+						minResponseTime = candidateResponseTime;
 					}
-
-					bestHostIndex = i;
-					minResponseTime = candidateResponseTime;
 				}
+	
+				if (bestHostIndex == localResponseTimes.length - 1) {
+					// try again, assuming that the previous list was mostly
+					// correct as far as distribution of response times went
+					
+					synchronized (responseTimes) {
+						System.arraycopy(responseTimes, 0, localResponseTimes, 0, responseTimes.length);
+					}
+					
+					continue;
+				}
+				String bestHost = (String) hostList.get(bestHostIndex);
+	
+				Connection conn = (Connection) liveConnections.get(bestHost);
+	
+				if (conn == null) {
+					try {
+						conn = createConnectionForHost(bestHost);
+					} catch (SQLException sqlEx) {
+						ex = sqlEx;
+						
+						if (sqlEx instanceof CommunicationsException || "08S01".equals(sqlEx.getSQLState())) {
+							localResponseTimes[bestHostIndex] = Long.MAX_VALUE;
+							
+							try {
+								Thread.sleep(250);
+							} catch (InterruptedException e) {
+							}
+							
+							continue;
+						} else {
+							throw sqlEx;
+						}
+					}
+				}
+	
+				return conn;
 			}
-
-			String bestHost = (String) hostList.get(bestHostIndex);
-
-			Connection conn = (Connection) liveConnections.get(bestHost);
-
-			if (conn == null) {
-				conn = createConnectionForHost(bestHost);
+			
+			if (ex != null) {
+				throw ex;
 			}
-
-			return conn;
+			
+			return null; // we won't get here, compiler can't tell
 		}
 	}
 
@@ -146,14 +189,41 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
 			String hostPortSpec = (String) hostList.get(random);
 
-			Connection conn = (Connection) liveConnections.get(hostPortSpec);
-
-			if (conn == null) {
-				conn = createConnectionForHost(hostPortSpec);
+			SQLException ex = null;
+			
+			for (int attempts = 0; attempts < 1200 /* 5 minutes */; attempts++) {
+				Connection conn = (Connection) liveConnections.get(hostPortSpec);
+				
+				if (conn == null) {
+					try {
+						conn = createConnectionForHost(hostPortSpec);
+					} catch (SQLException sqlEx) {
+						ex = sqlEx;
+						
+						if (sqlEx instanceof CommunicationsException || "08S01".equals(sqlEx.getSQLState())) {
+							
+							try {
+								Thread.sleep(250);
+							} catch (InterruptedException e) {
+							}
+							
+							continue;
+						} else {
+							throw sqlEx;
+						}
+					}
+				}
+	
+				return conn;
 			}
-
-			return conn;
+			
+			if (ex != null) {
+				throw ex;
+			}
+			
+			return null; // we won't get here, compiler can't tell
 		}
+
 	}
 
 	private Connection currentConn;
@@ -247,7 +317,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		connProps.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY,
 				hostPortPair[1]);
 
-		Connection conn = new ConnectionImpl(hostPortSpec, Integer
+		Connection conn = ConnectionImpl.getInstance(hostPortSpec, Integer
 				.parseInt(hostPortPair[1]), connProps, connProps
 				.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY),
 				"jdbc:mysql://" + hostPortPair[0] + ":" + hostPortPair[1] + "/");
@@ -370,8 +440,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 						.get(this.connectionsToHostsMap.get(this.currentConn)))
 						.intValue();
 
-				this.responseTimes[hostIndex] = getLocalTimeBestResolution()
-						- this.transactionStartTime;
+				synchronized (this.responseTimes) {
+					this.responseTimes[hostIndex] = getLocalTimeBestResolution()
+							- this.transactionStartTime;
+				}
 
 				pickNewConnection();
 			}
