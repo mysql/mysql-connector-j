@@ -1,5 +1,10 @@
 # Changelog
 # $Id$
+10-09-07 - Version 5.1.5
+
+    - Released instead of 5.1.4 to pickup patch for BUG#31053
+      from 5.0.8.
+      
 10-09-07 - Version 5.1.4 
 
     - Added "autoSlowLog" configuration property, overrides 
