@@ -1325,6 +1325,12 @@ class MysqlIO {
         if (!this.useConnectWithDb) {
             changeDatabaseTo(database);
         }
+        
+        try {
+        	this.mysqlConnection = this.socketFactory.afterHandshake();
+        } catch (IOException ioEx) {
+        	throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, ioEx);
+        }
     }
 
 	private void changeDatabaseTo(String database) throws SQLException {
