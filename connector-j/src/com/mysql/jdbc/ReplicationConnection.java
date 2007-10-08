@@ -52,7 +52,7 @@ public class ReplicationConnection implements java.sql.Connection, PingTarget {
 
 	public ReplicationConnection(Properties masterProperties,
 			Properties slaveProperties) throws SQLException {
-		Driver driver = new Driver();
+		NonRegisteringDriver driver = new NonRegisteringDriver();
 
 		StringBuffer masterUrl = new StringBuffer("jdbc:mysql://");
         StringBuffer slaveUrl = new StringBuffer("jdbc:mysql://");
