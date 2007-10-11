@@ -592,7 +592,7 @@ public class MetadataTest extends BaseTestCase {
                 this.rs.next();
                 assertEquals("t1", this.rs.getString("TABLE_NAME"));
                 assertEquals("c1", this.rs.getString("COLUMN_NAME"));
-                assertEquals("char", this.rs.getString("TYPE_NAME"));
+                assertEquals("CHAR", this.rs.getString("TYPE_NAME"));
                 assertEquals("1", this.rs.getString("COLUMN_SIZE"));
             } finally {
                 if (conn1 != null) {

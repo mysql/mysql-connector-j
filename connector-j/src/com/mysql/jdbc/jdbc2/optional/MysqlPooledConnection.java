@@ -23,11 +23,15 @@
 
 package com.mysql.jdbc.jdbc2.optional;
 
+import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.SQLException;
 
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
 
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
@@ -36,6 +40,7 @@ import javax.sql.PooledConnection;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Constants;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.Util;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 /**
@@ -49,6 +54,37 @@ import com.mysql.jdbc.exceptions.NotYetImplementedException;
  */
 public class MysqlPooledConnection implements PooledConnection {
 
+	private static final Constructor JDBC_4_POOLED_CONNECTION_WRAPPER_CTOR;
+
+	static {
+		if (Util.isJdbc4()) {
+			try {
+				JDBC_4_POOLED_CONNECTION_WRAPPER_CTOR = Class.forName(
+						"com.mysql.jdbc.jdbc2.optional.JDBC4MysqlPooledConnection")
+						.getConstructor(
+								new Class[] { com.mysql.jdbc.Connection.class });
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(e);
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			JDBC_4_POOLED_CONNECTION_WRAPPER_CTOR = null;
+		}
+	}
+
+	protected static MysqlPooledConnection getInstance(com.mysql.jdbc.Connection connection) throws SQLException {
+		if (!Util.isJdbc4()) {
+			return new MysqlPooledConnection(connection);
+		}
+
+		return (MysqlPooledConnection) Util.handleNewInstance(
+				JDBC_4_POOLED_CONNECTION_WRAPPER_CTOR, new Object[] {
+						connection});
+	}
+	
 	/**
 	 * The flag for an exception being thrown.
 	 */
@@ -61,7 +97,7 @@ public class MysqlPooledConnection implements PooledConnection {
 
 	// ~ Instance/static variables .............................................
 
-	private Hashtable eventListeners;
+	private Map connectionEventListeners;
 
 	private Connection logicalHandle;
 
@@ -78,10 +114,8 @@ public class MysqlPooledConnection implements PooledConnection {
 	public MysqlPooledConnection(com.mysql.jdbc.Connection connection) {
 		this.logicalHandle = null;
 		this.physicalConn = connection;
-		this.eventListeners = new Hashtable(10);
+		this.connectionEventListeners = new HashMap();
 	}
-
-	// ~ Methods ...............................................................
 
 	/**
 	 * Adds ConnectionEventListeners to a hash table to be used for notification
@@ -93,8 +127,8 @@ public class MysqlPooledConnection implements PooledConnection {
 	public synchronized void addConnectionEventListener(
 			ConnectionEventListener connectioneventlistener) {
 
-		if (this.eventListeners != null) {
-			this.eventListeners.put(connectioneventlistener,
+		if (this.connectionEventListeners != null) {
+			this.connectionEventListeners.put(connectioneventlistener,
 					connectioneventlistener);
 		}
 	}
@@ -109,8 +143,8 @@ public class MysqlPooledConnection implements PooledConnection {
 	public synchronized void removeConnectionEventListener(
 			ConnectionEventListener connectioneventlistener) {
 
-		if (this.eventListeners != null) {
-			this.eventListeners.remove(connectioneventlistener);
+		if (this.connectionEventListeners != null) {
+			this.connectionEventListeners.remove(connectioneventlistener);
 		}
 	}
 
@@ -132,7 +166,7 @@ public class MysqlPooledConnection implements PooledConnection {
 
 			SQLException sqlException = SQLError.createSQLException(
 					"Physical Connection doesn't exist");
-			callListener(CONNECTION_ERROR_EVENT, sqlException);
+			callConnectionEventListeners(CONNECTION_ERROR_EVENT, sqlException);
 
 			throw sqlException;
 		}
@@ -151,7 +185,7 @@ public class MysqlPooledConnection implements PooledConnection {
 					(ConnectionImpl)this.physicalConn, 
 					forXa);
 		} catch (SQLException sqlException) {
-			callListener(CONNECTION_ERROR_EVENT, sqlException);
+			callConnectionEventListeners(CONNECTION_ERROR_EVENT, sqlException);
 
 			throw sqlException;
 		}
@@ -169,9 +203,15 @@ public class MysqlPooledConnection implements PooledConnection {
 	public synchronized void close() throws SQLException {
 		if (this.physicalConn != null) {
 			this.physicalConn.close();
+			
+			this.physicalConn = null;
 		}
-
-		this.physicalConn = null;
+		
+		if (this.connectionEventListeners != null) {
+			this.connectionEventListeners.clear();
+			
+			this.connectionEventListeners = null;
+		}
 	}
 
 	/**
@@ -186,63 +226,30 @@ public class MysqlPooledConnection implements PooledConnection {
 	 * @param sqlException
 	 *            the exception being thrown
 	 */
-	protected synchronized void callListener(int eventType,
+	protected synchronized void callConnectionEventListeners(int eventType,
 			SQLException sqlException) {
 
-		if (this.eventListeners == null) {
+		if (this.connectionEventListeners == null) {
 
 			return;
 		}
 
-		Enumeration enumeration = this.eventListeners.keys();
+		Iterator iterator = this.connectionEventListeners.entrySet().iterator();
+		
 		ConnectionEvent connectionevent = new ConnectionEvent(this,
 				sqlException);
 
-		while (enumeration.hasMoreElements()) {
+		while (iterator.hasNext()) {
 
-			ConnectionEventListener connectioneventlistener = (ConnectionEventListener) enumeration
-					.nextElement();
-			ConnectionEventListener connectioneventlistener1 = (ConnectionEventListener) this.eventListeners
-					.get(connectioneventlistener);
+			ConnectionEventListener connectioneventlistener = (ConnectionEventListener) ((Map.Entry)iterator
+					.next()).getValue();
 
 			if (eventType == CONNECTION_CLOSED_EVENT) {
-				connectioneventlistener1.connectionClosed(connectionevent);
+				connectioneventlistener.connectionClosed(connectionevent);
 			} else if (eventType == CONNECTION_ERROR_EVENT) {
-				connectioneventlistener1
+				connectioneventlistener
 						.connectionErrorOccurred(connectionevent);
 			}
 		}
 	}
-	
-//	/**
-//	 * Registers a <code>StatementEventListener</code> with this <code>PooledConnection</code> object.  Components that 
-//	 * wish to be notified when  <code>PreparedStatement</code>s created by the
-//         * connection are closed or are detected to be invalid may use this method 
-//         * to register a <code>StatementEventListener</code> with this <code>PooledConnection</code> object.
-//	 * <p>
-//	 * @param listener	an component which implements the <code>StatementEventListener</code> 
-//	 * 					interface that is to be registered with this <code>PooledConnection</code> object
-//	 * <p>
-//	 * @since 1.6
-//	 */
-//	public void addStatementEventListener(StatementEventListener listener) {
-//		throw new NotYetImplementedException();
-//	}
-//	
-//	/**
-//	 * Removes the specified <code>StatementEventListener</code> from the list of 
-//	 * components that will be notified when the driver detects that a 
-//	 * <code>PreparedStatement</code> has been closed or is invalid.
-//	 * <p> 
-//	 * @param listener	the component which implements the
-//	 * 					<code>StatementEventListener</code> interface that was previously 
-//	 * 					registered with this <code>PooledConnection</code> object
-//	 * <p>
-//	 * @since 1.6
-//	 */
-//	public void removeStatementEventListener(StatementEventListener listener) {
-//		throw new NotYetImplementedException();
-//	}
-
-
 }

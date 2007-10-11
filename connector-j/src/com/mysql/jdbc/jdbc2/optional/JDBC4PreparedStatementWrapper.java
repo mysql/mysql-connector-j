@@ -46,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.sql.StatementEvent;
+
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
@@ -64,7 +66,12 @@ public class JDBC4PreparedStatementWrapper extends PreparedStatementWrapper {
 		try {
 			super.close();
 		} finally {
-			this.unwrappedInterfaces = null;
+			try {
+				((JDBC4MysqlPooledConnection)this.pooledConnection).fireStatementEvent(
+						new StatementEvent(this.pooledConnection, this));
+			} finally {
+				this.unwrappedInterfaces = null;
+			}
 		}
 	}
 	

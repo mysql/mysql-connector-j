@@ -56,7 +56,7 @@ public class MysqlConnectionPoolDataSource extends MysqlDataSource implements
 	public synchronized PooledConnection getPooledConnection()
 			throws SQLException {
 		Connection connection = getConnection();
-		MysqlPooledConnection mysqlPooledConnection = new MysqlPooledConnection(
+		MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance(
 				(com.mysql.jdbc.Connection)connection);
 
 		return mysqlPooledConnection;
@@ -77,7 +77,7 @@ public class MysqlConnectionPoolDataSource extends MysqlDataSource implements
 	public synchronized PooledConnection getPooledConnection(String s, String s1)
 			throws SQLException {
 		Connection connection = getConnection(s, s1);
-		MysqlPooledConnection mysqlPooledConnection = new MysqlPooledConnection(
+		MysqlPooledConnection mysqlPooledConnection = MysqlPooledConnection.getInstance(
 				(com.mysql.jdbc.Connection)connection);
 
 		return mysqlPooledConnection;

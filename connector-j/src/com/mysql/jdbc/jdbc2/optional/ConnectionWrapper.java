@@ -854,7 +854,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 			}
 
 			if (fireClosedEvent) {
-				this.mpc.callListener(
+				this.mpc.callConnectionEventListeners(
 						MysqlPooledConnection.CONNECTION_CLOSED_EVENT, null);
 			}
 

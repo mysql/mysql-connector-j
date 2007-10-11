@@ -1,5 +1,9 @@
 # Changelog
 # $Id$
+nn-nn-08 - Version 5.1.6
+
+    - JDBC-4.0-ized XAConnections and datasources.
+    
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

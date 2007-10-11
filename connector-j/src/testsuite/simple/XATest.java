@@ -278,7 +278,7 @@ public class XATest extends BaseTestCase {
 			xaConn1 = getXAConnection();
 			XAResource xaRes1 = xaConn1.getXAResource();
 			conn1 = xaConn1.getConnection();
-			assertEquals(false, conn1.getAutoCommit());
+			assertEquals(true, conn1.getAutoCommit());
 			conn1.setAutoCommit(true);
 			conn1.createStatement().executeUpdate(
 					"INSERT INTO testLocalTransaction VALUES (1)");

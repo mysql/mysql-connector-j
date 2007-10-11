@@ -1907,7 +1907,11 @@ public class StatementsTest extends BaseTestCase {
 		ParameterBindings bindings = ((com.mysql.jdbc.PreparedStatement)this.pstmt).getParameterBindings();
 
 		for (int i = 0; i < valuesToTest.length; i++) {
-			assertEquals(bindings.getObject(i + 1), valuesToTest[i]);
+			if (bindings.getObject(i + 1) instanceof Number) {
+				assertEquals("For binding " + (i + 1), bindings.getObject(i + 1).toString(), valuesToTest[i].toString());
+			} else {
+				assertEquals("For binding " + (i + 1), bindings.getObject(i + 1), valuesToTest[i]);
+			}
 		}
 	}
 
