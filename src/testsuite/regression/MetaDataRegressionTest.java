@@ -1961,6 +1961,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	 * @throws Exception if the test fails.
 	 */
 	public void testBug27867() throws Exception {
+		if (!versionMeetsMinimum(4, 1)) {
+			return;
+		}
+		
 		try {
 			String gbkColumnName = "\u00e4\u00b8\u00ad\u00e6\u2013\u2021\u00e6\u00b5\u2039\u00e8\u00af\u2022";
 			createTable("ColumnNameEncoding", "(" + "`" + gbkColumnName
@@ -2065,6 +2069,52 @@ public class MetaDataRegressionTest extends BaseTestCase {
 					.getPrecision(i + 1));
 			assertEquals(typeName, new Integer(rsmd.getPrecision(i + 1)),
 					typeNameToPrecision.get(typeName));
+		}
+	}
+	
+	public void testBug20491() throws Exception {
+		try {
+			String[] fields = { "field1_ae_ä", "field2_ue_ü", "field3_oe_ö",
+			"field4_sz_ß" };
+			
+			createTable("tst",
+					"(`" + fields[0] + "` int(10) unsigned NOT NULL default '0',"
+							+ "`" + fields[1] + "` varchar(45) default '',"
+							+ "`" + fields[2] + "` varchar(45) default '',"
+							+ "`" + fields[3] + "` varchar(45) default '',"
+							+ "PRIMARY KEY  (`" + fields[0] + "`))");
+
+			// demonstrate that these are all in the Cp1252 encoding
+			
+			for (int i = 0; i < fields.length; i++) {
+				assertEquals(fields[i], new String(fields[i].getBytes("Cp1252"), "Cp1252"));
+			}
+			
+			byte[] asBytes = fields[0].getBytes("utf-8");
+			
+			DatabaseMetaData md = this.conn.getMetaData();
+			
+			this.rs = md.getColumns(null, "%", "tst", "%");
+			
+			int j = 0;
+			
+			while (this.rs.next()) {
+				assertEquals("Wrong column name:" + this.rs.getString(4),
+						fields[j++], this.rs.getString(4));
+			}
+			
+			this.rs.close();
+			
+			this.rs = this.stmt.executeQuery("SELECT * FROM tst");
+			
+			ResultSetMetaData rsmd = this.rs.getMetaData();
+			
+			for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+				assertEquals("Wrong column name:" + rsmd.getColumnName(i),
+						fields[i - 1], rsmd.getColumnName(i));
+			}
+		} finally {
+			closeMemberJDBCResources();
 		}
 	}
 }
