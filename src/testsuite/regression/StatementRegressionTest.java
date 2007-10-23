@@ -3486,6 +3486,7 @@ public class StatementRegressionTest extends BaseTestCase {
 				
 				try {
 					timeoutStmt.execute("SELECT SLEEP(30)");
+					fail("Query didn't time out");
 				} catch (MySQLTimeoutException timeoutEx) {
 					long end = System.currentTimeMillis();
 					
@@ -3898,7 +3899,9 @@ public class StatementRegressionTest extends BaseTestCase {
 			this.conn.setReadOnly(true);
 			this.stmt.execute("(SELECT 1) UNION (SELECT 2)");
 			this.conn.prepareStatement("(SELECT 1) UNION (SELECT 2)").execute();
-			((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("(SELECT 1) UNION (SELECT 2)").execute();
+			if (versionMeetsMinimum(4, 1)) {
+				((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("(SELECT 1) UNION (SELECT 2)").execute();
+			}
 		} finally {
 			this.conn.setReadOnly(false);
 		}

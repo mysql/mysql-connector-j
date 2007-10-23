@@ -4401,7 +4401,10 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	    noBlobConn = getConnectionWithProps(props);
 	    this.rs = noBlobConn.createStatement().executeQuery("SELECT concat(Class,petallength), COUNT(*) FROM `testBug24886` GROUP BY `concat(Class,petallength)`");
         this.rs.next();
-        assertEquals("java.lang.String", this.rs.getObject(1).getClass().getName());
+        
+        if (versionMeetsMinimum(4, 1)) {
+        	assertEquals("java.lang.String", this.rs.getObject(1).getClass().getName());
+        }
 	}
 
 	
