@@ -32,6 +32,7 @@ import java.sql.Statement;
 import java.util.TimeZone;
 
 import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.Extension;
 import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.SQLError;
@@ -2496,5 +2497,17 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 
 	public boolean useUnbufferedInput() {
 		return this.mc.useUnbufferedInput();
+	}
+
+	public void initializeExtension(Extension ex) throws SQLException {
+		this.mc.initializeExtension(ex);
+	}
+
+	public String getProfilerEventHandler() {
+		return this.mc.getProfilerEventHandler();
+	}
+
+	public void setProfilerEventHandler(String handler) {
+		this.mc.setProfilerEventHandler(handler);
 	}
 }

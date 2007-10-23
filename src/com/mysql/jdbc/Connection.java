@@ -360,4 +360,5 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	
 	public abstract boolean isAbonormallyLongQuery(long millisOrNanos);
 
+	public abstract void initializeExtension(Extension ex) throws SQLException;
 }

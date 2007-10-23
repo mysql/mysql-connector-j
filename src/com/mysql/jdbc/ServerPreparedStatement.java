@@ -26,7 +26,7 @@ package com.mysql.jdbc;
 
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-import com.mysql.jdbc.profiler.ProfileEventSink;
+import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
 import java.io.IOException;
@@ -1333,7 +1333,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				this.connection.incrementNumberOfPreparedExecutes();
 
 				if (this.profileSQL) {
-					this.eventSink = ProfileEventSink
+					this.eventSink = ProfilerEventHandlerFactory
 							.getInstance(this.connection);
 
 					this.eventSink.consumeEvent(new ProfilerEvent(

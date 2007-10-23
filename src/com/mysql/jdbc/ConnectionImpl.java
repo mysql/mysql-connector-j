@@ -53,7 +53,8 @@ import java.util.TreeMap;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.LogFactory;
 import com.mysql.jdbc.log.NullLogger;
-import com.mysql.jdbc.profiler.ProfileEventSink;
+import com.mysql.jdbc.profiler.ProfilerEventHandler;
+import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.util.LRUCache;
 
@@ -387,7 +388,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private TimeZone defaultTimeZone;
 
 	/** The event sink to use for profiling */
-	private ProfileEventSink eventSink;
+	private ProfilerEventHandler eventSink;
 
 	private boolean executingFailoverReconnect = false;
 
@@ -3253,7 +3254,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME);
 
 		if (getProfileSql() || getUseUsageAdvisor()) {
-			this.eventSink = ProfileEventSink.getInstance(this);
+			this.eventSink = ProfilerEventHandlerFactory.getInstance(this);
 		}
 
 		if (getCachePreparedStatements()) {
@@ -4234,7 +4235,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		} finally {
 			this.openStatements = null;
 			this.io = null;
-			ProfileEventSink.removeInstance(this);
+			ProfilerEventHandlerFactory.removeInstance(this);
 			this.isClosed = true;
 		}
 
@@ -5439,5 +5440,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		double stddev = Math.sqrt((this.queryTimeSumSquares - ((this.queryTimeSum*this.queryTimeSum) / this.queryTimeCount)) / (this.queryTimeCount - 1));
 		
 		return millisOrNanos > (this.queryTimeMean + 5 * stddev);
+	}
+
+	public void initializeExtension(Extension ex) throws SQLException {
+		ex.init(this, this.props);
 	}
 }

@@ -1169,6 +1169,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				"3.1.12", //$NON-NLS-1$
 				MISC_CATEGORY, Integer.MIN_VALUE);
 	
+	private StringConnectionProperty profilerEventHandler = new StringConnectionProperty(
+			"profilerEventHandler",
+			"com.mysql.jdbc.profiler.LoggingProfilerEventHandler",
+			Messages.getString("ConnectionProperties.profilerEventHandler"),
+			"5.1.6", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+			
 	private StringConnectionProperty profileSql = new StringConnectionProperty(
 			"profileSql", //$NON-NLS-1$
 			null,
@@ -4283,4 +4289,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	public void setConnectionLifecycleInterceptors(String interceptors) {
 		this.connectionLifecycleInterceptors.setValue(interceptors);
     }
+
+	public String getProfilerEventHandler() {
+		return this.profilerEventHandler.getValueAsString();
+	}
+
+	public void setProfilerEventHandler(String handler) {
+		this.profilerEventHandler.setValue(handler);
+	}
 }

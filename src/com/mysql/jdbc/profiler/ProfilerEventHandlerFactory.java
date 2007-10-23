@@ -25,6 +25,7 @@ package com.mysql.jdbc.profiler;
 
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.log.Log;
+import com.mysql.jdbc.Util;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -33,7 +34,7 @@ import java.util.Map;
 /**
  * @author mmatthew
  */
-public class ProfileEventSink {
+public class ProfilerEventHandlerFactory {
 
 	private static final Map CONNECTIONS_TO_SINKS = new HashMap();
 
@@ -42,44 +43,40 @@ public class ProfileEventSink {
 	private Log log = null;
 
 	/**
-	 * Returns the ProfileEventSink that handles profiler events for the given
+	 * Returns the ProfilerEventHandlerFactory that handles profiler events for the given
 	 * connection.
 	 * 
 	 * @param conn
 	 *            the connection to handle events for
-	 * @return the ProfileEventSink that handles profiler events
+	 * @return the ProfilerEventHandlerFactory that handles profiler events
 	 */
-	public static synchronized ProfileEventSink getInstance(Connection conn) {
-		ProfileEventSink sink = (ProfileEventSink) CONNECTIONS_TO_SINKS
+	public static synchronized ProfilerEventHandler getInstance(Connection conn) throws SQLException {
+		ProfilerEventHandler handler = (ProfilerEventHandler) CONNECTIONS_TO_SINKS
 				.get(conn);
 
-		if (sink == null) {
-			sink = new ProfileEventSink(conn);
-			CONNECTIONS_TO_SINKS.put(conn, sink);
+		if (handler == null) {
+			handler = (ProfilerEventHandler)Util.getInstance(conn.getProfilerEventHandler(), new Class[0], new Object[0]);
+			
+			// we do it this way to not require
+			// exposing the connection properties 
+			// for all who utilize it
+			conn.initializeExtension(handler);
+			
+			CONNECTIONS_TO_SINKS.put(conn, handler);
 		}
 
-		return sink;
-	}
-
-	/**
-	 * Process a profiler event
-	 * 
-	 * @param evt
-	 *            the event to process
-	 */
-	public void consumeEvent(ProfilerEvent evt) {
-		if (evt.eventType == ProfilerEvent.TYPE_WARN) {
-			this.log.logWarn(evt);
-		} else {
-			this.log.logInfo(evt);
-		}
+		return handler;
 	}
 
 	public static synchronized void removeInstance(Connection conn) {
-		CONNECTIONS_TO_SINKS.remove(conn);
+		ProfilerEventHandler handler = (ProfilerEventHandler) CONNECTIONS_TO_SINKS.remove(conn);
+		
+		if (handler != null) {
+			handler.destroy();
+		}
 	}
 
-	private ProfileEventSink(Connection conn) {
+	private ProfilerEventHandlerFactory(Connection conn) {
 		this.ownerConnection = conn;
 
 		try {

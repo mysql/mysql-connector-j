@@ -49,7 +49,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.zip.Deflater;
 
-import com.mysql.jdbc.profiler.ProfileEventSink;
+import com.mysql.jdbc.profiler.ProfilerEventHandler;
+import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.util.ReadAheadInputStream;
 import com.mysql.jdbc.util.ResultSetUtil;
@@ -2058,7 +2059,7 @@ class MysqlIO {
 	    				new Long(queryEndTime - queryStartTime)}));
 	    		mesgBuf.append(profileQueryToLog);
 
-	    		ProfileEventSink eventSink = ProfileEventSink.getInstance(this.connection);
+	    		ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
 	    		eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_SLOW_QUERY,
 	    				"", catalog, this.connection.getId(), //$NON-NLS-1$
@@ -2082,7 +2083,7 @@ class MysqlIO {
 
 	    	if (this.logSlowQueries) {
 
-	    		ProfileEventSink eventSink = ProfileEventSink.getInstance(this.connection);
+	    		ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
 	    		if (this.queryBadIndexUsed) {
 	    			eventSink.consumeEvent(new ProfilerEvent(
@@ -2116,7 +2117,7 @@ class MysqlIO {
 	    	if (this.profileSql) {
 	    		fetchEndTime = getCurrentTimeNanosOrMillis();
 
-	    		ProfileEventSink eventSink = ProfileEventSink.getInstance(this.connection);
+	    		ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
 	    		eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_QUERY,
 	    				"", catalog, this.connection.getId(), //$NON-NLS-1$

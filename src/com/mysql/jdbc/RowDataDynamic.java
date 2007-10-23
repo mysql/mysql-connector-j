@@ -26,7 +26,8 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 
-import com.mysql.jdbc.profiler.ProfileEventSink;
+import com.mysql.jdbc.profiler.ProfilerEventHandler;
+import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
@@ -199,7 +200,7 @@ public class RowDataDynamic implements RowData {
 				if (conn.getUseUsageAdvisor()) {
 					if (hadMore) {
 
-						ProfileEventSink eventSink = ProfileEventSink
+						ProfilerEventHandler eventSink = ProfilerEventHandlerFactory
 						.getInstance(conn);
 
 						eventSink

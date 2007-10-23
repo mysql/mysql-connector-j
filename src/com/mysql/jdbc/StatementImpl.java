@@ -27,7 +27,8 @@ package com.mysql.jdbc;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-import com.mysql.jdbc.profiler.ProfileEventSink;
+import com.mysql.jdbc.profiler.ProfilerEventHandler;
+import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.util.LRUCache;
 
@@ -170,7 +171,7 @@ public class StatementImpl implements Statement {
 	protected boolean doEscapeProcessing = true;
 
 	/** If we're profiling, where should events go to? */
-	protected ProfileEventSink eventSink = null;
+	protected ProfilerEventHandler eventSink = null;
 
 	/** The number of rows to fetch at a time (currently ignored) */
 	private int fetchSize = 0;
@@ -308,7 +309,7 @@ public class StatementImpl implements Statement {
 			this.pointOfOrigin = new Throwable();
 			this.profileSQL = this.connection.getProfileSql();
 			this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
-			this.eventSink = ProfileEventSink.getInstance(this.connection);
+			this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 		}
 
 		int maxRowsConn = this.connection.getMaxRows();

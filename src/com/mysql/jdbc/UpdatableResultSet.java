@@ -24,7 +24,7 @@
  */
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.profiler.ProfileEventSink;
+import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
 import java.io.InputStream;
@@ -1177,7 +1177,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 		if (this.useUsageAdvisor) {
 			if ((this.deleter == null) && (this.inserter == null)
 					&& (this.refresher == null) && (this.updater == null)) {
-				this.eventSink = ProfileEventSink.getInstance(this.connection);
+				this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
 				String message = Messages.getString("UpdatableResultSet.34"); //$NON-NLS-1$
 

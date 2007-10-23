@@ -19,6 +19,9 @@ nn-nn-08 - Version 5.1.6
       warning counts and status if talking to a 4.1 or newer server
       (fixes a hang when reading data from 4.0 servers).
       
+    - Made profiler event handling extensible via the "profilerEventHandler"
+      connection property.
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

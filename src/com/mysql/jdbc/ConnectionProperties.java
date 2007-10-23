@@ -1574,4 +1574,8 @@ public interface ConnectionProperties {
 	public abstract String getConnectionLifecycleInterceptors();
 
 	public abstract void setConnectionLifecycleInterceptors(String interceptors);
+	
+	public abstract String getProfilerEventHandler();
+
+	public abstract  void setProfilerEventHandler(String handler);
 }

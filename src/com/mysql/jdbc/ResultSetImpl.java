@@ -26,7 +26,8 @@ package com.mysql.jdbc;
 
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.jdbc.exceptions.NotYetImplementedException;
-import com.mysql.jdbc.profiler.ProfileEventSink;
+import com.mysql.jdbc.profiler.ProfilerEventHandler;
+import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
 import java.io.ByteArrayInputStream;
@@ -217,7 +218,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	/** Are we in the middle of doing updates to the current row? */
 	protected boolean doingUpdates = false;
 
-	protected ProfileEventSink eventSink = null;
+	protected ProfilerEventHandler eventSink = null;
 
 	Calendar fastDateCal = null;
 
@@ -493,7 +494,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			this.pointOfOrigin = new Throwable();
 			this.resultId = resultCounter++;
 			this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
-			this.eventSink = ProfileEventSink.getInstance(this.connection);
+			this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 		}
 
 		if (this.connection.getGatherPerformanceMetrics()) {

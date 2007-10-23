@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.mysql.jdbc.profiler.ProfileEventSink;
+import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
