@@ -30,6 +30,7 @@ import java.sql.Statement;
 
 import org.jboss.resource.adapter.jdbc.ValidConnectionChecker;
 
+import com.mysql.jdbc.PingTarget;
 import com.mysql.jdbc.SQLError;
 
 /**
@@ -74,7 +75,17 @@ public final class MysqlValidConnectionChecker implements
 	 * @see org.jboss.resource.adapter.jdbc.ValidConnectionChecker#isValidConnection(java.sql.Connection)
 	 */
 	public SQLException isValidConnection(Connection conn) {
-		if (conn instanceof com.mysql.jdbc.Connection) {
+		if (conn instanceof PingTarget) {
+			try {
+				((PingTarget)conn).doPing();
+			} catch (Exception ex) {
+				if (ex instanceof SQLException) {
+					return (SQLException) ex;
+				}
+
+				return SQLError.createSQLException("Ping failed: " + ex.toString());
+			}
+		} else if (conn instanceof com.mysql.jdbc.Connection) {
 			if (pingMethod != null) {
 				try {
 					this.pingMethod.invoke(conn, null);
@@ -104,14 +115,16 @@ public final class MysqlValidConnectionChecker implements
 			}
 		}
 
-		// Punt and use 'SELECT 1'
+		// Punt and use "/* ping */ SELECT 1" which will send
+		// pings across multi-connections too in case the connection
+		// was "wrapped" by Jboss in any way...
 
 		Statement pingStatement = null;
 
 		try {
 			pingStatement = conn.createStatement();
 			
-			pingStatement.executeQuery("SELECT 1").close();
+			pingStatement.executeQuery("/* ping */ SELECT 1").close();
 
 			return null;
 		} catch (SQLException sqlEx) {
