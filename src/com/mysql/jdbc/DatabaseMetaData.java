@@ -700,6 +700,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		int fieldsLength = fields.length;
 
 		for (int i = 0; i < fieldsLength; i++) {
+			int jdbcType = fields[i].getSQLType();
+			
+			switch (jdbcType) {
+			case Types.CHAR:
+			case Types.VARCHAR:
+			case Types.LONGVARCHAR:
+				fields[i].setCharacterSet(c.getCharacterSetMetadata());
+				break;
+			default:
+				// do nothing
+			}
+			
 			fields[i].setConnection(c);
 			fields[i].setUseOldNameMetadata(true);
 		}
@@ -6940,9 +6952,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * @return DOCUMENT ME!
 	 */
 	protected byte[] s2b(String s) throws SQLException {
-		return StringUtils.s2b(s, this.conn);
+		if (s == null) {
+			return null;
+		}
+		
+		return StringUtils.getBytes(s, this.conn.getCharacterSetMetadata(),
+				this.conn.getServerCharacterEncoding(), this.conn
+						.parserKnowsUnicode(), this.conn);
 	}
-	
 
 	/**
 	 * Does the database store mixed case unquoted SQL identifiers in lower

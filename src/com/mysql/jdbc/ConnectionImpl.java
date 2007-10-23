@@ -2728,7 +2728,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @return Returns the characterSetMetadata.
 	 */
 	protected String getCharacterSetMetadata() {
-		return characterSetMetadata;
+		return this.characterSetMetadata;
 	}
 
 	/**
@@ -3479,6 +3479,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								characterSetResultsOnServerMysql, this);
 				this.characterSetMetadata = this.characterSetResultsOnServer;
 			}
+		} else {
+			this.characterSetMetadata = getEncoding();
 		}
 
 		//

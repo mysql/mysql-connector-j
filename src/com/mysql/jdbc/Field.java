@@ -416,6 +416,12 @@ public class Field {
 		return this.charsetName;
 	}
 
+	public void setCharacterSet(String javaEncodingName) throws SQLException {
+		this.charsetName = javaEncodingName;
+		this.charsetIndex = CharsetMapping
+				.getCharsetIndexForMysqlEncodingName(javaEncodingName);
+	}
+	
 	public synchronized String getCollation() throws SQLException {
 		if (this.collationName == null) {
 			if (this.connection != null) {
@@ -938,7 +944,9 @@ public class Field {
 	public void setConnection(ConnectionImpl conn) {
 		this.connection = conn;
 
-		this.charsetName = this.connection.getEncoding();
+		if (this.charsetName == null || this.charsetIndex == 0) {
+			this.charsetName = this.connection.getEncoding();
+		}
 	}
 
 	void setMysqlType(int type) {

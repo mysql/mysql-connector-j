@@ -7,6 +7,14 @@ nn-nn-08 - Version 5.1.6
     - Fixed BUG#31790 MysqlValidConnectionChecker 
       doesn't properly handle ReplicationConnection
     
+    - Fixed Bug#20491 - DatabaseMetadata.getColumns() doesn't
+      return correct column names if connection character set
+      isn't UTF-8. (There was a server-side component of this that
+      was fixed late in the 5.0 development cycle, it seems, this
+      is the last piece that fixes some loose ends in the JDBC
+      driver). This fix touches *all* metadata information coming
+      from the MySQL server itself.
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053
