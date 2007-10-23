@@ -50,6 +50,8 @@ public class ReplicationConnection implements java.sql.Connection, PingTarget {
 
 	protected Connection slavesConnection;
 
+	protected ReplicationConnection() {}
+	
 	public ReplicationConnection(Properties masterProperties,
 			Properties slaveProperties) throws SQLException {
 		NonRegisteringDriver driver = new NonRegisteringDriver();
