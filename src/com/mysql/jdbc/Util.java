@@ -59,7 +59,7 @@ public class Util {
 		}
 	}
 
-	protected static boolean nanoTimeAvailable() {
+	public static boolean nanoTimeAvailable() {
 		return systemNanoTimeMethod != null;
 	}
 
@@ -487,7 +487,7 @@ public class Util {
 
 		return System.currentTimeMillis();
 	}
-
+	
 	public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs)
 			throws SQLException {
 		while (rs.next()) {

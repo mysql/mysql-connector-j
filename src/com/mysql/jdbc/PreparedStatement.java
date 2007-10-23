@@ -5038,4 +5038,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			return this.parameterIsNull[parameterIndex -1];
 		}	
 	}
+	
+	public String getPreparedSql() {
+		return this.originalSql;
+	}
 }
