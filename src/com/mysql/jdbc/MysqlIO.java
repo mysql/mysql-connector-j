@@ -1518,20 +1518,25 @@ class MysqlIO {
 					}
 
 					if (sw == 254 && packetLength < 9) {
-						this.warningCount = (this.mysqlInput.read() & 0xff)
-						| ((this.mysqlInput.read() & 0xff) << 8);
-						remaining -= 2;
+						if (this.use41Extensions) {
+							this.warningCount = (this.mysqlInput.read() & 0xff)
+									| ((this.mysqlInput.read() & 0xff) << 8);
+							remaining -= 2;
 
-			            if (this.warningCount > 0) {
-			                this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
-			            }
+							if (this.warningCount > 0) {
+								this.hadWarnings = true; // this is a
+															// 'latch', it's
+															// reset by
+															// sendCommand()
+							}
 
-			            this.serverStatus = (this.mysqlInput.read() & 0xff)
-						| ((this.mysqlInput.read() & 0xff) << 8);
-						remaining -= 2;
+							this.serverStatus = (this.mysqlInput.read() & 0xff)
+									| ((this.mysqlInput.read() & 0xff) << 8);
+							remaining -= 2;
 
-						if (remaining > 0) {
-							skipFully(this.mysqlInput, remaining);
+							if (remaining > 0) {
+								skipFully(this.mysqlInput, remaining);
+							}
 						}
 
 						return null; // last data packet

@@ -15,6 +15,10 @@ nn-nn-08 - Version 5.1.6
       driver). This fix touches *all* metadata information coming
       from the MySQL server itself.
       
+    - Fixed MysqlIO.nextRowFast() to only attempt to read server
+      warning counts and status if talking to a 4.1 or newer server
+      (fixes a hang when reading data from 4.0 servers).
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053
