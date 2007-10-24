@@ -3341,7 +3341,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setNull(int parameterIndex, int sqlType) throws SQLException {
 		setInternal(parameterIndex, "null"); //$NON-NLS-1$
-		this.isNull[parameterIndex - 1] = true;
+		this.isNull[parameterIndex - 1 + getParameterIndexOffset()] = true;
 		
 		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.NULL;
 	}

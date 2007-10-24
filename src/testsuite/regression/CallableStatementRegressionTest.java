@@ -27,6 +27,8 @@ package testsuite.regression;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -1240,6 +1242,161 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			
 			if (noProcedureBodiesConn != null) {
 				noProcedureBodiesConn.close();
+			}
+		}
+	}
+	
+	/** 
+	 * Tests fix for Bug#31823 - CallableStatement.setNull() on a stored
+	 * function would throw an ArrayIndexOutOfBounds when setting the 
+	 * last parameter to null when calling setNull().
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug31823() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return; // no stored functions
+		}
+
+		createTable("testBug31823",
+				"(value_1 BIGINT PRIMARY KEY,value_2 VARCHAR(20))");
+
+		createFunction(
+				"f_testBug31823",
+				"(value_1_v BIGINT,value_2_v VARCHAR(20)) RETURNS BIGINT "
+						+ "DETERMINISTIC MODIFIES SQL DATA BEGIN INSERT INTO testBug31823 VALUES (value_1_v,value_2_v); "
+						+ "RETURN value_1_v; END;");
+
+		// Prepare the function call
+		CallableStatement callable = null;
+
+		try {
+			callable = this.conn.prepareCall("{? = call f_testBug31823(?,?)}");
+
+			callable.registerOutParameter(1, Types.BIGINT);
+
+			// Add row with non-null value
+			callable.setLong(2, 1);
+			callable.setString(3, "Non-null value");
+			callable.executeUpdate();
+			assertEquals(1, callable.getLong(1));
+
+			// Add row with null value
+			callable.setLong(2, 2);
+			callable.setNull(3, Types.VARCHAR);
+			callable.executeUpdate();
+			assertEquals(2, callable.getLong(1));
+
+			Method[] setters = CallableStatement.class.getMethods();
+
+			for (int i = 0; i < setters.length; i++) {
+				if (setters[i].getName().startsWith("set")) {
+					Class[] args = setters[i].getParameterTypes();
+
+					if (args.length == 2 && args[0].equals(Integer.TYPE)) {
+						if (!args[1].isPrimitive()) {
+							try {
+								setters[i].invoke(callable, new Object[] {
+										new Integer(2), null });
+							} catch (InvocationTargetException ive) {
+								if (!(ive.getCause() instanceof com.mysql.jdbc.NotImplemented)) {
+									throw ive;
+								}
+							}
+						} else {
+							if (args[1].getName().equals("boolean")) {
+								try {
+									setters[i].invoke(callable, new Object[] {
+											new Integer(2), Boolean.FALSE });
+								} catch (InvocationTargetException ive) {
+									if (!(ive.getCause() instanceof com.mysql.jdbc.NotImplemented)) {
+										throw ive;
+									}
+								}
+							}
+
+							if (args[1].getName().equals("byte")) {
+
+								try {
+									setters[i].invoke(callable,
+											new Object[] { new Integer(2),
+													new Byte((byte) 0) });
+								} catch (InvocationTargetException ive) {
+									if (!(ive.getCause() instanceof com.mysql.jdbc.NotImplemented)) {
+										throw ive;
+									}
+								}
+
+							}
+
+							if (args[1].getName().equals("double")) {
+
+								try {
+									setters[i].invoke(callable, new Object[] {
+											new Integer(2), new Double(0) });
+								} catch (InvocationTargetException ive) {
+									if (!(ive.getCause() instanceof com.mysql.jdbc.NotImplemented)) {
+										throw ive;
+									}
+								}
+
+							}
+
+							if (args[1].getName().equals("float")) {
+
+								try {
+									setters[i].invoke(callable, new Object[] {
+											new Integer(2), new Float(0) });
+								} catch (InvocationTargetException ive) {
+									if (!(ive.getCause() instanceof com.mysql.jdbc.NotImplemented)) {
+										throw ive;
+									}
+								}
+
+							}
+
+							if (args[1].getName().equals("int")) {
+
+								try {
+									setters[i].invoke(callable, new Object[] {
+											new Integer(2), new Integer(0) });
+								} catch (InvocationTargetException ive) {
+									if (!(ive.getCause() instanceof com.mysql.jdbc.NotImplemented)) {
+										throw ive;
+									}
+								}
+
+							}
+
+							if (args[1].getName().equals("long")) {
+								try {
+									setters[i].invoke(callable, new Object[] {
+											new Integer(2), new Long(0) });
+								} catch (InvocationTargetException ive) {
+									if (!(ive.getCause() instanceof com.mysql.jdbc.NotImplemented)) {
+										throw ive;
+									}
+								}
+							}
+
+							if (args[1].getName().equals("short")) {
+								try {
+									setters[i].invoke(callable, new Object[] {
+											new Integer(2),
+											new Short((short) 0) });
+								} catch (InvocationTargetException ive) {
+									if (!(ive.getCause() instanceof com.mysql.jdbc.NotImplemented)) {
+										throw ive;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		} finally {
+			if (callable != null) {
+				callable.close();
 			}
 		}
 	}
