@@ -25,6 +25,13 @@ nn-nn-08 - Version 5.1.6
     - Fixed Bug#31823 - CallableStatement.setNull() on a stored function would 
       throw an ArrayIndexOutOfBounds when setting the last parameter to null when calling setNull().
       
+    - Added SSL-related configuration property "verifyServerCertificate". If set to "false", the driver won't verify 
+      the server's certificate when "useSSL" is set to "true".
+      
+      When using this feature, the keystore parameters should be specified by the 
+      "clientCertificateKeyStore*" properties, rather than system properties, as the JSSE doesn't
+      make it straightforward to have a non-verifying trust store and the "default" key store.
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

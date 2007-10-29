@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2002-2004 MySQL AB
+ Copyright (C) 2002-2007 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -33,14 +33,18 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.sql.SQLException;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.TrustManagerFactorySpi;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Holds functionality that falls under export-control regulations.
@@ -124,8 +128,10 @@ public class ExportControlled {
 
 		if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)
 				&& StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
-			return (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory
-					.getDefault();
+			if (mysqlIO.connection.getVerifyServerCertificate()) {
+				return (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory
+						.getDefault();
+			}
 		}
 
 		TrustManagerFactory tmf = null;
@@ -145,13 +151,15 @@ public class ExportControlled {
 
 		if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
 			try {
-				KeyStore clientKeyStore = KeyStore
-						.getInstance(clientCertificateKeyStoreType);
-				URL ksURL = new URL(clientCertificateKeyStoreUrl);
-				char[] password = (clientCertificateKeyStorePassword == null) ? new char[0]
-						: clientCertificateKeyStorePassword.toCharArray();
-				clientKeyStore.load(ksURL.openStream(), password);
-				kmf.init(clientKeyStore, password);
+				if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreType)) {
+					KeyStore clientKeyStore = KeyStore
+							.getInstance(clientCertificateKeyStoreType);
+					URL ksURL = new URL(clientCertificateKeyStoreUrl);
+					char[] password = (clientCertificateKeyStorePassword == null) ? new char[0]
+							: clientCertificateKeyStorePassword.toCharArray();
+					clientKeyStore.load(ksURL.openStream(), password);
+					kmf.init(clientKeyStore, password);
+				}
 			} catch (UnrecoverableKeyException uke) {
 				throw SQLError
 						.createSQLException(
@@ -183,14 +191,16 @@ public class ExportControlled {
 		if (StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
 
 			try {
-				KeyStore trustKeyStore = KeyStore
-						.getInstance(trustCertificateKeyStoreType);
-				URL ksURL = new URL(trustCertificateKeyStoreUrl);
-
-				char[] password = (trustCertificateKeyStorePassword == null) ? new char[0]
-						: trustCertificateKeyStorePassword.toCharArray();
-				trustKeyStore.load(ksURL.openStream(), password);
-				tmf.init(trustKeyStore);
+				if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
+					KeyStore trustKeyStore = KeyStore
+							.getInstance(trustCertificateKeyStoreType);
+					URL ksURL = new URL(trustCertificateKeyStoreUrl);
+	
+					char[] password = (trustCertificateKeyStorePassword == null) ? new char[0]
+							: trustCertificateKeyStorePassword.toCharArray();
+					trustKeyStore.load(ksURL.openStream(), password);
+					tmf.init(trustKeyStore);
+				}
 			} catch (NoSuchAlgorithmException nsae) {
 				throw SQLError.createSQLException(
 						"Unsupported keystore algorithm [" + nsae.getMessage()
@@ -218,16 +228,32 @@ public class ExportControlled {
 
 		try {
 			sslContext = SSLContext.getInstance("TLS");
-			sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+			sslContext.init(StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl) ?  null : kmf.getKeyManagers(), mysqlIO.connection
+					.getVerifyServerCertificate() ? tmf.getTrustManagers()
+					: new X509TrustManager[] { new X509TrustManager() {
+						public void checkClientTrusted(X509Certificate[] chain,
+								String authType) {
+							// return without complaint
+						}
+
+						public void checkServerTrusted(X509Certificate[] chain,
+								String authType) throws CertificateException {
+							// return without complaint
+						}
+
+						public X509Certificate[] getAcceptedIssuers() {
+							return null;
+						}
+					} }, null);
 
 			return sslContext.getSocketFactory();
 		} catch (NoSuchAlgorithmException nsae) {
 			throw SQLError.createSQLException("TLS"
-					+ " is not a valid SSL protocol.", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+					+ " is not a valid SSL protocol.",
+					SQL_STATE_BAD_SSL_PARAMS, 0, false);
 		} catch (KeyManagementException kme) {
 			throw SQLError.createSQLException("KeyManagementException: "
 					+ kme.getMessage(), SQL_STATE_BAD_SSL_PARAMS, 0, false);
 		}
 	}
-
 }

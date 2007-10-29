@@ -2510,4 +2510,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 	public void setProfilerEventHandler(String handler) {
 		this.mc.setProfilerEventHandler(handler);
 	}
+
+	public boolean getVerifyServerCertificate() {
+		return this.mc.getVerifyServerCertificate();
+	}
+
+	public void setVerifyServerCertificate(boolean flag) {
+		this.mc.setVerifyServerCertificate(flag);
+	}
 }

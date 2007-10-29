@@ -1578,4 +1578,8 @@ public interface ConnectionProperties {
 	public abstract String getProfilerEventHandler();
 
 	public abstract  void setProfilerEventHandler(String handler);
+	
+	public boolean getVerifyServerCertificate();
+
+	public void setVerifyServerCertificate(boolean flag);
 }

@@ -357,131 +357,131 @@ public class ConnectionTest extends BaseTestCase {
 
 				/*
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL BE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL BE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL VE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL VE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL GE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL GE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL DE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL DE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL IE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL IE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL IO')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL IO')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL ZHE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL ZHE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL ZE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL ZE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL I')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL I')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL KA')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL KA')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL EL')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL EL')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL EM')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL EM')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL EN')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL EN')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL O')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL O')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL PE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL PE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL ER')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL ER')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL ES')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL ES')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL TE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL TE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL U')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL U')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL EF')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL EF')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL HA')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL HA')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL TSE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL TSE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL CHE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL CHE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL SHA')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL SHA')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL SCHA')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL SCHA')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL HARD SIGN')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL HARD SIGN')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL YERU')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL YERU')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL SOFT SIGN')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL SOFT SIGN')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL E')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL E')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL YU')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL YU')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR SMALL YA')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR SMALL YA')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT A')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT A')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT BE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT BE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT VE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT VE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT GE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT GE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT DE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT DE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT IE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT IE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT IO')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT IO')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT ZHE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT ZHE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT ZE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT ZE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT I')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT I')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT KA')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT KA')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT EL')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT EL')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT EM')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT EM')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT EN')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT EN')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT O')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT O')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT PE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT PE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT ER')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT ER')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT ES')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT ES')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT TE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT TE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT U')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT U')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT EF')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT EF')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT HA')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT HA')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT TSE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT TSE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT CHE')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT CHE')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT SHA')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT SHA')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT SCHA')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT SCHA')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT HARD SIGN')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT HARD SIGN')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT YERU')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT YERU')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT SOFT SIGN')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT SOFT SIGN')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT E')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT E')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT YU')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT YU')");
 				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?¿½','CYR CAPIT YA')");
+				 * VALUES (_koi8r'?ï¿½ï¿½','CYR CAPIT YA')");
 				 */
 
 				this.stmt
@@ -1597,5 +1597,9 @@ public class ConnectionTest extends BaseTestCase {
 				throw e;
 			}
     	}
+	}
+	
+	public void testNonVerifyServerCert() throws Exception {
+		getConnectionWithProps("useSSL=true,verifyServerCertificate=false,requireSSL=true");
 	}
 }

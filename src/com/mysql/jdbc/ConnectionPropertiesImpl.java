@@ -1597,32 +1597,38 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	private StringConnectionProperty clientCertificateKeyStoreUrl = new StringConnectionProperty(
 			"clientCertificateKeyStoreUrl", null, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.clientCertificateKeyStoreUrl"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
-			SECURITY_CATEGORY, Integer.MAX_VALUE);
+			SECURITY_CATEGORY, 5);
 	
 	private StringConnectionProperty trustCertificateKeyStoreUrl = new StringConnectionProperty(
 			"trustCertificateKeyStoreUrl", null, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.trustCertificateKeyStoreUrl"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
-			SECURITY_CATEGORY, Integer.MAX_VALUE);
+			SECURITY_CATEGORY, 8);
 	
 	private StringConnectionProperty clientCertificateKeyStoreType = new StringConnectionProperty(
 			"clientCertificateKeyStoreType", null, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.clientCertificateKeyStoreType"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
-			SECURITY_CATEGORY, Integer.MAX_VALUE);
+			SECURITY_CATEGORY, 6);
 	
 	private StringConnectionProperty clientCertificateKeyStorePassword = new StringConnectionProperty(
 			"clientCertificateKeyStorePassword", null, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.clientCertificateKeyStorePassword"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
-			SECURITY_CATEGORY, Integer.MAX_VALUE);
+			SECURITY_CATEGORY, 7);
 	
 	private StringConnectionProperty trustCertificateKeyStoreType = new StringConnectionProperty(
 			"trustCertificateKeyStoreType", null, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.trustCertificateKeyStoreType"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
-			SECURITY_CATEGORY, Integer.MAX_VALUE);
+			SECURITY_CATEGORY, 9);
 	
 	private StringConnectionProperty trustCertificateKeyStorePassword = new StringConnectionProperty(
 			"trustCertificateKeyStorePassword", null, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.trustCertificateKeyStorePassword"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
-			SECURITY_CATEGORY, Integer.MAX_VALUE);
+			SECURITY_CATEGORY, 10);
+
+	private BooleanConnectionProperty verifyServerCertificate = new BooleanConnectionProperty(
+			"verifyServerCertificate",
+			true,
+			Messages.getString("ConnectionProperties.verifyServerCertificate"),
+			"5.1.6", SECURITY_CATEGORY, 4);
 	
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
 			Properties info, int slotsToReserve) throws SQLException {
@@ -4296,5 +4302,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setProfilerEventHandler(String handler) {
 		this.profilerEventHandler.setValue(handler);
+	}
+
+	public boolean getVerifyServerCertificate() {
+		return this.verifyServerCertificate.getValueAsBoolean();
+	}
+
+	public void setVerifyServerCertificate(boolean flag) {
+		this.verifyServerCertificate.setValue(flag);
 	}
 }
