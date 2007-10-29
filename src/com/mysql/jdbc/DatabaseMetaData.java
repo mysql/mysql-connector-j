@@ -2353,7 +2353,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						java.sql.ResultSet tables = null;
 
 						try {
-							tables = getTables(catalog, schemaPattern, "%",
+							tables = getTables((String)catalogStr, schemaPattern, "%",
 									new String[0]);
 
 							while (tables.next()) {
@@ -2377,7 +2377,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						java.sql.ResultSet tables = null;
 
 						try {
-							tables = getTables(catalog, schemaPattern,
+							tables = getTables((String)catalogStr, schemaPattern,
 									tableNamePattern, new String[0]);
 
 							while (tables.next()) {
@@ -2419,7 +2419,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							queryBuf.append(quotedId);
 							queryBuf.append(" FROM ");
 							queryBuf.append(quotedId);
-							queryBuf.append(catalogStr.toString());
+							queryBuf.append((String)catalogStr);
 							queryBuf.append(quotedId);
 							queryBuf.append(" LIKE '");
 							queryBuf.append(colPattern);
@@ -2450,7 +2450,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								fullColumnQueryBuf.append(" FROM ");
 								fullColumnQueryBuf.append(quotedId);
 								fullColumnQueryBuf
-										.append(catalogStr.toString());
+										.append((String)catalogStr);
 								fullColumnQueryBuf.append(quotedId);
 
 								results = stmt.executeQuery(fullColumnQueryBuf
@@ -2475,7 +2475,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 							while (results.next()) {
 								byte[][] rowVal = new byte[23][];
-								rowVal[0] = s2b(catalog); // TABLE_CAT
+								rowVal[0] = s2b((String)catalogStr); // TABLE_CAT
 								rowVal[1] = null; // TABLE_SCHEM (No schemas
 								// in MySQL)
 
