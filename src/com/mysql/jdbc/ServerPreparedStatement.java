@@ -663,7 +663,13 @@ public class ServerPreparedStatement extends PreparedStatement {
 	}
 
 	protected int[] executeBatchSerially(int batchTimeout) throws SQLException {
-		if (this.connection.isReadOnly()) {
+		ConnectionImpl locallyScopedConn = this.connection;
+		
+		if (locallyScopedConn == null) {
+			checkClosed();
+		}
+		
+		if (locallyScopedConn.isReadOnly()) {
 			throw SQLError.createSQLException(Messages
 					.getString("ServerPreparedStatement.2") //$NON-NLS-1$
 					+ Messages.getString("ServerPreparedStatement.3"), //$NON-NLS-1$
@@ -672,7 +678,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 		checkClosed();
 
-		synchronized (this.connection.getMutex()) {
+		synchronized (locallyScopedConn.getMutex()) {
 			clearWarnings();
 
 			// Store this for later, we're going to 'swap' them out
@@ -703,9 +709,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 					CancelTask timeoutTask = null;
 					
 					try {
-						if (this.connection.getEnableQueryTimeouts() &&
+						if (locallyScopedConn.getEnableQueryTimeouts() &&
 								batchTimeout != 0
-								&& this.connection.versionMeetsMinimum(5, 0, 0)) {
+								&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 							timeoutTask = new CancelTask(this);
 							ConnectionImpl.getCancelTimer().schedule(timeoutTask,
 									batchTimeout);
