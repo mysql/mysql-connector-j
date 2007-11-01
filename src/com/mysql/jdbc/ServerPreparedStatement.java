@@ -24,6 +24,7 @@
  */
 package com.mysql.jdbc;
 
+import com.mysql.jdbc.StatementImpl.CancelTask;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
@@ -206,6 +207,51 @@ public class ServerPreparedStatement extends PreparedStatement {
 						return String.valueOf(value);
 					}
 				}
+			}
+		}
+		
+		long getBoundLength() {
+			if (isNull) {
+				return 0;
+			}
+			
+			if (isLongData) {
+				return bindLength;
+			}
+
+			switch (bufferType) {
+
+			case MysqlDefs.FIELD_TYPE_TINY:
+				return 1;
+			case MysqlDefs.FIELD_TYPE_SHORT:
+				return 2;
+			case MysqlDefs.FIELD_TYPE_LONG:
+				return 4;
+			case MysqlDefs.FIELD_TYPE_LONGLONG:
+				return 8;
+			case MysqlDefs.FIELD_TYPE_FLOAT:
+				return 4;
+			case MysqlDefs.FIELD_TYPE_DOUBLE:
+				return 8;
+			case MysqlDefs.FIELD_TYPE_TIME:
+				return 9;
+			case MysqlDefs.FIELD_TYPE_DATE:
+				return 7;
+			case MysqlDefs.FIELD_TYPE_DATETIME:
+			case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+				return 11;
+			case MysqlDefs.FIELD_TYPE_VAR_STRING:
+			case MysqlDefs.FIELD_TYPE_STRING:
+			case MysqlDefs.FIELD_TYPE_VARCHAR:
+			case MysqlDefs.FIELD_TYPE_DECIMAL:
+			case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
+				if (value instanceof byte[]) {
+					return ((byte[]) value).length;
+				} else {
+					return ((String) value).length();
+				}
+			default: 
+				return 0;
 			}
 		}
 	}
@@ -616,10 +662,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		this.connection.dumpTestcaseQuery(buf.toString());
 	}
 
-	/**
-	 * @see java.sql.Statement#executeBatch()
-	 */
-	public synchronized int[] executeBatch() throws SQLException {
+	protected int[] executeBatchSerially(int batchTimeout) throws SQLException {
 		if (this.connection.isReadOnly()) {
 			throw SQLError.createSQLException(Messages
 					.getString("ServerPreparedStatement.2") //$NON-NLS-1$
@@ -657,77 +700,97 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 					BindValue[] previousBindValuesForBatch = null;
 
-					for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
-						Object arg = this.batchedArgs.get(commandIndex);
-
-						if (arg instanceof String) {
-							updateCounts[commandIndex] = executeUpdate((String) arg);
-						} else {
-							this.parameterBindings = ((BatchedBindValues) arg).batchedParameterValues;
-
-							try {
-								// We need to check types each time, as
-								// the user might have bound different
-								// types in each addBatch()
-
-								if (previousBindValuesForBatch != null) {
-									for (int j = 0; j < this.parameterBindings.length; j++) {
-										if (this.parameterBindings[j].bufferType != previousBindValuesForBatch[j].bufferType) {
-											this.sendTypesToServer = true;
-
-											break;
-										}
-									}
-								}
-
+					CancelTask timeoutTask = null;
+					
+					try {
+						if (this.connection.getEnableQueryTimeouts() &&
+								batchTimeout != 0
+								&& this.connection.versionMeetsMinimum(5, 0, 0)) {
+							timeoutTask = new CancelTask(this);
+							ConnectionImpl.getCancelTimer().schedule(timeoutTask,
+									batchTimeout);
+						}
+						
+						for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
+							Object arg = this.batchedArgs.get(commandIndex);
+	
+							if (arg instanceof String) {
+								updateCounts[commandIndex] = executeUpdate((String) arg);
+							} else {
+								this.parameterBindings = ((BatchedBindValues) arg).batchedParameterValues;
+	
 								try {
-									updateCounts[commandIndex] = executeUpdate(false, true);
-								} finally {
-									previousBindValuesForBatch = this.parameterBindings;
-								}
-
-								if (this.retrieveGeneratedKeys) {
-									java.sql.ResultSet rs = null;
-
-									try {
-										// we don't want to use our version,
-										// because we've altered the behavior of
-										// ours to support batch updates
-										// (catch-22)
-										// Ideally, what we need here is
-										// super.super.getGeneratedKeys()
-										// but that construct doesn't exist in
-										// Java, so that's why there's
-										// this kludge.
-										rs = getGeneratedKeysInternal();
-
-										while (rs.next()) {
-											this.batchedGeneratedKeys
-													.add(new ByteArrayRow(new byte[][] { rs
-															.getBytes(1) }));
-										}
-									} finally {
-										if (rs != null) {
-											rs.close();
+									// We need to check types each time, as
+									// the user might have bound different
+									// types in each addBatch()
+	
+									if (previousBindValuesForBatch != null) {
+										for (int j = 0; j < this.parameterBindings.length; j++) {
+											if (this.parameterBindings[j].bufferType != previousBindValuesForBatch[j].bufferType) {
+												this.sendTypesToServer = true;
+	
+												break;
+											}
 										}
 									}
-								}
-							} catch (SQLException ex) {
-								updateCounts[commandIndex] = EXECUTE_FAILED;
-
-								if (this.continueBatchOnError) {
-									sqlEx = ex;
-								} else {
-									int[] newUpdateCounts = new int[commandIndex];
-									System.arraycopy(updateCounts, 0,
-											newUpdateCounts, 0, commandIndex);
-
-									throw new java.sql.BatchUpdateException(ex
-											.getMessage(), ex.getSQLState(), ex
-											.getErrorCode(), newUpdateCounts);
+	
+									try {
+										updateCounts[commandIndex] = executeUpdate(false, true);
+									} finally {
+										previousBindValuesForBatch = this.parameterBindings;
+									}
+	
+									if (this.retrieveGeneratedKeys) {
+										java.sql.ResultSet rs = null;
+	
+										try {
+											// we don't want to use our version,
+											// because we've altered the behavior of
+											// ours to support batch updates
+											// (catch-22)
+											// Ideally, what we need here is
+											// super.super.getGeneratedKeys()
+											// but that construct doesn't exist in
+											// Java, so that's why there's
+											// this kludge.
+											rs = getGeneratedKeysInternal();
+	
+											while (rs.next()) {
+												this.batchedGeneratedKeys
+														.add(new ByteArrayRow(new byte[][] { rs
+																.getBytes(1) }));
+											}
+										} finally {
+											if (rs != null) {
+												rs.close();
+											}
+										}
+									}
+								} catch (SQLException ex) {
+									updateCounts[commandIndex] = EXECUTE_FAILED;
+									
+									if (this.continueBatchOnError && 
+											!(ex instanceof MySQLTimeoutException) && 
+											!(ex instanceof MySQLStatementCancelledException)) {
+										sqlEx = ex;
+									} else {
+										int[] newUpdateCounts = new int[commandIndex];
+										System.arraycopy(updateCounts, 0,
+												newUpdateCounts, 0, commandIndex);
+			
+										throw new java.sql.BatchUpdateException(ex
+												.getMessage(), ex.getSQLState(), ex
+												.getErrorCode(), newUpdateCounts);
+									}
 								}
 							}
 						}
+					} finally {
+						if (timeoutTask != null) {
+							timeoutTask.cancel();
+						}
+						
+						resetCancelledState();
 					}
 
 					if (sqlEx != null) {
@@ -2574,6 +2637,185 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 	protected long getServerStatementId() {
 		return serverStatementId;
+	}
+
+	public synchronized boolean canRewriteAsMultivalueInsertStatement() {
+		if (!super.canRewriteAsMultivalueInsertStatement()) {
+			return false;
+		}
+	
+		BindValue[] currentBindValues = null;
+		BindValue[] previousBindValues = null;
+	
+		int nbrCommands = this.batchedArgs.size();
+	
+		// Can't have type changes between sets of bindings for this to work...
+	
+		for (int commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
+			Object arg = this.batchedArgs.get(commandIndex);
+	
+			if (!(arg instanceof String)) {
+	
+				currentBindValues = ((BatchedBindValues) arg).batchedParameterValues;
+	
+				// We need to check types each time, as
+				// the user might have bound different
+				// types in each addBatch()
+	
+				if (previousBindValues != null) {
+					for (int j = 0; j < this.parameterBindings.length; j++) {
+						if (currentBindValues[j].bufferType != previousBindValues[j].bufferType) {
+							return false;
+						}
+					}
+				}
+			}
+		}
+		
+		return true;
+	}
+
+	/** 
+	 *  Computes the maximum parameter set size, and entire batch size given 
+	 *  the number of arguments in the batch.
+	 */
+	protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) {
+		long sizeOfEntireBatch = 1 + /* com_execute */ + 4 /* stmt id */ + 1 /* flags */ + 4 /* batch count padding */; 
+		long maxSizeOfParameterSet = 0;
+		
+		for (int i = 0; i < numBatchedArgs; i++) {
+			BindValue[] paramArg = ((BatchedBindValues) this.batchedArgs.get(i)).batchedParameterValues;
+	
+			long sizeOfParameterSet = 0;
+			
+			sizeOfParameterSet += (this.parameterCount + 7) / 8; // for isNull
+			
+			sizeOfParameterSet += this.parameterCount * 2; // have to send types
+			
+			for (int j = 0; j < this.parameterBindings.length; j++) {
+				if (!paramArg[j].isNull) {
+	
+					long size = paramArg[j].getBoundLength();
+					
+					if (paramArg[j].isLongData) {
+						if (size != -1) {
+							sizeOfParameterSet += size;
+						}
+					} else {
+						sizeOfParameterSet += size;
+					}
+				}
+			}
+			
+			sizeOfEntireBatch += sizeOfParameterSet;
+			
+			if (sizeOfParameterSet > maxSizeOfParameterSet) {
+				maxSizeOfParameterSet = sizeOfParameterSet;
+			}
+		}	
+		
+		return new long[] {maxSizeOfParameterSet, sizeOfEntireBatch};
+	}
+
+	protected int setOneBatchedParameterSet(
+			java.sql.PreparedStatement batchedStatement, int batchedParamIndex,
+			Object paramSet) throws SQLException {
+		BindValue[] paramArg = ((BatchedBindValues) paramSet).batchedParameterValues;
+	
+		for (int j = 0; j < paramArg.length; j++) {
+			if (paramArg[j].isNull) {
+				batchedStatement.setNull(batchedParamIndex++, Types.NULL);
+			} else {
+				if (paramArg[j].isLongData) {
+					Object value = paramArg[j].value;
+	
+					if (value instanceof InputStream) {
+						batchedStatement.setBinaryStream(batchedParamIndex++,
+								(InputStream) value,
+								(int) paramArg[j].bindLength);
+					} else {
+						batchedStatement.setCharacterStream(
+								batchedParamIndex++, (Reader) value,
+								(int) paramArg[j].bindLength);
+					}
+				} else {
+	
+					switch (paramArg[j].bufferType) {
+	
+					case MysqlDefs.FIELD_TYPE_TINY:
+						batchedStatement.setByte(batchedParamIndex++,
+								paramArg[j].byteBinding);
+						break;
+					case MysqlDefs.FIELD_TYPE_SHORT:
+						batchedStatement.setShort(batchedParamIndex++,
+								paramArg[j].shortBinding);
+						break;
+					case MysqlDefs.FIELD_TYPE_LONG:
+						batchedStatement.setInt(batchedParamIndex++,
+								paramArg[j].intBinding);
+						break;
+					case MysqlDefs.FIELD_TYPE_LONGLONG:
+						batchedStatement.setLong(batchedParamIndex++,
+								paramArg[j].longBinding);
+						break;
+					case MysqlDefs.FIELD_TYPE_FLOAT:
+						batchedStatement.setFloat(batchedParamIndex++,
+								paramArg[j].floatBinding);
+						break;
+					case MysqlDefs.FIELD_TYPE_DOUBLE:
+						batchedStatement.setDouble(batchedParamIndex++,
+								paramArg[j].doubleBinding);
+						break;
+					case MysqlDefs.FIELD_TYPE_TIME:
+						batchedStatement.setTime(batchedParamIndex++,
+								(Time) paramArg[j].value);
+						break;
+					case MysqlDefs.FIELD_TYPE_DATE:
+						batchedStatement.setDate(batchedParamIndex++,
+								(Date) paramArg[j].value);
+						break;
+					case MysqlDefs.FIELD_TYPE_DATETIME:
+					case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+						batchedStatement.setTimestamp(batchedParamIndex++,
+								(Timestamp) paramArg[j].value);
+						break;
+					case MysqlDefs.FIELD_TYPE_VAR_STRING:
+					case MysqlDefs.FIELD_TYPE_STRING:
+					case MysqlDefs.FIELD_TYPE_VARCHAR:
+					case MysqlDefs.FIELD_TYPE_DECIMAL:
+					case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
+						Object value = paramArg[j].value;
+	
+						if (value instanceof byte[]) {
+							batchedStatement.setBytes(batchedParamIndex,
+									(byte[]) value);
+						} else {
+							batchedStatement.setString(batchedParamIndex,
+									(String) value);
+						}
+	
+						BindValue asBound = ((ServerPreparedStatement) batchedStatement)
+								.getBinding(
+										batchedParamIndex + 1 /*
+																 * uses 1-based
+																 * offset
+																 */,
+										false);
+						asBound.bufferType = paramArg[j].bufferType;
+	
+						batchedParamIndex++;
+	
+						break;
+					default:
+						throw new IllegalArgumentException(
+								"Unknown type when re-binding parameter into batched statement for parameter index "
+										+ batchedParamIndex);
+					}
+				}
+			}
+		}
+	
+		return batchedParamIndex;
 	}
 
 
