@@ -4120,4 +4120,36 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public void testBustedGGKColumnNames() throws Exception {
+		createTable("testBustedGGKColumnNames",
+				"(field1 int primary key auto_increment)");
+
+		try {
+			this.stmt.executeUpdate(
+					"INSERT INTO testBustedGGKColumnNames VALUES (null)",
+					Statement.RETURN_GENERATED_KEYS);
+			assertEquals("GENERATED_KEY", this.stmt.getGeneratedKeys()
+					.getMetaData().getColumnName(1));
+	
+			this.pstmt = this.conn.prepareStatement(
+					"INSERT INTO testBustedGGKColumnNames VALUES (null)",
+					Statement.RETURN_GENERATED_KEYS);
+			this.pstmt.executeUpdate();
+			assertEquals("GENERATED_KEY", this.pstmt.getGeneratedKeys()
+					.getMetaData().getColumnName(1));
+	
+			if (versionMeetsMinimum(4, 1, 0)) {
+				this.pstmt = ((com.mysql.jdbc.Connection) this.conn)
+						.serverPrepareStatement(
+								"INSERT INTO testBustedGGKColumnNames VALUES (null)",
+								Statement.RETURN_GENERATED_KEYS);
+				this.pstmt.executeUpdate();
+				assertEquals("GENERATED_KEY", this.pstmt.getGeneratedKeys()
+						.getMetaData().getColumnName(1));
+			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

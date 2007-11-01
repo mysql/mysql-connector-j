@@ -1793,6 +1793,7 @@ public class StatementImpl implements Statement {
 		Field[] fields = new Field[1];
 		fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17); //$NON-NLS-1$ //$NON-NLS-2$
 		fields[0].setConnection(this.connection);
+		fields[0].setUseOldNameMetadata(true);
 
 		ArrayList rowSet = new ArrayList();
 
