@@ -39,6 +39,11 @@ nn-nn-08 - Version 5.1.6
     - Simplified the JBoss connection validator by piggy-backing on the
       special "ping" syntax rather than trying to do a bunch of reflection.
       
+    - Driver now displays the version in a comment when issuing 
+      "SHOW VARIABLES" when connecting (for debugging purposes, it shows
+      up in the query log on the server). This information is not shown
+      if the connection property "paranoid" has been set to "true".
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

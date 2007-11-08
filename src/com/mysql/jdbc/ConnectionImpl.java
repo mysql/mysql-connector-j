@@ -727,8 +727,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		initializeDriverProperties(info);
 
 		try {
+			this.dbmd = getMetaData(false);
 			createNewIO(false);
-			this.dbmd = getMetaData();
 		} catch (SQLException ex) {
 			cleanup(ex);
 
@@ -2988,7 +2988,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *                if a database access error occurs
 	 */
 	public java.sql.DatabaseMetaData getMetaData() throws SQLException {
-		checkClosed();	
+		return getMetaData(true);
+	}
+	
+	private java.sql.DatabaseMetaData getMetaData(boolean checkClosed) throws SQLException {
+		if (checkClosed) {
+			checkClosed();	
+		}
+		
 		return com.mysql.jdbc.DatabaseMetaData.getInstance(this, this.database);
 	}
 
@@ -3725,11 +3732,32 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		try {
 			stmt = createStatement();
 			stmt.setEscapeProcessing(false);
+			
+			String version = this.dbmd.getDriverVersion();
+			
+			if (version != null && version.indexOf('*') != -1) {
+				StringBuffer buf = new StringBuffer(version.length() + 10);
 
-			String query = "SHOW VARIABLES";
+				for (int i = 0; i < version.length(); i++) {
+					char c = version.charAt(i);
+
+					if (c == '*') {
+						buf.append("[star]");
+					} else {
+						buf.append(c);
+					}
+				}
+
+				version = buf.toString();
+			}
+
+			String versionComment = (this.getParanoid() || version == null) ? ""
+					: "/* " + version + " */";
+			
+			String query = versionComment + "SHOW VARIABLES";
 			
 			if (versionMeetsMinimum(5, 0, 3)) {
-				query = "SHOW VARIABLES WHERE Variable_name ='language'"
+				query = versionComment + "SHOW VARIABLES WHERE Variable_name ='language'"
 					+ " OR Variable_name = 'net_write_timeout'"
 					+ " OR Variable_name = 'interactive_timeout'"
 					+ " OR Variable_name = 'wait_timeout'"
