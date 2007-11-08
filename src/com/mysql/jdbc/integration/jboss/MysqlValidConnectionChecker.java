@@ -42,31 +42,9 @@ import com.mysql.jdbc.SQLError;
 public final class MysqlValidConnectionChecker implements
 		ValidConnectionChecker, Serializable {
 
-	private static final long serialVersionUID = 3258689922776119348L;
-
-	private Method pingMethod;
-	
-	private Method pingMethodWrapped;
-
-	private final static Object[] NO_ARGS_OBJECT_ARRAY = new Object[0];
+	private static final long serialVersionUID = 8909421133577519177L;
 
 	public MysqlValidConnectionChecker() {
-		try {
-			// Avoid classloader goofiness
-			Class mysqlConnection = Thread.currentThread()
-					.getContextClassLoader().loadClass(
-							"com.mysql.jdbc.Connection");
-
-			pingMethod = mysqlConnection.getMethod("ping", null);
-			
-			Class mysqlConnectionWrapper = Thread.currentThread()
-			.getContextClassLoader().loadClass(
-					"com.mysql.jdbc.jdbc2.optional.ConnectionWrapper");
-			
-			pingMethodWrapped = mysqlConnectionWrapper.getMethod("ping", null);
-		} catch (Exception ex) {
-			// Punt, we'll use 'SELECT 1' to do the check
-		}
 	}
 
 	/*
@@ -75,47 +53,8 @@ public final class MysqlValidConnectionChecker implements
 	 * @see org.jboss.resource.adapter.jdbc.ValidConnectionChecker#isValidConnection(java.sql.Connection)
 	 */
 	public SQLException isValidConnection(Connection conn) {
-		if (conn instanceof PingTarget) {
-			try {
-				((PingTarget)conn).doPing();
-			} catch (Exception ex) {
-				if (ex instanceof SQLException) {
-					return (SQLException) ex;
-				}
 
-				return SQLError.createSQLException("Ping failed: " + ex.toString());
-			}
-		} else if (conn instanceof com.mysql.jdbc.Connection) {
-			if (pingMethod != null) {
-				try {
-					this.pingMethod.invoke(conn, null);
-	
-					return null;
-				} catch (Exception ex) {
-					if (ex instanceof SQLException) {
-						return (SQLException) ex;
-					}
-	
-					return SQLError.createSQLException("Ping failed: " + ex.toString());
-				}
-			}
-		} else if (conn instanceof com.mysql.jdbc.jdbc2.optional.ConnectionWrapper) {
-			if (pingMethodWrapped != null) {
-				try {
-					this.pingMethodWrapped.invoke(conn, null);
-	
-					return null;
-				} catch (Exception ex) {
-					if (ex instanceof SQLException) {
-						return (SQLException) ex;
-					}
-	
-					return SQLError.createSQLException("Ping failed: " + ex.toString());
-				}
-			}
-		}
-
-		// Punt and use "/* ping */ SELECT 1" which will send
+		// Use "/* ping */ SELECT 1" which will send
 		// pings across multi-connections too in case the connection
 		// was "wrapped" by Jboss in any way...
 

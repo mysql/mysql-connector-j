@@ -50,6 +50,7 @@ import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationDriver;
+import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.log.StandardLogger;
 
 /**
@@ -2159,6 +2160,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
 						+ propertyName);
 			}
 		}
+	}
+	
+	public void testBug29106() throws Exception {
+		ClassLoader cl = Thread.currentThread().getContextClassLoader(); 
+		Class checkerClass = cl.loadClass("com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker");
+		((MysqlValidConnectionChecker)checkerClass.newInstance()).isValidConnection(this.conn);
 	}
 	
 	public void testBug29852() throws Exception {
