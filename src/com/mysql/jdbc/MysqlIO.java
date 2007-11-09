@@ -406,7 +406,7 @@ class MysqlIO {
         }
 
         packet = reuseAndReadPacket(this.reusablePacket);
-
+        
         readServerStatusForResultSets(packet);
 
 		//
@@ -1510,11 +1510,19 @@ class MysqlIO {
 
 				if (firstTime) {
 					if (sw == 255) {
-						// error packet
-						Buffer errorPacket = new Buffer(packetLength);
+						// error packet - we assemble it whole for "fidelity"
+						// in case we ever need an entire packet in checkErrorPacket()
+						// but we could've gotten away with just writing the error code
+						// and message in it (for now).
+						Buffer errorPacket = new Buffer(packetLength + HEADER_LENGTH);
+						errorPacket.setPosition(0);
+						errorPacket.writeByte(this.packetHeaderBuf[0]);
+						errorPacket.writeByte(this.packetHeaderBuf[1]);
+						errorPacket.writeByte(this.packetHeaderBuf[2]);
+						errorPacket.writeByte((byte) 1);
 						errorPacket.writeByte((byte)sw);
-						readFully(this.mysqlInput, errorPacket.getByteBuffer(), 1, packetLength - 1);
-
+						readFully(this.mysqlInput, errorPacket.getByteBuffer(), 5, packetLength - 1);
+						errorPacket.setPosition(4);
 						checkErrorPacket(errorPacket);
 					}
 

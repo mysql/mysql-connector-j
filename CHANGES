@@ -44,6 +44,13 @@ nn-nn-08 - Version 5.1.6
       up in the query log on the server). This information is not shown
       if the connection property "paranoid" has been set to "true".
       
+    - Fixed BUG#32246 - When unpacking rows directly, we don't hand off error 
+      message packets to the internal method which decodes them correctly, so 
+      no exception is raised, and the driver than hangs trying to read rows 
+      that aren't there. This tends to happen when calling stored procedures, as
+      normal SELECTs won't have an error in this spot in the protocol unless an 
+      I/O error occurs.
+     
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053
