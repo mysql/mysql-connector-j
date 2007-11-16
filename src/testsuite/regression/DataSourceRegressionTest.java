@@ -32,6 +32,7 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Hashtable;
@@ -469,5 +470,24 @@ public class DataSourceRegressionTest extends BaseTestCase {
 				break;
 			}
 		}
+	}
+	
+	/**
+	 * Tests fix for BUG#32101 - When using a connection from our ConnectionPoolDataSource,
+     * some Connection.prepareStatement() methods would return null instead of
+     * a prepared statement.
+     * 
+	 * @throws Exception
+	 */
+	public void testBug32101() throws Exception {
+		MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
+		ds.setURL(BaseTestCase.dbUrl);
+		PooledConnection pc = ds.getPooledConnection();
+		assertNotNull(pc.getConnection().prepareStatement("SELECT 1"));
+		assertNotNull(pc.getConnection().prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
+		assertNotNull(pc.getConnection().prepareStatement("SELECT 1", new int[0]));
+		assertNotNull(pc.getConnection().prepareStatement("SELECT 1", new String[0]));
+		assertNotNull(pc.getConnection().prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY));
+		assertNotNull(pc.getConnection().prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT));
 	}
 }

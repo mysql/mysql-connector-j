@@ -732,7 +732,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 		checkClosed();
 
 		try {
-			PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
 					.prepareStatement(arg0, arg1));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -749,7 +749,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 		checkClosed();
 
 		try {
-			PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
 					.prepareStatement(arg0, arg1));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -766,7 +766,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 		checkClosed();
 
 		try {
-			PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
 					.prepareStatement(arg0, arg1));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);

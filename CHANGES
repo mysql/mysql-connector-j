@@ -51,6 +51,10 @@ nn-nn-08 - Version 5.1.6
       normal SELECTs won't have an error in this spot in the protocol unless an 
       I/O error occurs.
      
+    - Fixed Bug#32101 - When using a connection from our ConnectionPoolDataSource,
+      some Connection.prepareStatement() methods would return null instead of
+      a prepared statement.
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053
