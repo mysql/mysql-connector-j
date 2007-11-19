@@ -727,7 +727,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		initializeDriverProperties(info);
 
 		try {
-			this.dbmd = getMetaData(false);
+			this.dbmd = getMetaData(false, false);
 			createNewIO(false);
 		} catch (SQLException ex) {
 			cleanup(ex);
@@ -2988,15 +2988,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *                if a database access error occurs
 	 */
 	public java.sql.DatabaseMetaData getMetaData() throws SQLException {
-		return getMetaData(true);
+		return getMetaData(true, true);
 	}
 	
-	private java.sql.DatabaseMetaData getMetaData(boolean checkClosed) throws SQLException {
+	private java.sql.DatabaseMetaData getMetaData(boolean checkClosed, boolean checkForInfoSchema) throws SQLException {
 		if (checkClosed) {
 			checkClosed();	
 		}
 		
-		return com.mysql.jdbc.DatabaseMetaData.getInstance(this, this.database);
+		return com.mysql.jdbc.DatabaseMetaData.getInstance(this, this.database, checkForInfoSchema);
 	}
 
 	protected java.sql.Statement getMetadataSafeStatement() throws SQLException {

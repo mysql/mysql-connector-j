@@ -620,10 +620,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	// and JDBC4 runtimes, otherwise the class verifier complains...
 	
 	protected static DatabaseMetaData getInstance(
-			ConnectionImpl connToSet, String databaseToSet)
+			ConnectionImpl connToSet, String databaseToSet, boolean checkForInfoSchema)
 			throws SQLException {
 		if (!Util.isJdbc4()) {
-			if (connToSet != null && connToSet.getUseInformationSchema()
+			if (checkForInfoSchema && connToSet != null 
+					&& connToSet.getUseInformationSchema()
 					&& connToSet.versionMeetsMinimum(5, 0, 7)) {
 				return new DatabaseMetaDataUsingInfoSchema(connToSet,
 						databaseToSet);
