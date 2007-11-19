@@ -44,6 +44,7 @@ import java.sql.DataTruncation;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
@@ -4152,7 +4153,48 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
-	
+	/*
+	public void testBug32265() throws Exception {
+
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
+		Connection fetchableConn = null;
+		Statement fetchableStmt = null;
+		
+		try {
+
+			createTable("bug32265", "(Id INTEGER NOT NULL PRIMARY KEY)");
+			assertEquals(1, this.stmt
+					.executeUpdate("INSERT INTO bug32265 (Id) values (1)"));
+			this.rs = this.stmt.executeQuery("SELECT * FROM bug32265");
+			this.rs.next();
+			this.rs.getInt("bug32265.Id"); // ok
+
+			fetchableConn = getConnectionWithProps("useCursorFetch=true,dumpMetadataOnColumnNotFound=true");
+			fetchableStmt = fetchableConn.createStatement();
+			this.rs.close();
+			fetchableStmt.setFetchSize(10);
+			this.rs = fetchableStmt.executeQuery("SELECT * FROM bug32265");
+			ResultSetMetaData rs2 = this.rs.getMetaData();
+			assertEquals("bug32265", rs2.getTableName(1));
+			this.rs.next();
+			this.rs.getInt("bug32265.Id"); // fails
+
+		} finally {
+			if (fetchableStmt != null) {
+				fetchableStmt.close();
+			}
+			
+			if (fetchableConn != null) {
+				fetchableConn.close();
+			}
+			
+			closeMemberJDBCResources();
+		}
+	}*/
+
 	public void testLancesBitMappingBug() throws Exception {
 		if (!versionMeetsMinimum(5, 0)) {
 			return;
