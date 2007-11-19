@@ -36,25 +36,6 @@ nn-nn-08 - Version 5.1.6
       Statement.getGeneratedKeys() - it was returning null instead of
       "GENERATED_KEY" as in 5.0.x.
       
-    - Simplified the JBoss connection validator by piggy-backing on the
-      special "ping" syntax rather than trying to do a bunch of reflection.
-      
-    - Driver now displays the version in a comment when issuing 
-      "SHOW VARIABLES" when connecting (for debugging purposes, it shows
-      up in the query log on the server). This information is not shown
-      if the connection property "paranoid" has been set to "true".
-      
-    - Fixed BUG#32246 - When unpacking rows directly, we don't hand off error 
-      message packets to the internal method which decodes them correctly, so 
-      no exception is raised, and the driver than hangs trying to read rows 
-      that aren't there. This tends to happen when calling stored procedures, as
-      normal SELECTs won't have an error in this spot in the protocol unless an 
-      I/O error occurs.
-     
-    - Fixed Bug#32101 - When using a connection from our ConnectionPoolDataSource,
-      some Connection.prepareStatement() methods would return null instead of
-      a prepared statement.
-      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

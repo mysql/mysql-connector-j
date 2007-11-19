@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!--
-   Copyright (C) 2002-2005 MySQL AB
+   Copyright (C) 2002-2007 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of version 2 of the GNU General Public License as 
@@ -47,21 +47,21 @@
 	 </condition>
 
 	<!-- 
+			The following properties are needed for finding JDK6, set to the defaults
+			for my development environment, but can be passed on the command line
+			to ant via -D switches
+	-->
+		
+	<property name="com.mysql.jdbc.java6.javac" value="C:\jvms\jdk1.6.0\bin\javac.exe" />
+	<property name="com.mysql.jdbc.java6.rtjar" value="C:\jvms\jdk1.6.0\jre\lib\rt.jar" />
+				
+	<!-- 
 	     The following property is needed for building the docs. It's
 	     set to the defaults for my development environment, but can be passed
 	     on the command line to ant via -D switches. 
 	-->
 
 	<property name="com.mysql.jdbc.docs.sourceDir" value="/home/mmatthew/work/docs/prebuilt"/>
-
-	<!-- 
-		The following properties are needed for finding JDK6, set to the defaults
-		for my development environment, but can be passed on the command line
-		to ant via -D switches
-	-->
-	
-	<property name="com.mysql.jdbc.java6.javac" value="C:\jvms\jdk1.6.0\bin\javac.exe" />
-	<property name="com.mysql.jdbc.java6.rtjar" value="C:\jvms\jdk1.6.0\jre\lib\rt.jar" />
 	
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
@@ -84,8 +84,37 @@
 
 		<pathelement location="${buildDir}/${fullProdName}" />
 	</path>
+		
+	<target name="-compiler-check">
+		<if>
+			<and>	
+				<not>
+					<or>
+						<equals arg1="${ant.java.version}" arg2="1.4" />
+						<equals arg1="${ant.java.version}" arg2="1.5" />
+					</or>
+				</not>	
+				<or>
+					<not>
+						<available file="${com.mysql.jdbc.java6.javac}" />
+					</not>
+					<not>
+						<available file="${com.mysql.jdbc.java6.rtjar}" />
+					</not>
+				</or>
+			</and>
+			<then>
+				<echo>This version of MySQL Connector/J requires a compiler from Java-1.4 or Java-1.5 to be used, set your JAVA_HOME property to point to one of these versions of the JDK.
+							
+Compiling this version also requires Java-6 for compiling the JDBC-4.0 implementation, please set the full path to the javac executable with the property &quot;com.mysql.jdbc.java6.javac&quot;
+and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jdbc.java6.rtjar&quot;.
+						</echo>
+						<fail/>
+			</then>
+		</if>	
+	</target>
 
-	<target name="init" depends="-init-copy, -init-no-crypto">
+	<target name="init" depends="-compiler-check, -init-copy, -init-no-crypto">
 		<!-- If we're building under cruise control, update ourself -->
 		
 		<if>

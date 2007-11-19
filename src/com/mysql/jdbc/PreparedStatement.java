@@ -3380,12 +3380,17 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		} else if (parameterObj instanceof String) {
 			switch (targetSqlType) {
 			case Types.BIT:
-				boolean parameterAsBoolean = "true"
-						.equalsIgnoreCase((String) parameterObj);
+				if ("1".equals((String) parameterObj)
+						|| "0".equals((String) parameterObj)) {
+					parameterAsNum = Integer.valueOf((String) parameterObj);
+				} else {
+					boolean parameterAsBoolean = "true"
+							.equalsIgnoreCase((String) parameterObj);
 
 				parameterAsNum = parameterAsBoolean ? Constants.integerValueOf(1)
 						: Constants.integerValueOf(0);
-
+				}
+				
 				break;
 
 			case Types.TINYINT:

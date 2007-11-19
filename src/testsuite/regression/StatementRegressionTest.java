@@ -4152,4 +4152,83 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public void testLancesBitMappingBug() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
+		 createTable("Bit_TabXXX", "( `MAX_VAL` BIT default NULL, "
+				 + "`MIN_VAL` BIT default NULL, `NULL_VAL` BIT default NULL) "
+         		 + "ENGINE=InnoDB DEFAULT CHARSET=latin1");
+         
+         
+         // add Bit_In_MinXXX procedure
+         createProcedure("Bit_In_MinXXX", "(MIN_PARAM TINYINT(1)) begin update Bit_TabXXX set MIN_VAL=MIN_PARAM; end");
+         
+         createProcedure("Bit_In_MaxXXX", "(MAX_PARAM TINYINT(1)) begin update Bit_TabXXX set MAX_VAL=MAX_PARAM; end");
+
+         this.stmt.execute("insert into Bit_TabXXX values(null,0,null)");
+        
+         
+         String sPrepStmt = "{call Bit_In_MinXXX(?)}";
+        this.pstmt = conn.prepareStatement(sPrepStmt);
+        this.pstmt.setObject(1,"true",java.sql.Types.BIT);
+        this.pstmt.executeUpdate();
+        assertEquals("true", getSingleIndexedValueWithQuery(1, "SELECT MIN_VAL FROM Bit_TabXXX").toString());
+        this.stmt.execute("TRUNCATE TABLE Bit_TabXXX");
+        this.stmt.execute("insert into Bit_TabXXX values(null,0,null)");
+        
+        this.pstmt.setObject(1,"false",java.sql.Types.BIT);
+        this.pstmt.executeUpdate();
+        assertEquals("false", getSingleIndexedValueWithQuery(1, "SELECT MIN_VAL FROM Bit_TabXXX").toString());
+        this.stmt.execute("TRUNCATE TABLE Bit_TabXXX");
+        this.stmt.execute("insert into Bit_TabXXX values(null,0,null)");
+        
+        this.pstmt.setObject(1,"1",java.sql.Types.BIT); // fails
+        this.pstmt.executeUpdate();
+        assertEquals("true", getSingleIndexedValueWithQuery(1, "SELECT MIN_VAL FROM Bit_TabXXX").toString());
+        this.stmt.execute("TRUNCATE TABLE Bit_TabXXX");
+        this.stmt.execute("insert into Bit_TabXXX values(null,0,null)");
+        
+        this.pstmt.setObject(1,"0",java.sql.Types.BIT);
+        this.pstmt.executeUpdate();
+        assertEquals("false", getSingleIndexedValueWithQuery(1, "SELECT MIN_VAL FROM Bit_TabXXX").toString());
+        this.stmt.execute("TRUNCATE TABLE Bit_TabXXX");
+        this.stmt.execute("insert into Bit_TabXXX values(null,0,null)");
+         
+        this.pstmt.setObject(1,Boolean.TRUE,java.sql.Types.BIT);
+        this.pstmt.executeUpdate();
+        assertEquals("true", getSingleIndexedValueWithQuery(1, "SELECT MIN_VAL FROM Bit_TabXXX").toString());
+        this.stmt.execute("TRUNCATE TABLE Bit_TabXXX");
+        this.stmt.execute("insert into Bit_TabXXX values(null,0,null)");
+         
+        this.pstmt.setObject(1,Boolean.FALSE,java.sql.Types.BIT);
+        this.pstmt.executeUpdate();
+        assertEquals("false", getSingleIndexedValueWithQuery(1, "SELECT MIN_VAL FROM Bit_TabXXX").toString());
+        this.stmt.execute("TRUNCATE TABLE Bit_TabXXX");
+        this.stmt.execute("insert into Bit_TabXXX values(null,0,null)");
+
+        this.pstmt.setObject(1,new Boolean(true),java.sql.Types.BIT);
+        this.pstmt.executeUpdate();
+        assertEquals("true", getSingleIndexedValueWithQuery(1, "SELECT MIN_VAL FROM Bit_TabXXX").toString());
+        this.stmt.execute("TRUNCATE TABLE Bit_TabXXX");
+        this.stmt.execute("insert into Bit_TabXXX values(null,0,null)");
+         
+        this.pstmt.setObject(1,new Boolean(false),java.sql.Types.BIT);
+        this.pstmt.executeUpdate();
+        assertEquals("false", getSingleIndexedValueWithQuery(1, "SELECT MIN_VAL FROM Bit_TabXXX").toString());
+        this.stmt.execute("TRUNCATE TABLE Bit_TabXXX");
+        this.stmt.execute("insert into Bit_TabXXX values(null,0,null)");
+         
+        this.pstmt.setObject(1,new Byte("1"),java.sql.Types.BIT);
+        this.pstmt.executeUpdate();
+        assertEquals("true", getSingleIndexedValueWithQuery(1, "SELECT MIN_VAL FROM Bit_TabXXX").toString());
+        this.stmt.execute("TRUNCATE TABLE Bit_TabXXX");
+        this.stmt.execute("insert into Bit_TabXXX values(null,0,null)");
+
+        this.pstmt.setObject(1,new Byte("0"),java.sql.Types.BIT);
+        this.pstmt.executeUpdate();
+        assertEquals("false", getSingleIndexedValueWithQuery(1, "SELECT MIN_VAL FROM Bit_TabXXX").toString());
+	}
 }
