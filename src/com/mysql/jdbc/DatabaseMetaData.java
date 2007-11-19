@@ -633,7 +633,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			return new DatabaseMetaData(connToSet, databaseToSet);
 		}
 
-		if (connToSet != null && connToSet.getUseInformationSchema()
+		if (checkForInfoSchema && connToSet != null 
+				&& connToSet.getUseInformationSchema()
 				&& connToSet.versionMeetsMinimum(5, 0, 7)) {
 
 			return (DatabaseMetaData) Util.handleNewInstance(
