@@ -42,10 +42,16 @@
 	
 	<!-- Send class files to correct location if running in eclipse -->
 	
-	 <condition property="compiler.output" value="bin" else="${buildDir}/${fullProdName}">
-	    <isset property="eclipse.pdebuild.home" />
-	 </condition>
-
+	<condition property="compiler.output" value="bin" else="${buildDir}/${fullProdName}">
+		<or>
+		    <isset property="eclipse.running" />
+		    <isset property="eclipse.pdebuild.home" />
+			<contains string="${ant.home}" substring="plugins" />
+		</or>
+	</condition>
+	
+	<echo>Compiling class files to ${compiler.output}...</echo>
+		
 	<!-- 
 			The following properties are needed for finding JDK6, set to the defaults
 			for my development environment, but can be passed on the command line
