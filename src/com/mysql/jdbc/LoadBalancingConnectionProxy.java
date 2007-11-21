@@ -181,17 +181,18 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 	class RandomBalanceStrategy implements BalanceStrategy {
 
 		public Connection pickConnection() throws SQLException {
-			int random = (int) (Math.random() * hostList.size());
-
-			if (random == hostList.size()) {
-				random--;
-			}
-
-			String hostPortSpec = (String) hostList.get(random);
-
+			
 			SQLException ex = null;
 			
 			for (int attempts = 0; attempts < 1200 /* 5 minutes */; attempts++) {
+				int random = (int) (Math.random() * hostList.size());
+
+				if (random == hostList.size()) {
+					random--;
+				}
+
+				String hostPortSpec = (String) hostList.get(random);
+
 				Connection conn = (Connection) liveConnections.get(hostPortSpec);
 				
 				if (conn == null) {

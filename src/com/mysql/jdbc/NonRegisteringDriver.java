@@ -301,6 +301,9 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			throws SQLException {
 		Properties parsedProps = parseURL(url, info);
 
+		// People tend to drop this in, it doesn't make sense
+		parsedProps.remove("roundRobinLoadBalance");
+		
 		if (parsedProps == null) {
 			return null;
 		}

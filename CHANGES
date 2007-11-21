@@ -36,6 +36,10 @@ nn-nn-08 - Version 5.1.6
       Statement.getGeneratedKeys() - it was returning null instead of
       "GENERATED_KEY" as in 5.0.x.
       
+    - More applicable fix for the "random" load balance strategy in the face
+      of node non-responsive, it re-tries a *different* random node, rather 
+      than waiting for the node to recover (for BUG#31053)
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

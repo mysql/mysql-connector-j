@@ -2174,7 +2174,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     	lbConn.close();
     }
 
-	private Connection getLoadBalancedConnection() throws SQLException {
+	private Connection getLoadBalancedConnection(String secondHost, Properties props) throws SQLException {
 		int indexOfHostStart = dbUrl.indexOf("://") + 3;
     	int indexOfHostEnd = dbUrl.indexOf("/", indexOfHostStart);
     	
@@ -2186,9 +2186,23 @@ public class ConnectionRegressionTest extends BaseTestCase {
     	
     	String dbAndConfigs = dbUrl.substring(indexOfHostEnd);
     	
-    	Connection lbConn = DriverManager.getConnection("jdbc:mysql:loadbalance://" + backHalf + "," + backHalf + dbAndConfigs);
-		return lbConn;
+    	if (secondHost != null) {
+    		secondHost = secondHost + ",";
+    	}
+    	
+    	Connection lbConn = DriverManager.getConnection("jdbc:mysql:loadbalance://" + backHalf + "," + secondHost + backHalf + dbAndConfigs, props);
+		
+    	return lbConn;
 	}
+	
+	private Connection getLoadBalancedConnection() throws SQLException {
+		return getLoadBalancedConnection("", null);
+	}
+	
+	private Connection getLoadBalancedConnection(Properties props) throws SQLException {
+		return getLoadBalancedConnection("", props);
+	}
+	
 	
 	/**
 	 * Test of a new feature to fix BUG 22643, specifying a
@@ -2254,6 +2268,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			assertEquals(this.rs.getInt(1), 1);
 		} finally {
 			closeMemberJDBCResources();
+		}
+	}
+	
+	public void testBug31053() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("connectTimeout", "2000");
+		props.setProperty("loadBalanceStrategy", "random");
+		
+		Connection lbConn = getLoadBalancedConnection("localhost:23", props);
+		
+		lbConn.setAutoCommit(false);
+		
+		for (int i = 0; i < 10; i++) {
+			lbConn.commit();
 		}
 	}
 }
