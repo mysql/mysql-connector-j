@@ -55,6 +55,7 @@ import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.Properties;
 import java.util.TimeZone;
 
@@ -574,6 +575,10 @@ public class ServerPreparedStatement extends PreparedStatement {
 	protected boolean isCached = false;
 
 	private boolean useAutoSlowLog;
+
+	private Calendar serverTzCalendar;
+
+	private Calendar defaultTzCalendar;
 
 	protected void setClosed(boolean flag) {
 		this.isClosed = flag;
@@ -2144,15 +2149,19 @@ public class ServerPreparedStatement extends PreparedStatement {
 			BindValue binding = getBinding(parameterIndex, false);
 			setType(binding, MysqlDefs.FIELD_TYPE_TIME);
 
-			Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
-			
-			synchronized (sessionCalendar) {
-				binding.value = TimeUtil.changeTimezone(this.connection, 
-						sessionCalendar,
-						targetCalendar,
-						x, tz,
-						this.connection.getServerTimezoneTZ(), 
-						rollForward);
+			if (!this.useLegacyDatetimeCode) {
+				binding.value = x;
+			} else {
+				Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
+				
+				synchronized (sessionCalendar) {
+					binding.value = TimeUtil.changeTimezone(this.connection, 
+							sessionCalendar,
+							targetCalendar,
+							x, tz,
+							this.connection.getServerTimezoneTZ(), 
+							rollForward);
+				}
 			}
 			
 			binding.isNull = false;
@@ -2206,21 +2215,25 @@ public class ServerPreparedStatement extends PreparedStatement {
 			BindValue binding = getBinding(parameterIndex, false);
 			setType(binding, MysqlDefs.FIELD_TYPE_DATETIME);
 
-			Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
-					this.connection.getUtcCalendar() : 
-						getCalendarInstanceForSessionOrNew();
-			
-			synchronized (sessionCalendar) {
-				binding.value = TimeUtil.changeTimezone(this.connection, 
-						sessionCalendar,
-						targetCalendar,
-						x, tz,
-						this.connection.getServerTimezoneTZ(), 
-						rollForward);
+			if (!this.useLegacyDatetimeCode) {
+				binding.value = x;
+			} else {
+				Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
+						this.connection.getUtcCalendar() : 
+							getCalendarInstanceForSessionOrNew();
+				
+				synchronized (sessionCalendar) {
+					binding.value = TimeUtil.changeTimezone(this.connection, 
+							sessionCalendar,
+							targetCalendar,
+							x, tz,
+							this.connection.getServerTimezoneTZ(), 
+							rollForward);
+				}
+				
+				binding.isNull = false;
+				binding.isLongData = false;
 			}
-			
-			binding.isNull = false;
-			binding.isLongData = false;
 		}
 	}
 
@@ -2317,7 +2330,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			case MysqlDefs.FIELD_TYPE_DATE:
 			case MysqlDefs.FIELD_TYPE_DATETIME:
 			case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-				storeDateTime(packet, (java.util.Date) value, mysql);
+				storeDateTime(packet, (java.util.Date) value, mysql, bindValue.bufferType);
 				return;
 			case MysqlDefs.FIELD_TYPE_VAR_STRING:
 			case MysqlDefs.FIELD_TYPE_STRING:
@@ -2348,10 +2361,22 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 	}
 
-	private void storeDataTime412AndOlder(Buffer intoBuf, java.util.Date dt)
+	private void storeDateTime412AndOlder(Buffer intoBuf, java.util.Date dt, int bufferType)
 			throws SQLException {
 		
-		Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
+		Calendar sessionCalendar = null;
+		
+		if (!this.useLegacyDatetimeCode) {
+			if (bufferType == MysqlDefs.FIELD_TYPE_DATE) {
+				sessionCalendar = getDefaultTzCalendar();
+			} else {
+				sessionCalendar = getServerTzCalendar();
+			}
+		} else {
+			sessionCalendar = (dt instanceof Timestamp && 
+				this.connection.getUseJDBCCompliantTimezoneShift()) ? 
+				this.connection.getUtcCalendar() : getCalendarInstanceForSessionOrNew();
+		}
 		
 		synchronized (sessionCalendar) {
 			java.util.Date oldTime = sessionCalendar.getTime();
@@ -2388,25 +2413,34 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 	}
 
-	private void storeDateTime(Buffer intoBuf, java.util.Date dt, MysqlIO mysql)
+	private void storeDateTime(Buffer intoBuf, java.util.Date dt, MysqlIO mysql, int bufferType)
 			throws SQLException {
 		if (this.connection.versionMeetsMinimum(4, 1, 3)) {
-			storeDateTime413AndNewer(intoBuf, dt);
+			storeDateTime413AndNewer(intoBuf, dt, bufferType);
 		} else {
-			storeDataTime412AndOlder(intoBuf, dt);
+			storeDateTime412AndOlder(intoBuf, dt, bufferType);
 		}
 	}
 
-	private void storeDateTime413AndNewer(Buffer intoBuf, java.util.Date dt)
+	private void storeDateTime413AndNewer(Buffer intoBuf, java.util.Date dt, int bufferType)
 			throws SQLException {
-		Calendar sessionCalendar = (dt instanceof Timestamp && 
+		Calendar sessionCalendar = null;
+		
+		if (!this.useLegacyDatetimeCode) {
+			if (bufferType == MysqlDefs.FIELD_TYPE_DATE) {
+				sessionCalendar = getDefaultTzCalendar();
+			} else {
+				sessionCalendar = getServerTzCalendar();
+			}
+		} else {
+			sessionCalendar = (dt instanceof Timestamp && 
 				this.connection.getUseJDBCCompliantTimezoneShift()) ? 
 				this.connection.getUtcCalendar() : getCalendarInstanceForSessionOrNew();
+		}
 		
 		synchronized (sessionCalendar) {
 			java.util.Date oldTime = sessionCalendar.getTime();
-		
-		
+
 			try {
 				sessionCalendar.setTime(dt);
 				
@@ -2455,6 +2489,26 @@ public class ServerPreparedStatement extends PreparedStatement {
 			} finally {
 				sessionCalendar.setTime(oldTime);
 			}
+		}
+	}
+
+	private Calendar getServerTzCalendar() {
+		synchronized (this) {
+			if (serverTzCalendar == null) {
+				serverTzCalendar = new GregorianCalendar(this.connection.getServerTimezoneTZ());
+			}
+			
+			return this.serverTzCalendar;
+		}
+	}
+	
+	private Calendar getDefaultTzCalendar() {
+		synchronized (this) {
+			if (defaultTzCalendar == null) {
+				defaultTzCalendar = new GregorianCalendar(TimeZone.getDefault());
+			}
+			
+			return this.defaultTzCalendar;
 		}
 	}
 

@@ -1476,6 +1476,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.useLocalSessionState"), //$NON-NLS-1$
 			"3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
+	private BooleanConnectionProperty useLegacyDatetimeCode = new BooleanConnectionProperty(
+			"useLegacyDatetimeCode",
+			true,
+			Messages.getString("ConnectionProperties.useLegacyDatetimeCode"),
+			"5.1.6", MISC_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty useNanosForElapsedTime = new BooleanConnectionProperty(
 			"useNanosForElapsedTime", //$NON-NLS-1$
 			false,
@@ -4310,5 +4316,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setVerifyServerCertificate(boolean flag) {
 		this.verifyServerCertificate.setValue(flag);
+	}
+
+	public boolean getUseLegacyDatetimeCode() {
+		return this.useLegacyDatetimeCode.getValueAsBoolean();
+	}
+
+	public void setUseLegacyDatetimeCode(boolean flag) {
+		this.useLegacyDatetimeCode.setValue(flag);
 	}
 }

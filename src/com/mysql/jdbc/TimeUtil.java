@@ -117,8 +117,7 @@ public class TimeUtil {
 		tempMap.put("Canada Central Standard Time", "America/Regina");
 		tempMap.put("US Mountain", "America/Phoenix");
 		tempMap.put("US Mountain Standard Time", "America/Phoenix");
-		tempMap.put("GMT", "Europe/London");
-		tempMap.put("GMT Standard Time", "Europe/London");
+		tempMap.put("GMT", "GMT");
 		tempMap.put("Ekaterinburg", "Asia/Yekaterinburg");
 		tempMap.put("Ekaterinburg Standard Time", "Asia/Yekaterinburg");
 		tempMap.put("West Asia", "Asia/Karachi");
@@ -974,11 +973,38 @@ public class TimeUtil {
 		}
 		
 		dateCal.clear();
-
+		dateCal.set(Calendar.MILLISECOND, 0);
+		
 		// why-oh-why is this different than java.util.date,
 		// in the year part, but it still keeps the silly '0'
 		// for the start month????
 		dateCal.set(year, month - 1, day, 0, 0, 0);
+		
+		long dateAsMillis = 0;
+
+		try {
+			dateAsMillis = dateCal.getTimeInMillis();
+		} catch (IllegalAccessError iae) {
+			// Must be on JDK-1.3.1 or older....
+			dateAsMillis = dateCal.getTime().getTime();
+		}
+
+		return new Date(dateAsMillis);
+	}
+	
+	final static Date fastDateCreate(int year, int month, int day, Calendar targetCalendar) {
+ 		
+		
+		Calendar dateCal = (targetCalendar == null) ? new GregorianCalendar() : targetCalendar;
+		
+		dateCal.clear();
+
+		
+		// why-oh-why is this different than java.util.date,
+		// in the year part, but it still keeps the silly '0'
+		// for the start month????
+		dateCal.set(year, month - 1, day, 0, 0, 0);
+		dateCal.set(Calendar.MILLISECOND, 0);
 		
 		long dateAsMillis = 0;
 
@@ -1029,6 +1055,44 @@ public class TimeUtil {
 		return new Time(timeAsMillis);
 	}
 
+	final static Time fastTimeCreate(int hour, int minute,
+ 			int second, Calendar targetCalendar) throws SQLException {
+		if (hour < 0 || hour > 23) {
+			throw SQLError.createSQLException("Illegal hour value '" + hour + "' for java.sql.Time type in value '"
+					+ timeFormattedString(hour, minute, second) + ".", 
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+		}
+		
+		if (minute < 0 || minute > 59) {
+			throw SQLError.createSQLException("Illegal minute value '" + minute + "'" + "' for java.sql.Time type in value '"
+					+ timeFormattedString(hour, minute, second) + ".", 
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+		}
+		
+		if (second < 0 || second > 59) {
+			throw SQLError.createSQLException("Illegal minute value '" + second + "'" + "' for java.sql.Time type in value '"
+					+ timeFormattedString(hour, minute, second) + ".", 
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+		}
+		
+		Calendar cal = (targetCalendar == null) ? new GregorianCalendar() : targetCalendar;
+		cal.clear();
+
+		// Set 'date' to epoch of Jan 1, 1970
+		cal.set(1970, 0, 1, hour, minute, second);
+
+		long timeAsMillis = 0;
+
+		try {
+			timeAsMillis = cal.getTimeInMillis();
+		} catch (IllegalAccessError iae) {
+			// Must be on JDK-1.3.1 or older....
+			timeAsMillis = cal.getTime().getTime();
+		}
+
+		return new Time(timeAsMillis);
+ 	}
+	
 	final static Timestamp fastTimestampCreate(boolean useGmtConversion,
 			Calendar gmtCalIfNeeded,
 			Calendar cal, int year,
@@ -1073,7 +1137,33 @@ public class TimeUtil {
 
 		return ts;
 	}
+	
+	final static Timestamp fastTimestampCreate(TimeZone tz, int year,
+ 			int month, int day, int hour, int minute, int seconds,
+ 			int secondsPart) {
+		Calendar cal = new GregorianCalendar(tz);
+		cal.clear();
+		
+		// why-oh-why is this different than java.util.date,
+		// in the year part, but it still keeps the silly '0'
+		// for the start month????
+		cal.set(year, month - 1, day, hour, minute, seconds);
 
+		long tsAsMillis = 0;
+
+		try {
+			tsAsMillis = cal.getTimeInMillis();
+		} catch (IllegalAccessError iae) {
+			// Must be on JDK-1.3.1 or older....
+			tsAsMillis = cal.getTime().getTime();
+		}
+
+		Timestamp ts = new Timestamp(tsAsMillis);
+		ts.setNanos(secondsPart);
+
+		return ts;
+	}
+	
 	/**
 	 * Returns the 'official' Java timezone name for the given timezone
 	 * 
@@ -1081,17 +1171,26 @@ public class TimeUtil {
 	 *            the 'common' timezone name
 	 * 
 	 * @return the Java timezone name for the given timezone
+	 * @throws SQLException 
 	 * 
 	 * @throws IllegalArgumentException
 	 *             DOCUMENT ME!
 	 */
-	public static String getCanoncialTimezone(String timezoneStr) {
+	public static String getCanoncialTimezone(String timezoneStr) throws SQLException {
 		if (timezoneStr == null) {
 			return null;
 		}
 
 		timezoneStr = timezoneStr.trim();
 
+		// handle '+/-hh:mm' form ...
+		
+		if (timezoneStr.length() > 2) {
+			if ((timezoneStr.charAt(0) == '+' || timezoneStr.charAt(0) == '-') &&
+					Character.isDigit(timezoneStr.charAt(1))) {
+				return "GMT" + timezoneStr;
+			}
+		}
 		// Fix windows Daylight/Standard shift JDK doesn't map these (doh)
 
 		int daylightIndex = StringUtils.indexOfIgnoreCase(timezoneStr,
@@ -1118,26 +1217,17 @@ public class TimeUtil {
 				if (abbreviatedTimezone.length == 1) {
 					canonicalTz = abbreviatedTimezone[0];
 				} else {
-					StringBuffer errorMsg = new StringBuffer(
-							"The server timezone value '");
-					errorMsg.append(timezoneStr);
-					errorMsg
-							.append("' represents more than one timezone. You must ");
-					errorMsg
-							.append("configure either the server or client to use a ");
-					errorMsg
-							.append("more specifc timezone value if you want to enable ");
-					errorMsg.append("timezone support. The timezones that '");
-					errorMsg.append(timezoneStr);
-					errorMsg.append("' maps to are: ");
-					errorMsg.append(abbreviatedTimezone[0]);
-
+					StringBuffer possibleTimezones = new StringBuffer(128);
+					
+					possibleTimezones.append(abbreviatedTimezone[0]);
+					
 					for (int i = 1; i < abbreviatedTimezone.length; i++) {
-						errorMsg.append(", ");
-						errorMsg.append(abbreviatedTimezone[i]);
+						possibleTimezones.append(", ");
+						possibleTimezones.append(abbreviatedTimezone[i]);
 					}
 
-					throw new IllegalArgumentException(errorMsg.toString());
+					throw SQLError.createSQLException(Messages.getString("TimeUtil.TooGenericTimezoneId",
+							new Object[] {timezoneStr, possibleTimezones}), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
 				}
 			}
 		}

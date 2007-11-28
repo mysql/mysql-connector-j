@@ -522,6 +522,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	private boolean canRewrite = false;
 
 	private boolean doPingInstead;
+	private SimpleDateFormat ddf;
+	private SimpleDateFormat tdf;
 	
 	/**
 	 * Creates a prepared statement instance -- We need to provide factory-style
@@ -3153,17 +3155,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setDate(int parameterIndex, java.sql.Date x)
 			throws java.sql.SQLException {
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.DATE);
-		} else {
-			// FIXME: Have instance version of this, problem as it's
-			// not thread-safe :(
-			SimpleDateFormat dateFormatter = new SimpleDateFormat(
-					"''yyyy-MM-dd''", Locale.US); //$NON-NLS-1$
-			setInternal(parameterIndex, dateFormatter.format(x));
-			
-			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DATE;
-		}
+		setDate(parameterIndex, x, null);
 	}
 
 	/**
@@ -3182,7 +3174,23 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setDate(int parameterIndex, java.sql.Date x, Calendar cal)
 			throws SQLException {
-		setDate(parameterIndex, x);
+		if (x == null) {
+			setNull(parameterIndex, java.sql.Types.DATE);
+		} else {
+			checkClosed();
+			
+			if (!this.useLegacyDatetimeCode) {
+				newSetDateInternal(parameterIndex, x, cal);
+			} else {
+				// FIXME: Have instance version of this, problem as it's
+				// not thread-safe :(
+				SimpleDateFormat dateFormatter = new SimpleDateFormat(
+						"''yyyy-MM-dd''", Locale.US); //$NON-NLS-1$
+				setInternal(parameterIndex, dateFormatter.format(x));
+				
+				this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DATE;
+			}
+		}
 	}
 
 	/**
@@ -4202,17 +4210,21 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		} else {
 			checkClosed();
 			
-			Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
-			
-			synchronized (sessionCalendar) {
-				x = TimeUtil.changeTimezone(this.connection, 
-						sessionCalendar,
-						targetCalendar,
-						 x, tz, this.connection
-						.getServerTimezoneTZ(), rollForward);
+			if (!this.useLegacyDatetimeCode) {
+				newSetTimeInternal(parameterIndex, x, targetCalendar);
+			} else {
+				Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
+				
+				synchronized (sessionCalendar) {
+					x = TimeUtil.changeTimezone(this.connection, 
+							sessionCalendar,
+							targetCalendar,
+							 x, tz, this.connection
+							.getServerTimezoneTZ(), rollForward);
+				}
+				
+				setInternal(parameterIndex, "'" + x.toString() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
-			
-			setInternal(parameterIndex, "'" + x.toString() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
 			
 			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIME;
 		}
@@ -4276,36 +4288,106 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		} else {
 			checkClosed();
 			
-			String timestampString = null;
-			
-			Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
-					this.connection.getUtcCalendar() : 
-						getCalendarInstanceForSessionOrNew();
-					
-			synchronized (sessionCalendar) {
-				x = TimeUtil.changeTimezone(this.connection, 
-						sessionCalendar,
-						targetCalendar,
-						x, tz, this.connection
-					.getServerTimezoneTZ(), rollForward);
-			}
-
-			if (this.connection.getUseSSPSCompatibleTimezoneShift()) {
-				doSSPSCompatibleTimezoneShift(parameterIndex, x, sessionCalendar);
+			if (!this.useLegacyDatetimeCode) {
+				newSetTimestampInternal(parameterIndex, x, targetCalendar);
 			} else {
-				
-				if (this.tsdf == null) {
-					this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US); //$NON-NLS-1$
-				}
-				
-				timestampString = this.tsdf.format(x);
+				String timestampString = null;
 
-				setInternal(parameterIndex, timestampString); // SimpleDateFormat is not
-															  // thread-safe
+				Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
+						this.connection.getUtcCalendar() : 
+							getCalendarInstanceForSessionOrNew();
+					
+				synchronized (sessionCalendar) {
+					x = TimeUtil.changeTimezone(this.connection, 
+							sessionCalendar,
+							targetCalendar,
+							x, tz, this.connection
+						.getServerTimezoneTZ(), rollForward);
+				}
+	
+				if (this.connection.getUseSSPSCompatibleTimezoneShift()) {
+					doSSPSCompatibleTimezoneShift(parameterIndex, x, sessionCalendar);
+				} else {
+					synchronized (this) {
+						if (this.tsdf == null) {
+							this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US); //$NON-NLS-1$
+						}
+						
+						timestampString = this.tsdf.format(x);
+		
+						setInternal(parameterIndex, timestampString); // SimpleDateFormat is not
+																	  // thread-safe
+					}
+				}
 			}
 			
 			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIMESTAMP;
 		}
+	}
+	
+	private synchronized void newSetTimestampInternal(int parameterIndex,
+			Timestamp x, Calendar targetCalendar) throws SQLException {
+		if (this.tsdf == null) {
+			this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US); //$NON-NLS-1$
+		}
+		
+		String timestampString = null;
+		
+		if (targetCalendar != null) {
+			targetCalendar.setTime(x);
+			this.tsdf.setTimeZone(targetCalendar.getTimeZone());
+			
+			timestampString = this.tsdf.format(x);
+		} else {
+			this.tsdf.setTimeZone(this.connection.getServerTimezoneTZ());
+			timestampString = this.tsdf.format(x);
+		}
+
+		setInternal(parameterIndex, timestampString); 
+	}
+	
+	private synchronized void newSetTimeInternal(int parameterIndex,
+			Time x, Calendar targetCalendar) throws SQLException {
+		if (this.tdf == null) {
+			this.tdf = new SimpleDateFormat("''HH:mm:ss''", Locale.US); //$NON-NLS-1$
+			
+		}
+
+		String timeString = null;
+		
+		if (targetCalendar != null) {
+			targetCalendar.setTime(x);
+			this.tdf.setTimeZone(targetCalendar.getTimeZone());
+			
+			timeString = this.tdf.format(x);
+		} else {
+			this.tdf.setTimeZone(this.connection.getServerTimezoneTZ());
+			timeString = this.tdf.format(x);
+		}
+
+		setInternal(parameterIndex, timeString); 
+	}
+	
+	private synchronized void newSetDateInternal(int parameterIndex,
+			Date x, Calendar targetCalendar) throws SQLException {
+		if (this.ddf == null) {
+			this.ddf = new SimpleDateFormat("''yyyy-MM-dd''", Locale.US); //$NON-NLS-1$
+			
+		}
+
+		String timeString = null;
+		
+		if (targetCalendar != null) {
+			targetCalendar.setTime(x);
+			this.ddf.setTimeZone(targetCalendar.getTimeZone());
+			
+			timeString = this.ddf.format(x);
+		} else {
+			this.ddf.setTimeZone(this.connection.getServerTimezoneTZ());
+			timeString = this.ddf.format(x);
+		}
+
+		setInternal(parameterIndex, timeString); 
 	}
 
 	private void doSSPSCompatibleTimezoneShift(int parameterIndex, Timestamp x, Calendar sessionCalendar) throws SQLException {

@@ -2228,6 +2228,39 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}
 	}
 
+	public void testBug15604() throws Exception {
+		createTable("testBug15604_date_cal", "(field1 DATE)");
+		Properties props = new Properties();
+		props.setProperty("useLegacyDatetimeCode", "false");
+		props.setProperty("sessionVariables", "time_zone='America/Chicago'");
+		
+		Connection nonLegacyConn = getConnectionWithProps(props);
+		
+		Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+		
+		cal.set(Calendar.YEAR, 2005);
+	    cal.set(Calendar.MONTH, 4);
+	    cal.set(Calendar.DAY_OF_MONTH, 15);
+	    cal.set(Calendar.HOUR_OF_DAY, 0);
+	    cal.set(Calendar.MINUTE, 0);
+	    cal.set(Calendar.SECOND, 0);
+	    cal.set(Calendar.MILLISECOND, 0);
+	    
+	    java.sql.Date sqlDate = new java.sql.Date(cal.getTime().getTime());
+
+	    Calendar cal2 = Calendar.getInstance();
+	    cal2.setTime(sqlDate);
+	    System.out.println(new java.sql.Date(cal2.getTime().getTime()));
+	    this.pstmt = nonLegacyConn.prepareStatement("INSERT INTO testBug15604_date_cal VALUES (?)");
+	    
+	    this.pstmt.setDate(1, sqlDate, cal);
+	    this.pstmt.executeUpdate();
+	    this.rs = nonLegacyConn.createStatement().executeQuery("SELECT field1 FROM testBug15604_date_cal");
+	    this.rs.next();
+
+	    assertEquals(sqlDate.getTime(), this.rs.getDate(1, cal).getTime());
+	}
+	
 	public void testBug14897() throws Exception {
 		createTable("table1", "(id int, name_id int)");
 		createTable("table2", "(id int)");

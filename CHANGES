@@ -40,6 +40,22 @@ nn-nn-08 - Version 5.1.6
       of node non-responsive, it re-tries a *different* random node, rather 
       than waiting for the node to recover (for BUG#31053)
       
+    - Fixed BUG#32577 - no way to store two timestamp/datetime values that happens
+      over the DST switchover, as the hours end up being the same when sent as
+      the literal that MySQL requires.
+
+      Note that to get this scenario to work with MySQL (since it doesn't support
+      per-value timezones), you need to configure your server (or session) to be in UTC,
+      and tell the driver not to use the legacy date/time code by setting
+      "useLegacyDatetimeCode" to "false". This will cause the driver to always convert
+      to/from the server and client timezone consistently.
+      
+      This bug fix also fixes BUG#15604, by adding entirely new date/time handling
+      code that can be switched on by "useLegacyDatetimeCode" being set to "false" as
+      a JDBC configuration property. For Connector/J 5.1.x, the default is "true",
+      in trunk and beyond it will be "false" (i.e. the old date/time handling code, warts
+      and all will be deprecated).
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

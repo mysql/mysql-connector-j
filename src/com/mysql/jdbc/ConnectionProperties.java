@@ -1582,4 +1582,8 @@ public interface ConnectionProperties {
 	public boolean getVerifyServerCertificate();
 
 	public void setVerifyServerCertificate(boolean flag);
+	
+	public abstract boolean getUseLegacyDatetimeCode();
+
+	public abstract void setUseLegacyDatetimeCode(boolean flag);
 }

@@ -34,9 +34,7 @@ import java.util.TimeZone;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Extension;
 import com.mysql.jdbc.MysqlErrorNumbers;
-import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.ServerPreparedStatement;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.Log;
 
@@ -2517,5 +2515,13 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 
 	public void setVerifyServerCertificate(boolean flag) {
 		this.mc.setVerifyServerCertificate(flag);
+	}
+
+	public boolean getUseLegacyDatetimeCode() {
+		return this.mc.getUseLegacyDatetimeCode();
+	}
+
+	public void setUseLegacyDatetimeCode(boolean flag) {
+		this.mc.setUseLegacyDatetimeCode(flag);
 	}
 }

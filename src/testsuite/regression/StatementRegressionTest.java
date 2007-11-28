@@ -4273,4 +4273,83 @@ public class StatementRegressionTest extends BaseTestCase {
         this.pstmt.executeUpdate();
         assertEquals("false", getSingleIndexedValueWithQuery(1, "SELECT MIN_VAL FROM Bit_TabXXX").toString());
 	}
+	
+	/**
+	 * Tests fix for BUG#32577 - no way to store two timestamp/datetime values that happens
+	 * over the DST switchover, as the hours end up being the same when sent as
+	 * the literal that MySQL requires.
+	 * 
+	 * Note that to get this scenario to work with MySQL (since it doesn't support
+	 * per-value timezones), you need to configure your server (or session) to be in UTC,
+	 * and tell the driver not to use the legacy date/time code by setting
+	 * "useLegacyDatetimeCode" to "false". This will cause the driver to always convert
+	 * to/from the server and client timezone consistently.
+     *
+	 * @throws Exception
+	 */
+	public void testBug32577() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+
+		createTable("testBug32577",
+				"(id INT, field_datetime DATETIME, field_timestamp TIMESTAMP)");
+		Properties props = new Properties();
+		props.setProperty("useLegacyDatetimeCode", "false");
+		props.setProperty("sessionVariables", "time_zone='+0:00'");
+		props.setProperty("serverTimezone", "UTC");
+
+		Connection nonLegacyConn = getConnectionWithProps(props);
+
+		try {
+			long earlier = 1194154200000L;
+			long later = 1194157800000L;
+
+			this.pstmt = nonLegacyConn
+					.prepareStatement("INSERT INTO testBug32577 VALUES (?,?,?)");
+			Timestamp ts = new Timestamp(earlier);
+			this.pstmt.setInt(1, 1);
+			this.pstmt.setTimestamp(2, ts);
+			this.pstmt.setTimestamp(3, ts);
+			this.pstmt.executeUpdate();
+
+			ts = new Timestamp(later);
+			this.pstmt.setInt(1, 1);
+			this.pstmt.setTimestamp(2, ts);
+			this.pstmt.setTimestamp(3, ts);
+			this.pstmt.executeUpdate();
+
+			this.rs = nonLegacyConn
+					.createStatement()
+					.executeQuery(
+							"SELECT id, field_datetime, field_timestamp "
+									+ ", UNIX_TIMESTAMP(field_datetime), UNIX_TIMESTAMP(field_timestamp) "
+									+ "FROM testBug32577 ORDER BY id ASC");
+
+			this.rs.next();
+
+			java.util.Date date1 = new Date(this.rs.getTimestamp(2).getTime());
+			Timestamp ts1 = this.rs.getTimestamp(3);
+			long datetimeSeconds1 = rs.getLong(4) * 1000;
+			long timestampSeconds1 = rs.getLong(5) * 1000;
+
+			this.rs.next();
+
+			java.util.Date date2 = new Date(this.rs.getTimestamp(2).getTime());
+			Timestamp ts2 = this.rs.getTimestamp(3);
+			long datetimeSeconds2 = rs.getLong(4) * 1000;
+			long timestampSeconds2 = rs.getLong(5) * 1000;
+
+			assertEquals(later, datetimeSeconds2);
+			assertEquals(later, timestampSeconds2);
+			assertEquals(earlier, datetimeSeconds1);
+			assertEquals(earlier, timestampSeconds1);
+		} finally {
+			closeMemberJDBCResources();
+
+			if (nonLegacyConn != null) {
+				nonLegacyConn.close();
+			}
+		}
+	}
 }

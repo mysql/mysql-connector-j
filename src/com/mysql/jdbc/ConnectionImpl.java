@@ -1895,21 +1895,18 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 		}
 
-		if (getUseTimezone() && configuredTimeZoneOnServer != null) {
-			// user can specify/override as property
-			String canoncicalTimezone = getServerTimezone();
-
-			if ((canoncicalTimezone == null)
-					|| (canoncicalTimezone.length() == 0)) {
-				String serverTimezoneStr = configuredTimeZoneOnServer;
-
+		String canoncicalTimezone = getServerTimezone();
+		
+		if ((getUseTimezone() || !getUseLegacyDatetimeCode()) && configuredTimeZoneOnServer != null) {
+			// user can override this with driver properties, so don't detect if that's the case
+			if (canoncicalTimezone == null || StringUtils.isEmptyOrWhitespaceOnly(canoncicalTimezone)) {
 				try {
 					canoncicalTimezone = TimeUtil
-							.getCanoncialTimezone(serverTimezoneStr);
+							.getCanoncialTimezone(configuredTimeZoneOnServer);
 
 					if (canoncicalTimezone == null) {
 						throw SQLError.createSQLException("Can't map timezone '"
-								+ serverTimezoneStr + "' to "
+								+ configuredTimeZoneOnServer + "' to "
 								+ " canonical timezone.",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 					}
@@ -1918,8 +1915,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							SQLError.SQL_STATE_GENERAL_ERROR);
 				}
 			}
-
-			this.serverTimezoneTZ = TimeZone.getTimeZone(canoncicalTimezone);
+		} else {
+			canoncicalTimezone = getServerTimezone();
+		}
+		
+		if (canoncicalTimezone != null && canoncicalTimezone.length() > 0) {
+				this.serverTimezoneTZ = TimeZone.getTimeZone(canoncicalTimezone);
 
 			//
 			// The Calendar class has the behavior of mapping

@@ -684,7 +684,7 @@ public class BufferRow extends ResultSetRow {
 	}
 
 	public Date getDateFast(int columnIndex, ConnectionImpl conn,
-			ResultSetImpl rs) throws SQLException {
+			ResultSetImpl rs, Calendar targetCalendar) throws SQLException {
 		if (isNull(columnIndex)) {
 			return null;
 		}
@@ -696,7 +696,7 @@ public class BufferRow extends ResultSetRow {
 		int offset = this.rowFromServer.getPosition();
 
 		return getDateFast(columnIndex, this.rowFromServer.getByteBuffer(),
-				offset, (int)length, conn, rs);
+				offset, (int)length, conn, rs, targetCalendar);
 	}
 
 	public java.sql.Date getNativeDate(int columnIndex, ConnectionImpl conn,

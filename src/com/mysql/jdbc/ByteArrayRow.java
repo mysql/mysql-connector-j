@@ -225,7 +225,7 @@ public class ByteArrayRow extends ResultSetRow {
 	}
 
 	public Date getDateFast(int columnIndex, ConnectionImpl conn,
-			ResultSetImpl rs) throws SQLException {
+			ResultSetImpl rs, Calendar targetCalendar) throws SQLException {
 		byte[] columnValue = this.internalRowData[columnIndex];
 
 		if (columnValue == null) {
@@ -233,7 +233,7 @@ public class ByteArrayRow extends ResultSetRow {
 		}
 
 		return getDateFast(columnIndex, this.internalRowData[columnIndex], 0,
-				columnValue.length, conn, rs);
+				columnValue.length, conn, rs, targetCalendar);
 	}
 
 	public Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar,

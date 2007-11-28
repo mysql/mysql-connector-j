@@ -413,7 +413,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				this.connection.getRetainStatementAfterResultSetClose();
 			
 			this.connectionId = this.connection.getId();
+			this.serverTimeZoneTz = this.connection.getServerTimezoneTZ();
 		}
+		
+		useLegacyDatetimeCode = !this.connection.getUseLegacyDatetimeCode();
 	}
 
 	/**
@@ -450,6 +453,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				this.connection.getRetainStatementAfterResultSetClose();
 			this.jdbcCompliantTruncationForReads = this.connection.getJdbcCompliantTruncationForReads();
 			this.useFastIntParsing = this.connection.getUseFastIntParsing();
+			this.serverTimeZoneTz = this.connection.getServerTimezoneTZ();
 		}
 
 		this.owningStatement = creatorStmt;
@@ -484,6 +488,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (this.fields != null) {
 			initializeWithMetadata();
 		} // else called by Connection.initializeResultsMetadataFromCache() when cached
+		useLegacyDatetimeCode = !this.connection.getUseLegacyDatetimeCode();
 	}
 
 	public void initializeWithMetadata() throws SQLException {
@@ -822,6 +827,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	
 	private boolean onValidRow = false;
 	private String invalidRowReason = null;
+	protected boolean useLegacyDatetimeCode;
+	private TimeZone serverTimeZoneTz;
 	
 	private void setRowPositionValidity() throws SQLException {
 		if (!this.rowData.isDynamic() && (this.rowData.size() == 0)) {
@@ -983,13 +990,17 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 	protected synchronized Date fastDateCreate(Calendar cal, int year, int month,
 			int day) {
+		if (this.useLegacyDatetimeCode) {
+			return TimeUtil.fastDateCreate(year, month, day, cal);
+		}
+		
 		if (cal == null) {
 			createCalendarIfNeeded();
 			cal = this.fastDateCal;
 		}
 
 		boolean useGmtMillis = this.connection.getUseGmtMillisForDatetimes();
-						
+		
 		return TimeUtil.fastDateCreate(useGmtMillis,
 				useGmtMillis ? getGmtCalendar() : null,
 				cal, year, month, day);
@@ -997,6 +1008,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 	protected synchronized Time fastTimeCreate(Calendar cal, int hour,
 			int minute, int second) throws SQLException {
+		if (!this.useLegacyDatetimeCode) {
+			return TimeUtil.fastTimeCreate(hour, minute, second, cal);
+		}
+		
 		if (cal == null) {
 			createCalendarIfNeeded();
 			cal = this.fastDateCal;
@@ -1008,6 +1023,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	protected synchronized Timestamp fastTimestampCreate(Calendar cal, int year,
 			int month, int day, int hour, int minute, int seconds,
 			int secondsPart) {
+		if (!this.useLegacyDatetimeCode) {
+			return TimeUtil.fastTimestampCreate(cal.getTimeZone(), year, month, day, hour,
+					minute, seconds, secondsPart);
+		}
+		
 		if (cal == null) {
 			createCalendarIfNeeded();
 			cal = this.fastDateCal;
@@ -2091,7 +2111,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				return null;
 			}
 			
-			return getDateFromString(stringVal, columnIndex);
+			return getDateFromString(stringVal, columnIndex, cal);
 		}
 		
 		checkColumnBounds(columnIndex);
@@ -2106,7 +2126,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		
 		this.wasNullFlag = false;
 		
-		return this.thisRow.getDateFast(columnIndexMinusOne, this.connection, this);
+		return this.thisRow.getDateFast(columnIndexMinusOne, this.connection, this, cal);
 	}
 
 	/**
@@ -2146,7 +2166,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	}
 
 	private final java.sql.Date getDateFromString(String stringVal,
-			int columnIndex) throws SQLException {
+			int columnIndex, Calendar targetCalendar) throws SQLException {
 		int year = 0;
 		int month = 0;
 		int day = 0;
@@ -2189,7 +2209,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 				// We're left with the case of 'round' to a date Java _can_
 				// represent, which is '0001-01-01'.
-				return fastDateCreate(null, 1, 1, 1);
+				return fastDateCreate(targetCalendar, 1, 1, 1);
 
 			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
 				// Convert from TIMESTAMP
@@ -2200,7 +2220,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					month = Integer.parseInt(stringVal.substring(5, 7));
 					day = Integer.parseInt(stringVal.substring(8, 10));
 
-					return fastDateCreate(null, year, month, day);
+					return fastDateCreate(targetCalendar, year, month, day);
 				}
 
 				case 14:
@@ -2209,7 +2229,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					month = Integer.parseInt(stringVal.substring(4, 6));
 					day = Integer.parseInt(stringVal.substring(6, 8));
 
-					return fastDateCreate(null, year, month, day);
+					return fastDateCreate(targetCalendar, year, month, day);
 				}
 
 				case 12:
@@ -2224,7 +2244,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					month = Integer.parseInt(stringVal.substring(2, 4));
 					day = Integer.parseInt(stringVal.substring(4, 6));
 
-					return fastDateCreate(null, year + 1900, month, day);
+					return fastDateCreate(targetCalendar, year + 1900, month, day);
 				}
 
 				case 4: {
@@ -2236,7 +2256,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 					month = Integer.parseInt(stringVal.substring(2, 4));
 
-					return fastDateCreate(null, year + 1900, month, 1);
+					return fastDateCreate(targetCalendar, year + 1900, month, 1);
 				}
 
 				case 2: {
@@ -2246,7 +2266,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						year = year + 100;
 					}
 
-					return fastDateCreate(null, year + 1900, 1, 1);
+					return fastDateCreate(targetCalendar, year + 1900, 1, 1);
 				}
 
 				default:
@@ -2269,13 +2289,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					year = Integer.parseInt(stringVal.substring(0, 4));
 				}
 
-				return fastDateCreate(null, year, 1, 1);
+				return fastDateCreate(targetCalendar, year, 1, 1);
 			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_TIME) {
-				return fastDateCreate(null, 1970, 1, 1); // Return EPOCH
+				return fastDateCreate(targetCalendar, 1970, 1, 1); // Return EPOCH
 			} else {
 				if (stringVal.length() < 10) {
 					if (stringVal.length() == 8) {
-						return fastDateCreate(null, 1970, 1, 1); // Return EPOCH for TIME
+						return fastDateCreate(targetCalendar, 1970, 1, 1); // Return EPOCH for TIME
 					}
 					
 					throw SQLError.createSQLException(Messages.getString(
@@ -2298,7 +2318,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				}
 			}
 
-			return fastDateCreate(null, year, month, day);
+			return fastDateCreate(targetCalendar, year, month, day);
 		} catch (SQLException sqlEx) {
 			throw sqlEx; // don't re-wrap
 		} catch (Exception e) {
@@ -2310,6 +2330,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	}
 	
 	private TimeZone getDefaultTimeZone() {
+		if (!this.useLegacyDatetimeCode && this.connection != null) {
+			return this.serverTimeZoneTz;
+		}
+		
 		return this.connection.getDefaultTimeZone();
 	}
 
@@ -3835,7 +3859,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		String stringVal = getNativeString(columnIndex);
 
-		return getDateFromString(stringVal, columnIndex);
+		return getDateFromString(stringVal, columnIndex, null);
 	}
 
 	/**
@@ -5567,7 +5591,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					return stringVal;
 				}
 
-				Date dt = getDateFromString(stringVal, columnIndex);
+				Date dt = getDateFromString(stringVal, columnIndex, null);
 
 				if (dt == null) {
 					this.wasNullFlag = true;
@@ -5599,7 +5623,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					return tm.toString();
 				case Types.DATE:
 
-					Date dt = getDateFromString(stringVal, columnIndex);
+					Date dt = getDateFromString(stringVal, columnIndex, null);
 
 					if (dt == null) {
 						this.wasNullFlag = true;
@@ -5748,7 +5772,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 				// We're left with the case of 'round' to a time Java _can_
 				// represent, which is '00:00:00'
-				return fastTimeCreate(null, 0, 0, 0);
+				return fastTimeCreate(targetCalendar, 0, 0, 0);
 			}
 
 			this.wasNullFlag = false;
@@ -5831,7 +5855,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					this.warningChain.setNextWarning(precisionLost);
 				}
 			} else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATE) {
-				return fastTimeCreate(null, 0, 0, 0); // midnight on the given
+				return fastTimeCreate(targetCalendar, 0, 0, 0); // midnight on the given
 														// date
 			} else {
 				// convert a String to a Time
@@ -6043,15 +6067,20 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					
 				} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 					
-					return TimeUtil.changeTimezone(this.connection,
-							sessionCalendar, 
-							targetCalendar,
-							fastTimestampCreate(sessionCalendar, 
-									Integer
-									.parseInt(timestampValue.substring(0, 4)), 1,
-									1, 0, 0, 0, 0), this.connection
-									.getServerTimezoneTZ(), tz, rollForward);
-					
+					if (!this.useLegacyDatetimeCode) {
+						return TimeUtil.fastTimestampCreate(tz, Integer
+										.parseInt(timestampValue.substring(0, 4)), 1,
+										1, 0, 0, 0, 0);
+					} else {
+						return TimeUtil.changeTimezone(this.connection,
+								sessionCalendar, 
+								targetCalendar,
+								fastTimestampCreate(sessionCalendar, 
+										Integer
+										.parseInt(timestampValue.substring(0, 4)), 1,
+										1, 0, 0, 0, 0), this.connection
+										.getServerTimezoneTZ(), tz, rollForward);
+					}
 				} else {
 					if (timestampValue.endsWith(".")) {
 						timestampValue = timestampValue.substring(0, timestampValue
@@ -6059,6 +6088,15 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					}
 					
 					// Convert from TIMESTAMP or DATE
+					
+					int year = 0;
+					int month = 0;
+					int day = 0;
+					int hour = 0;
+					int minutes = 0;
+					int seconds = 0;
+					int nanos = 0;
+					
 					switch (length) {
 					case 26:
 					case 25:
@@ -6068,18 +6106,18 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					case 21:
 					case 20:
 					case 19: {
-						int year = Integer.parseInt(timestampValue.substring(0, 4));
-						int month = Integer
+						year = Integer.parseInt(timestampValue.substring(0, 4));
+						month = Integer
 						.parseInt(timestampValue.substring(5, 7));
-						int day = Integer.parseInt(timestampValue.substring(8, 10));
-						int hour = Integer.parseInt(timestampValue
+						day = Integer.parseInt(timestampValue.substring(8, 10));
+						hour = Integer.parseInt(timestampValue
 								.substring(11, 13));
-						int minutes = Integer.parseInt(timestampValue.substring(14,
+						minutes = Integer.parseInt(timestampValue.substring(14,
 								16));
-						int seconds = Integer.parseInt(timestampValue.substring(17,
+						seconds = Integer.parseInt(timestampValue.substring(17,
 								19));
 						
-						int nanos = 0;
+						nanos = 0;
 						
 						if (length > 19) {
 							int decimalIndex = timestampValue.lastIndexOf('.');
@@ -6099,65 +6137,46 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							}
 						}
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year, month, day, hour,
-										minutes, seconds, nanos), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						break;
 					}
 					
 					case 14: {
-						int year = Integer.parseInt(timestampValue.substring(0, 4));
-						int month = Integer
+						year = Integer.parseInt(timestampValue.substring(0, 4));
+						month = Integer
 						.parseInt(timestampValue.substring(4, 6));
-						int day = Integer.parseInt(timestampValue.substring(6, 8));
-						int hour = Integer
+						day = Integer.parseInt(timestampValue.substring(6, 8));
+						hour = Integer
 						.parseInt(timestampValue.substring(8, 10));
-						int minutes = Integer.parseInt(timestampValue.substring(10,
+						minutes = Integer.parseInt(timestampValue.substring(10,
 								12));
-						int seconds = Integer.parseInt(timestampValue.substring(12,
+						seconds = Integer.parseInt(timestampValue.substring(12,
 								14));
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar, 
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year, month, day, hour,
-										minutes, seconds, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						break;
 					}
 					
 					case 12: {
-						int year = Integer.parseInt(timestampValue.substring(0, 2));
+						year = Integer.parseInt(timestampValue.substring(0, 2));
 						
 						if (year <= 69) {
 							year = (year + 100);
 						}
 						
-						int month = Integer
+						year += 1900;
+						
+						month = Integer
 						.parseInt(timestampValue.substring(2, 4));
-						int day = Integer.parseInt(timestampValue.substring(4, 6));
-						int hour = Integer.parseInt(timestampValue.substring(6, 8));
-						int minutes = Integer.parseInt(timestampValue.substring(8,
+						day = Integer.parseInt(timestampValue.substring(4, 6));
+						hour = Integer.parseInt(timestampValue.substring(6, 8));
+						minutes = Integer.parseInt(timestampValue.substring(8,
 								10));
-						int seconds = Integer.parseInt(timestampValue.substring(10,
+						seconds = Integer.parseInt(timestampValue.substring(10,
 								12));
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year + 1900, month, day,
-										hour, minutes, seconds, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						break;
 					}
 					
 					case 10: {
-						int year;
-						int month;
-						int day;
-						int hour;
-						int minutes;
-						
 						if ((this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_DATE)
 								|| (timestampValue.indexOf("-") != -1)) {
 							year = Integer.parseInt(timestampValue.substring(0, 4));
@@ -6183,97 +6202,79 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							year += 1900; // two-digit year
 						}
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year, month, day, hour,
-										minutes, 0, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						break;
 					}
 					
 					case 8: {
 						if (timestampValue.indexOf(":") != -1) {
-							int hour = Integer.parseInt(timestampValue.substring(0,
+							hour = Integer.parseInt(timestampValue.substring(0,
 									2));
-							int minutes = Integer.parseInt(timestampValue
+							minutes = Integer.parseInt(timestampValue
 									.substring(3, 5));
-							int seconds = Integer.parseInt(timestampValue
+							seconds = Integer.parseInt(timestampValue
 									.substring(6, 8));
-							
-							return TimeUtil
-							.changeTimezone(this.connection,
-									sessionCalendar,
-									targetCalendar,
-									fastTimestampCreate(sessionCalendar, 1970, 1, 1,
-											hour, minutes, seconds, 0),
-											this.connection.getServerTimezoneTZ(),
-											tz, rollForward);
-							
+							year = 1970;
+							month = 1;
+							day = 1;
+							break;
 						}
 						
-						int year = Integer.parseInt(timestampValue.substring(0, 4));
-						int month = Integer
+						year = Integer.parseInt(timestampValue.substring(0, 4));
+						month = Integer
 						.parseInt(timestampValue.substring(4, 6));
-						int day = Integer.parseInt(timestampValue.substring(6, 8));
+						day = Integer.parseInt(timestampValue.substring(6, 8));
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year - 1900, month - 1,
-										day, 0, 0, 0, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						year -= 1900;
+						month--;
+						
+						break;
 					}
 					
 					case 6: {
-						int year = Integer.parseInt(timestampValue.substring(0, 2));
+						year = Integer.parseInt(timestampValue.substring(0, 2));
 						
 						if (year <= 69) {
 							year = (year + 100);
 						}
 						
-						int month = Integer
-						.parseInt(timestampValue.substring(2, 4));
-						int day = Integer.parseInt(timestampValue.substring(4, 6));
+						year += 1900;
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year + 1900, month, day,
-										0, 0, 0, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						month = Integer
+						.parseInt(timestampValue.substring(2, 4));
+						day = Integer.parseInt(timestampValue.substring(4, 6));
+						
+						break;
 					}
 					
 					case 4: {
-						int year = Integer.parseInt(timestampValue.substring(0, 2));
+						year = Integer.parseInt(timestampValue.substring(0, 2));
 						
 						if (year <= 69) {
 							year = (year + 100);
 						}
 						
-						int month = Integer
+						year += 1900;
+						
+						month = Integer
 						.parseInt(timestampValue.substring(2, 4));
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year + 1900, month, 1, 0,
-										0, 0, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						day = 1;
+						
+						break;
 					}
 					
 					case 2: {
-						int year = Integer.parseInt(timestampValue.substring(0, 2));
+						year = Integer.parseInt(timestampValue.substring(0, 2));
 						
 						if (year <= 69) {
 							year = (year + 100);
 						}
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(null, year + 1900, 1, 1, 0, 0,
-										0, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						year += 1900;
+						month = 1;
+						day = 1;
+						
+						break;
 					}
 					
 					default:
@@ -6282,6 +6283,18 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 								+ "' in column " + columnIndex + ".",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 					}
+					
+					if (!this.useLegacyDatetimeCode) {
+						return TimeUtil.fastTimestampCreate(tz, year, month, day, hour,
+								minutes, seconds, nanos);
+					}
+						
+					return TimeUtil.changeTimezone(this.connection,
+							sessionCalendar,
+							targetCalendar,
+							fastTimestampCreate(sessionCalendar, year, month, day, hour,
+									minutes, seconds, nanos), this.connection
+									.getServerTimezoneTZ(), tz, rollForward);
 				}
 			}
 		} catch (Exception e) {
@@ -6349,24 +6362,41 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					
 					// We're left with the case of 'round' to a date Java _can_
 					// represent, which is '0001-01-01'.
+					if (!this.useLegacyDatetimeCode) {
+						return TimeUtil.fastTimestampCreate(tz,
+								1, 1, 1, 0, 0, 0, 0);
+					}
+
 					return fastTimestampCreate(null, 1, 1, 1, 0, 0, 0, 0);
-					
 				} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 					
-					return TimeUtil.changeTimezone(this.connection,
-							sessionCalendar, 
-							targetCalendar,
-							fastTimestampCreate(sessionCalendar, 
-									StringUtils.getInt(timestampAsBytes, 0, 4), 1,
-									1, 0, 0, 0, 0), this.connection
-									.getServerTimezoneTZ(), tz, rollForward);
+					if (!this.useLegacyDatetimeCode) {
+						return TimeUtil.fastTimestampCreate(tz,
+								StringUtils.getInt(timestampAsBytes, 0, 4), 1, 1, 0, 0, 0, 0);
+					}
 					
+					return TimeUtil.changeTimezone(this.connection,
+						sessionCalendar, 
+						targetCalendar,
+						fastTimestampCreate(sessionCalendar, 
+								StringUtils.getInt(timestampAsBytes, 0, 4), 1,
+								1, 0, 0, 0, 0), this.connection
+								.getServerTimezoneTZ(), tz, rollForward);
 				} else {
 					if (timestampAsBytes[length - 1] == '.') {
 						length--;
 					}
 					
 					// Convert from TIMESTAMP or DATE
+					
+					int year = 0;
+					int month = 0;
+					int day = 0;
+					int hour = 0;
+					int minutes = 0;
+					int seconds = 0;
+					int nanos = 0;
+					
 					switch (length) {
 					case 26:
 					case 25:
@@ -6376,14 +6406,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					case 21:
 					case 20:
 					case 19: {
-						int year = StringUtils.getInt(timestampAsBytes, 0, 4);
-						int month = StringUtils.getInt(timestampAsBytes, 5, 7);
-						int day = StringUtils.getInt(timestampAsBytes, 8, 10);
-						int hour = StringUtils.getInt(timestampAsBytes, 11, 13);
-						int minutes = StringUtils.getInt(timestampAsBytes, 14, 16);
-						int seconds = StringUtils.getInt(timestampAsBytes, 17, 19);
+						year = StringUtils.getInt(timestampAsBytes, 0, 4);
+						month = StringUtils.getInt(timestampAsBytes, 5, 7);
+						day = StringUtils.getInt(timestampAsBytes, 8, 10);
+						hour = StringUtils.getInt(timestampAsBytes, 11, 13);
+						minutes = StringUtils.getInt(timestampAsBytes, 14, 16);
+						seconds = StringUtils.getInt(timestampAsBytes, 17, 19);
 						
-						int nanos = 0;
+						nanos = 0;
 						
 						if (length > 19) {
 							int decimalIndex = StringUtils.lastIndexOf(timestampAsBytes, '.');
@@ -6402,58 +6432,39 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							}
 						}
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year, month, day, hour,
-										minutes, seconds, nanos), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						break;
 					}
 					
 					case 14: {
-						int year = StringUtils.getInt(timestampAsBytes, 0, 4);
-						int month = StringUtils.getInt(timestampAsBytes, 4, 6);
-						int day = StringUtils.getInt(timestampAsBytes, 6, 8);
-						int hour = StringUtils.getInt(timestampAsBytes, 8, 10);
-						int minutes = StringUtils.getInt(timestampAsBytes, 10, 12);
-						int seconds = StringUtils.getInt(timestampAsBytes, 12, 14);
+						year = StringUtils.getInt(timestampAsBytes, 0, 4);
+						month = StringUtils.getInt(timestampAsBytes, 4, 6);
+						day = StringUtils.getInt(timestampAsBytes, 6, 8);
+						hour = StringUtils.getInt(timestampAsBytes, 8, 10);
+						minutes = StringUtils.getInt(timestampAsBytes, 10, 12);
+						seconds = StringUtils.getInt(timestampAsBytes, 12, 14);
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar, 
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year, month, day, hour,
-										minutes, seconds, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						break;
 					}
 					
 					case 12: {
-						int year = StringUtils.getInt(timestampAsBytes, 0, 2);
+						year = StringUtils.getInt(timestampAsBytes, 0, 2);
 						
 						if (year <= 69) {
 							year = (year + 100);
 						}
 						
-						int month = StringUtils.getInt(timestampAsBytes, 2, 4);
-						int day = StringUtils.getInt(timestampAsBytes, 4, 6);
-						int hour = StringUtils.getInt(timestampAsBytes, 6, 8);
-						int minutes = StringUtils.getInt(timestampAsBytes, 8,	10);
-						int seconds = StringUtils.getInt(timestampAsBytes, 10, 12);
+						year += 1900;
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year + 1900, month, day,
-										hour, minutes, seconds, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						month = StringUtils.getInt(timestampAsBytes, 2, 4);
+						day = StringUtils.getInt(timestampAsBytes, 4, 6);
+						hour = StringUtils.getInt(timestampAsBytes, 6, 8);
+						minutes = StringUtils.getInt(timestampAsBytes, 8,	10);
+						seconds = StringUtils.getInt(timestampAsBytes, 10, 12);
+						
+						break;
 					}
 					
 					case 10: {
-						int year;
-						int month;
-						int day;
-						int hour;
-						int minutes;
-						
 						if ((this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_DATE)
 								|| (StringUtils.indexOf(timestampAsBytes, '-') != -1)) {
 							year = StringUtils.getInt(timestampAsBytes, 0, 4);
@@ -6476,91 +6487,74 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							year += 1900; // two-digit year
 						}
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year, month, day, hour,
-										minutes, 0, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						break;
 					}
 					
 					case 8: {
 						if (StringUtils.indexOf(timestampAsBytes, ':') != -1) {
-							int hour = StringUtils.getInt(timestampAsBytes, 0, 2);
-							int minutes = StringUtils.getInt(timestampAsBytes, 3, 5);
-							int seconds = StringUtils.getInt(timestampAsBytes, 6, 8);
+							hour = StringUtils.getInt(timestampAsBytes, 0, 2);
+							minutes = StringUtils.getInt(timestampAsBytes, 3, 5);
+							seconds = StringUtils.getInt(timestampAsBytes, 6, 8);
 							
-							return TimeUtil
-							.changeTimezone(this.connection,
-									sessionCalendar,
-									targetCalendar,
-									fastTimestampCreate(sessionCalendar, 1970, 1, 1,
-											hour, minutes, seconds, 0),
-											this.connection.getServerTimezoneTZ(),
-											tz, rollForward);
+							year = 1970;
+							month = 1;
+							day = 1;
 							
+							break;
 						}
 						
-						int year = StringUtils.getInt(timestampAsBytes, 0, 4);
-						int month = StringUtils.getInt(timestampAsBytes, 4, 6);
-						int day = StringUtils.getInt(timestampAsBytes, 6, 8);
+						year = StringUtils.getInt(timestampAsBytes, 0, 4);
+						month = StringUtils.getInt(timestampAsBytes, 4, 6);
+						day = StringUtils.getInt(timestampAsBytes, 6, 8);
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year - 1900, month - 1,
-										day, 0, 0, 0, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						year -= 1900;
+						month--;
+						
+						break;
 					}
 					
 					case 6: {
-						int year = StringUtils.getInt(timestampAsBytes, 0, 2);
+						year = StringUtils.getInt(timestampAsBytes, 0, 2);
 						
 						if (year <= 69) {
 							year = (year + 100);
 						}
 						
-						int month = StringUtils.getInt(timestampAsBytes, 2, 4);
-						int day = StringUtils.getInt(timestampAsBytes, 4, 6);
+						year += 1900;
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year + 1900, month, day,
-										0, 0, 0, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						month = StringUtils.getInt(timestampAsBytes, 2, 4);
+						day = StringUtils.getInt(timestampAsBytes, 4, 6);
+						
+						break;
 					}
 					
 					case 4: {
-						int year = StringUtils.getInt(timestampAsBytes, 0, 2);
+						year = StringUtils.getInt(timestampAsBytes, 0, 2);
 						
 						if (year <= 69) {
 							year = (year + 100);
 						}
 						
-						int month = StringUtils.getInt(timestampAsBytes, 2, 4);
+						year += 1900;
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, year + 1900, month, 1, 0,
-										0, 0, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						month = StringUtils.getInt(timestampAsBytes, 2, 4);
+						day = 1;
+						
+						break;
 					}
 					
 					case 2: {
-						int year = StringUtils.getInt(timestampAsBytes, 0, 2);
+						year = StringUtils.getInt(timestampAsBytes, 0, 2);
 						
 						if (year <= 69) {
 							year = (year + 100);
 						}
 						
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar,
-								targetCalendar,
-								fastTimestampCreate(null, year + 1900, 1, 1, 0, 0,
-										0, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
+						year += 1900;
+						month = 1;
+						day = 1;
+						
+						break;
 					}
 					
 					default:
@@ -6569,6 +6563,18 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 								+ "' in column " + columnIndex + ".",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 					}
+					
+					if (!this.useLegacyDatetimeCode) {
+						return TimeUtil.fastTimestampCreate(tz,
+								year, month, day, hour, minutes, seconds, nanos);
+					}
+					
+					return TimeUtil.changeTimezone(this.connection,
+						sessionCalendar,
+						targetCalendar,
+						fastTimestampCreate(sessionCalendar, year, month, day, hour,
+								minutes, seconds, nanos), this.connection
+								.getServerTimezoneTZ(), tz, rollForward);
 				}
 			}
 		} catch (Exception e) {

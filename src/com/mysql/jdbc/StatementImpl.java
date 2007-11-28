@@ -247,6 +247,7 @@ public class StatementImpl implements Statement {
 
 	protected PingTarget pingTarget = null;
 	
+	protected boolean useLegacyDatetimeCode;
 	
 	/**
 	 * Constructor for a Statement.
@@ -272,7 +273,8 @@ public class StatementImpl implements Statement {
 		this.currentCatalog = catalog;
 		this.pedantic = this.connection.getPedantic();
 		this.continueBatchOnError = this.connection.getContinueBatchOnError();
-
+		this.useLegacyDatetimeCode = this.connection.getUseLegacyDatetimeCode();
+		
 		if (!this.connection.getDontTrackOpenResources()) {
 			this.connection.registerStatement(this);
 		}
