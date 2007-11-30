@@ -56,6 +56,19 @@ nn-nn-08 - Version 5.1.6
       in trunk and beyond it will be "false" (i.e. the old date/time handling code, warts
       and all will be deprecated).
       
+    - Fixed BUG#32877 - Load balancing connection using best response time would incorrectly
+      "stick" to hosts that were down when the connection was first created.
+      
+      We solve this problem with a black list that is used during the picking of new hosts.
+      If the black list ends up including all configured hosts, the driver will retry for
+      a configurable number of times (the "retriesAllDown" configuration property, with a default
+      of 120 times), sleeping 250ms between attempts to pick a new connection.
+      
+      We've also went ahead and made the balancing strategy extensible. To create a new strategy,
+      implement the interface com.mysql.jdbc.BalanceStrategy (which also includes our standard
+      "extension" interface), and tell the driver to use it by passing in the
+      class name via the "loadBalanceStrategy" configuration property. 
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

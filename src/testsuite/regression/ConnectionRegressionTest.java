@@ -2174,33 +2174,49 @@ public class ConnectionRegressionTest extends BaseTestCase {
     	lbConn.close();
     }
 
-	private Connection getLoadBalancedConnection(String secondHost, Properties props) throws SQLException {
+	private Connection getLoadBalancedConnection(int badHostLocation, 
+			String badHost, Properties props) throws SQLException {
 		int indexOfHostStart = dbUrl.indexOf("://") + 3;
     	int indexOfHostEnd = dbUrl.indexOf("/", indexOfHostStart);
     	
-    	String backHalf = dbUrl.substring(indexOfHostStart, indexOfHostEnd);
+    	String firstHost = dbUrl.substring(indexOfHostStart, indexOfHostEnd);
     	
-    	if (backHalf.length() == 0) {
-    		backHalf = "localhost:3306";
+    	if (firstHost.length() == 0) {
+    		firstHost = "localhost:3306";
     	}
     	
     	String dbAndConfigs = dbUrl.substring(indexOfHostEnd);
     	
-    	if (secondHost != null) {
-    		secondHost = secondHost + ",";
+    	if (badHost != null) {
+    		badHost = badHost + ",";
     	}
     	
-    	Connection lbConn = DriverManager.getConnection("jdbc:mysql:loadbalance://" + backHalf + "," + secondHost + backHalf + dbAndConfigs, props);
+    	String hostsString = null;
+    	
+    	switch (badHostLocation) {
+    	case 1:
+    		hostsString = badHost + firstHost;
+    		break;
+    	case 2:
+    		hostsString = firstHost + badHost + firstHost;
+    		break;
+    	case 3:
+    		hostsString = firstHost + "," + badHost;
+    		default:
+    			throw new IllegalArgumentException();
+    	}
+    	
+    	Connection lbConn = DriverManager.getConnection("jdbc:mysql:loadbalance://" + hostsString + dbAndConfigs, props);
 		
     	return lbConn;
 	}
 	
 	private Connection getLoadBalancedConnection() throws SQLException {
-		return getLoadBalancedConnection("", null);
+		return getLoadBalancedConnection(1, "", null);
 	}
 	
 	private Connection getLoadBalancedConnection(Properties props) throws SQLException {
-		return getLoadBalancedConnection("", props);
+		return getLoadBalancedConnection(1, "", props);
 	}
 	
 	
@@ -2276,12 +2292,30 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		props.setProperty("connectTimeout", "2000");
 		props.setProperty("loadBalanceStrategy", "random");
 		
-		Connection lbConn = getLoadBalancedConnection("localhost:23", props);
+		Connection lbConn = getLoadBalancedConnection(2, "localhost:23", props);
 		
 		lbConn.setAutoCommit(false);
 		
 		for (int i = 0; i < 10; i++) {
 			lbConn.commit();
 		}
+	}
+	
+	public void testBug32877() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("connectTimeout", "2000");
+		props.setProperty("loadBalanceStrategy", "bestResponseTime");
+		
+		Connection lbConn = getLoadBalancedConnection(1, "localhost:23", props);
+		
+		lbConn.setAutoCommit(false);
+		
+		long begin = System.currentTimeMillis();
+		
+		for (int i = 0; i < 4; i++) {
+			lbConn.commit();
+		}
+		
+		assertTrue(System.currentTimeMillis() - begin < 10000);
 	}
 }

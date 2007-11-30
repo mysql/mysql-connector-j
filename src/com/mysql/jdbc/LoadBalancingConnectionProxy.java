@@ -28,6 +28,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -69,87 +70,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		}
 	}
 
-	interface BalanceStrategy {
-		abstract Connection pickConnection() throws SQLException;
-	}
-
-	class BestResponseTimeBalanceStrategy implements BalanceStrategy {
-
-		public Connection pickConnection() throws SQLException {
-			long minResponseTime = Long.MAX_VALUE;
-
-			int bestHostIndex = 0;
-
-			long[] localResponseTimes = new long[responseTimes.length];
-			
-			synchronized (responseTimes) {
-				System.arraycopy(responseTimes, 0, localResponseTimes, 0, responseTimes.length);
-			}
-			
-			SQLException ex = null;
-			
-			for (int attempts = 0; attempts < 1200 /* 5 minutes */; attempts++) {
-				for (int i = 0; i < localResponseTimes.length; i++) {
-					long candidateResponseTime = localResponseTimes[i];
-	
-					if (candidateResponseTime < minResponseTime) {
-						if (candidateResponseTime == 0) {
-							bestHostIndex = i;
-	
-							break;
-						}
-	
-						bestHostIndex = i;
-						minResponseTime = candidateResponseTime;
-					}
-				}
-	
-				if (bestHostIndex == localResponseTimes.length - 1) {
-					// try again, assuming that the previous list was mostly
-					// correct as far as distribution of response times went
-					
-					synchronized (responseTimes) {
-						System.arraycopy(responseTimes, 0, localResponseTimes, 0, responseTimes.length);
-					}
-					
-					continue;
-				}
-				String bestHost = (String) hostList.get(bestHostIndex);
-	
-				Connection conn = (Connection) liveConnections.get(bestHost);
-	
-				if (conn == null) {
-					try {
-						conn = createConnectionForHost(bestHost);
-					} catch (SQLException sqlEx) {
-						ex = sqlEx;
-						
-						if (sqlEx instanceof CommunicationsException || "08S01".equals(sqlEx.getSQLState())) {
-							localResponseTimes[bestHostIndex] = Long.MAX_VALUE;
-							
-							try {
-								Thread.sleep(250);
-							} catch (InterruptedException e) {
-							}
-							
-							continue;
-						} else {
-							throw sqlEx;
-						}
-					}
-				}
-	
-				return conn;
-			}
-			
-			if (ex != null) {
-				throw ex;
-			}
-			
-			return null; // we won't get here, compiler can't tell
-		}
-	}
-
 	// Lifted from C/J 5.1's JDBC-2.0 connection pool classes, let's merge this
 	// if/when this gets into 5.1
 	protected class ConnectionErrorFiringInvocationHandler implements
@@ -178,55 +98,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		}
 	}
 
-	class RandomBalanceStrategy implements BalanceStrategy {
-
-		public Connection pickConnection() throws SQLException {
-			
-			SQLException ex = null;
-			
-			for (int attempts = 0; attempts < 1200 /* 5 minutes */; attempts++) {
-				int random = (int) (Math.random() * hostList.size());
-
-				if (random == hostList.size()) {
-					random--;
-				}
-
-				String hostPortSpec = (String) hostList.get(random);
-
-				Connection conn = (Connection) liveConnections.get(hostPortSpec);
-				
-				if (conn == null) {
-					try {
-						conn = createConnectionForHost(hostPortSpec);
-					} catch (SQLException sqlEx) {
-						ex = sqlEx;
-						
-						if (sqlEx instanceof CommunicationsException || "08S01".equals(sqlEx.getSQLState())) {
-							
-							try {
-								Thread.sleep(250);
-							} catch (InterruptedException e) {
-							}
-							
-							continue;
-						} else {
-							throw sqlEx;
-						}
-					}
-				}
-	
-				return conn;
-			}
-			
-			if (ex != null) {
-				throw ex;
-			}
-			
-			return null; // we won't get here, compiler can't tell
-		}
-
-	}
-
 	private Connection currentConn;
 
 	private List hostList;
@@ -239,15 +110,17 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
 	private Map hostsToListIndexMap;
 
-	boolean inTransaction = false;
+	private boolean inTransaction = false;
 
-	long transactionStartTime = 0;
+	private long transactionStartTime = 0;
 
-	Properties localProps;
+	private Properties localProps;
 
-	boolean isClosed = false;
+	private boolean isClosed = false;
 
-	BalanceStrategy balancer;
+	private BalanceStrategy balancer;
+
+	private int retriesAllDown;
 
 	/**
 	 * Creates a proxy for java.sql.Connection that routes requests between the
@@ -281,16 +154,32 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		String strategy = this.localProps.getProperty("loadBalanceStrategy",
 				"random");
 
-		if ("random".equals(strategy)) {
-			this.balancer = new RandomBalanceStrategy();
-		} else if ("bestResponseTime".equals(strategy)) {
-			this.balancer = new BestResponseTimeBalanceStrategy();
-		} else {
+		String retriesAllDownAsString = this.localProps.getProperty("retriesAllDown", "120");
+		
+		try {
+			this.retriesAllDown = Integer.parseInt(retriesAllDownAsString);
+		} catch (NumberFormatException nfe) {
 			throw SQLError.createSQLException(Messages.getString(
-					"InvalidLoadBalanceStrategy", new Object[] { strategy }),
+					"LoadBalancingConnectionProxy.badValueForRetriesAllDown",
+					new Object[] { retriesAllDownAsString }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
+		
+		if ("random".equals(strategy)) {
+			this.balancer = (BalanceStrategy) Util.loadExtensions(null, props,
+					"com.mysql.jdbc.RandomBalanceStrategy",
+					"InvalidLoadBalanceStrategy").get(0);
+		} else if ("bestResponseTime".equals(strategy)) {
+			this.balancer = (BalanceStrategy) Util.loadExtensions(null, props,
+					"com.mysql.jdbc.BestResponseTimeBalanceStrategy",
+			"InvalidLoadBalanceStrategy").get(0);
+		} else {
+			this.balancer = (BalanceStrategy) Util.loadExtensions(null, props,
+					strategy, "InvalidLoadBalanceStrategy").get(0);
+		}
 
+		this.balancer.init(null, props);
+		
 		pickNewConnection();
 	}
 
@@ -302,7 +191,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 	 * @return
 	 * @throws SQLException
 	 */
-	private synchronized Connection createConnectionForHost(String hostPortSpec)
+	public synchronized Connection createConnectionForHost(String hostPortSpec)
 			throws SQLException {
 		Properties connProps = (Properties) this.localProps.clone();
 
@@ -396,6 +285,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 					((Connection) allConnections.next()).close();
 				}
 
+				if (!this.isClosed) {
+					this.balancer.destroy();
+				}
+				
 				this.liveConnections.clear();
 				this.connectionsToHostsMap.clear();
 			}
@@ -461,12 +354,20 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 	 */
 	private synchronized void pickNewConnection() throws SQLException {
 		if (this.currentConn == null) {
-			this.currentConn = this.balancer.pickConnection();
+			this.currentConn = this.balancer.pickConnection(this,
+					Collections.unmodifiableList(this.hostList),
+					Collections.unmodifiableMap(this.liveConnections),
+					(long[]) this.responseTimes.clone(),
+					this.retriesAllDown);
 
 			return;
 		}
 
-		Connection newConn = this.balancer.pickConnection();
+		Connection newConn = this.balancer.pickConnection(this,
+				Collections.unmodifiableList(this.hostList),
+				Collections.unmodifiableMap(this.liveConnections),
+				(long[]) this.responseTimes.clone(),
+				this.retriesAllDown);
 
 		newConn.setTransactionIsolation(this.currentConn
 				.getTransactionIsolation());
