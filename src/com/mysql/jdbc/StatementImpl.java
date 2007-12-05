@@ -483,7 +483,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public void close() throws SQLException {
+	public synchronized void close() throws SQLException {
 		realClose(true, true);
 	}
 
@@ -1823,8 +1823,12 @@ public class StatementImpl implements Statement {
 			}
 		}
 
-		return com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields,
+		com.mysql.jdbc.ResultSetImpl gkRs = com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields,
 				new RowDataStatic(rowSet), this.connection, this, false);
+		
+		this.openResults.add(gkRs);
+		
+		return gkRs;
 	}
 
 	/**
@@ -2220,21 +2224,21 @@ public class StatementImpl implements Statement {
 			}
 		}
 
-		if (this.results != null) {
-			if (closeOpenResults) {
-				closeOpenResults = !this.holdResultsOpenOverClose;
-			}
-
-			if (closeOpenResults && this.connection != null
-					&& !this.connection.getHoldResultsOpenOverStatementClose()) {
+		if (closeOpenResults) {
+			closeOpenResults = !this.holdResultsOpenOverClose;
+		}
+		
+		if (closeOpenResults) {
+			if (this.results != null) {
+				
 				try {
 					this.results.close();
 				} catch (Exception ex) {
 					;
 				}
-
-				this.closeAllOpenResults();
 			}
+			
+			closeAllOpenResults();
 		}
 
 		if (this.connection != null) {

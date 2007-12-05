@@ -4352,4 +4352,54 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#30508 - ResultSet returned by Statement.getGeneratedKeys()
+	 * is not closed automatically when statement that created it is closed.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug30508() throws Exception {
+		
+		try {
+			Statement ggkStatement = this.conn.createStatement();
+			this.rs = ggkStatement.getGeneratedKeys();
+			ggkStatement.close();
+
+			this.rs.next();
+			fail("Should've had an exception here");
+		} catch (SQLException sqlEx) {
+			assertEquals("S1000", sqlEx.getSQLState());
+		} finally {
+			closeMemberJDBCResources();
+		}
+		
+		try {
+			this.pstmt = this.conn.prepareStatement("SELECT 1");
+			this.rs = this.pstmt.getGeneratedKeys();
+			this.pstmt.close();
+			this.rs.next();
+			fail("Should've had an exception here");
+		} catch (SQLException sqlEx) {
+			assertEquals("S1000", sqlEx.getSQLState());
+		} finally {
+			closeMemberJDBCResources();
+		}
+		
+		if (versionMeetsMinimum(5, 0)) {
+			createProcedure("testBug30508", "() BEGIN SELECT 1; END");
+			
+			try {
+				this.pstmt = this.conn.prepareCall("{CALL testBug30508()}");
+				this.rs = this.pstmt.getGeneratedKeys();
+				this.pstmt.close();
+				this.rs.next();
+				fail("Should've had an exception here");
+			} catch (SQLException sqlEx) {
+				assertEquals("S1000", sqlEx.getSQLState());
+			} finally {
+				closeMemberJDBCResources();
+			}
+		}
+	}
 }

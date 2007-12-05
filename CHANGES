@@ -69,6 +69,9 @@ nn-nn-08 - Version 5.1.6
       "extension" interface), and tell the driver to use it by passing in the
       class name via the "loadBalanceStrategy" configuration property. 
       
+    - Fixed BUG#30508 - ResultSet returned by Statement.getGeneratedKeys() is not closed 
+      automatically when statement that created it is closed.
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053
