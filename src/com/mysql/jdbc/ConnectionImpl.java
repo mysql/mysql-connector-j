@@ -760,15 +760,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				mesg.append("Unable to connect to database.");
 			}
 
-			mesg.append("Underlying exception: \n\n");
-			mesg.append(ex.getClass().getName());
-
-			if (!getParanoid()) {
-				mesg.append(Util.stackTraceToString(ex));
-			}
-
-			throw SQLError.createSQLException(mesg.toString(),
+			SQLException sqlEx = SQLError.createSQLException(mesg.toString(),
 					SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE);
+			
+			sqlEx.initCause(ex);
+			
+			throw sqlEx;
 		}
 	}
 
@@ -2113,14 +2110,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				
 				if (!connectionGood) {
 					// We've really failed!
-					throw SQLError.createSQLException(
-							"Could not create connection to database server due to underlying exception: '"
-									+ connectionNotEstablishedBecause
-									+ "'."
-									+ (getParanoid() ? ""
-											: Util
-													.stackTraceToString(connectionNotEstablishedBecause)),
+					SQLException chainedEx = SQLError.createSQLException(
+							Messages.getString("Connection.UnableToConnect"),
 							SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+					chainedEx.initCause(connectionNotEstablishedBecause);
+					
+					throw chainedEx;
 				}
 			} else {
 				double timeout = getInitialTimeout();
@@ -2253,16 +2248,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 				if (!connectionGood) {
 					// We've really failed!
-					throw SQLError.createSQLException(
-							"Server connection failure during transaction. Due to underlying exception: '"
-									+ connectionException
-									+ "'."
-									+ (getParanoid() ? ""
-											: Util
-													.stackTraceToString(connectionException))
-									+ "\nAttempted reconnect "
-									+ getMaxReconnects() + " times. Giving up.",
+					SQLException chainedEx = SQLError.createSQLException(
+							Messages.getString("Connection.UnableToConnectWithRetries",
+									new Object[] {new Integer(getMaxReconnects())}),
 							SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+					chainedEx.initCause(connectionException);
+					
+					throw chainedEx;
 				}
 			}
 
@@ -2581,19 +2573,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					cleanup(ex);
 				}
 
-				String exceptionType = ex.getClass().getName();
-				String exceptionMessage = ex.getMessage();
-
-				if (!getParanoid()) {
-					exceptionMessage += "\n\nNested Stack Trace:\n";
-					exceptionMessage += Util.stackTraceToString(ex);
-				}
-
-				throw new java.sql.SQLException(
-						"Error during query: Unexpected Exception: "
-								+ exceptionType + " message given: "
-								+ exceptionMessage,
+				SQLException sqlEx = SQLError.createSQLException(
+						Messages.getString("Connection.UnexpectedException"),
 						SQLError.SQL_STATE_GENERAL_ERROR);
+				sqlEx.initCause(ex);
+				
+				throw sqlEx;
 			} finally {
 				if (getMaintainTimeStats()) {
 					this.lastQueryFinishedTime = System.currentTimeMillis();
@@ -5264,8 +5249,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		try {
 			this.io.sendCommand(MysqlDefs.SHUTDOWN, null, null, false, null);
 		} catch (Exception ex) {
-			throw SQLError.createSQLException("Unhandled exception '" + ex.toString()
-					+ "'", SQLError.SQL_STATE_GENERAL_ERROR);
+			SQLException sqlEx = SQLError.createSQLException(
+					Messages.getString("Connection.UnhandledExceptionDuringShutdown"),
+					SQLError.SQL_STATE_GENERAL_ERROR);
+			
+			sqlEx.initCause(ex);
+			
+			throw sqlEx;
 		}
 	}
 
