@@ -217,7 +217,18 @@ public abstract class BaseTestCase extends TestCase {
 			while (iter.hasNext()) {
 				String kvp = (String)iter.next();
 				List splitUp = StringUtils.split(kvp, "=", false);
-				props.setProperty(splitUp.get(0).toString().trim(), splitUp.get(1).toString());
+				StringBuffer value = new StringBuffer();
+				
+				for (int i = 1; i < splitUp.size(); i++) {
+					if (i != 1) {
+						value.append("=");
+					}
+					
+					value.append(splitUp.get(i));
+					
+				}
+				
+				props.setProperty(splitUp.get(0).toString().trim(), value.toString());
 			}
 		}
 		
