@@ -287,11 +287,14 @@ public abstract class ResultSetRow {
 		} catch (SQLException sqlEx) {
 			throw sqlEx; // don't re-wrap
 		} catch (Exception e) {
-			throw SQLError.createSQLException(Messages.getString(
+			SQLException sqlEx = SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_Date", new Object[] {
 							new String(dateAsBytes),
 							Constants.integerValueOf(columnIndex + 1) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
 		}
 	}
 

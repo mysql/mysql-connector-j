@@ -1141,7 +1141,7 @@ public class TimeUtil {
 	final static Timestamp fastTimestampCreate(TimeZone tz, int year,
  			int month, int day, int hour, int minute, int seconds,
  			int secondsPart) {
-		Calendar cal = new GregorianCalendar(tz);
+		Calendar cal = (tz == null) ? new GregorianCalendar() : new GregorianCalendar(tz);
 		cal.clear();
 		
 		// why-oh-why is this different than java.util.date,

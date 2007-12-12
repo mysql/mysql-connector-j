@@ -416,7 +416,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			this.serverTimeZoneTz = this.connection.getServerTimezoneTZ();
 		}
 		
-		useLegacyDatetimeCode = !this.connection.getUseLegacyDatetimeCode();
+		useLegacyDatetimeCode = this.connection.getUseLegacyDatetimeCode();
 	}
 
 	/**
@@ -488,7 +488,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (this.fields != null) {
 			initializeWithMetadata();
 		} // else called by Connection.initializeResultsMetadataFromCache() when cached
-		useLegacyDatetimeCode = !this.connection.getUseLegacyDatetimeCode();
+		useLegacyDatetimeCode = this.connection.getUseLegacyDatetimeCode();
 	}
 
 	public void initializeWithMetadata() throws SQLException {
@@ -1002,7 +1002,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		boolean useGmtMillis = this.connection.getUseGmtMillisForDatetimes();
 		
 		return TimeUtil.fastDateCreate(useGmtMillis,
-				useGmtMillis ? getGmtCalendar() : null,
+				useGmtMillis ? getGmtCalendar() : cal,
 				cal, year, month, day);
 	}
 
@@ -2322,10 +2322,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		} catch (SQLException sqlEx) {
 			throw sqlEx; // don't re-wrap
 		} catch (Exception e) {
-			throw SQLError.createSQLException(Messages.getString(
+			SQLException sqlEx = SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_Date", new Object[] { stringVal,
 							Constants.integerValueOf(columnIndex) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+			
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
 		}
 	}
 	
