@@ -85,6 +85,17 @@ nn-nn-08 - Version 5.1.6
       throw a SQLException with the SQLState of "08S01" at the time of the ping, which
       will cause the connection to be invalidated with most pools in use today.
       
+    - Fixed issue where driver could send invalid server-side prepared statement 
+      IDs to the server when the driver was setup to do auto-reconnect as the
+      connection could get set up enough to start sending queries on one thread,
+      while the thread that "noticed" the connection was down hasn't completed
+      re-preparing all of the server-side prepared statements that were open when
+      the connection died.
+      
+      Potentially fixes cause for bug 28934. Potentially fixes other possible race
+      conditions where one thread that has created a connection "shares" it with other
+      threads if the connection is reconnected due to auto-reconnect functionality.
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

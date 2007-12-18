@@ -1967,198 +1967,56 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	protected void createNewIO(boolean isForReconnect)
 			throws SQLException {
-		Properties mergedProps  = exposeAsProperties(this.props);
-
-		long queriesIssuedFailedOverCopy = this.queriesIssuedFailedOver;
-		this.queriesIssuedFailedOver = 0;
+		// Synchronization Not needed for *new* connections, but defintely for
+		// connections going through fail-over, since we might get the
+		// new connection up and running *enough* to start sending
+		// cached or still-open server-side prepared statements over
+		// to the backend before we get a chance to re-prepare them...
 		
-		try {
-			if (!getHighAvailability() && !this.failedOver) {
-				boolean connectionGood = false;
-				Exception connectionNotEstablishedBecause = null;
-				
-				int hostIndex = 0;
-
-				//
-				// TODO: Eventually, when there's enough metadata
-				// on the server to support it, we should come up
-				// with a smarter way to pick what server to connect
-				// to...perhaps even making it 'pluggable'
-				//
-				if (getRoundRobinLoadBalance()) {
-					hostIndex = getNextRoundRobinHostIndex(getURL(),
-							this.hostList);
-				}
-
-				for (; hostIndex < this.hostListSize; hostIndex++) {
-
-					if (hostIndex == 0) {
-						this.hasTriedMasterFlag = true;
-					}
-					
-					try {
-						String newHostPortPair = (String) this.hostList
-								.get(hostIndex);
-
-						int newPort = 3306;
-
-						String[] hostPortPair = NonRegisteringDriver
-								.parseHostPortPair(newHostPortPair);
-						String newHost = hostPortPair[NonRegisteringDriver.HOST_NAME_INDEX];
-
-						if (newHost == null || StringUtils.isEmptyOrWhitespaceOnly(newHost)) {
-							newHost = "localhost";
-						}
-
-						if (hostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX] != null) {
-							try {
-								newPort = Integer
-										.parseInt(hostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]);
-							} catch (NumberFormatException nfe) {
-								throw SQLError.createSQLException(
-										"Illegal connection port value '"
-												+ hostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]
-												+ "'",
-										SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
-							}
-						}
-
-						this.io = new MysqlIO(newHost, newPort, mergedProps,
-								getSocketFactoryClassName(), this,
-								getSocketTimeout(), 
-								this.largeRowSizeThreshold.getValueAsInt());
+		synchronized (this.mutex) {
+			Properties mergedProps  = exposeAsProperties(this.props);
 	
-						this.io.doHandshake(this.user, this.password,
-								this.database);
-						this.connectionId = this.io.getThreadId();
-						this.isClosed = false;
-
-						// save state from old connection
-						boolean oldAutoCommit = getAutoCommit();
-						int oldIsolationLevel = this.isolationLevel;
-						boolean oldReadOnly = isReadOnly();
-						String oldCatalog = getCatalog();
-
-						// Server properties might be different
-						// from previous connection, so initialize
-						// again...
-						initializePropsFromServer();
-
-						if (isForReconnect) {
-							// Restore state from old connection
-							setAutoCommit(oldAutoCommit);
-
-							if (this.hasIsolationLevels) {
-								setTransactionIsolation(oldIsolationLevel);
-							}
-
-							setCatalog(oldCatalog);
-						}
-
-						if (hostIndex != 0) {
-							setFailedOverState();
-							queriesIssuedFailedOverCopy = 0;
-						} else {
-							this.failedOver = false;
-							queriesIssuedFailedOverCopy = 0;
-
-							if (this.hostListSize > 1) {
-								setReadOnlyInternal(false);
-							} else {
-								setReadOnlyInternal(oldReadOnly);
-							}
-						}
-
-						connectionGood = true;
-						
-						break; // low-level connection succeeded
-					} catch (Exception EEE) {
-						if (this.io != null) {
-							this.io.forceClose();
-						}
-
-						connectionNotEstablishedBecause = EEE;
-						
-						connectionGood = false;
-						
-						if (EEE instanceof SQLException) {
-							SQLException sqlEx = (SQLException)EEE;
-						
-							String sqlState = sqlEx.getSQLState();
+			long queriesIssuedFailedOverCopy = this.queriesIssuedFailedOver;
+			this.queriesIssuedFailedOver = 0;
+			
+			try {
+				if (!getHighAvailability() && !this.failedOver) {
+					boolean connectionGood = false;
+					Exception connectionNotEstablishedBecause = null;
+					
+					int hostIndex = 0;
 	
-							// If this isn't a communications failure, it will probably never succeed, so
-							// give up right here and now ....
-							if ((sqlState == null)
-									|| !sqlState
-											.equals(SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE)) {
-								throw sqlEx;
-							}
+					//
+					// TODO: Eventually, when there's enough metadata
+					// on the server to support it, we should come up
+					// with a smarter way to pick what server to connect
+					// to...perhaps even making it 'pluggable'
+					//
+					if (getRoundRobinLoadBalance()) {
+						hostIndex = getNextRoundRobinHostIndex(getURL(),
+								this.hostList);
+					}
+	
+					for (; hostIndex < this.hostListSize; hostIndex++) {
+	
+						if (hostIndex == 0) {
+							this.hasTriedMasterFlag = true;
 						}
-
-						// Check next host, it might be up...
-						if (getRoundRobinLoadBalance()) {
-							hostIndex = getNextRoundRobinHostIndex(getURL(),
-									this.hostList) - 1 /* incremented by for loop next time around */;
-						} else if ((this.hostListSize - 1) == hostIndex) {
-							throw SQLError.createCommunicationsException(this,
-									(this.io != null) ? this.io
-											.getLastPacketSentTimeMs() : 0,
-											EEE);
-						}
-					}
-				}
-				
-				if (!connectionGood) {
-					// We've really failed!
-					SQLException chainedEx = SQLError.createSQLException(
-							Messages.getString("Connection.UnableToConnect"),
-							SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
-					chainedEx.initCause(connectionNotEstablishedBecause);
-					
-					throw chainedEx;
-				}
-			} else {
-				double timeout = getInitialTimeout();
-				boolean connectionGood = false;
-
-				Exception connectionException = null;
-
-				int hostIndex = 0;
-
-				if (getRoundRobinLoadBalance()) {
-					hostIndex = getNextRoundRobinHostIndex(getURL(),
-							this.hostList);
-				}
-
-				for (; (hostIndex < this.hostListSize) && !connectionGood; hostIndex++) {
-					if (hostIndex == 0) {
-						this.hasTriedMasterFlag = true;
-					}
-					
-					if (this.preferSlaveDuringFailover && hostIndex == 0) {
-						hostIndex++;
-					}
-
-					for (int attemptCount = 0; (attemptCount < getMaxReconnects())
-							&& !connectionGood; attemptCount++) {
+						
 						try {
-							if (this.io != null) {
-								this.io.forceClose();
-							}
-
 							String newHostPortPair = (String) this.hostList
 									.get(hostIndex);
-
+	
 							int newPort = 3306;
-
+	
 							String[] hostPortPair = NonRegisteringDriver
 									.parseHostPortPair(newHostPortPair);
 							String newHost = hostPortPair[NonRegisteringDriver.HOST_NAME_INDEX];
-
+	
 							if (newHost == null || StringUtils.isEmptyOrWhitespaceOnly(newHost)) {
 								newHost = "localhost";
 							}
-
+	
 							if (hostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX] != null) {
 								try {
 									newPort = Integer
@@ -2171,142 +2029,292 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 											SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
 								}
 							}
-
-							this.io = new MysqlIO(newHost, newPort,
-									mergedProps, getSocketFactoryClassName(),
-									this, getSocketTimeout(),
+	
+							this.io = new MysqlIO(newHost, newPort, mergedProps,
+									getSocketFactoryClassName(), this,
+									getSocketTimeout(), 
 									this.largeRowSizeThreshold.getValueAsInt());
+		
 							this.io.doHandshake(this.user, this.password,
 									this.database);
-							pingInternal(false);
 							this.connectionId = this.io.getThreadId();
 							this.isClosed = false;
-
+	
 							// save state from old connection
 							boolean oldAutoCommit = getAutoCommit();
 							int oldIsolationLevel = this.isolationLevel;
 							boolean oldReadOnly = isReadOnly();
 							String oldCatalog = getCatalog();
-
+	
 							// Server properties might be different
 							// from previous connection, so initialize
 							// again...
 							initializePropsFromServer();
-
+	
 							if (isForReconnect) {
 								// Restore state from old connection
 								setAutoCommit(oldAutoCommit);
-
+	
 								if (this.hasIsolationLevels) {
 									setTransactionIsolation(oldIsolationLevel);
 								}
-
+	
 								setCatalog(oldCatalog);
 							}
-
-							connectionGood = true;
-
+	
 							if (hostIndex != 0) {
 								setFailedOverState();
 								queriesIssuedFailedOverCopy = 0;
 							} else {
 								this.failedOver = false;
 								queriesIssuedFailedOverCopy = 0;
-
+	
 								if (this.hostListSize > 1) {
 									setReadOnlyInternal(false);
 								} else {
 									setReadOnlyInternal(oldReadOnly);
 								}
 							}
-
-							break;
+	
+							connectionGood = true;
+							
+							break; // low-level connection succeeded
 						} catch (Exception EEE) {
-							connectionException = EEE;
+							if (this.io != null) {
+								this.io.forceClose();
+							}
+	
+							connectionNotEstablishedBecause = EEE;
+							
 							connectionGood = false;
 							
+							if (EEE instanceof SQLException) {
+								SQLException sqlEx = (SQLException)EEE;
+							
+								String sqlState = sqlEx.getSQLState();
+		
+								// If this isn't a communications failure, it will probably never succeed, so
+								// give up right here and now ....
+								if ((sqlState == null)
+										|| !sqlState
+												.equals(SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE)) {
+									throw sqlEx;
+								}
+							}
+	
 							// Check next host, it might be up...
 							if (getRoundRobinLoadBalance()) {
 								hostIndex = getNextRoundRobinHostIndex(getURL(),
 										this.hostList) - 1 /* incremented by for loop next time around */;
+							} else if ((this.hostListSize - 1) == hostIndex) {
+								throw SQLError.createCommunicationsException(this,
+										(this.io != null) ? this.io
+												.getLastPacketSentTimeMs() : 0,
+												EEE);
 							}
 						}
-
-						if (connectionGood) {
-							break;
-						}
-
-						if (attemptCount > 0) {
-							try {
-								Thread.sleep((long) timeout * 1000);
-							} catch (InterruptedException IE) {
-								// ignore
-							}
-						}
-					} // end attempts for a single host
-				} // end iterator for list of hosts
-
-				if (!connectionGood) {
-					// We've really failed!
-					SQLException chainedEx = SQLError.createSQLException(
-							Messages.getString("Connection.UnableToConnectWithRetries",
-									new Object[] {new Integer(getMaxReconnects())}),
-							SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
-					chainedEx.initCause(connectionException);
+					}
 					
-					throw chainedEx;
-				}
-			}
-
-			if (getParanoid() && !getHighAvailability()
-					&& (this.hostListSize <= 1)) {
-				this.password = null;
-				this.user = null;
-			}
-
-			if (isForReconnect) {
-				//
-				// Retrieve any 'lost' prepared statements if re-connecting
-				//
-				Iterator statementIter = this.openStatements.values()
-						.iterator();
-
-				//
-				// We build a list of these outside the map of open statements,
-				// because
-				// in the process of re-preparing, we might end up having to
-				// close
-				// a prepared statement, thus removing it from the map, and
-				// generating
-				// a ConcurrentModificationException
-				//
-				Stack serverPreparedStatements = null;
-
-				while (statementIter.hasNext()) {
-					Object statementObj = statementIter.next();
-
-					if (statementObj instanceof ServerPreparedStatement) {
-						if (serverPreparedStatements == null) {
-							serverPreparedStatements = new Stack();
+					if (!connectionGood) {
+						// We've really failed!
+						SQLException chainedEx = SQLError.createSQLException(
+								Messages.getString("Connection.UnableToConnect"),
+								SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+						chainedEx.initCause(connectionNotEstablishedBecause);
+						
+						throw chainedEx;
+					}
+				} else {
+					double timeout = getInitialTimeout();
+					boolean connectionGood = false;
+	
+					Exception connectionException = null;
+	
+					int hostIndex = 0;
+	
+					if (getRoundRobinLoadBalance()) {
+						hostIndex = getNextRoundRobinHostIndex(getURL(),
+								this.hostList);
+					}
+	
+					for (; (hostIndex < this.hostListSize) && !connectionGood; hostIndex++) {
+						if (hostIndex == 0) {
+							this.hasTriedMasterFlag = true;
 						}
-
-						serverPreparedStatements.add(statementObj);
+						
+						if (this.preferSlaveDuringFailover && hostIndex == 0) {
+							hostIndex++;
+						}
+	
+						for (int attemptCount = 0; (attemptCount < getMaxReconnects())
+								&& !connectionGood; attemptCount++) {
+							try {
+								if (this.io != null) {
+									this.io.forceClose();
+								}
+	
+								String newHostPortPair = (String) this.hostList
+										.get(hostIndex);
+	
+								int newPort = 3306;
+	
+								String[] hostPortPair = NonRegisteringDriver
+										.parseHostPortPair(newHostPortPair);
+								String newHost = hostPortPair[NonRegisteringDriver.HOST_NAME_INDEX];
+	
+								if (newHost == null || StringUtils.isEmptyOrWhitespaceOnly(newHost)) {
+									newHost = "localhost";
+								}
+	
+								if (hostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX] != null) {
+									try {
+										newPort = Integer
+												.parseInt(hostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]);
+									} catch (NumberFormatException nfe) {
+										throw SQLError.createSQLException(
+												"Illegal connection port value '"
+														+ hostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]
+														+ "'",
+												SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+									}
+								}
+	
+								this.io = new MysqlIO(newHost, newPort,
+										mergedProps, getSocketFactoryClassName(),
+										this, getSocketTimeout(),
+										this.largeRowSizeThreshold.getValueAsInt());
+								this.io.doHandshake(this.user, this.password,
+										this.database);
+								pingInternal(false);
+								this.connectionId = this.io.getThreadId();
+								this.isClosed = false;
+	
+								// save state from old connection
+								boolean oldAutoCommit = getAutoCommit();
+								int oldIsolationLevel = this.isolationLevel;
+								boolean oldReadOnly = isReadOnly();
+								String oldCatalog = getCatalog();
+	
+								// Server properties might be different
+								// from previous connection, so initialize
+								// again...
+								initializePropsFromServer();
+	
+								if (isForReconnect) {
+									// Restore state from old connection
+									setAutoCommit(oldAutoCommit);
+	
+									if (this.hasIsolationLevels) {
+										setTransactionIsolation(oldIsolationLevel);
+									}
+	
+									setCatalog(oldCatalog);
+								}
+	
+								connectionGood = true;
+	
+								if (hostIndex != 0) {
+									setFailedOverState();
+									queriesIssuedFailedOverCopy = 0;
+								} else {
+									this.failedOver = false;
+									queriesIssuedFailedOverCopy = 0;
+	
+									if (this.hostListSize > 1) {
+										setReadOnlyInternal(false);
+									} else {
+										setReadOnlyInternal(oldReadOnly);
+									}
+								}
+	
+								break;
+							} catch (Exception EEE) {
+								connectionException = EEE;
+								connectionGood = false;
+								
+								// Check next host, it might be up...
+								if (getRoundRobinLoadBalance()) {
+									hostIndex = getNextRoundRobinHostIndex(getURL(),
+											this.hostList) - 1 /* incremented by for loop next time around */;
+								}
+							}
+	
+							if (connectionGood) {
+								break;
+							}
+	
+							if (attemptCount > 0) {
+								try {
+									Thread.sleep((long) timeout * 1000);
+								} catch (InterruptedException IE) {
+									// ignore
+								}
+							}
+						} // end attempts for a single host
+					} // end iterator for list of hosts
+	
+					if (!connectionGood) {
+						// We've really failed!
+						SQLException chainedEx = SQLError.createSQLException(
+								Messages.getString("Connection.UnableToConnectWithRetries",
+										new Object[] {new Integer(getMaxReconnects())}),
+								SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+						chainedEx.initCause(connectionException);
+						
+						throw chainedEx;
 					}
 				}
-
-				if (serverPreparedStatements != null) {
-					while (!serverPreparedStatements.isEmpty()) {
-						((ServerPreparedStatement) serverPreparedStatements
-								.pop()).rePrepare();
+	
+				if (getParanoid() && !getHighAvailability()
+						&& (this.hostListSize <= 1)) {
+					this.password = null;
+					this.user = null;
+				}
+	
+				if (isForReconnect) {
+					//
+					// Retrieve any 'lost' prepared statements if re-connecting
+					//
+					Iterator statementIter = this.openStatements.values()
+							.iterator();
+	
+					//
+					// We build a list of these outside the map of open statements,
+					// because
+					// in the process of re-preparing, we might end up having to
+					// close
+					// a prepared statement, thus removing it from the map, and
+					// generating
+					// a ConcurrentModificationException
+					//
+					Stack serverPreparedStatements = null;
+	
+					while (statementIter.hasNext()) {
+						Object statementObj = statementIter.next();
+	
+						if (statementObj instanceof ServerPreparedStatement) {
+							if (serverPreparedStatements == null) {
+								serverPreparedStatements = new Stack();
+							}
+	
+							serverPreparedStatements.add(statementObj);
+						}
+					}
+	
+					if (serverPreparedStatements != null) {
+						while (!serverPreparedStatements.isEmpty()) {
+							((ServerPreparedStatement) serverPreparedStatements
+									.pop()).rePrepare();
+						}
 					}
 				}
-			}
-		} finally {
-			this.queriesIssuedFailedOver = queriesIssuedFailedOverCopy;
-			
-			if (this.io != null && getStatementInterceptors() != null) {
-				this.io.initializeStatementInterceptors(
-						getStatementInterceptors(), mergedProps);
+			} finally {
+				this.queriesIssuedFailedOver = queriesIssuedFailedOverCopy;
+				
+				if (this.io != null && getStatementInterceptors() != null) {
+					this.io.initializeStatementInterceptors(
+							getStatementInterceptors(), mergedProps);
+				}
 			}
 		}
 	}
@@ -2316,32 +2324,34 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		this.cachedPreparedStatementParams = new HashMap(cacheSize);
 		
-		this.serverSideStatementCheckCache = new LRUCache(cacheSize);
-		
-		this.serverSideStatementCache = new LRUCache(cacheSize) {
-			protected boolean removeEldestEntry(java.util.Map.Entry eldest) {
-				if (this.maxElements <= 1) {
-					return false;
-				}
-				
-				boolean removeIt = super.removeEldestEntry(eldest);
-				
-				if (removeIt) {
-					ServerPreparedStatement ps = 
-						(ServerPreparedStatement)eldest.getValue();
-					ps.isCached = false;
-					ps.setClosed(false);
-					
-					try {
-						ps.close();
-					} catch (SQLException sqlEx) {
-						// punt
+		if (getUseServerPreparedStmts()) {
+			this.serverSideStatementCheckCache = new LRUCache(cacheSize);
+			
+			this.serverSideStatementCache = new LRUCache(cacheSize) {
+				protected boolean removeEldestEntry(java.util.Map.Entry eldest) {
+					if (this.maxElements <= 1) {
+						return false;
 					}
+					
+					boolean removeIt = super.removeEldestEntry(eldest);
+					
+					if (removeIt) {
+						ServerPreparedStatement ps = 
+							(ServerPreparedStatement)eldest.getValue();
+						ps.isCached = false;
+						ps.setClosed(false);
+						
+						try {
+							ps.close();
+						} catch (SQLException sqlEx) {
+							// punt
+						}
+					}
+					
+					return removeIt;
 				}
-				
-				return removeIt;
-			}
-		};
+			};
+		}
 	}
 
 	/**

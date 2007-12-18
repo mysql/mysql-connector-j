@@ -5952,8 +5952,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database access error occurs
 	 */
 	public Timestamp getTimestamp(int columnIndex) throws java.sql.SQLException {
-		checkColumnBounds(columnIndex);
-		
 		return getTimestampInternal(columnIndex, null, this.getDefaultTimeZone(),
 				false);
 	}
@@ -6618,6 +6616,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					timestampValue, tz,
 					rollForward);
 		} else {
+			checkClosed();
+			checkColumnBounds(columnIndex);
+			
 			tsVal = this.thisRow.getTimestampFast(columnIndex - 1, 
 					targetCalendar, tz, rollForward, this.connection, this);
 		}

@@ -583,12 +583,16 @@ public class ServerPreparedStatement extends PreparedStatement {
 	protected void setClosed(boolean flag) {
 		this.isClosed = flag;
 	}
+	
 	/**
 	 * @see java.sql.Statement#close()
 	 */
-	public void close() throws SQLException {
+	public synchronized void close() throws SQLException {
 		if (this.isCached) {
+			clearParameters();
+			
 			this.isClosed = true;
+			
 			this.connection.recachePreparedStatement(this);
 			return;
 		}
