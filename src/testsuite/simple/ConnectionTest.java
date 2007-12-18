@@ -1602,4 +1602,57 @@ public class ConnectionTest extends BaseTestCase {
 	public void testNonVerifyServerCert() throws Exception {
 		getConnectionWithProps("useSSL=true,verifyServerCertificate=false,requireSSL=true");
 	}
+	
+	public void testSelfDestruct() throws Exception {
+		Connection selfDestructingConn = getConnectionWithProps("selfDestructOnPingMaxOperations=2");
+		
+		boolean failed = false;
+		
+		for (int i = 0; i < 20; i++) {
+			selfDestructingConn.createStatement().executeQuery("SELECT 1");
+			
+			try {
+				selfDestructingConn.createStatement().executeQuery("/* ping */ SELECT 1");
+			} catch (SQLException sqlEx) {
+				String sqlState = sqlEx.getSQLState();
+				
+				assertEquals("08S01", sqlState);
+				
+				failed = true;
+				
+				break;
+			}
+		}
+			
+		if (!failed) {
+			fail("Connection should've self-destructed");
+		}
+		
+		failed = false;
+		
+		selfDestructingConn = getConnectionWithProps("selfDestructOnPingSecondsLifetime=1");
+		
+		long begin = System.currentTimeMillis();
+			
+		for (int i = 0; i < 20; i++) {
+			selfDestructingConn.createStatement().executeQuery("SELECT SLEEP(1)");
+			
+			try {
+				selfDestructingConn.createStatement().executeQuery("/* ping */ SELECT 1");
+			} catch (SQLException sqlEx) {
+				String sqlState = sqlEx.getSQLState();
+				
+				assertEquals("08S01", sqlState);
+				
+				failed = true;
+				
+				break;
+			}
+		}
+		
+		if (!failed) {
+			fail("Connection should've self-destructed");
+		}
+		
+	}
 }

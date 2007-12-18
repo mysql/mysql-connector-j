@@ -1277,6 +1277,22 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.secondsBeforeRetryMaster"), //$NON-NLS-1$
 			"3.0.2", HA_CATEGORY, 8); //$NON-NLS-1$
 
+	private IntegerConnectionProperty selfDestructOnPingSecondsLifetime = new IntegerConnectionProperty(
+			"selfDestructOnPingSecondsLifetime",
+			0,
+			0,
+			Integer.MAX_VALUE,
+			Messages.getString("ConnectionProperties.selfDestructOnPingSecondsLifetime"),
+			"5.1.6", HA_CATEGORY, Integer.MAX_VALUE);
+	
+	private IntegerConnectionProperty selfDestructOnPingMaxOperations = new IntegerConnectionProperty(
+			"selfDestructOnPingMaxOperations",
+			0,
+			0,
+			Integer.MAX_VALUE,
+			Messages.getString("ConnectionProperties.selfDestructOnPingMaxOperations"),
+			"5.1.6", HA_CATEGORY, Integer.MAX_VALUE);
+			
 	private StringConnectionProperty serverTimezone = new StringConnectionProperty(
 			"serverTimezone", //$NON-NLS-1$
 			null,
@@ -4324,5 +4340,21 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setUseLegacyDatetimeCode(boolean flag) {
 		this.useLegacyDatetimeCode.setValue(flag);
+	}
+
+	public int getSelfDestructOnPingSecondsLifetime() {
+		return this.selfDestructOnPingSecondsLifetime.getValueAsInt();
+	}
+
+	public void setSelfDestructOnPingSecondsLifetime(int seconds) {
+		this.selfDestructOnPingSecondsLifetime.setValue(seconds);
+	}
+
+	public int getSelfDestructOnPingMaxOperations() {
+		return this.selfDestructOnPingMaxOperations.getValueAsInt();
+	}
+
+	public void setSelfDestructOnPingMaxOperations(int maxOperations) {
+		this.selfDestructOnPingMaxOperations.setValue(maxOperations);
 	}
 }

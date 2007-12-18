@@ -234,6 +234,7 @@ class MysqlIO {
 	private List statementInterceptors;
 	private boolean useDirectRowUnpack = true;
 	private int useBufferRowSizeThreshold;
+	private int commandCount = 0;
 
     /**
      * Constructor:  Connect to the MySQL server and setup a stream connection.
@@ -591,6 +592,10 @@ class MysqlIO {
             int packetLength = (this.packetHeaderBuf[0] & 0xff) +
                 ((this.packetHeaderBuf[1] & 0xff) << 8) +
                 ((this.packetHeaderBuf[2] & 0xff) << 16);
+            
+            if (packetLength > this.maxAllowedPacket) {
+                throw new PacketTooBigException(packetLength, this.maxAllowedPacket);
+            }
 
             if (this.traceProtocol) {
                 StringBuffer traceMessageBuf = new StringBuffer();
@@ -1754,6 +1759,8 @@ class MysqlIO {
     final Buffer sendCommand(int command, String extraData, Buffer queryPacket,
         boolean skipCheck, String extraDataCharEncoding)
         throws SQLException {
+    	this.commandCount++;
+    	
         //
         // We cache these locally, per-command, as the checks
         // for them are in very 'hot' sections of the I/O code
@@ -4457,5 +4464,9 @@ class MysqlIO {
 
 	protected String getQueryTimingUnits() {
 		return this.queryTimingUnits;
+	}
+	
+	protected int getCommandCount() {
+		return this.commandCount;
 	}
 }

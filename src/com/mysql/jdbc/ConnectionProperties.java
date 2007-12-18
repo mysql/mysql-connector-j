@@ -1586,4 +1586,12 @@ public interface ConnectionProperties {
 	public abstract boolean getUseLegacyDatetimeCode();
 
 	public abstract void setUseLegacyDatetimeCode(boolean flag);
+	
+	public int getSelfDestructOnPingSecondsLifetime();
+
+	public void setSelfDestructOnPingSecondsLifetime(int seconds);
+
+	public int getSelfDestructOnPingMaxOperations();
+
+	public void setSelfDestructOnPingMaxOperations(int maxOperations);
 }

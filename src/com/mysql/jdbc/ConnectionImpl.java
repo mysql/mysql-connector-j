@@ -1971,7 +1971,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		long queriesIssuedFailedOverCopy = this.queriesIssuedFailedOver;
 		this.queriesIssuedFailedOver = 0;
-
+		
 		try {
 			if (!getHighAvailability() && !this.failedOver) {
 				boolean connectionGood = false;
@@ -3689,7 +3689,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	}
 
 	private boolean usingCachedConfig = false;
-	
+
 	/**
 	 * Loads the result of 'SHOW VARIABLES' into the serverVariables field so
 	 * that the driver can configure itself.
@@ -3899,6 +3899,19 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			checkClosed();
 		}
 
+		long pingMillisLifetime = getSelfDestructOnPingSecondsLifetime();
+		int pingMaxOperations = getSelfDestructOnPingMaxOperations();
+
+		if ((pingMillisLifetime > 0 && (System.currentTimeMillis() - this.connectionCreationTimeMillis) > pingMillisLifetime)
+				|| (pingMaxOperations > 0 && pingMaxOperations <= this.io
+						.getCommandCount())) {
+
+			close();
+
+			throw SQLError.createSQLException(Messages
+					.getString("Connection.exceededConnectionLifetime"),
+					SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE);
+		}
 		// Need MySQL-3.22.1, but who uses anything older!?
 		this.io.sendCommand(MysqlDefs.PING, null, null, false, null);
 	}

@@ -2524,4 +2524,20 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 	public void setUseLegacyDatetimeCode(boolean flag) {
 		this.mc.setUseLegacyDatetimeCode(flag);
 	}
+
+	public int getSelfDestructOnPingMaxOperations() {
+		return this.mc.getSelfDestructOnPingMaxOperations();
+	}
+
+	public int getSelfDestructOnPingSecondsLifetime() {
+		return this.mc.getSelfDestructOnPingSecondsLifetime();
+	}
+
+	public void setSelfDestructOnPingMaxOperations(int maxOperations) {
+		this.mc.setSelfDestructOnPingMaxOperations(maxOperations);
+	}
+
+	public void setSelfDestructOnPingSecondsLifetime(int seconds) {
+		this.mc.setSelfDestructOnPingSecondsLifetime(seconds);
+	}
 }
