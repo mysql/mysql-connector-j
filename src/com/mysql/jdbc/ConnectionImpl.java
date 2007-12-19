@@ -775,13 +775,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		if (histogramCounts == null) {
 			createInitialHistogram(histogramBreakpoints,
 					currentLowerBound, currentUpperBound);
-		}
-
-		for (int i = 0; i < HISTOGRAM_BUCKETS; i++) {
-			if (histogramBreakpoints[i] >= value) {
-				histogramCounts[i] += numberOfTimes;
-
-				break;
+		} else {
+			for (int i = 0; i < HISTOGRAM_BUCKETS; i++) {
+				if (histogramBreakpoints[i] >= value) {
+					histogramCounts[i] += numberOfTimes;
+	
+					break;
+				}
 			}
 		}
 	}

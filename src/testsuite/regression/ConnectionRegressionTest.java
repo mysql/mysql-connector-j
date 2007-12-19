@@ -2202,7 +2202,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
     		break;
     	case 3:
     		hostsString = firstHost + "," + badHost;
-    		default:
+    		break;
+    	default:
     			throw new IllegalArgumentException();
     	}
     	

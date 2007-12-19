@@ -1090,7 +1090,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				int lastParenIndex = line.lastIndexOf(")");
 	
 				if (lastParenIndex != (line.length() - 1)) {
-					String cascadeOptions = cascadeOptions = line
+					String cascadeOptions = line
 							.substring(lastParenIndex + 1);
 					commentBuf.append(" ");
 					commentBuf.append(cascadeOptions);

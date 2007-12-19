@@ -52,10 +52,10 @@ public class MysqlXADataSource extends MysqlDataSource implements
 	/**
 	 * @see javax.sql.XADataSource#getXAConnection(String, String)
 	 */
-	public XAConnection getXAConnection(String user, String password)
+	public XAConnection getXAConnection(String u, String p)
 			throws SQLException {
 
-		Connection conn = getConnection(user, password);
+		Connection conn = getConnection(u, p);
 
 		return wrapConnection(conn);
 	}
