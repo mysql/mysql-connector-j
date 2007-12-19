@@ -24,12 +24,6 @@
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
-
-import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
-import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
  * This interface is intended to be used by implementors of statement

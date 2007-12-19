@@ -24,7 +24,6 @@ package com.mysql.jdbc.integration.jboss;
 
 import java.sql.SQLException;
 
-import org.jboss.resource.adapter.jdbc.ExceptionSorter;
 import org.jboss.resource.adapter.jdbc.vendor.MySQLExceptionSorter;
 
 /**

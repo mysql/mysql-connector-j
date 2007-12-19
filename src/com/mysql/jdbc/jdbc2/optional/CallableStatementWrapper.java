@@ -34,12 +34,8 @@ import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Date;
-import java.sql.PreparedStatement;
-//import java.sql.NClob;
 import java.sql.Ref;
-//import java.sql.RowId;
 import java.sql.SQLException;
-//import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
@@ -47,7 +43,6 @@ import java.util.Map;
 
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Util;
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 /**
  * Wraps callable statements created by pooled connections.

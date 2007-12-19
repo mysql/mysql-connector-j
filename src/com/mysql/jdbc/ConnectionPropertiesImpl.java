@@ -23,15 +23,10 @@
 
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.log.Log;
-import com.mysql.jdbc.log.StandardLogger;
-
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
-
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,6 +37,9 @@ import java.util.TreeMap;
 import javax.naming.RefAddr;
 import javax.naming.Reference;
 import javax.naming.StringRefAddr;
+
+import com.mysql.jdbc.log.Log;
+import com.mysql.jdbc.log.StandardLogger;
 
 /**
  * Represents configurable properties for Connections and DataSources. Can also

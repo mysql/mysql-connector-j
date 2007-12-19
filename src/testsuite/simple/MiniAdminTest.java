@@ -24,9 +24,9 @@
  */
 package testsuite.simple;
 
-import com.mysql.jdbc.MiniAdmin;
-
 import testsuite.BaseTestCase;
+
+import com.mysql.jdbc.MiniAdmin;
 
 /**
  * Testsuite for MiniAdmin functionality.

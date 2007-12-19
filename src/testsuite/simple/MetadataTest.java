@@ -36,9 +36,9 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import com.mysql.jdbc.StringUtils;
-
 import testsuite.BaseTestCase;
+
+import com.mysql.jdbc.StringUtils;
 
 /**
  * Tests DatabaseMetaData methods.

@@ -49,9 +49,9 @@ import java.util.List;
 import java.util.Properties;
 import java.util.zip.Deflater;
 
+import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
 import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
-import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.util.ReadAheadInputStream;
 import com.mysql.jdbc.util.ResultSetUtil;
 

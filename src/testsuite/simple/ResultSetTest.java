@@ -30,9 +30,9 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Properties;
 
-import com.mysql.jdbc.CharsetMapping;
-
 import testsuite.BaseTestCase;
+
+import com.mysql.jdbc.CharsetMapping;
 
 public class ResultSetTest extends BaseTestCase {
 

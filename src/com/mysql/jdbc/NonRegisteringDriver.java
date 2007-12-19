@@ -30,7 +30,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;

@@ -24,16 +24,15 @@
  */
 package com.mysql.jdbc.jdbc2.optional;
 
-import com.mysql.jdbc.ConnectionImpl;
-import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.Util;
-
 import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+
+import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.Util;
 
 /**
  * Wraps statements so that errors can be reported correctly to

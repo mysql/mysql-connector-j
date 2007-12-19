@@ -27,9 +27,7 @@ package com.mysql.jdbc;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-
 import java.sql.SQLException;
-
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 

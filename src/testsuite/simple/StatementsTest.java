@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.math.BigDecimal;
-import java.rmi.server.UID;
 import java.sql.BatchUpdateException;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -52,7 +51,6 @@ import testsuite.BaseTestCase;
 import com.mysql.jdbc.NotImplemented;
 import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.StringUtils;
 
 /**

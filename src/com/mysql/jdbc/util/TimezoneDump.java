@@ -24,10 +24,10 @@
  */
 package com.mysql.jdbc.util;
 
-import com.mysql.jdbc.TimeUtil;
-
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+
+import com.mysql.jdbc.TimeUtil;
 
 /**
  * Dumps the timezone of the MySQL server represented by the JDBC url given on

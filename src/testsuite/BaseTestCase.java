@@ -25,8 +25,8 @@
 package testsuite;
 
 import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.sql.Blob;
@@ -42,10 +42,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
+import junit.framework.TestCase;
+
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.StringUtils;
-
-import junit.framework.TestCase;
 
 /**
  * Base class for all test cases. Creates connections, statements, etc. and

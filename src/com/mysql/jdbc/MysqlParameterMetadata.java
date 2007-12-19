@@ -27,8 +27,6 @@ import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
-
 public class MysqlParameterMetadata implements ParameterMetaData {
 	boolean returnSimpleMetadata = false;
 

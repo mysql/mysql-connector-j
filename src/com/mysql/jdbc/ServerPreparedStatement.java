@@ -24,23 +24,14 @@
  */
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.StatementImpl.CancelTask;
-import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
-import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
-import com.mysql.jdbc.profiler.ProfilerEvent;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
-
 import java.net.URL;
-
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
@@ -52,12 +43,15 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.Properties;
 import java.util.TimeZone;
+
+import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
+import com.mysql.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.jdbc.profiler.ProfilerEvent;
+import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 
 /**
  * JDBC Interface for MySQL-4.1 and newer server-side PreparedStatements.

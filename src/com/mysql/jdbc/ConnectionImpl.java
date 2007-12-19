@@ -39,7 +39,6 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -53,9 +52,9 @@ import java.util.TreeMap;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.LogFactory;
 import com.mysql.jdbc.log.NullLogger;
+import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
 import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
-import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.util.LRUCache;
 
 /**

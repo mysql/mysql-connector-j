@@ -24,10 +24,10 @@
  */
 package com.mysql.jdbc.log;
 
-import com.mysql.jdbc.profiler.ProfilerEvent;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
  * Logging functionality for JDK1.4

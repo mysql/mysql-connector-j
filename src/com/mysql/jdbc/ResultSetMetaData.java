@@ -25,8 +25,6 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
-
 /**
  * A ResultSetMetaData object can be used to find out about the types and
  * properties of the columns in a ResultSet

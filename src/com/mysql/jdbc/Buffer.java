@@ -25,9 +25,7 @@
 package com.mysql.jdbc;
 
 import java.io.UnsupportedEncodingException;
-
 import java.nio.ByteBuffer;
-
 import java.sql.SQLException;
 
 /**

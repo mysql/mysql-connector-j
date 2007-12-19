@@ -24,11 +24,6 @@
  */
 package testsuite.simple;
 
-import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.log.StandardLogger;
-
-import testsuite.BaseTestCase;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ParameterMetaData;
@@ -36,8 +31,12 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-
 import java.util.Properties;
+
+import testsuite.BaseTestCase;
+
+import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.log.StandardLogger;
 
 /**
  * Tests callable statement functionality.

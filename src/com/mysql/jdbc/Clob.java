@@ -30,7 +30,6 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
-
 import java.sql.SQLException;
 
 import com.mysql.jdbc.exceptions.NotYetImplementedException;

@@ -24,10 +24,7 @@
  */
 package testsuite.simple;
 
-import testsuite.BaseTestCase;
-
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
@@ -44,7 +41,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
-
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -52,8 +48,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-import com.mysql.jdbc.ConnectionPropertiesTransform;
-import com.mysql.jdbc.Driver;
+import testsuite.BaseTestCase;
+
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;

@@ -39,7 +39,6 @@ import java.util.Properties;
 import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.Driver;
-import com.mysql.jdbc.Field;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
 

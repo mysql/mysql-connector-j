@@ -24,10 +24,10 @@
  */
 package com.mysql.jdbc.log;
 
+import java.util.Date;
+
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.profiler.ProfilerEvent;
-
-import java.util.Date;
 
 /**
  * Provides logging facilities for those platforms that don't have built-in

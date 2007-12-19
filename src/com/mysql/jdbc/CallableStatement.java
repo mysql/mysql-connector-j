@@ -25,13 +25,9 @@ package com.mysql.jdbc;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
-
 import java.net.URL;
-
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
@@ -42,16 +38,12 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 /**
  * Representation of stored procedures for JDBC

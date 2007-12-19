@@ -24,14 +24,14 @@
  */
 package testsuite.simple;
 
-import com.mysql.jdbc.NotUpdatable;
-
-import testsuite.BaseTestCase;
-
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import testsuite.BaseTestCase;
+
+import com.mysql.jdbc.NotUpdatable;
 
 /**
  * Tests for updatable result sets

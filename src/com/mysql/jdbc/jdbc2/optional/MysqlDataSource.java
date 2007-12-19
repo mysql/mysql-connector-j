@@ -24,23 +24,19 @@
  */
 package com.mysql.jdbc.jdbc2.optional;
 
-import com.mysql.jdbc.ConnectionPropertiesImpl;
-import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
-
 import java.io.PrintWriter;
 import java.io.Serializable;
-
 import java.sql.SQLException;
-
 import java.util.Properties;
 
 import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.Referenceable;
 import javax.naming.StringRefAddr;
-
 import javax.sql.DataSource;
+
+import com.mysql.jdbc.ConnectionPropertiesImpl;
+import com.mysql.jdbc.NonRegisteringDriver;
 
 /**
  * A JNDI DataSource for a Mysql JDBC connection

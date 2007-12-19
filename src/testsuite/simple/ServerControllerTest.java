@@ -24,9 +24,9 @@
  */
 package testsuite.simple;
 
-import com.mysql.jdbc.util.ServerController;
-
 import testsuite.BaseTestCase;
+
+import com.mysql.jdbc.util.ServerController;
 
 /**
  * Demonstrates usage of the ServerController class.

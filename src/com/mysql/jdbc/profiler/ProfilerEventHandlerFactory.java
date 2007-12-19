@@ -23,13 +23,13 @@
 
 package com.mysql.jdbc.profiler;
 
-import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.log.Log;
-import com.mysql.jdbc.Util;
-
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.Util;
+import com.mysql.jdbc.log.Log;
 
 /**
  * @author mmatthew

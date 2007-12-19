@@ -32,18 +32,15 @@ import java.lang.reflect.Method;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.List;
 import java.util.Properties;
+
+import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.DatabaseMetaData;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.StringUtils;
-
-import testsuite.BaseTestCase;
 
 /**
  * Tests fixes for bugs in CallableStatement code.

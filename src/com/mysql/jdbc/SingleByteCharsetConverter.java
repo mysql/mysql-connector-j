@@ -25,7 +25,6 @@
 package com.mysql.jdbc;
 
 import java.io.UnsupportedEncodingException;
-
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;

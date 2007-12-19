@@ -24,9 +24,9 @@
  */
 package testsuite.simple;
 
-import testsuite.BaseTestCase;
-
 import java.sql.SQLException;
+
+import testsuite.BaseTestCase;
 
 /**
  * 

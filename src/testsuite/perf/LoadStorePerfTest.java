@@ -26,7 +26,6 @@ package testsuite.perf;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-
 import java.text.NumberFormat;
 
 import testsuite.BaseTestCase;

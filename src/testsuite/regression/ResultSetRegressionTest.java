@@ -25,7 +25,6 @@
 package testsuite.regression;
 
 import java.io.Reader;
-import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -55,7 +54,6 @@ import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.NotUpdatable;
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.StandardLogger;
 

@@ -29,7 +29,6 @@ import java.sql.PreparedStatement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import testsuite.BaseTestCase;

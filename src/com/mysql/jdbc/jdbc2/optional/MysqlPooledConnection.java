@@ -26,10 +26,7 @@ package com.mysql.jdbc.jdbc2.optional;
 import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.SQLException;
-
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -38,10 +35,8 @@ import javax.sql.ConnectionEventListener;
 import javax.sql.PooledConnection;
 
 import com.mysql.jdbc.ConnectionImpl;
-import com.mysql.jdbc.Constants;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Util;
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
 
 /**
  * This class is used to wrap and return a physical connection within a logical

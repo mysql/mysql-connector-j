@@ -26,9 +26,9 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 
+import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
 import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
-import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
  * Allows streaming of MySQL data.

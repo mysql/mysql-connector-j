@@ -11,7 +11,6 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Util;
 

@@ -24,12 +24,11 @@
  */
 package testsuite.perf;
 
-import testsuite.BaseTestCase;
-
 import java.text.NumberFormat;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import testsuite.BaseTestCase;
 
 /**
  * Base class for performance test cases. Handles statistics.
