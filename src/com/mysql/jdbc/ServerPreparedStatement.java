@@ -428,8 +428,11 @@ public class ServerPreparedStatement extends PreparedStatement {
 		} catch (Exception ex) {
 			realClose(false, true);
 
-			throw SQLError.createSQLException(ex.toString(),
+			SQLException sqlEx = SQLError.createSQLException(ex.toString(),
 					SQLError.SQL_STATE_GENERAL_ERROR);
+			sqlEx.initCause(ex);
+			
+			throw sqlEx;
 		}
 		
 		setResultSetType(resultSetType);
@@ -873,6 +876,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 						.toString());
 			}
 
+			sqlEx.initCause(ex);
+			
 			throw sqlEx;
 		}
 	}
@@ -1095,6 +1100,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		} catch (Exception ex) {
 			this.invalidationException = SQLError.createSQLException(ex.toString(),
 					SQLError.SQL_STATE_GENERAL_ERROR);
+			this.invalidationException.initCause(ex);
 		}
 
 		if (this.invalidationException != null) {
@@ -1683,8 +1689,11 @@ public class ServerPreparedStatement extends PreparedStatement {
 			} catch (SQLException sqlEx) {
 				throw sqlEx;
 			} catch (Exception ex) {
-				throw SQLError.createSQLException(ex.toString(),
+				SQLException sqlEx = SQLError.createSQLException(ex.toString(),
 						SQLError.SQL_STATE_GENERAL_ERROR);
+				sqlEx.initCause(ex);
+				
+				throw sqlEx;
 			} finally {
 				mysql.clearInputStream();
 			}
@@ -2590,9 +2599,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 						null);
 			}
 		} catch (IOException ioEx) {
-			throw SQLError.createSQLException(Messages
+			SQLException sqlEx = SQLError.createSQLException(Messages
 					.getString("ServerPreparedStatement.24") //$NON-NLS-1$
 					+ ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+			sqlEx.initCause(ioEx);
+			
+			throw sqlEx;
 		} finally {
 			if (this.connection.getAutoClosePStmtStreams()) {
 				if (inStream != null) {
@@ -2657,9 +2669,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 						null);
 			}
 		} catch (IOException ioEx) {
-			throw SQLError.createSQLException(Messages
+			SQLException sqlEx = SQLError.createSQLException(Messages
 					.getString("ServerPreparedStatement.25") //$NON-NLS-1$
 					+ ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+			sqlEx.initCause(ioEx);
+			
+			throw sqlEx;
 		} finally {
 			if (this.connection.getAutoClosePStmtStreams()) {
 				if (inStream != null) {

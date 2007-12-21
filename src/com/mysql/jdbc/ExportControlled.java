@@ -180,9 +180,12 @@ public class ExportControlled {
 						+ " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0,
 						false);
 			} catch (IOException ioe) {
-				throw SQLError.createSQLException("Cannot open "
+				SQLException sqlEx = SQLError.createSQLException("Cannot open "
 						+ clientCertificateKeyStoreUrl + " ["
 						+ ioe.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+				sqlEx.initCause(ioe);
+				
+				throw sqlEx;
 			}
 		}
 
@@ -216,9 +219,13 @@ public class ExportControlled {
 						+ " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0,
 						false);
 			} catch (IOException ioe) {
-				throw SQLError.createSQLException("Cannot open "
+				SQLException sqlEx = SQLError.createSQLException("Cannot open "
 						+ trustCertificateKeyStoreUrl + " [" + ioe.getMessage()
 						+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+				
+				sqlEx.initCause(ioe);
+				
+				throw sqlEx;
 			}
 		}
 

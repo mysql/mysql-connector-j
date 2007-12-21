@@ -5882,8 +5882,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						tz, rollForward);
 			}
 		} catch (Exception ex) {
-			throw SQLError.createSQLException(ex.toString(),
+			SQLException sqlEx = SQLError.createSQLException(ex.toString(),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			sqlEx.initCause(ex);
+			
+			throw sqlEx;
 		}
 	}
 	
@@ -6292,9 +6295,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				}
 			}
 		} catch (Exception e) {
-			throw new java.sql.SQLException("Cannot convert value '"
+			SQLException sqlEx = SQLError.createSQLException("Cannot convert value '"
 					+ timestampValue + "' from column " + columnIndex
 					+ " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
 		}
 		
 	}
@@ -6572,9 +6578,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				}
 			}
 		} catch (Exception e) {
-			throw new java.sql.SQLException("Cannot convert value '"
+			SQLException sqlEx = SQLError.createSQLException("Cannot convert value '"
 					+ new String(timestampAsBytes) + "' from column " + columnIndex
 					+ " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
 		}	
 	}
 	

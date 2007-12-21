@@ -24,21 +24,17 @@
  */
 package com.mysql.jdbc;
 
-import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
-import com.mysql.jdbc.profiler.ProfilerEvent;
-
-import java.io.InputStream;
-import java.io.Reader;
 import java.math.BigDecimal;
-
 import java.sql.SQLException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import com.mysql.jdbc.profiler.ProfilerEvent;
+import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 
 /**
  * A result set that is updatable.
@@ -617,7 +613,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 		for (int i = 0; i < this.fields.length; i++) {
 		    StringBuffer tableNameBuffer = new StringBuffer();
-		    Map columnNameToIndex = null;
+		    Map updColumnNameToIndex = null;
 
 		    // FIXME: What about no table?
 		    if (this.fields[i].getOriginalTableName() != null) {
@@ -650,7 +646,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	            columnIndicesToTable.put(new Integer(i), fqTableName);
 
-	            columnNameToIndex = getColumnsToIndexMapForTableAndDB(databaseName, tableOnlyName);
+	            updColumnNameToIndex = getColumnsToIndexMapForTableAndDB(databaseName, tableOnlyName);
 	        } else {
 	            String tableOnlyName = this.fields[i].getTableName();
 
@@ -672,7 +668,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
                     columnIndicesToTable.put(new Integer(i), fqTableName);
 
-                    columnNameToIndex = getColumnsToIndexMapForTableAndDB(this.catalog, tableOnlyName);
+                    updColumnNameToIndex = getColumnsToIndexMapForTableAndDB(this.catalog, tableOnlyName);
 	            }
 	        }
 
@@ -687,8 +683,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 				columnName = this.fields[i].getName();
 			}
 
-			if (columnNameToIndex != null && columnName != null) {
-			    columnNameToIndex.put(columnName, new Integer(i));
+			if (updColumnNameToIndex != null && columnName != null) {
+			    updColumnNameToIndex.put(columnName, new Integer(i));
 			}
 
 			String originalTableName = this.fields[i].getOriginalTableName();

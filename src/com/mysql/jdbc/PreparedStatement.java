@@ -2595,9 +2595,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	private final int readblock(InputStream i, byte[] b) throws SQLException {
 		try {
 			return i.read(b);
-		} catch (Throwable E) {
-			throw SQLError.createSQLException(Messages.getString("PreparedStatement.56") //$NON-NLS-1$
-					+ E.getClass().getName(), SQLError.SQL_STATE_GENERAL_ERROR);
+		} catch (Throwable ex) {
+			SQLException sqlEx = SQLError.createSQLException(Messages.getString("PreparedStatement.56") //$NON-NLS-1$
+					+ ex.getClass().getName(), SQLError.SQL_STATE_GENERAL_ERROR);
+			sqlEx.initCause(ex);
+			
+			throw sqlEx;
 		}
 	}
 
@@ -2611,9 +2614,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			}
 
 			return i.read(b, 0, lengthToRead);
-		} catch (Throwable E) {
-			throw SQLError.createSQLException(Messages.getString("PreparedStatement.55") //$NON-NLS-1$
-					+ E.getClass().getName(), SQLError.SQL_STATE_GENERAL_ERROR);
+		} catch (Throwable ex) {
+			SQLException sqlEx = SQLError.createSQLException(Messages.getString("PreparedStatement.56") //$NON-NLS-1$
+					+ ex.getClass().getName(), SQLError.SQL_STATE_GENERAL_ERROR);
+			sqlEx.initCause(ex);
+			
+			throw sqlEx;
 		}
 	}
 
@@ -3793,13 +3799,17 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					throw (SQLException) ex;
 				}
 
-				throw SQLError.createSQLException(
+				SQLException sqlEx = SQLError.createSQLException(
 						Messages.getString("PreparedStatement.17") //$NON-NLS-1$
 								+ parameterObj.getClass().toString()
 								+ Messages.getString("PreparedStatement.18") //$NON-NLS-1$
 								+ ex.getClass().getName()
 								+ Messages.getString("PreparedStatement.19") + ex.getMessage(), //$NON-NLS-1$
 						SQLError.SQL_STATE_GENERAL_ERROR);
+				
+				sqlEx.initCause(ex);
+				
+				throw sqlEx;
 			}
 		}
 	}
@@ -3907,9 +3917,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			setBinaryStream(parameterIndex, bytesIn, buf.length);
 			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.JAVA_OBJECT;
 		} catch (Exception ex) {
-			throw SQLError.createSQLException(Messages.getString("PreparedStatement.54") //$NON-NLS-1$
+			SQLException sqlEx = SQLError.createSQLException(Messages.getString("PreparedStatement.54") //$NON-NLS-1$
 					+ ex.getClass().getName(),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			sqlEx.initCause(ex);
+			
+			throw sqlEx;
 		}
 	}
 

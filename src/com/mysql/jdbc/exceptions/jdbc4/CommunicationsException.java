@@ -55,6 +55,10 @@ public class CommunicationsException extends SQLRecoverableException implements 
 
 		this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn,
 				lastPacketSentTimeMs, underlyingException, this.streamingResultSetInPlay);
+		
+		if (underlyingException != null) {
+			initCause(underlyingException);
+		}
 	}
 
 	/*

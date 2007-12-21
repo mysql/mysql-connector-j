@@ -238,8 +238,11 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
 		try {
 			bytesOut.write(bytes, offset, length);
 		} catch (IOException ioEx) {
-			throw SQLError.createSQLException(Messages.getString("Blob.1"), //$NON-NLS-1$
+			SQLException sqlEx = SQLError.createSQLException(Messages.getString("Blob.1"), //$NON-NLS-1$
 					SQLError.SQL_STATE_GENERAL_ERROR);
+			sqlEx.initCause(ioEx);
+			
+			throw sqlEx;
 		} finally {
 			try {
 				bytesOut.close();

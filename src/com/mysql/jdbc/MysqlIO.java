@@ -2522,9 +2522,11 @@ class MysqlIO {
                 info = resultPacket.readString();
             }
         } catch (Exception ex) {
-            throw SQLError.createSQLException(SQLError.get(
-                    SQLError.SQL_STATE_GENERAL_ERROR) + ": " //$NON-NLS-1$
-                 +ex.getClass().getName(), SQLError.SQL_STATE_GENERAL_ERROR, -1);
+            SQLException sqlEx = SQLError.createSQLException(SQLError.get(
+                    SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1);
+            sqlEx.initCause(ex);
+            
+            throw sqlEx;
         }
 
         ResultSetInternalMethods updateRs = com.mysql.jdbc.ResultSetImpl.getInstance(updateCount,
@@ -2638,12 +2640,14 @@ class MysqlIO {
             return (SocketFactory) (Class.forName(this.socketFactoryClassName)
                                          .newInstance());
         } catch (Exception ex) {
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.76") //$NON-NLS-1$
+            SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.76") //$NON-NLS-1$
                  +this.socketFactoryClassName +
-                Messages.getString("MysqlIO.77") + ex.toString() //$NON-NLS-1$
-                 +(this.connection.getParanoid() ? "" //$NON-NLS-1$
-                                                 : Util.stackTraceToString(ex)),
+                Messages.getString("MysqlIO.77"),
                 SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+            
+            sqlEx.initCause(ex);
+            
+            throw sqlEx;
         }
     }
 
@@ -3280,8 +3284,11 @@ class MysqlIO {
                 try {
                     fileIn.close();
                 } catch (Exception ex) {
-                    throw SQLError.createSQLException(Messages.getString("MysqlIO.65"), //$NON-NLS-1$
+                    SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.65"), //$NON-NLS-1$
                         SQLError.SQL_STATE_GENERAL_ERROR);
+                    sqlEx.initCause(ex);
+                    
+                    throw sqlEx;
                 }
 
                 fileIn = null;

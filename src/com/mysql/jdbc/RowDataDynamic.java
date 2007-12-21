@@ -436,10 +436,13 @@ public class RowDataDynamic implements RowData {
 			exceptionMessage += Messages.getString("RowDataDynamic.7"); //$NON-NLS-1$
 			exceptionMessage += Util.stackTraceToString(ex);
 
-			throw new java.sql.SQLException(
+			SQLException sqlEx = SQLError.createSQLException(
 					Messages.getString("RowDataDynamic.8") //$NON-NLS-1$
 							+ exceptionType
 							+ Messages.getString("RowDataDynamic.9") + exceptionMessage, SQLError.SQL_STATE_GENERAL_ERROR); //$NON-NLS-1$
+			sqlEx.initCause(ex);
+			
+			throw sqlEx;
 		}
 	}
 

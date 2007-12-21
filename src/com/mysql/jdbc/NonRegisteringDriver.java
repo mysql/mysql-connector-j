@@ -288,11 +288,15 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			// them un-changed.
 			throw sqlEx;
 		} catch (Exception ex) {
-			throw SQLError.createSQLException(Messages
+			SQLException sqlEx = SQLError.createSQLException(Messages
 					.getString("NonRegisteringDriver.17") //$NON-NLS-1$
 					+ ex.toString()
 					+ Messages.getString("NonRegisteringDriver.18"), //$NON-NLS-1$
 					SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+			
+			sqlEx.initCause(ex);
+			
+			throw sqlEx;
 		}
 	}
 
@@ -718,12 +722,15 @@ public class NonRegisteringDriver implements java.sql.Driver {
 					}
 					configProps.load(configAsStream);
 				} catch (IOException ioEx) {
-					throw SQLError.createSQLException(
+					SQLException sqlEx = SQLError.createSQLException(
 							"Unable to load configuration template '"
 									+ configName
 									+ "' due to underlying IOException: "
 									+ ioEx,
 							SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+					sqlEx.initCause(ioEx);
+					
+					throw sqlEx;
 				}
 			}
 
