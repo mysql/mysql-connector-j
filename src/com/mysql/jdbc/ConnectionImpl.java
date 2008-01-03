@@ -830,11 +830,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				if (sortedCollationMap == null) {
 					sortedCollationMap = new TreeMap();
 
-					stmt = createStatement();
-
-					if (stmt.getMaxRows() != 0) {
-						stmt.setMaxRows(0);
-					}
+					stmt = getMetadataSafeStatement();
 
 					results = stmt
 							.executeQuery("SHOW COLLATION");
@@ -3002,6 +2998,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 
 		stmt.setEscapeProcessing(false);
+		
+		if (stmt.getFetchSize() != 0) {
+			stmt.setFetchSize(0);
+		}
 
 		return stmt;
 	}
@@ -3725,8 +3725,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		java.sql.ResultSet results = null;
 
 		try {
-			stmt = createStatement();
-			stmt.setEscapeProcessing(false);
+			stmt = getMetadataSafeStatement();
 			
 			String version = this.dbmd.getDriverVersion();
 			
@@ -4649,7 +4648,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					java.sql.Statement stmt = null;
 	
 					try {
-						stmt = createStatement();
+						stmt = getMetadataSafeStatement();
 	
 						stmt.executeUpdate(rollbackQuery.toString());
 					} catch (SQLException sqlEx) {
@@ -5068,7 +5067,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				java.sql.Statement stmt = null;
 	
 				try {
-					stmt = createStatement();
+					stmt = getMetadataSafeStatement();
 	
 					stmt.executeUpdate(savePointQuery.toString());
 				} finally {

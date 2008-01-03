@@ -3441,6 +3441,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case MysqlDefs.FIELD_TYPE_BIT:
 			return (byte[]) value;
 
+		case MysqlDefs.FIELD_TYPE_STRING:
+		case MysqlDefs.FIELD_TYPE_VARCHAR:
+		case MysqlDefs.FIELD_TYPE_VAR_STRING:
+			if (value instanceof byte[]) {
+				return (byte[]) value;
+			}
+			// fallthrough
 		default:
 			int sqlType = field.getSQLType();
 		

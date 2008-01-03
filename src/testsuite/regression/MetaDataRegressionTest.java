@@ -2116,4 +2116,82 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	/**
+	 * Tests fix for Bug#33594 - When cursor fetch is enabled,
+	 * wrong metadata is returned from DBMD. 
+	 * 
+	 * The fix is two parts. 
+	 * 
+	 * First, when asking for the first column value
+	 * twice from a cursor-fetched row, the driver didn't re-position,
+	 * and thus the "next" column was returned.
+	 * 
+	 * Second, metadata statements and internal statements the driver
+	 * uses shouldn't use cursor-based fetching at all, so we've
+	 * ensured that internal statements have their fetch size set to "0".
+	 */
+	public void testBug33594() throws Exception {
+		if (!versionMeetsMinimum(5, 0, 7)) {
+			return;
+		}
+
+		try {
+			createTable(
+					"bug33594",
+					"(fid varchar(255) not null primary key, id INT, geom linestring, name varchar(255))");
+
+			Properties props = new Properties();
+			props.put("useInformationSchema", "false");
+			props.put("useCursorFetch", "false");
+			props.put("defaultFetchSize", "100");
+			Connection conn1 = null;
+			try {
+				conn1 = getConnectionWithProps(props);
+				DatabaseMetaData metaData = conn1.getMetaData();
+				this.rs = metaData.getColumns(null, null, "bug33594", null);
+				this.rs.next();
+				assertEquals("bug33594", this.rs.getString("TABLE_NAME"));
+				assertEquals("fid", this.rs.getString("COLUMN_NAME"));
+				assertEquals("VARCHAR", this.rs.getString("TYPE_NAME"));
+				assertEquals("255", this.rs.getString("COLUMN_SIZE"));
+
+				Properties props2 = new Properties();
+				props2.put("useInformationSchema", "false");
+				props2.put("useCursorFetch", "true");
+				props2.put("defaultFetchSize", "100");
+
+				Connection conn2 = null;
+
+				try {
+					conn2 = getConnectionWithProps(props2);
+					DatabaseMetaData metaData2 = conn2.getMetaData();
+					this.rs = metaData2
+							.getColumns(null, null, "bug33594", null);
+					this.rs.next();
+					assertEquals("bug33594", this.rs.getString("TABLE_NAME"));
+					assertEquals("fid", this.rs.getString("COLUMN_NAME"));
+					assertEquals("VARCHAR", this.rs.getString("TYPE_NAME"));
+					assertEquals("255", this.rs.getString("COLUMN_SIZE"));
+					
+					// we should only see one server-side prepared statement, and that's
+					// caused by us going off to ask about the count!
+					assertEquals("1", getSingleIndexedValueWithQuery(conn2, 2,
+							"SHOW SESSION STATUS LIKE 'Com_stmt_prepare'")
+							.toString());
+				} finally {
+					if (conn2 != null) {
+						conn2.close();
+					}
+				}
+			} finally {
+				if (conn1 != null) {
+					conn1.close();
+				}
+			}
+
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

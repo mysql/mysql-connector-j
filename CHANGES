@@ -100,6 +100,19 @@ nn-nn-08 - Version 5.1.6
       trace as a string into the message, set the underlying Throwable as the cause for
       the SQLException, making it accessible via getCause().
       
+    - Fixed Bug#33594 - When cursor fetch is enabled, wrong metadata is returned from 
+      DatabaseMetaData calls. 
+
+      The fix is two parts. 
+      
+      First, when asking for the first column value
+      twice from a cursor-fetched row, the driver didn't re-position,
+      and thus the "next" column was returned.
+
+      Second, metadata statements and internal statements the driver
+      uses shouldn't use cursor-based fetching at all, so we've
+      ensured that internal statements have their fetch size set to "0".
+
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

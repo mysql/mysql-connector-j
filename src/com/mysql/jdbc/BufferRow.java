@@ -180,7 +180,8 @@ public class BufferRow extends ResultSetRow {
 		if (index == 0) {
 			this.lastRequestedIndex = 0;
 			this.lastRequestedPos = this.homePosition;
-
+			this.rowFromServer.setPosition(this.homePosition);
+			
 			return 0;
 		}
 
