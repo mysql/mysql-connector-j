@@ -113,6 +113,12 @@ nn-nn-08 - Version 5.1.6
       uses shouldn't use cursor-based fetching at all, so we've
       ensured that internal statements have their fetch size set to "0".
 
+    -  Fixed Bug#33678 - Multiple result sets not supported in
+       "streaming" mode. This fix covers both normal statements, and stored
+       procedures, with the exception of stored procedures with registered 
+       OUTPUT parameters, which can't be used at all with "streaming" result 
+       sets.
+       
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

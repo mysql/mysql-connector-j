@@ -95,7 +95,7 @@ class MysqlIO {
     private static final int CLIENT_MULTI_RESULTS = 131072; // Enable/disable multi-results
     private static final int SERVER_STATUS_IN_TRANS = 1;
     private static final int SERVER_STATUS_AUTOCOMMIT = 2; // Server in auto_commit mode
-    private static final int SERVER_MORE_RESULTS_EXISTS = 8; // Multi query - next query exists
+    static final int SERVER_MORE_RESULTS_EXISTS = 8; // Multi query - next query exists
     private static final int SERVER_QUERY_NO_GOOD_INDEX_USED = 16;
     private static final int SERVER_QUERY_NO_INDEX_USED = 32;
 	private static final int  SERVER_STATUS_CURSOR_EXISTS = 64;
@@ -1672,6 +1672,55 @@ class MysqlIO {
         this.streamingData = null;
     }
 
+    boolean tackOnMoreStreamingResults(ResultSetImpl addingTo) throws SQLException {
+    	if ((this.serverStatus & SERVER_MORE_RESULTS_EXISTS) != 0) {
+    		
+			boolean moreRowSetsExist = true;
+			ResultSetImpl currentResultSet = addingTo;
+			boolean firstTime = true;
+			
+			while (moreRowSetsExist) {
+				if (!firstTime && currentResultSet.reallyResult()) {
+					break;
+				}
+				
+				firstTime = false;
+				
+				Buffer fieldPacket = checkErrorPacket();
+	            fieldPacket.setPosition(0);
+	            
+	            java.sql.Statement owningStatement = addingTo.getStatement();
+	            
+	            int maxRows = owningStatement.getMaxRows();
+	            
+	            // fixme for catalog, isBinary
+	            
+	            ResultSetImpl newResultSet = readResultsForQueryOrUpdate(
+	            		(StatementImpl)owningStatement,
+	                    maxRows, owningStatement.getResultSetType(), 
+	                    owningStatement.getResultSetConcurrency(),
+	                    true, owningStatement.getConnection().getCatalog(), fieldPacket, 
+	                    addingTo.isBinaryEncoded,
+	                    -1L, null);
+
+	            currentResultSet.setNextResultSet(newResultSet);
+
+	            currentResultSet = newResultSet;
+
+	            moreRowSetsExist = (this.serverStatus & MysqlIO.SERVER_MORE_RESULTS_EXISTS) != 0;
+	            
+	            if (!currentResultSet.reallyResult() && !moreRowSetsExist) {
+	            	// special case, we can stop "streaming"
+	            	return false;
+	            }
+			}
+			
+			return true;
+    	}
+
+    	return false;
+    }
+    
     ResultSetImpl readAllResults(StatementImpl callingStatement, int maxRows,
         int resultSetType, int resultSetConcurrency, boolean streamResults,
         String catalog, Buffer resultPacket, boolean isBinaryEncoded,
@@ -1696,10 +1745,17 @@ class MysqlIO {
         // TODO: We need to support streaming of multiple result sets
         //
         if (serverHasMoreResults && streamResults) {
-            clearInputStream();
-
-            throw SQLError.createSQLException(Messages.getString("MysqlIO.23"), //$NON-NLS-1$
-                SQLError.SQL_STATE_DRIVER_NOT_CAPABLE);
+            //clearInputStream();
+//
+            //throw SQLError.createSQLException(Messages.getString("MysqlIO.23"), //$NON-NLS-1$
+                //SQLError.SQL_STATE_DRIVER_NOT_CAPABLE);
+        	if (topLevelResultSet.getUpdateCount() != -1) {
+        		tackOnMoreStreamingResults(topLevelResultSet);
+        	}
+        	
+        	reclaimLargeReusablePacket();
+        	
+        	return topLevelResultSet;
         }
 
         boolean moreRowSetsExist = checkForMoreResults & serverHasMoreResults;
@@ -2407,7 +2463,7 @@ class MysqlIO {
      *
      * @throws SQLException if an error occurs while reading the rows
      */
-    private final ResultSetImpl readResultsForQueryOrUpdate(
+    protected final ResultSetImpl readResultsForQueryOrUpdate(
         StatementImpl callingStatement, int maxRows, int resultSetType,
         int resultSetConcurrency, boolean streamResults, String catalog,
         Buffer resultPacket, boolean isBinaryEncoded, long preSentColumnCount,

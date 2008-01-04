@@ -4507,4 +4507,85 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			}
 		}        
 	}
+	
+	/**
+	 * Tests fix for Bug#33678 - Multiple result sets not supported in
+	 * "streaming" mode. This fix covers both normal statements, and stored
+	 * procedures, with the exception of stored procedures with registered 
+	 * OUTPUT parameters, which can't be used at all with "streaming" result 
+	 * sets.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug33678() throws Exception {
+		if (!versionMeetsMinimum(4, 1)) {
+			return;
+		}
+		
+		createTable("testBug33678", "(field1 INT)");
+		
+		
+		Connection multiConn = getConnectionWithProps("allowMultiQueries=true");
+		Statement multiStmt = multiConn.createStatement();
+		
+		try {
+			multiStmt.setFetchSize(Integer.MIN_VALUE);
+			
+			multiStmt.execute("SELECT 1 UNION SELECT 2; INSERT INTO testBug33678 VALUES (1); UPDATE testBug33678 set field1=2; INSERT INTO testBug33678 VALUES(3); UPDATE testBug33678 set field1=2 WHERE field1=3; UPDATE testBug33678 set field1=2; SELECT 1");
+			this.rs = multiStmt.getResultSet();
+			this.rs.next();
+			assertEquals("1", this.rs.getString(1));
+			
+			assertFalse(multiStmt.getMoreResults());
+			assertEquals(1, multiStmt.getUpdateCount());
+			assertFalse(multiStmt.getMoreResults());
+			assertEquals(1, multiStmt.getUpdateCount());
+			assertFalse(multiStmt.getMoreResults());
+			assertEquals(1, multiStmt.getUpdateCount());
+			assertFalse(multiStmt.getMoreResults());
+			assertEquals(1, multiStmt.getUpdateCount());
+			assertFalse(multiStmt.getMoreResults());
+			assertEquals(2, multiStmt.getUpdateCount());
+			assertTrue(multiStmt.getMoreResults());
+			this.rs = multiStmt.getResultSet();
+			this.rs.next();
+			assertEquals("1", this.rs.getString(1));
+			
+			this.rs.close();
+			
+			multiStmt.execute("INSERT INTO testBug33678 VALUES (1); INSERT INTO testBug33678 VALUES (1), (2); INSERT INTO testBug33678 VALUES (1), (2), (3)");
+			
+			assertEquals(1, multiStmt.getUpdateCount());
+			assertFalse(multiStmt.getMoreResults());
+			assertEquals(2, multiStmt.getUpdateCount());
+			assertFalse(multiStmt.getMoreResults());
+			assertEquals(3, multiStmt.getUpdateCount());
+			assertFalse(multiStmt.getMoreResults() && multiStmt.getUpdateCount() == -1);
+			
+			this.rs.close();
+			
+			if (versionMeetsMinimum(5, 0)) {
+				createProcedure("spBug33678", "() BEGIN SELECT 1; SELECT 2; SELECT 3; END");
+				
+				CallableStatement cStmt = multiConn.prepareCall("{CALL spBug33678()}");
+				cStmt.setFetchSize(Integer.MIN_VALUE);
+				cStmt.execute();
+				
+				for (int i = 0; i < 2; i++) {
+					if (i != 0) {
+						assertTrue(cStmt.getMoreResults());
+					}
+					
+					this.rs = cStmt.getResultSet();
+					assertTrue(this.rs.next());
+					assertEquals(i + 1, this.rs.getInt(1));	
+				}
+			}
+		} finally {
+			multiStmt.close();
+			multiConn.close();
+			
+			closeMemberJDBCResources();
+		}
+	}
 }

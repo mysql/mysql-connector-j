@@ -25,6 +25,7 @@
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
@@ -68,6 +69,8 @@ public class RowDataDynamic implements RowData {
 	private boolean wasEmpty = false; // we don't know until we attempt to traverse
 
 	private boolean useBufferRowExplicit;
+
+	private boolean moreResultsExisted;
 
 	/**
 	 * Creates a new RowDataDynamic object.
@@ -388,7 +391,7 @@ public class RowDataDynamic implements RowData {
 
 		nextRecord();
 
-		if (this.nextRow == null && !this.streamerClosed) {
+		if (this.nextRow == null && !this.streamerClosed && !this.moreResultsExisted) {
 			this.io.closeStreamer(this);
 			this.streamerClosed = true;
 		}
@@ -414,7 +417,8 @@ public class RowDataDynamic implements RowData {
 
 				if (this.nextRow == null) {
 					this.isAtEnd = true;
-					
+					this.moreResultsExisted = this.io.tackOnMoreStreamingResults(this.owner);
+
 					if (this.index == -1) {
 						this.wasEmpty = true;
 					}

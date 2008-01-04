@@ -1932,13 +1932,25 @@ public class StatementImpl implements Statement {
 			return false;
 		}
 
+		boolean streamingMode = createStreamingResultSet();
+		
+		if (streamingMode) {
+			if (this.results.reallyResult()) {
+				while (this.results.next()); // need to drain remaining rows to get to server status 
+										 // which tells us whether more results actually exist or not
+			}
+		}
+		
 		ResultSetInternalMethods nextResultSet = this.results.getNextResultSet();
 
 		switch (current) {
 		case java.sql.Statement.CLOSE_CURRENT_RESULT:
 
 			if (this.results != null) {
-				this.results.close();
+				if (!streamingMode) { 
+					this.results.close();
+				}
+				
 				this.results.clearNextResult();
 			}
 
@@ -1947,7 +1959,10 @@ public class StatementImpl implements Statement {
 		case java.sql.Statement.CLOSE_ALL_RESULTS:
 
 			if (this.results != null) {
-				this.results.close();
+				if (!streamingMode) { 
+					this.results.close();
+				}
+				
 				this.results.clearNextResult();
 			}
 
