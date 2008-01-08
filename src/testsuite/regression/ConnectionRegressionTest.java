@@ -2318,4 +2318,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		
 		assertTrue(System.currentTimeMillis() - begin < 10000);
 	}
+	
+	/**
+	 * Tests fix for BUG#33734 - NullPointerException when using client-side
+	 * prepared statements and enabling caching of prepared statements (only present
+	 * in nightly builds of 5.1).
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug33734() throws Exception {
+		Connection testConn = getConnectionWithProps("cachePrepStmts=true,useServerPrepStmts=false");
+		try {
+			testConn.prepareStatement("SELECT 1");
+		} finally {
+			testConn.close();
+		}
+	}
 }

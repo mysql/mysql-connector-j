@@ -908,6 +908,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			return true;
 		}
 
+		if (!this.useServerPreparedStmts) {
+			return false;
+		}
+		
 		if (getCachePreparedStatements()) {
 			synchronized (this.serverSideStatementCheckCache) {
 				Boolean flag = (Boolean)this.serverSideStatementCheckCache.get(sql);
@@ -4085,7 +4089,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql;
 		
-		if (getEmulateUnsupportedPstmts()) {
+		if (this.useServerPreparedStmts && getEmulateUnsupportedPstmts()) {
 			canServerPrepare = canHandleAsServerPreparedStatement(nativeSql);
 		}
 		

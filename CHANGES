@@ -118,6 +118,10 @@ nn-nn-08 - Version 5.1.6
        procedures, with the exception of stored procedures with registered 
        OUTPUT parameters, which can't be used at all with "streaming" result 
        sets.
+
+    -  Fixed BUG#33734 - NullPointerException when using client-side
+       prepared statements and enabling caching of prepared statements (only
+       present in nightly builds of 5.1).
        
 10-09-07 - Version 5.1.5
 
