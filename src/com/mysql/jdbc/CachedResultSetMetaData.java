@@ -23,9 +23,10 @@
 
 package com.mysql.jdbc;
 
+import java.sql.ResultSetMetaData;
 import java.util.Map;
 
-class CachedResultSetMetaData {
+public class CachedResultSetMetaData {
 		/** Map column names (and all of their permutations) to column indices */
 		Map columnNameToIndex = null;
 
@@ -37,4 +38,20 @@ class CachedResultSetMetaData {
 
 		/** Cached ResultSetMetaData */
 		java.sql.ResultSetMetaData metadata;
+
+		public Map getColumnNameToIndex() {
+			return columnNameToIndex;
+		}
+
+		public Field[] getFields() {
+			return fields;
+		}
+
+		public Map getFullColumnNameToIndex() {
+			return fullColumnNameToIndex;
+		}
+
+		public java.sql.ResultSetMetaData getMetadata() {
+			return metadata;
+		}
 	}
