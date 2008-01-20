@@ -25,6 +25,7 @@
 package testsuite.regression;
 
 import java.io.Reader;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -54,6 +55,7 @@ import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.NotUpdatable;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.StandardLogger;
 
@@ -4460,7 +4462,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.stmt
 					.executeUpdate("insert into testBug30664_1 values (1),(2),(3)");
 			this.stmt
-					.executeUpdate("insert into testBug30664_2 values (1,'¢‚¤'),(2,'‚¢‚¤'),(3,' ‚¢¤')");
+					.executeUpdate("insert into testBug30664_2 values (1,'ï¿½ï¿½ï¿½'),(2,'ï¿½ï¿½ï¿½ï¿½'),(3,' ï¿½ï¿½ï¿½')");
 			this.rs = this.stmt
 					.executeQuery("select testBug30664_1.id, (select testBug30664_2.binaryvalue from testBug30664_2 where testBug30664_2.id=testBug30664_1.id) as value from testBug30664_1");
 			ResultSetMetaData tblMD = this.rs.getMetaData();
@@ -4508,7 +4510,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}        
 	}
 	
-	/**
+		/**
 	 * Tests fix for Bug#33678 - Multiple result sets not supported in
 	 * "streaming" mode. This fix covers both normal statements, and stored
 	 * procedures, with the exception of stored procedures with registered 
@@ -4588,4 +4590,15 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public void testBug33162() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
+		this.rs = this.stmt.executeQuery("select now() from dual where 1=0");
+		this.rs.next();
+		this.rs.getTimestamp(1);  // fails
+	}
+	
 }
