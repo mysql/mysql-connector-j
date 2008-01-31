@@ -1072,7 +1072,7 @@ class MysqlIO {
 
             errno = buf.readInt();
 
-            String serverErrorMessage = buf.readString();
+            String serverErrorMessage = buf.readString("ASCII");
 
             StringBuffer errorBuf = new StringBuffer(Messages.getString(
                         "MysqlIO.10")); //$NON-NLS-1$
@@ -1086,7 +1086,7 @@ class MysqlIO {
                  +errorBuf.toString(), xOpen, errno);
         }
 
-        this.serverVersion = buf.readString();
+        this.serverVersion = buf.readString("ASCII");
 
         // Parse the server version into major/minor/subminor
         int point = this.serverVersion.indexOf('.'); //$NON-NLS-1$
@@ -1146,7 +1146,7 @@ class MysqlIO {
         this.useNewUpdateCounts = versionMeetsMinimum(3, 22, 5);
 
         threadId = buf.readLong();
-        this.seed = buf.readString();
+        this.seed = buf.readString("ASCII");
 
         this.serverCapabilities = 0;
 
@@ -1162,7 +1162,7 @@ class MysqlIO {
             this.serverStatus = buf.readInt();
             buf.setPosition(position + 16);
 
-            String seedPart2 = buf.readString();
+            String seedPart2 = buf.readString("ASCII");
             StringBuffer newSeed = new StringBuffer(20);
             newSeed.append(this.seed);
             newSeed.append(seedPart2);
@@ -2575,7 +2575,7 @@ class MysqlIO {
             }
 
             if (this.connection.isReadInfoMsgEnabled()) {
-                info = resultPacket.readString();
+                info = resultPacket.readString(this.connection.getErrorMessageEncoding());
             }
         } catch (Exception ex) {
             SQLException sqlEx = SQLError.createSQLException(SQLError.get(

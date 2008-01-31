@@ -107,6 +107,10 @@ nn-nn-08 - Version 5.1.6
       getGeneratedKeys() when "rewriteBatchedStatements" is set to "true", and the 
       statement has an "ON DUPLICATE KEY UPDATE" clause.
 
+    - Fixed BUG#31192 - Encoding Issue retrieving serverVersion in MysqlIO in the 
+      method doHandshake when encoding doesn't contain ASCII characters in the "standard"
+      place (i.e. ebcdic).
+       
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053
