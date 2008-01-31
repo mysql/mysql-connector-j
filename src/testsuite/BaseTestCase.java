@@ -664,4 +664,38 @@ public abstract class BaseTestCase extends TestCase {
 			}
 		}
 	}
+
+	protected void assertResultSetsEqual(ResultSet control, ResultSet test)
+			throws Exception {
+				int controlNumCols = control.getMetaData().getColumnCount();
+				int testNumCols = test.getMetaData().getColumnCount();
+				assertEquals(controlNumCols, testNumCols);
+				
+				while (control.next()) {
+					test.next();
+					
+					for (int i = 0; i < controlNumCols; i++) {
+						Object controlObj = control.getObject(i + 1);
+						Object testObj = test.getObject(i + 1);
+						
+						if (controlObj == null) {
+							assertNull(testObj);
+						} else {
+							assertNotNull(testObj);
+						}
+						
+						if (controlObj instanceof Float) {
+							assertEquals(((Float)controlObj).floatValue(),
+									((Float)testObj).floatValue(), 0.1);
+						} else if (controlObj instanceof Double) {
+							assertEquals(((Double)controlObj).doubleValue(),
+									((Double)testObj).doubleValue(), 0.1);
+						} else {
+							assertEquals(controlObj, testObj);
+						}
+					}
+				}
+					
+				assertFalse(test.next());
+			}
 }

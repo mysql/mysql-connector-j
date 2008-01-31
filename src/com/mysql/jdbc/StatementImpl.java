@@ -1181,15 +1181,14 @@ public class StatementImpl implements Statement {
 		updateCounts[updateCountCounter++] = batchedStatement.getUpdateCount();
 		
 		boolean doGenKeys = this.batchedGeneratedKeys != null;
-		
-		long generatedKeyStart = 0;
+
 		byte[][] row = null;
 		
 		if (doGenKeys) {
-			generatedKeyStart = batchedStatement.getLastInsertID();
+			long generatedKey = batchedStatement.getLastInsertID();
 		
 			row = new byte[1][];
-			row[0] = Long.toString(generatedKeyStart++).getBytes();
+			row[0] = Long.toString(generatedKey).getBytes();
 			this.batchedGeneratedKeys.add(new ByteArrayRow(row));
 		}
 
@@ -1198,8 +1197,10 @@ public class StatementImpl implements Statement {
 			updateCounts[updateCountCounter++] = batchedStatement.getUpdateCount();
 			
 			if (doGenKeys) {
+				long generatedKey = batchedStatement.getLastInsertID();
+				
 				row = new byte[1][];
-				row[0] = Long.toString(generatedKeyStart++).getBytes();
+				row[0] = Long.toString(generatedKey).getBytes();
 				this.batchedGeneratedKeys.add(new ByteArrayRow(row));
 			}
 		}

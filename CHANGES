@@ -102,7 +102,11 @@ nn-nn-08 - Version 5.1.6
     - For any SQLException caused by another Throwable, besides dumping the message or stack
       trace as a string into the message, set the underlying Throwable as the cause for
       the SQLException, making it accessible via getCause().  
-      
+     
+    - Fixed BUG#30493 - Statements with batched values do not return correct values for 
+      getGeneratedKeys() when "rewriteBatchedStatements" is set to "true", and the 
+      statement has an "ON DUPLICATE KEY UPDATE" clause.
+
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

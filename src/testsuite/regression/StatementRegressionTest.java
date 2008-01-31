@@ -5332,4 +5332,59 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		};
 	}
+	
+	/**
+	 * Tests fix for BUG#30493 - Statements with batched values do not
+	 * return correct values for getGeneratedKeys() when "rewriteBatchedStatements"
+	 * is set to "true", and the statement has an "ON DUPLICATE KEY UPDATE" clause.
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug30493() throws Exception {
+		Connection rewriteConn = null;
+		
+		try {
+			String ddl = "(autoIncId INT NOT NULL PRIMARY KEY AUTO_INCREMENT, uniqueTextKey VARCHAR(255) UNIQUE KEY)";
+			createTable("testBug30493", ddl);
+			
+			String [] sequence = {"c", "a", "d", "b"};
+			String sql = "insert into testBug30493 (uniqueTextKey) values (?) on duplicate key UPDATE autoIncId = last_insert_id( autoIncId )";
+			String tablePrimeSql = "INSERT INTO testBug30493 (uniqueTextKey) VALUES ('a'), ('b'), ('c'), ('d')";
+			
+			this.stmt.executeUpdate(tablePrimeSql);
+			this.pstmt = this.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			
+			for (int i = 0; i < sequence.length; i++) {
+				this.pstmt.setString(1, sequence[i]);
+				this.pstmt.addBatch();
+			}
+			
+			this.pstmt.executeBatch();
+			
+			ResultSet nonRewrittenRsKeys = this.pstmt.getGeneratedKeys();
+	
+			createTable("testBug30493", ddl);
+			this.stmt.executeUpdate(tablePrimeSql);
+			
+			rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true");
+			
+			this.pstmt = rewriteConn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			
+			for (int i = 0; i < sequence.length; i++) {
+				this.pstmt.setString(1, sequence[i]);
+				this.pstmt.addBatch();
+			}
+			
+			this.pstmt.executeBatch();
+			ResultSet rewrittenRsKeys = this.pstmt.getGeneratedKeys();
+			
+			assertResultSetsEqual(nonRewrittenRsKeys, rewrittenRsKeys);
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (rewriteConn != null) {
+				rewriteConn.close();
+			}
+		}
+	}
 }
