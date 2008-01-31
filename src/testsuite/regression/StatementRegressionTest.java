@@ -42,6 +42,7 @@ import java.net.URL;
 import java.sql.Array;
 import java.sql.BatchUpdateException;
 import java.sql.Blob;
+import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DataTruncation;
@@ -56,6 +57,7 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Map;
@@ -4325,7 +4327,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			this.pstmt.executeUpdate();
 
 			ts = new Timestamp(later);
-			this.pstmt.setInt(1, 1);
+			this.pstmt.setInt(1, 2);
 			this.pstmt.setTimestamp(2, ts);
 			this.pstmt.setTimestamp(3, ts);
 			this.pstmt.executeUpdate();
@@ -4355,6 +4357,11 @@ public class StatementRegressionTest extends BaseTestCase {
 			assertEquals(later, timestampSeconds2);
 			assertEquals(earlier, datetimeSeconds1);
 			assertEquals(earlier, timestampSeconds1);
+			
+			SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm z");
+			sdf.setTimeZone(TimeZone.getTimeZone("America/New York"));
+			System.out.println(sdf.format(ts2));
+			System.out.println(sdf.format(ts1));
 		} finally {
 			closeMemberJDBCResources();
 
@@ -4413,7 +4420,49 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
-	
+
+	public void testMoreLanceBugs() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+
+		createTable("Bit_Tab", "( `MAX_VAL` BIT default NULL, "
+				+ "`MIN_VAL` BIT default NULL, `NULL_VAL` BIT default NULL) "
+				+ "ENGINE=InnoDB DEFAULT CHARSET=latin1");
+		//this.stmt.execute("insert into Bit_Tab values(null,0,null)");
+		createProcedure(
+				"Bit_Proc",
+				"(out MAX_PARAM TINYINT, out MIN_PARAM TINYINT, out NULL_PARAM TINYINT) "
+						+ "begin select MAX_VAL, MIN_VAL, NULL_VAL  into MAX_PARAM, MIN_PARAM, NULL_PARAM from Bit_Tab; end ");
+
+		Boolean minBooleanVal;
+		Boolean oRetVal;
+		ResultSet rs;
+		String Min_Val_Query = "SELECT MIN_VAL from Bit_Tab";
+		String sMaxBooleanVal = "1";
+		//sMaxBooleanVal = "true";
+		Boolean bool = Boolean.valueOf("true");
+		String Min_Insert = "insert into Bit_Tab values(1,0,null)";
+		//System.out.println("Value to insert=" + extractVal(Min_Insert,1));
+		CallableStatement cstmt;
+		
+		stmt.executeUpdate("delete from Bit_Tab");
+		stmt.executeUpdate(Min_Insert);
+		cstmt = conn.prepareCall("{call Bit_Proc(?,?,?)}");
+
+		cstmt.registerOutParameter(1, java.sql.Types.BIT);
+		cstmt.registerOutParameter(2, java.sql.Types.BIT);
+		cstmt.registerOutParameter(3, java.sql.Types.BIT);
+
+		cstmt.executeUpdate();
+
+		boolean bRetVal = cstmt.getBoolean(2);
+		oRetVal = new Boolean(bRetVal);
+		minBooleanVal = new Boolean("false");
+		rs = stmt.executeQuery(Min_Val_Query);
+		assertEquals(minBooleanVal, oRetVal);
+	}
+
 	public void testBug33823() {
 		new ResultSetInternalMethods() {
 
