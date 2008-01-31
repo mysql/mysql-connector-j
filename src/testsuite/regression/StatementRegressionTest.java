@@ -5334,13 +5334,13 @@ public class StatementRegressionTest extends BaseTestCase {
 	}
 	
 	/**
-	 * Tests fix for BUG#30493 - Statements with batched values do not
+	 * Tests fix for BUG#34093 - Statements with batched values do not
 	 * return correct values for getGeneratedKeys() when "rewriteBatchedStatements"
 	 * is set to "true", and the statement has an "ON DUPLICATE KEY UPDATE" clause.
 	 * 
 	 * @throws Exception if the test fails.
 	 */
-	public void testBug30493() throws Exception {
+	public void testBug34093() throws Exception {
 		Connection rewriteConn = null;
 		
 		try {

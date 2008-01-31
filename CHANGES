@@ -103,7 +103,7 @@ nn-nn-08 - Version 5.1.6
       trace as a string into the message, set the underlying Throwable as the cause for
       the SQLException, making it accessible via getCause().  
      
-    - Fixed BUG#30493 - Statements with batched values do not return correct values for 
+    - Fixed BUG#34093 - Statements with batched values do not return correct values for 
       getGeneratedKeys() when "rewriteBatchedStatements" is set to "true", and the 
       statement has an "ON DUPLICATE KEY UPDATE" clause.
 
