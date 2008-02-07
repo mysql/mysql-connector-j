@@ -110,6 +110,9 @@ nn-nn-08 - Version 5.1.6
     - Fixed BUG#31192 - Encoding Issue retrieving serverVersion in MysqlIO in the 
       method doHandshake when encoding doesn't contain ASCII characters in the "standard"
       place (i.e. ebcdic).
+      
+    - Fixed issue where META-INF in the binary .jar file wasn't packed correctly,
+      leading to failure of the JDBC-4.0 SPI mechanism.
        
 10-09-07 - Version 5.1.5
 

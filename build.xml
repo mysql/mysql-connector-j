@@ -375,11 +375,11 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		
 		<!-- JDBC-4.0 support of service provider mechanism -->
 		
-		<mkdir dir="${buildDir}/META-INF/services/" />
-		<echo file="${buildDir}/META-INF/services/java.sql.Driver"
+		<mkdir dir="${buildDir}/${fullProdName}/META-INF/services/" />
+		<echo file="${buildDir}/${fullProdName}/META-INF/services/java.sql.Driver"
 			message="com.mysql.jdbc.Driver" />
 
-		<manifest file="${buildDir}/META-INF/MANIFEST.MF">
+		<manifest file="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF">
 			<attribute name="Built-By" value="${user.name}" />
 
 			<section name="common">
@@ -395,10 +395,10 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 		<jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar" 
 			basedir="${buildDir}/${fullProdName}" 
-			includes="**/*.class,**/*.properties*,COPYING,README" 
+			includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**" 
 			excludes="testsuite/**" 
 			index="true" 
-			manifest="${buildDir}/META-INF/MANIFEST.MF"/>
+			manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF"/>
 	</target>
 
 	<target name="-dist-trace" depends="init, compile-driver-trace">
@@ -408,12 +408,18 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<mkdir dir="${distDir}" />
 		<mkdir dir="${buildDir}/${fullProdName}/debug"/>
 
-		<manifest file="${buildDir}/MANIFEST.MF">
+		<!-- JDBC-4.0 support of service provider mechanism -->
+				
+		<mkdir dir="${buildDir}/${fullProdName}/META-INF/services/" />
+		<echo file="${buildDir}/${fullProdName}/META-INF/services/java.sql.Driver"
+				message="com.mysql.jdbc.Driver" />
+		
+		<manifest file="${buildDir}/${fullProdName}/MANIFEST.MF">
 			<attribute name="Built-By" value="${user.name}" />
 
 			<section name="common">
 				<attribute name="Specification-Title" value="JDBC" />
-				<attribute name="Specification-Version" value="3.0" />
+				<attribute name="Specification-Version" value="4.0" />
 				<attribute name="Specification-Vendor" value="Sun Microsystems Inc." />
 				<attribute name="Implementation-Title" value="MySQL Connector/J (trace/debug enabled)" />
 				<attribute name="Implementation-Version" value="${full-version} (trace/debug-enabled)" />
@@ -423,10 +429,10 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 		<jar jarfile="${buildDir}/${fullProdName}/debug/${fullProdName}-bin-g.jar"
 				basedir="${buildDir}/${fullProdName}"
-				includes="**/*.class,**/*.properties*,COPYING,README"
+				includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**"
 				excludes="testsuite/**"
 				index="true"
-				manifest="${buildDir}/MANIFEST.MF"
+				manifest="${buildDir}/${fullProdName}/MANIFEST.MF"
 			/>
 	</target>
 
