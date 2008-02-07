@@ -1543,4 +1543,24 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
 		}
 	}
+	
+	public void testNotReallyCallableStatement() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
+		CallableStatement cstmt = null;
+		
+		try {
+			this.stmt.executeUpdate("DROP TABLE IF EXISTS testNotReallyCallableStatement");
+			cstmt = this.conn.prepareCall("CREATE TABLE testNotReallyCallableStatement(field1 INT)");
+			
+		} finally {
+			this.stmt.executeUpdate("DROP TABLE IF EXISTS testNotReallyCallableStatement");
+			
+			if (cstmt != null) {
+				cstmt.close();
+			}
+		}
+	}
 }

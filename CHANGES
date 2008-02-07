@@ -114,6 +114,10 @@ nn-nn-08 - Version 5.1.6
     - Fixed issue where META-INF in the binary .jar file wasn't packed correctly,
       leading to failure of the JDBC-4.0 SPI mechanism.
        
+    - CallableStatements that aren't really stored procedure or stored function calls can
+      now be used, for tools such as Oracle JDeveloper ADF that issue statements such as 
+      DDL through CallableStatements.
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

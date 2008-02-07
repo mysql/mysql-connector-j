@@ -601,10 +601,16 @@ public class CallableStatement extends PreparedStatement implements
 
 		this.callingStoredFunction = isFunctionCall;
 
-		determineParameterTypes();
-		generateParameterMap();
-		
-		if (this.callingStoredFunction) {
+		if (!this.callingStoredFunction) {
+			if (!StringUtils.startsWithIgnoreCaseAndWs(sql, "CALL")) {
+				// not really a stored procedure call
+				fakeParameterTypes(false);
+			} else {
+				determineParameterTypes();
+			}
+			
+			generateParameterMap();
+		} else {
 			this.parameterCount += 1;
 		}
 	}
@@ -714,7 +720,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 * @throws SQLException if we can't build the metadata.
 	 */
-	private void fakeParameterTypes() throws SQLException {
+	private void fakeParameterTypes(boolean isReallyProcedure) throws SQLException {
 		Field[] fields = new Field[13];
 
 		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
@@ -731,12 +737,12 @@ public class CallableStatement extends PreparedStatement implements
 		fields[11] = new Field("", "NULLABLE", Types.SMALLINT, 0);
 		fields[12] = new Field("", "REMARKS", Types.CHAR, 0);
 
-		String procName = extractProcedureName();
+		String procName = isReallyProcedure ? extractProcedureName() : null;
 
 		byte[] procNameAsBytes = null;
 
 		try {
-			procNameAsBytes = procName.getBytes("UTF-8");
+			procNameAsBytes = procName == null ? null : procName.getBytes("UTF-8");
 		} catch (UnsupportedEncodingException ueEx) {
 			procNameAsBytes = StringUtils.s2b(procName, this.connection);
 		}
@@ -779,7 +785,7 @@ public class CallableStatement extends PreparedStatement implements
 	
 	private void determineParameterTypes() throws SQLException {
 		if (this.connection.getNoAccessToProcedureBodies()) {
-			fakeParameterTypes();
+			fakeParameterTypes(true);
 			
 			return;
 		}
