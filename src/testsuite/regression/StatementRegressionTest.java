@@ -5387,4 +5387,22 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	public void testBug34518() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+		
+		Connection fetchConn = getConnectionWithProps("useCursorFetch=true");
+		Statement fetchStmt = fetchConn.createStatement();
+		
+		int stmtCount = ((com.mysql.jdbc.Connection)fetchConn).getActiveStatementCount();
+		
+		fetchStmt.setFetchSize(100);
+		this.rs = fetchStmt.executeQuery("SELECT 1");
+	
+		assertEquals(((com.mysql.jdbc.Connection)fetchConn).getActiveStatementCount(), stmtCount + 1);
+		this.rs.close();
+		assertEquals(((com.mysql.jdbc.Connection)fetchConn).getActiveStatementCount(), stmtCount);
+	}
 }

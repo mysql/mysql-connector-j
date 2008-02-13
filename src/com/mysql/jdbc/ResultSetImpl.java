@@ -7489,6 +7489,18 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				}
 			}
 
+			if (this.statementUsedForFetchingRows != null) {
+				try {
+					this.statementUsedForFetchingRows.realClose(true, false);
+				} catch (SQLException sqlEx) {
+					if (exceptionDuringClose != null) {
+						exceptionDuringClose.setNextException(sqlEx);
+					} else {
+						exceptionDuringClose = sqlEx;
+					}
+				}
+			}
+			
 			this.rowData = null;
 			this.defaultTimeZone = null;
 			this.fields = null;

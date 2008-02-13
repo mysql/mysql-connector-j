@@ -2270,7 +2270,6 @@ public class StatementImpl implements Statement {
 		this.warningChain = null;
 		this.openResults = null;
 		this.batchedGeneratedKeys = null;
-		this.cancelTimeoutMutex = null;
 		this.localInfileInputStream = null;
 		this.pingTarget = null;
 	}
