@@ -221,6 +221,7 @@ class MysqlIO {
     private int warningCount = 0;
     protected long clientParam = 0;
     protected long lastPacketSentTimeMs = 0;
+    protected long lastPacketReceivedTimeMs = 0;
     private boolean traceProtocol = false;
     private boolean enablePacketDebug = false;
     private Calendar sessionCalendar;
@@ -347,7 +348,7 @@ class MysqlIO {
             return this.mysqlInput.available() > 0;
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
         }
     }
 
@@ -358,6 +359,10 @@ class MysqlIO {
      */
     protected long getLastPacketSentTimeMs() {
         return this.lastPacketSentTimeMs;
+    }
+    
+    protected long getLastPacketReceivedTimeMs() {
+        return this.lastPacketReceivedTimeMs;
     }
 
     /**
@@ -560,7 +565,7 @@ class MysqlIO {
 			skipFully(this.mysqlInput, packetLength);
 		} catch (IOException ioEx) {
 			throw SQLError.createCommunicationsException(this.connection,
-					this.lastPacketSentTimeMs, ioEx);
+					this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
 		} catch (OutOfMemoryError oom) {
 			try {
 				this.connection.realClose(false, false, true, oom);
@@ -651,10 +656,14 @@ class MysqlIO {
                     this.packetHeaderBuf, packet);
             }
 
+            if (this.connection.getMaintainTimeStats()) {
+				this.lastPacketReceivedTimeMs = System.currentTimeMillis();
+			}
+            
             return packet;
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
         } catch (OutOfMemoryError oom) {
         	try {
     			this.connection.realClose(false, false, true, oom);
@@ -931,7 +940,7 @@ class MysqlIO {
             }
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
         }
     }
 
@@ -1335,7 +1344,7 @@ class MysqlIO {
         try {
         	this.mysqlConnection = this.socketFactory.afterHandshake();
         } catch (IOException ioEx) {
-        	throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, ioEx);
+        	throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
         }
     }
 
@@ -1354,7 +1363,7 @@ class MysqlIO {
 				sendCommand(MysqlDefs.INIT_DB, database, null, false, null);
 			} else {
 				throw SQLError.createCommunicationsException(this.connection,
-						this.lastPacketSentTimeMs, ex);
+						this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ex);
 			}
 		}
 	}
@@ -1610,7 +1619,7 @@ class MysqlIO {
 
 					if (bytesRead != len) {
 						throw SQLError.createCommunicationsException(this.connection,
-			    				this.lastPacketSentTimeMs,
+			    				this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
 			    				new IOException(Messages.getString("MysqlIO.43")));
 					}
 
@@ -1625,7 +1634,7 @@ class MysqlIO {
 			return new ByteArrayRow(rowData);
 		} catch (IOException ioEx) {
 			throw SQLError.createCommunicationsException(this.connection,
-    				this.lastPacketSentTimeMs, ioEx);
+    				this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
 		}
 	}
 
@@ -1905,7 +1914,7 @@ class MysqlIO {
                 throw sqlEx;
             } catch (Exception ex) {
                 throw SQLError.createCommunicationsException(this.connection,
-                    this.lastPacketSentTimeMs, ex);
+                    this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ex);
             }
 
             Buffer returnPacket = null;
@@ -1923,7 +1932,7 @@ class MysqlIO {
             return returnPacket;
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
         }
     }
 
@@ -2955,10 +2964,14 @@ class MysqlIO {
     			reuse.getByteBuffer()[packetLength] = 0; // Null-termination
     		}
 
+    		if (this.connection.getMaintainTimeStats()) {
+ 				this.lastPacketReceivedTimeMs = System.currentTimeMillis();
+ 			}
+    		 
     		return reuse;
     	} catch (IOException ioEx) {
     		throw SQLError.createCommunicationsException(this.connection,
-    				this.lastPacketSentTimeMs, ioEx);
+    				this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
     	} catch (OutOfMemoryError oom) {
     		try {
     			// _Try_ this
@@ -3040,7 +3053,7 @@ class MysqlIO {
 
 				if (bytesRead != lengthToWrite) {
 					throw SQLError.createCommunicationsException(this.connection,
-							this.lastPacketSentTimeMs,
+							this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
 							SQLError.createSQLException(Messages.getString(
 							"MysqlIO.50") //$NON-NLS-1$
 							+lengthToWrite +
@@ -3080,7 +3093,7 @@ class MysqlIO {
 
 			if (bytesRead != lengthToWrite) {
 				throw SQLError.createCommunicationsException(this.connection,
-						this.lastPacketSentTimeMs,
+						this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
 						SQLError.createSQLException(Messages.getString(
 						"MysqlIO.54") //$NON-NLS-1$
 						+lengthToWrite +
@@ -3106,14 +3119,14 @@ class MysqlIO {
         throws SQLException {
         if ((multiPacketSeq == -128) && (this.readPacketSequence != 127)) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs,
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
                 new IOException("Packets out of order, expected packet # -128, but received packet # " +
                     multiPacketSeq));
         }
 
         if ((this.readPacketSequence == -1) && (multiPacketSeq != 0)) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs,
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
                 new IOException("Packets out of order, expected packet # -1, but received packet # " +
                     multiPacketSeq));
         }
@@ -3121,7 +3134,7 @@ class MysqlIO {
         if ((multiPacketSeq != -128) && (this.readPacketSequence != -1) &&
                 (multiPacketSeq != (this.readPacketSequence + 1))) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs,
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
                 new IOException("Packets out of order, expected packet # " +
                     (this.readPacketSequence + 1) + ", but received packet # " +
                     multiPacketSeq));
@@ -3152,10 +3165,6 @@ class MysqlIO {
             if (packetLen > this.maxAllowedPacket) {
                 throw new PacketTooBigException(packetLen, this.maxAllowedPacket);
             }
-
-			if (this.connection.getMaintainTimeStats()) {
-				this.lastPacketSentTimeMs = System.currentTimeMillis();
-			}
 
             if ((this.serverMajorVersion >= 4) &&
                     (packetLen >= this.maxThreeBytes)) {
@@ -3217,9 +3226,13 @@ class MysqlIO {
             if (packet == this.sharedSendPacket) {
                 reclaimLargeSharedSendPacket();
             }
+            
+            if (this.connection.getMaintainTimeStats()) {
+				this.lastPacketSentTimeMs = System.currentTimeMillis();
+			}
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
         }
     }
 
@@ -3392,7 +3405,7 @@ class MysqlIO {
             throw sqlEx;
         } catch (Exception fallThru) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, fallThru);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, fallThru);
         }
 
         checkErrorPacket(resultPacket);
@@ -3639,7 +3652,7 @@ class MysqlIO {
             }
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
         }
     }
 

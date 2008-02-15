@@ -1061,17 +1061,18 @@ public class SQLError {
 		}
 	}
 	
-	public static SQLException createCommunicationsException(ConnectionImpl conn, long lastPacketSentTimeMs,
+	public static SQLException createCommunicationsException(ConnectionImpl conn, long lastPacketSentTimeMs, 
+			long lastPacketReceivedTimeMs,
 			Exception underlyingException) {
 		SQLException exToReturn = null;
 		
 		if (!Util.isJdbc4()) {
-			exToReturn = new CommunicationsException(conn, lastPacketSentTimeMs, underlyingException);
+			exToReturn = new CommunicationsException(conn, lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException);
 		} else {
 		
 			try {
 				exToReturn = (SQLException) Util.handleNewInstance(JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR, new Object[] {
-					conn, Constants.longValueOf(lastPacketSentTimeMs), underlyingException});
+					conn, Constants.longValueOf(lastPacketSentTimeMs), Constants.longValueOf(lastPacketReceivedTimeMs), underlyingException});
 			} catch (SQLException sqlEx) {
 				// We should _never_ get this, but let's not swallow it either
 				
@@ -1104,7 +1105,9 @@ public class SQLError {
 	 */
 	public static String createLinkFailureMessageBasedOnHeuristics(
 			ConnectionImpl conn,
-			long lastPacketSentTimeMs, Exception underlyingException,
+			long lastPacketSentTimeMs, 
+			long lastPacketReceivedTimeMs,
+			Exception underlyingException,
 			boolean streamingResultSetInPlay) {
 		long serverTimeoutSeconds = 0;
 		boolean isInteractiveClient = false;
@@ -1139,7 +1142,8 @@ public class SQLError {
 		}
 
 		long timeSinceLastPacket = (System.currentTimeMillis() - lastPacketSentTimeMs) / 1000;
-
+		long timeSinceLastPacketReceived = (System.currentTimeMillis() - lastPacketReceivedTimeMs) / 1000;
+		
 		int dueToTimeout = DUE_TO_TIMEOUT_FALSE;
 
 		StringBuffer timeoutMessageBuf = null;
@@ -1184,6 +1188,12 @@ public class SQLError {
 			if (dueToTimeout == DUE_TO_TIMEOUT_TRUE
 					|| dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
 
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.9_1")); //$NON-NLS-1$
+				exceptionMessageBuf.append(timeSinceLastPacketReceived);
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.9_2")); //$NON-NLS-1$
+				
 				exceptionMessageBuf.append(Messages
 						.getString("CommunicationsException.9")); //$NON-NLS-1$
 				exceptionMessageBuf.append(timeSinceLastPacket);

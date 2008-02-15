@@ -2109,6 +2109,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								throw SQLError.createCommunicationsException(this,
 										(this.io != null) ? this.io
 												.getLastPacketSentTimeMs() : 0,
+										(this.io != null) ? this.io
+												 .getLastPacketReceivedTimeMs() : 0,
 												EEE);
 							}
 						}

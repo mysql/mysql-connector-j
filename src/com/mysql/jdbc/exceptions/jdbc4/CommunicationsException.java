@@ -51,10 +51,11 @@ public class CommunicationsException extends SQLRecoverableException implements 
 	private boolean streamingResultSetInPlay = false;
 
 	public CommunicationsException(ConnectionImpl conn, long lastPacketSentTimeMs,
+			long lastPacketReceivedTimeMs,
 			Exception underlyingException) {
 
 		this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn,
-				lastPacketSentTimeMs, underlyingException, this.streamingResultSetInPlay);
+				lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException, this.streamingResultSetInPlay);
 		
 		if (underlyingException != null) {
 			initCause(underlyingException);

@@ -44,7 +44,7 @@ public class ConnectionFeatureNotAvailableException extends
 	 */
 	public ConnectionFeatureNotAvailableException(ConnectionImpl conn,
 			long lastPacketSentTimeMs, Exception underlyingException) {
-		super(conn, lastPacketSentTimeMs, underlyingException);
+		super(conn, lastPacketSentTimeMs, 0, underlyingException);
 	}
 
 	/*

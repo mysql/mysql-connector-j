@@ -118,6 +118,11 @@ nn-nn-08 - Version 5.1.6
       now be used, for tools such as Oracle JDeveloper ADF that issue statements such as 
       DDL through CallableStatements.
       
+    - CommunicationExceptions now carry information about the last time a packet
+      was received from the MySQL server, as well as when the last packet was sent
+      to one, in an effort to make it easier to debug communications errors caused
+      by network timeouts.
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053
