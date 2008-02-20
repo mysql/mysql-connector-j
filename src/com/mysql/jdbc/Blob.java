@@ -296,7 +296,7 @@ public class Blob implements java.sql.Blob, OutputStreamWatcher {
 	public synchronized void truncate(long len) throws SQLException {
 		checkClosed();
 		
-		if (len < 1) {
+		if (len < 0) {
 			throw SQLError.createSQLException("\"len\" argument can not be < 1.", 
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}

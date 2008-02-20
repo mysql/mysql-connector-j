@@ -400,4 +400,20 @@ public class BlobRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	public void testBug34677() throws Exception {
+		createTable("testBug34677", "(field1 BLOB)");
+		this.stmt.executeUpdate("INSERT INTO testBug34677 VALUES ('abc')");
+		
+		try {
+			this.rs = this.stmt.executeQuery("SELECT field1 FROM testBug34677");
+			this.rs.next();
+			Blob blob = this.rs.getBlob(1);
+			blob.truncate(0L);
+			assertEquals(0, blob.length());
+			assertEquals(-1, blob.getBinaryStream().read());
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

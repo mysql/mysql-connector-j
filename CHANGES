@@ -117,7 +117,13 @@ nn-nn-08 - Version 5.1.6
     - CallableStatements that aren't really stored procedure or stored function calls can
       now be used, for tools such as Oracle JDeveloper ADF that issue statements such as 
       DDL through CallableStatements.
-      
+    
+    - Fixed BUG#34518 - Statements using cursor fetch leaked internal prepared statements
+      until connection was closed. The internal prepared statement is now held open while
+      the result set is open, and closed by the result set itself being closed.
+
+    - Fixed BUG#34677 - Blob.truncate() wouldn't take "0" as an argument.
+
     - CommunicationExceptions now carry information about the last time a packet
       was received from the MySQL server, as well as when the last packet was sent
       to one, in an effort to make it easier to debug communications errors caused
