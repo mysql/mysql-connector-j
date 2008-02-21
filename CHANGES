@@ -129,6 +129,12 @@ nn-nn-08 - Version 5.1.6
       to one, in an effort to make it easier to debug communications errors caused
       by network timeouts.
       
+    - Reverted a change to DatabaseMetadata.getColumns() from 5.0, where
+      getColumns() would report NULL for COLUMN_SIZE for TIME, DATE, DATETIME
+      and TIMESTAMP types. It now reports the column size, in the 
+      DatabaseMetadata implementations that use "SHOW" commands, and the 
+      INFORMATION_SCHEMA.
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

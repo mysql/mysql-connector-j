@@ -343,17 +343,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						"varchar")) {
 					this.columnSize = Constants.integerValueOf(255);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+					"timestamp")) {
+					this.columnSize = Constants.integerValueOf(19);
+				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
+					"datetime")) {
+					this.columnSize = Constants.integerValueOf(19);
+				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"date")) {
-					this.columnSize = null;
+					this.columnSize = Constants.integerValueOf(10);
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"time")) {
-					this.columnSize = null;
-				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
-						"timestamp")) {
-					this.columnSize = null;
-				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
-						"datetime")) {
-					this.columnSize = null;
+					this.columnSize = Constants.integerValueOf(8);
+				
 				} else if (StringUtils.startsWithIgnoreCaseAndWs(typeInfo,
 						"tinyblob")) {
 					this.columnSize = Constants.integerValueOf(255);
