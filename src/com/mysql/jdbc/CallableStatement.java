@@ -611,6 +611,9 @@ public class CallableStatement extends PreparedStatement implements
 			
 			generateParameterMap();
 		} else {
+			determineParameterTypes();
+			generateParameterMap();
+			
 			this.parameterCount += 1;
 		}
 	}
