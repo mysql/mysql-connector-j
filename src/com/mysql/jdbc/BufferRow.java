@@ -637,12 +637,14 @@ public class BufferRow extends ResultSetRow {
 		throw new OperationNotSupportedException();
 	}
 
-	public void setMetadata(Field[] f) throws SQLException {
+	public ResultSetRow setMetadata(Field[] f) throws SQLException {
 		super.setMetadata(f);
 
 		if (this.isBinaryEncoded) {
 			setupIsNullBitmask();
 		}
+		
+		return this;
 	}
 
 	/**
