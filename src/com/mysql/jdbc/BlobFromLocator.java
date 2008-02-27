@@ -32,8 +32,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
-
 /**
  * The representation (mapping) in the JavaTM programming language of an SQL
  * BLOB value. An SQL BLOB is a built-in type that stores a Binary Large Object
@@ -164,7 +162,7 @@ public class BlobFromLocator implements java.sql.Blob {
 	 */
 	public OutputStream setBinaryStream(long indexToWriteAt)
 			throws SQLException {
-		throw new NotImplemented();
+		throw SQLError.notImplemented();
 	}
 
 	/**
@@ -577,6 +575,29 @@ public class BlobFromLocator implements java.sql.Blob {
 			pStmt = createGetBytesStatement();
 		}
 
+		LocatorInputStream(long pos, long len) throws SQLException {
+			length = pos + len;
+			currentPositionInBlob = pos;
+			long blobLength = length();
+			
+			if (pos + len > blobLength) {
+				throw SQLError.createSQLException(
+						Messages.getString("Blob.invalidStreamLength", 
+								new Object[] {new Long(blobLength), new Long(pos), new Long(len)}),
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			}
+			
+			if (pos < 1) {
+				throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), 
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			}
+			
+			if (pos > blobLength) {
+				throw SQLError.createSQLException(Messages.getString("Blob.invalidStreamPos"), 
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			}
+		}
+		
 		public int read() throws IOException {
 			if (currentPositionInBlob + 1 > length) {
 				return -1;
@@ -677,6 +698,6 @@ public class BlobFromLocator implements java.sql.Blob {
 	}
 
 	public InputStream getBinaryStream(long pos, long length) throws SQLException {
-		throw new NotYetImplementedException();
+		return new LocatorInputStream(pos, length);
 	}
 }
