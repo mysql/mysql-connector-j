@@ -371,7 +371,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
 		case MysqlDefs.FIELD_TYPE_SET:
 			return "SET"; //$NON-NLS-1$
-
+			
+		case MysqlDefs.FIELD_TYPE_GEOMETRY:
+			return "GEOMETRY"; //$NON-NLS-1$
+			
 		default:
 			return "UNKNOWN"; //$NON-NLS-1$
 		}

@@ -2194,4 +2194,18 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public void testBug34194() throws Exception {
+		createTable("bug34194", "(id integer,geom geometry)");
+		try {
+			this.stmt
+					.execute("insert into bug34194 values('1',GeomFromText('POINT(622572.881 5156121.034)'))");
+			this.rs = this.stmt.executeQuery("select * from bug34194");
+			ResultSetMetaData RSMD = this.rs.getMetaData();
+			assertEquals("GEOMETRY", RSMD.getColumnTypeName(2));
+
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }
