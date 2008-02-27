@@ -8,7 +8,7 @@ import java.sql.SQLXML;
 import java.sql.Types;
 
 import com.mysql.jdbc.PreparedStatement;
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
+
 
 public class JDBC4PreparedStatementHelper {
 	private JDBC4PreparedStatementHelper() {
@@ -16,7 +16,7 @@ public class JDBC4PreparedStatementHelper {
 	}
 	
 	static void setRowId(PreparedStatement pstmt, int parameterIndex, RowId x) throws SQLException {
-		throw new NotYetImplementedException();
+		throw SQLError.notImplemented();
 	}
 
 

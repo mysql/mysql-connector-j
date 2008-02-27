@@ -32,7 +32,7 @@ import java.sql.RowId;
 import java.sql.SQLXML;
 import java.sql.NClob;
 
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
+
 
 public class JDBC4CallableStatement extends CallableStatement {
 

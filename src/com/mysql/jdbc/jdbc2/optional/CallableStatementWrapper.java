@@ -2626,11 +2626,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 //	}
 //
 //	public boolean isWrapperFor(Class arg0) throws SQLException {
-//		throw new NotYetImplementedException();
+//		throw SQLError.notImplemented();
 //	}
 //
 //	public Object unwrap(Class arg0) throws SQLException {
-//		throw new NotYetImplementedException();
+//		throw SQLError.notImplemented();
 //	}
 
 }

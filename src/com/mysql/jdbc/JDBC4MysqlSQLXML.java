@@ -67,7 +67,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.SAXException;
 
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
+
 
 public class JDBC4MysqlSQLXML implements SQLXML {
 

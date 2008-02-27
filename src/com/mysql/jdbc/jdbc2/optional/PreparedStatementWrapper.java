@@ -1217,10 +1217,10 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 //	}
 //
 //	public boolean isWrapperFor(Class arg0) throws SQLException {
-//		throw new NotYetImplementedException();
+//		throw SQLError.notImplemented();
 //	}
 //
 //	public Object unwrap(Class arg0) throws SQLException {
-//		throw new NotYetImplementedException();
+//		throw SQLError.notImplemented();
 //	}
 }

@@ -2197,7 +2197,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
     		hostsString = badHost + firstHost;
     		break;
     	case 2:
-    		hostsString = firstHost + badHost + firstHost;
+    		hostsString = firstHost + "," + badHost + firstHost;
     		break;
     	case 3:
     		hostsString = firstHost + "," + badHost;

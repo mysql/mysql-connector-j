@@ -1412,7 +1412,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * @see DatabaseMetaData#deletesAreDetected
 	 */
 	public synchronized boolean rowDeleted() throws SQLException {
-		throw new NotImplemented();
+		throw SQLError.notImplemented();
 	}
 
 	/**
@@ -1430,7 +1430,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * @see DatabaseMetaData#insertsAreDetected
 	 */
 	public synchronized boolean rowInserted() throws SQLException {
-		throw new NotImplemented();
+		throw SQLError.notImplemented();
 	}
 
 	/**
@@ -1448,7 +1448,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * @see DatabaseMetaData#updatesAreDetected
 	 */
 	public synchronized boolean rowUpdated() throws SQLException {
-		throw new NotImplemented();
+		throw SQLError.notImplemented();
 	}
 
 	/**

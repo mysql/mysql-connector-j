@@ -954,7 +954,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		if (bindValue.isNull) {
 			return null;
 		} else if (bindValue.isLongData) {
-			throw new NotImplemented();
+			throw SQLError.notImplemented();
 		} else {
 			if (this.outByteBuffer == null) {
 				this.outByteBuffer = new Buffer(this.connection
@@ -1704,7 +1704,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @see java.sql.PreparedStatement#setArray(int, java.sql.Array)
 	 */
 	public void setArray(int i, Array x) throws SQLException {
-		throw new NotImplemented();
+		throw SQLError.notImplemented();
 	}
 
 	/**
@@ -2059,7 +2059,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @see java.sql.PreparedStatement#setRef(int, java.sql.Ref)
 	 */
 	public void setRef(int i, Ref x) throws SQLException {
-		throw new NotImplemented();
+		throw SQLError.notImplemented();
 	}
 
 	/**
@@ -2275,7 +2275,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			throws SQLException {
 		checkClosed();
 
-		throw new NotImplemented();
+		throw SQLError.notImplemented();
 	}
 
 	/**

@@ -38,7 +38,7 @@ import com.mysql.jdbc.ResultSetImpl;
 import com.mysql.jdbc.RowData;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Statement;
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
+
 
 public class JDBC4ResultSet extends ResultSetImpl {
 
@@ -300,11 +300,11 @@ public class JDBC4ResultSet extends ResultSetImpl {
 	}
 
 	public int getHoldability() throws SQLException {
-		throw new NotYetImplementedException();
+		throw SQLError.notImplemented();
 	}
 
 	public RowId getRowId(int columnIndex) throws SQLException {
-		throw new NotYetImplementedException();
+		throw SQLError.notImplemented();
 	}
 
 	public RowId getRowId(String columnLabel) throws SQLException {

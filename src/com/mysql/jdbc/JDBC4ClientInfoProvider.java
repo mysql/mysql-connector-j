@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.sql.SQLClientInfoException;
 import java.util.Properties;
 
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
+
 
 /**
  * Classes that implement this interface and provide a no-args constructor

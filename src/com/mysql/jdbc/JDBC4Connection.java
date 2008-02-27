@@ -37,7 +37,7 @@ import java.util.TimerTask;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
+
 
 public class JDBC4Connection extends ConnectionImpl {
 	private JDBC4ClientInfoProvider infoProvider;
@@ -52,11 +52,11 @@ public class JDBC4Connection extends ConnectionImpl {
 	}
 	
 	public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-		throw new NotYetImplementedException();
+		throw SQLError.notImplemented();
 	}
 
 	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-		throw new NotYetImplementedException();
+		throw SQLError.notImplemented();
 	}
 
 	public Properties getClientInfo() throws SQLException {

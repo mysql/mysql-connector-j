@@ -4704,7 +4704,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			}
 		} else {
-			throw new NotImplemented();
+			throw SQLError.notImplemented();
 		}
 	}
 
@@ -5087,7 +5087,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			}
 		} else {
-			throw new NotImplemented();
+			throw SQLError.notImplemented();
 		}
 	}
 	

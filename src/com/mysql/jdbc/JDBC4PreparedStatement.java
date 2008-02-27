@@ -34,7 +34,7 @@ import java.sql.Types;
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
+
 
 public class JDBC4PreparedStatement extends PreparedStatement {
 

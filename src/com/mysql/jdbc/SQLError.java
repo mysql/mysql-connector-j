@@ -1267,4 +1267,18 @@ public class SQLError {
 		
 		return exceptionMessageBuf.toString();
 	}
+	
+	public static SQLException notImplemented() {
+		if (Util.isJdbc4()) {
+			try {
+				return (SQLException) Class.forName(
+						"java.sql.SQLFeatureNotSupportedException")
+						.newInstance();
+			} catch (Throwable t) {
+				// proceed
+			}
+		}
+
+		return SQLError.notImplemented();
+	}
 }

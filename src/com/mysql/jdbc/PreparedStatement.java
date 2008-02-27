@@ -2675,7 +2675,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *             DOCUMENT ME!
 	 */
 	public void setArray(int i, Array x) throws SQLException {
-		throw new NotImplemented();
+		throw SQLError.notImplemented();
 	}
 
 	/**
@@ -3855,7 +3855,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *             DOCUMENT ME!
 	 */
 	public void setRef(int i, Ref x) throws SQLException {
-		throw new NotImplemented();
+		throw SQLError.notImplemented();
 	}
 
 	/**

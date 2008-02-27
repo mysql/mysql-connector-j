@@ -423,10 +423,10 @@ public class MysqlDataSource extends ConnectionPropertiesImpl implements
 	}
 //
 //	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-//		throw new NotYetImplementedException();
+//		throw SQLError.notImplemented();
 //	}
 //
 //	public <T> T unwrap(Class<T> iface) throws SQLException {
-//		throw new NotYetImplementedException();
+//		throw SQLError.notImplemented();
 //	}
 }

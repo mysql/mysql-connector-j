@@ -4072,14 +4072,16 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				advisorStmt = advisorConn.createStatement();
 				advisorStmt.setFetchSize(1);
 				
-				StandardLogger.bufferedLog = advisorBuf;
-				
 				this.rs = advisorStmt.executeQuery("SELECT 1, 2 LIMIT 0");
+				advisorBuf = new StringBuffer();
+				StandardLogger.bufferedLog = advisorBuf;
 				this.rs.next();
 				this.rs.close();
 			}
 			
-			assertEquals("", advisorBuf.toString());
+			assertEquals(
+					-1, advisorBuf.toString().indexOf(
+					Messages.getString("ResultSet.Possible_incomplete_traversal_of_result_set").substring(0, 10)));
 		} finally {
 			StandardLogger.bufferedLog = null;
 			
@@ -4456,7 +4458,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}
 		
 		createTable("testBug30664_1", "(id int)");
-		createTable("testBug30664_2", "(id int, binaryvalue varbinary(10))");
+		createTable("testBug30664_2", "(id int, binaryvalue varbinary(255))");
 
 		try {
 			this.stmt
@@ -4598,7 +4600,11 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		
 		this.rs = this.stmt.executeQuery("select now() from dual where 1=0");
 		this.rs.next();
-		this.rs.getTimestamp(1);  // fails
+		try {
+			this.rs.getTimestamp(1);  // fails
+		} catch (SQLException sqlEx) {
+			assertEquals(SQLError.SQL_STATE_GENERAL_ERROR, sqlEx.getSQLState());
+		}
 	}
 	
 	public void testBug34762() throws Exception {

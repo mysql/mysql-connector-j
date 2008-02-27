@@ -39,7 +39,7 @@ import com.mysql.jdbc.Statement;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.UpdatableResultSet;
 
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
+
 
 public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	public JDBC4UpdatableResultSet(String catalog, Field[] fields, RowData tuples, 
@@ -343,7 +343,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	}
 
 	public int getHoldability() throws SQLException {
-		throw new NotYetImplementedException();
+		throw SQLError.notImplemented();
 	}
 
 	/**
@@ -507,7 +507,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	}
 
 	public RowId getRowId(int columnIndex) throws SQLException {
-		throw new NotYetImplementedException();
+		throw SQLError.notImplemented();
 	}
 
 	public RowId getRowId(String columnLabel) throws SQLException {

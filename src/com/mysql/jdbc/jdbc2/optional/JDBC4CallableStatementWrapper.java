@@ -49,7 +49,7 @@ import java.util.Properties;
 
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.exceptions.NotYetImplementedException;
+
 import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
 import com.mysql.jdbc.jdbc2.optional.MysqlPooledConnection;
 
