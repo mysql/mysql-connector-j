@@ -2334,4 +2334,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			testConn.close();
 		}
 	}
+	
+	/** 34703 [NEW]: isValild() aborts Connection on timeout */
+	
+	public void testBug34703() throws Exception {
+		if (!com.mysql.jdbc.Util.isJdbc4()) {
+			return;
+		}
+		
+		Method isValid = java.sql.Connection.class.getMethod("isValid", new Class[] {Integer.TYPE});
+		
+		
+		Connection newConn = getConnectionWithProps((Properties)null);
+		isValid.invoke(newConn, new Object[] {new Integer(1)});
+		Thread.sleep(2000);
+		assertTrue(((Boolean)isValid.invoke(newConn, new Object[] {new Integer(0)})).booleanValue());
+	}
 }

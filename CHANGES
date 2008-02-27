@@ -140,6 +140,9 @@ nn-nn-08 - Version 5.1.6
       TIME, DATETIME and TIMESTAMP types when using absolute, relative,
       and previous result set navigation methods.
       
+    - Fixed BUG#34703 - Connection.isValid() invalidates connection after
+      timeout, even if connection is actually valid.
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

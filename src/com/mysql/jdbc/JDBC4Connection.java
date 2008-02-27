@@ -96,7 +96,7 @@ public class JDBC4Connection extends ConnectionImpl {
 		TimerTask timeoutTask = null;
 		
 		if (timeout != 0) {
-			getCancelTimer().schedule(new TimerTask() { 
+			timeoutTask = new TimerTask() { 
 				public void run() {
 					new Thread() {
 						public void run() {
@@ -108,7 +108,9 @@ public class JDBC4Connection extends ConnectionImpl {
 						}
 					}.start();	
 				}
-				}, timeout * 1000);
+			};
+			
+			getCancelTimer().schedule(timeoutTask, timeout * 1000);
 		}
 		
 		try {
