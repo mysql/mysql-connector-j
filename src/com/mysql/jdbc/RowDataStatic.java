@@ -98,12 +98,12 @@ public class RowDataStatic implements RowData {
 	 * 
 	 * @return DOCUMENT ME!
 	 */
-	public ResultSetRow getAt(int atIndex) {
+	public ResultSetRow getAt(int atIndex) throws SQLException {
 		if ((atIndex < 0) || (atIndex >= this.rows.size())) {
 			return null;
 		}
 
-		return (ResultSetRow) this.rows.get(atIndex);
+		return ((ResultSetRow) this.rows.get(atIndex)).setMetadata(this.metadata);
 	}
 
 	/**
@@ -215,9 +215,8 @@ public class RowDataStatic implements RowData {
 
 		if (this.index < this.rows.size()) {
 			ResultSetRow row = (ResultSetRow) this.rows.get(this.index);
-			row.setMetadata(this.metadata);
 			
-			return row; 
+			return row.setMetadata(this.metadata);
 		}
 
 		return null;

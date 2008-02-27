@@ -135,6 +135,11 @@ nn-nn-08 - Version 5.1.6
       DatabaseMetadata implementations that use "SHOW" commands, and the 
       INFORMATION_SCHEMA.
       
+    - Fixed Bug#34762 - RowDataStatic does't always set the metadata in 
+      ResultSetRow, which can lead to failures when unpacking DATE,
+      TIME, DATETIME and TIMESTAMP types when using absolute, relative,
+      and previous result set navigation methods.
+      
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053

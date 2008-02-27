@@ -4601,4 +4601,50 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		this.rs.getTimestamp(1);  // fails
 	}
 	
+	public void testBug34762() throws Exception {
+		createTable("testBug34762", "(field1 TIMESTAMP)");
+		int numRows = 10;
+		
+		for (int i = 0; i < numRows; i++) {
+			this.stmt.executeUpdate("INSERT INTO testBug34762 VALUES (NOW())");
+		}
+		
+		this.rs = this.stmt.executeQuery("SELECT field1 FROM testBug34762");
+		
+		while (this.rs.next()) {
+			this.rs.getTimestamp(1);
+		}
+		
+		this.rs = this.stmt.executeQuery("SELECT field1 FROM testBug34762");
+		
+		for (int i = 1; i <= numRows; i++) {
+			this.rs.absolute(i);
+			this.rs.getTimestamp(1);
+		}
+		
+		this.rs = this.stmt.executeQuery("SELECT field1 FROM testBug34762");
+		
+		this.rs.last();
+		this.rs.getTimestamp(1);
+		
+		while (this.rs.previous()) {
+			this.rs.getTimestamp(1);
+		}
+		
+		this.rs = this.stmt.executeQuery("SELECT field1 FROM testBug34762");
+		
+		this.rs.last();
+		
+		while (this.rs.relative(-1)) {
+			this.rs.getTimestamp(1);
+		}
+		
+		this.rs = this.stmt.executeQuery("SELECT field1 FROM testBug34762");
+		
+		this.rs.beforeFirst();
+		
+		while (this.rs.relative(1)) {
+			this.rs.getTimestamp(1);
+		}
+	}	
 }

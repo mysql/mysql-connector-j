@@ -1391,7 +1391,9 @@ public abstract class ResultSetRow {
 	public abstract void setColumnValue(int index, byte[] value)
 			throws SQLException;
 
-	public void setMetadata(Field[] f) throws SQLException {
+	public ResultSetRow setMetadata(Field[] f) throws SQLException {
 		this.metadata = f;
+		
+		return this;
 	}
 }

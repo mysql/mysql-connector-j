@@ -1234,10 +1234,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 */
 	protected void abortInternal() throws SQLException {
-		io.forceClose();
-		io = null;
-		isClosed = true;
-		cleanup(null);
+		if (this.io != null) {
+			try {
+				this.io.forceClose();
+			} catch (Throwable t) {
+				// can't do anything about it, and we're forcibly aborting
+			}
+			this.io = null;
+		}
+		
+		this.isClosed = true;
 	}
 	
 	/**
