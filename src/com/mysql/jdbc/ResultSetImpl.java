@@ -6625,6 +6625,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					rollForward);
 		} else {
 			checkClosed();
+			checkRowPos();
 			checkColumnBounds(columnIndex);
 			
 			tsVal = this.thisRow.getTimestampFast(columnIndex - 1, 
