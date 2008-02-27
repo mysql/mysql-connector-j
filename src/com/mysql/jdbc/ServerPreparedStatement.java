@@ -585,7 +585,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @see java.sql.Statement#close()
 	 */
 	public synchronized void close() throws SQLException {
-		if (this.isCached) {
+		if (this.isCached && !this.isClosed) {
 			clearParameters();
 			
 			this.isClosed = true;
