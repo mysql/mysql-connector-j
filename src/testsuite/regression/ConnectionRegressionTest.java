@@ -1513,7 +1513,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 													.getClass()
 													.getName()
 													.equals(
-															"com.mysql.jdbc.NotImplemented")) {
+															"com.mysql.jdbc.NotImplemented")
+											&& !invokeEx
+											.getCause()
+											.getClass()
+											.getName()
+											.equals(
+													"java.sql.SQLFeatureNotSupportedException")) {
 										throw invokeEx;
 									}
 								}
