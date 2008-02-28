@@ -294,7 +294,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					errorMessageBuf.append(", "); //$NON-NLS-1$
 					errorMessageBuf.append("'"); //$NON-NLS-1$
 					errorMessageBuf.append(validateAgainst[i]);
-					errorMessageBuf.append(Messages.getString("'")); //$NON-NLS-1$
+					errorMessageBuf.append("'"); //$NON-NLS-1$
 				}
 
 				errorMessageBuf.append(" or '"); //$NON-NLS-1$
@@ -2701,8 +2701,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				String testString = "abc"; //$NON-NLS-1$
 				testString.getBytes(testEncoding);
 			} catch (UnsupportedEncodingException UE) {
-				throw SQLError.createSQLException(Messages.getString("ConnectionProperties.unsupportedCharacterEncoding") + Messages.getString("ConnectionProperties.unsupportedCharacterEncoding.1") //$NON-NLS-1$ //$NON-NLS-2$
-						+ testEncoding + Messages.getString("ConnectionProperties.unsupportedCharacterEncoding.2"), "0S100"); //$NON-NLS-1$ //$NON-NLS-2$
+				throw SQLError.createSQLException(Messages.getString(
+						"ConnectionProperties.unsupportedCharacterEncoding", 
+						new Object[] {testEncoding}), "0S100"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 

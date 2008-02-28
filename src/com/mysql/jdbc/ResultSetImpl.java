@@ -1303,14 +1303,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						} catch (ArithmeticException arEx) {
 							throw SQLError.createSQLException(
 									Messages
-											.getString("ResultSet.Bad_format_for_BigDecimal____124") //$NON-NLS-1$
-											+ stringVal
-											+ Messages
-													.getString("ResultSet.___in_column__125")
-											+ columnIndex
-											+ "(" //$NON-NLS-1$
-											+ this.fields[columnIndex - 1]
-											+ ").",
+											.getString("ResultSet.Bad_format_for_BigDecimal", //$NON-NLS-1$
+											 new Object[] {stringVal, new Integer(columnIndex)}),
 									SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 						}
 					}
@@ -4816,13 +4810,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				} catch (NumberFormatException ex) {
 					throw SQLError.createSQLException(
 							Messages
-									.getString("ResultSet.Bad_format_for_BigDecimal____86") //$NON-NLS-1$
-									+ stringVal
-									+ Messages
-											.getString("ResultSet.___in_column__87")
-									+ columnIndex + "(" //$NON-NLS-1$
-									+ this.fields[columnIndex - 1] + ").",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							.getString("ResultSet.Bad_format_for_BigDecimal", //$NON-NLS-1$
+							 new Object[] {stringVal, new Integer(columnIndex)}),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 				}
 
 				return val;
@@ -5048,13 +5038,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				} catch (NumberFormatException ex) {
 					throw SQLError.createSQLException(
 							Messages
-									.getString("ResultSet.Bad_format_for_BigDecimal____86") //$NON-NLS-1$
-									+ stringVal
-									+ Messages
-											.getString("ResultSet.___in_column__87")
-									+ columnIndex + "(" //$NON-NLS-1$
-									+ this.fields[columnIndex - 1] + ").",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							.getString("ResultSet.Bad_format_for_BigDecimal", //$NON-NLS-1$
+							 new Object[] {stringVal, new Integer(columnIndex)}),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 				}
 
 				return val;
