@@ -4652,5 +4652,23 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		while (this.rs.relative(1)) {
 			this.rs.getTimestamp(1);
 		}
-	}	
+	}
+	
+	/**
+	 * @deprecated because we use deprecated methods
+	 */
+	public void testBug34913() throws Exception {
+		try {
+			Timestamp ts = new Timestamp(System.currentTimeMillis());
+			
+			this.pstmt = ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("SELECT 'abcdefghij', ?");
+			this.pstmt.setTimestamp(1, ts);
+			this.rs = this.pstmt.executeQuery();
+			this.rs.next();
+			assertTrue(this.rs.getTimestamp(2).getMonth() != 5);
+			assertTrue(this.rs.getTimestamp(2).getDate() != 21);
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

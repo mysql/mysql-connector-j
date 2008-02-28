@@ -667,8 +667,8 @@ public abstract class ResultSetRow {
 
 		if (length != 0) {
 			year = (bits[offset + 0] & 0xff) | ((bits[offset + 1] & 0xff) << 8);
-			month = bits[2];
-			day = bits[3];
+			month = bits[offset + 2];
+			day = bits[offset + 3];
 
 			if (length > 4) {
 				hour = bits[offset + 4];

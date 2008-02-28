@@ -148,8 +148,8 @@ nn-nn-08 - Version 5.1.6
       
     - Fixed BUG#33162 - NullPointerException instead of SQLException 
       thrown for ResultSet.getTimestamp() when not positioned on a
-      row. 
-    
+      row.
+
     - The ConnectionLifecycleInterceptor interface now has callback methods for
       transaction initiation (transactionBegun()), and completion 
       (transactionCompleted()), as reported by the *server* (i.e. 
@@ -158,7 +158,11 @@ nn-nn-08 - Version 5.1.6
       which causes a transaction to start on the server will cause
       transactionBegun() to be called *after* the statement has been processed
       on the server).
-      
+
+    - Fixed Bug#34913 - ResultSet.getTimestamp() returns incorrect
+      values for month/day of TIMESTAMPs when using server-side
+      prepared statements (not enabled by default).
+    
 10-09-07 - Version 5.1.5
 
     - Released instead of 5.1.4 to pickup patch for BUG#31053
