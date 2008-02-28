@@ -5497,4 +5497,30 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	public void initializeExtension(Extension ex) throws SQLException {
 		ex.init(this, this.props);
 	}
+	
+	protected void transactionBegun() throws SQLException {
+		if (this.connectionLifecycleInterceptors != null) {
+			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+
+				void forEach(Object each) throws SQLException {
+					((ConnectionLifecycleInterceptor)each).transactionBegun();
+				}
+			};
+			
+			iter.doForAll();
+		}
+	}
+	
+	protected void transactionCompleted() throws SQLException {
+		if (this.connectionLifecycleInterceptors != null) {
+			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+
+				void forEach(Object each) throws SQLException {
+					((ConnectionLifecycleInterceptor)each).transactionCompleted();
+				}
+			};
+			
+			iter.doForAll();
+		}
+	}
 }

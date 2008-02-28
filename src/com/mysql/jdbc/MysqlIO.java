@@ -216,6 +216,7 @@ class MysqlIO {
     protected int serverCapabilities;
     private int serverMajorVersion = 0;
     private int serverMinorVersion = 0;
+    private int oldServerStatus = 0;
     private int serverStatus = 0;
     private int serverSubMinorVersion = 0;
     private int warningCount = 0;
@@ -1169,6 +1170,7 @@ class MysqlIO {
             /* New protocol with 16 bytes to describe server characteristics */
             this.serverCharsetIndex = buf.readByte() & 0xff;
             this.serverStatus = buf.readInt();
+            checkTransactionState(0);
             buf.setPosition(position + 16);
 
             String seedPart2 = buf.readString("ASCII");
@@ -1553,8 +1555,12 @@ class MysqlIO {
 															// sendCommand()
 							}
 
+							this.oldServerStatus = this.serverStatus;
+							
 							this.serverStatus = (this.mysqlInput.read() & 0xff)
 									| ((this.mysqlInput.read() & 0xff) << 8);
+							checkTransactionState(oldServerStatus);
+							
 							remaining -= 2;
 
 							if (remaining > 0) {
@@ -1842,6 +1848,7 @@ class MysqlIO {
             // Clear serverStatus...this value is guarded by an
             // external mutex, as you can only ever be processing
             // one command at a time
+            this.oldServerStatus = this.serverStatus;
             this.serverStatus = 0;
             this.hadWarnings = false;
             this.warningCount = 0;
@@ -2565,8 +2572,11 @@ class MysqlIO {
             }
 
             if (this.use41Extensions) {
+            	// oldStatus set in sendCommand()
                 this.serverStatus = resultPacket.readInt();
 
+                checkTransactionState(oldServerStatus);
+                
                 this.warningCount = resultPacket.readInt();
 
                 if (this.warningCount > 0) {
@@ -2684,7 +2694,9 @@ class MysqlIO {
                 this.hadWarnings = true; // this is a 'latch', it's reset by sendCommand()
             }
 
+            this.oldServerStatus = this.serverStatus;
             this.serverStatus = rowPacket.readInt();
+            checkTransactionState(oldServerStatus);
 
             if (this.profileSql) {
                 this.queryNoIndexUsed = (this.serverStatus &
@@ -4544,5 +4556,16 @@ class MysqlIO {
 	
 	protected int getCommandCount() {
 		return this.commandCount;
+	}
+	
+	private void checkTransactionState(int oldStatus) throws SQLException {
+		boolean previouslyInTrans = ((oldStatus & SERVER_STATUS_IN_TRANS) != 0);
+		boolean currentlyInTrans = ((this.serverStatus & SERVER_STATUS_IN_TRANS) != 0);
+
+		if (previouslyInTrans && !currentlyInTrans) {
+			this.connection.transactionCompleted();
+		} else if (!previouslyInTrans && currentlyInTrans) {
+			this.connection.transactionBegun();
+		}
 	}
 }

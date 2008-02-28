@@ -1651,4 +1651,30 @@ public class ConnectionTest extends BaseTestCase {
 		}
 		
 	}
+	
+	public void testLifecyleInterceptor() throws Exception {
+		createTable("testLifecycleInterceptor", "(field1 int) ENGINE=InnoDB");
+		Connection liConn = null;
+		
+		try {
+			liConn = getConnectionWithProps("connectionLifecycleInterceptors=testsuite.simple.TestLifecycleInterceptor");
+			liConn.setAutoCommit(false);
+		
+			liConn.createStatement().executeUpdate("INSERT INTO testLifecycleInterceptor VALUES (1)");
+			liConn.commit();
+			assertEquals(TestLifecycleInterceptor.transactionsBegun, 1);
+			assertEquals(TestLifecycleInterceptor.transactionsCompleted, 1);
+			liConn.createStatement().executeQuery("SELECT * FROM testLifecycleInterceptor");
+			assertEquals(TestLifecycleInterceptor.transactionsBegun, 2);
+			// implicit commit
+			liConn.createStatement().executeUpdate("CREATE TABLE testLifecycleFoo (field1 int)");
+			assertEquals(TestLifecycleInterceptor.transactionsCompleted, 2);
+		} finally {
+			if (liConn != null) {
+				liConn.createStatement().executeUpdate("DROP TABLE IF EXISTS testLifecycleFoo");
+				liConn.close();
+			}
+		}
+		
+	}
 }

@@ -149,6 +149,15 @@ nn-nn-08 - Version 5.1.6
     - Fixed BUG#33162 - NullPointerException instead of SQLException 
       thrown for ResultSet.getTimestamp() when not positioned on a
       row. 
+    
+    - The ConnectionLifecycleInterceptor interface now has callback methods for
+      transaction initiation (transactionBegun()), and completion 
+      (transactionCompleted()), as reported by the *server* (i.e. 
+      calling Connection.setAutoCommit(false) will not trigger 
+      transactionBegun() being called, however the first statement
+      which causes a transaction to start on the server will cause
+      transactionBegun() to be called *after* the statement has been processed
+      on the server).
       
 10-09-07 - Version 5.1.5
 

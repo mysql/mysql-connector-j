@@ -112,4 +112,16 @@ public interface ConnectionLifecycleInterceptor extends Extension {
 	 * @throws SQLException if an error occurs
 	 */
 	public abstract boolean setCatalog(String catalog) throws SQLException;
+	
+	/**
+	 * Called when the driver has been told by the server that a transaction
+	 * is now in progress (when one has not been currently in progress).
+	 */
+	public abstract boolean transactionBegun() throws SQLException;
+	
+	/**
+	 * Called when the driver has been told by the server that a transaction
+	 * has completed, and no transaction is currently in progress.
+	 */
+	public abstract boolean transactionCompleted() throws SQLException;
 }
