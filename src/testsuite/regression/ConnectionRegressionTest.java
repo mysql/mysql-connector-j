@@ -35,6 +35,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
@@ -2355,5 +2356,28 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		isValid.invoke(newConn, new Object[] {new Integer(1)});
 		Thread.sleep(2000);
 		assertTrue(((Boolean)isValid.invoke(newConn, new Object[] {new Integer(0)})).booleanValue());
+	}
+	
+	public void testBug34937() throws Exception {
+		com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource ds = new
+		com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource();
+		StringBuffer urlBuf = new StringBuffer();
+		urlBuf.append(getMasterSlaveUrl());
+		urlBuf.append("?");
+		Properties props = getMasterSlaveProps();
+		String key = null;
+		
+		Enumeration keyEnum = props.keys();
+		
+		while (keyEnum.hasMoreElements()) {
+			key = (String)keyEnum.nextElement();
+			urlBuf.append(key);
+			urlBuf.append("=");
+			urlBuf.append(props.get(key));
+			urlBuf.append("&");
+		}
+		
+		ds.setURL(urlBuf.toString());
+		ds.getPooledConnection().close();
 	}
 }
