@@ -162,6 +162,14 @@ nn-nn-08 - Version 5.1.6
     - Fixed Bug#34913 - ResultSet.getTimestamp() returns incorrect
       values for month/day of TIMESTAMPs when using server-side
       prepared statements (not enabled by default).
+      
+    - Fixed BUG#34937 - MysqlConnectionPoolDataSource does not support 
+      ReplicationConnection. Notice that we implemented com.mysql.jdbc.Connection
+      for ReplicationConnection, however, only accessors from ConnectionProperties
+      are implemented (not the mutators), and they return values from the currently
+      active connection. All other methods from com.mysql.jdbc.Connection are
+      implemented, and operate on the currently active connection, with the exception of
+      resetServerState() and changeUser().
     
 10-09-07 - Version 5.1.5
 

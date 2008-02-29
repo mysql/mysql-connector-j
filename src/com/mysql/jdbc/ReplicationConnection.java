@@ -30,6 +30,9 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
+
+import com.mysql.jdbc.log.Log;
 
 /**
  * Connection that opens two connections, one two a replication master, and
@@ -39,7 +42,7 @@ import java.util.Properties;
  * @version $Id: ReplicationConnection.java,v 1.1.2.1 2005/05/13 18:58:38
  *          mmatthews Exp $
  */
-public class ReplicationConnection implements java.sql.Connection, PingTarget {
+public class ReplicationConnection implements Connection, PingTarget {
 	protected Connection currentConnection;
 
 	protected Connection masterConnection;
@@ -558,5 +561,1760 @@ public class ReplicationConnection implements java.sql.Connection, PingTarget {
 		if (this.slavesConnection != null) {
 			this.slavesConnection.ping();
 		}
+	}
+
+	public synchronized void changeUser(String userName, String newPassword)
+			throws SQLException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void clearHasTriedMaster() {
+		this.masterConnection.clearHasTriedMaster();
+		this.slavesConnection.clearHasTriedMaster();
+		
+	}
+
+	public synchronized PreparedStatement clientPrepareStatement(String sql)
+			throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized PreparedStatement clientPrepareStatement(String sql,
+			int autoGenKeyIndex) throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql, autoGenKeyIndex);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized PreparedStatement clientPrepareStatement(String sql,
+			int resultSetType, int resultSetConcurrency) throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql, resultSetType, resultSetConcurrency);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized PreparedStatement clientPrepareStatement(String sql,
+			int[] autoGenKeyIndexes) throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql, autoGenKeyIndexes);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized PreparedStatement clientPrepareStatement(String sql,
+			int resultSetType, int resultSetConcurrency,
+			int resultSetHoldability) throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized PreparedStatement clientPrepareStatement(String sql,
+			String[] autoGenKeyColNames) throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql, autoGenKeyColNames);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized int getActiveStatementCount() {
+		return this.currentConnection.getActiveStatementCount();
+	}
+
+	public synchronized long getIdleFor() {
+		return this.currentConnection.getIdleFor();
+	}
+
+	public synchronized Log getLog() throws SQLException {
+		return this.currentConnection.getLog();
+	}
+
+	public synchronized String getServerCharacterEncoding() {
+		return this.currentConnection.getServerCharacterEncoding();
+	}
+
+	public synchronized TimeZone getServerTimezoneTZ() {
+		return this.currentConnection.getServerTimezoneTZ();
+	}
+
+	public synchronized String getStatementComment() {
+		return this.currentConnection.getStatementComment();
+	}
+
+	public synchronized boolean hasTriedMaster() {
+		return this.currentConnection.hasTriedMaster();
+	}
+
+	public synchronized void initializeExtension(Extension ex) throws SQLException {
+		this.currentConnection.initializeExtension(ex);
+	}
+
+	public synchronized boolean isAbonormallyLongQuery(long millisOrNanos) {
+		return this.currentConnection.isAbonormallyLongQuery(millisOrNanos);
+	}
+
+	public synchronized boolean isInGlobalTx() {
+		return this.currentConnection.isInGlobalTx();
+	}
+
+	public synchronized boolean isMasterConnection() {
+		return this.currentConnection.isMasterConnection();
+	}
+
+	public synchronized boolean isNoBackslashEscapesSet() {
+		return this.currentConnection.isNoBackslashEscapesSet();
+	}
+
+	public synchronized boolean lowerCaseTableNames() {
+		return this.currentConnection.lowerCaseTableNames();
+	}
+
+	public synchronized boolean parserKnowsUnicode() {
+		return this.currentConnection.parserKnowsUnicode();
+	}
+
+	public synchronized void ping() throws SQLException {
+		this.masterConnection.ping();
+		this.slavesConnection.ping();
+	}
+
+	public synchronized void reportQueryTime(long millisOrNanos) {
+		this.currentConnection.reportQueryTime(millisOrNanos);
+	}
+
+	public synchronized void resetServerState() throws SQLException {
+		this.currentConnection.resetServerState();
+	}
+
+	public synchronized PreparedStatement serverPrepareStatement(String sql)
+			throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized PreparedStatement serverPrepareStatement(String sql,
+			int autoGenKeyIndex) throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql, autoGenKeyIndex);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized PreparedStatement serverPrepareStatement(String sql,
+			int resultSetType, int resultSetConcurrency) throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql, resultSetType, resultSetConcurrency);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized PreparedStatement serverPrepareStatement(String sql,
+			int resultSetType, int resultSetConcurrency,
+			int resultSetHoldability) throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized PreparedStatement serverPrepareStatement(String sql,
+			int[] autoGenKeyIndexes) throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql, autoGenKeyIndexes);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized PreparedStatement serverPrepareStatement(String sql,
+			String[] autoGenKeyColNames) throws SQLException {
+		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql, autoGenKeyColNames);
+		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
+		
+		return pstmt;
+	}
+
+	public synchronized void setFailedOver(boolean flag) {
+		this.currentConnection.setFailedOver(flag);
+	}
+
+	public synchronized void setPreferSlaveDuringFailover(boolean flag) {
+		this.currentConnection.setPreferSlaveDuringFailover(flag);
+	}
+
+	public synchronized void setStatementComment(String comment) {
+		this.masterConnection.setStatementComment(comment);
+		this.slavesConnection.setStatementComment(comment);
+	}
+
+	public synchronized void shutdownServer() throws SQLException {
+		this.currentConnection.shutdownServer();
+	}
+
+	public synchronized boolean supportsIsolationLevel() {
+		return this.currentConnection.supportsIsolationLevel();
+	}
+
+	public synchronized boolean supportsQuotedIdentifiers() {
+		return this.currentConnection.supportsQuotedIdentifiers();
+	}
+
+	public synchronized boolean supportsTransactions() {
+		return this.currentConnection.supportsTransactions();
+	}
+
+	public synchronized boolean versionMeetsMinimum(int major, int minor, int subminor)
+			throws SQLException {
+		return this.currentConnection.versionMeetsMinimum(major, minor, subminor);
+	}
+
+	public synchronized String exposeAsXml() throws SQLException {
+		return this.currentConnection.exposeAsXml();
+	}
+
+	public synchronized boolean getAllowLoadLocalInfile() {
+		return this.currentConnection.getAllowLoadLocalInfile();
+	}
+
+	public synchronized boolean getAllowMultiQueries() {
+		return this.currentConnection.getAllowMultiQueries();
+	}
+
+	public synchronized boolean getAllowNanAndInf() {
+		return this.currentConnection.getAllowNanAndInf();
+	}
+
+	public synchronized boolean getAllowUrlInLocalInfile() {
+		return this.currentConnection.getAllowUrlInLocalInfile();
+	}
+
+	public synchronized boolean getAlwaysSendSetIsolation() {
+		return this.currentConnection.getAlwaysSendSetIsolation();
+	}
+
+	public synchronized boolean getAutoClosePStmtStreams() {
+		return this.currentConnection.getAutoClosePStmtStreams();
+	}
+
+	public synchronized boolean getAutoDeserialize() {
+		return this.currentConnection.getAutoDeserialize();
+	}
+
+	public synchronized boolean getAutoGenerateTestcaseScript() {
+		return this.currentConnection.getAutoGenerateTestcaseScript();
+	}
+
+	public synchronized boolean getAutoReconnectForPools() {
+		return this.currentConnection.getAutoReconnectForPools();
+	}
+
+	public synchronized boolean getAutoSlowLog() {
+		return this.currentConnection.getAutoSlowLog();
+	}
+
+	public synchronized int getBlobSendChunkSize() {
+		return this.currentConnection.getBlobSendChunkSize();
+	}
+
+	public synchronized boolean getBlobsAreStrings() {
+		return this.currentConnection.getBlobsAreStrings();
+	}
+
+	public synchronized boolean getCacheCallableStatements() {
+		return this.currentConnection.getCacheCallableStatements();
+	}
+
+	public synchronized boolean getCacheCallableStmts() {
+		return this.currentConnection.getCacheCallableStmts();
+	}
+
+	public synchronized boolean getCachePrepStmts() {
+		return this.currentConnection.getCachePrepStmts();
+	}
+
+	public synchronized boolean getCachePreparedStatements() {
+		return this.currentConnection.getCachePreparedStatements();
+	}
+
+	public synchronized boolean getCacheResultSetMetadata() {
+		return this.currentConnection.getCacheResultSetMetadata();
+	}
+
+	public synchronized boolean getCacheServerConfiguration() {
+		return this.currentConnection.getCacheServerConfiguration();
+	}
+
+	public synchronized int getCallableStatementCacheSize() {
+		return this.currentConnection.getCallableStatementCacheSize();
+	}
+
+	public synchronized int getCallableStmtCacheSize() {
+		return this.currentConnection.getCallableStmtCacheSize();
+	}
+
+	public synchronized boolean getCapitalizeTypeNames() {
+		return this.currentConnection.getCapitalizeTypeNames();
+	}
+
+	public synchronized String getCharacterSetResults() {
+		return this.currentConnection.getCharacterSetResults();
+	}
+
+	public synchronized String getClientCertificateKeyStorePassword() {
+		return this.currentConnection.getClientCertificateKeyStorePassword();
+	}
+
+	public synchronized String getClientCertificateKeyStoreType() {
+		return this.currentConnection.getClientCertificateKeyStoreType();
+	}
+
+	public synchronized String getClientCertificateKeyStoreUrl() {
+		return this.currentConnection.getClientCertificateKeyStoreUrl();
+	}
+
+	public synchronized String getClientInfoProvider() {
+		return this.currentConnection.getClientInfoProvider();
+	}
+
+	public synchronized String getClobCharacterEncoding() {
+		return this.currentConnection.getClobCharacterEncoding();
+	}
+
+	public synchronized boolean getClobberStreamingResults() {
+		return this.currentConnection.getClobberStreamingResults();
+	}
+
+	public synchronized int getConnectTimeout() {
+		return this.currentConnection.getConnectTimeout();
+	}
+
+	public synchronized String getConnectionCollation() {
+		return this.currentConnection.getConnectionCollation();
+	}
+
+	public synchronized String getConnectionLifecycleInterceptors() {
+		return this.currentConnection.getConnectionLifecycleInterceptors();
+	}
+
+	public synchronized boolean getContinueBatchOnError() {
+		return this.currentConnection.getContinueBatchOnError();
+	}
+
+	public synchronized boolean getCreateDatabaseIfNotExist() {
+		return this.currentConnection.getCreateDatabaseIfNotExist();
+	}
+
+	public synchronized int getDefaultFetchSize() {
+		return this.currentConnection.getDefaultFetchSize();
+	}
+
+	public synchronized boolean getDontTrackOpenResources() {
+		return this.currentConnection.getDontTrackOpenResources();
+	}
+
+	public synchronized boolean getDumpMetadataOnColumnNotFound() {
+		return this.currentConnection.getDumpMetadataOnColumnNotFound();
+	}
+
+	public synchronized boolean getDumpQueriesOnException() {
+		return this.currentConnection.getDumpQueriesOnException();
+	}
+
+	public synchronized boolean getDynamicCalendars() {
+		return this.currentConnection.getDynamicCalendars();
+	}
+
+	public synchronized boolean getElideSetAutoCommits() {
+		return this.currentConnection.getElideSetAutoCommits();
+	}
+
+	public synchronized boolean getEmptyStringsConvertToZero() {
+		return this.currentConnection.getEmptyStringsConvertToZero();
+	}
+
+	public synchronized boolean getEmulateLocators() {
+		return this.currentConnection.getEmulateLocators();
+	}
+
+	public synchronized boolean getEmulateUnsupportedPstmts() {
+		return this.currentConnection.getEmulateUnsupportedPstmts();
+	}
+
+	public synchronized boolean getEnablePacketDebug() {
+		return this.currentConnection.getEnablePacketDebug();
+	}
+
+	public synchronized boolean getEnableQueryTimeouts() {
+		return this.currentConnection.getEnableQueryTimeouts();
+	}
+
+	public synchronized String getEncoding() {
+		return this.currentConnection.getEncoding();
+	}
+
+	public synchronized boolean getExplainSlowQueries() {
+		return this.currentConnection.getExplainSlowQueries();
+	}
+
+	public synchronized boolean getFailOverReadOnly() {
+		return this.currentConnection.getFailOverReadOnly();
+	}
+
+	public synchronized boolean getFunctionsNeverReturnBlobs() {
+		return this.currentConnection.getFunctionsNeverReturnBlobs();
+	}
+
+	public synchronized boolean getGatherPerfMetrics() {
+		return this.currentConnection.getGatherPerfMetrics();
+	}
+
+	public synchronized boolean getGatherPerformanceMetrics() {
+		return this.currentConnection.getGatherPerformanceMetrics();
+	}
+
+	public synchronized boolean getGenerateSimpleParameterMetadata() {
+		return this.currentConnection.getGenerateSimpleParameterMetadata();
+	}
+
+	public synchronized boolean getHoldResultsOpenOverStatementClose() {
+		return this.currentConnection.getHoldResultsOpenOverStatementClose();
+	}
+
+	public synchronized boolean getIgnoreNonTxTables() {
+		return this.currentConnection.getIgnoreNonTxTables();
+	}
+
+	public synchronized boolean getIncludeInnodbStatusInDeadlockExceptions() {
+		return this.currentConnection.getIncludeInnodbStatusInDeadlockExceptions();
+	}
+
+	public synchronized int getInitialTimeout() {
+		return this.currentConnection.getInitialTimeout();
+	}
+
+	public synchronized boolean getInteractiveClient() {
+		return this.currentConnection.getInteractiveClient();
+	}
+
+	public synchronized boolean getIsInteractiveClient() {
+		return this.currentConnection.getIsInteractiveClient();
+	}
+
+	public synchronized boolean getJdbcCompliantTruncation() {
+		return this.currentConnection.getJdbcCompliantTruncation();
+	}
+
+	public synchronized boolean getJdbcCompliantTruncationForReads() {
+		return this.currentConnection.getJdbcCompliantTruncationForReads();
+	}
+
+	public synchronized String getLargeRowSizeThreshold() {
+		return this.currentConnection.getLargeRowSizeThreshold();
+	}
+
+	public synchronized String getLoadBalanceStrategy() {
+		return this.currentConnection.getLoadBalanceStrategy();
+	}
+
+	public synchronized String getLocalSocketAddress() {
+		return this.currentConnection.getLocalSocketAddress();
+	}
+
+	public synchronized int getLocatorFetchBufferSize() {
+		return this.currentConnection.getLocatorFetchBufferSize();
+	}
+
+	public synchronized boolean getLogSlowQueries() {
+		return this.currentConnection.getLogSlowQueries();
+	}
+
+	public synchronized boolean getLogXaCommands() {
+		return this.currentConnection.getLogXaCommands();
+	}
+
+	public synchronized String getLogger() {
+		return this.currentConnection.getLogger();
+	}
+
+	public synchronized String getLoggerClassName() {
+		return this.currentConnection.getLoggerClassName();
+	}
+
+	public synchronized boolean getMaintainTimeStats() {
+		return this.currentConnection.getMaintainTimeStats();
+	}
+
+	public synchronized int getMaxQuerySizeToLog() {
+		return this.currentConnection.getMaxQuerySizeToLog();
+	}
+
+	public synchronized int getMaxReconnects() {
+		return this.currentConnection.getMaxReconnects();
+	}
+
+	public synchronized int getMaxRows() {
+		return this.currentConnection.getMaxRows();
+	}
+
+	public synchronized int getMetadataCacheSize() {
+		return this.currentConnection.getMetadataCacheSize();
+	}
+
+	public synchronized int getNetTimeoutForStreamingResults() {
+		return this.currentConnection.getNetTimeoutForStreamingResults();
+	}
+
+	public synchronized boolean getNoAccessToProcedureBodies() {
+		return this.currentConnection.getNoAccessToProcedureBodies();
+	}
+
+	public synchronized boolean getNoDatetimeStringSync() {
+		return this.currentConnection.getNoDatetimeStringSync();
+	}
+
+	public synchronized boolean getNoTimezoneConversionForTimeType() {
+		return this.currentConnection.getNoTimezoneConversionForTimeType();
+	}
+
+	public synchronized boolean getNullCatalogMeansCurrent() {
+		return this.currentConnection.getNullCatalogMeansCurrent();
+	}
+
+	public synchronized boolean getNullNamePatternMatchesAll() {
+		return this.currentConnection.getNullNamePatternMatchesAll();
+	}
+
+	public synchronized boolean getOverrideSupportsIntegrityEnhancementFacility() {
+		return this.currentConnection.getOverrideSupportsIntegrityEnhancementFacility();
+	}
+
+	public synchronized int getPacketDebugBufferSize() {
+		return this.currentConnection.getPacketDebugBufferSize();
+	}
+
+	public synchronized boolean getPadCharsWithSpace() {
+		return this.currentConnection.getPadCharsWithSpace();
+	}
+
+	public synchronized boolean getParanoid() {
+		return this.currentConnection.getParanoid();
+	}
+
+	public synchronized boolean getPedantic() {
+		return this.currentConnection.getPedantic();
+	}
+
+	public synchronized boolean getPinGlobalTxToPhysicalConnection() {
+		return this.currentConnection.getPinGlobalTxToPhysicalConnection();
+	}
+
+	public synchronized boolean getPopulateInsertRowWithDefaultValues() {
+		return this.currentConnection.getPopulateInsertRowWithDefaultValues();
+	}
+
+	public synchronized int getPrepStmtCacheSize() {
+		return this.currentConnection.getPrepStmtCacheSize();
+	}
+
+	public synchronized int getPrepStmtCacheSqlLimit() {
+		return this.currentConnection.getPrepStmtCacheSqlLimit();
+	}
+
+	public synchronized int getPreparedStatementCacheSize() {
+		return this.currentConnection.getPreparedStatementCacheSize();
+	}
+
+	public synchronized int getPreparedStatementCacheSqlLimit() {
+		return this.currentConnection.getPreparedStatementCacheSqlLimit();
+	}
+
+	public synchronized boolean getProcessEscapeCodesForPrepStmts() {
+		return this.currentConnection.getProcessEscapeCodesForPrepStmts();
+	}
+
+	public synchronized boolean getProfileSQL() {
+		return this.currentConnection.getProfileSQL();
+	}
+
+	public synchronized boolean getProfileSql() {
+		return this.currentConnection.getProfileSql();
+	}
+
+	public synchronized String getProfilerEventHandler() {
+		return this.currentConnection.getProfilerEventHandler();
+	}
+
+	public synchronized String getPropertiesTransform() {
+		return this.currentConnection.getPropertiesTransform();
+	}
+
+	public synchronized int getQueriesBeforeRetryMaster() {
+		return this.currentConnection.getQueriesBeforeRetryMaster();
+	}
+
+	public synchronized boolean getReconnectAtTxEnd() {
+		return this.currentConnection.getReconnectAtTxEnd();
+	}
+
+	public synchronized boolean getRelaxAutoCommit() {
+		return this.currentConnection.getRelaxAutoCommit();
+	}
+
+	public synchronized int getReportMetricsIntervalMillis() {
+		return this.currentConnection.getReportMetricsIntervalMillis();
+	}
+
+	public synchronized boolean getRequireSSL() {
+		return this.currentConnection.getRequireSSL();
+	}
+
+	public synchronized String getResourceId() {
+		return this.currentConnection.getResourceId();
+	}
+
+	public synchronized int getResultSetSizeThreshold() {
+		return this.currentConnection.getResultSetSizeThreshold();
+	}
+
+	public synchronized boolean getRewriteBatchedStatements() {
+		return this.currentConnection.getRewriteBatchedStatements();
+	}
+
+	public synchronized boolean getRollbackOnPooledClose() {
+		return this.currentConnection.getRollbackOnPooledClose();
+	}
+
+	public synchronized boolean getRoundRobinLoadBalance() {
+		return this.currentConnection.getRoundRobinLoadBalance();
+	}
+
+	public synchronized boolean getRunningCTS13() {
+		return this.currentConnection.getRunningCTS13();
+	}
+
+	public synchronized int getSecondsBeforeRetryMaster() {
+		return this.currentConnection.getSecondsBeforeRetryMaster();
+	}
+
+	public synchronized int getSelfDestructOnPingMaxOperations() {
+		return this.currentConnection.getSelfDestructOnPingMaxOperations();
+	}
+
+	public synchronized int getSelfDestructOnPingSecondsLifetime() {
+		return this.currentConnection.getSelfDestructOnPingSecondsLifetime();
+	}
+
+	public synchronized String getServerTimezone() {
+		return this.currentConnection.getServerTimezone();
+	}
+
+	public synchronized String getSessionVariables() {
+		return this.currentConnection.getSessionVariables();
+	}
+
+	public synchronized int getSlowQueryThresholdMillis() {
+		return this.currentConnection.getSlowQueryThresholdMillis();
+	}
+
+	public synchronized long getSlowQueryThresholdNanos() {
+		return this.currentConnection.getSlowQueryThresholdNanos();
+	}
+
+	public synchronized String getSocketFactory() {
+		return this.currentConnection.getSocketFactory();
+	}
+
+	public synchronized String getSocketFactoryClassName() {
+		return this.currentConnection.getSocketFactoryClassName();
+	}
+
+	public synchronized int getSocketTimeout() {
+		return this.currentConnection.getSocketTimeout();
+	}
+
+	public synchronized String getStatementInterceptors() {
+		return this.currentConnection.getStatementInterceptors();
+	}
+
+	public synchronized boolean getStrictFloatingPoint() {
+		return this.currentConnection.getStrictFloatingPoint();
+	}
+
+	public synchronized boolean getStrictUpdates() {
+		return this.currentConnection.getStrictUpdates();
+	}
+
+	public synchronized boolean getTcpKeepAlive() {
+		return this.currentConnection.getTcpKeepAlive();
+	}
+
+	public synchronized boolean getTcpNoDelay() {
+		return this.currentConnection.getTcpNoDelay();
+	}
+
+	public synchronized int getTcpRcvBuf() {
+		return this.currentConnection.getTcpRcvBuf();
+	}
+
+	public synchronized int getTcpSndBuf() {
+		return this.currentConnection.getTcpSndBuf();
+	}
+
+	public synchronized int getTcpTrafficClass() {
+		return this.currentConnection.getTcpTrafficClass();
+	}
+
+	public synchronized boolean getTinyInt1isBit() {
+		return this.currentConnection.getTinyInt1isBit();
+	}
+
+	public synchronized boolean getTraceProtocol() {
+		return this.currentConnection.getTraceProtocol();
+	}
+
+	public synchronized boolean getTransformedBitIsBoolean() {
+		return this.currentConnection.getTransformedBitIsBoolean();
+	}
+
+	public synchronized boolean getTreatUtilDateAsTimestamp() {
+		return this.currentConnection.getTreatUtilDateAsTimestamp();
+	}
+
+	public synchronized String getTrustCertificateKeyStorePassword() {
+		return this.currentConnection.getTrustCertificateKeyStorePassword();
+	}
+
+	public synchronized String getTrustCertificateKeyStoreType() {
+		return this.currentConnection.getTrustCertificateKeyStoreType();
+	}
+
+	public synchronized String getTrustCertificateKeyStoreUrl() {
+		return this.currentConnection.getTrustCertificateKeyStoreUrl();
+	}
+
+	public synchronized boolean getUltraDevHack() {
+		return this.currentConnection.getUltraDevHack();
+	}
+
+	public synchronized boolean getUseBlobToStoreUTF8OutsideBMP() {
+		return this.currentConnection.getUseBlobToStoreUTF8OutsideBMP();
+	}
+
+	public synchronized boolean getUseCompression() {
+		return this.currentConnection.getUseCompression();
+	}
+
+	public synchronized String getUseConfigs() {
+		return this.currentConnection.getUseConfigs();
+	}
+
+	public synchronized boolean getUseCursorFetch() {
+		return this.currentConnection.getUseCursorFetch();
+	}
+
+	public synchronized boolean getUseDirectRowUnpack() {
+		return this.currentConnection.getUseDirectRowUnpack();
+	}
+
+	public synchronized boolean getUseDynamicCharsetInfo() {
+		return this.currentConnection.getUseDynamicCharsetInfo();
+	}
+
+	public synchronized boolean getUseFastDateParsing() {
+		return this.currentConnection.getUseFastDateParsing();
+	}
+
+	public synchronized boolean getUseFastIntParsing() {
+		return this.currentConnection.getUseFastIntParsing();
+	}
+
+	public synchronized boolean getUseGmtMillisForDatetimes() {
+		return this.currentConnection.getUseGmtMillisForDatetimes();
+	}
+
+	public synchronized boolean getUseHostsInPrivileges() {
+		return this.currentConnection.getUseHostsInPrivileges();
+	}
+
+	public synchronized boolean getUseInformationSchema() {
+		return this.currentConnection.getUseInformationSchema();
+	}
+
+	public synchronized boolean getUseJDBCCompliantTimezoneShift() {
+		return this.currentConnection.getUseJDBCCompliantTimezoneShift();
+	}
+
+	public synchronized boolean getUseJvmCharsetConverters() {
+		return this.currentConnection.getUseJvmCharsetConverters();
+	}
+
+	public synchronized boolean getUseLegacyDatetimeCode() {
+		return this.currentConnection.getUseLegacyDatetimeCode();
+	}
+
+	public synchronized boolean getUseLocalSessionState() {
+		return this.currentConnection.getUseLocalSessionState();
+	}
+
+	public synchronized boolean getUseNanosForElapsedTime() {
+		return this.currentConnection.getUseNanosForElapsedTime();
+	}
+
+	public synchronized boolean getUseOldAliasMetadataBehavior() {
+		return this.currentConnection.getUseOldAliasMetadataBehavior();
+	}
+
+	public synchronized boolean getUseOldUTF8Behavior() {
+		return this.currentConnection.getUseOldUTF8Behavior();
+	}
+
+	public synchronized boolean getUseOnlyServerErrorMessages() {
+		return this.currentConnection.getUseOnlyServerErrorMessages();
+	}
+
+	public synchronized boolean getUseReadAheadInput() {
+		return this.currentConnection.getUseReadAheadInput();
+	}
+
+	public synchronized boolean getUseSSL() {
+		return this.currentConnection.getUseSSL();
+	}
+
+	public synchronized boolean getUseSSPSCompatibleTimezoneShift() {
+		return this.currentConnection.getUseSSPSCompatibleTimezoneShift();
+	}
+
+	public synchronized boolean getUseServerPrepStmts() {
+		return this.currentConnection.getUseServerPrepStmts();
+	}
+
+	public synchronized boolean getUseServerPreparedStmts() {
+		return this.currentConnection.getUseServerPreparedStmts();
+	}
+
+	public synchronized boolean getUseSqlStateCodes() {
+		return this.currentConnection.getUseSqlStateCodes();
+	}
+
+	public synchronized boolean getUseStreamLengthsInPrepStmts() {
+		return this.currentConnection.getUseStreamLengthsInPrepStmts();
+	}
+
+	public synchronized boolean getUseTimezone() {
+		return this.currentConnection.getUseTimezone();
+	}
+
+	public synchronized boolean getUseUltraDevWorkAround() {
+		return this.currentConnection.getUseUltraDevWorkAround();
+	}
+
+	public synchronized boolean getUseUnbufferedInput() {
+		return this.currentConnection.getUseUnbufferedInput();
+	}
+
+	public synchronized boolean getUseUnicode() {
+		return this.currentConnection.getUseUnicode();
+	}
+
+	public synchronized boolean getUseUsageAdvisor() {
+		return this.currentConnection.getUseUsageAdvisor();
+	}
+
+	public synchronized String getUtf8OutsideBmpExcludedColumnNamePattern() {
+		return this.currentConnection.getUtf8OutsideBmpExcludedColumnNamePattern();
+	}
+
+	public synchronized String getUtf8OutsideBmpIncludedColumnNamePattern() {
+		return this.currentConnection.getUtf8OutsideBmpIncludedColumnNamePattern();
+	}
+
+	public synchronized boolean getVerifyServerCertificate() {
+		return this.currentConnection.getVerifyServerCertificate();
+	}
+
+	public synchronized boolean getYearIsDateType() {
+		return this.currentConnection.getYearIsDateType();
+	}
+
+	public synchronized String getZeroDateTimeBehavior() {
+		return this.currentConnection.getZeroDateTimeBehavior();
+	}
+
+	public synchronized void setAllowLoadLocalInfile(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setAllowMultiQueries(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setAllowNanAndInf(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setAllowUrlInLocalInfile(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setAlwaysSendSetIsolation(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setAutoClosePStmtStreams(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setAutoDeserialize(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setAutoGenerateTestcaseScript(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setAutoReconnect(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setAutoReconnectForConnectionPools(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setAutoReconnectForPools(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setAutoSlowLog(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setBlobSendChunkSize(String value) throws SQLException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setBlobsAreStrings(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCacheCallableStatements(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCacheCallableStmts(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCachePrepStmts(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCachePreparedStatements(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCacheResultSetMetadata(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCacheServerConfiguration(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCallableStatementCacheSize(int size) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCallableStmtCacheSize(int cacheSize) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCapitalizeDBMDTypes(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCapitalizeTypeNames(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCharacterEncoding(String encoding) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCharacterSetResults(String characterSet) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setClientCertificateKeyStorePassword(String value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setClientCertificateKeyStoreType(String value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setClientCertificateKeyStoreUrl(String value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setClientInfoProvider(String classname) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setClobCharacterEncoding(String encoding) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setClobberStreamingResults(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setConnectTimeout(int timeoutMs) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setConnectionCollation(String collation) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setConnectionLifecycleInterceptors(String interceptors) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setContinueBatchOnError(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setCreateDatabaseIfNotExist(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setDefaultFetchSize(int n) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setDetectServerPreparedStmts(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setDontTrackOpenResources(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setDumpMetadataOnColumnNotFound(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setDumpQueriesOnException(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setDynamicCalendars(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setElideSetAutoCommits(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setEmptyStringsConvertToZero(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setEmulateLocators(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setEmulateUnsupportedPstmts(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setEnablePacketDebug(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setEnableQueryTimeouts(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setEncoding(String property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setExplainSlowQueries(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setFailOverReadOnly(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setFunctionsNeverReturnBlobs(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setGatherPerfMetrics(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setGatherPerformanceMetrics(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setGenerateSimpleParameterMetadata(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setHoldResultsOpenOverStatementClose(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setIgnoreNonTxTables(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setIncludeInnodbStatusInDeadlockExceptions(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setInitialTimeout(int property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setInteractiveClient(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setIsInteractiveClient(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setJdbcCompliantTruncation(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setJdbcCompliantTruncationForReads(
+			boolean jdbcCompliantTruncationForReads) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setLargeRowSizeThreshold(String value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setLoadBalanceStrategy(String strategy) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setLocalSocketAddress(String address) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setLocatorFetchBufferSize(String value) throws SQLException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setLogSlowQueries(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setLogXaCommands(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setLogger(String property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setLoggerClassName(String className) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setMaintainTimeStats(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setMaxQuerySizeToLog(int sizeInBytes) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setMaxReconnects(int property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setMaxRows(int property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setMetadataCacheSize(int value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setNetTimeoutForStreamingResults(int value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setNoAccessToProcedureBodies(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setNoDatetimeStringSync(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setNoTimezoneConversionForTimeType(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setNullCatalogMeansCurrent(boolean value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setNullNamePatternMatchesAll(boolean value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setOverrideSupportsIntegrityEnhancementFacility(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setPacketDebugBufferSize(int size) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setPadCharsWithSpace(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setParanoid(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setPedantic(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setPinGlobalTxToPhysicalConnection(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setPopulateInsertRowWithDefaultValues(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setPrepStmtCacheSize(int cacheSize) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setPrepStmtCacheSqlLimit(int sqlLimit) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setPreparedStatementCacheSize(int cacheSize) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setProcessEscapeCodesForPrepStmts(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setProfileSQL(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setProfileSql(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setProfilerEventHandler(String handler) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setPropertiesTransform(String value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setQueriesBeforeRetryMaster(int property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setReconnectAtTxEnd(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setRelaxAutoCommit(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setReportMetricsIntervalMillis(int millis) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setRequireSSL(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setResourceId(String resourceId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setResultSetSizeThreshold(int threshold) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setRetainStatementAfterResultSetClose(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setRewriteBatchedStatements(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setRollbackOnPooledClose(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setRoundRobinLoadBalance(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setRunningCTS13(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setSecondsBeforeRetryMaster(int property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setSelfDestructOnPingMaxOperations(int maxOperations) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setSelfDestructOnPingSecondsLifetime(int seconds) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setServerTimezone(String property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setSessionVariables(String variables) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setSlowQueryThresholdMillis(int millis) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setSlowQueryThresholdNanos(long nanos) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setSocketFactory(String name) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setSocketFactoryClassName(String property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setSocketTimeout(int property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setStatementInterceptors(String value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setStrictFloatingPoint(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setStrictUpdates(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTcpKeepAlive(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTcpNoDelay(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTcpRcvBuf(int bufSize) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTcpSndBuf(int bufSize) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTcpTrafficClass(int classFlags) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTinyInt1isBit(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTraceProtocol(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTransformedBitIsBoolean(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTreatUtilDateAsTimestamp(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTrustCertificateKeyStorePassword(String value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTrustCertificateKeyStoreType(String value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setTrustCertificateKeyStoreUrl(String value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUltraDevHack(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseBlobToStoreUTF8OutsideBMP(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseCompression(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseConfigs(String configs) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseCursorFetch(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseDirectRowUnpack(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseDynamicCharsetInfo(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseFastDateParsing(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseFastIntParsing(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseGmtMillisForDatetimes(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseHostsInPrivileges(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseInformationSchema(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseJDBCCompliantTimezoneShift(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseJvmCharsetConverters(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseLegacyDatetimeCode(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseLocalSessionState(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseNanosForElapsedTime(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseOldAliasMetadataBehavior(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseOldUTF8Behavior(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseOnlyServerErrorMessages(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseReadAheadInput(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseSSL(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseSSPSCompatibleTimezoneShift(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseServerPrepStmts(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseServerPreparedStmts(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseSqlStateCodes(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseStreamLengthsInPrepStmts(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseTimezone(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseUltraDevWorkAround(boolean property) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseUnbufferedInput(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseUnicode(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUseUsageAdvisor(boolean useUsageAdvisorFlag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUtf8OutsideBmpExcludedColumnNamePattern(String regexPattern) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setUtf8OutsideBmpIncludedColumnNamePattern(String regexPattern) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setVerifyServerCertificate(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setYearIsDateType(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized void setZeroDateTimeBehavior(String behavior) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public synchronized boolean useUnbufferedInput() {
+		return this.currentConnection.useUnbufferedInput();
 	}
 }
