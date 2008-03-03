@@ -185,6 +185,12 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	 * Is this connection currently a participant in an XA transaction?
 	 */
 	public abstract boolean isInGlobalTx();
+	
+	/**
+	 * Set the state of being in a global (XA) transaction.
+	 * @param flag
+	 */
+	public void setInGlobalTx(boolean flag);
 
 	/**
 	 * Is this connection connected to the first host in the list if
@@ -203,6 +209,15 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	 */
 	public abstract boolean isNoBackslashEscapesSet();
 
+	/**
+	 * Does this connection have the same resource name as the given
+	 * connection (for XA)?
+	 * 
+	 * @param c
+	 * @return
+	 */
+	public abstract boolean isSameResource(Connection c);
+	
 	/**
 	 * Is the server configured to use lower-case table names only?
 	 * 

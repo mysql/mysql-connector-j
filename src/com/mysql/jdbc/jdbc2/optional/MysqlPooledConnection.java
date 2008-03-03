@@ -177,7 +177,7 @@ public class MysqlPooledConnection implements PooledConnection {
 			}
 
 			this.logicalHandle = ConnectionWrapper.getInstance(this, 
-					(ConnectionImpl)this.physicalConn, 
+					this.physicalConn, 
 					forXa);
 		} catch (SQLException sqlException) {
 			callConnectionEventListeners(CONNECTION_ERROR_EVENT, sqlException);

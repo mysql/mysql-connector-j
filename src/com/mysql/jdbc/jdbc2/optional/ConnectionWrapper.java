@@ -25,13 +25,12 @@
 package com.mysql.jdbc.jdbc2.optional;
 
 import java.lang.reflect.Constructor;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.TimeZone;
 
-import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.Extension;
 import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.SQLError;
@@ -60,9 +59,8 @@ import com.mysql.jdbc.log.Log;
  * @see org.gjt.mm.mysql.jdbc2.Connection
  * @see org.gjt.mm.mysql.jdbc2.optional.MysqlPooledConnection
  */
-public class ConnectionWrapper extends WrapperBase implements Connection,
-		com.mysql.jdbc.Connection {
-	protected com.mysql.jdbc.ConnectionImpl mc = null;
+public class ConnectionWrapper extends WrapperBase implements Connection {
+	protected Connection mc = null;
 
 	private MysqlPooledConnection mpc = null;
 
@@ -81,7 +79,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 						"com.mysql.jdbc.jdbc2.optional.JDBC4ConnectionWrapper")
 						.getConstructor(
 								new Class[] { MysqlPooledConnection.class,
-										ConnectionImpl.class, Boolean.TYPE });
+										Connection.class, Boolean.TYPE });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
 			} catch (NoSuchMethodException e) {
@@ -96,7 +94,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 
 	protected static ConnectionWrapper getInstance(
 			MysqlPooledConnection mysqlPooledConnection,
-			ConnectionImpl mysqlConnection, boolean forXa) throws SQLException {
+			Connection mysqlConnection, boolean forXa) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new ConnectionWrapper(mysqlPooledConnection,
 					mysqlConnection, forXa);
@@ -120,7 +118,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 	 *             if an error occurs.
 	 */
 	public ConnectionWrapper(MysqlPooledConnection mysqlPooledConnection,
-			ConnectionImpl mysqlConnection, boolean forXa) throws SQLException {
+			Connection mysqlConnection, boolean forXa) throws SQLException {
 		this.mpc = mysqlPooledConnection;
 		this.mc = mysqlConnection;
 		this.closed = false;
@@ -876,7 +874,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection,
 		return this.mc.isInGlobalTx();
 	}
 
-	protected void setInGlobalTx(boolean flag) {
+	public void setInGlobalTx(boolean flag) {
 		this.mc.setInGlobalTx(flag);
 	}
 

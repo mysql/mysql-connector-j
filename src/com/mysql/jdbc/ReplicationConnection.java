@@ -2317,4 +2317,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public synchronized boolean useUnbufferedInput() {
 		return this.currentConnection.useUnbufferedInput();
 	}
+
+	public synchronized boolean isSameResource(Connection c) {
+		return this.currentConnection.isSameResource(c);
+	}
+
+	public void setInGlobalTx(boolean flag) {
+		this.currentConnection.setInGlobalTx(flag);
+	}
 }

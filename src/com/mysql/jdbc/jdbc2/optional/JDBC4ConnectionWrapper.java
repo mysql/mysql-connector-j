@@ -64,7 +64,7 @@ public class JDBC4ConnectionWrapper extends ConnectionWrapper {
 	 *             if an error occurs.
 	 */
 	public JDBC4ConnectionWrapper(MysqlPooledConnection mysqlPooledConnection,
-			ConnectionImpl mysqlConnection, boolean forXa)
+			com.mysql.jdbc.Connection mysqlConnection, boolean forXa)
 			throws SQLException {
 		super(mysqlPooledConnection, mysqlConnection, forXa);
 	}

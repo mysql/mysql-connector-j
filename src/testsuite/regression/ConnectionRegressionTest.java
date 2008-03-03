@@ -2377,7 +2377,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			urlBuf.append("&");
 		}
 		
-		ds.setURL(urlBuf.toString());
-		ds.getPooledConnection().close();
+		String url = urlBuf.toString();
+		url = "jdbc:mysql:replication:" + url.substring(url.indexOf("jdbc:mysql:") + "jdbc:mysql:".length());
+		ds.setURL(url);
+		Connection replConn = ds.getPooledConnection().getConnection();
+		
+		boolean readOnly = false;
+		
+		for (int i = 0; i < 10; i++) {
+			this.rs = replConn.createStatement().executeQuery("SELECT 1");
+			assertTrue(this.rs.next());
+			this.rs = replConn.prepareStatement("SELECT 1").executeQuery();
+			assertTrue(this.rs.next());
+			readOnly = !readOnly;
+			replConn.setReadOnly(readOnly);
+		}	
 	}
 }
