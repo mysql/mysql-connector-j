@@ -90,10 +90,13 @@ public class ReplicationConnection implements Connection, PingTarget {
         	slaveUrl.append(slaveDb);
         }
         
+        slaveProperties.setProperty("roundRobinLoadBalance", "true");
+        
         this.masterConnection = (com.mysql.jdbc.Connection) driver.connect(
                 masterUrl.toString(), masterProperties);
         this.slavesConnection = (com.mysql.jdbc.Connection) driver.connect(
                 slaveUrl.toString(), slaveProperties);
+        this.slavesConnection.setReadOnly(true);
         
 		this.currentConnection = this.masterConnection;
 	}

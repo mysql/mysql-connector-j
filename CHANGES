@@ -170,6 +170,14 @@ nn-nn-08 - Version 5.1.6
       active connection. All other methods from com.mysql.jdbc.Connection are
       implemented, and operate on the currently active connection, with the exception of
       resetServerState() and changeUser().
+      
+    - Connections created with jdbc:mysql:replication:// URLs now force
+      roundRobinLoadBalance=true on the slaves, and round-robin loadbalancing
+      now uses a "random" choice to more evenly distribute load across slave
+      servers, especially in connection pools. Connections that are configured
+      with "roundRobinLoadBalance=true" no longer set the failover state,
+      as it's assumed that we're not attempting to fall-back to a master
+      server. This fixes BUG#34963.
     
 10-09-07 - Version 5.1.5
 

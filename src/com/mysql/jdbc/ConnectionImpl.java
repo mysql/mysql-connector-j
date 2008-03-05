@@ -307,26 +307,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 	private static synchronized int getNextRoundRobinHostIndex(String url,
 			List hostList) {
-		if (roundRobinStatsMap == null) {
-			roundRobinStatsMap = new HashMap();
-		}
-
-		int[] index = (int[]) roundRobinStatsMap.get(url);
-
-		if (index == null) {
-			index = new int[1];
-			index[0] = -1;
-
-			roundRobinStatsMap.put(url, index);
-		}
-
-		index[0]++;
-
-		if (index[0] >= hostList.size()) {
-			index[0] = 0;
-		}
-
-		return index[0];
+		// we really do "random" here, because you don't get even
+		// distribution when this is coupled with connection pools
+		
+		int indexRange = hostList.size() - 1;
+		
+		int index = (int)(Math.random() * indexRange);
+		
+		return index;
 	}
 
 	private static boolean nullSafeCompare(String s1, String s2) {
@@ -4985,6 +4973,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *            The failedOver to set.
 	 */
 	public synchronized void setFailedOver(boolean flag) {
+		if (flag && getRoundRobinLoadBalance()) {
+			return; // we don't failover for round-robin load-balanced connections
+		}
+		
 		this.failedOver = flag;
 	}
 
@@ -4995,6 +4987,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *             DOCUMENT ME!
 	 */
 	private void setFailedOverState() throws SQLException {
+		if (getRoundRobinLoadBalance()) {
+			return; // we don't failover for round-robin load-balanced connections
+		}
+		
 		if (getFailOverReadOnly()) {
 			setReadOnlyInternal(true);
 		}
