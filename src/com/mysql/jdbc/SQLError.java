@@ -1279,6 +1279,6 @@ public class SQLError {
 			}
 		}
 
-		return SQLError.notImplemented();
+		return new NotImplemented();
 	}
 }
