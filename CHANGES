@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-nn-nn-08 - Version 5.1.6
+03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.
     
