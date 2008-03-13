@@ -56,7 +56,7 @@ public class RowDataDynamic implements RowData {
 
 	private boolean isAfterEnd = false;
 
-	private boolean isAtEnd = false;
+	private boolean noMoreRows = false;
 
 	private boolean isBinaryEncoded = false;
 
@@ -409,14 +409,15 @@ public class RowDataDynamic implements RowData {
 	private void nextRecord() throws SQLException {
 
 		try {
-			if (!this.isAtEnd) {				
+			if (!this.noMoreRows) {				
 				this.nextRow = this.io.nextRow(this.metadata, this.columnCount,
 						this.isBinaryEncoded,
 						java.sql.ResultSet.CONCUR_READ_ONLY, true, 
 						this.useBufferRowExplicit, true, null);
 
 				if (this.nextRow == null) {
-					this.isAtEnd = true;
+					this.noMoreRows = true;
+					this.isAfterEnd = true;
 					this.moreResultsExisted = this.io.tackOnMoreStreamingResults(this.owner);
 
 					if (this.index == -1) {

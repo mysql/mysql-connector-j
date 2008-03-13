@@ -5405,4 +5405,27 @@ public class StatementRegressionTest extends BaseTestCase {
 		this.rs.close();
 		assertEquals(((com.mysql.jdbc.Connection)fetchConn).getActiveStatementCount(), stmtCount);
 	}
-}
+	
+	public void testBug35170() throws Exception {
+		Statement stt = null;
+		
+		try {
+			this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY,
+					ResultSet.CONCUR_READ_ONLY);
+			stt.setFetchSize(Integer.MIN_VALUE);
+			this.rs = stt.executeQuery("select 1");
+			this.rs.next();
+			while (!this.rs.isAfterLast()) {
+				this.rs.getString(1);
+				this.rs.next();
+			}
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (stt != null) {
+				stt.close();
+			}
+		}
+				
+	}
+ } 
