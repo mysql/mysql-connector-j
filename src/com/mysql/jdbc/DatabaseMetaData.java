@@ -1892,18 +1892,26 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		int startLookingAt = positionOfReturnKeyword + "RETURNS".length() + 1;
 
+		int endOfReturn = -1;
+		
 		for (int i = 0; i < tokens.length; i++) {
-			int endOfReturn = StringUtils.indexOfIgnoreCaseRespectQuotes(
+			int nextEndOfReturn = StringUtils.indexOfIgnoreCaseRespectQuotes(
 					startLookingAt, procedureDefn, tokens[i], quoteChar
 							.charAt(0), !this.conn.isNoBackslashEscapesSet());
 
-			if (endOfReturn != -1) {
-				return endOfReturn;
+			if (nextEndOfReturn != -1) {
+				if (endOfReturn == -1 || (nextEndOfReturn < endOfReturn)) {
+					endOfReturn = nextEndOfReturn;
+				}
 			}
+		}
+		
+		if (endOfReturn != -1) {
+			return endOfReturn;
 		}
 
 		// Label?
-		int endOfReturn = StringUtils.indexOfIgnoreCaseRespectQuotes(
+		endOfReturn = StringUtils.indexOfIgnoreCaseRespectQuotes(
 				startLookingAt, procedureDefn, ":", quoteChar.charAt(0),
 				!this.conn.isNoBackslashEscapesSet());
 

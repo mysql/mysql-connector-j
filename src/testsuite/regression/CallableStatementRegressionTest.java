@@ -1571,4 +1571,29 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	public void testBug35199() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+
+		createFunction("test_function", "(a varchar(40), " + "b bigint(20), "
+				+ "c varchar(80)) " + "RETURNS bigint(20) " + "LANGUAGE SQL "
+				+ "DETERMINISTIC " + "MODIFIES SQL DATA " + "COMMENT 'bbb' "
+				+ "BEGIN " + "RETURN 1; " + "END; ");
+
+		CallableStatement callable = null;
+		try {
+			callable = conn.prepareCall("{? = call test_function(?,101,?)}");
+			callable.registerOutParameter(1, Types.BIGINT);
+
+			callable.setString(2, "FOO");
+			callable.setString(3, "BAR");
+			callable.executeUpdate();
+		} finally {
+			if (callable != null) {
+				callable.close();
+			}
+		}
+	}
 }

@@ -6,6 +6,8 @@ nn-nn-08 - Version 5.1.7
 	- Fixed BUG#35170- ResultSet.isAfterLast() doesn't work with for
 	  streaming result sets.
 	  
+	- Fixed BUG#35199 - Parse error for metadata in stored function.
+	  
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.
