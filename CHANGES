@@ -7,7 +7,12 @@ nn-nn-08 - Version 5.1.7
 	  streaming result sets.
 	  
 	- Fixed BUG#35199 - Parse error for metadata in stored function.
-	  
+	
+	- Fixed BUG#35415 - When result set is from views without access to underlying
+	  columns and is opened with CONCUR_UPDATABLE, don't throw SQLExceptions when
+	  checking updatability due to access permissions, instead return
+	  CONCUR_READONLY from getConcurrency.
+	    
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.

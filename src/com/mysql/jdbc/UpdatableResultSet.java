@@ -234,199 +234,204 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 *             DOCUMENT ME!
 	 */
 	protected void checkUpdatability() throws SQLException {
-		if (this.fields == null) {
-			// we've been created to be populated with cached
-			// metadata, and we don't have the metadata yet,
-			// we'll be called again by
-			// Connection.initializeResultsMetadataFromCache()
-			// when the metadata has been made available
-
-			return;
-		}
-
-		String singleTableName = null;
-		String catalogName = null;
-
-		int primaryKeyCount = 0;
-
-		// We can only do this if we know that there is a currently
-		// selected database, or if we're talking to a > 4.1 version
-		// of MySQL server (as it returns database names in field
-		// info)
-		//
-		if ((this.catalog == null) || (this.catalog.length() == 0)) {
-			this.catalog = this.fields[0].getDatabaseName();
-
-			if ((this.catalog == null) || (this.catalog.length() == 0)) {
-				throw SQLError.createSQLException(Messages
-						.getString("UpdatableResultSet.43") //$NON-NLS-1$
-						, SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-		}
-
-		if (this.fields.length > 0) {
-			singleTableName = this.fields[0].getOriginalTableName();
-			catalogName = this.fields[0].getDatabaseName();
-
-			if (singleTableName == null) {
-				singleTableName = this.fields[0].getTableName();
-				catalogName = this.catalog;
-			}
-
-			if (singleTableName != null && singleTableName.length() == 0) {
-				this.isUpdatable = false;
-				this.notUpdatableReason = Messages.getString("NotUpdatableReason.3");
-
+		try {
+			if (this.fields == null) {
+				// we've been created to be populated with cached
+				// metadata, and we don't have the metadata yet,
+				// we'll be called again by
+				// Connection.initializeResultsMetadataFromCache()
+				// when the metadata has been made available
+	
 				return;
 			}
-
-			if (this.fields[0].isPrimaryKey()) {
-				primaryKeyCount++;
-			}
-
+	
+			String singleTableName = null;
+			String catalogName = null;
+	
+			int primaryKeyCount = 0;
+	
+			// We can only do this if we know that there is a currently
+			// selected database, or if we're talking to a > 4.1 version
+			// of MySQL server (as it returns database names in field
+			// info)
 			//
-			// References only one table?
-			//
-			for (int i = 1; i < this.fields.length; i++) {
-				String otherTableName = this.fields[i].getOriginalTableName();
-				String otherCatalogName = this.fields[i].getDatabaseName();
-
-				if (otherTableName == null) {
-					otherTableName = this.fields[i].getTableName();
-					otherCatalogName = this.catalog;
+			if ((this.catalog == null) || (this.catalog.length() == 0)) {
+				this.catalog = this.fields[0].getDatabaseName();
+	
+				if ((this.catalog == null) || (this.catalog.length() == 0)) {
+					throw SQLError.createSQLException(Messages
+							.getString("UpdatableResultSet.43") //$NON-NLS-1$
+							, SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ //$NON-NLS-2$
 				}
-
-				if (otherTableName != null && otherTableName.length() == 0) {
+			}
+	
+			if (this.fields.length > 0) {
+				singleTableName = this.fields[0].getOriginalTableName();
+				catalogName = this.fields[0].getDatabaseName();
+	
+				if (singleTableName == null) {
+					singleTableName = this.fields[0].getTableName();
+					catalogName = this.catalog;
+				}
+	
+				if (singleTableName != null && singleTableName.length() == 0) {
 					this.isUpdatable = false;
 					this.notUpdatableReason = Messages.getString("NotUpdatableReason.3");
-
+	
 					return;
 				}
-
-				if ((singleTableName == null)
-						|| !otherTableName.equals(singleTableName)) {
-					this.isUpdatable = false;
-					this.notUpdatableReason = Messages.getString("NotUpdatableReason.0");
-
-					return;
-				}
-
-				// Can't reference more than one database
-				if ((catalogName == null)
-						|| !otherCatalogName.equals(catalogName)) {
-					this.isUpdatable = false;
-					this.notUpdatableReason = Messages.getString("NotUpdatableReason.1");
-
-					return;
-				}
-
-				if (this.fields[i].isPrimaryKey()) {
+	
+				if (this.fields[0].isPrimaryKey()) {
 					primaryKeyCount++;
 				}
-			}
-
-			if ((singleTableName == null) || (singleTableName.length() == 0)) {
+	
+				//
+				// References only one table?
+				//
+				for (int i = 1; i < this.fields.length; i++) {
+					String otherTableName = this.fields[i].getOriginalTableName();
+					String otherCatalogName = this.fields[i].getDatabaseName();
+	
+					if (otherTableName == null) {
+						otherTableName = this.fields[i].getTableName();
+						otherCatalogName = this.catalog;
+					}
+	
+					if (otherTableName != null && otherTableName.length() == 0) {
+						this.isUpdatable = false;
+						this.notUpdatableReason = Messages.getString("NotUpdatableReason.3");
+	
+						return;
+					}
+	
+					if ((singleTableName == null)
+							|| !otherTableName.equals(singleTableName)) {
+						this.isUpdatable = false;
+						this.notUpdatableReason = Messages.getString("NotUpdatableReason.0");
+	
+						return;
+					}
+	
+					// Can't reference more than one database
+					if ((catalogName == null)
+							|| !otherCatalogName.equals(catalogName)) {
+						this.isUpdatable = false;
+						this.notUpdatableReason = Messages.getString("NotUpdatableReason.1");
+	
+						return;
+					}
+	
+					if (this.fields[i].isPrimaryKey()) {
+						primaryKeyCount++;
+					}
+				}
+	
+				if ((singleTableName == null) || (singleTableName.length() == 0)) {
+					this.isUpdatable = false;
+					this.notUpdatableReason = Messages.getString("NotUpdatableReason.2");
+	
+					return;
+				}
+			} else {
 				this.isUpdatable = false;
-				this.notUpdatableReason = Messages.getString("NotUpdatableReason.2");
-
+				this.notUpdatableReason = Messages.getString("NotUpdatableReason.3");
+	
 				return;
 			}
-		} else {
-			this.isUpdatable = false;
-			this.notUpdatableReason = Messages.getString("NotUpdatableReason.3");
-
-			return;
-		}
-
-		if (this.connection.getStrictUpdates()) {
-			java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
-
-			java.sql.ResultSet rs = null;
-			HashMap primaryKeyNames = new HashMap();
-
-			try {
-				rs = dbmd.getPrimaryKeys(catalogName, null, singleTableName);
-
-				while (rs.next()) {
-					String keyName = rs.getString(4);
-					keyName = keyName.toUpperCase();
-					primaryKeyNames.put(keyName, keyName);
-				}
-			} finally {
-				if (rs != null) {
-					try {
-						rs.close();
-					} catch (Exception ex) {
-						AssertionFailedException.shouldNotHappen(ex);
+	
+			if (this.connection.getStrictUpdates()) {
+				java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
+	
+				java.sql.ResultSet rs = null;
+				HashMap primaryKeyNames = new HashMap();
+	
+				try {
+					rs = dbmd.getPrimaryKeys(catalogName, null, singleTableName);
+	
+					while (rs.next()) {
+						String keyName = rs.getString(4);
+						keyName = keyName.toUpperCase();
+						primaryKeyNames.put(keyName, keyName);
 					}
-
-					rs = null;
+				} finally {
+					if (rs != null) {
+						try {
+							rs.close();
+						} catch (Exception ex) {
+							AssertionFailedException.shouldNotHappen(ex);
+						}
+	
+						rs = null;
+					}
 				}
-			}
-
-			int existingPrimaryKeysCount = primaryKeyNames.size();
-
-			if (existingPrimaryKeysCount == 0) {
-				this.isUpdatable = false;
-				this.notUpdatableReason = Messages.getString("NotUpdatableReason.5");
-
-				return; // we can't update tables w/o keys
-			}
-
-			//
-			// Contains all primary keys?
-			//
-			for (int i = 0; i < this.fields.length; i++) {
-				if (this.fields[i].isPrimaryKey()) {
-					String columnNameUC = this.fields[i].getName()
-							.toUpperCase();
-
-					if (primaryKeyNames.remove(columnNameUC) == null) {
-						// try original name
-						String originalName = this.fields[i].getOriginalName();
-
-						if (originalName != null) {
-							if (primaryKeyNames.remove(originalName
-									.toUpperCase()) == null) {
-								// we don't know about this key, so give up :(
-								this.isUpdatable = false;
-								this.notUpdatableReason = Messages.getString("NotUpdatableReason.6",
-										new Object[] {originalName});
-
-								return;
+	
+				int existingPrimaryKeysCount = primaryKeyNames.size();
+	
+				if (existingPrimaryKeysCount == 0) {
+					this.isUpdatable = false;
+					this.notUpdatableReason = Messages.getString("NotUpdatableReason.5");
+	
+					return; // we can't update tables w/o keys
+				}
+	
+				//
+				// Contains all primary keys?
+				//
+				for (int i = 0; i < this.fields.length; i++) {
+					if (this.fields[i].isPrimaryKey()) {
+						String columnNameUC = this.fields[i].getName()
+								.toUpperCase();
+	
+						if (primaryKeyNames.remove(columnNameUC) == null) {
+							// try original name
+							String originalName = this.fields[i].getOriginalName();
+	
+							if (originalName != null) {
+								if (primaryKeyNames.remove(originalName
+										.toUpperCase()) == null) {
+									// we don't know about this key, so give up :(
+									this.isUpdatable = false;
+									this.notUpdatableReason = Messages.getString("NotUpdatableReason.6",
+											new Object[] {originalName});
+	
+									return;
+								}
 							}
 						}
 					}
 				}
-			}
-
-			this.isUpdatable = primaryKeyNames.isEmpty();
-
-			if (!this.isUpdatable) {
-				if (existingPrimaryKeysCount > 1) {
-					this.notUpdatableReason = Messages.getString("NotUpdatableReason.7");
-				} else {
-					this.notUpdatableReason = Messages.getString("NotUpdatableReason.4");
+	
+				this.isUpdatable = primaryKeyNames.isEmpty();
+	
+				if (!this.isUpdatable) {
+					if (existingPrimaryKeysCount > 1) {
+						this.notUpdatableReason = Messages.getString("NotUpdatableReason.7");
+					} else {
+						this.notUpdatableReason = Messages.getString("NotUpdatableReason.4");
+					}
+	
+					return;
 				}
-
+			}
+	
+			//
+			// Must have at least one primary key
+			//
+			if (primaryKeyCount == 0) {
+				this.isUpdatable = false;
+				this.notUpdatableReason = Messages.getString("NotUpdatableReason.4");
+	
 				return;
 			}
-		}
-
-		//
-		// Must have at least one primary key
-		//
-		if (primaryKeyCount == 0) {
-			this.isUpdatable = false;
-			this.notUpdatableReason = Messages.getString("NotUpdatableReason.4");
-
+	
+			this.isUpdatable = true;
+			this.notUpdatableReason = null;
+	
 			return;
+		} catch (SQLException sqlEx) {
+			this.isUpdatable = false;
+			this.notUpdatableReason = sqlEx.getMessage();
 		}
-
-		this.isUpdatable = true;
-		this.notUpdatableReason = null;
-
-		return;
 	}
 
 	/**
