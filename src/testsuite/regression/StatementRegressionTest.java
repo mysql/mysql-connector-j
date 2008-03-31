@@ -5428,4 +5428,14 @@ public class StatementRegressionTest extends BaseTestCase {
 		}
 				
 	}
+	
+	public void testBug35307() throws Exception {
+		createTable("testBug35307", "(`id` int(11) unsigned NOT NULL auto_increment,"
+			+ "`field` varchar(20) NOT NULL,"
+			+ "`date` datetime NOT NULL,"
+			+ "PRIMARY KEY  (`id`)"
+			+ ") ENGINE=MyISAM DEFAULT CHARSET=latin1");
+		
+		this.stmt.executeUpdate("INSERT INTO testBug35307 (field) values ('works')");
+	}
  } 
