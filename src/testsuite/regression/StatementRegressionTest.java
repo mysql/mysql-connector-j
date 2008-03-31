@@ -5438,4 +5438,10 @@ public class StatementRegressionTest extends BaseTestCase {
 		
 		this.stmt.executeUpdate("INSERT INTO testBug35307 (field) values ('works')");
 	}
+	
+	public void testBug35666() throws Exception {
+		Connection loggingConn = getConnectionWithProps("logSlowQueries=true");
+		this.pstmt = ((com.mysql.jdbc.Connection) loggingConn).serverPrepareStatement("SELECT SLEEP(4)");
+		this.pstmt.execute();
+	}
  } 

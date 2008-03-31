@@ -297,7 +297,7 @@ public class StatementImpl implements Statement {
 		}
 
 		boolean profiling = this.connection.getProfileSql()
-				|| this.connection.getUseUsageAdvisor();
+				|| this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
 
 		if (this.connection.getAutoGenerateTestcaseScript() || profiling) {
 			this.statementId = statementCounter++;

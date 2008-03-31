@@ -12,6 +12,9 @@ nn-nn-08 - Version 5.1.7
 	  columns and is opened with CONCUR_UPDATABLE, don't throw SQLExceptions when
 	  checking updatability due to access permissions, instead return
 	  CONCUR_READONLY from getConcurrency.
+	  
+	- Fixed BUG#35666 - NullPointerException when using "logSlowQueries=true" with
+	  server-side prepared statements enabled.
 	    
 03-06-08 - Version 5.1.6
 
