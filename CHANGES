@@ -15,6 +15,16 @@ nn-nn-08 - Version 5.1.7
 	  
 	- Fixed BUG#35666 - NullPointerException when using "logSlowQueries=true" with
 	  server-side prepared statements enabled.
+	  
+	- Fixed BUG#35660 - Calling equals() on connections created with "jdbc:mysql:loadbalance:"
+	  URLs did not have the same behavior as "plain" connections. The behavior we use
+	  is the implementation in java.lang.Object, load-balanced connections just happened
+	  to be using a java.lang.reflect.Proxy which required some custom behavior in 
+	  equals() to make it work the same as "plain" connections.
+	  
+	  Note that there is no *specified* equals contract for JDBC connections in the
+	  JDBC specification itself, but the test makes sure that our implementation is
+	  at least consistent.
 	    
 03-06-08 - Version 5.1.6
 

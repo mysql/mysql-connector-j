@@ -2393,4 +2393,20 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			replConn.setReadOnly(readOnly);
 		}	
 	}
+	
+	public void testBug35660() throws Exception {
+		
+		Connection lbConn = getLoadBalancedConnection(null);
+		Connection lbConn2 = getLoadBalancedConnection(null);
+		
+		try {
+			assertEquals(this.conn, this.conn);
+			assertEquals(lbConn, lbConn);
+			assertFalse(lbConn.equals(this.conn));
+			assertFalse(lbConn.equals(lbConn2));
+		} finally {
+			lbConn.close();
+			lbConn2.close();
+		}
+	}
 }
