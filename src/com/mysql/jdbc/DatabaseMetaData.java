@@ -745,7 +745,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				
 				if (fields != null && fields.length == 9) {
 					
-					rowData = new byte[8][];
+					rowData = new byte[9][];
 					rowData[0] = catalog == null ? null : s2b(catalog);         // PROCEDURE_CAT
 					rowData[1] = null;                                          // PROCEDURE_SCHEM
 					rowData[2] = s2b(functionName);                             // PROCEDURE_NAME
