@@ -26,6 +26,10 @@ nn-nn-08 - Version 5.1.7
 	  JDBC specification itself, but the test makes sure that our implementation is
 	  at least consistent.
 	    
+	- Fixed BUG#35810 - Properties set in URLs and then passed to DataSources via setUrl() 
+	  did not take effect in certain circumstances. This also fixes related bugs BUG#13261 and
+	  BUG#35753.
+	  
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.

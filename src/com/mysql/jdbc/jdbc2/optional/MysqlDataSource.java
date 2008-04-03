@@ -27,6 +27,7 @@ package com.mysql.jdbc.jdbc2.optional;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.sql.SQLException;
+import java.util.Iterator;
 import java.util.Properties;
 
 import javax.naming.NamingException;
@@ -419,6 +420,23 @@ public class MysqlDataSource extends ConnectionPropertiesImpl implements
 			jdbcUrlToUse = this.url;
 		}
 
+		//
+		// URL should take precedence over properties
+		//
+		
+		Properties urlProps = mysqlDriver.parseURL(jdbcUrlToUse, null);
+		urlProps.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		urlProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		urlProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		
+		Iterator keys = urlProps.keySet().iterator();
+		
+		while (keys.hasNext()) {
+			String key = (String)keys.next();
+			
+			props.setProperty(key, urlProps.getProperty(key));
+		}
+		
 		return mysqlDriver.connect(jdbcUrlToUse, props);
 	}
 //

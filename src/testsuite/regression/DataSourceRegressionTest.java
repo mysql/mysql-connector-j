@@ -51,6 +51,7 @@ import javax.sql.PooledConnection;
 import testsuite.BaseTestCase;
 import testsuite.simple.DataSourceTest;
 
+import com.mysql.jdbc.ConnectionProperties;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -489,5 +490,26 @@ public class DataSourceRegressionTest extends BaseTestCase {
 		assertNotNull(pc.getConnection().prepareStatement("SELECT 1", new String[0]));
 		assertNotNull(pc.getConnection().prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY));
 		assertNotNull(pc.getConnection().prepareStatement("SELECT 1", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT));
+	}
+
+	public void testBug35810() throws Exception {
+		int defaultConnectTimeout = ((ConnectionProperties) this.conn).getConnectTimeout();
+		int nonDefaultConnectTimeout = defaultConnectTimeout + 1000 * 2;
+		MysqlConnectionPoolDataSource cpds = new MysqlConnectionPoolDataSource();
+		String dsUrl = BaseTestCase.dbUrl;
+		if (dsUrl.indexOf("?") == -1) {
+			dsUrl += "?";
+		} else {
+			dsUrl += "&";
+		}
+		
+		dsUrl += "connectTimeout=" + nonDefaultConnectTimeout;
+		cpds.setUrl(dsUrl);
+		
+		Connection dsConn = cpds.getPooledConnection().getConnection();
+		int configuredConnectTimeout = ((ConnectionProperties) dsConn).getConnectTimeout();
+		
+		assertEquals("Connect timeout spec'd by URL didn't take", nonDefaultConnectTimeout, configuredConnectTimeout);
+		assertFalse("Connect timeout spec'd by URL didn't take", defaultConnectTimeout == configuredConnectTimeout);
 	}
 }
