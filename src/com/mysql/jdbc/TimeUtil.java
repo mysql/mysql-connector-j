@@ -1019,7 +1019,7 @@ public class TimeUtil {
 
 	final static Time fastTimeCreate(Calendar cal, int hour, int minute,
 			int second) throws SQLException {
-		if (hour < 0 || hour > 23) {
+		if (hour < 0 || hour > 24) {
 			throw SQLError.createSQLException("Illegal hour value '" + hour + "' for java.sql.Time type in value '"
 					+ timeFormattedString(hour, minute, second) + ".", 
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);

@@ -431,7 +431,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public ResultSetImpl(String catalog, Field[] fields, RowData tuples,
 			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
 		this.connection = conn;
-
+		
 		this.retainOwningStatement = false;
 		
 		if (this.connection != null) {
@@ -481,6 +481,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			initializeWithMetadata();
 		} // else called by Connection.initializeResultsMetadataFromCache() when cached
 		useLegacyDatetimeCode = this.connection.getUseLegacyDatetimeCode();
+		
+		setRowPositionValidity();
 	}
 
 	public void initializeWithMetadata() throws SQLException {
@@ -5900,6 +5902,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	private Time getTimeInternal(int columnIndex, Calendar targetCalendar,
 			TimeZone tz,
 			boolean rollForward) throws java.sql.SQLException {
+		checkRowPos();
+		
 		if (this.isBinaryEncoded) {
 			return getNativeTime(columnIndex, targetCalendar, tz, rollForward);
 		}

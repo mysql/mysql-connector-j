@@ -4671,4 +4671,14 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public void testBug36051() throws Exception {
+		try {
+			this.rs = this.stmt.executeQuery("SELECT '24:00:00'");
+			this.rs.next();
+			this.rs.getTime(1);
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

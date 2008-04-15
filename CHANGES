@@ -30,6 +30,9 @@ nn-nn-08 - Version 5.1.7
 	  did not take effect in certain circumstances. This also fixes related bugs BUG#13261 and
 	  BUG#35753.
 	  
+	- Fixed BUG#36051 - ResultSet.getTime() won't accept value of '24' for hours component of
+	  a java.sql.Time.
+	  
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.
