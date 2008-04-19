@@ -726,7 +726,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 			StringBuffer mesg = new StringBuffer(128);
 
-			if (getParanoid()) {
+			if (!getParanoid()) {
 				mesg.append("Cannot connect to MySQL server on ");
 				mesg.append(this.host);
 				mesg.append(":");
