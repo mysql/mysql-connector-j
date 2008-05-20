@@ -223,12 +223,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				this.columnSize = Constants.integerValueOf(maxLength);
 				this.decimalDigits = null;
 			} else if (StringUtils.startsWithIgnoreCase(typeInfo, "set")) {
-				String temp = typeInfo.substring(typeInfo.indexOf("("),
+				String temp = typeInfo.substring(typeInfo.indexOf("(") + 1,
 						typeInfo.lastIndexOf(")"));
 				java.util.StringTokenizer tokenizer = new java.util.StringTokenizer(
 						temp, ",");
 				int maxLength = 0;
 
+				int numElements = tokenizer.countTokens();
+				
+				if (numElements > 0) {
+					maxLength += (numElements - 1);
+				}
+				
 				while (tokenizer.hasMoreTokens()) {
 					String setMember = tokenizer.nextToken().trim();
 

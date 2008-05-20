@@ -33,6 +33,9 @@ nn-nn-08 - Version 5.1.7
 	- Fixed BUG#36051 - ResultSet.getTime() won't accept value of '24' for hours component of
 	  a java.sql.Time.
 	  
+	- Fixed BUG#36830 - DBMD.getColumns() doesn't return correct COLUMN_SIZE for SET columns. The
+	  logic wasn't accounting for the ","s in the column size.
+	  
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.

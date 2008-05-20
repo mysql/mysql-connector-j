@@ -1637,7 +1637,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	 */
 	public void testBug22613() throws Exception {
 		
-		createTable("bug22613", "( s set('a','bc','def','ghij') default NULL, t enum('a', 'ab', 'cdef'))");
+		createTable("bug22613", "( s set('a','bc','def','ghij') default NULL, t enum('a', 'ab', 'cdef'), s2 SET('1','2','3','4','1585','ONE','TWO','Y','N','THREE'))");
 
 		try {
 			checkMetadataForBug22613(this.conn);
@@ -1665,13 +1665,19 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	
 	private void checkMetadataForBug22613(Connection c) throws Exception {
 		String maxValue = "a,bc,def,ghij";
+		String maxValue2 = "1,2,3,4,1585,ONE,TWO,Y,N,THREE";
 		
 		try {
 			DatabaseMetaData meta = c.getMetaData();
 			this.rs = meta.getColumns(null, this.conn.getCatalog(), "bug22613", "s");
 			this.rs.first();
-
+			
 			assertEquals(maxValue.length(), rs.getInt("COLUMN_SIZE"));
+			
+			this.rs = meta.getColumns(null, this.conn.getCatalog(), "bug22613", "s2");
+			this.rs.first();
+			
+			assertEquals(maxValue2.length(), rs.getInt("COLUMN_SIZE"));
 			
 			this.rs = meta.getColumns(null, c.getCatalog(), "bug22613", "t");
 			this.rs.first();
