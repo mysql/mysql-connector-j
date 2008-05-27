@@ -148,7 +148,7 @@ public class ExportControlled {
 							SQL_STATE_BAD_SSL_PARAMS, 0, false);
 		}
 
-		if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
+		if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
 			try {
 				if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreType)) {
 					KeyStore clientKeyStore = KeyStore
@@ -190,7 +190,7 @@ public class ExportControlled {
 			}
 		}
 
-		if (StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
+		if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
 
 			try {
 				if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
