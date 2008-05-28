@@ -5410,7 +5410,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		Statement stt = null;
 		
 		try {
-			this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY,
+			stt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY,
 					ResultSet.CONCUR_READ_ONLY);
 			stt.setFetchSize(Integer.MIN_VALUE);
 			this.rs = stt.executeQuery("select 1");
@@ -5429,6 +5429,7 @@ public class StatementRegressionTest extends BaseTestCase {
 				
 	}
 	
+	/*
 	public void testBug35307() throws Exception {
 		createTable("testBug35307", "(`id` int(11) unsigned NOT NULL auto_increment,"
 			+ "`field` varchar(20) NOT NULL,"
@@ -5437,7 +5438,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			+ ") ENGINE=MyISAM DEFAULT CHARSET=latin1");
 		
 		this.stmt.executeUpdate("INSERT INTO testBug35307 (field) values ('works')");
-	}
+	}*/
 	
 	public void testBug35666() throws Exception {
 		Connection loggingConn = getConnectionWithProps("logSlowQueries=true");
