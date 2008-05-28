@@ -233,10 +233,10 @@ class MysqlIO {
 	private boolean useNanosForElapsedTime;
 	private long slowQueryThreshold;
 	private String queryTimingUnits;
-	private List statementInterceptors;
 	private boolean useDirectRowUnpack = true;
 	private int useBufferRowSizeThreshold;
 	private int commandCount = 0;
+	private List statementInterceptors;
 
     /**
      * Constructor:  Connect to the MySQL server and setup a stream connection.
@@ -256,7 +256,9 @@ class MysqlIO {
         String socketFactoryClassName, ConnectionImpl conn,
         int socketTimeout, int useBufferRowSizeThreshold) throws IOException, SQLException {
         this.connection = conn;
-
+        
+        this.statementInterceptors = this.connection.getStatementInterceptorsInstances();
+        
         if (this.connection.getEnablePacketDebug()) {
             this.packetDebugRingBuffer = new LinkedList();
         }
@@ -327,13 +329,6 @@ class MysqlIO {
 			calculateSlowQueryThreshold();
 		}
     }
-
-    protected void initializeStatementInterceptors(String interceptorClasses,
-			Properties props) throws SQLException {
-		this.statementInterceptors = Util.loadExtensions(this.connection, props, 
-				interceptorClasses,
-				"MysqlIo.BadStatementInterceptor");
-	}
 
     /**
 	 * Does the server send back extra column info?
@@ -486,7 +481,7 @@ class MysqlIO {
     /**
      * Forcibly closes the underlying socket to MySQL.
      */
-    protected final void forceClose() {
+    protected final void forceClose() {	
         try {
             if (this.mysqlInput != null) {
                 this.mysqlInput.close();

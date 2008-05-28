@@ -595,6 +595,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	private String statementComment = null;
 
+	private List statementInterceptors;
+	
 	/**'
 	 * For the delegate only
 	 */
@@ -712,10 +714,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		this.props = info;
 		initializeDriverProperties(info);
-
+		initializeStatementInterceptors();
+		
 		try {
 			this.dbmd = getMetaData(false, false);
 			createNewIO(false);
+			
 		} catch (SQLException ex) {
 			cleanup(ex);
 
@@ -756,6 +760,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
+    protected void initializeStatementInterceptors() throws SQLException {
+		this.statementInterceptors = Util.loadExtensions(this, this.props, 
+				getStatementInterceptors(),
+				"MysqlIo.BadStatementInterceptor");
+	}
+    
+    protected List getStatementInterceptorsInstances() {
+    	return this.statementInterceptors;
+    }
+    
 	private void addToHistogram(int[] histogramCounts,
 			long[] histogramBreakpoints, long value, int numberOfTimes,
 			long currentLowerBound, long currentUpperBound) {
@@ -2305,11 +2319,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			} finally {
 				this.queriesIssuedFailedOver = queriesIssuedFailedOverCopy;
-				
-				if (this.io != null && getStatementInterceptors() != null) {
-					this.io.initializeStatementInterceptors(
-							getStatementInterceptors(), mergedProps);
-				}
 			}
 		}
 	}
@@ -4267,9 +4276,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			} else {
 				this.io.forceClose();
 			}
+			
+	    	if (this.statementInterceptors != null) {
+	    		for (int i = 0; i < this.statementInterceptors.size(); i++) {
+	    			((StatementInterceptor)this.statementInterceptors.get(i)).destroy();
+	    		}
+	    	}
 		} finally {
 			this.openStatements = null;
 			this.io = null;
+			this.statementInterceptors = null;
 			ProfilerEventHandlerFactory.removeInstance(this);
 			this.isClosed = true;
 		}
