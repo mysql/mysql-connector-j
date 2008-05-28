@@ -1594,4 +1594,8 @@ public interface ConnectionProperties {
 	public int getSelfDestructOnPingMaxOperations();
 
 	public void setSelfDestructOnPingMaxOperations(int maxOperations);
+	
+	public boolean getUseColumnNamesInFindColumn();
+
+	public void setUseColumnNamesInFindColumn(boolean flag);
 }

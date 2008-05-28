@@ -2328,4 +2328,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public void setInGlobalTx(boolean flag) {
 		this.currentConnection.setInGlobalTx(flag);
 	}
+
+	public boolean getUseColumnNamesInFindColumn() {
+		return this.currentConnection.getUseColumnNamesInFindColumn();
+	}
+
+	public void setUseColumnNamesInFindColumn(boolean flag) {
+		// TODO Auto-generated method stub
+	}
 }

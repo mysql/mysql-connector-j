@@ -4681,4 +4681,79 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#35610, BUG#35150. We follow the JDBC Spec here, in that the 4.0 behavior
+	 * is correct, the JDBC-3.0 (and earlier) spec has a bug, but you can get the buggy behavior
+	 * (allowing column names *and* labels to be used) by setting "useColumnNamesInFindColumn" to
+	 * "true".
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug35610() throws Exception {
+		createTable("testBug35610", "(field1 int, field2 int, field3 int)");
+		this.stmt.executeUpdate("INSERT INTO testBug35610 VALUES (1, 2, 3)");
+		exercise35610(this.stmt, false);
+		exercise35610(getConnectionWithProps("useColumnNamesInFindColumn=true").createStatement(), true);
+	}
+	
+	private void exercise35610(Statement configuredStmt, boolean force30Behavior) throws Exception {
+		try {
+			this.rs = configuredStmt.executeQuery("SELECT field1 AS f1, field2 AS f2, field3 FROM testBug35610");
+			
+			ResultSetMetaData rsmd = this.rs.getMetaData();
+			
+			assertEquals("field1", rsmd.getColumnName(1));
+			assertEquals("field2", rsmd.getColumnName(2));
+			assertEquals("f1", rsmd.getColumnLabel(1));
+			assertEquals("f2", rsmd.getColumnLabel(2));
+			
+
+			
+			assertEquals("field3", rsmd.getColumnName(3));
+			assertEquals("field3", rsmd.getColumnLabel(3));
+			
+			this.rs.next();
+			
+			// From ResultSet.html#getInt(java.lang.String) in JDBC-4.0
+			//
+			// Retrieves the value of the designated column in the current row of this ResultSet
+			// object as an int in the Java programming language.
+			//
+			// Parameters:
+			// columnLabel - the label for the column specified with the SQL AS clause. If the 
+			//               SQL AS clause was not specified, then the label is the name of the column
+			//
+			
+			assertEquals(1, this.rs.getInt("f1"));
+			assertEquals(2, this.rs.getInt("f2"));
+			assertEquals(3, this.rs.getInt("field3"));
+			
+			// Pre-JDBC 4.0, some versions of the spec say "column name *or* label"
+			// for the column name argument...
+			
+			if (force30Behavior) {
+				assertEquals(1, this.rs.getInt("field1"));
+				assertEquals(2, this.rs.getInt("field2"));
+			}
+			
+			if (!force30Behavior) {
+				try {
+					this.rs.findColumn("field1");
+					fail("findColumn(\"field1\" should have failed with an exception");
+				} catch (SQLException sqlEx) {
+					// expected
+				}
+				
+				try {
+					this.rs.findColumn("field2");
+					fail("findColumn(\"field2\" should have failed with an exception");
+				} catch (SQLException sqlEx) {
+					// expected
+				}
+			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

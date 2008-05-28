@@ -36,6 +36,20 @@ nn-nn-08 - Version 5.1.7
 	- Fixed BUG#36830 - DBMD.getColumns() doesn't return correct COLUMN_SIZE for SET columns. The
 	  logic wasn't accounting for the ","s in the column size.
 	  
+    - Fixed BUG#35610, BUG#35150- ResultSet.findColumn() and ResultSet.get...(String) doesn't allow
+      column names to be used, and isn't congruent with ResultSetMetadata.getColumnName().
+      
+      By default, we follow the JDBC Specification here, in that the 4.0 behavior
+	  is correct. Calling programs should use ResultSetMetaData.getColumnLabel() to dynamically determine
+	  the correct "name" to pass to ResultSet.findColumn() or ResultSet.get...(String) whether or not the
+	  query specifies an alias via "AS" for the column. ResultSetMetaData.getColumnName() will return the
+	  actual name of the column, if it exists, and this name can *not* be used as input to ResultSet.findColumn()
+	  or ResultSet.get...(String).
+	  
+	  The JDBC-3.0 (and earlier) specification has a bug, but you can get the buggy behavior
+	  (allowing column names *and* labels to be used for ResultSet.findColumn() and get...(String)) by setting 
+	  "useColumnNamesInFindColumn" to "true".
+	  
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.

@@ -28,6 +28,7 @@ import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.util.Map;
 import java.util.TimeZone;
 
 import com.mysql.jdbc.Connection;
@@ -2537,5 +2538,13 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
 	public void setSelfDestructOnPingSecondsLifetime(int seconds) {
 		this.mc.setSelfDestructOnPingSecondsLifetime(seconds);
+	}
+
+	public boolean getUseColumnNamesInFindColumn() {
+		return this.mc.getUseColumnNamesInFindColumn();
+	}
+
+	public void setUseColumnNamesInFindColumn(boolean flag) {
+		this.mc.setUseColumnNamesInFindColumn(flag);
 	}
 }

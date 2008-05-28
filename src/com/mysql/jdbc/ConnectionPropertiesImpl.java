@@ -1434,6 +1434,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.useCompression"), //$NON-NLS-1$
 			"3.0.17", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
+	private BooleanConnectionProperty useColumnNamesInFindColumn = new BooleanConnectionProperty(
+			"useColumnNamesInFindColumn",
+			false, 
+			Messages.getString("ConnectionProperties.useColumnNamesInFindColumn"), //$NON-NLS-1$
+			"5.1.7", MISC_CATEGORY, Integer.MAX_VALUE); //$NON-NLS-1$
+	
 	private StringConnectionProperty useConfigs = new StringConnectionProperty(
 			"useConfigs", //$NON-NLS-1$
 			null,
@@ -4358,5 +4364,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setSelfDestructOnPingMaxOperations(int maxOperations) {
 		this.selfDestructOnPingMaxOperations.setValue(maxOperations);
+	}
+
+	public boolean getUseColumnNamesInFindColumn() {
+		return this.useColumnNamesInFindColumn.getValueAsBoolean();
+	}
+
+	public void setUseColumnNamesInFindColumn(boolean flag) {
+		this.useColumnNamesInFindColumn.setValue(flag);
 	}
 }

@@ -191,7 +191,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	protected String catalog = null;
 
 	/** Map column names (and all of their permutations) to column indices */
-	protected Map columnNameToIndex = null;
+	protected Map columnLabelToIndex = null;
 
 	/** Keep track of columns accessed */
 	protected boolean[] columnUsed = null;
@@ -233,6 +233,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	/** Map of fully-specified column names to column indices */
 	protected Map fullColumnNameToIndex = null;
 
+	protected Map columnNameToIndex = null;
+	
 	protected boolean hasBuiltIndexMapping = false;
 
 	/**
@@ -326,6 +328,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	private boolean jdbcCompliantTruncationForReads;
 	
 	private boolean useFastIntParsing = true;
+	private boolean useColumnNamesInFindColumn;
 	
 	protected final static char[] EMPTY_SPACE = new char[255];
 	
@@ -481,6 +484,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			initializeWithMetadata();
 		} // else called by Connection.initializeResultsMetadataFromCache() when cached
 		useLegacyDatetimeCode = this.connection.getUseLegacyDatetimeCode();
+		
+		this.useColumnNamesInFindColumn = this.connection.getUseColumnNamesInFindColumn();
 		
 		setRowPositionValidity();
 	}
@@ -709,8 +714,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	public void buildIndexMapping() throws SQLException {
 		int numFields = this.fields.length;
-		this.columnNameToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+		this.columnLabelToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
 		this.fullColumnNameToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+		this.columnNameToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
 		
 		
 		// We do this in reverse order, so that the 'first' column
@@ -727,15 +733,20 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		//
 		for (int i = numFields - 1; i >= 0; i--) {
 			Integer index = Constants.integerValueOf(i);
-			String columnName = this.fields[i].getName();
+			String columnName = this.fields[i].getOriginalName();
+			String columnLabel = this.fields[i].getName();
 			String fullColumnName = this.fields[i].getFullName();
 
-			if (columnName != null) {			
-				this.columnNameToIndex.put(columnName, index);
+			if (columnLabel != null) {			
+				this.columnLabelToIndex.put(columnLabel, index);
 			}
 
 			if (fullColumnName != null) {
 				this.fullColumnNameToIndex.put(fullColumnName, index);
+			}
+			
+			if (columnName != null) {
+				this.columnNameToIndex.put(columnName, index);
 			}
 		}
 
@@ -928,14 +939,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public void populateCachedMetaData(CachedResultSetMetaData cachedMetaData)
 		throws SQLException {
 		cachedMetaData.fields = this.fields;
-		cachedMetaData.columnNameToIndex = this.columnNameToIndex;
+		cachedMetaData.columnNameToIndex = this.columnLabelToIndex;
 		cachedMetaData.fullColumnNameToIndex = this.fullColumnNameToIndex;
 		cachedMetaData.metadata = getMetaData();
 	}
 	
 	public void initializeFromCachedMetaData(CachedResultSetMetaData cachedMetaData) {
 		this.fields = cachedMetaData.fields;
-		this.columnNameToIndex = cachedMetaData.columnNameToIndex;
+		this.columnLabelToIndex = cachedMetaData.columnNameToIndex;
 		this.fullColumnNameToIndex = cachedMetaData.fullColumnNameToIndex;
 		this.hasBuiltIndexMapping = true;
 	}
@@ -1053,7 +1064,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	// ---------------------------------------------------------------------
 
 
-	/**
+	/*
+	 * [For JDBC-3.0 and older - http://java.sun.com/j2se/1.5.0/docs/api/java/sql/ResultSet.html#findColumn(java.lang.String)]
 	 * Map a ResultSet column name to a ResultSet column index
 	 * 
 	 * @param columnName
@@ -1063,6 +1075,16 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * 
 	 * @exception SQLException
 	 *                if a database access error occurs
+	 *                
+	 * [For JDBC-4.0 and newer - http://java.sun.com/javase/6/docs/api/java/sql/ResultSet.html#findColumn(java.lang.String)]
+	 * 
+	 * Maps the given ResultSet column label to its ResultSet column index.
+	 * 
+	 * @param columnLabel
+	 *            the label for the column specified with the SQL AS clause. If the 
+	 *            SQL AS clause was not specified, then the label is the name of the column
+	 *            
+	 * @return the column index of the given column name
 	 */
 	public synchronized int findColumn(String columnName) throws SQLException {
 		Integer index;
@@ -1071,12 +1093,16 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			buildIndexMapping();
 		}
 
-		index = (Integer) this.columnNameToIndex.get(columnName);
+		index = (Integer) this.columnLabelToIndex.get(columnName);
 
+		if (index == null && this.useColumnNamesInFindColumn) {
+			index = (Integer) this.columnNameToIndex.get(columnName);
+		}
+		
 		if (index == null) {
 			index = (Integer) this.fullColumnNameToIndex.get(columnName);
 		}
-
+		
 		if (index != null) {
 			return index.intValue() + 1;
 		}
@@ -7495,7 +7521,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			this.rowData = null;
 			this.defaultTimeZone = null;
 			this.fields = null;
-			this.columnNameToIndex = null;
+			this.columnLabelToIndex = null;
 			this.fullColumnNameToIndex = null;
 			this.eventSink = null;
 			this.warningChain = null;
