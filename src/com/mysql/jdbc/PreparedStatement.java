@@ -701,7 +701,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		StringBuffer buf = new StringBuffer();
 
 		try {
-			for (int i = 0; i < this.parameterCount; ++i) {
+			int realParameterCount = this.parameterCount + getParameterIndexOffset();
+			
+			for (int i = 0; i < realParameterCount; ++i) {
 				if (this.charEncoding != null) {
 					buf.append(new String(this.staticSqlStrings[i],
 							this.charEncoding));
@@ -747,12 +749,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 			if (this.charEncoding != null) {
 				buf.append(new String(
-						this.staticSqlStrings[this.parameterCount],
+						this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()],
 						this.charEncoding));
 			} else {
 				buf
 						.append(StringUtils
-								.toAsciiString(this.staticSqlStrings[this.parameterCount]));
+								.toAsciiString(this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()]));
 			}
 		} catch (UnsupportedEncodingException uue) {
 			throw new RuntimeException(Messages
