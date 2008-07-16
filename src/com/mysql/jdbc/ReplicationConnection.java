@@ -2336,4 +2336,13 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public void setUseColumnNamesInFindColumn(boolean flag) {
 		// TODO Auto-generated method stub
 	}
+
+	public boolean getUseLocalTransactionState() {
+		return this.currentConnection.getUseLocalTransactionState();
+	}
+
+	public void setUseLocalTransactionState(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
 }

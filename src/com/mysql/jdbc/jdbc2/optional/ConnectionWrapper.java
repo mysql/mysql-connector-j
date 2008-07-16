@@ -2547,4 +2547,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void setUseColumnNamesInFindColumn(boolean flag) {
 		this.mc.setUseColumnNamesInFindColumn(flag);
 	}
+
+	public boolean getUseLocalTransactionState() {
+		return this.mc.getUseLocalTransactionState();
+	}
+
+	public void setUseLocalTransactionState(boolean flag) {
+		this.mc.setUseLocalTransactionState(flag);
+	}
 }

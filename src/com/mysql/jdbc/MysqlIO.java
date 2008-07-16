@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.lang.ref.SoftReference;
 import java.math.BigInteger;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
@@ -257,8 +258,6 @@ class MysqlIO {
         int socketTimeout, int useBufferRowSizeThreshold) throws IOException, SQLException {
         this.connection = conn;
         
-        this.statementInterceptors = this.connection.getStatementInterceptorsInstances();
-        
         if (this.connection.getEnablePacketDebug()) {
             this.packetDebugRingBuffer = new LinkedList();
         }
@@ -279,55 +278,60 @@ class MysqlIO {
         this.socketFactoryClassName = socketFactoryClassName;
         this.socketFactory = createSocketFactory();
 
-        this.mysqlConnection = this.socketFactory.connect(this.host,
+        try {
+        	this.mysqlConnection = this.socketFactory.connect(this.host,
         		this.port, props);
-
-        if (socketTimeout != 0) {
-        	try {
-        		this.mysqlConnection.setSoTimeout(socketTimeout);
-        	} catch (Exception ex) {
-        		/* Ignore if the platform does not support it */
-        	}
+	        
+	
+	        if (socketTimeout != 0) {
+	        	try {
+	        		this.mysqlConnection.setSoTimeout(socketTimeout);
+	        	} catch (Exception ex) {
+	        		/* Ignore if the platform does not support it */
+	        	}
+	        }
+	
+	        this.mysqlConnection = this.socketFactory.beforeHandshake();
+	
+	        if (this.connection.getUseReadAheadInput()) {
+	        	this.mysqlInput = new ReadAheadInputStream(this.mysqlConnection.getInputStream(), 16384,
+	        			this.connection.getTraceProtocol(),
+	        			this.connection.getLog());
+	        } else if (this.connection.useUnbufferedInput()) {
+	        	this.mysqlInput = this.mysqlConnection.getInputStream();
+	        } else {
+	        	this.mysqlInput = new BufferedInputStream(this.mysqlConnection.getInputStream(),
+	        			16384);
+	        }
+	
+	        this.mysqlOutput = new BufferedOutputStream(this.mysqlConnection.getOutputStream(),
+	        		16384);
+	
+	
+	        this.isInteractiveClient = this.connection.getInteractiveClient();
+	        this.profileSql = this.connection.getProfileSql();
+	        this.sessionCalendar = Calendar.getInstance();
+	        this.autoGenerateTestcaseScript = this.connection.getAutoGenerateTestcaseScript();
+	
+	        this.needToGrabQueryFromPacket = (this.profileSql ||
+	        		this.logSlowQueries ||
+	        		this.autoGenerateTestcaseScript);
+	
+	        if (this.connection.getUseNanosForElapsedTime()
+					&& Util.nanoTimeAvailable()) {
+				this.useNanosForElapsedTime = true;
+	
+				this.queryTimingUnits = Messages.getString("Nanoseconds");
+			} else {
+				this.queryTimingUnits = Messages.getString("Milliseconds");
+			}
+	
+			if (this.connection.getLogSlowQueries()) {
+				calculateSlowQueryThreshold();
+			}
+        } catch (IOException ioEx) {
+        	throw SQLError.createCommunicationsException(this.connection, 0, 0, ioEx);
         }
-
-        this.mysqlConnection = this.socketFactory.beforeHandshake();
-
-        if (this.connection.getUseReadAheadInput()) {
-        	this.mysqlInput = new ReadAheadInputStream(this.mysqlConnection.getInputStream(), 16384,
-        			this.connection.getTraceProtocol(),
-        			this.connection.getLog());
-        } else if (this.connection.useUnbufferedInput()) {
-        	this.mysqlInput = this.mysqlConnection.getInputStream();
-        } else {
-        	this.mysqlInput = new BufferedInputStream(this.mysqlConnection.getInputStream(),
-        			16384);
-        }
-
-        this.mysqlOutput = new BufferedOutputStream(this.mysqlConnection.getOutputStream(),
-        		16384);
-
-
-        this.isInteractiveClient = this.connection.getInteractiveClient();
-        this.profileSql = this.connection.getProfileSql();
-        this.sessionCalendar = Calendar.getInstance();
-        this.autoGenerateTestcaseScript = this.connection.getAutoGenerateTestcaseScript();
-
-        this.needToGrabQueryFromPacket = (this.profileSql ||
-        		this.logSlowQueries ||
-        		this.autoGenerateTestcaseScript);
-
-        if (this.connection.getUseNanosForElapsedTime()
-				&& Util.nanoTimeAvailable()) {
-			this.useNanosForElapsedTime = true;
-
-			this.queryTimingUnits = Messages.getString("Nanoseconds");
-		} else {
-			this.queryTimingUnits = Messages.getString("Milliseconds");
-		}
-
-		if (this.connection.getLogSlowQueries()) {
-			calculateSlowQueryThreshold();
-		}
     }
 
     /**
@@ -3529,10 +3533,12 @@ class MysqlIO {
 					errorBuf.append("\n\n");
 					errorBuf.append(rs.getString(1));
 				} else {
+					errorBuf.append("\n\n");
 					errorBuf.append(Messages
 							.getString("MysqlIO.NoInnoDBStatusFound"));
 				}
 			} catch (Exception ex) {
+				errorBuf.append("\n\n");
 				errorBuf.append(Messages
 						.getString("MysqlIO.InnoDBStatusFailed"));
 				errorBuf.append("\n\n");
@@ -4562,5 +4568,9 @@ class MysqlIO {
 		} else if (!previouslyInTrans && currentlyInTrans) {
 			this.connection.transactionBegun();
 		}
+	}
+
+	protected void setStatementInterceptors(List statementInterceptors) {
+		this.statementInterceptors = statementInterceptors;
 	}
 }

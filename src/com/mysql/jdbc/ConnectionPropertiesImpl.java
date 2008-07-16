@@ -1497,7 +1497,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			"useLocalSessionState", //$NON-NLS-1$
 			false,
 			Messages.getString("ConnectionProperties.useLocalSessionState"), //$NON-NLS-1$
-			"3.1.7", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+			"3.1.7", PERFORMANCE_CATEGORY, 5); //$NON-NLS-1$
+	
+	private BooleanConnectionProperty useLocalTransactionState = new BooleanConnectionProperty(
+			"useLocalTransactionState", //$NON-NLS-1$
+			false,
+			Messages.getString("ConnectionProperties.useLocalTransactionState"),
+			"5.1.7", PERFORMANCE_CATEGORY, 6);
 	
 	private BooleanConnectionProperty useLegacyDatetimeCode = new BooleanConnectionProperty(
 			"useLegacyDatetimeCode",
@@ -4372,5 +4378,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setUseColumnNamesInFindColumn(boolean flag) {
 		this.useColumnNamesInFindColumn.setValue(flag);
+	}
+
+	public boolean getUseLocalTransactionState() {
+		return this.useLocalTransactionState.getValueAsBoolean();
+	}
+
+	public void setUseLocalTransactionState(boolean flag) {
+		this.useLocalTransactionState.setValue(flag);
 	}
 }

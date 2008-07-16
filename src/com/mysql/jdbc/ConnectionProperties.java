@@ -1581,21 +1581,25 @@ public interface ConnectionProperties {
 	
 	public boolean getVerifyServerCertificate();
 
-	public void setVerifyServerCertificate(boolean flag);
+	public abstract void setVerifyServerCertificate(boolean flag);
 	
 	public abstract boolean getUseLegacyDatetimeCode();
 
 	public abstract void setUseLegacyDatetimeCode(boolean flag);
 	
-	public int getSelfDestructOnPingSecondsLifetime();
+	public abstract int getSelfDestructOnPingSecondsLifetime();
 
-	public void setSelfDestructOnPingSecondsLifetime(int seconds);
+	public abstract void setSelfDestructOnPingSecondsLifetime(int seconds);
 
-	public int getSelfDestructOnPingMaxOperations();
+	public abstract int getSelfDestructOnPingMaxOperations();
 
-	public void setSelfDestructOnPingMaxOperations(int maxOperations);
+	public abstract void setSelfDestructOnPingMaxOperations(int maxOperations);
 	
-	public boolean getUseColumnNamesInFindColumn();
+	public abstract boolean getUseColumnNamesInFindColumn();
 
-	public void setUseColumnNamesInFindColumn(boolean flag);
+	public abstract void setUseColumnNamesInFindColumn(boolean flag);
+	
+	public abstract boolean getUseLocalTransactionState();
+
+	public abstract void setUseLocalTransactionState(boolean flag);
 }

@@ -714,12 +714,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		this.props = info;
 		initializeDriverProperties(info);
-		initializeStatementInterceptors();
+		
 		
 		try {
 			this.dbmd = getMetaData(false, false);
 			createNewIO(false);
-			
+			initializeStatementInterceptors();
+			this.io.setStatementInterceptors(this.statementInterceptors);
 		} catch (SQLException ex) {
 			cleanup(ex);
 
@@ -1548,7 +1549,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				if (this.autoCommit && !getRelaxAutoCommit()) {
 					throw SQLError.createSQLException("Can't call commit when autocommit=true");
 				} else if (this.transactionsSupported) {
-					if (getUseLocalSessionState() && versionMeetsMinimum(5, 0, 0)) {
+					if (getUseLocalTransactionState() && versionMeetsMinimum(5, 0, 0)) {
 						if (!this.io.inTransactionOnServer()) {
 							return; // effectively a no-op
 						}
@@ -4713,7 +4714,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	}
 
 	private void rollbackNoChecks() throws SQLException {
-		if (getUseLocalSessionState() && versionMeetsMinimum(5, 0, 0)) {
+		if (getUseLocalTransactionState() && versionMeetsMinimum(5, 0, 0)) {
 			if (!this.io.inTransactionOnServer()) {
 				return; // effectively a no-op
 			}
