@@ -62,13 +62,28 @@ public class JDBC4PreparedStatementWrapper extends PreparedStatementWrapper {
 		super(c, conn, toWrap);
 	}
 	
-	public void close() throws SQLException {
+	public synchronized void close() throws SQLException {
+		if (this.pooledConnection == null) {
+			// no-op
+			return;
+		}
+		
+		MysqlPooledConnection con = this.pooledConnection; // we need this
+														   // later...
+
 		try {
 			super.close();
 		} finally {
 			try {
-				((JDBC4MysqlPooledConnection)this.pooledConnection).fireStatementEvent(
-						new StatementEvent(this.pooledConnection, this));
+				StatementEvent e = new StatementEvent(con, this);
+				// todo: pull this all up into base classes when we support *only* JDK6 or newer
+				if (con instanceof JDBC4MysqlPooledConnection) {
+					((JDBC4MysqlPooledConnection) con).fireStatementEvent(e);
+				} else if (con instanceof JDBC4MysqlXAConnection) {
+					((JDBC4MysqlXAConnection) con).fireStatementEvent(e);
+				} else if (con instanceof JDBC4SuspendableXAConnection) {
+					((JDBC4SuspendableXAConnection) con).fireStatementEvent(e);
+				}
 			} finally {
 				this.unwrappedInterfaces = null;
 			}

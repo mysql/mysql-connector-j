@@ -49,6 +49,8 @@ nn-nn-08 - Version 5.1.7
 	  The JDBC-3.0 (and earlier) specification has a bug, but you can get the buggy behavior
 	  (allowing column names *and* labels to be used for ResultSet.findColumn() and get...(String)) by setting 
 	  "useColumnNamesInFindColumn" to "true".
+	
+	- Fixed BUG#35489 - Prepared statements from pooled connections cause NPE when closed() under JDBC-4.0.
 	  
 03-06-08 - Version 5.1.6
 

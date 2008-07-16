@@ -42,6 +42,8 @@ import testsuite.BaseTestCase;
 import com.mysql.jdbc.PacketTooBigException;
 import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import com.mysql.jdbc.jdbc2.optional.MysqlPooledConnection;
+import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 
 /**
  * Tests a PooledConnection implementation provided by a JDBC driver. Test case
@@ -405,6 +407,37 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 		public void connectionErrorOccurred(ConnectionEvent event) {
 			PooledConnectionRegressionTest.this.connectionErrorEventCount++;
 			System.out.println("Connection error: " + event.getSQLException());
+		}
+	}
+	
+	/**
+	 * Tests fix for BUG#35489 - Prepared statements from pooled connections cause NPE
+	 * when closed() under JDBC4
+	 * 
+	 * @throws Exception if the test fails
+	 */
+	public void testBug35489() throws Exception {
+		try {
+			MysqlConnectionPoolDataSource pds = new MysqlConnectionPoolDataSource();
+			pds.setUrl(dbUrl);
+			this.pstmt = pds.getPooledConnection().getConnection().prepareStatement("SELECT 1");
+			this.pstmt.execute();
+			this.pstmt.close();
+			
+			MysqlXADataSource xads = new MysqlXADataSource();
+			xads.setUrl(dbUrl);
+			this.pstmt = xads.getXAConnection().getConnection().prepareStatement("SELECT 1");
+			this.pstmt.execute();
+			this.pstmt.close();
+			
+			xads = new MysqlXADataSource();
+			xads.setUrl(dbUrl);
+			xads.setPinGlobalTxToPhysicalConnection(true);
+			this.pstmt = xads.getXAConnection().getConnection().prepareStatement("SELECT 1");
+			this.pstmt.execute();
+			this.pstmt.close();
+		} finally {
+			closeMemberJDBCResources();
 		}
 	}
 }
