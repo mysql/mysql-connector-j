@@ -51,6 +51,10 @@ nn-nn-08 - Version 5.1.7
 	  "useColumnNamesInFindColumn" to "true".
 	
 	- Fixed BUG#35489 - Prepared statements from pooled connections cause NPE when closed() under JDBC-4.0.
+	
+	- Added connection property "useLocalTransactionState" which configures if the driver use the in-transaction 
+	  state provided by the MySQL protocol to determine if a commit() or rollback() should actually be sent to the database.
+	  (disabled by default).
 	  
 03-06-08 - Version 5.1.6
 
