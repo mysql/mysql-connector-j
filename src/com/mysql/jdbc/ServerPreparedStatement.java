@@ -783,7 +783,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 									
 									if (this.continueBatchOnError && 
 											!(ex instanceof MySQLTimeoutException) && 
-											!(ex instanceof MySQLStatementCancelledException)) {
+											!(ex instanceof MySQLStatementCancelledException)
+											&& !hasDeadlockOrTimeoutRolledBackTx(ex)) {
 										sqlEx = ex;
 									} else {
 										int[] newUpdateCounts = new int[commandIndex];

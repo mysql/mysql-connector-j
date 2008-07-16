@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TimerTask;
 
+import com.mysql.jdbc.exceptions.DeadlockTimeoutRollbackMarker;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
@@ -989,12 +990,20 @@ public class StatementImpl implements Statement {
 
 							if (this.continueBatchOnError && 
 									!(ex instanceof MySQLTimeoutException) && 
-									!(ex instanceof MySQLStatementCancelledException)) {
+									!(ex instanceof MySQLStatementCancelledException) &&
+                                    !hasDeadlockOrTimeoutRolledBackTx(ex)) {
 								sqlEx = ex;
 							} else {
 								int[] newUpdateCounts = new int[commandIndex];
-								System.arraycopy(updateCounts, 0,
+								
+								if (hasDeadlockOrTimeoutRolledBackTx(ex)) {
+									for (int i = 0; i < newUpdateCounts.length; i++) {
+										newUpdateCounts[i] = Statement.EXECUTE_FAILED;
+									}
+								} else {
+									System.arraycopy(updateCounts, 0,
 										newUpdateCounts, 0, commandIndex);
+								}
 
 								throw new java.sql.BatchUpdateException(ex
 										.getMessage(), ex.getSQLState(), ex
@@ -1033,6 +1042,25 @@ public class StatementImpl implements Statement {
 
 				clearBatch();
 			}
+		}
+	}
+
+	protected final boolean hasDeadlockOrTimeoutRolledBackTx(SQLException ex) {
+		int vendorCode = ex.getErrorCode();
+		
+		switch (vendorCode) {
+		case MysqlErrorNumbers.ER_LOCK_DEADLOCK:
+		case MysqlErrorNumbers.ER_LOCK_TABLE_FULL:
+			return true;
+		case MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT:
+			try {
+				return !this.connection.versionMeetsMinimum(5, 0, 13);
+			} catch (SQLException sqlEx) {
+				// won't actually be thrown in this case
+				return false;
+			}
+		default:
+			return false;
 		}
 	}
 
@@ -1219,7 +1247,8 @@ public class StatementImpl implements Statement {
 
 		if (this.continueBatchOnError && 
 				!(ex instanceof MySQLTimeoutException) && 
-				!(ex instanceof MySQLStatementCancelledException)) {
+				!(ex instanceof MySQLStatementCancelledException) &&
+				!hasDeadlockOrTimeoutRolledBackTx(ex)) {
 			sqlEx = ex;
 		} else {
 			int[] newUpdateCounts = new int[endOfBatchIndex];

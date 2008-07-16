@@ -5445,4 +5445,47 @@ public class StatementRegressionTest extends BaseTestCase {
 		this.pstmt = ((com.mysql.jdbc.Connection) loggingConn).serverPrepareStatement("SELECT SLEEP(4)");
 		this.pstmt.execute();
 	}
+	
+	public void testDeadlockBatchBehavior() throws Exception {
+		try {
+			createTable("t1", "(id INTEGER, x INTEGER) TYPE=INNODB");
+			createTable("t2", "(id INTEGER, x INTEGER) TYPE=INNODB");
+			this.stmt.executeUpdate("INSERT INTO t1 VALUES (0, 0)");
+			
+			this.conn.setAutoCommit(false);
+			this.conn.createStatement().executeQuery(
+					"SELECT * FROM t1 WHERE id=0 FOR UPDATE");
+			
+			Connection deadlockConn = getConnectionWithProps("includeInnodbStatusInDeadlockExceptions=true");
+			deadlockConn.setAutoCommit(false);
+			
+			final Statement deadlockStmt = deadlockConn.createStatement();
+			deadlockStmt.executeUpdate("INSERT INTO t2 VALUES (1, 0)");
+			deadlockStmt.executeQuery("SELECT * FROM t2 WHERE id=0 FOR UPDATE");
+			
+			new Thread() {
+				public void run() {
+					try {
+						deadlockStmt.addBatch("INSERT INTO t2 VALUES (1, 0)");
+						deadlockStmt.addBatch("INSERT INTO t2 VALUES (2, 0)");
+						deadlockStmt.addBatch("UPDATE t1 SET x=2 WHERE id=0");
+						deadlockStmt.executeBatch();
+					} catch (SQLException sqlEx) {
+						sqlEx.printStackTrace();
+					}
+				}
+			}.run();
+			
+			this.stmt.executeUpdate("INSERT INTO t1 VALUES (0, 0)");
+			
+		} catch (BatchUpdateException sqlEx) {
+			int[] updateCounts = sqlEx.getUpdateCounts();
+			for (int i = 0; i < updateCounts.length; i++) {
+				System.out.println(updateCounts[i]);
+			}
+		} finally {
+			this.conn.setAutoCommit(true);
+			closeMemberJDBCResources();
+		}
+	}
  } 

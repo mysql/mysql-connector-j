@@ -54,8 +54,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import com.mysql.jdbc.exceptions.DeadlockTimeoutRollbackMarker;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.jdbc.exceptions.MySQLTransactionRollbackException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
@@ -1649,7 +1651,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 							if (this.continueBatchOnError && 
 									!(ex instanceof MySQLTimeoutException) && 
-									!(ex instanceof MySQLStatementCancelledException)) {
+									!(ex instanceof MySQLStatementCancelledException) &&
+									!hasDeadlockOrTimeoutRolledBackTx(ex)) {
 								sqlEx = ex;
 							} else {
 								int[] newUpdateCounts = new int[commandIndex];

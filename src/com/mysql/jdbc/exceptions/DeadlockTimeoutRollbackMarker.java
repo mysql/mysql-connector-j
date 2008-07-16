@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2005 MySQL AB
+ Copyright (C) 2008 MySQL AB
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -23,22 +23,9 @@
 
 package com.mysql.jdbc.exceptions;
 
-public class MySQLTransactionRollbackException extends MySQLTransientException implements DeadlockTimeoutRollbackMarker {
+/**
+ * Marker interface for exceptions that are caused by deadlock/wait timeout
+ */
+public interface DeadlockTimeoutRollbackMarker {
 
-	public MySQLTransactionRollbackException(String reason, String SQLState,
-			int vendorCode) {
-		super(reason, SQLState, vendorCode);
-	}
-
-	public MySQLTransactionRollbackException(String reason, String SQLState) {
-		super(reason, SQLState);
-	}
-
-	public MySQLTransactionRollbackException(String reason) {
-		super(reason);
-	}
-
-	public MySQLTransactionRollbackException() {
-		super();
-	}
 }
