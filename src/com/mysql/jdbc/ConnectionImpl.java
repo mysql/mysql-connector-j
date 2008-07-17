@@ -595,6 +595,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	private String statementComment = null;
 
+	private boolean storesLowerCaseTableName;
+
 	private List statementInterceptors;
 	
 	/**'
@@ -3368,6 +3370,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					|| "1".equalsIgnoreCase(lowerCaseTables)
 					|| "2".equalsIgnoreCase(lowerCaseTables);
 
+			this.storesLowerCaseTableName = "1".equalsIgnoreCase(lowerCaseTables) ||
+					"on".equalsIgnoreCase(lowerCaseTables);
+
 			configureTimezone();
 
 			if (this.serverVariables.containsKey("max_allowed_packet")) {
@@ -5535,5 +5540,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			
 			iter.doForAll();
 		}
+	}
+	
+	public boolean storesLowerCaseTableName() {
+		return storesLowerCaseTableName;
 	}
 }

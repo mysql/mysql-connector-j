@@ -6983,7 +6983,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public boolean storesLowerCaseIdentifiers() throws SQLException {
-		return this.conn.lowerCaseTableNames();
+		return this.conn.storesLowerCaseTableName();
 	}
 
 	/**
@@ -6995,7 +6995,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public boolean storesLowerCaseQuotedIdentifiers() throws SQLException {
-		return this.conn.lowerCaseTableNames();
+		return this.conn.storesLowerCaseTableName();
 	}
 
 	/**
@@ -7007,9 +7007,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public boolean storesMixedCaseIdentifiers() throws SQLException {
-		return !this.conn.lowerCaseTableNames();
+		return !this.conn.storesLowerCaseTableName();
 	}
-
 	/**
 	 * Does the database store mixed case quoted SQL identifiers in mixed case?
 	 * A JDBC compliant driver will always return false.
@@ -7019,7 +7018,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public boolean storesMixedCaseQuotedIdentifiers() throws SQLException {
-		return !this.conn.lowerCaseTableNames();
+		return !this.conn.storesLowerCaseTableName();
 	}
 
 	/**
