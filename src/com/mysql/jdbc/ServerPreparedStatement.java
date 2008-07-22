@@ -1062,7 +1062,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 						packet.writeLong(this.serverStatementId);
 
 						mysql.sendCommand(MysqlDefs.COM_CLOSE_STATEMENT, null,
-								packet, true, null);
+								packet, true, null, 0);
 					} catch (SQLException sqlEx) {
 						exceptionDuringClose = sqlEx;
 					}
@@ -1327,7 +1327,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				}
 				
 				Buffer resultPacket = mysql.sendCommand(MysqlDefs.COM_EXECUTE,
-					null, packet, false, null);
+					null, packet, false, null, 0);
 				
 				long queryEndTime = 0L;
 				
@@ -1517,7 +1517,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				packet.writeBytesNoNull((byte[]) longData.value);
 
 				mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
-						null);
+						null, 0);
 			} else if (value instanceof InputStream) {
 				storeStream(mysql, parameterIndex, packet, (InputStream) value);
 			} else if (value instanceof java.sql.Blob) {
@@ -1565,7 +1565,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 				Buffer prepareResultPacket = mysql.sendCommand(
 						MysqlDefs.COM_PREPARE, sql, null, false,
-						characterEncoding);
+						characterEncoding, 0);
 
 				if (this.connection.versionMeetsMinimum(4, 1, 1)) {
 					// 4.1.1 and newer use the first byte
@@ -1686,7 +1686,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 			try {
 				mysql.sendCommand(MysqlDefs.COM_RESET_STMT, null, packet,
-						!this.connection.versionMeetsMinimum(4, 1, 2), null);
+						!this.connection.versionMeetsMinimum(4, 1, 2), null, 0);
 			} catch (SQLException sqlEx) {
 				throw sqlEx;
 			} catch (Exception ex) {
@@ -2580,7 +2580,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 					bytesReadAtLastSend = totalBytesRead;
 
 					mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet,
-							true, null);
+							true, null, 0);
 
 					bytesInPacket = 0;
 					packet.clear();
@@ -2592,12 +2592,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 			if (totalBytesRead != bytesReadAtLastSend) {
 				mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
-						null);
+						null, 0);
 			}
 			
 			if (!readAny) {
 				mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
-						null);
+						null, 0);
 			}
 		} catch (IOException ioEx) {
 			SQLException sqlEx = SQLError.createSQLException(Messages
@@ -2650,7 +2650,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 					bytesReadAtLastSend = totalBytesRead;
 
 					mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet,
-							true, null);
+							true, null, 0);
 
 					bytesInPacket = 0;
 					packet.clear();
@@ -2662,12 +2662,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 			if (totalBytesRead != bytesReadAtLastSend) {
 				mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
-						null);
+						null, 0);
 			}
 			
 			if (!readAny) {
 				mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
-						null);
+						null, 0);
 			}
 		} catch (IOException ioEx) {
 			SQLException sqlEx = SQLError.createSQLException(Messages

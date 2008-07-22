@@ -56,6 +56,10 @@ nn-nn-08 - Version 5.1.7
 	  state provided by the MySQL protocol to determine if a commit() or rollback() should actually be sent to the database.
 	  (disabled by default).
 	  
+	- Use socket timeouts for JDBC-4.0's Connection.isValid(int timeout) instead of timer tasks, for scalability. As a side effect
+	  internally, any communications with the database can use a timeout different than the configured timeout, but this isn't currently
+	  used.
+	  
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.

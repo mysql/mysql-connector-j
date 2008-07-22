@@ -37,6 +37,7 @@ import java.math.BigInteger;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
@@ -1355,13 +1356,13 @@ class MysqlIO {
 		}
 
 		try {
-		    sendCommand(MysqlDefs.INIT_DB, database, null, false, null);
+		    sendCommand(MysqlDefs.INIT_DB, database, null, false, null, 0);
 		} catch (Exception ex) {
 			if (this.connection.getCreateDatabaseIfNotExist()) {
 				sendCommand(MysqlDefs.QUERY, "CREATE DATABASE IF NOT EXISTS " +
 					database,
-					null, false, null);
-				sendCommand(MysqlDefs.INIT_DB, database, null, false, null);
+					null, false, null, 0);
+				sendCommand(MysqlDefs.INIT_DB, database, null, false, null, 0);
 			} else {
 				throw SQLError.createCommunicationsException(this.connection,
 						this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ex);
@@ -1827,7 +1828,7 @@ class MysqlIO {
      */
 
     final Buffer sendCommand(int command, String extraData, Buffer queryPacket,
-        boolean skipCheck, String extraDataCharEncoding)
+        boolean skipCheck, String extraDataCharEncoding, int timeoutMillis)
         throws SQLException {
     	this.commandCount++;
     	
@@ -1840,6 +1841,18 @@ class MysqlIO {
         this.traceProtocol = this.connection.getTraceProtocol();
         this.readPacketSequence = 0;
 
+        int oldTimeout = 0;
+        
+        if (timeoutMillis != 0) {
+        	try {
+        		oldTimeout = this.mysqlConnection.getSoTimeout();
+				this.mysqlConnection.setSoTimeout(timeoutMillis);
+			} catch (SocketException e) {
+				throw SQLError.createCommunicationsException(this.connection, lastPacketSentTimeMs, 
+						lastPacketReceivedTimeMs, e);
+			}
+        }
+        
         try {
 
             checkForOutstandingStreamingData();
@@ -1939,6 +1952,15 @@ class MysqlIO {
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
                 this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
+        } finally {
+        	if (timeoutMillis != 0) {
+        		try {
+        			this.mysqlConnection.setSoTimeout(oldTimeout);
+        		} catch (SocketException e) {
+    				throw SQLError.createCommunicationsException(this.connection, lastPacketSentTimeMs, 
+    						lastPacketReceivedTimeMs, e);
+    			}
+        	}
         }
     }
 
@@ -2057,7 +2079,7 @@ class MysqlIO {
 
 	    	// Send query command and sql query string
 	    	Buffer resultPacket = sendCommand(MysqlDefs.QUERY, null, queryPacket,
-	    			false, null);
+	    			false, null, 0);
 
 	    	long fetchBeginTime = 0;
 	    	long fetchEndTime = 0;
@@ -3158,7 +3180,7 @@ class MysqlIO {
     	buf.clear();
     	buf.writeByte((byte)MysqlDefs.COM_SET_OPTION);
     	buf.writeInt(0);
-    	sendCommand(MysqlDefs.COM_SET_OPTION, null, buf, false, null);
+    	sendCommand(MysqlDefs.COM_SET_OPTION, null, buf, false, null, 0);
     }
 
     void disableMultiQueries() throws SQLException {
@@ -3167,7 +3189,7 @@ class MysqlIO {
     	buf.clear();
     	buf.writeByte((byte)MysqlDefs.COM_SET_OPTION);
     	buf.writeInt(1);
-    	sendCommand(MysqlDefs.COM_SET_OPTION, null, buf, false, null);
+    	sendCommand(MysqlDefs.COM_SET_OPTION, null, buf, false, null, 0);
     }
 
     private final void send(Buffer packet, int packetLen)
@@ -4527,7 +4549,7 @@ class MysqlIO {
 		this.sharedSendPacket.writeLong(fetchSize);
 
 		sendCommand(MysqlDefs.COM_FETCH, null, this.sharedSendPacket, true,
-				null);
+				null, 0);
 
 		ResultSetRow row = null;
 

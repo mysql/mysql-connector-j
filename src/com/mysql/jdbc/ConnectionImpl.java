@@ -2197,7 +2197,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 										this.largeRowSizeThreshold.getValueAsInt());
 								this.io.doHandshake(this.user, this.password,
 										this.database);
-								pingInternal(false);
+								pingInternal(false, 0);
 								this.connectionId = this.io.getThreadId();
 								this.isClosed = false;
 	
@@ -2529,7 +2529,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					&& (this.autoCommit || getAutoReconnectForPools())
 					&& this.needsPing && !isBatch) {
 				try {
-					pingInternal(false);
+					pingInternal(false, 0);
 
 					this.needsPing = false;
 				} catch (Exception Ex) {
@@ -3913,10 +3913,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *             if the ping fails
 	 */
 	public void ping() throws SQLException {
-		pingInternal(true);
+		pingInternal(true, 0);
 	}
 
-	protected void pingInternal(boolean checkForClosedConnection)
+	protected void pingInternal(boolean checkForClosedConnection, int timeoutMillis)
 			throws SQLException {
 		if (checkForClosedConnection) {
 			checkClosed();
@@ -3936,7 +3936,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE);
 		}
 		// Need MySQL-3.22.1, but who uses anything older!?
-		this.io.sendCommand(MysqlDefs.PING, null, null, false, null);
+		this.io.sendCommand(MysqlDefs.PING, null, null, false, null, timeoutMillis);
 	}
 
 	/**
@@ -5298,7 +5298,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public void shutdownServer() throws SQLException {
 		try {
-			this.io.sendCommand(MysqlDefs.SHUTDOWN, null, null, false, null);
+			this.io.sendCommand(MysqlDefs.SHUTDOWN, null, null, false, null, 0);
 		} catch (Exception ex) {
 			SQLException sqlEx = SQLError.createSQLException(
 					Messages.getString("Connection.UnhandledExceptionDuringShutdown"),

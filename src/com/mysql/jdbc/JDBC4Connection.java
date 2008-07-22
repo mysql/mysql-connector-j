@@ -93,36 +93,10 @@ public class JDBC4Connection extends ConnectionImpl {
 			return false;
 		}
 		
-		TimerTask timeoutTask = null;
-		
-		if (timeout != 0) {
-			timeoutTask = new TimerTask() { 
-				public void run() {
-					new Thread() {
-						public void run() {
-							try {
-								abortInternal();
-							} catch (Throwable t) {
-								throw new RuntimeException(t);
-							}
-						}
-					}.start();	
-				}
-			};
-			
-			getCancelTimer().schedule(timeoutTask, timeout * 1000);
-		}
-		
 		try {
 			synchronized (getMutex()) {
 				try {
-					pingInternal(false);
-					
-					if (timeoutTask != null) {
-						timeoutTask.cancel();
-					}
-					
-					timeoutTask = null;
+					pingInternal(false, timeout * 1000);
 				} catch (Throwable t) {
 					try {
 						abortInternal();
@@ -131,10 +105,6 @@ public class JDBC4Connection extends ConnectionImpl {
 					}
 					
 					return false;
-				} finally {
-					if (timeoutTask != null) {
-						timeoutTask.cancel();
-					}
 				}
 			}
 		} catch (Throwable t) {
