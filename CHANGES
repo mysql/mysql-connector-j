@@ -60,6 +60,9 @@ nn-nn-08 - Version 5.1.7
 	  internally, any communications with the database can use a timeout different than the configured timeout, but this isn't currently
 	  used.
 	  
+	- The number and position of columns for "SHOW INNODB STATUS" changed in MySQL-5.1, which caused the 
+	  "includeInnodbStatusInDeadlockExceptions" feature to not show data about the deadlock.
+	  
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.

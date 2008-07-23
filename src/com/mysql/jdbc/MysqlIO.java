@@ -3553,7 +3553,7 @@ class MysqlIO {
 
 				if (rs.next()) {
 					errorBuf.append("\n\n");
-					errorBuf.append(rs.getString(1));
+					errorBuf.append(rs.getString("Status"));
 				} else {
 					errorBuf.append("\n\n");
 					errorBuf.append(Messages
