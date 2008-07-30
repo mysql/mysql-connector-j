@@ -2555,4 +2555,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void setUseLocalTransactionState(boolean flag) {
 		this.mc.setUseLocalTransactionState(flag);
 	}
+	
+	public boolean getCompensateOnDuplicateKeyUpdateCounts() {
+		return this.mc.getCompensateOnDuplicateKeyUpdateCounts();
+	}
+
+	public void setCompensateOnDuplicateKeyUpdateCounts(boolean flag) {
+		this.mc.setCompensateOnDuplicateKeyUpdateCounts(flag);
+	}
 }

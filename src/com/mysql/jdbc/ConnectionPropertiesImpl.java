@@ -843,6 +843,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.clobCharacterEncoding"), //$NON-NLS-1$
 			"5.0.0", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
+	private BooleanConnectionProperty compensateOnDuplicateKeyUpdateCounts = new BooleanConnectionProperty(
+			"compensateOnDuplicateKeyUpdateCounts",
+			false,
+			Messages.getString("ConnectionProperties.compensateOnDuplicateKeyUpdateCounts"),
+			"5.1.7", MISC_CATEGORY, Integer.MIN_VALUE);
 	private StringConnectionProperty connectionCollation = new StringConnectionProperty(
 			"connectionCollation", //$NON-NLS-1$
 			null,
@@ -4386,5 +4391,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setUseLocalTransactionState(boolean flag) {
 		this.useLocalTransactionState.setValue(flag);
+	}
+
+	public boolean getCompensateOnDuplicateKeyUpdateCounts() {
+		return this.compensateOnDuplicateKeyUpdateCounts.getValueAsBoolean();
+	}
+
+	public void setCompensateOnDuplicateKeyUpdateCounts(boolean flag) {
+		this.compensateOnDuplicateKeyUpdateCounts.setValue(flag);
 	}
 }

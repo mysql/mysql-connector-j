@@ -265,6 +265,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * (seconds) + 4 (microseconds)
 	 */
 	private static final byte MAX_TIME_REP_LENGTH = 13;
+	
+	private boolean hasOnDuplicateKeyUpdate = false;
 
 	private void storeTime(Buffer intoBuf, Time tm) throws SQLException {
 		
@@ -390,6 +392,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 		checkNullOrEmptyQuery(sql);
 
+		this.hasOnDuplicateKeyUpdate = containsOnDuplicateKeyInString(sql);
+		
 		int startOfStatement = findStartOfStatement(sql);
 		
 		this.firstCharOfStmt = StringUtils.firstAlphaCharUc(sql, startOfStatement);
@@ -2892,5 +2896,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		return batchedParamIndex;
 	}
 
-
+	protected boolean containsOnDuplicateKeyUpdateInSQL() {
+		return this.hasOnDuplicateKeyUpdate;
+	}
 }

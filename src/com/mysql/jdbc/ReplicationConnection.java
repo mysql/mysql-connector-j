@@ -2345,4 +2345,13 @@ public class ReplicationConnection implements Connection, PingTarget {
 		// TODO Auto-generated method stub
 		
 	}
+
+	public boolean getCompensateOnDuplicateKeyUpdateCounts() {
+		return this.currentConnection.getCompensateOnDuplicateKeyUpdateCounts();
+	}
+
+	public void setCompensateOnDuplicateKeyUpdateCounts(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
 }

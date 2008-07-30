@@ -181,6 +181,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 		byte[][] staticSql = null;
 
+		boolean isOnDuplicateKeyUpdate = false;
+		
 		/**
 		 * Represents the "parsed" state of a client-side
 		 * prepared statement, with the statement broken up into
@@ -197,6 +199,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 				}
 
+				this.isOnDuplicateKeyUpdate = containsOnDuplicateKeyInString(sql);
+				
 				this.lastUsed = System.currentTimeMillis();
 
 				String quotedIdentifierString = dbmd.getIdentifierQuoteString();
@@ -522,6 +526,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	private SimpleDateFormat ddf;
 	private SimpleDateFormat tdf;
 	
+	private boolean compensateForOnDuplicateKeyUpdate = false;
+	
 	/**
 	 * Creates a prepared statement instance -- We need to provide factory-style
 	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
@@ -588,6 +594,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public PreparedStatement(ConnectionImpl conn, String catalog)
 			throws SQLException {
 		super(conn, catalog);
+		
+		this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
 	}
 
 	/**
@@ -628,6 +636,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				this.charEncoding, this.charConverter);
 
 		initializeFromParseInfo();
+		
+		this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
 	}
 
 	/**
@@ -665,6 +675,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		this.usingAnsiMode = !this.connection.useAnsiQuotedIdentifiers();
 
 		initializeFromParseInfo();
+		
+		this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
 	}
 
 	/**
@@ -1105,7 +1117,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			this.canRewrite = StringUtils.startsWithIgnoreCaseAndWs(
 					this.originalSql, "INSERT", this.statementAfterCommentsPos) 
 			&& StringUtils.indexOfIgnoreCaseRespectMarker(this.statementAfterCommentsPos, this.originalSql, "SELECT", "\"'`", "\"'`", false) == -1 
-			&& StringUtils.indexOfIgnoreCaseRespectMarker(this.statementAfterCommentsPos, this.originalSql, "UPDATE", "\"'`", "\"'`", false) == -1;
+			&& !containsOnDuplicateKeyUpdateInSQL();
 			
 			this.hasCheckedForRewrite = true;
 		}
@@ -2037,6 +2049,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		this.results = rs;
 
 		this.updateCount = rs.getUpdateCount();
+		
+		if (containsOnDuplicateKeyUpdateInSQL() && 
+				this.compensateForOnDuplicateKeyUpdate) {
+			if (this.updateCount == 2 || this.updateCount == 0) {
+				this.updateCount = 1;
+			}
+		}
 
 		int truncatedUpdateCount = 0;
 
@@ -2049,6 +2068,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		this.lastInsertId = rs.getUpdateID();
 
 		return truncatedUpdateCount;
+	}
+
+	protected boolean containsOnDuplicateKeyUpdateInSQL() {
+		return this.parseInfo.isOnDuplicateKeyUpdate;
 	}
 
 	private String extractValuesClause() throws SQLException {
@@ -5141,5 +5164,24 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 	public String getPreparedSql() {
 		return this.originalSql;
+	}
+
+	@Override
+	public int getUpdateCount() throws SQLException {
+		int count = super.getUpdateCount();
+		
+		if (containsOnDuplicateKeyUpdateInSQL() && 
+				this.compensateForOnDuplicateKeyUpdate) {
+			if (count == 2 || count == 0) {
+				count = 1;
+			}
+		}
+		
+		return count;
+	}
+	
+	protected boolean containsOnDuplicateKeyInString(String sql) {
+		return StringUtils.indexOfIgnoreCaseRespectMarker(0, 
+				sql, " ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet()) != -1;
 	}
 }

@@ -1602,4 +1602,8 @@ public interface ConnectionProperties {
 	public abstract boolean getUseLocalTransactionState();
 
 	public abstract void setUseLocalTransactionState(boolean flag);
+	
+	public abstract boolean getCompensateOnDuplicateKeyUpdateCounts();
+
+	public abstract void setCompensateOnDuplicateKeyUpdateCounts(boolean flag);
 }
