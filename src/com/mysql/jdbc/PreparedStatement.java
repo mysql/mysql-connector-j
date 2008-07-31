@@ -5166,7 +5166,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		return this.originalSql;
 	}
 
-	@Override
 	public int getUpdateCount() throws SQLException {
 		int count = super.getUpdateCount();
 		
