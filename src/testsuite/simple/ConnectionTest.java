@@ -1429,6 +1429,7 @@ public class ConnectionTest extends BaseTestCase {
     	
     	Properties props = new Properties();
     	props.setProperty("useLocalSessionState", "true");
+    	props.setProperty("useLocalTransactionState", "true");
     	props.setProperty("profileSQL", "true");
     	
     	StringBuffer buf = new StringBuffer();
