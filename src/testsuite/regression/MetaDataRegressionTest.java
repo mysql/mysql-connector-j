@@ -2249,4 +2249,23 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public void testNoSystemTablesReturned() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return; // no information schema
+		}
+		
+		try {
+			this.rs = this.conn.getMetaData().getTables("information_schema", "null", "%", new String[] {"SYSTEM TABLE"});
+			assertTrue(this.rs.next());
+			this.rs = this.conn.getMetaData().getTables("information_schema", "null", "%", new String[] {"TABLE"});
+			assertFalse(this.rs.next());
+			this.rs = this.conn.getMetaData().getTables("information_schema", "null", "%", new String[] {"TABLE", "SYSTEM TABLE"});
+			assertTrue(this.rs.next());
+			this.rs = this.conn.getMetaData().getColumns("information_schema", null, "tables", "%");
+			assertTrue(this.rs.next());
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

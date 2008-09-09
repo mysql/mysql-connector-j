@@ -63,6 +63,9 @@ nn-nn-08 - Version 5.1.7
 	- The number and position of columns for "SHOW INNODB STATUS" changed in MySQL-5.1, which caused the 
 	  "includeInnodbStatusInDeadlockExceptions" feature to not show data about the deadlock.
 	  
+	- Implemented support of INFORMATION_SCHEMA for DatabaseMetadata.getTables() (views there are available as "SYSTEM TABLE"), and thus
+	  also made INFORMATION_SCHEMA tables available via DatabaseMetadata.getColumns().
+	  
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.

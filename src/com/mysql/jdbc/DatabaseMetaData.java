@@ -458,6 +458,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 	private static final byte[] TABLE_AS_BYTES = "TABLE".getBytes();
 
+	private static final byte[] SYSTEM_TABLE_AS_BYTES = "SYSTEM TABLE".getBytes();
+	
 	private static final int UPDATE_RULE = 9;
 
 	private static final byte[] VIEW_AS_BYTES = "VIEW".getBytes();
@@ -4813,6 +4815,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		final String tableNamePat = tableNamePattern;
 
+		final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
+		
 		try {
 
 			new IterateBlock(getCatalogIterator(catalog)) {
@@ -4853,10 +4857,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 						boolean shouldReportTables = false;
 						boolean shouldReportViews = false;
-
+						boolean shouldReportSystemTables = false;
+						
 						if (types == null || types.length == 0) {
 							shouldReportTables = true;
 							shouldReportViews = true;
+							shouldReportSystemTables = true;
 						} else {
 							for (int i = 0; i < types.length; i++) {
 								if ("TABLE".equalsIgnoreCase(types[i])) {
@@ -4865,6 +4871,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 								if ("VIEW".equalsIgnoreCase(types[i])) {
 									shouldReportViews = true;
+								}
+								
+								if ("SYSTEM TABLE".equalsIgnoreCase(types[i])) {
+									shouldReportSystemTables = true;
 								}
 							}
 						}
@@ -4918,7 +4928,26 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								if (("table".equalsIgnoreCase(tableType) || "base table"
 										.equalsIgnoreCase(tableType))
 										&& shouldReportTables) {
-									row[3] = TABLE_AS_BYTES;
+									boolean reportTable = false;
+									
+									if (!operatingOnInformationSchema && shouldReportTables) {
+										row[3] = TABLE_AS_BYTES;
+										reportTable = true;
+									} else if (operatingOnInformationSchema && shouldReportSystemTables) {
+										row[3] = SYSTEM_TABLE_AS_BYTES;
+										reportTable = true;
+									}
+									
+									if (reportTable) {
+										if (tablesOrderedByName == null) {
+											tablesOrderedByName = new TreeMap();
+										}
+	
+										tablesOrderedByName.put(results
+												.getString(1), row);
+									}
+								} else if ("system view".equalsIgnoreCase(tableType) && shouldReportSystemTables) {
+									row[3] = SYSTEM_TABLE_AS_BYTES;
 
 									if (tablesOrderedByName == null) {
 										tablesOrderedByName = new TreeMap();
