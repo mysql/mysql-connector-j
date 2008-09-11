@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * An implementation of java.sql.Connection that load balances requests across a
@@ -44,9 +45,10 @@ import java.util.Properties;
  * reading data.
  * 
  * This implementation will invalidate connections that it detects have had
- * communication errors when processing a request. A new connection to the
- * problematic host will be attempted the next time it is selected by the load
- * balancing algorithm.
+ * communication errors when processing a request.  Problematic hosts will
+ * be added to a global blacklist for loadBalanceBlacklistTimeout ms, after
+ * which they will be removed from the blacklist and made eligible once again
+ * to be selected for new connections.
  * 
  * This implementation is thread-safe, but it's questionable whether sharing a
  * connection instance amongst threads is a good idea, given that transactions
@@ -58,6 +60,8 @@ import java.util.Properties;
 public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarget {
 
 	private static Method getLocalTimeMethod;
+	
+	public static final String BLACKLIST_TIMEOUT_PROPERTY_KEY = "loadBalanceBlacklistTimeout";
 
 	static {
 		try {
@@ -121,6 +125,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 	private BalanceStrategy balancer;
 
 	private int retriesAllDown;
+	
+	private static Map globalBlacklist = new HashMap();
+
+	private int globalBlacklistTimeout = 0;
 
 	/**
 	 * Creates a proxy for java.sql.Connection that routes requests between the
@@ -161,6 +169,16 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		} catch (NumberFormatException nfe) {
 			throw SQLError.createSQLException(Messages.getString(
 					"LoadBalancingConnectionProxy.badValueForRetriesAllDown",
+					new Object[] { retriesAllDownAsString }),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+		}
+		String blacklistTimeoutAsString = this.localProps.getProperty(BLACKLIST_TIMEOUT_PROPERTY_KEY, "0");
+		
+		try {
+			this.globalBlacklistTimeout = Integer.parseInt(blacklistTimeoutAsString);
+		} catch (NumberFormatException nfe) {
+			throw SQLError.createSQLException(Messages.getString(
+					"LoadBalancingConnectionProxy.badValueForLoadBalanceBlacklistTimeout",
 					new Object[] { retriesAllDownAsString }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
@@ -438,5 +456,57 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		while (allConns.hasNext()) {
 			((Connection)allConns.next()).ping();
 		}
+	}
+	
+	public void addToGlobalBlacklist(String host) {
+		if(this.isGlobalBlacklistEnabled()) {
+			synchronized(globalBlacklist){
+				globalBlacklist.put(host, new Long(System.currentTimeMillis() 
+					+ this.globalBlacklistTimeout));
+			}
+		}
+	}
+	
+	public boolean isGlobalBlacklistEnabled() {
+		return (this.globalBlacklistTimeout > 0);
+	}
+	
+	public Map getGlobalBlacklist() {
+		if(!this.isGlobalBlacklistEnabled()) {
+			return new HashMap(1);
+		}
+		
+		// Make a local copy of the blacklist
+		Map blacklistClone = new HashMap(globalBlacklist.size());
+		// Copy everything from synchronized global blacklist to local copy for manipulation
+		synchronized (globalBlacklist) {
+			blacklistClone.putAll(globalBlacklist);
+		}
+		Set keys = blacklistClone.keySet();
+		
+		// we're only interested in blacklisted hosts that are in the hostList
+		keys.retainAll(this.hostList);
+		if(keys.size() == this.hostList.size()){
+			// return an empty blacklist, let the BalanceStrategy implementations try to connect to everything
+			// since it appears that all hosts are unavailable - we don't want to wait for 
+			// loadBalanceBlacklistTimeout to expire.
+			return new HashMap(1); 			
+		}
+		
+		// Don't need to synchronize here as we using a local copy
+		for(Iterator i = keys.iterator(); i.hasNext(); ) {
+			String host = (String) i.next();
+			// OK if null is returned because another thread already purged Map entry.
+			Long timeout = (Long) globalBlacklist.get(host);
+			if(timeout != null && timeout.longValue() < System.currentTimeMillis()){
+				// Timeout has expired, remove from blacklist
+				synchronized(globalBlacklist){
+					globalBlacklist.remove(host);
+				}
+			}
+				
+		}
+		
+		return blacklistClone;
 	}
 }

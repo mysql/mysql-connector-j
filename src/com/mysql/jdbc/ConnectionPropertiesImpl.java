@@ -1011,6 +1011,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.loadBalanceStrategy"), //$NON-NLS-1$
 			"5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
+	private IntegerConnectionProperty loadBalanceBlacklistTimeout = new IntegerConnectionProperty(
+			"loadBalanceBlacklistTimeout", 0, //$NON-NLS-1$
+			0, Integer.MAX_VALUE,
+			Messages.getString("ConnectionProperties.loadBalanceBlacklistTimeout"), //$NON-NLS-1$
+			"5.1.0", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+	
 	private StringConnectionProperty localSocketAddress = new StringConnectionProperty("localSocketAddress", //$NON-NLS-1$
 			null, Messages.getString("ConnectionProperties.localSocketAddress"), //$NON-NLS-1$
 			"5.0.5", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
@@ -1064,6 +1070,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Integer.MAX_VALUE,
 			Messages.getString("ConnectionProperties.maxReconnects"), //$NON-NLS-1$
 			"1.1", HA_CATEGORY, 4); //$NON-NLS-1$
+
+	private IntegerConnectionProperty retriesAllDown = new IntegerConnectionProperty(
+			"retriesAllDown", //$NON-NLS-1$
+			120,
+			0,
+			Integer.MAX_VALUE,
+			Messages.getString("ConnectionProperties.retriesAllDown"), //$NON-NLS-1$
+			"5.1.6", HA_CATEGORY, 4); //$NON-NLS-1$
 
 	private IntegerConnectionProperty maxRows = new IntegerConnectionProperty(
 			"maxRows", -1, -1, Integer.MAX_VALUE, //$NON-NLS-1$
@@ -4400,4 +4414,18 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	public void setCompensateOnDuplicateKeyUpdateCounts(boolean flag) {
 		this.compensateOnDuplicateKeyUpdateCounts.setValue(flag);
 	}
+
+	public IntegerConnectionProperty getLoadBalanceBlacklistTimeout() {
+		return loadBalanceBlacklistTimeout;
+	}
+
+	public void setLoadBalanceBlacklistTimeout(
+			IntegerConnectionProperty loadBalanceBlacklistTimeout) {
+		this.loadBalanceBlacklistTimeout = loadBalanceBlacklistTimeout;
+	}
+	
+	void setRetriesAllDown(IntegerConnectionProperty retriesAllDown) {
+		this.retriesAllDown = retriesAllDown;
+	}
+
 }

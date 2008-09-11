@@ -49,20 +49,18 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 
 		SQLException ex = null;
 
-		Map whiteListMap = new HashMap(numHosts);
 		List whiteList = new ArrayList(numHosts);
 		whiteList.addAll(configuredHosts);
+		
+		Map blackList = proxy.getGlobalBlacklist();
 
-		for (int i = 0; i < numHosts; i++) {
-			whiteListMap.put(whiteList.get(i), new Integer(i));
-		}
+		whiteList.removeAll(blackList.keySet());
+		
+		Map whiteListMap = this.getArrayIndexMap(whiteList);
+		
 
-		for (int attempts = 0; attempts < numRetries; attempts++) {
-			int random = (int) (Math.random() * whiteList.size());
-
-			if (random == whiteList.size()) {
-				random--;
-			}
+		for (int attempts = 0; attempts < numRetries;) {
+			int random = (int) Math.floor((Math.random() * whiteList.size()));
 
 			String hostPortSpec = (String) whiteList.get(random);
 
@@ -83,16 +81,24 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 						// exclude this host from being picked again
 						if (whiteListIndex != null) {
 							whiteList.remove(whiteListIndex.intValue());
+							whiteListMap = this.getArrayIndexMap(whiteList);
 						}
+						proxy.addToGlobalBlacklist( hostPortSpec );
 
 						if (whiteList.size() == 0) {
+							attempts++;
 							try {
 								Thread.sleep(250);
 							} catch (InterruptedException e) {
 							}
 
 							// start fresh
+							whiteListMap = new HashMap(numHosts);
 							whiteList.addAll(configuredHosts);
+							blackList = proxy.getGlobalBlacklist();
+
+							whiteList.removeAll(blackList.keySet());
+							whiteListMap = this.getArrayIndexMap(whiteList);
 						}
 
 						continue;
@@ -110,6 +116,15 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 		}
 
 		return null; // we won't get here, compiler can't tell
+	}
+	
+	private Map getArrayIndexMap(List l) {
+		Map m = new HashMap(l.size());
+		for (int i = 0; i < l.size(); i++) {
+			m.put(l.get(i), new Integer(i));
+		}
+		return m;
+		
 	}
 
 }

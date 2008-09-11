@@ -24,9 +24,11 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 
@@ -47,18 +49,19 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 	public Connection pickConnection(LoadBalancingConnectionProxy proxy,
 			List configuredHosts, Map liveConnections, long[] responseTimes,
 			int numRetries) throws SQLException {
-		long minResponseTime = Long.MAX_VALUE;
-
-		int bestHostIndex = 0;
-
-		Map blackList = new HashMap(configuredHosts.size());
-
+				
+		Map blackList = proxy.getGlobalBlacklist();
+				
 		SQLException ex = null;
 
-		for (int attempts = 0; attempts < numRetries; attempts++) {
+		for (int attempts = 0; attempts < numRetries; ) {
+			long minResponseTime = Long.MAX_VALUE;
+
+			int bestHostIndex = 0;
+
 			// safety
 			if (blackList.size() == configuredHosts.size()) {
-				blackList.clear();
+				blackList = proxy.getGlobalBlacklist();
 			}
 
 			for (int i = 0; i < responseTimes.length; i++) {
@@ -89,15 +92,17 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 
 					if (sqlEx instanceof CommunicationsException
 							|| "08S01".equals(sqlEx.getSQLState())) {
+						proxy.addToGlobalBlacklist(bestHost);
 						blackList.put(bestHost, null);
 
-						if (blackList.size() == configuredHosts.size()) {
-							blackList.clear(); // try again after a little bit
 
+						if (blackList.size() == configuredHosts.size()) {
+							attempts++;
 							try {
 								Thread.sleep(250);
 							} catch (InterruptedException e) {
 							}
+							blackList = proxy.getGlobalBlacklist(); // try again after a little bit
 						}
 
 						continue;
