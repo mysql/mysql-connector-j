@@ -477,9 +477,11 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		}
 		
 		// Make a local copy of the blacklist
-		Map blacklistClone = new HashMap(globalBlacklist.size());
+		Map blacklistClone = null;
+		
 		// Copy everything from synchronized global blacklist to local copy for manipulation
 		synchronized (globalBlacklist) {
+			blacklistClone = new HashMap(globalBlacklist.size());
 			blacklistClone.putAll(globalBlacklist);
 		}
 		Set keys = blacklistClone.keySet();
