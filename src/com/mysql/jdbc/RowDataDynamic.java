@@ -24,6 +24,7 @@
  */
 package com.mysql.jdbc;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -192,7 +193,7 @@ public class RowDataDynamic implements RowData {
 					
 					try {
 						stmt = conn.createStatement();
-						stmt.executeUpdate("SET net_write_timeout=" + oldValue);
+						((com.mysql.jdbc.StatementImpl)stmt).executeSimpleNonQuery(conn, "SET net_write_timeout=" + oldValue);
 					} finally {
 						if (stmt != null) {
 							stmt.close();

@@ -5519,4 +5519,24 @@ public class StatementRegressionTest extends BaseTestCase {
 			affectedRowsConn.close();
 		}
 	}
+	
+	public void testBug38747() throws Exception {
+		try {
+			this.conn.setReadOnly(true);
+			this.pstmt = this.conn.prepareStatement("SELECT 1",ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+			this.pstmt.setFetchSize(Integer.MIN_VALUE);
+
+			this.rs = this.pstmt.executeQuery();
+			
+	        while (this.rs.next());
+	        
+	        this.rs.close();
+	        this.pstmt.close();
+	        
+		} finally {
+			this.conn.setReadOnly(false);
+			
+			closeMemberJDBCResources();
+		}
+	}
  } 
