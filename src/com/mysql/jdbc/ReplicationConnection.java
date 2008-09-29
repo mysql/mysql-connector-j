@@ -2363,4 +2363,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 		// TODO Auto-generated method stub
 		
 	}
+
+	public String getPasswordCharacterEncoding() {
+		return this.currentConnection.getPasswordCharacterEncoding();
+	}
+
+	public void setPasswordCharacterEncoding(String characterSet) {
+		this.currentConnection.setPasswordCharacterEncoding(characterSet);
+	}
 }

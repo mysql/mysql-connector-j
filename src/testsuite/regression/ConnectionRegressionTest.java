@@ -2409,4 +2409,32 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			lbConn2.close();
 		}
 	}
+	
+	public void testBug37570() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("characterEncoding", "utf-8");
+		props.setProperty("passwordCharacterEncoding", "utf-8");
+		
+		Connection adminConn = getAdminConnectionWithProps(props);
+		
+		if (adminConn != null) {
+			try {
+				String unicodePassword = "\u0430\u0431\u0432"; // Cyrillic string
+				String user = "bug37570";
+				Statement adminStmt = adminConn.createStatement();
+
+				adminStmt.executeUpdate("grant usage on *.* to '" + user + "'@'127.0.0.1' identified by 'foo'");
+				adminStmt.executeUpdate("update mysql.user set password=PASSWORD('"+ unicodePassword +"') where user = '" + user + "'");
+				adminStmt.executeUpdate("flush privileges");
+				
+				try {
+					((ConnectionImpl)adminConn).changeUser(user, unicodePassword);
+				} catch (SQLException sqle) {
+					assertTrue("Connection with non-latin1 password failed", false);
+				}
+			} finally {
+		    	closeMemberJDBCResources();
+			}
+		}
+	}
 }

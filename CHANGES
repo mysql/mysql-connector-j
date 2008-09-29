@@ -72,6 +72,11 @@ nn-nn-08 - Version 5.1.7
 	  
 	- Fixed BUG#38747 - ResultSets in "streaming" mode throw an exception when closed when the connection is set as "read-only".
 	  
+	- Fixed BUG#37570 - Can't use non-latin1 passwords. Added connection property "passwordCharacterEncoding". Leaving this set to 
+	  the default value (null), uses the platform character set, which works for ISO8859_1 (i.e. "latin1") passwords. For passwords 
+	  in other character encodings, the encoding will have to be specified with this property, as it's not possible for the driver to 
+	  auto-detect this.
+	
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.

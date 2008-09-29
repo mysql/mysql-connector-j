@@ -2571,4 +2571,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void setUseAffectedRows(boolean flag) {
 		this.mc.setUseAffectedRows(flag);
 	}
+
+	public String getPasswordCharacterEncoding() {
+		return this.mc.getPasswordCharacterEncoding();
+	}
+
+	public void setPasswordCharacterEncoding(String characterSet) {
+		this.mc.setPasswordCharacterEncoding(characterSet);
+	}
 }

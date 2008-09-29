@@ -32,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.SoftReference;
 import java.math.BigInteger;
 import java.net.ConnectException;
@@ -3926,12 +3927,16 @@ class MysqlIO {
             packet.writeByte((byte) 0x14);
 
             try {
-                packet.writeBytesNoNull(Security.scramble411(password, this.seed));
+                packet.writeBytesNoNull(Security.scramble411(password, this.seed, this.connection));
             } catch (NoSuchAlgorithmException nse) {
                 throw SQLError.createSQLException(Messages.getString("MysqlIO.95") //$NON-NLS-1$
                      +Messages.getString("MysqlIO.96"), //$NON-NLS-1$
                     SQLError.SQL_STATE_GENERAL_ERROR);
-            }
+            } catch (UnsupportedEncodingException e) {
+            	throw SQLError.createSQLException(Messages.getString("MysqlIO.95") //$NON-NLS-1$
+                        +Messages.getString("MysqlIO.96"), //$NON-NLS-1$
+                       SQLError.SQL_STATE_GENERAL_ERROR);
+			}
         } else {
             /* For empty password*/
             packet.writeByte((byte) 0);

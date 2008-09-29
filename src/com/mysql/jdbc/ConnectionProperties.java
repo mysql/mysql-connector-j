@@ -1610,4 +1610,8 @@ public interface ConnectionProperties {
 	public void setUseAffectedRows(boolean flag);
 
 	public boolean getUseAffectedRows();
+	
+	public void setPasswordCharacterEncoding(String characterSet);
+
+	public String getPasswordCharacterEncoding();
 }

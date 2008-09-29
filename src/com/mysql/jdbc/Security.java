@@ -24,6 +24,7 @@
  */
 package com.mysql.jdbc;
 
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -319,11 +320,15 @@ class Security {
 	// hash_stage1=xor(reply, sha1(public_seed,hash_stage2))
 	// candidate_hash2=sha1(hash_stage1)
 	// check(candidate_hash2==hash_stage2)
-	static byte[] scramble411(String password, String seed)
-			throws NoSuchAlgorithmException {
+	static byte[] scramble411(String password, String seed, Connection conn)
+			throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		MessageDigest md = MessageDigest.getInstance("SHA-1"); //$NON-NLS-1$
-
-		byte[] passwordHashStage1 = md.digest(password.getBytes());
+		String passwordEncoding = conn.getPasswordCharacterEncoding();
+		
+		byte[] passwordHashStage1 = md
+				.digest((passwordEncoding == null || passwordEncoding.length() == 0) ? password
+						.getBytes()
+						: password.getBytes(passwordEncoding));
 		md.reset();
 
 		byte[] passwordHashStage2 = md.digest(passwordHashStage1);

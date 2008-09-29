@@ -1689,6 +1689,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.useAffectedRows"),
 			"5.1.7", MISC_CATEGORY, Integer.MIN_VALUE);
 	
+	private StringConnectionProperty passwordCharacterEncoding = new StringConnectionProperty("passwordCharacterEncoding",
+			null,
+			Messages.getString("ConnectionProperties.passwordCharacterEncoding"),
+			"5.1.7", SECURITY_CATEGORY, Integer.MIN_VALUE);
+	
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
 			Properties info, int slotsToReserve) throws SQLException {
 		initializeProperties(info);
@@ -4439,6 +4444,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public boolean getUseAffectedRows() {
 		return this.useAffectedRows.getValueAsBoolean();
+	}
+
+	public void setPasswordCharacterEncoding(String characterSet) {
+		this.passwordCharacterEncoding.setValue(characterSet);
+	}
+
+	public String getPasswordCharacterEncoding() {
+		return this.passwordCharacterEncoding.getValueAsString();
 	}
 
 }
