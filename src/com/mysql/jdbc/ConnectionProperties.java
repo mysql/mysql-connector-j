@@ -1606,4 +1606,8 @@ public interface ConnectionProperties {
 	public abstract boolean getCompensateOnDuplicateKeyUpdateCounts();
 
 	public abstract void setCompensateOnDuplicateKeyUpdateCounts(boolean flag);
+	
+	public void setUseAffectedRows(boolean flag);
+
+	public boolean getUseAffectedRows();
 }

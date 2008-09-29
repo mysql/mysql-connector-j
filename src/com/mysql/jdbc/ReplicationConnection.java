@@ -2354,4 +2354,13 @@ public class ReplicationConnection implements Connection, PingTarget {
 		// TODO Auto-generated method stub
 		
 	}
+
+	public boolean getUseAffectedRows() {
+		return this.currentConnection.getUseAffectedRows();
+	}
+
+	public void setUseAffectedRows(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
 }

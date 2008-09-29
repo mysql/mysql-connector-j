@@ -5488,4 +5488,35 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public void testBug39352() throws Exception {
+		Connection affectedRowsConn = getConnectionWithProps("useAffectedRows=true");
+		
+		try {
+
+			createTable("bug39352", "(id INT PRIMARY KEY, data VARCHAR(100))");
+			assertEquals(
+					1,
+					this.stmt
+							.executeUpdate("INSERT INTO bug39352 (id,data) values (1,'a')"));
+			int rowsAffected = this.stmt
+					.executeUpdate("INSERT INTO bug39352 (id, data) VALUES(2, 'bb') "
+							+ "ON DUPLICATE KEY " + "UPDATE data=values(data)");
+			assertEquals("First UPD failed", 1, rowsAffected);
+
+			rowsAffected = affectedRowsConn.createStatement()
+					.executeUpdate("INSERT INTO bug39352 (id, data) VALUES(2, 'bbb') "
+							+ "ON DUPLICATE KEY " + "UPDATE data=values(data)");
+			assertEquals("2nd UPD failed", 2, rowsAffected);
+
+			rowsAffected = affectedRowsConn.createStatement()
+					.executeUpdate("INSERT INTO bug39352 (id, data) VALUES(2, 'bbb') "
+							+ "ON DUPLICATE KEY " + "UPDATE data=values(data)");
+			assertEquals("3rd UPD failed", 0, rowsAffected);
+
+		} finally {
+			closeMemberJDBCResources();
+			affectedRowsConn.close();
+		}
+	}
  } 

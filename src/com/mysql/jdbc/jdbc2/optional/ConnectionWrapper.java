@@ -2563,4 +2563,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void setCompensateOnDuplicateKeyUpdateCounts(boolean flag) {
 		this.mc.setCompensateOnDuplicateKeyUpdateCounts(flag);
 	}
+
+	public boolean getUseAffectedRows() {
+		return this.mc.getUseAffectedRows();
+	}
+
+	public void setUseAffectedRows(boolean flag) {
+		this.mc.setUseAffectedRows(flag);
+	}
 }

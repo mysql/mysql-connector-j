@@ -1212,7 +1212,9 @@ class MysqlIO {
         }
 
         // return FOUND rows
-        this.clientParam |= CLIENT_FOUND_ROWS;
+        if (!this.connection.getUseAffectedRows()) {
+        	this.clientParam |= CLIENT_FOUND_ROWS;
+        }
 
         if (this.connection.getAllowLoadLocalInfile()) {
             this.clientParam |= CLIENT_LOCAL_FILES;

@@ -1684,6 +1684,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.verifyServerCertificate"),
 			"5.1.6", SECURITY_CATEGORY, 4);
 	
+	private BooleanConnectionProperty useAffectedRows = new BooleanConnectionProperty("useAffectedRows",
+			false,
+			Messages.getString("ConnectionProperties.useAffectedRows"),
+			"5.1.7", MISC_CATEGORY, Integer.MIN_VALUE);
+	
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
 			Properties info, int slotsToReserve) throws SQLException {
 		initializeProperties(info);
@@ -4424,8 +4429,16 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		this.loadBalanceBlacklistTimeout = loadBalanceBlacklistTimeout;
 	}
 	
-	void setRetriesAllDown(IntegerConnectionProperty retriesAllDown) {
+	public void setRetriesAllDown(IntegerConnectionProperty retriesAllDown) {
 		this.retriesAllDown = retriesAllDown;
+	}
+
+	public void setUseAffectedRows(boolean flag) {
+		this.useAffectedRows.setValue(flag);
+	}
+
+	public boolean getUseAffectedRows() {
+		return this.useAffectedRows.getValueAsBoolean();
 	}
 
 }

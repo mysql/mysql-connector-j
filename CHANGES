@@ -66,6 +66,10 @@ nn-nn-08 - Version 5.1.7
 	- Implemented support of INFORMATION_SCHEMA for DatabaseMetadata.getTables() (views there are available as "SYSTEM TABLE"), and thus
 	  also made INFORMATION_SCHEMA tables available via DatabaseMetadata.getColumns().
 	  
+	- Fixed BUG#39352, "INSERT ... ON DUPLICATE KEY UPDATE" doesn't return "0" for un-affected rows. This requires the driver to not
+	  send the "CLIENT_FOUND_ROWS" flag to the server when it connects if the connection property "useAffectedRows" is set to "true", 
+	  which breaks JDBC-compliance, but currently there is no other way to get correct return values from the server.
+	  
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.
