@@ -277,10 +277,26 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 			}
 
 		} finally {
+			// add host to the global blacklist, if enabled
+			if (this.isGlobalBlacklistEnabled()) {
+				this.addToGlobalBlacklist((String) this.connectionsToHostsMap.get(this.currentConn)); 
+				
+			}
+			// remove from liveConnections
 			this.liveConnections.remove(this.connectionsToHostsMap
 					.get(this.currentConn));
+			
+			int hostIndex = ((Integer) this.hostsToListIndexMap
+					.get(this.connectionsToHostsMap.get(this.currentConn)))
+					.intValue();
+
+			// reset the statistics for the host
+			synchronized (this.responseTimes) {
+				this.responseTimes[hostIndex] = 0;
+			}
+
 			this.connectionsToHostsMap.remove(this.currentConn);
-		}
+			}
 	}
 
 	/**
@@ -356,13 +372,19 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 				this.inTransaction = false;
 
 				// Update stats
-				int hostIndex = ((Integer) this.hostsToListIndexMap
-						.get(this.connectionsToHostsMap.get(this.currentConn)))
-						.intValue();
-
-				synchronized (this.responseTimes) {
-					this.responseTimes[hostIndex] = getLocalTimeBestResolution()
-							- this.transactionStartTime;
+				String host = (String) this.connectionsToHostsMap.get(this.currentConn);
+				// avoid NPE if the connection has already been removed from connectionsToHostsMap
+				// in invalidateCurrenctConnection()
+				if ( host != null ) {
+					int hostIndex = ((Integer) this.hostsToListIndexMap
+							.get( host ))
+							.intValue();
+	
+					
+					synchronized (this.responseTimes) {
+						this.responseTimes[hostIndex] = getLocalTimeBestResolution()
+								- this.transactionStartTime;
+					}
 				}
 
 				pickNewConnection();
@@ -477,11 +499,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		}
 		
 		// Make a local copy of the blacklist
-		Map blacklistClone = null;
-		
+		Map blacklistClone = new HashMap(globalBlacklist.size());
 		// Copy everything from synchronized global blacklist to local copy for manipulation
 		synchronized (globalBlacklist) {
-			blacklistClone = new HashMap(globalBlacklist.size());
 			blacklistClone.putAll(globalBlacklist);
 		}
 		Set keys = blacklistClone.keySet();
@@ -505,6 +525,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 				synchronized(globalBlacklist){
 					globalBlacklist.remove(host);
 				}
+				blacklistClone.remove(host);
 			}
 				
 		}
