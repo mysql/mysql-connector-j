@@ -4756,4 +4756,38 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#39911 - We don't retrieve nanos correctly when -parsing- a string for a TIMESTAMP.
+	 */
+	public void testBug39911() throws Exception {
+		try {
+			this.rs = this.stmt
+					.executeQuery("SELECT '2008-09-26 15:47:20.797283'");
+			this.rs.next();
+
+			testTimestampNanos();
+
+			this.rs = ((com.mysql.jdbc.Connection) this.conn)
+					.serverPrepareStatement(
+							"SELECT '2008-09-26 15:47:20.797283'")
+					.executeQuery();
+			this.rs.next();
+
+			testTimestampNanos();
+
+			this.rs.close();
+		} finally {
+			closeMemberJDBCResources();
+		}
+
+	}
+
+	private void testTimestampNanos() throws SQLException {
+		Timestamp ts = this.rs.getTimestamp(1);
+		assertEquals(797283000, ts.getNanos());
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(ts);
+		assertEquals(797, cal.get(Calendar.MILLISECOND));
+	}
 }

@@ -1106,6 +1106,13 @@ public abstract class ResultSetRow {
 									nanos = StringUtils.getInt(
 											timestampAsBytes, decimalIndex + 1,
 											offset + length);
+									
+									int numDigits = (offset + length) - (decimalIndex + 1);
+									
+									if (numDigits < 9) {
+										int factor = (int)(Math.pow(10, 9 - numDigits));
+										nanos = nanos * factor;
+									}
 								} else {
 									throw new IllegalArgumentException(); // re-thrown
 									// further

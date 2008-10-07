@@ -6143,9 +6143,16 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							int decimalIndex = timestampValue.lastIndexOf('.');
 							
 							if (decimalIndex != -1) {
-								if ((decimalIndex + 2) <= timestampValue.length()) {
+								if ((decimalIndex + 2) <= length) {
 									nanos = Integer.parseInt(timestampValue
 											.substring(decimalIndex + 1));
+									
+									int numDigits = length - (decimalIndex + 1);
+									
+									if (numDigits < 9) {
+										int factor = (int)(Math.pow(10, 9 - numDigits));
+										nanos = nanos * factor;
+									}
 								} else {
 									throw new IllegalArgumentException(); // re-thrown
 									// further

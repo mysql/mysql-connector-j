@@ -76,6 +76,11 @@ nn-nn-08 - Version 5.1.7
 	  the default value (null), uses the platform character set, which works for ISO8859_1 (i.e. "latin1") passwords. For passwords 
 	  in other character encodings, the encoding will have to be specified with this property, as it's not possible for the driver to 
 	  auto-detect this.
+	  
+	- Fixed BUG#39911 - We don't retrieve nanos correctly when -parsing- a string for a TIMESTAMP. MySQL itself doesn't support micros
+	  or nanos in timestamp values, but if they're stored as strings, historically we try and parse the nanos portion as well. 
+	  Unfortunately we -interpreted- them as micros. This fix includes correcting that behavior, and setting the milliseconds portion of
+	  such TIMESTAMPs to a correct value as well.
 	
 03-06-08 - Version 5.1.6
 

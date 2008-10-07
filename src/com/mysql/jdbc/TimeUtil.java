@@ -1122,8 +1122,13 @@ public class TimeUtil {
 			offsetDiff = fromOffset - toOffset;
 		}
 
+		if (secondsPart != 0) {
+			cal.set(Calendar.MILLISECOND, secondsPart / 1000000);
+		}
+		
 		long tsAsMillis = 0;
 
+		
 		try {
 			tsAsMillis = cal.getTimeInMillis();
 		} catch (IllegalAccessError iae) {
@@ -1132,6 +1137,7 @@ public class TimeUtil {
 		}
 
 		Timestamp ts = new Timestamp(tsAsMillis + offsetDiff);
+		
 		ts.setNanos(secondsPart);
 
 		return ts;
