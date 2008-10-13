@@ -3770,7 +3770,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	public void testBug21814() throws Exception {
 		try {
 			try {
-				this.rs = this.stmt.executeQuery("SELECT '24:01'");
+				this.rs = this.stmt.executeQuery("SELECT '25:01'");
 				this.rs.next();
 				this.rs.getTime(1);
 				fail("Expected exception");
@@ -4766,7 +4766,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 					.executeQuery("SELECT '2008-09-26 15:47:20.797283'");
 			this.rs.next();
 
-			testTimestampNanos();
+			checkTimestampNanos();
 
 			this.rs = ((com.mysql.jdbc.Connection) this.conn)
 					.serverPrepareStatement(
@@ -4774,7 +4774,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 					.executeQuery();
 			this.rs.next();
 
-			testTimestampNanos();
+			checkTimestampNanos();
 
 			this.rs.close();
 		} finally {
@@ -4783,7 +4783,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 	}
 
-	private void testTimestampNanos() throws SQLException {
+	private void checkTimestampNanos() throws SQLException {
 		Timestamp ts = this.rs.getTimestamp(1);
 		assertEquals(797283000, ts.getNanos());
 		Calendar cal = Calendar.getInstance();
