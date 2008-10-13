@@ -193,6 +193,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	/** Map column names (and all of their permutations) to column indices */
 	protected Map columnLabelToIndex = null;
 
+	/** The above map is a case-insensitive tree-map, it can be slow, this caches
+	 *  lookups into that map, because the other alternative is to create new
+	 *  object instances for every call to findColumn()....
+	 */
+	protected Map columnToIndexCache = null;
+	
 	/** Keep track of columns accessed */
 	protected boolean[] columnUsed = null;
 
@@ -717,6 +723,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		this.columnLabelToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
 		this.fullColumnNameToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
 		this.columnNameToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+		this.columnToIndexCache = new HashMap();
 		
 		
 		// We do this in reverse order, so that the 'first' column
@@ -1093,6 +1100,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			buildIndexMapping();
 		}
 
+		index = (Integer) this.columnToIndexCache.get(columnName);
+
+		if (index != null) {
+			return index.intValue() + 1;
+		}
+
 		index = (Integer) this.columnLabelToIndex.get(columnName);
 
 		if (index == null && this.useColumnNamesInFindColumn) {
@@ -1104,6 +1117,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 		
 		if (index != null) {
+			this.columnToIndexCache.put(columnName, index);
+			
 			return index.intValue() + 1;
 		}
 
@@ -7530,6 +7545,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			this.fields = null;
 			this.columnLabelToIndex = null;
 			this.fullColumnNameToIndex = null;
+			this.columnToIndexCache = null;
 			this.eventSink = null;
 			this.warningChain = null;
 			
