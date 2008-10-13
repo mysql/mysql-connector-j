@@ -584,11 +584,17 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs
 	 */
 	public boolean execute(String sql) throws SQLException {
+		return execute(sql, false);
+	}
+	
+	private boolean execute(String sql, boolean returnGeneratedKeys) throws SQLException {
 		checkClosed();
 
 		ConnectionImpl locallyScopedConn = this.connection;
 
 		synchronized (locallyScopedConn.getMutex()) {
+			this.retrieveGeneratedKeys = returnGeneratedKeys;
+			
 			resetCancelledState();
 
 			checkNullOrEmptyQuery(sql);
@@ -829,7 +835,7 @@ public class StatementImpl implements Statement {
 				locallyScopedConn.setReadInfoMsgEnabled(true);
 
 				try {
-					return execute(sql);
+					return execute(sql, true);
 				} finally {
 					locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 				}
@@ -850,6 +856,8 @@ public class StatementImpl implements Statement {
 			ConnectionImpl locallyScopedConn = this.connection;
 
 			synchronized (locallyScopedConn.getMutex()) {
+				this.retrieveGeneratedKeys = true;
+				
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
 				// the actual number of keys generated.
@@ -858,7 +866,7 @@ public class StatementImpl implements Statement {
 				locallyScopedConn.setReadInfoMsgEnabled(true);
 
 				try {
-					return execute(sql);
+					return execute(sql, true);
 				} finally {
 					locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 				}
@@ -879,6 +887,7 @@ public class StatementImpl implements Statement {
 			ConnectionImpl locallyScopedConn = this.connection;
 
 			synchronized (locallyScopedConn.getMutex()) {
+				this.retrieveGeneratedKeys = true;
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
 				// the actual number of keys generated.
@@ -887,7 +896,7 @@ public class StatementImpl implements Statement {
 				locallyScopedConn.setReadInfoMsgEnabled(true);
 
 				try {
-					return execute(sql);
+					return execute(sql, true);
 				} finally {
 					locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 				}
@@ -943,7 +952,7 @@ public class StatementImpl implements Statement {
 			try {
 				resetCancelledState();
 
-				this.retrieveGeneratedKeys = true;
+				this.retrieveGeneratedKeys = true; // The JDBC spec doesn't forbid this, but doesn't provide for it either...we do..
 
 				int[] updateCounts = null;
 
@@ -983,7 +992,7 @@ public class StatementImpl implements Statement {
 					for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
 						try {
 							updateCounts[commandIndex] = executeUpdate((String) this.batchedArgs
-									.get(commandIndex), true);
+									.get(commandIndex), true, true);
 							getBatchedGeneratedKeys();
 						} catch (SQLException ex) {
 							updateCounts[commandIndex] = EXECUTE_FAILED;
@@ -1038,7 +1047,6 @@ public class StatementImpl implements Statement {
 				resetCancelledState();
 				
 				this.timeoutInMillis = individualStatementTimeout;
-				this.retrieveGeneratedKeys = false;
 
 				clearBatch();
 			}
@@ -1138,7 +1146,7 @@ public class StatementImpl implements Statement {
 						+ MysqlIO.HEADER_LENGTH) * escapeAdjust)  + 32 > this.connection
 						.getMaxAllowedPacket()) {
 					try {
-						batchStmt.execute(queryBuf.toString());
+						batchStmt.execute(queryBuf.toString(), Statement.RETURN_GENERATED_KEYS);
 					} catch (SQLException ex) {
 						sqlEx = handleExceptionForBatch(commandIndex,
 								argumentSetsInBatchSoFar, updateCounts, ex);
@@ -1158,7 +1166,7 @@ public class StatementImpl implements Statement {
 
 			if (queryBuf.length() > 0) {
 				try {
-					batchStmt.execute(queryBuf.toString());
+					batchStmt.execute(queryBuf.toString(), Statement.RETURN_GENERATED_KEYS);
 				} catch (SQLException ex) {
 					sqlEx = handleExceptionForBatch(commandIndex - 1,
 							argumentSetsInBatchSoFar, updateCounts, ex);
@@ -1281,6 +1289,8 @@ public class StatementImpl implements Statement {
 		ConnectionImpl locallyScopedConn = this.connection;
 
 		synchronized (locallyScopedConn.getMutex()) {
+			this.retrieveGeneratedKeys = false;
+			
 			resetCancelledState();
 
 			checkNullOrEmptyQuery(sql);
@@ -1511,10 +1521,10 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs
 	 */
 	public int executeUpdate(String sql) throws SQLException {
-		return executeUpdate(sql, false);
+		return executeUpdate(sql, false, false);
 	}
 
-	protected int executeUpdate(String sql, boolean isBatch)
+	protected int executeUpdate(String sql, boolean isBatch, boolean returnGeneratedKeys)
 		throws SQLException {
 		checkClosed();
 
@@ -1526,6 +1536,8 @@ public class StatementImpl implements Statement {
 		ResultSetInternalMethods rs = null;
 
 		synchronized (locallyScopedConn.getMutex()) {
+			this.retrieveGeneratedKeys = returnGeneratedKeys;
+			
 			resetCancelledState();
 
 			checkNullOrEmptyQuery(sql);
@@ -1671,7 +1683,7 @@ public class StatementImpl implements Statement {
 				locallyScopedConn.setReadInfoMsgEnabled(true);
 
 				try {
-					return executeUpdate(sql);
+					return executeUpdate(sql, false, true);
 				} finally {
 					locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 				}
@@ -1700,7 +1712,7 @@ public class StatementImpl implements Statement {
 				locallyScopedConn.setReadInfoMsgEnabled(true);
 
 				try {
-					return executeUpdate(sql);
+					return executeUpdate(sql, false, true);
 				} finally {
 					locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 				}
@@ -1729,7 +1741,7 @@ public class StatementImpl implements Statement {
 				locallyScopedConn.setReadInfoMsgEnabled(true);
 
 				try {
-					return executeUpdate(sql);
+					return executeUpdate(sql, false, true);
 				} finally {
 					locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 				}
@@ -1798,6 +1810,10 @@ public class StatementImpl implements Statement {
 	 */
 	public synchronized java.sql.ResultSet getGeneratedKeys()
 			throws SQLException {
+		if (!this.retrieveGeneratedKeys) {
+			throw SQLError.createSQLException(Messages.getString("Statement.GeneratedKeysNotRequested"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+		}
+		
 		if (this.batchedGeneratedKeys == null) {
 			return getGeneratedKeysInternal();
 		}

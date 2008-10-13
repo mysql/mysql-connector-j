@@ -487,6 +487,8 @@ public class CallableStatement extends PreparedStatement implements
 		if (this.callingStoredFunction) {
 			this.parameterCount += 1;
 		}
+		
+		this.retrieveGeneratedKeys = true; // not provided for in the JDBC spec
 	}
 
 	/**
@@ -616,6 +618,8 @@ public class CallableStatement extends PreparedStatement implements
 			
 			this.parameterCount += 1;
 		}
+		
+		this.retrieveGeneratedKeys = true; // not provided for in the JDBC spec
 	}
 
 	/*

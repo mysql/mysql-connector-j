@@ -92,6 +92,9 @@ nn-nn-08 - Version 5.1.7
 	  
 	- Fixed BUG#39611 - ReplicationConnection never sends queries to last host in slave list.
 	
+	- Fixed BUG#34185 - Statement.getGeneratedKeys() does not raise exception when statement was not 
+	  created with Statement.RETURN_GENERATED_KEYS flags.
+	
 03-06-08 - Version 5.1.6
 
     - JDBC-4.0-ized XAConnections and datasources.

@@ -3091,15 +3091,12 @@ public class StatementRegressionTest extends BaseTestCase {
 			return; // test not valid
 		}
 
-		Statement newStmt = this.conn.createStatement();
-		assertNotNull(newStmt.getGeneratedKeys());
-
-		PreparedStatement pStmt = this.conn.prepareStatement("SELECT 1");
+		PreparedStatement pStmt = this.conn.prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
 		assertNotNull(pStmt.getGeneratedKeys());
 
 		if (versionMeetsMinimum(4, 1)) {
 			pStmt = ((com.mysql.jdbc.Connection) this.conn)
-					.clientPrepareStatement("SELECT 1");
+					.clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
 			assertNotNull(pStmt.getGeneratedKeys());
 		}
 	}
@@ -4378,9 +4375,11 @@ public class StatementRegressionTest extends BaseTestCase {
 	 * @throws Exception
 	 */
 	public void testBug30508() throws Exception {
-		
+		createTable("testBug30508", "(k INT PRIMARY KEY NOT NULL AUTO_INCREMENT, p VARCHAR(32))");
 		try {
 			Statement ggkStatement = this.conn.createStatement();
+			ggkStatement.executeUpdate("INSERT INTO testBug30508 (p) VALUES ('abc')", Statement.RETURN_GENERATED_KEYS);
+			
 			this.rs = ggkStatement.getGeneratedKeys();
 			ggkStatement.close();
 
@@ -4393,7 +4392,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		}
 		
 		try {
-			this.pstmt = this.conn.prepareStatement("SELECT 1");
+			this.pstmt = this.conn.prepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS);
 			this.rs = this.pstmt.getGeneratedKeys();
 			this.pstmt.close();
 			this.rs.next();
@@ -5634,6 +5633,29 @@ public class StatementRegressionTest extends BaseTestCase {
 					}
 				}
 			}
+		}
+	}
+	
+	public void testBug34185() throws Exception {
+		this.stmt.executeQuery("SELECT 1");
+		
+		try {
+			this.stmt.getGeneratedKeys();
+			fail("Expected exception");
+		} catch (SQLException sqlEx) {
+			assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+		}
+		
+		this.pstmt = this.conn.prepareStatement("SELECT 1");
+		
+		try {
+			this.pstmt.execute();
+			this.pstmt.getGeneratedKeys();
+			fail("Expected exception");
+		} catch (SQLException sqlEx) {
+			assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx.getSQLState());
+		} finally {
+			closeMemberJDBCResources();
 		}
 	}
  } 
