@@ -310,7 +310,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		// we really do "random" here, because you don't get even
 		// distribution when this is coupled with connection pools
 		
-		int indexRange = hostList.size() - 1;
+		int indexRange = hostList.size();
 		
 		int index = (int)(Math.random() * indexRange);
 		

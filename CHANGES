@@ -90,6 +90,7 @@ nn-nn-08 - Version 5.1.7
 	  value, and use that. Beware that using "cacheServerConfig=true" will cause us to cache this value, so new connections won't see changes
 	  that are applied via something like "init-sql".
 	  
+	- Fixed BUG#39611 - ReplicationConnection never sends queries to last host in slave list.
 	
 03-06-08 - Version 5.1.6
 
