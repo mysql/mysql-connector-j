@@ -3359,6 +3359,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		if (versionMeetsMinimum(3, 21, 22)) {
 			loadServerVariables();
 
+			this.autoIncrementIncrement = getServerVariableAsInt("auto_increment_increment", 1);
+			
 			buildCollationMapping();
 
 			LicenseConfiguration.checkLicenseType(this.serverVariables);
@@ -3796,11 +3798,21 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						.getString(2));
 			}
 
+			if (versionMeetsMinimum(5, 0, 2)) {
+				results = stmt.executeQuery(versionComment + "SELECT @@session.auto_increment_increment");
+				
+				if (results.next()) {
+					this.serverVariables.put("auto_increment_increment", results.getString(1));
+				}
+			}
+			
 			if (getCacheServerConfiguration()) {
 				synchronized (serverConfigByUrl) {
 					serverConfigByUrl.put(getURL(), this.serverVariables);
 				}
 			}
+			
+			
 		} catch (SQLException e) {
 			throw e;
 		} finally {
@@ -3822,6 +3834,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
+	private int autoIncrementIncrement = 0;
+	
+	public int getAutoIncrementIncrement() {
+		return this.autoIncrementIncrement;
+	}
+	
 	/**
 	 * Is the server configured to use lower-case table names only?
 	 * 

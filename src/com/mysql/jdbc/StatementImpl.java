@@ -1843,8 +1843,9 @@ public class StatementImpl implements Statement {
 			if ((beginAt > 0) && (numKeys > 0)) {
 				for (int i = 0; i < numKeys; i++) {
 					byte[][] row = new byte[1][];
-					row[0] = Long.toString(beginAt++).getBytes();
+					row[0] = Long.toString(beginAt).getBytes();
 					rowSet.add(new ByteArrayRow(row));
+					beginAt  += this.connection.getAutoIncrementIncrement();
 				}
 			}
 		}

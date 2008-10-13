@@ -85,6 +85,11 @@ nn-nn-08 - Version 5.1.7
 	- Fixed BUG#39962 - ResultSet.findColumn() is slow for applications that call it too often (we're looking at -you- Hibernate). We're
 	  using TreeMaps to get case-insensitive comparisons (required for JDBC compliance), but they can be slower than hash maps, so using the
 	  approach Alex Burgel points out in this bug seems to help.
+	  
+	- Fixed BUG#39956 - Statement.getGeneratedKeys() doesn't respect the 'auto_increment_increment' value. We now grab the *session-scoped* 
+	  value, and use that. Beware that using "cacheServerConfig=true" will cause us to cache this value, so new connections won't see changes
+	  that are applied via something like "init-sql".
+	  
 	
 03-06-08 - Version 5.1.6
 

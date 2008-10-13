@@ -5539,4 +5539,101 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public void testBug39956() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+
+		ResultSet enginesRs = this.conn.createStatement().executeQuery(
+				"SHOW ENGINES");
+
+		while (enginesRs.next()) {
+			if ("YES".equalsIgnoreCase(enginesRs.getString("Support"))
+					|| "DEFAULT".equalsIgnoreCase(enginesRs
+							.getString("Support"))) {
+				
+				String engineName = enginesRs.getString("Engine");
+				
+				if ("CSV".equalsIgnoreCase(engineName)
+						|| "BLACKHOLE".equalsIgnoreCase(engineName)
+						|| "FEDERATED".equalsIgnoreCase(engineName)
+						|| "MRG_MYISAM".equalsIgnoreCase(engineName)
+						|| "PARTITION".equalsIgnoreCase(engineName)) {
+					continue; // not supported
+				}
+
+				if ("ARCHIVE".equalsIgnoreCase(engineName)
+						&& !versionMeetsMinimum(5, 1, 6)) {
+					continue;
+				}
+
+				String tableName = "testBug39956_" + engineName;
+
+				Connection twoConn = getConnectionWithProps("sessionVariables=auto_increment_increment=2");
+
+				try {
+					for (int i = 0; i < 2; i++) {
+						createTable(tableName,
+								"(k int primary key auto_increment, p varchar(4)) ENGINE="
+										+ engineName);
+
+						((com.mysql.jdbc.Connection) twoConn)
+								.setRewriteBatchedStatements(i == 1);
+
+						this.pstmt = twoConn.prepareStatement("INSERT INTO "
+								+ tableName + " (p) VALUES (?)",
+								Statement.RETURN_GENERATED_KEYS);
+						this.pstmt.setString(1, "a");
+						this.pstmt.addBatch();
+						this.pstmt.setString(1, "b");
+						this.pstmt.addBatch();
+						this.pstmt.executeBatch();
+
+						this.rs = this.pstmt.getGeneratedKeys();
+
+						this.rs.next();
+						assertEquals("For engine " + engineName
+								+ ((i == 1) ? " rewritten " : " plain "), 1,
+								this.rs.getInt(1));
+						this.rs.next();
+						assertEquals("For engine " + engineName
+								+ ((i == 1) ? " rewritten " : " plain "), 3,
+								this.rs.getInt(1));
+
+						createTable(tableName,
+								"(k int primary key auto_increment, p varchar(4)) ENGINE="
+										+ engineName);
+						Statement twoStmt = twoConn.createStatement();
+						for (int j = 0; j < 10; j++) {
+							twoStmt.addBatch("INSERT INTO " + tableName
+									+ " (p) VALUES ('" + j + "')");
+						}
+
+						twoStmt.executeBatch(); // UGH: No getGeneratedKeys()
+												// support in JDBC spec, but we
+												// allow it...might have to
+												// rewrite test if/when we don't
+						this.rs = twoStmt.getGeneratedKeys();
+
+						int key = 1;
+
+						for (int j = 0; j < 10; j++) {
+							this.rs.next();
+							assertEquals("For engine " + engineName
+									+ ((i == 1) ? " rewritten " : " plain "),
+									key, this.rs.getInt(1));
+							key += 2;
+						}
+					}
+				} finally {
+					closeMemberJDBCResources();
+
+					if (twoConn != null) {
+						twoConn.close();
+					}
+				}
+			}
+		}
+	}
  } 

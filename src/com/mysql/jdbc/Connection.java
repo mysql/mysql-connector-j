@@ -376,4 +376,9 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	public abstract boolean isAbonormallyLongQuery(long millisOrNanos);
 
 	public abstract void initializeExtension(Extension ex) throws SQLException;
+	
+	/** Returns the -session- value of 'auto_increment_increment' from the server if it exists,
+	 * or '1' if not.
+	 */
+	public abstract int getAutoIncrementIncrement();
 }

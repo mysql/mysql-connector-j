@@ -2579,4 +2579,8 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void setPasswordCharacterEncoding(String characterSet) {
 		this.mc.setPasswordCharacterEncoding(characterSet);
 	}
+
+	public int getAutoIncrementIncrement() {
+		return this.mc.getAutoIncrementIncrement();
+	}
 }
