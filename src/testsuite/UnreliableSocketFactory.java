@@ -259,12 +259,6 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 			underlyingSocket.setOOBInline(on);
 		}
 
-		public void setPerformancePreferences(int connectionTime, int latency,
-				int bandwidth) {
-			underlyingSocket.setPerformancePreferences(connectionTime, latency,
-					bandwidth);
-		}
-
 		public synchronized void setReceiveBufferSize(int size)
 				throws SocketException {
 			underlyingSocket.setReceiveBufferSize(size);
