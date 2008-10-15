@@ -1606,7 +1606,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 
-	private Connection getMasterSlaveReplicationConnection()
+	protected Connection getMasterSlaveReplicationConnection()
 			throws SQLException {
 
 		Connection replConn = new ReplicationDriver().connect(

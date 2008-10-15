@@ -8129,4 +8129,26 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
 		return true;
 	}
+	
+	/**
+	 * Get a prepared statement to query information_schema tables.
+	 * 
+	 * @return PreparedStatement
+	 * @throws SQLException
+	 */
+	protected PreparedStatement prepareMetaDataSafeStatement(String sql)
+			throws SQLException {
+		// Can't use server-side here as we coerce a lot of types to match
+		// the spec.
+		PreparedStatement pStmt = (PreparedStatement) this.conn
+				.clientPrepareStatement(sql);
+
+		if (pStmt.getMaxRows() != 0) {
+			pStmt.setMaxRows(0);
+		}
+
+		pStmt.setHoldResultsOpenOverClose(true);
+
+		return pStmt;
+	}
 }

@@ -894,6 +894,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			bytesOut.write(buf, lastwritten, size - lastwritten);
 		}
 	}
+	
+	/**
+	 * Check to see if the statement is safe for read-only slaves after failover.
+	 * 
+	 * @return true if safe for read-only.
+	 * @throws SQLException
+	 */
+	protected boolean checkReadOnlySafeStatement() throws SQLException {
+		return ((!this.connection.isReadOnly()) || (this.firstCharOfStmt == 'S'));
+	}
 
 	/**
 	 * Some prepared statements return multiple results; the execute method
@@ -911,10 +921,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		
 		ConnectionImpl locallyScopedConn = this.connection;
 		
-		if (locallyScopedConn.isReadOnly() && (this.firstCharOfStmt != 'S')) {
-			throw SQLError.createSQLException(Messages.getString("PreparedStatement.20") //$NON-NLS-1$
-					+ Messages.getString("PreparedStatement.21"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+		if(!checkReadOnlySafeStatement()) {
+			 throw SQLError.createSQLException(Messages.getString("PreparedStatement.20") //$NON-NLS-1$
+							+ Messages.getString("PreparedStatement.21"), //$NON-NLS-1$
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
 		
 		ResultSetInternalMethods rs = null;

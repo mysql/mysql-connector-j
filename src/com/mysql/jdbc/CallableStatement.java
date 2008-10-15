@@ -34,7 +34,9 @@ import java.sql.Clob;
 import java.sql.Date;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -147,6 +149,10 @@ public class CallableStatement extends PreparedStatement implements
 
 		Map parameterMap;
 
+		boolean isReadOnlySafeProcedure = false;
+		
+		boolean isReadOnlySafeChecked = false;
+
 		/**
 		 * Constructor that converts a full list of parameter metadata into one
 		 * that only represents the placeholders present in the {CALL ()}.
@@ -161,6 +167,8 @@ public class CallableStatement extends PreparedStatement implements
 			int[] localParameterMap = placeholderToParameterIndexMap;
 			int parameterMapLength = localParameterMap.length;
 			
+			this.isReadOnlySafeProcedure = fullParamInfo.isReadOnlySafeProcedure;
+			this.isReadOnlySafeChecked = fullParamInfo.isReadOnlySafeChecked;
 			parameterList = new ArrayList(fullParamInfo.numParameters);
 			parameterMap = new HashMap(fullParamInfo.numParameters);
 			
@@ -2352,5 +2360,71 @@ public class CallableStatement extends PreparedStatement implements
 		setNCharacterStream(getNamedParamIndex(parameterName, false), value, length);
 		
 	}
+	
+	/**
+	 * Check whether the stored procedure alters any data or is safe for read-only usage.
+	 * 
+	 * @return true if procedure does not alter data
+	 * @throws SQLException
+	 */
+	private boolean checkReadOnlyProcedure() throws SQLException {
+		if (this.connection.getNoAccessToProcedureBodies()) {
+			return false;
+		}
+		
+		synchronized(this.paramInfo){
+			if(this.paramInfo.isReadOnlySafeChecked){
+				return this.paramInfo.isReadOnlySafeProcedure;
+			}
+		}
+		
+		ResultSet rs = null;
+		try {
+			String procName = extractProcedureName();
+
+
+			String catalog = this.currentCatalog;
+			
+			if (procName.indexOf(".") != -1) {
+				catalog = procName.substring(0, procName.indexOf("."));
+				procName = procName.substring(procName.indexOf(".") + 1);
+				procName = new String(StringUtils.stripEnclosure(procName.getBytes(), "`", "`"));
+								}
+			PreparedStatement ps = ((DatabaseMetaData) this.connection.getMetaData()).prepareMetaDataSafeStatement(
+					"SELECT SQL_DATA_ACCESS FROM "
+						+ " information_schema.routines "
+						+ " WHERE routine_schema = ? "
+						+ " AND routine_name = ?");
+			
+			ps.setString(1, catalog);
+			ps.setString(2, procName);
+			rs = ps.executeQuery();
+			if(rs.next()) {
+				String sqlDataAccess = rs.getString(1);
+				rs.close();
+				ps.close();
+				if(sqlDataAccess.equals("READS SQL DATA") || sqlDataAccess.equals("NO SQL")){
+					synchronized(this.paramInfo){
+						this.paramInfo.isReadOnlySafeChecked = true;
+						this.paramInfo.isReadOnlySafeProcedure = true;
+					}
+					return true;
+				}
+			}
+		} catch (SQLException e) {
+			// swallow the Exception
+		}
+		synchronized(this.paramInfo){
+			this.paramInfo.isReadOnlySafeChecked = false;
+			this.paramInfo.isReadOnlySafeProcedure = false;
+		}
+		return false;
+					
+	}
+
+	protected boolean checkReadOnlySafeStatement() throws SQLException {
+		return (super.checkReadOnlySafeStatement() || this.checkReadOnlyProcedure());
+	}
+
 
 }
