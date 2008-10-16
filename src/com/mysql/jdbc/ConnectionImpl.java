@@ -2672,6 +2672,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	protected StringBuffer generateConnectionCommentBlock(StringBuffer buf) {
 		buf.append("/* conn id ");
 		buf.append(getId());
+		buf.append(" clock: ");
+		buf.append(System.currentTimeMillis());
 		buf.append(" */ ");
 
 		return buf;

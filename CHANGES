@@ -94,6 +94,11 @@ nn-nn-08 - Version 5.1.7
 	
 	- Fixed BUG#34185 - Statement.getGeneratedKeys() does not raise exception when statement was not 
 	  created with Statement.RETURN_GENERATED_KEYS flags.
+	  
+	- Using autoGenerateTestcaseScript=true now logs all statements, regardless or not if they cause errors when processed by MySQL.
+	  A "clock" value (millis since epoch) was added in the comment that is pre-pended with the idea that it can then be used
+	  when post-processing output to sequence things correctly for a multi-threaded testcase, or to replay the test case with the
+	  correct think times.
 	
 03-06-08 - Version 5.1.6
 

@@ -2079,6 +2079,23 @@ class MysqlIO {
 
 	    		queryStartTime = getCurrentTimeNanosOrMillis();
 	    	}
+	    	
+	    	if (this.autoGenerateTestcaseScript) {
+	    		String testcaseQuery = null;
+
+	    		if (query != null) {
+	    			testcaseQuery = query;
+	    		} else {
+	    			testcaseQuery = new String(queryBuf, 5,
+	    					(oldPacketPosition - 5));
+	    		}
+
+	    		StringBuffer debugBuf = new StringBuffer(testcaseQuery.length() + 32);
+	    		this.connection.generateConnectionCommentBlock(debugBuf);
+	    		debugBuf.append(testcaseQuery);
+	    		debugBuf.append(';');
+	    		this.connection.dumpTestcaseQuery(debugBuf.toString());
+	    	}
 
 	    	// Send query command and sql query string
 	    	Buffer resultPacket = sendCommand(MysqlDefs.QUERY, null, queryPacket,
@@ -2137,23 +2154,6 @@ class MysqlIO {
 	    		}
 
 	    		fetchBeginTime = queryEndTime;
-	    	}
-
-	    	if (this.autoGenerateTestcaseScript) {
-	    		String testcaseQuery = null;
-
-	    		if (query != null) {
-	    			testcaseQuery = query;
-	    		} else {
-	    			testcaseQuery = new String(queryBuf, 5,
-	    					(oldPacketPosition - 5));
-	    		}
-
-	    		StringBuffer debugBuf = new StringBuffer(testcaseQuery.length() + 32);
-	    		this.connection.generateConnectionCommentBlock(debugBuf);
-	    		debugBuf.append(testcaseQuery);
-	    		debugBuf.append(';');
-	    		this.connection.dumpTestcaseQuery(debugBuf.toString());
 	    	}
 
 	    	ResultSetInternalMethods rs = readAllResults(callingStatement, maxRows, resultSetType,
