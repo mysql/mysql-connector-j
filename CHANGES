@@ -2,6 +2,20 @@
 # $Id$
 
 nn-nn-08 - Version 5.1.7
+	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
+	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.
+	  Added new property, "loadBalanceBlacklistTimeout", to control how long a
+	  server lives in the global blacklist.
+	  
+	- Fixed BUG#38782 - Possible IndexOutOfBoundsException in random load balancing
+	  strategy.
+	  
+	- Fixed BUG#39784 - invalidateCurrentConnection() does not manage global blacklist
+	  when handling connection exceptions.
+
+	- Fixed BUG#40031 - Adding support for CallableStatement.execute() to call
+	  stored procedures that are defined as NO SQL or SQL READ DATA when failed
+	  over to a read-only slave with replication driver.
 
 	- Fixed BUG#35170- ResultSet.isAfterLast() doesn't work with for
 	  streaming result sets.

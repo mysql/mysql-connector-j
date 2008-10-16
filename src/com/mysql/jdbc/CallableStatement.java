@@ -149,8 +149,15 @@ public class CallableStatement extends PreparedStatement implements
 
 		Map parameterMap;
 
+		
+		/**
+		 * synchronized externally in checkReadOnlyProcedure()
+		 */
 		boolean isReadOnlySafeProcedure = false;
 		
+		/**
+		 * synchronized externally in checkReadOnlyProcedure()
+		 */
 		boolean isReadOnlySafeChecked = false;
 
 		/**
@@ -2371,50 +2378,58 @@ public class CallableStatement extends PreparedStatement implements
 		if (this.connection.getNoAccessToProcedureBodies()) {
 			return false;
 		}
-		
-		synchronized(this.paramInfo){
-			if(this.paramInfo.isReadOnlySafeChecked){
+
+		synchronized (this.paramInfo) {
+			if (this.paramInfo.isReadOnlySafeChecked) {
 				return this.paramInfo.isReadOnlySafeProcedure;
 			}
-		}
-		
-		ResultSet rs = null;
-		try {
-			String procName = extractProcedureName();
 
+			ResultSet rs = null;
+			PreparedStatement ps = null;
+			
+			try {
+				String procName = extractProcedureName();
 
-			String catalog = this.currentCatalog;
-			
-			if (procName.indexOf(".") != -1) {
-				catalog = procName.substring(0, procName.indexOf("."));
-				procName = procName.substring(procName.indexOf(".") + 1);
-				procName = new String(StringUtils.stripEnclosure(procName.getBytes(), "`", "`"));
-								}
-			PreparedStatement ps = ((DatabaseMetaData) this.connection.getMetaData()).prepareMetaDataSafeStatement(
-					"SELECT SQL_DATA_ACCESS FROM "
-						+ " information_schema.routines "
-						+ " WHERE routine_schema = ? "
-						+ " AND routine_name = ?");
-			
-			ps.setString(1, catalog);
-			ps.setString(2, procName);
-			rs = ps.executeQuery();
-			if(rs.next()) {
-				String sqlDataAccess = rs.getString(1);
-				rs.close();
-				ps.close();
-				if(sqlDataAccess.equals("READS SQL DATA") || sqlDataAccess.equals("NO SQL")){
-					synchronized(this.paramInfo){
-						this.paramInfo.isReadOnlySafeChecked = true;
-						this.paramInfo.isReadOnlySafeProcedure = true;
-					}
-					return true;
+				String catalog = this.currentCatalog;
+
+				if (procName.indexOf(".") != -1) {
+					catalog = procName.substring(0, procName.indexOf("."));
+					procName = procName.substring(procName.indexOf(".") + 1);
+					procName = new String(StringUtils.stripEnclosure(procName
+							.getBytes(), "`", "`"));
 				}
+				ps = ((DatabaseMetaData) this.connection
+						.getMetaData())
+						.prepareMetaDataSafeStatement("SELECT SQL_DATA_ACCESS FROM "
+								+ " information_schema.routines "
+								+ " WHERE routine_schema = ? "
+								+ " AND routine_name = ?");
+
+				ps.setString(1, catalog);
+				ps.setString(2, procName);
+				rs = ps.executeQuery();
+				if (rs.next()) {
+					String sqlDataAccess = rs.getString(1);
+					if ("READS SQL DATA".equalsIgnoreCase(sqlDataAccess)
+							|| "NO SQL".equalsIgnoreCase(sqlDataAccess)) {
+						synchronized (this.paramInfo) {
+							this.paramInfo.isReadOnlySafeChecked = true;
+							this.paramInfo.isReadOnlySafeProcedure = true;
+						}
+						return true;
+					}
+				}
+			} catch (SQLException e) {
+				// swallow the Exception
+			} finally {
+				if(rs != null){
+					rs.close();
+				}
+				if(ps != null){
+					ps.close();
+				}
+				
 			}
-		} catch (SQLException e) {
-			// swallow the Exception
-		}
-		synchronized(this.paramInfo){
 			this.paramInfo.isReadOnlySafeChecked = false;
 			this.paramInfo.isReadOnlySafeProcedure = false;
 		}
