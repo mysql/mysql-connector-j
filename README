@@ -1,6 +1,6 @@
 MySQL Connector/J @MYSQL_CJ_VERSION@ (formerly MM.MySQL)
-MySQL AB's JDBC Driver for MySQL
-Copyright (c) 2003 MySQL AB
+Sun Microsystem's JDBC Driver for MySQL
+Copyright 2003-2008 MySQL AB, 2008 Sun Microsystems
 
 CONTENTS
 
@@ -11,7 +11,7 @@ CONTENTS
 LICENSE
 
 MySQL Connector/J is licensed under the GPL or a commercial license
-from MySQL AB. 
+from Sun Microsystems. 
 
 If you have licensed this product under the GPL, please see the COPYING
 file for more information. 
@@ -22,7 +22,7 @@ exception in file EXCEPTIONS-CONNECTOR-J in the directory of this
 software distribution.
 
 If you have licensed this product under a commercial license from
-MySQL AB, please see the file "MySQLEULA.txt" that comes with this 
+MySQL AB, please see the file "LICENSE.mysql" that comes with this 
 distribution for the terms of the license.
 
 If you need non-GPL licenses for commercial distribution please contact 
