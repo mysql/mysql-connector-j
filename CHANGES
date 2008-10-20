@@ -1,7 +1,7 @@
 # Changelog
 # $Id$
 
-nn-nn-08 - Version 5.1.7
+10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
 	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.
 	  Added new property, "loadBalanceBlacklistTimeout", to control how long a
