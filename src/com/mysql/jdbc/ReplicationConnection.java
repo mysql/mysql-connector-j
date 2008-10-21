@@ -2383,4 +2383,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
 		this.currentConnection.setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
 	}
+
+	public int getRetriesAllDown() {
+		return this.currentConnection.getRetriesAllDown();
+	}
+
+	public void setRetriesAllDown(int retriesAllDown) {
+		this.currentConnection.setRetriesAllDown(retriesAllDown);
+	}
 }

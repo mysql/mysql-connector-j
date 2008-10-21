@@ -1607,15 +1607,19 @@ public interface ConnectionProperties {
 
 	public abstract void setCompensateOnDuplicateKeyUpdateCounts(boolean flag);
 	
-	public void setUseAffectedRows(boolean flag);
+	public abstract void setUseAffectedRows(boolean flag);
 
-	public boolean getUseAffectedRows();
+	public abstract boolean getUseAffectedRows();
 	
-	public void setPasswordCharacterEncoding(String characterSet);
+	public abstract void setPasswordCharacterEncoding(String characterSet);
 
-	public String getPasswordCharacterEncoding();
+	public abstract String getPasswordCharacterEncoding();
 	
-	public int getLoadBalanceBlacklistTimeout();
+	public abstract int getLoadBalanceBlacklistTimeout();
 
-	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout);
+	public abstract void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout);
+	
+	public abstract void setRetriesAllDown(int retriesAllDown);
+	
+	public abstract int getRetriesAllDown();
 }

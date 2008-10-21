@@ -2591,4 +2591,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
 		this.mc.setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
 	}
+	
+	public void setRetriesAllDown(int retriesAllDown) {
+		this.mc.setRetriesAllDown(retriesAllDown);
+	}
+	
+	public int getRetriesAllDown() {
+		return this.mc.getRetriesAllDown();
+	}
 }

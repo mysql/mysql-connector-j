@@ -4433,8 +4433,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		this.loadBalanceBlacklistTimeout.setValue(loadBalanceBlacklistTimeout);
 	}
 	
-	public void setRetriesAllDown(IntegerConnectionProperty retriesAllDown) {
-		this.retriesAllDown = retriesAllDown;
+	public void setRetriesAllDown(int retriesAllDown) {
+		this.retriesAllDown.setValue(retriesAllDown);
+	}
+	
+	public int getRetriesAllDown() {
+		return this.retriesAllDown.getValueAsInt();
 	}
 
 	public void setUseAffectedRows(boolean flag) {
