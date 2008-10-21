@@ -2583,4 +2583,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public int getAutoIncrementIncrement() {
 		return this.mc.getAutoIncrementIncrement();
 	}
+
+	public int getLoadBalanceBlacklistTimeout() {
+		return this.mc.getLoadBalanceBlacklistTimeout();
+	}
+
+	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
+		this.mc.setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
+	}
 }

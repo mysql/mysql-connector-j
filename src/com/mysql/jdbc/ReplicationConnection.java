@@ -2375,4 +2375,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public int getAutoIncrementIncrement() {
 		return this.currentConnection.getAutoIncrementIncrement();
 	}
+
+	public int getLoadBalanceBlacklistTimeout() {
+		return this.currentConnection.getLoadBalanceBlacklistTimeout();
+	}
+
+	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
+		this.currentConnection.setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
+	}
 }

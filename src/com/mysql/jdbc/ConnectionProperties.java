@@ -1614,4 +1614,8 @@ public interface ConnectionProperties {
 	public void setPasswordCharacterEncoding(String characterSet);
 
 	public String getPasswordCharacterEncoding();
+	
+	public int getLoadBalanceBlacklistTimeout();
+
+	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout);
 }

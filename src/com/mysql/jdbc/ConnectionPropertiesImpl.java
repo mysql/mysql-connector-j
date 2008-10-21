@@ -4425,13 +4425,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		this.compensateOnDuplicateKeyUpdateCounts.setValue(flag);
 	}
 
-	public IntegerConnectionProperty getLoadBalanceBlacklistTimeout() {
-		return loadBalanceBlacklistTimeout;
+	public int getLoadBalanceBlacklistTimeout() {
+		return loadBalanceBlacklistTimeout.getValueAsInt();
 	}
 
-	public void setLoadBalanceBlacklistTimeout(
-			IntegerConnectionProperty loadBalanceBlacklistTimeout) {
-		this.loadBalanceBlacklistTimeout = loadBalanceBlacklistTimeout;
+	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
+		this.loadBalanceBlacklistTimeout.setValue(loadBalanceBlacklistTimeout);
 	}
 	
 	public void setRetriesAllDown(IntegerConnectionProperty retriesAllDown) {
