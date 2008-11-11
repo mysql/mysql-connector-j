@@ -246,6 +246,8 @@ public class StatementImpl implements Statement {
 	
 	protected boolean useLegacyDatetimeCode;
 	
+	private ExceptionInterceptor exceptionInterceptor;
+	
 	/**
 	 * Constructor for a Statement.
 	 *
@@ -261,11 +263,12 @@ public class StatementImpl implements Statement {
 		if ((c == null) || c.isClosed()) {
 			throw SQLError.createSQLException(
 					Messages.getString("Statement.0"), //$NON-NLS-1$
-					SQLError.SQL_STATE_CONNECTION_NOT_OPEN); //$NON-NLS-1$ //$NON-NLS-2$
+					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		this.connection = c;
 		this.connectionId = this.connection.getId();
+		this.exceptionInterceptor = c.getExceptionInterceptor();
 
 		this.currentCatalog = catalog;
 		this.pedantic = this.connection.getPedantic();
@@ -380,7 +383,7 @@ public class StatementImpl implements Statement {
 		if (this.isClosed) {
 			throw SQLError.createSQLException(Messages
 					.getString("Statement.49"), //$NON-NLS-1$
-					SQLError.SQL_STATE_CONNECTION_NOT_OPEN); //$NON-NLS-1$
+					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 	}
 
@@ -412,7 +415,7 @@ public class StatementImpl implements Statement {
 					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "ALTER")) { //$NON-NLS-1$
 				throw SQLError.createSQLException(Messages
 						.getString("Statement.57"), //$NON-NLS-1$
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 			}
 		}
 	}
@@ -430,13 +433,13 @@ public class StatementImpl implements Statement {
 		if (sql == null) {
 			throw SQLError.createSQLException(Messages
 					.getString("Statement.59"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ //$NON-NLS-2$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		if (sql.length() == 0) {
 			throw SQLError.createSQLException(Messages
 					.getString("Statement.61"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ //$NON-NLS-2$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
@@ -612,7 +615,7 @@ public class StatementImpl implements Statement {
 					throw SQLError.createSQLException(Messages
 							.getString("Statement.27") //$NON-NLS-1$
 							+ Messages.getString("Statement.28"), //$NON-NLS-1$
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 				}
 			}
 
@@ -929,7 +932,7 @@ public class StatementImpl implements Statement {
 			throw SQLError.createSQLException(Messages
 					.getString("Statement.34") //$NON-NLS-1$
 					+ Messages.getString("Statement.35"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		if (this.results != null) {
@@ -1225,7 +1228,7 @@ public class StatementImpl implements Statement {
 		
 			row = new byte[1][];
 			row[0] = Long.toString(generatedKey).getBytes();
-			this.batchedGeneratedKeys.add(new ByteArrayRow(row));
+			this.batchedGeneratedKeys.add(new ByteArrayRow(row, getExceptionInterceptor()));
 		}
 
 		while (batchedStatement.getMoreResults()
@@ -1237,7 +1240,7 @@ public class StatementImpl implements Statement {
 				
 				row = new byte[1][];
 				row[0] = Long.toString(generatedKey).getBytes();
-				this.batchedGeneratedKeys.add(new ByteArrayRow(row));
+				this.batchedGeneratedKeys.add(new ByteArrayRow(row, getExceptionInterceptor()));
 			}
 		}
 		
@@ -1491,7 +1494,7 @@ public class StatementImpl implements Statement {
 		ArrayList rows = new ArrayList();
 		byte[] colVal = new byte[] { (byte) '1' };
 
-		rows.add(new ByteArrayRow(new byte[][] { colVal }));
+		rows.add(new ByteArrayRow(new byte[][] { colVal }, getExceptionInterceptor()));
 
 		return (ResultSetInternalMethods) DatabaseMetaData.buildResultSet(fields, rows,
 				this.connection);
@@ -1557,13 +1560,13 @@ public class StatementImpl implements Statement {
 				throw SQLError.createSQLException(Messages
 						.getString("Statement.42") //$NON-NLS-1$
 						+ Messages.getString("Statement.43"), //$NON-NLS-1$
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 			}
 
 			if (StringUtils.startsWithIgnoreCaseAndWs(sql, "select")) { //$NON-NLS-1$
 				throw SQLError.createSQLException(Messages
 						.getString("Statement.46"), //$NON-NLS-1$
-				"01S03"); //$NON-NLS-1$
+				"01S03", getExceptionInterceptor()); //$NON-NLS-1$
 			}
 
 			if (this.results != null) {
@@ -1811,7 +1814,7 @@ public class StatementImpl implements Statement {
 	public synchronized java.sql.ResultSet getGeneratedKeys()
 			throws SQLException {
 		if (!this.retrieveGeneratedKeys) {
-			throw SQLError.createSQLException(Messages.getString("Statement.GeneratedKeysNotRequested"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			throw SQLError.createSQLException(Messages.getString("Statement.GeneratedKeysNotRequested"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 		
 		if (this.batchedGeneratedKeys == null) {
@@ -1860,7 +1863,7 @@ public class StatementImpl implements Statement {
 				for (int i = 0; i < numKeys; i++) {
 					byte[][] row = new byte[1][];
 					row[0] = Long.toString(beginAt).getBytes();
-					rowSet.add(new ByteArrayRow(row));
+					rowSet.add(new ByteArrayRow(row, getExceptionInterceptor()));
 					beginAt  += this.connection.getAutoIncrementIncrement();
 				}
 			}
@@ -2029,7 +2032,7 @@ public class StatementImpl implements Statement {
 		default:
 			throw SQLError.createSQLException(Messages
 					.getString("Statement.19"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		this.results = nextResultSet;
@@ -2379,7 +2382,7 @@ public class StatementImpl implements Statement {
 		default:
 			throw SQLError.createSQLException(
 					Messages.getString("Statement.5"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 	}
 
@@ -2403,7 +2406,7 @@ public class StatementImpl implements Statement {
 						.getMaxRows()))) {
 			throw SQLError.createSQLException(
 					Messages.getString("Statement.7"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ //$NON-NLS-2$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		this.fetchSize = rows;
@@ -2426,7 +2429,7 @@ public class StatementImpl implements Statement {
 		if (max < 0) {
 			throw SQLError.createSQLException(Messages
 					.getString("Statement.11"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		int maxBuf = (this.connection != null) ? this.connection
@@ -2436,7 +2439,7 @@ public class StatementImpl implements Statement {
 			throw SQLError.createSQLException(Messages.getString(
 					"Statement.13", //$NON-NLS-1$
 					new Object[] { Constants.longValueOf(maxBuf) }), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		this.maxFieldSize = max;
@@ -2459,7 +2462,7 @@ public class StatementImpl implements Statement {
 					.createSQLException(
 							Messages.getString("Statement.15") + max //$NON-NLS-1$
 									+ " > " //$NON-NLS-1$ //$NON-NLS-2$
-									+ MysqlDefs.MAX_ROWS + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ //$NON-NLS-2$
+									+ MysqlDefs.MAX_ROWS + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		if (max == 0) {
@@ -2495,7 +2498,7 @@ public class StatementImpl implements Statement {
 		if (seconds < 0) {
 			throw SQLError.createSQLException(Messages
 					.getString("Statement.21"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		this.timeoutInMillis = seconds * 1000;
@@ -2530,7 +2533,7 @@ public class StatementImpl implements Statement {
 
 				while (rs.next()) {
 					this.batchedGeneratedKeys
-							.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }));
+							.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }, getExceptionInterceptor()));
 				}
 			} finally {
 				if (rs != null) {
@@ -2549,7 +2552,7 @@ public class StatementImpl implements Statement {
 
 				while (rs.next()) {
 					this.batchedGeneratedKeys
-							.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }));
+							.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }, getExceptionInterceptor()));
 				}
 			} finally {
 				if (rs != null) {
@@ -2627,7 +2630,7 @@ public class StatementImpl implements Statement {
             return Util.cast(iface, this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(),
-            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 
@@ -2671,4 +2674,8 @@ public class StatementImpl implements Statement {
     public synchronized void setPingTarget(PingTarget pingTarget) {
 		this.pingTarget = pingTarget;
 	}
+    
+    public ExceptionInterceptor getExceptionInterceptor() {
+    	return this.exceptionInterceptor;
+    }
 }

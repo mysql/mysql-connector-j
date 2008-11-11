@@ -170,7 +170,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			} else {
 				throw SQLError.createSQLException(Messages
 						.getString("NonRegisteringDriver.37"), //$NON-NLS-1$
-						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
 			}
 		} else {
 			splitValues[HOST_NAME_INDEX] = hostPortPair;
@@ -292,7 +292,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 					.getString("NonRegisteringDriver.17") //$NON-NLS-1$
 					+ ex.toString()
 					+ Messages.getString("NonRegisteringDriver.18"), //$NON-NLS-1$
-					SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+					SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, null);
 			
 			sqlEx.initCause(ex);
 			
@@ -394,7 +394,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 				throw SQLError
 						.createSQLException(
 								"Must specify at least one slave host to connect to for master/slave replication load-balancing functionality",
-								SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+								SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
 			}
 
 			masterProps.setProperty(HOST_PROPERTY_KEY, masterHost.toString());
@@ -651,21 +651,21 @@ public class NonRegisteringDriver implements java.sql.Driver {
 								+ propertiesTransformClassName
 								+ "' due to underlying exception: "
 								+ e.toString(),
-						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
 			} catch (IllegalAccessException e) {
 				throw SQLError.createSQLException(
 						"Unable to create properties transform instance '"
 								+ propertiesTransformClassName
 								+ "' due to underlying exception: "
 								+ e.toString(),
-						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
 			} catch (ClassNotFoundException e) {
 				throw SQLError.createSQLException(
 						"Unable to create properties transform instance '"
 								+ propertiesTransformClassName
 								+ "' due to underlying exception: "
 								+ e.toString(),
-						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
 			}
 		}
 
@@ -718,7 +718,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 								.createSQLException(
 										"Can't find configuration template named '"
 												+ configName + "'",
-										SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+										SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
 					}
 					configProps.load(configAsStream);
 				} catch (IOException ioEx) {
@@ -727,7 +727,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 									+ configName
 									+ "' due to underlying IOException: "
 									+ ioEx,
-							SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+							SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
 					sqlEx.initCause(ioEx);
 					
 					throw sqlEx;

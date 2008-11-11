@@ -261,7 +261,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 				if ((this.catalog == null) || (this.catalog.length() == 0)) {
 					throw SQLError.createSQLException(Messages
 							.getString("UpdatableResultSet.43") //$NON-NLS-1$
-							, SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ //$NON-NLS-2$
+							, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 			}
 	
@@ -452,13 +452,13 @@ public class UpdatableResultSet extends ResultSetImpl {
 		}
 
 		if (this.onInsertRow) {
-			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.1")); //$NON-NLS-1$
+			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.1"), getExceptionInterceptor()); //$NON-NLS-1$
 		} else if (this.rowData.size() == 0) {
-			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.2")); //$NON-NLS-1$
+			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.2"), getExceptionInterceptor()); //$NON-NLS-1$
 		} else if (isBeforeFirst()) {
-			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.3")); //$NON-NLS-1$
+			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.3"), getExceptionInterceptor()); //$NON-NLS-1$
 		} else if (isAfterLast()) {
-			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.4")); //$NON-NLS-1$
+			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.4"), getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		if (this.deleter == null) {
@@ -508,7 +508,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} catch (java.io.UnsupportedEncodingException encodingEx) {
 			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.39", //$NON-NLS-1$
 					new Object[] { this.charEncoding }) //$NON-NLS-1$
-					, SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ //$NON-NLS-2$
+					, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
@@ -851,7 +851,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 		checkClosed();
 
 		if (!this.onInsertRow) {
-			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.7")); //$NON-NLS-1$
+			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.7"), getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		this.inserter.executeUpdate();
@@ -877,7 +877,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 			}
 		}
 
-		ResultSetRow resultSetRow = new ByteArrayRow(newRow);
+		ResultSetRow resultSetRow = new ByteArrayRow(newRow, getExceptionInterceptor());
 
 		refreshRow(this.inserter, resultSetRow);
 
@@ -1044,7 +1044,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 		this.doingUpdates = false;
 		this.savedCurrentRow = this.thisRow;
 		byte[][] newRowData = new byte[numFields][];
-		this.thisRow = new ByteArrayRow(newRowData);
+		this.thisRow = new ByteArrayRow(newRowData, getExceptionInterceptor());
 
 		for (int i = 0; i < numFields; i++) {
 			if (!this.populateInserterWithDefaultValues) {
@@ -1262,13 +1262,13 @@ public class UpdatableResultSet extends ResultSetImpl {
 		}
 
 		if (this.onInsertRow) {
-			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.8")); //$NON-NLS-1$
+			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.8"), getExceptionInterceptor()); //$NON-NLS-1$
 		} else if (this.rowData.size() == 0) {
-			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.9")); //$NON-NLS-1$
+			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.9"), getExceptionInterceptor()); //$NON-NLS-1$
 		} else if (isBeforeFirst()) {
-			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.10")); //$NON-NLS-1$
+			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.10"), getExceptionInterceptor()); //$NON-NLS-1$
 		} else if (isAfterLast()) {
-			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.11")); //$NON-NLS-1$
+			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.11"), getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		refreshRow(this.updater, this.thisRow);
@@ -1350,7 +1350,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 			} else {
 				throw SQLError.createSQLException(Messages
 						.getString("UpdatableResultSet.12"), //$NON-NLS-1$
-						SQLError.SQL_STATE_GENERAL_ERROR); //$NON-NLS-1$
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor()); //$NON-NLS-1$
 			}
 		} finally {
 			if (rs != null) {
@@ -2461,7 +2461,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 					this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x,
 							this.charConverter, this.charEncoding,
 							this.connection.getServerCharacterEncoding(),
-							this.connection.parserKnowsUnicode()));
+							this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
 				} else {
 					this.thisRow.setColumnValue(columnIndex - 1, x.getBytes());
 				}

@@ -40,13 +40,16 @@ import java.sql.SQLException;
  */
 public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 	private String charData;
-
-    Clob() {
+	private ExceptionInterceptor exceptionInterceptor;
+	
+    Clob(ExceptionInterceptor exceptionInterceptor) {
         this.charData = "";
+        this.exceptionInterceptor = exceptionInterceptor;
     }
     
-	Clob(String charDataInit) {
+	Clob(String charDataInit, ExceptionInterceptor exceptionInterceptor) {
 		this.charData = charDataInit;
+		this.exceptionInterceptor = exceptionInterceptor;
 	}
 
 	/**
@@ -77,7 +80,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 	public String getSubString(long startPos, int length) throws SQLException {
 		if (startPos < 1) {
 			throw SQLError.createSQLException(Messages.getString("Clob.6"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 
 		int adjustedStartPos = (int)startPos - 1;
@@ -86,7 +89,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 		if (this.charData != null) {
 			if (adjustedEndIndex > this.charData.length()) {
 				throw SQLError.createSQLException(Messages.getString("Clob.7"), //$NON-NLS-1$
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 
 			return this.charData.substring(adjustedStartPos, 
@@ -122,13 +125,13 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 		if (startPos < 1) {
 			throw SQLError.createSQLException(
 					Messages.getString("Clob.8") //$NON-NLS-1$
-							+ startPos + Messages.getString("Clob.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+							+ startPos + Messages.getString("Clob.9"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor); //$NON-NLS-1$
 		}
 
 		if (this.charData != null) {
 			if ((startPos - 1) > this.charData.length()) {
 				throw SQLError.createSQLException(Messages.getString("Clob.10"), //$NON-NLS-1$
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 
 			int pos = this.charData.indexOf(stringToFind, (int) (startPos - 1));
@@ -145,7 +148,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 	public OutputStream setAsciiStream(long indexToWriteAt) throws SQLException {
 		if (indexToWriteAt < 1) {
 			throw SQLError.createSQLException(Messages.getString("Clob.0"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 
 		WatchableOutputStream bytesOut = new WatchableOutputStream();
@@ -165,7 +168,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 	public Writer setCharacterStream(long indexToWriteAt) throws SQLException {
 		if (indexToWriteAt < 1) {
 			throw SQLError.createSQLException(Messages.getString("Clob.1"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 
 		WatchableWriter writer = new WatchableWriter();
@@ -187,12 +190,12 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 	public int setString(long pos, String str) throws SQLException {
 		if (pos < 1) {
 			throw SQLError.createSQLException(Messages.getString("Clob.2"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 
 		if (str == null) {
 			throw SQLError.createSQLException(Messages.getString("Clob.3"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 
 		StringBuffer charBuf = new StringBuffer(this.charData);
@@ -215,12 +218,12 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 			throws SQLException {
 		if (pos < 1) {
 			throw SQLError.createSQLException(Messages.getString("Clob.4"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 
 		if (str == null) {
 			throw SQLError.createSQLException(Messages.getString("Clob.5"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 
 		StringBuffer charBuf = new StringBuffer(this.charData);
@@ -246,7 +249,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 		if (streamSize < this.charData.length()) {
 			try {
 				out.write(StringUtils
-						.getBytes(this.charData, null, null, false, null),
+						.getBytes(this.charData, null, null, false, null, this.exceptionInterceptor),
 						streamSize, this.charData.length() - streamSize);
 			} catch (SQLException ex) {
 				//
@@ -264,7 +267,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 			throw SQLError.createSQLException(
 					Messages.getString("Clob.11") //$NON-NLS-1$
 							+ this.charData.length()
-							+ Messages.getString("Clob.12") + length + Messages.getString("Clob.13")); //$NON-NLS-1$ //$NON-NLS-2$
+							+ Messages.getString("Clob.12") + length + Messages.getString("Clob.13"), this.exceptionInterceptor); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		this.charData = this.charData.substring(0, (int) length);

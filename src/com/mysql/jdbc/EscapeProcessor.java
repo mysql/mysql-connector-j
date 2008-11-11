@@ -137,7 +137,7 @@ class EscapeProcessor {
 					if (!token.endsWith("}")) {
 						throw SQLError
 								.createSQLException("Not a valid escape sequence: "
-										+ token);
+										+ token, conn.getExceptionInterceptor());
 					}
 
 					if (token.length() > 2) {
@@ -215,7 +215,7 @@ class EscapeProcessor {
 						if (StringUtils.startsWithIgnoreCaseAndWs(fnToken,
 								"convert")) {
 							newSql.append(processConvertToken(fnToken,
-									serverSupportsConvertFn));
+									serverSupportsConvertFn, conn));
 						} else {
 							// just pass functions right to the DB
 							newSql.append(fnToken);
@@ -246,7 +246,7 @@ class EscapeProcessor {
 							} catch (java.util.NoSuchElementException e) {
 								throw SQLError.createSQLException(
 										"Syntax error for DATE escape sequence '"
-												+ argument + "'", "42000");
+												+ argument + "'", "42000", conn.getExceptionInterceptor());
 							}
 						}
 					} else if (StringUtils.startsWithIgnoreCase(collapsedToken,
@@ -386,7 +386,7 @@ class EscapeProcessor {
 									.fastTimeCreate(
 											sessionCalendar,
 											hourInt, minuteInt,
-											secondInt);
+											secondInt, conn.getExceptionInterceptor());
 
 							Time inServerTimezone = TimeUtil
 									.changeTimezone(
@@ -411,13 +411,13 @@ class EscapeProcessor {
 								.createSQLException(
 										"Syntax error in TIMESTAMP escape sequence '"
 												+ token + "'.",
-										SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+										SQLError.SQL_STATE_ILLEGAL_ARGUMENT, conn.getExceptionInterceptor());
 					}
 				}
 			} catch (java.util.NoSuchElementException e) {
 				throw SQLError.createSQLException(
 						"Syntax error for escape sequence '"
-								+ argument + "'", "42000");
+								+ argument + "'", "42000", conn.getExceptionInterceptor());
 			}
 		}
 	}
@@ -584,14 +584,14 @@ class EscapeProcessor {
 												"Syntax error in TIMESTAMP escape sequence '"
 														+ token
 														+ "'.",
-												SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+												SQLError.SQL_STATE_ILLEGAL_ARGUMENT, conn.getExceptionInterceptor());
 							}
 						}
 					} catch (java.util.NoSuchElementException e) {
 						throw SQLError.createSQLException(
 								"Syntax error for TIMESTAMP escape sequence '"
 										+ argument + "'",
-								"42000");
+								"42000", conn.getExceptionInterceptor());
 					}
 				}
 			} catch (IllegalArgumentException illegalArgumentException) {
@@ -599,7 +599,7 @@ class EscapeProcessor {
 						.createSQLException(
 								"Syntax error for TIMESTAMP escape sequence '"
 										+ argument + "'",
-								"42000");
+								"42000", conn.getExceptionInterceptor());
 				sqlEx.initCause(illegalArgumentException);
 
 				throw sqlEx;
@@ -615,7 +615,7 @@ class EscapeProcessor {
 	 * @throws SQLException
 	 */
 	private static String processConvertToken(String functionToken,
-			boolean serverSupportsConvertFn) throws SQLException {
+			boolean serverSupportsConvertFn, ConnectionImpl conn) throws SQLException {
 		// The JDBC spec requires these types:
 		//
 		// BIGINT
@@ -654,7 +654,7 @@ class EscapeProcessor {
 					.createSQLException(
 							"Syntax error while processing {fn convert (... , ...)} token, missing opening parenthesis in token '"
 									+ functionToken + "'.",
-							SQLError.SQL_STATE_SYNTAX_ERROR);
+							SQLError.SQL_STATE_SYNTAX_ERROR, conn.getExceptionInterceptor());
 		}
 
 		int tokenLength = functionToken.length();
@@ -666,7 +666,7 @@ class EscapeProcessor {
 					.createSQLException(
 							"Syntax error while processing {fn convert (... , ...)} token, missing comma in token '"
 									+ functionToken + "'.",
-							SQLError.SQL_STATE_SYNTAX_ERROR);
+							SQLError.SQL_STATE_SYNTAX_ERROR, conn.getExceptionInterceptor());
 		}
 
 		int indexOfCloseParen = functionToken.indexOf(')', indexOfComma);
@@ -676,7 +676,7 @@ class EscapeProcessor {
 					.createSQLException(
 							"Syntax error while processing {fn convert (... , ...)} token, missing closing parenthesis in token '"
 									+ functionToken + "'.",
-							SQLError.SQL_STATE_SYNTAX_ERROR);
+							SQLError.SQL_STATE_SYNTAX_ERROR, conn.getExceptionInterceptor());
 
 		}
 
@@ -713,14 +713,14 @@ class EscapeProcessor {
 								"Can't find conversion re-write for type '"
 										+ type
 										+ "' that is applicable for this server version while processing escape tokens.",
-								SQLError.SQL_STATE_GENERAL_ERROR);
+								SQLError.SQL_STATE_GENERAL_ERROR, conn.getExceptionInterceptor());
 			}
 		}
 
 		if (newType == null) {
 			throw SQLError.createSQLException("Unsupported conversion type '"
 					+ type.trim() + "' found while processing escape token.",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, conn.getExceptionInterceptor());
 		}
 
 		int replaceIndex = newType.indexOf("?");

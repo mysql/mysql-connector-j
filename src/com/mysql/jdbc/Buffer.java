@@ -422,7 +422,7 @@ class Buffer {
 		return s;
 	}
 
-	final String readString(String encoding) throws SQLException {
+	final String readString(String encoding, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 		int i = this.position;
 		int len = 0;
 		int maxLen = getBufLength();
@@ -436,7 +436,7 @@ class Buffer {
 			return new String(this.byteBuffer, this.position, len, encoding);
 		} catch (UnsupportedEncodingException uEE) {
 			throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.1") //$NON-NLS-1$
-					+ encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					+ encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
 		} finally {
 			this.position += (len + 1); // update cursor
 		}
@@ -580,7 +580,7 @@ class Buffer {
 			b = converter.toBytes(s);
 		} else {
 			b = StringUtils.getBytes(s, encoding, serverEncoding,
-					parserKnowsUnicode, conn);
+					parserKnowsUnicode, conn, conn.getExceptionInterceptor());
 		}
 
 		int len = b.length;
@@ -661,7 +661,7 @@ class Buffer {
 			String serverEncoding, boolean parserKnowsUnicode, ConnectionImpl conn)
 			throws UnsupportedEncodingException, SQLException {
 		byte[] b = StringUtils.getBytes(s, encoding, serverEncoding,
-				parserKnowsUnicode, conn);
+				parserKnowsUnicode, conn, conn.getExceptionInterceptor());
 
 		int len = b.length;
 		ensureCapacity(len);

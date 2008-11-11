@@ -351,7 +351,7 @@ public class RowDataCursor implements RowData {
 			throw SQLError.createSQLException(
 					Messages
 							.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"), //$NON-NLS-1$
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, mysql.getExceptionInterceptor());
 		}
 		
 		if (!hasNext()) {

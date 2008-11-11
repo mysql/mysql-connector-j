@@ -922,22 +922,22 @@ public class SQLError {
 	 */
 
 	public static SQLException createSQLException(String message,
-			String sqlState) {
-		return createSQLException(message, sqlState, 0);
+			String sqlState, ExceptionInterceptor interceptor) {
+		return createSQLException(message, sqlState, 0, interceptor);
 	}
 
-	public static SQLException createSQLException(String message) {
+	public static SQLException createSQLException(String message, ExceptionInterceptor interceptor) {
 		return new SQLException(message);
 	}
 
-	public static SQLException createSQLException(String message, String sqlState, Throwable cause) {
+	public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor) {
 		if (THROWABLE_INIT_CAUSE_METHOD == null) {
 			if (cause != null) {
 				message = message + " due to " + cause.toString();
 			}
 		}
 		
-		SQLException sqlEx = createSQLException(message, sqlState);
+		SQLException sqlEx = createSQLException(message, sqlState, interceptor);
 		
 		if (cause != null && THROWABLE_INIT_CAUSE_METHOD != null) {
 			try {
@@ -952,12 +952,12 @@ public class SQLError {
 	}
 	
 	public static SQLException createSQLException(String message,
-			String sqlState, int vendorErrorCode) {
-		return createSQLException(message, sqlState, vendorErrorCode, false);
+			String sqlState, int vendorErrorCode, ExceptionInterceptor interceptor) {
+		return createSQLException(message, sqlState, vendorErrorCode, false, interceptor);
 	}
 	
 	public static SQLException createSQLException(String message,
-			String sqlState, int vendorErrorCode, boolean isTransient) {
+			String sqlState, int vendorErrorCode, boolean isTransient, ExceptionInterceptor interceptor) {
 		try {
 			if (sqlState != null) {
 				if (sqlState.startsWith("08")) {
@@ -973,7 +973,7 @@ public class SQLError {
 										new Class[] { String.class,
 												String.class, Integer.TYPE },
 										new Object[] { message, sqlState,
-												Constants.integerValueOf(vendorErrorCode) });
+												Constants.integerValueOf(vendorErrorCode) }, interceptor);
 					}
 
 					if (!Util.isJdbc4()) {
@@ -987,7 +987,7 @@ public class SQLError {
 									new Class[] { String.class, String.class,
 											Integer.TYPE  }, new Object[] {
 											message, sqlState,
-											Constants.integerValueOf(vendorErrorCode) });
+											Constants.integerValueOf(vendorErrorCode) }, interceptor);
 				}
 
 				if (sqlState.startsWith("22")) {
@@ -1002,7 +1002,7 @@ public class SQLError {
 									new Class[] { String.class, String.class,
 											Integer.TYPE  }, new Object[] {
 											message, sqlState,
-											Constants.integerValueOf(vendorErrorCode) });
+											Constants.integerValueOf(vendorErrorCode) }, interceptor);
 				}
 
 				if (sqlState.startsWith("23")) {
@@ -1018,7 +1018,7 @@ public class SQLError {
 									new Class[] { String.class, String.class,
 											Integer.TYPE  }, new Object[] {
 											message, sqlState,
-											Constants.integerValueOf(vendorErrorCode) });
+											Constants.integerValueOf(vendorErrorCode) }, interceptor);
 				}
 
 				if (sqlState.startsWith("42")) {
@@ -1033,7 +1033,7 @@ public class SQLError {
 									new Class[] { String.class, String.class,
 											Integer.TYPE  }, new Object[] {
 											message, sqlState,
-											Constants.integerValueOf(vendorErrorCode) });
+											Constants.integerValueOf(vendorErrorCode) }, interceptor);
 				}
 
 				if (sqlState.startsWith("40")) {
@@ -1048,7 +1048,7 @@ public class SQLError {
 									new Class[] { String.class, String.class,
 											Integer.TYPE  }, new Object[] {
 											message, sqlState,
-											Constants.integerValueOf(vendorErrorCode) });
+											Constants.integerValueOf(vendorErrorCode) }, interceptor);
 				}
 			}
 
@@ -1063,7 +1063,7 @@ public class SQLError {
 	
 	public static SQLException createCommunicationsException(ConnectionImpl conn, long lastPacketSentTimeMs, 
 			long lastPacketReceivedTimeMs,
-			Exception underlyingException) {
+			Exception underlyingException, ExceptionInterceptor interceptor) {
 		SQLException exToReturn = null;
 		
 		if (!Util.isJdbc4()) {
@@ -1072,7 +1072,7 @@ public class SQLError {
 		
 			try {
 				exToReturn = (SQLException) Util.handleNewInstance(JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR, new Object[] {
-					conn, Constants.longValueOf(lastPacketSentTimeMs), Constants.longValueOf(lastPacketReceivedTimeMs), underlyingException});
+					conn, Constants.longValueOf(lastPacketSentTimeMs), Constants.longValueOf(lastPacketReceivedTimeMs), underlyingException}, interceptor);
 			} catch (SQLException sqlEx) {
 				// We should _never_ get this, but let's not swallow it either
 				

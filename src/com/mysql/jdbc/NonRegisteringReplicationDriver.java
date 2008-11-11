@@ -106,7 +106,7 @@ public class NonRegisteringReplicationDriver extends NonRegisteringDriver {
 			if (slaveHosts.length() == 0) {
 				throw SQLError.createSQLException(
 						"Must specify at least one slave host to connect to for master/slave replication load-balancing functionality",
-						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
 			}
 
 			masterProps.setProperty(HOST_PROPERTY_KEY, masterHost.toString());

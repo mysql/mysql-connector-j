@@ -1622,4 +1622,10 @@ public interface ConnectionProperties {
 	public abstract void setRetriesAllDown(int retriesAllDown);
 	
 	public abstract int getRetriesAllDown();
+
+	public ExceptionInterceptor getExceptionInterceptor();
+	
+	public abstract void setExceptionInterceptors(String exceptionInterceptors);
+
+	public abstract String getExceptionInterceptors();
 }

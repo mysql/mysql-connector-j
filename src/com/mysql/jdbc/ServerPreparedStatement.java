@@ -433,7 +433,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			realClose(false, true);
 
 			SQLException sqlEx = SQLError.createSQLException(ex.toString(),
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			sqlEx.initCause(ex);
 			
 			throw sqlEx;
@@ -683,7 +683,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			throw SQLError.createSQLException(Messages
 					.getString("ServerPreparedStatement.2") //$NON-NLS-1$
 					+ Messages.getString("ServerPreparedStatement.3"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		checkClosed();
@@ -774,7 +774,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 											while (rs.next()) {
 												this.batchedGeneratedKeys
 														.add(new ByteArrayRow(new byte[][] { rs
-																.getBytes(1) }));
+																.getBytes(1) }, getExceptionInterceptor()));
 											}
 										} finally {
 											if (rs != null) {
@@ -857,7 +857,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				messageBuf.append(extractedSql);
 
 				sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf
-						.toString());
+						.toString(), getExceptionInterceptor());
 			}
 
 			throw sqlEx;
@@ -867,7 +867,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			}
 
 			SQLException sqlEx = SQLError.createSQLException(ex.toString(),
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 
 			if (this.connection.getDumpQueriesOnException()) {
 				String extractedSql = toString();
@@ -878,7 +878,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				messageBuf.append(extractedSql);
 
 				sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf
-						.toString());
+						.toString(), getExceptionInterceptor());
 			}
 
 			sqlEx.initCause(ex);
@@ -920,7 +920,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		if (this.parameterBindings.length == 0) {
 			throw SQLError.createSQLException(Messages
 					.getString("ServerPreparedStatement.8"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		parameterIndex--;
@@ -932,7 +932,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 					+ (parameterIndex + 1)
 					+ Messages.getString("ServerPreparedStatement.10") //$NON-NLS-1$
 					+ this.parameterBindings.length,
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		if (this.parameterBindings[parameterIndex] == null) {
@@ -996,7 +996,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 
 		return new ResultSetMetaData(this.resultFields, 
-				this.connection.getUseOldAliasMetadataBehavior());
+				this.connection.getUseOldAliasMetadataBehavior(), getExceptionInterceptor());
 	}
 
 	/**
@@ -1007,7 +1007,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		
 		if (this.parameterMetaData == null) {
 			this.parameterMetaData = new MysqlParameterMetadata(
-					this.parameterFields, this.parameterCount);
+					this.parameterFields, this.parameterCount, getExceptionInterceptor());
 		}
 		
 		return this.parameterMetaData;
@@ -1104,7 +1104,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			this.invalidationException = sqlEx;
 		} catch (Exception ex) {
 			this.invalidationException = SQLError.createSQLException(ex.toString(),
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			this.invalidationException.initCause(ex);
 		}
 
@@ -1185,7 +1185,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 							throw SQLError.createSQLException(Messages
 									.getString("ServerPreparedStatement.11") //$NON-NLS-1$
 									+ Messages.getString("ServerPreparedStatement.12"), //$NON-NLS-1$
-									SQLError.SQL_STATE_DRIVER_NOT_CAPABLE);
+									SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
 						} else {
 							firstFound = true;
 							boundTimeToCheck = this.parameterBindings[i].boundBeforeExecutionNum;
@@ -1206,7 +1206,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 					throw SQLError.createSQLException(Messages
 							.getString("ServerPreparedStatement.13") + (i + 1) //$NON-NLS-1$
 							+ Messages.getString("ServerPreparedStatement.14"),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 				}
 			}
 
@@ -1533,7 +1533,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				throw SQLError.createSQLException(Messages
 						.getString("ServerPreparedStatement.18") //$NON-NLS-1$
 						+ value.getClass().getName() + "'", //$NON-NLS-1$
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 	}
@@ -1647,7 +1647,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 					messageBuf.append(this.originalSql);
 
 					sqlEx = ConnectionImpl.appendMessageToException(sqlEx,
-							messageBuf.toString());
+							messageBuf.toString(), getExceptionInterceptor());
 				}
 
 				throw sqlEx;
@@ -1695,7 +1695,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				throw sqlEx;
 			} catch (Exception ex) {
 				SQLException sqlEx = SQLError.createSQLException(ex.toString(),
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 				sqlEx.initCause(ex);
 				
 				throw sqlEx;
@@ -1959,7 +1959,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 						|| x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
 			throw SQLError.createSQLException("'" + x
 					+ "' is not a valid numeric or approximate numeric value",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 
 		}
 
@@ -2369,7 +2369,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			throw SQLError.createSQLException(Messages
 					.getString("ServerPreparedStatement.22") //$NON-NLS-1$
 					+ this.connection.getEncoding() + "'", //$NON-NLS-1$
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 	}
 
@@ -2573,7 +2573,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				byte[] valueAsBytes = StringUtils.getBytes(buf, null,
 						clobEncoding, this.connection
 								.getServerCharacterEncoding(), 0, numRead,
-						this.connection.parserKnowsUnicode());
+						this.connection.parserKnowsUnicode(), getExceptionInterceptor());
 
 				packet.writeBytesNoNull(valueAsBytes, 0, valueAsBytes.length);
 
@@ -2606,7 +2606,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		} catch (IOException ioEx) {
 			SQLException sqlEx = SQLError.createSQLException(Messages
 					.getString("ServerPreparedStatement.24") //$NON-NLS-1$
-					+ ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+					+ ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			sqlEx.initCause(ioEx);
 			
 			throw sqlEx;
@@ -2676,7 +2676,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		} catch (IOException ioEx) {
 			SQLException sqlEx = SQLError.createSQLException(Messages
 					.getString("ServerPreparedStatement.25") //$NON-NLS-1$
-					+ ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR);
+					+ ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			sqlEx.initCause(ioEx);
 			
 			throw sqlEx;

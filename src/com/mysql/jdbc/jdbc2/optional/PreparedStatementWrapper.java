@@ -90,7 +90,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 		return (PreparedStatementWrapper) Util.handleNewInstance(
 				JDBC_4_PREPARED_STATEMENT_WRAPPER_CTOR,
 				new Object[] {c, 
-						conn, toWrap });
+						conn, toWrap }, conn.getExceptionInterceptor());
 	}
 	
 	PreparedStatementWrapper(ConnectionWrapper c, MysqlPooledConnection conn,
@@ -111,7 +111,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -133,7 +133,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -154,7 +154,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -176,7 +176,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -196,7 +196,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -216,7 +216,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -236,7 +236,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -256,7 +256,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -278,7 +278,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -298,7 +298,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -318,7 +318,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -340,7 +340,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -360,7 +360,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -380,7 +380,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -400,7 +400,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -420,7 +420,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -440,7 +440,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 
 			throw SQLError.createSQLException(
 					"No operations allowed after statement closed",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -461,7 +461,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -482,7 +482,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -502,7 +502,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -523,7 +523,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -545,7 +545,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -566,7 +566,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 
 			throw SQLError.createSQLException(
 					"No operations allowed after statement closed",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -587,7 +587,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -607,7 +607,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -627,7 +627,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -647,7 +647,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -669,7 +669,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -690,7 +690,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -712,7 +712,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -732,7 +732,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -765,7 +765,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -784,7 +784,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -803,7 +803,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -823,7 +823,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 
 			throw SQLError.createSQLException(
 					"No operations allowed after statement closed",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -852,7 +852,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 
 			throw SQLError.createSQLException(
 					"No operations allowed after statement closed",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -876,7 +876,7 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 
 			throw SQLError.createSQLException(
 					"No operations allowed after statement closed",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}

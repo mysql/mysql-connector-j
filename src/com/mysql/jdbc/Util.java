@@ -375,23 +375,23 @@ public class Util {
 	}
 
 	public static Object getInstance(String className, Class[] argTypes,
-			Object[] args) throws SQLException {
+			Object[] args, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 
 		try {
 			return handleNewInstance(Class.forName(className).getConstructor(
-					argTypes), args);
+					argTypes), args, exceptionInterceptor);
 		} catch (SecurityException e) {
 			throw SQLError.createSQLException(
 					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e);
+					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
 		} catch (NoSuchMethodException e) {
 			throw SQLError.createSQLException(
 					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e);
+					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
 		} catch (ClassNotFoundException e) {
 			throw SQLError.createSQLException(
 					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e);
+					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
 		}
 	}
 
@@ -399,7 +399,7 @@ public class Util {
 	 * Handles constructing new instance with the given constructor and wrapping
 	 * (or not, as required) the exceptions that could possibly be generated
 	 */
-	public static final Object handleNewInstance(Constructor ctor, Object[] args)
+	public static final Object handleNewInstance(Constructor ctor, Object[] args, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
 		try {
 
@@ -407,15 +407,15 @@ public class Util {
 		} catch (IllegalArgumentException e) {
 			throw SQLError.createSQLException(
 					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e);
+					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
 		} catch (InstantiationException e) {
 			throw SQLError.createSQLException(
 					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e);
+					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
 		} catch (IllegalAccessException e) {
 			throw SQLError.createSQLException(
 					"Can't instantiate required class",
-					SQLError.SQL_STATE_GENERAL_ERROR, e);
+					SQLError.SQL_STATE_GENERAL_ERROR, e, exceptionInterceptor);
 		} catch (InvocationTargetException e) {
 			Throwable target = e.getTargetException();
 
@@ -428,7 +428,7 @@ public class Util {
 			}
 
 			throw SQLError.createSQLException(target.toString(),
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, exceptionInterceptor);
 		}
 	}
 
@@ -560,7 +560,7 @@ public class Util {
 	
 	public static List loadExtensions(Connection conn,
 			Properties props, String extensionClassNames,
-			String errorMessageKey) throws SQLException {
+			String errorMessageKey, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 		List extensionList = new LinkedList();
 
 		List interceptorsToCreate = StringUtils.split(extensionClassNames, ",",
@@ -581,7 +581,7 @@ public class Util {
 			}
 		} catch (Throwable t) {
 			SQLException sqlEx = SQLError.createSQLException(Messages
-					.getString(errorMessageKey, new Object[] { className }));
+					.getString(errorMessageKey, new Object[] { className }), exceptionInterceptor);
 			sqlEx.initCause(t);
 
 			throw sqlEx;

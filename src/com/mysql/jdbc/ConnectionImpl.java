@@ -75,6 +75,47 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		Connection {
 	private static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
 	
+	class ExceptionInterceptorChain implements ExceptionInterceptor {
+		List interceptors;
+		
+		ExceptionInterceptorChain(String interceptorClasses) throws SQLException {
+			interceptors = Util.loadExtensions(ConnectionImpl.this, props, interceptorClasses, "Coonection.BadExceptionInterceptor",  this);
+		}
+		
+		public SQLException interceptException(SQLException sqlEx) {
+			if (interceptors != null) {
+				Iterator iter = interceptors.iterator();
+				
+				while (iter.hasNext()) {
+					sqlEx = ((ExceptionInterceptor)iter.next()).interceptException(sqlEx);
+				}
+			}
+			
+			return sqlEx;
+		}
+
+		public void destroy() {
+			if (interceptors != null) {
+				Iterator iter = interceptors.iterator();
+				
+				while (iter.hasNext()) {
+					((ExceptionInterceptor)iter.next()).destroy();
+				}
+			}
+			
+		}
+
+		public void init(Connection conn, Properties props) throws SQLException {
+			if (interceptors != null) {
+				Iterator iter = interceptors.iterator();
+				
+				while (iter.hasNext()) {
+					((ExceptionInterceptor)iter.next()).init(conn, props);
+				}
+			}
+		}
+	}
+	
 	/**
 	 * Used as a key for caching callable statements which (may) depend on
 	 * current catalog...In 5.0.x, they don't (currently), but stored procedure
@@ -227,7 +268,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	}
 
 	protected static SQLException appendMessageToException(SQLException sqlEx,
-			String messageToAppend) {
+			String messageToAppend, ExceptionInterceptor interceptor) {
 		String origMessage = sqlEx.getMessage();
 		String sqlState = sqlEx.getSQLState();
 		int vendorErrorCode = sqlEx.getErrorCode();
@@ -238,7 +279,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		messageBuf.append(messageToAppend);
 
 		SQLException sqlExceptionWithNewMessage = SQLError.createSQLException(messageBuf
-				.toString(), sqlState, vendorErrorCode);
+				.toString(), sqlState, vendorErrorCode, interceptor);
 
 		//
 		// Try and maintain the original stack trace,
@@ -302,7 +343,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return (Connection) Util.handleNewInstance(JDBC_4_CONNECTION_CTOR,
 				new Object[] {
 							hostToConnectTo, Constants.integerValueOf(portToConnectTo), info,
-							databaseToConnectTo, url });
+							databaseToConnectTo, url }, null);
 	}
 
 	private static synchronized int getNextRoundRobinHostIndex(String url,
@@ -661,7 +702,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		// We will reset this to the configured logger during properties
 		// initialization.
 		//
-		this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME);
+		this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
 
 		// We store this per-connection, due to static synchronization
 		// issues in Java's built-in TimeZone class...
@@ -755,7 +796,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 
 			SQLException sqlEx = SQLError.createSQLException(mesg.toString(),
-					SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE);
+					SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, getExceptionInterceptor());
 			
 			sqlEx.initCause(ex);
 			
@@ -766,7 +807,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
     protected void initializeStatementInterceptors() throws SQLException {
 		this.statementInterceptors = Util.loadExtensions(this, this.props, 
 				getStatementInterceptors(),
-				"MysqlIo.BadStatementInterceptor");
+				"MysqlIo.BadStatementInterceptor", getExceptionInterceptor());
 	}
     
     protected List getStatementInterceptorsInstances() {
@@ -1113,7 +1154,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 
 			throw SQLError.createSQLException(messageBuf.toString(),
-					SQLError.SQL_STATE_CONNECTION_NOT_OPEN);
+					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
 		}
 	}
 
@@ -1181,7 +1222,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						+ serverEncoding
 						+ "', use 'characterEncoding=' property "
 						+ " to provide correct mapping",
-						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+						SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
 			}
 
 			//
@@ -1200,7 +1241,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								+ "to a character encoding your JVM understands. You "
 								+ "can specify this mapping manually by adding \"useUnicode=true\" "
 								+ "as well as \"characterEncoding=[an_encoding_your_jvm_understands]\" "
-								+ "to your JDBC URL.", "0S100");
+								+ "to your JDBC URL.", "0S100", getExceptionInterceptor());
 			}
 		}
 	}
@@ -1549,7 +1590,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				
 				// no-op if _relaxAutoCommit == true
 				if (this.autoCommit && !getRelaxAutoCommit()) {
-					throw SQLError.createSQLException("Can't call commit when autocommit=true");
+					throw SQLError.createSQLException("Can't call commit when autocommit=true", getExceptionInterceptor());
 				} else if (this.transactionsSupported) {
 					if (getUseLocalTransactionState() && versionMeetsMinimum(5, 0, 0)) {
 						if (!this.io.inTransactionOnServer()) {
@@ -1568,7 +1609,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						.equals(sqlException.getSQLState())) {
 					throw SQLError.createSQLException(
 							"Communications link failure during commit(). Transaction resolution unknown.",
-							SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN);
+							SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
 				}
 	
 				throw sqlException;
@@ -1576,6 +1617,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				this.needsPing = this.getReconnectAtTxEnd();
 			}
 	
+			if (this.io.inTransactionOnServer()) {
+				throw new RuntimeException();
+			}
+			
 			return;
 		}
 	}
@@ -1604,7 +1649,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					throw SQLError.createSQLException(
 							"Java does not support the MySQL character encoding "
 									+ " " + "encoding '" + oldEncoding + "'.",
-							SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+							SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
 				}
 
 				try {
@@ -1613,7 +1658,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				} catch (UnsupportedEncodingException encodingEx) {
 					throw SQLError.createSQLException("Unsupported character "
 							+ "encoding '" + getEncoding() + "'.",
-							SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+							SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
 				}
 			}
 		}
@@ -1669,7 +1714,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 									"Unknown initial character set index '"
 											+ this.io.serverCharsetIndex
 											+ "' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
-									SQLError.SQL_STATE_GENERAL_ERROR);
+									SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 						}
 					}
 					
@@ -1690,7 +1735,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								"Unknown initial character set index '"
 										+ this.io.serverCharsetIndex
 										+ "' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
-								SQLError.SQL_STATE_GENERAL_ERROR);
+								SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 					}
 				}
 
@@ -1909,17 +1954,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			if (canoncicalTimezone == null || StringUtils.isEmptyOrWhitespaceOnly(canoncicalTimezone)) {
 				try {
 					canoncicalTimezone = TimeUtil
-							.getCanoncialTimezone(configuredTimeZoneOnServer);
+							.getCanoncialTimezone(configuredTimeZoneOnServer, getExceptionInterceptor());
 
 					if (canoncicalTimezone == null) {
 						throw SQLError.createSQLException("Can't map timezone '"
 								+ configuredTimeZoneOnServer + "' to "
 								+ " canonical timezone.",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 					}
 				} catch (IllegalArgumentException iae) {
 					throw SQLError.createSQLException(iae.getMessage(),
-							SQLError.SQL_STATE_GENERAL_ERROR);
+							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 				}
 			}
 		} else {
@@ -1938,7 +1983,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					&& this.serverTimezoneTZ.getID().equals("GMT")) {
 				throw SQLError.createSQLException("No timezone mapping entry for '"
 						+ canoncicalTimezone + "'",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 
 			if ("GMT".equalsIgnoreCase(this.serverTimezoneTZ.getID())) {
@@ -2036,7 +2081,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 											"Illegal connection port value '"
 													+ hostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]
 													+ "'",
-											SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+											SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
 								}
 							}
 	
@@ -2122,7 +2167,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 												.getLastPacketSentTimeMs() : 0,
 										(this.io != null) ? this.io
 												 .getLastPacketReceivedTimeMs() : 0,
-												EEE);
+												EEE, getExceptionInterceptor());
 							}
 						}
 					}
@@ -2131,7 +2176,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						// We've really failed!
 						SQLException chainedEx = SQLError.createSQLException(
 								Messages.getString("Connection.UnableToConnect"),
-								SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+								SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
 						chainedEx.initCause(connectionNotEstablishedBecause);
 						
 						throw chainedEx;
@@ -2187,7 +2232,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 												"Illegal connection port value '"
 														+ hostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]
 														+ "'",
-												SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+												SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
 									}
 								}
 	
@@ -2270,7 +2315,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						SQLException chainedEx = SQLError.createSQLException(
 								Messages.getString("Connection.UnableToConnectWithRetries",
 										new Object[] {new Integer(getMaxReconnects())}),
-								SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+								SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
 						chainedEx.initCause(connectionException);
 						
 						throw chainedEx;
@@ -2408,7 +2453,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
 				throw SQLError.createSQLException(
 						"HOLD_CUSRORS_OVER_COMMIT is only supported holdability level",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -2567,7 +2612,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							.append("\n\nQuery being executed when exception was thrown:\n\n");
 					messageBuf.append(extractedSql);
 
-					sqlE = appendMessageToException(sqlE, messageBuf.toString());
+					sqlE = appendMessageToException(sqlE, messageBuf.toString(), getExceptionInterceptor());
 				}
 
 				if ((getHighAvailability() || this.failedOver)) {
@@ -2592,7 +2637,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 				SQLException sqlEx = SQLError.createSQLException(
 						Messages.getString("Connection.UnexpectedException"),
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 				sqlEx.initCause(ex);
 				
 				throw sqlEx;
@@ -2824,7 +2869,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				throw SQLError.createSQLException(
 						"Unknown character set index for field '"
 								+ charsetIndex + "' received from server.",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			}
 
 			// Punt
@@ -2892,7 +2937,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		if ((this.io == null) || this.isClosed) {
 			throw SQLError.createSQLException(
 					"Operation not allowed on closed connection",
-					SQLError.SQL_STATE_CONNECTION_NOT_OPEN);
+					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
 		}
 
 		return this.io;
@@ -3031,7 +3076,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		if (this.io == null) {
 			throw SQLError.createSQLException(
 					"Connection.close() has already been called. Invalid operation in this state.",
-					SQLError.SQL_STATE_CONNECTION_NOT_OPEN);
+					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
 		}
 
 		reportMetricsIfNeeded();
@@ -3145,12 +3190,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					throw SQLError.createSQLException(
 							"Could not map transaction isolation '" + s
 									+ " to a valid JDBC level.",
-							SQLError.SQL_STATE_GENERAL_ERROR);
+							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 				}
 
 				throw SQLError.createSQLException(
 						"Could not retrieve transaction isolation level from server",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 
 			} finally {
 				if (rs != null) {
@@ -3265,9 +3310,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			throws SQLException {
 		initializeProperties(info);
 		
+		String exceptionInterceptorClasses = getExceptionInterceptors();
+		
+		if (exceptionInterceptorClasses != null && !"".equals(exceptionInterceptorClasses)) {
+			this.exceptionInterceptor = new ExceptionInterceptorChain(exceptionInterceptorClasses);
+			this.exceptionInterceptor.init(this, info);
+		}
+		
 		this.usePlatformCharsetConverters = getUseJvmCharsetConverters();
 
-		this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME);
+		this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
 
 		if (getProfileSql() || getUseUsageAdvisor()) {
 			this.eventSink = ProfilerEventHandlerFactory.getInstance(this);
@@ -3281,7 +3333,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			throw SQLError.createSQLException(
 					"Can't enable noDatetimeSync and useTimezone configuration "
 							+ "properties at the same time",
-					SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+					SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
 		}
 		
 		if (getCacheCallableStatements()) {
@@ -3316,7 +3368,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		if (connectionInterceptorClasses != null) {
 			this.connectionLifecycleInterceptors = Util.loadExtensions(this, this.props, 
 					connectionInterceptorClasses, 
-					"Connection.badLifecycleInterceptor");
+					"Connection.badLifecycleInterceptor", getExceptionInterceptor());
 			
 			Iterator iter = this.connectionLifecycleInterceptors.iterator();
 			
@@ -3857,7 +3909,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @param stmt
 	 *            DOCUMENT ME!
 	 */
-	void maxRowsChanged(StatementImpl stmt) {
+	void maxRowsChanged(Statement stmt) {
 		synchronized (this.mutex) {
 			if (this.statementsUsingMaxRows == null) {
 				this.statementsUsingMaxRows = new HashMap();
@@ -3953,7 +4005,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 			throw SQLError.createSQLException(Messages
 					.getString("Connection.exceededConnectionLifetime"),
-					SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE);
+					SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE, getExceptionInterceptor());
 		}
 		// Need MySQL-3.22.1, but who uses anything older!?
 		this.io.sendCommand(MysqlDefs.PING, null, null, false, null, timeoutMillis);
@@ -4024,7 +4076,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 
 		throw SQLError.createSQLException("Callable statements not " + "supported.",
-				SQLError.SQL_STATE_DRIVER_NOT_CAPABLE);
+				SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
 	}
 
 	/**
@@ -4037,7 +4089,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
 				throw SQLError.createSQLException(
 						"HOLD_CUSRORS_OVER_COMMIT is only supported holdability level",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -4191,7 +4243,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
 				throw SQLError.createSQLException(
 						"HOLD_CUSRORS_OVER_COMMIT is only supported holdability level",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -4308,10 +4360,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	    			((StatementInterceptor)this.statementInterceptors.get(i)).destroy();
 	    		}
 	    	}
+	    	
+	    	if (this.exceptionInterceptor != null) {
+	    		this.exceptionInterceptor.destroy();
+	    	}
 		} finally {
 			this.openStatements = null;
 			this.io = null;
 			this.statementInterceptors = null;
+			this.exceptionInterceptor = null;
 			ProfilerEventHandlerFactory.removeInstance(this);
 			this.isClosed = true;
 		}
@@ -4359,7 +4416,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @param stmt
 	 *            the Statement instance to remove
 	 */
-	void registerStatement(StatementImpl stmt) {
+	void registerStatement(Statement stmt) {
 		synchronized (this.openStatements) {
 			this.openStatements.put(stmt, stmt);
 		}
@@ -4627,7 +4684,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				if (this.autoCommit && !getRelaxAutoCommit()) {
 					throw SQLError.createSQLException(
 							"Can't call rollback when autocommit=true",
-							SQLError.SQL_STATE_CONNECTION_NOT_OPEN);
+							SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
 				} else if (this.transactionsSupported) {
 					try {
 						rollbackNoChecks();
@@ -4644,7 +4701,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						.equals(sqlException.getSQLState())) {
 					throw SQLError.createSQLException(
 							"Communications link failure during rollback(). Transaction resolution unknown.",
-							SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN);
+							SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
 				}
 	
 				throw sqlException;
@@ -4707,7 +4764,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 											+ savepoint.getSavepointName()
 											+ "' does not exist",
 											SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-											errno);
+											errno, getExceptionInterceptor());
 								}
 							}
 						}
@@ -4722,7 +4779,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								.equals(sqlEx.getSQLState())) {
 							throw SQLError.createSQLException(
 									"Communications link failure during rollback(). Transaction resolution unknown.",
-									SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN);
+									SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
 						}
 	
 						throw sqlEx;
@@ -4749,6 +4806,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				java.sql.ResultSet.TYPE_FORWARD_ONLY,
 				java.sql.ResultSet.CONCUR_READ_ONLY, false,
 				this.database, null, false);
+		
+		if (this.io.inTransactionOnServer()) {
+			throw new RuntimeException();
+		}
 	}
 
 	/**
@@ -4803,7 +4864,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			if (resultSetHoldability != java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT) {
 				throw SQLError.createSQLException(
 						"HOLD_CUSRORS_OVER_COMMIT is only supported holdability level",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -4924,7 +4985,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					if ((autoCommitFlag == false) && !getRelaxAutoCommit()) {
 						throw SQLError.createSQLException("MySQL Versions Older than 3.23.15 "
 								+ "do not support transactions",
-								SQLError.SQL_STATE_CONNECTION_NOT_OPEN);
+								SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
 					}
 	
 					this.autoCommit = autoCommitFlag;
@@ -4935,6 +4996,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			}
 	
+			//if (autoCommitFlag) {
+			//	if (this.io.isSetNeededForAutoCommitMode(true)) {
+			//		throw new RuntimeException();
+			//	}
+			//}
+			
 			return;
 		}
 	}
@@ -4958,7 +5025,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 			if (catalog == null) {
 				throw SQLError.createSQLException("Catalog can not be null",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 			
 			if (this.connectionLifecycleInterceptors != null) {
@@ -5096,7 +5163,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @see Connection#setSavepoint()
 	 */
 	public java.sql.Savepoint setSavepoint() throws SQLException {
-		MysqlSavepoint savepoint = new MysqlSavepoint();
+		MysqlSavepoint savepoint = new MysqlSavepoint(getExceptionInterceptor());
 
 		setSavepoint(savepoint);
 
@@ -5133,7 +5200,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @see Connection#setSavepoint(String)
 	 */
 	public synchronized java.sql.Savepoint setSavepoint(String name) throws SQLException {
-		MysqlSavepoint savepoint = new MysqlSavepoint(name);
+		MysqlSavepoint savepoint = new MysqlSavepoint(name, getExceptionInterceptor());
 
 		setSavepoint(savepoint);
 
@@ -5205,7 +5272,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				switch (level) {
 				case java.sql.Connection.TRANSACTION_NONE:
 					throw SQLError.createSQLException("Transaction isolation level "
-							+ "NONE not supported by MySQL");
+							+ "NONE not supported by MySQL", getExceptionInterceptor());
 
 				case java.sql.Connection.TRANSACTION_READ_COMMITTED:
 					sql = "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED";
@@ -5230,7 +5297,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				default:
 					throw SQLError.createSQLException("Unsupported transaction "
 							+ "isolation level '" + level + "'",
-							SQLError.SQL_STATE_DRIVER_NOT_CAPABLE);
+							SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
 				}
 
 				execSQL(null, sql, -1, null,
@@ -5243,7 +5310,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		} else {
 			throw SQLError.createSQLException("Transaction Isolation Levels are "
 					+ "not supported on MySQL versions older than 3.23.36.",
-					SQLError.SQL_STATE_DRIVER_NOT_CAPABLE);
+					SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
 		}
 	}
 	
@@ -5322,7 +5389,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		} catch (Exception ex) {
 			SQLException sqlEx = SQLError.createSQLException(
 					Messages.getString("Connection.UnhandledExceptionDuringShutdown"),
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			
 			sqlEx.initCause(ex);
 			
@@ -5363,7 +5430,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @param stmt
 	 *            the Statement instance to remove
 	 */
-	void unregisterStatement(StatementImpl stmt) {
+	void unregisterStatement(Statement stmt) {
 		if (this.openStatements != null) {
 			synchronized (this.openStatements) {
 				this.openStatements.remove(stmt);
@@ -5381,7 +5448,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *             if a database error occurs issuing the statement that sets
 	 *             the limit default.
 	 */
-	void unsetMaxRows(StatementImpl stmt) throws SQLException {
+	void unsetMaxRows(Statement stmt) throws SQLException {
 		synchronized (this.mutex) {
 			if (this.statementsUsingMaxRows != null) {
 				Object found = this.statementsUsingMaxRows.remove(stmt);
@@ -5564,5 +5631,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	public boolean storesLowerCaseTableName() {
 		return storesLowerCaseTableName;
+	}
+	
+	private ExceptionInterceptor exceptionInterceptor;
+	
+	public ExceptionInterceptor getExceptionInterceptor() {
+		return this.exceptionInterceptor;
 	}
 }

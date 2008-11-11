@@ -272,7 +272,7 @@ public class CallableStatement extends PreparedStatement implements
 				throw SQLError.createSQLException(
 						Messages.getString("CallableStatement.11") + paramIndex //$NON-NLS-1$
 								+ Messages.getString("CallableStatement.12") + numParameters //$NON-NLS-1$
-								+ Messages.getString("CallableStatement.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+								+ Messages.getString("CallableStatement.13"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 			}
 		}
 
@@ -433,7 +433,7 @@ public class CallableStatement extends PreparedStatement implements
 	    		return Util.cast(iface, this);
 	        } catch (ClassCastException cce) {
 	            throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
-	            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+	            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 	        }
 	    }
 	}
@@ -521,7 +521,7 @@ public class CallableStatement extends PreparedStatement implements
 
 		return (CallableStatement) Util.handleNewInstance(
 				JDBC_4_CSTMT_4_ARGS_CTOR, new Object[] { conn, sql, catalog,
-						Boolean.valueOf(isFunctionCall) });
+						Boolean.valueOf(isFunctionCall) }, conn.getExceptionInterceptor());
 	}
 	
 	/**
@@ -538,7 +538,7 @@ public class CallableStatement extends PreparedStatement implements
 		}
 
 		return (CallableStatement) Util.handleNewInstance(
-				JDBC_4_CSTMT_2_ARGS_CTOR, new Object[] { conn, paramInfo });
+				JDBC_4_CSTMT_2_ARGS_CTOR, new Object[] { conn, paramInfo }, conn.getExceptionInterceptor());
 
 	}
 	
@@ -690,7 +690,7 @@ public class CallableStatement extends PreparedStatement implements
 			throw SQLError.createSQLException(
 					Messages.getString("CallableStatement.9") + paramIndex //$NON-NLS-1$
 							+ Messages.getString("CallableStatement.10"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		this.hasOutputParams = true;
@@ -720,7 +720,7 @@ public class CallableStatement extends PreparedStatement implements
 	private void checkStreamability() throws SQLException {
 		if (this.hasOutputParams && createStreamingResultSet()) {
 			throw SQLError.createSQLException(Messages.getString("CallableStatement.14"), //$NON-NLS-1$
-					SQLError.SQL_STATE_DRIVER_NOT_CAPABLE);
+					SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
 		}
 	}
 
@@ -796,7 +796,7 @@ public class CallableStatement extends PreparedStatement implements
 
 			row[12] = null;
 
-			resultRows.add(new ByteArrayRow(row));
+			resultRows.add(new ByteArrayRow(row, getExceptionInterceptor()));
 		}
 
 		java.sql.ResultSet paramTypesRs = DatabaseMetaData.buildResultSet(
@@ -985,7 +985,7 @@ public class CallableStatement extends PreparedStatement implements
 		}
 		
 		throw SQLError.createSQLException(Messages.getString("CallableStatement.1"), //$NON-NLS-1$
-				SQLError.SQL_STATE_GENERAL_ERROR);
+				SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 	}
 
 	/**
@@ -1003,12 +1003,13 @@ public class CallableStatement extends PreparedStatement implements
 		if ((paramNameIn == null) || (paramNameIn.length() == 0)) {
 			throw SQLError.createSQLException(
 					((Messages.getString("CallableStatement.0") + paramNameIn) == null) //$NON-NLS-1$
-							? Messages.getString("CallableStatement.15") : Messages.getString("CallableStatement.16"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$ //$NON-NLS-2$
+							? Messages.getString("CallableStatement.15") : Messages.getString("CallableStatement.16"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, 
+									getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		if (this.connection.getNoAccessToProcedureBodies()) {
 			throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 		
 		return mangleParameterName(paramNameIn);
@@ -1429,18 +1430,18 @@ public class CallableStatement extends PreparedStatement implements
 	throws SQLException {
 		if (this.connection.getNoAccessToProcedureBodies()) {
 			throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 		
 		if ((paramName == null) || (paramName.length() == 0)) {
 			throw SQLError.createSQLException(Messages.getString("CallableStatement.2"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		if (this.paramInfo == null) {
 			throw SQLError.createSQLException(
 					Messages.getString("CallableStatement.3") + paramName + Messages.getString("CallableStatement.4"), //$NON-NLS-1$ //$NON-NLS-2$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		CallableStatementParam namedParamInfo = this.paramInfo
@@ -1450,7 +1451,7 @@ public class CallableStatement extends PreparedStatement implements
 			throw SQLError.createSQLException(
 					Messages.getString("CallableStatement.5") + paramName //$NON-NLS-1$
 					+ Messages.getString("CallableStatement.6"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 
@@ -1465,7 +1466,7 @@ public class CallableStatement extends PreparedStatement implements
 		}
 
 		throw SQLError.createSQLException("Can't find local placeholder mapping for parameter named \"" + 
-				paramName + "\".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+				paramName + "\".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 	}
 
 	/**
@@ -1554,10 +1555,10 @@ public class CallableStatement extends PreparedStatement implements
 			if (this.paramInfo.numberOfParameters() == 0) {
 				throw SQLError.createSQLException(Messages
 						.getString("CallableStatement.7"), //$NON-NLS-1$
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 			throw SQLError.createSQLException(Messages.getString("CallableStatement.8"), //$NON-NLS-1$
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
 		return this.outputParameterResults;
@@ -1830,7 +1831,7 @@ public class CallableStatement extends PreparedStatement implements
 			throw SQLError.createSQLException(
 					Messages.getString("CallableStatement.21") + paramIndex //$NON-NLS-1$
 							+ Messages.getString("CallableStatement.22"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		return rsIndex + 1;
@@ -2212,7 +2213,7 @@ public class CallableStatement extends PreparedStatement implements
 									this.charConverter, this.charEncoding,
 									this.connection
 											.getServerCharacterEncoding(),
-									this.connection.parserKnowsUnicode()));
+									this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
 				}
 			}
 		}
@@ -2284,7 +2285,7 @@ public class CallableStatement extends PreparedStatement implements
 	public int[] executeBatch() throws SQLException {
 		if (this.hasOutputParams) {
 			throw SQLError.createSQLException("Can't call executeBatch() on CallableStatement with OUTPUT parameters",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 		
 		return super.executeBatch();

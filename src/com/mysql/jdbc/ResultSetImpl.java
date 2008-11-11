@@ -336,6 +336,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	private boolean useFastIntParsing = true;
 	private boolean useColumnNamesInFindColumn;
 	
+	private ExceptionInterceptor exceptionInterceptor;
+	
 	protected final static char[] EMPTY_SPACE = new char[255];
 	
 	static {
@@ -352,7 +354,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		return (ResultSetImpl) Util.handleNewInstance(JDBC_4_RS_4_ARG_CTOR,
 				new Object[] { Constants.longValueOf(updateCount), Constants.longValueOf(updateID), conn,
-						creatorStmt });
+						creatorStmt}, conn.getExceptionInterceptor());
 	}
 
 	/**
@@ -378,11 +380,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (!isUpdatable) {
 			return (ResultSetImpl) Util
 					.handleNewInstance(JDBC_4_RS_6_ARG_CTOR, new Object[] {
-							catalog, fields, tuples, conn, creatorStmt });
+							catalog, fields, tuples, conn, creatorStmt }, conn.getExceptionInterceptor());
 		}
 
 		return (ResultSetImpl) Util.handleNewInstance(JDBC_4_UPD_RS_6_ARG_CTOR,
-				new Object[] { catalog, fields, tuples, conn, creatorStmt });
+				new Object[] { catalog, fields, tuples, conn, creatorStmt }, conn.getExceptionInterceptor());
 	}
 
 	/**
@@ -406,6 +408,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		this.connection = conn;
 		this.owningStatement = creatorStmt;
+		
+		this.exceptionInterceptor = this.connection.getExceptionInterceptor();
 		
 		this.retainOwningStatement = false;
 		
@@ -592,7 +596,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				throw SQLError.createSQLException(
 						Messages
 								.getString("ResultSet.Cannot_absolute_position_to_row_0_110"), //$NON-NLS-1$
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 
 			if (this.onInsertRow) {
@@ -788,7 +792,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			throw SQLError.createSQLException(
 					Messages
 							.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"), //$NON-NLS-1$
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 	}
 
@@ -807,13 +811,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					"ResultSet.Column_Index_out_of_range_low", new Object[] {
 							Constants.integerValueOf(columnIndex),
 							Constants.integerValueOf(this.fields.length) }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		} else if ((columnIndex > this.fields.length)) {
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Column_Index_out_of_range_high", new Object[] {
 							Constants.integerValueOf(columnIndex),
 							Constants.integerValueOf(this.fields.length) }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		if (this.profileSql || this.useUsageAdvisor) {
@@ -833,7 +837,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		if (!this.onValidRow) {
 			throw SQLError.createSQLException(this.invalidRowReason, 
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 	}
 	
@@ -910,7 +914,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 
 		throw SQLError.createSQLException("Can't convert empty string ('') to numeric",
-				SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST);
+				SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, getExceptionInterceptor());
 	}
 	
 	private String convertToZeroLiteralStringWithEmptyCheck()
@@ -921,7 +925,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 
 		throw SQLError.createSQLException("Can't convert empty string ('') to numeric",
-				SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST);
+				SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, getExceptionInterceptor());
 	}
 
 	//
@@ -1021,7 +1025,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	protected synchronized Time fastTimeCreate(Calendar cal, int hour,
 			int minute, int second) throws SQLException {
 		if (!this.useLegacyDatetimeCode) {
-			return TimeUtil.fastTimeCreate(hour, minute, second, cal);
+			return TimeUtil.fastTimeCreate(hour, minute, second, cal, getExceptionInterceptor());
 		}
 		
 		if (cal == null) {
@@ -1029,7 +1033,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			cal = this.fastDateCal;
 		}
 
-		return TimeUtil.fastTimeCreate(cal, hour, minute, second);
+		return TimeUtil.fastTimeCreate(cal, hour, minute, second, getExceptionInterceptor());
 	}
 
 	protected synchronized Timestamp fastTimestampCreate(Calendar cal, int year,
@@ -1136,7 +1140,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		throw SQLError.createSQLException(Messages.getString("ResultSet.Column____112")
 				+ columnName
 				+ Messages.getString("ResultSet.___not_found._113"), //$NON-NLS-1$ //$NON-NLS-2$
-				SQLError.SQL_STATE_COLUMN_NOT_FOUND);
+				SQLError.SQL_STATE_COLUMN_NOT_FOUND, getExceptionInterceptor());
 	}
 
 	/**
@@ -1300,7 +1304,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							.getString("ResultSet.Bad_format_for_BigDecimal",
 									new Object[] { stringVal,
 											Constants.integerValueOf(columnIndex) }),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 				}
 			}
 
@@ -1348,7 +1352,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 									Messages
 											.getString("ResultSet.Bad_format_for_BigDecimal", //$NON-NLS-1$
 											 new Object[] {stringVal, new Integer(columnIndex)}),
-									SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+									SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 						}
 					}
 				}
@@ -1365,7 +1369,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							.getString("ResultSet.Bad_format_for_BigDecimal",
 									new Object[] { Constants.integerValueOf(columnIndex),
 											stringVal }),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 						}
 				}
 
@@ -1379,7 +1383,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 								"ResultSet.Bad_format_for_BigDecimal",
 								new Object[] { Constants.integerValueOf(columnIndex),
 										stringVal }),
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 					}
 				}
 			}
@@ -1584,10 +1588,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			}
 
 			if (!this.connection.getEmulateLocators()) {
-				return new Blob(this.thisRow.getColumnValue(columnIndexMinusOne));
+				return new Blob(this.thisRow.getColumnValue(columnIndexMinusOne), getExceptionInterceptor());
 			}
 
-			return new BlobFromLocator(this, columnIndex);
+			return new BlobFromLocator(this, columnIndex, getExceptionInterceptor());
 		}
 
 		return getNativeBlob(columnIndex);
@@ -1673,7 +1677,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				case Types.STRUCT:
 				case Types.JAVA_OBJECT:
 					throw SQLError.createSQLException("Required type conversion not allowed",
-							SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST);
+							SQLError.SQL_STATE_INVALID_CHARACTER_VALUE_FOR_CAST, getExceptionInterceptor());
 				}
 			}
 		
@@ -1852,7 +1856,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							+ stringVal //$NON-NLS-1$
 							+ Messages
 									.getString("ResultSet.___is_out_of_range_[-127,127]_174"),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 	}
 
@@ -1922,7 +1926,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					.getEncoding(), this.connection
 					.getServerCharacterEncoding(), this.connection
 					.parserKnowsUnicode(),
-					this.connection);
+					this.connection, getExceptionInterceptor());
 		}
 
 		return null;
@@ -2025,7 +2029,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				return null;
 			}
 
-			return new com.mysql.jdbc.Clob(asString);
+			return new com.mysql.jdbc.Clob(asString, getExceptionInterceptor());
 		}
 
 		return getNativeClob(i);
@@ -2048,7 +2052,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 	private final java.sql.Clob getClobFromString(String stringVal,
 			int columnIndex) throws SQLException {
-		return new com.mysql.jdbc.Clob(stringVal);
+		return new com.mysql.jdbc.Clob(stringVal, getExceptionInterceptor());
 	}
 
 	/**
@@ -2092,7 +2096,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public String getCursorName() throws SQLException {
 		throw SQLError.createSQLException(Messages
 				.getString("ResultSet.Positioned_Update_not_supported"),
-				SQLError.SQL_STATE_DRIVER_NOT_CAPABLE); //$NON-NLS-1$
+				SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor()); //$NON-NLS-1$
 	}
 
 	/**
@@ -2233,7 +2237,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException("Value '" + stringVal
 							+ "' can not be represented as java.sql.Date",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
 				// We're left with the case of 'round' to a date Java _can_
@@ -2302,7 +2306,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					throw SQLError.createSQLException(Messages.getString(
 							"ResultSet.Bad_format_for_Date", new Object[] {
 									stringVal, Constants.integerValueOf(columnIndex) }),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 				} /* endswitch */
 			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 
@@ -2330,7 +2334,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					throw SQLError.createSQLException(Messages.getString(
 							"ResultSet.Bad_format_for_Date", new Object[] {
 									stringVal, Constants.integerValueOf(columnIndex) }),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 				}
 
 				if (stringVal.length() != 18) {
@@ -2354,7 +2358,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			SQLException sqlEx = SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_Date", new Object[] { stringVal,
 							Constants.integerValueOf(columnIndex) }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 			
 			sqlEx.initCause(e);
 			
@@ -2486,7 +2490,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_number", new Object[] {
 							stringVal, Constants.integerValueOf(colIndex) }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 	}
 
@@ -2617,7 +2621,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							.getString("ResultSet.Invalid_value_for_getFloat()_-____200")
 							+ val //$NON-NLS-1$
 							+ Messages.getString("ResultSet.___in_column__201")
-							+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+							+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 	}
 
@@ -2697,7 +2701,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 																		.getCharacterSet(),
 																this.connection) //$NON-NLS-1$
 												+ "'",
-										SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+										SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 					}
 				}
 			}
@@ -2755,7 +2759,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 										.getString("ResultSet.Invalid_value_for_getInt()_-____74")
 										+ val //$NON-NLS-1$
 										+ "'",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -2854,7 +2858,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					.getString("ResultSet.Invalid_value_for_getInt()_-____206")
 					+ val //$NON-NLS-1$
 					+ Messages.getString("ResultSet.___in_column__207")
-					+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 	}
 
@@ -2927,7 +2931,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 														.getCharacterSet(),
 												this.connection) //$NON-NLS-1$
 										+ "'",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 					}
 				}
 			}
@@ -2963,7 +2967,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						Messages
 								.getString("ResultSet.Invalid_value_for_getLong()_-____79")
 								+ val //$NON-NLS-1$
-								+ "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+								+ "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -3016,7 +3020,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							.getString("ResultSet.Invalid_value_for_getLong()_-____211")
 							+ val //$NON-NLS-1$
 							+ Messages.getString("ResultSet.___in_column__212")
-							+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+							+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 	}
 
@@ -3033,7 +3037,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkClosed();
 
 		return new com.mysql.jdbc.ResultSetMetaData(this.fields,
-				this.connection.getUseOldAliasMetadataBehavior());
+				this.connection.getUseOldAliasMetadataBehavior(), getExceptionInterceptor());
 	}
 
 	/**
@@ -3247,10 +3251,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 
 		if (!this.connection.getEmulateLocators()) {
-			return new Blob(dataAsBytes);
+			return new Blob(dataAsBytes, getExceptionInterceptor());
 		}
 
-		return new BlobFromLocator(this, columnIndex);
+		return new BlobFromLocator(this, columnIndex, getExceptionInterceptor());
 	}
 
 	public static boolean arraysEqual(byte[] left, byte[] right) {
@@ -3692,7 +3696,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							Messages
 									.getString("ResultSet.Bad_format_for_BigDecimal", 
 											new Object[] {stringVal, Constants.integerValueOf(columnIndex)}),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
 				return val.toString();
@@ -3736,7 +3740,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 											.getString("ResultSet.Class_not_found___91") //$NON-NLS-1$
 											+ cnfe.toString()
 											+ Messages
-													.getString("ResultSet._while_reading_serialized_object_92")); //$NON-NLS-1$
+													.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor()); //$NON-NLS-1$
 						} catch (IOException ex) {
 							obj = data; // not serialized?
 						}
@@ -4532,7 +4536,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			throw SQLError.createSQLException(
 					Messages
 							.getString("ResultSet.Query_generated_no_fields_for_ResultSet_133"), //$NON-NLS-1$
-					SQLError.SQL_STATE_INVALID_COLUMN_NUMBER);
+					SQLError.SQL_STATE_INVALID_COLUMN_NUMBER, getExceptionInterceptor());
 		}
 		
 		if (this.thisRow.isNull(columnIndex - 1)) {
@@ -4728,7 +4732,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		} catch (MalformedURLException mfe) {
 			throw SQLError.createSQLException(Messages
 					.getString("ResultSet.Malformed_URL____141")
-					+ val + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					+ val + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 	}
 
@@ -4832,7 +4836,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				throw SQLError.createSQLException(Messages.getString(
 						"ResultSet.Bad_format_for_BigInteger", new Object[] {
 								Constants.integerValueOf(columnIndex), stringVal }),
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 			}
 
 		case Types.DECIMAL:
@@ -4855,7 +4859,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							Messages
 							.getString("ResultSet.Bad_format_for_BigDecimal", //$NON-NLS-1$
 							 new Object[] {stringVal, new Integer(columnIndex)}),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
 				return val;
@@ -4912,7 +4916,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 												.getString("ResultSet.Class_not_found___91") //$NON-NLS-1$
 												+ cnfe.toString()
 												+ Messages
-														.getString("ResultSet._while_reading_serialized_object_92")); //$NON-NLS-1$
+														.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor()); //$NON-NLS-1$
 							} catch (IOException ex) {
 								obj = data; // not serialized?
 							}
@@ -5083,7 +5087,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							Messages
 							.getString("ResultSet.Bad_format_for_BigDecimal", //$NON-NLS-1$
 							 new Object[] {stringVal, new Integer(columnIndex)}),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
 				return val;
@@ -5342,7 +5346,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 										.getString("ResultSet.Invalid_value_for_getShort()_-____96")
 										+ new String(shortAsBytes) //$NON-NLS-1$
 										+ "'",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 					}
 				}
 			}
@@ -5393,7 +5397,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						Messages
 								.getString("ResultSet.Invalid_value_for_getShort()_-____96")
 								+ val //$NON-NLS-1$
-								+ "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+								+ "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -5446,7 +5450,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							.getString("ResultSet.Invalid_value_for_getShort()_-____217")
 							+ val //$NON-NLS-1$
 							+ Messages.getString("ResultSet.___in_column__218")
-							+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+							+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 	}
 
@@ -5465,7 +5469,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					"Operation not allowed on closed ResultSet. Statements "
 							+ "can be retained over result set closure by setting the connection property "
 							+ "\"retainStatementAfterResultSetClose\" to \"true\".",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 
 		}
 		
@@ -5558,7 +5562,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				}
 			} catch (UnsupportedEncodingException uee) {
 				throw SQLError.createSQLException("Unsupported character encoding " + 
-						forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 		
@@ -5575,7 +5579,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				throw SQLError.createSQLException(
 						Messages
 								.getString("ResultSet.Query_generated_no_fields_for_ResultSet_99"), //$NON-NLS-1$
-						SQLError.SQL_STATE_INVALID_COLUMN_NUMBER);
+						SQLError.SQL_STATE_INVALID_COLUMN_NUMBER, getExceptionInterceptor());
 			}
 
 			// JDBC is 1-based, Java is not !?
@@ -5799,7 +5803,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						.equals(this.connection.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException("Value '" + timeAsString
 							+ "' can not be represented as java.sql.Time",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
 				// We're left with the case of 'round' to a time Java _can_
@@ -5854,7 +5858,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 									+ columnIndex
 									+ "("
 									+ this.fields[columnIndex - 1] + ").",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				} /* endswitch */
 
 				SQLWarning precisionLost = new SQLWarning(
@@ -5897,7 +5901,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							.getString("ResultSet.Bad_format_for_Time____267") //$NON-NLS-1$
 							+ timeAsString
 							+ Messages.getString("ResultSet.___in_column__268")
-							+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
 				hr = Integer.parseInt(timeAsString.substring(0, 2));
@@ -5919,7 +5923,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			}
 		} catch (Exception ex) {
 			SQLException sqlEx = SQLError.createSQLException(ex.toString(),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			sqlEx.initCause(ex);
 			
 			throw sqlEx;
@@ -6093,7 +6097,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							.equals(this.connection.getZeroDateTimeBehavior())) {
 						throw SQLError.createSQLException("Value '" + timestampValue
 								+ "' can not be represented as java.sql.Timestamp",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 					}
 					
 					// We're left with the case of 'round' to a date Java _can_
@@ -6342,7 +6346,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		} catch (Exception e) {
 			SQLException sqlEx = SQLError.createSQLException("Cannot convert value '"
 					+ timestampValue + "' from column " + columnIndex
-					+ " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					+ " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			sqlEx.initCause(e);
 			
 			throw sqlEx;
@@ -6402,7 +6406,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							.equals(this.connection.getZeroDateTimeBehavior())) {
 						throw SQLError.createSQLException("Value '" + timestampAsBytes
 								+ "' can not be represented as java.sql.Timestamp",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 					}
 					
 					// We're left with the case of 'round' to a date Java _can_
@@ -6625,7 +6629,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		} catch (Exception e) {
 			SQLException sqlEx = SQLError.createSQLException("Cannot convert value '"
 					+ new String(timestampAsBytes) + "' from column " + columnIndex
-					+ " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					+ " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			sqlEx.initCause(e);
 			
 			throw sqlEx;
@@ -6761,7 +6765,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		} catch (MalformedURLException mfe) {
 			throw SQLError.createSQLException(Messages
 					.getString("ResultSet.Malformed_URL____104")
-					+ val + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					+ val + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 	}
 
@@ -6780,7 +6784,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		} catch (MalformedURLException mfe) {
 			throw SQLError.createSQLException(Messages
 					.getString("ResultSet.Malformed_URL____107")
-					+ val + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					+ val + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 	}
 
@@ -7073,7 +7077,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			throw SQLError.createSQLException(
 					Messages
 							.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-					SQLError.SQL_STATE_GENERAL_ERROR); //$NON-NLS-1$
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		if (this.thisRow != null) {
@@ -7734,7 +7738,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			throw SQLError.createSQLException(
 					Messages
 							.getString("ResultSet.Illegal_value_for_fetch_direction_64"),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		this.fetchDirection = direction;
@@ -7761,7 +7765,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			throw SQLError.createSQLException(
 					Messages
 							.getString("ResultSet.Value_must_be_between_0_and_getMaxRows()_66"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		this.fetchSize = rows;
@@ -7871,7 +7875,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		throw SQLError.createSQLException("'" + valueAsString + "' in column '"
 				+ columnIndex + "' is outside valid range for the datatype "
-				+ datatype + ".", SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE);
+				+ datatype + ".", SQLError.SQL_STATE_NUMERIC_VALUE_OUT_OF_RANGE, getExceptionInterceptor());
 	}
 
 	/**
@@ -8743,5 +8747,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 		
 		return this.gmtCalendar;
+	}
+	
+	protected ExceptionInterceptor getExceptionInterceptor() {
+		return this.exceptionInterceptor;
 	}
 }

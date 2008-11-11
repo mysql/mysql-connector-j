@@ -166,7 +166,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				throws SQLException {
 			if (typeInfo == null) {
 				throw SQLError.createSQLException("NULL typeinfo not supported.",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 			
 			String mysqlType = "";
@@ -417,6 +417,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				this.isNullable = "NO";
 			}
 		}
+
+		private ExceptionInterceptor getExceptionInterceptor() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 	}
        
 	private static String mysqlKeywordsThatArentSQL92;
@@ -644,11 +649,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 			return (DatabaseMetaData) Util.handleNewInstance(
 					JDBC_4_DBMD_IS_CTOR, new Object[] { connToSet,
-							databaseToSet });
+							databaseToSet }, connToSet.getExceptionInterceptor());
 		}
 
 		return (DatabaseMetaData) Util.handleNewInstance(JDBC_4_DBMD_SHOW_CTOR,
-				new Object[] { connToSet, databaseToSet });
+				new Object[] { connToSet, databaseToSet }, connToSet.getExceptionInterceptor());
 	}
 	
 	/**
@@ -662,7 +667,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	protected DatabaseMetaData(ConnectionImpl connToSet, String databaseToSet) {
 		this.conn = connToSet;
 		this.database = databaseToSet;
-
+		this.exceptionInterceptor = this.conn.getExceptionInterceptor();
+		
 		try {
 			this.quotedId = this.conn.supportsQuotedIdentifiers() ? getIdentifierQuoteString()
 					: "";
@@ -775,7 +781,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					rowData[5] = s2b(functionName);                      // SPECFIC NAME
 				}
 
-				procedureRowsOrderedByName.put(functionName, new ByteArrayRow(rowData));
+				procedureRowsOrderedByName.put(functionName, new ByteArrayRow(rowData, getExceptionInterceptor()));
 			}
 		}
 	}
@@ -822,7 +828,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 				rowData[8] = s2b(procedureName);
 				
-				procedureRowsOrderedByName.put(procedureName, new ByteArrayRow(rowData));
+				procedureRowsOrderedByName.put(procedureName, new ByteArrayRow(rowData, getExceptionInterceptor()));
 			}
 		}
 	}
@@ -881,7 +887,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		default:
 			throw SQLError.createSQLException(
 					"Internal error while parsing callable statement metadata (unknown nullability value fount)",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 		
 		row[12] = null;
@@ -899,7 +905,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			row[16] = s2b(paramName);
 		}
 		
-		return new ByteArrayRow(row);
+		return new ByteArrayRow(row, getExceptionInterceptor());
+	}
+
+	private ExceptionInterceptor exceptionInterceptor;
+	
+	protected ExceptionInterceptor getExceptionInterceptor() {
+		return this.exceptionInterceptor;
 	}
 
 	/**
@@ -1104,7 +1116,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 	
 		row[2] = s2b(commentBuf.toString());
-		rows.add(new ByteArrayRow(row));
+		rows.add(new ByteArrayRow(row, getExceptionInterceptor()));
 	
 		return rows;
 	}
@@ -1289,7 +1301,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			throws SQLException {
 		if (table == null) {
 			throw SQLError.createSQLException("Table not specified.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		Field[] fields = new Field[8];
@@ -1396,7 +1408,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 													java.sql.DatabaseMetaData.bestRowNotPseudo)
 											.getBytes();
 
-									rows.add(new ByteArrayRow(rowVal));
+									rows.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 								}
 							}
 						}
@@ -1476,7 +1488,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			} else {
 				throw SQLError.createSQLException(
 						"Parameter/Column name pattern can not be NULL or empty.",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -1601,7 +1613,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					throw SQLError.createSQLException("User does not have access to metadata required to determine " +
 							"stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" " +
 							"to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
-							SQLError.SQL_STATE_GENERAL_ERROR);		
+							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());		
 				}
 
 				try {
@@ -1671,7 +1683,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					throw SQLError
 					.createSQLException(
 							"Internal error when parsing callable statement metadata",
-							SQLError.SQL_STATE_GENERAL_ERROR);
+							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 				}
 
 				parameterDef = procedureDef.substring(openParenIndex + 1,
@@ -1738,7 +1750,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						} else {
 							throw SQLError.createSQLException(
 									"Internal error when parsing callable statement metadata (missing parameter name)",
-									SQLError.SQL_STATE_GENERAL_ERROR);
+									SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 						}
 					} else if (possibleParamName.equalsIgnoreCase("INOUT")) {
 						isOutParam = true;
@@ -1749,7 +1761,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						} else {
 							throw SQLError.createSQLException(
 									"Internal error when parsing callable statement metadata (missing parameter name)",
-									SQLError.SQL_STATE_GENERAL_ERROR);
+									SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 						}
 					} else if (possibleParamName.equalsIgnoreCase("IN")) {
 						isOutParam = false;
@@ -1760,7 +1772,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						} else {
 							throw SQLError.createSQLException(
 									"Internal error when parsing callable statement metadata (missing parameter name)",
-									SQLError.SQL_STATE_GENERAL_ERROR);
+									SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 						}
 					} else {
 						isOutParam = false;
@@ -1786,7 +1798,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					} else {
 						throw SQLError.createSQLException(
 								"Internal error when parsing callable statement metadata (missing parameter type)",
-								SQLError.SQL_STATE_GENERAL_ERROR);
+								SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 					}
 
 					if ((paramName.startsWith("`") && paramName.endsWith("`")) || 
@@ -1808,7 +1820,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				} else {
 					throw SQLError.createSQLException(
 							"Internal error when parsing callable statement metadata (unknown output from 'SHOW CREATE PROCEDURE')",
-							SQLError.SQL_STATE_GENERAL_ERROR);
+							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 				}
 			}
 		} else {
@@ -1865,7 +1877,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				throw SQLError
 						.createSQLException(
 								"Internal error when parsing callable statement metadata",
-								SQLError.SQL_STATE_GENERAL_ERROR);
+								SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			}
 		}
 
@@ -1936,7 +1948,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		throw SQLError.createSQLException(
 				"Internal error when parsing callable statement metadata",
-				SQLError.SQL_STATE_GENERAL_ERROR);
+				SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 	}
 	
 	/**
@@ -2050,7 +2062,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			while (results.next()) {
 				byte[][] rowVal = new byte[1][];
 				rowVal[0] = results.getBytes(1);
-				tuples.add(new ByteArrayRow(rowVal));
+				tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 			}
 
 			return buildResultSet(fields, tuples);
@@ -2224,7 +2236,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						tuple[5] = s2b(fullUser.toString());
 						tuple[6] = s2b(privilege);
 						tuple[7] = null;
-						grantRows.add(new ByteArrayRow(tuple));
+						grantRows.add(new ByteArrayRow(tuple, getExceptionInterceptor()));
 					}
 				}
 			}
@@ -2320,7 +2332,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			} else {
 				throw SQLError.createSQLException(
 						"Column name pattern can not be NULL or empty.",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -2564,7 +2576,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									} else {
 										throw SQLError.createSQLException(
 												"Can not find column in full column list to determine true ordinal position.",
-												SQLError.SQL_STATE_GENERAL_ERROR);
+												SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 									}
 								}
 
@@ -2587,7 +2599,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 											: "NO");
 								}
 								
-								rows.add(new ByteArrayRow(rowVal));
+								rows.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 							}
 						} finally {
 							if (results != null) {
@@ -2698,7 +2710,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			final String foreignTable) throws SQLException {
 		if (primaryTable == null) {
 			throw SQLError.createSQLException("Table not specified.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		Field[] fields = new Field[14];
@@ -2844,7 +2856,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 														.toString(
 																java.sql.DatabaseMetaData.importedKeyNotDeferrable)
 														.getBytes();
-												tuples.add(new ByteArrayRow(tuple));
+												tuples.add(new ByteArrayRow(tuple, getExceptionInterceptor()));
 												keySeq++;
 											}
 										}
@@ -3034,7 +3046,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			final String table) throws SQLException {
 		if (table == null) {
 			throw SQLError.createSQLException("Table not specified.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		Field[] fields = new Field[14];
@@ -3303,7 +3315,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			final String table) throws SQLException {
 		if (table == null) {
 			throw SQLError.createSQLException("Table not specified.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		Field[] fields = new Field[14];
@@ -3589,11 +3601,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 							if (unique) {
 								if (indexIsUnique) {
-									rows.add(new ByteArrayRow(row));
+									rows.add(new ByteArrayRow(row, getExceptionInterceptor()));
 								}
 							} else {
 								// All rows match
-								rows.add(new ByteArrayRow(row));
+								rows.add(new ByteArrayRow(row, getExceptionInterceptor()));
 							}
 						}
 					} finally {
@@ -3904,7 +3916,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		if (table == null) {
 			throw SQLError.createSQLException("Table not specified.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		final ArrayList rows = new ArrayList();
@@ -3958,7 +3970,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						Iterator sortedIterator = sortMap.values().iterator();
 
 						while (sortedIterator.hasNext()) {
-							rows.add(new ByteArrayRow((byte[][])sortedIterator.next()));
+							rows.add(new ByteArrayRow((byte[][])sortedIterator.next(), getExceptionInterceptor()));
 						}
 
 					} finally {
@@ -4219,7 +4231,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			} else {
 				throw SQLError.createSQLException(
 						"Procedure name pattern can not be NULL or empty.",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -4399,7 +4411,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			throw SQLError.createSQLException(
 					"Error parsing foreign keys definition,"
 							+ "number of local and referenced columns is not the same.",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
 		Iterator localColumnNames = parsedInfo.localColumnsList.iterator();
@@ -4433,7 +4445,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			tuple[PK_NAME] = null; // not available from show table status
 			tuple[DEFERRABILITY] = s2b(Integer
 					.toString(java.sql.DatabaseMetaData.importedKeyNotDeferrable));
-			tuples.add(new ByteArrayRow(tuple));
+			tuples.add(new ByteArrayRow(tuple, getExceptionInterceptor()));
 		}
 	}
 
@@ -4627,7 +4639,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			} else {
 				throw SQLError.createSQLException(
 						"Table name pattern can not be NULL or empty.",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -4714,7 +4726,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								tuple[4] = s2b(fullUser.toString());
 								tuple[5] = s2b(privilege);
 								tuple[6] = null;
-								grantRows.add(new ByteArrayRow(tuple));
+								grantRows.add(new ByteArrayRow(tuple, getExceptionInterceptor()));
 							}
 						} finally {
 							if (columnResults != null) {
@@ -4798,7 +4810,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			} else {
 				throw SQLError.createSQLException(
 						"Table name pattern can not be NULL or empty.",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -4999,7 +5011,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									.iterator();
 
 							while (tablesIter.hasNext()) {
-								tuples.add(new ByteArrayRow((byte[][])tablesIter.next()));
+								tuples.add(new ByteArrayRow((byte[][])tablesIter.next(), getExceptionInterceptor()));
 							}
 						}
 
@@ -5008,7 +5020,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									.iterator();
 
 							while (viewsIter.hasNext()) {
-								tuples.add(new ByteArrayRow((byte[][])viewsIter.next()));
+								tuples.add(new ByteArrayRow((byte[][])viewsIter.next(), getExceptionInterceptor()));
 							}
 						}
 
@@ -5061,17 +5073,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		byte[][] tableTypeRow = new byte[1][];
 		tableTypeRow[0] = TABLE_AS_BYTES;
-		tuples.add(new ByteArrayRow(tableTypeRow));
+		tuples.add(new ByteArrayRow(tableTypeRow, getExceptionInterceptor()));
 
 		if (this.conn.versionMeetsMinimum(5, 0, 1)) {
 			byte[][] viewTypeRow = new byte[1][];
 			viewTypeRow[0] = VIEW_AS_BYTES;
-			tuples.add(new ByteArrayRow(viewTypeRow));
+			tuples.add(new ByteArrayRow(viewTypeRow, getExceptionInterceptor()));
 		}
 
 		byte[][] tempTypeRow = new byte[1][];
 		tempTypeRow[0] = s2b("LOCAL TEMPORARY");
-		tuples.add(new ByteArrayRow(tempTypeRow));
+		tuples.add(new ByteArrayRow(tempTypeRow, getExceptionInterceptor()));
 
 		return buildResultSet(fields, tuples);
 	}
@@ -5250,7 +5262,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: BOOL (silently converted to TINYINT(1)) JDBC Type: BIT
@@ -5282,7 +5294,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: TINYINT JDBC Type: TINYINT
@@ -5314,7 +5326,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 		
 		rowVal = new byte[18][];
 		rowVal[0] = s2b("TINYINT UNSIGNED");
@@ -5343,7 +5355,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: BIGINT JDBC Type: BIGINT
@@ -5375,7 +5387,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 		
 		rowVal = new byte[18][];
 		rowVal[0] = s2b("BIGINT UNSIGNED");
@@ -5404,7 +5416,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: LONG VARBINARY JDBC Type: LONGVARBINARY
@@ -5436,7 +5448,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: MEDIUMBLOB JDBC Type: LONGVARBINARY
@@ -5468,7 +5480,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: LONGBLOB JDBC Type: LONGVARBINARY
@@ -5502,7 +5514,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: BLOB JDBC Type: LONGVARBINARY
@@ -5534,7 +5546,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: TINYBLOB JDBC Type: LONGVARBINARY
@@ -5566,7 +5578,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: VARBINARY (sliently converted to VARCHAR(M) BINARY) JDBC
@@ -5599,7 +5611,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: BINARY (silently converted to CHAR(M) BINARY) JDBC Type:
@@ -5632,7 +5644,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: LONG VARCHAR JDBC Type: LONGVARCHAR
@@ -5664,7 +5676,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: MEDIUMTEXT JDBC Type: LONGVARCHAR
@@ -5696,7 +5708,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: LONGTEXT JDBC Type: LONGVARCHAR
@@ -5730,7 +5742,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: TEXT JDBC Type: LONGVARCHAR
@@ -5762,7 +5774,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: TINYTEXT JDBC Type: LONGVARCHAR
@@ -5794,7 +5806,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: CHAR JDBC Type: CHAR
@@ -5826,7 +5838,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		// The maximum number of digits for DECIMAL or NUMERIC is 65 (64 from MySQL 5.0.3 to 5.0.5). 
 		
@@ -5871,7 +5883,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: DECIMAL JDBC Type: DECIMAL
@@ -5903,7 +5915,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: INTEGER JDBC Type: INTEGER
@@ -5935,7 +5947,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 		
 		rowVal = new byte[18][];
 		rowVal[0] = s2b("INTEGER UNSIGNED");
@@ -5964,7 +5976,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: INT JDBC Type: INTEGER
@@ -5996,7 +6008,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 		
 		rowVal = new byte[18][];
 		rowVal[0] = s2b("INT UNSIGNED");
@@ -6025,7 +6037,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: MEDIUMINT JDBC Type: INTEGER
@@ -6057,7 +6069,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		rowVal = new byte[18][];
 		rowVal[0] = s2b("MEDIUMINT UNSIGNED");
@@ -6086,7 +6098,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 		
 		/*
 		 * MySQL Type: SMALLINT JDBC Type: SMALLINT
@@ -6118,7 +6130,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 		
 		rowVal = new byte[18][];
 		rowVal[0] = s2b("SMALLINT UNSIGNED");
@@ -6147,7 +6159,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: FLOAT JDBC Type: REAL (this is the SINGLE PERCISION
@@ -6180,7 +6192,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: DOUBLE JDBC Type: DOUBLE
@@ -6212,7 +6224,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: DOUBLE PRECISION JDBC Type: DOUBLE
@@ -6244,7 +6256,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: REAL (does not map to Types.REAL) JDBC Type: DOUBLE
@@ -6276,7 +6288,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: VARCHAR JDBC Type: VARCHAR
@@ -6308,7 +6320,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: ENUM JDBC Type: VARCHAR
@@ -6340,7 +6352,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: SET JDBC Type: VARCHAR
@@ -6372,7 +6384,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: DATE JDBC Type: DATE
@@ -6404,7 +6416,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: TIME JDBC Type: TIME
@@ -6436,7 +6448,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: DATETIME JDBC Type: TIMESTAMP
@@ -6468,7 +6480,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		/*
 		 * MySQL Type: TIMESTAMP JDBC Type: TIMESTAMP
@@ -6500,7 +6512,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		rowVal[15] = s2b("0"); // SQL Data Type (not used)
 		rowVal[16] = s2b("0"); // SQL DATETIME SUB (not used)
 		rowVal[17] = s2b("10"); // NUM_PREC_RADIX (2 or 10)
-		tuples.add(new ByteArrayRow(rowVal));
+		tuples.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 
 		return buildResultSet(fields, tuples);
 	}
@@ -6878,7 +6890,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		if (indexOfOpenParenLocalColumns == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"
 					+ " couldn't find start of local columns list.",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
 		String constraintName = removeQuotedId(keysComment.substring(0,
@@ -6895,7 +6907,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		if (indexOfCloseParenLocalColumns == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"
 					+ " couldn't find end of local columns list.",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
 		String localColumnNamesString = keysCommentTrimmed.substring(1,
@@ -6907,7 +6919,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		if (indexOfRefer == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"
 					+ " couldn't find start of referenced tables list.",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
 		int indexOfOpenParenReferCol = StringUtils
@@ -6917,7 +6929,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		if (indexOfOpenParenReferCol == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"
 					+ " couldn't find start of referenced columns list.",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
 		String referCatalogTableString = keysCommentTrimmed.substring(
@@ -6929,7 +6941,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		if (indexOfSlash == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"
 					+ " couldn't find name of referenced catalog.",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
 		String referCatalog = removeQuotedId(referCatalogTableString.substring(
@@ -6944,7 +6956,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		if (indexOfCloseParenRefer == -1) {
 			throw SQLError.createSQLException("Error parsing foreign keys definition,"
 					+ " couldn't find end of referenced columns list.",
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
 		String referColumnNamesString = keysCommentTrimmed.substring(
@@ -7000,7 +7012,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		
 		return StringUtils.getBytes(s, this.conn.getCharacterSetMetadata(),
 				this.conn.getServerCharacterEncoding(), this.conn
-						.parserKnowsUnicode(), this.conn);
+						.parserKnowsUnicode(), this.conn, getExceptionInterceptor());
 	}
 
 	/**
@@ -7779,7 +7791,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			} else {
 				throw SQLError.createSQLException(
 						"Illegal arguments to supportsResultSetConcurrency()",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		case ResultSet.TYPE_FORWARD_ONLY:
 			if ((concurrency == ResultSet.CONCUR_READ_ONLY)
@@ -7788,14 +7800,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			} else {
 				throw SQLError.createSQLException(
 						"Illegal arguments to supportsResultSetConcurrency()",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		case ResultSet.TYPE_SCROLL_SENSITIVE:
 			return false;
 		default:
 			throw SQLError.createSQLException(
 					"Illegal arguments to supportsResultSetConcurrency()",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 	}

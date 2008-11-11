@@ -31,6 +31,7 @@ import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.Map;
 
+import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.SQLError;
 
 /**
@@ -65,7 +66,13 @@ abstract class WrapperBase {
 	}
 	
 	protected Map unwrappedInterfaces = null;
+	protected ExceptionInterceptor exceptionInterceptor;
 
+	protected WrapperBase(MysqlPooledConnection pooledConnection) {
+		this.pooledConnection = pooledConnection;
+		this.exceptionInterceptor = this.pooledConnection.getExceptionInterceptor();
+	}
+	
 	protected class ConnectionErrorFiringInvocationHandler implements InvocationHandler {
 		Object invokeOn = null;
 		

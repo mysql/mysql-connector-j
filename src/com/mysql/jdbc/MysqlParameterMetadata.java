@@ -34,10 +34,13 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 
 	int parameterCount = 0;
 
-	MysqlParameterMetadata(Field[] fieldInfo, int parameterCount) {
-		this.metadata = new ResultSetMetaData(fieldInfo, false);
+	private ExceptionInterceptor exceptionInterceptor;
+	
+	MysqlParameterMetadata(Field[] fieldInfo, int parameterCount, ExceptionInterceptor exceptionInterceptor) {
+		this.metadata = new ResultSetMetaData(fieldInfo, false, exceptionInterceptor);
 
 		this.parameterCount = parameterCount;
+		this.exceptionInterceptor = exceptionInterceptor;
 	}
 
 	/**
@@ -65,7 +68,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 		if (this.metadata == null || this.metadata.fields == null) {
 			throw SQLError.createSQLException(
 					"Parameter metadata not available for the given statement",
-					SQLError.SQL_STATE_DRIVER_NOT_CAPABLE);
+					SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, this.exceptionInterceptor);
 		}
 	}
 
@@ -149,7 +152,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 		if (paramNumber < 1) {
 			throw SQLError.createSQLException("Parameter index of '"
 					+ paramNumber + "' is invalid.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 
 		if (paramNumber > this.parameterCount) {
@@ -157,7 +160,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 					+ paramNumber
 					+ "' is greater than number of parameters, which is '"
 					+ this.parameterCount + "'.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 
 		}
 	}
@@ -205,7 +208,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
     		return Util.cast(iface, this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
-            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 }

@@ -308,7 +308,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			errorMessageBuf.append("' is not in this set."); //$NON-NLS-1$
 
 			throw SQLError.createSQLException(errorMessageBuf.toString(),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 	}
 
@@ -411,7 +411,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 							+ "' only accepts integer values. The value '" //$NON-NLS-1$
 							+ extractedValue
 							+ "' can not be converted to an integer.", //$NON-NLS-1$
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 			} else {
 				this.valueAsObject = this.defaultValue;
@@ -474,7 +474,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 							+ "' only accepts long integer values. The value '" //$NON-NLS-1$
 							+ extractedValue
 							+ "' can not be converted to a long integer.", //$NON-NLS-1$
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 			} else {
 				this.valueAsObject = this.defaultValue;
@@ -663,6 +663,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 	}
 
+	public ExceptionInterceptor getExceptionInterceptor() {
+		return null;
+	}
+	
 	/**
 	 * Exposes all ConnectionPropertyInfo instances as DriverPropertyInfo
 	 * 
@@ -943,6 +947,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.explainSlowQueries"), //$NON-NLS-1$
 			"3.1.2", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
+	private StringConnectionProperty exceptionInterceptors = new StringConnectionProperty(
+			"exceptionInterceptors", //$NON-NLS-1$
+			null,
+			Messages.getString("ConnectionProperties.exceptionInterceptors"),
+			"5.1.8", MISC_CATEGORY, Integer.MIN_VALUE);
+	
 	/** When failed-over, set connection to read-only? */
 	private BooleanConnectionProperty failOverReadOnly = new BooleanConnectionProperty(
 			"failOverReadOnly", //$NON-NLS-1$
@@ -1720,7 +1730,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				driverProperties[i] = propToExpose.getAsDriverPropertyInfo();
 			} catch (IllegalAccessException iae) {
 				throw SQLError.createSQLException(Messages.getString("ConnectionProperties.InternalPropertiesFailure"), //$NON-NLS-1$
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			}
 		}
 
@@ -1751,7 +1761,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				}
 			} catch (IllegalAccessException iae) {
 				throw SQLError.createSQLException("Internal properties failure", //$NON-NLS-1$
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			}
 		}
 
@@ -1896,7 +1906,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			}
 		} catch (IllegalAccessException iae) {
 			throw SQLError.createSQLException("Internal properties failure", //$NON-NLS-1$
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
 		xmlBuf.append("\n</ConnectionProperties>"); //$NON-NLS-1$
@@ -2639,7 +2649,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				}
 			} catch (IllegalAccessException iae) {
 				throw SQLError.createSQLException("Internal properties failure", //$NON-NLS-1$
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			}
 		}
 
@@ -2688,7 +2698,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					throw SQLError.createSQLException(
 							Messages.getString("ConnectionProperties.unableToInitDriverProperties") //$NON-NLS-1$
 									+ iae.toString(),
-							SQLError.SQL_STATE_GENERAL_ERROR);
+							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 				}
 			}
 
@@ -2744,7 +2754,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			} catch (UnsupportedEncodingException UE) {
 				throw SQLError.createSQLException(Messages.getString(
 						"ConnectionProperties.unsupportedCharacterEncoding", 
-						new Object[] {testEncoding}), "0S100"); //$NON-NLS-1$ //$NON-NLS-2$
+						new Object[] {testEncoding}), "0S100", getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 
@@ -3560,7 +3570,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					propToStore.storeTo(ref);
 				}
 			} catch (IllegalAccessException iae) {
-				throw SQLError.createSQLException(Messages.getString("ConnectionProperties.errorNotExpected")); //$NON-NLS-1$
+				throw SQLError.createSQLException(Messages.getString("ConnectionProperties.errorNotExpected"), getExceptionInterceptor()); //$NON-NLS-1$
 			}
 		}
 	}
@@ -4455,6 +4465,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public String getPasswordCharacterEncoding() {
 		return this.passwordCharacterEncoding.getValueAsString();
+	}
+
+	public void setExceptionInterceptors(String exceptionInterceptors) {
+		this.exceptionInterceptors.setValue(exceptionInterceptors);
+	}
+
+	public String getExceptionInterceptors() {
+		return this.exceptionInterceptors.getValueAsString();
 	}
 
 }

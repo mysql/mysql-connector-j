@@ -170,7 +170,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 			throw SQLError.createSQLException(Messages.getString(
 					"LoadBalancingConnectionProxy.badValueForRetriesAllDown",
 					new Object[] { retriesAllDownAsString }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
 		}
 		String blacklistTimeoutAsString = this.localProps.getProperty(BLACKLIST_TIMEOUT_PROPERTY_KEY, "0");
 		
@@ -180,20 +180,20 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 			throw SQLError.createSQLException(Messages.getString(
 					"LoadBalancingConnectionProxy.badValueForLoadBalanceBlacklistTimeout",
 					new Object[] { retriesAllDownAsString }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
 		}
 		
 		if ("random".equals(strategy)) {
 			this.balancer = (BalanceStrategy) Util.loadExtensions(null, props,
 					"com.mysql.jdbc.RandomBalanceStrategy",
-					"InvalidLoadBalanceStrategy").get(0);
+					"InvalidLoadBalanceStrategy", null).get(0);
 		} else if ("bestResponseTime".equals(strategy)) {
 			this.balancer = (BalanceStrategy) Util.loadExtensions(null, props,
 					"com.mysql.jdbc.BestResponseTimeBalanceStrategy",
-			"InvalidLoadBalanceStrategy").get(0);
+			"InvalidLoadBalanceStrategy", null).get(0);
 		} else {
 			this.balancer = (BalanceStrategy) Util.loadExtensions(null, props,
-					strategy, "InvalidLoadBalanceStrategy").get(0);
+					strategy, "InvalidLoadBalanceStrategy", null).get(0);
 		}
 
 		this.balancer.init(null, props);
@@ -345,7 +345,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		if (this.isClosed) {
 			throw SQLError.createSQLException(
 					"No operations allowed after connection closed.",
-					SQLError.SQL_STATE_CONNECTION_NOT_OPEN);
+					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /* no access to a interceptor here... */);
 		}
 
 		if (!inTransaction) {

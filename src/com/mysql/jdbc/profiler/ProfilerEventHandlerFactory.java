@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.Log;
 
@@ -50,12 +51,12 @@ public class ProfilerEventHandlerFactory {
 	 *            the connection to handle events for
 	 * @return the ProfilerEventHandlerFactory that handles profiler events
 	 */
-	public static synchronized ProfilerEventHandler getInstance(Connection conn) throws SQLException {
+	public static synchronized ProfilerEventHandler getInstance(ConnectionImpl conn) throws SQLException {
 		ProfilerEventHandler handler = (ProfilerEventHandler) CONNECTIONS_TO_SINKS
 				.get(conn);
 
 		if (handler == null) {
-			handler = (ProfilerEventHandler)Util.getInstance(conn.getProfilerEventHandler(), new Class[0], new Object[0]);
+			handler = (ProfilerEventHandler)Util.getInstance(conn.getProfilerEventHandler(), new Class[0], new Object[0], conn.getExceptionInterceptor());
 			
 			// we do it this way to not require
 			// exposing the connection properties 

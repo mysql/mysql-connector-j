@@ -35,6 +35,7 @@ import javax.sql.ConnectionEventListener;
 import javax.sql.PooledConnection;
 
 import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Util;
 
@@ -77,7 +78,7 @@ public class MysqlPooledConnection implements PooledConnection {
 
 		return (MysqlPooledConnection) Util.handleNewInstance(
 				JDBC_4_POOLED_CONNECTION_WRAPPER_CTOR, new Object[] {
-						connection});
+						connection}, connection.getExceptionInterceptor());
 	}
 	
 	/**
@@ -97,6 +98,8 @@ public class MysqlPooledConnection implements PooledConnection {
 	private Connection logicalHandle;
 
 	private com.mysql.jdbc.Connection physicalConn;
+	
+	private ExceptionInterceptor exceptionInterceptor;
 
 	// ~ Constructors ..........................................................
 
@@ -110,6 +113,7 @@ public class MysqlPooledConnection implements PooledConnection {
 		this.logicalHandle = null;
 		this.physicalConn = connection;
 		this.connectionEventListeners = new HashMap();
+		this.exceptionInterceptor = this.physicalConn.getExceptionInterceptor();
 	}
 
 	/**
@@ -160,7 +164,7 @@ public class MysqlPooledConnection implements PooledConnection {
 		if (this.physicalConn == null) {
 
 			SQLException sqlException = SQLError.createSQLException(
-					"Physical Connection doesn't exist");
+					"Physical Connection doesn't exist", this.exceptionInterceptor);
 			callConnectionEventListeners(CONNECTION_ERROR_EVENT, sqlException);
 
 			throw sqlException;
@@ -246,5 +250,9 @@ public class MysqlPooledConnection implements PooledConnection {
 						.connectionErrorOccurred(connectionevent);
 			}
 		}
+	}
+	
+	protected ExceptionInterceptor getExceptionInterceptor() {
+		return this.exceptionInterceptor;
 	}
 }

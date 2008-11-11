@@ -45,7 +45,7 @@ XAConnection, XAResource {
 
 		return (SuspendableXAConnection) Util.handleNewInstance(
 				JDBC_4_XA_CONNECTION_WRAPPER_CTOR, new Object[] {
-						mysqlConnection});
+						mysqlConnection}, mysqlConnection.getExceptionInterceptor());
 	}
 	
 	public SuspendableXAConnection(ConnectionImpl connection) {

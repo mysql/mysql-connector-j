@@ -28,6 +28,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 
+import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.SQLError;
 
 /**
@@ -51,18 +52,18 @@ public class LogFactory {
 	 * @throws SQLException
 	 *             if unable to create a logger instance
 	 */
-	public static Log getLogger(String className, String instanceName)
+	public static Log getLogger(String className, String instanceName, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
 
 		if (className == null) {
 			throw SQLError.createSQLException("Logger class can not be NULL",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 		}
 
 		if (instanceName == null) {
 			throw SQLError.createSQLException(
 					"Logger instance name can not be NULL",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 		}
 
 		try {
@@ -82,7 +83,7 @@ public class LogFactory {
 		} catch (ClassNotFoundException cnfe) {
 			SQLException sqlEx = SQLError.createSQLException(
 					"Unable to load class for logger '" + className + "'",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 			sqlEx.initCause(cnfe);
 
 			throw sqlEx;
@@ -90,7 +91,7 @@ public class LogFactory {
 			SQLException sqlEx = SQLError
 					.createSQLException(
 							"Logger class does not have a single-arg constructor that takes an instance name",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 			sqlEx.initCause(nsme);
 
 			throw sqlEx;
@@ -98,7 +99,7 @@ public class LogFactory {
 			SQLException sqlEx = SQLError.createSQLException(
 					"Unable to instantiate logger class '" + className
 							+ "', exception in constructor?",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 			sqlEx.initCause(inse);
 
 			throw sqlEx;
@@ -106,7 +107,7 @@ public class LogFactory {
 			SQLException sqlEx = SQLError.createSQLException(
 					"Unable to instantiate logger class '" + className
 							+ "', exception in constructor?",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 			sqlEx.initCause(ite);
 
 			throw sqlEx;
@@ -114,7 +115,7 @@ public class LogFactory {
 			SQLException sqlEx = SQLError.createSQLException(
 					"Unable to instantiate logger class '" + className
 							+ "', constructor not public",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 			sqlEx.initCause(iae);
 
 			throw sqlEx;
@@ -122,7 +123,7 @@ public class LogFactory {
 			SQLException sqlEx = SQLError.createSQLException("Logger class '"
 					+ className + "' does not implement the '"
 					+ Log.class.getName() + "' interface",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 			sqlEx.initCause(cce);
 
 			throw sqlEx;

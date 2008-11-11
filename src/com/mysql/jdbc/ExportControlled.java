@@ -103,7 +103,7 @@ public class ExportControlled {
 		} catch (IOException ioEx) {
 			throw SQLError.createCommunicationsException(mysqlIO.connection,
 					mysqlIO.getLastPacketSentTimeMs(), mysqlIO.getLastPacketReceivedTimeMs(),
-					ioEx);
+					ioEx, mysqlIO.getExceptionInterceptor());
 		}
 	}
 
@@ -145,7 +145,7 @@ public class ExportControlled {
 			throw SQLError
 					.createSQLException(
 							"Default algorithm definitions for TrustManager and/or KeyManager are invalid.  Check java security properties file.",
-							SQL_STATE_BAD_SSL_PARAMS, 0, false);
+							SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 		}
 
 		if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
@@ -163,27 +163,27 @@ public class ExportControlled {
 				throw SQLError
 						.createSQLException(
 								"Could not recover keys from client keystore.  Check password?",
-								SQL_STATE_BAD_SSL_PARAMS, 0, false);
+								SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 			} catch (NoSuchAlgorithmException nsae) {
 				throw SQLError.createSQLException(
 						"Unsupported keystore algorithm [" + nsae.getMessage()
-								+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+								+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 			} catch (KeyStoreException kse) {
 				throw SQLError.createSQLException(
 						"Could not create KeyStore instance ["
-								+ kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+								+ kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 			} catch (CertificateException nsae) {
 				throw SQLError.createSQLException("Could not load client"
 						+ clientCertificateKeyStoreType + " keystore from "
-						+ clientCertificateKeyStoreUrl);
+						+ clientCertificateKeyStoreUrl, mysqlIO.getExceptionInterceptor());
 			} catch (MalformedURLException mue) {
 				throw SQLError.createSQLException(clientCertificateKeyStoreUrl
 						+ " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0,
-						false);
+						false, mysqlIO.getExceptionInterceptor());
 			} catch (IOException ioe) {
 				SQLException sqlEx = SQLError.createSQLException("Cannot open "
 						+ clientCertificateKeyStoreUrl + " ["
-						+ ioe.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+						+ ioe.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 				sqlEx.initCause(ioe);
 				
 				throw sqlEx;
@@ -206,23 +206,23 @@ public class ExportControlled {
 			} catch (NoSuchAlgorithmException nsae) {
 				throw SQLError.createSQLException(
 						"Unsupported keystore algorithm [" + nsae.getMessage()
-								+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+								+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 			} catch (KeyStoreException kse) {
 				throw SQLError.createSQLException(
 						"Could not create KeyStore instance ["
-								+ kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+								+ kse.getMessage() + "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 			} catch (CertificateException nsae) {
 				throw SQLError.createSQLException("Could not load trust"
 						+ trustCertificateKeyStoreType + " keystore from "
-						+ trustCertificateKeyStoreUrl, SQL_STATE_BAD_SSL_PARAMS, 0, false);
+						+ trustCertificateKeyStoreUrl, SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 			} catch (MalformedURLException mue) {
 				throw SQLError.createSQLException(trustCertificateKeyStoreUrl
 						+ " does not appear to be a valid URL.", SQL_STATE_BAD_SSL_PARAMS, 0,
-						false);
+						false, mysqlIO.getExceptionInterceptor());
 			} catch (IOException ioe) {
 				SQLException sqlEx = SQLError.createSQLException("Cannot open "
 						+ trustCertificateKeyStoreUrl + " [" + ioe.getMessage()
-						+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false);
+						+ "]", SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 				
 				sqlEx.initCause(ioe);
 				
@@ -256,10 +256,10 @@ public class ExportControlled {
 		} catch (NoSuchAlgorithmException nsae) {
 			throw SQLError.createSQLException("TLS"
 					+ " is not a valid SSL protocol.",
-					SQL_STATE_BAD_SSL_PARAMS, 0, false);
+					SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 		} catch (KeyManagementException kme) {
 			throw SQLError.createSQLException("KeyManagementException: "
-					+ kme.getMessage(), SQL_STATE_BAD_SSL_PARAMS, 0, false);
+					+ kme.getMessage(), SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 		}
 	}
 }

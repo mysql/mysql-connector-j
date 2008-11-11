@@ -1018,23 +1018,23 @@ public class TimeUtil {
 	}
 
 	final static Time fastTimeCreate(Calendar cal, int hour, int minute,
-			int second) throws SQLException {
+			int second, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 		if (hour < 0 || hour > 24) {
 			throw SQLError.createSQLException("Illegal hour value '" + hour + "' for java.sql.Time type in value '"
 					+ timeFormattedString(hour, minute, second) + ".", 
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 		}
 		
 		if (minute < 0 || minute > 59) {
 			throw SQLError.createSQLException("Illegal minute value '" + minute + "'" + "' for java.sql.Time type in value '"
 					+ timeFormattedString(hour, minute, second) + ".", 
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 		}
 		
 		if (second < 0 || second > 59) {
 			throw SQLError.createSQLException("Illegal minute value '" + second + "'" + "' for java.sql.Time type in value '"
 					+ timeFormattedString(hour, minute, second) + ".", 
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 		}
 		
 		cal.clear();
@@ -1055,23 +1055,23 @@ public class TimeUtil {
 	}
 
 	final static Time fastTimeCreate(int hour, int minute,
- 			int second, Calendar targetCalendar) throws SQLException {
+ 			int second, Calendar targetCalendar, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 		if (hour < 0 || hour > 23) {
 			throw SQLError.createSQLException("Illegal hour value '" + hour + "' for java.sql.Time type in value '"
 					+ timeFormattedString(hour, minute, second) + ".", 
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 		}
 		
 		if (minute < 0 || minute > 59) {
 			throw SQLError.createSQLException("Illegal minute value '" + minute + "'" + "' for java.sql.Time type in value '"
 					+ timeFormattedString(hour, minute, second) + ".", 
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 		}
 		
 		if (second < 0 || second > 59) {
 			throw SQLError.createSQLException("Illegal minute value '" + second + "'" + "' for java.sql.Time type in value '"
 					+ timeFormattedString(hour, minute, second) + ".", 
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 		}
 		
 		Calendar cal = (targetCalendar == null) ? new GregorianCalendar() : targetCalendar;
@@ -1181,7 +1181,7 @@ public class TimeUtil {
 	 * @throws IllegalArgumentException
 	 *             DOCUMENT ME!
 	 */
-	public static String getCanoncialTimezone(String timezoneStr) throws SQLException {
+	public static String getCanoncialTimezone(String timezoneStr, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 		if (timezoneStr == null) {
 			return null;
 		}
@@ -1232,7 +1232,7 @@ public class TimeUtil {
 					}
 
 					throw SQLError.createSQLException(Messages.getString("TimeUtil.TooGenericTimezoneId",
-							new Object[] {timezoneStr, possibleTimezones}), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE);
+							new Object[] {timezoneStr, possibleTimezones}), SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, exceptionInterceptor);
 				}
 			}
 		}

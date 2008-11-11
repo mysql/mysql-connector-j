@@ -58,6 +58,8 @@ public class MysqlSavepoint implements Savepoint {
 	}
 
 	private String savepointName;
+	
+	private ExceptionInterceptor exceptionInterceptor;
 
 	/**
 	 * Creates an unnamed savepoint.
@@ -67,8 +69,8 @@ public class MysqlSavepoint implements Savepoint {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	MysqlSavepoint() throws SQLException {
-		this(getUniqueId());
+	MysqlSavepoint(ExceptionInterceptor exceptionInterceptor) throws SQLException {
+		this(getUniqueId(), exceptionInterceptor);
 	}
 
 	/**
@@ -80,13 +82,15 @@ public class MysqlSavepoint implements Savepoint {
 	 * @throws SQLException
 	 *             if name == null or is empty.
 	 */
-	MysqlSavepoint(String name) throws SQLException {
+	MysqlSavepoint(String name, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 		if (name == null || name.length() == 0) {
 			throw SQLError.createSQLException("Savepoint name can not be NULL or empty",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 		}
 
 		this.savepointName = name;
+		
+		this.exceptionInterceptor = exceptionInterceptor;
 	}
 
 	/**
@@ -94,7 +98,7 @@ public class MysqlSavepoint implements Savepoint {
 	 */
 	public int getSavepointId() throws SQLException {
 		throw SQLError.createSQLException("Only named savepoints are supported.",
-				SQLError.SQL_STATE_DRIVER_NOT_CAPABLE);
+				SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, exceptionInterceptor);
 	}
 
 	/**

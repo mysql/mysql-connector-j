@@ -307,7 +307,7 @@ public class Field {
 							SQLException sqlEx = SQLError
 									.createSQLException(
 											"Illegal regex specified for \"utf8OutsideBmpIncludedColumnNamePattern\"",
-											SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+											SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.connection.getExceptionInterceptor());
 
 							if (!this.connection.getParanoid()) {
 								sqlEx.initCause(pse);
@@ -323,7 +323,7 @@ public class Field {
 				SQLException sqlEx = SQLError
 						.createSQLException(
 								"Illegal regex specified for \"utf8OutsideBmpExcludedColumnNamePattern\"",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.connection.getExceptionInterceptor());
 
 				if (!this.connection.getParanoid()) {
 					sqlEx.initCause(pse);

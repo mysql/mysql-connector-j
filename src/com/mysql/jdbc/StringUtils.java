@@ -392,7 +392,7 @@ public class StringUtils {
 
 	public static final byte[] getBytes(char[] c,
 			SingleByteCharsetConverter converter, String encoding,
-			String serverEncoding, boolean parserKnowsUnicode)
+			String serverEncoding, boolean parserKnowsUnicode, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
 		try {
 			byte[] b = null;
@@ -420,14 +420,14 @@ public class StringUtils {
 		} catch (UnsupportedEncodingException uee) {
 			throw SQLError.createSQLException(Messages.getString("StringUtils.5") //$NON-NLS-1$
 					+ encoding + Messages.getString("StringUtils.6"),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
 		}
 	}
 
 	public static final byte[] getBytes(char[] c,
 			SingleByteCharsetConverter converter, String encoding,
 			String serverEncoding, int offset, int length,
-			boolean parserKnowsUnicode) throws SQLException {
+			boolean parserKnowsUnicode, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 		try {
 			byte[] b = null;
 
@@ -464,13 +464,13 @@ public class StringUtils {
 		} catch (UnsupportedEncodingException uee) {
 			throw SQLError.createSQLException(Messages.getString("StringUtils.10") //$NON-NLS-1$
 					+ encoding + Messages.getString("StringUtils.11"),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
 		}
 	}
 
 	public static final byte[] getBytes(char[] c, String encoding,
 			String serverEncoding, boolean parserKnowsUnicode, 
-			ConnectionImpl conn)
+			ConnectionImpl conn, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
 		try {
 			
@@ -483,11 +483,11 @@ public class StringUtils {
 			}
 
 			return getBytes(c, converter, encoding, serverEncoding,
-					parserKnowsUnicode);
+					parserKnowsUnicode, exceptionInterceptor);
 		} catch (UnsupportedEncodingException uee) {
 			throw SQLError.createSQLException(Messages.getString("StringUtils.0") //$NON-NLS-1$
 					+ encoding + Messages.getString("StringUtils.1"),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
 		}
 	}
 
@@ -513,7 +513,7 @@ public class StringUtils {
 	 */
 	public static final byte[] getBytes(String s,
 			SingleByteCharsetConverter converter, String encoding,
-			String serverEncoding, boolean parserKnowsUnicode)
+			String serverEncoding, boolean parserKnowsUnicode, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
 		try {
 			byte[] b = null;
@@ -539,13 +539,13 @@ public class StringUtils {
 		} catch (UnsupportedEncodingException uee) {
 			throw SQLError.createSQLException(Messages.getString("StringUtils.5") //$NON-NLS-1$
 					+ encoding + Messages.getString("StringUtils.6"),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
 		}
 	}
 
 	public static final byte[] getBytesWrapped(String s, char beginWrap, char endWrap,
 			SingleByteCharsetConverter converter, String encoding,
-			String serverEncoding, boolean parserKnowsUnicode)
+			String serverEncoding, boolean parserKnowsUnicode, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
 		try {
 			byte[] b = null;
@@ -581,7 +581,7 @@ public class StringUtils {
 		} catch (UnsupportedEncodingException uee) {
 			throw SQLError.createSQLException(Messages.getString("StringUtils.5") //$NON-NLS-1$
 					+ encoding + Messages.getString("StringUtils.6"),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
 		}
 	}
 	
@@ -611,7 +611,7 @@ public class StringUtils {
 	public static final byte[] getBytes(String s,
 			SingleByteCharsetConverter converter, String encoding,
 			String serverEncoding, int offset, int length,
-			boolean parserKnowsUnicode) throws SQLException {
+			boolean parserKnowsUnicode, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 		try {
 			byte[] b = null;
 
@@ -648,7 +648,7 @@ public class StringUtils {
 		} catch (UnsupportedEncodingException uee) {
 			throw SQLError.createSQLException(Messages.getString("StringUtils.10") //$NON-NLS-1$
 					+ encoding + Messages.getString("StringUtils.11"),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
 		}
 	}
 
@@ -670,7 +670,7 @@ public class StringUtils {
 	 */
 	public static final byte[] getBytes(String s, String encoding,
 			String serverEncoding, boolean parserKnowsUnicode, 
-			ConnectionImpl conn)
+			ConnectionImpl conn, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
 		try {
 			SingleByteCharsetConverter converter = null;
@@ -682,11 +682,11 @@ public class StringUtils {
 			}
 
 			return getBytes(s, converter, encoding, serverEncoding,
-					parserKnowsUnicode);
+					parserKnowsUnicode, exceptionInterceptor);
 		} catch (UnsupportedEncodingException uee) {
 			throw SQLError.createSQLException(Messages.getString("StringUtils.0") //$NON-NLS-1$
 					+ encoding + Messages.getString("StringUtils.1"),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
 		}
 	}
 

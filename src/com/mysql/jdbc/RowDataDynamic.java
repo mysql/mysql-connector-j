@@ -73,6 +73,8 @@ public class RowDataDynamic implements RowData {
 
 	private boolean moreResultsExisted;
 
+	private ExceptionInterceptor exceptionInterceptor;
+	
 	/**
 	 * Creates a new RowDataDynamic object.
 	 * 
@@ -93,7 +95,7 @@ public class RowDataDynamic implements RowData {
 		this.columnCount = colCount;
 		this.isBinaryEncoded = isBinaryEncoded;
 		this.metadata = fields;
-		
+		this.exceptionInterceptor = this.io.getExceptionInterceptor();
 		this.useBufferRowExplicit = MysqlIO.useBufferRowExplicit(this.metadata);
 	}
 
@@ -445,7 +447,7 @@ public class RowDataDynamic implements RowData {
 			SQLException sqlEx = SQLError.createSQLException(
 					Messages.getString("RowDataDynamic.8") //$NON-NLS-1$
 							+ exceptionType
-							+ Messages.getString("RowDataDynamic.9") + exceptionMessage, SQLError.SQL_STATE_GENERAL_ERROR); //$NON-NLS-1$
+							+ Messages.getString("RowDataDynamic.9") + exceptionMessage, SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor); //$NON-NLS-1$
 			sqlEx.initCause(ex);
 			
 			throw sqlEx;

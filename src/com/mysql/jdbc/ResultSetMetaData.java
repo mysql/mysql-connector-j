@@ -75,15 +75,18 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 	Field[] fields;
 	boolean useOldAliasBehavior = false;
 
+	private ExceptionInterceptor exceptionInterceptor;
+	
 	/**
 	 * Initialise for a result with a tuple set and a field descriptor set
 	 * 
 	 * @param fields
 	 *            the array of field descriptors
 	 */
-	public ResultSetMetaData(Field[] fields, boolean useOldAliasBehavior) {
+	public ResultSetMetaData(Field[] fields, boolean useOldAliasBehavior, ExceptionInterceptor exceptionInterceptor) {
 		this.fields = fields;
 		this.useOldAliasBehavior = useOldAliasBehavior;
+		this.exceptionInterceptor = exceptionInterceptor;
 	}
 
 	/**
@@ -394,7 +397,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 	protected Field getField(int columnIndex) throws SQLException {
 		if ((columnIndex < 1) || (columnIndex > this.fields.length)) {
 			throw SQLError.createSQLException(Messages.getString("ResultSetMetaData.46"), //$NON-NLS-1$
-					SQLError.SQL_STATE_INVALID_COLUMN_NUMBER);
+					SQLError.SQL_STATE_INVALID_COLUMN_NUMBER, this.exceptionInterceptor);
 		}
 
 		return this.fields[columnIndex - 1];
@@ -847,7 +850,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
     		return Util.cast(iface, this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
-            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
         }
     }
 }

@@ -77,7 +77,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 		return (StatementWrapper) Util.handleNewInstance(
 				JDBC_4_STATEMENT_WRAPPER_CTOR,
 				new Object[] {c, 
-						conn, toWrap });
+						conn, toWrap }, conn.getExceptionInterceptor());
 	}
 	
 	protected Statement wrappedStmt;
@@ -86,7 +86,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 
 	public StatementWrapper(ConnectionWrapper c, MysqlPooledConnection conn,
 			Statement toWrap) {
-		this.pooledConnection = conn;
+		super(conn);
 		this.wrappedStmt = toWrap;
 		this.wrappedConn = c;
 	}
@@ -103,7 +103,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -125,7 +125,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 				this.wrappedStmt.setCursorName(name);
 			} else {
 				throw SQLError.createSQLException("Statement already closed",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -143,7 +143,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 				this.wrappedStmt.setEscapeProcessing(enable);
 			} else {
 				throw SQLError.createSQLException("Statement already closed",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -161,7 +161,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 				this.wrappedStmt.setFetchDirection(direction);
 			} else {
 				throw SQLError.createSQLException("Statement already closed",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -180,7 +180,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -202,7 +202,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 				this.wrappedStmt.setFetchSize(rows);
 			} else {
 				throw SQLError.createSQLException("Statement already closed",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -221,7 +221,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -243,7 +243,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -265,7 +265,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 				this.wrappedStmt.setMaxFieldSize(max);
 			} else {
 				throw SQLError.createSQLException("Statement already closed",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -284,7 +284,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -305,7 +305,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 				this.wrappedStmt.setMaxRows(max);
 			} else {
 				throw SQLError.createSQLException("Statement already closed",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -324,7 +324,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -346,7 +346,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -366,7 +366,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -385,7 +385,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 				this.wrappedStmt.setQueryTimeout(seconds);
 			} else {
 				throw SQLError.createSQLException("Statement already closed",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -404,7 +404,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -428,7 +428,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -448,7 +448,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -468,7 +468,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -488,7 +488,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -508,7 +508,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -528,7 +528,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -627,7 +627,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -650,7 +650,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -674,7 +674,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -697,7 +697,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -720,7 +720,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -747,7 +747,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -771,7 +771,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -794,7 +794,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -818,7 +818,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -840,7 +840,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			}
 
 			throw SQLError.createSQLException("Statement already closed",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -858,7 +858,7 @@ public class StatementWrapper extends WrapperBase implements Statement {
 			} else {
 				throw SQLError.createSQLException(
 						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);

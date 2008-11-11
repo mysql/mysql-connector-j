@@ -96,8 +96,10 @@ public class BufferRow extends ResultSetRow {
 
 	private List openStreams;
 
-	public BufferRow(Buffer buf, Field[] fields, boolean isBinaryEncoded)
+	public BufferRow(Buffer buf, Field[] fields, boolean isBinaryEncoded, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
+		super(exceptionInterceptor);
+		
 		this.rowFromServer = buf;
 		this.metadata = fields;
 		this.isBinaryEncoded = isBinaryEncoded;
@@ -283,7 +285,7 @@ public class BufferRow extends ResultSetRow {
 						+ Messages.getString("MysqlIO.99") //$NON-NLS-1$ //$NON-NLS-2$
 						+ this.metadata.length
 						+ Messages.getString("MysqlIO.100"), //$NON-NLS-1$
-						SQLError.SQL_STATE_GENERAL_ERROR);
+						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
 		}
 
@@ -380,7 +382,7 @@ public class BufferRow extends ResultSetRow {
 					+ (index + 1)
 					+ Messages.getString("MysqlIO.99") //$NON-NLS-1$ //$NON-NLS-2$
 					+ this.metadata.length + Messages.getString("MysqlIO.100"), //$NON-NLS-1$
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 		}
 	}
 
@@ -503,7 +505,7 @@ public class BufferRow extends ResultSetRow {
 			return new InputStreamReader(stream, this.metadata[columnIndex]
 					.getCharacterSet());
 		} catch (UnsupportedEncodingException e) {
-			SQLException sqlEx = SQLError.createSQLException("");
+			SQLException sqlEx = SQLError.createSQLException("", this.exceptionInterceptor);
 
 			sqlEx.initCause(e);
 

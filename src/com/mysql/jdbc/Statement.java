@@ -85,4 +85,6 @@ public interface Statement extends java.sql.Statement {
 	public abstract InputStream getLocalInfileInputStream();
 
 	public void setPingTarget(PingTarget pingTarget);
+
+	public ExceptionInterceptor getExceptionInterceptor();
 }

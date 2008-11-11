@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.Extension;
 import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.SQLError;
@@ -62,8 +63,6 @@ import com.mysql.jdbc.log.Log;
  */
 public class ConnectionWrapper extends WrapperBase implements Connection {
 	protected Connection mc = null;
-
-	private MysqlPooledConnection mpc = null;
 
 	private String invalidHandleStr = "Logical handle no longer valid";
 
@@ -104,7 +103,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		return (ConnectionWrapper) Util.handleNewInstance(
 				JDBC_4_CONNECTION_WRAPPER_CTOR, new Object[] {
 						mysqlPooledConnection, mysqlConnection,
-						Boolean.valueOf(forXa) });
+						Boolean.valueOf(forXa) }, mysqlPooledConnection.getExceptionInterceptor());
 	}
 
 	/**
@@ -120,10 +119,10 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	 */
 	public ConnectionWrapper(MysqlPooledConnection mysqlPooledConnection,
 			Connection mysqlConnection, boolean forXa) throws SQLException {
-		this.mpc = mysqlPooledConnection;
+		super(mysqlPooledConnection);
+		
 		this.mc = mysqlConnection;
 		this.closed = false;
-		this.pooledConnection = this.mpc;
 		this.isForXa = forXa;
 
 		if (this.isForXa) {
@@ -144,7 +143,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 			throw SQLError.createSQLException(
 					"Can't set autocommit to 'true' on an XAConnection",
 					SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-					MysqlErrorNumbers.ER_XA_RMERR);
+					MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
 		}
 
 		try {
@@ -326,7 +325,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 			throw SQLError.createSQLException(
 					"Can't set autocommit to 'true' on an XAConnection",
 					SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-					MysqlErrorNumbers.ER_XA_RMERR);
+					MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
 		}
 
 		try {
@@ -348,7 +347,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 			throw SQLError.createSQLException(
 					"Can't set autocommit to 'true' on an XAConnection",
 					SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-					MysqlErrorNumbers.ER_XA_RMERR);
+					MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
 		}
 
 		try {
@@ -493,7 +492,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 					.createSQLException(
 							"Can't call commit() on an XAConnection associated with a global transaction",
 							SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-							MysqlErrorNumbers.ER_XA_RMERR);
+							MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
 		}
 
 		try {
@@ -513,7 +512,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return StatementWrapper.getInstance(this, this.mpc, this.mc
+			return StatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.createStatement());
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -533,7 +532,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return StatementWrapper.getInstance(this, this.mpc, this.mc
+			return StatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.createStatement(resultSetType, resultSetConcurrency));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -550,7 +549,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return StatementWrapper.getInstance(this, this.mpc, this.mc
+			return StatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.createStatement(arg0, arg1, arg2));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -588,7 +587,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return CallableStatementWrapper.getInstance(this, this.mpc, this.mc
+			return CallableStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.prepareCall(sql));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -608,7 +607,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return CallableStatementWrapper.getInstance(this, this.mpc, this.mc
+			return CallableStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.prepareCall(sql, resultSetType, resultSetConcurrency));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -625,7 +624,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return CallableStatementWrapper.getInstance(this, this.mpc, this.mc
+			return CallableStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.prepareCall(arg0, arg1, arg2, arg3));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -639,7 +638,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return new PreparedStatementWrapper(this, this.mpc, this.mc
+			return new PreparedStatementWrapper(this, this.pooledConnection, this.mc
 					.clientPrepareStatement(sql));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -653,7 +652,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return new PreparedStatementWrapper(this, this.mpc, this.mc
+			return new PreparedStatementWrapper(this, this.pooledConnection, this.mc
 					.clientPrepareStatement(sql, resultSetType,
 							resultSetConcurrency));
 		} catch (SQLException sqlException) {
@@ -674,7 +673,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.prepareStatement(sql));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -695,7 +694,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
 		try {
 			return PreparedStatementWrapper
-					.getInstance(this, this.mpc, this.mc.prepareStatement(sql,
+					.getInstance(this, this.pooledConnection, this.mc.prepareStatement(sql,
 							resultSetType, resultSetConcurrency));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -712,7 +711,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.prepareStatement(arg0, arg1, arg2, arg3));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -729,7 +728,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.prepareStatement(arg0, arg1));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -746,7 +745,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.prepareStatement(arg0, arg1));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -763,7 +762,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.prepareStatement(arg0, arg1));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -799,7 +798,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 					.createSQLException(
 							"Can't call rollback() on an XAConnection associated with a global transaction",
 							SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-							MysqlErrorNumbers.ER_XA_RMERR);
+							MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
 		}
 
 		try {
@@ -820,7 +819,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 					.createSQLException(
 							"Can't call rollback() on an XAConnection associated with a global transaction",
 							SQLError.SQL_STATE_INVALID_TRANSACTION_TERMINATION,
-							MysqlErrorNumbers.ER_XA_RMERR);
+							MysqlErrorNumbers.ER_XA_RMERR, this.exceptionInterceptor);
 		}
 
 		try {
@@ -841,7 +840,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	}
 
 	protected void close(boolean fireClosedEvent) throws SQLException {
-		synchronized (this.mpc) {
+		synchronized (this.pooledConnection) {
 			if (this.closed) {
 				return;
 			}
@@ -852,7 +851,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 			}
 
 			if (fireClosedEvent) {
-				this.mpc.callConnectionEventListeners(
+				this.pooledConnection.callConnectionEventListeners(
 						MysqlPooledConnection.CONNECTION_CLOSED_EVENT, null);
 			}
 
@@ -867,7 +866,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
 	protected void checkClosed() throws SQLException {
 		if (this.closed) {
-			throw SQLError.createSQLException(this.invalidHandleStr);
+			throw SQLError.createSQLException(this.invalidHandleStr, this.exceptionInterceptor);
 		}
 	}
 
@@ -905,7 +904,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.clientPrepareStatement(sql));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -917,7 +916,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public java.sql.PreparedStatement clientPrepareStatement(String sql,
 			int autoGenKeyIndex) throws SQLException {
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.clientPrepareStatement(sql, autoGenKeyIndex));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -929,7 +928,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public java.sql.PreparedStatement clientPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency) throws SQLException {
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.clientPrepareStatement(sql, resultSetType,
 							resultSetConcurrency));
 		} catch (SQLException sqlException) {
@@ -943,7 +942,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 			int resultSetType, int resultSetConcurrency,
 			int resultSetHoldability) throws SQLException {
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.clientPrepareStatement(sql, resultSetType,
 							resultSetConcurrency, resultSetHoldability));
 		} catch (SQLException sqlException) {
@@ -956,7 +955,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public java.sql.PreparedStatement clientPrepareStatement(String sql,
 			int[] autoGenKeyIndexes) throws SQLException {
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.clientPrepareStatement(sql, autoGenKeyIndexes));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -968,7 +967,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public java.sql.PreparedStatement clientPrepareStatement(String sql,
 			String[] autoGenKeyColNames) throws SQLException {
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.clientPrepareStatement(sql, autoGenKeyColNames));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -1036,7 +1035,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		checkClosed();
 
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.serverPrepareStatement(sql));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -1048,7 +1047,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public java.sql.PreparedStatement serverPrepareStatement(String sql,
 			int autoGenKeyIndex) throws SQLException {
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.serverPrepareStatement(sql, autoGenKeyIndex));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -1060,7 +1059,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public java.sql.PreparedStatement serverPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency) throws SQLException {
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.serverPrepareStatement(sql, resultSetType,
 							resultSetConcurrency));
 		} catch (SQLException sqlException) {
@@ -1074,7 +1073,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 			int resultSetType, int resultSetConcurrency,
 			int resultSetHoldability) throws SQLException {
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.serverPrepareStatement(sql, resultSetType,
 							resultSetConcurrency, resultSetHoldability));
 		} catch (SQLException sqlException) {
@@ -1087,7 +1086,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public java.sql.PreparedStatement serverPrepareStatement(String sql,
 			int[] autoGenKeyIndexes) throws SQLException {
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.serverPrepareStatement(sql, autoGenKeyIndexes));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -1099,7 +1098,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public java.sql.PreparedStatement serverPrepareStatement(String sql,
 			String[] autoGenKeyColNames) throws SQLException {
 		try {
-			return PreparedStatementWrapper.getInstance(this, this.mpc, this.mc
+			return PreparedStatementWrapper.getInstance(this, this.pooledConnection, this.mc
 					.serverPrepareStatement(sql, autoGenKeyColNames));
 		} catch (SQLException sqlException) {
 			checkAndFireConnectionError(sqlException);
@@ -2598,5 +2597,17 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	
 	public int getRetriesAllDown() {
 		return this.mc.getRetriesAllDown();
+	}
+
+	public ExceptionInterceptor getExceptionInterceptor() {
+		return this.pooledConnection.getExceptionInterceptor();
+	}
+
+	public String getExceptionInterceptors() {
+		return this.mc.getExceptionInterceptors();
+	}
+
+	public void setExceptionInterceptors(String exceptionInterceptors) {
+		this.mc.setExceptionInterceptors(exceptionInterceptors);
 	}
 }

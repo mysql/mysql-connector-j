@@ -2391,4 +2391,16 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public void setRetriesAllDown(int retriesAllDown) {
 		this.currentConnection.setRetriesAllDown(retriesAllDown);
 	}
+
+	public ExceptionInterceptor getExceptionInterceptor() {
+		return this.currentConnection.getExceptionInterceptor();
+	}
+
+	public String getExceptionInterceptors() {
+		return this.currentConnection.getExceptionInterceptors();
+	}
+
+	public void setExceptionInterceptors(String exceptionInterceptors) {
+		this.currentConnection.setExceptionInterceptors(exceptionInterceptors);
+	}
 }

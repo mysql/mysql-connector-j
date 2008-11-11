@@ -47,6 +47,12 @@ import java.util.TimeZone;
  * @version $Id: $
  */
 public abstract class ResultSetRow {
+	protected ExceptionInterceptor exceptionInterceptor;
+	
+	protected ResultSetRow(ExceptionInterceptor exceptionInterceptor) {
+		this.exceptionInterceptor = exceptionInterceptor;
+	}
+	
 	/**
 	 * The metadata of the fields of this result set.
 	 */
@@ -134,7 +140,7 @@ public abstract class ResultSetRow {
 					throw SQLError.createSQLException("Value '"
 							+ new String(dateAsBytes)
 							+ "' can not be represented as java.sql.Date",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 				}
 
 				// We're left with the case of 'round' to a date Java _can_
@@ -222,7 +228,7 @@ public abstract class ResultSetRow {
 																	dateAsBytes),
 															Constants
 																	.integerValueOf(columnIndex + 1) }),
-									SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+									SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor); //$NON-NLS-1$
 				} /* endswitch */
 			} else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
 
@@ -261,7 +267,7 @@ public abstract class ResultSetRow {
 																	dateAsBytes),
 															Constants
 																	.integerValueOf(columnIndex + 1) }),
-									SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+									SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor); //$NON-NLS-1$
 				}
 
 				if (length != 18) {
@@ -291,7 +297,7 @@ public abstract class ResultSetRow {
 					"ResultSet.Bad_format_for_Date", new Object[] {
 							new String(dateAsBytes),
 							Constants.integerValueOf(columnIndex + 1) }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor); //$NON-NLS-1$
 			sqlEx.initCause(e);
 			
 			throw sqlEx;
@@ -349,7 +355,7 @@ public abstract class ResultSetRow {
 				throw SQLError
 						.createSQLException(
 								"Value '0000-00-00' can not be represented as java.sql.Date",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 
 			year = 1;
@@ -455,12 +461,12 @@ public abstract class ResultSetRow {
 		case Types.TIME:
 			if (populatedFromDateTimeValue) {
 				if (!rs.useLegacyDatetimeCode) {
-					return TimeUtil.fastTimeCreate(hour, minute, seconds, targetCalendar);
+					return TimeUtil.fastTimeCreate(hour, minute, seconds, targetCalendar, this.exceptionInterceptor);
 				}
 				
 				Time time = TimeUtil.fastTimeCreate(rs
 						.getCalendarInstanceForSessionOrNew(), hour, minute,
-						seconds);
+						seconds, this.exceptionInterceptor);
 
 				Time adjustedTime = TimeUtil.changeTimezone(conn,
 						sessionCalendar, targetCalendar, time, conn
@@ -631,14 +637,14 @@ public abstract class ResultSetRow {
 		}
 
 		if (!rs.useLegacyDatetimeCode) {
-			return TimeUtil.fastTimeCreate(hour, minute, seconds, targetCalendar);
+			return TimeUtil.fastTimeCreate(hour, minute, seconds, targetCalendar, this.exceptionInterceptor);
 		}
 		
 		Calendar sessionCalendar = rs.getCalendarInstanceForSessionOrNew();
 
 		synchronized (sessionCalendar) {
 			Time time = TimeUtil.fastTimeCreate(sessionCalendar, hour, minute,
-					seconds);
+					seconds, this.exceptionInterceptor);
 
 			Time adjustedTime = TimeUtil.changeTimezone(conn, sessionCalendar,
 					targetCalendar, time, conn.getServerTimezoneTZ(), tz,
@@ -694,7 +700,7 @@ public abstract class ResultSetRow {
 				throw SQLError
 						.createSQLException(
 								"Value '0000-00-00' can not be represented as java.sql.Timestamp",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 
 			year = 1;
@@ -794,7 +800,7 @@ public abstract class ResultSetRow {
 						.createSQLException(
 								Messages
 										.getString("ResultSet.Unsupported_character_encoding____101") //$NON-NLS-1$
-										+ encoding + "'.", "0S100");
+										+ encoding + "'.", "0S100", this.exceptionInterceptor);
 			}
 		} else {
 			stringVal = StringUtils.toAsciiString(value, offset, length);
@@ -852,7 +858,7 @@ public abstract class ResultSetRow {
 					throw SQLError.createSQLException("Value '"
 							+ new String(timeAsBytes)
 							+ "' can not be represented as java.sql.Time",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 				}
 
 				// We're left with the case of 'round' to a time Java _can_
@@ -906,7 +912,7 @@ public abstract class ResultSetRow {
 											+ (columnIndex + 1)
 											+ "("
 											+ timeColField + ").",
-									SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+									SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 				} /* endswitch */
 
 				SQLWarning precisionLost = new SQLWarning(
@@ -945,7 +951,7 @@ public abstract class ResultSetRow {
 							+ new String(timeAsBytes)
 							+ Messages.getString("ResultSet.___in_column__268")
 							+ (columnIndex + 1),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 				}
 
 				hr = StringUtils.getInt(timeAsBytes, offset + 0, offset + 2);
@@ -968,7 +974,7 @@ public abstract class ResultSetRow {
 			}
 		} catch (Exception ex) {
 			SQLException sqlEx = SQLError.createSQLException(ex.toString(),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			sqlEx.initCause(ex);
 			
 			throw sqlEx;
@@ -1029,7 +1035,7 @@ public abstract class ResultSetRow {
 										"Value '"
 												+ timestampAsBytes
 												+ "' can not be represented as java.sql.Timestamp",
-										SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+										SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 					}
 
 					if (!rs.useLegacyDatetimeCode) {
@@ -1328,7 +1334,7 @@ public abstract class ResultSetRow {
 			SQLException sqlEx = SQLError.createSQLException("Cannot convert value '"
 					+ getString(columnIndex, "ISO8859_1", conn)
 					+ "' from column " + (columnIndex + 1) + " to TIMESTAMP.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			sqlEx.initCause(e);
 			
 			throw sqlEx;

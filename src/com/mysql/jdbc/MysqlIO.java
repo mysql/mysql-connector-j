@@ -240,7 +240,8 @@ class MysqlIO {
 	private int useBufferRowSizeThreshold;
 	private int commandCount = 0;
 	private List statementInterceptors;
-
+	private ExceptionInterceptor exceptionInterceptor;
+	
     /**
      * Constructor:  Connect to the MySQL server and setup a stream connection.
      *
@@ -279,7 +280,8 @@ class MysqlIO {
 
         this.socketFactoryClassName = socketFactoryClassName;
         this.socketFactory = createSocketFactory();
-
+        this.exceptionInterceptor = this.connection.getExceptionInterceptor();
+        
         try {
         	this.mysqlConnection = this.socketFactory.connect(this.host,
         		this.port, props);
@@ -332,7 +334,7 @@ class MysqlIO {
 				calculateSlowQueryThreshold();
 			}
         } catch (IOException ioEx) {
-        	throw SQLError.createCommunicationsException(this.connection, 0, 0, ioEx);
+        	throw SQLError.createCommunicationsException(this.connection, 0, 0, ioEx, getExceptionInterceptor());
         }
     }
 
@@ -350,7 +352,7 @@ class MysqlIO {
             return this.mysqlInput.available() > 0;
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
     }
 
@@ -567,7 +569,7 @@ class MysqlIO {
 			skipFully(this.mysqlInput, packetLength);
 		} catch (IOException ioEx) {
 			throw SQLError.createCommunicationsException(this.connection,
-					this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
+					this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
 		} catch (OutOfMemoryError oom) {
 			try {
 				this.connection.realClose(false, false, true, oom);
@@ -665,7 +667,7 @@ class MysqlIO {
             return packet;
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         } catch (OutOfMemoryError oom) {
         	try {
     			this.connection.realClose(false, false, true, oom);
@@ -942,7 +944,7 @@ class MysqlIO {
             }
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
     }
 
@@ -1083,7 +1085,7 @@ class MysqlIO {
 
             errno = buf.readInt();
 
-            String serverErrorMessage = buf.readString("ASCII");
+            String serverErrorMessage = buf.readString("ASCII", getExceptionInterceptor());
 
             StringBuffer errorBuf = new StringBuffer(Messages.getString(
                         "MysqlIO.10")); //$NON-NLS-1$
@@ -1094,10 +1096,10 @@ class MysqlIO {
                     this.connection.getUseSqlStateCodes());
 
             throw SQLError.createSQLException(SQLError.get(xOpen) + ", " //$NON-NLS-1$
-                 +errorBuf.toString(), xOpen, errno);
+                 +errorBuf.toString(), xOpen, errno, getExceptionInterceptor());
         }
 
-        this.serverVersion = buf.readString("ASCII");
+        this.serverVersion = buf.readString("ASCII", getExceptionInterceptor());
 
         // Parse the server version into major/minor/subminor
         int point = this.serverVersion.indexOf('.'); //$NON-NLS-1$
@@ -1157,7 +1159,7 @@ class MysqlIO {
         this.useNewUpdateCounts = versionMeetsMinimum(3, 22, 5);
 
         threadId = buf.readLong();
-        this.seed = buf.readString("ASCII");
+        this.seed = buf.readString("ASCII", getExceptionInterceptor());
 
         this.serverCapabilities = 0;
 
@@ -1174,7 +1176,7 @@ class MysqlIO {
             checkTransactionState(0);
             buf.setPosition(position + 16);
 
-            String seedPart2 = buf.readString("ASCII");
+            String seedPart2 = buf.readString("ASCII", getExceptionInterceptor());
             StringBuffer newSeed = new StringBuffer(20);
             newSeed.append(this.seed);
             newSeed.append(seedPart2);
@@ -1200,7 +1202,7 @@ class MysqlIO {
                 this.connection.close();
                 forceClose();
                 throw SQLError.createSQLException(Messages.getString("MysqlIO.15"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
             }
 
             this.connection.setUseSSL(false);
@@ -1349,7 +1351,7 @@ class MysqlIO {
         try {
         	this.mysqlConnection = this.socketFactory.afterHandshake();
         } catch (IOException ioEx) {
-        	throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
+        	throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
     }
 
@@ -1368,7 +1370,7 @@ class MysqlIO {
 				sendCommand(MysqlDefs.INIT_DB, database, null, false, null, 0);
 			} else {
 				throw SQLError.createCommunicationsException(this.connection,
-						this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ex);
+						this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ex, getExceptionInterceptor());
 			}
 		}
 	}
@@ -1437,14 +1439,14 @@ class MysqlIO {
             			rowData[i] = rowPacket.readLenByteArray(0);
             		}
 
-            		return new ByteArrayRow(rowData);
+            		return new ByteArrayRow(rowData, getExceptionInterceptor());
             	}
 
             	if (!canReuseRowPacketForBufferRow) {
             		this.reusablePacket = new Buffer(rowPacket.getBufLength());
             	}
 
-            	return new BufferRow(rowPacket, fields, false);
+            	return new BufferRow(rowPacket, fields, false, getExceptionInterceptor());
 
             }
 
@@ -1468,7 +1470,7 @@ class MysqlIO {
         		this.reusablePacket = new Buffer(rowPacket.getBufLength());
         	}
 
-            return new BufferRow(rowPacket, fields, true);
+            return new BufferRow(rowPacket, fields, true, getExceptionInterceptor());
         }
 
         rowPacket.setPosition(rowPacket.getPosition() - 1);
@@ -1629,7 +1631,7 @@ class MysqlIO {
 					if (bytesRead != len) {
 						throw SQLError.createCommunicationsException(this.connection,
 			    				this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
-			    				new IOException(Messages.getString("MysqlIO.43")));
+			    				new IOException(Messages.getString("MysqlIO.43")), getExceptionInterceptor());
 					}
 
 					remaining -= bytesRead;
@@ -1640,10 +1642,10 @@ class MysqlIO {
 				skipFully(this.mysqlInput, remaining);
 			}
 
-			return new ByteArrayRow(rowData);
+			return new ByteArrayRow(rowData, getExceptionInterceptor());
 		} catch (IOException ioEx) {
 			throw SQLError.createCommunicationsException(this.connection,
-    				this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
+    				this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
 		}
 	}
 
@@ -1677,14 +1679,14 @@ class MysqlIO {
     void closeStreamer(RowData streamer) throws SQLException {
         if (this.streamingData == null) {
             throw SQLError.createSQLException(Messages.getString("MysqlIO.17") //$NON-NLS-1$
-                 +streamer + Messages.getString("MysqlIO.18")); //$NON-NLS-1$
+                 +streamer + Messages.getString("MysqlIO.18"), getExceptionInterceptor()); //$NON-NLS-1$
         }
 
         if (streamer != this.streamingData) {
             throw SQLError.createSQLException(Messages.getString("MysqlIO.19") //$NON-NLS-1$
                  +streamer + Messages.getString("MysqlIO.20") //$NON-NLS-1$
                  +Messages.getString("MysqlIO.21") //$NON-NLS-1$
-                 +Messages.getString("MysqlIO.22")); //$NON-NLS-1$
+                 +Messages.getString("MysqlIO.22"), getExceptionInterceptor()); //$NON-NLS-1$
         }
 
         this.streamingData = null;
@@ -1852,7 +1854,7 @@ class MysqlIO {
 				this.mysqlConnection.setSoTimeout(timeoutMillis);
 			} catch (SocketException e) {
 				throw SQLError.createCommunicationsException(this.connection, lastPacketSentTimeMs, 
-						lastPacketReceivedTimeMs, e);
+						lastPacketReceivedTimeMs, e, getExceptionInterceptor());
 			}
         }
         
@@ -1936,7 +1938,7 @@ class MysqlIO {
                 throw sqlEx;
             } catch (Exception ex) {
                 throw SQLError.createCommunicationsException(this.connection,
-                    this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ex);
+                    this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ex, getExceptionInterceptor());
             }
 
             Buffer returnPacket = null;
@@ -1954,14 +1956,14 @@ class MysqlIO {
             return returnPacket;
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         } finally {
         	if (timeoutMillis != 0) {
         		try {
         			this.mysqlConnection.setSoTimeout(oldTimeout);
         		} catch (SocketException e) {
     				throw SQLError.createCommunicationsException(this.connection, lastPacketSentTimeMs, 
-    						lastPacketReceivedTimeMs, e);
+    						lastPacketReceivedTimeMs, e, getExceptionInterceptor());
     			}
         	}
         }
@@ -2024,7 +2026,7 @@ class MysqlIO {
 	    			commentAsBytes = StringUtils.getBytes(statementComment, null,
 	    					characterEncoding, this.connection
 	    					.getServerCharacterEncoding(),
-	    					this.connection.parserKnowsUnicode());
+	    					this.connection.parserKnowsUnicode(), getExceptionInterceptor());
 
 	    			packLength += commentAsBytes.length;
 	    			packLength += 6; // for /*[space] [space]*/
@@ -2523,7 +2525,7 @@ class MysqlIO {
 
             if (this.platformDbCharsetMatches) {
                 fileName = ((charEncoding != null)
-                    ? resultPacket.readString(charEncoding)
+                    ? resultPacket.readString(charEncoding, getExceptionInterceptor())
                     : resultPacket.readString());
             } else {
                 fileName = resultPacket.readString();
@@ -2618,11 +2620,11 @@ class MysqlIO {
             }
 
             if (this.connection.isReadInfoMsgEnabled()) {
-                info = resultPacket.readString(this.connection.getErrorMessageEncoding());
+                info = resultPacket.readString(this.connection.getErrorMessageEncoding(), getExceptionInterceptor());
             }
         } catch (Exception ex) {
             SQLException sqlEx = SQLError.createSQLException(SQLError.get(
-                    SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1);
+                    SQLError.SQL_STATE_GENERAL_ERROR), SQLError.SQL_STATE_GENERAL_ERROR, -1, getExceptionInterceptor());
             sqlEx.initCause(ex);
             
             throw sqlEx;
@@ -2647,7 +2649,7 @@ class MysqlIO {
                      +this.streamingData +
                     Messages.getString("MysqlIO.40") //$NON-NLS-1$
                      +Messages.getString("MysqlIO.41") //$NON-NLS-1$
-                     +Messages.getString("MysqlIO.42")); //$NON-NLS-1$
+                     +Messages.getString("MysqlIO.42"), getExceptionInterceptor()); //$NON-NLS-1$
             }
 
             // Close the result set
@@ -2735,7 +2737,7 @@ class MysqlIO {
         try {
             if (this.socketFactoryClassName == null) {
                 throw SQLError.createSQLException(Messages.getString("MysqlIO.75"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+                    SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
             }
 
             return (SocketFactory) (Class.forName(this.socketFactoryClassName)
@@ -2744,7 +2746,7 @@ class MysqlIO {
             SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.76") //$NON-NLS-1$
                  +this.socketFactoryClassName +
                 Messages.getString("MysqlIO.77"),
-                SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE);
+                SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
             
             sqlEx.initCause(ex);
             
@@ -3007,7 +3009,7 @@ class MysqlIO {
     		return reuse;
     	} catch (IOException ioEx) {
     		throw SQLError.createCommunicationsException(this.connection,
-    				this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
+    				this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
     	} catch (OutOfMemoryError oom) {
     		try {
     			// _Try_ this
@@ -3095,7 +3097,7 @@ class MysqlIO {
 							+lengthToWrite +
 							Messages.getString("MysqlIO.51") +
 							bytesRead //$NON-NLS-1$
-							+".")); //$NON-NLS-1$
+							+".", getExceptionInterceptor()), getExceptionInterceptor()); //$NON-NLS-1$
 				}
 
 				reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
@@ -3134,7 +3136,7 @@ class MysqlIO {
 						"MysqlIO.54") //$NON-NLS-1$
 						+lengthToWrite +
 						Messages.getString("MysqlIO.55") //$NON-NLS-1$
-						+bytesRead + ".")); //$NON-NLS-1$
+						+bytesRead + ".", getExceptionInterceptor()), getExceptionInterceptor()); //$NON-NLS-1$
 			}
 
 			reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
@@ -3157,14 +3159,14 @@ class MysqlIO {
             throw SQLError.createCommunicationsException(this.connection,
                 this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
                 new IOException("Packets out of order, expected packet # -128, but received packet # " +
-                    multiPacketSeq));
+                    multiPacketSeq), getExceptionInterceptor());
         }
 
         if ((this.readPacketSequence == -1) && (multiPacketSeq != 0)) {
             throw SQLError.createCommunicationsException(this.connection,
                 this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
                 new IOException("Packets out of order, expected packet # -1, but received packet # " +
-                    multiPacketSeq));
+                    multiPacketSeq), getExceptionInterceptor());
         }
 
         if ((multiPacketSeq != -128) && (this.readPacketSequence != -1) &&
@@ -3173,7 +3175,7 @@ class MysqlIO {
                 this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs,
                 new IOException("Packets out of order, expected packet # " +
                     (this.readPacketSequence + 1) + ", but received packet # " +
-                    multiPacketSeq));
+                    multiPacketSeq), getExceptionInterceptor());
         }
     }
 
@@ -3268,7 +3270,7 @@ class MysqlIO {
 			}
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
     }
 
@@ -3308,7 +3310,7 @@ class MysqlIO {
         		throw SQLError.createSQLException("Could not allocate packet of " + packetLength
         				+ " bytes required for LOAD DATA LOCAL INFILE operation."
 						+ " Try increasing max heap allocation for JVM or decreasing server variable "
-						+ "'max_allowed_packet'", SQLError.SQL_STATE_MEMORY_ALLOCATION_FAILURE);
+						+ "'max_allowed_packet'", SQLError.SQL_STATE_MEMORY_ALLOCATION_FAILURE, getExceptionInterceptor());
 
         	}
         }
@@ -3324,7 +3326,7 @@ class MysqlIO {
         	if (!this.connection.getAllowLoadLocalInfile()) {
         		throw SQLError.createSQLException(
         				Messages.getString("MysqlIO.LoadDataLocalNotAllowed"),
-        				SQLError.SQL_STATE_GENERAL_ERROR);
+        				SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
         	}
 
         	InputStream hookedStream = null;
@@ -3383,14 +3385,14 @@ class MysqlIO {
             }
 
             throw SQLError.createSQLException(messageBuf.toString(),
-                SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+                SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         } finally {
             if (fileIn != null) {
                 try {
                     fileIn.close();
                 } catch (Exception ex) {
                     SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.65"), //$NON-NLS-1$
-                        SQLError.SQL_STATE_GENERAL_ERROR);
+                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                     sqlEx.initCause(ex);
                     
                     throw sqlEx;
@@ -3441,7 +3443,7 @@ class MysqlIO {
             throw sqlEx;
         } catch (Exception fallThru) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, fallThru);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, fallThru, getExceptionInterceptor());
         }
 
         checkErrorPacket(resultPacket);
@@ -3464,7 +3466,7 @@ class MysqlIO {
                 String xOpen = null;
 
                 serverErrorMessage =
-                	resultPacket.readString(this.connection.getErrorMessageEncoding());
+                	resultPacket.readString(this.connection.getErrorMessageEncoding(), getExceptionInterceptor());
 
                 if (serverErrorMessage.charAt(0) == '#') { //$NON-NLS-1$
 
@@ -3512,12 +3514,12 @@ class MysqlIO {
                 if (xOpen != null && xOpen.startsWith("22")) {
                 	throw new MysqlDataTruncation(errorBuf.toString(), 0, true, false, 0, 0);
                 } else {
-                	throw SQLError.createSQLException(errorBuf.toString(), xOpen, errno);
+                	throw SQLError.createSQLException(errorBuf.toString(), xOpen, errno, getExceptionInterceptor());
                 }
             }
 
             serverErrorMessage = resultPacket.readString(
-            		this.connection.getErrorMessageEncoding());
+            		this.connection.getErrorMessageEncoding(), getExceptionInterceptor());
             clearInputStream();
 
             if (serverErrorMessage.indexOf(Messages.getString("MysqlIO.70")) != -1) { //$NON-NLS-1$
@@ -3525,7 +3527,7 @@ class MysqlIO {
                         SQLError.SQL_STATE_COLUMN_NOT_FOUND) +
                     ", " //$NON-NLS-1$
                      +serverErrorMessage, SQLError.SQL_STATE_COLUMN_NOT_FOUND,
-                    -1);
+                    -1, getExceptionInterceptor());
             }
 
             StringBuffer errorBuf = new StringBuffer(Messages.getString(
@@ -3535,7 +3537,7 @@ class MysqlIO {
 
             throw SQLError.createSQLException(SQLError.get(
                     SQLError.SQL_STATE_GENERAL_ERROR) + ", " //$NON-NLS-1$
-                 +errorBuf.toString(), SQLError.SQL_STATE_GENERAL_ERROR, -1);
+                 +errorBuf.toString(), SQLError.SQL_STATE_GENERAL_ERROR, -1, getExceptionInterceptor());
         }
     }
 
@@ -3690,7 +3692,7 @@ class MysqlIO {
             }
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,
-                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx);
+                this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
     }
 
@@ -3822,7 +3824,7 @@ class MysqlIO {
                     } catch (NoSuchAlgorithmException nse) {
                         throw SQLError.createSQLException(Messages.getString("MysqlIO.91") //$NON-NLS-1$
                              +Messages.getString("MysqlIO.92"), //$NON-NLS-1$
-                            SQLError.SQL_STATE_GENERAL_ERROR);
+                            SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                     }
                 } else {
                     try {
@@ -3853,7 +3855,7 @@ class MysqlIO {
                     } catch (NoSuchAlgorithmException nse) {
                         throw SQLError.createSQLException(Messages.getString("MysqlIO.93") //$NON-NLS-1$
                              +Messages.getString("MysqlIO.94"), //$NON-NLS-1$
-                            SQLError.SQL_STATE_GENERAL_ERROR);
+                            SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
                     }
                 }
             }
@@ -3931,11 +3933,11 @@ class MysqlIO {
             } catch (NoSuchAlgorithmException nse) {
                 throw SQLError.createSQLException(Messages.getString("MysqlIO.95") //$NON-NLS-1$
                      +Messages.getString("MysqlIO.96"), //$NON-NLS-1$
-                    SQLError.SQL_STATE_GENERAL_ERROR);
+                    SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
             } catch (UnsupportedEncodingException e) {
             	throw SQLError.createSQLException(Messages.getString("MysqlIO.95") //$NON-NLS-1$
                         +Messages.getString("MysqlIO.96"), //$NON-NLS-1$
-                       SQLError.SQL_STATE_GENERAL_ERROR);
+                       SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			}
         } else {
             /* For empty password*/
@@ -4027,7 +4029,7 @@ class MysqlIO {
         	}
         }
 
-        return new ByteArrayRow(unpackedRowData);
+        return new ByteArrayRow(unpackedRowData, getExceptionInterceptor());
     }
 
 
@@ -4109,7 +4111,7 @@ class MysqlIO {
 					Messages.getString("MysqlIO.98") + columnIndex +
 					Messages.getString("MysqlIO.99") //$NON-NLS-1$ //$NON-NLS-2$
 					+ fields.length + Messages.getString("MysqlIO.100"), //$NON-NLS-1$
-					SQLError.SQL_STATE_GENERAL_ERROR);
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
     	}
     }
 
@@ -4275,7 +4277,7 @@ class MysqlIO {
     			} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(
     					this.connection.getZeroDateTimeBehavior())) {
     				throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Date",
-    						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+    						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
     			}
 
     			year = 1;
@@ -4357,7 +4359,7 @@ class MysqlIO {
     			} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION.equals(
     					this.connection.getZeroDateTimeBehavior())) {
     				throw SQLError.createSQLException("Value '0000-00-00' can not be represented as java.sql.Timestamp",
-    						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+    						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
     			}
 
     			year = 1;
@@ -4457,7 +4459,7 @@ class MysqlIO {
     				Messages.getString("MysqlIO.98") + columnIndex +
     				Messages.getString("MysqlIO.99") //$NON-NLS-1$ //$NON-NLS-2$
     				+ fields.length + Messages.getString("MysqlIO.100"), //$NON-NLS-1$
-    				SQLError.SQL_STATE_GENERAL_ERROR);
+    				SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
     	}
     }
 
@@ -4601,5 +4603,9 @@ class MysqlIO {
 
 	protected void setStatementInterceptors(List statementInterceptors) {
 		this.statementInterceptors = statementInterceptors;
+	}
+	
+	protected ExceptionInterceptor getExceptionInterceptor() {
+		return this.exceptionInterceptor;
 	}
 }

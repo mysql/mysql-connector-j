@@ -44,7 +44,9 @@ public class ByteArrayRow extends ResultSetRow {
 
 	byte[][] internalRowData;
 
-	public ByteArrayRow(byte[][] internalRowData) {
+	public ByteArrayRow(byte[][] internalRowData, ExceptionInterceptor exceptionInterceptor) {
+		super(exceptionInterceptor);
+		
 		this.internalRowData = internalRowData;
 	}
 
@@ -203,7 +205,7 @@ public class ByteArrayRow extends ResultSetRow {
 			return new InputStreamReader(stream, this.metadata[columnIndex]
 					.getCharacterSet());
 		} catch (UnsupportedEncodingException e) {
-			SQLException sqlEx = SQLError.createSQLException("");
+			SQLException sqlEx = SQLError.createSQLException("", this.exceptionInterceptor);
 
 			sqlEx.initCause(e);
 

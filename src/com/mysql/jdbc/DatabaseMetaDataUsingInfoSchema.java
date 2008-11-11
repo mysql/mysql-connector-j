@@ -97,7 +97,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			} else {
 				throw SQLError.createSQLException(
 						"Column name pattern can not be NULL or empty.",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -199,7 +199,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			} else {
 				throw SQLError.createSQLException(
 						"Column name pattern can not be NULL or empty.",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -368,7 +368,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			String foreignSchema, String foreignTable) throws SQLException {
 		if (primaryTable == null) {
 			throw SQLError.createSQLException("Table not specified.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		if (primaryCatalog == null) {
@@ -543,7 +543,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 		if (table == null) {
 			throw SQLError.createSQLException("Table not specified.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		if (catalog == null) {
@@ -718,7 +718,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			String table) throws SQLException {
 		if (table == null) {
 			throw SQLError.createSQLException("Table not specified.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		if (catalog == null) {
@@ -960,7 +960,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 		if (table == null) {
 			throw SQLError.createSQLException("Table not specified.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
 		String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, NULL AS TABLE_SCHEM, TABLE_NAME, "
@@ -1048,7 +1048,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			} else {
 				throw SQLError.createSQLException(
 						"Procedure name pattern can not be NULL or empty.",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
@@ -1155,7 +1155,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			} else {
 				throw SQLError.createSQLException(
 						"Table name pattern can not be NULL or empty.",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
 
