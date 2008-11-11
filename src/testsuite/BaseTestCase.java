@@ -671,31 +671,50 @@ public abstract class BaseTestCase extends TestCase {
 				int testNumCols = test.getMetaData().getColumnCount();
 				assertEquals(controlNumCols, testNumCols);
 				
+				StringBuffer rsAsString = new StringBuffer();
+				
 				while (control.next()) {
 					test.next();
-					
+					rsAsString.append("\n");
 					for (int i = 0; i < controlNumCols; i++) {
 						Object controlObj = control.getObject(i + 1);
 						Object testObj = test.getObject(i + 1);
 						
+						rsAsString.append("" + controlObj);
+						rsAsString.append("\t = \t");
+						rsAsString.append("" + testObj);
+						rsAsString.append(", ");
+						
 						if (controlObj == null) {
-							assertNull(testObj);
+							assertNull("Expected null, see last row: \n" + rsAsString.toString(), testObj);
 						} else {
-							assertNotNull(testObj);
+							assertNotNull("Expected non-null, see last row: \n" + rsAsString.toString(), testObj);
 						}
 						
 						if (controlObj instanceof Float) {
-							assertEquals(((Float)controlObj).floatValue(),
+							assertEquals("Float comparison failed, see last row: \n" + rsAsString.toString(), ((Float)controlObj).floatValue(),
 									((Float)testObj).floatValue(), 0.1);
 						} else if (controlObj instanceof Double) {
-							assertEquals(((Double)controlObj).doubleValue(),
+							assertEquals("Double comparison failed, see last row: \n" + rsAsString.toString(), ((Double)controlObj).doubleValue(),
 									((Double)testObj).doubleValue(), 0.1);
 						} else {
-							assertEquals(controlObj, testObj);
+							assertEquals("Value comparison failed, see last row: \n" + rsAsString.toString(), controlObj, testObj);
 						}
 					}
 				}
 					
-				assertFalse(test.next());
+				int howMuchMore = 0;
+				
+				while (test.next()) {
+					rsAsString.append("\n");
+					howMuchMore++;
+					for (int i = 0; i < controlNumCols; i++) {
+						rsAsString.append("\t = \t");
+						rsAsString.append("" + control.getObject(i + 1));
+						rsAsString.append(", ");
+					}
+				}
+				
+				assertTrue("Found " + howMuchMore + " extra rows in result set to be compared: ", howMuchMore == 0);
 			}
 }
