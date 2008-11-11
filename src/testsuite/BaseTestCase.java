@@ -710,7 +710,7 @@ public abstract class BaseTestCase extends TestCase {
 					howMuchMore++;
 					for (int i = 0; i < controlNumCols; i++) {
 						rsAsString.append("\t = \t");
-						rsAsString.append("" + control.getObject(i + 1));
+						rsAsString.append("" + test.getObject(i + 1));
 						rsAsString.append(", ");
 					}
 				}
