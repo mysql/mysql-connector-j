@@ -4404,7 +4404,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 	
 	private String formatNanos(int nanos) {
-		if (nanos == 0) {
+		if (true /* for now */ || nanos == 0) {
 		    return "0";
 		}
 		
