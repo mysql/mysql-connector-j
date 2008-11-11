@@ -74,7 +74,7 @@ public class JDBC4StatementWrapper extends StatementWrapper {
 				return this.wrappedStmt.isClosed();
 			} else {
 				throw SQLError.createSQLException("Statement already closed",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -89,7 +89,7 @@ public class JDBC4StatementWrapper extends StatementWrapper {
 				this.wrappedStmt.setPoolable(poolable);
 			} else {
 				throw SQLError.createSQLException("Statement already closed",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -102,7 +102,7 @@ public class JDBC4StatementWrapper extends StatementWrapper {
 				return this.wrappedStmt.isPoolable();
 			} else {
 				throw SQLError.createSQLException("Statement already closed",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			}
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
@@ -192,7 +192,7 @@ public class JDBC4StatementWrapper extends StatementWrapper {
 			return iface.cast(cachedUnwrapped);
 		} catch (ClassCastException cce) {
 			throw SQLError.createSQLException("Unable to unwrap to "
-					+ iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					+ iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 	}
 }

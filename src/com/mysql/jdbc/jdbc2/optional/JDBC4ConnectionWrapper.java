@@ -287,7 +287,7 @@ public class JDBC4ConnectionWrapper extends ConnectionWrapper {
 			return iface.cast(cachedUnwrapped);
 		} catch (ClassCastException cce) {
 			throw SQLError.createSQLException("Unable to unwrap to "
-					+ iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					+ iface.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 	}
 	

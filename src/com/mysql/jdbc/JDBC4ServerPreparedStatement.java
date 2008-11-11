@@ -54,7 +54,7 @@ public class JDBC4ServerPreparedStatement extends ServerPreparedStatement {
 		if (!this.charEncoding.equalsIgnoreCase("UTF-8")
 				&& !this.charEncoding.equalsIgnoreCase("utf8")) {
 			throw SQLError
-					.createSQLException("Can not call setNCharacterStream() when connection character set isn't UTF-8");
+					.createSQLException("Can not call setNCharacterStream() when connection character set isn't UTF-8", getExceptionInterceptor());
 		}
 
 		checkClosed();
@@ -104,7 +104,7 @@ public class JDBC4ServerPreparedStatement extends ServerPreparedStatement {
 		if (!this.charEncoding.equalsIgnoreCase("UTF-8")
 				&& !this.charEncoding.equalsIgnoreCase("utf8")) {
 			throw SQLError
-					.createSQLException("Can not call setNClob() when connection character set isn't UTF-8");
+					.createSQLException("Can not call setNClob() when connection character set isn't UTF-8", getExceptionInterceptor());
 		}
 
 		checkClosed();
@@ -136,7 +136,7 @@ public class JDBC4ServerPreparedStatement extends ServerPreparedStatement {
 			setString(parameterIndex, x);
 		} else {
 			throw SQLError
-					.createSQLException("Can not call setNString() when connection character set isn't UTF-8");
+					.createSQLException("Can not call setNString() when connection character set isn't UTF-8", getExceptionInterceptor());
 		}
 	}
 

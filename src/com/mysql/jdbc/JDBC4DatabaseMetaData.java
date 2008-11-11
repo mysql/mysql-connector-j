@@ -84,7 +84,7 @@ public class JDBC4DatabaseMetaData extends DatabaseMetaData {
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
-            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.conn.getExceptionInterceptor());
         }
     }
 

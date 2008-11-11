@@ -97,14 +97,18 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 
 	private ByteArrayOutputStream asByteArrayOutputStream;
 
-	protected JDBC4MysqlSQLXML(ResultSetInternalMethods owner, int index) {
+	private ExceptionInterceptor exceptionInterceptor;
+	
+	protected JDBC4MysqlSQLXML(ResultSetInternalMethods owner, int index, ExceptionInterceptor exceptionInterceptor) {
 		this.owningResultSet = owner;
 		this.columnIndexOfXml = index;
 		this.fromResultSet = true;
+		this.exceptionInterceptor = exceptionInterceptor;
 	}
 
-	protected JDBC4MysqlSQLXML() {
+	protected JDBC4MysqlSQLXML(ExceptionInterceptor exceptionInterceptor) {
 		this.fromResultSet = false;
+		this.exceptionInterceptor = exceptionInterceptor;
 	}
 
 	public synchronized void free() throws SQLException {
@@ -133,7 +137,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 	private synchronized void checkClosed() throws SQLException {
 		if (this.isClosed) {
 			throw SQLError
-					.createSQLException("SQLXMLInstance has been free()d");
+					.createSQLException("SQLXMLInstance has been free()d", this.exceptionInterceptor);
 		}
 	}
 
@@ -142,7 +146,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 			throw SQLError
 					.createSQLException(
 							"Can't perform requested operation after getResult() has been called to write XML data",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 	}
 
@@ -318,7 +322,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 				return new DOMSource(builder.parse(inputSource));
 			} catch (Throwable t) {
 				SQLException sqlEx = SQLError.createSQLException(t
-						.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 				sqlEx.initCause(t);
 				
 				throw sqlEx;
@@ -350,7 +354,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 						.createXMLStreamReader(reader));
 			} catch (XMLStreamException ex) {
 				SQLException sqlEx = SQLError.createSQLException(ex
-						.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 				sqlEx.initCause(ex);
 				
 				throw sqlEx;
@@ -358,7 +362,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 		} else {
 			throw SQLError.createSQLException("XML Source of type \""
 					+ clazz.toString() + "\" Not supported.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 	}
 
@@ -518,7 +522,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 						.createXMLEventWriter(setCharacterStreamInternal()));
 			} catch (XMLStreamException ex) {
 				SQLException sqlEx = SQLError.createSQLException(ex
-						.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 				sqlEx.initCause(ex);
 				
 				throw sqlEx;
@@ -526,7 +530,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 		} else {
 			throw SQLError.createSQLException("XML Result of type \""
 					+ clazz.toString() + "\" Not supported.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 		}
 	}
 
@@ -584,7 +588,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 			}
 		} catch (IOException ioEx) {
 			SQLException sqlEx = SQLError.createSQLException(ioEx
-					.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			sqlEx.initCause(ioEx);
 			
 			throw sqlEx;
@@ -634,7 +638,7 @@ public class JDBC4MysqlSQLXML implements SQLXML {
 			return stringOut.toString();
 		} catch (Throwable t) {
 			SQLException sqlEx = SQLError.createSQLException(t
-					.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			sqlEx.initCause(t);
 			
 			throw sqlEx;

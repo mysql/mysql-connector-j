@@ -318,7 +318,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	        	 this.thisRow.setColumnValue(columnIndex, StringUtils.getBytes(x,
 	                        this.charConverter, fieldEncoding,
 	                        this.connection.getServerCharacterEncoding(),
-	                        this.connection.parserKnowsUnicode()));
+	                        this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
 	        }
 	    }
 	}
@@ -438,7 +438,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 				return null;
 			}
 	
-			return new com.mysql.jdbc.JDBC4NClob(asString);
+			return new com.mysql.jdbc.JDBC4NClob(asString, getExceptionInterceptor());
 		}
 	
 		return getNativeNClob(columnIndex);
@@ -461,7 +461,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 
 	private final java.sql.NClob getNClobFromString(String stringVal,
 			int columnIndex) throws SQLException {
-		return new com.mysql.jdbc.JDBC4NClob(stringVal);
+		return new com.mysql.jdbc.JDBC4NClob(stringVal, getExceptionInterceptor());
 	}
 
 	/**
@@ -515,7 +515,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	}
 
 	public SQLXML getSQLXML(int columnIndex) throws SQLException {
-		return new JDBC4MysqlSQLXML(this, columnIndex);
+		return new JDBC4MysqlSQLXML(this, columnIndex, getExceptionInterceptor());
 	}
 
 	public SQLXML getSQLXML(String columnLabel) throws SQLException {
@@ -541,7 +541,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 			}
 		} catch (UnsupportedEncodingException uee) {
 			throw SQLError.createSQLException("Unsupported character encoding "
-					+ forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+					+ forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 	
 		return asString;
@@ -607,7 +607,7 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
-            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
 }

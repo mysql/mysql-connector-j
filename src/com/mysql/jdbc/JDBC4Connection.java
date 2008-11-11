@@ -48,7 +48,7 @@ public class JDBC4Connection extends ConnectionImpl {
 	}
 
 	public SQLXML createSQLXML() throws SQLException {
-		return new JDBC4MysqlSQLXML();
+		return new JDBC4MysqlSQLXML(getExceptionInterceptor());
 	}
 	
 	public java.sql.Array createArrayOf(String typeName, Object[] elements) throws SQLException {
@@ -184,7 +184,7 @@ public class JDBC4Connection extends ConnectionImpl {
             return iface.cast(this);
         } catch (ClassCastException cce) {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
-            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+            		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
     }
     
@@ -192,21 +192,21 @@ public class JDBC4Connection extends ConnectionImpl {
 	 * @see java.sql.Connection#createBlob()
 	 */
 	public Blob createBlob() {
-	    return new com.mysql.jdbc.Blob();
+	    return new com.mysql.jdbc.Blob(getExceptionInterceptor());
 	}
 
 	/**
 	 * @see java.sql.Connection#createClob()
 	 */
 	public Clob createClob() {
-	    return new com.mysql.jdbc.Clob();
+	    return new com.mysql.jdbc.Clob(getExceptionInterceptor());
 	}
 
 	/**
 	 * @see java.sql.Connection#createNClob()
 	 */
 	public NClob createNClob() {
-	    return new com.mysql.jdbc.JDBC4NClob();
+	    return new com.mysql.jdbc.JDBC4NClob(getExceptionInterceptor());
 	}
 	
 	protected synchronized JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
@@ -214,19 +214,19 @@ public class JDBC4Connection extends ConnectionImpl {
 			try {
 				try {
 					this.infoProvider = (JDBC4ClientInfoProvider)Util.getInstance(getClientInfoProvider(), 
-							new Class[0], new Object[0]);
+							new Class[0], new Object[0], getExceptionInterceptor());
 				} catch (SQLException sqlEx) {
 					if (sqlEx.getCause() instanceof ClassCastException) {
 						// try with package name prepended
 						this.infoProvider = (JDBC4ClientInfoProvider)Util.getInstance(
 								"com.mysql.jdbc." + getClientInfoProvider(), 
-								new Class[0], new Object[0]);
+								new Class[0], new Object[0], getExceptionInterceptor());
 					}
 				}
 			} catch (ClassCastException cce) {
 				throw SQLError.createSQLException(Messages
 						.getString("JDBC4Connection.ClientInfoNotImplemented", new Object[] {getClientInfoProvider()}), 
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 			
 			this.infoProvider.initialize(this, this.props);
