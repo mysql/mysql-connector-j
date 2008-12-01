@@ -929,8 +929,6 @@ public class StringUtils {
 		int stringLength = searchIn.length();
 		int stopSearchingAt = stringLength - patternLength;
 
-		int i = startingPosition;
-
 		if (patternLength == 0) {
 			return -1;
 		}
@@ -940,49 +938,38 @@ public class StringUtils {
 		char firstCharOfPatternUc = Character.toUpperCase(searchFor.charAt(0));
 		char firstCharOfPatternLc = Character.toLowerCase(searchFor.charAt(0));
 
-		lookForFirstChar: while (true) {
-			while ((i < stopSearchingAt)
-					&& (Character.toUpperCase(searchIn.charAt(i)) != firstCharOfPatternUc)
-					&& Character.toLowerCase(searchIn.charAt(i)) != firstCharOfPatternLc) {
-				i++;
-			}
+		// note, this also catches the case where patternLength > stringLength
+        for (int i = startingPosition; i <= stopSearchingAt; i++) {
+            if (isNotEqualIgnoreCharCase(searchIn, firstCharOfPatternUc,
+					firstCharOfPatternLc, i)) {
+            	// find the first occurrence of the first character of searchFor in searchIn
+                while (++i <= stopSearchingAt && (isNotEqualIgnoreCharCase(searchIn, firstCharOfPatternUc,
+						firstCharOfPatternLc, i)));
+            }
 
-			if (i > stopSearchingAt) {
-				return -1;
-			}
+            if (i <= stopSearchingAt /* searchFor might be one character long! */) {
+            	// walk searchIn and searchFor in lock-step starting just past the first match,bail out if not 
+            	// a match, or we've hit the end of searchFor...
+                int j = i + 1;
+                int end = j + patternLength - 1;
+                for (int k = 1; j < end && (Character.toLowerCase(searchIn.charAt(j)) == 
+                	Character.toLowerCase(searchFor.charAt(k)) || Character.toUpperCase(searchIn.charAt(j)) == 
+                    	Character.toUpperCase(searchFor.charAt(k))); j++, k++);
 
-			int j = i + 1;
-			int end = (j + patternLength) - 1;
-
-			int k = 1; // start at second char of pattern
-
-			while (j < end) {
-				int searchInPos = j++;
-				int searchForPos = k++;
-
-				if (Character.toUpperCase(searchIn.charAt(searchInPos)) != Character
-						.toUpperCase(searchFor.charAt(searchForPos))) {
-					i++;
-
-					// start over
-					continue lookForFirstChar;
-				}
-
-				// Georgian and Turkish locales don't have same convention, so
-				// need to check lowercase
-				// too!
-				if (Character.toLowerCase(searchIn.charAt(searchInPos)) != Character
-						.toLowerCase(searchFor.charAt(searchForPos))) {
-					i++;
-
-					// start over
-					continue lookForFirstChar;
-				}
-			}
-
-			return i; // found entire pattern
-		}
+                if (j == end) {
+                    return i;
+                }
+            }
+        }
+        
+        return -1;
 	}
+
+	private final static boolean isNotEqualIgnoreCharCase(String searchIn,
+			char firstCharOfPatternUc, char firstCharOfPatternLc, int i) {
+		return Character.toLowerCase(searchIn.charAt(i)) != firstCharOfPatternLc && Character.toUpperCase(searchIn.charAt(i)) != firstCharOfPatternUc;
+	}
+	
 
 	/**
 	 * DOCUMENT ME!
