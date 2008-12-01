@@ -5659,4 +5659,29 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public void testBug41161() throws Exception {
+		createTable("testBug41161", "(a int, b int)");
+		
+		Connection rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true");
+		
+		try {
+			this.pstmt = rewriteConn.prepareStatement("INSERT INTO testBug41161 (a, b) VALUES (?, ?, ?)");
+			this.pstmt.setInt(1, 1);
+			this.pstmt.setInt(2, 1);
+			
+			try {
+				this.pstmt.addBatch();
+				fail("Should have thrown an exception");
+			} catch (SQLException sqlEx) {
+				assertEquals("07001", sqlEx.getSQLState());
+			}
+			
+			this.pstmt.executeBatch(); // NPE when this bug exists
+		} finally {
+			closeMemberJDBCResources();
+			
+			rewriteConn.close();
+		}
+	}
  } 

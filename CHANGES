@@ -1,6 +1,10 @@
 # Changelog
 # $Id$
-
+nn-nn-08 - Version 5.1.8
+    - Fixed BUG#41161 - PreparedStatement.addBatch() doesn't check for all parameters
+      being set, which leads to a NullPointerException when calling executeBatch() and
+      rewriting batched statements into multi-value or multi-statement statements.
+      
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
 	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.

@@ -692,6 +692,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			this.batchedArgs = new ArrayList();
 		}
 
+		for (int i = 0; i < this.parameterValues.length; i++) {
+			checkAllParametersSet(this.parameterValues[i],
+					this.parameterStreams[i], i);
+		}
+		
 		this.batchedArgs.add(new BatchParams(this.parameterValues,
 				this.parameterStreams, this.isStream, this.streamLengths,
 				this.isNull));
@@ -2209,12 +2214,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 		
 		for (int i = 0; i < batchedParameterStrings.length; i++) {
-			if ((batchedParameterStrings[i] == null)
-					&& (batchedParameterStreams[i] == null)) {
-				throw SQLError.createSQLException(Messages
-						.getString("PreparedStatement.40") //$NON-NLS-1$
-						+ (i + 1), SQLError.SQL_STATE_WRONG_NO_OF_PARAMETERS, getExceptionInterceptor());
-			}
+			checkAllParametersSet(batchedParameterStrings[i],
+					batchedParameterStreams[i], i);
 
 			sendPacket.writeBytesNoNull(this.staticSqlStrings[i]);
 
@@ -2230,6 +2231,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				.writeBytesNoNull(this.staticSqlStrings[batchedParameterStrings.length]);
 
 		return sendPacket;
+	}
+
+	private void checkAllParametersSet(byte[] parameterString,
+			InputStream parameterStream, int columnIndex) throws SQLException {
+		if ((parameterString == null)
+				&& parameterStream == null) {
+			throw SQLError.createSQLException(Messages
+					.getString("PreparedStatement.40") //$NON-NLS-1$
+					+ (columnIndex + 1), SQLError.SQL_STATE_WRONG_NO_OF_PARAMETERS, getExceptionInterceptor());
+		}
 	}
 
 	private String generateBatchedInsertSQL(String valuesClause, int numBatches) {
