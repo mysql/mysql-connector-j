@@ -525,7 +525,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 				synchronized(globalBlacklist){
 					globalBlacklist.remove(host);
 				}
-				blacklistClone.remove(host);
+				i.remove();
 			}
 				
 		}
