@@ -24,6 +24,9 @@
 <!-- version $Id$ -->
 
 <project name="MySQL Connector/J" default="dist" basedir=".">
+    <!-- If build.properties exists, import it -->
+	<property file="build.properties"/>
+
 	<property name="major_version" value="5"/>
 	<property name="minor_version" value="1"/>
 	<property name="subminor_version" value="8"/>
