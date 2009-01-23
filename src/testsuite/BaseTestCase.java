@@ -664,6 +664,17 @@ public abstract class BaseTestCase extends TestCase {
 			}
 		}
 	}
+	
+	protected void assertResultSetLength(ResultSet rs, int len) throws Exception {
+		assertTrue("Result set is scrollable", rs.getType() != ResultSet.TYPE_FORWARD_ONLY);
+		int oldRowPos = rs.getRow();
+		rs.last();
+		assertEquals("Result set length", len, rs.getRow());
+		if (oldRowPos > 0)
+			rs.absolute(oldRowPos);
+		else
+			rs.beforeFirst();
+	}
 
 	protected void assertResultSetsEqual(ResultSet control, ResultSet test)
 			throws Exception {

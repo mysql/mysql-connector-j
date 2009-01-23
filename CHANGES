@@ -8,6 +8,9 @@ nn-nn-08 - Version 5.1.8
     - Fixed BUG#42055 - ConcurrentModificationException possible when removing items
       from global blacklist.
       
+    - Fixed Bug #42309 - Statement.getGeneratedKeys() returns 2 keys when
+      using ON DUPLICATE KEY UPDATE
+
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
 	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.
