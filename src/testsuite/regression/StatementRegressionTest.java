@@ -5344,40 +5344,95 @@ public class StatementRegressionTest extends BaseTestCase {
 		
 		try {
 			String ddl = "(autoIncId INT NOT NULL PRIMARY KEY AUTO_INCREMENT, uniqueTextKey VARCHAR(255) UNIQUE KEY)";
-			createTable("testBug30493", ddl);
 			
 			String [] sequence = {"c", "a", "d", "b"};
 			String sql = "insert into testBug30493 (uniqueTextKey) values (?) on duplicate key UPDATE autoIncId = last_insert_id( autoIncId )";
 			String tablePrimeSql = "INSERT INTO testBug30493 (uniqueTextKey) VALUES ('a'), ('b'), ('c'), ('d')";
-			
-			this.stmt.executeUpdate(tablePrimeSql);
-			this.pstmt = getConnectionWithProps("compensateForOnDuplicateKeyUpdate=true").prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-			
-			for (int i = 0; i < sequence.length; i++) {
-				this.pstmt.setString(1, sequence[i]);
-				this.pstmt.addBatch();
-			}
-			
-			this.pstmt.executeBatch();
-			
-			ResultSet nonRewrittenRsKeys = this.pstmt.getGeneratedKeys();
-	
-			createTable("testBug30493", ddl);
-			this.stmt.executeUpdate(tablePrimeSql);
-			
+
 			rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true");
-			
-			this.pstmt = rewriteConn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-			
-			for (int i = 0; i < sequence.length; i++) {
-				this.pstmt.setString(1, sequence[i]);
-				this.pstmt.addBatch();
+
+			// setup the rewritten and non-written statements
+			Statement stmts[] = new Statement[2];
+			PreparedStatement pstmts[] = new PreparedStatement[2];
+			stmts[0] = conn.createStatement();
+			stmts[1] = rewriteConn.createStatement();
+			pstmts[0] = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			pstmts[1] = rewriteConn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS); 
+			for (int i = 0; i < sequence.length; ++i) {
+				String sqlLiteral = sql.replaceFirst("\\?", "'" + sequence[i] + "'");
+				stmts[0].addBatch(sqlLiteral);
+				stmts[1].addBatch(sqlLiteral);
+				pstmts[0].setString(1, sequence[i]);
+				pstmts[0].addBatch();
+				pstmts[1].setString(1, sequence[i]);
+				pstmts[1].addBatch();
 			}
 			
-			this.pstmt.executeBatch();
-			ResultSet rewrittenRsKeys = this.pstmt.getGeneratedKeys();
+			// run the test once for Statement, and once for PreparedStatement
+			Statement stmtSets[][] = new Statement[2][];
+			stmtSets[0] = stmts;
+			stmtSets[1] = pstmts;
 			
-			assertResultSetsEqual(nonRewrittenRsKeys, rewrittenRsKeys);
+			for(int stmtSet = 0; stmtSet < 2; ++stmtSet) {
+				Statement testStmts[] = stmtSets[stmtSet];
+				createTable("testBug30493", ddl);
+				this.stmt.executeUpdate(tablePrimeSql);
+			
+				int nonRwUpdateCounts[] = testStmts[0].executeBatch();
+			
+				ResultSet nonRewrittenRsKeys = testStmts[0].getGeneratedKeys();
+			
+				createTable("testBug30493", ddl);
+				this.stmt.executeUpdate(tablePrimeSql);
+			
+				int rwUpdateCounts[] = testStmts[1].executeBatch();
+				ResultSet rewrittenRsKeys = testStmts[1].getGeneratedKeys();
+				for(int i = 0; i < 4; ++i) {
+					assertEquals(2, nonRwUpdateCounts[i]);
+					assertEquals(2, rwUpdateCounts[i]);
+				}
+
+				assertResultSetLength(nonRewrittenRsKeys, 4);
+				assertResultSetLength(rewrittenRsKeys, 4);
+			
+				assertResultSetsEqual(nonRewrittenRsKeys, rewrittenRsKeys);
+			}
+		} finally {
+			closeMemberJDBCResources();
+			
+			if (rewriteConn != null) {
+				rewriteConn.close();
+			}
+		}
+	}
+	
+	public void testBug34093_nonbatch() throws Exception {
+		Connection rewriteConn = null;
+		
+		try {
+			String ddl = "(autoIncId INT NOT NULL PRIMARY KEY AUTO_INCREMENT, uniqueTextKey VARCHAR(255) UNIQUE KEY)";
+			
+			String sql = "insert into testBug30493 (uniqueTextKey) values ('c') on duplicate key UPDATE autoIncId = last_insert_id( autoIncId )";
+			String tablePrimeSql = "INSERT INTO testBug30493 (uniqueTextKey) VALUES ('a'), ('b'), ('c'), ('d')";
+
+			createTable("testBug30493", ddl);
+			stmt.executeUpdate(tablePrimeSql);
+
+			stmt.execute(sql, Statement.RETURN_GENERATED_KEYS);
+			assertEquals(2, stmt.getUpdateCount());
+			ResultSet stmtKeys = stmt.getGeneratedKeys();
+			assertResultSetLength(stmtKeys, 1);
+
+			createTable("testBug30493", ddl);
+			stmt.executeUpdate(tablePrimeSql);
+			
+			pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			pstmt.execute();
+			assertEquals(2, pstmt.getUpdateCount());
+			ResultSet pstmtKeys = pstmt.getGeneratedKeys();
+			assertResultSetLength(pstmtKeys, 1);
+			
+			assertResultSetsEqual(stmtKeys, pstmtKeys);
 		} finally {
 			closeMemberJDBCResources();
 			

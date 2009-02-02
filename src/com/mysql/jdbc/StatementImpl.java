@@ -248,6 +248,9 @@ public class StatementImpl implements Statement {
 	
 	private ExceptionInterceptor exceptionInterceptor;
 	
+	/** Whether or not the last query was of the form ON DUPLICATE KEY UPDATE */
+	protected boolean lastQueryIsOnDupKeyUpdate = false;
+	
 	/**
 	 * Constructor for a Statement.
 	 *
@@ -597,6 +600,9 @@ public class StatementImpl implements Statement {
 
 		synchronized (locallyScopedConn.getMutex()) {
 			this.retrieveGeneratedKeys = returnGeneratedKeys;
+			lastQueryIsOnDupKeyUpdate = false;
+			if (returnGeneratedKeys)
+				lastQueryIsOnDupKeyUpdate = containsOnDuplicateKeyInString(sql);
 			
 			resetCancelledState();
 
@@ -994,9 +1000,10 @@ public class StatementImpl implements Statement {
 
 					for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
 						try {
-							updateCounts[commandIndex] = executeUpdate((String) this.batchedArgs
-									.get(commandIndex), true, true);
-							getBatchedGeneratedKeys();
+							String sql = (String) this.batchedArgs.get(commandIndex);
+							updateCounts[commandIndex] = executeUpdate(sql, true, true);
+							// limit one generated key per OnDuplicateKey statement
+							getBatchedGeneratedKeys(containsOnDuplicateKeyInString(sql) ? 1 : 0);
 						} catch (SQLException ex) {
 							updateCounts[commandIndex] = EXECUTE_FAILED;
 
@@ -1818,7 +1825,10 @@ public class StatementImpl implements Statement {
 		}
 		
 		if (this.batchedGeneratedKeys == null) {
-			return getGeneratedKeysInternal();
+			if (lastQueryIsOnDupKeyUpdate)
+				return getGeneratedKeysInternal(1);
+			else
+				return getGeneratedKeysInternal();
 		}
 
 		Field[] fields = new Field[1];
@@ -1837,6 +1847,12 @@ public class StatementImpl implements Statement {
 	 */
 	protected java.sql.ResultSet getGeneratedKeysInternal()
 			throws SQLException {
+		int numKeys = getUpdateCount();
+		return getGeneratedKeysInternal(numKeys);
+	}
+
+	protected java.sql.ResultSet getGeneratedKeysInternal(int numKeys)
+			throws SQLException {
 		Field[] fields = new Field[1];
 		fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17); //$NON-NLS-1$ //$NON-NLS-2$
 		fields[0].setConnection(this.connection);
@@ -1845,7 +1861,6 @@ public class StatementImpl implements Statement {
 		ArrayList rowSet = new ArrayList();
 
 		long beginAt = getLastInsertID();
-		int numKeys = getUpdateCount();
 
 		if (this.results != null) {
 			String serverInfo = this.results.getServerInfo();
@@ -2542,13 +2557,16 @@ public class StatementImpl implements Statement {
 			}
 		}
 	}
-
-	protected void getBatchedGeneratedKeys() throws SQLException {
+	
+	protected void getBatchedGeneratedKeys(int maxKeys) throws SQLException {
 		if (this.retrieveGeneratedKeys) {
 			java.sql.ResultSet rs = null;
 
 			try {
-				rs = getGeneratedKeysInternal();
+				if (maxKeys == 0)
+					rs = getGeneratedKeysInternal();
+				else
+					rs = getGeneratedKeysInternal(maxKeys);
 
 				while (rs.next()) {
 					this.batchedGeneratedKeys
@@ -2678,4 +2696,9 @@ public class StatementImpl implements Statement {
     public ExceptionInterceptor getExceptionInterceptor() {
     	return this.exceptionInterceptor;
     }
+	
+	protected boolean containsOnDuplicateKeyInString(String sql) {
+		return StringUtils.indexOfIgnoreCaseRespectMarker(0, 
+				sql, " ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet()) != -1;
+	}
 }

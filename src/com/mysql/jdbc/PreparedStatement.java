@@ -937,6 +937,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		CachedResultSetMetaData cachedMetadata = null;
 
 		synchronized (locallyScopedConn.getMutex()) {
+			lastQueryIsOnDupKeyUpdate = false;
+			if (retrieveGeneratedKeys)
+				lastQueryIsOnDupKeyUpdate = containsOnDuplicateKeyUpdateInSQL();
 			boolean doStreaming = createStreamingResultSet();
 			
 			clearWarnings();
@@ -1661,7 +1664,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 								java.sql.ResultSet rs = null;
 	
 								try {
-									rs = getGeneratedKeysInternal();
+									if (containsOnDuplicateKeyUpdateInSQL())
+										rs = getGeneratedKeysInternal(1);
+									else
+										rs = getGeneratedKeysInternal();
 	
 									while (rs.next()) {
 										this.batchedGeneratedKeys
@@ -5241,10 +5247,5 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 		
 		return count;
-	}
-	
-	protected boolean containsOnDuplicateKeyInString(String sql) {
-		return StringUtils.indexOfIgnoreCaseRespectMarker(0, 
-				sql, " ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet()) != -1;
 	}
 }

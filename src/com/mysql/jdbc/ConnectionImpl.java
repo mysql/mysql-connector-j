@@ -79,7 +79,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		List interceptors;
 		
 		ExceptionInterceptorChain(String interceptorClasses) throws SQLException {
-			interceptors = Util.loadExtensions(ConnectionImpl.this, props, interceptorClasses, "Coonection.BadExceptionInterceptor",  this);
+			interceptors = Util.loadExtensions(ConnectionImpl.this, props, interceptorClasses, "Connection.BadExceptionInterceptor",  this);
 		}
 		
 		public SQLException interceptException(SQLException sqlEx) {
