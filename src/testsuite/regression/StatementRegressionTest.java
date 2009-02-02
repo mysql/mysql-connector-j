@@ -5351,7 +5351,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			String tablePrimeSql = "INSERT INTO testBug30493 (uniqueTextKey) VALUES ('a'), ('b'), ('c'), ('d')";
 			
 			this.stmt.executeUpdate(tablePrimeSql);
-			this.pstmt = this.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			this.pstmt = getConnectionWithProps("compensateForOnDuplicateKeyUpdate=true").prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			
 			for (int i = 0; i < sequence.length; i++) {
 				this.pstmt.setString(1, sequence[i]);
@@ -5682,6 +5682,92 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 			
 			rewriteConn.close();
+		}
+	}
+	
+	/** Ensures that cases listed in Bug#41448 actually work - we don't think there's a bug here right now */
+	
+	public void testBug41448() throws Exception {
+		createTable("testBug41448","(pk INT PRIMARY KEY AUTO_INCREMENT, field1 VARCHAR(4))");
+		
+		stmt.executeUpdate("INSERT INTO testBug41448 (field1) VALUES ('abc')", Statement.RETURN_GENERATED_KEYS);
+		stmt.getGeneratedKeys();
+		
+		stmt.executeUpdate("INSERT INTO testBug41448 (field1) VALUES ('def')", new int[] {1});
+		stmt.getGeneratedKeys();
+		
+		stmt.executeUpdate("INSERT INTO testBug41448 (field1) VALUES ('ghi')", new String[] {"pk"});
+		stmt.getGeneratedKeys();
+		
+		stmt.executeUpdate("INSERT INTO testBug41448 (field1) VALUES ('ghi')");
+		
+		try {
+			stmt.getGeneratedKeys();
+			fail("Expected a SQLException here");
+		} catch (SQLException sqlEx) {
+			// expected
+		}
+		
+		stmt.execute("INSERT INTO testBug41448 (field1) VALUES ('jkl')", Statement.RETURN_GENERATED_KEYS);
+		stmt.getGeneratedKeys();
+		
+		stmt.execute("INSERT INTO testBug41448 (field1) VALUES ('mno')", new int[] {1});
+		stmt.getGeneratedKeys();
+		
+		stmt.execute("INSERT INTO testBug41448 (field1) VALUES ('pqr')", new String[] {"pk"});
+		stmt.getGeneratedKeys();
+		
+		stmt.execute("INSERT INTO testBug41448 (field1) VALUES ('stu')");
+		
+		try {
+			stmt.getGeneratedKeys();
+			fail("Expected a SQLException here");
+		} catch (SQLException sqlEx) {
+			// expected
+		}
+		
+		try {
+			this.pstmt = this.conn.prepareStatement("INSERT INTO testBug41448 (field1) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
+			this.pstmt.setString(1, "abc");
+			this.pstmt.executeUpdate();
+			this.pstmt.getGeneratedKeys();
+			this.pstmt.execute();
+			this.pstmt.getGeneratedKeys();
+			
+			this.pstmt = this.conn.prepareStatement("INSERT INTO testBug41448 (field1) VALUES (?)", new int[] {1});
+			this.pstmt.setString(1, "abc");
+			this.pstmt.executeUpdate();
+			this.pstmt.getGeneratedKeys();
+			this.pstmt.execute();
+			this.pstmt.getGeneratedKeys();
+			
+			this.pstmt = this.conn.prepareStatement("INSERT INTO testBug41448 (field1) VALUES (?)", new String[] {"pk"});
+			this.pstmt.setString(1, "abc");
+			this.pstmt.executeUpdate();
+			this.pstmt.getGeneratedKeys();
+			this.pstmt.execute();
+			this.pstmt.getGeneratedKeys();
+			
+			this.pstmt = this.conn.prepareStatement("INSERT INTO testBug41448 (field1) VALUES (?)");
+			this.pstmt.setString(1, "abc");
+			this.pstmt.executeUpdate();
+			try {
+				this.pstmt.getGeneratedKeys();
+				fail("Expected a SQLException here");
+			} catch (SQLException sqlEx) {
+				// expected
+			}
+			
+			this.pstmt.execute();
+			
+			try {
+				this.pstmt.getGeneratedKeys();
+				fail("Expected a SQLException here");
+			} catch (SQLException sqlEx) {
+				// expected
+			}
+		} finally {
+			closeMemberJDBCResources();
 		}
 	}
  } 
