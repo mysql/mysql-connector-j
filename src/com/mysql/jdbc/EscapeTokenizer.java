@@ -108,11 +108,13 @@ public class EscapeTokenizer {
 				if (this.inQuotes && c == quoteChar) {
 					if (this.pos + 1 < this.sourceLength) {
 						if (this.source.charAt(this.pos + 1) == quoteChar) {
-							// Doubled-up quote escape
-							tokenBuf.append(quoteChar);
-							tokenBuf.append(quoteChar);
-							this.pos++;
-							continue;
+							// Doubled-up quote escape, if the first quote isn't already escaped
+							if (this.lastChar != '\\') {
+								tokenBuf.append(quoteChar);
+								tokenBuf.append(quoteChar);
+								this.pos++;
+								continue;
+							}
 						}
 					}
 				}

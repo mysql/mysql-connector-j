@@ -5830,6 +5830,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+<<<<<<< TREE
 	
 	/**
 	 * Tests fix for Bug#41532 - regression in performance for batched inserts when using ON DUPLICATE KEY UPDATE
@@ -5972,7 +5973,6 @@ public class StatementRegressionTest extends BaseTestCase {
 	}
 	
 	public void testBug43196() throws Exception {
-
 		try {
 			createTable(
 					"`bug43196`",
@@ -6021,25 +6021,29 @@ public class StatementRegressionTest extends BaseTestCase {
 
 				assertTrue("No rows returned", this.rs.isFirst());
 				assertEquals("18446744073709551200", this.rs.getObject(1).toString());
-
 			} finally {
-
 				if (conn1 != null) {
-
 					conn1.close();
 				}
-
 			}
-
 		}
-
 		finally {
-
 			closeMemberJDBCResources();
-
 		}
+	}
 
+	/**
+	 * Bug #42253 - multiple escaped quotes cause exception from EscapeProcessor.
+	 */
+	public void testBug42253() throws Exception {
+		try {
+			rs = stmt.executeQuery("select '\\'\\'','{t\\'}'");
+			rs.next();
+			assertEquals("''", rs.getString(1));
+			assertEquals("{t'}", rs.getString(2));
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }
 
-
-} 

@@ -79,6 +79,9 @@ nn-nn-08 - Version 5.1.8
     - Fixed Bug #43714 - useInformationSchema with
       DatabaseMetaData.getExportedKeys() throws exception
 
+    - Fixed Bug #42253 - multiple escaped quotes cause exception from
+      EscapeProcessor
+
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
 	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.
