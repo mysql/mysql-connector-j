@@ -91,6 +91,9 @@ nn-nn-08 - Version 5.1.8
     - Fixed Bug #40439 - Error rewriting batched statement if table name
       ends with "values".
 
+    - Fixed Bug #41484 Accessing fields by name after the ResultSet is closed throws
+      NullPointerException.
+
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
 	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.

@@ -1102,6 +1102,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public synchronized int findColumn(String columnName) throws SQLException {
 		Integer index;
 
+		checkClosed();
+		
 		if (!this.hasBuiltIndexMapping) {
 			buildIndexMapping();
 		}

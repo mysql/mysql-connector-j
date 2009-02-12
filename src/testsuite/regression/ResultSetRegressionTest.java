@@ -4863,4 +4863,22 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		assertEquals(10000, this.rs.getInt(4));
 		assertEquals(10000, this.rs.getLong(4));
 	}
+	
+	/**
+	 * Bug #41484
+	 * Accessing fields by name after the ResultSet is closed throws NullPointerException.
+	 */
+	public void testBug41484() throws Exception {
+		try {
+			rs = stmt.executeQuery("select 1 as abc");
+			rs.next();
+			rs.getString("abc");
+			rs.close();
+			rs.getString("abc");
+		} catch(SQLException ex) {
+			/* expected */
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }
