@@ -264,6 +264,8 @@ class MysqlIO {
         if (this.connection.getEnablePacketDebug()) {
             this.packetDebugRingBuffer = new LinkedList();
         }
+        this.traceProtocol = this.connection.getTraceProtocol();
+        
 
         this.useAutoSlowLog = this.connection.getAutoSlowLog();
         
@@ -1843,7 +1845,6 @@ class MysqlIO {
         // and we save 10-15% in overall performance by doing this...
         //
         this.enablePacketDebug = this.connection.getEnablePacketDebug();
-        this.traceProtocol = this.connection.getTraceProtocol();
         this.readPacketSequence = 0;
 
         int oldTimeout = 0;

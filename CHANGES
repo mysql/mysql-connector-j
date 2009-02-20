@@ -1,6 +1,9 @@
 # Changelog
 # $Id$
 nn-nn-08 - Version 5.1.8
+    - Fixed BUG#43070 - traceProtocol parameter isn't configured early enough to
+      capture handshake protocol.
+
     - Fixed BUG#41161 - PreparedStatement.addBatch() doesn't check for all parameters
       being set, which leads to a NullPointerException when calling executeBatch() and
       rewriting batched statements into multi-value or multi-statement statements.
