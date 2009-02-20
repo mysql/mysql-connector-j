@@ -334,7 +334,7 @@ class Security {
 		byte[] passwordHashStage2 = md.digest(passwordHashStage1);
 		md.reset();
 
-		byte[] seedAsBytes = seed.getBytes(); // for debugging
+		byte[] seedAsBytes = seed.getBytes("ASCII"); // for debugging
 		md.update(seedAsBytes);
 		md.update(passwordHashStage2);
 

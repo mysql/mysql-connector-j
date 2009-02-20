@@ -1,6 +1,10 @@
 # Changelog
 # $Id$
 nn-nn-08 - Version 5.1.8
+    - Fixed BUG#43071 - Specifying ASCII encoding for converting seed String to
+      byte array; allowing system default encoding to be used causes auth failures
+      on EBCDIC platforms.
+
     - Fixed BUG#43070 - traceProtocol parameter isn't configured early enough to
       capture handshake protocol.
 
