@@ -19,6 +19,10 @@ nn-nn-08 - Version 5.1.8
       using ON DUPLICATE KEY UPDATE
       
     - Fixed some quoting of substituted parameter issues in localized error messages.
+    
+    - Added a version check around getting the variable 'auto_increment_increment' for
+      servers < 5.0.2, which quiets down a warning message that the driver would log
+      when connecting to MySQL-4.1 or older.
 
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and

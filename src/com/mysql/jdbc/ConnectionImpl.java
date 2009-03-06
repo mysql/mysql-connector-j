@@ -3413,7 +3413,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		if (versionMeetsMinimum(3, 21, 22)) {
 			loadServerVariables();
 
-			this.autoIncrementIncrement = getServerVariableAsInt("auto_increment_increment", 1);
+			if (versionMeetsMinimum(5, 0, 2)) {
+				this.autoIncrementIncrement = getServerVariableAsInt("auto_increment_increment", 1);
+			} else {
+				this.autoIncrementIncrement = 1;
+			}
 			
 			buildCollationMapping();
 
