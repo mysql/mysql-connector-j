@@ -1,6 +1,9 @@
 # Changelog
 # $Id$
 nn-nn-08 - Version 5.1.8
+    - Fixed BUG#43421 - Made doPing() global blacklist-aware, so that it does not
+      throw Exceptions when at least a single load-balanced server is available.
+
     - Fixed BUG#43071 - Specifying ASCII encoding for converting seed String to
       byte array; allowing system default encoding to be used causes auth failures
       on EBCDIC platforms.
