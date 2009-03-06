@@ -17,6 +17,8 @@ nn-nn-08 - Version 5.1.8
       
     - Fixed Bug #42309 - Statement.getGeneratedKeys() returns 2 keys when
       using ON DUPLICATE KEY UPDATE
+      
+    - Fixed some quoting of substituted parameter issues in localized error messages.
 
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
