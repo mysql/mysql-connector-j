@@ -2490,4 +2490,21 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			assertEquals("Unexpected type in column " + (i + 1), expectedType, actualType);
 		}
 	}
+
+	/**
+	 * Bug #43714 - useInformationSchema with DatabaseMetaData.getExportedKeys() throws exception
+	 */
+	public void testBug43714() throws Exception {
+		Connection c_IS = null;
+		try {
+			c_IS = getConnectionWithProps("useInformationSchema=true");
+    		DatabaseMetaData dbmd = c_IS.getMetaData();
+    		rs = dbmd.getExportedKeys("x", "y", "z");
+		} finally {
+			try {
+				c_IS.close();
+			} catch (SQLException ex) {}
+			closeMemberJDBCResources();
+		}
+	}
 }

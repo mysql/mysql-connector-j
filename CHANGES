@@ -76,6 +76,9 @@ nn-nn-08 - Version 5.1.8
 
     - Fixed Bug#45171 - Connection.serverPrepareStatement() returns wrong default result set types
     
+    - Fixed Bug #43714 - useInformationSchema with
+      DatabaseMetaData.getExportedKeys() throws exception
+
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
 	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.
