@@ -3565,15 +3565,21 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		// Query cache is broken wrt. multi-statements before MySQL-4.1.10
 		//
 
-		if (this.versionMeetsMinimum(4, 1, 0)
+		if (versionMeetsMinimum(4, 1, 0)
 				&& !this.versionMeetsMinimum(4, 1, 10)
 				&& getAllowMultiQueries()) {
-			if ("ON".equalsIgnoreCase((String) this.serverVariables
-					.get("query_cache_type"))
-					&& !"0".equalsIgnoreCase((String) this.serverVariables
-							.get("query_cache_size"))) {
+			if (isQueryCacheEnabled()) {
 				setAllowMultiQueries(false);
 			}
+		}
+		
+		if (versionMeetsMinimum(5, 0, 0) && 
+				(getUseLocalTransactionState() || getElideSetAutoCommits()) &&
+				isQueryCacheEnabled() && !versionMeetsMinimum(6, 0, 10)) {
+			// Can't trust the server status flag on the wire if query cache is enabled,
+			// due to Bug#36326
+			setUseLocalTransactionState(false);
+			setElideSetAutoCommits(false);
 		}
 		
 		//
@@ -3581,6 +3587,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		//
 		
 		setupServerForTruncationChecks();
+	}
+
+	private boolean isQueryCacheEnabled() {
+		return "ON".equalsIgnoreCase((String) this.serverVariables
+				.get("query_cache_type"))
+				&& !"0".equalsIgnoreCase((String) this.serverVariables
+						.get("query_cache_size"));
 	}
 
 	private int getServerVariableAsInt(String variableName, int fallbackValue)
