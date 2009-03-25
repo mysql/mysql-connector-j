@@ -63,6 +63,18 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 	
 	static final Set IMMEDIATELY_DOWNED_HOSTS = new HashSet();
 	
+	private String hostname;
+	private int portNumber;
+	private Properties props;
+	
+	public static void flushAllHostLists(){
+		IMMEDIATELY_DOWNED_HOSTS.clear();
+		HUNG_CONNECT_HOSTS.clear();
+		HUNG_READ_HOSTS.clear();
+		HUNG_WRITE_HOSTS.clear();
+	}
+	
+	
 	public static void mapHost(String alias, String orig) {
 		MAPPED_HOSTS.put(alias, orig);
 	}
@@ -102,6 +114,13 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 	
 	public Socket connect(String hostname, int portNumber, Properties props)
 			throws SocketException, IOException {
+		this.hostname = hostname;
+		this.portNumber = portNumber;
+		this.props = props;
+		return getNewSocket();
+	}
+	
+	private Socket getNewSocket() throws SocketException, IOException {
 		if (IMMEDIATELY_DOWNED_HOSTS.contains(hostname)) {
 
 			sleepMillisForProperty(props, "connectTimeout");
@@ -116,6 +135,16 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 		}
 		
 		return new HangingSocket(super.connect(hostnameToConnectTo, portNumber, props), props, hostname);
+	}
+	
+	
+
+	public Socket afterHandshake() throws SocketException, IOException {
+		return getNewSocket();
+	}
+
+	public Socket beforeHandshake() throws SocketException, IOException {
+		return getNewSocket();
 	}
 
 	static void sleepMillisForProperty(Properties props, String name) {
@@ -364,7 +393,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 		}
 
 		private void failIfRequired() throws SocketTimeoutException {
-			if (HUNG_READ_HOSTS.contains(aliasedHostname)) {
+			if (HUNG_READ_HOSTS.contains(aliasedHostname) || IMMEDIATELY_DOWNED_HOSTS.contains(aliasedHostname)) {
 				sleepMillisForProperty(props, "socketTimeout");
 
 				throw new SocketTimeoutException();
@@ -416,7 +445,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 			}
 			
 			private void failIfRequired() throws SocketTimeoutException {
-				if (HUNG_WRITE_HOSTS.contains(aliasedHostname)) {
+				if (HUNG_WRITE_HOSTS.contains(aliasedHostname) || IMMEDIATELY_DOWNED_HOSTS.contains(aliasedHostname)) {
 					sleepMillisForProperty(props, "socketTimeout");
 
 					throw new SocketTimeoutException();

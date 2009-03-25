@@ -318,7 +318,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		}
 		
 		if ("close".equals(methodName)) {
-			synchronized (this.liveConnections) {
+			synchronized (this) {
 				// close all underlying connections
 				Iterator allConnections = this.liveConnections.values()
 						.iterator();
@@ -473,11 +473,35 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 	}
 
 	public synchronized void doPing() throws SQLException {
-		Iterator allConns = this.liveConnections.values().iterator();
-		
-		while (allConns.hasNext()) {
-			((Connection)allConns.next()).ping();
+		if(this.isGlobalBlacklistEnabled()){
+			SQLException se = null;
+			boolean foundHost = false;
+			synchronized(this){
+				for(Iterator i = this.hostList.iterator(); i.hasNext(); ){
+					String host = (String) i.next();
+					Connection conn = (Connection) this.liveConnections.get(host);
+					if(conn == null){
+						continue;
+					}
+					try{
+						conn.ping();
+						foundHost = true;
+					} catch (SQLException e){
+						se = e;
+						this.addToGlobalBlacklist(host);
+					}
+				}
+			}
+			if(!foundHost){
+				throw se;
+			}
+		} else {
+			Iterator allConns = this.liveConnections.values().iterator();
+			while (allConns.hasNext()) {
+				((Connection)allConns.next()).ping();
+			}			
 		}
+
 	}
 	
 	public void addToGlobalBlacklist(String host) {

@@ -44,6 +44,7 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 
 import testsuite.BaseTestCase;
+import testsuite.UnreliableSocketFactory;
 
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
@@ -2436,5 +2437,92 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		    	closeMemberJDBCResources();
 			}
 		}
+	}
+	public void testUnreliableSocketFactory() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+		props.setProperty("loadBalanceStrategy", "bestResponseTime");
+		NonRegisteringDriver d = new NonRegisteringDriver();
+		String host = d.parseURL(BaseTestCase.dbUrl, props).getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		if(host == null){
+			host = "localhost";
+		}
+		
+		UnreliableSocketFactory.mapHost("first", host);
+		UnreliableSocketFactory.mapHost("second", host);
+		
+		Connection conn = getConnectionWithProps("jdbc:mysql:loadbalance://first,second/test", props);
+		assertNotNull("Connection should not be null", conn);
+		try {
+			conn.createStatement().execute("SELECT 1");
+			conn.createStatement().execute("SELECT 1");
+			// both connections are live now
+			UnreliableSocketFactory.downHost("first");
+			UnreliableSocketFactory.downHost("second");
+			try{
+				conn.createStatement().execute("SELECT 1");
+				fail("Should hang here.");
+			} catch (SQLException sqlEx){
+				assertEquals("08S01", sqlEx.getSQLState());
+			}
+		} finally {
+	    	closeMemberJDBCResources();
+		}
+	}	
+	
+	public void testBug43421() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+		props.setProperty("bestResponse", "bestResponseTime");
+		NonRegisteringDriver d = new NonRegisteringDriver();
+		Properties testCaseProps = d.parseURL(BaseTestCase.dbUrl, null);
+		String host = testCaseProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		String db = testCaseProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		if(host == null){
+			host = "localhost";
+		}
+		UnreliableSocketFactory.mapHost("first", host);
+		UnreliableSocketFactory.mapHost("second", host);
+		
+		Connection conn = getConnectionWithProps("jdbc:mysql:loadbalance://first,second/" + db, props);
+		assertNotNull("Connection should not be null", conn);
+		
+		try {
+			conn.createStatement().execute("SELECT 1");
+			conn.createStatement().execute("SELECT 1");
+			// both connections are live now
+			UnreliableSocketFactory.downHost("second");
+			try{
+				conn.createStatement().execute("/* ping */");
+				fail("Pings will not succeed when one host is down and using loadbalance w/o global blacklist.");
+			} catch (SQLException sqlEx){
+			}
+		} finally {
+	    	closeMemberJDBCResources();
+		}
+	
+		UnreliableSocketFactory.flushAllHostLists();
+		props = new Properties();
+		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+		props.setProperty("loadBalanceStrategy", "bestResponseTime");
+		props.setProperty("globalBlacklistTimeout", "200");
+		
+		conn = getConnectionWithProps("jdbc:mysql:loadbalance://first,second/" + db, props);
+		assertNotNull("Connection should not be null", conn);
+		
+		try {
+			conn.createStatement().execute("SELECT 1");
+			conn.createStatement().execute("SELECT 1");
+			// both connections are live now
+			UnreliableSocketFactory.downHost("second");
+			try{
+				conn.createStatement().execute("/* ping */");
+			} catch (SQLException sqlEx){
+				fail("Pings should succeed even though host is down.");
+			}
+		} finally {
+	    	closeMemberJDBCResources();
+		}
+
 	}
 }
