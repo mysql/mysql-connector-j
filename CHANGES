@@ -27,6 +27,14 @@ nn-nn-08 - Version 5.1.8
     - The driver will automatically disable elideSetAutoCommit and useLocalTransactionState
       if it detects a MySQL server version older than 6.0.10 with the query cache enabled, due
       to Bug#36326 which can cause the server to report bogus transaction state.
+      
+    - Fixed a performance regression (Bug#41532) in rewritten batched inserts when "ON DUPLICATE KEY" 
+      was present.
+      
+      Fixes include an improvement to token searching in the statement, and the ability for the driver
+      to rewrite prepared statements that include "ON DUPLICATE KEY UPDATE" into multi-valued inserts as
+      long as there is no use of LAST_INSERT_ID() in the update clause (as this would render 
+      getGeneratedKey() values incorrect).
 
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and

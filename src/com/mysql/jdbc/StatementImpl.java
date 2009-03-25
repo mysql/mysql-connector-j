@@ -2698,7 +2698,11 @@ public class StatementImpl implements Statement {
     }
 	
 	protected boolean containsOnDuplicateKeyInString(String sql) {
+		return getOnDuplicateKeyLocation(sql) != -1;
+	}
+	
+	protected int getOnDuplicateKeyLocation(String sql) {
 		return StringUtils.indexOfIgnoreCaseRespectMarker(0, 
-				sql, " ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet()) != -1;
+				sql, " ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet());
 	}
 }

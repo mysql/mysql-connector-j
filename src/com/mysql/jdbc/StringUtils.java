@@ -1005,9 +1005,10 @@ public class StringUtils {
 					&& contextMarker == Character.MIN_VALUE) {
 				markerTypeFound = ind;
 				contextMarker = c;
-			} else if (c == target.charAt(0) && !escaped
+			} else if ((Character.toUpperCase(c) == Character.toUpperCase(target.charAt(0)) ||
+					Character.toLowerCase(c) == Character.toLowerCase(target.charAt(0))) && !escaped
 					&& contextMarker == Character.MIN_VALUE) {
-				if (indexOfIgnoreCase(i, src, target) != -1)
+				if (startsWithIgnoreCase(src, i, target))
 					return i;
 			}
 		}

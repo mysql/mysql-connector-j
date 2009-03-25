@@ -183,6 +183,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 		boolean isOnDuplicateKeyUpdate = false;
 		
+		int locationOfOnDuplicateKeyUpdate = -1;
+		
 		/**
 		 * Represents the "parsed" state of a client-side
 		 * prepared statement, with the statement broken up into
@@ -199,7 +201,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
-				this.isOnDuplicateKeyUpdate = containsOnDuplicateKeyInString(sql);
+				this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(sql);
+				this.isOnDuplicateKeyUpdate = this.locationOfOnDuplicateKeyUpdate != -1;
 				
 				this.lastUsed = System.currentTimeMillis();
 
@@ -1123,19 +1126,22 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public synchronized boolean canRewriteAsMultivalueInsertStatement() {
 		if (!this.hasCheckedForRewrite) {
 			// Needs to be INSERT, can't have INSERT ... SELECT or
-			// INSERT ... ON DUPLICATE KEY UPDATE
-			//
-			// We're not smart enough to re-write to
-			//
-			//    INSERT INTO table (a,b,c) VALUES (1,2,3),(4,5,6)
-			//    ON DUPLICATE KEY UPDATE c=VALUES(a)+VALUES(b);
-			//
-			// (yet)
+			// INSERT ... ON DUPLICATE KEY UPDATE with an id=LAST_INSERT_ID(...)
 
+			boolean rewritableOdku = true;
+			
+			if (containsOnDuplicateKeyUpdateInSQL()) {
+				int updateClausePos = StringUtils.indexOfIgnoreCase(this.parseInfo.locationOfOnDuplicateKeyUpdate, originalSql, " UPDATE ");
+				
+				if (updateClausePos != -1) {
+					rewritableOdku = StringUtils.indexOfIgnoreCaseRespectMarker(updateClausePos, this.originalSql, "LAST_INSERT_ID", "\"'`", "\"'`", false) == -1;
+				}
+			}
+			
 			this.canRewrite = StringUtils.startsWithIgnoreCaseAndWs(
 					this.originalSql, "INSERT", this.statementAfterCommentsPos) 
 			&& StringUtils.indexOfIgnoreCaseRespectMarker(this.statementAfterCommentsPos, this.originalSql, "SELECT", "\"'`", "\"'`", false) == -1 
-			&& !containsOnDuplicateKeyUpdateInSQL();
+			&& rewritableOdku;
 			
 			this.hasCheckedForRewrite = true;
 		}
@@ -1361,7 +1367,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected int[] executeBatchedInserts(int batchTimeout) throws SQLException {
 		String valuesClause = extractValuesClause();
-
+		String odkuClause = containsOnDuplicateKeyUpdateInSQL() ? this.originalSql.substring(this.parseInfo.locationOfOnDuplicateKeyUpdate) : "";
+		
 		Connection locallyScopedConn = this.connection;
 
 		if (valuesClause == null) {
@@ -1399,12 +1406,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			try {
 				if (this.retrieveGeneratedKeys) {
 					batchedStatement = locallyScopedConn.prepareStatement(
-							generateBatchedInsertSQL(valuesClause,
+							generateBatchedInsertSQL(valuesClause, odkuClause,
 									numValuesPerBatch), RETURN_GENERATED_KEYS);
 				} else {
 					batchedStatement = locallyScopedConn
 							.prepareStatement(generateBatchedInsertSQL(
-									valuesClause, numValuesPerBatch));
+									valuesClause, odkuClause, numValuesPerBatch));
 				}
 
 				if (this.connection.getEnableQueryTimeouts()
@@ -1468,13 +1475,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 					if (this.retrieveGeneratedKeys) {
 						batchedStatement = locallyScopedConn.prepareStatement(
-								generateBatchedInsertSQL(valuesClause,
+								generateBatchedInsertSQL(valuesClause, odkuClause, 
 										numValuesPerBatch),
 								RETURN_GENERATED_KEYS);
 					} else {
 						batchedStatement = locallyScopedConn
 								.prepareStatement(generateBatchedInsertSQL(
-										valuesClause, numValuesPerBatch));
+										valuesClause, odkuClause, numValuesPerBatch));
 					}
 
 					if (timeoutTask != null) {
@@ -2123,14 +2130,18 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				return null;
 			}
 	
-			int indexOfLastParen = this.originalSql.lastIndexOf(')');
+			int endOfValuesClause = this.originalSql.lastIndexOf(')');
 	
-			if (indexOfLastParen == -1) {
+			if (endOfValuesClause == -1) {
 				return null;
 			}
 	
+			if (containsOnDuplicateKeyUpdateInSQL()) {
+				endOfValuesClause = this.parseInfo.locationOfOnDuplicateKeyUpdate - 1;
+			}
+			
 			this.batchedValuesClause = this.originalSql.substring(indexOfFirstParen,
-					indexOfLastParen + 1);
+					endOfValuesClause + 1);
 		}
 			
 		return this.batchedValuesClause;
@@ -2249,18 +2260,27 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 
-	private String generateBatchedInsertSQL(String valuesClause, int numBatches) {
+	private String generateBatchedInsertSQL(String valuesClause, String odkuClause, int numBatches) {
 		StringBuffer newStatementSql = new StringBuffer(this.originalSql
 				.length()
 				+ (numBatches * (valuesClause.length() + 1)));
 
-		newStatementSql.append(this.originalSql);
+		if (containsOnDuplicateKeyUpdateInSQL()) {
+			newStatementSql.append(this.originalSql.substring(0, this.parseInfo.locationOfOnDuplicateKeyUpdate));
+		} else {
+			newStatementSql.append(this.originalSql);
+		}
 
 		for (int i = 0; i < numBatches - 1; i++) {
 			newStatementSql.append(',');
 			newStatementSql.append(valuesClause);
 		}
 
+		if (odkuClause != null && odkuClause.length() > 0) {
+			newStatementSql.append(" ");
+			newStatementSql.append(odkuClause);
+		}
+		
 		return newStatementSql.toString();
 	}
 

@@ -5825,4 +5825,84 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	/**
+	 * Tests fix for Bug#41532 - regression in performance for batched inserts when using ON DUPLICATE KEY UPDATE
+	 */
+	public void testBug41532() throws Exception {
+		createTable(
+				"testBug41532",
+				"(ID"
+						+ " INTEGER, S1 VARCHAR(100), S2 VARCHAR(100), S3 VARCHAR(100), D1 DATETIME, D2 DATETIME, D3 DATETIME, N1 DECIMAL(28,6), N2 DECIMAL(28,6), N3 DECIMAL(28,6), UNIQUE KEY"
+						+ " UNIQUE_KEY_TEST_DUPLICATE (ID) )");
+
+		int numTests = 1000;
+		Connection rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true,dumpQueriesOnException=true");
+
+		assertEquals("0", getSingleIndexedValueWithQuery(rewriteConn, 2,
+				"SHOW SESSION STATUS LIKE 'Com_insert'").toString());
+		long batchedTime = timeBatch(rewriteConn, numTests);
+		assertEquals("1", getSingleIndexedValueWithQuery(rewriteConn, 2,
+				"SHOW SESSION STATUS LIKE 'Com_insert'").toString());
+
+		this.stmt.executeUpdate("TRUNCATE TABLE testBug41532");
+
+		assertEquals("0", getSingleIndexedValueWithQuery(this.conn, 2,
+				"SHOW SESSION STATUS LIKE 'Com_insert'").toString());
+		long unbatchedTime = timeBatch(this.conn, numTests);
+		assertEquals(String.valueOf(numTests), getSingleIndexedValueWithQuery(
+				this.conn, 2, "SHOW SESSION STATUS LIKE 'Com_insert'")
+				.toString());
+		assertTrue(batchedTime < unbatchedTime);
+	}
+
+	private long timeBatch(Connection c, int numberOfRows) throws SQLException {
+		this.pstmt = c
+				.prepareStatement("INSERT INTO testBug41532(ID, S1, S2, S3, D1,"
+						+ "D2, D3, N1, N2, N3) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+						+ " ON DUPLICATE KEY"
+						+ " UPDATE S1 = VALUES(S1), S2 = VALUES(S2), S3 = VALUES(S3), D1 = VALUES(D1), D2 ="
+						+ " VALUES(D2), D3 = VALUES(D3), N1 = N1 + VALUES(N1), N2 = N2 + VALUES(N2), N2 = N2 +"
+						+ " VALUES(N2)");
+		try {
+			c.setAutoCommit(false);
+			c.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+			Date d1 = new Date(System.currentTimeMillis());
+			Date d2 = new Date(System.currentTimeMillis() + 1000000);
+			Date d3 = new Date(System.currentTimeMillis() + 1250000);
+
+			for (int i = 0; i < numberOfRows; i++) {
+				this.pstmt.setObject(1, Integer.valueOf(i), Types.INTEGER);
+				this.pstmt.setObject(2, String.valueOf(i), Types.VARCHAR);
+				this.pstmt.setObject(3, String.valueOf(i * 0.1), Types.VARCHAR);
+				this.pstmt.setObject(4, String.valueOf(i / 3), Types.VARCHAR);
+				this.pstmt.setObject(5, new Timestamp(d1.getTime()),
+						Types.TIMESTAMP);
+				this.pstmt.setObject(6, new Timestamp(d2.getTime()),
+						Types.TIMESTAMP);
+				this.pstmt.setObject(7, new Timestamp(d3.getTime()),
+						Types.TIMESTAMP);
+				this.pstmt.setObject(8, BigDecimal.valueOf(i + 0.1),
+						Types.DECIMAL);
+				this.pstmt.setObject(9, BigDecimal.valueOf(i * 0.1),
+						Types.DECIMAL);
+				this.pstmt.setObject(10, BigDecimal.valueOf(i / 3),
+						Types.DECIMAL);
+				this.pstmt.addBatch();
+			}
+			long startTime = System.currentTimeMillis();
+			this.pstmt.executeBatch();
+			c.commit();
+			long stopTime = System.currentTimeMillis();
+
+			rs = conn.createStatement().executeQuery(
+					"SELECT COUNT(*) FROM testBug41532");
+			assertTrue(rs.next());
+			assertEquals(numberOfRows, rs.getInt(1));
+
+			return stopTime - startTime;
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
  } 
