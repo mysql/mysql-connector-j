@@ -5872,7 +5872,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			Date d3 = new Date(System.currentTimeMillis() + 1250000);
 
 			for (int i = 0; i < numberOfRows; i++) {
-				this.pstmt.setObject(1, Integer.valueOf(i), Types.INTEGER);
+				this.pstmt.setObject(1, new Integer(i), Types.INTEGER);
 				this.pstmt.setObject(2, String.valueOf(i), Types.VARCHAR);
 				this.pstmt.setObject(3, String.valueOf(i * 0.1), Types.VARCHAR);
 				this.pstmt.setObject(4, String.valueOf(i / 3), Types.VARCHAR);
@@ -5882,11 +5882,11 @@ public class StatementRegressionTest extends BaseTestCase {
 						Types.TIMESTAMP);
 				this.pstmt.setObject(7, new Timestamp(d3.getTime()),
 						Types.TIMESTAMP);
-				this.pstmt.setObject(8, BigDecimal.valueOf(i + 0.1),
+				this.pstmt.setObject(8, new BigDecimal(i + 0.1),
 						Types.DECIMAL);
-				this.pstmt.setObject(9, BigDecimal.valueOf(i * 0.1),
+				this.pstmt.setObject(9, new BigDecimal(i * 0.1),
 						Types.DECIMAL);
-				this.pstmt.setObject(10, BigDecimal.valueOf(i / 3),
+				this.pstmt.setObject(10, new BigDecimal(i / 3),
 						Types.DECIMAL);
 				this.pstmt.addBatch();
 			}
