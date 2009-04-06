@@ -5905,4 +5905,37 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	/**
+	 * Tests fix for Bug#44056 - Statement.getGeneratedKeys() retains result set instances until 
+	 * statement is closed.
+	 */
+	 
+	public void testBug44056() throws Exception {
+		createTable("testBug44056", "(pk int primary key not null auto_increment)");
+		Statement newStmt = this.conn.createStatement();
+		
+		try {
+			newStmt.executeUpdate("INSERT INTO testBug44056 VALUES (null)", Statement.RETURN_GENERATED_KEYS);
+			checkOpenResultsFor44056(newStmt);
+			this.pstmt = this.conn.prepareStatement("INSERT INTO testBug44056 VALUES (null)", Statement.RETURN_GENERATED_KEYS);
+			this.pstmt.executeUpdate();
+			checkOpenResultsFor44056(this.pstmt);
+			this.pstmt = ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("INSERT INTO testBug44056 VALUES (null)", Statement.RETURN_GENERATED_KEYS);
+			this.pstmt.executeUpdate();
+			checkOpenResultsFor44056(this.pstmt);
+		} finally {
+			newStmt.close();
+			
+			closeMemberJDBCResources();
+		}
+	}
+
+	private void checkOpenResultsFor44056(Statement newStmt)
+			throws SQLException {
+		this.rs = newStmt.getGeneratedKeys();
+		assertEquals(1, ((com.mysql.jdbc.Statement) newStmt).getOpenResultSetCount());
+		this.rs.close();
+		assertEquals(0, ((com.mysql.jdbc.Statement) newStmt).getOpenResultSetCount());
+	}
  } 

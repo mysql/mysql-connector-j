@@ -38,6 +38,9 @@ nn-nn-08 - Version 5.1.8
       to rewrite prepared statements that include "ON DUPLICATE KEY UPDATE" into multi-valued inserts as
       long as there is no use of LAST_INSERT_ID() in the update clause (as this would render 
       getGeneratedKey() values incorrect).
+      
+    - Fixed Bug#44056 - Statement.getGeneratedKeys() retains result set instances until statement is closed,
+      thus causing memory leaks for long-lived statements, or statements used in tight loops.
 
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and

@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2009 Sun Microsystems
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as
@@ -33,8 +33,10 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.TimerTask;
 
 import com.mysql.jdbc.exceptions.DeadlockTimeoutRollbackMarker;
@@ -191,8 +193,8 @@ public class StatementImpl implements Statement {
 	/** Has someone changed this for this statement? */
 	protected boolean maxRowsChanged = false;
 
-	/** List of currently-open ResultSets */
-	protected List openResults = new ArrayList();
+	/** Set of currently-open ResultSets */
+	protected Set openResults = new HashSet();
 
 	/** Are we in pedantic mode? */
 	protected boolean pedantic = false;
@@ -493,7 +495,7 @@ public class StatementImpl implements Statement {
 	/**
 	 * Close any open result sets that have been 'held open'
 	 */
-	protected void closeAllOpenResults() {
+	protected synchronized void closeAllOpenResults() {
 		if (this.openResults != null) {
 			for (Iterator iter = this.openResults.iterator(); iter.hasNext();) {
 				ResultSetInternalMethods element = (ResultSetInternalMethods) iter.next();
@@ -509,6 +511,20 @@ public class StatementImpl implements Statement {
 		}
 	}
 
+	public synchronized void removeOpenResultSet(ResultSet rs) {
+		if (this.openResults != null) {
+			this.openResults.remove(rs);
+		}
+	}
+	
+	public synchronized int getOpenResultSetCount() {
+		if (this.openResults != null) {
+			return this.openResults.size();
+		}
+		
+		return 0;
+	}
+	
 	/**
 	 * @param sql
 	 * @return
@@ -1851,7 +1867,7 @@ public class StatementImpl implements Statement {
 		return getGeneratedKeysInternal(numKeys);
 	}
 
-	protected java.sql.ResultSet getGeneratedKeysInternal(int numKeys)
+	protected synchronized java.sql.ResultSet getGeneratedKeysInternal(int numKeys)
 			throws SQLException {
 		Field[] fields = new Field[1];
 		fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1991,7 +2007,7 @@ public class StatementImpl implements Statement {
 	/**
 	 * @see StatementImpl#getMoreResults(int)
 	 */
-	public boolean getMoreResults(int current) throws SQLException {
+	public synchronized boolean getMoreResults(int current) throws SQLException {
 
 		if (this.results == null) {
 			return false;
@@ -2279,7 +2295,7 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	protected void realClose(boolean calledExplicitly, boolean closeOpenResults)
+	protected synchronized void realClose(boolean calledExplicitly, boolean closeOpenResults)
 			throws SQLException {
 		if (this.isClosed) {
 			return;

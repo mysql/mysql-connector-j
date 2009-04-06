@@ -1,5 +1,5 @@
 /*
- Copyright  2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2007 MySQL AB, 2008-2009 Sun Microsystems
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as
@@ -24,6 +24,7 @@
 package com.mysql.jdbc;
 
 import java.io.InputStream;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
@@ -87,4 +88,17 @@ public interface Statement extends java.sql.Statement {
 	public void setPingTarget(PingTarget pingTarget);
 
 	public ExceptionInterceptor getExceptionInterceptor();
+	
+	/** 
+	 * Callback for result set instances to remove them from the Set that 
+	 * tracks them per-statement 
+	 */
+	 
+	public abstract void removeOpenResultSet(ResultSet rs);
+	
+	/**
+	 * Returns the number of open result sets for this statement.
+	 * @return
+	 */
+	public abstract int getOpenResultSetCount();
 }

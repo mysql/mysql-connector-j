@@ -7522,6 +7522,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				}
 			}
 		} finally {
+			if (this.owningStatement != null && calledExplicitly) {
+				this.owningStatement.removeOpenResultSet(this);
+			}
+			
 			SQLException exceptionDuringClose = null;
 
 			if (this.rowData != null) {
