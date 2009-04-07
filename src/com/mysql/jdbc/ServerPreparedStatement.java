@@ -2752,6 +2752,23 @@ public class ServerPreparedStatement extends PreparedStatement {
 		
 		return true;
 	}
+	
+	private int locationOfOnDuplicateKeyUpdate = -2;
+	
+	protected synchronized int getLocationOfOnDuplicateKeyUpdate() {
+		if (this.locationOfOnDuplicateKeyUpdate == -2) {
+			this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(this.originalSql);
+		}
+		
+		return this.locationOfOnDuplicateKeyUpdate;
+	}
+	
+	protected synchronized boolean isOnDuplicateKeyUpdate() {
+		return getLocationOfOnDuplicateKeyUpdate() != -1;
+	}
+
+	
+	
 
 	/** 
 	 *  Computes the maximum parameter set size, and entire batch size given 
@@ -2798,6 +2815,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	protected int setOneBatchedParameterSet(
 			java.sql.PreparedStatement batchedStatement, int batchedParamIndex,
 			Object paramSet) throws SQLException {
+		System.out.println("batchedParamIndex[in] " + batchedParamIndex);
 		BindValue[] paramArg = ((BatchedBindValues) paramSet).batchedParameterValues;
 	
 		for (int j = 0; j < paramArg.length; j++) {
@@ -2874,10 +2892,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	
 						BindValue asBound = ((ServerPreparedStatement) batchedStatement)
 								.getBinding(
-										batchedParamIndex + 1 /*
-																 * uses 1-based
-																 * offset
-																 */,
+										batchedParamIndex,
 										false);
 						asBound.bufferType = paramArg[j].bufferType;
 	
@@ -2893,6 +2908,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			}
 		}
 	
+		System.out.println("batchedParamIndex[out] " + batchedParamIndex);
 		return batchedParamIndex;
 	}
 

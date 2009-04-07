@@ -1131,7 +1131,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			boolean rewritableOdku = true;
 			
 			if (containsOnDuplicateKeyUpdateInSQL()) {
-				int updateClausePos = StringUtils.indexOfIgnoreCase(this.parseInfo.locationOfOnDuplicateKeyUpdate, originalSql, " UPDATE ");
+				int updateClausePos = StringUtils.indexOfIgnoreCase(getLocationOfOnDuplicateKeyUpdate(), originalSql, " UPDATE ");
 				
 				if (updateClausePos != -1) {
 					rewritableOdku = StringUtils.indexOfIgnoreCaseRespectMarker(updateClausePos, this.originalSql, "LAST_INSERT_ID", "\"'`", "\"'`", false) == -1;
@@ -1147,6 +1147,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 
 		return this.canRewrite;
+	}
+
+	protected int getLocationOfOnDuplicateKeyUpdate() {
+		return this.parseInfo.locationOfOnDuplicateKeyUpdate;
 	}
 
 	/**
@@ -1367,7 +1371,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected int[] executeBatchedInserts(int batchTimeout) throws SQLException {
 		String valuesClause = extractValuesClause();
-		String odkuClause = containsOnDuplicateKeyUpdateInSQL() ? this.originalSql.substring(this.parseInfo.locationOfOnDuplicateKeyUpdate) : "";
+		String odkuClause = containsOnDuplicateKeyUpdateInSQL() ? this.originalSql.substring(getLocationOfOnDuplicateKeyUpdate()) : "";
 		
 		Connection locallyScopedConn = this.connection;
 
@@ -2137,7 +2141,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			}
 	
 			if (containsOnDuplicateKeyUpdateInSQL()) {
-				endOfValuesClause = this.parseInfo.locationOfOnDuplicateKeyUpdate - 1;
+				endOfValuesClause = getLocationOfOnDuplicateKeyUpdate() - 1;
 			}
 			
 			this.batchedValuesClause = this.originalSql.substring(indexOfFirstParen,
@@ -2266,7 +2270,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				+ (numBatches * (valuesClause.length() + 1)));
 
 		if (containsOnDuplicateKeyUpdateInSQL()) {
-			newStatementSql.append(this.originalSql.substring(0, this.parseInfo.locationOfOnDuplicateKeyUpdate));
+			newStatementSql.append(this.originalSql.substring(0, getLocationOfOnDuplicateKeyUpdate()));
 		} else {
 			newStatementSql.append(this.originalSql);
 		}

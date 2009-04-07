@@ -41,6 +41,10 @@ nn-nn-08 - Version 5.1.8
       
     - Fixed Bug#44056 - Statement.getGeneratedKeys() retains result set instances until statement is closed,
       thus causing memory leaks for long-lived statements, or statements used in tight loops.
+      
+    - Fixed issues with server-side prepared statement batch re-writing caused by the fix to Bug#41532.
+      Rewriting of batched statements now works the same between normal prepared statements and server-side
+      prepared statements.
 
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and

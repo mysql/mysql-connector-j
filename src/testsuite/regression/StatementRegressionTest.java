@@ -5854,6 +5854,9 @@ public class StatementRegressionTest extends BaseTestCase {
 				this.conn, 2, "SHOW SESSION STATUS LIKE 'Com_insert'")
 				.toString());
 		assertTrue(batchedTime < unbatchedTime);
+		
+		rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true,useCursorFetch=true,defaultFetchSize=10000");
+		timeBatch(rewriteConn, numTests);
 	}
 
 	private long timeBatch(Connection c, int numberOfRows) throws SQLException {
