@@ -2815,7 +2815,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 	protected int setOneBatchedParameterSet(
 			java.sql.PreparedStatement batchedStatement, int batchedParamIndex,
 			Object paramSet) throws SQLException {
-		System.out.println("batchedParamIndex[in] " + batchedParamIndex);
 		BindValue[] paramArg = ((BatchedBindValues) paramSet).batchedParameterValues;
 	
 		for (int j = 0; j < paramArg.length; j++) {
@@ -2907,8 +2906,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				}
 			}
 		}
-	
-		System.out.println("batchedParamIndex[out] " + batchedParamIndex);
+
 		return batchedParamIndex;
 	}
 
