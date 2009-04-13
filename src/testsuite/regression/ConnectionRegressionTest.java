@@ -1220,6 +1220,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			return; // test not valid on JDK-1.3.1
 		}
 
+		if (!versionMeetsMinimum(6, 0)) {
+			return; // server status is broken until MySQL-6.0
+		}
+		
 		Properties props = new Properties();
 		props.setProperty("useConfigs", "maxPerformance");
 
@@ -1830,7 +1834,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	 * @throws Exception if the test fails.
 	 */
 	public void testBug24706() throws Exception {
-		if (!versionMeetsMinimum(5, 0)) {
+		if (!versionMeetsMinimum(6, 0)) {
 			return; // server status isn't there to support this feature
 		}
 		
