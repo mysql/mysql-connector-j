@@ -94,6 +94,9 @@ nn-nn-08 - Version 5.1.8
     - Fixed Bug #41484 Accessing fields by name after the ResultSet is closed throws
       NullPointerException.
 
+    - Fixed Bug #39426 - executeBatch passes most recent PreparedStatement params
+      to StatementInterceptor
+
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
 	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.

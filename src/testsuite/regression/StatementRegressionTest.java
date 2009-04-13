@@ -58,7 +58,9 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -68,10 +70,12 @@ import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.Field;
+import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.ServerPreparedStatement;
 import com.mysql.jdbc.StatementImpl;
+import com.mysql.jdbc.StatementInterceptor;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 
 /**
@@ -6079,6 +6083,66 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public static class Bug39426Interceptor implements StatementInterceptor {
+		public static List vals = new ArrayList();
+		String prevSql;
+		
+		public void destroy() {
+		}
 
+		public boolean executeTopLevelOnly() {
+			return false;
+		}
+
+		public void init(com.mysql.jdbc.Connection conn, Properties props)
+				throws SQLException {
+		}
+
+		public ResultSetInternalMethods postProcess(String sql,
+				com.mysql.jdbc.Statement interceptedStatement,
+				ResultSetInternalMethods originalResultSet,
+				com.mysql.jdbc.Connection connection) throws SQLException {
+			return null;
+		}
+
+		public ResultSetInternalMethods preProcess(String sql,
+				com.mysql.jdbc.Statement interceptedStatement,
+				com.mysql.jdbc.Connection connection) throws SQLException {
+			if (sql.equals(prevSql))
+				throw new RuntimeException("Previous statement matched current: " + sql);
+			prevSql = sql;
+			ParameterBindings b = ((com.mysql.jdbc.PreparedStatement)interceptedStatement).getParameterBindings();
+			vals.add(new Integer(b.getInt(1)));
+			return null;
+		}
+	}
+	
+	/**
+	 * Bug #39426 - executeBatch passes most recent PreparedStatement params
+	 * to StatementInterceptor 
+	 */
+	public void testBug39426() throws Exception {
+		Connection c = null;
+		try {
+			createTable("testBug39426", "(x int)");
+			c = getConnectionWithProps("statementInterceptors=testsuite.regression.StatementRegressionTest$Bug39426Interceptor");
+			PreparedStatement ps = c.prepareStatement("insert into testBug39426 values (?)");
+			ps.setInt(1, 1);
+			ps.addBatch();
+			ps.setInt(1, 2);
+			ps.addBatch();
+			ps.setInt(1, 3);
+			ps.addBatch();
+			ps.executeBatch();
+			List vals = Bug39426Interceptor.vals;
+			assertEquals(new Integer(1), vals.get(0));
+			assertEquals(new Integer(2), vals.get(1));
+			assertEquals(new Integer(3), vals.get(2));
+		} finally {
+			closeMemberJDBCResources();
+			if(c != null)
+				c.close();
+		}
+	}
 }
-

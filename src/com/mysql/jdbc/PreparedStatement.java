@@ -822,6 +822,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	/** Charset encoder used to escape if needed, such as Yen sign in SJIS */
 	private CharsetEncoder charsetEncoder;
 	
+	/** Command index of currently executing batch command. */
+	private int batchCommandIndex = -1;
+	
 	/**
 	 * Creates a prepared statement instance -- We need to provide factory-style
 	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
@@ -1021,6 +1024,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 		try {
 			int realParameterCount = this.parameterCount + getParameterIndexOffset();
+			Object batchArg = null;
+			if (batchCommandIndex != -1)
+				batchArg = batchedArgs.get(batchCommandIndex);
 			
 			for (int i = 0; i < realParameterCount; ++i) {
 				if (this.charEncoding != null) {
@@ -1030,7 +1036,23 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					buf.append(new String(this.staticSqlStrings[i]));
 				}
 
-				if ((this.parameterValues[i] == null) && !this.isStream[i]) {
+				byte val[] = null;
+				if (batchArg != null && batchArg instanceof String) {
+					buf.append((String)batchArg);
+					continue;
+				}
+				if (batchCommandIndex == -1)
+					val = parameterValues[i];
+				else
+					val = ((BatchParams)batchArg).parameterStrings[i]; 
+				
+				boolean isStreamParam = false;
+				if (batchCommandIndex == -1)
+					isStreamParam = isStream[i];
+				else
+					isStreamParam = ((BatchParams)batchArg).isStream[i];
+
+				if ((val == null) && !isStreamParam) {
 					if (quoteStreamsAndUnknowns) {
 						buf.append("'");
 					}
@@ -1040,7 +1062,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					if (quoteStreamsAndUnknowns) {
 						buf.append("'");
 					}
-				} else if (this.isStream[i]) {
+				} else if (isStreamParam) {
 					if (quoteStreamsAndUnknowns) {
 						buf.append("'");
 					}
@@ -1052,15 +1074,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					}
 				} else {
 					if (this.charConverter != null) {
-						buf.append(this.charConverter
-								.toString(this.parameterValues[i]));
+						buf.append(this.charConverter.toString(val));
 					} else {
 						if (this.charEncoding != null) {
-							buf.append(new String(this.parameterValues[i],
-									this.charEncoding));
+							buf.append(new String(val, this.charEncoding));
 						} else {
-							buf.append(StringUtils
-									.toAsciiString(this.parameterValues[i]));
+							buf.append(StringUtils.toAsciiString(val));
 						}
 					}
 				}
@@ -1907,8 +1926,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 			SQLException sqlEx = null;
 
-			int commandIndex = 0;
-
 			CancelTask timeoutTask = null;
 			
 			try {
@@ -1924,16 +1941,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					this.batchedGeneratedKeys = new ArrayList(nbrCommands);
 				}
 	
-				for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
-					Object arg = this.batchedArgs.get(commandIndex);
+				for (batchCommandIndex = 0; batchCommandIndex < nbrCommands; batchCommandIndex++) {
+					Object arg = this.batchedArgs.get(batchCommandIndex);
 	
 					if (arg instanceof String) {
-						updateCounts[commandIndex] = executeUpdate((String) arg);
+						updateCounts[batchCommandIndex] = executeUpdate((String) arg);
 					} else {
 						BatchParams paramArg = (BatchParams) arg;
 	
 						try {
-							updateCounts[commandIndex] = executeUpdate(
+							updateCounts[batchCommandIndex] = executeUpdate(
 									paramArg.parameterStrings,
 									paramArg.parameterStreams, paramArg.isStream,
 									paramArg.streamLengths, paramArg.isNull, true);
@@ -1958,7 +1975,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 								}
 							}
 						} catch (SQLException ex) {
-							updateCounts[commandIndex] = EXECUTE_FAILED;
+							updateCounts[batchCommandIndex] = EXECUTE_FAILED;
 	
 							if (this.continueBatchOnError && 
 									!(ex instanceof MySQLTimeoutException) && 
@@ -1966,9 +1983,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 									!hasDeadlockOrTimeoutRolledBackTx(ex)) {
 								sqlEx = ex;
 							} else {
-								int[] newUpdateCounts = new int[commandIndex];
+								int[] newUpdateCounts = new int[batchCommandIndex];
 								System.arraycopy(updateCounts, 0,
-										newUpdateCounts, 0, commandIndex);
+										newUpdateCounts, 0, batchCommandIndex);
 	
 								throw new java.sql.BatchUpdateException(ex
 										.getMessage(), ex.getSQLState(), ex
@@ -1983,6 +2000,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 							sqlEx.getSQLState(), sqlEx.getErrorCode(), updateCounts);
 				}
 			} finally {
+				batchCommandIndex = -1;
+				
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
 				}
@@ -2524,6 +2543,49 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			return null;
 		}
 
+		if ((parameterVal[0] == '\'')
+				&& (parameterVal[parameterVal.length - 1] == '\'')) {
+			byte[] valNoQuotes = new byte[parameterVal.length - 2];
+			System.arraycopy(parameterVal, 1, valNoQuotes, 0,
+					parameterVal.length - 2);
+
+			return valNoQuotes;
+		}
+
+		return parameterVal;
+	}
+	
+	/**
+	 * Get bytes representation for a parameter in a statement batch.
+	 * @param parameterIndex
+	 * @param commandIndex
+	 * @return
+	 * @throws SQLException
+	 */
+	protected byte[] getBytesRepresentationForBatch(int parameterIndex, int commandIndex)
+				throws SQLException {
+		Object batchedArg = batchedArgs.get(commandIndex);
+		if (batchedArg instanceof String) {
+			try {
+				return ((String)batchedArg).getBytes(charEncoding);
+				
+			} catch (UnsupportedEncodingException uue) {
+				throw new RuntimeException(Messages
+						.getString("PreparedStatement.32") //$NON-NLS-1$
+						+ this.charEncoding
+						+ Messages.getString("PreparedStatement.33")); //$NON-NLS-1$
+			}
+		}
+		
+		BatchParams params = (BatchParams)batchedArg;
+		if (params.isStream[parameterIndex])
+			return streamToBytes(params.parameterStreams[parameterIndex], false,
+					params.streamLengths[parameterIndex],
+					connection.getUseStreamLengthsInPrepStmts());
+		byte parameterVal[] = params.parameterStrings[parameterIndex];
+		if (parameterVal == null)
+			return null;
+		
 		if ((parameterVal[0] == '\'')
 				&& (parameterVal[parameterVal.length - 1] == '\'')) {
 			byte[] valNoQuotes = new byte[parameterVal.length - 2];
@@ -5321,7 +5383,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			Field[] typeMetadata = new Field[parameterCount];
 
 			for (int i = 0; i < parameterCount; i++) {
-				rowData[i] = getBytesRepresentation(i);
+				if (batchCommandIndex == -1)
+					rowData[i] = getBytesRepresentation(i);
+				else
+					rowData[i] = getBytesRepresentationForBatch(i, batchCommandIndex);
 
 				int charsetIndex = 0;
 
