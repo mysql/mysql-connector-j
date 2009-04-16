@@ -2717,8 +2717,23 @@ public class ServerPreparedStatement extends PreparedStatement {
 		return serverStatementId;
 	}
 
-	public synchronized boolean canRewriteAsMultivalueInsertStatement() {
-		if (!super.canRewriteAsMultivalueInsertStatement()) {
+	private boolean hasCheckedRewrite = false;
+	private boolean canRewrite = false;
+	
+	public synchronized boolean canRewriteAsMultiValueInsertAtSqlLevel() throws SQLException {
+		if (!hasCheckedRewrite) {
+			this.hasCheckedRewrite = true;
+			this.canRewrite = canRewrite(this.originalSql, isOnDuplicateKeyUpdate(), getLocationOfOnDuplicateKeyUpdate(), 0);
+			// We need to client-side parse this to get the VALUES clause, etc.
+			this.parseInfo = new ParseInfo(this.originalSql, this.connection, this.connection.getMetaData(), this.charEncoding, this.charConverter);
+		}
+		
+		return this.canRewrite;
+	}
+
+	
+	public synchronized boolean canRewriteAsMultivalueInsertStatement() throws SQLException {
+		if (!canRewriteAsMultiValueInsertAtSqlLevel()) {
 			return false;
 		}
 	
@@ -2749,6 +2764,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 				}
 			}
 		}
+		
+		
 		
 		return true;
 	}
@@ -2912,5 +2929,20 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 	protected boolean containsOnDuplicateKeyUpdateInSQL() {
 		return this.hasOnDuplicateKeyUpdate;
+	}
+	
+	protected PreparedStatement prepareBatchedInsertSQL(ConnectionImpl localConn, int numBatches) throws SQLException {
+		try {
+			PreparedStatement pstmt = new ServerPreparedStatement(localConn, this.parseInfo.getSqlForBatch(numBatches), this.currentCatalog, this.resultSetConcurrency, this.resultSetType);
+			pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
+			
+			return pstmt;
+		} catch (UnsupportedEncodingException e) {
+			SQLException sqlEx = SQLError.createSQLException("Unable to prepare batch statement", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
+		}
+		
 	}
 }

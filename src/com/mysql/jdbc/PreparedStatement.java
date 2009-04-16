@@ -38,6 +38,7 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.sql.Array;
 import java.sql.Clob;
+import java.sql.DatabaseMetaData;
 import java.sql.Date;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
@@ -50,6 +51,7 @@ import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -179,11 +181,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 		int statementStartPos = 0;
 
+		boolean canRewriteAsMultiValueInsert = false;
+		
 		byte[][] staticSql = null;
 
 		boolean isOnDuplicateKeyUpdate = false;
 		
 		int locationOfOnDuplicateKeyUpdate = -1;
+		
+		String valuesClause;
 		
 		/**
 		 * Represents the "parsed" state of a client-side
@@ -191,9 +197,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		 * it's static and dynamic (where parameters are bound) 
 		 * parts.
 		 */
-		public ParseInfo(String sql, ConnectionImpl conn,
+		ParseInfo(String sql, ConnectionImpl conn,
 				java.sql.DatabaseMetaData dbmd, String encoding,
 				SingleByteCharsetConverter converter) throws SQLException {
+			this(sql, conn, dbmd, encoding, converter, true);
+		}
+		
+		public ParseInfo(String sql, ConnectionImpl conn,
+				java.sql.DatabaseMetaData dbmd, String encoding,
+				SingleByteCharsetConverter converter, boolean buildRewriteInfo) throws SQLException {
 			try {
 				if (sql == null) {
 					throw SQLError.createSQLException(Messages
@@ -402,9 +414,259 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 				throw sqlEx;
 			}
+			
+			
+			if (buildRewriteInfo) {
+				this.canRewriteAsMultiValueInsert = PreparedStatement
+						.canRewrite(sql, this.isOnDuplicateKeyUpdate,
+								this.locationOfOnDuplicateKeyUpdate,
+								this.statementStartPos);
+
+				if (this.canRewriteAsMultiValueInsert
+						&& conn.getRewriteBatchedStatements()) {
+					buildRewriteBatchedParams(sql, conn, dbmd, encoding,
+							converter);
+				}
+			}
+		}
+
+		private ParseInfo batchHead;
+
+		private ParseInfo batchValues;
+
+		private ParseInfo batchODKUClause;
+
+		private void buildRewriteBatchedParams(String sql, ConnectionImpl conn,
+				DatabaseMetaData metadata, String encoding,
+				SingleByteCharsetConverter converter) throws SQLException {
+			this.valuesClause = extractValuesClause(sql);
+			String odkuClause = isOnDuplicateKeyUpdate ? sql
+					.substring(locationOfOnDuplicateKeyUpdate) : null;
+
+			String headSql = null;
+
+			if (isOnDuplicateKeyUpdate) {
+				headSql = sql.substring(0, locationOfOnDuplicateKeyUpdate);
+			} else {
+				headSql = sql;
+			}
+
+			this.batchHead = new ParseInfo(headSql, conn, metadata, encoding,
+					converter, false);
+			this.batchValues = new ParseInfo("," + this.valuesClause, conn,
+					metadata, encoding, converter, false);
+			this.batchODKUClause = null;
+
+			if (odkuClause != null && odkuClause.length() > 0) {
+				this.batchODKUClause = new ParseInfo("," + this.valuesClause
+						+ " " + odkuClause, conn, metadata, encoding,
+						converter, false);
+			}
+		}
+
+		private String extractValuesClause(String sql) throws SQLException {
+			String quoteCharStr = connection.getMetaData()
+					.getIdentifierQuoteString();
+
+			int indexOfValues = -1;
+
+			if (quoteCharStr.length() > 0) {
+				indexOfValues = StringUtils.indexOfIgnoreCaseRespectQuotes(
+						this.statementStartPos, sql, "VALUES ", quoteCharStr
+								.charAt(0), false);
+			} else {
+				indexOfValues = StringUtils.indexOfIgnoreCase(
+						this.statementStartPos, sql, "VALUES ");
+			}
+
+			if (indexOfValues == -1) {
+				return null;
+			}
+
+			int indexOfFirstParen = sql.indexOf('(', indexOfValues + 7);
+
+			if (indexOfFirstParen == -1) {
+				return null;
+			}
+
+			int endOfValuesClause = sql.lastIndexOf(')');
+
+			if (endOfValuesClause == -1) {
+				return null;
+			}
+
+			if (isOnDuplicateKeyUpdate) {
+				endOfValuesClause = this.locationOfOnDuplicateKeyUpdate - 1;
+			}
+
+			return sql.substring(indexOfFirstParen, endOfValuesClause + 1);
+		}
+
+		/**
+		 * Returns a ParseInfo for a multi-value INSERT for a batch of size numBatch (without parsing!).
+		 */
+		synchronized ParseInfo getParseInfoForBatch(int numBatch) {
+			AppendingBatchVisitor apv = new AppendingBatchVisitor();
+			buildInfoForBatch(numBatch, apv);
+
+			ParseInfo batchParseInfo = new ParseInfo(apv.getStaticSqlStrings(),
+					this.firstStmtChar, this.foundLimitClause,
+					this.foundLoadData, this.isOnDuplicateKeyUpdate,
+					this.locationOfOnDuplicateKeyUpdate, this.statementLength,
+					this.statementStartPos);
+
+			return batchParseInfo;
+		}
+		
+		/**
+		 * Returns a preparable SQL string for the number of batched parameters, used by server-side prepared statements
+		 * when re-writing batch INSERTs.
+		 */
+		
+		String getSqlForBatch(int numBatch) throws UnsupportedEncodingException {
+			ParseInfo batchInfo = getParseInfoForBatch(numBatch);
+			int size = 0;
+			final byte[][] sqlStrings = batchInfo.staticSql;
+			final int sqlStringsLength = sqlStrings.length;
+			
+			for (int i = 0; i < sqlStringsLength; i++) {
+				size += sqlStrings[i].length;
+				size++; // for the '?'
+			}
+			
+			StringBuffer buf = new StringBuffer(size);
+		
+			for (int i = 0; i < sqlStringsLength - 1; i++) {
+				buf.append(new String(sqlStrings[i], charEncoding));
+				buf.append("?");
+			}
+			
+			buf.append(new String(sqlStrings[sqlStringsLength - 1]));
+			
+			return buf.toString();
+		}
+
+		/**
+		 * Builds a ParseInfo for the given batch size, without parsing. We use
+		 * a visitor pattern here, because the if {}s make computing a size for the
+		 * resultant byte[][] make this too complex, and we don't necessarily want to 
+		 * use a List for this, because the size can be dynamic, and thus we'll not be
+		 * able to guess a good initial size for an array-based list, and it's not
+		 * efficient to convert a LinkedList to an array.
+		 */
+		private void buildInfoForBatch(int numBatch, BatchVisitor visitor) {
+			final byte[][] headStaticSql = this.batchHead.staticSql;
+			final int headStaticSqlLength = headStaticSql.length;
+
+			if (headStaticSqlLength > 1) {
+				for (int i = 0; i < headStaticSqlLength - 1; i++) {
+					visitor.append(headStaticSql[i]).increment();
+				}
+			}
+
+			// merge end of head, with beginning of a value clause
+			byte[] endOfHead = headStaticSql[headStaticSqlLength - 1];
+			final byte[][] valuesStaticSql = this.batchValues.staticSql;
+			byte[] beginOfValues = valuesStaticSql[0];
+
+			visitor.merge(endOfHead, beginOfValues).increment();
+
+			int numValueRepeats = numBatch - 1; // first one is in the "head"
+
+			if (this.batchODKUClause != null) {
+				numValueRepeats--; // Last one is in the ODKU clause
+			}
+
+			final int valuesStaticSqlLength = valuesStaticSql.length;
+			byte[] endOfValues = valuesStaticSql[valuesStaticSqlLength - 1];
+
+			for (int i = 0; i < numValueRepeats; i++) {
+				for (int j = 1; j < valuesStaticSqlLength - 1; j++) {
+					visitor.append(valuesStaticSql[j]).increment();
+				}
+				visitor.merge(endOfValues, beginOfValues).increment();
+			}
+
+			if (this.batchODKUClause != null) {
+				final byte[][] batchOdkuStaticSql = this.batchODKUClause.staticSql;
+				byte[] beginOfOdku = batchOdkuStaticSql[0];
+				visitor.decrement().merge(endOfValues, beginOfOdku).increment();
+
+				final int batchOdkuStaticSqlLength = batchOdkuStaticSql.length;
+				
+				for (int i = 1; i < batchOdkuStaticSqlLength; i++) {
+					visitor.append(batchOdkuStaticSql[i])
+							.increment();
+				}
+			} else {
+				visitor.decrement().append(endOfValues);
+			}
+		}
+
+		private ParseInfo(byte[][] staticSql, char firstStmtChar,
+				boolean foundLimitClause, boolean foundLoadData,
+				boolean isOnDuplicateKeyUpdate,
+				int locationOfOnDuplicateKeyUpdate, int statementLength,
+				int statementStartPos) {
+			this.firstStmtChar = firstStmtChar;
+			this.foundLimitClause = foundLimitClause;
+			this.foundLoadData = foundLoadData;
+			this.isOnDuplicateKeyUpdate = isOnDuplicateKeyUpdate;
+			this.locationOfOnDuplicateKeyUpdate = locationOfOnDuplicateKeyUpdate;
+			this.statementLength = statementLength;
+			this.statementStartPos = statementStartPos;
+			this.staticSql = staticSql;
 		}
 	}
 
+	interface BatchVisitor {
+		abstract BatchVisitor increment();
+		
+		abstract BatchVisitor decrement();
+		
+		abstract BatchVisitor append(byte[] values);
+		
+		abstract BatchVisitor merge(byte[] begin, byte[] end);
+	}
+	
+	class AppendingBatchVisitor implements BatchVisitor {
+		LinkedList statementComponents = new LinkedList();
+		
+		public BatchVisitor append(byte[] values) {
+			statementComponents.addLast(values);
+
+			return this;
+		}
+
+		public BatchVisitor increment() {
+			// no-op
+			return this;
+		}
+
+		public BatchVisitor decrement() {
+			statementComponents.removeLast();
+			
+			return this;
+		}
+
+		public BatchVisitor merge(byte[] front, byte[] back) {
+			int mergedLength = front.length + back.length;
+			byte[] merged = new byte[mergedLength];
+			System.arraycopy(front, 0, merged, 0, front.length);
+			System.arraycopy(back, 0, merged, front.length, back.length);
+			statementComponents.addLast(merged);
+			return this;
+		}
+		
+		public byte[][] getStaticSqlStrings() {
+			byte[][] asBytes = new byte[this.statementComponents.size()][];
+			this.statementComponents.toArray(asBytes);
+			
+			return asBytes;
+		}
+		
+	}
+	
 	private final static byte[] HEX_DIGITS = new byte[] { (byte) '0',
 			(byte) '1', (byte) '2', (byte) '3', (byte) '4', (byte) '5',
 			(byte) '6', (byte) '7', (byte) '8', (byte) '9', (byte) 'A',
@@ -489,7 +751,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected int[] parameterTypes = null;
 	
-	private ParseInfo parseInfo;
+	protected ParseInfo parseInfo;
 
 	private java.sql.ResultSetMetaData pstmtResultMetaData;
 
@@ -1104,7 +1366,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						&& this.connection.getRewriteBatchedStatements()) {
 					
 					
-					if (canRewriteAsMultivalueInsertStatement()) {
+					if (canRewriteAsMultiValueInsertAtSqlLevel()) {
 						return executeBatchedInserts(batchTimeout);
 					}
 					
@@ -1123,32 +1385,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 
-	public synchronized boolean canRewriteAsMultivalueInsertStatement() {
-		if (!this.hasCheckedForRewrite) {
-			// Needs to be INSERT, can't have INSERT ... SELECT or
-			// INSERT ... ON DUPLICATE KEY UPDATE with an id=LAST_INSERT_ID(...)
-
-			boolean rewritableOdku = true;
-			
-			if (containsOnDuplicateKeyUpdateInSQL()) {
-				int updateClausePos = StringUtils.indexOfIgnoreCase(getLocationOfOnDuplicateKeyUpdate(), originalSql, " UPDATE ");
-				
-				if (updateClausePos != -1) {
-					rewritableOdku = StringUtils.indexOfIgnoreCaseRespectMarker(updateClausePos, this.originalSql, "LAST_INSERT_ID", "\"'`", "\"'`", false) == -1;
-				}
-			}
-			
-			this.canRewrite = StringUtils.startsWithIgnoreCaseAndWs(
-					this.originalSql, "INSERT", this.statementAfterCommentsPos) 
-			&& StringUtils.indexOfIgnoreCaseRespectMarker(this.statementAfterCommentsPos, this.originalSql, "SELECT", "\"'`", "\"'`", false) == -1 
-			&& rewritableOdku;
-			
-			this.hasCheckedForRewrite = true;
-		}
-
-		return this.canRewrite;
+	public boolean canRewriteAsMultiValueInsertAtSqlLevel() throws SQLException {
+		return this.parseInfo.canRewriteAsMultiValueInsert;
 	}
-
+	
 	protected int getLocationOfOnDuplicateKeyUpdate() {
 		return this.parseInfo.locationOfOnDuplicateKeyUpdate;
 	}
@@ -1370,9 +1610,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 */
 	protected int[] executeBatchedInserts(int batchTimeout) throws SQLException {
-		String valuesClause = extractValuesClause();
-		String odkuClause = containsOnDuplicateKeyUpdateInSQL() ? this.originalSql.substring(getLocationOfOnDuplicateKeyUpdate()) : "";
-		
+		String valuesClause = getValuesClause(); 
+
 		Connection locallyScopedConn = this.connection;
 
 		if (valuesClause == null) {
@@ -1408,15 +1647,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		
 		try {
 			try {
-				if (this.retrieveGeneratedKeys) {
-					batchedStatement = locallyScopedConn.prepareStatement(
-							generateBatchedInsertSQL(valuesClause, odkuClause,
-									numValuesPerBatch), RETURN_GENERATED_KEYS);
-				} else {
-					batchedStatement = locallyScopedConn
-							.prepareStatement(generateBatchedInsertSQL(
-									valuesClause, odkuClause, numValuesPerBatch));
-				}
+					batchedStatement = /* FIXME -if we ever care about folks proxying our ConnectionImpl */
+							prepareBatchedInsertSQL((ConnectionImpl) locallyScopedConn, numValuesPerBatch);
 
 				if (this.connection.getEnableQueryTimeouts()
 						&& batchTimeout != 0
@@ -1476,18 +1708,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 			try {
 				if (numValuesPerBatch > 0) {
-
-					if (this.retrieveGeneratedKeys) {
-						batchedStatement = locallyScopedConn.prepareStatement(
-								generateBatchedInsertSQL(valuesClause, odkuClause, 
-										numValuesPerBatch),
-								RETURN_GENERATED_KEYS);
-					} else {
-						batchedStatement = locallyScopedConn
-								.prepareStatement(generateBatchedInsertSQL(
-										valuesClause, odkuClause, numValuesPerBatch));
-					}
-
+						batchedStatement = 
+								prepareBatchedInsertSQL((ConnectionImpl) locallyScopedConn, 
+										numValuesPerBatch);
+					
 					if (timeoutTask != null) {
 						timeoutTask.toCancel = (StatementImpl) batchedStatement;
 					}
@@ -1531,14 +1755,19 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 
+	protected String getValuesClause() throws SQLException {
+		return this.parseInfo.valuesClause;
+	}
+
 	/**
 	 * Computes the optimum number of batched parameter lists to send
 	 * without overflowing max_allowed_packet.
 	 * 
 	 * @param numBatchedArgs
 	 * @return
+	 * @throws SQLException 
 	 */
-	protected int computeBatchSize(int numBatchedArgs) {
+	protected int computeBatchSize(int numBatchedArgs) throws SQLException {
 		long[] combinedValues = computeMaxParameterSetSizeAndBatchSize(numBatchedArgs);
 		
 		long maxSizeOfParameterSet = combinedValues[0];
@@ -1556,8 +1785,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	/** 
 	 *  Computes the maximum parameter set size, and entire batch size given 
 	 *  the number of arguments in the batch.
+	 * @throws SQLException 
 	 */
-	protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) {
+	protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) throws SQLException {
 		long sizeOfEntireBatch = 0;
 		long maxSizeOfParameterSet = 0;
 		
@@ -1598,8 +1828,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			// anyway
 			//
 			
-			if (this.batchedValuesClause != null) {
-				sizeOfParameterSet += this.batchedValuesClause.length() + 1;
+			if (getValuesClause() != null) {
+				sizeOfParameterSet += getValuesClause().length() + 1;
 			}
 			
 			sizeOfEntireBatch += sizeOfParameterSet;
@@ -2106,50 +2336,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		return this.parseInfo.isOnDuplicateKeyUpdate;
 	}
 
-	private String extractValuesClause() throws SQLException {
-		if (this.batchedValuesClause == null) {
-			String quoteCharStr = this.connection.getMetaData()
-					.getIdentifierQuoteString();
-	
-			int indexOfValues = -1;
-	
-			if (quoteCharStr.length() > 0) {
-				indexOfValues = StringUtils.indexOfIgnoreCaseRespectQuotes(
-						this.statementAfterCommentsPos,
-						this.originalSql, "VALUES ", quoteCharStr.charAt(0), false);
-			} else {
-				indexOfValues = StringUtils.indexOfIgnoreCase(this.statementAfterCommentsPos, 
-						this.originalSql,
-						"VALUES ");
-			}
-	
-			if (indexOfValues == -1) {
-				return null;
-			}
-	
-			int indexOfFirstParen = this.originalSql
-					.indexOf('(', indexOfValues + 7);
-	
-			if (indexOfFirstParen == -1) {
-				return null;
-			}
-	
-			int endOfValuesClause = this.originalSql.lastIndexOf(')');
-	
-			if (endOfValuesClause == -1) {
-				return null;
-			}
-	
-			if (containsOnDuplicateKeyUpdateInSQL()) {
-				endOfValuesClause = getLocationOfOnDuplicateKeyUpdate() - 1;
-			}
-			
-			this.batchedValuesClause = this.originalSql.substring(indexOfFirstParen,
-					endOfValuesClause + 1);
-		}
-			
-		return this.batchedValuesClause;
-	}
+
 
 	/**
 	 * Creates the packet that contains the query to be sent to the server.
@@ -2258,34 +2445,21 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			InputStream parameterStream, int columnIndex) throws SQLException {
 		if ((parameterString == null)
 				&& parameterStream == null) {
+			System.out.println(toString());
 			throw SQLError.createSQLException(Messages
 					.getString("PreparedStatement.40") //$NON-NLS-1$
 					+ (columnIndex + 1), SQLError.SQL_STATE_WRONG_NO_OF_PARAMETERS, getExceptionInterceptor());
 		}
 	}
 
-	private String generateBatchedInsertSQL(String valuesClause, String odkuClause, int numBatches) {
-		StringBuffer newStatementSql = new StringBuffer(this.originalSql
-				.length()
-				+ (numBatches * (valuesClause.length() + 1)));
-
-		if (containsOnDuplicateKeyUpdateInSQL()) {
-			newStatementSql.append(this.originalSql.substring(0, getLocationOfOnDuplicateKeyUpdate()));
-		} else {
-			newStatementSql.append(this.originalSql);
-		}
-
-		for (int i = 0; i < numBatches - 1; i++) {
-			newStatementSql.append(',');
-			newStatementSql.append(valuesClause);
-		}
-
-		if (odkuClause != null && odkuClause.length() > 0) {
-			newStatementSql.append(" ");
-			newStatementSql.append(odkuClause);
-		}
+	/**
+	 * Returns a preparaed statement for the number of batched parameters, used when re-writing batch INSERTs.
+	 */
+	protected PreparedStatement prepareBatchedInsertSQL(ConnectionImpl localConn, int numBatches) throws SQLException {
+		PreparedStatement pstmt = new PreparedStatement(localConn, "batch statement, no sql available", this.currentCatalog, this.parseInfo.getParseInfoForBatch(numBatches));
+		pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
 		
-		return newStatementSql.toString();
+		return pstmt;
 	}
 
 	/**
@@ -5271,5 +5445,31 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 		
 		return count;
+	}
+	
+	protected static boolean canRewrite(String sql, boolean isOnDuplicateKeyUpdate, int locationOfOnDuplicateKeyUpdate, int statementStartPos) {
+		// Needs to be INSERT, can't have INSERT ... SELECT or
+		// INSERT ... ON DUPLICATE KEY UPDATE with an id=LAST_INSERT_ID(...)
+
+		boolean rewritableOdku = true;
+
+		if (isOnDuplicateKeyUpdate) {
+			int updateClausePos = StringUtils.indexOfIgnoreCase(
+					locationOfOnDuplicateKeyUpdate, sql, " UPDATE ");
+
+			if (updateClausePos != -1) {
+				rewritableOdku = StringUtils
+						.indexOfIgnoreCaseRespectMarker(updateClausePos,
+								sql, "LAST_INSERT_ID", "\"'`", "\"'`",
+								false) == -1;
+			}
+		}
+
+		return StringUtils
+				.startsWithIgnoreCaseAndWs(sql, "INSERT",
+						statementStartPos)
+				&& StringUtils.indexOfIgnoreCaseRespectMarker(
+						statementStartPos, sql, "SELECT", "\"'`",
+						"\"'`", false) == -1 && rewritableOdku;
 	}
 }
