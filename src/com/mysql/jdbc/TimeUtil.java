@@ -32,6 +32,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -203,6 +204,17 @@ public class TimeUtil {
 		tempMap.put("Greenwich Standard Time", "GMT");
 		tempMap.put("UTC", "GMT");
 
+		// MySQL understands the Continent/City/region as well
+		Iterator entries = tempMap.entrySet().iterator();
+		Map entryMap = new HashMap(tempMap.size()); // to avoid ConcurrentModificationException
+		
+		while (entries.hasNext()) {
+			String name = ((Map.Entry)entries.next()).getValue().toString();
+			entryMap.put(name, name);
+		}
+		
+		tempMap.putAll(entryMap);
+		
 		TIMEZONE_MAPPINGS = Collections.unmodifiableMap(tempMap);
 
 		//
