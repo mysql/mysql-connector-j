@@ -142,7 +142,7 @@ public abstract class BaseTestCase extends TestCase {
 			String columnsAndOtherStuff) throws SQLException {
 		this.createdObjects.add(new String[] {objectType, objectName});
 		dropSchemaObject(objectType, objectName);
-
+		
 		StringBuffer createSql = new StringBuffer(objectName.length()
 				+ objectType.length() + columnsAndOtherStuff.length() + 10);
 		createSql.append("CREATE  ");
@@ -151,7 +151,18 @@ public abstract class BaseTestCase extends TestCase {
 		createSql.append(objectName);
 		createSql.append(" ");
 		createSql.append(columnsAndOtherStuff);
-		this.stmt.executeUpdate(createSql.toString());
+		
+		try {
+			this.stmt.executeUpdate(createSql.toString());
+		} catch (SQLException sqlEx) {
+			if ("42S01".equals(sqlEx.getSQLState())) {
+				System.err.println("WARN: Stale mysqld table cache preventing table creation - flushing tables and trying again");
+				this.stmt.executeUpdate("FLUSH TABLES"); // some bug in 5.1 on the mac causes tables to not disappear from the cache
+				this.stmt.executeUpdate(createSql.toString());
+			} else {
+				throw sqlEx;
+			}
+		}
 	}
 
 	protected void createFunction(String functionName, String functionDefn)
