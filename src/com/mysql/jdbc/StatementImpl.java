@@ -324,6 +324,8 @@ public class StatementImpl implements Statement {
 		if (maxRowsConn != -1) {
 			setMaxRows(maxRowsConn);
 		}
+		
+		this.holdResultsOpenOverClose = this.connection.getHoldResultsOpenOverStatementClose();
 	}
 
 	/**
