@@ -4168,7 +4168,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			byte[] buf = bytesOut.toByteArray();
 			ByteArrayInputStream bytesIn = new ByteArrayInputStream(buf);
 			setBinaryStream(parameterIndex, bytesIn, buf.length);
-			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.JAVA_OBJECT;
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BINARY;
 		} catch (Exception ex) {
 			SQLException sqlEx = SQLError.createSQLException(Messages.getString("PreparedStatement.54") //$NON-NLS-1$
 					+ ex.getClass().getName(),

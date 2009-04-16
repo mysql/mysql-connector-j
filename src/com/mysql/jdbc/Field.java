@@ -396,6 +396,14 @@ public class Field {
 		this.colFlag = 0;
 		this.colDecimals = 0;
 		this.charsetIndex = charsetIndex;
+		
+		switch (this.sqlType) {
+		case Types.BINARY:
+		case Types.VARBINARY:
+			this.colFlag |= 128;
+			this.colFlag |= 16;
+			break;
+		}
 	}
 	
 	private void checkForImplicitTemporaryTable() {
