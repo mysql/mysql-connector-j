@@ -222,7 +222,12 @@ public class ConnectionTest extends BaseTestCase {
 			assertTrue(SQLError.SQL_STATE_DEADLOCK.equals(sqlEx.getSQLState()));
 			assertTrue(sqlEx.getErrorCode() == 1205);
 			// Make sure INNODB Status is getting dumped into error message
-			assertTrue(sqlEx.getMessage().indexOf("INNODB MONITOR") != -1);
+			
+			if (sqlEx.getMessage().indexOf("PROCESS privilege") != -1) {
+				fail("This test requires user with process privilege");
+			}
+
+			assertTrue("Can't find INNODB MONITOR in:\n\n" + sqlEx.getMessage(), sqlEx.getMessage().indexOf("INNODB MONITOR") != -1);
 		} finally {
 			this.conn.setAutoCommit(true);
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS t1");
@@ -883,9 +888,12 @@ public class ConnectionTest extends BaseTestCase {
 
 		Connection conn1 = getConnectionWithProps(props);
 
-		StandardLogger.saveLogsToBuffer();
-
+		// eliminate side-effects when not run in isolation
+		StandardLogger.bufferedLog = new StringBuffer();
+		
 		Connection conn2 = getConnectionWithProps(props);
+
+		StandardLogger.saveLogsToBuffer();
 
 		assertTrue("Configuration wasn't cached", StandardLogger.bufferedLog
 				.toString().indexOf("SHOW VARIABLES") == -1);
@@ -1423,7 +1431,7 @@ public class ConnectionTest extends BaseTestCase {
     }
     
     public void testUseLocalSessionStateRollback() throws Exception {
-    	if (!versionMeetsMinimum(5, 0, 0)) {
+    	if (!versionMeetsMinimum(6, 0, 0)) {
     		return;
     	}
     	

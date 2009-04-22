@@ -287,12 +287,10 @@ public class StatementsTest extends BaseTestCase {
 	public void testAutoIncrement() throws SQLException {
 		if (!isRunningOnJdk131()) {
 			try {
-				this.stmt = this.conn.createStatement(
-						java.sql.ResultSet.TYPE_FORWARD_ONLY,
-						java.sql.ResultSet.CONCUR_READ_ONLY);
 				this.stmt.setFetchSize(Integer.MIN_VALUE);
+				
 				this.stmt
-						.executeUpdate("INSERT INTO statement_test (strdata1) values ('blah')");
+						.executeUpdate("INSERT INTO statement_test (strdata1) values ('blah')", Statement.RETURN_GENERATED_KEYS);
 
 				int autoIncKeyFromApi = -1;
 				this.rs = this.stmt.getGeneratedKeys();
@@ -948,7 +946,7 @@ public class StatementsTest extends BaseTestCase {
 				int insertIdFromGeneratedKeys = Integer.MIN_VALUE;
 
 				this.stmt
-						.executeUpdate("INSERT INTO statement_test (strdata1, strdata2) values ('a', 'a'), ('b', 'b'), ('c', 'c')");
+						.executeUpdate("INSERT INTO statement_test (strdata1, strdata2) values ('a', 'a'), ('b', 'b'), ('c', 'c')", Statement.RETURN_GENERATED_KEYS);
 				this.rs = this.stmt.getGeneratedKeys();
 
 				if (this.rs.next()) {
@@ -1568,6 +1566,8 @@ public class StatementsTest extends BaseTestCase {
 	
 			if (j == 1) {
 				props.setProperty("continueBatchOnError", "false");
+			} else {
+				props.setProperty("continueBatchOnError", "true");
 			}
 			
 			props.setProperty("sessionVariables", "max_allowed_packet=1024");
@@ -1874,7 +1874,7 @@ public class StatementsTest extends BaseTestCase {
 
 	public void testParameterBindings() throws Exception {
 		// Need to check character set stuff, so need a new connection
-		Connection utfConn = getConnectionWithProps("characterEncoding=utf-8");
+		Connection utfConn = getConnectionWithProps("characterEncoding=utf-8,treatUtilDateAsTimestamp=false,autoDeserialize=true");
 
 		java.util.Date now = new java.util.Date();
 
@@ -1905,10 +1905,21 @@ public class StatementsTest extends BaseTestCase {
 		ParameterBindings bindings = ((com.mysql.jdbc.PreparedStatement)this.pstmt).getParameterBindings();
 
 		for (int i = 0; i < valuesToTest.length; i++) {
-			if (bindings.getObject(i + 1) instanceof Number) {
-				assertEquals("For binding " + (i + 1), bindings.getObject(i + 1).toString(), valuesToTest[i].toString());
+			Object boundObject = bindings.getObject(i + 1);
+			
+			if (boundObject == null && valuesToTest[i] == null) {
+				continue;
+			}
+			
+			Class boundObjectClass= boundObject.getClass();
+			Class testObjectClass = valuesToTest[i].getClass();
+			
+			if (boundObject instanceof Number) {
+				assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, boundObject.toString(), valuesToTest[i].toString());
+			} else if (boundObject instanceof Date) {
+				
 			} else {
-				assertEquals("For binding " + (i + 1), bindings.getObject(i + 1), valuesToTest[i]);
+				assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, boundObject, valuesToTest[i]);
 			}
 		}
 	}
