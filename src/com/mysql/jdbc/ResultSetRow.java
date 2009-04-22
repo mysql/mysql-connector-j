@@ -150,6 +150,7 @@ public abstract class ResultSetRow {
 			} else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
 				// Convert from TIMESTAMP
 				switch (length) {
+				case 29:
 				case 21:
 				case 19: { // java.sql.Timestamp format
 					year = StringUtils.getInt(dateAsBytes, offset + 0,
@@ -1075,6 +1076,7 @@ public abstract class ResultSetRow {
 					int nanos = 0;
 					
 					switch (length) {
+					case 29:
 					case 26:
 					case 25:
 					case 24:
