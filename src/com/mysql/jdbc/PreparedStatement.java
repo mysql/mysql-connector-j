@@ -1830,6 +1830,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			
 			if (getValuesClause() != null) {
 				sizeOfParameterSet += getValuesClause().length() + 1;
+			} else {
+				sizeOfParameterSet += this.originalSql.length() + 1;
 			}
 			
 			sizeOfEntireBatch += sizeOfParameterSet;
