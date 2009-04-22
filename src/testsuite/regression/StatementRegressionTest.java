@@ -3718,6 +3718,8 @@ public class StatementRegressionTest extends BaseTestCase {
 		props.clear();
 		props.setProperty("rewriteBatchedStatements", "true");
 		props.setProperty("sessionVariables", "max_allowed_packet=1024");
+		props.setProperty("dumpQueriesOnException", "true");
+		props.setProperty("maxQuerySizeToLog", String.valueOf(1024 * 1024 * 2));
 		multiConn = getConnectionWithProps(props);
 		multiStmt = multiConn.createStatement();
 		
@@ -3738,6 +3740,8 @@ public class StatementRegressionTest extends BaseTestCase {
 		props.clear();
 		props.setProperty("useServerPrepStmts", "false");
 		props.setProperty("rewriteBatchedStatements", "true");
+		props.setProperty("dumpQueriesOnException", "true");
+		props.setProperty("maxQuerySizeToLog", String.valueOf(1024 * 1024 * 2));
 		multiConn = getConnectionWithProps(props);
 		PreparedStatement pStmt = multiConn.prepareStatement("INSERT INTO testBug25073(field1) VALUES (?)", 
 				Statement.RETURN_GENERATED_KEYS);
@@ -3759,6 +3763,8 @@ public class StatementRegressionTest extends BaseTestCase {
 		props.setProperty("useServerPrepStmts", "false");
 		props.setProperty("rewriteBatchedStatements", "true");
 		props.setProperty("sessionVariables", "max_allowed_packet=1024");
+		props.setProperty("dumpQueriesOnException", "true");
+		props.setProperty("maxQuerySizeToLog", String.valueOf(1024 * 1024 * 2));
 		multiConn = getConnectionWithProps(props);
 		pStmt = multiConn.prepareStatement("INSERT INTO testBug25073(field1) VALUES (?)", 
 				Statement.RETURN_GENERATED_KEYS);
@@ -3859,7 +3865,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			assertEquals(1, counts[1]);
 			assertEquals(1, counts[2]);
 			assertEquals(true, 
-					((com.mysql.jdbc.PreparedStatement)this.pstmt).canRewriteAsMultivalueInsertStatement());
+					((com.mysql.jdbc.PreparedStatement)this.pstmt).canRewriteAsMultiValueInsertAtSqlLevel());
 		} finally {
 			closeMemberJDBCResources();
 			

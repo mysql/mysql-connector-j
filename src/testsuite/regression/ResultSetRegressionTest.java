@@ -4501,7 +4501,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
     		this.rs = padConn.createStatement().executeQuery("SELECT * FROM bug30851");
     		this.rs.first();
     		String strvar = this.rs.getString(1);
-    		//assertNotNull("Should be null", strvar);
+    		assertNull("Should be null", strvar);
 
     	} finally {
 			closeMemberJDBCResources();
