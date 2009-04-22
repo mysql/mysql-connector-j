@@ -419,6 +419,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			this.connectionId = this.connection.getId();
 			this.serverTimeZoneTz = this.connection.getServerTimezoneTZ();
+			this.padCharsWithSpace = this.connection.getPadCharsWithSpace();
 		}
 		
 		useLegacyDatetimeCode = this.connection.getUseLegacyDatetimeCode();
@@ -459,6 +460,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			this.jdbcCompliantTruncationForReads = this.connection.getJdbcCompliantTruncationForReads();
 			this.useFastIntParsing = this.connection.getUseFastIntParsing();
 			this.serverTimeZoneTz = this.connection.getServerTimezoneTZ();
+			this.padCharsWithSpace = this.connection.getPadCharsWithSpace();
 		}
 
 		this.owningStatement = creatorStmt;
