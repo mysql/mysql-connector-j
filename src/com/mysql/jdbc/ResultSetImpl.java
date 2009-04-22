@@ -5496,7 +5496,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public String getString(int columnIndex) throws SQLException {
 		String stringVal = getStringInternal(columnIndex, true);
 		
-		if (this.padCharsWithSpace) {
+		if (this.padCharsWithSpace && stringVal != null) {
 			Field f = this.fields[columnIndex - 1];
 			
 			if (f.getMysqlType() == MysqlDefs.FIELD_TYPE_STRING ) {
