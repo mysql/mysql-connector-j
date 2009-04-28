@@ -2451,10 +2451,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
 		props.setProperty("loadBalanceStrategy", "bestResponseTime");
 		NonRegisteringDriver d = new NonRegisteringDriver();
-		String host = d.parseURL(BaseTestCase.dbUrl, props).getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-		if(host == null){
-			host = "localhost";
-		}
+		String host = getPortFreeHostname(props, d);
 		
 		UnreliableSocketFactory.mapHost("first", host);
 		UnreliableSocketFactory.mapHost("second", host);
@@ -2477,6 +2474,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		} finally {
 	    	closeMemberJDBCResources();
 		}
+	}
+
+	private String getPortFreeHostname(Properties props, NonRegisteringDriver d)
+			throws SQLException {
+		String host = d.parseURL(BaseTestCase.dbUrl, props).getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		if(host == null){
+			host = "localhost";
+		}
+		
+		host = host.split(":")[0];
+		return host;
 	}	
 	
 	public void testBug43421() throws Exception {
@@ -2485,11 +2493,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		props.setProperty("loadBalanceStrategy", "bestResponseTime");
 		NonRegisteringDriver d = new NonRegisteringDriver();
 		Properties testCaseProps = d.parseURL(BaseTestCase.dbUrl, null);
-		String host = testCaseProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 		String db = testCaseProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-		if(host == null){
-			host = "localhost";
-		}
+		String host = getPortFreeHostname(props, d);
 		UnreliableSocketFactory.flushAllHostLists();
 		UnreliableSocketFactory.mapHost("first", host);
 		UnreliableSocketFactory.mapHost("second", host);
