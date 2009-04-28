@@ -2457,16 +2457,18 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		UnreliableSocketFactory.mapHost("second", host);
 		UnreliableSocketFactory.flushAllHostLists();
 		
-		Connection conn = getConnectionWithProps("jdbc:mysql:loadbalance://first,second/test", props);
+		copyAuthCredsIntoProps(props, d);
+		
+		Connection conn2 = getConnectionWithProps("jdbc:mysql:loadbalance://first,second/test", props);
 		assertNotNull("Connection should not be null", conn);
 		try {
-			conn.createStatement().execute("SELECT 1");
-			conn.createStatement().execute("SELECT 1");
+			conn2.createStatement().execute("SELECT 1");
+			conn2.createStatement().execute("SELECT 1");
 			// both connections are live now
 			UnreliableSocketFactory.downHost("first");
 			UnreliableSocketFactory.downHost("second");
 			try{
-				conn.createStatement().execute("SELECT 1");
+				conn2.createStatement().execute("SELECT 1");
 				fail("Should hang here.");
 			} catch (SQLException sqlEx){
 				assertEquals("08S01", sqlEx.getSQLState());
@@ -2476,9 +2478,26 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 
+	private void copyAuthCredsIntoProps(Properties props, NonRegisteringDriver d)
+			throws SQLException {
+		Properties testCaseProps = d.parseURL(BaseTestCase.dbUrl, null);
+		String user = testCaseProps.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
+		
+		if (user != null) {
+			props.setProperty(NonRegisteringDriver.USER_PROPERTY_KEY, user);
+		}
+		
+		String password =  testCaseProps.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+		
+		if (password != null) {
+			props.setProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, password);
+		}
+	}
+
 	private String getPortFreeHostname(Properties props, NonRegisteringDriver d)
 			throws SQLException {
 		String host = d.parseURL(BaseTestCase.dbUrl, props).getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		
 		if(host == null){
 			host = "localhost";
 		}
@@ -2498,6 +2517,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		UnreliableSocketFactory.flushAllHostLists();
 		UnreliableSocketFactory.mapHost("first", host);
 		UnreliableSocketFactory.mapHost("second", host);
+		
+		copyAuthCredsIntoProps(props, d);
 		
 		Connection conn2 = getConnectionWithProps("jdbc:mysql:loadbalance://first,second/" + db, props);
 		assertNotNull("Connection should not be null", conn2);
