@@ -5390,12 +5390,12 @@ public class StatementRegressionTest extends BaseTestCase {
 			
 				createTable("testBug30493", ddl);
 				this.stmt.executeUpdate(tablePrimeSql);
-			
+				int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
 				int rwUpdateCounts[] = testStmts[1].executeBatch();
 				ResultSet rewrittenRsKeys = testStmts[1].getGeneratedKeys();
 				for(int i = 0; i < 4; ++i) {
-					assertEquals(2, nonRwUpdateCounts[i]);
-					assertEquals(2, rwUpdateCounts[i]);
+					assertEquals(expectedUpdateCount, nonRwUpdateCounts[i]);
+					assertEquals(expectedUpdateCount, rwUpdateCounts[i]);
 				}
 
 				assertResultSetLength(nonRewrittenRsKeys, 4);
@@ -5425,7 +5425,9 @@ public class StatementRegressionTest extends BaseTestCase {
 			stmt.executeUpdate(tablePrimeSql);
 
 			stmt.execute(sql, Statement.RETURN_GENERATED_KEYS);
-			assertEquals(2, stmt.getUpdateCount());
+			int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
+			
+			assertEquals(expectedUpdateCount, stmt.getUpdateCount());
 			ResultSet stmtKeys = stmt.getGeneratedKeys();
 			assertResultSetLength(stmtKeys, 1);
 
@@ -5434,7 +5436,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			
 			pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			pstmt.execute();
-			assertEquals(2, pstmt.getUpdateCount());
+			assertEquals(expectedUpdateCount, pstmt.getUpdateCount());
 			ResultSet pstmtKeys = pstmt.getGeneratedKeys();
 			assertResultSetLength(pstmtKeys, 1);
 			
