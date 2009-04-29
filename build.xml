@@ -61,6 +61,7 @@
 			to ant via -D switches
 	-->
 		
+	<property name="com.mysql.jdbc.java6.java"  value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home/bin/java" />
 	<property name="com.mysql.jdbc.java6.javac" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home/bin/javac" />
 	<property name="com.mysql.jdbc.java6.rtjar" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Classes/classes.jar" />
 				
@@ -523,10 +524,10 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<junit printSummary="yes" 
 			fork="on" 
 			forkmode="once"
-			jvm="${com.mysql.jdbc.testsuite.jvm}"
+			jvm="${com.mysql.jdbc.java6.java}"
 			errorProperty="tests.failed"
 			failureProperty="tests.failed">
-			<jvmarg value="-Xmx128m" />
+			<jvmarg value="-Xmx384m" />
 
 			<!-- For java.sql.SavePoint on old JVMs -->
 
@@ -551,10 +552,44 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				<fileset dir="${buildDir}/${fullProdName}">
 					<include name="**/*Test.java" />
 					<exclude name="**/perf/*.java"/>
+					<exclude name="**/jdbc4/*Test.java"/>
 				</fileset>
 			</batchtest>
 		</junit>
 
+
+		<junit printSummary="yes" 
+		            fork="on" 
+		            forkmode="once"
+		            jvm="${com.mysql.jdbc.testsuite.jvm}"
+		            errorProperty="tests.failed"
+		            failureProperty="tests.failed">
+		            <jvmarg value="-Xmx384m" />
+			
+            <sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url}"/>
+
+            <classpath>
+                <fileset dir="${sourceDir}/lib-nodist">
+                    <include name="**/*.jar"/>
+                </fileset>
+                <fileset dir="${buildDir}/${fullProdName}/lib">
+                    <include name="**/*.jar"/>
+                </fileset>
+                <pathelement location="${buildDir}/${fullProdName}" />
+                <pathelement path="${java.class.path}" />
+            </classpath>
+
+            <formatter type="xml"/>
+
+            <batchtest todir="${junit.unitregress.results}" >
+                <fileset dir="${buildDir}/${fullProdName}">
+                    <include name="**/jdbc4/*Test.java" />
+
+                </fileset>
+            </batchtest>
+        </junit>
+
+		
 		<junitreport todir="${junit.unitregress.results}/report">
 			<fileset dir="${junit.unitregress.results}">
 				<include name="**/TEST-*.xml"/>
