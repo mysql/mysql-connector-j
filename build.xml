@@ -524,7 +524,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<junit printSummary="yes" 
 			fork="on" 
 			forkmode="once"
-			jvm="${com.mysql.jdbc.java6.java}"
+			jvm="${com.mysql.jdbc.testsuite.jvm}"
 			errorProperty="tests.failed"
 			failureProperty="tests.failed">
 			<jvmarg value="-Xmx384m" />
@@ -561,7 +561,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<junit printSummary="yes" 
 		            fork="on" 
 		            forkmode="once"
-		            jvm="${com.mysql.jdbc.testsuite.jvm}"
+		            jvm="${com.mysql.jdbc.java6.java}"
 		            errorProperty="tests.failed"
 		            failureProperty="tests.failed">
 		            <jvmarg value="-Xmx384m" />
