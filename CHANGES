@@ -1,6 +1,11 @@
 # Changelog
 # $Id$
 nn-nn-08 - Version 5.1.8
+    - Fixed BUG#44588 - Fixed error message for connection exceptions when
+      streaming result sets are used.
+      
+    - Modified/fixed test cases using UnreliableSocketFactory.
+
     - Fixed BUG#43421 - Made doPing() global blacklist-aware, so that it does not
       throw Exceptions when at least a single load-balanced server is available.
 

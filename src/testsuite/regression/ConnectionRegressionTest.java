@@ -35,6 +35,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -2448,18 +2449,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	}
 	public void testUnreliableSocketFactory() throws Exception {
 		Properties props = new Properties();
-		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
 		props.setProperty("loadBalanceStrategy", "bestResponseTime");
-		NonRegisteringDriver d = new NonRegisteringDriver();
-		String host = getPortFreeHostname(props, d);
-		
-		UnreliableSocketFactory.mapHost("first", host);
-		UnreliableSocketFactory.mapHost("second", host);
-		UnreliableSocketFactory.flushAllHostLists();
-		
-		copyBasePropertiesIntoProps(props, d);
-		
-		Connection conn2 = getConnectionWithProps("jdbc:mysql:loadbalance://first,second/test", props);
+		Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
 		assertNotNull("Connection should not be null", conn);
 		try {
 			conn2.createStatement().execute("SELECT 1");
@@ -2522,21 +2513,40 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		return host;
 	}	
 	
-	public void testBug43421() throws Exception {
-		Properties props = new Properties();
-		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
-		props.setProperty("loadBalanceStrategy", "bestResponseTime");
+	private Connection getUnreliableLoadBalancedConnection(String[] hostNames, Properties props) throws Exception{
+		if(props == null){
+			props = new Properties();
+		}
 		NonRegisteringDriver d = new NonRegisteringDriver();
-		Properties testCaseProps = d.parseURL(BaseTestCase.dbUrl, null);
-		String db = testCaseProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		this.copyBasePropertiesIntoProps(props, d);
+		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+		String db = d.parseURL(BaseTestCase.dbUrl, props).getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		
 		String host = getPortFreeHostname(props, d);
 		UnreliableSocketFactory.flushAllHostLists();
-		UnreliableSocketFactory.mapHost("first", host);
+		StringBuffer hostString = new StringBuffer();
+		String glue = "";
+		for(int i = 0; i < hostNames.length; i++){
+			UnreliableSocketFactory.mapHost(hostNames[i], host);
+			hostString.append(glue);
+			glue = ",";
+			hostString.append(hostNames[i]);
+		}
+		
 		UnreliableSocketFactory.mapHost("second", host);
+		props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
+			
+		return getConnectionWithProps("jdbc:mysql:loadbalance://" + hostString.toString() +"/" + db, props);
 		
-		copyBasePropertiesIntoProps(props, d);
+	}
+	
+	public void testBug43421() throws Exception {
 		
-		Connection conn2 = getConnectionWithProps("jdbc:mysql:loadbalance://first,second/" + db, props);
+		Properties props = new Properties();
+		props.setProperty("loadBalanceStrategy", "bestResponseTime");
+		
+		Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
+			
 		assertNotNull("Connection should not be null", conn2);
 		
 		try {
@@ -2556,11 +2566,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	
 		UnreliableSocketFactory.flushAllHostLists();
 		props = new Properties();
-		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
-		props.setProperty("loadBalanceStrategy", "bestResponseTime");
 		props.setProperty("globalBlacklistTimeout", "200");
+		props.setProperty("loadBalanceStrategy", "bestResponseTime");
 		
-		conn2 = getConnectionWithProps("jdbc:mysql:loadbalance://first,second/" + db, props);
+		conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
+		
 		assertNotNull("Connection should not be null", conn);
 		
 		try {

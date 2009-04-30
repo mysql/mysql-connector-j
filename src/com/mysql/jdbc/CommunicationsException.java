@@ -41,15 +41,23 @@ import java.sql.SQLException;
 public class CommunicationsException extends SQLException implements StreamingNotifiable {
 
 	
-	private String exceptionMessage;
+	private String exceptionMessage = null;
 
 	private boolean streamingResultSetInPlay = false;
+	
+	private ConnectionImpl conn;
+	private long lastPacketSentTimeMs;
+	private long lastPacketReceivedTimeMs;
+	private Exception underlyingException;
 
 	public CommunicationsException(ConnectionImpl conn, long lastPacketSentTimeMs,
 			long lastPacketReceivedTimeMs, Exception underlyingException) {
-
-		this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(conn,
-				lastPacketSentTimeMs, lastPacketReceivedTimeMs, underlyingException, this.streamingResultSetInPlay);
+		
+		// store this information for later generation of message
+		this.conn = conn;
+		this.lastPacketReceivedTimeMs = lastPacketReceivedTimeMs;
+		this.lastPacketSentTimeMs = lastPacketSentTimeMs;
+		this.underlyingException = underlyingException;
 		
 		if (underlyingException != null) {
 			initCause(underlyingException);
@@ -64,6 +72,15 @@ public class CommunicationsException extends SQLException implements StreamingNo
 	 * @see java.lang.Throwable#getMessage()
 	 */
 	public String getMessage() {
+		// Get the message at last possible moment, but cache it 
+		// and drop references to conn, underlyingException
+		if(this.exceptionMessage == null){
+			this.exceptionMessage = SQLError.createLinkFailureMessageBasedOnHeuristics(this.conn,
+					this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, this.underlyingException, 
+					this.streamingResultSetInPlay);
+			this.conn = null;
+			this.underlyingException = null;
+		}
 		return this.exceptionMessage;
 	}
 
