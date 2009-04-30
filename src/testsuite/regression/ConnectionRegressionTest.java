@@ -2457,7 +2457,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		UnreliableSocketFactory.mapHost("second", host);
 		UnreliableSocketFactory.flushAllHostLists();
 		
-		copyAuthCredsIntoProps(props, d);
+		copyBasePropertiesIntoProps(props, d);
 		
 		Connection conn2 = getConnectionWithProps("jdbc:mysql:loadbalance://first,second/test", props);
 		assertNotNull("Connection should not be null", conn);
@@ -2478,7 +2478,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 
-	private void copyAuthCredsIntoProps(Properties props, NonRegisteringDriver d)
+	private void copyBasePropertiesIntoProps(Properties props, NonRegisteringDriver d)
 			throws SQLException {
 		Properties testCaseProps = d.parseURL(BaseTestCase.dbUrl, null);
 		String user = testCaseProps.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
@@ -2491,6 +2491,22 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		
 		if (password != null) {
 			props.setProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, password);
+		}
+		
+		String port = testCaseProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		
+		if (port != null) {
+			props.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, port);
+		} else {
+			String host = testCaseProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+			
+			if (host != null) {
+				String[] hostPort = host.split(":");
+				
+				if (hostPort.length > 1) {
+					props.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, hostPort[1]);
+				}
+			}
 		}
 	}
 
@@ -2518,7 +2534,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		UnreliableSocketFactory.mapHost("first", host);
 		UnreliableSocketFactory.mapHost("second", host);
 		
-		copyAuthCredsIntoProps(props, d);
+		copyBasePropertiesIntoProps(props, d);
 		
 		Connection conn2 = getConnectionWithProps("jdbc:mysql:loadbalance://first,second/" + db, props);
 		assertNotNull("Connection should not be null", conn2);
