@@ -5949,4 +5949,28 @@ public class StatementRegressionTest extends BaseTestCase {
 		this.rs.close();
 		assertEquals(0, ((com.mysql.jdbc.Statement) newStmt).getOpenResultSetCount());
 	}
- } 
+
+	/**
+	 * Bug #41730 - SQL Injection when using U+00A5 and SJIS/Windows-31J
+	 */
+	public void testBug41730() throws Exception {
+		Connection conn2 = null;
+		PreparedStatement pstmt2 = null;
+		try {
+			conn2 = getConnectionWithProps("characterEncoding=sjis");
+			pstmt2 = conn2.prepareStatement("select ?");
+			pstmt2.setString(1, "\u00A5'");
+			// this will throw an exception with a syntax error if it fails
+			pstmt2.executeQuery();
+		} finally {
+			try {
+				if(pstmt2 != null)
+					pstmt2.close();
+			} catch(SQLException ex) {}
+			try {
+				if(conn2 != null)
+					conn2.close();
+			} catch(SQLException ex) {}
+		}
+	}
+} 

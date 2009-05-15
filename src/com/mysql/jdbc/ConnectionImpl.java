@@ -29,6 +29,10 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.sql.Blob;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
@@ -639,6 +643,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private boolean storesLowerCaseTableName;
 
 	private List statementInterceptors;
+	
+	/**
+	 * If a CharsetEncoder is required for escaping. Needed for SJIS and related
+	 * problems with \u00A5.
+	 */
+	private boolean requiresEscapingEncoder;
 	
 	/**'
 	 * For the delegate only
@@ -1921,6 +1931,31 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			// encoding matches what the user has specified.
 			//
 			setEncoding(realJavaEncoding);
+		}
+		
+		/**
+		 * Check if we need a CharsetEncoder for escaping codepoints that are
+		 * transformed to backslash (0x5c) in the connection encoding.
+		 */
+		CharsetEncoder enc = Charset.forName(getEncoding()).newEncoder();
+		CharBuffer cbuf = CharBuffer.allocate(1);
+		ByteBuffer bbuf = ByteBuffer.allocate(1);
+		
+		cbuf.put("\u00a5");
+		cbuf.position(0);
+		enc.encode(cbuf, bbuf, true);
+		if(bbuf.get(0) == '\\') {
+			requiresEscapingEncoder = true;
+		} else {
+			cbuf.clear();
+			bbuf.clear();
+			
+			cbuf.put("\u20a9");
+			cbuf.position(0);
+			enc.encode(cbuf, bbuf, true);
+			if(bbuf.get(0) == '\\') {
+				requiresEscapingEncoder = true;
+			}
 		}
 
 		return characterSetAlreadyConfigured;
@@ -5654,5 +5689,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	public ExceptionInterceptor getExceptionInterceptor() {
 		return this.exceptionInterceptor;
+	}
+	
+	public boolean getRequiresEscapingEncoder() {
+		return requiresEscapingEncoder;
 	}
 }

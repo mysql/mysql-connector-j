@@ -36,6 +36,10 @@ import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.sql.Array;
 import java.sql.Clob;
 import java.sql.DatabaseMetaData;
@@ -793,6 +797,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 	private boolean compensateForOnDuplicateKeyUpdate = false;
 	
+	/** Charset encoder used to escape if needed, such as Yen sign in SJIS */
+	private CharsetEncoder charsetEncoder;
+	
 	/**
 	 * Creates a prepared statement instance -- We need to provide factory-style
 	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
@@ -903,6 +910,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		initializeFromParseInfo();
 		
 		this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
+		
+		if (conn.getRequiresEscapingEncoder())
+			charsetEncoder = Charset.forName(conn.getEncoding()).newEncoder();
 	}
 
 	/**
@@ -942,6 +952,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		initializeFromParseInfo();
 		
 		this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
+
+		if (conn.getRequiresEscapingEncoder())
+			charsetEncoder = Charset.forName(conn.getEncoding()).newEncoder();
 	}
 
 	/**
@@ -4330,7 +4343,22 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						buf.append('Z');
 	
 						break;
-	
+
+					case '\u00a5':
+					case '\u20a9':
+						// escape characters interpreted as backslash by mysql
+						if(charsetEncoder != null) {
+							CharBuffer cbuf = CharBuffer.allocate(1);
+							ByteBuffer bbuf = ByteBuffer.allocate(1); 
+							cbuf.put(c);
+							cbuf.position(0);
+							charsetEncoder.encode(cbuf, bbuf, true);
+							if(bbuf.get(0) == '\\') {
+								buf.append('\\');
+							}
+						}
+						// fall through
+
 					default:
 						buf.append(c);
 					}

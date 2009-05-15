@@ -51,6 +51,8 @@ nn-nn-08 - Version 5.1.8
       Rewriting of batched statements now works the same between normal prepared statements and server-side
       prepared statements.
 
+    - Fixed Bug #41730 - SQL Injection when using U+00A5 and SJIS
+
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
 	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.
