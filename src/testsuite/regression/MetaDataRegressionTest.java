@@ -24,6 +24,8 @@
  */
 package testsuite.regression;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverPropertyInfo;
@@ -34,6 +36,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.ComparisonFailure;
@@ -2081,8 +2084,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	
 	public void testBug20491() throws Exception {
 		try {
-			String[] fields = { "field1_ae_ä", "field2_ue_ü", "field3_oe_ö",
-			"field4_sz_ß" };
+			String[] fields = { "field1_ae_ï¿½", "field2_ue_ï¿½", "field3_oe_ï¿½",
+			"field4_sz_ï¿½" };
 			
 			createTable("tst",
 					"(`" + fields[0] + "` int(10) unsigned NOT NULL default '0',"
@@ -2266,6 +2269,227 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			assertTrue(this.rs.next());
 		} finally {
 			closeMemberJDBCResources();
+		}
+	}
+	
+	public void testABunchOfReturnTypes() throws Exception {
+		checkABunchOfReturnTypesForConnection(this.conn);
+		
+		if (versionMeetsMinimum(5, 0)) {
+			checkABunchOfReturnTypesForConnection(getConnectionWithProps("useInformationSchema=true"));
+		}
+	}
+	
+	private void checkABunchOfReturnTypesForConnection(Connection mdConn) throws Exception {
+		
+		DatabaseMetaData md = mdConn.getMetaData();
+		
+		// Bug#44862 - getBestRowIdentifier does not return resultset as per JDBC API specifications
+		this.rs = md.getBestRowIdentifier(this.conn.getCatalog(), null, "foo", DatabaseMetaData.bestRowSession, false);
+		
+		int[] types = new int[] { 
+				Types.SMALLINT, // 1.  SCOPE short => actual scope of result
+				Types.CHAR,     // 2. COLUMN_NAME String => column name
+				Types.INTEGER,  // 3. DATA_TYPE int => SQL data type from java.sql.Types
+				Types.CHAR,     // 4. TYPE_NAME String => Data source dependent type name, for a UDT the type name is fully qualified
+				Types.INTEGER,  // 5. COLUMN_SIZE int => precision
+				Types.INTEGER,  // 6. BUFFER_LENGTH int => not used
+				Types.SMALLINT, // 7. DECIMAL_DIGITS short => scale
+				Types.SMALLINT, // 8. PSEUDO_COLUMN short => is this a pseudo column like an Oracle ROWID
+		}; 
+		
+		checkTypes(this.rs, types);
+		
+		// Bug#44683 - getVersionColumns does not return resultset as per JDBC API specifications
+		this.rs = md.getVersionColumns(this.conn.getCatalog(), null, "foo");
+		
+		types = new int[] {
+				Types.SMALLINT, // SCOPE short => is not used
+				Types.CHAR,     // COLUMN_NAME String => column name
+				Types.INTEGER,  // DATA_TYPE int => SQL data type from java.sql.Types
+				Types.CHAR,     // TYPE_NAME String => Data source-dependent type name
+				Types.INTEGER,  // COLUMN_SIZE int => precision
+				Types.INTEGER,  // BUFFER_LENGTH int => length of column value in bytes
+				Types.SMALLINT, // DECIMAL_DIGITS short => scale
+				Types.SMALLINT  // PSEUDO_COLUMN short => whether this is pseudo column like an Oracle ROWID 	
+		};
+		
+		checkTypes(this.rs, types);
+		
+		// Bug#44865 - getColumns does not return resultset as per JDBC API specifications
+		this.rs = md.getColumns(this.conn.getCatalog(), null, "foo", "foo");
+		
+		types = new int[] {
+				Types.CHAR,     //  1. TABLE_CAT String => table catalog (may be null)
+				Types.CHAR,     //  2. TABLE_SCHEM String => table schema (may be null)
+				Types.CHAR,     //  3. TABLE_NAME String => table name
+				Types.CHAR,     //  4. COLUMN_NAME String => column name
+				Types.INTEGER,  //  5. DATA_TYPE int => SQL type from java.sql.Types
+				Types.CHAR,     //  6. TYPE_NAME String => Data source dependent type name, for a UDT the type name is fully qualified
+				Types.INTEGER,  //  7. COLUMN_SIZE int => column size. For char or date types this is the maximum number of characters, for numeric or decimal types this is precision.
+				Types.INTEGER,  //  8. BUFFER_LENGTH is not used.
+				Types.INTEGER,  //  9. DECIMAL_DIGITS int => the number of fractional digits
+				Types.INTEGER,  // 10. NUM_PREC_RADIX int => Radix (typically either 10 or 2)
+				Types.INTEGER,  // 11. NULLABLE int => is NULL allowed.
+				Types.CHAR,     // 12. REMARKS String => comment describing column (may be null)
+				Types.CHAR,     // 13. COLUMN_DEF String => default value (may be null)
+				Types.INTEGER,  // 14. SQL_DATA_TYPE int => unused
+				Types.INTEGER,  // 15. SQL_DATETIME_SUB int => unused
+				Types.INTEGER,  // 16. CHAR_OCTET_LENGTH int => for char types the maximum number of bytes in the column
+				Types.INTEGER,  // 17. ORDINAL_POSITION int => index of column in table (starting at 1)
+				Types.CHAR,     // 18. IS_NULLABLE String => "NO" means column definitely does not allow NULL values; "YES" means the column might allow NULL values. An empty string means nobody knows.
+				Types.CHAR,     // 19. SCOPE_CATLOG String => catalog of table that is the scope of a reference attribute (null if DATA_TYPE isn't REF)
+				Types.CHAR,     // 20. SCOPE_SCHEMA String => schema of table that is the scope of a reference attribute (null if the DATA_TYPE isn't REF)
+				Types.CHAR,     // 21. SCOPE_TABLE String => table name that this the scope of a reference attribure (null if the DATA_TYPE isn't REF)
+				Types.SMALLINT, // 22. SOURCE_DATA_TYPE short => source type of a distinct type or user-generated Ref type, SQL type from java.sql.Types (null if DATA_TYPE isn't DISTINCT or user-generated REF) 	
+				Types.CHAR, // 23. IS_AUTOINCREMENT String => Indicates whether this column is auto incremented 
+		};
+		
+		checkTypes(this.rs, types);
+		
+		// Bug#44867 - DEFERRABILITY column in resultsets for database metadata has wrong data type
+		
+		// Bug#44868 - getTypeInfo does not return resultset as per JDBC API specifications
+		this.rs = md.getTypeInfo();
+		
+		types = new int[] {
+			Types.CHAR,     //  1. TYPE_NAME String => Type name
+			Types.INTEGER,  //  2. DATA_TYPE int => SQL data type from java.sql.Types
+			Types.INTEGER,  //  3. PRECISION int => maximum precision
+			Types.CHAR,     //  4. LITERAL_PREFIX String => prefix used to quote a literal (may be null)
+			Types.CHAR,     //  5. LITERAL_SUFFIX String => suffix used to quote a literal (may be null)
+			Types.CHAR,     //  6. CREATE_PARAMS String => parameters used in creating the type (may be null)
+			Types.SMALLINT, //  7. NULLABLE short => can you use NULL for this type.
+			Types.BOOLEAN,  //  8. CASE_SENSITIVE boolean=> is it case sensitive.
+			Types.SMALLINT, //  9. SEARCHABLE short => can you use "WHERE" based on this type:
+			Types.BOOLEAN,  // 10. UNSIGNED_ATTRIBUTE boolean => is it unsigned.
+			Types.BOOLEAN,  // 11. FIXED_PREC_SCALE boolean => can it be a money value.
+			Types.BOOLEAN,  // 12. AUTO_INCREMENT boolean => can it be used for an auto-increment value.
+			Types.CHAR,     // 13. LOCAL_TYPE_NAME String => localized version of type name (may be null)
+			Types.SMALLINT, // 14. MINIMUM_SCALE short => minimum scale supported
+			Types.SMALLINT, // 15. MAXIMUM_SCALE short => maximum scale supported
+			Types.INTEGER,  // 16. SQL_DATA_TYPE int => unused
+			Types.INTEGER,  // 17. SQL_DATETIME_SUB int => unused
+			Types.INTEGER   // 18. NUM_PREC_RADIX int => usually 2 or 10 
+		};
+		
+		checkTypes(this.rs, types);
+		
+		// Bug#44869 - getIndexInfo does not return resultset as per JDBC API specifications
+		this.rs = md.getIndexInfo(this.conn.getCatalog(), null, "foo", false, false);
+
+		types = new int[] {
+			Types.CHAR,     //  1. TABLE_CAT String => table catalog (may be null)
+			Types.CHAR,     //  2. TABLE_SCHEM String => table schema (may be null)
+			Types.CHAR,     //  3. TABLE_NAME String => table name
+			Types.BOOLEAN,  //  4. NON_UNIQUE boolean => Can index values be non-unique. false when TYPE is tableIndexStatistic
+			Types.CHAR,     //  5. INDEX_QUALIFIER String => index catalog (may be null); null when TYPE is tableIndexStatistic
+			Types.CHAR,     //  6. INDEX_NAME String => index name; null when TYPE is tableIndexStatistic
+			Types.SMALLINT, //  7. TYPE short => index type:
+			Types.SMALLINT, //  8. ORDINAL_POSITION short => column sequence number within index; zero when TYPE is tableIndexStatistic
+			Types.CHAR,     //  9. COLUMN_NAME String => column name; null when TYPE is tableIndexStatistic
+			Types.CHAR,     // 10. ASC_OR_DESC String => column sort sequence, "A" => ascending, "D" => descending, may be null if sort sequence is not supported; null when TYPE is tableIndexStatistic
+			Types.INTEGER,  // 11. CARDINALITY int => When TYPE is tableIndexStatistic, then this is the number of rows in the table; otherwise, it is the number of unique values in the index.
+			Types.INTEGER,  // 12. PAGES int => When TYPE is tableIndexStatisic then this is the number of pages used for the table, otherwise it is the number of pages used for the current index.
+			Types.CHAR      // 13. FILTER_CONDITION String => Filter condition, if any. (may be null) 	
+		};
+		
+		checkTypes(this.rs, types);
+
+		// Bug#44867 - getImportedKeys/exportedKeys/crossReference doesn't have correct type for DEFERRABILITY
+		this.rs = md.getImportedKeys(this.conn.getCatalog(), null, "foo");
+		
+		types = new int[] {
+			Types.CHAR,     // PKTABLE_CAT String => primary key table catalog being imported (may be null)
+			Types.CHAR,     // PKTABLE_SCHEM String => primary key table schema being imported (may be null)
+			Types.CHAR,     // PKTABLE_NAME String => primary key table name being imported
+			Types.CHAR,     // PKCOLUMN_NAME String => primary key column name being imported
+			Types.CHAR,     // FKTABLE_CAT String => foreign key table catalog (may be null)
+			Types.CHAR,     // FKTABLE_SCHEM String => foreign key table schema (may be null)
+			Types.CHAR,     // FKTABLE_NAME String => foreign key table name
+			Types.CHAR,     // FKCOLUMN_NAME String => foreign key column name
+			Types.SMALLINT, // KEY_SEQ short => sequence number within a foreign key
+			Types.SMALLINT, // UPDATE_RULE short => What happens to a foreign key when the primary key is updated:
+			Types.SMALLINT, // DELETE_RULE short => What happens to the foreign key when primary is deleted
+			Types.CHAR,     // FK_NAME String => foreign key name (may be null)
+			Types.CHAR,     // PK_NAME String => primary key name (may be null)
+			Types.SMALLINT  // DEFERRABILITY short => can the evaluation of foreign key constraints be deferred until commit 
+		};
+		
+		checkTypes(this.rs, types);
+		
+		this.rs = md.getExportedKeys(this.conn.getCatalog(), null, "foo");
+		
+		types = new int[] {
+			Types.CHAR,     // PKTABLE_CAT String => primary key table catalog being imported (may be null)
+			Types.CHAR,     // PKTABLE_SCHEM String => primary key table schema being imported (may be null)
+			Types.CHAR,     // PKTABLE_NAME String => primary key table name being imported
+			Types.CHAR,     // PKCOLUMN_NAME String => primary key column name being imported
+			Types.CHAR,     // FKTABLE_CAT String => foreign key table catalog (may be null)
+			Types.CHAR,     // FKTABLE_SCHEM String => foreign key table schema (may be null)
+			Types.CHAR,     // FKTABLE_NAME String => foreign key table name
+			Types.CHAR,     // FKCOLUMN_NAME String => foreign key column name
+			Types.SMALLINT, // KEY_SEQ short => sequence number within a foreign key
+			Types.SMALLINT, // UPDATE_RULE short => What happens to a foreign key when the primary key is updated:
+			Types.SMALLINT, // DELETE_RULE short => What happens to the foreign key when primary is deleted
+			Types.CHAR,     // FK_NAME String => foreign key name (may be null)
+			Types.CHAR,     // PK_NAME String => primary key name (may be null)
+			Types.SMALLINT  // DEFERRABILITY short => can the evaluation of foreign key constraints be deferred until commit 
+		};
+		
+		checkTypes(this.rs, types);
+		
+		this.rs = md.getCrossReference(this.conn.getCatalog(), null, "foo", this.conn.getCatalog(), null, "bar");
+		
+		types = new int[] {
+			Types.CHAR,     // PKTABLE_CAT String => primary key table catalog being imported (may be null)
+			Types.CHAR,     // PKTABLE_SCHEM String => primary key table schema being imported (may be null)
+			Types.CHAR,     // PKTABLE_NAME String => primary key table name being imported
+			Types.CHAR,     // PKCOLUMN_NAME String => primary key column name being imported
+			Types.CHAR,     // FKTABLE_CAT String => foreign key table catalog (may be null)
+			Types.CHAR,     // FKTABLE_SCHEM String => foreign key table schema (may be null)
+			Types.CHAR,     // FKTABLE_NAME String => foreign key table name
+			Types.CHAR,     // FKCOLUMN_NAME String => foreign key column name
+			Types.SMALLINT, // KEY_SEQ short => sequence number within a foreign key
+			Types.SMALLINT, // UPDATE_RULE short => What happens to a foreign key when the primary key is updated:
+			Types.SMALLINT, // DELETE_RULE short => What happens to the foreign key when primary is deleted
+			Types.CHAR,     // FK_NAME String => foreign key name (may be null)
+			Types.CHAR,     // PK_NAME String => primary key name (may be null)
+			Types.SMALLINT  // DEFERRABILITY short => can the evaluation of foreign key constraints be deferred until commit 
+		};
+		
+		checkTypes(this.rs, types);
+	}
+	
+	private final static Map TYPES_MAP = new HashMap();
+	
+	static {
+		Field[] typeFields = Types.class.getFields();
+		
+		for (int i = 0; i < typeFields.length; i++) {
+			System.out.println(typeFields[i].getName() + " -> " + typeFields[i].getType().getClass());
+			
+			if (Modifier.isStatic(typeFields[i].getModifiers())) {
+				try {
+					TYPES_MAP.put(new Integer(typeFields[i].getInt(null)), "java.sql.Types." + typeFields[i].getName());
+				} catch (IllegalArgumentException e) {
+					// ignore
+				} catch (IllegalAccessException e) {
+					// ignore
+				}
+			}
+		}
+	}
+	
+	private void checkTypes(ResultSet rsToCheck, int[] types) throws Exception {
+		ResultSetMetaData rsmd = rsToCheck.getMetaData();
+		assertEquals(types.length, rsmd.getColumnCount());
+		for (int i = 0; i < types.length; i++) {
+			String expectedType = (String)TYPES_MAP.get(new Integer(types[i]));
+			String actualType = (String)TYPES_MAP.get(new Integer(rsmd.getColumnType(i + 1)));
+			assertNotNull(expectedType);
+			assertNotNull(actualType);
+			assertEquals("Unexpected type in column " + (i + 1), expectedType, actualType);
 		}
 	}
 }

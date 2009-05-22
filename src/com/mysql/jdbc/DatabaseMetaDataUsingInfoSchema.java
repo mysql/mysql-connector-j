@@ -262,32 +262,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 			ResultSet rs = executeMetadataQuery(pStmt);
 
-			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
-					new Field("", "TABLE_CAT", Types.CHAR, 255),
-					new Field("", "TABLE_SCHEM", Types.CHAR, 0),
-					new Field("", "TABLE_NAME", Types.CHAR, 255),
-					new Field("", "COLUMN_NAME", Types.CHAR, 32),
-					new Field("", "DATA_TYPE", Types.SMALLINT, 5),
-					new Field("", "TYPE_NAME", Types.CHAR, 16),
-					new Field("", "COLUMN_SIZE", Types.INTEGER, Integer
-							.toString(Integer.MAX_VALUE).length()),
-					new Field("", "BUFFER_LENGTH", Types.INTEGER, 10),
-					new Field("", "DECIMAL_DIGITS", Types.INTEGER, 10),
-					new Field("", "NUM_PREC_RADIX", Types.INTEGER, 10),
-					new Field("", "NULLABLE", Types.INTEGER, 10),
-					new Field("", "REMARKS", Types.CHAR, 0),
-					new Field("", "COLUMN_DEF", Types.CHAR, 0),
-					new Field("", "SQL_DATA_TYPE", Types.INTEGER, 10),
-					new Field("", "SQL_DATETIME_SUB", Types.INTEGER, 10),
-					new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, Integer
-							.toString(Integer.MAX_VALUE).length()),
-					new Field("", "ORDINAL_POSITION", Types.INTEGER, 10),
-					new Field("", "IS_NULLABLE", Types.CHAR, 3),
-					new Field("", "SCOPE_CATALOG", Types.CHAR, 255),
-					new Field("", "SCOPE_SCHEMA", Types.CHAR, 255),
-					new Field("", "SCOPE_TABLE", Types.CHAR, 255),
-					new Field("", "SOURCE_DATA_TYPE", Types.SMALLINT, 10),
-					new Field("", "IS_AUTOINCREMENT", Types.CHAR, 3) });
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createColumnsFields());
 			return rs;
 		} finally {
 			if (pStmt != null) {
@@ -383,22 +358,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			}
 		}
 
-		Field[] fields = new Field[14];
-		fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
-		fields[1] = new Field("", "PKTABLE_SCHEM", Types.CHAR, 0);
-		fields[2] = new Field("", "PKTABLE_NAME", Types.CHAR, 255);
-		fields[3] = new Field("", "PKCOLUMN_NAME", Types.CHAR, 32);
-		fields[4] = new Field("", "FKTABLE_CAT", Types.CHAR, 255);
-		fields[5] = new Field("", "FKTABLE_SCHEM", Types.CHAR, 0);
-		fields[6] = new Field("", "FKTABLE_NAME", Types.CHAR, 255);
-		fields[7] = new Field("", "FKCOLUMN_NAME", Types.CHAR, 32);
-		fields[8] = new Field("", "KEY_SEQ", Types.SMALLINT, 2);
-		fields[9] = new Field("", "UPDATE_RULE", Types.SMALLINT, 2);
-		fields[10] = new Field("", "DELETE_RULE", Types.SMALLINT, 2);
-		fields[11] = new Field("", "FK_NAME", Types.CHAR, 0);
-		fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
-		fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
-
 		String sql = "SELECT "
 				+ "A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,"
 				+ "NULL AS PKTABLE_SCHEM,"
@@ -454,21 +413,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			pStmt.setString(4, foreignTable);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
-			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
-					new Field("", "PKTABLE_CAT", Types.CHAR, 255),
-					new Field("", "PKTABLE_SCHEM", Types.CHAR, 0),
-					new Field("", "PKTABLE_NAME", Types.CHAR, 255),
-					new Field("", "PKCOLUMN_NAME", Types.CHAR, 32),
-					new Field("", "FKTABLE_CAT", Types.CHAR, 255),
-					new Field("", "FKTABLE_SCHEM", Types.CHAR, 0),
-					new Field("", "FKTABLE_NAME", Types.CHAR, 255),
-					new Field("", "FKCOLUMN_NAME", Types.CHAR, 32),
-					new Field("", "KEY_SEQ", Types.SMALLINT, 2),
-					new Field("", "UPDATE_RULE", Types.SMALLINT, 2),
-					new Field("", "DELETE_RULE", Types.SMALLINT, 2),
-					new Field("", "FK_NAME", Types.CHAR, 0),
-					new Field("", "PK_NAME", Types.CHAR, 0),
-					new Field("", "DEFERRABILITY", Types.INTEGER, 2) });
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFkMetadataFields());
 
 			return rs;
 		} finally {
@@ -602,21 +547,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 			ResultSet rs = executeMetadataQuery(pStmt);
 
-			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
-					new Field("", "PKTABLE_CAT", Types.CHAR, 255),
-					new Field("", "PKTABLE_SCHEM", Types.CHAR, 0),
-					new Field("", "PKTABLE_NAME", Types.CHAR, 255),
-					new Field("", "PKCOLUMN_NAME", Types.CHAR, 32),
-					new Field("", "FKTABLE_CAT", Types.CHAR, 255),
-					new Field("", "FKTABLE_SCHEM", Types.CHAR, 0),
-					new Field("", "FKTABLE_NAME", Types.CHAR, 255),
-					new Field("", "FKCOLUMN_NAME", Types.CHAR, 32),
-					new Field("", "KEY_SEQ", Types.SMALLINT, 2),
-					new Field("", "UPDATE_RULE", Types.SMALLINT, 2),
-					new Field("", "DELETE_RULE", Types.SMALLINT, 2),
-					new Field("", "FK_NAME", Types.CHAR, 255),
-					new Field("", "PK_NAME", Types.CHAR, 0),
-					new Field("", "DEFERRABILITY", Types.INTEGER, 2) });
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFkMetadataFields());
 
 			return rs;
 		} finally {
@@ -779,21 +710,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 			ResultSet rs = executeMetadataQuery(pStmt);
 
-			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
-					new Field("", "PKTABLE_CAT", Types.CHAR, 255),
-					new Field("", "PKTABLE_SCHEM", Types.CHAR, 0),
-					new Field("", "PKTABLE_NAME", Types.CHAR, 255),
-					new Field("", "PKCOLUMN_NAME", Types.CHAR, 32),
-					new Field("", "FKTABLE_CAT", Types.CHAR, 255),
-					new Field("", "FKTABLE_SCHEM", Types.CHAR, 0),
-					new Field("", "FKTABLE_NAME", Types.CHAR, 255),
-					new Field("", "FKCOLUMN_NAME", Types.CHAR, 32),
-					new Field("", "KEY_SEQ", Types.SMALLINT, 2),
-					new Field("", "UPDATE_RULE", Types.SMALLINT, 2),
-					new Field("", "DELETE_RULE", Types.SMALLINT, 2),
-					new Field("", "FK_NAME", Types.CHAR, 255),
-					new Field("", "PK_NAME", Types.CHAR, 0),
-					new Field("", "DEFERRABILITY", Types.INTEGER, 2) });
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFkMetadataFields());
 
 			return rs;
 		} finally {
@@ -901,20 +818,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 			ResultSet rs = executeMetadataQuery(pStmt);
 
-			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
-					new Field("", "TABLE_CAT", Types.CHAR, 255),
-					new Field("", "TABLE_SCHEM", Types.CHAR, 0),
-					new Field("", "TABLE_NAME", Types.CHAR, 255),
-					new Field("", "NON_UNIQUE", Types.CHAR, 4),
-					new Field("", "INDEX_QUALIFIER", Types.CHAR, 1),
-					new Field("", "INDEX_NAME", Types.CHAR, 32),
-					new Field("", "TYPE", Types.CHAR, 32),
-					new Field("", "ORDINAL_POSITION", Types.SMALLINT, 5),
-					new Field("", "COLUMN_NAME", Types.CHAR, 32),
-					new Field("", "ASC_OR_DESC", Types.CHAR, 1),
-					new Field("", "CARDINALITY", Types.INTEGER, 10),
-					new Field("", "PAGES", Types.INTEGER, 10),
-					new Field("", "FILTER_CONDITION", Types.CHAR, 32) });
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createIndexInfoFields());
 
 			return rs;
 		} finally {

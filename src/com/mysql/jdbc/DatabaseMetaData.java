@@ -1307,11 +1307,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		Field[] fields = new Field[8];
 		fields[0] = new Field("", "SCOPE", Types.SMALLINT, 5);
 		fields[1] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
-		fields[2] = new Field("", "DATA_TYPE", Types.SMALLINT, 32);
+		fields[2] = new Field("", "DATA_TYPE", Types.INTEGER, 32);
 		fields[3] = new Field("", "TYPE_NAME", Types.CHAR, 32);
 		fields[4] = new Field("", "COLUMN_SIZE", Types.INTEGER, 10);
 		fields[5] = new Field("", "BUFFER_LENGTH", Types.INTEGER, 10);
-		fields[6] = new Field("", "DECIMAL_DIGITS", Types.INTEGER, 10);
+		fields[6] = new Field("", "DECIMAL_DIGITS", Types.SMALLINT, 10);
 		fields[7] = new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5);
 
 		final ArrayList rows = new ArrayList();
@@ -2338,32 +2338,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		final String colPattern = columnNamePattern;
 
-		Field[] fields = new Field[23];
-		fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
-		fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
-		fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 255);
-		fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
-		fields[4] = new Field("", "DATA_TYPE", Types.SMALLINT, 5);
-		fields[5] = new Field("", "TYPE_NAME", Types.CHAR, 16);
-		fields[6] = new Field("", "COLUMN_SIZE", Types.INTEGER, Integer
-				.toString(Integer.MAX_VALUE).length());
-		fields[7] = new Field("", "BUFFER_LENGTH", Types.INTEGER, 10);
-		fields[8] = new Field("", "DECIMAL_DIGITS", Types.INTEGER, 10);
-		fields[9] = new Field("", "NUM_PREC_RADIX", Types.INTEGER, 10);
-		fields[10] = new Field("", "NULLABLE", Types.INTEGER, 10);
-		fields[11] = new Field("", "REMARKS", Types.CHAR, 0);
-		fields[12] = new Field("", "COLUMN_DEF", Types.CHAR, 0);
-		fields[13] = new Field("", "SQL_DATA_TYPE", Types.INTEGER, 10);
-		fields[14] = new Field("", "SQL_DATETIME_SUB", Types.INTEGER, 10);
-		fields[15] = new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, Integer
-				.toString(Integer.MAX_VALUE).length());
-		fields[16] = new Field("", "ORDINAL_POSITION", Types.INTEGER, 10);
-		fields[17] = new Field("", "IS_NULLABLE", Types.CHAR, 3);
-		fields[18] = new Field("", "SCOPE_CATALOG", Types.CHAR, 255);
-		fields[19] = new Field("", "SCOPE_SCHEMA", Types.CHAR, 255);
-		fields[20] = new Field("", "SCOPE_TABLE", Types.CHAR, 255);
-		fields[21] = new Field("", "SOURCE_DATA_TYPE", Types.SMALLINT, 10);
-		fields[22] = new Field("", "IS_AUTOINCREMENT", Types.CHAR, 3);
+		Field[] fields = createColumnsFields();
 
 		final ArrayList rows = new ArrayList();
 		final Statement stmt = this.conn.getMetadataSafeStatement();
@@ -2626,6 +2601,36 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		return results;
 	}
 
+	protected Field[] createColumnsFields() {
+		Field[] fields = new Field[23];
+		fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
+		fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
+		fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 255);
+		fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
+		fields[4] = new Field("", "DATA_TYPE", Types.INTEGER, 5);
+		fields[5] = new Field("", "TYPE_NAME", Types.CHAR, 16);
+		fields[6] = new Field("", "COLUMN_SIZE", Types.INTEGER, Integer
+				.toString(Integer.MAX_VALUE).length());
+		fields[7] = new Field("", "BUFFER_LENGTH", Types.INTEGER, 10);
+		fields[8] = new Field("", "DECIMAL_DIGITS", Types.INTEGER, 10);
+		fields[9] = new Field("", "NUM_PREC_RADIX", Types.INTEGER, 10);
+		fields[10] = new Field("", "NULLABLE", Types.INTEGER, 10);
+		fields[11] = new Field("", "REMARKS", Types.CHAR, 0);
+		fields[12] = new Field("", "COLUMN_DEF", Types.CHAR, 0);
+		fields[13] = new Field("", "SQL_DATA_TYPE", Types.INTEGER, 10);
+		fields[14] = new Field("", "SQL_DATETIME_SUB", Types.INTEGER, 10);
+		fields[15] = new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, Integer
+				.toString(Integer.MAX_VALUE).length());
+		fields[16] = new Field("", "ORDINAL_POSITION", Types.INTEGER, 10);
+		fields[17] = new Field("", "IS_NULLABLE", Types.CHAR, 3);
+		fields[18] = new Field("", "SCOPE_CATALOG", Types.CHAR, 255);
+		fields[19] = new Field("", "SCOPE_SCHEMA", Types.CHAR, 255);
+		fields[20] = new Field("", "SCOPE_TABLE", Types.CHAR, 255);
+		fields[21] = new Field("", "SOURCE_DATA_TYPE", Types.SMALLINT, 10);
+		fields[22] = new Field("", "IS_AUTOINCREMENT", Types.CHAR, 3);
+		return fields;
+	}
+
 	/**
 	 * JDBC 2.0 Return the connection that produced this metadata object.
 	 * 
@@ -2713,21 +2718,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
-		Field[] fields = new Field[14];
-		fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
-		fields[1] = new Field("", "PKTABLE_SCHEM", Types.CHAR, 0);
-		fields[2] = new Field("", "PKTABLE_NAME", Types.CHAR, 255);
-		fields[3] = new Field("", "PKCOLUMN_NAME", Types.CHAR, 32);
-		fields[4] = new Field("", "FKTABLE_CAT", Types.CHAR, 255);
-		fields[5] = new Field("", "FKTABLE_SCHEM", Types.CHAR, 0);
-		fields[6] = new Field("", "FKTABLE_NAME", Types.CHAR, 255);
-		fields[7] = new Field("", "FKCOLUMN_NAME", Types.CHAR, 32);
-		fields[8] = new Field("", "KEY_SEQ", Types.SMALLINT, 2);
-		fields[9] = new Field("", "UPDATE_RULE", Types.SMALLINT, 2);
-		fields[10] = new Field("", "DELETE_RULE", Types.SMALLINT, 2);
-		fields[11] = new Field("", "FK_NAME", Types.CHAR, 0);
-		fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
-		fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
+		Field[] fields = createFkMetadataFields();
 
 		final ArrayList tuples = new ArrayList();
 
@@ -2890,6 +2881,25 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		return results;
 	}
 
+	protected Field[] createFkMetadataFields() {
+		Field[] fields = new Field[14];
+		fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
+		fields[1] = new Field("", "PKTABLE_SCHEM", Types.CHAR, 0);
+		fields[2] = new Field("", "PKTABLE_NAME", Types.CHAR, 255);
+		fields[3] = new Field("", "PKCOLUMN_NAME", Types.CHAR, 32);
+		fields[4] = new Field("", "FKTABLE_CAT", Types.CHAR, 255);
+		fields[5] = new Field("", "FKTABLE_SCHEM", Types.CHAR, 0);
+		fields[6] = new Field("", "FKTABLE_NAME", Types.CHAR, 255);
+		fields[7] = new Field("", "FKCOLUMN_NAME", Types.CHAR, 32);
+		fields[8] = new Field("", "KEY_SEQ", Types.SMALLINT, 2);
+		fields[9] = new Field("", "UPDATE_RULE", Types.SMALLINT, 2);
+		fields[10] = new Field("", "DELETE_RULE", Types.SMALLINT, 2);
+		fields[11] = new Field("", "FK_NAME", Types.CHAR, 0);
+		fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
+		fields[13] = new Field("", "DEFERRABILITY", Types.SMALLINT, 2);
+		return fields;
+	}
+
 	/**
 	 * @see DatabaseMetaData#getDatabaseMajorVersion()
 	 */
@@ -3049,21 +3059,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
-		Field[] fields = new Field[14];
-		fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
-		fields[1] = new Field("", "PKTABLE_SCHEM", Types.CHAR, 0);
-		fields[2] = new Field("", "PKTABLE_NAME", Types.CHAR, 255);
-		fields[3] = new Field("", "PKCOLUMN_NAME", Types.CHAR, 32);
-		fields[4] = new Field("", "FKTABLE_CAT", Types.CHAR, 255);
-		fields[5] = new Field("", "FKTABLE_SCHEM", Types.CHAR, 0);
-		fields[6] = new Field("", "FKTABLE_NAME", Types.CHAR, 255);
-		fields[7] = new Field("", "FKCOLUMN_NAME", Types.CHAR, 32);
-		fields[8] = new Field("", "KEY_SEQ", Types.SMALLINT, 2);
-		fields[9] = new Field("", "UPDATE_RULE", Types.SMALLINT, 2);
-		fields[10] = new Field("", "DELETE_RULE", Types.SMALLINT, 2);
-		fields[11] = new Field("", "FK_NAME", Types.CHAR, 255);
-		fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
-		fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
+		Field[] fields = createFkMetadataFields();
 
 		final ArrayList rows = new ArrayList();
 
@@ -3318,22 +3314,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
-		Field[] fields = new Field[14];
-		fields[0] = new Field("", "PKTABLE_CAT", Types.CHAR, 255);
-		fields[1] = new Field("", "PKTABLE_SCHEM", Types.CHAR, 0);
-		fields[2] = new Field("", "PKTABLE_NAME", Types.CHAR, 255);
-		fields[3] = new Field("", "PKCOLUMN_NAME", Types.CHAR, 32);
-		fields[4] = new Field("", "FKTABLE_CAT", Types.CHAR, 255);
-		fields[5] = new Field("", "FKTABLE_SCHEM", Types.CHAR, 0);
-		fields[6] = new Field("", "FKTABLE_NAME", Types.CHAR, 255);
-		fields[7] = new Field("", "FKCOLUMN_NAME", Types.CHAR, 32);
-		fields[8] = new Field("", "KEY_SEQ", Types.SMALLINT, 2);
-		fields[9] = new Field("", "UPDATE_RULE", Types.SMALLINT, 2);
-		fields[10] = new Field("", "DELETE_RULE", Types.SMALLINT, 2);
-		fields[11] = new Field("", "FK_NAME", Types.CHAR, 255);
-		fields[12] = new Field("", "PK_NAME", Types.CHAR, 0);
-		fields[13] = new Field("", "DEFERRABILITY", Types.INTEGER, 2);
-
+		Field[] fields = createFkMetadataFields();
+		
 		final ArrayList rows = new ArrayList();
 
 		if (this.conn.versionMeetsMinimum(3, 23, 0)) {
@@ -3522,20 +3504,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		 * Sub_part
 		 */
 
-		Field[] fields = new Field[13];
-		fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
-		fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
-		fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 255);
-		fields[3] = new Field("", "NON_UNIQUE", Types.CHAR, 4);
-		fields[4] = new Field("", "INDEX_QUALIFIER", Types.CHAR, 1);
-		fields[5] = new Field("", "INDEX_NAME", Types.CHAR, 32);
-		fields[6] = new Field("", "TYPE", Types.CHAR, 32);
-		fields[7] = new Field("", "ORDINAL_POSITION", Types.SMALLINT, 5);
-		fields[8] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
-		fields[9] = new Field("", "ASC_OR_DESC", Types.CHAR, 1);
-		fields[10] = new Field("", "CARDINALITY", Types.INTEGER, 10);
-		fields[11] = new Field("", "PAGES", Types.INTEGER, 10);
-		fields[12] = new Field("", "FILTER_CONDITION", Types.CHAR, 32);
+		Field[] fields = createIndexInfoFields();
 
 		final ArrayList rows = new ArrayList();
 		final Statement stmt = this.conn.getMetadataSafeStatement();
@@ -3630,6 +3599,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				stmt.close();
 			}
 		}
+	}
+
+	protected Field[] createIndexInfoFields() {
+		Field[] fields = new Field[13];
+		fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
+		fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
+		fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 255);
+		fields[3] = new Field("", "NON_UNIQUE", Types.BOOLEAN, 4);
+		fields[4] = new Field("", "INDEX_QUALIFIER", Types.CHAR, 1);
+		fields[5] = new Field("", "INDEX_NAME", Types.CHAR, 32);
+		fields[6] = new Field("", "TYPE", Types.SMALLINT, 32);
+		fields[7] = new Field("", "ORDINAL_POSITION", Types.SMALLINT, 5);
+		fields[8] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
+		fields[9] = new Field("", "ASC_OR_DESC", Types.CHAR, 1);
+		fields[10] = new Field("", "CARDINALITY", Types.INTEGER, 10);
+		fields[11] = new Field("", "PAGES", Types.INTEGER, 10);
+		fields[12] = new Field("", "FILTER_CONDITION", Types.CHAR, 32);
+		return fields;
 	}
 
 	/**
@@ -5207,17 +5194,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	public java.sql.ResultSet getTypeInfo() throws SQLException {
 		Field[] fields = new Field[18];
 		fields[0] = new Field("", "TYPE_NAME", Types.CHAR, 32);
-		fields[1] = new Field("", "DATA_TYPE", Types.SMALLINT, 5);
+		fields[1] = new Field("", "DATA_TYPE", Types.INTEGER, 5);
 		fields[2] = new Field("", "PRECISION", Types.INTEGER, 10);
 		fields[3] = new Field("", "LITERAL_PREFIX", Types.CHAR, 4);
 		fields[4] = new Field("", "LITERAL_SUFFIX", Types.CHAR, 4);
 		fields[5] = new Field("", "CREATE_PARAMS", Types.CHAR, 32);
 		fields[6] = new Field("", "NULLABLE", Types.SMALLINT, 5);
-		fields[7] = new Field("", "CASE_SENSITIVE", Types.CHAR, 3);
+		fields[7] = new Field("", "CASE_SENSITIVE", Types.BOOLEAN, 3);
 		fields[8] = new Field("", "SEARCHABLE", Types.SMALLINT, 3);
-		fields[9] = new Field("", "UNSIGNED_ATTRIBUTE", Types.CHAR, 3);
-		fields[10] = new Field("", "FIXED_PREC_SCALE", Types.CHAR, 3);
-		fields[11] = new Field("", "AUTO_INCREMENT", Types.CHAR, 3);
+		fields[9] = new Field("", "UNSIGNED_ATTRIBUTE", Types.BOOLEAN, 3);
+		fields[10] = new Field("", "FIXED_PREC_SCALE", Types.BOOLEAN, 3);
+		fields[11] = new Field("", "AUTO_INCREMENT", Types.BOOLEAN, 3);
 		fields[12] = new Field("", "LOCAL_TYPE_NAME", Types.CHAR, 32);
 		fields[13] = new Field("", "MINIMUM_SCALE", Types.SMALLINT, 5);
 		fields[14] = new Field("", "MAXIMUM_SCALE", Types.SMALLINT, 5);
@@ -6669,11 +6656,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		Field[] fields = new Field[8];
 		fields[0] = new Field("", "SCOPE", Types.SMALLINT, 5);
 		fields[1] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
-		fields[2] = new Field("", "DATA_TYPE", Types.SMALLINT, 5);
+		fields[2] = new Field("", "DATA_TYPE", Types.INTEGER, 5);
 		fields[3] = new Field("", "TYPE_NAME", Types.CHAR, 16);
-		fields[4] = new Field("", "COLUMN_SIZE", Types.CHAR, 16);
-		fields[5] = new Field("", "BUFFER_LENGTH", Types.CHAR, 16);
-		fields[6] = new Field("", "DECIMAL_DIGITS", Types.CHAR, 16);
+		fields[4] = new Field("", "COLUMN_SIZE", Types.INTEGER, 16);
+		fields[5] = new Field("", "BUFFER_LENGTH", Types.INTEGER, 16);
+		fields[6] = new Field("", "DECIMAL_DIGITS", Types.SMALLINT, 16);
 		fields[7] = new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5);
 
 		return buildResultSet(fields, new ArrayList());

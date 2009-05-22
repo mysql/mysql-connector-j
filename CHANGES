@@ -50,6 +50,18 @@ nn-nn-08 - Version 5.1.8
     - Fixed issues with server-side prepared statement batch re-writing caused by the fix to Bug#41532.
       Rewriting of batched statements now works the same between normal prepared statements and server-side
       prepared statements.
+      
+    - Fixed Bug#44862 - getBestRowIdentifier does not return resultset as per JDBC API specifications
+
+    - Fixed Bug#44683 - getVersionColumns does not return resultset as per JDBC API specifications
+
+    - Fixed Bug#44865 - getColumns does not return resultset as per JDBC API specifications
+
+    - Fixed Bug#44868 - getTypeInfo does not return resultset as per JDBC API specifications
+
+    - Fixed Bug#44869 - getIndexInfo does not return resultset as per JDBC API specifications
+
+    - Fixed Bug#44867 - getImportedKeys/exportedKeys/crossReference doesn't have correct type for DEFERRABILITY
 
     - Fixed Bug #41730 - SQL Injection when using U+00A5 and SJIS
 
