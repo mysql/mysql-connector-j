@@ -162,9 +162,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		Properties props = new Properties();
 
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3790");
-			this.stmt
-					.executeUpdate("CREATE TABLE testBug3790 (field1 INT NOT NULL PRIMARY KEY, field2 VARCHAR(32)) TYPE=InnoDB");
+			createTable("testBug3790", "(field1 INT NOT NULL PRIMARY KEY, field2 VARCHAR(32)) ", "InnoDB");
 			this.stmt.executeUpdate("INSERT INTO testBug3790 VALUES ("
 					+ field1OldValue + ", '" + field2OldValue + "')");
 
@@ -187,8 +185,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			assertTrue(rs2.getInt(1) == field1OldValue);
 			assertTrue(rs2.getString(2).equals(field2NewValue));
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3790");
-
 			if (rs2 != null) {
 				rs2.close();
 			}

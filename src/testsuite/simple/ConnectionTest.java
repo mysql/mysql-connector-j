@@ -120,7 +120,8 @@ public class ConnectionTest extends BaseTestCase {
 					clusterStmt
 							.executeQuery("DROP TABLE IF EXISTS testClusterConn");
 					clusterStmt
-							.executeQuery("CREATE TABLE testClusterConn (field1 INT) TYPE=ndbcluster");
+							.executeQuery("CREATE TABLE testClusterConn (field1 INT) " +
+									getTableTypeDecl() + " =ndbcluster");
 					clusterStmt
 							.executeQuery("INSERT INTO testClusterConn VALUES (1)");
 
@@ -189,9 +190,7 @@ public class ConnectionTest extends BaseTestCase {
 
 			int timeoutSecs = this.rs.getInt(2);
 
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS t1");
-			this.stmt
-					.executeUpdate("CREATE TABLE t1 (id INTEGER, x INTEGER) TYPE=INNODB");
+			createTable("t1", "(id INTEGER, x INTEGER) ", "INNODB");
 			this.stmt.executeUpdate("INSERT INTO t1 VALUES(0, 0)");
 			this.conn.setAutoCommit(false);
 			this.conn.createStatement().executeQuery(
@@ -230,7 +229,6 @@ public class ConnectionTest extends BaseTestCase {
 			assertTrue("Can't find INNODB MONITOR in:\n\n" + sqlEx.getMessage(), sqlEx.getMessage().indexOf("INNODB MONITOR") != -1);
 		} finally {
 			this.conn.setAutoCommit(true);
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS t1");
 		}
 	}
 
@@ -602,9 +600,7 @@ public class ConnectionTest extends BaseTestCase {
 				try {
 					this.conn.setAutoCommit(true);
 	
-					this.stmt.executeUpdate("DROP TABLE IF EXISTS testSavepoints");
-					this.stmt
-							.executeUpdate("CREATE TABLE testSavepoints (field1 int) TYPE=InnoDB");
+					createTable("testSavepoints", "(field1 int)", "InnoDB");
 	
 					// Try with named save points
 					this.conn.setAutoCommit(false);
@@ -656,7 +652,6 @@ public class ConnectionTest extends BaseTestCase {
 					this.conn.releaseSavepoint(this.conn.setSavepoint());
 				} finally {
 					this.conn.setAutoCommit(true);
-					this.stmt.executeUpdate("DROP TABLE IF EXISTS testSavepoints");
 				}
 			} else {
 				System.out.println("MySQL version does not support SAVEPOINTs");
@@ -1443,7 +1438,7 @@ public class ConnectionTest extends BaseTestCase {
     	StringBuffer buf = new StringBuffer();
     	StandardLogger.bufferedLog = buf;
     	
-    	createTable("testUseLocalSessionState", "(field1 varchar(32)) ENGINE=InnoDB");
+    	createTable("testUseLocalSessionState", "(field1 varchar(32))", "InnoDB");
     	
     	Connection localStateConn = null;
     	Statement localStateStmt = null;
@@ -1662,7 +1657,7 @@ public class ConnectionTest extends BaseTestCase {
 	}
 	
 	public void testLifecyleInterceptor() throws Exception {
-		createTable("testLifecycleInterceptor", "(field1 int) ENGINE=InnoDB");
+		createTable("testLifecycleInterceptor", "(field1 int)", "InnoDB");
 		Connection liConn = null;
 		
 		try {

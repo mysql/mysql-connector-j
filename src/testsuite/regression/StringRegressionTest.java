@@ -244,43 +244,37 @@ public class StringRegressionTest extends BaseTestCase {
 	 */
 	public void testGreekUtf8411() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
-			try {
-				Properties newProps = new Properties();
-				newProps.put("useUnicode", "true");
-				newProps.put("characterEncoding", "UTF-8");
+			Properties newProps = new Properties();
+			newProps.put("useUnicode", "true");
+			newProps.put("characterEncoding", "UTF-8");
 
-				Connection utf8Conn = this.getConnectionWithProps(newProps);
+			Connection utf8Conn = this.getConnectionWithProps(newProps);
 
-				Statement utfStmt = utf8Conn.createStatement();
+			Statement utfStmt = utf8Conn.createStatement();
 
-				utfStmt.executeUpdate("DROP TABLE IF EXISTS greekunicode");
-				utfStmt
-						.executeUpdate("CREATE TABLE greekunicode(ID INTEGER NOT NULL "
-								+ " AUTO_INCREMENT,UpperCase VARCHAR (30),LowerCase VARCHAR (30),Accented "
-								+ " VARCHAR (30),Special VARCHAR (30),PRIMARY KEY(ID)) TYPE = InnoDB, DEFAULT "
-								+ "CHARACTER SET utf8");
+			createTable("greekunicode", "(ID INTEGER NOT NULL "
+							+ " AUTO_INCREMENT,UpperCase VARCHAR (30),LowerCase VARCHAR (30),Accented "
+							+ " VARCHAR (30),Special VARCHAR (30),PRIMARY KEY(ID)) " 
+							+ "DEFAULT CHARACTER SET utf8", "InnoDB");
 
-				String upper = "\u0394\u930F\u039A\u0399\u039C\u0397";
-				String lower = "\u03B4\u03BF\u03BA\u03B9\u03BC\u03B7";
-				String accented = "\u03B4\u03CC\u03BA\u03AF\u03BC\u03AE";
-				String special = "\u037E\u03C2\u03B0";
+			String upper = "\u0394\u930F\u039A\u0399\u039C\u0397";
+			String lower = "\u03B4\u03BF\u03BA\u03B9\u03BC\u03B7";
+			String accented = "\u03B4\u03CC\u03BA\u03AF\u03BC\u03AE";
+			String special = "\u037E\u03C2\u03B0";
 
-				utfStmt.executeUpdate("INSERT INTO greekunicode VALUES "
-						+ "('1','" + upper + "','" + lower + "','" + accented
-						+ "','" + special + "')");
+			utfStmt.executeUpdate("INSERT INTO greekunicode VALUES "
+					+ "('1','" + upper + "','" + lower + "','" + accented
+					+ "','" + special + "')");
 
-				this.rs = utfStmt
-						.executeQuery("SELECT UpperCase, LowerCase, Accented, Special from greekunicode");
+			this.rs = utfStmt
+					.executeQuery("SELECT UpperCase, LowerCase, Accented, Special from greekunicode");
 
-				this.rs.next();
+			this.rs.next();
 
-				assertTrue(upper.equals(this.rs.getString(1)));
-				assertTrue(lower.equals(this.rs.getString(2)));
-				assertTrue(accented.equals(this.rs.getString(3)));
-				assertTrue(special.equals(this.rs.getString(4)));
-			} finally {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS greekunicode");
-			}
+			assertTrue(upper.equals(this.rs.getString(1)));
+			assertTrue(lower.equals(this.rs.getString(2)));
+			assertTrue(accented.equals(this.rs.getString(3)));
+			assertTrue(special.equals(this.rs.getString(4)));
 		}
 	}
 

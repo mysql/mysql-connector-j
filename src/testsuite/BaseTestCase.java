@@ -187,6 +187,12 @@ public abstract class BaseTestCase extends TestCase {
 			throws SQLException {
 		createSchemaObject("TABLE", tableName, columnsAndOtherStuff);
 	}
+	
+	protected void createTable(String tableName, String columnsAndOtherStuff,
+			String engine) throws SQLException {
+		createSchemaObject("TABLE", tableName,
+				columnsAndOtherStuff + " " + getTableTypeDecl() + " = " + engine);
+	}
 
 	protected void dropTable(String tableName) throws SQLException {
 		dropSchemaObject("TABLE", tableName);
@@ -403,6 +409,13 @@ public abstract class BaseTestCase extends TestCase {
 
 	protected Object getSingleValueWithQuery(String query) throws SQLException {
 		return getSingleIndexedValueWithQuery(1, query);
+	}
+	
+	protected String getTableTypeDecl() throws SQLException {
+		if (versionMeetsMinimum(5, 0)) {
+			return "ENGINE";
+		}
+		return "TYPE";
 	}
 
 	protected boolean isAdminConnectionConfigured() {

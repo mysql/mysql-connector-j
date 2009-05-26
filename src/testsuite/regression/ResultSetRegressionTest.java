@@ -154,9 +154,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			 * assertTrue(!this.rs.wasNull());
 			 * 
 			 */
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug2359_1");
-			this.stmt
-					.executeUpdate("CREATE TABLE testBug2359_1 (id INT) TYPE=InnoDB");
+			createTable("testBug2359_1", "(id INT)", "InnoDB");
 			this.stmt.executeUpdate("INSERT INTO testBug2359_1 VALUES (1)");
 
 			this.pstmt = this.conn
@@ -170,9 +168,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 			this.rs.close();
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug2359_1");
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug2359");
-
 			this.rs.close();
 			this.pstmt.close();
 		}
@@ -218,45 +213,39 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testBug2654() throws Exception {
 		if (false) { // this is currently a server-level bug
-
-			try {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS foo");
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS bar");
-
-				this.stmt.executeUpdate("CREATE TABLE foo ("
-						+ "  id tinyint(3) default NULL,"
-						+ "  data varchar(255) default NULL"
-						+ ") TYPE=MyISAM DEFAULT CHARSET=latin1");
-				this.stmt
-						.executeUpdate("INSERT INTO foo VALUES (1,'male'),(2,'female')");
-
-				this.stmt.executeUpdate("CREATE TABLE bar ("
-						+ "id tinyint(3) unsigned default NULL,"
-						+ "data char(3) default '0'"
-						+ ") TYPE=MyISAM DEFAULT CHARSET=latin1");
-
-				this.stmt
-						.executeUpdate("INSERT INTO bar VALUES (1,'yes'),(2,'no')");
-
-				String statement = "select foo.id, foo.data, "
-						+ "bar.data from foo, bar" + "	where "
-						+ "foo.id = bar.id order by foo.id";
-
-				String column = "foo.data";
-
-				this.rs = this.stmt.executeQuery(statement);
-
-				ResultSetMetaData rsmd = this.rs.getMetaData();
-				System.out.println(rsmd.getTableName(1));
-				System.out.println(rsmd.getColumnName(1));
-
-				this.rs.next();
-
-				String fooData = this.rs.getString(column);
-			} finally {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS foo");
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS bar");
-			}
+			this.stmt.executeUpdate("DROP TABLE IF EXISTS foo");
+			this.stmt.executeUpdate("DROP TABLE IF EXISTS bar");
+	
+			createTable("foo", "("
+					+ "  id tinyint(3) default NULL,"
+					+ "  data varchar(255) default NULL"
+					+ ") DEFAULT CHARSET=latin1", "MyISAM ");
+			this.stmt
+					.executeUpdate("INSERT INTO foo VALUES (1,'male'),(2,'female')");
+	
+			createTable("bar", "("
+					+ "id tinyint(3) unsigned default NULL,"
+					+ "data char(3) default '0'"
+					+ ") DEFAULT CHARSET=latin1", "MyISAM ");
+	
+			this.stmt
+					.executeUpdate("INSERT INTO bar VALUES (1,'yes'),(2,'no')");
+	
+			String statement = "select foo.id, foo.data, "
+					+ "bar.data from foo, bar" + "	where "
+					+ "foo.id = bar.id order by foo.id";
+	
+			String column = "foo.data";
+	
+			this.rs = this.stmt.executeQuery(statement);
+	
+			ResultSetMetaData rsmd = this.rs.getMetaData();
+			System.out.println(rsmd.getTableName(1));
+			System.out.println(rsmd.getColumnName(1));
+	
+			this.rs.next();
+	
+			String fooData = this.rs.getString(column);
 		}
 	}
 
@@ -713,8 +702,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	public void testUpdatability() throws Exception {
 		this.rs = null;
 
-		this.stmt.execute("DROP TABLE IF EXISTS updatabilityBug");
-		this.stmt.execute("CREATE TABLE IF NOT EXISTS updatabilityBug ("
+		createTable("updatabilityBug", "("
 				+ " id int(10) unsigned NOT NULL auto_increment,"
 				+ " field1 varchar(32) NOT NULL default '',"
 				+ " field2 varchar(128) NOT NULL default '',"
@@ -723,7 +711,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				+ " field5 varchar(64) default NULL,"
 				+ " field6 int(10) unsigned default NULL,"
 				+ " field7 varchar(64) default NULL," + " PRIMARY KEY  (id)"
-				+ ") TYPE=InnoDB;");
+				+ ") ", "InnoDB");
 		this.stmt.executeUpdate("insert into updatabilityBug (id) values (1)");
 
 		try {
@@ -1335,7 +1323,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 						"(`id` int(11) NOT NULL default '0',"
 								+ "`value` decimal(10,2) NOT NULL default '0.00', `stringval` varchar(10),"
 								+ "PRIMARY KEY  (`id`)"
-								+ ") ENGINE=MyISAM DEFAULT CHARSET=latin1");
+								+ ") DEFAULT CHARSET=latin1", "MyISAM");
 				this.stmt
 						.executeUpdate("INSERT INTO "
 								+ tableName
@@ -1525,7 +1513,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		createTable(tableName, "(id1 int(10) unsigned NOT NULL,"
 				+ " id2 DATETIME, "
 				+ " field1 varchar(128) NOT NULL default '',"
-				+ " PRIMARY KEY  (id1, id2)) TYPE=InnoDB;");
+				+ " PRIMARY KEY  (id1, id2))", "InnoDB;");
 
 		this.stmt.executeUpdate("insert into " + tableName
 				+ " (id1, id2, field1)"
@@ -1724,7 +1712,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 								+ "KEY (field_6,field_10,field_9),"
 								+ "KEY (field_11,field_10),"
 								+ "KEY (field_12,field_10)"
-								+ ") ENGINE=InnoDB DEFAULT CHARSET=latin1");
+								+ ") DEFAULT CHARSET=latin1", "InnoDB");
 
 				this.stmt
 						.executeUpdate("INSERT INTO testBug9236 VALUES "
@@ -1817,7 +1805,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 								+ "KEY countryCode (countryCode),"
 								+ "KEY ordering (ordering),"
 								+ "KEY modifyDate (modifyDate)"
-								+ ") ENGINE=InnoDB DEFAULT CHARSET=utf8");
+								+ ") DEFAULT CHARSET=utf8", "InnoDB");
 
 				this.stmt.executeUpdate("INSERT INTO " + tableName
 						+ " (languageCode) VALUES ('en')");
@@ -2000,7 +1988,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testBug12104() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
-			createTable("testBug12104", "(field1 GEOMETRY) ENGINE=MyISAM");
+			createTable("testBug12104", "(field1 GEOMETRY)", "MyISAM");
 
 			try {
 				this.stmt
@@ -2367,7 +2355,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				+ "OID int( 20 ) NOT NULL AUTO_INCREMENT ,"
 				+ "PatientID int( 20 ) default NULL ,"
 				+ "PRIMARY KEY ( CID , OID ) ," + "KEY OID ( OID ) ,"
-				+ "KEY Path ( CID, PatientID)" + ") TYPE = MYISAM");
+				+ "KEY Path ( CID, PatientID)" + ")", "MYISAM");
 
 		String sSQLQuery = "SELECT * FROM testBug16841 WHERE 1 = 0";
 		Statement updStmt = null;
@@ -3327,7 +3315,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	public void testTruncationOfNonSigDigits() throws Exception {
 		if (versionMeetsMinimum(4, 1, 0)) {
 			createTable("testTruncationOfNonSigDigits",
-					"(field1 decimal(12,2), field2 varchar(2)) ENGINE=Innodb");
+					"(field1 decimal(12,2), field2 varchar(2))", "Innodb");
 
 			this.stmt
 					.executeUpdate("INSERT INTO testTruncationOfNonSigDigits VALUES (123456.2345, 'ab')");

@@ -227,25 +227,21 @@ public class MetadataTest extends BaseTestCase {
 		this.stmt.executeUpdate("DROP TABLE IF EXISTS cpd_foreign_1");
 		this.stmt.executeUpdate("DROP TABLE IF EXISTS fktable2");
 		this.stmt.executeUpdate("DROP TABLE IF EXISTS fktable1");
-
-		this.stmt
-				.executeUpdate("CREATE TABLE parent(parent_id INT NOT NULL, PRIMARY KEY (parent_id)) TYPE=INNODB");
-		this.stmt
-				.executeUpdate("CREATE TABLE child(child_id INT, parent_id_fk INT, INDEX par_ind (parent_id_fk), "
-						+ "FOREIGN KEY (parent_id_fk) REFERENCES parent(parent_id)) TYPE=INNODB");
-		this.stmt
-				.executeUpdate("CREATE TABLE multikey(d INT NOT NULL, b INT NOT NULL, a INT NOT NULL, c INT NOT NULL, PRIMARY KEY (d, b, a, c))");
+		
+		createTable("parent", "(parent_id INT NOT NULL, PRIMARY KEY (parent_id))", "INNODB");
+		createTable("child", "(child_id INT, parent_id_fk INT, INDEX par_ind (parent_id_fk), "
+						+ "FOREIGN KEY (parent_id_fk) REFERENCES parent(parent_id)) ", "INNODB");
+		createTable("multikey", "(d INT NOT NULL, b INT NOT NULL, a INT NOT NULL, c INT NOT NULL, PRIMARY KEY (d, b, a, c))");
 
 		// Test compound foreign keys
-		this.stmt.executeUpdate("create table cpd_foreign_1("
+		createTable("cpd_foreign_1", "("
 				+ "id int(8) not null auto_increment primary key,"
 				+ "name varchar(255) not null unique," + "key (id)"
-				+ ") type=InnoDB");
-		this.stmt.executeUpdate("create table cpd_foreign_2("
+				+ ")", "InnoDB");
+		createTable("cpd_foreign_2", "("
 				+ "id int(8) not null auto_increment primary key,"
-				+ "key (id)," + "name varchar(255)" + ") type=InnoDB");
-		this.stmt
-				.executeUpdate("create table cpd_foreign_3("
+				+ "key (id)," + "name varchar(255)" + ") ", "InnoDB");
+		createTable("cpd_foreign_3", "("
 						+ "cpd_foreign_1_id int(8) not null,"
 						+ "cpd_foreign_2_id int(8) not null,"
 						+ "key(cpd_foreign_1_id),"
@@ -253,9 +249,8 @@ public class MetadataTest extends BaseTestCase {
 						+ "primary key (cpd_foreign_1_id, cpd_foreign_2_id),"
 						+ "foreign key (cpd_foreign_1_id) references cpd_foreign_1(id),"
 						+ "foreign key (cpd_foreign_2_id) references cpd_foreign_2(id)"
-						+ ") type=InnoDB");
-		this.stmt
-				.executeUpdate("create table cpd_foreign_4("
+						+ ") ", "InnoDB");
+		createTable("cpd_foreign_4", "("
 						+ "cpd_foreign_1_id int(8) not null,"
 						+ "cpd_foreign_2_id int(8) not null,"
 						+ "key(cpd_foreign_1_id),"
@@ -264,13 +259,11 @@ public class MetadataTest extends BaseTestCase {
 						+ "foreign key (cpd_foreign_1_id, cpd_foreign_2_id) "
 						+ "references cpd_foreign_3(cpd_foreign_1_id, cpd_foreign_2_id) "
 						+ "ON DELETE RESTRICT ON UPDATE CASCADE"
-						+ ") type=InnoDB");
+						+ ") ", "InnoDB");
 
-		this.stmt
-				.executeUpdate("create table fktable1 (TYPE_ID int not null, TYPE_DESC varchar(32), primary key(TYPE_ID)) TYPE=InnoDB");
-		this.stmt
-				.executeUpdate("create table fktable2 (KEY_ID int not null, COF_NAME varchar(32), PRICE float, TYPE_ID int, primary key(KEY_ID), "
-						+ "index(TYPE_ID), foreign key(TYPE_ID) references fktable1(TYPE_ID)) TYPE=InnoDB");
+		createTable("fktable1", "(TYPE_ID int not null, TYPE_DESC varchar(32), primary key(TYPE_ID))", "InnoDB");
+		createTable("fktable2", "(KEY_ID int not null, COF_NAME varchar(32), PRICE float, TYPE_ID int, primary key(KEY_ID), "
+						+ "index(TYPE_ID), foreign key(TYPE_ID) references fktable1(TYPE_ID)) ", "InnoDB");
 	}
 
 	/**

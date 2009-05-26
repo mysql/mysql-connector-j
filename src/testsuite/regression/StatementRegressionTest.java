@@ -481,7 +481,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		if (versionMeetsMinimum(4, 1, 0)) {
 
 			createTable(tableName,
-					"(pwd VARBINARY(30)) TYPE=InnoDB DEFAULT CHARACTER SET utf8");
+					"(pwd VARBINARY(30)) DEFAULT CHARACTER SET utf8", "InnoDB");
 
 			byte[] bytesToTest = new byte[] { 17, 120, -1, -73, -5 };
 
@@ -1131,47 +1131,41 @@ public class StatementRegressionTest extends BaseTestCase {
 	 */
 	public void testBug2671() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
-			try {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS test3");
-				this.stmt
-						.executeUpdate("CREATE TABLE test3 ("
-								+ " `field1` int(8) NOT NULL auto_increment,"
-								+ " `field2` int(8) unsigned zerofill default NULL,"
-								+ " `field3` varchar(30) binary NOT NULL default '',"
-								+ " `field4` varchar(100) default NULL,"
-								+ " `field5` datetime NULL default '0000-00-00 00:00:00',"
-								+ " PRIMARY KEY  (`field1`),"
-								+ " UNIQUE KEY `unq_id` (`field2`),"
-								+ " UNIQUE KEY  (`field3`),"
-								+ " UNIQUE KEY  (`field2`)"
-								+ " ) TYPE=InnoDB CHARACTER SET utf8");
+			createTable("test3", "("
+							+ " `field1` int(8) NOT NULL auto_increment,"
+							+ " `field2` int(8) unsigned zerofill default NULL,"
+							+ " `field3` varchar(30) binary NOT NULL default '',"
+							+ " `field4` varchar(100) default NULL,"
+							+ " `field5` datetime NULL default '0000-00-00 00:00:00',"
+							+ " PRIMARY KEY  (`field1`),"
+							+ " UNIQUE KEY `unq_id` (`field2`),"
+							+ " UNIQUE KEY  (`field3`),"
+							+ " UNIQUE KEY  (`field2`)"
+							+ " )  CHARACTER SET utf8", "InnoDB");
 
-				this.stmt
-						.executeUpdate("insert into test3 (field1, field3, field4) values (1,'blewis','Bob Lewis')");
+			this.stmt
+					.executeUpdate("insert into test3 (field1, field3, field4) values (1,'blewis','Bob Lewis')");
 
-				String query = "              " + "UPDATE                   "
-						+ "  test3                  "
-						+ "SET                      "
-						+ "  field2=?               " + "  ,field3=?          "
-						+ "  ,field4=?           " + "  ,field5=?        "
-						+ "WHERE                    "
-						+ "  field1 = ?                 ";
+			String query = "              " + "UPDATE                   "
+					+ "  test3                  "
+					+ "SET                      "
+					+ "  field2=?               " + "  ,field3=?          "
+					+ "  ,field4=?           " + "  ,field5=?        "
+					+ "WHERE                    "
+					+ "  field1 = ?                 ";
 
-				java.sql.Date mydate = null;
+			java.sql.Date mydate = null;
 
-				this.pstmt = this.conn.prepareStatement(query);
+			this.pstmt = this.conn.prepareStatement(query);
 
-				this.pstmt.setInt(1, 13);
-				this.pstmt.setString(2, "abc");
-				this.pstmt.setString(3, "def");
-				this.pstmt.setDate(4, mydate);
-				this.pstmt.setInt(5, 1);
+			this.pstmt.setInt(1, 13);
+			this.pstmt.setString(2, "abc");
+			this.pstmt.setString(3, "def");
+			this.pstmt.setDate(4, mydate);
+			this.pstmt.setInt(5, 1);
 
-				int retval = this.pstmt.executeUpdate();
-				assertTrue(retval == 1);
-			} finally {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS test3");
-			}
+			int retval = this.pstmt.executeUpdate();
+			assertTrue(retval == 1);
 		}
 	}
 
@@ -1921,38 +1915,30 @@ public class StatementRegressionTest extends BaseTestCase {
 	public void testBug5510() throws Exception {
 		// This is a server bug that should be fixed by 4.1.6
 		if (versionMeetsMinimum(4, 1, 6)) {
-			try {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5510");
-
-				this.stmt
-						.executeUpdate("CREATE TABLE `testBug5510` ("
-								+ "`a` bigint(20) NOT NULL auto_increment,"
-								+ "`b` varchar(64) default NULL,"
-								+ "`c` varchar(64) default NULL,"
-								+ "`d` varchar(255) default NULL,"
-								+ "`e` int(11) default NULL,"
-								+ "`f` varchar(32) default NULL,"
-								+ "`g` varchar(32) default NULL,"
-								+ "`h` varchar(80) default NULL,"
-								+ "`i` varchar(255) default NULL,"
-								+ "`j` varchar(255) default NULL,"
-								+ "`k` varchar(255) default NULL,"
-								+ "`l` varchar(32) default NULL,"
-								+ "`m` varchar(32) default NULL,"
-								+ "`n` timestamp NOT NULL default CURRENT_TIMESTAMP on update"
-								+ " CURRENT_TIMESTAMP,"
-								+ "`o` int(11) default NULL,"
-								+ "`p` int(11) default NULL,"
-								+ "PRIMARY KEY  (`a`)"
-								+ ") ENGINE=InnoDB DEFAULT CHARSET=latin1");
-				PreparedStatement pStmt = this.conn
-						.prepareStatement("INSERT INTO testBug5510 (a) VALUES (?)");
-				pStmt.setNull(1, 0);
-				pStmt.executeUpdate();
-
-			} finally {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5510");
-			}
+			createTable("`testBug5510`", "("
+							+ "`a` bigint(20) NOT NULL auto_increment,"
+							+ "`b` varchar(64) default NULL,"
+							+ "`c` varchar(64) default NULL,"
+							+ "`d` varchar(255) default NULL,"
+							+ "`e` int(11) default NULL,"
+							+ "`f` varchar(32) default NULL,"
+							+ "`g` varchar(32) default NULL,"
+							+ "`h` varchar(80) default NULL,"
+							+ "`i` varchar(255) default NULL,"
+							+ "`j` varchar(255) default NULL,"
+							+ "`k` varchar(255) default NULL,"
+							+ "`l` varchar(32) default NULL,"
+							+ "`m` varchar(32) default NULL,"
+							+ "`n` timestamp NOT NULL default CURRENT_TIMESTAMP on update"
+							+ " CURRENT_TIMESTAMP,"
+							+ "`o` int(11) default NULL,"
+							+ "`p` int(11) default NULL,"
+							+ "PRIMARY KEY  (`a`)"
+							+ ") DEFAULT CHARSET=latin1", "InnoDB ");
+			PreparedStatement pStmt = this.conn
+					.prepareStatement("INSERT INTO testBug5510 (a) VALUES (?)");
+			pStmt.setNull(1, 0);
+			pStmt.executeUpdate();
 		}
 	}
 
@@ -3047,7 +3033,7 @@ public class StatementRegressionTest extends BaseTestCase {
 				"testBug15383",
 				"(id INTEGER UNSIGNED NOT NULL "
 						+ "AUTO_INCREMENT,value BIGINT UNSIGNED NULL DEFAULT 0,PRIMARY "
-						+ "KEY(id))ENGINE=InnoDB;");
+						+ "KEY(id))", "InnoDB");
 
 		this.stmt.executeUpdate("INSERT INTO testBug15383(value) VALUES(1)");
 
@@ -3453,7 +3439,7 @@ public class StatementRegressionTest extends BaseTestCase {
 	 */
 
 	public void testBug21438() throws Exception {
-		createTable("testBug21438","(t_id int(10), test_date timestamp(30) NOT NULL,primary key t_pk (t_id));");		
+		createTable("testBug21438","(t_id int(10), test_date timestamp NOT NULL,primary key t_pk (t_id));");		
 		
 		assertEquals(1, this.stmt.executeUpdate("insert into testBug21438 values (1,NOW());"));
 		
@@ -3525,7 +3511,8 @@ public class StatementRegressionTest extends BaseTestCase {
 		
 		createTable(
 				"testbug22290",
-				"(`id` int(11) NOT NULL default '1',`cost` decimal(10,2) NOT NULL,PRIMARY KEY  (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+				"(`id` int(11) NOT NULL default '1',`cost` decimal(10,2) NOT NULL,PRIMARY KEY  (`id`))" +
+				" DEFAULT CHARSET=utf8", "InnoDB");
 		assertEquals(
 				this.stmt
 						.executeUpdate("INSERT INTO testbug22290 (`id`,`cost`) VALUES (1,'1.00')"),
@@ -4218,7 +4205,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		
 		 createTable("Bit_TabXXX", "( `MAX_VAL` BIT default NULL, "
 				 + "`MIN_VAL` BIT default NULL, `NULL_VAL` BIT default NULL) "
-         		 + "ENGINE=InnoDB DEFAULT CHARSET=latin1");
+         		 + "DEFAULT CHARSET=latin1", "InnoDB");
          
          
          // add Bit_In_MinXXX procedure
@@ -4433,7 +4420,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
 		createTable("Bit_Tab", "( `MAX_VAL` BIT default NULL, "
 				+ "`MIN_VAL` BIT default NULL, `NULL_VAL` BIT default NULL) "
-				+ "ENGINE=InnoDB DEFAULT CHARSET=latin1");
+				+ "DEFAULT CHARSET=latin1", "InnoDB");
 		//this.stmt.execute("insert into Bit_Tab values(null,0,null)");
 		createProcedure(
 				"Bit_Proc",
@@ -5520,8 +5507,8 @@ public class StatementRegressionTest extends BaseTestCase {
 	
 	public void testDeadlockBatchBehavior() throws Exception {
 		try {
-			createTable("t1", "(id INTEGER, x INTEGER) TYPE=INNODB");
-			createTable("t2", "(id INTEGER, x INTEGER) TYPE=INNODB");
+			createTable("t1", "(id INTEGER, x INTEGER)", "INNODB");
+			createTable("t2", "(id INTEGER, x INTEGER)", "INNODB");
 			this.stmt.executeUpdate("INSERT INTO t1 VALUES (0, 0)");
 			
 			this.conn.setAutoCommit(false);

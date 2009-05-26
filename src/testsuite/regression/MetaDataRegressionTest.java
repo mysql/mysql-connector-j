@@ -1205,7 +1205,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		
 		createTable(
 				"`app tab`",
-				"( C1 int(11) NULL, INDEX NEWINX (C1), INDEX NEWINX2 (C1)) ENGINE = InnoDB CHECKSUM = 0 COMMENT = 'InnoDB free: 3072 kB; (`C1`) REFER`test/app tab`(`C1`)' PACK_KEYS = 0");
+				"( C1 int(11) NULL, INDEX NEWINX (C1), INDEX NEWINX2 (C1))", "InnoDB");
 
 		this.stmt
 				.executeUpdate("ALTER TABLE `app tab` ADD CONSTRAINT APPFK FOREIGN KEY (C1) REFERENCES `app tab` (C1)");
@@ -1607,7 +1607,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		
 		createTable("testBug21544",
 	            "(foo_id INT NOT NULL, stuff LONGTEXT"
-	            + ", PRIMARY KEY (foo_id)) TYPE=INNODB");
+	            + ", PRIMARY KEY (foo_id))", "INNODB");
 		
 		Connection infoSchemConn = null;
 		

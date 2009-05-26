@@ -72,14 +72,10 @@ public class RetrievalPerfTest extends BaseTestCase {
 	 */
 	public void setUp() throws Exception {
 		super.setUp();
-		this.stmt.executeUpdate("DROP TABLE IF EXISTS retrievalPerfTestHeap");
-		this.stmt.executeUpdate("DROP TABLE IF EXISTS retrievalPerfTestMyIsam");
-		this.stmt
-				.executeUpdate("CREATE TABLE retrievalPerfTestHeap (priKey INT NOT NULL PRIMARY KEY,"
-						+ "charField VARCHAR(80)) TYPE=HEAP");
-		this.stmt
-				.executeUpdate("CREATE TABLE retrievalPerfTestMyIsam (priKey INT NOT NULL PRIMARY KEY,"
-						+ "charField VARCHAR(80)) TYPE=MyISAM");
+		createTable("retrievalPerfTestHeap",  "(priKey INT NOT NULL PRIMARY KEY,"
+						+ "charField VARCHAR(80)) ", "HEAP");
+		createTable("retrievalPerfTestMyIsam", "(priKey INT NOT NULL PRIMARY KEY,"
+				+ "charField VARCHAR(80)) ", "MyISAM");
 
 		for (int i = 0; i < NUM_ROWS; i++) {
 			this.stmt
@@ -91,15 +87,6 @@ public class RetrievalPerfTest extends BaseTestCase {
 							+ i
 							+ ",'abcdefghijklmnopqrstuvqxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')");
 		}
-	}
-
-	/**
-	 * @see junit.framework.TestCase#tearDown()
-	 */
-	public void tearDown() throws Exception {
-		this.stmt.executeUpdate("DROP TABLE IF EXISTS retrievalPerfTestHeap");
-		this.stmt.executeUpdate("DROP TABLE IF EXISTS retrievalPerfTestMyIsam");
-		super.tearDown();
 	}
 
 	/**

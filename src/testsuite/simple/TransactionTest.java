@@ -75,7 +75,6 @@ public class TransactionTest extends BaseTestCase {
 	 */
 	public void setUp() throws Exception {
 		super.setUp();
-		createTestTable();
 	}
 
 	/**
@@ -86,6 +85,7 @@ public class TransactionTest extends BaseTestCase {
 	 */
 	public void testTransaction() throws SQLException {
 		try {
+			createTable("trans_test", "(id INT NOT NULL PRIMARY KEY, decdata DOUBLE)", "InnoDB");
 			this.conn.setAutoCommit(false);
 			this.stmt
 					.executeUpdate("INSERT INTO trans_test (id, decdata) VALUES (1, 1.0)");
@@ -111,19 +111,5 @@ public class TransactionTest extends BaseTestCase {
 		} finally {
 			this.conn.setAutoCommit(true);
 		}
-	}
-
-	private void createTestTable() throws SQLException {
-		//
-		// Catch the error, the table might exist
-		//
-		try {
-			this.stmt.executeUpdate("DROP TABLE trans_test");
-		} catch (SQLException sqlEx) {
-			;
-		}
-
-		this.stmt
-				.executeUpdate("CREATE TABLE trans_test (id INT NOT NULL PRIMARY KEY, decdata DOUBLE) TYPE=InnoDB");
 	}
 }
