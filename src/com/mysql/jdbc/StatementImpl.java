@@ -25,6 +25,7 @@
 package com.mysql.jdbc;
 
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.sql.BatchUpdateException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -1879,6 +1880,10 @@ public class StatementImpl implements Statement {
 		ArrayList rowSet = new ArrayList();
 
 		long beginAt = getLastInsertID();
+		
+		if (beginAt < 0) { // looking at an UNSIGNED BIGINT that has overflowed
+			fields[0].setUnsigned();
+		}
 
 		if (this.results != null) {
 			String serverInfo = this.results.getServerInfo();
@@ -1892,10 +1897,26 @@ public class StatementImpl implements Statement {
 				numKeys = getRecordCountFromInfo(serverInfo);
 			}
 
-			if ((beginAt > 0) && (numKeys > 0)) {
+			if ((beginAt != 0 /* BIGINT UNSIGNED can wrap the protocol representation */) && (numKeys > 0)) {
 				for (int i = 0; i < numKeys; i++) {
 					byte[][] row = new byte[1][];
-					row[0] = Long.toString(beginAt).getBytes();
+					if (beginAt > 0) {
+						row[0] = Long.toString(beginAt).getBytes();
+					} else {
+						byte[] asBytes = new byte[8];
+						asBytes[7] = (byte) (beginAt & 0xff);
+						asBytes[6] = (byte) (beginAt >>> 8);
+						asBytes[5] = (byte) (beginAt >>> 16);
+						asBytes[4] = (byte) (beginAt >>> 24);
+						asBytes[3] = (byte) (beginAt >>> 32);
+						asBytes[2] = (byte) (beginAt >>> 40);
+						asBytes[1] = (byte) (beginAt >>> 48);
+						asBytes[0] = (byte) (beginAt >>> 56);
+						
+						BigInteger val = new BigInteger(1, asBytes);
+
+						row[0] = val.toString().getBytes();
+					}
 					rowSet.add(new ByteArrayRow(row, getExceptionInterceptor()));
 					beginAt  += this.connection.getAutoIncrementIncrement();
 				}

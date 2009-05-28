@@ -902,6 +902,10 @@ public class Field {
 		return ((this.colFlag & 32) > 0);
 	}
 
+	public void setUnsigned() {
+		this.colFlag |= 32;
+	}
+	
 	/**
 	 * DOCUMENT ME!
 	 *

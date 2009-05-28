@@ -63,7 +63,14 @@ nn-nn-08 - Version 5.1.8
 
     - Fixed Bug#44867 - getImportedKeys/exportedKeys/crossReference doesn't have correct type for DEFERRABILITY
 
-    - Fixed Bug #41730 - SQL Injection when using U+00A5 and SJIS
+    - Fixed Bug#41730 - SQL Injection when using U+00A5 and SJIS
+    
+    - Fixed Bug#43196 - Statement.getGeneratedKeys() doesn't return values for UNSIGNED BIGINTS with values > Long.MAX_VALUE.
+      Unfortunately, because the server doesn't tell clients what TYPE the auto increment value is, the driver can't consistently 
+      return BigIntegers for the result set returned from getGeneratedKeys(), it will only return them if the value is > Long.MAX_VALUE. 
+      If your application needs this consistency, it will need to check the class of the return value from .getObject() on the 
+      ResultSet returned by Statement.getGeneratedKeys() and if it's not a BigInteger, create one based on the java.lang.Long that 
+      is returned.
 
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and

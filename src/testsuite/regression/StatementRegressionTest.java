@@ -5983,4 +5983,76 @@ public class StatementRegressionTest extends BaseTestCase {
 			} catch(SQLException ex) {}
 		}
 	}
+	
+	public void testBug43196() throws Exception {
+
+		try {
+			createTable(
+					"`bug43196`",
+					"(`id` bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY, `a` bigint(20) unsigned NOT NULL) ENGINE=MyISAM DEFAULT CHARSET=latin1;");
+
+
+
+			Connection conn1 = null;
+
+			try {
+				assertEquals(1, this.stmt.executeUpdate(
+						"INSERT INTO bug43196 (a) VALUES (1)",
+						Statement.RETURN_GENERATED_KEYS));
+
+				this.rs = this.stmt.getGeneratedKeys();
+
+				if (this.rs.next()) {
+
+					Long id = (Long) this.rs.getObject(1);// use long
+
+				}
+
+				this.rs.close();
+
+				this.rs = this.stmt.executeQuery("select id from bug43196");
+
+				if (this.rs.next()) {
+					BigInteger id = (BigInteger) this.rs.getObject(1);// use
+																		// BigInteger
+				}
+
+				this.rs.close();
+
+				// insert a id > Long.MAX_VALUE(9223372036854775807)
+
+				assertEquals(
+						1,
+						this.stmt
+								.executeUpdate(
+										"insert into bug43196(id,a) values(18446744073709551200,1)",
+										Statement.RETURN_GENERATED_KEYS));
+
+				this.rs = this.stmt.getGeneratedKeys();
+
+				this.rs.first();
+
+				assertTrue("No rows returned", this.rs.isFirst());
+				assertEquals("18446744073709551200", this.rs.getObject(1).toString());
+
+			} finally {
+
+				if (conn1 != null) {
+
+					conn1.close();
+				}
+
+			}
+
+		}
+
+		finally {
+
+			closeMemberJDBCResources();
+
+		}
+
+}
+
+
 } 
