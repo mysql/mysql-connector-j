@@ -74,6 +74,8 @@ nn-nn-08 - Version 5.1.8
       
     - Fixed Bug#38387 - "functionsNeverReturnBlobs=true" now works for SQL functions that return binary/binary collation VAR_STRINGS.
 
+    - Fixed Bug#45171 - Connection.serverPrepareStatement() returns wrong default result set types
+    
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
 	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.

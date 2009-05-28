@@ -39,6 +39,8 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -2587,5 +2589,27 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	    	closeMemberJDBCResources();
 		}
 
+	}
+	
+	public void testStatementDefaults() throws Exception {
+		List statementsToTest = new LinkedList();
+		statementsToTest.add(this.conn.createStatement());
+		statementsToTest.add(((com.mysql.jdbc.Connection)this.conn).clientPrepareStatement("SELECT 1"));
+		statementsToTest.add(((com.mysql.jdbc.Connection)this.conn).clientPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
+		statementsToTest.add(((com.mysql.jdbc.Connection)this.conn).clientPrepareStatement("SELECT 1", new int[0]));
+		statementsToTest.add(((com.mysql.jdbc.Connection)this.conn).clientPrepareStatement("SELECT 1", new String[0]));
+		statementsToTest.add(((com.mysql.jdbc.Connection)this.conn).serverPrepareStatement("SELECT 1"));
+		statementsToTest.add(((com.mysql.jdbc.Connection)this.conn).serverPrepareStatement("SELECT 1", Statement.RETURN_GENERATED_KEYS));
+		statementsToTest.add(((com.mysql.jdbc.Connection)this.conn).serverPrepareStatement("SELECT 1", new int[0]));
+		statementsToTest.add(((com.mysql.jdbc.Connection)this.conn).serverPrepareStatement("SELECT 1", new String[0]));
+		
+		Iterator iter = statementsToTest.iterator();
+		
+		while (iter.hasNext()) {
+			Statement toTest = (Statement) iter.next();
+			assertEquals(toTest.getResultSetType(), ResultSet.TYPE_FORWARD_ONLY);
+			assertEquals(toTest.getResultSetConcurrency(), ResultSet.CONCUR_READ_ONLY);
+		}
+		
 	}
 }
