@@ -474,7 +474,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 		try {
 			this.stmt.executeUpdate("DROP FUNCTION IF EXISTS testBug10310");
 			this.stmt
-					.executeUpdate("CREATE FUNCTION testBug10310(a float, b bigint, c int) RETURNS INT"
+					.executeUpdate("CREATE FUNCTION testBug10310(a float, b bigint, c int) RETURNS INT NO SQL"
 							+ "\nBEGIN" + "\nRETURN a;" + "\nEND");
 			cStmt = this.conn.prepareCall("{? = CALL testBug10310(?,?,?)}");
 			cStmt.registerOutParameter(1, Types.INTEGER);
