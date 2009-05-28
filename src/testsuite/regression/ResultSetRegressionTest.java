@@ -4790,4 +4790,22 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		cal.setTime(ts);
 		assertEquals(797, cal.get(Calendar.MILLISECOND));
 	}
+	
+	public void testBug38387() throws Exception {
+		Connection noBlobConn = null;
+	    Properties props = new Properties();
+	    props.put("functionsNeverReturnBlobs","true");//toggle, no change
+	    noBlobConn = getConnectionWithProps(props);
+		try {
+			Statement noBlobStmt = noBlobConn.createStatement();
+			this.rs = noBlobStmt.executeQuery("SELECT TRIM(1) AS Rslt");
+	        while (this.rs.next()) {
+	        	assertEquals("1", this.rs.getString("Rslt"));
+	            assertEquals("java.lang.String", this.rs.getObject(1).getClass().getName());
+	        }
+		} finally {
+			noBlobConn.close();
+		}
+
+	}
 }

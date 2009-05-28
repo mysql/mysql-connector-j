@@ -71,6 +71,8 @@ nn-nn-08 - Version 5.1.8
       If your application needs this consistency, it will need to check the class of the return value from .getObject() on the 
       ResultSet returned by Statement.getGeneratedKeys() and if it's not a BigInteger, create one based on the java.lang.Long that 
       is returned.
+      
+    - Fixed Bug#38387 - "functionsNeverReturnBlobs=true" now works for SQL functions that return binary/binary collation VAR_STRINGS.
 
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and

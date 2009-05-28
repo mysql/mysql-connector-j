@@ -157,10 +157,9 @@ public class Field {
 
         checkForImplicitTemporaryTable();
 		// Re-map to 'real' blob type, if we're a BLOB
-
+        boolean isFromFunction = this.originalTableNameLength == 0;
+        
 		if (this.mysqlType == MysqlDefs.FIELD_TYPE_BLOB) {
-		    boolean isFromFunction = this.originalTableNameLength == 0;
-
 		    if (this.connection != null && this.connection.getBlobsAreStrings() ||
 		            (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
 		        this.sqlType = Types.VARCHAR;
@@ -208,9 +207,12 @@ public class Field {
 					this.mysqlType == MysqlDefs.FIELD_TYPE_VAR_STRING &&
 					isBinary &&
 					this.charsetIndex == 63) {
-				if (this.isOpaqueBinary()) {
+				if (this.connection != null && (this.connection.getFunctionsNeverReturnBlobs() && isFromFunction)) {
+			        this.sqlType = Types.VARCHAR;
+			        this.mysqlType = MysqlDefs.FIELD_TYPE_VARCHAR;
+				} else if (this.isOpaqueBinary()) {
 					this.sqlType = Types.VARBINARY;
-				}
+				} 
 			}
 
 			if (this.connection.versionMeetsMinimum(4, 1, 0) &&
