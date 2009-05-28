@@ -1647,8 +1647,17 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		int sqlType = field.getSQLType();
 		
 		switch (sqlType) {
-		case Types.BIT:
 		case Types.BOOLEAN:
+			if (field.getMysqlType() == -1) { // from dbmd
+				String stringVal = getString(columnIndex);
+
+				return getBooleanFromString(stringVal, columnIndex);
+			}
+				
+			long boolVal = getLong(columnIndex, false);
+
+			return (boolVal == -1 || boolVal > 0);
+		case Types.BIT:
 		case Types.TINYINT:
 		case Types.SMALLINT:
 		case Types.INTEGER:
@@ -1658,7 +1667,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case Types.REAL:
 		case Types.FLOAT:
 		case Types.DOUBLE:
-			long boolVal = getLong(columnIndex, false);
+			boolVal = getLong(columnIndex, false);
 
 			return (boolVal == -1 || boolVal > 0);
 		default:
