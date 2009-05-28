@@ -5348,6 +5348,16 @@ public class StatementRegressionTest extends BaseTestCase {
 	public void testBug34093() throws Exception {
 		Connection rewriteConn = null;
 		
+		rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true");
+		
+		checkBug34093(rewriteConn);
+		
+		rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true,useServerPrepStmts=true");
+		
+		checkBug34093(rewriteConn);
+	}
+	
+	private void checkBug34093(Connection rewriteConn) throws Exception {
 		try {
 			String ddl = "(autoIncId INT NOT NULL PRIMARY KEY AUTO_INCREMENT, uniqueTextKey VARCHAR(255) UNIQUE KEY)";
 			
@@ -5355,7 +5365,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			String sql = "insert into testBug30493 (uniqueTextKey) values (?) on duplicate key UPDATE autoIncId = last_insert_id( autoIncId )";
 			String tablePrimeSql = "INSERT INTO testBug30493 (uniqueTextKey) VALUES ('a'), ('b'), ('c'), ('d')";
 
-			rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true");
+			
 
 			// setup the rewritten and non-written statements
 			Statement stmts[] = new Statement[2];
