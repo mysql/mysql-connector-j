@@ -2906,11 +2906,15 @@ public class ServerPreparedStatement extends PreparedStatement {
 									(String) value);
 						}
 	
-						BindValue asBound = ((ServerPreparedStatement) batchedStatement)
-								.getBinding(
-										batchedParamIndex,
-										false);
-						asBound.bufferType = paramArg[j].bufferType;
+						// If we ended up here as a multi-statement, we're not working with a server prepared statement
+						
+						if (batchedStatement instanceof ServerPreparedStatement) {
+							BindValue asBound = ((ServerPreparedStatement) batchedStatement)
+									.getBinding(
+											batchedParamIndex,
+											false);
+							asBound.bufferType = paramArg[j].bufferType;
+						}
 	
 						batchedParamIndex++;
 	
