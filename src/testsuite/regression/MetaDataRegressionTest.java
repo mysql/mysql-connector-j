@@ -2346,9 +2346,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		};
 		
 		checkTypes(this.rs, types);
-		
-		// Bug#44867 - DEFERRABILITY column in resultsets for database metadata has wrong data type
-		
+
 		// Bug#44868 - getTypeInfo does not return resultset as per JDBC API specifications
 		this.rs = md.getTypeInfo();
 		
