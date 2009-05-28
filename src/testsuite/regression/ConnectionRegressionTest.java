@@ -2591,7 +2591,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 	}
 	
-	public void testStatementDefaults() throws Exception {
+	public void testBug45171() throws Exception {
 		List statementsToTest = new LinkedList();
 		statementsToTest.add(this.conn.createStatement());
 		statementsToTest.add(((com.mysql.jdbc.Connection)this.conn).clientPrepareStatement("SELECT 1"));
