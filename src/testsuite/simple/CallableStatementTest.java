@@ -567,7 +567,7 @@ public class CallableStatementTest extends BaseTestCase {
 			createProcedure("p", "() label1: WHILE @a=0 DO SET @a=1; END WHILE");
 			this.conn.prepareCall("{CALL p()}");
 
-			createFunction("f", "() RETURNS INT return 1; ");
+			createFunction("f", "() RETURNS INT NO SQL return 1; ");
 			cstmt = this.conn.prepareCall("{? = CALL f()}");
 
 			if (!isRunningOnJdk131()) {
