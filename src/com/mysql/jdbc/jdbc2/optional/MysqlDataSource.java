@@ -47,12 +47,11 @@ import com.mysql.jdbc.NonRegisteringDriver;
 public class MysqlDataSource extends ConnectionPropertiesImpl implements
 		DataSource, Referenceable, Serializable  {
 	/** The driver to create connections with */
-	protected static com.mysql.jdbc.Driver mysqlDriver = null;
+	protected static NonRegisteringDriver mysqlDriver = null;
 
 	static {
 		try {
-			mysqlDriver = (com.mysql.jdbc.Driver) Class.forName(
-					"com.mysql.jdbc.Driver").newInstance();
+			mysqlDriver = new NonRegisteringDriver();
 		} catch (Exception E) {
 			throw new RuntimeException(
 					"Can not load Driver class com.mysql.jdbc.Driver");
