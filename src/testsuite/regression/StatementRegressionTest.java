@@ -5830,7 +5830,6 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
-<<<<<<< TREE
 	
 	/**
 	 * Tests fix for Bug#41532 - regression in performance for batched inserts when using ON DUPLICATE KEY UPDATE
