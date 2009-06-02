@@ -4877,6 +4877,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			rs.getString("abc");
 		} catch(SQLException ex) {
 			/* expected */
+			assertEquals(0, ex.getErrorCode());
+			assertEquals("S1000", ex.getSQLState());
 		} finally {
 			closeMemberJDBCResources();
 		}
