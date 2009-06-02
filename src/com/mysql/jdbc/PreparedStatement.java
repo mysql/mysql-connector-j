@@ -473,14 +473,36 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					.getIdentifierQuoteString();
 
 			int indexOfValues = -1;
+			int valuesSearchStart = statementStartPos;
 
-			if (quoteCharStr.length() > 0) {
-				indexOfValues = StringUtils.indexOfIgnoreCaseRespectQuotes(
-						this.statementStartPos, sql, "VALUES ", quoteCharStr
-								.charAt(0), false);
-			} else {
-				indexOfValues = StringUtils.indexOfIgnoreCase(
-						this.statementStartPos, sql, "VALUES ");
+			while (indexOfValues == -1) {
+				if (quoteCharStr.length() > 0) {
+					indexOfValues = StringUtils.indexOfIgnoreCaseRespectQuotes(
+							valuesSearchStart,
+							originalSql, "VALUES ", quoteCharStr.charAt(0), false);
+				} else {
+					indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, 
+							originalSql,
+							"VALUES ");
+				}
+				/* check if the char immediately preceding VALUES may be part of the table name */
+				if (indexOfValues > 0) {
+					char c = originalSql.charAt(indexOfValues - 1);
+					switch(c) {
+					case ' ':
+					case ')':
+					case '`':
+					case '\t':
+					case '\n':
+						break;
+					default:
+						valuesSearchStart = indexOfValues + 7;
+						indexOfValues = -1;
+						break;
+					}
+				} else {
+					break;
+				}
 			}
 
 			if (indexOfValues == -1) {

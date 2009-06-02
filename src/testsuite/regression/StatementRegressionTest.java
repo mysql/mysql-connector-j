@@ -6058,5 +6058,27 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	/*
+	 * Bug #40439 - Error rewriting batched statement if table name ends with "values".
+	 */
+	public void testBug40439() throws Exception {
+		Connection conn2 = null;
+		try {
+			createTable("testBug40439VALUES", "(x int)");
+			conn2 = getConnectionWithProps("rewriteBatchedStatements=true");
+			PreparedStatement ps = conn2.prepareStatement("insert into testBug40439VALUES (x) values (?)");
+			ps.setInt(1, 1);
+			ps.addBatch();
+			ps.setInt(1, 2);
+			ps.addBatch();
+			ps.executeBatch();
+		} finally {
+			if(conn2 != null)
+				try { conn2.close(); } catch(SQLException ex) {}
+			closeMemberJDBCResources();
+		}
+	}
+
 }
 
