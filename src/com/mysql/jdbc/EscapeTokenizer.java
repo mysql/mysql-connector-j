@@ -104,7 +104,7 @@ public class EscapeTokenizer {
 				this.sawVariableUse = true;
 			}
 
-			if (c == '\'' || c == '"') {
+			if ((c == '\'' || c == '"') && !inComment) {
 				if (this.inQuotes && c == quoteChar) {
 					if (this.pos + 1 < this.sourceLength) {
 						if (this.source.charAt(this.pos + 1) == quoteChar) {

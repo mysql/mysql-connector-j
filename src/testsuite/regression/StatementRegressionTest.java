@@ -6045,5 +6045,19 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+
+	
+	/**
+	 * Bug #41566 - Quotes within comments not correctly ignored by escape parser
+	 */
+	public void testBug41566() throws Exception {
+		try {
+			rs = stmt.executeQuery("-- this should't change the literal\n select '{1}'");
+			rs.next();
+			assertEquals("{1}", rs.getString(1));
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }
 
