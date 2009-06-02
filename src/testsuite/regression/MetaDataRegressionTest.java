@@ -2084,8 +2084,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	
 	public void testBug20491() throws Exception {
 		try {
-			String[] fields = { "field1_ae_�", "field2_ue_�", "field3_oe_�",
-			"field4_sz_�" };
+			String[] fields = { "field1_ae_\u00e4", "field2_ue_\u00fc", "field3_oe_\u00f6",
+			"field4_sz_\u00df" };
 			
 			createTable("tst",
 					"(`" + fields[0] + "` int(10) unsigned NOT NULL default '0',"
