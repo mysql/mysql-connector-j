@@ -602,8 +602,11 @@ public class BufferRow extends ResultSetRow {
 			return false;
 		}
 
+		int offset = this.rowFromServer.getPosition();
+		byte[] buffer = this.rowFromServer.getByteBuffer();
+		
 		for (int i = 0; i < (int) length; i++) {
-			char c = (char) this.rowFromServer.readByte();
+			char c = (char) buffer[offset + i];
 
 			if ((c == 'e') || (c == 'E')) {
 				return true;

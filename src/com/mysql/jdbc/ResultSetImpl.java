@@ -2731,7 +2731,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							&& (val.indexOf(".") == -1)) {
 						int intVal = Integer.parseInt(val);
 						
-						checkForIntegerTruncation(columnIndex, null, val, intVal);
+						checkForIntegerTruncation(columnIndexMinusOne, null, intVal);
 						
 						return intVal;
 					}
@@ -2739,7 +2739,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					// Convert floating point
 					int intVal =  parseIntAsDouble(columnIndex, val);
 					
-					checkForIntegerTruncation(columnIndex, null, val, intVal);
+					checkForIntegerTruncation(columnIndex, null, intVal);
 					
 					return intVal;
 				}
@@ -2920,7 +2920,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					} catch (NumberFormatException nfe) {
 						try {
 							// To do: Warn of over/underflow???
-							return parseLongAsDouble(columnIndex, this.thisRow
+							return parseLongAsDouble(columnIndexMinusOne, this.thisRow
 									.getString(columnIndexMinusOne,
 											this.fields[columnIndexMinusOne]
 													.getCharacterSet(),
@@ -2958,18 +2958,18 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					}
 
 					if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1)) {
-						return parseLongWithOverflowCheck(columnIndex, null,
+						return parseLongWithOverflowCheck(columnIndexMinusOne, null,
 								val, overflowCheck);
 					}
 
 					// Convert floating point
-					return parseLongAsDouble(columnIndex, val);
+					return parseLongAsDouble(columnIndexMinusOne, val);
 				}
 
 				return 0; // for NULL
 			} catch (NumberFormatException nfe) {
 				try {
-					return parseLongAsDouble(columnIndex, val);
+					return parseLongAsDouble(columnIndexMinusOne, val);
 				} catch (NumberFormatException newNfe) {
 					// ; // ignore, it's not a number
 				}
@@ -3000,7 +3000,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return getLong(findColumn(columnName));
 	}
 
-	private final long getLongFromString(String val, int columnIndex)
+	private final long getLongFromString(String val, int columnIndexZeroBased)
 			throws SQLException {
 		try {
 			if ((val != null)) {
@@ -3010,18 +3010,18 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				}
 
 				if ((val.indexOf("e") == -1) && (val.indexOf("E") == -1)) {
-					return parseLongWithOverflowCheck(columnIndex, null, val, true);
+					return parseLongWithOverflowCheck(columnIndexZeroBased, null, val, true);
 				}
 
 				// Convert floating point
-				return parseLongAsDouble(columnIndex, val);
+				return parseLongAsDouble(columnIndexZeroBased, val);
 			}
 
 			return 0; // for NULL
 		} catch (NumberFormatException nfe) {
 			try {
 				// To do: Warn of over/underflow???
-				return parseLongAsDouble(columnIndex, val);
+				return parseLongAsDouble(columnIndexZeroBased, val);
 			} catch (NumberFormatException newNfe) {
 				; // ignore, it's not a number
 			}
@@ -3031,7 +3031,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							.getString("ResultSet.Invalid_value_for_getLong()_-____211")
 							+ val //$NON-NLS-1$
 							+ Messages.getString("ResultSet.___in_column__212")
-							+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+							+ (columnIndexZeroBased + 1), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 	}
 
@@ -4314,7 +4314,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						columnIndex + 1, Types.BIGINT);
 			}
 			
-			return getLongFromString(asBigInt.toString(), columnIndex + 1);
+			return getLongFromString(asBigInt.toString(), columnIndex);
 
 		case MysqlDefs.FIELD_TYPE_DOUBLE:
 			double valueAsDouble = getNativeDouble(columnIndex + 1);
@@ -7137,19 +7137,25 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	private int getIntWithOverflowCheck(int columnIndex) throws SQLException {
 		int intValue = this.thisRow.getInt(columnIndex);
 
-		checkForIntegerTruncation(columnIndex + 1 /* only reported in errors */, 
-				null, this.thisRow.getString(
-				columnIndex, this.fields[columnIndex].getCharacterSet(),
-				this.connection), intValue);
+		checkForIntegerTruncation(columnIndex, 
+				null, intValue);
 
 		return intValue;
 	}
 	
 	private void checkForIntegerTruncation(int columnIndex,
-			byte[] valueAsBytes, String valueAsString, int intValue)
+			byte[] valueAsBytes, int intValue)
 			throws SQLException {
 		if (this.jdbcCompliantTruncationForReads) {
 			if (intValue == Integer.MIN_VALUE || intValue == Integer.MAX_VALUE) {
+				String valueAsString = null;
+				
+				if (valueAsBytes == null) {
+					valueAsString = this.thisRow.getString(
+							columnIndex, this.fields[columnIndex].getCharacterSet(),
+							this.connection);
+				}
+				
 				long valueAsLong = Long
 						.parseLong(valueAsString == null ? new String(
 								valueAsBytes) : valueAsString);
@@ -7157,14 +7163,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				if (valueAsLong < Integer.MIN_VALUE
 						|| valueAsLong > Integer.MAX_VALUE) {
 					throwRangeException(valueAsString == null ? new String(
-							valueAsBytes) : valueAsString, columnIndex,
+							valueAsBytes) : valueAsString, columnIndex + 1,
 							Types.INTEGER);
 				}
 			}
 		}
 	}
 
-	private long parseLongAsDouble(int columnIndex, String val)
+	private long parseLongAsDouble(int columnIndexZeroBased, String val)
 			throws NumberFormatException, SQLException {
 		if (val == null) {
 			return 0;
@@ -7175,27 +7181,24 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (this.jdbcCompliantTruncationForReads) {
 			if (valueAsDouble < Long.MIN_VALUE
 					|| valueAsDouble > Long.MAX_VALUE) {
-				throwRangeException(val, columnIndex, Types.BIGINT);
+				throwRangeException(val, columnIndexZeroBased + 1, Types.BIGINT);
 			}
 		}
 
 		return (long) valueAsDouble;
 	}
 
-	private long getLongWithOverflowCheck(int columnIndex, boolean doOverflowCheck) throws SQLException {
-		long longValue = this.thisRow.getLong(columnIndex);
+	private long getLongWithOverflowCheck(int columnIndexZeroBased, boolean doOverflowCheck) throws SQLException {
+		long longValue = this.thisRow.getLong(columnIndexZeroBased);
 
 		if (doOverflowCheck) {
-			checkForLongTruncation(columnIndex + 1 /* only reported in errors */, 
-					null, this.thisRow.getString(
-					columnIndex, this.fields[columnIndex].getCharacterSet(),
-					this.connection), longValue);
+			checkForLongTruncation(columnIndexZeroBased, null, longValue);
 		}
 
 		return longValue;
 	}
 	
-	private long parseLongWithOverflowCheck(int columnIndex,
+	private long parseLongWithOverflowCheck(int columnIndexZeroBased,
 			byte[] valueAsBytes, String valueAsString, boolean doCheck)
 			throws NumberFormatException, SQLException {
 
@@ -7222,17 +7225,23 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 
 		if (doCheck && this.jdbcCompliantTruncationForReads) {
-			checkForLongTruncation(columnIndex, valueAsBytes, valueAsString,
-					longValue);
+			checkForLongTruncation(columnIndexZeroBased, valueAsBytes, longValue);
 		}
 
 		return longValue;
 	}
 
-	private void checkForLongTruncation(int columnIndex, byte[] valueAsBytes,
-			String valueAsString, long longValue) throws SQLException {
+	private void checkForLongTruncation(int columnIndexZeroBased, byte[] valueAsBytes, long longValue) throws SQLException {
 		if (longValue == Long.MIN_VALUE
 				|| longValue == Long.MAX_VALUE) {
+			String valueAsString = null;
+			
+			if (valueAsBytes == null) {
+				valueAsString = this.thisRow.getString(
+						columnIndexZeroBased, this.fields[columnIndexZeroBased].getCharacterSet(),
+						this.connection);
+			}
+			
 			double valueAsDouble = Double
 					.parseDouble(valueAsString == null ? new String(
 							valueAsBytes) : valueAsString);
@@ -7240,7 +7249,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			if (valueAsDouble < Long.MIN_VALUE
 					|| valueAsDouble > Long.MAX_VALUE) {
 				throwRangeException(valueAsString == null ? new String(
-						valueAsBytes) : valueAsString, columnIndex,
+						valueAsBytes) : valueAsString, columnIndexZeroBased + 1,
 						Types.BIGINT);
 			}
 		}

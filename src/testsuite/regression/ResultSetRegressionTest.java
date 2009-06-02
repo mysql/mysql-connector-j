@@ -4808,4 +4808,71 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}
 
 	}
+	
+	public void testRanges() throws Exception {
+		createTable("testRanges", "(int_field INT, long_field BIGINT, double_field DOUBLE, string_field VARCHAR(32))");
+		
+		this.pstmt = this.conn.prepareStatement("INSERT INTO testRanges VALUES (?,?,?, ?)");
+		this.pstmt.setInt(1, Integer.MIN_VALUE);
+		this.pstmt.setLong(2, Long.MIN_VALUE);
+		this.pstmt.setDouble(3, (double)Long.MAX_VALUE + 1D);
+		this.pstmt.setString(4, "1E4");
+		
+		this.pstmt.executeUpdate();
+		
+		checkRangeMatrix(this.conn);
+		checkRangeMatrix(getConnectionWithProps("useFastIntParsing=false"));
+	}
+	
+	private void checkRangeMatrix(Connection c) throws Exception {
+		this.rs = c.createStatement().executeQuery("SELECT int_field, long_field, double_field, string_field FROM testRanges");
+		this.rs.next();
+		checkRanges();
+		this.rs.close();
+		
+		this.pstmt = ((com.mysql.jdbc.Connection)c).serverPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
+		this.rs = this.pstmt.executeQuery();
+		this.rs.next();
+		checkRanges();
+		this.rs.close();
+		
+		this.pstmt.setFetchSize(Integer.MIN_VALUE);
+		this.rs = this.pstmt.executeQuery();
+		this.rs.next();
+		checkRanges();
+		this.rs.close();
+		
+		this.pstmt = ((com.mysql.jdbc.Connection)c).clientPrepareStatement("SELECT int_field, long_field, double_field, string_field FROM testRanges");
+		this.rs = this.pstmt.executeQuery();
+		this.rs.next();
+		checkRanges();
+		this.rs.close();
+		
+		this.pstmt.setFetchSize(Integer.MIN_VALUE);
+		this.rs = this.pstmt.executeQuery();
+		this.rs.next();
+		checkRanges();
+		this.rs.close();
+	}
+
+	private void checkRanges() throws SQLException {
+		assertEquals(Integer.MIN_VALUE, this.rs.getInt(1));
+		
+		try {
+			this.rs.getInt(2);
+		} catch (SQLException sqlEx) {
+			assertTrue(sqlEx.getMessage().indexOf(" in column '2'") != -1);
+		}
+		
+		assertEquals(Long.MIN_VALUE, this.rs.getLong(2));
+		
+		try {
+			this.rs.getLong(3);
+		} catch (SQLException sqlEx) {
+			assertTrue(sqlEx.getMessage().indexOf(" in column '3'") != -1);
+		}
+		
+		assertEquals(10000, this.rs.getInt(4));
+		assertEquals(10000, this.rs.getLong(4));
+	}
 }
