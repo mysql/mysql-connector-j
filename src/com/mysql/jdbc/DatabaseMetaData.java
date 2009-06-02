@@ -864,7 +864,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		row[5] = s2b(Short.toString(typeDesc.dataType)); // DATA_TYPE
 		row[6] = s2b(typeDesc.typeName); // TYPE_NAME
 		row[7] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString()); // PRECISION
-		row[8] = s2b(Integer.toString(typeDesc.bufferLength)); // LENGTH
+		row[8] = row[7]; // LENGTH
 		row[9] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString()); // SCALE
 		row[10] = s2b(Integer.toString(typeDesc.numPrecRadix)); // RADIX
 		// Map 'column****' to 'procedure****'

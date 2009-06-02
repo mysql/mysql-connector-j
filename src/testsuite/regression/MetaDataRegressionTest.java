@@ -2507,4 +2507,23 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	/**
+	 * Bug #41269 - DatabaseMetadata.getProcedureColumns() returns wrong value for column length
+	 */
+	public void testBug41269() throws Exception {
+		createProcedure("bug41269",
+				"(in param1 int, out result varchar(197)) BEGIN select 1, ''; END");
+		try {
+			ResultSet procMD = this.conn.getMetaData()
+							.getProcedureColumns(null, null, "bug41269", "%");
+			assertTrue(procMD.next());
+			assertEquals("Int param length", 10, procMD.getInt(9));
+			assertTrue(procMD.next());
+			assertEquals("String param length", 197, procMD.getInt(9));
+			assertFalse(procMD.next());
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }

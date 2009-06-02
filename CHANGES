@@ -85,6 +85,9 @@ nn-nn-08 - Version 5.1.8
     - Fixed Bug #41566 - Quotes within comments not correctly ignored by
       statement parser
 
+    - Fixed Bug #41269 - DatabaseMetadata.getProcedureColumns() returns
+      wrong value for column length
+
 10-22-08 - Version 5.1.7
 	- Fixed BUG#33861 - Added global blacklist for LoadBalancingConnectionProxy and
 	  implemented in RandomBalanceStrategy and BestResponseTimeBalanceStrategy.
