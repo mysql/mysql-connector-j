@@ -4647,14 +4647,14 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testBug34913() throws Exception {
 		try {
-			Timestamp ts = new Timestamp(System.currentTimeMillis());
+			Timestamp ts = new Timestamp(new Date(109, 5, 1).getTime());
 			
 			this.pstmt = ((com.mysql.jdbc.Connection) this.conn).serverPrepareStatement("SELECT 'abcdefghij', ?");
 			this.pstmt.setTimestamp(1, ts);
 			this.rs = this.pstmt.executeQuery();
 			this.rs.next();
-			assertTrue(this.rs.getTimestamp(2).getMonth() != 5);
-			assertTrue(this.rs.getTimestamp(2).getDate() != 21);
+			assertTrue(this.rs.getTimestamp(2).getMonth() == 5);
+			assertTrue(this.rs.getTimestamp(2).getDate() == 1);
 		} finally {
 			closeMemberJDBCResources();
 		}
