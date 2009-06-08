@@ -1412,7 +1412,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								}
 							}
 						}
-
+					} catch (SQLException sqlEx) {
+						if (!SQLError.SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND.equals(sqlEx.getSQLState())) {
+							throw sqlEx;
+						}
 					} finally {
 						if (results != null) {
 							try {

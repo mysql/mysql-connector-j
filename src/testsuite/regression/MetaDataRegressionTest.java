@@ -2285,7 +2285,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		DatabaseMetaData md = mdConn.getMetaData();
 		
 		// Bug#44862 - getBestRowIdentifier does not return resultset as per JDBC API specifications
-		this.rs = md.getBestRowIdentifier(this.conn.getCatalog(), null, "foo", DatabaseMetaData.bestRowSession, false);
+		this.rs = md.getBestRowIdentifier(this.conn.getCatalog(), null, "returnTypesTest", DatabaseMetaData.bestRowSession, false);
 		
 		int[] types = new int[] { 
 				Types.SMALLINT, // 1.  SCOPE short => actual scope of result
@@ -2301,7 +2301,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		checkTypes(this.rs, types);
 		
 		// Bug#44683 - getVersionColumns does not return resultset as per JDBC API specifications
-		this.rs = md.getVersionColumns(this.conn.getCatalog(), null, "foo");
+		this.rs = md.getVersionColumns(this.conn.getCatalog(), null, "returnTypesTest");
 		
 		types = new int[] {
 				Types.SMALLINT, // SCOPE short => is not used
@@ -2317,7 +2317,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		checkTypes(this.rs, types);
 		
 		// Bug#44865 - getColumns does not return resultset as per JDBC API specifications
-		this.rs = md.getColumns(this.conn.getCatalog(), null, "foo", "foo");
+		this.rs = md.getColumns(this.conn.getCatalog(), null, "returnTypesTest", "foo");
 		
 		types = new int[] {
 				Types.CHAR,     //  1. TABLE_CAT String => table catalog (may be null)
@@ -2374,7 +2374,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		checkTypes(this.rs, types);
 		
 		// Bug#44869 - getIndexInfo does not return resultset as per JDBC API specifications
-		this.rs = md.getIndexInfo(this.conn.getCatalog(), null, "foo", false, false);
+		this.rs = md.getIndexInfo(this.conn.getCatalog(), null, "returnTypesTest", false, false);
 
 		types = new int[] {
 			Types.CHAR,     //  1. TABLE_CAT String => table catalog (may be null)
@@ -2395,7 +2395,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		checkTypes(this.rs, types);
 
 		// Bug#44867 - getImportedKeys/exportedKeys/crossReference doesn't have correct type for DEFERRABILITY
-		this.rs = md.getImportedKeys(this.conn.getCatalog(), null, "foo");
+		this.rs = md.getImportedKeys(this.conn.getCatalog(), null, "returnTypesTest");
 		
 		types = new int[] {
 			Types.CHAR,     // PKTABLE_CAT String => primary key table catalog being imported (may be null)
@@ -2416,7 +2416,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		
 		checkTypes(this.rs, types);
 		
-		this.rs = md.getExportedKeys(this.conn.getCatalog(), null, "foo");
+		this.rs = md.getExportedKeys(this.conn.getCatalog(), null, "returnTypesTest");
 		
 		types = new int[] {
 			Types.CHAR,     // PKTABLE_CAT String => primary key table catalog being imported (may be null)
@@ -2437,7 +2437,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		
 		checkTypes(this.rs, types);
 		
-		this.rs = md.getCrossReference(this.conn.getCatalog(), null, "foo", this.conn.getCatalog(), null, "bar");
+		this.rs = md.getCrossReference(this.conn.getCatalog(), null, "returnTypesTest", this.conn.getCatalog(), null, "bar");
 		
 		types = new int[] {
 			Types.CHAR,     // PKTABLE_CAT String => primary key table catalog being imported (may be null)
