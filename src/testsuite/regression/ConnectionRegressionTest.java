@@ -45,15 +45,19 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
+import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationDriver;
+import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.log.StandardLogger;
 
@@ -2608,4 +2612,48 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 		
 	}
+	
+	/**
+	 * Tests fix for BUG#44587, provide last packet sent/received
+	 * timing in all connection failure errors.
+	 */
+	public void testBug44587() throws Exception {
+		Exception e = null;
+		String msg = SQLError.createLinkFailureMessageBasedOnHeuristics(
+				(ConnectionImpl) this.conn, 
+				System.currentTimeMillis() - 1000,
+				System.currentTimeMillis() - 2000,
+				e, 
+				false);
+		assertTrue(containsMessage(msg,"CommunicationsException.ServerPacketTimingInfo"));
+	}
+	
+	/**
+	 * Tests fix for BUG#45419, ensure that time is not converted to seconds
+	 * before being reported as milliseconds.
+	 */
+	public void testBug45419() throws Exception {
+		Exception e = null;
+		String msg = SQLError.createLinkFailureMessageBasedOnHeuristics(
+				(ConnectionImpl) this.conn, 
+				System.currentTimeMillis() - 1000,
+				System.currentTimeMillis() - 2000,
+				e, 
+				false);
+		Matcher m = Pattern.compile("([\\d\\,]+)").matcher(msg);
+		assertTrue(m.find());
+		assertTrue(Long.parseLong(m.group(0).replace(",", "")) >= 2000);
+		assertTrue(Long.parseLong(m.group(1).replace(",", "")) >= 1000);
+	}
+	
+	public static boolean containsMessage(String msg, String key){
+		String [] expectedFragments = Messages.getString(key).split("\\{\\d\\}");
+		for(int i = 0; i < expectedFragments.length; i++){
+			if(!msg.contains(expectedFragments[i])){
+				return false;
+			}
+		}
+		return true;
+	}
+
 }

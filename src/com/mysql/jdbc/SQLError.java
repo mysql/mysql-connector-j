@@ -1142,7 +1142,8 @@ public class SQLError {
 		}
 
 		long timeSinceLastPacket = (System.currentTimeMillis() - lastPacketSentTimeMs) / 1000;
-		long timeSinceLastPacketReceived = (System.currentTimeMillis() - lastPacketReceivedTimeMs) / 1000;
+		long timeSinceLastPacketMs = (System.currentTimeMillis() - lastPacketSentTimeMs);
+		long timeSinceLastPacketReceivedMs = (System.currentTimeMillis() - lastPacketReceivedTimeMs);
 		
 		int dueToTimeout = DUE_TO_TIMEOUT_FALSE;
 
@@ -1189,16 +1190,12 @@ public class SQLError {
 					|| dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
 
 				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.9_1")); //$NON-NLS-1$
-				exceptionMessageBuf.append(timeSinceLastPacketReceived);
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.9_2")); //$NON-NLS-1$
-				
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.9")); //$NON-NLS-1$
-				exceptionMessageBuf.append(timeSinceLastPacket);
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.10")); //$NON-NLS-1$
+						.getString("CommunicationsException.ServerPacketTimingInfo",  //$NON-NLS-1$
+								new Object[] {
+									new Long(timeSinceLastPacketReceivedMs),
+									new Long(timeSinceLastPacketMs)
+								}
+						));
 
 				if (timeoutMessageBuf != null) {
 					exceptionMessageBuf.append(timeoutMessageBuf);
@@ -1222,21 +1219,11 @@ public class SQLError {
 							&& !Util.interfaceExists(conn
 									.getLocalSocketAddress())) {
 						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.19a")); //$NON-NLS-1$
+								.getString("CommunicationsException.LocalSocketAddressNotAvailable")); //$NON-NLS-1$
 					} else {
 						// too many client connections???
 						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.14")); //$NON-NLS-1$
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.15")); //$NON-NLS-1$
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.16")); //$NON-NLS-1$
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.17")); //$NON-NLS-1$
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.18")); //$NON-NLS-1$
-						exceptionMessageBuf.append(Messages
-								.getString("CommunicationsException.19")); //$NON-NLS-1$
+								.getString("CommunicationsException.TooManyClientConnections")); //$NON-NLS-1$
 					}
 				}
 			}
@@ -1257,11 +1244,14 @@ public class SQLError {
 
 			if (conn != null && conn.getMaintainTimeStats()
 					&& !conn.getParanoid()) {
-				exceptionMessageBuf
-						.append("\n\nLast packet sent to the server was ");
-				exceptionMessageBuf.append(System.currentTimeMillis()
-						- lastPacketSentTimeMs);
-				exceptionMessageBuf.append(" ms ago.");
+				exceptionMessageBuf.append("\n\n"); //$NON-NLS-1$
+				Object[] timingInfo = {
+						Long.valueOf(timeSinceLastPacketReceivedMs),
+						Long.valueOf(timeSinceLastPacketMs)
+				};
+				exceptionMessageBuf.append(Messages
+						.getString("CommunicationsException.ServerPacketTimingInfo", //$NON-NLS-1$
+								timingInfo));
 			}
 		}
 		
