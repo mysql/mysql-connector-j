@@ -1704,6 +1704,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.passwordCharacterEncoding"),
 			"5.1.7", SECURITY_CATEGORY, Integer.MIN_VALUE);
 	
+	private IntegerConnectionProperty maxAllowedPacket = new IntegerConnectionProperty("maxAllowedPacket",
+			-1, Messages.getString("ConnectionProperties.maxAllowedPacket"), "5.1.8", NETWORK_CATEGORY,
+			Integer.MIN_VALUE);
+	
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
 			Properties info, int slotsToReserve) throws SQLException {
 		initializeProperties(info);
@@ -4473,6 +4477,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public String getExceptionInterceptors() {
 		return this.exceptionInterceptors.getValueAsString();
+	}
+	
+	public void setMaxAllowedPacket(int  max) {
+		this.maxAllowedPacket.setValue(max);
+	}
+	
+	public int getMaxAllowedPacket() {
+		return this.maxAllowedPacket.getValueAsInt();
 	}
 
 }

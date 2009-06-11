@@ -3201,7 +3201,7 @@ class MysqlIO {
     private final void send(Buffer packet, int packetLen)
         throws SQLException {
         try {
-            if (packetLen > this.maxAllowedPacket) {
+            if (this.maxAllowedPacket > 0 && packetLen > this.maxAllowedPacket) {
                 throw new PacketTooBigException(packetLen, this.maxAllowedPacket);
             }
 

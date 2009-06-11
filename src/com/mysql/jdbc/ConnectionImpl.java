@@ -496,12 +496,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	/** When did the master fail? */
 	private long masterFailTimeMillis = 0L;
 
-	/**
-	 * The largest packet we can send (changed once we know what the server
-	 * supports, we get this at connection init).
-	 */
-	private int maxAllowedPacket = 65536;
-
 	private long maximumNumberTablesAccessed = 0;
 
 	/** Has the max-rows setting been changed from the default? */
@@ -2995,15 +2989,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return this.log;
 	}
 
-	/**
-	 * Returns the maximum packet size the MySQL server will accept
-	 * 
-	 * @return DOCUMENT ME!
-	 */
-	int getMaxAllowedPacket() {
-		return this.maxAllowedPacket;
-	}
-
 	protected int getMaxBytesPerChar(String javaCharsetName)
 	throws SQLException {
 		// TODO: Check if we can actually run this query at this point in time
@@ -3476,12 +3461,18 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			configureTimezone();
 
 			if (this.serverVariables.containsKey("max_allowed_packet")) {
-				this.maxAllowedPacket = getServerVariableAsInt("max_allowed_packet", 1024 * 1024);
+				int serverMaxAllowedPacket = getServerVariableAsInt("max_allowed_packet", -1);
+				// use server value if maxAllowedPacket hasn't been given, or max_allowed_packet is smaller
+				if (serverMaxAllowedPacket != -1 && (serverMaxAllowedPacket < getMaxAllowedPacket() ||
+						getMaxAllowedPacket() <= 0))
+					setMaxAllowedPacket(serverMaxAllowedPacket);
+				else if (serverMaxAllowedPacket == -1 && getMaxAllowedPacket() == -1)
+					setMaxAllowedPacket(65535);
 				
 				int preferredBlobSendChunkSize = getBlobSendChunkSize();
 				
 				int allowedBlobSendChunkSize = Math.min(preferredBlobSendChunkSize, 
-						this.maxAllowedPacket) - 
+						getMaxAllowedPacket()) - 
 						ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE 
 						- 11 /* LONG_DATA and MySQLIO packet header size */;
 				

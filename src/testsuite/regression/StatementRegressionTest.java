@@ -3708,7 +3708,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		createTable("testBug25073", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
 		props.clear();
 		props.setProperty("rewriteBatchedStatements", "true");
-		props.setProperty("sessionVariables", "max_allowed_packet=1024");
+		props.setProperty("maxAllowedPacket", "1024");
 		props.setProperty("dumpQueriesOnException", "true");
 		props.setProperty("maxQuerySizeToLog", String.valueOf(1024 * 1024 * 2));
 		multiConn = getConnectionWithProps(props);
@@ -3753,7 +3753,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		createTable("testBug25073", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
 		props.setProperty("useServerPrepStmts", "false");
 		props.setProperty("rewriteBatchedStatements", "true");
-		props.setProperty("sessionVariables", "max_allowed_packet=1024");
+		props.setProperty("maxAllowedPacket", "1024");
 		props.setProperty("dumpQueriesOnException", "true");
 		props.setProperty("maxQuerySizeToLog", String.valueOf(1024 * 1024 * 2));
 		multiConn = getConnectionWithProps(props);
