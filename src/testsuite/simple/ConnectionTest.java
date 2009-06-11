@@ -1161,19 +1161,19 @@ public class ConnectionTest extends BaseTestCase {
 	}
 
 	public void testSessionVariables() throws Exception {
-		String getInitialMaxAllowedPacket = getMysqlVariable("max_allowed_packet");
+		String getInitialWaitTimeout = getMysqlVariable("wait_timeout");
 
-		int newMaxAllowedPacket = Integer.parseInt(getInitialMaxAllowedPacket) + 1024;
+		int newWaitTimeout = Integer.parseInt(getInitialWaitTimeout) + 10000;
 
 		Properties props = new Properties();
-		props.setProperty("sessionVariables", "max_allowed_packet="
-				+ newMaxAllowedPacket);
+		props.setProperty("sessionVariables", "wait_timeout="
+				+ newWaitTimeout);
 		props.setProperty("profileSQL", "true");
 
 		Connection varConn = getConnectionWithProps(props);
 
-		assertTrue(!getInitialMaxAllowedPacket.equals(getMysqlVariable(varConn,
-				"max_allowed_packet")));
+		assertTrue(!getInitialWaitTimeout.equals(getMysqlVariable(varConn,
+				"wait_timeout")));
 	}
 
 	/**
