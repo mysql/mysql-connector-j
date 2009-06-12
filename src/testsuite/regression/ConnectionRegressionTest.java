@@ -2642,14 +2642,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				false);
 		Matcher m = Pattern.compile("([\\d\\,]+)").matcher(msg);
 		assertTrue(m.find());
-		assertTrue(Long.parseLong(m.group(0).replace(",", "")) >= 2000);
-		assertTrue(Long.parseLong(m.group(1).replace(",", "")) >= 1000);
+		assertTrue(Long.parseLong(m.group(0).replaceAll(",", "")) >= 2000);
+		assertTrue(Long.parseLong(m.group(1).replaceAll(",", "")) >= 1000);
 	}
 	
-	public static boolean containsMessage(String msg, String key){
+	public static boolean containsMessage(String msg, String key) {
 		String [] expectedFragments = Messages.getString(key).split("\\{\\d\\}");
-		for(int i = 0; i < expectedFragments.length; i++){
-			if(!msg.contains(expectedFragments[i])){
+		for(int i = 0; i < expectedFragments.length; i++) {
+			if(msg.indexOf(expectedFragments[i]) < 0) {
 				return false;
 			}
 		}

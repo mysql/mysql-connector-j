@@ -1246,8 +1246,8 @@ public class SQLError {
 					&& !conn.getParanoid()) {
 				exceptionMessageBuf.append("\n\n"); //$NON-NLS-1$
 				Object[] timingInfo = {
-						Long.valueOf(timeSinceLastPacketReceivedMs),
-						Long.valueOf(timeSinceLastPacketMs)
+						new Long(timeSinceLastPacketReceivedMs),
+						new Long(timeSinceLastPacketMs)
 				};
 				exceptionMessageBuf.append(Messages
 						.getString("CommunicationsException.ServerPacketTimingInfo", //$NON-NLS-1$
