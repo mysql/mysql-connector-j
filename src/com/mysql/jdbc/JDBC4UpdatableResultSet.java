@@ -226,9 +226,9 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	    	((com.mysql.jdbc.JDBC4PreparedStatement)this.inserter).setNCharacterStream(columnIndex, x, length);
 	
 	        if (x == null) {
-	            this.thisRow.setColumnValue(columnIndex, null);
+	            this.thisRow.setColumnValue(columnIndex - 1, null);
 	        } else {
-	        	 this.thisRow.setColumnValue(columnIndex, STREAM_DATA_MARKER);
+	        	this.thisRow.setColumnValue(columnIndex - 1, STREAM_DATA_MARKER);
 	        }
 	    }
 	}
@@ -313,9 +313,9 @@ public class JDBC4UpdatableResultSet extends UpdatableResultSet {
 	    	((com.mysql.jdbc.JDBC4PreparedStatement)this.inserter).setNString(columnIndex, x);
 	
 	        if (x == null) {
-	        	 this.thisRow.setColumnValue(columnIndex, null);
+	        	 this.thisRow.setColumnValue(columnIndex - 1, null);
 	        } else {
-	        	 this.thisRow.setColumnValue(columnIndex, StringUtils.getBytes(x,
+	        	 this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x,
 	                        this.charConverter, fieldEncoding,
 	                        this.connection.getServerCharacterEncoding(),
 	                        this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
