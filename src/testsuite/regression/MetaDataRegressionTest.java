@@ -2526,4 +2526,24 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public void testBug31187() throws Exception {
+		createTable("testBug31187", "(field1 int)");
+		
+		Connection nullCatConn = getConnectionWithProps("nullCatalogMeansCurrent=false");
+		DatabaseMetaData dbmd = nullCatConn.getMetaData();
+		ResultSet dbTblCols = dbmd.getColumns(null, null, "testBug31187", "%");
+		
+		boolean found = false;
+		
+		while (dbTblCols.next()) {
+			String catalog = dbTblCols.getString("TABLE_CAT");
+			String table = dbTblCols.getString("TABLE_NAME");
+			if (catalog.equals(nullCatConn.getCatalog()) && "testBug31187".equals(table)) {
+				found = true;
+			}
+		}
+		
+		assertTrue(found);
+	}
 }
