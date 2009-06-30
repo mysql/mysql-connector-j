@@ -32,6 +32,7 @@ import java.lang.reflect.Method;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Properties;
@@ -488,7 +489,32 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				assertEquals(Types.INTEGER, cStmt.getParameterMetaData()
 						.getParameterType(1));
 			}
-
+			java.sql.DatabaseMetaData dbmd = this.conn.getMetaData();
+			
+			this.rs = ((com.mysql.jdbc.DatabaseMetaData)dbmd).getFunctionColumns(this.conn.getCatalog(), null, "testBug10310", "%");
+			ResultSetMetaData rsmd = this.rs.getMetaData();
+			
+			assertEquals(17, rsmd.getColumnCount());
+			assertEquals("FUNCTION_CAT", rsmd.getColumnName(1));
+			assertEquals("FUNCTION_SCHEM", rsmd.getColumnName(2));
+			assertEquals("FUNCTION_NAME", rsmd.getColumnName(3));
+			assertEquals("COLUMN_NAME", rsmd.getColumnName(4));
+			assertEquals("COLUMN_TYPE", rsmd.getColumnName(5));
+			assertEquals("DATA_TYPE", rsmd.getColumnName(6));
+			assertEquals("TYPE_NAME", rsmd.getColumnName(7));
+			assertEquals("PRECISION", rsmd.getColumnName(8));
+			assertEquals("LENGTH", rsmd.getColumnName(9));
+			assertEquals("SCALE", rsmd.getColumnName(10));
+			assertEquals("RADIX", rsmd.getColumnName(11));
+			assertEquals("NULLABLE", rsmd.getColumnName(12));
+			assertEquals("REMARKS", rsmd.getColumnName(13));
+			assertEquals("CHAR_OCTET_LENGTH", rsmd.getColumnName(14));
+			assertEquals("ORDINAL_POSITION", rsmd.getColumnName(15));
+			assertEquals("IS_NULLABLE", rsmd.getColumnName(16));
+			assertEquals("SPECIFIC_NAME", rsmd.getColumnName(17));
+		     
+			this.rs.close();
+			
 			assertFalse(cStmt.execute());
 			assertEquals(2f, cStmt.getInt(1), .001);
 			assertEquals("java.lang.Integer", cStmt.getObject(1).getClass()
@@ -517,7 +543,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
 			// Check metadata while we're at it
 
-			java.sql.DatabaseMetaData dbmd = this.conn.getMetaData();
+			
 
 			this.rs = dbmd.getProcedures(this.conn.getCatalog(), null,
 					"testBug10310");
@@ -564,6 +590,8 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				assertEquals(Types.INTEGER, cStmt.getParameterMetaData()
 						.getParameterType(2));
 			}
+			
+			
 		} finally {
 			if (this.rs != null) {
 				this.rs.close();

@@ -36,13 +36,26 @@ import java.sql.Types;
 public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 	private boolean hasReferentialConstraintsView;
-
+	private boolean hasParametersView;
+	
 	protected DatabaseMetaDataUsingInfoSchema(ConnectionImpl connToSet,
 			String databaseToSet) throws SQLException {
 		super(connToSet, databaseToSet);
 		
 		this.hasReferentialConstraintsView = 
 			this.conn.versionMeetsMinimum(5, 1, 10);
+		
+		ResultSet rs = null;
+		
+		try {
+			rs = super.getTables("INFORMATION_SCHEMA", null, "PARAMETERS", new String[0]);
+			
+			this.hasParametersView = rs.next();
+		} finally {
+			if (rs != null) {
+				rs.close();
+			}
+		}
 	}
 
 	private ResultSet executeMetadataQuery(PreparedStatement pStmt)
@@ -1000,6 +1013,388 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 					new Field("", "reserved3", Types.CHAR, 0),
 					new Field("", "REMARKS", Types.CHAR, 0),
 					new Field("", "PROCEDURE_TYPE", Types.SMALLINT, 0) });
+
+			return rs;
+		} finally {
+			if (pStmt != null) {
+				pStmt.close();
+			}
+		}
+	}
+
+    /**
+     * Retrieves a description of the given catalog's system or user 
+     * function parameters and return type.
+     *
+     * <P>Only descriptions matching the schema,  function and
+     * parameter name criteria are returned. They are ordered by
+     * <code>FUNCTION_CAT</code>, <code>FUNCTION_SCHEM</code>,
+     * <code>FUNCTION_NAME</code> and 
+     * <code>SPECIFIC_ NAME</code>. Within this, the return value,
+     * if any, is first. Next are the parameter descriptions in call
+     * order. The column descriptions follow in column number order.
+     *
+     * <P>Each row in the <code>ResultSet</code> 
+     * is a parameter description, column description or
+     * return type description with the following fields:
+     *  <OL>
+     *  <LI><B>FUNCTION_CAT</B> String => function catalog (may be <code>null</code>)
+     *	<LI><B>FUNCTION_SCHEM</B> String => function schema (may be <code>null</code>)
+     *	<LI><B>FUNCTION_NAME</B> String => function name.  This is the name 
+     * used to invoke the function
+     *	<LI><B>COLUMN_NAME</B> String => column/parameter name 
+     *	<LI><B>COLUMN_TYPE</B> Short => kind of column/parameter:
+     *      <UL>
+     *      <LI> functionColumnUnknown - nobody knows
+     *      <LI> functionColumnIn - IN parameter
+     *      <LI> functionColumnInOut - INOUT parameter
+     *      <LI> functionColumnOut - OUT parameter
+     *      <LI> functionColumnReturn - function return value
+     *      <LI> functionColumnResult - Indicates that the parameter or column
+     *  is a column in the <code>ResultSet</code>
+     *      </UL>
+     *  <LI><B>DATA_TYPE</B> int => SQL type from java.sql.Types
+     *	<LI><B>TYPE_NAME</B> String => SQL type name, for a UDT type the
+     *  type name is fully qualified
+     *	<LI><B>PRECISION</B> int => precision
+     *	<LI><B>LENGTH</B> int => length in bytes of data
+     *	<LI><B>SCALE</B> short => scale -  null is returned for data types where  
+     * SCALE is not applicable.
+     *	<LI><B>RADIX</B> short => radix
+     *	<LI><B>NULLABLE</B> short => can it contain NULL.
+     *      <UL>
+     *      <LI> functionNoNulls - does not allow NULL values
+     *      <LI> functionNullable - allows NULL values
+     *      <LI> functionNullableUnknown - nullability unknown
+     *      </UL>
+     *	<LI><B>REMARKS</B> String => comment describing column/parameter
+     *	<LI><B>CHAR_OCTET_LENGTH</B> int  => the maximum length of binary 
+     * and character based parameters or columns.  For any other datatype the returned value 
+     * is a NULL
+     *	<LI><B>ORDINAL_POSITION</B> int  => the ordinal position, starting 
+     * from 1, for the input and output parameters. A value of 0
+     * is returned if this row describes the function's return value. 
+     * For result set columns, it is the
+     * ordinal position of the column in the result set starting from 1.  
+     *	<LI><B>IS_NULLABLE</B> String  => ISO rules are used to determine 
+     * the nullability for a parameter or column.
+     *       <UL>
+     *       <LI> YES           --- if the parameter or column can include NULLs
+     *       <LI> NO            --- if the parameter or column  cannot include NULLs
+     *       <LI> empty string  --- if the nullability for the 
+     * parameter  or column is unknown
+     *       </UL>
+     *	<LI><B>SPECIFIC_NAME</B> String  => the name which uniquely identifies 
+     * this function within its schema.  This is a user specified, or DBMS
+     * generated, name that may be different then the <code>FUNCTION_NAME</code> 
+     * for example with overload functions
+     *  </OL>
+     * 
+     * <p>The PRECISION column represents the specified column size for the given 
+     * parameter or column. 
+     * For numeric data, this is the maximum precision.  For character data, this is the length in characters. 
+     * For datetime datatypes, this is the length in characters of the String representation (assuming the 
+     * maximum allowed precision of the fractional seconds component). For binary data, this is the length in bytes.  For the ROWID datatype, 
+     * this is the length in bytes. Null is returned for data types where the
+     * column size is not applicable.
+     * @param catalog a catalog name; must match the catalog name as it
+     *        is stored in the database; "" retrieves those without a catalog;
+     *        <code>null</code> means that the catalog name should not be used to narrow
+     *        the search
+     * @param schemaPattern a schema name pattern; must match the schema name
+     *        as it is stored in the database; "" retrieves those without a schema;
+     *        <code>null</code> means that the schema name should not be used to narrow
+     *        the search
+     * @param functionNamePattern a procedure name pattern; must match the
+     *        function name as it is stored in the database 
+     * @param columnNamePattern a parameter name pattern; must match the 
+     * parameter or column name as it is stored in the database 
+     * @return <code>ResultSet</code> - each row describes a 
+     * user function parameter, column  or return type
+     *
+     * @exception SQLException if a database access error occurs
+     * @see #getSearchStringEscape 
+     * @since 1.6
+     */
+    public ResultSet getFunctionColumns(String catalog,
+				  String schemaPattern,
+				  String functionNamePattern, 
+				  String columnNamePattern) throws SQLException {
+    	if (!this.conn.versionMeetsMinimum(5, 4, 0)) {
+			return super.getFunctionColumns(catalog, schemaPattern, functionNamePattern,
+					columnNamePattern);
+		}
+		
+		if (!this.hasParametersView) {
+			return super.getFunctionColumns(catalog, schemaPattern, functionNamePattern, columnNamePattern);
+		}
+		
+		if ((functionNamePattern == null)
+				|| (functionNamePattern.length() == 0)) {
+			if (this.conn.getNullNamePatternMatchesAll()) {
+				functionNamePattern = "%";
+			} else {
+				throw SQLError.createSQLException(
+						"Procedure name pattern can not be NULL or empty.",
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+		}
+
+		String db = null;
+
+		if (catalog == null) {
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				db = this.database;
+			}
+		}
+    	
+		// FIXME: Use DBMD constants when we leave Java5
+		// FUNCTION_CAT
+		// FUNCTION_SCHEM
+		// FUNCTION_NAME
+		// COLUMN_NAME
+		// COLUMN_TYPE
+		StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS FUNCTION_CAT, "
+				+ "NULL AS `FUNCTION_SCHEM`, "
+				+ "SPECIFIC_NAME AS `FUNCTION_NAME`, "
+				+ "PARAMETER_NAME AS `COLUMN_NAME`, "
+				+ "CASE WHEN PARAMETER_MODE = 'IN' THEN "
+					+ 1 /* functionColumnIn */ + " WHEN PARAMETER_MODE='OUT' THEN " + 3 /* functionColumnOut */ 
+					+ " WHEN PARAMETER_MODE='INOUT' THEN " + 2 /* functionColumnInOut */
+					+ " WHEN ORDINAL_POSITION=0 THEN " + 4 /* functionReturn */ 
+					+ " ELSE " + 0 /* functionColumnUnknown */
+				+ " END AS `COLUMN_TYPE`, ");
+		
+		//DATA_TYPE
+		MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+
+		sqlBuf.append(" AS `DATA_TYPE`, ");
+
+		// TYPE_NAME
+		if (conn.getCapitalizeTypeNames()) {
+			sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END) AS `TYPE_NAME`,");
+		} else {
+			sqlBuf.append("CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END AS `TYPE_NAME`,");
+		}
+
+		// PRECISION</B> int => precision
+		sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
+		// LENGTH</B> int => length in bytes of data
+		sqlBuf
+				.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > " 
+						+ Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ");
+		
+		// SCALE</B> short => scale
+		sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ");
+		// RADIX</B> short => radix
+		sqlBuf.append("10 AS RADIX,");
+		// NULLABLE
+		// REMARKS
+		// CHAR_OCTET_LENGTH *
+		// ORDINAL_POSITION *
+		// IS_NULLABLE *
+		// SPECIFIC_NAME *
+		sqlBuf.append(2 /* functionNullableUnknown */ + " AS `NULLABLE`, "
+			     + " NULL AS `REMARKS`, "
+			    + "CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, "
+			    + " ORDINAL_POSITION, "
+			    + "'' AS `IS_NULLABLE`, "
+			    + "SPECIFIC_NAME "
+				+ "FROM INFORMATION_SCHEMA.PARAMETERS WHERE "
+				+ "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
+				+ "AND ROUTINE_TYPE='FUNCTION' ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
+
+		PreparedStatement pStmt = null;
+
+		try {
+			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+			
+			if (db != null) {
+				pStmt.setString(1, db);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
+			pStmt.setString(2, functionNamePattern);
+			pStmt.setString(3, columnNamePattern);
+
+			ResultSet rs = executeMetadataQuery(pStmt);
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFunctionColumnsFields());
+
+			return rs;
+		} finally {
+			if (pStmt != null) {
+				pStmt.close();
+			}
+		}
+	}
+
+    /**
+     * Retrieves a description of the given catalog's stored procedure parameter
+     * and result columns.
+     *
+     * <P>Only descriptions matching the schema, procedure and
+     * parameter name criteria are returned.  They are ordered by
+     * PROCEDURE_SCHEM and PROCEDURE_NAME. Within this, the return value,
+     * if any, is first. Next are the parameter descriptions in call
+     * order. The column descriptions follow in column number order.
+     *
+     * <P>Each row in the <code>ResultSet</code> is a parameter description or
+     * column description with the following fields:
+     *  <OL>
+     *	<LI><B>PROCEDURE_CAT</B> String => procedure catalog (may be <code>null</code>)
+     *	<LI><B>PROCEDURE_SCHEM</B> String => procedure schema (may be <code>null</code>)
+     *	<LI><B>PROCEDURE_NAME</B> String => procedure name
+     *	<LI><B>COLUMN_NAME</B> String => column/parameter name 
+     *	<LI><B>COLUMN_TYPE</B> Short => kind of column/parameter:
+     *      <UL>
+     *      <LI> procedureColumnUnknown - nobody knows
+     *      <LI> procedureColumnIn - IN parameter
+     *      <LI> procedureColumnInOut - INOUT parameter
+     *      <LI> procedureColumnOut - OUT parameter
+     *      <LI> procedureColumnReturn - procedure return value
+     *      <LI> procedureColumnResult - result column in <code>ResultSet</code>
+     *      </UL>
+     *  <LI><B>DATA_TYPE</B> int => SQL type from java.sql.Types
+     *	<LI><B>TYPE_NAME</B> String => SQL type name, for a UDT type the
+     *  type name is fully qualified
+     *	<LI><B>PRECISION</B> int => precision
+     *	<LI><B>LENGTH</B> int => length in bytes of data
+     *	<LI><B>SCALE</B> short => scale
+     *	<LI><B>RADIX</B> short => radix
+     *	<LI><B>NULLABLE</B> short => can it contain NULL.
+     *      <UL>
+     *      <LI> procedureNoNulls - does not allow NULL values
+     *      <LI> procedureNullable - allows NULL values
+     *      <LI> procedureNullableUnknown - nullability unknown
+     *      </UL>
+     *	<LI><B>REMARKS</B> String => comment describing parameter/column
+     *  </OL>
+     *
+     * <P><B>Note:</B> Some databases may not return the column
+     * descriptions for a procedure. Additional columns beyond
+     * REMARKS can be defined by the database.
+     *
+     * @param catalog a catalog name; must match the catalog name as it
+     *        is stored in the database; "" retrieves those without a catalog;
+     *        <code>null</code> means that the catalog name should not be used to narrow
+     *        the search
+     * @param schemaPattern a schema name pattern; must match the schema name
+     *        as it is stored in the database; "" retrieves those without a schema;
+     *        <code>null</code> means that the schema name should not be used to narrow
+     *        the search
+     * @param procedureNamePattern a procedure name pattern; must match the
+     *        procedure name as it is stored in the database 
+     * @param columnNamePattern a column name pattern; must match the column name
+     *        as it is stored in the database 
+     * @return <code>ResultSet</code> - each row describes a stored procedure parameter or 
+     *      column
+     * @exception SQLException if a database access error occurs
+     * @see #getSearchStringEscape 
+     */
+	public ResultSet getProcedureColumns(String catalog, String schemaPattern,
+			String procedureNamePattern, String columnNamePattern)
+			throws SQLException {
+		if (!this.conn.versionMeetsMinimum(5, 4, 0)) {
+			return super.getProcedureColumns(catalog, schemaPattern, procedureNamePattern,
+					columnNamePattern);
+		}
+		
+		if (!this.hasParametersView) {
+			return super.getProcedureColumns(catalog, schemaPattern, procedureNamePattern, columnNamePattern);
+		}
+		
+		if ((procedureNamePattern == null)
+				|| (procedureNamePattern.length() == 0)) {
+			if (this.conn.getNullNamePatternMatchesAll()) {
+				procedureNamePattern = "%";
+			} else {
+				throw SQLError.createSQLException(
+						"Procedure name pattern can not be NULL or empty.",
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+		}
+
+		String db = null;
+
+		if (catalog == null) {
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				db = this.database;
+			}
+		}
+		
+		// Here's what we get from MySQL ...
+		// SPECIFIC_CATALOG                             NULL 
+		// SPECIFIC_SCHEMA                              db17 
+		// SPECIFIC_NAME                                p 
+		// ORDINAL_POSITION                             1 
+		// PARAMETER_MODE                               OUT 
+		// PARAMETER_NAME                               a 
+		// DATA_TYPE                                    int 
+		// CHARACTER_MAXIMUM_LENGTH                     NULL 
+		// CHARACTER_OCTET_LENGTH                       NULL 
+		// CHARACTER_SET_NAME                           NULL 
+		// COLLATION_NAME                               NULL 
+		// NUMERIC_PRECISION                            10 
+		// NUMERIC_SCALE                                0 
+		// DTD_IDENTIFIER                               int(11)
+
+		StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, "
+				+ "NULL AS `PROCEDURE_SCHEM`, "
+				+ "SPECIFIC_NAME AS `PROCEDURE_NAME`, "
+				+ "PARAMETER_NAME AS `COLUMN_NAME`, "
+				+ "CASE WHEN PARAMETER_MODE = 'IN' THEN "
+					+ procedureColumnIn + " WHEN PARAMETER_MODE='OUT' THEN " + procedureColumnOut 
+					+ " WHEN PARAMETER_MODE='INOUT' THEN " + procedureColumnInOut
+					+ " WHEN ORDINAL_POSITION=0 THEN " + procedureColumnReturn 
+					+ " ELSE " + procedureColumnUnknown
+				+ " END AS `COLUMN_TYPE`, ");
+		
+		//DATA_TYPE
+		MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+
+		sqlBuf.append(" AS `DATA_TYPE`, ");
+
+		// TYPE_NAME
+		if (conn.getCapitalizeTypeNames()) {
+			sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END) AS `TYPE_NAME`,");
+		} else {
+			sqlBuf.append("CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END AS `TYPE_NAME`,");
+		}
+
+		// PRECISION</B> int => precision
+		sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
+		// LENGTH</B> int => length in bytes of data
+		sqlBuf
+				.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > " 
+						+ Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ");
+		
+		// SCALE</B> short => scale
+		sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ");
+		// RADIX</B> short => radix
+		sqlBuf.append("10 AS RADIX,");
+		sqlBuf.append(procedureNullableUnknown + " AS `NULLABLE`, "
+			     + " NULL AS `REMARKS` "
+				+ "FROM INFORMATION_SCHEMA.PARAMETERS WHERE "
+				+ "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
+				+ "ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
+
+		PreparedStatement pStmt = null;
+
+		try {
+			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+			
+			if (db != null) {
+				pStmt.setString(1, db);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
+			pStmt.setString(2, procedureNamePattern);
+			pStmt.setString(3, columnNamePattern);
+
+			ResultSet rs = executeMetadataQuery(pStmt);
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createProcedureColumnsFields());
 
 			return rs;
 		} finally {

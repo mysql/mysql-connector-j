@@ -4056,6 +4056,15 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	public java.sql.ResultSet getProcedureColumns(String catalog,
 			String schemaPattern, String procedureNamePattern,
 			String columnNamePattern) throws SQLException {
+		Field[] fields = createProcedureColumnsFields();
+		
+		return getProcedureOrFunctionColumns(
+				fields, catalog, schemaPattern,
+				procedureNamePattern, columnNamePattern,
+				true, true);
+	}
+
+	protected Field[] createProcedureColumnsFields() {
 		Field[] fields = new Field[13];
 
 		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
@@ -4071,11 +4080,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[10] = new Field("", "RADIX", Types.SMALLINT, 0);
 		fields[11] = new Field("", "NULLABLE", Types.SMALLINT, 0);
 		fields[12] = new Field("", "REMARKS", Types.CHAR, 0);
-		
-		return getProcedureOrFunctionColumns(
-				fields, catalog, schemaPattern,
-				procedureNamePattern, columnNamePattern,
-				true, true);
+		return fields;
 	}
 	
 	protected java.sql.ResultSet getProcedureOrFunctionColumns(
@@ -8089,7 +8094,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     		String schemaPattern, 
     		String functionNamePattern, 
     		String columnNamePattern) throws SQLException {
-    	Field[] fields = {
+    	Field[] fields = createFunctionColumnsFields();
+
+		return getProcedureOrFunctionColumns(
+				fields, catalog, schemaPattern,
+				functionNamePattern, columnNamePattern,
+				false, true);
+	}
+
+	protected Field[] createFunctionColumnsFields() {
+		Field[] fields = {
     			new Field("", "FUNCTION_CAT", Types.VARCHAR, 0),
     			new Field("", "FUNCTION_SCHEM", Types.VARCHAR, 0),
     			new Field("", "FUNCTION_NAME", Types.VARCHAR, 0),
@@ -8107,11 +8121,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     			new Field("", "ORDINAL_POSITION", Types.INTEGER, 0),
     			new Field("", "IS_NULLABLE", Types.VARCHAR, 3),
     			new Field("", "SPECIFIC_NAME", Types.VARCHAR, 0)};
-
-		return getProcedureOrFunctionColumns(
-				fields, catalog, schemaPattern,
-				functionNamePattern, columnNamePattern,
-				false, true);
+		return fields;
 	}
 
 	public boolean providesQueryObjectGenerator() throws SQLException {

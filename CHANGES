@@ -96,6 +96,9 @@ nn-nn-08 - Version 5.1.8
 
     - Fixed Bug #39426 - executeBatch passes most recent PreparedStatement params
       to StatementInterceptor
+      
+    - Support use of INFORMATION_SCHEMA.PARAMETERS when "useInformationSchema" is set "true" and the view exists
+      for DatabaseMetaData.getProcedureColumns() and getFunctionColumns().
 
     - Added new property, "maxAllowedPacket" to set maximum allowed packet size to
       send to server.
