@@ -68,7 +68,6 @@ public class MysqlDataTruncation extends DataTruncation {
 	 * @see java.lang.Throwable#getMessage()
 	 */
 	public String getMessage() {
-		// TODO Auto-generated method stub
 		return super.getMessage() + ": " + this.message; //$NON-NLS-1$
 	}
 }

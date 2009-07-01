@@ -417,11 +417,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				this.isNullable = "NO";
 			}
 		}
-
-		private ExceptionInterceptor getExceptionInterceptor() {
-			// TODO Auto-generated method stub
-			return null;
-		}
 	}
        
 	private static String mysqlKeywordsThatArentSQL92;

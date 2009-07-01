@@ -10,8 +10,6 @@ import testsuite.regression.ConnectionRegressionTest;
 public class ReadOnlyCallableStatementTest extends ConnectionRegressionTest {
 	public ReadOnlyCallableStatementTest(String name) {
 		super(name);
-
-		// TODO Auto-generated constructor stub
 	}
 
 	public void testReadOnlyWithProcBodyAccess() throws Exception {

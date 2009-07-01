@@ -495,7 +495,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			super(propertyNameToSet, defaultValueToSet, lowerBoundToSet,
 					upperBoundToSet, descriptionToSet, sinceVersionToSet,
 					category, orderInCategory);
-			// TODO Auto-generated constructor stub
 		}
 
 		void initializeFrom(String extractedValue) throws SQLException {
@@ -2706,22 +2705,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				}
 			}
 
-			// TODO -- Not yet
-			/*
-			 * int numUnknownProperties = infoCopy.size(); if
-			 * (numUnknownProperties > 0) { StringBuffer errorMessageBuf = new
-			 * StringBuffer( "Unknown connection ");
-			 * errorMessageBuf.append((numUnknownProperties == 1) ? "property " :
-			 * "properties "); Iterator propNamesItor =
-			 * infoCopy.keySet().iterator(); errorMessageBuf.append("'");
-			 * errorMessageBuf.append(propNamesItor.next().toString());
-			 * errorMessageBuf.append("'"); while (propNamesItor.hasNext()) {
-			 * errorMessageBuf.append(", '");
-			 * errorMessageBuf.append(propNamesItor.next().toString());
-			 * errorMessageBuf.append("'"); } throw new
-			 * SQLException(errorMessageBuf.toString(),
-			 * SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE); }
-			 */
 			postInitialization();
 		}
 	}

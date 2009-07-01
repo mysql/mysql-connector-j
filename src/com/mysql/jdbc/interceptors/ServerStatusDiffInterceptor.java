@@ -101,7 +101,6 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 	}
 
 	public void destroy() {
-		// TODO Auto-generated method stub
 		
 	}
 }

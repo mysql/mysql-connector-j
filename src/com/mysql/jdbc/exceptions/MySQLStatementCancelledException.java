@@ -39,9 +39,4 @@ public class MySQLStatementCancelledException extends MySQLNonTransientException
 	public MySQLStatementCancelledException() {
 		super("Statement cancelled due to client request");
 	}
-
-	public int getErrorCode() {
-		// TODO Auto-generated method stub
-		return super.getErrorCode();
-	}
 }

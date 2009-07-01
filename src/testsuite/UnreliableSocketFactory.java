@@ -425,7 +425,6 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 			}
 
 			public void flush() throws IOException {
-				// TODO Auto-generated method stub
 				underlyingOutputStream.flush();
 			}
 

@@ -91,8 +91,6 @@ public class DataSourceRegressionTest extends BaseTestCase {
 	 */
 	public DataSourceRegressionTest(String name) {
 		super(name);
-
-		// TODO Auto-generated constructor stub
 	}
 
 	/**

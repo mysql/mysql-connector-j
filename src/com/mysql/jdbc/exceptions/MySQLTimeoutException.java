@@ -40,9 +40,4 @@ public class MySQLTimeoutException extends MySQLTransientException {
 	public MySQLTimeoutException() {
 		super("Statement cancelled due to timeout or client request");
 	}
-
-	public int getErrorCode() {
-		// TODO Auto-generated method stub
-		return super.getErrorCode();
-	}
 }

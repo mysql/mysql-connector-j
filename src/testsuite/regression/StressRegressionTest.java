@@ -56,8 +56,6 @@ public class StressRegressionTest extends BaseTestCase {
 	 */
 	public StressRegressionTest(String name) {
 		super(name);
-
-		// TODO Auto-generated constructor stub
 	}
 
 	/**

@@ -46,8 +46,6 @@ public class AppletRegressionTest extends BaseTestCase {
 	 */
 	public AppletRegressionTest(String name) {
 		super(name);
-
-		// TODO Auto-generated constructor stub
 	}
 
 	/**

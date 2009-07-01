@@ -40,7 +40,6 @@ public class CharsetTests extends BaseTestCase {
 
 	public CharsetTests(String name) {
 		super(name);
-		// TODO Auto-generated constructor stub
 	}
 
 	public static void main(String[] args) {

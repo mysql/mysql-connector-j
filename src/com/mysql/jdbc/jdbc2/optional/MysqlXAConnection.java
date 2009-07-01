@@ -157,7 +157,6 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 	 *             XAER_RMERR and XAER_RMFAIL.
 	 */
 	public int getTransactionTimeout() throws XAException {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
@@ -183,7 +182,6 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 	 *             XAER_RMERR, XAER_RMFAIL, or XAER_INVAL.
 	 */
 	public boolean setTransactionTimeout(int arg0) throws XAException {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -401,7 +399,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 	 *             XAER_PROTO.
 	 */
 	public void forget(Xid xid) throws XAException {
-		// TODO Auto-generated method stub
+		// mysql doesn't support this
 	}
 
 	/**

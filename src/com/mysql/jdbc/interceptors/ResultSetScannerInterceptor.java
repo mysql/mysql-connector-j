@@ -106,7 +106,7 @@ public class ResultSetScannerInterceptor implements StatementInterceptor {
 	}
 
 	public void destroy() {
-		// TODO Auto-generated method stub
+
 		
 	}
 }

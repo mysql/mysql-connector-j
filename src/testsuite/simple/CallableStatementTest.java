@@ -53,8 +53,6 @@ public class CallableStatementTest extends BaseTestCase {
 	 */
 	public CallableStatementTest(String name) {
 		super(name);
-
-		// TODO Auto-generated constructor stub
 	}
 
 	/**

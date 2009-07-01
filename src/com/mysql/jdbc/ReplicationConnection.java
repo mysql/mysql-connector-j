@@ -568,8 +568,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 
 	public synchronized void changeUser(String userName, String newPassword)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
+		this.masterConnection.changeUser(userName, newPassword);
+		this.slavesConnection.changeUser(userName, newPassword);
 	}
 
 	public synchronized void clearHasTriedMaster() {
@@ -1452,868 +1452,868 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public synchronized void setAllowLoadLocalInfile(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setAllowMultiQueries(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setAllowNanAndInf(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setAllowUrlInLocalInfile(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setAlwaysSendSetIsolation(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setAutoClosePStmtStreams(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setAutoDeserialize(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setAutoGenerateTestcaseScript(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setAutoReconnect(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setAutoReconnectForConnectionPools(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setAutoReconnectForPools(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setAutoSlowLog(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setBlobSendChunkSize(String value) throws SQLException {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setBlobsAreStrings(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCacheCallableStatements(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCacheCallableStmts(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCachePrepStmts(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCachePreparedStatements(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCacheResultSetMetadata(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCacheServerConfiguration(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCallableStatementCacheSize(int size) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCallableStmtCacheSize(int cacheSize) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCapitalizeDBMDTypes(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCapitalizeTypeNames(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCharacterEncoding(String encoding) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCharacterSetResults(String characterSet) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setClientCertificateKeyStorePassword(String value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setClientCertificateKeyStoreType(String value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setClientCertificateKeyStoreUrl(String value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setClientInfoProvider(String classname) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setClobCharacterEncoding(String encoding) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setClobberStreamingResults(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setConnectTimeout(int timeoutMs) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setConnectionCollation(String collation) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setConnectionLifecycleInterceptors(String interceptors) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setContinueBatchOnError(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setCreateDatabaseIfNotExist(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setDefaultFetchSize(int n) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setDetectServerPreparedStmts(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setDontTrackOpenResources(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setDumpMetadataOnColumnNotFound(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setDumpQueriesOnException(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setDynamicCalendars(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setElideSetAutoCommits(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setEmptyStringsConvertToZero(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setEmulateLocators(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setEmulateUnsupportedPstmts(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setEnablePacketDebug(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setEnableQueryTimeouts(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setEncoding(String property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setExplainSlowQueries(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setFailOverReadOnly(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setFunctionsNeverReturnBlobs(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setGatherPerfMetrics(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setGatherPerformanceMetrics(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setGenerateSimpleParameterMetadata(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setHoldResultsOpenOverStatementClose(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setIgnoreNonTxTables(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setIncludeInnodbStatusInDeadlockExceptions(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setInitialTimeout(int property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setInteractiveClient(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setIsInteractiveClient(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setJdbcCompliantTruncation(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setJdbcCompliantTruncationForReads(
 			boolean jdbcCompliantTruncationForReads) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setLargeRowSizeThreshold(String value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setLoadBalanceStrategy(String strategy) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setLocalSocketAddress(String address) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setLocatorFetchBufferSize(String value) throws SQLException {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setLogSlowQueries(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setLogXaCommands(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setLogger(String property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setLoggerClassName(String className) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setMaintainTimeStats(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setMaxQuerySizeToLog(int sizeInBytes) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setMaxReconnects(int property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setMaxRows(int property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setMetadataCacheSize(int value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setNetTimeoutForStreamingResults(int value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setNoAccessToProcedureBodies(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setNoDatetimeStringSync(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setNoTimezoneConversionForTimeType(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setNullCatalogMeansCurrent(boolean value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setNullNamePatternMatchesAll(boolean value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setOverrideSupportsIntegrityEnhancementFacility(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setPacketDebugBufferSize(int size) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setPadCharsWithSpace(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setParanoid(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setPedantic(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setPinGlobalTxToPhysicalConnection(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setPopulateInsertRowWithDefaultValues(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setPrepStmtCacheSize(int cacheSize) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setPrepStmtCacheSqlLimit(int sqlLimit) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setPreparedStatementCacheSize(int cacheSize) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setProcessEscapeCodesForPrepStmts(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setProfileSQL(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setProfileSql(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setProfilerEventHandler(String handler) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setPropertiesTransform(String value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setQueriesBeforeRetryMaster(int property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setReconnectAtTxEnd(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setRelaxAutoCommit(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setReportMetricsIntervalMillis(int millis) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setRequireSSL(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setResourceId(String resourceId) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setResultSetSizeThreshold(int threshold) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setRetainStatementAfterResultSetClose(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setRewriteBatchedStatements(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setRollbackOnPooledClose(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setRoundRobinLoadBalance(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setRunningCTS13(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setSecondsBeforeRetryMaster(int property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setSelfDestructOnPingMaxOperations(int maxOperations) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setSelfDestructOnPingSecondsLifetime(int seconds) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setServerTimezone(String property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setSessionVariables(String variables) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setSlowQueryThresholdMillis(int millis) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setSlowQueryThresholdNanos(long nanos) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setSocketFactory(String name) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setSocketFactoryClassName(String property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setSocketTimeout(int property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setStatementInterceptors(String value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setStrictFloatingPoint(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setStrictUpdates(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTcpKeepAlive(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTcpNoDelay(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTcpRcvBuf(int bufSize) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTcpSndBuf(int bufSize) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTcpTrafficClass(int classFlags) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTinyInt1isBit(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTraceProtocol(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTransformedBitIsBoolean(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTreatUtilDateAsTimestamp(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTrustCertificateKeyStorePassword(String value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTrustCertificateKeyStoreType(String value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setTrustCertificateKeyStoreUrl(String value) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUltraDevHack(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseBlobToStoreUTF8OutsideBMP(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseCompression(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseConfigs(String configs) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseCursorFetch(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseDirectRowUnpack(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseDynamicCharsetInfo(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseFastDateParsing(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseFastIntParsing(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseGmtMillisForDatetimes(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseHostsInPrivileges(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseInformationSchema(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseJDBCCompliantTimezoneShift(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseJvmCharsetConverters(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseLegacyDatetimeCode(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseLocalSessionState(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseNanosForElapsedTime(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseOldAliasMetadataBehavior(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseOldUTF8Behavior(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseOnlyServerErrorMessages(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseReadAheadInput(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseSSL(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseSSPSCompatibleTimezoneShift(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseServerPrepStmts(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseServerPreparedStmts(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseSqlStateCodes(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseStreamLengthsInPrepStmts(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseTimezone(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseUltraDevWorkAround(boolean property) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseUnbufferedInput(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseUnicode(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUseUsageAdvisor(boolean useUsageAdvisorFlag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUtf8OutsideBmpExcludedColumnNamePattern(String regexPattern) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setUtf8OutsideBmpIncludedColumnNamePattern(String regexPattern) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setVerifyServerCertificate(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setYearIsDateType(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
 	public synchronized void setZeroDateTimeBehavior(String behavior) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
@@ -2334,7 +2334,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public void setUseColumnNamesInFindColumn(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 	}
 
 	public boolean getUseLocalTransactionState() {
@@ -2342,7 +2342,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public void setUseLocalTransactionState(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
@@ -2351,7 +2351,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public void setCompensateOnDuplicateKeyUpdateCounts(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 
@@ -2360,7 +2360,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public void setUseAffectedRows(boolean flag) {
-		// TODO Auto-generated method stub
+		// not runtime configurable
 		
 	}
 

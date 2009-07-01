@@ -31,7 +31,6 @@ public class SessionAssociationInterceptor implements StatementInterceptor {
 	}
 
 	public void init(Connection conn, Properties props) throws SQLException {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -64,7 +63,6 @@ public class SessionAssociationInterceptor implements StatementInterceptor {
 	}
 
 	public void destroy() {
-		// TODO Auto-generated method stub
 		
 	}
 }

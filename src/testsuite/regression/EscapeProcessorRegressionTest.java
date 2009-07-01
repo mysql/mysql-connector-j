@@ -34,15 +34,6 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
 
 	public EscapeProcessorRegressionTest(String name) {
 		super(name);
-		// TODO Auto-generated constructor stub
-	}
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
 	}
 
 	/**

@@ -124,7 +124,6 @@ XAConnection, XAResource {
 	}
 
 	public int getTransactionTimeout() throws XAException {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
@@ -148,7 +147,6 @@ XAConnection, XAResource {
 	}
 
 	public boolean setTransactionTimeout(int arg0) throws XAException {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
