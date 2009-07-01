@@ -2539,11 +2539,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		while (dbTblCols.next()) {
 			String catalog = dbTblCols.getString("TABLE_CAT");
 			String table = dbTblCols.getString("TABLE_NAME");
-			if (catalog.equals(nullCatConn.getCatalog()) && "testBug31187".equals(table)) {
+			boolean useLowerCaseTableNames = dbmd.storesLowerCaseIdentifiers();
+			
+			if (catalog.equals(nullCatConn.getCatalog()) && 
+					(((useLowerCaseTableNames && "testBug31187".equalsIgnoreCase(table)) || "testBug31187".equals(table)))) {
 				found = true;
 			}
 		}
 		
-		assertTrue(found);
+		assertTrue("Didn't find any columns for table named 'testBug31187' in database " + this.conn.getCatalog(), found);
 	}
 }
