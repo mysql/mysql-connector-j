@@ -101,6 +101,7 @@ class MysqlIO {
     static final int SERVER_MORE_RESULTS_EXISTS = 8; // Multi query - next query exists
     private static final int SERVER_QUERY_NO_GOOD_INDEX_USED = 16;
     private static final int SERVER_QUERY_NO_INDEX_USED = 32;
+    private static final int SERVER_QUERY_WAS_SLOW = 2048;
 	private static final int  SERVER_STATUS_CURSOR_EXISTS = 64;
     private static final String FALSE_SCRAMBLE = "xxxxxxxx"; //$NON-NLS-1$
     protected static final int MAX_QUERY_SIZE_TO_LOG = 1024; // truncate logging of queries at 1K
@@ -203,6 +204,7 @@ class MysqlIO {
     private boolean profileSql = false;
     private boolean queryBadIndexUsed = false;
     private boolean queryNoIndexUsed = false;
+    private boolean serverQueryWasSlow = false;
 
     /** Should we use 4.1 protocol extensions? */
     private boolean use41Extensions = false;
@@ -1873,7 +1875,8 @@ class MysqlIO {
 
             this.queryNoIndexUsed = false;
             this.queryBadIndexUsed = false;
-
+            this.serverQueryWasSlow = false;
+            
             //
             // Compressed input stream needs cleared at beginning
             // of each command execution...
@@ -2163,7 +2166,7 @@ class MysqlIO {
 	    			resultSetConcurrency, streamResults, catalog, resultPacket,
 	    			false, -1L, cachedMetadata);
 
-	    	if (queryWasSlow) {
+	    	if (queryWasSlow && !this.serverQueryWasSlow /* don't log slow queries twice */) {
 	    		StringBuffer mesgBuf = new StringBuffer(48 +
 	    				profileQueryToLog.length());
 
@@ -2224,6 +2227,20 @@ class MysqlIO {
 	    							null,
 	    							new Throwable(),
 	    							Messages.getString("MysqlIO.35") //$NON-NLS-1$
+	    							+profileQueryToLog));
+	    		}
+	    		
+	    		if (this.serverQueryWasSlow) {
+	    			eventSink.consumeEvent(new ProfilerEvent(
+	    					ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, //$NON-NLS-1$
+	    					this.connection.getId(),
+	    					(callingStatement != null) ? callingStatement.getId()
+	    							: 999, ((ResultSetImpl)rs).resultId,
+	    							System.currentTimeMillis(),
+	    							(queryEndTime - queryStartTime), this.queryTimingUnits,
+	    							null,
+	    							new Throwable(),
+	    							Messages.getString("MysqlIO.ServerSlowQuery") //$NON-NLS-1$
 	    							+profileQueryToLog));
 	    		}
 	    	}
@@ -2612,12 +2629,7 @@ class MysqlIO {
 
                 resultPacket.readByte(); // advance pointer
 
-                if (this.profileSql) {
-                    this.queryNoIndexUsed = (this.serverStatus &
-                        SERVER_QUERY_NO_GOOD_INDEX_USED) != 0;
-                    this.queryBadIndexUsed = (this.serverStatus &
-                        SERVER_QUERY_NO_INDEX_USED) != 0;
-                }
+                setServerSlowQueryFlags();
             }
 
             if (this.connection.isReadInfoMsgEnabled()) {
@@ -2640,6 +2652,17 @@ class MysqlIO {
 
         return (com.mysql.jdbc.ResultSetImpl)updateRs;
     }
+
+	private void setServerSlowQueryFlags() {
+		if (this.profileSql) {
+		    this.queryNoIndexUsed = (this.serverStatus &
+		        SERVER_QUERY_NO_GOOD_INDEX_USED) != 0;
+		    this.queryBadIndexUsed = (this.serverStatus &
+		        SERVER_QUERY_NO_INDEX_USED) != 0;
+		    this.serverQueryWasSlow = (this.serverStatus & 
+		    	SERVER_QUERY_WAS_SLOW) != 0;
+		}
+	}
 
     private void checkForOutstandingStreamingData() throws SQLException {
         if (this.streamingData != null) {
@@ -2725,12 +2748,7 @@ class MysqlIO {
             this.serverStatus = rowPacket.readInt();
             checkTransactionState(oldServerStatus);
 
-            if (this.profileSql) {
-                this.queryNoIndexUsed = (this.serverStatus &
-                    SERVER_QUERY_NO_GOOD_INDEX_USED) != 0;
-                this.queryBadIndexUsed = (this.serverStatus &
-                    SERVER_QUERY_NO_INDEX_USED) != 0;
-            }
+            setServerSlowQueryFlags();
         }
     }
 

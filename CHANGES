@@ -99,6 +99,10 @@ nn-nn-08 - Version 5.1.8
       
     - Support use of INFORMATION_SCHEMA.PARAMETERS when "useInformationSchema" is set "true" and the view exists
       for DatabaseMetaData.getProcedureColumns() and getFunctionColumns().
+      
+    - When "logSlowQueries" is set to "true", and the driver has made a connection to a server that has suport
+      for the SERVER_QUERY_WAS_SLOW flag in the protocol, the query will be logged if the server indicates the
+      query has passed the slow query threshold.
 
     - Added new property, "maxAllowedPacket" to set maximum allowed packet size to
       send to server.
