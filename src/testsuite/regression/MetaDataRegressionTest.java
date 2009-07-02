@@ -2265,7 +2265,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			assertFalse(this.rs.next());
 			this.rs = this.conn.getMetaData().getTables("information_schema", "null", "%", new String[] {"TABLE", "SYSTEM TABLE"});
 			assertTrue(this.rs.next());
-			this.rs = this.conn.getMetaData().getColumns("information_schema", null, "tables", "%");
+			this.rs = this.conn.getMetaData().getColumns("information_schema", null, "TABLES", "%");
 			assertTrue(this.rs.next());
 		} finally {
 			closeMemberJDBCResources();
