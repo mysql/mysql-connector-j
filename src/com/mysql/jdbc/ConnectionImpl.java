@@ -1625,10 +1625,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			} finally {
 				this.needsPing = this.getReconnectAtTxEnd();
 			}
-	
-			if (this.io.inTransactionOnServer()) {
-				throw new RuntimeException();
-			}
 			
 			return;
 		}
@@ -4854,10 +4850,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				DEFAULT_RESULT_SET_TYPE,
 				DEFAULT_RESULT_SET_CONCURRENCY, false,
 				this.database, null, false);
-		
-		if (this.io.inTransactionOnServer()) {
-			throw new RuntimeException();
-		}
 	}
 
 	/**
