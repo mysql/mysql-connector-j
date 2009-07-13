@@ -5879,9 +5879,9 @@ public class StatementRegressionTest extends BaseTestCase {
 		try {
 			c.setAutoCommit(false);
 			c.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-			Date d1 = new Date(System.currentTimeMillis());
-			Date d2 = new Date(System.currentTimeMillis() + 1000000);
-			Date d3 = new Date(System.currentTimeMillis() + 1250000);
+			Date d1 = new Date(currentTimeMillis());
+			Date d2 = new Date(currentTimeMillis() + 1000000);
+			Date d3 = new Date(currentTimeMillis() + 1250000);
 
 			for (int i = 0; i < numberOfRows; i++) {
 				this.pstmt.setObject(1, new Integer(i), Types.INTEGER);
@@ -5902,10 +5902,10 @@ public class StatementRegressionTest extends BaseTestCase {
 						Types.DECIMAL);
 				this.pstmt.addBatch();
 			}
-			long startTime = System.currentTimeMillis();
+			long startTime = currentTimeMillis();
 			this.pstmt.executeBatch();
 			c.commit();
-			long stopTime = System.currentTimeMillis();
+			long stopTime = currentTimeMillis();
 
 			rs = conn.createStatement().executeQuery(
 					"SELECT COUNT(*) FROM testBug41532");

@@ -651,8 +651,6 @@ public class StringRegressionTest extends BaseTestCase {
 			this.rs = this.stmt.executeQuery("SELECT * FROM charConvTest_"
 					+ charsetName);
 
-			boolean hadRows = false;
-
 			assertTrue(this.rs.next());
 
 			String testValue = this.rs.getString(1);

@@ -24,6 +24,7 @@
  */
 package testsuite;
 
+import java.lang.reflect.Method;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -752,4 +753,44 @@ public abstract class BaseTestCase extends TestCase {
 				
 				assertTrue("Found " + howMuchMore + " extra rows in result set to be compared: ", howMuchMore == 0);
 			}
+
+	/*
+	 * Set default values for primitives.
+	 * (prevents NPE in Java 1.4 when calling via reflection)
+	 */
+	protected void fillPrimitiveDefaults(Class types[], Object vals[], int count) {
+		for (int i = 0; i < count; ++i) {
+			if (vals[i] != null)
+				continue;
+			String type = types[i].toString();
+			if (type.equals("short")) {
+				vals[i] = new Short((short)0);
+			} else if (type.equals("int")) {
+				vals[i] = new Integer(0);
+			} else if (type.equals("long")) {
+				vals[i] = new Long(0);
+			} else if (type.equals("boolean")) {
+				vals[i] = new Boolean(false);
+			} else if (type.equals("byte")) {
+				vals[i] = new Byte((byte)0);
+			} else if (type.equals("double")) {
+				vals[i] = new Double(0.0);
+			} else if (type.equals("float")) {
+				vals[i] = new Float(0.0);
+			}
+		}
+	}
+
+	/**
+	 * Retrieve the current system time in milliseconds, using the nanosecond
+	 * time if possible.
+	 */
+	protected long currentTimeMillis() {
+		try {
+			Method mNanoTime = System.class.getDeclaredMethod("nanoTime", null);
+			return ((Long)mNanoTime.invoke(null, null)).longValue() / 1000000;
+		} catch(Exception ex) {
+			return System.currentTimeMillis();
+		}
+	}
 }

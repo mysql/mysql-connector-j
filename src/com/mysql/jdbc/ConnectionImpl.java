@@ -1932,24 +1932,43 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		 * Check if we need a CharsetEncoder for escaping codepoints that are
 		 * transformed to backslash (0x5c) in the connection encoding.
 		 */
-		CharsetEncoder enc = Charset.forName(getEncoding()).newEncoder();
-		CharBuffer cbuf = CharBuffer.allocate(1);
-		ByteBuffer bbuf = ByteBuffer.allocate(1);
-		
-		cbuf.put("\u00a5");
-		cbuf.position(0);
-		enc.encode(cbuf, bbuf, true);
-		if(bbuf.get(0) == '\\') {
-			requiresEscapingEncoder = true;
-		} else {
-			cbuf.clear();
-			bbuf.clear();
-			
-			cbuf.put("\u20a9");
+		try {
+			CharsetEncoder enc = Charset.forName(getEncoding()).newEncoder();
+			CharBuffer cbuf = CharBuffer.allocate(1);
+			ByteBuffer bbuf = ByteBuffer.allocate(1);
+
+			cbuf.put("\u00a5");
 			cbuf.position(0);
 			enc.encode(cbuf, bbuf, true);
 			if(bbuf.get(0) == '\\') {
 				requiresEscapingEncoder = true;
+			} else {
+				cbuf.clear();
+				bbuf.clear();
+				
+				cbuf.put("\u20a9");
+				cbuf.position(0);
+				enc.encode(cbuf, bbuf, true);
+				if(bbuf.get(0) == '\\') {
+					requiresEscapingEncoder = true;
+				}
+			}
+		} catch(java.nio.charset.UnsupportedCharsetException ucex) {
+			// fallback to String API - for Java 1.4
+			try {
+				byte bbuf[] = new String("\u00a5").getBytes(getEncoding());
+				if (bbuf[0] == '\\') {
+					requiresEscapingEncoder = true;
+				} else {
+					bbuf = new String("\u20a9").getBytes(getEncoding());
+					if (bbuf[0] == '\\') {
+						requiresEscapingEncoder = true;
+					}
+				}
+			} catch(UnsupportedEncodingException ueex) {
+				throw SQLError.createSQLException("Unable to use encoding: " + getEncoding(),
+						SQLError.SQL_STATE_GENERAL_ERROR, ueex,
+						getExceptionInterceptor());
 			}
 		}
 

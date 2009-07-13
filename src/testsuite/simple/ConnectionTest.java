@@ -1582,8 +1582,10 @@ public class ConnectionTest extends BaseTestCase {
     		Method toFind = interfaceMethods[i];
     		Method toMatch = implementingClass.getMethod(toFind.getName(), toFind.getParameterTypes());
     		assertNotNull(toFind.toString(), toMatch);
+    		Class paramTypes[] = toFind.getParameterTypes();
 
-    		Object[] args = new Object[toFind.getParameterTypes().length];
+    		Object[] args = new Object[paramTypes.length];
+			fillPrimitiveDefaults(paramTypes, args, paramTypes.length);
     		
     		try {
 				toMatch.invoke(invokeOn, args);

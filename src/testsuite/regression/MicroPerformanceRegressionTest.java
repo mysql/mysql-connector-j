@@ -63,20 +63,34 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 				0.00861));
 		BASELINE_TIMES
 				.put("Connection.prepareStatement()", new Double(0.18547));
-		BASELINE_TIMES.put("PreparedStatement.setInt()", new Double(0.0011));
-		BASELINE_TIMES
-				.put("PreparedStatement.setDouble()", new Double(0.00671));
-		BASELINE_TIMES.put("PreparedStatement.setTime()", new Double(0.0642));
-		BASELINE_TIMES.put("PreparedStatement.setTimestamp()", new Double(
-				0.03184));
-		BASELINE_TIMES.put("PreparedStatement.setDate()", new Double(0.12248));
-		BASELINE_TIMES
-				.put("PreparedStatement.setString()", new Double(0.01512));
-		BASELINE_TIMES.put("PreparedStatement.setObject() on a string",
-				new Double(0.01923));
 		BASELINE_TIMES.put("single selects", new Double(46));
 		BASELINE_TIMES.put("5 standalone queries", new Double(146));
 		BASELINE_TIMES.put("total time all queries", new Double(190));
+		if (com.mysql.jdbc.Util.isJdbc4()) {
+			BASELINE_TIMES.put("PreparedStatement.setInt()", new Double(0.0014));
+			BASELINE_TIMES.put("PreparedStatement.setTime()", new Double(0.0107));
+			BASELINE_TIMES.put("PreparedStatement.setTimestamp()", new Double(
+					0.0182));
+			BASELINE_TIMES.put("PreparedStatement.setDate()", new Double(0.0819));
+			BASELINE_TIMES
+					.put("PreparedStatement.setString()", new Double(0.0081));
+			BASELINE_TIMES.put("PreparedStatement.setObject() on a string",
+					new Double(0.00793));
+			BASELINE_TIMES
+					.put("PreparedStatement.setDouble()", new Double(0.0246));
+		} else {
+			BASELINE_TIMES.put("PreparedStatement.setInt()", new Double(0.0011));
+			BASELINE_TIMES.put("PreparedStatement.setTime()", new Double(0.0642));
+			BASELINE_TIMES.put("PreparedStatement.setTimestamp()", new Double(
+					0.03184));
+			BASELINE_TIMES.put("PreparedStatement.setDate()", new Double(0.12248));
+			BASELINE_TIMES
+					.put("PreparedStatement.setString()", new Double(0.01512));
+			BASELINE_TIMES.put("PreparedStatement.setObject() on a string",
+					new Double(0.01923));
+			BASELINE_TIMES
+					.put("PreparedStatement.setDouble()", new Double(0.00671));
+		}
 	}
 
 	public MicroPerformanceRegressionTest(String name) {
@@ -114,79 +128,79 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
 			int numLoops = 100000;
 
-			long start = System.currentTimeMillis();
+			long start = currentTimeMillis();
 
 			for (int i = 0; i < numLoops; i++) {
 				this.rs.getInt(1);
 			}
 
-			double getIntAvgMs = (double) (System.currentTimeMillis() - start)
+			double getIntAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("ResultSet.getInt()", getIntAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			for (int i = 0; i < numLoops; i++) {
 				this.rs.getDouble(2);
 			}
 
-			double getDoubleAvgMs = (double) (System.currentTimeMillis() - start)
+			double getDoubleAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("ResultSet.getDouble()", getDoubleAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			for (int i = 0; i < numLoops; i++) {
 				this.rs.getTime(3);
 			}
 
-			double getTimeAvgMs = (double) (System.currentTimeMillis() - start)
+			double getTimeAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("ResultSet.getTime()", getTimeAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			for (int i = 0; i < numLoops; i++) {
 				this.rs.getTimestamp(4);
 			}
 
-			double getTimestampAvgMs = (double) (System.currentTimeMillis() - start)
+			double getTimestampAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("ResultSet.getTimestamp()", getTimestampAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			for (int i = 0; i < numLoops; i++) {
 				this.rs.getDate(4);
 			}
 
-			double getDateAvgMs = (double) (System.currentTimeMillis() - start)
+			double getDateAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("ResultSet.getDate()", getDateAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			for (int i = 0; i < numLoops; i++) {
 				this.rs.getString(5);
 			}
 
-			double getStringAvgMs = (double) (System.currentTimeMillis() - start)
+			double getStringAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("ResultSet.getString()", getStringAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			for (int i = 0; i < numLoops; i++) {
 				this.rs.getObject(5);
 			}
 
-			double getStringObjAvgMs = (double) (System.currentTimeMillis() - start)
+			double getStringObjAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("ResultSet.getObject() on a string", getStringObjAvgMs);
@@ -203,9 +217,9 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 			this.stmt
 					.executeUpdate("INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
 
-			long start = System.currentTimeMillis();
+			long start = currentTimeMillis();
 
-			long blockStart = System.currentTimeMillis();
+			long blockStart = currentTimeMillis();
 			long lastBlock = 0;
 
 			int numLoops = 100000;
@@ -220,7 +234,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 			for (int i = 0; i < numPrepares; i++) {
 				if (i % 1000 == 0) {
 
-					long blockEnd = System.currentTimeMillis();
+					long blockEnd = currentTimeMillis();
 
 					long totalTime = blockEnd - blockStart;
 
@@ -252,7 +266,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 				pStmt.close();
 			}
 
-			double getPrepareStmtAvgMs = (double) (System.currentTimeMillis() - start)
+			double getPrepareStmtAvgMs = (double) (currentTimeMillis() - start)
 					/ numPrepares;
 
 			// checkTime("Connection.prepareStatement()", getPrepareStmtAvgMs);
@@ -262,7 +276,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
 			System.out.println(pStmt.toString());
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			for (int i = 0; i < numLoops; i++) {
 				pStmt.setInt(1, 1);
@@ -270,23 +284,23 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
 			System.out.println(pStmt.toString());
 
-			double setIntAvgMs = (double) (System.currentTimeMillis() - start)
+			double setIntAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("PreparedStatement.setInt()", setIntAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			for (int i = 0; i < numLoops; i++) {
 				pStmt.setDouble(2, 1234567890.1234);
 			}
 
-			double setDoubleAvgMs = (double) (System.currentTimeMillis() - start)
+			double setDoubleAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("PreparedStatement.setDouble()", setDoubleAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			Time tm = new Time(start);
 
@@ -294,12 +308,12 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 				pStmt.setTime(3, tm);
 			}
 
-			double setTimeAvgMs = (double) (System.currentTimeMillis() - start)
+			double setTimeAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("PreparedStatement.setTime()", setTimeAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			Timestamp ts = new Timestamp(start);
 
@@ -307,12 +321,12 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 				pStmt.setTimestamp(4, ts);
 			}
 
-			double setTimestampAvgMs = (double) (System.currentTimeMillis() - start)
+			double setTimestampAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("PreparedStatement.setTimestamp()", setTimestampAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			Date dt = new Date(start);
 
@@ -320,12 +334,12 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 				pStmt.setDate(4, dt);
 			}
 
-			double setDateAvgMs = (double) (System.currentTimeMillis() - start)
+			double setDateAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("PreparedStatement.setDate()", setDateAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			for (int i = 0; i < numLoops; i++) {
 				pStmt
@@ -333,12 +347,12 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 								"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@");
 			}
 
-			double setStringAvgMs = (double) (System.currentTimeMillis() - start)
+			double setStringAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("PreparedStatement.setString()", setStringAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 			for (int i = 0; i < numLoops; i++) {
 				pStmt
@@ -346,13 +360,13 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 								"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@");
 			}
 
-			double setStringObjAvgMs = (double) (System.currentTimeMillis() - start)
+			double setStringObjAvgMs = (double) (currentTimeMillis() - start)
 					/ numLoops;
 
 			checkTime("PreparedStatement.setObject() on a string",
 					setStringObjAvgMs);
 
-			start = System.currentTimeMillis();
+			start = currentTimeMillis();
 
 		} finally {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS marktest");
@@ -374,7 +388,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 		// on this test.
 		int numLoops = 10000;
 
-		long start = System.currentTimeMillis();
+		long start = currentTimeMillis();
 
 		for (int j = 0; j < 2000; j++) {
 			StringBuffer buf = new StringBuffer(numLoops);
@@ -384,7 +398,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 			}
 		}
 
-		long elapsedTime = System.currentTimeMillis() - start;
+		long elapsedTime = currentTimeMillis() - start;
 
 		System.out.println("Elapsed time for factor: " + elapsedTime);
 
@@ -445,16 +459,16 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
 				logDebug("Finished loading rows");
 
-				long begin = System.currentTimeMillis();
+				long begin = currentTimeMillis();
 
-				long beginSingleQuery = System.currentTimeMillis();
+				long beginSingleQuery = currentTimeMillis();
 
 				for (int i = 0; i < numSelects; i++) {
 					this.rs = this.stmt
 							.executeQuery("SELECT pk_field FROM testBug6359 WHERE field1 BETWEEN 1 AND 5");
 				}
 
-				long endSingleQuery = System.currentTimeMillis();
+				long endSingleQuery = currentTimeMillis();
 
 				double secondsSingleQuery = ((double) endSingleQuery - (double) beginSingleQuery) / 1000;
 
@@ -466,7 +480,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 				PreparedStatement pStmt2 = this.conn
 						.prepareStatement("SELECT field2, field3, field4, field5 FROM testBug6359 WHERE pk_field=?");
 
-				long beginFiveQueries = System.currentTimeMillis();
+				long beginFiveQueries = currentTimeMillis();
 
 				for (int i = 0; i < numSelects; i++) {
 
@@ -476,7 +490,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 					}
 				}
 
-				long endFiveQueries = System.currentTimeMillis();
+				long endFiveQueries = currentTimeMillis();
 
 				double secondsFiveQueries = ((double) endFiveQueries - (double) beginFiveQueries) / 1000;
 
@@ -486,7 +500,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
 				checkTime("5 standalone queries", secondsFiveQueries);
 
-				long end = System.currentTimeMillis();
+				long end = currentTimeMillis();
 
 				double seconds = ((double) end - (double) begin) / 1000;
 
