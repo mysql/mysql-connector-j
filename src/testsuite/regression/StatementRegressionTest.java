@@ -6145,4 +6145,39 @@ public class StatementRegressionTest extends BaseTestCase {
 				c.close();
 		}
 	}
+	
+	public void testBugDupeKeySingle() throws Exception {
+		createTable("testBugDupeKeySingle", "(field1 int not null primary key)");
+		Connection conn2 = null;
+		try {
+			conn2 = getConnectionWithProps("rewriteBatchedStatements=true");
+			
+			this.pstmt = conn2.prepareStatement("INSERT INTO testBugDupeKeySingle VALUES (?) ON DUPLICATE KEY UPDATE field1=VALUES(field1)");
+			this.pstmt.setInt(1, 1);
+			this.pstmt.addBatch();
+			this.pstmt.executeBatch();
+			
+			// this should be a syntax error
+			this.pstmt = conn2.prepareStatement("INSERT INTO testBugDupeKeySingle VALUES (?) ON DUPLICATE KEY UPDATE");
+			this.pstmt.setInt(1, 1);
+			this.pstmt.addBatch();
+			try {
+				this.pstmt.executeBatch();
+			} catch (SQLException sqlEx) {
+				assertEquals(SQLError.SQL_STATE_SYNTAX_ERROR, sqlEx.getSQLState());
+			}
+			
+			this.pstmt = conn2.prepareStatement("INSERT INTO testBugDupeKeySingle VALUES (?)");
+			this.pstmt.setInt(1, 2);
+			this.pstmt.addBatch();
+			this.pstmt.executeBatch();
+			this.pstmt.setInt(1, 3);
+			this.pstmt.setInt(1, 4);
+			this.pstmt.executeBatch();
+		} finally {
+			if (conn2 != null) {
+				conn2.close();
+			}
+		}
+	}
 }

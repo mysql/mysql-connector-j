@@ -55,6 +55,7 @@ import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -620,12 +621,18 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 				final int batchOdkuStaticSqlLength = batchOdkuStaticSql.length;
 				
-				for (int i = 1; i < batchOdkuStaticSqlLength; i++) {
-					visitor.append(batchOdkuStaticSql[i])
-							.increment();
+				if (numBatch > 1) {
+					for (int i = 1; i < batchOdkuStaticSqlLength; i++) {
+						visitor.append(batchOdkuStaticSql[i])
+								.increment();
+					}
+				} else {
+					visitor.decrement().append(batchOdkuStaticSql[(batchOdkuStaticSqlLength - 1)]);
 				}
 			} else {
-				visitor.decrement().append(endOfValues);
+				// Everything after the values clause, but not ODKU, which today is nothing
+				// but a syntax error, but we should still not mangle the SQL!
+				visitor.decrement().append(this.staticSql[this.staticSql.length - 1]);
 			}
 		}
 
@@ -689,6 +696,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			this.statementComponents.toArray(asBytes);
 			
 			return asBytes;
+		}
+		
+		public String toString() {
+			StringBuffer buf = new StringBuffer();
+			Iterator iter = this.statementComponents.iterator();
+			while (iter.hasNext()) {
+				buf.append(new String((byte[]) iter.next()));
+			}
+			
+			return buf.toString();
 		}
 		
 	}
