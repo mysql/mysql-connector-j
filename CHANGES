@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-nn-nn-08 - Version 5.1.8
+07-16-08 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when
       streaming result sets are used.
       
