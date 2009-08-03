@@ -6180,4 +6180,32 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	/**
+	 * Bug #37458 - MySQL 5.1 returns generated keys in ascending order
+	 */
+	public void testBug37458() throws Exception {
+		try {
+			int ids[] = {13, 1, 8};
+			String vals[] = {"c", "a", "b"};
+			createTable("testBug37458", "(id int not null auto_increment, val varchar(100), " + 
+					"primary key (id), unique (val))");
+			stmt.executeUpdate("insert into testBug37458 values (1, 'a'), (8, 'b'), (13, 'c')");
+			pstmt = conn.prepareStatement("insert into testBug37458 (val) values (?) " +
+					"on duplicate key update id = last_insert_id(id)",
+					PreparedStatement.RETURN_GENERATED_KEYS);
+			for(int i = 0; i < ids.length; ++i) {
+				pstmt.setString(1, vals[i]);
+				pstmt.addBatch();
+			}
+			pstmt.executeBatch();
+			ResultSet keys = pstmt.getGeneratedKeys();
+			for(int i = 0; i < ids.length; ++i) {
+				assertTrue(keys.next());
+				assertEquals(ids[i], keys.getInt(1));
+			}
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }
