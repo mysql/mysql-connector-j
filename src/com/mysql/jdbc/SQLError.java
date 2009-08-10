@@ -1189,13 +1189,19 @@ public class SQLError {
 			if (dueToTimeout == DUE_TO_TIMEOUT_TRUE
 					|| dueToTimeout == DUE_TO_TIMEOUT_MAYBE) {
 
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.ServerPacketTimingInfo",  //$NON-NLS-1$
-								new Object[] {
-									new Long(timeSinceLastPacketReceivedMs),
-									new Long(timeSinceLastPacketMs)
-								}
-						));
+				if (lastPacketReceivedTimeMs != 0) {
+					Object[] timingInfo = {
+							new Long(timeSinceLastPacketReceivedMs),
+							new Long(timeSinceLastPacketMs)
+					};
+					exceptionMessageBuf.append(Messages
+							.getString("CommunicationsException.ServerPacketTimingInfo", //$NON-NLS-1$
+									timingInfo));
+				} else {
+					exceptionMessageBuf.append(Messages
+							.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", //$NON-NLS-1$
+									new Object[] { new Long(timeSinceLastPacketMs)}));
+				}
 
 				if (timeoutMessageBuf != null) {
 					exceptionMessageBuf.append(timeoutMessageBuf);
