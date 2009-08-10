@@ -8,6 +8,17 @@ nn-nn-09 - Version 5.1.9
       
     - Fix for a variant of Bug#41484 - ResultSet.find*(String) failed when using cached result set
       metadata.
+      
+    - Fixed BUG#46637 - When the driver encounters an error condition that causes it to create a 
+      CommunicationsException, it tries to build a friendly error message that helps diagnose 
+      what is wrong. However, if there has been no network packets received from the server, 
+      the error message contains bogus information like:
+
+      "The last packet successfully received from the server was 1,249,932,468,916 milliseconds ago.  
+      The last packet sent successfully to the server was 0 milliseconds ago."
+      
+      Now the error message states that it has never received any packets from the server in this
+      scenario.
 
 07-16-09 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when

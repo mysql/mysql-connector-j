@@ -1245,13 +1245,19 @@ public class SQLError {
 			if (conn != null && conn.getMaintainTimeStats()
 					&& !conn.getParanoid()) {
 				exceptionMessageBuf.append("\n\n"); //$NON-NLS-1$
-				Object[] timingInfo = {
-						new Long(timeSinceLastPacketReceivedMs),
-						new Long(timeSinceLastPacketMs)
-				};
-				exceptionMessageBuf.append(Messages
-						.getString("CommunicationsException.ServerPacketTimingInfo", //$NON-NLS-1$
-								timingInfo));
+				if (lastPacketReceivedTimeMs != 0) {
+					Object[] timingInfo = {
+							new Long(timeSinceLastPacketReceivedMs),
+							new Long(timeSinceLastPacketMs)
+					};
+					exceptionMessageBuf.append(Messages
+							.getString("CommunicationsException.ServerPacketTimingInfo", //$NON-NLS-1$
+									timingInfo));
+				} else {
+					exceptionMessageBuf.append(Messages
+							.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", //$NON-NLS-1$
+									new Object[] { new Long(timeSinceLastPacketMs)}));
+				}
 			}
 		}
 		

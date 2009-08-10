@@ -2655,5 +2655,22 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 		return true;
 	}
+	
+	public void testBug46637() throws Exception {
+		NonRegisteringDriver driver = new NonRegisteringDriver();
+		Properties props = new Properties();
+		copyBasePropertiesIntoProps(props, driver);
+		String hostname = getPortFreeHostname(props, driver);
+		UnreliableSocketFactory.flushAllHostLists();
+		UnreliableSocketFactory.downHost(hostname);
+		
+		try {
+			Connection noConn = getConnectionWithProps("socketFactory=testsuite.UnreliableSocketFactory");
+		} catch (SQLException sqlEx) {
+			assertTrue(sqlEx.getMessage().indexOf("has not received") != -1);
+		} finally {
+			UnreliableSocketFactory.flushAllHostLists();
+		}
+	}
 
 }
