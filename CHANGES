@@ -5,6 +5,9 @@ nn-nn-09 - Version 5.1.9
 
     - Fixed BUG#45040, adding missing tags from SVN import to BZR branch for
       5.1.
+      
+    - Fix for a variant of Bug#41484 - ResultSet.find*(String) failed when using cached result set
+      metadata.
 
 07-16-09 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when

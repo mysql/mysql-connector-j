@@ -505,6 +505,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public void initializeWithMetadata() throws SQLException {
 		this.rowData.setMetadata(this.fields);
 		
+		this.columnToIndexCache = new HashMap();
+		
 		if (this.profileSql || this.connection.getUseUsageAdvisor()) {
 			this.columnUsed = new boolean[this.fields.length];
 			this.pointOfOrigin = new Throwable();
@@ -729,8 +731,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		this.columnLabelToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
 		this.fullColumnNameToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
 		this.columnNameToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
-		this.columnToIndexCache = new HashMap();
-		
 		
 		// We do this in reverse order, so that the 'first' column
 		// with a given name ends up as the final mapping in the

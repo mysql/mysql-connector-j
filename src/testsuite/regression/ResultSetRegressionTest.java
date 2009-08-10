@@ -4883,4 +4883,41 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	
+	public void testBug41484_2() throws Exception {
+		Connection cachedRsmdConn = getConnectionWithProps("cacheResultSetMetadata=true");
+		
+		try {
+			createTable("bug41484", "(id int not null primary key, day date not null) DEFAULT CHARSET=utf8");
+			this.pstmt = cachedRsmdConn.prepareStatement("INSERT INTO bug41484(id, day) values(1, ?)");
+			this.pstmt.setInt(1, 20080509);
+			assertEquals(1, this.pstmt.executeUpdate());
+			this.pstmt.close();
+	
+			this.pstmt = cachedRsmdConn.prepareStatement("SELECT * FROM bug41484 WHERE id = ?");
+			this.pstmt.setInt(1, 1);
+			this.rs = this.pstmt.executeQuery();
+			this.rs.first();
+			this.rs.getString("day");
+			this.rs.close();
+			this.pstmt.close();
+	
+			this.pstmt = cachedRsmdConn.prepareStatement("INSERT INTO bug41484(id, day) values(2, ?)");
+			this.pstmt.setInt(1, 20090212);
+			assertEquals(1, this.pstmt.executeUpdate());
+			this.pstmt.close();
+	
+			this.pstmt = cachedRsmdConn.prepareStatement("SELECT * FROM bug41484 WHERE id = ?");
+			this.pstmt.setInt(1, 2);
+			this.rs = this.pstmt.executeQuery();
+			this.rs.first();
+			assertEquals(this.rs.getString(1), "2");
+			this.rs.getString("day");
+			this.rs.close();
+			
+			this.pstmt.close();
+		} finally {
+			cachedRsmdConn.close();
+		}
+	}
 }
