@@ -1136,35 +1136,27 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 	protected void checkClosed() throws SQLException {
 		if (this.isClosed) {
-			StringBuffer messageBuf = new StringBuffer(
-					"No operations allowed after connection closed.");
-
-			if (this.forcedClosedLocation != null || this.forceClosedReason != null) {
-				messageBuf
-				.append("Connection was implicitly closed ");
-			}
-			
-			if (this.forcedClosedLocation != null) {
-				messageBuf.append("\n\n at (stack trace):\n");
-				messageBuf.append(Util
-						.stackTraceToString(this.forcedClosedLocation));
-			}
-
-			if (this.forceClosedReason != null) {
-				if (this.forcedClosedLocation != null) {
-					messageBuf.append("\n\nDue ");
-				} else {
-					messageBuf.append("due ");
-				}
-				
-				messageBuf.append("to underlying exception/error:\n");
-				messageBuf.append(Util
-						.stackTraceToString(this.forceClosedReason));
-			}
-
-			throw SQLError.createSQLException(messageBuf.toString(),
-					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
+			throwConnectionClosedException();
 		}
+	}
+
+	private void throwConnectionClosedException() throws SQLException {
+		StringBuffer messageBuf = new StringBuffer(
+				"No operations allowed after connection closed.");
+
+		if (this.forcedClosedLocation != null || this.forceClosedReason != null) {
+			messageBuf
+			.append("Connection was implicitly closed by the driver.");
+		}
+
+		SQLException ex = SQLError.createSQLException(messageBuf.toString(),
+				SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
+		
+		if (this.forceClosedReason != null) {
+			ex.initCause(this.forceClosedReason);
+		}
+
+		throw ex;
 	}
 
 	/**
@@ -3114,9 +3106,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	Object getMutex() throws SQLException {
 		if (this.io == null) {
-			throw SQLError.createSQLException(
-					"Connection.close() has already been called. Invalid operation in this state.",
-					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
+			throwConnectionClosedException();
 		}
 
 		reportMetricsIfNeeded();

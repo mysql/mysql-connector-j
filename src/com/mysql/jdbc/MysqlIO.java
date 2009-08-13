@@ -52,6 +52,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.zip.Deflater;
 
+import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
+import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
 import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
@@ -2281,6 +2283,26 @@ class MysqlIO {
 	    	}
 
 	    	return rs;
+    	} catch (SQLException sqlEx) {
+    		if (callingStatement != null) {
+    			synchronized (callingStatement.cancelTimeoutMutex) {
+	    			if (callingStatement.wasCancelled) {
+						SQLException cause = null;
+						
+						if (callingStatement.wasCancelledByTimeout) {
+							cause = new MySQLTimeoutException();
+						} else {
+							cause = new MySQLStatementCancelledException();
+						}
+						
+						callingStatement.resetCancelledState();
+						
+						throw cause;
+					}
+    			}
+    		}
+    		
+    		throw sqlEx;
     	} finally {
     		this.statementExecutionDepth--;
     	}

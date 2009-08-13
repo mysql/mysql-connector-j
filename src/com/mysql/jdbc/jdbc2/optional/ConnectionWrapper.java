@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2009 Sun Microsystems
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -2609,5 +2609,14 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
 	public void setExceptionInterceptors(String exceptionInterceptors) {
 		this.mc.setExceptionInterceptors(exceptionInterceptors);
+	}
+
+	public boolean getQueryTimeoutKillsConnection() {
+		return this.mc.getQueryTimeoutKillsConnection();
+	}
+
+	public void setQueryTimeoutKillsConnection(
+			boolean queryTimeoutKillsConnection) {
+		this.mc.setQueryTimeoutKillsConnection(queryTimeoutKillsConnection);
 	}
 }

@@ -76,6 +76,7 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.ServerPreparedStatement;
 import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.StatementInterceptor;
+import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 
 /**
@@ -6206,6 +6207,37 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		} finally {
 			closeMemberJDBCResources();
+		}
+	}
+	
+	public void testBug34555() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return; // no KILL QUERY prior to this
+		}
+		
+		createTable("testBug34555", "(field1 int)", "INNODB");
+		this.stmt.executeUpdate("INSERT INTO testBug34555 VALUES (0)");
+		
+		final Connection lockerConn = getConnectionWithProps("");
+		lockerConn.setAutoCommit(false);
+		lockerConn.createStatement().execute("SELECT * FROM testBug34555 WHERE field1=0 FOR UPDATE");
+		
+		this.conn.setAutoCommit(false);
+		
+		this.pstmt = this.conn.prepareStatement("UPDATE testBug34555 SET field1=1 WHERE field1=?");
+		this.pstmt.setQueryTimeout(1);
+		this.pstmt.setInt(1, 0);
+		this.pstmt.addBatch();
+		this.pstmt.setInt(1, 2);
+		this.pstmt.addBatch();
+		
+		try {
+			this.pstmt.executeBatch();
+		} catch (BatchUpdateException batchEx) {
+			assertTrue(batchEx.getMessage().startsWith("Statement cancelled"));
+		} finally {
+			this.conn.setAutoCommit(true);
+			lockerConn.commit();
 		}
 	}
 }

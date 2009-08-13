@@ -19,6 +19,9 @@ nn-nn-09 - Version 5.1.9
       
       Now the error message states that it has never received any packets from the server in this
       scenario.
+      
+    - Added a new option, "queryTimeoutKillsConnection", when set to "true" will cause timeouts set
+      by Statement.setQueryTimeout() to forcibly kill the connection, not just the query.
 
 07-16-09 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when

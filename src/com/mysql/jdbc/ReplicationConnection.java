@@ -1,5 +1,5 @@
 /*
- Copyright  2004-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2004-2007 MySQL AB, 2008-2009 Sun Microsystems
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -2402,5 +2402,14 @@ public class ReplicationConnection implements Connection, PingTarget {
 
 	public void setExceptionInterceptors(String exceptionInterceptors) {
 		this.currentConnection.setExceptionInterceptors(exceptionInterceptors);
+	}
+
+	public boolean getQueryTimeoutKillsConnection() {
+		return this.currentConnection.getQueryTimeoutKillsConnection();
+	}
+
+	public void setQueryTimeoutKillsConnection(
+			boolean queryTimeoutKillsConnection) {
+		this.currentConnection.setQueryTimeoutKillsConnection(queryTimeoutKillsConnection);
 	}
 }

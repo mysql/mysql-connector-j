@@ -1628,4 +1628,9 @@ public interface ConnectionProperties {
 	public abstract void setExceptionInterceptors(String exceptionInterceptors);
 
 	public abstract String getExceptionInterceptors();
+	
+
+	public abstract boolean getQueryTimeoutKillsConnection();
+
+	public abstract void setQueryTimeoutKillsConnection(boolean queryTimeoutKillsConnection);
 }

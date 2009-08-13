@@ -89,40 +89,53 @@ public class StatementImpl implements Statement {
 			Thread cancelThread = new Thread() {
 
 				public void run() {
-					Connection cancelConn = null;
-					java.sql.Statement cancelStmt = null;
-
-					try {
-						synchronized (cancelTimeoutMutex) {
-							cancelConn = connection.duplicate();
-							cancelStmt = cancelConn.createStatement();
-							cancelStmt.execute("KILL QUERY " + connectionId);
+					if (connection.getQueryTimeoutKillsConnection()) {
+						try {
 							toCancel.wasCancelled = true;
 							toCancel.wasCancelledByTimeout = true;
+							connection.realClose(false, false, true, 
+									new MySQLStatementCancelledException(Messages.getString("Statement.ConnectionKilledDueToTimeout")));
+						} catch (NullPointerException npe) {
+							// not worth guarding against
+						} catch (SQLException sqlEx) {
+							caughtWhileCancelling = sqlEx;
 						}
-					} catch (SQLException sqlEx) {
-						caughtWhileCancelling = sqlEx;
-					} catch (NullPointerException npe) {
-						// Case when connection closed while starting to cancel
-						// We can't easily synchronize this, because then one thread
-						// can't cancel() a running query
-
-						// ignore, we shouldn't re-throw this, because the connection's
-						// already closed, so the statement has been timed out.
-					} finally {
-						if (cancelStmt != null) {
-							try {
-								cancelStmt.close();
-							} catch (SQLException sqlEx) {
-								throw new RuntimeException(sqlEx.toString());
+					} else {
+						Connection cancelConn = null;
+						java.sql.Statement cancelStmt = null;
+	
+						try {
+							synchronized (cancelTimeoutMutex) {
+								cancelConn = connection.duplicate();
+								cancelStmt = cancelConn.createStatement();
+								cancelStmt.execute("KILL QUERY " + connectionId);
+								toCancel.wasCancelled = true;
+								toCancel.wasCancelledByTimeout = true;
 							}
-						}
-
-						if (cancelConn != null) {
-							try {
-								cancelConn.close();
-							} catch (SQLException sqlEx) {
-								throw new RuntimeException(sqlEx.toString());
+						} catch (SQLException sqlEx) {
+							caughtWhileCancelling = sqlEx;
+						} catch (NullPointerException npe) {
+							// Case when connection closed while starting to cancel
+							// We can't easily synchronize this, because then one thread
+							// can't cancel() a running query
+	
+							// ignore, we shouldn't re-throw this, because the connection's
+							// already closed, so the statement has been timed out.
+						} finally {
+							if (cancelStmt != null) {
+								try {
+									cancelStmt.close();
+								} catch (SQLException sqlEx) {
+									throw new RuntimeException(sqlEx.toString());
+								}
+							}
+	
+							if (cancelConn != null) {
+								try {
+									cancelConn.close();
+								} catch (SQLException sqlEx) {
+									throw new RuntimeException(sqlEx.toString());
+								}
 							}
 						}
 					}

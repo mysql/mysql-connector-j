@@ -52,6 +52,8 @@ import com.mysql.jdbc.NotImplemented;
 import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
+import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
+import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 
 /**
  * DOCUMENT ME!
@@ -764,6 +766,24 @@ public class StatementsTest extends BaseTestCase {
 
 				assertTrue(this.rs.next());
 				assertEquals(1, this.rs.getInt(1));
+				
+				Connection forceCancel = getConnectionWithProps("queryTimeoutKillsConnection=true");
+				Statement forceStmt = forceCancel.createStatement();
+				forceStmt.setQueryTimeout(1);
+				
+				try {
+					forceStmt.execute("SELECT SLEEP(30)");
+					fail("Statement should have been cancelled");
+				} catch (MySQLTimeoutException timeout) {
+					// expected
+				}
+				
+				try {
+					forceCancel.setAutoCommit(true); // should fail too
+				} catch (SQLException sqlEx) {
+					assertTrue(sqlEx.getCause() instanceof MySQLStatementCancelledException);
+				}
+				
 			} finally {
 				if (this.rs != null) {
 					ResultSet toClose = this.rs;

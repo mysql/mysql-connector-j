@@ -1232,6 +1232,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.queriesBeforeRetryMaster"), //$NON-NLS-1$
 			"3.0.2", HA_CATEGORY, 7); //$NON-NLS-1$
 
+	private BooleanConnectionProperty queryTimeoutKillsConnection = new BooleanConnectionProperty(
+			"queryTimeoutKillsConnection", false, 
+			Messages.getString("ConnectionProperties.queryTimeoutKillsConnection"), "5.1.9", MISC_CATEGORY, Integer.MIN_VALUE);
+			
 	private BooleanConnectionProperty reconnectAtTxEnd = new BooleanConnectionProperty(
 			"reconnectAtTxEnd", false, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.reconnectAtTxEnd"), "3.0.10", //$NON-NLS-1$ //$NON-NLS-2$
@@ -4470,4 +4474,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return this.maxAllowedPacket.getValueAsInt();
 	}
 
+	public boolean getQueryTimeoutKillsConnection() {
+		return this.queryTimeoutKillsConnection.getValueAsBoolean();
+	}
+
+	public void setQueryTimeoutKillsConnection(boolean queryTimeoutKillsConnection) {
+		this.queryTimeoutKillsConnection.setValue(queryTimeoutKillsConnection);
+	}
 }
