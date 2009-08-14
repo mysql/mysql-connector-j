@@ -565,65 +565,29 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	public void testBug6966() throws Exception {
 		Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
 		props.setProperty("autoReconnect", "true");
+		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
 
-		// Re-build the connection information
-		int firstIndexOfHost = BaseTestCase.dbUrl.indexOf("//") + 2;
-		int lastIndexOfHost = BaseTestCase.dbUrl.indexOf("/", firstIndexOfHost);
-
-		String hostPortPair = BaseTestCase.dbUrl.substring(firstIndexOfHost,
-				lastIndexOfHost);
-
-		StringTokenizer st = new StringTokenizer(hostPortPair, ":");
-
-		String host = null;
-		String port = null;
-
-		if (st.hasMoreTokens()) {
-			String possibleHostOrPort = st.nextToken();
-
-			if (Character.isDigit(possibleHostOrPort.charAt(0)) && 
-					(possibleHostOrPort.indexOf(".") == -1 /* IPV4 */)  &&
-					(possibleHostOrPort.indexOf("::") == -1 /* IPV6 */)) {
-				port = possibleHostOrPort;
-				host = "localhost";
-			} else {
-				host = possibleHostOrPort;
-			}
-		}
-
-		if (st.hasMoreTokens()) {
-			port = st.nextToken();
-		}
-
-		if (host == null) {
-			host = "";
-		}
-
-		if (port == null) {
-			port = "3306";
-		}
-
-		StringBuffer newHostBuf = new StringBuffer();
-		newHostBuf.append(host);
-		newHostBuf.append(":65532"); // make sure the master fails
-		newHostBuf.append(",");
-		newHostBuf.append(host);
-		if (port != null) {
-			newHostBuf.append(":");
-			newHostBuf.append(port);
-		}
-
-		props.remove("PORT");
-
-		props.setProperty("HOST", newHostBuf.toString());
+		Properties urlProps = new NonRegisteringDriver().parseURL(this.dbUrl, null);
+		
+		String host = urlProps.getProperty(Driver.HOST_PROPERTY_KEY);
+		String port = urlProps.getProperty(Driver.PORT_PROPERTY_KEY);
+		
+		props.remove(Driver.HOST_PROPERTY_KEY);
+		props.remove(Driver.NUM_HOSTS_PROPERTY_KEY);
+		props.remove(Driver.HOST_PROPERTY_KEY + ".1");
+		props.remove(Driver.PORT_PROPERTY_KEY + ".1");
+		
 		props.setProperty("queriesBeforeRetryMaster", "50");
 		props.setProperty("maxReconnects", "1");
 
+		UnreliableSocketFactory.mapHost("master", host);
+		UnreliableSocketFactory.mapHost("slave", host);
+		UnreliableSocketFactory.downHost("master");
+		
 		Connection failoverConnection = null;
 
 		try {
-			failoverConnection = getConnectionWithProps("jdbc:mysql://"
-					+ newHostBuf.toString() + "/", props);
+			failoverConnection = getConnectionWithProps("jdbc:mysql://master:" + port + ",slave:" + port + "/", props);
 			failoverConnection.setAutoCommit(false);
 
 			String originalConnectionId = getSingleIndexedValueWithQuery(
@@ -634,6 +598,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 
 			((com.mysql.jdbc.Connection)failoverConnection).clearHasTriedMaster();
+			UnreliableSocketFactory.dontDownHost("master");
 			
 			failoverConnection.setAutoCommit(true);
 
@@ -646,6 +611,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 			failoverConnection.createStatement().executeQuery("SELECT 1");
 		} finally {
+			UnreliableSocketFactory.flushAllHostLists();
+			
 			if (failoverConnection != null) {
 				failoverConnection.close();
 			}
@@ -2672,5 +2639,41 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			UnreliableSocketFactory.flushAllHostLists();
 		}
 	}
+	
+	public void testBug32216() throws Exception {
+		checkBug32216("www.mysql.com", "12345", "my_database");
+		checkBug32216("www.mysql.com", null, "my_database");
+	}
+	
+	private void checkBug32216(String host, String port, String dbname)
+        throws SQLException
+    {
+		NonRegisteringDriver driver = new NonRegisteringDriver();
+		
+        StringBuffer url = new StringBuffer("jdbc:mysql://");
+        url.append(host);
+
+        if (port != null) {
+            url.append(':');
+            url.append(port);
+        }
+
+        url.append('/');
+        url.append(dbname);
+
+        Properties result = driver.parseURL(url.toString(), new Properties());
+
+        assertEquals("hostname not equal", host, result
+                .getProperty(Driver.HOST_PROPERTY_KEY));
+        if (port != null) {
+        	assertEquals("port not equal", port, result
+                .getProperty(Driver.PORT_PROPERTY_KEY));
+        } else {
+        	assertEquals("port default incorrect", "3306", result.getProperty(Driver.PORT_PROPERTY_KEY));	
+        }
+        
+        assertEquals("dbname not equal", dbname, result
+                .getProperty(Driver.DBNAME_PROPERTY_KEY));
+    }
 
 }

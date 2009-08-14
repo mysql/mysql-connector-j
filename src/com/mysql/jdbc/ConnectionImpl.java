@@ -727,16 +727,19 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		this.serverVariables = new HashMap();
 		this.hostList = new ArrayList();
 
+		int numHosts = Integer.parseInt(info.getProperty(Driver.NUM_HOSTS_PROPERTY_KEY));
+		
 		if (hostToConnectTo == null) {
 			this.host = "localhost";
 			this.hostList.add(this.host);
-		} else if (hostToConnectTo.indexOf(',') != -1) {
+		} else if (numHosts > 1) {
 			// multiple hosts separated by commas (failover)
-			StringTokenizer hostTokenizer = new StringTokenizer(
-					hostToConnectTo, ",", false);
-
-			while (hostTokenizer.hasMoreTokens()) {
-				this.hostList.add(hostTokenizer.nextToken().trim());
+			
+			for (int i = 0; i < numHosts; i++) {
+				int index = i + 1;
+				
+				this.hostList.add(info.getProperty(Driver.HOST_PROPERTY_KEY + "." + index) + 
+						":" + info.getProperty(Driver.PORT_PROPERTY_KEY + "." + index));
 			}
 		} else {
 			this.host = hostToConnectTo;

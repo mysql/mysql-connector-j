@@ -50,6 +50,7 @@ import java.util.StringTokenizer;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
@@ -949,57 +950,17 @@ public class ConnectionTest extends BaseTestCase {
 			props.setProperty("autoReconnect", "true");
 			props.setProperty("failOverReadOnly", "false");
 	
-			// Re-build the connection information
-			int firstIndexOfHost = BaseTestCase.dbUrl.indexOf("//") + 2;
-			int lastIndexOfHost = BaseTestCase.dbUrl.indexOf("/", firstIndexOfHost);
-	
-			String hostPortPair = BaseTestCase.dbUrl.substring(firstIndexOfHost,
-					lastIndexOfHost);
-			System.out.println(hostPortPair);
-	
-			StringTokenizer st = new StringTokenizer(hostPortPair, ":");
-	
-			String host = null;
-			String port = null;
-	
-			if (st.hasMoreTokens()) {
-				String possibleHostOrPort = st.nextToken();
-	
-				if (Character.isDigit(possibleHostOrPort.charAt(0)) && 
-						(possibleHostOrPort.indexOf(".") == -1 /* IPV4 */)  &&
-						(possibleHostOrPort.indexOf("::") == -1 /* IPV6 */)) {
-					port = possibleHostOrPort;
-					host = "localhost";
-				} else {
-					host = possibleHostOrPort;
-				}
-			}
-	
-			if (host == null) {
-				host = "localhost"; 
-			}
+			Properties urlProps = new NonRegisteringDriver().parseURL(this.dbUrl, null);
 			
-			if (st.hasMoreTokens()) {
-				port = st.nextToken();
-			}
+			String host = urlProps.getProperty(Driver.HOST_PROPERTY_KEY);
+			String port = urlProps.getProperty(Driver.PORT_PROPERTY_KEY);
 	
-			StringBuffer newHostBuf = new StringBuffer();
-			newHostBuf.append(host);
-			if (port != null) {
-				newHostBuf.append(":");
-				newHostBuf.append(port);
-			}
-			newHostBuf.append(",");
-			newHostBuf.append(host);
-			if (port != null) {
-				newHostBuf.append(":");
-				newHostBuf.append(port);
-			}
-	
-			props
-					.put(NonRegisteringDriver.HOST_PROPERTY_KEY, newHostBuf
-							.toString());
-	
+			props.setProperty(Driver.HOST_PROPERTY_KEY + ".1", host);
+			props.setProperty(Driver.PORT_PROPERTY_KEY + ".1", port);
+			props.setProperty(Driver.HOST_PROPERTY_KEY + ".2", host);
+			props.setProperty(Driver.PORT_PROPERTY_KEY + ".2", port);
+			props.setProperty(Driver.NUM_HOSTS_PROPERTY_KEY, "2");
+
 			Connection failoverConnection = null;
 	
 			try {

@@ -22,6 +22,15 @@ nn-nn-09 - Version 5.1.9
       
     - Added a new option, "queryTimeoutKillsConnection", when set to "true" will cause timeouts set
       by Statement.setQueryTimeout() to forcibly kill the connection, not just the query.
+      
+    - Fixed BUG#32216, "PORT" property filled in by Driver.parseURL() not always present. The driver 
+      will now always fill in the "PORT" (using 3306 if not specified) property, and the "HOST" property 
+      (using "localhost" if not specified) when parseURL() is called. The driver also parses a list of hosts 
+      into HOST.n and PORT.n properties as well as adding a property "NUM_HOSTS" for the number of hosts 
+      it has found. If a list of hosts is passed to the driver, "HOST" and "PORT" will be set to the 
+      values given by "HOST.1" and "PORT.1" respectively. This change has centralized and cleaned up a large
+      swath of code used to generate lists of hosts, both for load-balanced and fault tolerant connections and
+      their tests.
 
 07-16-09 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when

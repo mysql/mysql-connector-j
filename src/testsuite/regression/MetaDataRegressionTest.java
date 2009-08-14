@@ -1704,15 +1704,19 @@ public class MetaDataRegressionTest extends BaseTestCase {
 				new Properties());
 		
 		boolean foundHost = false;
+		boolean foundPort = false;
 		
 		for (int i = 0; i < dpi.length; i++) {
-			if ("bogus:9999".equals(dpi[i].value)) {
+			if ("bogus".equals(dpi[i].value)) {
 				foundHost = true;
-				break;
+			}
+			
+			if ("9999".equals(dpi[i].value)) {
+				foundPort = true;
 			}
 		}
 		
-		assertTrue(foundHost);
+		assertTrue(foundHost && foundPort);
 	}
 	
 	private void testAbsenceOfMetadataForQuery(String query) throws Exception {
