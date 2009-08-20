@@ -4920,4 +4920,21 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			cachedRsmdConn.close();
 		}
 	}
+	
+	public void testBug27431() throws Exception {
+		createTable("bug27431", "(`ID` int(20) NOT NULL auto_increment,"
+		  + "`Name` varchar(255) NOT NULL default '',"
+		  + "PRIMARY KEY  (`ID`))");
+		
+		this.stmt.executeUpdate("INSERT INTO bug27431 (`ID`, `Name`) VALUES 	(1, 'Lucho'),(2, 'Lily'),(3, 'Kiro')");
+
+		Statement updStmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY,	ResultSet.CONCUR_UPDATABLE);
+		this.rs = updStmt.executeQuery("SELECT ID, Name FROM bug27431");
+
+		while(this.rs.next()) {
+		   this.rs.deleteRow();
+		}
+		
+		assertEquals(0, getRowCount("bug27431"));
+	}
 }

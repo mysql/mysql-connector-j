@@ -39,6 +39,9 @@ nn-nn-09 - Version 5.1.9
       the vendor error code is not hard-coded to 1265 as in the bug report, because the server returns different
       error codes for different types of truncations, and we did not want to mask those.
       
+    - Fixed Bug#27431 - ResultSet.deleteRow() advances the cursor. The driver now places the cursor on the prior
+      row in the result set, or before the start of the result set if the result set is empty after the deletion.
+      
 07-16-09 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when
       streaming result sets are used.

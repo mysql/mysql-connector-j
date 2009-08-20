@@ -505,6 +505,9 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 			this.deleter.executeUpdate();
 			this.rowData.removeRow(this.rowData.getCurrentRowNumber());
+			
+			// position on previous row - Bug#27431
+			previous();
 		} catch (java.io.UnsupportedEncodingException encodingEx) {
 			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.39", //$NON-NLS-1$
 					new Object[] { this.charEncoding }) //$NON-NLS-1$
