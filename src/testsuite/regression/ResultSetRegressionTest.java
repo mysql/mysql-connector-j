@@ -4937,4 +4937,39 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		
 		assertEquals(0, getRowCount("bug27431"));
 	}
+	
+	public void testBug43759() throws Exception {
+        createTable("testtable_bincolumn", "(" +
+                "bincolumn binary(8) NOT NULL, " +
+                "PRIMARY KEY (bincolumn)" +
+                ")", "innodb");
+        
+        String pkValue1 = "0123456789ABCD90";
+        String pkValue2 = "0123456789ABCD00";
+        // put some data in it
+       this.stmt.executeUpdate("INSERT INTO testtable_bincolumn (bincolumn) " +
+                "VALUES (unhex('"+pkValue1+"')), (unhex('"+pkValue2+"'))");
+
+        // cause the bug
+        Statement updStmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        this.rs = updStmt.executeQuery("SELECT * FROM testtable_bincolumn WHERE bincolumn = unhex('"+pkValue1+"')");
+        assertTrue(this.rs.next());
+        this.rs.deleteRow();
+        
+        // At this point the row with pkValue1 should be deleted.  We'll select it back to see.
+        // If the row comes back, the testcase has failed.
+
+        this.rs = this.stmt.executeQuery("SELECT * FROM testtable_bincolumn WHERE bincolumn = unhex('"+pkValue1+"')");
+        assertFalse(rs.next());
+
+        // Now, show a case where it happens to work, because the binary data is different
+        updStmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        this.rs = updStmt.executeQuery("SELECT * FROM testtable_bincolumn WHERE bincolumn = unhex('"+pkValue2+"')");
+        assertTrue (this.rs.next());
+        rs.deleteRow();
+
+        
+        this.rs = this.stmt.executeQuery("SELECT * FROM testtable_bincolumn WHERE bincolumn = unhex('"+pkValue2+"')");
+        assertFalse(rs.next());
+	}
 }

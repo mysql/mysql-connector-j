@@ -478,41 +478,29 @@ public class UpdatableResultSet extends ResultSetImpl {
 			characterEncoding = this.connection.getEncoding();
 		}
 
-		//
-		// FIXME: Use internal routines where possible for character
-		// conversion!
-		try {
-			int numKeys = this.primaryKeyIndicies.size();
+		int numKeys = this.primaryKeyIndicies.size();
 
-			if (numKeys == 1) {
-				int index = ((Integer) this.primaryKeyIndicies.get(0))
+		if (numKeys == 1) {
+			int index = ((Integer) this.primaryKeyIndicies.get(0))
+					.intValue();
+			byte[] currentVal = this.thisRow.getColumnValue(index);
+			this.deleter.setBytes(1, currentVal);
+		} else {
+			for (int i = 0; i < numKeys; i++) {
+				int index = ((Integer) this.primaryKeyIndicies.get(i))
 						.intValue();
-				String currentVal = ((characterEncoding == null) ? new String(
-						(byte[]) this.thisRow.getColumnValue(index)) : new String(
-						(byte[]) this.thisRow.getColumnValue(index), characterEncoding));
-				this.deleter.setString(1, currentVal);
-			} else {
-				for (int i = 0; i < numKeys; i++) {
-					int index = ((Integer) this.primaryKeyIndicies.get(i))
-							.intValue();
-					String currentVal = ((characterEncoding == null) ? new String(
-							(byte[]) this.thisRow.getColumnValue(index))
-							: new String((byte[]) this.thisRow.getColumnValue(index),
-									characterEncoding));
-					this.deleter.setString(i + 1, currentVal);
-				}
+				byte[] currentVal = this.thisRow.getColumnValue(index);
+						
+				this.deleter.setBytes(i + 1, currentVal);
 			}
-
-			this.deleter.executeUpdate();
-			this.rowData.removeRow(this.rowData.getCurrentRowNumber());
-			
-			// position on previous row - Bug#27431
-			previous();
-		} catch (java.io.UnsupportedEncodingException encodingEx) {
-			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.39", //$NON-NLS-1$
-					new Object[] { this.charEncoding }) //$NON-NLS-1$
-					, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
+
+		this.deleter.executeUpdate();
+		this.rowData.removeRow(this.rowData.getCurrentRowNumber());
+		
+		// position on previous row - Bug#27431
+		previous();
+		
 	}
 
 	private synchronized void extractDefaultValues() throws SQLException {

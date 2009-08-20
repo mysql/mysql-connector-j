@@ -42,6 +42,9 @@ nn-nn-09 - Version 5.1.9
     - Fixed Bug#27431 - ResultSet.deleteRow() advances the cursor. The driver now places the cursor on the prior
       row in the result set, or before the start of the result set if the result set is empty after the deletion.
       
+    - Fixed Bug#43759 - ResultSet.deleteRow() generates corrupt DELETE statement for primary keys with binary
+      data.
+      
 07-16-09 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when
       streaming result sets are used.
