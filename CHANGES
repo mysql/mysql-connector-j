@@ -31,6 +31,9 @@ nn-nn-09 - Version 5.1.9
       values given by "HOST.1" and "PORT.1" respectively. This change has centralized and cleaned up a large
       swath of code used to generate lists of hosts, both for load-balanced and fault tolerant connections and
       their tests.
+      
+    - Fixed the ResultSet side of BUG#23584 - Calendar discared when retrieving dates from server-side prepared
+      statements. The other cases of this bug were fixed when "useLegacyDatetimeCode=false" became the default.
 
 07-16-09 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when

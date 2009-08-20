@@ -2146,8 +2146,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public java.sql.Date getDate(int columnIndex, Calendar cal)
 			throws SQLException {
 		if (this.isBinaryEncoded) {
-			return getNativeDate(columnIndex, (cal != null) ? cal.getTimeZone()
-					: this.getDefaultTimeZone());
+			return getNativeDate(columnIndex, cal);
 		}
 
 		if (!this.useFastDateParsing) {
@@ -3864,7 +3863,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
-	protected java.sql.Date getNativeDate(int columnIndex, TimeZone tz)
+	protected java.sql.Date getNativeDate(int columnIndex, Calendar cal)
 			throws SQLException {
 		checkRowPos();
 		checkColumnBounds(columnIndex);
@@ -3878,9 +3877,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (mysqlType == MysqlDefs.FIELD_TYPE_DATE) {
 
 			dateToReturn = this.thisRow.getNativeDate(columnIndexMinusOne, 
-					this.connection, this);	
+					this.connection, this, cal);	
 		} else {
-
+			TimeZone tz = (cal != null) ? cal.getTimeZone()
+					: this.getDefaultTimeZone();
+			
 			boolean rollForward = (tz != null && !tz.equals(this.getDefaultTimeZone()));
 			
 			dateToReturn = (Date) this.thisRow.getNativeDateTimeValue(columnIndexMinusOne,

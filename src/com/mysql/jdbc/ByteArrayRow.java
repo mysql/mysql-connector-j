@@ -254,7 +254,7 @@ public class ByteArrayRow extends ResultSetRow {
 	}
 
 	public Date getNativeDate(int columnIndex, ConnectionImpl conn,
-			ResultSetImpl rs) throws SQLException {
+			ResultSetImpl rs, Calendar cal) throws SQLException {
 		byte[] columnValue = this.internalRowData[columnIndex];
 
 		if (columnValue == null) {
@@ -262,7 +262,7 @@ public class ByteArrayRow extends ResultSetRow {
 		}
 
 		return getNativeDate(columnIndex, columnValue, 0, columnValue.length,
-				conn, rs);
+				conn, rs, cal);
 	}
 
 	public Time getNativeTime(int columnIndex, Calendar targetCalendar,

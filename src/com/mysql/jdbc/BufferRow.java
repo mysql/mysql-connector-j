@@ -708,7 +708,7 @@ public class BufferRow extends ResultSetRow {
 	}
 
 	public java.sql.Date getNativeDate(int columnIndex, ConnectionImpl conn,
-			ResultSetImpl rs) throws SQLException {
+			ResultSetImpl rs, Calendar cal) throws SQLException {
 		if (isNull(columnIndex)) {
 			return null;
 		}
@@ -720,7 +720,7 @@ public class BufferRow extends ResultSetRow {
 		int offset = this.rowFromServer.getPosition();
 		
 		return getNativeDate(columnIndex, this.rowFromServer.getByteBuffer(),
-				offset, (int) length, conn, rs);
+				offset, (int) length, conn, rs, cal);
 	}
 
 	public Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar,

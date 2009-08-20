@@ -333,7 +333,7 @@ public abstract class ResultSetRow {
 	public abstract long getLong(int columnIndex) throws SQLException;
 
 	protected java.sql.Date getNativeDate(int columnIndex, byte[] bits,
-			int offset, int length, ConnectionImpl conn, ResultSetImpl rs)
+			int offset, int length, ConnectionImpl conn, ResultSetImpl rs, Calendar cal)
 			throws SQLException {
 
 		int year = 0;
@@ -365,15 +365,15 @@ public abstract class ResultSetRow {
 		}
 
 		if (!rs.useLegacyDatetimeCode) {
-			return TimeUtil.fastDateCreate(year, month, day, null);
+			return TimeUtil.fastDateCreate(year, month, day, cal);
 		}
 		
-		return rs.fastDateCreate(rs.getCalendarInstanceForSessionOrNew(), year,
+		return rs.fastDateCreate(cal == null ? rs.getCalendarInstanceForSessionOrNew() : cal, year,
 				month, day);
 	}
 
 	public abstract Date getNativeDate(int columnIndex, ConnectionImpl conn,
-			ResultSetImpl rs) throws SQLException;
+			ResultSetImpl rs, Calendar cal) throws SQLException;
 
 	protected Object getNativeDateTimeValue(int columnIndex, byte[] bits,
 			int offset, int length, Calendar targetCalendar, int jdbcType,
