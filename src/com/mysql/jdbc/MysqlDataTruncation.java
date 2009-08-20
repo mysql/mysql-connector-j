@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2004 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2004 MySQL AB, 2008-2009 Sun Microsystems
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as 
@@ -39,6 +39,8 @@ public class MysqlDataTruncation extends DataTruncation {
 
 	private String message;
 
+	private int vendorErrorCode;
+	
 	/**
 	 * Creates a new MysqlDataTruncation exception/warning.
 	 * 
@@ -56,10 +58,15 @@ public class MysqlDataTruncation extends DataTruncation {
 	 *            size actually used
 	 */
 	public MysqlDataTruncation(String message, int index, boolean parameter,
-			boolean read, int dataSize, int transferSize) {
+			boolean read, int dataSize, int transferSize, int vendorErrorCode) {
 		super(index, parameter, read, dataSize, transferSize);
 
 		this.message = message;
+		this.vendorErrorCode = vendorErrorCode;
+	}
+
+	public int getErrorCode() {
+		return this.vendorErrorCode;
 	}
 
 	/*

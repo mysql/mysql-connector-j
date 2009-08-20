@@ -3553,7 +3553,7 @@ class MysqlIO {
                 appendInnodbStatusInformation(xOpen, errorBuf);
 
                 if (xOpen != null && xOpen.startsWith("22")) {
-                	throw new MysqlDataTruncation(errorBuf.toString(), 0, true, false, 0, 0);
+                	throw new MysqlDataTruncation(errorBuf.toString(), 0, true, false, 0, 0, errno);
                 } else {
                 	throw SQLError.createSQLException(errorBuf.toString(), xOpen, errno, getExceptionInterceptor());
                 }

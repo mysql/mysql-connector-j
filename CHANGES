@@ -35,6 +35,10 @@ nn-nn-09 - Version 5.1.9
     - Fixed the ResultSet side of BUG#23584 - Calendar discared when retrieving dates from server-side prepared
       statements. The other cases of this bug were fixed when "useLegacyDatetimeCode=false" became the default.
 
+    - Fixed Bug#44324 - Data truncation exceptions did not return the vendor error code from the server. Note that
+      the vendor error code is not hard-coded to 1265 as in the bug report, because the server returns different
+      error codes for different types of truncations, and we did not want to mask those.
+      
 07-16-09 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when
       streaming result sets are used.

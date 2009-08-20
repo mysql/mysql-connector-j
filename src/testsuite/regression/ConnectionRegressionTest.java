@@ -54,6 +54,8 @@ import testsuite.UnreliableSocketFactory;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.Messages;
+import com.mysql.jdbc.MysqlDataTruncation;
+import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationDriver;
@@ -2675,5 +2677,19 @@ public class ConnectionRegressionTest extends BaseTestCase {
         assertEquals("dbname not equal", dbname, result
                 .getProperty(Driver.DBNAME_PROPERTY_KEY));
     }
+	
+	public void testBug44324() throws Exception {
+		createTable(
+				"bug44324",
+				"(Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, SomeVChar VARCHAR(10)) ENGINE=MyISAM;");
+
+		try {
+			this.stmt
+					.executeUpdate("INSERT INTO bug44324 values (null, 'Some text much longer than 10 characters')");
+		} catch (MysqlDataTruncation sqlEx) {
+			assertTrue(0 != sqlEx.getErrorCode());
+		}
+
+	}
 
 }

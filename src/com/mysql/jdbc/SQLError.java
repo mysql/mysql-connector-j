@@ -755,7 +755,7 @@ public class SQLError {
 				if (forTruncationOnly) {
 					if (code == 1265 || code == 1264) {
 						DataTruncation newTruncation = new MysqlDataTruncation(
-								warnRs.getString("Message"), 0, false, false, 0, 0); //$NON-NLS-1$
+								warnRs.getString("Message"), 0, false, false, 0, 0, code); //$NON-NLS-1$
 
 						if (currentWarning == null) {
 							currentWarning = newTruncation;
