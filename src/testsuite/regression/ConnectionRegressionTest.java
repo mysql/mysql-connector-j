@@ -48,6 +48,10 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.sql.XAConnection;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
@@ -61,6 +65,9 @@ import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationDriver;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
+import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
+import com.mysql.jdbc.jdbc2.optional.MysqlXid;
+import com.mysql.jdbc.jdbc2.optional.SuspendableXAConnection;
 import com.mysql.jdbc.log.StandardLogger;
 
 /**
@@ -2690,6 +2697,32 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			assertTrue(0 != sqlEx.getErrorCode());
 		}
 
+	}
+	
+	public void testBug46925() throws Exception {
+		MysqlXADataSource xads1 = new MysqlXADataSource();
+		MysqlXADataSource xads2 = new MysqlXADataSource();
+
+		Xid txid = new MysqlXid(new byte[] {0x1}, new byte[] {0xf}, 3306);
+		
+		xads1.setPinGlobalTxToPhysicalConnection(true);
+		xads1.setUrl(dbUrl);
+		
+		xads2.setPinGlobalTxToPhysicalConnection(true);
+		xads2.setUrl(dbUrl);
+		
+		XAConnection c1 = xads1.getXAConnection();
+		assertTrue(c1 instanceof SuspendableXAConnection);
+		// start a transaction on one connection
+		c1.getXAResource().start(txid, XAResource.TMNOFLAGS);
+		c1.getXAResource().end(txid, XAResource.TMSUCCESS);
+		
+		XAConnection c2 = xads2.getXAConnection();
+		assertTrue(c2 instanceof SuspendableXAConnection);
+		// prepare on another one. Since we are using a "pinned" connection
+		// we should have the same "currentXAConnection" for both SuspendableXAConnection 
+		c2.getXAResource().prepare(txid); // this will fail without the fix.
+		c2.getXAResource().commit(txid,false);
 	}
 
 }
