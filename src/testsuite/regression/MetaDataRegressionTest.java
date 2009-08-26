@@ -2553,4 +2553,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		
 		assertTrue("Didn't find any columns for table named 'testBug31187' in database " + this.conn.getCatalog(), found);
 	}
+	
+	public void testBug44508() throws Exception {
+		DatabaseMetaData dbmd = this.conn.getMetaData();
+
+		this.rs = dbmd.getSuperTypes("", "", "");
+		ResultSetMetaData rsmd = this.rs.getMetaData();
+
+		assertEquals("TYPE_CAT", rsmd.getColumnName(1)); // Gives TABLE_CAT
+		assertEquals("TYPE_SCHEM", rsmd.getColumnName(2)); // Gives TABLE_SCHEM
+	}
 }

@@ -48,6 +48,8 @@ nn-nn-09 - Version 5.1.9
     - Fixed Bug#46925 - Suspendable XA connections were not pinned to the XID for the global transaction, leading
       to failure when attempting to suspend/resume/commit from different logical XA connections.
       
+    - Fixed Bug#44508 - DatabaseMetadata.getSuperTypes() returns result set with incorrect column names.
+      
 07-16-09 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when
       streaming result sets are used.

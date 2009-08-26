@@ -4558,8 +4558,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	public java.sql.ResultSet getSuperTypes(String arg0, String arg1,
 			String arg2) throws SQLException {
 		Field[] fields = new Field[6];
-		fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 32);
-		fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 32);
+		fields[0] = new Field("", "TYPE_CAT", Types.CHAR, 32);
+		fields[1] = new Field("", "TYPE_SCHEM", Types.CHAR, 32);
 		fields[2] = new Field("", "TYPE_NAME", Types.CHAR, 32);
 		fields[3] = new Field("", "SUPERTYPE_CAT", Types.CHAR, 32);
 		fields[4] = new Field("", "SUPERTYPE_SCHEM", Types.CHAR, 32);
