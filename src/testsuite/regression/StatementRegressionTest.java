@@ -6258,4 +6258,27 @@ public class StatementRegressionTest extends BaseTestCase {
 		
 		this.pstmt.executeBatch();
 	}
+	
+	public void testBug31193() throws Exception {
+		try {
+			createTable("bug31193", "(sometime datetime, junk text)");
+			Connection fetchConn = getConnectionWithProps("useCursorFetch=true");
+			Statement fetchStmt = fetchConn.createStatement();
+			
+			fetchStmt.setFetchSize(10000);
+			
+			assertEquals(1, fetchStmt.executeUpdate("INSERT INTO bug31193 (sometime) values ('2007-01-01 12:34:56.7')"));
+			this.rs = fetchStmt.executeQuery("SELECT * FROM bug31193");
+	        this.rs.next();
+	        String badDatetime = this.rs.getString("sometime");
+	        
+			this.rs = fetchStmt.executeQuery("SELECT sometime FROM bug31193");
+	        this.rs.next();
+	        String goodDatetime = this.rs.getString("sometime");
+	        assertEquals(goodDatetime, badDatetime);
+			
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
 }
