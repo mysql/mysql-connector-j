@@ -196,6 +196,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		
 		String valuesClause;
 		
+		boolean parametersInDuplicateKeyClause = false;
+		
 		/**
 		 * Represents the "parsed" state of a client-side
 		 * prepared statement, with the statement broken up into
@@ -341,6 +343,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					if ((c == '?') && !inQuotes && !inQuotedId) {
 						endpointList.add(new int[] { lastParmEnd, i });
 						lastParmEnd = i + 1;
+						
+						if (isOnDuplicateKeyUpdate && i > locationOfOnDuplicateKeyUpdate) {
+							parametersInDuplicateKeyClause = true;
+						}
 					}
 
 					if (!inQuotes && (i < stopLookingForLimitClause)) {
@@ -425,7 +431,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				this.canRewriteAsMultiValueInsert = PreparedStatement
 						.canRewrite(sql, this.isOnDuplicateKeyUpdate,
 								this.locationOfOnDuplicateKeyUpdate,
-								this.statementStartPos);
+								this.statementStartPos) && !this.parametersInDuplicateKeyClause;
 
 				if (this.canRewriteAsMultiValueInsert
 						&& conn.getRewriteBatchedStatements()) {
@@ -814,21 +820,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	protected boolean usingAnsiMode;
 
 	protected String batchedValuesClause;
-
-	/** Where does the statement text actually start? */
-	
-	private int statementAfterCommentsPos;
-
-	/**
-	 * have we checked whether we can rewrite this statement as a multi-value
-	 * insert?
-	 */
-
-	private boolean hasCheckedForRewrite = false;
-
-	/** Can we actually rewrite this statement as a multi-value insert? */
-
-	private boolean canRewrite = false;
 
 	private boolean doPingInstead;
 	private SimpleDateFormat ddf;
@@ -2953,8 +2944,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		for (int j = 0; j < this.parameterCount; j++) {
 			this.isStream[j] = false;
 		}
-		
-		this.statementAfterCommentsPos = this.parseInfo.statementStartPos;
 	}
 
 	boolean isNull(int paramIndex) {

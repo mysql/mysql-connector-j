@@ -50,6 +50,10 @@ nn-nn-09 - Version 5.1.9
       
     - Fixed Bug#44508 - DatabaseMetadata.getSuperTypes() returns result set with incorrect column names.
       
+    - Fixed Bug#46788 - Batched prepared statements with ON DUPLICATE KEY UPDATE are rewritten incorrectly when
+      when there are parameters as part of the UPDATE clause. Statements of this form can not be rewritten
+      as multi-value INSERTs so they are rewritten into multi-statements instead.
+
 07-16-09 - Version 5.1.8
     - Fixed BUG#44588 - Fixed error message for connection exceptions when
       streaming result sets are used.

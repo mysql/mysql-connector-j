@@ -6240,4 +6240,22 @@ public class StatementRegressionTest extends BaseTestCase {
 			lockerConn.commit();
 		}
 	}
+	
+	public void testBug46788() throws Exception {
+		createTable("testBug46788", "(modified varchar(32), id varchar(32))");
+		
+		Connection rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true");
+		
+		this.pstmt = rewriteConn.prepareStatement("insert into testBug46788 (modified,id) values (?,?) ON DUPLICATE KEY UPDATE modified=?");
+
+		this.pstmt.setString(1, "theID");
+		this.pstmt.setString(2, "Hello_world_");
+		this.pstmt.setString(3, "Hello_world_");
+		
+		for (int i = 0; i < 10; i++) {
+			this.pstmt.addBatch();
+		}
+		
+		this.pstmt.executeBatch();
+	}
 }
