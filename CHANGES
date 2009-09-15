@@ -3,6 +3,9 @@
 
 nn-nn-09 - Version 5.1.9
 
+    - The driver has been OSGi-ified. The bundle symbolic name is "com.mysql.jdbc", see META-INF/MANIFEST.MF to see
+      what interfaces we export.
+      
     - Fixed BUG#45040, adding missing tags from SVN import to BZR branch for
       5.1.
       

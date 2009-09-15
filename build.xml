@@ -29,7 +29,7 @@
 
 	<property name="major_version" value="5"/>
 	<property name="minor_version" value="1"/>
-	<property name="subminor_version" value="8"/>
+	<property name="subminor_version" value="9"/>
 	<property name="version_status" value=""/>
 
 	<property name="version" value="${major_version}.${minor_version}.${subminor_version}${version_status}"/>
@@ -383,6 +383,27 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<echo file="${buildDir}/${fullProdName}/META-INF/services/java.sql.Driver"
 			message="com.mysql.jdbc.Driver" />
 
+		<property name="osgid-version" value="${major_version}.${minor_version}.${subminor_version}"/>
+		
+		<property name="jee-imports" value="javax.naming,javax.naming.spi,javax.sql,javax.transaction.xa;version=&quot;[1.0.1, 2.0.0)&quot;;resolution:=optional" />
+		<property name="crypto-imports" value="javax.net,javax.net.ssl;version=&quot;[1.0.1, 2.0.0)&quot;;resolution:=optional" />
+		<property name="jdbc4-imports" value="javax.xml.parsers, javax.xml.stream,javax.xml.transform,javax.xml.transform.dom,javax.xml.transform.sax,javax.xml.transform.stax,javax.xml.transform.stream,org.w3c.dom,org.xml.sax,org.xml.sax.helpers;resolution:=optional" />
+		<property name="logging-imports" value="org.apache.commons.logging;version=&quot;[1.1.1,2.0.0)&quot;,org.apache.log4j;version=&quot;[1.2.15, 2.0.0)&quot;;resolution:=optional" />
+		<property name="integration-imports" value="com.mchange.v2.c3p0;version=&quot;[0.9.1.2, 1.0.0)&quot;;resolution:=optional,org.jboss.resource.adapter.jdbc;resolution:=optional,org.jboss.resource.adapter.jdbc.vendor;resolution:=optional" />
+
+		<property name="driver-exports" value="com.mysql.jdbc;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log,javax.naming,javax.net.ssl,javax.xml.transform,org.xml.sax&quot;" />
+		<property name="jee-exports" value="com.mysql.jdbc.jdbc2.optional;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc,com.mysql.jdbc.log,javax.naming,javax.sql,javax.transaction.xa&quot;" />
+		<property name="logging-exports" value="com.mysql.jdbc.log;version=&quot;${osgid-version}&quot;" />
+		<property name="profiling-exports" value="com.mysql.jdbc.profiler;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
+		<property name="util-exports" value="com.mysql.jdbc.util;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc.log&quot;" />
+		<property name="exceptions-exports" value="com.mysql.jdbc.exceptions;version=&quot;${osgid-version}&quot;" />
+		<property name="jdbc4-exceptions-exports" value="com.mysql.jdbc.exceptions.jdbc4;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
+		
+		<property name="interceptors-exports" value="com.mysql.jdbc.interceptors;version=&quot;${osgid-version}&quot;;uses:=&quot;com.mysql.jdbc&quot;" />
+		<property name="integration-exports" value="com.mysql.jdbc.integration.c3p0;version=&quot;${osgid-version}&quot;,com.mysql.jdbc.integration.jboss;version=&quot;${osgid-version}&quot;" />
+		<property name="configs-exports" value="com.mysql.jdbc.configs;version=&quot;${osgid-version}&quot;" />
+		<property name="legacy-exports" value="org.gjt.mm.mysql;version=&quot;${osgid-version}&quot;" />
+		
 		<manifest file="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF">
 			<attribute name="Built-By" value="${user.name}" />
 
@@ -395,6 +416,17 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				<attribute name="Implementation-Vendor-Id" value="com.mysql" />
 				<attribute name="Implementation-Vendor" value="Sun Microsystems Inc." />
 			</section>
+			
+			<!-- OSGi -->
+
+            <attribute name="Bundle-Vendor" value="Sun Microsystems Inc." />
+            <attribute name="Bundle-Classpath" value="." />
+            <attribute name="Bundle-Version" value="${osgid-version}" />
+            <attribute name="Bundle-Name" value="Sun Microsystems' JDBC Driver for MySQL" />
+            <attribute name="Bundle-ManifestVersion" value="2" />
+            <attribute name="Bundle-SymbolicName" value="com.mysql.jdbc" />
+            <attribute name="Export-Package" value="${driver-exports},${jee-exports},${logging-exports},${profiling-exports},${util-exports},${exceptions-exports},${jdbc4-exceptions-exports},${interceptors-exports},${integration-exports},${configs-exports},${legacy-exports}" />
+            <attribute name="Import-Package" value="${crypto-imports},${jdbc4-imports},${jee-imports},${logging-imports},${integration-imports}" />
 		</manifest>
 
 		<jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar" 
