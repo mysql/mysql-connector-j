@@ -1,7 +1,7 @@
 # Changelog
 # $Id$
 
-nn-nn-09 - Version 5.1.9
+09-16-09 - Version 5.1.9
 
     - The driver has been OSGi-ified. The bundle symbolic name is "com.mysql.jdbc", see META-INF/MANIFEST.MF to see
       what interfaces we export.
