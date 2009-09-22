@@ -5846,7 +5846,7 @@ public class StatementRegressionTest extends BaseTestCase {
 						+ " INTEGER, S1 VARCHAR(100), S2 VARCHAR(100), S3 VARCHAR(100), D1 DATETIME, D2 DATETIME, D3 DATETIME, N1 DECIMAL(28,6), N2 DECIMAL(28,6), N3 DECIMAL(28,6), UNIQUE KEY"
 						+ " UNIQUE_KEY_TEST_DUPLICATE (ID) )");
 
-		int numTests = 1000;
+		int numTests = 5000;
 		Connection rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true,dumpQueriesOnException=true");
 
 		assertEquals("0", getSingleIndexedValueWithQuery(rewriteConn, 2,
