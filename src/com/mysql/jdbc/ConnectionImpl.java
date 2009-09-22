@@ -731,7 +731,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		if (hostToConnectTo == null) {
 			this.host = "localhost";
-			this.hostList.add(this.host);
+			this.hostList.add(this.host + ":" + portToConnectTo);
 		} else if (numHosts > 1) {
 			// multiple hosts separated by commas (failover)
 			
@@ -743,7 +743,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 		} else {
 			this.host = hostToConnectTo;
-			this.hostList.add(this.host);
+			
+			if (hostToConnectTo.indexOf(":") == -1) {
+				this.hostList.add(this.host + ":" + portToConnectTo);
+			} else {
+				this.hostList.add(this.host);
+			}
 		}
 
 		this.hostListSize = this.hostList.size();

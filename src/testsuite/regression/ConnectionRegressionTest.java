@@ -25,9 +25,12 @@
 package testsuite.regression;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.Socket;
+import java.net.SocketException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
@@ -64,6 +67,7 @@ import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationDriver;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXid;
@@ -2723,6 +2727,48 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		// we should have the same "currentXAConnection" for both SuspendableXAConnection 
 		c2.getXAResource().prepare(txid); // this will fail without the fix.
 		c2.getXAResource().commit(txid,false);
+	}
+	
+	public void testBug47494() throws Exception {
+		try {
+			getConnectionWithProps("jdbc:mysql://localhost:9999/test?socketFactory=testsuite.regression.ConnectionRegressionTest$PortNumberSocketFactory");
+		} catch (SQLException sqlEx) {
+			assertTrue(sqlEx.getCause() instanceof IOException);
+		}
+		
+		
+		try {
+			getConnectionWithProps("jdbc:mysql://:9999/test?socketFactory=testsuite.regression.ConnectionRegressionTest$PortNumberSocketFactory");
+		} catch (SQLException sqlEx) {
+			assertTrue(sqlEx.getCause() instanceof IOException);
+		}
+		
+		try {
+			getConnectionWithProps("jdbc:mysql://:9999,:9999/test?socketFactory=testsuite.regression.ConnectionRegressionTest$PortNumberSocketFactory");
+		} catch (SQLException sqlEx) {
+			assertTrue(sqlEx.getCause() instanceof IOException);
+		}
+		
+		try {
+			getConnectionWithProps("jdbc:mysql://localhost:9999,localhost:9999/test?socketFactory=testsuite.regression.ConnectionRegressionTest$PortNumberSocketFactory");
+		} catch (SQLException sqlEx) {
+			assertTrue(sqlEx.getCause() instanceof IOException);
+		}
+	}
+	
+	public static class PortNumberSocketFactory extends StandardSocketFactory {
+		
+		public PortNumberSocketFactory() {
+			
+		}
+		
+		public Socket connect(String hostname, int portNumber, Properties props)
+				throws SocketException, IOException {
+			assertEquals(9999, portNumber);
+			
+			throw new IOException();
+		}
+		
 	}
 
 }
