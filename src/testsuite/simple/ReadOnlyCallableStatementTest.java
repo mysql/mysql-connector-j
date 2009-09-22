@@ -40,10 +40,10 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
 				stmt.execute();
 				stmt.execute();
 				
-				stmt = replConn.prepareCall("CALL test.testProc1()");
+				stmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc1()");
 				stmt.execute();
 				
-				stmt = replConn.prepareCall("CALL test.`testProc.1`()");
+				stmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.1`()");
 				stmt.execute();
 				
 			} finally {
@@ -90,7 +90,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
 					assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
 				}
 
-				stmt = replConn.prepareCall("CALL test.testProc2()");
+				stmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc2()");
 
 				try{
 					stmt.execute();
@@ -99,7 +99,7 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
 					assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
 				}
 
-				stmt = replConn.prepareCall("CALL test.`testProc.2`()");
+				stmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.2`()");
 
 				try{
 					stmt.execute();
