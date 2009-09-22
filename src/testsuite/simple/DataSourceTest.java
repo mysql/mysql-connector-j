@@ -115,7 +115,8 @@ public class DataSourceTest extends BaseTestCase {
 	public void testDataSource() throws Exception {
 		NameParser nameParser = this.ctx.getNameParser("");
 		Name datasourceName = nameParser.parse(this.tempDir.getAbsolutePath()
-				+ "/test");
+				+ "" +
+						"_test");
 		Object obj = this.ctx.lookup(datasourceName);
 		DataSource boundDs = null;
 
