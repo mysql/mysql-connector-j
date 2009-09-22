@@ -548,13 +548,13 @@ public class MetadataTest extends BaseTestCase {
             this.stmt.executeUpdate("DROP TABLE IF EXISTS t1");
             this.stmt.executeUpdate("CREATE TABLE t1 (c1 int(1))");
             this.stmt.executeUpdate("CREATE INDEX index1 ON t1 (c1)");
-            Properties props = new Properties();
-            props.put("useInformationSchema", "true");
+
             Connection conn1 = null;
+            
             try {
-                conn1 = getConnectionWithProps(props);
+                conn1 = getConnectionWithProps("useInformationSchema=true");
                 DatabaseMetaData metaData = conn1.getMetaData();
-                this.rs = metaData.getIndexInfo("test", null, "t1", false, true);
+                this.rs = metaData.getIndexInfo(conn1.getCatalog(), null, "t1", false, true);
                 this.rs.next();
                 assertEquals("t1", this.rs.getString("TABLE_NAME"));
                 assertEquals("c1", this.rs.getString("COLUMN_NAME"));
