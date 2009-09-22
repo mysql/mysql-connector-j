@@ -1613,20 +1613,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		String hostname = defaultProps
 				.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 
-		int colonIndex = hostname.indexOf(":");
+		String portNumber = defaultProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
 
-		String portNumber = "3306";
-
-		if (colonIndex != -1 && !hostname.startsWith(":")) {
-			portNumber = hostname.substring(colonIndex + 1);
-			hostname = hostname.substring(0, colonIndex);
-		} else if (hostname.startsWith(":")) {
-			portNumber = hostname.substring(1);
-			hostname = "localhost";
-		} else {
-			portNumber = defaultProps
-					.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
-		}
+		hostname = (hostname == null ? "localhost" : hostname);
 
 		for (int i = 0; i < 2; i++) {
 			urlBuf.append(hostname);
@@ -2502,8 +2491,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		NonRegisteringDriver d = new NonRegisteringDriver();
 		this.copyBasePropertiesIntoProps(props, d);
 		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
-		String db = d.parseURL(BaseTestCase.dbUrl, props).getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-		
+		Properties parsed = d.parseURL(BaseTestCase.dbUrl, props);
+		String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
 		String host = getPortFreeHostname(props, d);
 		UnreliableSocketFactory.flushAllHostLists();
 		StringBuffer hostString = new StringBuffer();
@@ -2512,7 +2502,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			UnreliableSocketFactory.mapHost(hostNames[i], host);
 			hostString.append(glue);
 			glue = ",";
-			hostString.append(hostNames[i]);
+			hostString.append(hostNames[i] + ":" + (port == null ? "3306" : port));
 		}
 		
 		UnreliableSocketFactory.mapHost("second", host);
