@@ -65,7 +65,6 @@ import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ReplicationConnection;
-import com.mysql.jdbc.ReplicationDriver;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
@@ -1598,48 +1597,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 
-	protected Connection getMasterSlaveReplicationConnection()
-			throws SQLException {
-
-		Connection replConn = new ReplicationDriver().connect(
-				getMasterSlaveUrl(), getMasterSlaveProps());
-
-		return replConn;
-	}
-
-	protected String getMasterSlaveUrl() throws SQLException {
-		StringBuffer urlBuf = new StringBuffer("jdbc:mysql://");
-		Properties defaultProps = getPropertiesFromTestsuiteUrl();
-		String hostname = defaultProps
-				.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-
-		String portNumber = defaultProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
-
-		hostname = (hostname == null ? "localhost" : hostname);
-
-		for (int i = 0; i < 2; i++) {
-			urlBuf.append(hostname);
-			urlBuf.append(":");
-			urlBuf.append(portNumber);
-
-			if (i == 0) {
-				urlBuf.append(",");
-			}
-		}
-		urlBuf.append("/");
-
-		return urlBuf.toString();
-	}
-
-	protected Properties getMasterSlaveProps() throws SQLException {
-		Properties props = getPropertiesFromTestsuiteUrl();
-
-		props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-		props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
-
-		return props;
-	}
-
 	/**
 	 * Tests fix for BUG#15570 - ReplicationConnection incorrectly copies state,
 	 * doesn't transfer connection context correctly when transitioning between
@@ -2161,53 +2118,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
     	lbConn.close();
     }
 
-	private Connection getLoadBalancedConnection(int badHostLocation, 
-			String badHost, Properties props) throws SQLException {
-		int indexOfHostStart = dbUrl.indexOf("://") + 3;
-    	int indexOfHostEnd = dbUrl.indexOf("/", indexOfHostStart);
-    	
-    	String firstHost = dbUrl.substring(indexOfHostStart, indexOfHostEnd);
-    	
-    	if (firstHost.length() == 0) {
-    		firstHost = "localhost:3306";
-    	}
-    	
-    	String dbAndConfigs = dbUrl.substring(indexOfHostEnd);
-    	
-    	if (badHost != null) {
-    		badHost = badHost + ",";
-    	}
-    	
-    	String hostsString = null;
-    	
-    	switch (badHostLocation) {
-    	case 1:
-    		hostsString = badHost + firstHost;
-    		break;
-    	case 2:
-    		hostsString = firstHost + "," + badHost + firstHost;
-    		break;
-    	case 3:
-    		hostsString = firstHost + "," + badHost;
-    		break;
-    	default:
-    			throw new IllegalArgumentException();
-    	}
-    	
-    	Connection lbConn = DriverManager.getConnection("jdbc:mysql:loadbalance://" + hostsString + dbAndConfigs, props);
-		
-    	return lbConn;
-	}
-	
-	private Connection getLoadBalancedConnection() throws SQLException {
-		return getLoadBalancedConnection(1, "", null);
-	}
-	
-	private Connection getLoadBalancedConnection(Properties props) throws SQLException {
-		return getLoadBalancedConnection(1, "", props);
-	}
-	
-	
 	/**
 	 * Test of a new feature to fix BUG 22643, specifying a
 	 * "validation query" in your connection pool that starts
@@ -2440,78 +2350,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 
-	private void copyBasePropertiesIntoProps(Properties props, NonRegisteringDriver d)
-			throws SQLException {
-		Properties testCaseProps = d.parseURL(BaseTestCase.dbUrl, null);
-		String user = testCaseProps.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
-		
-		if (user != null) {
-			props.setProperty(NonRegisteringDriver.USER_PROPERTY_KEY, user);
-		}
-		
-		String password =  testCaseProps.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
-		
-		if (password != null) {
-			props.setProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY, password);
-		}
-		
-		String port = testCaseProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
-		
-		if (port != null) {
-			props.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, port);
-		} else {
-			String host = testCaseProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-			
-			if (host != null) {
-				String[] hostPort = host.split(":");
-				
-				if (hostPort.length > 1) {
-					props.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, hostPort[1]);
-				}
-			}
-		}
-	}
-
-	private String getPortFreeHostname(Properties props, NonRegisteringDriver d)
-			throws SQLException {
-		String host = d.parseURL(BaseTestCase.dbUrl, props).getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-		
-		if(host == null){
-			host = "localhost";
-		}
-		
-		host = host.split(":")[0];
-		return host;
-	}	
-	
-	private Connection getUnreliableLoadBalancedConnection(String[] hostNames, Properties props) throws Exception{
-		if(props == null){
-			props = new Properties();
-		}
-		NonRegisteringDriver d = new NonRegisteringDriver();
-		this.copyBasePropertiesIntoProps(props, d);
-		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
-		Properties parsed = d.parseURL(BaseTestCase.dbUrl, props);
-		String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-		String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
-		String host = getPortFreeHostname(props, d);
-		UnreliableSocketFactory.flushAllHostLists();
-		StringBuffer hostString = new StringBuffer();
-		String glue = "";
-		for(int i = 0; i < hostNames.length; i++){
-			UnreliableSocketFactory.mapHost(hostNames[i], host);
-			hostString.append(glue);
-			glue = ",";
-			hostString.append(hostNames[i] + ":" + (port == null ? "3306" : port));
-		}
-		
-		UnreliableSocketFactory.mapHost("second", host);
-		props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-			
-		return getConnectionWithProps("jdbc:mysql:loadbalance://" + hostString.toString() +"/" + db, props);
-		
-	}
-	
 	public void testBug43421() throws Exception {
 		
 		Properties props = new Properties();
