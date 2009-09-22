@@ -2394,6 +2394,11 @@ public class CallableStatement extends PreparedStatement implements
 
 				if (procName.indexOf(".") != -1) {
 					catalog = procName.substring(0, procName.indexOf("."));
+					
+					if (StringUtils.startsWithIgnoreCaseAndWs(catalog, "`") && catalog.trim().endsWith("`")) {
+						catalog = catalog.substring(1, catalog.length() - 1);
+					}
+					
 					procName = procName.substring(procName.indexOf(".") + 1);
 					procName = new String(StringUtils.stripEnclosure(procName
 							.getBytes(), "`", "`"));
