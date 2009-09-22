@@ -240,6 +240,6 @@ public class DataSourceTest extends BaseTestCase {
 		assertTrue("Naming Context not created", this.ctx != null);
 		ds = new com.mysql.jdbc.jdbc2.optional.MysqlDataSource();
 		ds.setUrl(dbUrl); // from BaseTestCase
-		this.ctx.bind(this.tempDir.getAbsolutePath() + "/test", ds);
+		this.ctx.bind(this.tempDir.getAbsolutePath() + "_test", ds);
 	}
 }
