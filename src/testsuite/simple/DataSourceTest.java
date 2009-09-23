@@ -114,9 +114,7 @@ public class DataSourceTest extends BaseTestCase {
 	 */
 	public void testDataSource() throws Exception {
 		NameParser nameParser = this.ctx.getNameParser("");
-		Name datasourceName = nameParser.parse(this.tempDir.getAbsolutePath()
-				+ "" +
-						"_test");
+		Name datasourceName = nameParser.parse("_test");
 		Object obj = this.ctx.lookup(datasourceName);
 		DataSource boundDs = null;
 
@@ -237,10 +235,11 @@ public class DataSourceTest extends BaseTestCase {
 		Hashtable env = new Hashtable();
 		env.put(Context.INITIAL_CONTEXT_FACTORY,
 				"com.sun.jndi.fscontext.RefFSContextFactory");
+		env.put(Context.PROVIDER_URL, this.tempDir.toURI().toString());
 		this.ctx = new InitialContext(env);
 		assertTrue("Naming Context not created", this.ctx != null);
 		ds = new com.mysql.jdbc.jdbc2.optional.MysqlDataSource();
 		ds.setUrl(dbUrl); // from BaseTestCase
-		this.ctx.bind(this.tempDir.getAbsolutePath() + "_test", ds);
+		this.ctx.bind("_test", ds);
 	}
 }
