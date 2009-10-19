@@ -486,26 +486,25 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				if (quoteCharStr.length() > 0) {
 					indexOfValues = StringUtils.indexOfIgnoreCaseRespectQuotes(
 							valuesSearchStart,
-							originalSql, "VALUES ", quoteCharStr.charAt(0), false);
+							originalSql, "VALUES", quoteCharStr.charAt(0), false);
 				} else {
 					indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, 
 							originalSql,
-							"VALUES ");
+							"VALUES");
 				}
-				/* check if the char immediately preceding VALUES may be part of the table name */
+				
 				if (indexOfValues > 0) {
+					/* check if the char immediately preceding VALUES may be part of the table name */
 					char c = originalSql.charAt(indexOfValues - 1);
-					switch(c) {
-					case ' ':
-					case ')':
-					case '`':
-					case '\t':
-					case '\n':
-						break;
-					default:
-						valuesSearchStart = indexOfValues + 7;
+					if(!(Character.isWhitespace(c) || c == ')')){
+						valuesSearchStart = indexOfValues + 6;
 						indexOfValues = -1;
-						break;
+					}
+					/* check if the char immediately following VALUES may be whitespace or open parenthesis */
+					c = originalSql.charAt(indexOfValues + 6);
+					if(!(Character.isWhitespace(c) || c == '(')){
+						valuesSearchStart = indexOfValues + 6;
+						indexOfValues = -1;
 					}
 				} else {
 					break;
@@ -516,7 +515,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				return null;
 			}
 
-			int indexOfFirstParen = sql.indexOf('(', indexOfValues + 7);
+			int indexOfFirstParen = sql.indexOf('(', indexOfValues + 6);
 
 			if (indexOfFirstParen == -1) {
 				return null;

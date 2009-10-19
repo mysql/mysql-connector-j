@@ -5835,6 +5835,64 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
+	public void testBatchBug() throws Exception {
+		createTable(
+				"testBatchInsert",
+				"(a INT PRIMARY KEY AUTO_INCREMENT)");
+		Connection rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true,dumpQueriesOnException=true");
+		assertEquals("0", getSingleIndexedValueWithQuery(rewriteConn, 2,
+			"SHOW SESSION STATUS LIKE 'Com_insert'").toString());
+		
+		
+		this.pstmt = rewriteConn.prepareStatement("INSERT INTO testBatchInsert VALUES (?)");
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.executeBatch();
+		
+		assertEquals("1", getSingleIndexedValueWithQuery(rewriteConn, 2,
+			"SHOW SESSION STATUS LIKE 'Com_insert'").toString());
+		this.pstmt = rewriteConn.prepareStatement("INSERT INTO `testBatchInsert`VALUES (?)");
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.executeBatch();
+		
+		assertEquals("2", getSingleIndexedValueWithQuery(rewriteConn, 2,
+			"SHOW SESSION STATUS LIKE 'Com_insert'").toString());
+		
+		this.pstmt = rewriteConn.prepareStatement("INSERT INTO testBatchInsert VALUES(?)");
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.executeBatch();
+		
+		assertEquals("3", getSingleIndexedValueWithQuery(rewriteConn, 2,
+			"SHOW SESSION STATUS LIKE 'Com_insert'").toString());
+		
+		this.pstmt = rewriteConn.prepareStatement("INSERT INTO testBatchInsert VALUES\n(?)");
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.setNull(1, java.sql.Types.INTEGER);
+		this.pstmt.addBatch();
+		this.pstmt.executeBatch();
+		
+		assertEquals("4", getSingleIndexedValueWithQuery(rewriteConn, 2,
+			"SHOW SESSION STATUS LIKE 'Com_insert'").toString());
+		
+	}
+	
 	
 	/**
 	 * Tests fix for Bug#41532 - regression in performance for batched inserts when using ON DUPLICATE KEY UPDATE
