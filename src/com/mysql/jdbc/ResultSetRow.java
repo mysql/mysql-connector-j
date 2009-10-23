@@ -1411,4 +1411,6 @@ public abstract class ResultSetRow {
 		
 		return this;
 	}
+	
+	public abstract int getBytesSize();
 }

@@ -1945,6 +1945,26 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return null;
 	}
 
+	public int getBytesSize() throws SQLException {
+		RowData localRowData = this.rowData;
+		
+		checkClosed();
+		
+		if (localRowData instanceof RowDataStatic) {
+			int bytesSize = 0;
+			
+			int numRows = localRowData.size();
+
+			for (int i = 0; i < numRows; i++) {
+				bytesSize += localRowData.getAt(i).getBytesSize();
+			}
+
+			return bytesSize;
+		}
+		
+		return -1;
+	}
+	
 	/**
 	 * Optimization to only use one calendar per-session, or calculate it for
 	 * each call, depending on user configuration

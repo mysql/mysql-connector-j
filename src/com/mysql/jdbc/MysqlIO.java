@@ -2325,10 +2325,10 @@ class MysqlIO {
 			if (shouldExecute) {
 				String sqlToInterceptor = sql;
 
-				if (interceptedStatement instanceof PreparedStatement) {
-					sqlToInterceptor = ((PreparedStatement) interceptedStatement)
-							.asSql();
-				}
+				//if (interceptedStatement instanceof PreparedStatement) {
+				//	sqlToInterceptor = ((PreparedStatement) interceptedStatement)
+				//			.asSql();
+				//}
 
 				ResultSetInternalMethods interceptedResultSet = interceptor
 						.preProcess(sqlToInterceptor, interceptedStatement,
@@ -2359,10 +2359,10 @@ class MysqlIO {
 			if (shouldExecute) {
 				String sqlToInterceptor = sql;
 
-				if (interceptedStatement instanceof PreparedStatement) {
-					sqlToInterceptor = ((PreparedStatement) interceptedStatement)
-							.asSql();
-				}
+				//if (interceptedStatement instanceof PreparedStatement) {
+				//	sqlToInterceptor = ((PreparedStatement) interceptedStatement)
+				//			.asSql();
+				//}
 
 				ResultSetInternalMethods interceptedResultSet = interceptor
 						.postProcess(sqlToInterceptor, interceptedStatement,

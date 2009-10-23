@@ -5327,6 +5327,10 @@ public class StatementRegressionTest extends BaseTestCase {
 				
 				return false;
 			}
+
+			public int getBytesSize() throws SQLException {
+				return 0;
+			}
 		};
 	}
 	

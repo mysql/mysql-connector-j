@@ -277,4 +277,20 @@ public class ByteArrayRow extends ResultSetRow {
 		return getNativeTime(columnIndex, columnValue, 0, columnValue.length,
 				targetCalendar, tz, rollForward, conn, rs);
 	}
+
+	public int getBytesSize() {
+		if (internalRowData == null) {
+			return 0;
+		}
+		
+		int bytesSize = 0;
+		
+		for (int i = 0; i < internalRowData.length; i++) {
+			if (internalRowData[i] != null) {
+				bytesSize += internalRowData[i].length;
+			}
+		}
+		
+		return bytesSize;
+	}
 }

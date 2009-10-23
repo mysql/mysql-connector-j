@@ -173,5 +173,6 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
 	public void populateCachedMetaData(CachedResultSetMetaData cachedMetaData) throws SQLException;
 
 	public void initializeFromCachedMetaData(CachedResultSetMetaData cachedMetaData);
-
+	
+	public int getBytesSize() throws SQLException;
 }
