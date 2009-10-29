@@ -496,7 +496,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				if (indexOfValues > 0) {
 					/* check if the char immediately preceding VALUES may be part of the table name */
 					char c = originalSql.charAt(indexOfValues - 1);
-					if(!(Character.isWhitespace(c) || c == ')')){
+					if(!(Character.isWhitespace(c) || c == ')' || c == '`')){
 						valuesSearchStart = indexOfValues + 6;
 						indexOfValues = -1;
 					}
