@@ -5835,7 +5835,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			closeMemberJDBCResources();
 		}
 	}
-	public void testBatchBug() throws Exception {
+	public void testBug48172() throws Exception {
 		createTable(
 				"testBatchInsert",
 				"(a INT PRIMARY KEY AUTO_INCREMENT)");
