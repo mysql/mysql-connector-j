@@ -310,11 +310,11 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		String methodName = method.getName();
 
 		if ("equals".equals(methodName) && args.length == 1) {
-			if (args[0] instanceof Proxy) {
-				return Boolean.valueOf((((Proxy)args[0]).equals(this)));
-			}
-			
-			return Boolean.valueOf(equals(args[0]));
+			return Boolean.valueOf(this.equals(args[0]));
+		}
+		
+		if ("hashCode".equals(methodName)) {
+			return Integer.valueOf(this.hashCode());
 		}
 		
 		if ("close".equals(methodName)) {
