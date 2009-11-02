@@ -499,12 +499,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					if(!(Character.isWhitespace(c) || c == ')' || c == '`')){
 						valuesSearchStart = indexOfValues + 6;
 						indexOfValues = -1;
-					}
-					/* check if the char immediately following VALUES may be whitespace or open parenthesis */
-					c = originalSql.charAt(indexOfValues + 6);
-					if(!(Character.isWhitespace(c) || c == '(')){
-						valuesSearchStart = indexOfValues + 6;
-						indexOfValues = -1;
+					} else {
+						/* check if the char immediately following VALUES may be whitespace or open parenthesis */
+						c = originalSql.charAt(indexOfValues + 6);
+						if(!(Character.isWhitespace(c) || c == '(')){
+							valuesSearchStart = indexOfValues + 6;
+							indexOfValues = -1;
+						}
 					}
 				} else {
 					break;
