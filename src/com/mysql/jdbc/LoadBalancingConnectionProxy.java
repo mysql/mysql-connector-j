@@ -442,7 +442,8 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 			String packageName = interfaces[i].getPackage().getName();
 
 			if ("java.sql".equals(packageName)
-					|| "javax.sql".equals(packageName)) {
+					|| "javax.sql".equals(packageName) 
+					|| "com.mysql.jdbc".equals(packageName)) {
 				return Proxy.newProxyInstance(toProxy.getClass()
 						.getClassLoader(), interfaces,
 						new ConnectionErrorFiringInvocationHandler(toProxy));

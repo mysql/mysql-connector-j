@@ -329,7 +329,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
 		return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this
 				.getClass().getClassLoader(),
-				new Class[] { java.sql.Connection.class }, proxyBal);
+				new Class[] { com.mysql.jdbc.Connection.class }, proxyBal);
 	}
 
 	protected java.sql.Connection connectReplicationConnection(String url, Properties info)

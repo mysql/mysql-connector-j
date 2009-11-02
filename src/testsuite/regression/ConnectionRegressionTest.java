@@ -68,6 +68,7 @@ import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
+import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXid;
 import com.mysql.jdbc.jdbc2.optional.SuspendableXAConnection;
@@ -2628,6 +2629,24 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			throw new IOException();
 		}
 		
+	}
+	
+	public void testBug48486() throws Exception {
+		int endHost = dbUrl.lastIndexOf("/");
+		String databaseStuff = dbUrl.substring(endHost + 1);
+		
+		Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+		String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		
+		String newUrl =  "jdbc:mysql:loadbalance://" + host + ":" + port + "," + host + ":" + port + "/" + databaseStuff;
+		
+		MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
+		ds.setUrl(newUrl);
+		
+		Connection c = ds.getPooledConnection().getConnection();
+		c.createStatement().executeQuery("SELECT 1");
+		c.prepareStatement("SELECT 1").executeQuery();
 	}
 
 }

@@ -9,6 +9,8 @@ mm-dd-yy - Version 5.1.11 (not yet released)
     - Fix for BUG#48172 - Batch rewrite requires space immediately after "VALUES"
     
     - Statement Interceptors didn't completely intercept server-side prepared statements.
+    
+    - Fix for BUG#48486 Cannot use load balanced connections with MysqlConnectionPoolDataSource.
 
 09-22-09 - Version 5.1.10
 
