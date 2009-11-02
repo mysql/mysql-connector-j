@@ -2398,6 +2398,37 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 
 	}
+
+	public void testBug48442() throws Exception {
+		
+		Properties props = new Properties();
+		props.setProperty("loadBalanceStrategy", "random");
+		Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
+			
+		assertNotNull("Connection should not be null", conn2);
+		conn2.setAutoCommit(false);
+		UnreliableSocketFactory.downHost("second");
+		int hc = 0;
+		try {
+			try{
+				conn2.createStatement().execute("SELECT 1");
+			} catch (SQLException e){
+				conn2.createStatement().execute("SELECT 1");
+			}
+			hc = conn2.hashCode();
+			conn2.commit();
+			UnreliableSocketFactory.dontDownHost("second");
+			UnreliableSocketFactory.downHost("first");
+			try{
+				conn2.commit();
+			} catch (SQLException e){}
+			assertTrue(hc == conn2.hashCode());
+			
+
+		} finally {
+	    	closeMemberJDBCResources();
+		}
+	}
 	
 	public void testBug45171() throws Exception {
 		List statementsToTest = new LinkedList();
