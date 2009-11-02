@@ -1978,6 +1978,10 @@ class MysqlIO {
     private int statementExecutionDepth = 0;
 	private boolean useAutoSlowLog;
 
+	protected boolean shouldIntercept() {
+		return this.statementInterceptors != null;
+	}
+	
     /**
      * Send a query stored in a packet directly to the server.
      *
@@ -2007,7 +2011,7 @@ class MysqlIO {
     	try {
 	    	if (this.statementInterceptors != null) {
 	    		ResultSetInternalMethods interceptedResults =
-	    			invokeStatementInterceptorsPre(query, callingStatement);
+	    			invokeStatementInterceptorsPre(query, callingStatement, false);
 
 	    		if (interceptedResults != null) {
 	    			return interceptedResults;
@@ -2275,7 +2279,7 @@ class MysqlIO {
 
 	    	if (this.statementInterceptors != null) {
 	    		ResultSetInternalMethods interceptedResults = invokeStatementInterceptorsPost(
-	    				query, callingStatement, rs);
+	    				query, callingStatement, rs, false);
 
 	    		if (interceptedResults != null) {
 	    			rs = interceptedResults;
@@ -2308,8 +2312,8 @@ class MysqlIO {
     	}
     }
 
-    private ResultSetInternalMethods invokeStatementInterceptorsPre(String sql,
-			Statement interceptedStatement) throws SQLException {
+    ResultSetInternalMethods invokeStatementInterceptorsPre(String sql,
+			Statement interceptedStatement, boolean forceExecute) throws SQLException {
 		ResultSetInternalMethods previousResultSet = null;
 
 		Iterator interceptors = this.statementInterceptors.iterator();
@@ -2319,7 +2323,7 @@ class MysqlIO {
 					.next());
 
 			boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
-			boolean shouldExecute = (executeTopLevelOnly && this.statementExecutionDepth == 1)
+			boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute))
 					|| (!executeTopLevelOnly);
 
 			if (shouldExecute) {
@@ -2343,9 +2347,9 @@ class MysqlIO {
 		return previousResultSet;
 	}
 
-	private ResultSetInternalMethods invokeStatementInterceptorsPost(
+	ResultSetInternalMethods invokeStatementInterceptorsPost(
 			String sql, Statement interceptedStatement,
-			ResultSetInternalMethods originalResultSet) throws SQLException {
+			ResultSetInternalMethods originalResultSet, boolean forceExecute) throws SQLException {
 		Iterator interceptors = this.statementInterceptors.iterator();
 
 		while (interceptors.hasNext()) {
@@ -2353,7 +2357,7 @@ class MysqlIO {
 					.next());
 
 			boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
-			boolean shouldExecute = (executeTopLevelOnly && this.statementExecutionDepth == 1)
+			boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute))
 					|| (!executeTopLevelOnly);
 
 			if (shouldExecute) {

@@ -486,26 +486,25 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				if (quoteCharStr.length() > 0) {
 					indexOfValues = StringUtils.indexOfIgnoreCaseRespectQuotes(
 							valuesSearchStart,
-							originalSql, "VALUES ", quoteCharStr.charAt(0), false);
+							originalSql, "VALUES", quoteCharStr.charAt(0), false);
 				} else {
 					indexOfValues = StringUtils.indexOfIgnoreCase(valuesSearchStart, 
 							originalSql,
-							"VALUES ");
+							"VALUES");
 				}
-				/* check if the char immediately preceding VALUES may be part of the table name */
+				
 				if (indexOfValues > 0) {
+					/* check if the char immediately preceding VALUES may be part of the table name */
 					char c = originalSql.charAt(indexOfValues - 1);
-					switch(c) {
-					case ' ':
-					case ')':
-					case '`':
-					case '\t':
-					case '\n':
-						break;
-					default:
-						valuesSearchStart = indexOfValues + 7;
+					if(!(Character.isWhitespace(c) || c == ')')){
+						valuesSearchStart = indexOfValues + 6;
 						indexOfValues = -1;
-						break;
+					}
+					/* check if the char immediately following VALUES may be whitespace or open parenthesis */
+					c = originalSql.charAt(indexOfValues + 6);
+					if(!(Character.isWhitespace(c) || c == '(')){
+						valuesSearchStart = indexOfValues + 6;
+						indexOfValues = -1;
 					}
 				} else {
 					break;
@@ -516,7 +515,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				return null;
 			}
 
-			int indexOfFirstParen = sql.indexOf('(', indexOfValues + 7);
+			int indexOfFirstParen = sql.indexOf('(', indexOfValues + 6);
 
 			if (indexOfFirstParen == -1) {
 				return null;
@@ -558,6 +557,14 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		
 		String getSqlForBatch(int numBatch) throws UnsupportedEncodingException {
 			ParseInfo batchInfo = getParseInfoForBatch(numBatch);
+			
+			return getSqlForBatch(batchInfo);
+		}
+		
+		/** 
+		 * Used for filling in the SQL for getPreparedSql() - for debugging 
+		 */
+		String getSqlForBatch(ParseInfo batchInfo) throws UnsupportedEncodingException {
 			int size = 0;
 			final byte[][] sqlStrings = batchInfo.staticSql;
 			final int sqlStringsLength = sqlStrings.length;
@@ -2159,11 +2166,19 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			
 			if (doStreaming
 					&& this.connection.getNetTimeoutForStreamingResults() > 0) {
-				locallyScopedConn.execSQL(this, "SET net_write_timeout="
-						+ this.connection.getNetTimeoutForStreamingResults(),
-						-1, null, ResultSet.TYPE_FORWARD_ONLY,
-						ResultSet.CONCUR_READ_ONLY, false, this.currentCatalog,
-						null, false);
+				
+				java.sql.Statement stmt = null;
+				
+				try {
+					stmt = this.connection.createStatement();
+					
+					((com.mysql.jdbc.StatementImpl)stmt).executeSimpleNonQuery(this.connection, "SET net_write_timeout=" 
+							+ this.connection.getNetTimeoutForStreamingResults());
+				} finally {
+					if (stmt != null) {
+						stmt.close();
+					}
+				}
 			}
 			
 			Buffer sendPacket = fillSendPacket();
@@ -2517,15 +2532,33 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 
 	/**
-	 * Returns a preparaed statement for the number of batched parameters, used when re-writing batch INSERTs.
+	 * Returns a prepared statement for the number of batched parameters, used when re-writing batch INSERTs.
 	 */
 	protected PreparedStatement prepareBatchedInsertSQL(ConnectionImpl localConn, int numBatches) throws SQLException {
-		PreparedStatement pstmt = new PreparedStatement(localConn, "batch statement, no sql available", this.currentCatalog, this.parseInfo.getParseInfoForBatch(numBatches));
+		PreparedStatement pstmt = new PreparedStatement(localConn, "Rewritten batch of: " + this.originalSql, this.currentCatalog, this.parseInfo.getParseInfoForBatch(numBatches));
 		pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
+		pstmt.rewrittenBatchSize = numBatches;
 		
 		return pstmt;
 	}
 
+	protected int rewrittenBatchSize = 0;
+	
+	public int getRewrittenBatchSize() {
+		return this.rewrittenBatchSize;
+	}
+	
+	public String getNonRewrittenSql() {
+		int indexOfBatch = this.originalSql.indexOf(" of: ");
+		
+		if (indexOfBatch != -1) {
+			return this.originalSql.substring(indexOfBatch + 5);
+		}
+		
+		return this.originalSql;
+	}
+	
+	
 	/**
 	 * DOCUMENT ME!
 	 * 
@@ -5554,7 +5587,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 	
 	public String getPreparedSql() {
-		return this.originalSql;
+		if (this.rewrittenBatchSize == 0) {
+			return this.originalSql;
+		}
+		
+		try {
+			return this.parseInfo.getSqlForBatch(this.parseInfo);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public int getUpdateCount() throws SQLException {

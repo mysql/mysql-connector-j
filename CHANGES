@@ -1,6 +1,12 @@
 # Changelog
 # $Id$
 
+mm-dd-yy - Version 5.1.11 (not yet released)
+ 
+    - Fix for BUG#48172 - Batch rewrite requires space immediately after "VALUES"
+    
+    - Statement Interceptors didn't completely intercept server-side prepared statements.
+
 09-22-09 - Version 5.1.10
 
     - Fix for BUG#47494 - Non standard port numbers in the URL are not honored.

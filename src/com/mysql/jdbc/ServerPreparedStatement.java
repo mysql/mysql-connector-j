@@ -1173,6 +1173,17 @@ public class ServerPreparedStatement extends PreparedStatement {
 			boolean createStreamingResultSet, 
 			Field[] metadataFromCache) throws SQLException {
 		synchronized (this.connection.getMutex()) {
+			MysqlIO mysql = this.connection.getIO();
+
+			if (mysql.shouldIntercept()) {
+				ResultSetInternalMethods interceptedResults =
+	    			mysql.invokeStatementInterceptorsPre(this.originalSql, this, true);
+	
+	    		if (interceptedResults != null) {
+	    			return interceptedResults;
+	    		}
+			}
+    		
 			if (this.detectedLongParameterSwitch) {
 				// Check when values were bound
 				boolean firstFound = false;
@@ -1226,7 +1237,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 			//
 			// store the parameter values
 			//
-			MysqlIO mysql = this.connection.getIO();
 
 			Buffer packet = mysql.getSharedSendPacket();
 
@@ -1434,6 +1444,15 @@ public class ServerPreparedStatement extends PreparedStatement {
 						this.resultSetConcurrency, createStreamingResultSet,
 						this.currentCatalog, resultPacket, true, this.fieldCount,
 						metadataFromCache);
+				
+				if (mysql.shouldIntercept()) {
+					ResultSetInternalMethods interceptedResults =
+		    			mysql.invokeStatementInterceptorsPost(this.originalSql, this, rs, true);
+		
+		    		if (interceptedResults != null) {
+		    			rs = interceptedResults;
+		    		}
+				}
 				
 				if (this.profileSQL) {
 					long fetchEndTime = mysql.getCurrentTimeNanosOrMillis();
