@@ -760,10 +760,6 @@ public class BufferRow extends ResultSetRow {
 	}
 
 	public int getBytesSize() {
-		byte[] rawPacket = this.rowFromServer.getByteBuffer();
-		
-		return (rawPacket[0] & 0xff)
-		+ ((rawPacket[1] & 0xff) << 8)
-		+ ((rawPacket[2] & 0xff) << 16);
+		return this.rowFromServer.getBufLength();
 	}
 }
