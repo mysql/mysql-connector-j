@@ -4972,4 +4972,20 @@ public class ResultSetRegressionTest extends BaseTestCase {
         this.rs = this.stmt.executeQuery("SELECT * FROM testtable_bincolumn WHERE bincolumn = unhex('"+pkValue2+"')");
         assertFalse(rs.next());
 	}
+	
+	public void testBug32525() throws Exception {
+		createTable("bug32525", "(field1 date, field2 timestamp)");
+		this.stmt.executeUpdate("INSERT INTO bug32525 VALUES ('0000-00-00', '0000-00-00 00:00:00')");
+		Connection noStringSyncConn = getConnectionWithProps("noDatetimeStringSync=true");
+		
+		try {
+			this.rs = ((com.mysql.jdbc.Connection) noStringSyncConn).serverPrepareStatement("SELECT field1, field2 FROM bug32525").executeQuery();
+			this.rs.next();
+			assertEquals("0000-00-00", this.rs.getString(1));
+			assertEquals("0000-00-00 00:00:00", this.rs.getString(2));
+		} finally {
+			noStringSyncConn.close();
+		}
+		
+	}
 }

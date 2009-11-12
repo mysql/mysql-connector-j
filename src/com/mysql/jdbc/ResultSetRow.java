@@ -347,7 +347,7 @@ public abstract class ResultSetRow {
 			day = bits[offset + 3];
 		}
 
-		if ((year == 0) && (month == 0) && (day == 0)) {
+		if (length == 0 || ((year == 0) && (month == 0) && (day == 0))) {
 			if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 					.equals(conn.getZeroDateTimeBehavior())) {
 				return null;
@@ -691,7 +691,7 @@ public abstract class ResultSetRow {
 			}
 		}
 
-		if ((year == 0) && (month == 0) && (day == 0)) {
+		if (length == 0 || ((year == 0) && (month == 0) && (day == 0))) {
 			if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
 					.equals(conn.getZeroDateTimeBehavior())) {
 

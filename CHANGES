@@ -11,6 +11,8 @@ mm-dd-yy - Version 5.1.11 (not yet released)
     - Statement Interceptors didn't completely intercept server-side prepared statements.
     
     - Fix for BUG#48486 Cannot use load balanced connections with MysqlConnectionPoolDataSource.
+    
+    - Fix for Bug#32525 - "noDatetimeStringSync" doesn't work for server-side prepared statements. Now it does.
 
 09-22-09 - Version 5.1.10
 
