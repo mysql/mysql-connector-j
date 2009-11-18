@@ -14,6 +14,8 @@ mm-dd-yy - Version 5.1.11 (not yet released)
     
     - Fix for Bug#32525 - "noDatetimeStringSync" doesn't work for server-side prepared statements. Now it does.
 
+    - Hooked up exception interceptors so they get called now.
+    
 09-22-09 - Version 5.1.10
 
     - Fix for BUG#47494 - Non standard port numbers in the URL are not honored.
