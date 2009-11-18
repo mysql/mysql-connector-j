@@ -2279,7 +2279,7 @@ class MysqlIO {
 
 	    	if (this.statementInterceptors != null) {
 	    		ResultSetInternalMethods interceptedResults = invokeStatementInterceptorsPost(
-	    				query, callingStatement, rs, false);
+	    				query, callingStatement, rs, false, null);
 
 	    		if (interceptedResults != null) {
 	    			rs = interceptedResults;
@@ -2288,6 +2288,11 @@ class MysqlIO {
 
 	    	return rs;
     	} catch (SQLException sqlEx) {
+    		if (this.statementInterceptors != null) {
+	    		invokeStatementInterceptorsPost(
+	    				query, callingStatement, null, false, sqlEx); // we don't do anything with the result set in this case
+    		}
+    		
     		if (callingStatement != null) {
     			synchronized (callingStatement.cancelTimeoutMutex) {
 	    			if (callingStatement.wasCancelled) {
@@ -2319,7 +2324,7 @@ class MysqlIO {
 		Iterator interceptors = this.statementInterceptors.iterator();
 
 		while (interceptors.hasNext()) {
-			StatementInterceptor interceptor = ((StatementInterceptor) interceptors
+			StatementInterceptorV2 interceptor = ((StatementInterceptorV2) interceptors
 					.next());
 
 			boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
@@ -2349,11 +2354,11 @@ class MysqlIO {
 
 	ResultSetInternalMethods invokeStatementInterceptorsPost(
 			String sql, Statement interceptedStatement,
-			ResultSetInternalMethods originalResultSet, boolean forceExecute) throws SQLException {
+			ResultSetInternalMethods originalResultSet, boolean forceExecute, SQLException statementException) throws SQLException {
 		Iterator interceptors = this.statementInterceptors.iterator();
 
 		while (interceptors.hasNext()) {
-			StatementInterceptor interceptor = ((StatementInterceptor) interceptors
+			StatementInterceptorV2 interceptor = ((StatementInterceptorV2) interceptors
 					.next());
 
 			boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
@@ -2362,15 +2367,11 @@ class MysqlIO {
 
 			if (shouldExecute) {
 				String sqlToInterceptor = sql;
-
-				//if (interceptedStatement instanceof PreparedStatement) {
-				//	sqlToInterceptor = ((PreparedStatement) interceptedStatement)
-				//			.asSql();
-				//}
-
+				
 				ResultSetInternalMethods interceptedResultSet = interceptor
 						.postProcess(sqlToInterceptor, interceptedStatement,
-								originalResultSet, this.connection);
+								originalResultSet, this.connection, this.warningCount, 
+								this.queryNoIndexUsed, this.queryBadIndexUsed, statementException);
 
 				if (interceptedResultSet != null) {
 					originalResultSet = interceptedResultSet;

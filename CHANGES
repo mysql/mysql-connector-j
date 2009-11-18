@@ -16,6 +16,10 @@ mm-dd-yy - Version 5.1.11 (not yet released)
 
     - Hooked up exception interceptors so they get called now.
     
+    - Rev'd the statement interceptor interface to pass on some server flags, warning counts and errors. See 
+      the com.mysql.jdbc.StatementInteceptorsV2 interface for more details. The driver will create adaptors to
+      transparently convert older implementations to the newer interface at runtime.
+    
 09-22-09 - Version 5.1.10
 
     - Fix for BUG#47494 - Non standard port numbers in the URL are not honored.

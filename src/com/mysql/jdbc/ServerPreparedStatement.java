@@ -1447,7 +1447,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				
 				if (mysql.shouldIntercept()) {
 					ResultSetInternalMethods interceptedResults =
-		    			mysql.invokeStatementInterceptorsPost(this.originalSql, this, rs, true);
+		    			mysql.invokeStatementInterceptorsPost(this.originalSql, this, rs, true, null);
 		
 		    		if (interceptedResults != null) {
 		    			rs = interceptedResults;
@@ -1487,6 +1487,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 		        }
 				
 				return rs;
+			} catch (SQLException sqlEx) {
+				if (mysql.shouldIntercept()) {
+					mysql.invokeStatementInterceptorsPost(this.originalSql, this, null, true, sqlEx);
+				}
+				
+				throw sqlEx;
 			} finally {
 				if (timeoutTask != null) {
 					timeoutTask.cancel();

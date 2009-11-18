@@ -6172,9 +6172,17 @@ public class StatementRegressionTest extends BaseTestCase {
 		public ResultSetInternalMethods preProcess(String sql,
 				com.mysql.jdbc.Statement interceptedStatement,
 				com.mysql.jdbc.Connection connection) throws SQLException {
-			if (sql.equals(prevSql))
+			String asSql = sql;
+			
+			if (interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
+				asSql = interceptedStatement.toString();
+				int firstColon = asSql.indexOf(":");
+				asSql = asSql.substring(firstColon + 2);
+			}
+			
+			if (asSql.equals(prevSql))
 				throw new RuntimeException("Previous statement matched current: " + sql);
-			prevSql = sql;
+			prevSql = asSql;
 			ParameterBindings b = ((com.mysql.jdbc.PreparedStatement)interceptedStatement).getParameterBindings();
 			vals.add(new Integer(b.getInt(1)));
 			return null;

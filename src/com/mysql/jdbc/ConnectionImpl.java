@@ -822,9 +822,28 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	}
 
     protected void initializeStatementInterceptors() throws SQLException {
-		this.statementInterceptors = Util.loadExtensions(this, this.props, 
+    	List unwrappedInterceptors = Util.loadExtensions(this, this.props, 
 				getStatementInterceptors(),
 				"MysqlIo.BadStatementInterceptor", getExceptionInterceptor());
+    	
+    	this.statementInterceptors = new ArrayList(unwrappedInterceptors.size());
+    	
+    	for (int i = 0; i < unwrappedInterceptors.size(); i++) {
+    		Object interceptor = unwrappedInterceptors.get(i);
+    		
+    		// adapt older versions of statement interceptors, handle the case where something wants v2
+    		// functionality but wants to run with an older driver
+    		if (interceptor instanceof StatementInterceptor) {
+    			if (ReflectiveStatementInterceptorAdapter.getV2PostProcessMethod(interceptor.getClass()) != null) {
+    				this.statementInterceptors.add(new ReflectiveStatementInterceptorAdapter((StatementInterceptor) interceptor));
+    			} else {
+    				this.statementInterceptors.add(new V1toV2StatementInterceptorAdapter((StatementInterceptor) interceptor));
+    			}
+    		} else {
+    			this.statementInterceptors.add(interceptor);
+    		}
+    	}
+
 	}
     
     protected List getStatementInterceptorsInstances() {
@@ -4418,7 +4437,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			
 	    	if (this.statementInterceptors != null) {
 	    		for (int i = 0; i < this.statementInterceptors.size(); i++) {
-	    			((StatementInterceptor)this.statementInterceptors.get(i)).destroy();
+	    			((StatementInterceptorV2)this.statementInterceptors.get(i)).destroy();
 	    		}
 	    	}
 	    	
