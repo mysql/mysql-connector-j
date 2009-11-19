@@ -1167,7 +1167,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
-	private void throwConnectionClosedException() throws SQLException {
+	void throwConnectionClosedException() throws SQLException {
 		StringBuffer messageBuf = new StringBuffer(
 				"No operations allowed after connection closed.");
 

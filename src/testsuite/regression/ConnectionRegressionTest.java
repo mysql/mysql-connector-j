@@ -2648,5 +2648,33 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		c.createStatement().executeQuery("SELECT 1");
 		c.prepareStatement("SELECT 1").executeQuery();
 	}
+	public void testBug48605() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("loadBalanceStrategy", "random");
+		props.setProperty("selfDestructOnPingMaxOperations", "5");
+		Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
+			
+		assertNotNull("Connection should not be null", conn2);
+		conn2.setAutoCommit(false);
+		conn2.createStatement().execute("SELECT 1");
+		conn2.createStatement().execute("SELECT 1");
+		conn2.createStatement().execute("SELECT 1");
+		conn2.createStatement().execute("SELECT 1");
+		conn2.createStatement().execute("SELECT 1");
+		conn2.commit();
+		try{
+			conn2.createStatement().execute("/* ping */ SELECT 1");
+		// don't care about this - we want the SQLExceptions passed up early for ping failures, rather
+		// than waiting until commit/rollback and pickNewConnection().
+		} catch(SQLException e){ }
+		assertTrue(conn2.isClosed());
+		try{
+			conn2.createStatement().execute("SELECT 1");
+			fail("Should throw Exception, connection is closed.");
+		} catch(SQLException e){ }
+		
+		
+		closeMemberJDBCResources();
+	}
 
 }

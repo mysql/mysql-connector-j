@@ -285,18 +285,41 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 			// remove from liveConnections
 			this.liveConnections.remove(this.connectionsToHostsMap
 					.get(this.currentConn));
-			
-			int hostIndex = ((Integer) this.hostsToListIndexMap
-					.get(this.connectionsToHostsMap.get(this.currentConn)))
-					.intValue();
-
-			// reset the statistics for the host
-			synchronized (this.responseTimes) {
-				this.responseTimes[hostIndex] = 0;
+			if(this.connectionsToHostsMap.containsKey(this.currentConn)){
+				int hostIndex = ((Integer) this.hostsToListIndexMap
+						.get(this.connectionsToHostsMap.get(this.currentConn)))
+						.intValue();
+	
+				// reset the statistics for the host
+				synchronized (this.responseTimes) {
+					this.responseTimes[hostIndex] = 0;
+				}
 			}
 
 			this.connectionsToHostsMap.remove(this.currentConn);
 			}
+	}
+	
+	private void closeAllConnections(){
+		synchronized (this) {
+			// close all underlying connections
+			Iterator allConnections = this.liveConnections.values()
+					.iterator();
+
+			while (allConnections.hasNext()) {
+				try{
+					((Connection) allConnections.next()).close();
+				} catch(SQLException e){}
+			}
+
+			if (!this.isClosed) {
+				this.balancer.destroy();
+			}
+			
+			this.liveConnections.clear();
+			this.connectionsToHostsMap.clear();
+		}
+	
 	}
 
 	/**
@@ -321,22 +344,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		}
 		
 		if ("close".equals(methodName)) {
-			synchronized (this) {
-				// close all underlying connections
-				Iterator allConnections = this.liveConnections.values()
-						.iterator();
-
-				while (allConnections.hasNext()) {
-					((Connection) allConnections.next()).close();
-				}
-
-				if (!this.isClosed) {
-					this.balancer.destroy();
-				}
-				
-				this.liveConnections.clear();
-				this.connectionsToHostsMap.clear();
-			}
+			closeAllConnections();
 
 			return null;
 		}
@@ -413,7 +421,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
 			return;
 		}
-
+		
 		Connection newConn = this.balancer.pickConnection(this,
 				Collections.unmodifiableList(this.hostList),
 				Collections.unmodifiableMap(this.liveConnections),
@@ -423,7 +431,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		newConn.setTransactionIsolation(this.currentConn
 				.getTransactionIsolation());
 		newConn.setAutoCommit(this.currentConn.getAutoCommit());
+
 		this.currentConn = newConn;
+		
 	}
 
 	/**
@@ -477,35 +487,59 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 	}
 
 	public synchronized void doPing() throws SQLException {
-		if(this.isGlobalBlacklistEnabled()){
-			SQLException se = null;
-			boolean foundHost = false;
-			synchronized(this){
-				for(Iterator i = this.hostList.iterator(); i.hasNext(); ){
-					String host = (String) i.next();
-					Connection conn = (Connection) this.liveConnections.get(host);
-					if(conn == null){
-						continue;
+		SQLException se = null;
+		boolean foundHost = false;
+
+		synchronized(this){
+			for(Iterator i = this.hostList.iterator(); i.hasNext(); ){
+				String host = (String) i.next();
+				Connection conn = (Connection) this.liveConnections.get(host);
+				if(conn == null){
+					continue;
+				}
+				try{
+					conn.ping();
+					foundHost = true;
+				} catch (SQLException e){
+					// give up if it is the current connection, otherwise NPE faking resultset later.
+					if(host.equals(this.connectionsToHostsMap.get(this.currentConn))){
+						// clean up underlying connections, since connection pool won't do it
+						closeAllConnections();
+						this.isClosed = true;
+						throw e;
 					}
-					try{
-						conn.ping();
-						foundHost = true;
-					} catch (SQLException e){
+					
+					// if the Exception is caused by ping connection lifetime checks, don't add to blacklist
+					if(e.getMessage().equals(Messages.getString("Connection.exceededConnectionLifetime"))){
+						// only set the return Exception if it's null
+						if(se == null){
+							se = e;
+						}
+					} else {
+						// overwrite the return Exception no matter what
 						se = e;
-						this.addToGlobalBlacklist(host);
+						if(this.isGlobalBlacklistEnabled()){
+							this.addToGlobalBlacklist(host);
+						}
 					}
+					// take the connection out of the liveConnections Map
+					this.liveConnections.remove(this.connectionsToHostsMap
+							.get(conn));
 				}
 			}
-			if(!foundHost){
+		}
+		// if there were no successful pings
+		if(!foundHost){
+			closeAllConnections();
+			this.isClosed = true;
+			// throw the stored Exception, if exists
+			if(se != null){
 				throw se;
 			}
-		} else {
-			Iterator allConns = this.liveConnections.values().iterator();
-			while (allConns.hasNext()) {
-				((Connection)allConns.next()).ping();
-			}			
+			// or create a new SQLException and throw it, must be no liveConnections
+			((ConnectionImpl)this.currentConn).throwConnectionClosedException();
 		}
-
+		
 	}
 	
 	public void addToGlobalBlacklist(String host) {

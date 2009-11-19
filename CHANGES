@@ -3,6 +3,9 @@
 
 mm-dd-yy - Version 5.1.11 (not yet released)
  
+    - Fix for BUG#48605 - Ping leaves closed connections in liveConnections, causing subsequent Exceptions when
+      that connection is used.
+ 
     - Fix for BUG#48442 - Load-balanced Connection object returns inconsistent results for hashCode() and equals()
       dependent upon state of underlying connections.
  
