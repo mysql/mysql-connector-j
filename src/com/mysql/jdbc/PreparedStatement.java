@@ -2015,6 +2015,23 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					throw new java.sql.BatchUpdateException(sqlEx.getMessage(),
 							sqlEx.getSQLState(), sqlEx.getErrorCode(), updateCounts);
 				}
+			} catch (NullPointerException npe) {
+				try {
+					checkClosed();
+				} catch (SQLException connectionClosedEx) {
+					updateCounts[batchCommandIndex] = EXECUTE_FAILED;
+					
+					int[] newUpdateCounts = new int[batchCommandIndex];
+					
+					System.arraycopy(updateCounts, 0,
+							newUpdateCounts, 0, batchCommandIndex);
+
+					throw new java.sql.BatchUpdateException(connectionClosedEx
+							.getMessage(), connectionClosedEx.getSQLState(), connectionClosedEx
+							.getErrorCode(), newUpdateCounts);
+				}
+				
+				throw npe; // we don't know why this happened, punt
 			} finally {
 				batchCommandIndex = -1;
 				
