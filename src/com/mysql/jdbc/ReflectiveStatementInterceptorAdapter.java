@@ -58,7 +58,8 @@ public class ReflectiveStatementInterceptorAdapter implements
 			return (ResultSetInternalMethods) v2PostProcessMethod.invoke(toProxy, new Object[] {sql,
 				interceptedStatement,
 				originalResultSet, connection,
-				new Integer(warningCount)});
+				new Integer(warningCount), noIndexUsed ? Boolean.TRUE : Boolean.FALSE, noGoodIndexUsed ? Boolean.TRUE: Boolean.FALSE,
+						statementException});
 		} catch (IllegalArgumentException e) {
 			SQLException sqlEx = new SQLException("Unable to reflectively invoke interceptor");
 			sqlEx.initCause(e);

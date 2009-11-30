@@ -22,6 +22,13 @@ mm-dd-yy - Version 5.1.11 (not yet released)
     - Rev'd the statement interceptor interface to pass on some server flags, warning counts and errors. See 
       the com.mysql.jdbc.StatementInteceptorsV2 interface for more details. The driver will create adaptors to
       transparently convert older implementations to the newer interface at runtime.
+      
+    - Statement Interceptors are now enabled at connection instantiation, but 
+      can not return result sets (they will be ignored)  until the connection 
+      has bootstrapped itself. If during the init() method your interceptor 
+      requires access to the connection itself, it should ensure that methods 
+      that might throw exceptions if the connection is closed should handle 
+      this in a robust manner.
     
 09-22-09 - Version 5.1.10
 

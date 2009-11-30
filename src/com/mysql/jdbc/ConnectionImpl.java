@@ -778,9 +778,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		try {
 			this.dbmd = getMetaData(false, false);
+			initializeSafeStatementInterceptors();
 			createNewIO(false);
-			initializeStatementInterceptors();
-			this.io.setStatementInterceptors(this.statementInterceptors);
+			unSafeStatementInterceptors();
 		} catch (SQLException ex) {
 			cleanup(ex);
 
@@ -821,13 +821,30 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
-    protected void initializeStatementInterceptors() throws SQLException {
+    protected void unSafeStatementInterceptors() throws SQLException {
+    	
+    	ArrayList unSafedStatementInterceptors = new ArrayList(this.statementInterceptors.size());
+    	
+    	this.statementInterceptors = new ArrayList(this.statementInterceptors.size());
+    	
+    	for (int i = 0; i < this.statementInterceptors.size(); i++) {
+    		NoSubInterceptorWrapper wrappedInterceptor = (NoSubInterceptorWrapper) this.statementInterceptors.get(i);
+    		
+    		unSafedStatementInterceptors.add(wrappedInterceptor.getUnderlyingInterceptor());
+    	}
+    	
+    	this.statementInterceptors = unSafedStatementInterceptors;
+	}
+    
+    protected void initializeSafeStatementInterceptors() throws SQLException {
+    	this.isClosed = false;
+    	
     	List unwrappedInterceptors = Util.loadExtensions(this, this.props, 
 				getStatementInterceptors(),
 				"MysqlIo.BadStatementInterceptor", getExceptionInterceptor());
     	
     	this.statementInterceptors = new ArrayList(unwrappedInterceptors.size());
-    	
+
     	for (int i = 0; i < unwrappedInterceptors.size(); i++) {
     		Object interceptor = unwrappedInterceptors.get(i);
     		
@@ -835,16 +852,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
     		// functionality but wants to run with an older driver
     		if (interceptor instanceof StatementInterceptor) {
     			if (ReflectiveStatementInterceptorAdapter.getV2PostProcessMethod(interceptor.getClass()) != null) {
-    				this.statementInterceptors.add(new ReflectiveStatementInterceptorAdapter((StatementInterceptor) interceptor));
+    				this.statementInterceptors.add(new NoSubInterceptorWrapper(new ReflectiveStatementInterceptorAdapter((StatementInterceptor) interceptor)));
     			} else {
-    				this.statementInterceptors.add(new V1toV2StatementInterceptorAdapter((StatementInterceptor) interceptor));
+    				this.statementInterceptors.add(new NoSubInterceptorWrapper(new V1toV2StatementInterceptorAdapter((StatementInterceptor) interceptor)));
     			}
     		} else {
-    			this.statementInterceptors.add(interceptor);
+    			this.statementInterceptors.add(new NoSubInterceptorWrapper((StatementInterceptorV2)interceptor));
     		}
     	}
-
-	}
+    	
+    	
+    }
     
     protected List getStatementInterceptorsInstances() {
     	return this.statementInterceptors;
@@ -2169,6 +2187,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							boolean oldReadOnly = isReadOnly();
 							String oldCatalog = getCatalog();
 	
+							this.io.setStatementInterceptors(this.statementInterceptors);
+							
 							// Server properties might be different
 							// from previous connection, so initialize
 							// again...
@@ -2320,6 +2340,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								boolean oldReadOnly = isReadOnly();
 								String oldCatalog = getCatalog();
 	
+								this.io.setStatementInterceptors(this.statementInterceptors);
+								
 								// Server properties might be different
 								// from previous connection, so initialize
 								// again...
