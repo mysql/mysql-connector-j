@@ -6178,13 +6178,14 @@ public class StatementRegressionTest extends BaseTestCase {
 				asSql = interceptedStatement.toString();
 				int firstColon = asSql.indexOf(":");
 				asSql = asSql.substring(firstColon + 2);
-			}
 			
-			if (asSql.equals(prevSql))
-				throw new RuntimeException("Previous statement matched current: " + sql);
-			prevSql = asSql;
-			ParameterBindings b = ((com.mysql.jdbc.PreparedStatement)interceptedStatement).getParameterBindings();
-			vals.add(new Integer(b.getInt(1)));
+			
+				if (asSql.equals(prevSql))
+					throw new RuntimeException("Previous statement matched current: " + sql);
+				prevSql = asSql;
+				ParameterBindings b = ((com.mysql.jdbc.PreparedStatement)interceptedStatement).getParameterBindings();
+				vals.add(new Integer(b.getInt(1)));
+			}
 			return null;
 		}
 	}
