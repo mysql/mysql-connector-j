@@ -927,10 +927,13 @@ public class SQLError {
 	}
 
 	public static SQLException createSQLException(String message, ExceptionInterceptor interceptor) {
+		return createSQLException(message, interceptor, null);
+	}
+	public static SQLException createSQLException(String message, ExceptionInterceptor interceptor, Connection conn) {
 		SQLException sqlEx = new SQLException(message);
 		
 		if (interceptor != null) {
-			SQLException interceptedEx = interceptor.interceptException(sqlEx);
+			SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
 			
 			if (interceptedEx != null) {
 				return interceptedEx;
@@ -941,6 +944,10 @@ public class SQLError {
 	}
 
 	public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor) {
+		return createSQLException(message, sqlState, cause, interceptor, null);
+	}
+	public static SQLException createSQLException(String message, String sqlState, Throwable cause, ExceptionInterceptor interceptor,
+			Connection conn) {
 		if (THROWABLE_INIT_CAUSE_METHOD == null) {
 			if (cause != null) {
 				message = message + " due to " + cause.toString();
@@ -959,7 +966,7 @@ public class SQLError {
 		}
 		
 		if (interceptor != null) {
-			SQLException interceptedEx = interceptor.interceptException(sqlEx);
+			SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
 			
 			if (interceptedEx != null) {
 				return interceptedEx;
@@ -976,6 +983,10 @@ public class SQLError {
 	
 	public static SQLException createSQLException(String message,
 			String sqlState, int vendorErrorCode, boolean isTransient, ExceptionInterceptor interceptor) {
+		return createSQLException(message, sqlState, vendorErrorCode, false, interceptor, null);
+	}
+	public static SQLException createSQLException(String message,
+			String sqlState, int vendorErrorCode, boolean isTransient, ExceptionInterceptor interceptor, Connection conn) {
 		try {
 			SQLException sqlEx = null;
 			
@@ -1065,7 +1076,7 @@ public class SQLError {
 			}
 			
 			if (interceptor != null) {
-				SQLException interceptedEx = interceptor.interceptException(sqlEx);
+				SQLException interceptedEx = interceptor.interceptException(sqlEx, conn);
 				
 				if (interceptedEx != null) {
 					return interceptedEx;
@@ -1084,7 +1095,7 @@ public class SQLError {
 					SQL_STATE_GENERAL_ERROR);
 			
 			if (interceptor != null) {
-				SQLException interceptedEx = interceptor.interceptException(unexpectedEx);
+				SQLException interceptedEx = interceptor.interceptException(unexpectedEx, conn);
 				
 				if (interceptedEx != null) {
 					return interceptedEx;
@@ -1124,7 +1135,7 @@ public class SQLError {
 		}
 		
 		if (interceptor != null) {
-			SQLException interceptedEx = interceptor.interceptException(exToReturn);
+			SQLException interceptedEx = interceptor.interceptException(exToReturn, conn);
 			
 			if (interceptedEx != null) {
 				return interceptedEx;

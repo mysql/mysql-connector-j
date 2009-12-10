@@ -87,12 +87,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			interceptors = Util.loadExtensions(ConnectionImpl.this, props, interceptorClasses, "Connection.BadExceptionInterceptor",  this);
 		}
 		
-		public SQLException interceptException(SQLException sqlEx) {
+		public SQLException interceptException(SQLException sqlEx, Connection conn) {
 			if (interceptors != null) {
 				Iterator iter = interceptors.iterator();
 				
 				while (iter.hasNext()) {
-					sqlEx = ((ExceptionInterceptor)iter.next()).interceptException(sqlEx);
+					sqlEx = ((ExceptionInterceptor)iter.next()).interceptException(sqlEx, ConnectionImpl.this);
 				}
 			}
 			

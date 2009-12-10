@@ -3560,7 +3560,7 @@ class MysqlIO {
                 if (xOpen != null && xOpen.startsWith("22")) {
                 	throw new MysqlDataTruncation(errorBuf.toString(), 0, true, false, 0, 0, errno);
                 } else {
-                	throw SQLError.createSQLException(errorBuf.toString(), xOpen, errno, getExceptionInterceptor());
+                	throw SQLError.createSQLException(errorBuf.toString(), xOpen, errno, false, getExceptionInterceptor(), this.connection);
                 }
             }
 
@@ -3573,7 +3573,7 @@ class MysqlIO {
                         SQLError.SQL_STATE_COLUMN_NOT_FOUND) +
                     ", " //$NON-NLS-1$
                      +serverErrorMessage, SQLError.SQL_STATE_COLUMN_NOT_FOUND,
-                    -1, getExceptionInterceptor());
+                    -1, false, getExceptionInterceptor(), this.connection);
             }
 
             StringBuffer errorBuf = new StringBuffer(Messages.getString(
@@ -3583,7 +3583,7 @@ class MysqlIO {
 
             throw SQLError.createSQLException(SQLError.get(
                     SQLError.SQL_STATE_GENERAL_ERROR) + ", " //$NON-NLS-1$
-                 +errorBuf.toString(), SQLError.SQL_STATE_GENERAL_ERROR, -1, getExceptionInterceptor());
+                 +errorBuf.toString(), SQLError.SQL_STATE_GENERAL_ERROR, -1, false, getExceptionInterceptor(), this.connection);
         }
     }
 

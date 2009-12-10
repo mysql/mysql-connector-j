@@ -3,6 +3,8 @@
 
 mm-dd-yy - Version 5.1.11 (not yet released)
  
+    - Fix for BUG#49607 - Provide Connection context in ExceptionInterceptor.
+ 
     - Fix for BUG#48605 - Ping leaves closed connections in liveConnections, causing subsequent Exceptions when
       that connection is used.
  
