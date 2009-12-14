@@ -24,6 +24,7 @@
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
+import java.util.Properties;
 import java.util.TimeZone;
 
 import com.mysql.jdbc.log.Log;
@@ -381,4 +382,15 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	 * or '1' if not.
 	 */
 	public abstract int getAutoIncrementIncrement();
+
+	/**
+	 * Does this connection have the same properties as another?
+	 */
+	public boolean hasSameProperties(Connection c);
+	
+	/**
+	 * Returns the parsed and passed in properties for this connection.
+	 * @return
+	 */
+	public Properties getProperties();
 }

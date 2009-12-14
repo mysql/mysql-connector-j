@@ -56,7 +56,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 		NonRegisteringDriver driver = new NonRegisteringDriver();
 
 		StringBuffer masterUrl = new StringBuffer("jdbc:mysql://");
-        StringBuffer slaveUrl = new StringBuffer("jdbc:mysql://");
+        StringBuffer slaveUrl = new StringBuffer("jdbc:mysql:loadbalance://");
 
         String masterHost = masterProperties
         	.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
@@ -65,13 +65,21 @@ public class ReplicationConnection implements Connection, PingTarget {
         	masterUrl.append(masterHost);
         }
  
-        String slaveHost = slaveProperties
-        	.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        	
-        if (slaveHost != null) {
-        	slaveUrl.append(slaveHost);
-        }
+        int numHosts = Integer.parseInt(slaveProperties.getProperty(
+        		NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY));
         
+        for(int i = 1; i <= numHosts; i++){
+	        String slaveHost = slaveProperties
+	        	.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + "." + i);
+	        
+	        if (slaveHost != null) {
+	        	if(i > 1){
+	        		slaveUrl.append(',');
+	        	}
+	        	slaveUrl.append(slaveHost);
+	        }
+        }
+
         String masterDb = masterProperties
         	.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 
@@ -2411,5 +2419,18 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public void setQueryTimeoutKillsConnection(
 			boolean queryTimeoutKillsConnection) {
 		this.currentConnection.setQueryTimeoutKillsConnection(queryTimeoutKillsConnection);
+	}
+
+	public boolean hasSameProperties(Connection c) {
+		return this.masterConnection.hasSameProperties(c) && 
+			this.slavesConnection.hasSameProperties(c);
+	}
+	
+	public Properties getProperties() {
+		Properties props = new Properties();
+		props.putAll(this.masterConnection.getProperties());
+		props.putAll(this.slavesConnection.getProperties());
+		
+		return props;
 	}
 }

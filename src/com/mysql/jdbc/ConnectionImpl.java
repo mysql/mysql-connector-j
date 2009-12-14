@@ -3346,9 +3346,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	}
 
 	public boolean hasSameProperties(Connection c) {
-		return this.props.equals(((ConnectionImpl)c).props);
+		return this.props.equals(c.getProperties());
 	}
 
+	public Properties getProperties() {
+		return this.props;
+	}
+	
 	public boolean hasTriedMaster() {
 		return this.hasTriedMasterFlag;
 	}

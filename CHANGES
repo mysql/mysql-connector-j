@@ -31,6 +31,14 @@ mm-dd-yy - Version 5.1.11 (not yet released)
       requires access to the connection itself, it should ensure that methods 
       that might throw exceptions if the connection is closed should handle 
       this in a robust manner.
+      
+    - "Replication" connections (those with URLs that start with 
+      jdbc:mysql:replication) now use a jdbc:mysql:loadbalance connection
+      under the hood for the slave "pool". This also means that one can set
+      load balancing properties such as "loadBalanceBlacklistTimeout" and
+      "loadBalanceStrategy" to choose a mechanism for balancing the load and
+      failover/fault tolerance strategy for the slave pool. This work was done
+      in order to fix Bug#49537.
     
 09-22-09 - Version 5.1.10
 

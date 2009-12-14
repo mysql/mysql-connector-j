@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TimeZone;
 
 import com.mysql.jdbc.Connection;
@@ -2618,5 +2619,13 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void setQueryTimeoutKillsConnection(
 			boolean queryTimeoutKillsConnection) {
 		this.mc.setQueryTimeoutKillsConnection(queryTimeoutKillsConnection);
+	}
+
+	public boolean hasSameProperties(Connection c) {
+		return this.mc.hasSameProperties(c);
+	}
+	
+	public Properties getProperties() {
+		return this.mc.getProperties();
 	}
 }
