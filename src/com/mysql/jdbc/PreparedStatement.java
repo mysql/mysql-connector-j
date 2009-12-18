@@ -1527,7 +1527,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 							batchTimeout != 0
 							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 						timeoutTask = new CancelTask((StatementImpl)batchedStatement);
-						ConnectionImpl.getCancelTimer().schedule(timeoutTask,
+						locallyScopedConn.getCancelTimer().schedule(timeoutTask,
 								batchTimeout);
 					}
 					
@@ -1682,7 +1682,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	protected int[] executeBatchedInserts(int batchTimeout) throws SQLException {
 		String valuesClause = getValuesClause(); 
 
-		Connection locallyScopedConn = this.connection;
+		ConnectionImpl locallyScopedConn = this.connection;
 
 		if (valuesClause == null) {
 			return executeBatchSerially(batchTimeout);
@@ -1720,12 +1720,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					batchedStatement = /* FIXME -if we ever care about folks proxying our ConnectionImpl */
 							prepareBatchedInsertSQL((ConnectionImpl) locallyScopedConn, numValuesPerBatch);
 
-				if (this.connection.getEnableQueryTimeouts()
+				if (locallyScopedConn.getEnableQueryTimeouts()
 						&& batchTimeout != 0
-						&& this.connection.versionMeetsMinimum(5, 0, 0)) {
+						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask(
 							(StatementImpl) batchedStatement);
-					ConnectionImpl.getCancelTimer().schedule(timeoutTask,
+					locallyScopedConn.getCancelTimer().schedule(timeoutTask,
 							batchTimeout);
 				}
 
@@ -1924,7 +1924,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected int[] executeBatchSerially(int batchTimeout) throws SQLException {
 		
-		Connection locallyScopedConn = this.connection;
+		ConnectionImpl locallyScopedConn = this.connection;
 		
 		if (locallyScopedConn == null) {
 			checkClosed();
@@ -1945,11 +1945,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			CancelTask timeoutTask = null;
 			
 			try {
-				if (this.connection.getEnableQueryTimeouts() &&
+				if (locallyScopedConn.getEnableQueryTimeouts() &&
 						batchTimeout != 0
-						&& this.connection.versionMeetsMinimum(5, 0, 0)) {
+						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask(this);
-					ConnectionImpl.getCancelTimer().schedule(timeoutTask,
+					locallyScopedConn.getCancelTimer().schedule(timeoutTask,
 							batchTimeout);
 				}
 				
@@ -2095,7 +2095,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						this.timeoutInMillis != 0
 						&& locallyScopedConnection.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask(this);
-					ConnectionImpl.getCancelTimer().schedule(timeoutTask, 
+					locallyScopedConnection.getCancelTimer().schedule(timeoutTask, 
 							this.timeoutInMillis);
 				}
 				

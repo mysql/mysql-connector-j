@@ -218,7 +218,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private double queryTimeSumSquares;
 	private double queryTimeMean;
 	
-	private static Timer cancelTimer;
+	private Timer cancelTimer;
 	
 	private List connectionLifecycleInterceptors;
 	
@@ -240,24 +240,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				TRANSACTION_REPEATABLE_READ));
 		mapTransIsolationNameToValue.put("SERIALIZABLE", Constants.integerValueOf(
 				TRANSACTION_SERIALIZABLE));
-		
-		boolean createdNamedTimer = false;
-		
-		// Use reflection magic to try this on JDK's 1.5 and newer, fallback to non-named
-		// timer on older VMs.
-		try {
-			Constructor ctr = Timer.class.getConstructor(new Class[] {String.class, Boolean.TYPE});
-			
-			cancelTimer = (Timer)ctr.newInstance(new Object[] { "MySQL Statement Cancellation Timer", Boolean.TRUE});
-			createdNamedTimer = true;
-		} catch (Throwable t) {
-			createdNamedTimer = false;
-		}
-		
-		if (!createdNamedTimer) {
-			cancelTimer = new Timer(true);
-		}
-		
+
 		if (Util.isJdbc4()) {
 			try {
 				JDBC_4_CONNECTION_CTOR = Class.forName(
@@ -329,7 +312,26 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return sqlExceptionWithNewMessage;
 	}
 
-	protected static Timer getCancelTimer() {
+	protected synchronized Timer getCancelTimer() {
+		if (cancelTimer == null) {
+			boolean createdNamedTimer = false;
+			
+			// Use reflection magic to try this on JDK's 1.5 and newer, fallback to non-named
+			// timer on older VMs.
+			try {
+				Constructor ctr = Timer.class.getConstructor(new Class[] {String.class, Boolean.TYPE});
+				
+				cancelTimer = (Timer)ctr.newInstance(new Object[] { "MySQL Statement Cancellation Timer", Boolean.TRUE});
+				createdNamedTimer = true;
+			} catch (Throwable t) {
+				createdNamedTimer = false;
+			}
+			
+			if (!createdNamedTimer) {
+				cancelTimer = new Timer(true);
+			}
+		}
+		
 		return cancelTimer;
 	}
 
@@ -4476,6 +4478,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			this.statementInterceptors = null;
 			this.exceptionInterceptor = null;
 			ProfilerEventHandlerFactory.removeInstance(this);
+			
+			synchronized (this) {
+				if (this.cancelTimer != null) {
+					this.cancelTimer.cancel();
+				}
+			}
+			
 			this.isClosed = true;
 		}
 

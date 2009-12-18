@@ -723,7 +723,7 @@ public class StatementImpl implements Statement {
 							this.timeoutInMillis != 0
 							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 						timeoutTask = new CancelTask(this);
-						ConnectionImpl.getCancelTimer().schedule(timeoutTask,
+						locallyScopedConn.getCancelTimer().schedule(timeoutTask,
 								this.timeoutInMillis);
 					}
 
@@ -1016,7 +1016,7 @@ public class StatementImpl implements Statement {
 							individualStatementTimeout != 0
 							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 						timeoutTask = new CancelTask(this);
-						ConnectionImpl.getCancelTimer().schedule(timeoutTask,
+						locallyScopedConn.getCancelTimer().schedule(timeoutTask,
 								individualStatementTimeout);
 					}
 					
@@ -1152,7 +1152,7 @@ public class StatementImpl implements Statement {
 					individualStatementTimeout != 0
 					&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 				timeoutTask = new CancelTask((StatementImpl)batchStmt);
-				ConnectionImpl.getCancelTimer().schedule(timeoutTask,
+				locallyScopedConn.getCancelTimer().schedule(timeoutTask,
 						individualStatementTimeout);
 			}
 			
@@ -1407,7 +1407,7 @@ public class StatementImpl implements Statement {
 						this.timeoutInMillis != 0
 						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask(this);
-					ConnectionImpl.getCancelTimer().schedule(timeoutTask,
+					locallyScopedConn.getCancelTimer().schedule(timeoutTask,
 							this.timeoutInMillis);
 				}
 
@@ -1627,7 +1627,7 @@ public class StatementImpl implements Statement {
 						this.timeoutInMillis != 0
 						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
 					timeoutTask = new CancelTask(this);
-					ConnectionImpl.getCancelTimer().schedule(timeoutTask,
+					locallyScopedConn.getCancelTimer().schedule(timeoutTask,
 							this.timeoutInMillis);
 				}
 
