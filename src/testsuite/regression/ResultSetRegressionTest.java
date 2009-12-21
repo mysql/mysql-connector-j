@@ -4988,4 +4988,24 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}
 		
 	}
+	
+	public void testBug49797() throws Exception {
+		createTable("testBug49797", "(`Id` int(2) not null auto_increment, " +
+				"`abc` char(50) , " +
+				"PRIMARY KEY (`Id`)) ENGINE=MyISAM DEFAULT CHARSET=utf8");
+		this.stmt.executeUpdate("INSERT into testBug49797 VALUES (1,'1'),(2,'2'),(3,'3')");
+		assertEquals(3, getRowCount("testBug49797"));
+		
+		Statement updStmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, 
+				ResultSet.CONCUR_UPDATABLE );
+		try {
+			this.rs = updStmt.executeQuery("SELECT * FROM testBug49797");
+			while(rs.next()) {
+				rs.deleteRow();
+			}
+			assertEquals(0, getRowCount("testBug49797"));
+		} finally {
+			updStmt.close();
+		}
+	}
 }
