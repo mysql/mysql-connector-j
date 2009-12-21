@@ -6,7 +6,6 @@
 			<attribute name="javadoc_location" value="http://java.sun.com/j2se/1.5.0/docs/api/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="src/lib/jdbc2_0-stdext.jar"/>
 	<classpathentry kind="lib" path="src/lib/jta-spec1_0_1.jar"/>
 	<classpathentry kind="lib" path="src/lib-nodist/fscontext.jar"/>
 	<classpathentry kind="lib" path="src/lib-nodist/providerutil.jar"/>
