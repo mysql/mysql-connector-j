@@ -50,6 +50,11 @@ mm-dd-yy - Version 5.1.11 (not yet released)
       fix exists that lets us keep the timer shared amongst connection instances, so
       instead it's lazily created if need be per-instance, and torn down when the 
       connection is closed.
+      
+    - Fixed BUG#49700 - Connections from ConnectionPoolDataSource don't
+      maintain any values set with "sesssionVariables=...". This was a bug
+      in Connection.changeUser()/resetServerState(), we now resubmit the
+      session variables during the execution of these methods.
     
 09-22-09 - Version 5.1.10
 

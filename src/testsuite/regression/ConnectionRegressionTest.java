@@ -2677,4 +2677,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		closeMemberJDBCResources();
 	}
 
+	public void testBug49700() throws Exception {
+		Connection c = getConnectionWithProps("sessionVariables=@foo='bar'");
+		assertEquals("bar", getSingleIndexedValueWithQuery(c, 1, "SELECT @foo"));
+		((com.mysql.jdbc.Connection)c).resetServerState();
+		assertEquals("bar", getSingleIndexedValueWithQuery(c, 1, "SELECT @foo"));
+	}
 }

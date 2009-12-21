@@ -1149,6 +1149,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			configureClientCharacterSet(true);
 		}
 		
+		setSessionVariables();
+		
 		setupServerForTruncationChecks();
 	}
 
