@@ -285,19 +285,15 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 			// remove from liveConnections
 			this.liveConnections.remove(this.connectionsToHostsMap
 					.get(this.currentConn));
-			if(this.connectionsToHostsMap.containsKey(this.currentConn)){
-				int hostIndex = ((Integer) this.hostsToListIndexMap
-						.get(this.connectionsToHostsMap.get(this.currentConn)))
-						.intValue();
-	
+			Object mappedHost = this.connectionsToHostsMap.remove(this.currentConn);
+			if(mappedHost != null && this.hostsToListIndexMap.containsKey(mappedHost)){
+				int hostIndex = ((Integer) this.hostsToListIndexMap.get(mappedHost)).intValue();
 				// reset the statistics for the host
 				synchronized (this.responseTimes) {
 					this.responseTimes[hostIndex] = 0;
 				}
 			}
-
-			this.connectionsToHostsMap.remove(this.currentConn);
-			}
+		}
 	}
 	
 	private void closeAllConnections(){

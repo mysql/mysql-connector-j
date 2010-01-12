@@ -3,6 +3,9 @@
 
 mm-dd-yy - Version 5.1.11 (not yet released)
  
+    - Fix for BUG#50288 - NullPointerException possible during invalidateCurrentConnection() for load-balanced
+      connections.
+ 
     - Fix for BUG#49745 - deleteRow() for updatable result sets can cause full table scan because escaped hex 
       values are used for primary key identifiers.
  
