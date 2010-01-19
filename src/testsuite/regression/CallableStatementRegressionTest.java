@@ -1623,4 +1623,43 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	public void testBug49831() throws Exception {
+		if (!serverSupportsStoredProcedures()) {
+			return;
+		}
+		
+		createTable("testBug49831", "(val varchar(32))");
+		
+		createProcedure("pTestBug49831", "(testval varchar(32)) "
+			+ "BEGIN "
+			+ "insert into testBug49831 (val) values (testval);"
+			+ "END;");
+		
+		execProcBug49831(this.conn);
+		this.stmt.execute("TRUNCATE TABLE testBug49831");
+		assertEquals(0, getRowCount("testBug49831"));
+		Connection noBodiesConn = getConnectionWithProps("noAccessToProcedureBodies=true,jdbcCompliantTruncation=false,characterEncoding=utf8,useUnicode=yes");
+		try {
+			execProcBug49831(noBodiesConn);
+		} finally {
+			noBodiesConn.close();
+		}
+		
+	}
+	
+	private void execProcBug49831(Connection c) throws Exception {
+		CallableStatement cstmt = c.prepareCall("{call pTestBug49831(?)}");
+		cstmt.setObject(1, "abc", Types.VARCHAR, 32);
+		cstmt.addBatch();
+		cstmt.setObject(1, "def", Types.VARCHAR, 32);
+		cstmt.addBatch();
+		cstmt.executeBatch();
+		assertEquals(2, getRowCount("testBug49831"));
+		this.rs = this.stmt.executeQuery("SELECT * from testBug49831 ORDER BY VAL ASC");
+		this.rs.next();
+		assertEquals("abc", this.rs.getString(1));
+		this.rs.next();
+		assertEquals("def", this.rs.getString(1));
+	}
 }
