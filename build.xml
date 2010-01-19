@@ -437,41 +437,6 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF"/>
 	</target>
 
-	<target name="-dist-trace" depends="init, compile-driver-trace">
-
-		<delete file="${buildDir}/${fullProdName}-bin-g.jar"/>
-
-		<mkdir dir="${distDir}" />
-		<mkdir dir="${buildDir}/${fullProdName}/debug"/>
-
-		<!-- JDBC-4.0 support of service provider mechanism -->
-				
-		<mkdir dir="${buildDir}/${fullProdName}/META-INF/services/" />
-		<echo file="${buildDir}/${fullProdName}/META-INF/services/java.sql.Driver"
-				message="com.mysql.jdbc.Driver" />
-		
-		<manifest file="${buildDir}/${fullProdName}/MANIFEST.MF">
-			<attribute name="Built-By" value="${user.name}" />
-
-			<section name="common">
-				<attribute name="Specification-Title" value="JDBC" />
-				<attribute name="Specification-Version" value="4.0" />
-				<attribute name="Specification-Vendor" value="Sun Microsystems Inc." />
-				<attribute name="Implementation-Title" value="MySQL Connector/J (trace/debug enabled)" />
-				<attribute name="Implementation-Version" value="${full-version} (trace/debug-enabled)" />
-				<attribute name="Implementation-Vendor" value="MySQL AB" />
-			</section>
-		</manifest>
-
-		<jar jarfile="${buildDir}/${fullProdName}/debug/${fullProdName}-bin-g.jar"
-				basedir="${buildDir}/${fullProdName}"
-				includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**"
-				excludes="testsuite/**"
-				index="true"
-				manifest="${buildDir}/${fullProdName}/MANIFEST.MF"
-			/>
-	</target>
-
 	<target name="-bundle-docs" depends="init">
 		<copy file="${com.mysql.jdbc.docs.sourceDir}/en/html/connector-j.html"
 		  	todir="${buildDir}/${fullProdName}/docs"
@@ -773,9 +738,6 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 	<target name="compile" depends="init, compile-driver, compile-testsuite, compile.integration">
 	</target>
 
-	<target name="compile-trace" depends="init, compile-driver-trace">
-	</target>
-
 	<!-- Compiles the driver itself -->
 
 	<target name="compile-driver" depends="compile-driver-jdbc3, compile-driver-jdbc4" />
@@ -812,29 +774,6 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<classpath refid="project.build.classpath" />
 		</javac>
 		
-	</target>
-
-	<!-- Compiles a version of the driver with AspectJ tracing -->
-
-	<target name="compile-driver-trace" depends="init">
-		<taskdef 
-			      resource="org/aspectj/tools/ant/taskdefs/aspectjTaskdefs.properties">
-			<classpath>
-				<pathelement location="${sourceDir}/lib/aspectjtools.jar"/>
-			</classpath>
-		</taskdef>
-
-
-		<iajc destdir="${compiler.output}">
-			<sourceroots>
-				<pathelement location="${buildDir}/${fullProdName}/org"/>
-				<pathelement location="${buildDir}/${fullProdName}/com"/>
-			</sourceroots>
-			<classpath refid="project.build.classpath"/>
-			<classpath>
-				<pathelement location="${sourceDir}/lib/aspectjtools.jar"/>
-			</classpath>
-		</iajc>
 	</target>
 
 	<!-- Compiles integration 'helpers' for third-party software -->
