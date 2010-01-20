@@ -1,7 +1,7 @@
 # Changelog
 # $Id$
 
-mm-dd-yy - Version 5.1.11 (not yet released)
+01-20-10 - Version 5.1.11
  
     - Fix for BUG#50288 - NullPointerException possible during invalidateCurrentConnection() for load-balanced
       connections.
