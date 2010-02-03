@@ -6,9 +6,10 @@ nn-nn-10 - Version 5.1.12
     - NO_INDEX_USED and NO_GOOD_INDEX used were only being set when profileSQL 
       was set to "true", and in some cases their values were reversed.
 
-	- Fix for Bug#51022 - conn.getMetaData().getProcedures("schema",null,"%"); returns all stored procedures
-	  from all databases and not only for given one.
+    - Fix for Bug#51022 - conn.getMetaData().getProcedures("schema",null,"%"); returns all stored proceduresfrom all databases and not only for given one.
 	
+    - Fixed Bug#50538 - ${svn.revno} shows up in DBMD.getDriverVersion().
+    
 01-20-10 - Version 5.1.11
  
     - Fix for BUG#50288 - NullPointerException possible during invalidateCurrentConnection() for load-balanced
