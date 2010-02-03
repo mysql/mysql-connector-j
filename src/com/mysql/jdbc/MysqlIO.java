@@ -2209,7 +2209,7 @@ class MysqlIO {
 
 	    		ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 
-	    		if (this.queryBadIndexUsed) {
+	    		if (this.queryBadIndexUsed && this.profileSql) {
 	    			eventSink.consumeEvent(new ProfilerEvent(
 	    					ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, //$NON-NLS-1$
 	    					this.connection.getId(),
@@ -2223,7 +2223,7 @@ class MysqlIO {
 	    							+profileQueryToLog));
 	    		}
 
-	    		if (this.queryNoIndexUsed) {
+	    		if (this.queryNoIndexUsed && this.profileSql) {
 	    			eventSink.consumeEvent(new ProfilerEvent(
 	    					ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, //$NON-NLS-1$
 	    					this.connection.getId(),
@@ -2237,7 +2237,7 @@ class MysqlIO {
 	    							+profileQueryToLog));
 	    		}
 	    		
-	    		if (this.serverQueryWasSlow) {
+	    		if (this.serverQueryWasSlow && this.profileSql) {
 	    			eventSink.consumeEvent(new ProfilerEvent(
 	    					ProfilerEvent.TYPE_SLOW_QUERY, "", catalog, //$NON-NLS-1$
 	    					this.connection.getId(),
@@ -2682,14 +2682,12 @@ class MysqlIO {
     }
 
 	private void setServerSlowQueryFlags() {
-		if (this.profileSql) {
-		    this.queryNoIndexUsed = (this.serverStatus &
-		        SERVER_QUERY_NO_GOOD_INDEX_USED) != 0;
-		    this.queryBadIndexUsed = (this.serverStatus &
-		        SERVER_QUERY_NO_INDEX_USED) != 0;
-		    this.serverQueryWasSlow = (this.serverStatus & 
-		    	SERVER_QUERY_WAS_SLOW) != 0;
-		}
+	    this.queryBadIndexUsed = (this.serverStatus &
+	        SERVER_QUERY_NO_GOOD_INDEX_USED) != 0;
+	    this.queryNoIndexUsed = (this.serverStatus &
+	        SERVER_QUERY_NO_INDEX_USED) != 0;
+	    this.serverQueryWasSlow = (this.serverStatus & 
+	    	SERVER_QUERY_WAS_SLOW) != 0;
 	}
 
     private void checkForOutstandingStreamingData() throws SQLException {

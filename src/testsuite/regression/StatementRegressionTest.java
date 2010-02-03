@@ -79,6 +79,7 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.ServerPreparedStatement;
 import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.StatementInterceptor;
+import com.mysql.jdbc.StatementInterceptorV2;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 
@@ -6354,5 +6355,67 @@ public class StatementRegressionTest extends BaseTestCase {
 		} finally {
 			closeMemberJDBCResources();
 		}
+	}
+	
+	public void testReversalOfScanFlags() throws Exception {
+		createTable("testReversalOfScanFlags", "(field1 int)");
+		this.stmt.executeUpdate("INSERT INTO testReversalOfScanFlags VALUES (1),(2),(3)");
+		
+		Connection scanningConn = getConnectionWithProps(
+				"statementInterceptors=" + ScanDetectingInterceptor.class.getName());
+		
+		try {
+			ScanDetectingInterceptor.watchForScans = true;
+			scanningConn.createStatement().executeQuery("SELECT field1 FROM testReversalOfScanFlags");
+			assertTrue(ScanDetectingInterceptor.hasSeenScan);
+			assertFalse(ScanDetectingInterceptor.hasSeenBadIndex);
+		} finally {
+			scanningConn.close();
+		}
+		
+	}
+	public static class ScanDetectingInterceptor implements StatementInterceptorV2 {
+		static boolean watchForScans = false;
+		static boolean hasSeenScan = false;
+		static boolean hasSeenBadIndex = false;
+		
+		public void destroy() {
+			
+		}
+
+		public boolean executeTopLevelOnly() {
+			return false;
+		}
+
+		public void init(com.mysql.jdbc.Connection conn, Properties props)
+				throws SQLException {
+			
+		}
+
+		public ResultSetInternalMethods postProcess(String sql,
+				com.mysql.jdbc.Statement interceptedStatement,
+				ResultSetInternalMethods originalResultSet,
+				com.mysql.jdbc.Connection connection, int warningCount,
+				boolean noIndexUsed, boolean noGoodIndexUsed,
+				SQLException statementException) throws SQLException {
+			if (watchForScans) {
+				if (noIndexUsed) {
+					hasSeenScan = true;
+				} 
+				
+				if (noGoodIndexUsed) {
+					hasSeenBadIndex = true;
+				}
+			}
+			
+			return null;
+		}
+
+		public ResultSetInternalMethods preProcess(String sql,
+				com.mysql.jdbc.Statement interceptedStatement,
+				com.mysql.jdbc.Connection connection) throws SQLException {
+			return null;
+		}
+		
 	}
 }

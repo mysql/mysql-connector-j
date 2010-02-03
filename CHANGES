@@ -3,6 +3,9 @@
 
 nn-nn-10 - Version 5.1.12
 
+    - NO_INDEX_USED and NO_GOOD_INDEX used were only being set when profileSQL 
+      was set to "true", and in some cases their values were reversed.
+
 01-20-10 - Version 5.1.11
  
     - Fix for BUG#50288 - NullPointerException possible during invalidateCurrentConnection() for load-balanced
