@@ -978,6 +978,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			if (this.conn.getNullCatalogMeansCurrent()) {
 				db = this.database;
 			}
+		}  else {
+			db = catalog;
 		}
 
 		String sql = "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT, "
