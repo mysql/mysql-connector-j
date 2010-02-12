@@ -4745,17 +4745,25 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				} else {
 					synchronized (this) {
 						if (this.tsdf == null) {
-							this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US); //$NON-NLS-1$
+							this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US); //$NON-NLS-1$
 						}
 						
 						timestampString = this.tsdf.format(x);
-						StringBuffer buf = new StringBuffer();
-						buf.append(timestampString);
-						buf.append('.');
-						buf.append(formatNanos(x.getNanos()));
-						buf.append('\'');
 						
-						setInternal(parameterIndex, buf.toString()); // SimpleDateFormat is not
+						if (false) { // not so long as Bug#50774 is around
+							StringBuffer buf = new StringBuffer();
+							buf.append(timestampString);
+							int nanos = x.getNanos();
+							
+							if (nanos != 0) {
+								buf.append('.');
+								buf.append(formatNanos(nanos));
+							}
+							
+							buf.append('\'');
+						}
+						
+						setInternal(parameterIndex, timestampString); // SimpleDateFormat is not
 																	  // thread-safe
 					}
 				}

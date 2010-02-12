@@ -10,6 +10,11 @@ nn-nn-10 - Version 5.1.12
 	
     - Fixed Bug#50538 - ${svn.revno} shows up in DBMD.getDriverVersion().
     
+    - Removed usage of timestamp nanoseconds in PreparedStatement.setTimestamp(),
+      as long as Bug#50774 exists in the server and there's no real support
+      for nanos/micros in TIMESTAMPs, avoid the performance regression usage of 
+      them causes.
+    
 01-20-10 - Version 5.1.11
  
     - Fix for BUG#50288 - NullPointerException possible during invalidateCurrentConnection() for load-balanced
