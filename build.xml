@@ -169,14 +169,14 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<mkdir dir="${buildDir}" />
 
 		<exec dir="." executable="cmd" osfamily="windows" 
-			output="${buildDir}/bzr.properties" failonerror="true" 
-			failifexecutionfails="true">
+			output="${buildDir}/bzr.properties" failonerror="false" 
+			failifexecutionfails="false">
 			<arg line="/c bzr version-info" />
 		</exec>
 
 		<exec executable="bzr" osfamily="unix" 
-			output="${buildDir}/bzr.properties" failonerror="true" 
-			failifexecutionfails="true">
+			output="${buildDir}/bzr.properties" failonerror="false" 
+			failifexecutionfails="false">
 			<arg value="version-info" />
 		</exec>
 
