@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -41,10 +41,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -932,6 +936,11 @@ public abstract class BaseTestCase extends TestCase {
 
 	protected Connection getUnreliableLoadBalancedConnection(String[] hostNames,
 			Properties props) throws Exception {
+		return getUnreliableLoadBalancedConnection(hostNames,
+				props, new HashSet());
+	}
+	protected Connection getUnreliableLoadBalancedConnection(String[] hostNames,
+			Properties props, Set downedHosts) throws Exception {
 				if(props == null){
 					props = new Properties();
 				}
@@ -950,9 +959,12 @@ public abstract class BaseTestCase extends TestCase {
 					hostString.append(glue);
 					glue = ",";
 					hostString.append(hostNames[i] + ":" + (port == null ? "3306" : port));
+					
+					if (downedHosts.contains(hostNames[i])) {
+						UnreliableSocketFactory.downHost(hostNames[i]);
+					}
 				}
 				
-				UnreliableSocketFactory.mapHost("second", host);
 				props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
 					
 				return getConnectionWithProps("jdbc:mysql:loadbalance://" + hostString.toString() +"/" + db, props);

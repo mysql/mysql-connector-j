@@ -1,5 +1,5 @@
 /*
- Copyright  2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -153,13 +153,17 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		this.responseTimes = new long[numHosts];
 		this.hostsToListIndexMap = new HashMap(numHosts);
 
-		for (int i = 0; i < numHosts; i++) {
-			this.hostsToListIndexMap.put(this.hostList.get(i), new Integer(i));
-		}
-
 		this.localProps = (Properties) props.clone();
 		this.localProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
 		this.localProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
+
+		for (int i = 0; i < numHosts; i++) {
+			this.hostsToListIndexMap.put(this.hostList.get(i), new Integer(i));
+			this.localProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + "." + (i + 1));
+			this.localProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + "." + (i + 1));
+		}
+
+		this.localProps.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
 		this.localProps.setProperty("useLocalSessionState", "true");
 
 		String strategy = this.localProps.getProperty("loadBalanceStrategy",
@@ -224,10 +228,14 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		}
 
 		connProps.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY,
-				hostPortSpec);
+				hostPortPair[0]);
 		connProps.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY,
 				hostPortPair[1]);
-
+		connProps.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1", hostPortPair[0]);
+		connProps.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1", hostPortPair[1]);
+		connProps.setProperty(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY, "1");
+		connProps.setProperty("roundRobinLoadBalance", "false"); // make sure we don't pickup the default value
+		
 		Connection conn = ConnectionImpl.getInstance(hostPortSpec, Integer
 				.parseInt(hostPortPair[1]), connProps, connProps
 				.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY),

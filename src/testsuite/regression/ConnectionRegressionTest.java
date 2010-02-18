@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -2694,36 +2694,12 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	public void testBug51266() throws Exception {
 		Properties props = new Properties();
 		props.setProperty("roundRobinLoadBalance", "true"); // shouldn't be needed, but used in reported bug, it's removed by the driver
-		props.setProperty("loadBalanceStrategy", TraceableRandomBalanceStrategy.class.getName());
+		Set downedHosts = new HashSet();
+		downedHosts.add("first");
 		
+		// this loop will hang on the first unreliable host if the bug isn't fixed.
 		for (int i = 0; i < 20; i++) {
-			this.getUnreliableLoadBalancedConnection(new String[]{"first", "second", "third", "fourth"}, props).close();
-		}
-		
-		assertTrue(TraceableRandomBalanceStrategy.getPickedConnections().size() > 1);
-	}
-	
-	public static class TraceableRandomBalanceStrategy extends RandomBalanceStrategy {
-		private static Set pickedConnections = new HashSet();
-		
-		public static void clearPickedConnections() {
-			pickedConnections.clear();
-		}
-		
-		public static Set getPickedConnections() {
-			return pickedConnections;
-		}
-
-		public com.mysql.jdbc.Connection pickConnection(
-				LoadBalancingConnectionProxy proxy, List configuredHosts,
-				Map liveConnections, long[] responseTimes, int numRetries)
-				throws SQLException {
-			
-			com.mysql.jdbc.Connection c = super.pickConnection(proxy, configuredHosts, liveConnections,
-					responseTimes, numRetries);
-			pickedConnections.add(c.getMetaData().getURL());
-			
-			return c;
+			getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props, downedHosts).close();
 		}
 	}
 }
