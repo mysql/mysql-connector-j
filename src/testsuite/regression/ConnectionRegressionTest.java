@@ -44,12 +44,14 @@ import java.sql.Statement;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,10 +65,12 @@ import testsuite.UnreliableSocketFactory;
 
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
+import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.jdbc.RandomBalanceStrategy;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
@@ -2685,5 +2689,41 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		assertEquals("bar", getSingleIndexedValueWithQuery(c, 1, "SELECT @foo"));
 		((com.mysql.jdbc.Connection)c).resetServerState();
 		assertEquals("bar", getSingleIndexedValueWithQuery(c, 1, "SELECT @foo"));
+	}
+	
+	public void testBug51266() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("roundRobinLoadBalance", "true"); // shouldn't be needed, but used in reported bug, it's removed by the driver
+		props.setProperty("loadBalanceStrategy", TraceableRandomBalanceStrategy.class.getName());
+		
+		for (int i = 0; i < 20; i++) {
+			this.getUnreliableLoadBalancedConnection(new String[]{"first", "second", "third", "fourth"}, props).close();
+		}
+		
+		assertTrue(TraceableRandomBalanceStrategy.getPickedConnections().size() > 1);
+	}
+	
+	public static class TraceableRandomBalanceStrategy extends RandomBalanceStrategy {
+		private static Set pickedConnections = new HashSet();
+		
+		public static void clearPickedConnections() {
+			pickedConnections.clear();
+		}
+		
+		public static Set getPickedConnections() {
+			return pickedConnections;
+		}
+
+		public com.mysql.jdbc.Connection pickConnection(
+				LoadBalancingConnectionProxy proxy, List configuredHosts,
+				Map liveConnections, long[] responseTimes, int numRetries)
+				throws SQLException {
+			
+			com.mysql.jdbc.Connection c = super.pickConnection(proxy, configuredHosts, liveConnections,
+					responseTimes, numRetries);
+			pickedConnections.add(c.getMetaData().getURL());
+			
+			return c;
+		}
 	}
 }

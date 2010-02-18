@@ -1019,7 +1019,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	private StringConnectionProperty loadBalanceStrategy = new StringConnectionProperty(
 			"loadBalanceStrategy", //$NON-NLS-1$
 			"random", //$NON-NLS-1$
-			new String[] {"random", "bestResponseTime"}, //$NON-NLS-1$ //$NON-NLS-2$
+			null, //$NON-NLS-1$ //$NON-NLS-2$
 			Messages.getString("ConnectionProperties.loadBalanceStrategy"), //$NON-NLS-1$
 			"5.0.6", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
