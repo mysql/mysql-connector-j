@@ -105,9 +105,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		}
 	}
 
-	private Connection currentConn;
+	protected Connection currentConn;
 
-	private List hostList;
+	protected List hostList;
 
 	private Map liveConnections;
 
@@ -418,7 +418,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 	 * 
 	 * @throws SQLException
 	 */
-	private synchronized void pickNewConnection() throws SQLException {
+	protected synchronized void pickNewConnection() throws SQLException {
 		if (this.currentConn == null) {
 			this.currentConn = this.balancer.pickConnection(this,
 					Collections.unmodifiableList(this.hostList),
@@ -463,13 +463,18 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 					|| "com.mysql.jdbc".equals(packageName)) {
 				return Proxy.newProxyInstance(toProxy.getClass()
 						.getClassLoader(), interfaces,
-						new ConnectionErrorFiringInvocationHandler(toProxy));
+						createConnectionProxy(toProxy));
 			}
 
 			return proxyIfInterfaceIsJdbc(toProxy, interfaces[i]);
 		}
 
 		return toProxy;
+	}
+
+	protected ConnectionErrorFiringInvocationHandler createConnectionProxy(
+			Object toProxy) {
+		return new ConnectionErrorFiringInvocationHandler(toProxy);
 	}
 
 	/**

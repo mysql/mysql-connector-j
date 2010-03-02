@@ -281,6 +281,10 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			return null;
 		}
 
+		if (!"1".equals(props.getProperty(NUM_HOSTS_PROPERTY_KEY))) {
+			return connectFailover(url, info);
+		}
+		
 		try {
 			Connection newConn = com.mysql.jdbc.ConnectionImpl.getInstance(
 					host(props), port(props), props, database(props), url);
@@ -331,6 +335,39 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this
 				.getClass().getClassLoader(),
 				new Class[] { com.mysql.jdbc.Connection.class }, proxyBal);
+	}
+	
+	private java.sql.Connection connectFailover(String url, Properties info)
+			throws SQLException {
+		Properties parsedProps = parseURL(url, info);
+
+		// People tend to drop this in, it doesn't make sense
+		parsedProps.remove("roundRobinLoadBalance");
+
+		if (parsedProps == null) {
+			return null;
+		}
+
+		int numHosts = Integer.parseInt(parsedProps
+				.getProperty(NUM_HOSTS_PROPERTY_KEY));
+
+		List hostList = new ArrayList();
+
+		for (int i = 0; i < numHosts; i++) {
+			int index = i + 1;
+
+			hostList.add(parsedProps.getProperty(HOST_PROPERTY_KEY + "."
+					+ index)
+					+ ":"
+					+ parsedProps.getProperty(PORT_PROPERTY_KEY + "." + index));
+		}
+
+		FailoverConnectionProxy connProxy = new FailoverConnectionProxy(
+				hostList, parsedProps);
+
+		return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(
+				this.getClass().getClassLoader(),
+				new Class[] { com.mysql.jdbc.Connection.class }, connProxy);
 	}
 
 	protected java.sql.Connection connectReplicationConnection(String url, Properties info)
