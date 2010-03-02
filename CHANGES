@@ -16,6 +16,10 @@ nn-nn-10 - Version 5.1.13
       changed upon commit()/rollback(), and thus applications that held statement
       instances past commit()/rollback() could have data written to or read from
       un-intended connections.
+      
+    - StatementInterceptors were never "un-safed" after connection establishment,
+      causing interceptors which returned result sets pre/post execution would
+      not work.
 
 02-18-10 - Version 5.1.12
 

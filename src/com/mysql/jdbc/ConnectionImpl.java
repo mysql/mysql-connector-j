@@ -845,9 +845,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
     public void unSafeStatementInterceptors() throws SQLException {
     	
     	ArrayList unSafedStatementInterceptors = new ArrayList(this.statementInterceptors.size());
-    	
-    	this.statementInterceptors = new ArrayList(this.statementInterceptors.size());
-    	
+
     	for (int i = 0; i < this.statementInterceptors.size(); i++) {
     		NoSubInterceptorWrapper wrappedInterceptor = (NoSubInterceptorWrapper) this.statementInterceptors.get(i);
     		
