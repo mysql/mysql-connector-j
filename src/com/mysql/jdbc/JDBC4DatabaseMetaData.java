@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -37,7 +37,7 @@ import java.util.List;
 import com.mysql.jdbc.Field;
 
 public class JDBC4DatabaseMetaData extends DatabaseMetaData {
-	public JDBC4DatabaseMetaData(ConnectionImpl connToSet, String databaseToSet) {
+	public JDBC4DatabaseMetaData(MySQLConnection connToSet, String databaseToSet) {
 		super(connToSet, databaseToSet);
 	}
 

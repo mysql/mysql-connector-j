@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -39,12 +39,12 @@ import java.sql.NClob;
 
 public class JDBC4CallableStatement extends CallableStatement {
 
-	public JDBC4CallableStatement(ConnectionImpl conn,
+	public JDBC4CallableStatement(MySQLConnection conn,
 			CallableStatementParamInfo paramInfo) throws SQLException {
 		super(conn, paramInfo);
 	}
 
-	public JDBC4CallableStatement(ConnectionImpl conn, String sql,
+	public JDBC4CallableStatement(MySQLConnection conn, String sql,
 			String catalog, boolean isFunctionCall) throws SQLException {
 		super(conn, sql, catalog, isFunctionCall);
 	}

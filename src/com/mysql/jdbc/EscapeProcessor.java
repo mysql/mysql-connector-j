@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -103,7 +103,7 @@ class EscapeProcessor {
 	 *             DOCUMENT ME!
 	 */
 	public static final Object escapeSQL(String sql,
-			boolean serverSupportsConvertFn, ConnectionImpl conn)
+			boolean serverSupportsConvertFn, MySQLConnection conn)
 			throws java.sql.SQLException {
 		boolean replaceEscapeSequence = false;
 		String escapeSequence = null;
@@ -341,7 +341,7 @@ class EscapeProcessor {
 		return epr;
 	}
 
-	private static void processTimeToken(ConnectionImpl conn,
+	private static void processTimeToken(MySQLConnection conn,
 			StringBuffer newSql, String token) throws SQLException {
 		int startPos = token.indexOf('\'') + 1;
 		int endPos = token.lastIndexOf('\''); // no }
@@ -425,7 +425,7 @@ class EscapeProcessor {
 		}
 	}
 
-	private static void processTimestampToken(ConnectionImpl conn,
+	private static void processTimestampToken(MySQLConnection conn,
 			StringBuffer newSql, String token) throws SQLException {
 		int startPos = token.indexOf('\'') + 1;
 		int endPos = token.lastIndexOf('\''); // no }
@@ -618,7 +618,7 @@ class EscapeProcessor {
 	 * @throws SQLException
 	 */
 	private static String processConvertToken(String functionToken,
-			boolean serverSupportsConvertFn, ConnectionImpl conn) throws SQLException {
+			boolean serverSupportsConvertFn, MySQLConnection conn) throws SQLException {
 		// The JDBC spec requires these types:
 		//
 		// BIGINT

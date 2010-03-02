@@ -1,5 +1,5 @@
 /*
- Copyright  2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -482,7 +482,7 @@ public class BufferRow extends ResultSetRow {
 
 	public Timestamp getNativeTimestamp(int columnIndex,
 			Calendar targetCalendar, TimeZone tz, boolean rollForward,
-			ConnectionImpl conn, ResultSetImpl rs) throws SQLException {
+			MySQLConnection conn, ResultSetImpl rs) throws SQLException {
 		if (isNull(columnIndex)) {
 			return null;
 		}
@@ -516,7 +516,7 @@ public class BufferRow extends ResultSetRow {
 		}
 	}
 
-	public String getString(int columnIndex, String encoding, ConnectionImpl conn)
+	public String getString(int columnIndex, String encoding, MySQLConnection conn)
 			throws SQLException {
 		if (this.isBinaryEncoded) {
 			if (isNull(columnIndex)) {
@@ -546,7 +546,7 @@ public class BufferRow extends ResultSetRow {
 	}
 
 	public Time getTimeFast(int columnIndex, Calendar targetCalendar,
-			TimeZone tz, boolean rollForward, ConnectionImpl conn,
+			TimeZone tz, boolean rollForward, MySQLConnection conn,
 			ResultSetImpl rs) throws SQLException {
 		if (isNull(columnIndex)) {
 			return null;
@@ -563,7 +563,7 @@ public class BufferRow extends ResultSetRow {
 	}
 
 	public Timestamp getTimestampFast(int columnIndex, Calendar targetCalendar,
-			TimeZone tz, boolean rollForward, ConnectionImpl conn,
+			TimeZone tz, boolean rollForward, MySQLConnection conn,
 			ResultSetImpl rs) throws SQLException {
 		if (isNull(columnIndex)) {
 			return null;
@@ -694,7 +694,7 @@ public class BufferRow extends ResultSetRow {
 		}
 	}
 
-	public Date getDateFast(int columnIndex, ConnectionImpl conn,
+	public Date getDateFast(int columnIndex, MySQLConnection conn,
 			ResultSetImpl rs, Calendar targetCalendar) throws SQLException {
 		if (isNull(columnIndex)) {
 			return null;
@@ -710,7 +710,7 @@ public class BufferRow extends ResultSetRow {
 				offset, (int)length, conn, rs, targetCalendar);
 	}
 
-	public java.sql.Date getNativeDate(int columnIndex, ConnectionImpl conn,
+	public java.sql.Date getNativeDate(int columnIndex, MySQLConnection conn,
 			ResultSetImpl rs, Calendar cal) throws SQLException {
 		if (isNull(columnIndex)) {
 			return null;
@@ -728,7 +728,7 @@ public class BufferRow extends ResultSetRow {
 
 	public Object getNativeDateTimeValue(int columnIndex, Calendar targetCalendar,
 			int jdbcType, int mysqlType, TimeZone tz,
-			boolean rollForward, ConnectionImpl conn, ResultSetImpl rs)
+			boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
 			throws SQLException {
 		if (isNull(columnIndex)) {
 			return null;
@@ -746,7 +746,7 @@ public class BufferRow extends ResultSetRow {
 	}
 
 	public Time getNativeTime(int columnIndex, Calendar targetCalendar,
-			TimeZone tz, boolean rollForward, ConnectionImpl conn,
+			TimeZone tz, boolean rollForward, MySQLConnection conn,
 			ResultSetImpl rs) throws SQLException {
 		if (isNull(columnIndex)) {
 			return null;

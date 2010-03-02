@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2005 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2005 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -37,7 +37,7 @@ import java.sql.SQLException;
  * @version $Id$
  * @author Mark Matthews
  */
-class Buffer {
+public class Buffer {
 	static final int MAX_BYTES_TO_DUMP = 512;
 
 	static final int NO_LENGTH_LIMIT = -1;
@@ -575,7 +575,7 @@ class Buffer {
 	// encoding
 	final void writeLenString(String s, String encoding, String serverEncoding,
 			SingleByteCharsetConverter converter, boolean parserKnowsUnicode,
-			ConnectionImpl conn)
+			MySQLConnection conn)
 			throws UnsupportedEncodingException, SQLException {
 		byte[] b = null;
 
@@ -634,7 +634,7 @@ class Buffer {
 	}
 	
 	//	 Write null-terminated string in the given encoding
-	final void writeString(String s, String encoding, ConnectionImpl conn) throws SQLException {
+	final void writeString(String s, String encoding, MySQLConnection conn) throws SQLException {
 		ensureCapacity((s.length() * 2) + 1);
 		try {
 			writeStringNoNull(s, encoding, encoding, false, conn);
@@ -661,7 +661,7 @@ class Buffer {
 	// Write a String using the specified character
 	// encoding
 	final void writeStringNoNull(String s, String encoding,
-			String serverEncoding, boolean parserKnowsUnicode, ConnectionImpl conn)
+			String serverEncoding, boolean parserKnowsUnicode, MySQLConnection conn)
 			throws UnsupportedEncodingException, SQLException {
 		byte[] b = StringUtils.getBytes(s, encoding, serverEncoding,
 				parserKnowsUnicode, conn, conn.getExceptionInterceptor());

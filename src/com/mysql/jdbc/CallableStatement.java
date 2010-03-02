@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -69,12 +69,12 @@ public class CallableStatement extends PreparedStatement implements
 				JDBC_4_CSTMT_2_ARGS_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4CallableStatement")
 						.getConstructor(
-								new Class[] { ConnectionImpl.class,
+								new Class[] { MySQLConnection.class,
 										CallableStatementParamInfo.class });
 				JDBC_4_CSTMT_4_ARGS_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4CallableStatement")
 						.getConstructor(
-								new Class[] { ConnectionImpl.class,
+								new Class[] { MySQLConnection.class,
 										String.class, String.class,
 										Boolean.TYPE });
 			} catch (SecurityException e) {
@@ -494,7 +494,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public CallableStatement(ConnectionImpl conn,
+	public CallableStatement(MySQLConnection conn,
 			CallableStatementParamInfo paramInfo) throws SQLException {
 		super(conn, paramInfo.nativeSql, paramInfo.catalogInUse);
 
@@ -515,7 +515,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * classes that are present in JDBC4 method signatures.
 	 */
 
-	protected static CallableStatement getInstance(ConnectionImpl conn, String sql,
+	protected static CallableStatement getInstance(MySQLConnection conn, String sql,
 			String catalog, boolean isFunctionCall) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new CallableStatement(conn, sql, catalog, isFunctionCall);
@@ -533,7 +533,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * classes that are present in JDBC4 method signatures.
 	 */
 
-	protected static CallableStatement getInstance(ConnectionImpl conn,
+	protected static CallableStatement getInstance(MySQLConnection conn,
 			CallableStatementParamInfo paramInfo) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new CallableStatement(conn, paramInfo);
@@ -614,7 +614,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public CallableStatement(ConnectionImpl conn, String sql, String catalog,
+	public CallableStatement(MySQLConnection conn, String sql, String catalog,
 			boolean isFunctionCall) throws SQLException {
 		super(conn, sql, catalog);
 

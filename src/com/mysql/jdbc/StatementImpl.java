@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008-2009 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
  This program is free software; you can redistribute it and/or modify
@@ -174,7 +174,7 @@ public class StatementImpl implements Statement {
 	protected String charEncoding = null;
 
 	/** The connection that created us */
-	protected ConnectionImpl connection = null;
+	protected MySQLConnection connection = null;
 
 	protected long connectionId = 0;
 
@@ -279,7 +279,7 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	public StatementImpl(ConnectionImpl c, String catalog) throws SQLException {
+	public StatementImpl(MySQLConnection c, String catalog) throws SQLException {
 		if ((c == null) || c.isClosed()) {
 			throw SQLError.createSQLException(
 					Messages.getString("Statement.0"), //$NON-NLS-1$
@@ -629,7 +629,7 @@ public class StatementImpl implements Statement {
 	private boolean execute(String sql, boolean returnGeneratedKeys) throws SQLException {
 		checkClosed();
 
-		ConnectionImpl locallyScopedConn = this.connection;
+		MySQLConnection locallyScopedConn = this.connection;
 
 		synchronized (locallyScopedConn.getMutex()) {
 			this.retrieveGeneratedKeys = returnGeneratedKeys;
@@ -866,7 +866,7 @@ public class StatementImpl implements Statement {
 		if (returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS) {
 			checkClosed();
 
-			ConnectionImpl locallyScopedConn = this.connection;
+			MySQLConnection locallyScopedConn = this.connection;
 
 			synchronized (locallyScopedConn.getMutex()) {
 				// If this is a 'REPLACE' query, we need to be able to parse
@@ -895,7 +895,7 @@ public class StatementImpl implements Statement {
 		if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
 			checkClosed();
 
-			ConnectionImpl locallyScopedConn = this.connection;
+			MySQLConnection locallyScopedConn = this.connection;
 
 			synchronized (locallyScopedConn.getMutex()) {
 				this.retrieveGeneratedKeys = true;
@@ -926,7 +926,7 @@ public class StatementImpl implements Statement {
 		if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
 			checkClosed();
 
-			ConnectionImpl locallyScopedConn = this.connection;
+			MySQLConnection locallyScopedConn = this.connection;
 
 			synchronized (locallyScopedConn.getMutex()) {
 				this.retrieveGeneratedKeys = true;
@@ -965,7 +965,7 @@ public class StatementImpl implements Statement {
 	public synchronized int[] executeBatch() throws SQLException {
 		checkClosed();
 
-		ConnectionImpl locallyScopedConn = this.connection;
+		MySQLConnection locallyScopedConn = this.connection;
 
 		if (locallyScopedConn.isReadOnly()) {
 			throw SQLError.createSQLException(Messages
@@ -1126,7 +1126,7 @@ public class StatementImpl implements Statement {
 	private int[] executeBatchUsingMultiQueries(boolean multiQueriesEnabled,
 			int nbrCommands, int individualStatementTimeout) throws SQLException {
 
-		ConnectionImpl locallyScopedConn = this.connection;
+		MySQLConnection locallyScopedConn = this.connection;
 
 		if (!multiQueriesEnabled) {
 			locallyScopedConn.getIO().enableMultiQueries();
@@ -1329,7 +1329,7 @@ public class StatementImpl implements Statement {
 			throws SQLException {
 		checkClosed();
 
-		ConnectionImpl locallyScopedConn = this.connection;
+		MySQLConnection locallyScopedConn = this.connection;
 
 		synchronized (locallyScopedConn.getMutex()) {
 			this.retrieveGeneratedKeys = false;
@@ -1540,7 +1540,7 @@ public class StatementImpl implements Statement {
 				this.connection);
 	}
 	
-	protected void executeSimpleNonQuery(ConnectionImpl c, String nonQuery)
+	protected void executeSimpleNonQuery(MySQLConnection c, String nonQuery)
 			throws SQLException {
 		c.execSQL(this, nonQuery,
 				-1, null, ResultSet.TYPE_FORWARD_ONLY,
@@ -1571,7 +1571,7 @@ public class StatementImpl implements Statement {
 		throws SQLException {
 		checkClosed();
 
-		ConnectionImpl locallyScopedConn = this.connection;
+		MySQLConnection locallyScopedConn = this.connection;
 
 		char firstStatementChar = StringUtils.firstAlphaCharUc(sql,
 				findStartOfStatement(sql));
@@ -1715,7 +1715,7 @@ public class StatementImpl implements Statement {
 		if (returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS) {
 			checkClosed();
 
-			ConnectionImpl locallyScopedConn = this.connection;
+			MySQLConnection locallyScopedConn = this.connection;
 
 			synchronized (locallyScopedConn.getMutex()) {
 				// If this is a 'REPLACE' query, we need to be able to parse
@@ -1744,7 +1744,7 @@ public class StatementImpl implements Statement {
 		if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
 			checkClosed();
 
-			ConnectionImpl locallyScopedConn = this.connection;
+			MySQLConnection locallyScopedConn = this.connection;
 
 			synchronized (locallyScopedConn.getMutex()) {
 				// If this is a 'REPLACE' query, we need to be able to parse
@@ -1773,7 +1773,7 @@ public class StatementImpl implements Statement {
 		if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
 			checkClosed();
 
-			ConnectionImpl locallyScopedConn = this.connection;
+			MySQLConnection locallyScopedConn = this.connection;
 
 			synchronized (locallyScopedConn.getMutex()) {
 				// If this is a 'REPLACE' query, we need to be able to parse

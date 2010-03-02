@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
  This program is free software; you can redistribute it and/or modify
@@ -126,20 +126,20 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				JDBC_4_RS_4_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4ResultSet").getConstructor(
 						new Class[] { Long.TYPE, Long.TYPE,
-								ConnectionImpl.class,
+								MySQLConnection.class,
 								com.mysql.jdbc.StatementImpl.class });
 				JDBC_4_RS_6_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4ResultSet").getConstructor(
 						new Class[] { String.class, Field[].class,
 								RowData.class, 
-								ConnectionImpl.class,
+								MySQLConnection.class,
 								com.mysql.jdbc.StatementImpl.class });
 				JDBC_4_UPD_RS_6_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4UpdatableResultSet")
 						.getConstructor(
 								new Class[] { String.class, Field[].class,
 										RowData.class,
-										ConnectionImpl.class,
+										MySQLConnection.class,
 										com.mysql.jdbc.StatementImpl.class });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
@@ -204,7 +204,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	protected boolean[] columnUsed = null;
 
 	/** The Connection instance that created us */
-	protected ConnectionImpl connection; // The connection that
+	protected MySQLConnection connection; // The connection that
 				   					     // created us
 
 	protected long connectionId = 0;
@@ -348,7 +348,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	}
 	
 	protected static ResultSetImpl getInstance(long updateCount, long updateID,
-			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
+			MySQLConnection conn, StatementImpl creatorStmt) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new ResultSetImpl(updateCount, updateID, conn, creatorStmt);
 		}
@@ -367,7 +367,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 
 	protected static ResultSetImpl getInstance(String catalog, Field[] fields,
-			RowData tuples, ConnectionImpl conn, StatementImpl creatorStmt,
+			RowData tuples, MySQLConnection conn, StatementImpl creatorStmt,
 			boolean isUpdatable) throws SQLException {
 		if (!Util.isJdbc4()) {
 			if (!isUpdatable) {
@@ -400,7 +400,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @param creatorStmt
 	 *            DOCUMENT ME!
 	 */
-	public ResultSetImpl(long updateCount, long updateID, ConnectionImpl conn,
+	public ResultSetImpl(long updateCount, long updateID, MySQLConnection conn,
 			StatementImpl creatorStmt) {
 		this.updateCount = updateCount;
 		this.updateId = updateID;
@@ -444,7 +444,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *             if an error occurs
 	 */
 	public ResultSetImpl(String catalog, Field[] fields, RowData tuples,
-			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
+			MySQLConnection conn, StatementImpl creatorStmt) throws SQLException {
 		this.connection = conn;
 		
 		this.retainOwningStatement = false;

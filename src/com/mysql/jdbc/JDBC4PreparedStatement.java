@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -41,16 +41,16 @@ import com.mysql.jdbc.PreparedStatement.ParseInfo;
 
 public class JDBC4PreparedStatement extends PreparedStatement {
 
-	public JDBC4PreparedStatement(ConnectionImpl conn, String catalog) throws SQLException {
+	public JDBC4PreparedStatement(MySQLConnection conn, String catalog) throws SQLException {
 		super(conn, catalog);
 	}
 	
-	public JDBC4PreparedStatement(ConnectionImpl conn, String sql, String catalog)
+	public JDBC4PreparedStatement(MySQLConnection conn, String sql, String catalog)
 		throws SQLException {
 		super(conn, sql, catalog);
 	}
 	
-	public JDBC4PreparedStatement(ConnectionImpl conn, String sql, String catalog,
+	public JDBC4PreparedStatement(MySQLConnection conn, String sql, String catalog,
 			ParseInfo cachedParseInfo) throws SQLException {
 		super(conn, sql, catalog, cachedParseInfo);
 	}

@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2004 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2004 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -45,7 +45,7 @@ public class ConnectionFeatureNotAvailableException extends
 	 * @param lastPacketSentTimeMs
 	 * @param underlyingException
 	 */
-	public ConnectionFeatureNotAvailableException(ConnectionImpl conn,
+	public ConnectionFeatureNotAvailableException(MySQLConnection conn,
 			long lastPacketSentTimeMs, Exception underlyingException) {
 		super(conn, lastPacketSentTimeMs, 0, underlyingException);
 	}

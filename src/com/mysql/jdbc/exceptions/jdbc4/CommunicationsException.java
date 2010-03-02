@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -31,7 +31,7 @@ import java.net.BindException;
 
 import java.sql.SQLRecoverableException;
 
-import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StreamingNotifiable;
 
@@ -53,7 +53,7 @@ public class CommunicationsException extends SQLRecoverableException implements 
 
 	private boolean streamingResultSetInPlay = false;
 
-	public CommunicationsException(ConnectionImpl conn, long lastPacketSentTimeMs,
+	public CommunicationsException(MySQLConnection conn, long lastPacketSentTimeMs,
 			long lastPacketReceivedTimeMs,
 			Exception underlyingException) {
 

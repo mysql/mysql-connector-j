@@ -41,7 +41,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,14 +62,11 @@ import javax.transaction.xa.Xid;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
-import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
-import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.Messages;
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.MysqlDataTruncation;
-import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.NonRegisteringDriver;
-import com.mysql.jdbc.RandomBalanceStrategy;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
@@ -1239,7 +1235,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 			try {
 				replConn = getMasterSlaveReplicationConnection();
-				assertTrue(!((ConnectionImpl) ((ReplicationConnection) replConn)
+				assertTrue(!((MySQLConnection) ((ReplicationConnection) replConn)
 						.getMasterConnection()).hasSameProperties(
 								((ReplicationConnection) replConn)
 										.getSlavesConnection()));
@@ -2327,7 +2323,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				adminStmt.executeUpdate("flush privileges");
 				
 				try {
-					((ConnectionImpl)adminConn).changeUser(user, unicodePassword);
+					((MySQLConnection)adminConn).changeUser(user, unicodePassword);
 				} catch (SQLException sqle) {
 					assertTrue("Connection with non-latin1 password failed", false);
 				}
@@ -2467,7 +2463,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	public void testBug44587() throws Exception {
 		Exception e = null;
 		String msg = SQLError.createLinkFailureMessageBasedOnHeuristics(
-				(ConnectionImpl) this.conn, 
+				(MySQLConnection) this.conn,
 				System.currentTimeMillis() - 1000,
 				System.currentTimeMillis() - 2000,
 				e, 
@@ -2482,7 +2478,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	public void testBug45419() throws Exception {
 		Exception e = null;
 		String msg = SQLError.createLinkFailureMessageBasedOnHeuristics(
-				(ConnectionImpl) this.conn, 
+				(MySQLConnection) this.conn,
 				System.currentTimeMillis() - 1000,
 				System.currentTimeMillis() - 2000,
 				e, 
@@ -2639,7 +2635,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	}
 	
 	public void testBug48486() throws Exception {
-		int endHost = dbUrl.lastIndexOf("/");
+		int beginHost = dbUrl.indexOf("//");
+		
+		int endHost = dbUrl.indexOf("/", beginHost + 2);
 		String databaseStuff = dbUrl.substring(endHost + 1);
 		
 		Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);

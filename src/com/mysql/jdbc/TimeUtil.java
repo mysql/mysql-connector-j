@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2004 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2004 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -821,7 +821,7 @@ public class TimeUtil {
 	 * 
 	 * @return the times changed to the timezone 'toTz'
 	 */
-	public static Time changeTimezone(ConnectionImpl conn,
+	public static Time changeTimezone(MySQLConnection conn,
 			Calendar sessionCalendar, 
 			Calendar targetCalendar, 
 			Time t, 
@@ -883,7 +883,7 @@ public class TimeUtil {
 	 * 
 	 * @return the timestamp changed to the timezone 'toTz'
 	 */
-	public static Timestamp changeTimezone(ConnectionImpl conn, 
+	public static Timestamp changeTimezone(MySQLConnection conn,
 			Calendar sessionCalendar, 
 			Calendar targetCalendar, 
 			Timestamp tstamp,

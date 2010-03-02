@@ -1,5 +1,5 @@
 /*
- Copyright  2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -67,7 +67,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 
 			String hostPortSpec = (String) whiteList.get(random);
 
-			Connection conn = (Connection) liveConnections.get(hostPortSpec);
+			ConnectionImpl conn = (ConnectionImpl) liveConnections.get(hostPortSpec);
 
 			if (conn == null) {
 				try {
@@ -110,7 +110,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 					}
 				}
 			}
-
+			
 			return conn;
 		}
 

@@ -6,6 +6,16 @@ nn-nn-10 - Version 5.1.13
     - Fixed Bug#51266 - jdbc:mysql:loadbalance:// would stick to the first
       host in the list in some cases, especially exacerbated if the host was
       down.
+      
+    - Replaced URLs of the form jdbc:mysql://host-1,host-2 with a composite of
+      a normal connection and a jdbc:mysql:loadbalance:// connection for more 
+      robustness and cleaner code.
+      
+    - Fixed BUG#51643 - Connections using jdbc:mysql:loadbalance:// would 
+      have statements (and prepared statements) that did not have their connections
+      changed upon commit()/rollback(), and thus applications that held statement
+      instances past commit()/rollback() could have data written to or read from
+      un-intended connections.
 
 02-18-10 - Version 5.1.12
 

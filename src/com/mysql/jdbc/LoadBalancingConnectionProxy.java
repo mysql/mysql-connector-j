@@ -31,7 +31,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -48,10 +50,10 @@ import java.util.Set;
  * reading data.
  * 
  * This implementation will invalidate connections that it detects have had
- * communication errors when processing a request.  Problematic hosts will
- * be added to a global blacklist for loadBalanceBlacklistTimeout ms, after
- * which they will be removed from the blacklist and made eligible once again
- * to be selected for new connections.
+ * communication errors when processing a request. Problematic hosts will be
+ * added to a global blacklist for loadBalanceBlacklistTimeout ms, after which
+ * they will be removed from the blacklist and made eligible once again to be
+ * selected for new connections.
  * 
  * This implementation is thread-safe, but it's questionable whether sharing a
  * connection instance amongst threads is a good idea, given that transactions
@@ -60,10 +62,11 @@ import java.util.Set;
  * @version $Id: $
  * 
  */
-public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarget {
+public class LoadBalancingConnectionProxy implements InvocationHandler,
+		PingTarget {
 
 	private static Method getLocalTimeMethod;
-	
+
 	public static final String BLACKLIST_TIMEOUT_PROPERTY_KEY = "loadBalanceBlacklistTimeout";
 
 	static {
@@ -128,7 +131,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 	private BalanceStrategy balancer;
 
 	private int retriesAllDown;
-	
+
 	private static Map globalBlacklist = new HashMap();
 
 	private int globalBlacklistTimeout = 0;
@@ -159,8 +162,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
 		for (int i = 0; i < numHosts; i++) {
 			this.hostsToListIndexMap.put(this.hostList.get(i), new Integer(i));
-			this.localProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + "." + (i + 1));
-			this.localProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + "." + (i + 1));
+			this.localProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + "."
+					+ (i + 1));
+			this.localProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + "."
+					+ (i + 1));
 		}
 
 		this.localProps.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
@@ -169,8 +174,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		String strategy = this.localProps.getProperty("loadBalanceStrategy",
 				"random");
 
-		String retriesAllDownAsString = this.localProps.getProperty("retriesAllDown", "120");
-		
+		String retriesAllDownAsString = this.localProps.getProperty(
+				"retriesAllDown", "120");
+
 		try {
 			this.retriesAllDown = Integer.parseInt(retriesAllDownAsString);
 		} catch (NumberFormatException nfe) {
@@ -179,17 +185,22 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 					new Object[] { retriesAllDownAsString }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
 		}
-		String blacklistTimeoutAsString = this.localProps.getProperty(BLACKLIST_TIMEOUT_PROPERTY_KEY, "0");
-		
+		String blacklistTimeoutAsString = this.localProps.getProperty(
+				BLACKLIST_TIMEOUT_PROPERTY_KEY, "0");
+
 		try {
-			this.globalBlacklistTimeout = Integer.parseInt(blacklistTimeoutAsString);
+			this.globalBlacklistTimeout = Integer
+					.parseInt(blacklistTimeoutAsString);
 		} catch (NumberFormatException nfe) {
-			throw SQLError.createSQLException(Messages.getString(
-					"LoadBalancingConnectionProxy.badValueForLoadBalanceBlacklistTimeout",
-					new Object[] { retriesAllDownAsString }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+			throw SQLError
+					.createSQLException(
+							Messages
+									.getString(
+											"LoadBalancingConnectionProxy.badValueForLoadBalanceBlacklistTimeout",
+											new Object[] { retriesAllDownAsString }),
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
 		}
-		
+
 		if ("random".equals(strategy)) {
 			this.balancer = (BalanceStrategy) Util.loadExtensions(null, props,
 					"com.mysql.jdbc.RandomBalanceStrategy",
@@ -197,7 +208,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		} else if ("bestResponseTime".equals(strategy)) {
 			this.balancer = (BalanceStrategy) Util.loadExtensions(null, props,
 					"com.mysql.jdbc.BestResponseTimeBalanceStrategy",
-			"InvalidLoadBalanceStrategy", null).get(0);
+					"InvalidLoadBalanceStrategy", null).get(0);
 		} else {
 			this.balancer = (BalanceStrategy) Util.loadExtensions(null, props,
 					strategy, "InvalidLoadBalanceStrategy", null).get(0);
@@ -216,30 +227,43 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 	 * @return
 	 * @throws SQLException
 	 */
-	public synchronized Connection createConnectionForHost(String hostPortSpec)
-			throws SQLException {
+	public synchronized ConnectionImpl createConnectionForHost(
+			String hostPortSpec) throws SQLException {
 		Properties connProps = (Properties) this.localProps.clone();
 
 		String[] hostPortPair = NonRegisteringDriver
 				.parseHostPortPair(hostPortSpec);
+		String hostName = hostPortPair[NonRegisteringDriver.HOST_NAME_INDEX];
+		String portNumber = hostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX];
+		String dbName = connProps
+				.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 
-		if (hostPortPair[1] == null) {
-			hostPortPair[1] = "3306";
+		if (hostName == null) {
+			throw new SQLException(
+					"Could not find a hostname to start a connection to");
+		}
+		if (portNumber == null) {
+			portNumber = "3306";// use default
 		}
 
-		connProps.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY,
-				hostPortPair[0]);
+		connProps.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, hostName);
 		connProps.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY,
-				hostPortPair[1]);
-		connProps.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1", hostPortPair[0]);
-		connProps.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1", hostPortPair[1]);
+				portNumber);
+		connProps.setProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + ".1",
+				hostName);
+		connProps.setProperty(NonRegisteringDriver.PORT_PROPERTY_KEY + ".1",
+				portNumber);
 		connProps.setProperty(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY, "1");
-		connProps.setProperty("roundRobinLoadBalance", "false"); // make sure we don't pickup the default value
-		
-		Connection conn = ConnectionImpl.getInstance(hostPortSpec, Integer
-				.parseInt(hostPortPair[1]), connProps, connProps
-				.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY),
-				"jdbc:mysql://" + hostPortPair[0] + ":" + hostPortPair[1] + "/");
+		connProps.setProperty("roundRobinLoadBalance", "false"); // make sure we
+																	// don't
+																	// pickup
+																	// the
+																	// default
+																	// value
+
+		ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(
+				hostName, Integer.parseInt(portNumber), connProps, dbName,
+				"jdbc:mysql://" + hostName + ":" + portNumber + "/");
 
 		this.liveConnections.put(hostPortSpec, conn);
 		this.connectionsToHostsMap.put(conn, hostPortSpec);
@@ -290,15 +314,19 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		} finally {
 			// add host to the global blacklist, if enabled
 			if (this.isGlobalBlacklistEnabled()) {
-				this.addToGlobalBlacklist((String) this.connectionsToHostsMap.get(this.currentConn)); 
-				
+				this.addToGlobalBlacklist((String) this.connectionsToHostsMap
+						.get(this.currentConn));
+
 			}
 			// remove from liveConnections
 			this.liveConnections.remove(this.connectionsToHostsMap
 					.get(this.currentConn));
-			Object mappedHost = this.connectionsToHostsMap.remove(this.currentConn);
-			if(mappedHost != null && this.hostsToListIndexMap.containsKey(mappedHost)){
-				int hostIndex = ((Integer) this.hostsToListIndexMap.get(mappedHost)).intValue();
+			Object mappedHost = this.connectionsToHostsMap
+					.remove(this.currentConn);
+			if (mappedHost != null
+					&& this.hostsToListIndexMap.containsKey(mappedHost)) {
+				int hostIndex = ((Integer) this.hostsToListIndexMap
+						.get(mappedHost)).intValue();
 				// reset the statistics for the host
 				synchronized (this.responseTimes) {
 					this.responseTimes[hostIndex] = 0;
@@ -306,27 +334,27 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 			}
 		}
 	}
-	
-	private void closeAllConnections(){
+
+	private void closeAllConnections() {
 		synchronized (this) {
 			// close all underlying connections
-			Iterator allConnections = this.liveConnections.values()
-					.iterator();
+			Iterator allConnections = this.liveConnections.values().iterator();
 
 			while (allConnections.hasNext()) {
-				try{
+				try {
 					((Connection) allConnections.next()).close();
-				} catch(SQLException e){}
+				} catch (SQLException e) {
+				}
 			}
 
 			if (!this.isClosed) {
 				this.balancer.destroy();
 			}
-			
+
 			this.liveConnections.clear();
 			this.connectionsToHostsMap.clear();
 		}
-	
+
 	}
 
 	/**
@@ -341,15 +369,15 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
 		if ("equals".equals(methodName) && args.length == 1) {
 			if (args[0] instanceof Proxy) {
-				return Boolean.valueOf((((Proxy)args[0]).equals(this)));
+				return Boolean.valueOf((((Proxy) args[0]).equals(this)));
 			}
 			return Boolean.valueOf(this.equals(args[0]));
 		}
-		
+
 		if ("hashCode".equals(methodName)) {
 			return new Integer(this.hashCode());
 		}
-		
+
 		if ("close".equals(methodName)) {
 			closeAllConnections();
 
@@ -363,7 +391,11 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 		if (this.isClosed) {
 			throw SQLError.createSQLException(
 					"No operations allowed after connection closed.",
-					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /* no access to a interceptor here... */);
+					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /*
+																 * no access to
+																 * a interceptor
+																 * here...
+																 */);
 		}
 
 		if (!inTransaction) {
@@ -378,9 +410,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 
 			if (result != null) {
 				if (result instanceof com.mysql.jdbc.Statement) {
-					((com.mysql.jdbc.Statement)result).setPingTarget(this);
+					((com.mysql.jdbc.Statement) result).setPingTarget(this);
 				}
-				
+
 				result = proxyIfInterfaceIsJdbc(result, result.getClass());
 			}
 		} catch (InvocationTargetException e) {
@@ -390,15 +422,15 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 				this.inTransaction = false;
 
 				// Update stats
-				String host = (String) this.connectionsToHostsMap.get(this.currentConn);
-				// avoid NPE if the connection has already been removed from connectionsToHostsMap
+				String host = (String) this.connectionsToHostsMap
+						.get(this.currentConn);
+				// avoid NPE if the connection has already been removed from
+				// connectionsToHostsMap
 				// in invalidateCurrenctConnection()
-				if ( host != null ) {
+				if (host != null) {
 					int hostIndex = ((Integer) this.hostsToListIndexMap
-							.get( host ))
-							.intValue();
-	
-					
+							.get(host)).intValue();
+
 					synchronized (this.responseTimes) {
 						this.responseTimes[hostIndex] = getLocalTimeBestResolution()
 								- this.transactionStartTime;
@@ -419,28 +451,41 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 	 * @throws SQLException
 	 */
 	protected synchronized void pickNewConnection() throws SQLException {
-		if (this.currentConn == null) {
-			this.currentConn = this.balancer.pickConnection(this,
-					Collections.unmodifiableList(this.hostList),
-					Collections.unmodifiableMap(this.liveConnections),
-					(long[]) this.responseTimes.clone(),
-					this.retriesAllDown);
+		if (this.currentConn == null) { // startup
+			this.currentConn = this.balancer.pickConnection(this, Collections
+					.unmodifiableList(this.hostList), Collections
+					.unmodifiableMap(this.liveConnections),
+					(long[]) this.responseTimes.clone(), this.retriesAllDown);
 
+			MySQLConnection thisAsConnection = (MySQLConnection) Proxy
+			.newProxyInstance(getClass().getClassLoader(),
+					new Class[] { com.mysql.jdbc.MySQLConnection.class },
+					this);
+
+			this.currentConn.setProxy(thisAsConnection);
+	
 			return;
 		}
+
+		ConnectionImpl newConn = (ConnectionImpl) this.balancer.pickConnection(
+				this, Collections.unmodifiableList(this.hostList), Collections
+						.unmodifiableMap(this.liveConnections),
+				(long[]) this.responseTimes.clone(), this.retriesAllDown);
+
+		MySQLConnection thisAsConnection = (MySQLConnection) Proxy
+				.newProxyInstance(getClass().getClassLoader(),
+						new Class[] { com.mysql.jdbc.MySQLConnection.class },
+						this);
+
+		newConn.setProxy(thisAsConnection);
 		
-		Connection newConn = this.balancer.pickConnection(this,
-				Collections.unmodifiableList(this.hostList),
-				Collections.unmodifiableMap(this.liveConnections),
-				(long[]) this.responseTimes.clone(),
-				this.retriesAllDown);
-
-		newConn.setTransactionIsolation(this.currentConn
-				.getTransactionIsolation());
-		newConn.setAutoCommit(this.currentConn.getAutoCommit());
-
+		if (this.currentConn != null) {
+			newConn.setTransactionIsolation(this.currentConn
+					.getTransactionIsolation());
+			newConn.setAutoCommit(this.currentConn.getAutoCommit());
+		}
+		
 		this.currentConn = newConn;
-		
 	}
 
 	/**
@@ -459,7 +504,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 			String packageName = interfaces[i].getPackage().getName();
 
 			if ("java.sql".equals(packageName)
-					|| "javax.sql".equals(packageName) 
+					|| "javax.sql".equals(packageName)
 					|| "com.mysql.jdbc".equals(packageName)) {
 				return Proxy.newProxyInstance(toProxy.getClass()
 						.getClassLoader(), interfaces,
@@ -501,36 +546,43 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 	public synchronized void doPing() throws SQLException {
 		SQLException se = null;
 		boolean foundHost = false;
-
-		synchronized(this){
-			for(Iterator i = this.hostList.iterator(); i.hasNext(); ){
+		synchronized (this) {
+			for (Iterator i = this.hostList.iterator(); i.hasNext();) {
 				String host = (String) i.next();
 				Connection conn = (Connection) this.liveConnections.get(host);
-				if(conn == null){
+				if (conn == null) {
 					continue;
 				}
-				try{
+				try {
 					conn.ping();
 					foundHost = true;
-				} catch (SQLException e){
-					// give up if it is the current connection, otherwise NPE faking resultset later.
-					if(host.equals(this.connectionsToHostsMap.get(this.currentConn))){
-						// clean up underlying connections, since connection pool won't do it
+				} catch (SQLException e) {
+					// give up if it is the current connection, otherwise NPE
+					// faking resultset later.
+					if (host.equals(this.connectionsToHostsMap
+							.get(this.currentConn))) {
+						// clean up underlying connections, since connection
+						// pool won't do it
 						closeAllConnections();
 						this.isClosed = true;
 						throw e;
 					}
-					
-					// if the Exception is caused by ping connection lifetime checks, don't add to blacklist
-					if(e.getMessage().equals(Messages.getString("Connection.exceededConnectionLifetime"))){
+
+					// if the Exception is caused by ping connection lifetime
+					// checks, don't add to blacklist
+					if (e
+							.getMessage()
+							.equals(
+									Messages
+											.getString("Connection.exceededConnectionLifetime"))) {
 						// only set the return Exception if it's null
-						if(se == null){
+						if (se == null) {
 							se = e;
 						}
 					} else {
 						// overwrite the return Exception no matter what
 						se = e;
-						if(this.isGlobalBlacklistEnabled()){
+						if (this.isGlobalBlacklistEnabled()) {
 							this.addToGlobalBlacklist(host);
 						}
 					}
@@ -541,69 +593,80 @@ public class LoadBalancingConnectionProxy implements InvocationHandler, PingTarg
 			}
 		}
 		// if there were no successful pings
-		if(!foundHost){
+		if (!foundHost) {
 			closeAllConnections();
 			this.isClosed = true;
 			// throw the stored Exception, if exists
-			if(se != null){
+			if (se != null) {
 				throw se;
 			}
-			// or create a new SQLException and throw it, must be no liveConnections
-			((ConnectionImpl)this.currentConn).throwConnectionClosedException();
+			// or create a new SQLException and throw it, must be no
+			// liveConnections
+			((ConnectionImpl) this.currentConn)
+					.throwConnectionClosedException();
 		}
-		
 	}
-	
+
 	public void addToGlobalBlacklist(String host) {
-		if(this.isGlobalBlacklistEnabled()) {
-			synchronized(globalBlacklist){
-				globalBlacklist.put(host, new Long(System.currentTimeMillis() 
-					+ this.globalBlacklistTimeout));
+		if (this.isGlobalBlacklistEnabled()) {
+			synchronized (globalBlacklist) {
+				globalBlacklist.put(host, new Long(System.currentTimeMillis()
+						+ this.globalBlacklistTimeout));
 			}
 		}
 	}
-	
+
 	public boolean isGlobalBlacklistEnabled() {
 		return (this.globalBlacklistTimeout > 0);
 	}
-	
+
 	public Map getGlobalBlacklist() {
-		if(!this.isGlobalBlacklistEnabled()) {
+		if (!this.isGlobalBlacklistEnabled()) {
 			return new HashMap(1);
 		}
-		
+
 		// Make a local copy of the blacklist
 		Map blacklistClone = new HashMap(globalBlacklist.size());
-		// Copy everything from synchronized global blacklist to local copy for manipulation
+		// Copy everything from synchronized global blacklist to local copy for
+		// manipulation
 		synchronized (globalBlacklist) {
 			blacklistClone.putAll(globalBlacklist);
 		}
 		Set keys = blacklistClone.keySet();
-		
+
 		// we're only interested in blacklisted hosts that are in the hostList
 		keys.retainAll(this.hostList);
-		if(keys.size() == this.hostList.size()){
-			// return an empty blacklist, let the BalanceStrategy implementations try to connect to everything
-			// since it appears that all hosts are unavailable - we don't want to wait for 
+		if (keys.size() == this.hostList.size()) {
+			// return an empty blacklist, let the BalanceStrategy
+			// implementations try to connect to everything
+			// since it appears that all hosts are unavailable - we don't want
+			// to wait for
 			// loadBalanceBlacklistTimeout to expire.
-			return new HashMap(1); 			
+			return new HashMap(1);
 		}
-		
+
 		// Don't need to synchronize here as we using a local copy
-		for(Iterator i = keys.iterator(); i.hasNext(); ) {
+		for (Iterator i = keys.iterator(); i.hasNext();) {
 			String host = (String) i.next();
-			// OK if null is returned because another thread already purged Map entry.
+			// OK if null is returned because another thread already purged Map
+			// entry.
 			Long timeout = (Long) globalBlacklist.get(host);
-			if(timeout != null && timeout.longValue() < System.currentTimeMillis()){
+			if (timeout != null
+					&& timeout.longValue() < System.currentTimeMillis()) {
 				// Timeout has expired, remove from blacklist
-				synchronized(globalBlacklist){
+				synchronized (globalBlacklist) {
 					globalBlacklist.remove(host);
 				}
 				i.remove();
 			}
-				
+
 		}
-		
+
 		return blacklistClone;
+	}
+
+	public String getDateTime(String pattern) {
+		SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+		return sdf.format(new Date());
 	}
 }

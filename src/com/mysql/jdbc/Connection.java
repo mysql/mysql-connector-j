@@ -1,5 +1,5 @@
 /*
- Copyright  2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -396,4 +396,8 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	 * @return
 	 */
 	public Properties getProperties();
+
+   public String getHost();
+
+   public void setProxy(MySQLConnection proxy);
 }

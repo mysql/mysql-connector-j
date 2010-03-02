@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -106,16 +106,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				JDBC_4_PSTMT_2_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4PreparedStatement")
 						.getConstructor(
-								new Class[] { ConnectionImpl.class, String.class });
+								new Class[] { MySQLConnection.class, String.class });
 				JDBC_4_PSTMT_3_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4PreparedStatement")
 						.getConstructor(
-								new Class[] { ConnectionImpl.class, String.class,
+								new Class[] { MySQLConnection.class, String.class,
 										String.class });
 				JDBC_4_PSTMT_4_ARG_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4PreparedStatement")
 						.getConstructor(
-								new Class[] { ConnectionImpl.class, String.class,
+								new Class[] { MySQLConnection.class, String.class,
 										String.class, ParseInfo.class });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
@@ -207,13 +207,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		 * it's static and dynamic (where parameters are bound) 
 		 * parts.
 		 */
-		ParseInfo(String sql, ConnectionImpl conn,
+		ParseInfo(String sql, MySQLConnection conn,
 				java.sql.DatabaseMetaData dbmd, String encoding,
 				SingleByteCharsetConverter converter) throws SQLException {
 			this(sql, conn, dbmd, encoding, converter, true);
 		}
 		
-		public ParseInfo(String sql, ConnectionImpl conn,
+		public ParseInfo(String sql, MySQLConnection conn,
 				java.sql.DatabaseMetaData dbmd, String encoding,
 				SingleByteCharsetConverter converter, boolean buildRewriteInfo) throws SQLException {
 			try {
@@ -450,7 +450,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 		private ParseInfo batchODKUClause;
 
-		private void buildRewriteBatchedParams(String sql, ConnectionImpl conn,
+		private void buildRewriteBatchedParams(String sql, MySQLConnection conn,
 				DatabaseMetaData metadata, String encoding,
 				SingleByteCharsetConverter converter) throws SQLException {
 			this.valuesClause = extractValuesClause(sql);
@@ -851,7 +851,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * interface classes that are present in JDBC4 method signatures.
 	 */
 
-	protected static PreparedStatement getInstance(ConnectionImpl conn,
+	protected static PreparedStatement getInstance(MySQLConnection conn,
 			String catalog) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new PreparedStatement(conn, catalog);
@@ -868,7 +868,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * interface classes that are present in JDBC4 method signatures.
 	 */
 
-	protected static PreparedStatement getInstance(ConnectionImpl conn, String sql,
+	protected static PreparedStatement getInstance(MySQLConnection conn, String sql,
 			String catalog) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new PreparedStatement(conn, sql, catalog);
@@ -885,7 +885,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * interface classes that are present in JDBC4 method signatures.
 	 */
 
-	protected static PreparedStatement getInstance(ConnectionImpl conn, String sql,
+	protected static PreparedStatement getInstance(MySQLConnection conn, String sql,
 			String catalog, ParseInfo cachedParseInfo) throws SQLException {
 		if (!Util.isJdbc4()) {
 			return new PreparedStatement(conn, sql, catalog, cachedParseInfo);
@@ -907,7 +907,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public PreparedStatement(ConnectionImpl conn, String catalog)
+	public PreparedStatement(MySQLConnection conn, String catalog)
 			throws SQLException {
 		super(conn, catalog);
 		
@@ -927,7 +927,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if a database error occurs.
 	 */
-	public PreparedStatement(ConnectionImpl conn, String sql, String catalog)
+	public PreparedStatement(MySQLConnection conn, String sql, String catalog)
 			throws SQLException {
 		super(conn, catalog);
 
@@ -974,7 +974,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	public PreparedStatement(ConnectionImpl conn, String sql, String catalog,
+	public PreparedStatement(MySQLConnection conn, String sql, String catalog,
 			ParseInfo cachedParseInfo) throws SQLException {
 		super(conn, catalog);
 
@@ -1262,7 +1262,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public boolean execute() throws SQLException {
 		checkClosed();
 		
-		ConnectionImpl locallyScopedConn = this.connection;
+		MySQLConnection locallyScopedConn = this.connection;
 		
 		if(!checkReadOnlySafeStatement()) {
 			 throw SQLError.createSQLException(Messages.getString("PreparedStatement.20") //$NON-NLS-1$
@@ -1483,7 +1483,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				this.batchedValuesClause = this.originalSql + ";";
 			}
 			
-			ConnectionImpl locallyScopedConn = this.connection;
+			MySQLConnection locallyScopedConn = this.connection;
 			
 			boolean multiQueriesEnabled = locallyScopedConn.getAllowMultiQueries();
 			CancelTask timeoutTask = null;
@@ -1685,7 +1685,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	protected int[] executeBatchedInserts(int batchTimeout) throws SQLException {
 		String valuesClause = getValuesClause(); 
 
-		ConnectionImpl locallyScopedConn = this.connection;
+		MySQLConnection locallyScopedConn = this.connection;
 
 		if (valuesClause == null) {
 			return executeBatchSerially(batchTimeout);
@@ -1720,8 +1720,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		
 		try {
 			try {
-					batchedStatement = /* FIXME -if we ever care about folks proxying our ConnectionImpl */
-							prepareBatchedInsertSQL((ConnectionImpl) locallyScopedConn, numValuesPerBatch);
+					batchedStatement = /* FIXME -if we ever care about folks proxying our MySQLConnection */
+							prepareBatchedInsertSQL((MySQLConnection) locallyScopedConn, numValuesPerBatch);
 
 				if (locallyScopedConn.getEnableQueryTimeouts()
 						&& batchTimeout != 0
@@ -1782,7 +1782,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			try {
 				if (numValuesPerBatch > 0) {
 						batchedStatement = 
-								prepareBatchedInsertSQL((ConnectionImpl) locallyScopedConn, 
+								prepareBatchedInsertSQL((MySQLConnection) locallyScopedConn,
 										numValuesPerBatch);
 					
 					if (timeoutTask != null) {
@@ -1927,7 +1927,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected int[] executeBatchSerially(int batchTimeout) throws SQLException {
 		
-		ConnectionImpl locallyScopedConn = this.connection;
+		MySQLConnection locallyScopedConn = this.connection;
 		
 		if (locallyScopedConn == null) {
 			checkClosed();
@@ -2050,6 +2050,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		
 	}
 
+   public String getDateTime(String pattern){
+      SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+      return sdf.format(new java.util.Date());
+   }
+
 	/**
 	 * Actually execute the prepared statement. This is here so server-side
 	 * PreparedStatements can re-use most of the code from this class.
@@ -2079,7 +2084,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			
 			resetCancelledState();
 			
-			ConnectionImpl locallyScopedConnection = this.connection;
+			MySQLConnection locallyScopedConnection = this.connection;
 			
 			this.numberOfExecutions++;
 	
@@ -2101,7 +2106,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					locallyScopedConnection.getCancelTimer().schedule(timeoutTask, 
 							this.timeoutInMillis);
 				}
-				
+
 				rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket,
 					this.resultSetType, this.resultSetConcurrency,
 					createStreamingResultSet, this.currentCatalog,
@@ -2160,7 +2165,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public java.sql.ResultSet executeQuery() throws SQLException {
 		checkClosed();
 		
-		ConnectionImpl locallyScopedConn = this.connection;
+		MySQLConnection locallyScopedConn = this.connection;
 		
 		checkForDml(this.originalSql, this.firstCharOfStmt);
 
@@ -2343,7 +2348,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 		checkClosed();
 
-		ConnectionImpl locallyScopedConn = this.connection;
+		MySQLConnection locallyScopedConn = this.connection;
 		
 		if (locallyScopedConn.isReadOnly()) {
 			throw SQLError.createSQLException(Messages.getString("PreparedStatement.34") //$NON-NLS-1$
@@ -2545,7 +2550,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			InputStream parameterStream, int columnIndex) throws SQLException {
 		if ((parameterString == null)
 				&& parameterStream == null) {
-			System.out.println(toString());
+
 			throw SQLError.createSQLException(Messages
 					.getString("PreparedStatement.40") //$NON-NLS-1$
 					+ (columnIndex + 1), SQLError.SQL_STATE_WRONG_NO_OF_PARAMETERS, getExceptionInterceptor());
@@ -2555,7 +2560,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	/**
 	 * Returns a prepared statement for the number of batched parameters, used when re-writing batch INSERTs.
 	 */
-	protected PreparedStatement prepareBatchedInsertSQL(ConnectionImpl localConn, int numBatches) throws SQLException {
+	protected PreparedStatement prepareBatchedInsertSQL(MySQLConnection localConn, int numBatches) throws SQLException {
 		PreparedStatement pstmt = new PreparedStatement(localConn, "Rewritten batch of: " + this.originalSql, this.currentCatalog, this.parseInfo.getParseInfoForBatch(numBatches));
 		pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
 		pstmt.rewrittenBatchSize = numBatches;

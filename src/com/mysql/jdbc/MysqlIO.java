@@ -1,6 +1,6 @@
 /*
-      Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+      Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
+      All rights reserved. Use is subject to license terms.
 
       This program is free software; you can redistribute it and/or modify
       it under the terms of version 2 of the GNU General Public License as
@@ -70,10 +70,10 @@ import com.mysql.jdbc.util.ResultSetUtil;
  *
  * @see java.sql.Connection
  */
-class MysqlIO {
+public class MysqlIO {
     private static final int UTF8_CHARSET_INDEX = 33;
     private static final String CODE_PAGE_1252 = "Cp1252";
-	protected static final int NULL_LENGTH = ~0;
+	 protected static final int NULL_LENGTH = ~0;
     protected static final int COMP_HEADER_LENGTH = 3;
     protected static final int MIN_COMPRESS_LEN = 50;
     protected static final int HEADER_LENGTH = 4;
@@ -161,7 +161,7 @@ class MysqlIO {
 
     /** Data to the server */
     protected BufferedOutputStream mysqlOutput = null;
-    protected ConnectionImpl connection;
+    protected MySQLConnection connection;
     private Deflater deflater = null;
     protected InputStream mysqlInput = null;
     private LinkedList packetDebugRingBuffer = null;
@@ -262,7 +262,7 @@ class MysqlIO {
      * @throws SQLException if a database access error occurs.
      */
     public MysqlIO(String host, int port, Properties props,
-        String socketFactoryClassName, ConnectionImpl conn,
+        String socketFactoryClassName, MySQLConnection conn,
         int socketTimeout, int useBufferRowSizeThreshold) throws IOException, SQLException {
         this.connection = conn;
         
@@ -3286,6 +3286,11 @@ class MysqlIO {
                         StringBuffer traceMessageBuf = new StringBuffer();
 
                         traceMessageBuf.append(Messages.getString("MysqlIO.59")); //$NON-NLS-1$
+                        traceMessageBuf.append("host: '");
+                        traceMessageBuf.append(host);
+                        traceMessageBuf.append("' threadId: '");
+                        traceMessageBuf.append(threadId);
+                        traceMessageBuf.append("'\n");
                         traceMessageBuf.append(packetToSend.dump(packetLen));
 
                         this.connection.getLog().logTrace(traceMessageBuf.toString());

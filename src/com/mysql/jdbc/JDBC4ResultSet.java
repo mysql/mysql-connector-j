@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -46,12 +46,12 @@ import com.mysql.jdbc.Statement;
 public class JDBC4ResultSet extends ResultSetImpl {
 
 	public JDBC4ResultSet(long updateCount, long updateID, 
-			ConnectionImpl conn, StatementImpl creatorStmt) {
+			MySQLConnection conn, StatementImpl creatorStmt) {
 		super(updateCount, updateID, conn, creatorStmt);
 	}
 	
 	public JDBC4ResultSet(String catalog, Field[] fields, RowData tuples,
-			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
+			MySQLConnection conn, StatementImpl creatorStmt) throws SQLException {
 		super(catalog, fields, tuples, conn, creatorStmt);
 	}
 	

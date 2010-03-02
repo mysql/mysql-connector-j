@@ -1,5 +1,5 @@
 /*
- Copyright  2005-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2005-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -41,7 +41,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	private boolean hasReferentialConstraintsView;
 	private boolean hasParametersView;
 	
-	protected DatabaseMetaDataUsingInfoSchema(ConnectionImpl connToSet,
+   protected DatabaseMetaDataUsingInfoSchema(MySQLConnection connToSet,
 			String databaseToSet) throws SQLException {
 		super(connToSet, databaseToSet);
 		

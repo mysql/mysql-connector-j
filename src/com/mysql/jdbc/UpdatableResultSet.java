@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
  This program is free software; you can redistribute it and/or modify
@@ -117,7 +117,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 *             DOCUMENT ME!
 	 */
 	protected UpdatableResultSet(String catalog, Field[] fields, RowData tuples,
-			ConnectionImpl conn, StatementImpl creatorStmt) throws SQLException {
+			MySQLConnection conn, StatementImpl creatorStmt) throws SQLException {
 		super(catalog, fields, tuples, conn, creatorStmt);
 		checkUpdatability();
 		this.populateInserterWithDefaultValues =

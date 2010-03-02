@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2004 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2004 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -473,7 +473,7 @@ public class StringUtils {
 
 	public static final byte[] getBytes(char[] c, String encoding,
 			String serverEncoding, boolean parserKnowsUnicode, 
-			ConnectionImpl conn, ExceptionInterceptor exceptionInterceptor)
+			MySQLConnection conn, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
 		try {
 			
@@ -673,7 +673,7 @@ public class StringUtils {
 	 */
 	public static final byte[] getBytes(String s, String encoding,
 			String serverEncoding, boolean parserKnowsUnicode, 
-			ConnectionImpl conn, ExceptionInterceptor exceptionInterceptor)
+			MySQLConnection conn, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
 		try {
 			SingleByteCharsetConverter converter = null;
@@ -1489,7 +1489,7 @@ public class StringUtils {
 				: WILD_COMPARE_MATCH_NO_WILD);
 	}
 	
-	static byte[] s2b(String s, ConnectionImpl conn) throws SQLException {
+	static byte[] s2b(String s, MySQLConnection conn) throws SQLException {
 		if (s == null) {
 			return null;
 		}

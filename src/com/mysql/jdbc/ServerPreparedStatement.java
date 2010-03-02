@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -71,7 +71,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			try {
 				JDBC_4_SPS_CTOR = Class.forName("com.mysql.jdbc.JDBC4ServerPreparedStatement")
 				.getConstructor(
-				new Class[] { ConnectionImpl.class, String.class, String.class,
+				new Class[] { MySQLConnection.class, String.class, String.class,
 						Integer.TYPE, Integer.TYPE});
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
@@ -346,7 +346,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * interface classes that are present in JDBC4 method signatures.
 	 */
 
-	protected static ServerPreparedStatement getInstance(ConnectionImpl conn,
+	protected static ServerPreparedStatement getInstance(MySQLConnection conn,
 			String sql, String catalog, int resultSetType,
 			int resultSetConcurrency) throws SQLException {
 		if (!Util.isJdbc4()) {
@@ -388,7 +388,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 *             If an error occurs
 	 */
-	protected ServerPreparedStatement(ConnectionImpl conn, String sql, String catalog,
+   protected ServerPreparedStatement(MySQLConnection conn, String sql, String catalog,
 			int resultSetType, int resultSetConcurrency)
 			throws SQLException {
 		super(conn, catalog);
@@ -676,7 +676,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	}
 
 	protected int[] executeBatchSerially(int batchTimeout) throws SQLException {
-		ConnectionImpl locallyScopedConn = this.connection;
+		MySQLConnection locallyScopedConn = this.connection;
 		
 		if (locallyScopedConn == null) {
 			checkClosed();
@@ -856,8 +856,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 				StringBuffer messageBuf = new StringBuffer(extractedSql
 						.length() + 32);
 				messageBuf
-						.append("\n\nQuery being executed when exception was thrown:\n\n");
+						.append("\n\nQuery being executed when exception was thrown:\n");
 				messageBuf.append(extractedSql);
+            messageBuf.append("\n\n");
 
 				sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf
 						.toString(), getExceptionInterceptor());
@@ -877,8 +878,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 				StringBuffer messageBuf = new StringBuffer(extractedSql
 						.length() + 32);
 				messageBuf
-						.append("\n\nQuery being executed when exception was thrown:\n\n");
+						.append("\n\nQuery being executed when exception was thrown:\n");
 				messageBuf.append(extractedSql);
+            messageBuf.append("\n\n");
 
 				sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf
 						.toString(), getExceptionInterceptor());
@@ -2963,7 +2965,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		return this.hasOnDuplicateKeyUpdate;
 	}
 	
-	protected PreparedStatement prepareBatchedInsertSQL(ConnectionImpl localConn, int numBatches) throws SQLException {
+	protected PreparedStatement prepareBatchedInsertSQL(MySQLConnection localConn, int numBatches) throws SQLException {
 		try {
 			PreparedStatement pstmt = new ServerPreparedStatement(localConn, this.parseInfo.getSqlForBatch(numBatches), this.currentCatalog, this.resultSetConcurrency, this.resultSetType);
 			pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);

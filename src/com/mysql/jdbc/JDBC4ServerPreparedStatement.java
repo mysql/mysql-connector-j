@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -40,7 +40,7 @@ import com.mysql.jdbc.ServerPreparedStatement.BindValue;
 
 public class JDBC4ServerPreparedStatement extends ServerPreparedStatement {
 
-	public JDBC4ServerPreparedStatement(ConnectionImpl conn, String sql,
+	public JDBC4ServerPreparedStatement(MySQLConnection conn, String sql,
 			String catalog, int resultSetType, int resultSetConcurrency)
 			throws SQLException {
 		super(conn, sql, catalog, resultSetType, resultSetConcurrency);

@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -32,6 +32,7 @@ import java.util.Map;
 
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.Log;
 
@@ -54,7 +55,7 @@ public class ProfilerEventHandlerFactory {
 	 *            the connection to handle events for
 	 * @return the ProfilerEventHandlerFactory that handles profiler events
 	 */
-	public static synchronized ProfilerEventHandler getInstance(ConnectionImpl conn) throws SQLException {
+	public static synchronized ProfilerEventHandler getInstance(MySQLConnection conn) throws SQLException {
 		ProfilerEventHandler handler = (ProfilerEventHandler) CONNECTIONS_TO_SINKS
 				.get(conn);
 

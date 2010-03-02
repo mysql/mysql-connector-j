@@ -1,5 +1,5 @@
 /*
- Copyright  2004-2007 MySQL AB, 2008-2009 Sun Microsystems
+ Copyright  2004-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -2436,4 +2436,21 @@ public class ReplicationConnection implements Connection, PingTarget {
 		
 		return props;
 	}
+
+   public String getHost() {
+      return currentConnection.getHost();
+   }
+
+   public void setProxy(MySQLConnection proxy) {
+      currentConnection.setProxy(proxy);
+   }
+
+ 	public boolean getRetainStatementAfterResultSetClose() {
+		return currentConnection.getRetainStatementAfterResultSetClose();
+	}
+
+ 	public int getMaxAllowedPacket() {
+		return currentConnection.getMaxAllowedPacket();
+	}
+
 }

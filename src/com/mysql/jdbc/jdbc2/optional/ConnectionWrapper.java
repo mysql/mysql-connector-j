@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008-2009 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -38,6 +38,7 @@ import java.util.TimeZone;
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.Extension;
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Util;
@@ -2631,4 +2632,22 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public Properties getProperties() {
 		return this.mc.getProperties();
 	}
+
+   public String getHost() {
+      return this.mc.getHost();
+   }
+
+   public void setProxy(MySQLConnection conn) {
+      this.mc.setProxy(conn);
+   }
+
+ 	public boolean getRetainStatementAfterResultSetClose() {
+		return this.mc.getRetainStatementAfterResultSetClose();
+	}
+
+   public int getMaxAllowedPacket() {
+		return this.mc.getMaxAllowedPacket();
+	}
+
+
 }

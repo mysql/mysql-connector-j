@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -157,7 +157,7 @@ public class SQLError {
 				JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR = Class.forName(
 						"com.mysql.jdbc.exceptions.jdbc4.CommunicationsException")
 						.getConstructor(
-								new Class[] { ConnectionImpl.class, Long.TYPE, Long.TYPE, Exception.class });
+								new Class[] { MySQLConnection.class, Long.TYPE, Long.TYPE, Exception.class });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
 			} catch (NoSuchMethodException e) {
@@ -1086,10 +1086,6 @@ public class SQLError {
 				}
 			}
 			
-			if (sqlEx == null) {
-				System.out.println("!");
-			}
-			
 			return sqlEx;
 		} catch (SQLException sqlEx) {
 			SQLException unexpectedEx = new SQLException(
@@ -1109,7 +1105,7 @@ public class SQLError {
 		}
 	}
 	
-	public static SQLException createCommunicationsException(ConnectionImpl conn, long lastPacketSentTimeMs, 
+	public static SQLException createCommunicationsException(MySQLConnection conn, long lastPacketSentTimeMs,
 			long lastPacketReceivedTimeMs,
 			Exception underlyingException, ExceptionInterceptor interceptor) {
 		SQLException exToReturn = null;
@@ -1160,7 +1156,7 @@ public class SQLError {
 	 * @return
 	 */
 	public static String createLinkFailureMessageBasedOnHeuristics(
-			ConnectionImpl conn,
+			MySQLConnection conn,
 			long lastPacketSentTimeMs, 
 			long lastPacketReceivedTimeMs,
 			Exception underlyingException,

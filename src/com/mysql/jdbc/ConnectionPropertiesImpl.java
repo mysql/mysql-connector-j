@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -2398,7 +2398,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return this.requireSSL.getValueAsBoolean();
 	}
 
-	protected boolean getRetainStatementAfterResultSetClose() {
+	public boolean getRetainStatementAfterResultSetClose() {
 		return this.retainStatementAfterResultSetClose.getValueAsBoolean();
 	}
 

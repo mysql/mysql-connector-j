@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -476,12 +476,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			try {
 				JDBC_4_DBMD_SHOW_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4DatabaseMetaData").getConstructor(
-						new Class[] { com.mysql.jdbc.ConnectionImpl.class,
+						new Class[] { com.mysql.jdbc.MySQLConnection.class,
 								String.class });
 				JDBC_4_DBMD_IS_CTOR = Class.forName(
 						"com.mysql.jdbc.JDBC4DatabaseMetaDataUsingInfoSchema")
 						.getConstructor(
-								new Class[] { com.mysql.jdbc.ConnectionImpl.class,
+								new Class[] { com.mysql.jdbc.MySQLConnection.class,
 										String.class });
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
@@ -616,7 +616,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 	
 	/** The connection to the database */
-	protected ConnectionImpl conn;
+	protected MySQLConnection conn;
 
 	/** The 'current' database name being used */
 	protected String database = null;
@@ -628,7 +628,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	// and JDBC4 runtimes, otherwise the class verifier complains...
 	
 	protected static DatabaseMetaData getInstance(
-			ConnectionImpl connToSet, String databaseToSet, boolean checkForInfoSchema)
+			MySQLConnection connToSet, String databaseToSet, boolean checkForInfoSchema)
 			throws SQLException {
 		if (!Util.isJdbc4()) {
 			if (checkForInfoSchema && connToSet != null 
@@ -662,7 +662,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * @param databaseToSet
 	 *            DOCUMENT ME!
 	 */
-	protected DatabaseMetaData(ConnectionImpl connToSet, String databaseToSet) {
+	protected DatabaseMetaData(MySQLConnection connToSet, String databaseToSet) {
 		this.conn = connToSet;
 		this.database = databaseToSet;
 		this.exceptionInterceptor = this.conn.getExceptionInterceptor();
@@ -707,7 +707,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 	
 	static java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields,
-			java.util.ArrayList rows, ConnectionImpl c) throws SQLException {
+			java.util.ArrayList rows, MySQLConnection c) throws SQLException {
 		int fieldsLength = fields.length;
 
 		for (int i = 0; i < fieldsLength; i++) {

@@ -1,5 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -64,6 +64,8 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
 import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 import com.mysql.jdbc.util.LRUCache;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * A Connection represents a session with a specific database. Within the
@@ -80,9 +82,23 @@ import com.mysql.jdbc.util.LRUCache;
  * @see java.sql.Connection
  */
 public class ConnectionImpl extends ConnectionPropertiesImpl implements
-		Connection {
+		MySQLConnection {
 	private static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
-	
+
+   public String getHost() {
+      return host;
+   }
+
+   private MySQLConnection proxy = null;
+
+   public void setProxy(MySQLConnection proxy) {
+      this.proxy = proxy;
+   }
+
+   private MySQLConnection getProxy() {
+      return (proxy != null) ? proxy : (MySQLConnection) this;
+   }
+
 	class ExceptionInterceptorChain implements ExceptionInterceptor {
 		List interceptors;
 		
@@ -315,7 +331,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return sqlExceptionWithNewMessage;
 	}
 
-	protected synchronized Timer getCancelTimer() {
+	public synchronized Timer getCancelTimer() {
 		if (cancelTimer == null) {
 			boolean createdNamedTimer = false;
 			
@@ -685,7 +701,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 		this.connectionCreationTimeMillis = System.currentTimeMillis();
 		this.pointOfOrigin = new Throwable();
-		
+
+      if (databaseToConnectTo == null) {
+			databaseToConnectTo = "";
+		}
+
 		// Stash away for later, used to clone this connection for Statement.cancel
 		// and Statement.setQueryTimeout().
 		//
@@ -759,10 +779,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		this.hostListSize = this.hostList.size();
 		this.port = portToConnectTo;
 
-		if (databaseToConnectTo == null) {
-			databaseToConnectTo = "";
-		}
-
 		this.database = databaseToConnectTo;
 		this.myURL = url;
 		this.user = info.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
@@ -826,7 +842,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
-    protected void unSafeStatementInterceptors() throws SQLException {
+    public void unSafeStatementInterceptors() throws SQLException {
     	
     	ArrayList unSafedStatementInterceptors = new ArrayList(this.statementInterceptors.size());
     	
@@ -841,7 +857,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
     	this.statementInterceptors = unSafedStatementInterceptors;
 	}
     
-    protected void initializeSafeStatementInterceptors() throws SQLException {
+    public void initializeSafeStatementInterceptors() throws SQLException {
     	this.isClosed = false;
     	
     	List unwrappedInterceptors = Util.loadExtensions(this, this.props, 
@@ -869,7 +885,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
     	
     }
     
-    protected List getStatementInterceptorsInstances() {
+    public List getStatementInterceptorsInstances() {
     	return this.statementInterceptors;
     }
     
@@ -1186,13 +1202,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
-	protected void checkClosed() throws SQLException {
+	public void checkClosed() throws SQLException {
 		if (this.isClosed) {
 			throwConnectionClosedException();
 		}
 	}
 
-	void throwConnectionClosedException() throws SQLException {
+	public void throwConnectionClosedException() throws SQLException {
 		StringBuffer messageBuf = new StringBuffer(
 				"No operations allowed after connection closed.");
 
@@ -1332,7 +1348,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * 
 	 * @throws SQLException
 	 */
-	protected void abortInternal() throws SQLException {
+	public void abortInternal() throws SQLException {
 		if (this.io != null) {
 			try {
 				this.io.forceClose();
@@ -1432,7 +1448,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 
 	
-	protected java.sql.PreparedStatement clientPrepareStatement(String sql,
+	public java.sql.PreparedStatement clientPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency, 
 			boolean processEscapeCodesIfNeeded) throws SQLException {
 		checkClosed();
@@ -1447,7 +1463,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						.get(nativeSql);
 	
 				if (pStmtInfo == null) {
-					pStmt = com.mysql.jdbc.PreparedStatement.getInstance(this, nativeSql,
+					pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getProxy(), nativeSql,
 							this.database);
 	
 					PreparedStatement.ParseInfo parseInfo = pStmt.getParseInfo();
@@ -1481,12 +1497,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					}
 				} else {
 					pStmtInfo.lastUsed = System.currentTimeMillis();
-					pStmt = new com.mysql.jdbc.PreparedStatement(this, nativeSql,
+					pStmt = new com.mysql.jdbc.PreparedStatement(getProxy(), nativeSql,
 							this.database, pStmtInfo);
 				}
 			}
 		} else {
-			pStmt = com.mysql.jdbc.PreparedStatement.getInstance(this, nativeSql,
+			pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getProxy(), nativeSql,
 					this.database);
 		}
 
@@ -1605,6 +1621,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
+   public String getDateTime(String pattern){
+      SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+      return sdf.format(new Date());
+   }
+
 	/**
 	 * The method commit() makes all changes made since the previous
 	 * commit/rollback permanent and releases any database locks currently held
@@ -1622,7 +1643,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	public void commit() throws SQLException {
 		synchronized (getMutex()) {
 			checkClosed();
-			
+
+         this.log.logInfo("Commit with host='" + host + "' and origHost='" + origHostToConnectTo + "'");
 			try {
 				if (this.connectionLifecycleInterceptors != null) {
 					IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
@@ -1650,7 +1672,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							return; // effectively a no-op
 						}
 					}
-					
+
+               this.log.logInfo("Commit with host='" + host + "' and origHost='" + origHostToConnectTo + "'");
 					execSQL(null, "commit", -1, null,
 							DEFAULT_RESULT_SET_TYPE,
 							DEFAULT_RESULT_SET_CONCURRENCY, false,
@@ -1658,6 +1681,18 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							false);
 				}
 			} catch (SQLException sqlException) {
+            this.log.logWarn("Exception during commit with host='" + host + "' and origHost='" +
+                             origHostToConnectTo + "'", sqlException);
+            if (this.getDumpQueriesOnException()) {
+               StringBuffer messageBuf = new StringBuffer(60);
+               messageBuf.append("\n\nCommit to host '");
+               messageBuf.append(host);
+               messageBuf.append("' when exception was thrown\n\n");
+
+   				sqlException = ConnectionImpl.appendMessageToException(sqlException,
+                                                                      messageBuf.toString(),
+                                                                      getExceptionInterceptor());
+            }
 				if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE
 						.equals(sqlException.getSQLState())) {
 					throw SQLError.createSQLException(
@@ -2113,7 +2148,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws CommunicationsException
 	 *             DOCUMENT ME!
 	 */
-	protected void createNewIO(boolean isForReconnect)
+	public void createNewIO(boolean isForReconnect)
 			throws SQLException {
 		// Synchronization Not needed for *new* connections, but defintely for
 		// connections going through fail-over, since we might get the
@@ -2178,10 +2213,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								}
 							}
 	
-							this.io = new MysqlIO(newHost, newPort, mergedProps,
-									getSocketFactoryClassName(), this,
-									getSocketTimeout(), 
-									this.largeRowSizeThreshold.getValueAsInt());
+							this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(),
+                                           getProxy(), getSocketTimeout(),
+                                           this.largeRowSizeThreshold.getValueAsInt());
 		
 							this.io.doHandshake(this.user, this.password,
 									this.database);
@@ -2257,7 +2291,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								hostIndex = getNextRoundRobinHostIndex(getURL(),
 										this.hostList) - 1 /* incremented by for loop next time around */;
 							} else if ((this.hostListSize - 1) == hostIndex) {
-								throw SQLError.createCommunicationsException(this,
+								throw SQLError.createCommunicationsException(getProxy(),
 										(this.io != null) ? this.io
 												.getLastPacketSentTimeMs() : 0,
 										(this.io != null) ? this.io
@@ -2333,7 +2367,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 								this.io = new MysqlIO(newHost, newPort,
 										mergedProps, getSocketFactoryClassName(),
-										this, getSocketTimeout(),
+										getProxy(), getSocketTimeout(),
 										this.largeRowSizeThreshold.getValueAsInt());
 								this.io.doHandshake(this.user, this.password,
 										this.database);
@@ -2533,7 +2567,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			int resultSetConcurrency) throws SQLException {
 		checkClosed();
 
-		StatementImpl stmt = new com.mysql.jdbc.StatementImpl(this, this.database);
+		StatementImpl stmt = new StatementImpl(getProxy(), this.database);
 		stmt.setResultSetType(resultSetType);
 		stmt.setResultSetConcurrency(resultSetConcurrency);
 
@@ -2557,11 +2591,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return createStatement(resultSetType, resultSetConcurrency);
 	}
 
-	protected void dumpTestcaseQuery(String query) {
+	public void dumpTestcaseQuery(String query) {
 		System.err.println(query);
 	}
 
-	protected Connection duplicate() throws SQLException {
+	public Connection duplicate() throws SQLException {
 		return new ConnectionImpl(	this.origHostToConnectTo, 
 				this.origPortToConnectTo,
 				this.props,
@@ -2612,7 +2646,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	// resultSetConcurrency, streamResults, queryIsSelectOnly, catalog,
 	// unpackFields);
 	// }
-	ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows,
+	public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows,
 			Buffer packet, int resultSetType, int resultSetConcurrency,
 			boolean streamResults, String catalog,
 			Field[] cachedMetadata) throws SQLException {
@@ -2621,7 +2655,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				catalog, cachedMetadata, false);
 	}
 
-	ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows,
+	public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows,
 			Buffer packet, int resultSetType, int resultSetConcurrency,
 			boolean streamResults, String catalog,
 			Field[] cachedMetadata,
@@ -2706,8 +2740,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					StringBuffer messageBuf = new StringBuffer(extractedSql
 							.length() + 32);
 					messageBuf
-							.append("\n\nQuery being executed when exception was thrown:\n\n");
+							.append("\n\nQuery being executed when exception was thrown:\n");
 					messageBuf.append(extractedSql);
+               messageBuf.append("\n\n");
 
 					sqlE = appendMessageToException(sqlE, messageBuf.toString(), getExceptionInterceptor());
 				}
@@ -2726,6 +2761,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 				throw sqlE;
 			} catch (Exception ex) {
+            if (getDumpQueriesOnException()) {
+					String extractedSql = extractSqlFromPacket(sql, packet, endOfQueryPacketPosition);
+					log.logInfo("Unexpected exception occured. Query being executed when exception " + 
+                           " was thrown: [ " + extractedSql + " ]");
+				}
+
 				if ((getHighAvailability() || this.failedOver)) {
 					this.needsPing = true;
 				} else if (ex instanceof IOException) {
@@ -2757,7 +2798,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
-	protected String extractSqlFromPacket(String possibleSqlQuery,
+	public String extractSqlFromPacket(String possibleSqlQuery,
 			Buffer queryPacket, int endOfQueryPacketPosition)
 			throws SQLException {
 
@@ -2805,13 +2846,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws Throwable
 	 *             DOCUMENT ME!
 	 */
-	protected void finalize() throws Throwable {
+	public void finalize() throws Throwable {
 		cleanup(null);
 		
 		super.finalize();
 	}
 
-	protected StringBuffer generateConnectionCommentBlock(StringBuffer buf) {
+	public StringBuffer generateConnectionCommentBlock(StringBuffer buf) {
 		buf.append("/* conn id ");
 		buf.append(getId());
 		buf.append(" clock: ");
@@ -2849,7 +2890,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * Optimization to only use one calendar per-session, or calculate it for
 	 * each call, depending on user configuration
 	 */
-	protected Calendar getCalendarInstanceForSessionOrNew() {
+	public Calendar getCalendarInstanceForSessionOrNew() {
 		if (getDynamicCalendars()) {
 			return Calendar.getInstance();
 		}
@@ -2875,7 +2916,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	/**
 	 * @return Returns the characterSetMetadata.
 	 */
-	protected String getCharacterSetMetadata() {
+	public String getCharacterSetMetadata() {
 		return this.characterSetMetadata;
 	}
 
@@ -2887,7 +2928,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *            the encoding name to retrieve
 	 * @return a character converter, or null if one couldn't be mapped.
 	 */
-	SingleByteCharsetConverter getCharsetConverter(
+	public SingleByteCharsetConverter getCharsetConverter(
 			String javaEncodingName) throws SQLException {
 		if (javaEncodingName == null) {
 			return null;
@@ -2943,7 +2984,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             if the character set index isn't known by the driver
 	 */
-	protected String getCharsetNameForIndex(int charsetIndex)
+	public String getCharsetNameForIndex(int charsetIndex)
 			throws SQLException {
 		String charsetName = null;
 
@@ -2985,11 +3026,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * 
 	 * @return Returns the defaultTimeZone.
 	 */
-	protected TimeZone getDefaultTimeZone() {
+	public TimeZone getDefaultTimeZone() {
 		return this.defaultTimeZone;
 	}
 
-	protected String getErrorMessageEncoding() {
+	public String getErrorMessageEncoding() {
 		return errorMessageEncoding;
 	}
 
@@ -3000,7 +3041,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return java.sql.ResultSet.CLOSE_CURSORS_AT_COMMIT;
 	}
 
-	long getId() {
+	public long getId() {
 		return this.connectionId;
 	}
 
@@ -3030,7 +3071,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             if the connection is closed.
 	 */
-	protected MysqlIO getIO() throws SQLException {
+	public MysqlIO getIO() throws SQLException {
 		if ((this.io == null) || this.isClosed) {
 			throw SQLError.createSQLException(
 					"Operation not allowed on closed connection",
@@ -3052,7 +3093,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return this.log;
 	}
 
-	protected int getMaxBytesPerChar(String javaCharsetName)
+	public int getMaxBytesPerChar(String javaCharsetName)
 	throws SQLException {
 		// TODO: Check if we can actually run this query at this point in time
 		String charset = CharsetMapping.getMysqlEncodingForJavaEncoding(
@@ -3134,10 +3175,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			checkClosed();	
 		}
 		
-		return com.mysql.jdbc.DatabaseMetaData.getInstance(this, this.database, checkForInfoSchema);
+		return com.mysql.jdbc.DatabaseMetaData.getInstance(getProxy(), this.database, checkForInfoSchema);
 	}
 
-	protected java.sql.Statement getMetadataSafeStatement() throws SQLException {
+	public java.sql.Statement getMetadataSafeStatement() throws SQLException {
 		java.sql.Statement stmt = createStatement();
 
 		if (stmt.getMaxRows() != 0) {
@@ -3160,7 +3201,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	Object getMutex() throws SQLException {
+	public Object getMutex() throws SQLException {
 		if (this.io == null) {
 			throwConnectionClosedException();
 		}
@@ -3175,7 +3216,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * 
 	 * @return DOCUMENT ME!
 	 */
-	int getNetBufferLength() {
+	public int getNetBufferLength() {
 		return this.netBufferLength;
 	}
 
@@ -3192,15 +3233,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
-	int getServerMajorVersion() {
+	public int getServerMajorVersion() {
 		return this.io.getServerMajorVersion();
 	}
 
-	int getServerMinorVersion() {
+	public int getServerMinorVersion() {
 		return this.io.getServerMinorVersion();
 	}
 
-	int getServerSubMinorVersion() {
+	public int getServerSubMinorVersion() {
 		return this.io.getServerSubMinorVersion();
 	}
 
@@ -3214,7 +3255,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	}
 	
 	
-	String getServerVariable(String variableName) {
+	public String getServerVariable(String variableName) {
 		if (this.serverVariables != null) {
 			return (String) this.serverVariables.get(variableName);
 		}
@@ -3222,11 +3263,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return null;
 	}
 
-	String getServerVersion() {
+	public String getServerVersion() {
 		return this.io.getServerVersion();
 	}
 
-	protected Calendar getSessionLockedCalendar() {
+	public Calendar getSessionLockedCalendar() {
 	
 		return this.sessionCalendar;
 	}
@@ -3327,15 +3368,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return this.typeMap;
 	}
 
-	String getURL() {
+	public String getURL() {
 		return this.myURL;
 	}
 
-	String getUser() {
+	public String getUser() {
 		return this.user;
 	}
 
-	protected Calendar getUtcCalendar() {
+	public Calendar getUtcCalendar() {
 		return this.utcCalendar;
 	}
 	
@@ -3364,7 +3405,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return this.hasTriedMasterFlag;
 	}
 
-	protected void incrementNumberOfPreparedExecutes() {
+	public void incrementNumberOfPreparedExecutes() {
 		if (getGatherPerformanceMetrics()) {
 			this.numberOfPreparedExecutes++;
 
@@ -3375,13 +3416,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
-	protected void incrementNumberOfPrepares() {
+	public void incrementNumberOfPrepares() {
 		if (getGatherPerformanceMetrics()) {
 			this.numberOfPrepares++;
 		}
 	}
 
-	protected void incrementNumberOfResultSetsCreated() {
+	public void incrementNumberOfResultSetsCreated() {
 		if (getGatherPerformanceMetrics()) {
 			this.numberOfResultSetsCreated++;
 		}
@@ -3412,7 +3453,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
 
 		if (getProfileSql() || getUseUsageAdvisor()) {
-			this.eventSink = ProfilerEventHandlerFactory.getInstance(this);
+			this.eventSink = ProfilerEventHandlerFactory.getInstance(getProxy());
 		}
 
 		if (getCachePreparedStatements()) {
@@ -3767,7 +3808,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return overrideDefaultAutocommit;
 	}
 
-	protected boolean isClientTzUTC() {
+	public boolean isClientTzUTC() {
 		return this.isClientTzUTC;
 	}
 
@@ -3780,7 +3821,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return this.isClosed;
 	}
 
-	protected boolean isCursorFetchEnabled() throws SQLException {
+	public boolean isCursorFetchEnabled() throws SQLException {
 		return (versionMeetsMinimum(5, 0, 2) && getUseCursorFetch());
 	}
 
@@ -3809,7 +3850,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return this.noBackslashEscapes;
 	}
 
-	boolean isReadInfoMsgEnabled() {
+	public boolean isReadInfoMsgEnabled() {
 		return this.readInfoMsg;
 	}
 
@@ -3826,7 +3867,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return this.readOnly;
 	}
 
-	protected boolean isRunningOnJDK13() {
+	public boolean isRunningOnJDK13() {
 		return this.isRunningOnJDK13;
 	}
 
@@ -3877,7 +3918,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return false;	
 	}
 
-	protected boolean isServerTzUTC() {
+	public boolean isServerTzUTC() {
 		return this.isServerTzUTC;
 	}
 
@@ -4022,7 +4063,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @param stmt
 	 *            DOCUMENT ME!
 	 */
-	void maxRowsChanged(Statement stmt) {
+	public void maxRowsChanged(Statement stmt) {
 		synchronized (this.mutex) {
 			if (this.statementsUsingMaxRows == null) {
 				this.statementsUsingMaxRows = new HashMap();
@@ -4052,8 +4093,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 
 		Object escapedSqlResult = EscapeProcessor.escapeSQL(sql,
-				serverSupportsConvertFn(),
-				this);
+                                                          serverSupportsConvertFn(),
+                                                          getProxy());
 
 		if (escapedSqlResult instanceof String) {
 			return (String) escapedSqlResult;
@@ -4065,7 +4106,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private CallableStatement parseCallableStatement(String sql)
 			throws SQLException {
 		Object escapedSqlResult = EscapeProcessor.escapeSQL(sql,
-				serverSupportsConvertFn(), this);
+				serverSupportsConvertFn(), getProxy());
 
 		boolean isFunctionCall = false;
 		String parsedSql = null;
@@ -4078,7 +4119,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			isFunctionCall = false;
 		}
 
-		return CallableStatement.getInstance(this, parsedSql, this.database,
+		return CallableStatement.getInstance(getProxy(), parsedSql, this.database,
 				isFunctionCall);
 	}
 
@@ -4101,7 +4142,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		pingInternal(true, 0);
 	}
 
-	protected void pingInternal(boolean checkForClosedConnection, int timeoutMillis)
+	public void pingInternal(boolean checkForClosedConnection, int timeoutMillis)
 			throws SQLException {
 		if (checkForClosedConnection) {
 			checkClosed();
@@ -4171,7 +4212,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							.get(key);
 	
 					if (cachedParamInfo != null) {
-						cStmt = CallableStatement.getInstance(this, cachedParamInfo);
+						cStmt = CallableStatement.getInstance(getProxy(), cachedParamInfo);
 					} else {
 						cStmt = parseCallableStatement(sql);
 	
@@ -4301,7 +4342,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 					if (pStmt == null) {
 						try {
-							pStmt = ServerPreparedStatement.getInstance(this, nativeSql,
+							pStmt = ServerPreparedStatement.getInstance(getProxy(), nativeSql,
 									this.database, resultSetType, resultSetConcurrency);
 							if (sql.length() < getPreparedStatementCacheSqlLimit()) {
 								((com.mysql.jdbc.ServerPreparedStatement)pStmt).isCached = true;
@@ -4325,7 +4366,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			} else {
 				try {
-					pStmt = ServerPreparedStatement.getInstance(this, nativeSql,
+					pStmt = ServerPreparedStatement.getInstance(getProxy(), nativeSql,
 							this.database, resultSetType, resultSetConcurrency);
 					
 					pStmt.setResultSetType(resultSetType);
@@ -4401,7 +4442,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	protected void realClose(boolean calledExplicitly, boolean issueRollback,
+	public void realClose(boolean calledExplicitly, boolean issueRollback,
 			boolean skipLocalTeardown, Throwable reason) throws SQLException {
 		SQLException sqlEx = null;
 
@@ -4499,7 +4540,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 	}
 
-	protected void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
+	public void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
 		if (pstmt.isPoolable()) {
 			synchronized (this.serverSideStatementCache) {
 				this.serverSideStatementCache.put(pstmt.originalSql, pstmt);
@@ -4512,7 +4553,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * 
 	 * @param queryTimeMs
 	 */
-	protected void registerQueryExecutionTime(long queryTimeMs) {
+	public void registerQueryExecutionTime(long queryTimeMs) {
 		if (queryTimeMs > this.longestQueryTimeMs) {
 			this.longestQueryTimeMs = queryTimeMs;
 
@@ -4536,7 +4577,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @param stmt
 	 *            the Statement instance to remove
 	 */
-	void registerStatement(Statement stmt) {
+	public void registerStatement(Statement stmt) {
 		synchronized (this.openStatements) {
 			this.openStatements.put(stmt, stmt);
 		}
@@ -4741,7 +4782,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
-	protected void reportNumberOfTablesAccessed(int numTablesAccessed) {
+	public void reportNumberOfTablesAccessed(int numTablesAccessed) {
 		if (numTablesAccessed < this.minimumNumberTablesAccessed) {
 			this.minimumNumberTablesAccessed = numTablesAccessed;
 		}
@@ -4936,7 +4977,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql;
 
-		return ServerPreparedStatement.getInstance(this, nativeSql, this.getCatalog(),
+		return ServerPreparedStatement.getInstance(getProxy(), nativeSql, this.getCatalog(),
 				DEFAULT_RESULT_SET_TYPE,
 				DEFAULT_RESULT_SET_CONCURRENCY);
 	}
@@ -4948,7 +4989,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			int autoGenKeyIndex) throws SQLException {
 		String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql;
 
-		PreparedStatement pStmt = ServerPreparedStatement.getInstance(this, nativeSql, this.getCatalog(),
+		PreparedStatement pStmt = ServerPreparedStatement.getInstance(getProxy(), nativeSql, this.getCatalog(),
 				DEFAULT_RESULT_SET_TYPE,
 				DEFAULT_RESULT_SET_CONCURRENCY);
 		
@@ -4965,7 +5006,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			int resultSetType, int resultSetConcurrency) throws SQLException {
 		String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql;
 
-		return ServerPreparedStatement.getInstance(this, nativeSql, this.getCatalog(),
+		return ServerPreparedStatement.getInstance(getProxy(), nativeSql, this.getCatalog(),
 				resultSetType,
 				resultSetConcurrency);
 	}
@@ -5016,7 +5057,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return pStmt;
 	}
 	
-	protected boolean serverSupportsConvertFn() throws SQLException {
+	public boolean serverSupportsConvertFn() throws SQLException {
 		return versionMeetsMinimum(4, 0, 2);
 	}
 
@@ -5245,7 +5286,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		this.preferSlaveDuringFailover = flag;
 	}
 
-	void setReadInfoMsgEnabled(boolean flag) {
+	public void setReadInfoMsgEnabled(boolean flag) {
 		this.readInfoMsg = flag;
 	}
 
@@ -5271,7 +5312,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		setReadOnlyInternal(readOnlyFlag);
 	}
 	
-	protected void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
+	public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
 		this.readOnly = readOnlyFlag;
 	}
 	
@@ -5546,7 +5587,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @param stmt
 	 *            the Statement instance to remove
 	 */
-	void unregisterStatement(Statement stmt) {
+	public void unregisterStatement(Statement stmt) {
 		if (this.openStatements != null) {
 			synchronized (this.openStatements) {
 				this.openStatements.remove(stmt);
@@ -5564,7 +5605,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *             if a database error occurs issuing the statement that sets
 	 *             the limit default.
 	 */
-	void unsetMaxRows(Statement stmt) throws SQLException {
+	public void unsetMaxRows(Statement stmt) throws SQLException {
 		synchronized (this.mutex) {
 			if (this.statementsUsingMaxRows != null) {
 				Object found = this.statementsUsingMaxRows.remove(stmt);
@@ -5582,7 +5623,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 	
-	boolean useAnsiQuotedIdentifiers() {
+	public boolean useAnsiQuotedIdentifiers() {
 		return this.useAnsiQuotes;
 	}
 	
@@ -5591,7 +5632,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * 
 	 * @return DOCUMENT ME!
 	 */
-	boolean useMaxRows() {
+	public boolean useMaxRows() {
 		synchronized (this.mutex) {
 			return this.maxRowsChanged;
 		}
@@ -5618,7 +5659,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @return metadata cached for the given SQL, or none if it doesn't
 	 *                  exist.
 	 */
-	protected CachedResultSetMetaData getCachedMetaData(String sql) {
+	public CachedResultSetMetaData getCachedMetaData(String sql) {
 		if (this.resultSetMetadataCache != null) {
 			synchronized (this.resultSetMetadataCache) {
 				return (CachedResultSetMetaData) this.resultSetMetadataCache
@@ -5643,7 +5684,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *
 	 * @throws SQLException
 	 */
-	protected void initializeResultsMetadataFromCache(String sql,
+	public void initializeResultsMetadataFromCache(String sql,
 			CachedResultSetMetaData cachedMetaData, ResultSetInternalMethods resultSet)
 			throws SQLException {
 
@@ -5719,7 +5760,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		ex.init(this, this.props);
 	}
 	
-	protected void transactionBegun() throws SQLException {
+	public void transactionBegun() throws SQLException {
 		if (this.connectionLifecycleInterceptors != null) {
 			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
 
@@ -5732,7 +5773,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 	
-	protected void transactionCompleted() throws SQLException {
+	public void transactionCompleted() throws SQLException {
 		if (this.connectionLifecycleInterceptors != null) {
 			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
 
