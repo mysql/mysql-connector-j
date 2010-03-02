@@ -853,6 +853,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
     	}
     	
     	this.statementInterceptors = unSafedStatementInterceptors;
+    	
+    	if (this.io != null) {
+    		this.io.setStatementInterceptors(this.statementInterceptors);
+    	}
 	}
     
     public void initializeSafeStatementInterceptors() throws SQLException {
