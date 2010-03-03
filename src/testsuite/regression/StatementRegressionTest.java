@@ -6357,6 +6357,53 @@ public class StatementRegressionTest extends BaseTestCase {
 		}
 	}
 	
+	public void testBug51666() throws Exception {
+		Connection testConn = getConnectionWithProps(
+				"statementInterceptors=" + IncrementStatementCountInterceptor.class.getName());
+		createTable("testStatementInterceptorCount", "(field1 int)");
+		this.stmt.executeUpdate("INSERT INTO testStatementInterceptorCount VALUES (0)");
+		ResultSet rs = testConn.createStatement().executeQuery("SHOW SESSION STATUS LIKE 'Com_select'" );
+		rs.next();
+		int s = rs.getInt(2);
+		testConn.createStatement().executeQuery("SELECT 1");
+		rs = testConn.createStatement().executeQuery("SHOW SESSION STATUS LIKE 'Com_select'" );
+		rs.next();
+		assertEquals(s+ 1, rs.getInt(2));
+		
+	}
+
+		
+	public static class IncrementStatementCountInterceptor implements StatementInterceptorV2{
+		public void destroy() {}
+
+		public boolean executeTopLevelOnly() {
+			return false;
+		}
+
+		public void init(com.mysql.jdbc.Connection conn, Properties props)
+				throws SQLException {}
+
+		public ResultSetInternalMethods postProcess(String sql,
+				com.mysql.jdbc.Statement interceptedStatement,
+				ResultSetInternalMethods originalResultSet,
+				com.mysql.jdbc.Connection connection, int warningCount,
+				boolean noIndexUsed, boolean noGoodIndexUsed,
+				SQLException statementException) throws SQLException {
+			return null;
+		}
+
+		public ResultSetInternalMethods preProcess(String sql,
+				com.mysql.jdbc.Statement interceptedStatement,
+				com.mysql.jdbc.Connection conn) throws SQLException {
+			java.sql.Statement test = conn.createStatement();
+			if(sql.equals("SELECT 1")){
+				return (ResultSetInternalMethods) test.executeQuery("/* execute this, not the original */ SELECT 1");
+			}
+			return null;
+		}
+		
+	}
+	
 	public void testReversalOfScanFlags() throws Exception {
 		createTable("testReversalOfScanFlags", "(field1 int)");
 		this.stmt.executeUpdate("INSERT INTO testReversalOfScanFlags VALUES (1),(2),(3)");
