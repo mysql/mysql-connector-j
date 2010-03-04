@@ -2700,4 +2700,51 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props, downedHosts).close();
 		}
 	}
+	
+	// Tests fix for Bug#51643 - connection chosen by load balancer "sticks" to statements
+	// that live past commit()/rollback().
+	
+	public void testBug51643() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("loadBalanceStrategy", "com.mysql.jdbc.SequentialBalanceStrategy");
+		
+		Connection lbConn = getUnreliableLoadBalancedConnection(new String[] { "first", "second"}, props);
+		try {
+			PreparedStatement cPstmt = lbConn.prepareStatement("SELECT connection_id()");
+			PreparedStatement serverPstmt = lbConn.prepareStatement("SELECT connection_id()");
+			Statement plainStmt = lbConn.createStatement();
+			
+			lbConn.setAutoCommit(false);
+			this.rs = cPstmt.executeQuery();
+			this.rs.next();
+			String cPstmtConnId = this.rs.getString(1);
+			
+			this.rs = serverPstmt.executeQuery();
+			this.rs.next();
+			String serverPstmtConnId = this.rs.getString(1);
+			
+			this.rs = plainStmt.executeQuery("SELECT connection_id()");
+			this.rs.next();
+			String plainStmtConnId = this.rs.getString(1);
+			lbConn.commit();
+			lbConn.setAutoCommit(false);
+			
+			this.rs = cPstmt.executeQuery();
+			this.rs.next();
+			String cPstmtConnId2 = this.rs.getString(1);
+			assertFalse(cPstmtConnId2.equals(cPstmtConnId));
+			
+			this.rs = serverPstmt.executeQuery();
+			this.rs.next();
+			String serverPstmtConnId2 = this.rs.getString(1);
+			assertFalse(serverPstmtConnId2.equals(serverPstmtConnId));
+			
+			this.rs = plainStmt.executeQuery("SELECT connection_id()");
+			this.rs.next();
+			String plainStmtConnId2 = this.rs.getString(1);
+			assertFalse(plainStmtConnId2.equals(plainStmtConnId));
+		} finally {
+			lbConn.close();
+		}
+	}
 }
