@@ -33,7 +33,6 @@ import java.sql.Statement;
 
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
-import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 
 /**
  * Allows streaming of MySQL data.

@@ -57,7 +57,6 @@ import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
-import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 import com.mysql.jdbc.util.ReadAheadInputStream;
 import com.mysql.jdbc.util.ResultSetUtil;
 

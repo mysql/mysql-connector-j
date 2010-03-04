@@ -24,17 +24,14 @@
 
  */
 
-package com.mysql.jdbc.profiler;
+package com.mysql.jdbc;
 
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.ConnectionImpl;
-import com.mysql.jdbc.MySQLConnection;
-import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.Log;
+import com.mysql.jdbc.profiler.ProfilerEventHandler;
 
 /**
  * @author mmatthew

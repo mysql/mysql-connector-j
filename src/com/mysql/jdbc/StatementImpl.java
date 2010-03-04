@@ -46,7 +46,6 @@ import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
-import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 
 /**
  * A Statement object is used for executing a static SQL statement and obtaining
