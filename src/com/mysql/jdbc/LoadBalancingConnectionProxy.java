@@ -290,6 +290,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 						// connection error, close up shop on current
 						// connection
 						invalidateCurrentConnection();
+						pickNewConnection();
 					}
 				}
 			}
@@ -380,7 +381,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		if ("close".equals(methodName)) {
 			closeAllConnections();
-
+			this.isClosed = true;
 			return null;
 		}
 
@@ -436,7 +437,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 								- this.transactionStartTime;
 					}
 				}
-
 				pickNewConnection();
 			}
 		}
@@ -466,26 +466,58 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	
 			return;
 		}
-
-		ConnectionImpl newConn = (ConnectionImpl) this.balancer.pickConnection(
-				this, Collections.unmodifiableList(this.hostList), Collections
-						.unmodifiableMap(this.liveConnections),
-				(long[]) this.responseTimes.clone(), this.retriesAllDown);
-
-		MySQLConnection thisAsConnection = (MySQLConnection) Proxy
-				.newProxyInstance(getClass().getClassLoader(),
-						new Class[] { com.mysql.jdbc.MySQLConnection.class },
-						this);
-
-		newConn.setProxy(thisAsConnection);
 		
-		if (this.currentConn != null) {
-			newConn.setTransactionIsolation(this.currentConn
-					.getTransactionIsolation());
-			newConn.setAutoCommit(this.currentConn.getAutoCommit());
+		if(this.currentConn.isClosed()){
+			invalidateCurrentConnection();
 		}
+
+		boolean currentAutoCommit = this.currentConn.getAutoCommit();
+		int currentTransIsolation = this.currentConn.getTransactionIsolation();
+		int pingTimeout = this.currentConn.getLoadBalancePingTimeout();
+		boolean pingBeforeReturn = this.currentConn.getLoadBalanceValidateConnectionOnSwapServer();
+		for(int hostsTried = 0, hostsToTry = this.hostList.size(); hostsTried <= hostsToTry; hostsTried++){
+			try{
+				ConnectionImpl newConn = (ConnectionImpl) this.balancer.pickConnection(
+
+					this, Collections.unmodifiableList(this.hostList), Collections
+							.unmodifiableMap(this.liveConnections),
+					(long[]) this.responseTimes.clone(), this.retriesAllDown);
 		
-		this.currentConn = newConn;
+				MySQLConnection thisAsConnection = (MySQLConnection) Proxy
+						.newProxyInstance(getClass().getClassLoader(),
+								new Class[] { com.mysql.jdbc.MySQLConnection.class },
+								this);
+		
+				newConn.setProxy(thisAsConnection);
+				if (this.currentConn != null) {
+					if(pingBeforeReturn){
+						if(pingTimeout == 0){
+							newConn.ping();
+						} else {
+							newConn.pingInternal(true, pingTimeout);
+						}
+					}
+					newConn.setTransactionIsolation(currentTransIsolation);
+					newConn.setAutoCommit(currentAutoCommit);
+				}
+				
+				this.currentConn = newConn;
+				return;
+			} catch (SQLException e){
+				String sqlState = e.getSQLState();
+
+				if (sqlState != null) {
+					if (sqlState.startsWith("08")) {
+						// connection error, close up shop on current
+						// connection
+						invalidateCurrentConnection();
+					}
+				}
+			}
+
+		}
+		// no hosts available to swap connection to, close up.
+		this.isClosed = true;
 	}
 
 	/**
@@ -546,6 +578,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	public synchronized void doPing() throws SQLException {
 		SQLException se = null;
 		boolean foundHost = false;
+		int pingTimeout = this.currentConn.getLoadBalancePingTimeout();
 		synchronized (this) {
 			for (Iterator i = this.hostList.iterator(); i.hasNext();) {
 				String host = (String) i.next();
@@ -554,7 +587,11 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 					continue;
 				}
 				try {
-					conn.ping();
+					if(pingTimeout == 0){
+						conn.ping();
+					} else {
+						((ConnectionImpl) conn).pingInternal(true, pingTimeout);
+					}
 					foundHost = true;
 				} catch (SQLException e) {
 					// give up if it is the current connection, otherwise NPE

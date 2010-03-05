@@ -1029,6 +1029,18 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.loadBalanceBlacklistTimeout"), //$NON-NLS-1$
 			"5.1.0", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
+	private IntegerConnectionProperty loadBalancePingTimeout = new IntegerConnectionProperty(
+			"loadBalancePingTimeout", 0, //$NON-NLS-1$
+			0, Integer.MAX_VALUE,
+			Messages.getString("ConnectionProperties.loadBalancePingTimeout"), //$NON-NLS-1$
+			"5.1.13", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+	
+	private BooleanConnectionProperty loadBalanceValidateConnectionOnSwapServer = new BooleanConnectionProperty(
+			"loadBalanceValidateConnectionOnSwapServer",
+			false,
+			Messages.getString("ConnectionProperties.loadBalanceValidateConnectionOnSwapServer"), //$NON-NLS-1$
+			"5.1.13", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+	
 	private StringConnectionProperty localSocketAddress = new StringConnectionProperty("localSocketAddress", //$NON-NLS-1$
 			null, Messages.getString("ConnectionProperties.localSocketAddress"), //$NON-NLS-1$
 			"5.0.5", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
@@ -4436,6 +4448,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
 		this.loadBalanceBlacklistTimeout.setValue(loadBalanceBlacklistTimeout);
 	}
+
+	public int getLoadBalancePingTimeout() {
+		return loadBalancePingTimeout.getValueAsInt();
+	}
+
+	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) {
+		this.loadBalancePingTimeout.setValue(loadBalancePingTimeout);
+	}
 	
 	public void setRetriesAllDown(int retriesAllDown) {
 		this.retriesAllDown.setValue(retriesAllDown);
@@ -4483,5 +4503,15 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setQueryTimeoutKillsConnection(boolean queryTimeoutKillsConnection) {
 		this.queryTimeoutKillsConnection.setValue(queryTimeoutKillsConnection);
+	}
+
+	public boolean getLoadBalanceValidateConnectionOnSwapServer() {
+		return this.loadBalanceValidateConnectionOnSwapServer.getValueAsBoolean();
+	}
+
+	public void setLoadBalanceValidateConnectionOnSwapServer(
+			boolean loadBalanceValidateConnectionOnSwapServer) {
+		this.loadBalanceValidateConnectionOnSwapServer.setValue(loadBalanceValidateConnectionOnSwapServer);
+		
 	}
 }

@@ -70,9 +70,11 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
+import testsuite.UnreliableSocketFactory;
 
 import com.mysql.jdbc.CachedResultSetMetaData;
 import com.mysql.jdbc.Field;
+import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.SQLError;
@@ -6371,6 +6373,34 @@ public class StatementRegressionTest extends BaseTestCase {
 		assertEquals(s+ 1, rs.getInt(2));
 		
 	}
+	
+	public void testBug51776() throws Exception {
+		
+		Properties props = new Properties();
+		NonRegisteringDriver d = new NonRegisteringDriver();
+		this.copyBasePropertiesIntoProps(props, d);
+		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+		Properties parsed = d.parseURL(BaseTestCase.dbUrl, props);
+		String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		String host = getPortFreeHostname(props, d);
+		UnreliableSocketFactory.flushAllHostLists();
+		UnreliableSocketFactory.mapHost("first", host);
+		props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
+			
+		Connection testConn = getConnectionWithProps("jdbc:mysql://first:" + port + "/" + db, props);
+		testConn.setAutoCommit(false);
+		testConn.createStatement().execute("SELECT 1" );
+		UnreliableSocketFactory.downHost("first");
+		try{
+			testConn.rollback();
+			fail("Should receive SQLException on rollback().");
+		} catch (SQLException e){
+			
+		}
+		
+	}
+
 
 		
 	public static class IncrementStatementCountInterceptor implements StatementInterceptorV2{

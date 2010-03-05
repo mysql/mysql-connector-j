@@ -62,11 +62,15 @@ import javax.transaction.xa.Xid;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
+import com.mysql.jdbc.BalanceStrategy;
+import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
+import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.jdbc.RandomBalanceStrategy;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
@@ -2699,5 +2703,85 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		for (int i = 0; i < 20; i++) {
 			getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props, downedHosts).close();
 		}
+	}
+	
+	public void testBug51783() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("loadBalanceStrategy", ForcedLoadBalanceStrategy.class.getName());
+		props.setProperty("loadBalanceBlacklistTimeout", "5000");
+		props.setProperty("loadBalancePingTimeout", "100");
+		props.setProperty("loadBalanceValidateConnectionOnSwapServer", "true");
+		ForcedLoadBalanceStrategy.forceFutureServer("first:3306", -1);
+		Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
+		conn2.setAutoCommit(false);
+		conn2.createStatement().execute("SELECT 1");
+		ForcedLoadBalanceStrategy.forceFutureServer("second:3306", -1);
+		UnreliableSocketFactory.downHost("second");
+		try{
+			conn2.commit();  // will be on second after this
+			assertTrue("Connection should be closed", conn2.isClosed());
+		} catch (SQLException e){
+			fail("Should not error because failure to get another server.");
+		}
+		conn2.close();
+		
+		props = new Properties();
+		props.setProperty("loadBalanceStrategy", ForcedLoadBalanceStrategy.class.getName());
+		props.setProperty("loadBalanceBlacklistTimeout", "5000");
+		props.setProperty("loadBalancePingTimeout", "100");
+		props.setProperty("loadBalanceValidateConnectionOnSwapServer", "false");
+		ForcedLoadBalanceStrategy.forceFutureServer("first:3306", -1);
+		conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
+		conn2.setAutoCommit(false);
+		conn2.createStatement().execute("SELECT 1");
+		ForcedLoadBalanceStrategy.forceFutureServer("second:3306", 1);
+		UnreliableSocketFactory.downHost("second");
+		try{
+			conn2.commit();  // will be on second after this
+			assertFalse("Connection should not be closed, should be able to connect to first", conn2.isClosed());
+		} catch (SQLException e){
+			fail("Should not error because failure to get another server.");
+		}
+	}
+	
+	public static class ForcedLoadBalanceStrategy extends RandomBalanceStrategy {
+		
+		private static String forcedFutureServer = null;
+		private static int forceFutureServerTimes = 0;
+		public static void forceFutureServer(String host, int times){
+			forcedFutureServer = host;
+			forceFutureServerTimes = times;
+		}
+
+		public com.mysql.jdbc.Connection pickConnection(
+				LoadBalancingConnectionProxy proxy, List configuredHosts,
+				Map liveConnections, long[] responseTimes, int numRetries)
+				throws SQLException {
+			if(forcedFutureServer == null || forceFutureServerTimes == 0){
+				return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
+			}
+			if(forceFutureServerTimes > 0){
+				forceFutureServerTimes--;
+			}
+			ConnectionImpl conn = (ConnectionImpl) liveConnections.get(forcedFutureServer);
+
+			if (conn == null) {
+				conn = proxy.createConnectionForHost(forcedFutureServer);
+				
+			}
+			return conn;
+		}
+
+		public void destroy() {
+			super.destroy();
+			
+		}
+
+		public void init(com.mysql.jdbc.Connection conn, Properties props)
+				throws SQLException {
+			super.init(conn, props);
+			
+		}
+		
 	}
 }

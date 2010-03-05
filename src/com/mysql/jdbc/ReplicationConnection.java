@@ -2394,6 +2394,22 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
 		this.currentConnection.setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
 	}
+	
+	public int getLoadBalancePingTimeout() {
+		return this.currentConnection.getLoadBalancePingTimeout();
+	}
+
+	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) {
+		this.currentConnection.setLoadBalancePingTimeout(loadBalancePingTimeout);
+	}
+	
+	public boolean getLoadBalanceValidateConnectionOnSwapServer() {
+		return this.currentConnection.getLoadBalanceValidateConnectionOnSwapServer();
+	}
+
+	public void setLoadBalanceValidateConnectionOnSwapServer(boolean loadBalanceValidateConnectionOnSwapServer) {
+		this.currentConnection.setLoadBalanceValidateConnectionOnSwapServer(loadBalanceValidateConnectionOnSwapServer);
+	}
 
 	public int getRetriesAllDown() {
 		return this.currentConnection.getRetriesAllDown();

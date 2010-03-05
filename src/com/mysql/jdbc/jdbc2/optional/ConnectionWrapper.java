@@ -2595,6 +2595,22 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
 		this.mc.setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
 	}
+	public int getLoadBalancePingTimeout() {
+		return this.mc.getLoadBalancePingTimeout();
+	}
+
+	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) {
+		this.mc.setLoadBalancePingTimeout(loadBalancePingTimeout);
+	}
+	
+	public boolean getLoadBalanceValidateConnectionOnSwapServer() {
+		return this.mc.getLoadBalanceValidateConnectionOnSwapServer();
+	}
+
+	public void setLoadBalanceValidateConnectionOnSwapServer(
+			boolean loadBalanceValidateConnectionOnSwapServer) {
+		this.mc.setLoadBalanceValidateConnectionOnSwapServer(loadBalanceValidateConnectionOnSwapServer);
+	}
 	
 	public void setRetriesAllDown(int retriesAllDown) {
 		this.mc.setRetriesAllDown(retriesAllDown);
