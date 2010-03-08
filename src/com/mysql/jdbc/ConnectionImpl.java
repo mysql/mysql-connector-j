@@ -4833,9 +4833,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					} catch (SQLException sqlEx) {
 						// We ignore non-transactional tables if told to do so
 						if (getIgnoreNonTxTables()
-								&& (sqlEx.getErrorCode() != SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
-							throw sqlEx;
+								&& (sqlEx.getErrorCode() == SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
+							return;
 						}
+						throw sqlEx;
+
 					}
 				}
 			} catch (SQLException sqlException) {
