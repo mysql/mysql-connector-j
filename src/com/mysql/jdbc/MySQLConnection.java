@@ -28,66 +28,21 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Savepoint;
-import java.util.Properties;
-import java.util.TimeZone;
-
-import com.mysql.jdbc.log.Log;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Properties;
+import java.util.TimeZone;
 import java.util.Timer;
+
+import com.mysql.jdbc.log.Log;
 
 public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	void abortInternal() throws SQLException;
 
-	public void changeUser(String userName, String newPassword)
-			throws SQLException;
-
 	void checkClosed() throws SQLException;
 
-	public void clearHasTriedMaster();
-
-	public void clearWarnings() throws SQLException;
-
-	public java.sql.PreparedStatement clientPrepareStatement(String sql)
-			throws SQLException;
-
-	public java.sql.PreparedStatement clientPrepareStatement(String sql,
-			int autoGenKeyIndex) throws SQLException;
-
-	public java.sql.PreparedStatement clientPrepareStatement(String sql,
-			int resultSetType, int resultSetConcurrency) throws SQLException;
-
-	java.sql.PreparedStatement clientPrepareStatement(String sql,
-			int resultSetType, int resultSetConcurrency,
-			boolean processEscapeCodesIfNeeded) throws SQLException;
-
-	public java.sql.PreparedStatement clientPrepareStatement(String sql,
-			int resultSetType, int resultSetConcurrency,
-			int resultSetHoldability) throws SQLException;
-
-	public java.sql.PreparedStatement clientPrepareStatement(String sql,
-			int[] autoGenKeyIndexes) throws SQLException;
-
-	public java.sql.PreparedStatement clientPrepareStatement(String sql,
-			String[] autoGenKeyColNames) throws SQLException;
-
-	public void close() throws SQLException;
-
-	public void commit() throws SQLException;
-
 	void createNewIO(boolean isForReconnect) throws SQLException;
-
-	public java.sql.Statement createStatement() throws SQLException;
-
-	public java.sql.Statement createStatement(int resultSetType,
-			int resultSetConcurrency) throws SQLException;
-
-	public java.sql.Statement createStatement(int resultSetType,
-			int resultSetConcurrency, int resultSetHoldability)
-			throws SQLException;
 
 	void dumpTestcaseQuery(String query);
 
@@ -108,19 +63,15 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	StringBuffer generateConnectionCommentBlock(StringBuffer buf);
 
-	public int getActiveStatementCount();
+	int getActiveStatementCount();
 
-	public boolean getAutoCommit() throws SQLException;
-
-	public int getAutoIncrementIncrement();
+	int getAutoIncrementIncrement();
 
 	CachedResultSetMetaData getCachedMetaData(String sql);
 
 	Calendar getCalendarInstanceForSessionOrNew();
 
 	Timer getCancelTimer();
-
-	public String getCatalog() throws SQLException;
 
 	String getCharacterSetMetadata();
 
@@ -129,29 +80,23 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	String getCharsetNameForIndex(int charsetIndex) throws SQLException;
 
-	public String getDateTime(String pattern);
-
 	TimeZone getDefaultTimeZone();
 
 	String getErrorMessageEncoding();
 
-	public ExceptionInterceptor getExceptionInterceptor();
+	ExceptionInterceptor getExceptionInterceptor();
 
-	public int getHoldability() throws SQLException;
+	String getHost();
 
-	public String getHost();
+	long getId();
 
-	public long getId();
-
-	public long getIdleFor();
+	long getIdleFor();
 
 	MysqlIO getIO() throws SQLException;
 
-	public Log getLog() throws SQLException;
+	Log getLog() throws SQLException;
 
 	int getMaxBytesPerChar(String javaCharsetName) throws SQLException;
-
-	public java.sql.DatabaseMetaData getMetaData() throws SQLException;
 
 	java.sql.Statement getMetadataSafeStatement() throws SQLException;
 
@@ -159,11 +104,11 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	int getNetBufferLength();
 
-	public Properties getProperties();
+	Properties getProperties();
 
-	public boolean getRequiresEscapingEncoder();
+	boolean getRequiresEscapingEncoder();
 
-	public String getServerCharacterEncoding();
+	String getServerCharacterEncoding();
 
 	int getServerMajorVersion();
 
@@ -171,7 +116,7 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	int getServerSubMinorVersion();
 
-	public TimeZone getServerTimezoneTZ();
+	TimeZone getServerTimezoneTZ();
 
 	String getServerVariable(String variableName);
 
@@ -179,13 +124,9 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	Calendar getSessionLockedCalendar();
 
-	public String getStatementComment();
+	String getStatementComment();
 
 	List getStatementInterceptorsInstances();
-
-	public int getTransactionIsolation() throws SQLException;
-
-	public java.util.Map getTypeMap() throws SQLException;
 
 	String getURL();
 
@@ -193,19 +134,11 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	Calendar getUtcCalendar();
 
-	public SQLWarning getWarnings() throws SQLException;
-
-	public boolean hasSameProperties(Connection c);
-
-	public boolean hasTriedMaster();
-
 	void incrementNumberOfPreparedExecutes();
 
 	void incrementNumberOfPrepares();
 
 	void incrementNumberOfResultSetsCreated();
-
-	public void initializeExtension(Extension ex) throws SQLException;
 
 	void initializeResultsMetadataFromCache(String sql,
 			CachedResultSetMetaData cachedMetaData,
@@ -213,19 +146,11 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	void initializeSafeStatementInterceptors() throws SQLException;
 
-	public boolean isAbonormallyLongQuery(long millisOrNanos);
+	boolean isAbonormallyLongQuery(long millisOrNanos);
 
 	boolean isClientTzUTC();
 
-	public boolean isClosed();
-
 	boolean isCursorFetchEnabled() throws SQLException;
-
-	public boolean isInGlobalTx();
-
-	public boolean isMasterConnection();
-
-	public boolean isNoBackslashEscapesSet();
 
 	boolean isReadInfoMsgEnabled();
 
@@ -233,51 +158,14 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	boolean isRunningOnJDK13();
 
-	public boolean isSameResource(Connection otherConnection);
-
 	boolean isServerTzUTC();
 
-	public boolean lowerCaseTableNames();
+	boolean lowerCaseTableNames();
 
 	void maxRowsChanged(Statement stmt);
 
-	public String nativeSQL(String sql) throws SQLException;
-
-	public boolean parserKnowsUnicode();
-
-	public void ping() throws SQLException;
-
 	void pingInternal(boolean checkForClosedConnection, int timeoutMillis)
 			throws SQLException;
-
-	public java.sql.CallableStatement prepareCall(String sql)
-			throws SQLException;
-
-	public java.sql.CallableStatement prepareCall(String sql,
-			int resultSetType, int resultSetConcurrency) throws SQLException;
-
-	public java.sql.CallableStatement prepareCall(String sql,
-			int resultSetType, int resultSetConcurrency,
-			int resultSetHoldability) throws SQLException;
-
-	public java.sql.PreparedStatement prepareStatement(String sql)
-			throws SQLException;
-
-	public java.sql.PreparedStatement prepareStatement(String sql,
-			int autoGenKeyIndex) throws SQLException;
-
-	public java.sql.PreparedStatement prepareStatement(String sql,
-			int resultSetType, int resultSetConcurrency) throws SQLException;
-
-	public java.sql.PreparedStatement prepareStatement(String sql,
-			int resultSetType, int resultSetConcurrency,
-			int resultSetHoldability) throws SQLException;
-
-	public java.sql.PreparedStatement prepareStatement(String sql,
-			int[] autoGenKeyIndexes) throws SQLException;
-
-	public java.sql.PreparedStatement prepareStatement(String sql,
-			String[] autoGenKeyColNames) throws SQLException;
 
 	void realClose(boolean calledExplicitly, boolean issueRollback,
 			boolean skipLocalTeardown, Throwable reason) throws SQLException;
@@ -289,80 +177,21 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	void registerStatement(Statement stmt);
 
-	public void releaseSavepoint(Savepoint arg0) throws SQLException;
-
 	void reportNumberOfTablesAccessed(int numTablesAccessed);
-
-	public void reportQueryTime(long millisOrNanos);
-
-	public void resetServerState() throws SQLException;
-
-	public void rollback() throws SQLException;
-
-	public void rollback(final Savepoint savepoint) throws SQLException;
-
-	public java.sql.PreparedStatement serverPrepareStatement(String sql)
-			throws SQLException;
-
-	public java.sql.PreparedStatement serverPrepareStatement(String sql,
-			int autoGenKeyIndex) throws SQLException;
-
-	public java.sql.PreparedStatement serverPrepareStatement(String sql,
-			int resultSetType, int resultSetConcurrency) throws SQLException;
-
-	public java.sql.PreparedStatement serverPrepareStatement(String sql,
-			int resultSetType, int resultSetConcurrency,
-			int resultSetHoldability) throws SQLException;
-
-	public java.sql.PreparedStatement serverPrepareStatement(String sql,
-			int[] autoGenKeyIndexes) throws SQLException;
-
-	public java.sql.PreparedStatement serverPrepareStatement(String sql,
-			String[] autoGenKeyColNames) throws SQLException;
 
 	boolean serverSupportsConvertFn() throws SQLException;
 
-	public void setAutoCommit(final boolean autoCommitFlag) throws SQLException;
-
-	public void setCatalog(final String catalog) throws SQLException;
-
-	public void setFailedOver(boolean flag);
-
-	public void setHoldability(int arg0) throws SQLException;
-
-	public void setInGlobalTx(boolean flag);
-
-	public void setPreferSlaveDuringFailover(boolean flag);
-
-	public void setProxy(MySQLConnection proxy);
+	void setProxy(MySQLConnection proxy);
 
 	void setReadInfoMsgEnabled(boolean flag);
 
-	public void setReadOnly(boolean readOnlyFlag) throws SQLException;
-
 	void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException;
 
-	public java.sql.Savepoint setSavepoint() throws SQLException;
+	void shutdownServer() throws SQLException;
 
-	public java.sql.Savepoint setSavepoint(String name) throws SQLException;
+	boolean storesLowerCaseTableName();
 
-	public void setStatementComment(String comment);
-
-	public void setTransactionIsolation(int level) throws SQLException;
-
-	public void setTypeMap(java.util.Map map) throws SQLException;
-
-	public void shutdownServer() throws SQLException;
-
-	public boolean storesLowerCaseTableName();
-
-	public boolean supportsIsolationLevel();
-
-	public boolean supportsQuotedIdentifiers();
-
-	public boolean supportsTransactions();
-
-	public void throwConnectionClosedException() throws SQLException;
+	void throwConnectionClosedException() throws SQLException;
 
 	void transactionBegun() throws SQLException;
 
@@ -377,7 +206,4 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 	boolean useAnsiQuotedIdentifiers();
 
 	boolean useMaxRows();
-
-	public boolean versionMeetsMinimum(int major, int minor, int subminor)
-			throws SQLException;
 }

@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.mysql.jdbc.profiler.ProfilerEvent;
-import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 
 /**
  * A result set that is updatable.

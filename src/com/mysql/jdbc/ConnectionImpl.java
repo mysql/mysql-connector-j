@@ -62,7 +62,6 @@ import com.mysql.jdbc.log.LogFactory;
 import com.mysql.jdbc.log.NullLogger;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
-import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 import com.mysql.jdbc.util.LRUCache;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -95,6 +94,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
       this.proxy = proxy;
    }
 
+   // We have to proxy ourselves when we're load balanced so that
+   // statements get routed to the right physical connection
+   // (when load balanced, we're a "logical" connection)
    private MySQLConnection getProxy() {
       return (proxy != null) ? proxy : (MySQLConnection) this;
    }
@@ -1623,11 +1625,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
-   public String getDateTime(String pattern){
-      SimpleDateFormat sdf = new SimpleDateFormat(pattern);
-      return sdf.format(new Date());
-   }
-
 	/**
 	 * The method commit() makes all changes made since the previous
 	 * commit/rollback permanent and releases any database locks currently held
@@ -1646,7 +1643,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		synchronized (getMutex()) {
 			checkClosed();
 
-         this.log.logInfo("Commit with host='" + host + "' and origHost='" + origHostToConnectTo + "'");
 			try {
 				if (this.connectionLifecycleInterceptors != null) {
 					IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
@@ -1675,7 +1671,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						}
 					}
 
-               this.log.logInfo("Commit with host='" + host + "' and origHost='" + origHostToConnectTo + "'");
 					execSQL(null, "commit", -1, null,
 							DEFAULT_RESULT_SET_TYPE,
 							DEFAULT_RESULT_SET_CONCURRENCY, false,
@@ -1683,30 +1678,20 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							false);
 				}
 			} catch (SQLException sqlException) {
-            this.log.logWarn("Exception during commit with host='" + host + "' and origHost='" +
-                             origHostToConnectTo + "'", sqlException);
-            if (this.getDumpQueriesOnException()) {
-               StringBuffer messageBuf = new StringBuffer(60);
-               messageBuf.append("\n\nCommit to host '");
-               messageBuf.append(host);
-               messageBuf.append("' when exception was thrown\n\n");
-
-   				sqlException = ConnectionImpl.appendMessageToException(sqlException,
-                                                                      messageBuf.toString(),
-                                                                      getExceptionInterceptor());
-            }
 				if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE
 						.equals(sqlException.getSQLState())) {
-					throw SQLError.createSQLException(
-							"Communications link failure during commit(). Transaction resolution unknown.",
-							SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
+					throw SQLError
+							.createSQLException(
+									"Communications link failure during commit(). Transaction resolution unknown.",
+									SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
+									getExceptionInterceptor());
 				}
-	
+
 				throw sqlException;
 			} finally {
 				this.needsPing = this.getReconnectAtTxEnd();
 			}
-			
+
 			return;
 		}
 	}
@@ -2744,7 +2729,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					messageBuf
 							.append("\n\nQuery being executed when exception was thrown:\n");
 					messageBuf.append(extractedSql);
-               messageBuf.append("\n\n");
+					messageBuf.append("\n\n");
 
 					sqlE = appendMessageToException(sqlE, messageBuf.toString(), getExceptionInterceptor());
 				}
@@ -2763,12 +2748,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 				throw sqlE;
 			} catch (Exception ex) {
-            if (getDumpQueriesOnException()) {
-					String extractedSql = extractSqlFromPacket(sql, packet, endOfQueryPacketPosition);
-					log.logInfo("Unexpected exception occured. Query being executed when exception " + 
-                           " was thrown: [ " + extractedSql + " ]");
-				}
-
 				if ((getHighAvailability() || this.failedOver)) {
 					this.needsPing = true;
 				} else if (ex instanceof IOException) {

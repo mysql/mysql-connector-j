@@ -54,7 +54,6 @@ import java.util.TimeZone;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
-import com.mysql.jdbc.profiler.ProfilerEventHandlerFactory;
 
 /**
  * JDBC Interface for MySQL-4.1 and newer server-side PreparedStatements.
