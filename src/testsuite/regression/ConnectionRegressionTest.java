@@ -62,11 +62,14 @@ import javax.transaction.xa.Xid;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
+import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
+import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.jdbc.RandomBalanceStrategy;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
