@@ -1151,7 +1151,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			if (this.conn.getNullCatalogMeansCurrent()) {
 				db = this.database;
 			}
-		}
+		} else {
+			db = catalog;
+        }
+
     	
 		// FIXME: Use DBMD constants when we leave Java5
 		// FUNCTION_CAT
@@ -1326,8 +1329,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			if (this.conn.getNullCatalogMeansCurrent()) {
 				db = this.database;
 			}
-		}
-		
+		}  else {
+			db = catalog;
+		}		
+
 		// Here's what we get from MySQL ...
 		// SPECIFIC_CATALOG                             NULL 
 		// SPECIFIC_SCHEMA                              db17 
