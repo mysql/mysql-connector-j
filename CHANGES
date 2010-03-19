@@ -43,6 +43,10 @@ nn-nn-10 - Version 5.1.13
 
     - Fixed BUG#51776 - Connection.rollback() could swallow exceptions incorrectly.
     
+    - Fixed BUG#52231 - Differences in definitions of which SQLExceptions trigger
+      a failover event could result in failure to try more than a single host in 
+      certain situations.
+    
 02-18-10 - Version 5.1.12
 
     - NO_INDEX_USED and NO_GOOD_INDEX used were only being set when profileSQL 

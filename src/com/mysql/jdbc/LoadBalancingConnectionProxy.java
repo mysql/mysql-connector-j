@@ -282,17 +282,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		Throwable t = e.getTargetException();
 
 		if (t != null) {
-			if (t instanceof SQLException) {
-				String sqlState = ((SQLException) t).getSQLState();
-
-				if (sqlState != null) {
-					if (sqlState.startsWith("08")) {
-						// connection error, close up shop on current
-						// connection
-						invalidateCurrentConnection();
-						pickNewConnection();
-					}
-				}
+			if (t instanceof SQLException && shouldExceptionTriggerFailover((SQLException) t )) {
+				invalidateCurrentConnection();
+				pickNewConnection();
 			}
 
 			throw t;
@@ -504,14 +496,11 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 				this.currentConn = newConn;
 				return;
 			} catch (SQLException e){
-				String sqlState = e.getSQLState();
-
-				if (sqlState != null) {
-					if (sqlState.startsWith("08")) {
-						// connection error, close up shop on current
-						// connection
-						invalidateCurrentConnection();
-					}
+				
+				if (shouldExceptionTriggerFailover(e)) {
+					// connection error, close up shop on current
+					// connection
+					invalidateCurrentConnection();
 				}
 			}
 
@@ -702,8 +691,19 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		return blacklistClone;
 	}
 
-	public String getDateTime(String pattern) {
-		SimpleDateFormat sdf = new SimpleDateFormat(pattern);
-		return sdf.format(new Date());
+	public boolean shouldExceptionTriggerFailover(SQLException ex){
+		String sqlState = ex.getSQLState();
+
+		if (sqlState != null) {
+			if (sqlState.startsWith("08")) {
+				// connection error
+				return true;
+			}
+		}
+		if(ex instanceof CommunicationsException){
+			return true;
+		}
+		return false;
+		
 	}
 }
