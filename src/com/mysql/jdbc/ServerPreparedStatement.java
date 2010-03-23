@@ -807,6 +807,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 					} finally {
 						if (timeoutTask != null) {
 							timeoutTask.cancel();
+							
+							locallyScopedConn.getCancelTimer().purge();
 						}
 						
 						resetCancelledState();
@@ -1356,6 +1358,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
 					
+					this.connection.getCancelTimer().purge();
+					
 					if (timeoutTask.caughtWhileCancelling != null) {
 						throw timeoutTask.caughtWhileCancelling;
 					}
@@ -1500,6 +1504,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			} finally {
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+					this.connection.getCancelTimer().purge();
 				}
 			}
 		}
