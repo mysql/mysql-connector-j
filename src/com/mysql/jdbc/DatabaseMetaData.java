@@ -832,13 +832,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 
 	private ResultSetRow convertTypeDescriptorToProcedureRow(
-			byte[] procNameAsBytes, String paramName, boolean isOutParam,
+			byte[] procNameAsBytes, byte[] procCatAsBytes, String paramName, boolean isOutParam,
 			boolean isInParam, boolean isReturnParam, TypeDescriptor typeDesc,
 			boolean forGetFunctionColumns,
 			int ordinal)
 			throws SQLException {
 		byte[][] row = forGetFunctionColumns ? new byte[17][] : new byte[14][];
-		row[0] = null; // PROCEDURE_CAT
+		row[0] = procCatAsBytes; // PROCEDURE_CAT
 		row[1] = null; // PROCEDURE_SCHEM
 		row[2] = procNameAsBytes; // PROCEDURE/NAME
 		row[3] = s2b(paramName); // COLUMN_NAME
@@ -1493,20 +1493,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 		}
 
-		byte[] procNameAsBytes = null;
-
-		try {
-			procNameAsBytes = procName.getBytes("UTF-8");
-		} catch (UnsupportedEncodingException ueEx) {
-			procNameAsBytes = s2b(procName);
-
-			// Set all fields to connection encoding
-		}
-
 		String quoteChar = getIdentifierQuoteString();
 
 		String parameterDef = null;
-	
+
+		byte[] procNameAsBytes = null;
+		byte[] procCatAsBytes = null;
+		
 		boolean isProcedureInAnsiMode = false;
 		String storageDefnDelims = null;
 		String storageDefnClosures = null;
@@ -1561,6 +1554,29 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				procName = procName.substring(dotIndex + 1);
 			} else {
 				dbName = catalog;
+			}
+
+			// Moved from above so that procName is *without* database as expected
+			// by the rest of code
+			// Removing QuoteChar to get output as it was before PROC_CAT fixes
+			String tmpProcName = procName;
+			tmpProcName = tmpProcName.replaceAll(quoteChar, "");
+			try {
+				procNameAsBytes = tmpProcName.getBytes("UTF-8");
+			} catch (UnsupportedEncodingException ueEx) {
+				procNameAsBytes = s2b(tmpProcName);
+
+				// Set all fields to connection encoding
+			}
+
+			tmpProcName = dbName;
+			tmpProcName = tmpProcName.replaceAll(quoteChar, "");
+			try {
+				procCatAsBytes = tmpProcName.getBytes("UTF-8");
+			} catch (UnsupportedEncodingException ueEx) {
+				procCatAsBytes = s2b(tmpProcName);
+
+				// Set all fields to connection encoding
 			}
 
 			StringBuffer procNameBuf = new StringBuffer();
@@ -1674,7 +1690,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							returnsDefn, null);
 
 					resultRows.add(convertTypeDescriptorToProcedureRow(
-							procNameAsBytes, "", false, false, true,
+							procNameAsBytes, procCatAsBytes, "", false, false, true,
 							returnDescriptor, forGetFunctionColumns, 0));
 				}
 
@@ -1733,6 +1749,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					break; // no parameters actually declared, but whitespace spans lines
 				}
 				
+				// Bug#52167, tokenizer will break if declaration
+				// contains special characters like \n
+				declaration = declaration.replaceAll("[\\t\\n\\x0B\\f\\r]", " ");		
 				StringTokenizer declarationTok = new StringTokenizer(
 						declaration, " \t");
 
@@ -1812,7 +1831,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 					if (wildCompareRes != StringUtils.WILD_COMPARE_NO_MATCH) {
 						ResultSetRow row = convertTypeDescriptorToProcedureRow(
-								procNameAsBytes, paramName, isOutParam,
+								procNameAsBytes, procCatAsBytes, paramName, isOutParam,
 								isInParam, false, typeDesc, forGetFunctionColumns,
 								ordinal++);
 
@@ -4090,55 +4109,90 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		List proceduresToExtractList = new ArrayList();
 
 		if (supportsStoredProcedures()) {
-			if ((procedureOrFunctionNamePattern.indexOf("%") == -1)
-					&& (procedureOrFunctionNamePattern.indexOf("?") == -1)) {
-				proceduresToExtractList.add(procedureOrFunctionNamePattern);
-			} else {
 				
-				ResultSet procedureNameRs = null;
+			ResultSet procedureNameRs = null;
 
-				try {
+			try {
 
-					procedureNameRs = getProceduresAndOrFunctions(
-							createFieldMetadataForGetProcedures(),
-							catalog, schemaPattern,
-							procedureOrFunctionNamePattern, returnProcedures,
-							returnFunctions);
+				procedureNameRs = getProceduresAndOrFunctions(
+						createFieldMetadataForGetProcedures(),
+						catalog, schemaPattern,
+						procedureOrFunctionNamePattern, returnProcedures,
+						returnFunctions);
 
-					while (procedureNameRs.next()) {
-						proceduresToExtractList.add(procedureNameRs
-								.getString(3));
-					}
-
-					// Required to be sorted in name-order by JDBC spec,
-					// in 'normal' case getProcedures takes care of this for us,
-					// but if system tables are inaccessible, we need to sort...
-					// so just do this to be safe...
-					Collections.sort(proceduresToExtractList);
-				} finally {
-					SQLException rethrowSqlEx = null;
-
-					if (procedureNameRs != null) {
-						try {
-							procedureNameRs.close();
-						} catch (SQLException sqlEx) {
-							rethrowSqlEx = sqlEx;
-						}
-					}
+				// Demand: PARAM_CAT for SP.
+				// Goal: proceduresToExtractList has to have db.sp entries.
 					
-					if (rethrowSqlEx != null) {
-						throw rethrowSqlEx;
+				// Due to https://intranet.mysql.com/secure/paste/displaypaste.php?codeid=10704
+				// introducing new variables, ignoring ANSI mode
+					
+				String tmpstrPNameRs = null; 
+				String tmpstrCatNameRs = null;
+
+				while (procedureNameRs.next()) {
+					tmpstrCatNameRs = procedureNameRs.getString(1);
+					tmpstrPNameRs = procedureNameRs.getString(3);
+					
+					if (!((tmpstrCatNameRs.startsWith(this.quotedId) && tmpstrCatNameRs.endsWith(this.quotedId)) || 
+							(tmpstrCatNameRs.startsWith("\"") && tmpstrCatNameRs.endsWith("\"")))) {
+						tmpstrCatNameRs = this.quotedId + tmpstrCatNameRs + this.quotedId;
 					}
+					if (!((tmpstrPNameRs.startsWith(this.quotedId) && tmpstrPNameRs.endsWith(this.quotedId)) || 
+							(tmpstrPNameRs.startsWith("\"") && tmpstrPNameRs.endsWith("\"")))) {
+						tmpstrPNameRs = this.quotedId + tmpstrPNameRs + this.quotedId;
+					}
+
+					if (proceduresToExtractList.indexOf(tmpstrCatNameRs + "." + tmpstrPNameRs) < 0) {
+						proceduresToExtractList.add(tmpstrCatNameRs + "." + tmpstrPNameRs);
+					}
+				}
+
+				// Required to be sorted in name-order by JDBC spec,
+				// in 'normal' case getProcedures takes care of this for us,
+				// but if system tables are inaccessible, we need to sort...
+				// so just do this to be safe...
+				Collections.sort(proceduresToExtractList);
+			} finally {
+				SQLException rethrowSqlEx = null;
+
+				if (procedureNameRs != null) {
+					try {
+						procedureNameRs.close();
+					} catch (SQLException sqlEx) {
+						rethrowSqlEx = sqlEx;
+					}
+				}
+					
+				if (rethrowSqlEx != null) {
+					throw rethrowSqlEx;
 				}
 			}
 		}
 
 		ArrayList resultRows = new ArrayList();
-
+		int idx = 0;
+		String procNameToCall = "";
+		
 		for (Iterator iter = proceduresToExtractList.iterator(); iter.hasNext();) {
 			String procName = (String) iter.next();
 
-			getCallStmtParameterTypes(catalog, procName, columnNamePattern,
+			//Continuing from above (database_name.sp_name)
+			if (!" ".equals(this.quotedId)) {
+				idx = StringUtils.indexOfIgnoreCaseRespectQuotes(0,
+						procName, ".", this.quotedId.charAt(0), !this.conn
+								.isNoBackslashEscapesSet());
+			} else {
+				idx = procName.indexOf(".");
+			}
+			
+			if (idx > 0) {
+				catalog = procName.substring(0,idx);
+				procNameToCall = procName; // Leave as CAT.PROC, needed later
+			} else {
+				//No catalog. Not sure how to handle right now...
+				procNameToCall = procName;
+			}
+			getCallStmtParameterTypes(catalog, procNameToCall, columnNamePattern,
 					resultRows, 
 					fields.length == 17 /* for getFunctionColumns */);
 		}
