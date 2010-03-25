@@ -1628,6 +1628,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						}
 
 						timeoutTask.cancel();
+						
+						locallyScopedConn.getCancelTimer().purge();
+						
 						timeoutTask = null;
 					}
 					
@@ -1646,6 +1649,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			} finally {
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+					locallyScopedConn.getCancelTimer().purge();
 				}
 				
 				resetCancelledState();
@@ -1822,6 +1826,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		} finally {
 			if (timeoutTask != null) {
 				timeoutTask.cancel();
+				locallyScopedConn.getCancelTimer().purge();
 			}
 
 			resetCancelledState();
@@ -2040,6 +2045,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+					locallyScopedConn.getCancelTimer().purge();
 				}
 				
 				resetCancelledState();
@@ -2115,6 +2121,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
 					
+					locallyScopedConnection.getCancelTimer().purge();
+					
 					if (timeoutTask.caughtWhileCancelling != null) {
 						throw timeoutTask.caughtWhileCancelling;
 					}
@@ -2140,6 +2148,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			} finally {
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+					locallyScopedConnection.getCancelTimer().purge();
 				}
 			}
 			

@@ -1640,4 +1640,13 @@ public interface ConnectionProperties {
    public int getMaxAllowedPacket();
 
    boolean getRetainStatementAfterResultSetClose();
+   
+	public abstract int getLoadBalancePingTimeout();
+
+	public abstract void setLoadBalancePingTimeout(int loadBalancePingTimeout);
+
+	public abstract boolean getLoadBalanceValidateConnectionOnSwapServer();
+	
+	public abstract void setLoadBalanceValidateConnectionOnSwapServer(boolean loadBalanceValidateConnectionOnSwapServer);
+	
 }

@@ -137,6 +137,8 @@ public class StatementImpl implements Statement {
 									throw new RuntimeException(sqlEx.toString());
 								}
 							}
+							
+							toCancel = null;
 						}
 					}
 				}
@@ -812,6 +814,7 @@ public class StatementImpl implements Statement {
 				} finally {
 					if (timeoutTask != null) {
 						timeoutTask.cancel();
+						locallyScopedConn.getCancelTimer().purge();
 					}
 
 					if (oldCatalog != null) {
@@ -1076,6 +1079,8 @@ public class StatementImpl implements Statement {
 					}
 
 					timeoutTask.cancel();
+					
+					locallyScopedConn.getCancelTimer().purge();
 					timeoutTask = null;
 				}
 				
@@ -1084,6 +1089,8 @@ public class StatementImpl implements Statement {
 				
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+					
+					locallyScopedConn.getCancelTimer().purge();
 				}
 				
 				resetCancelledState();
@@ -1224,6 +1231,9 @@ public class StatementImpl implements Statement {
 				}
 
 				timeoutTask.cancel();
+				
+				locallyScopedConn.getCancelTimer().purge();
+				
 				timeoutTask = null;
 			}
 			
@@ -1237,6 +1247,8 @@ public class StatementImpl implements Statement {
 		} finally {
 			if (timeoutTask != null) {
 				timeoutTask.cancel();
+				
+				locallyScopedConn.getCancelTimer().purge();
 			}
 			
 			resetCancelledState();
@@ -1473,6 +1485,9 @@ public class StatementImpl implements Statement {
 					}
 
 					timeoutTask.cancel();
+					
+					locallyScopedConn.getCancelTimer().purge();
+					
 					timeoutTask = null;
 				}
 
@@ -1494,6 +1509,8 @@ public class StatementImpl implements Statement {
 			} finally {
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+					
+					locallyScopedConn.getCancelTimer().purge();
 				}
 
 				if (oldCatalog != null) {
@@ -1657,6 +1674,9 @@ public class StatementImpl implements Statement {
 					}
 
 					timeoutTask.cancel();
+					
+					locallyScopedConn.getCancelTimer().purge();
+					
 					timeoutTask = null;
 				}
 
@@ -1678,6 +1698,8 @@ public class StatementImpl implements Statement {
 			} finally {
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+					
+					locallyScopedConn.getCancelTimer().purge();
 				}
 
 				if (oldCatalog != null) {

@@ -93,8 +93,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 				} catch (SQLException sqlEx) {
 					ex = sqlEx;
 
-					if (sqlEx instanceof CommunicationsException
-							|| "08S01".equals(sqlEx.getSQLState())) {
+					if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
 						proxy.addToGlobalBlacklist(bestHost);
 						blackList.put(bestHost, null);
 

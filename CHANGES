@@ -3,6 +3,18 @@
 
 nn-nn-10 - Version 5.1.13
 
+	- Fix for Bug#51912 - Passing NULL as cat. param to getProcedureColumns with !nullCatalogMeansCurrent
+	
+	- Fix for Bug#52167 - Can't parse parameter list with special characters inside
+	
+	- Fix for Bug#51904 - getProcedureColumns() always returns PROCEDURE_CAT result column as NULL
+	
+	- Fix for Bug#51712 - Display Size is always 0 for columns returned by getProcedureColumns()
+
+    - Fix for Bug#51908 - db variable might have end up unassigned when calling
+      getProcedureColumns()/Functions(). This is a followup on code changes made
+      for Bug#51022.
+    
     - Fixed Bug#51266 - jdbc:mysql:loadbalance:// would stick to the first
       host in the list in some cases, especially exacerbated if the host was
       down.
@@ -20,7 +32,32 @@ nn-nn-10 - Version 5.1.13
     - Fixed BUG#51666 - StatementInterceptors were never "un-safed" after connection 
       establishment, causing interceptors which returned result sets pre/post execution
       would not work.
+      
+    - Fixed BUG#51783 - Load-balanced connections could throw a SQLException
+      incorrectly on commit() or rollback().  This was not caused by failures in commit
+      or rollback, but rather by the possibility that the newly-selected physical
+      connection was stale.  Added logic to catch and retry if this happens, up to
+      the number of hosts specified for load-balancing.  Also added new property,
+      loadBalanceValidateConnectionOnSwapServer, which controls whether to explicitly
+      ping the selected host (otherwise, the host is presumed to be up, and will only
+      be noticed if auto-commit or transaction isolation state needs to be set and
+      fails).
+      
+    - Added loadBalancePingTimeout property to allow a specific timeout to be set
+      for each ping executed against the servers.  This ping is executed when the
+      physical connections are rebalanced (commit/rollback or communication exception),
+      or when a query starting with (exactly) "/* ping */" is executed.  The latter
+      causes each open underlying physical connection to be pinged.
 
+    - Fixed BUG#51776 - Connection.rollback() could swallow exceptions incorrectly.
+
+    - Fixed BUG#52231 - Differences in definitions of which SQLExceptions trigger
+      a failover event could result in failure to try more than a single host in 
+      certain situations.
+
+    - More aggressively purge the statement timeout timers after they've been cancelled to
+      trade time for memory. This purge only happens if statement timeouts are in use.
+    
 02-18-10 - Version 5.1.12
 
     - NO_INDEX_USED and NO_GOOD_INDEX used were only being set when profileSQL 

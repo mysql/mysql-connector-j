@@ -1962,7 +1962,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		// we changed up the parameters to get coverage of the fixes,
 		// also note that whitespace _is_ significant in the DDL...
 		//
-		
 		createProcedure(
 				"testBug25624",
 				"(in _par1 decimal( 10 , 2 ) , in _par2 varchar( 4 )) BEGIN select 1; END");
@@ -2566,4 +2565,61 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		assertEquals("TYPE_CAT", rsmd.getColumnName(1)); // Gives TABLE_CAT
 		assertEquals("TYPE_SCHEM", rsmd.getColumnName(2)); // Gives TABLE_SCHEM
 	}
+	
+	/**
+	 * Tests fix for BUG#52167 - Can't parse parameter list with special characters inside
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug52167() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+
+		// DatabaseMetaData.java (~LN 1730)
+		// +	//Bug#52167, tokenizer will break if declaration contains special characters like \n
+		// +	declaration = declaration.replaceAll("[\\t\\n\\x0B\\f\\r]", " ");		
+		//	StringTokenizer declarationTok = new StringTokenizer(
+		//				declaration, " \t");
+		try {
+			createProcedure(
+					"testBug52167",
+					"(in _par1 decimal( 10 , 2 ) , in _par2\n varchar( 4 )) BEGIN select 1; END");
+
+			this.conn.prepareCall("{call testBug52167(?,?)}").close();
+		} finally {
+			closeMemberJDBCResources();
+		}
+	}
+
+	/**
+	 * Tests fix for BUG#51912 - Passing NULL as cat. param to getProcedureColumns 
+	 * with nullCatalogMeansCurrent = false
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug51912() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+
+		Connection overrideConn = null;
+		try {
+			Properties props = new Properties();
+			props.setProperty("nullCatalogMeansCurrent","false");
+			overrideConn = getConnectionWithProps(props);
+
+        	DatabaseMetaData dbmd = overrideConn.getMetaData();
+            this.rs = dbmd.getProcedureColumns(null, null, "%", null);
+            this.rs.close();
+            
+		} finally {
+			if (overrideConn != null) {
+				overrideConn.close();
+			}
+			closeMemberJDBCResources();
+		}
+	}
+	
 }

@@ -75,8 +75,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 				} catch (SQLException sqlEx) {
 					ex = sqlEx;
 
-					if (sqlEx instanceof CommunicationsException
-							|| "08S01".equals(sqlEx.getSQLState())) {
+					if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
 
 						Integer whiteListIndex = (Integer) whiteListMap
 								.get(hostPortSpec);
