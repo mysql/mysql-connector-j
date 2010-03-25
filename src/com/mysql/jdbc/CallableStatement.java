@@ -1,6 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+  Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
   like most MySQL Connectors. There are special exceptions to the
@@ -2388,7 +2387,7 @@ public class CallableStatement extends PreparedStatement implements
 			}
 
 			ResultSet rs = null;
-			PreparedStatement ps = null;
+			java.sql.PreparedStatement ps = null;
 			
 			try {
 				String procName = extractProcedureName();
@@ -2406,12 +2405,13 @@ public class CallableStatement extends PreparedStatement implements
 					procName = new String(StringUtils.stripEnclosure(procName
 							.getBytes(), "`", "`"));
 				}
-				ps = ((DatabaseMetaData) this.connection
-						.getMetaData())
-						.prepareMetaDataSafeStatement("SELECT SQL_DATA_ACCESS FROM "
+				ps = this.connection
+						.prepareStatement("SELECT SQL_DATA_ACCESS FROM "
 								+ " information_schema.routines "
 								+ " WHERE routine_schema = ? "
 								+ " AND routine_name = ?");
+				ps.setMaxRows(0);
+				ps.setFetchSize(0);
 
 				ps.setString(1, catalog);
 				ps.setString(2, procName);
