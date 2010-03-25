@@ -66,6 +66,12 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		PingTarget {
 
 	private static Method getLocalTimeMethod;
+	
+	private long totalPhysicalConnections = 0;
+	private long activePhysicalConnections = 0;
+	private String hostToRemove = null;
+	private long lastUsed = 0;
+	private long transactionCount = 0;
 
 	public static final String BLACKLIST_TIMEOUT_PROPERTY_KEY = "loadBalanceBlacklistTimeout";
 
@@ -342,6 +348,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 			while (allConnections.hasNext()) {
 				try {
+					this.activePhysicalConnections--;
 					((Connection) allConnections.next()).close();
 				} catch (SQLException e) {
 				}
@@ -401,11 +408,13 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		if (!inTransaction) {
 			this.inTransaction = true;
 			this.transactionStartTime = getLocalTimeBestResolution();
+			this.transactionCount++;
 		}
 
 		Object result = null;
 
 		try {
+			this.lastUsed = System.currentTimeMillis();
 			result = method.invoke(this.currentConn, args);
 
 			if (result != null) {
@@ -463,6 +472,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 					this);
 
 			this.currentConn.setProxy(thisAsConnection);
+			
+			this.activePhysicalConnections++;
+			this.totalPhysicalConnections++;
 	
 			return;
 		}
@@ -557,6 +569,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 					conn.ping();
 					foundHost = true;
 				} catch (SQLException e) {
+					this.activePhysicalConnections--;
 					// give up if it is the current connection, otherwise NPE
 					// faking resultset later.
 					if (host.equals(this.connectionsToHostsMap
@@ -622,6 +635,12 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 	public Map getGlobalBlacklist() {
 		if (!this.isGlobalBlacklistEnabled()) {
+			String localHostToRemove = this.hostToRemove;
+			if(hostToRemove != null){
+				HashMap fakedBlacklist = new HashMap();
+				fakedBlacklist.put(localHostToRemove, new Long(System.currentTimeMillis() + 5000));
+				return fakedBlacklist;
+			}
 			return new HashMap(1);
 		}
 
@@ -661,6 +680,14 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			}
 
 		}
+		
+		// in process of removing this host, add it to global blacklist
+		String localHostToRemove = this.hostToRemove;
+		if(hostToRemove != null){
+			if(!blacklistClone.containsKey(localHostToRemove)){
+				blacklistClone.put(localHostToRemove, new Long(System.currentTimeMillis() + 5000));
+			}
+		}
 
 		return blacklistClone;
 	}
@@ -669,4 +696,39 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		SimpleDateFormat sdf = new SimpleDateFormat(pattern);
 		return sdf.format(new Date());
 	}
+	
+	public void removeHostWhenNotInUse(String host){
+		synchronized (this){
+			this.hostToRemove = host;
+			if(!host.equals(this.currentConn.getHost())){
+				removeHost(host);
+			}
+		}
+	}
+	
+	public void removeHost(String host){
+		synchronized(this){
+			this.hostToRemove = host;
+			if(host.equals(this.currentConn.getHost())){
+				closeAllConnections();
+			} else {
+				
+			}
+		}
+		
+	}
+	
+	public long getLastUsed(){
+		return this.lastUsed;
+	}
+	
+	public boolean inTransaction(){
+		return this.inTransaction;
+	}
+	
+	public long getTransactionCount(){
+		return this.transactionCount;
+	}
+		
+	
 }
