@@ -1,6 +1,5 @@
 /*
- Copyright  2005 MySQL AB, 2008 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+  Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
   like most MySQL Connectors. There are special exceptions to the
@@ -370,7 +369,11 @@ public class XATest extends BaseTestCase {
 			}
 		} finally {
 			if (xaConn1 != null) {
-				xaConn1.close();
+				try {
+					xaConn1.close();
+				} catch (SQLException sqlEx) {
+					// this is just busted in the server right now
+				}
 			}
 		}
 	}

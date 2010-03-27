@@ -1,6 +1,5 @@
 /*
- Copyright  2007 MySQL AB, 2008-2010 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
   like most MySQL Connectors. There are special exceptions to the
@@ -72,6 +71,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	private String hostToRemove = null;
 	private long lastUsed = 0;
 	private long transactionCount = 0;
+	private ConnectionGroup connectionGroup = null;
 
 	public static final String BLACKLIST_TIMEOUT_PROPERTY_KEY = "loadBalanceBlacklistTimeout";
 
@@ -142,6 +142,8 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 	private int globalBlacklistTimeout = 0;
 
+	private LoadBalanceExceptionChecker exceptionChecker;
+
 	/**
 	 * Creates a proxy for java.sql.Connection that routes requests between the
 	 * given list of host:port and uses the given properties when creating
@@ -153,6 +155,14 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	 */
 	LoadBalancingConnectionProxy(List hosts, Properties props)
 			throws SQLException {
+		String group = props.getProperty("loadBalanceConnectionGroup",
+		null);
+		if(group != null){
+			this.connectionGroup = ConnectionGroupManager.getConnectionGroupInstance(group);
+			this.connectionGroup.registerConnectionProxy(this, hosts);
+			hosts = this.connectionGroup.getInitialHostList();
+		}
+		
 		this.hostList = hosts;
 
 		int numHosts = this.hostList.size();
@@ -179,6 +189,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		String strategy = this.localProps.getProperty("loadBalanceStrategy",
 				"random");
+		
+		String lbExceptionChecker = this.localProps.getProperty("loadBalanceExceptionChecker",
+		"com.mysql.jdbc.StandardLoadBalanceExceptionChecker");
+
 
 		String retriesAllDownAsString = this.localProps.getProperty(
 				"retriesAllDown", "120");
@@ -222,7 +236,15 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		this.balancer.init(null, props);
 		
+		this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props,
+				lbExceptionChecker, "InvalidLoadBalanceExceptionChecker", null).get(0);
+		this.exceptionChecker.init(null, props);
+		
+		
 		pickNewConnection();
+		
+		
+		
 	}
 
 	/**
@@ -646,13 +668,18 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		}
 	}
 
-	public void addToGlobalBlacklist(String host) {
+	public void addToGlobalBlacklist(String host, long timeout) {
 		if (this.isGlobalBlacklistEnabled()) {
 			synchronized (globalBlacklist) {
-				globalBlacklist.put(host, new Long(System.currentTimeMillis()
-						+ this.globalBlacklistTimeout));
+				globalBlacklist.put(host, new Long(timeout));
 			}
 		}
+	}
+	
+	public void addToGlobalBlacklist(String host){
+		addToGlobalBlacklist(host, System.currentTimeMillis()
+						+ this.globalBlacklistTimeout);
+		
 	}
 
 	public boolean isGlobalBlacklistEnabled() {
@@ -707,40 +734,35 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		}
 		
-		// in process of removing this host, add it to global blacklist
-		String localHostToRemove = this.hostToRemove;
-		if(hostToRemove != null){
-			if(!blacklistClone.containsKey(localHostToRemove)){
-				blacklistClone.put(localHostToRemove, new Long(System.currentTimeMillis() + 5000));
-			}
-		}
-
 		return blacklistClone;
 	}
 
 	public boolean shouldExceptionTriggerFailover(SQLException ex){
-		String sqlState = ex.getSQLState();
-
-		if (sqlState != null) {
-			if (sqlState.startsWith("08")) {
-				// connection error
-				return true;
-			}
-		}
-		if(ex instanceof CommunicationsException){
-			return true;
-		}
-		return false;
+		return this.exceptionChecker.shouldExceptionTriggerFailover(ex);
 		
 	}
 	
 	public void removeHostWhenNotInUse(String host){
-		synchronized (this){
-			this.hostToRemove = host;
-			if(!host.equals(this.currentConn.getHost())){
-				removeHost(host);
+		int timeBetweenChecks = 1000;
+		long timeBeforeHardFail = 15000;
+		addToGlobalBlacklist(host, timeBeforeHardFail + 1000);
+		long cur = System.currentTimeMillis();
+		while(System.currentTimeMillis() - timeBeforeHardFail < cur){
+			synchronized (this){
+				this.hostToRemove = host;
+				if(!host.equals(this.currentConn.getHost())){
+					removeHost(host);
+					return;
+				}
 			}
+			try {
+				Thread.currentThread().sleep(timeBetweenChecks);
+			} catch (InterruptedException e) {
+				// better to swallow this and retry.
+			}
+			
 		}
+		removeHost(host);
 	}
 	
 	public void removeHost(String host){
@@ -749,11 +771,41 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			if(host.equals(this.currentConn.getHost())){
 				closeAllConnections();
 			} else {
-				
+				this.hostList.remove(host);
+				this.connectionsToHostsMap.remove(this.liveConnections.remove(host));
+				Integer idx = (Integer) this.hostsToListIndexMap.remove(host);
+				long[] newResponseTimes = new long[this.responseTimes.length - 1];
+				int newIdx = 0;
+				for(Iterator i = this.hostList.iterator(); i.hasNext(); newIdx++){
+					String copyHost = i.next().toString();
+					if(idx != null && idx.intValue() < this.responseTimes.length){
+						newResponseTimes[newIdx] = this.responseTimes[idx.intValue()];
+					}
+				}
+				this.responseTimes = newResponseTimes;
 			}
 		}
 		
 	}
+	
+	public synchronized boolean addHost(String host){
+		synchronized(this){
+			if(this.hostsToListIndexMap.containsKey(host)){
+				return false;
+			}
+			long[] newResponseTimes = new long[this.responseTimes.length + 1];
+			for(int i = 0; i < this.responseTimes.length; i++){
+				newResponseTimes[i] = this.responseTimes[i];
+			}
+			this.responseTimes = newResponseTimes;
+			this.hostList.add(host);
+			this.hostsToListIndexMap.put(host, new Integer(this.responseTimes.length - 1));
+			return true;
+			
+		}
+	}
+	
+
 	
 	public long getLastUsed(){
 		return this.lastUsed;
