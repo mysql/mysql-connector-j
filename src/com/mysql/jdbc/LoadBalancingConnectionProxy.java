@@ -141,6 +141,8 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	private static Map globalBlacklist = new HashMap();
 
 	private int globalBlacklistTimeout = 0;
+	
+	private long connectionGroupProxyID = 0;
 
 	private LoadBalanceExceptionChecker exceptionChecker;
 
@@ -159,7 +161,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		null);
 		if(group != null){
 			this.connectionGroup = ConnectionGroupManager.getConnectionGroupInstance(group);
-			this.connectionGroup.registerConnectionProxy(this, hosts);
+			this.connectionGroupProxyID = this.connectionGroup.registerConnectionProxy(this, hosts);
 			hosts = this.connectionGroup.getInitialHostList();
 		}
 		
@@ -295,6 +297,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		this.liveConnections.put(hostPortSpec, conn);
 		this.connectionsToHostsMap.put(conn, hostPortSpec);
+		
+		this.activePhysicalConnections++;
+		this.totalPhysicalConnections++;
+
 
 		return conn;
 	}
@@ -371,6 +377,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 			if (!this.isClosed) {
 				this.balancer.destroy();
+				if(this.connectionGroup != null){
+					this.connectionGroup.closeConnectionProxy(this);
+				}
 			}
 
 			this.liveConnections.clear();
@@ -486,10 +495,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 					this);
 
 			this.currentConn.setProxy(thisAsConnection);
-			
-			this.activePhysicalConnections++;
-			this.totalPhysicalConnections++;
-	
+				
 			return;
 		}
 		
@@ -800,9 +806,8 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			this.responseTimes = newResponseTimes;
 			this.hostList.add(host);
 			this.hostsToListIndexMap.put(host, new Integer(this.responseTimes.length - 1));
-			return true;
-			
 		}
+		return true;
 	}
 	
 
@@ -817,6 +822,17 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	
 	public long getTransactionCount(){
 		return this.transactionCount;
+	}
+	
+	public long getActivePhysicalConnectionCount(){
+		return this.activePhysicalConnections;
+	}
+	public long getTotalPhysicalConnectionCount(){
+		return this.totalPhysicalConnections;
+	}
+	
+	public long getConnectionGroupProxyID(){
+		return this.connectionGroupProxyID;
 	}
 		
 	
