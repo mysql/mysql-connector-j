@@ -1,6 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+  Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
   like most MySQL Connectors. There are special exceptions to the
@@ -4187,6 +4186,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			
 			if (idx > 0) {
 				catalog = procName.substring(0,idx);
+				if (quotedId != " " && catalog.startsWith(quotedId) && catalog.endsWith(quotedId)) {
+					catalog = procName.substring(1, catalog.length() - 1);
+				}
 				procNameToCall = procName; // Leave as CAT.PROC, needed later
 			} else {
 				//No catalog. Not sure how to handle right now...
@@ -4296,7 +4298,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					boolean fromSelect = false;
 					ResultSet proceduresRs = null;
 					boolean needsClientFiltering = true;
-					PreparedStatement proceduresStmt = (PreparedStatement) conn
+					java.sql.PreparedStatement proceduresStmt = conn
 							.clientPrepareStatement("SELECT name, type, comment FROM mysql.proc WHERE name like ? and db <=> ? ORDER BY name");
 
 					try {
@@ -4343,7 +4345,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								nameIndex = 1;
 							}
 
-							proceduresStmt = (PreparedStatement) conn
+							proceduresStmt =  conn
 									.clientPrepareStatement("SHOW PROCEDURE STATUS LIKE ?");
 
 							if (proceduresStmt.getMaxRows() != 0) {
@@ -4367,7 +4369,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								proceduresStmt.close();
 							}
 
-							proceduresStmt = (PreparedStatement) conn
+							proceduresStmt = conn
 									.clientPrepareStatement("SHOW FUNCTION STATUS LIKE ?");
 
 							if (proceduresStmt.getMaxRows() != 0) {
@@ -8200,18 +8202,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * @return PreparedStatement
 	 * @throws SQLException
 	 */
-	protected PreparedStatement prepareMetaDataSafeStatement(String sql)
+	protected java.sql.PreparedStatement prepareMetaDataSafeStatement(String sql)
 			throws SQLException {
 		// Can't use server-side here as we coerce a lot of types to match
 		// the spec.
-		PreparedStatement pStmt = (PreparedStatement) this.conn
-				.clientPrepareStatement(sql);
+		java.sql.PreparedStatement pStmt = this.conn.clientPrepareStatement(sql);
 
 		if (pStmt.getMaxRows() != 0) {
 			pStmt.setMaxRows(0);
 		}
 
-		pStmt.setHoldResultsOpenOverClose(true);
+		((com.mysql.jdbc.Statement) pStmt).setHoldResultsOpenOverClose(true);
 
 		return pStmt;
 	}

@@ -20,7 +20,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   02110-1301 USA
- 
  */
 package com.mysql.jdbc;
 
@@ -40,7 +39,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimerTask;
 
-import com.mysql.jdbc.exceptions.DeadlockTimeoutRollbackMarker;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
@@ -2500,7 +2498,7 @@ public class StatementImpl implements Statement {
 		this.fetchSize = rows;
 	}
 
-	protected void setHoldResultsOpenOverClose(boolean holdResultsOpenOverClose) {
+	public void setHoldResultsOpenOverClose(boolean holdResultsOpenOverClose) {
 		this.holdResultsOpenOverClose = holdResultsOpenOverClose;
 	}
 

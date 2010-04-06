@@ -1,6 +1,5 @@
 /*
- Copyright  2005-2007 MySQL AB, 2008-2010 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+  Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
   like most MySQL Connectors. There are special exceptions to the
@@ -61,7 +60,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		}
 	}
 
-	private ResultSet executeMetadataQuery(PreparedStatement pStmt)
+	private ResultSet executeMetadataQuery(java.sql.PreparedStatement pStmt)
 			throws SQLException {
 		ResultSet rs = pStmt.executeQuery();
 		((com.mysql.jdbc.ResultSetInternalMethods) rs).setOwningStatement(null);
@@ -130,7 +129,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			 + "TABLE_NAME =? AND COLUMN_NAME LIKE ? ORDER BY " 
 			 + "COLUMN_NAME, PRIVILEGE_TYPE";
 		
-		PreparedStatement pStmt = null;
+		java.sql.PreparedStatement pStmt = null;
 		
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
@@ -262,7 +261,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 						+ "TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
 						+ "ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
 
-		PreparedStatement pStmt = null;
+		java.sql.PreparedStatement pStmt = null;
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
@@ -408,7 +407,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "AND A.TABLE_SCHEMA LIKE ? AND A.TABLE_NAME=? " + "ORDER BY "
 				+ "A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
 
-		PreparedStatement pStmt = null;
+		java.sql.PreparedStatement pStmt = null;
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
@@ -548,7 +547,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "AND A.REFERENCED_TABLE_SCHEMA LIKE ? AND A.REFERENCED_TABLE_NAME=? "
 				+ "ORDER BY A.TABLE_SCHEMA, A.TABLE_NAME, A.ORDINAL_POSITION";
 
-		PreparedStatement pStmt = null;
+		java.sql.PreparedStatement pStmt = null;
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
@@ -711,7 +710,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "A.REFERENCED_TABLE_SCHEMA, A.REFERENCED_TABLE_NAME, "
 				+ "A.ORDINAL_POSITION";
 
-		PreparedStatement pStmt = null;
+		java.sql.PreparedStatement pStmt = null;
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
@@ -813,7 +812,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 		sqlBuf.append("ORDER BY NON_UNIQUE, INDEX_NAME, SEQ_IN_INDEX");
 
-		PreparedStatement pStmt = null;
+		java.sql.PreparedStatement pStmt = null;
 
 		try {
 			if (catalog == null) {
@@ -888,7 +887,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND "
 				+ "INDEX_NAME='PRIMARY' ORDER BY TABLE_SCHEMA, TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX";
 
-		PreparedStatement pStmt = null;
+		java.sql.PreparedStatement pStmt = null;
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
@@ -995,7 +994,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ? "
 				+ "ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME";
 
-		PreparedStatement pStmt = null;
+		java.sql.PreparedStatement pStmt = null;
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
@@ -1212,7 +1211,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
 				+ "AND ROUTINE_TYPE='FUNCTION' ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
 
-		PreparedStatement pStmt = null;
+		java.sql.PreparedStatement pStmt = null;
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
@@ -1389,7 +1388,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
 				+ "ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
 
-		PreparedStatement pStmt = null;
+		java.sql.PreparedStatement pStmt = null;
 
 		try {
 			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
@@ -1468,7 +1467,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			}
 		}
 
-		PreparedStatement pStmt = null;
+		java.sql.PreparedStatement pStmt = null;
 
 		String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, "
 				+ "NULL AS TABLE_SCHEM, TABLE_NAME, "
