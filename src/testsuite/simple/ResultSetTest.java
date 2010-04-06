@@ -77,14 +77,12 @@ public class ResultSetTest extends BaseTestCase {
 				continue; // no mapping in Java
 			}
 
-			if (charsetName.equalsIgnoreCase("GBK")) {
-				try {
-					"".getBytes("GBK");
-				} catch (UnsupportedEncodingException uee) {
-					continue; // not supported on this platform
-				}
+			try {
+				"".getBytes(charsetName);
+			} catch (UnsupportedEncodingException uee) {
+				continue; // not supported on this platform
 			}
-			
+
 			if (counter != 0) {
 				columns.append(",");
 				emptyBuf.append(",");
