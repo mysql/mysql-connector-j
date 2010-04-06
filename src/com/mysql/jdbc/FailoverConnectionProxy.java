@@ -32,41 +32,34 @@ import java.util.List;
 import java.util.Properties;
 
 public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
-	boolean failedOver;
-	boolean preferSlaveDuringFailover;
-	long queriesIssuedFailedOver;
-	private long queriesBeforeRetryMaster;
-	private int secondsBeforeRetryMaster;
-	private long masterFailTimeMillis;
-	private String primaryHostPortSpec;
-	boolean hasTriedMaster;
-	
-	class FailoverInvocationHandler extends ConnectionErrorFiringInvocationHandler {
-
-		public Object invoke(Object proxy, Method method, Object[] args)
-				throws Throwable {
-			String methodName = method.getName();
-			
-			if (failedOver && methodName.indexOf("execute") != -1) {
-				queriesIssuedFailedOver++;
-			}
-			
-			if ("setPreferSlaveDuringFailover".equals(methodName)) {
-				preferSlaveDuringFailover = ((Boolean)args[0]).booleanValue();
-			} else if ("clearHasTriedMaster".equals(methodName)) {
-				hasTriedMaster = false;
-			} else if ("hasTriedMaster".equals(methodName)) {
-				return Boolean.valueOf(hasTriedMaster);
-			}
-			
-			return super.invoke(proxy, method, args);
-		}
+	class FailoverInvocationHandler extends
+			ConnectionErrorFiringInvocationHandler {
 
 		public FailoverInvocationHandler(Object toInvokeOn) {
 			super(toInvokeOn);
 		}
-		
+
+		public Object invoke(Object proxy, Method method, Object[] args)
+				throws Throwable {
+			String methodName = method.getName();
+
+			if (failedOver && methodName.indexOf("execute") != -1) {
+				queriesIssuedFailedOver++;
+			}
+
+			return super.invoke(proxy, method, args);
+		}
+
 	}
+
+	boolean failedOver;
+	boolean hasTriedMaster;
+	private long masterFailTimeMillis;
+	boolean preferSlaveDuringFailover;
+	private String primaryHostPortSpec;
+	private long queriesBeforeRetryMaster;
+	long queriesIssuedFailedOver;
+	private int secondsBeforeRetryMaster;
 	
 	FailoverConnectionProxy(List hosts, Properties props) throws SQLException {
 		super(hosts, props);
@@ -78,7 +71,45 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 		this.preferSlaveDuringFailover = false;
 	}
 	
+	protected ConnectionErrorFiringInvocationHandler createConnectionProxy(
+			Object toProxy) {
+		return new FailoverInvocationHandler(toProxy);
+	}
 	
+	
+
+	public Object invoke(Object proxy, Method method, Object[] args)
+			throws Throwable {
+		String methodName = method.getName();
+		
+		if ("setPreferSlaveDuringFailover".equals(methodName)) {
+			preferSlaveDuringFailover = ((Boolean) args[0]).booleanValue();
+		} else if ("clearHasTriedMaster".equals(methodName)) {
+			hasTriedMaster = false;
+		} else if ("hasTriedMaster".equals(methodName)) {
+			return Boolean.valueOf(hasTriedMaster);
+		} else if ("setReadOnly".equals(methodName)) {
+			if (failedOver) {
+				return null; // no-op when failed over
+			}
+		}
+		
+		return super.invoke(proxy, method, args);
+	}
+
+	private void createPrimaryConnection() throws SQLException {
+		try {
+			this.currentConn = createConnectionForHost(this.primaryHostPortSpec);
+			this.failedOver = false;
+			this.hasTriedMaster = true;
+		} catch (SQLException sqlEx) {
+			this.failedOver = true;
+			
+			if (this.currentConn != null) {
+				this.currentConn.getLog().logWarn("Connection to primary host failed", sqlEx);
+			}
+		}
+	}
 
 	synchronized void invalidateCurrentConnection() throws SQLException {
 		if (!this.failedOver) {
@@ -103,22 +134,8 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 		}
 		
 		super.pickNewConnection();
-		
+		this.currentConn.setReadOnly(true);
 		this.failedOver = true;
-	}
-
-	private void createPrimaryConnection() throws SQLException {
-		try {
-			this.currentConn = createConnectionForHost(this.primaryHostPortSpec);
-			this.failedOver = false;
-			this.hasTriedMaster = true;
-		} catch (SQLException sqlEx) {
-			this.failedOver = true;
-			
-			if (this.currentConn != null) {
-				this.currentConn.getLog().logWarn("Connection to primary host failed", sqlEx);
-			}
-		}
 	}
 
 	/**
