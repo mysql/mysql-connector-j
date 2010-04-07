@@ -1,6 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+  Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as
@@ -26,6 +25,7 @@
 
 package testsuite.simple;
 
+import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -77,6 +77,14 @@ public class ResultSetTest extends BaseTestCase {
 				continue; // no mapping in Java
 			}
 
+			if (charsetName.equalsIgnoreCase("GBK")) {
+				try {
+					"".getBytes("GBK");
+				} catch (UnsupportedEncodingException uee) {
+					continue; // not supported on this platform
+				}
+			}
+			
 			if (counter != 0) {
 				columns.append(",");
 				emptyBuf.append(",");

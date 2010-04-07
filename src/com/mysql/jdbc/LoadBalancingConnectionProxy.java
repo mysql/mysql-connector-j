@@ -1,6 +1,5 @@
 /*
- Copyright  2007 MySQL AB, 2008-2010 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
   like most MySQL Connectors. There are special exceptions to the
@@ -23,7 +22,6 @@
   02110-1301 USA
  
  */
-
 package com.mysql.jdbc;
 
 import java.lang.reflect.InvocationHandler;

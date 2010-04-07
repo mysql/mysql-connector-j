@@ -3,6 +3,14 @@
 
 nn-nn-10 - Version 5.1.13
 
+	- Fix for Bug#51912 - Passing NULL as cat. param to getProcedureColumns with !nullCatalogMeansCurrent
+	
+	- Fix for Bug#52167 - Can't parse parameter list with special characters inside
+	
+	- Fix for Bug#51904 - getProcedureColumns() always returns PROCEDURE_CAT result column as NULL
+	
+	- Fix for Bug#51712 - Display Size is always 0 for columns returned by getProcedureColumns()
+
     - Fix for Bug#51908 - db variable might have end up unassigned when calling
       getProcedureColumns()/Functions(). This is a followup on code changes made
       for Bug#51022.
@@ -42,12 +50,15 @@ nn-nn-10 - Version 5.1.13
       causes each open underlying physical connection to be pinged.
 
     - Fixed BUG#51776 - Connection.rollback() could swallow exceptions incorrectly.
-    
+
     - Fixed BUG#52231 - Differences in definitions of which SQLExceptions trigger
       a failover event could result in failure to try more than a single host in 
       certain situations.
       
     - Fixed BUG#52534 - Performance regression using load-balanced connection.  
+
+    - More aggressively purge the statement timeout timers after they've been cancelled to
+      trade time for memory. This purge only happens if statement timeouts are in use.
     
 02-18-10 - Version 5.1.12
 

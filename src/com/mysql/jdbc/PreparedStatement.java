@@ -1,6 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+  Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
   like most MySQL Connectors. There are special exceptions to the
@@ -21,9 +20,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   02110-1301 USA
-
-
-
+ 
  */
 package com.mysql.jdbc;
 
@@ -1628,6 +1625,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						}
 
 						timeoutTask.cancel();
+						
+						locallyScopedConn.getCancelTimer().purge();
+						
 						timeoutTask = null;
 					}
 					
@@ -1646,6 +1646,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			} finally {
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+					locallyScopedConn.getCancelTimer().purge();
 				}
 				
 				resetCancelledState();
@@ -1822,6 +1823,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		} finally {
 			if (timeoutTask != null) {
 				timeoutTask.cancel();
+				locallyScopedConn.getCancelTimer().purge();
 			}
 
 			resetCancelledState();
@@ -2040,6 +2042,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+					locallyScopedConn.getCancelTimer().purge();
 				}
 				
 				resetCancelledState();
@@ -2115,6 +2118,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
 					
+					locallyScopedConnection.getCancelTimer().purge();
+					
 					if (timeoutTask.caughtWhileCancelling != null) {
 						throw timeoutTask.caughtWhileCancelling;
 					}
@@ -2140,6 +2145,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			} finally {
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
+					locallyScopedConnection.getCancelTimer().purge();
 				}
 			}
 			
