@@ -287,7 +287,8 @@ public class StatementImpl implements Statement {
 
 		this.connection = c;
 		this.connectionId = this.connection.getId();
-		this.exceptionInterceptor = c.getExceptionInterceptor();
+		this.exceptionInterceptor = this.connection
+				.getExceptionInterceptor();
 
 		this.currentCatalog = catalog;
 		this.pedantic = this.connection.getPedantic();
@@ -315,8 +316,7 @@ public class StatementImpl implements Statement {
 		if (this.connection.getUseUnicode()) {
 			this.charEncoding = this.connection.getEncoding();
 
-			this.charConverter = this.connection
-					.getCharsetConverter(this.charEncoding);
+			this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
 		}
 
 		boolean profiling = this.connection.getProfileSql()
@@ -668,9 +668,9 @@ public class StatementImpl implements Statement {
 			// This is reset by RowDataDynamic.close().
 
 			if (doStreaming
-					&& this.connection.getNetTimeoutForStreamingResults() > 0) {
+					&& locallyScopedConn.getNetTimeoutForStreamingResults() > 0) {
 				executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout="
-						+ this.connection.getNetTimeoutForStreamingResults());
+						+ locallyScopedConn.getNetTimeoutForStreamingResults());
 			}
 
 			if (this.doEscapeProcessing) {

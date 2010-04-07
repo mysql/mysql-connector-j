@@ -26,8 +26,6 @@
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -54,7 +52,7 @@ public class SequentialBalanceStrategy implements BalanceStrategy {
 		// we don't have anything to initialize
 	}
 
-	public Connection pickConnection(LoadBalancingConnectionProxy proxy,
+	public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy,
 			List configuredHosts, Map liveConnections, long[] responseTimes,
 			int numRetries) throws SQLException {
 		int numHosts = configuredHosts.size();

@@ -46,6 +46,8 @@ nn-nn-10 - Version 5.1.13
     - Fixed BUG#52231 - Differences in definitions of which SQLExceptions trigger
       a failover event could result in failure to try more than a single host in 
       certain situations.
+      
+    - Fixed BUG#52534 - Performance regression using load-balanced connection.  
     
 02-18-10 - Version 5.1.12
 

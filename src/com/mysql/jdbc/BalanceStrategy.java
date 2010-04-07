@@ -73,7 +73,7 @@ public interface BalanceStrategy extends Extension {
 	 * 
 	 * @see LoadBalancingConnectionProxy#createConnectionForHost(String)
 	 */
-	public abstract Connection pickConnection(
+	public abstract ConnectionImpl pickConnection(
 			LoadBalancingConnectionProxy proxy, List configuredHosts,
 			Map liveConnections, long[] responseTimes, int numRetries)
 			throws SQLException;

@@ -206,4 +206,8 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 	boolean useAnsiQuotedIdentifiers();
 
 	boolean useMaxRows();
+	
+	MySQLConnection getLoadBalanceSafeProxy();
+	
+
 }
