@@ -1,6 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+  Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
   like most MySQL Connectors. There are special exceptions to the
@@ -21,9 +20,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   02110-1301 USA
-
-
-
+ 
  */
 package com.mysql.jdbc;
 
@@ -32,6 +29,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -52,7 +50,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Stack;
-import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TreeMap;
@@ -63,8 +60,6 @@ import com.mysql.jdbc.log.NullLogger;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
 import com.mysql.jdbc.util.LRUCache;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
  * A Connection represents a session with a specific database. Within the
@@ -100,6 +95,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
    private MySQLConnection getProxy() {
       return (proxy != null) ? proxy : (MySQLConnection) this;
    }
+   
+   public MySQLConnection getLoadBalanceSafeProxy() {
+	   return this.getProxy();
+   }
+   
 
 	class ExceptionInterceptorChain implements ExceptionInterceptor {
 		List interceptors;
@@ -1467,7 +1467,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						.get(nativeSql);
 	
 				if (pStmtInfo == null) {
-					pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getProxy(), nativeSql,
+					pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql,
 							this.database);
 	
 					PreparedStatement.ParseInfo parseInfo = pStmt.getParseInfo();
@@ -1501,12 +1501,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					}
 				} else {
 					pStmtInfo.lastUsed = System.currentTimeMillis();
-					pStmt = new com.mysql.jdbc.PreparedStatement(getProxy(), nativeSql,
+					pStmt = new com.mysql.jdbc.PreparedStatement(getLoadBalanceSafeProxy(), nativeSql,
 							this.database, pStmtInfo);
 				}
 			}
 		} else {
-			pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getProxy(), nativeSql,
+			pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql,
 					this.database);
 		}
 
@@ -2201,7 +2201,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							}
 	
 							this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(),
-                                           getProxy(), getSocketTimeout(),
+                                           getLoadBalanceSafeProxy(), getSocketTimeout(),
                                            this.largeRowSizeThreshold.getValueAsInt());
 		
 							this.io.doHandshake(this.user, this.password,
@@ -2278,7 +2278,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								hostIndex = getNextRoundRobinHostIndex(getURL(),
 										this.hostList) - 1 /* incremented by for loop next time around */;
 							} else if ((this.hostListSize - 1) == hostIndex) {
-								throw SQLError.createCommunicationsException(getProxy(),
+								throw SQLError.createCommunicationsException(getLoadBalanceSafeProxy(),
 										(this.io != null) ? this.io
 												.getLastPacketSentTimeMs() : 0,
 										(this.io != null) ? this.io
@@ -2354,7 +2354,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 								this.io = new MysqlIO(newHost, newPort,
 										mergedProps, getSocketFactoryClassName(),
-										getProxy(), getSocketTimeout(),
+										getLoadBalanceSafeProxy(), getSocketTimeout(),
 										this.largeRowSizeThreshold.getValueAsInt());
 								this.io.doHandshake(this.user, this.password,
 										this.database);
@@ -2554,7 +2554,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			int resultSetConcurrency) throws SQLException {
 		checkClosed();
 
-		StatementImpl stmt = new StatementImpl(getProxy(), this.database);
+		StatementImpl stmt = new StatementImpl(getLoadBalanceSafeProxy(), this.database);
 		stmt.setResultSetType(resultSetType);
 		stmt.setResultSetConcurrency(resultSetConcurrency);
 
@@ -3156,7 +3156,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			checkClosed();	
 		}
 		
-		return com.mysql.jdbc.DatabaseMetaData.getInstance(getProxy(), this.database, checkForInfoSchema);
+		return com.mysql.jdbc.DatabaseMetaData.getInstance(getLoadBalanceSafeProxy(), this.database, checkForInfoSchema);
 	}
 
 	public java.sql.Statement getMetadataSafeStatement() throws SQLException {
@@ -3434,7 +3434,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		this.log = LogFactory.getLogger(getLogger(), LOGGER_INSTANCE_NAME, getExceptionInterceptor());
 
 		if (getProfileSql() || getUseUsageAdvisor()) {
-			this.eventSink = ProfilerEventHandlerFactory.getInstance(getProxy());
+			this.eventSink = ProfilerEventHandlerFactory.getInstance(getLoadBalanceSafeProxy());
 		}
 
 		if (getCachePreparedStatements()) {
@@ -4075,7 +4075,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		Object escapedSqlResult = EscapeProcessor.escapeSQL(sql,
                                                           serverSupportsConvertFn(),
-                                                          getProxy());
+                                                          getLoadBalanceSafeProxy());
 
 		if (escapedSqlResult instanceof String) {
 			return (String) escapedSqlResult;
@@ -4087,7 +4087,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private CallableStatement parseCallableStatement(String sql)
 			throws SQLException {
 		Object escapedSqlResult = EscapeProcessor.escapeSQL(sql,
-				serverSupportsConvertFn(), getProxy());
+				serverSupportsConvertFn(), getLoadBalanceSafeProxy());
 
 		boolean isFunctionCall = false;
 		String parsedSql = null;
@@ -4100,7 +4100,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			isFunctionCall = false;
 		}
 
-		return CallableStatement.getInstance(getProxy(), parsedSql, this.database,
+		return CallableStatement.getInstance(getLoadBalanceSafeProxy(), parsedSql, this.database,
 				isFunctionCall);
 	}
 
@@ -4193,7 +4193,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							.get(key);
 	
 					if (cachedParamInfo != null) {
-						cStmt = CallableStatement.getInstance(getProxy(), cachedParamInfo);
+						cStmt = CallableStatement.getInstance(getLoadBalanceSafeProxy(), cachedParamInfo);
 					} else {
 						cStmt = parseCallableStatement(sql);
 	
@@ -4323,7 +4323,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 					if (pStmt == null) {
 						try {
-							pStmt = ServerPreparedStatement.getInstance(getProxy(), nativeSql,
+							pStmt = ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql,
 									this.database, resultSetType, resultSetConcurrency);
 							if (sql.length() < getPreparedStatementCacheSqlLimit()) {
 								((com.mysql.jdbc.ServerPreparedStatement)pStmt).isCached = true;
@@ -4347,7 +4347,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			} else {
 				try {
-					pStmt = ServerPreparedStatement.getInstance(getProxy(), nativeSql,
+					pStmt = ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql,
 							this.database, resultSetType, resultSetConcurrency);
 					
 					pStmt.setResultSetType(resultSetType);
@@ -4960,7 +4960,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql;
 
-		return ServerPreparedStatement.getInstance(getProxy(), nativeSql, this.getCatalog(),
+		return ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.getCatalog(),
 				DEFAULT_RESULT_SET_TYPE,
 				DEFAULT_RESULT_SET_CONCURRENCY);
 	}
@@ -4972,7 +4972,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			int autoGenKeyIndex) throws SQLException {
 		String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql;
 
-		PreparedStatement pStmt = ServerPreparedStatement.getInstance(getProxy(), nativeSql, this.getCatalog(),
+		PreparedStatement pStmt = ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.getCatalog(),
 				DEFAULT_RESULT_SET_TYPE,
 				DEFAULT_RESULT_SET_CONCURRENCY);
 		
@@ -4989,7 +4989,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			int resultSetType, int resultSetConcurrency) throws SQLException {
 		String nativeSql = getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql): sql;
 
-		return ServerPreparedStatement.getInstance(getProxy(), nativeSql, this.getCatalog(),
+		return ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.getCatalog(),
 				resultSetType,
 				resultSetConcurrency);
 	}

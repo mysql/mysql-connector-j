@@ -22,7 +22,6 @@
   02110-1301 USA
  
  */
-
 package com.mysql.jdbc;
 
 import java.lang.reflect.InvocationHandler;
@@ -113,7 +112,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		}
 	}
 
-	protected Connection currentConn;
+	protected MySQLConnection currentConn;
 
 	protected List hostList;
 
@@ -144,6 +143,15 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	private long connectionGroupProxyID = 0;
 
 	private LoadBalanceExceptionChecker exceptionChecker;
+
+	private Map jdbcInterfacesForProxyCache = new HashMap();
+	
+	private MySQLConnection thisAsConnection = null;
+	
+	
+
+
+
 
 	/**
 	 * Creates a proxy for java.sql.Connection that routes requests between the
@@ -237,10 +245,13 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		this.balancer.init(null, props);
 		
+
 		this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props,
 				lbExceptionChecker, "InvalidLoadBalanceExceptionChecker", null).get(0);
 		this.exceptionChecker.init(null, props);
-		
+
+		thisAsConnection = new LoadBalancedMySQLConnection(this);
+
 		
 		pickNewConnection();
 		
@@ -293,13 +304,17 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		ConnectionImpl conn = (ConnectionImpl) ConnectionImpl.getInstance(
 				hostName, Integer.parseInt(portNumber), connProps, dbName,
 				"jdbc:mysql://" + hostName + ":" + portNumber + "/");
+		
+		
 
 		this.liveConnections.put(hostPortSpec, conn);
 		this.connectionsToHostsMap.put(conn, hostPortSpec);
 		
+
 		this.activePhysicalConnections++;
 		this.totalPhysicalConnections++;
 
+		conn.setProxy(this.thisAsConnection);
 
 		return conn;
 	}
@@ -396,6 +411,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			throws Throwable {
 
 		String methodName = method.getName();
+		
+		if("getLoadBalanceSafeProxy".equals(methodName)){
+			return this.currentConn;
+		}
 
 		if ("equals".equals(methodName) && args.length == 1) {
 			if (args[0] instanceof Proxy) {
@@ -438,7 +457,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		try {
 			this.lastUsed = System.currentTimeMillis();
-			result = method.invoke(this.currentConn, args);
+			result = method.invoke(thisAsConnection, args);
 
 			if (result != null) {
 				if (result instanceof com.mysql.jdbc.Statement) {
@@ -489,14 +508,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 					.unmodifiableList(this.hostList), Collections
 					.unmodifiableMap(this.liveConnections),
 					(long[]) this.responseTimes.clone(), this.retriesAllDown);
-
-			MySQLConnection thisAsConnection = (MySQLConnection) Proxy
-			.newProxyInstance(getClass().getClassLoader(),
-					new Class[] { com.mysql.jdbc.MySQLConnection.class },
-					this);
-
-			this.currentConn.setProxy(thisAsConnection);
-				
 			return;
 		}
 		
@@ -516,12 +527,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 							.unmodifiableMap(this.liveConnections),
 					(long[]) this.responseTimes.clone(), this.retriesAllDown);
 		
-				MySQLConnection thisAsConnection = (MySQLConnection) Proxy
-						.newProxyInstance(getClass().getClassLoader(),
-								new Class[] { com.mysql.jdbc.MySQLConnection.class },
-								this);
-		
-				newConn.setProxy(thisAsConnection);
 				if (this.currentConn != null) {
 					if(pingBeforeReturn){
 						if(pingTimeout == 0){
@@ -560,6 +565,21 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	 * @return
 	 */
 	Object proxyIfInterfaceIsJdbc(Object toProxy, Class clazz) {
+		
+		if(isInterfaceJdbc(clazz)){
+				return Proxy.newProxyInstance(toProxy.getClass()
+						.getClassLoader(), clazz.getInterfaces(),
+						createConnectionProxy(toProxy));
+			}
+
+		return toProxy;
+	}
+	
+	
+	private boolean isInterfaceJdbc(Class clazz){
+		if(this.jdbcInterfacesForProxyCache.containsKey(clazz)){
+			return ((Boolean) this.jdbcInterfacesForProxyCache.get(clazz)).booleanValue();
+		}
 		Class[] interfaces = clazz.getInterfaces();
 
 		for (int i = 0; i < interfaces.length; i++) {
@@ -568,15 +588,19 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			if ("java.sql".equals(packageName)
 					|| "javax.sql".equals(packageName)
 					|| "com.mysql.jdbc".equals(packageName)) {
-				return Proxy.newProxyInstance(toProxy.getClass()
-						.getClassLoader(), interfaces,
-						createConnectionProxy(toProxy));
+				this.jdbcInterfacesForProxyCache.put(clazz, new Boolean(true));
+				return true;
 			}
 
-			return proxyIfInterfaceIsJdbc(toProxy, interfaces[i]);
+			if(isInterfaceJdbc(interfaces[i])){
+				this.jdbcInterfacesForProxyCache.put(clazz, new Boolean(true));
+				return true;
+			}
 		}
 
-		return toProxy;
+		this.jdbcInterfacesForProxyCache.put(clazz, new Boolean(false));
+		return false;
+		
 	}
 
 	protected ConnectionErrorFiringInvocationHandler createConnectionProxy(

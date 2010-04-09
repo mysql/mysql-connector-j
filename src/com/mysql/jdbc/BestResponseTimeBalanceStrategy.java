@@ -48,7 +48,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 		// we don't have anything to initialize
 	}
 
-	public Connection pickConnection(LoadBalancingConnectionProxy proxy,
+	public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy,
 			List configuredHosts, Map liveConnections, long[] responseTimes,
 			int numRetries) throws SQLException {
 				
@@ -84,7 +84,7 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 
 			String bestHost = (String) configuredHosts.get(bestHostIndex);
 
-			Connection conn = (Connection) liveConnections.get(bestHost);
+			ConnectionImpl conn = (ConnectionImpl) liveConnections.get(bestHost);
 
 			if (conn == null) {
 				try {

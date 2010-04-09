@@ -45,7 +45,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 		// we don't have anything to initialize
 	}
 
-	public Connection pickConnection(LoadBalancingConnectionProxy proxy,
+	public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy,
 			List configuredHosts, Map liveConnections, long[] responseTimes,
 			int numRetries) throws SQLException {
 		int numHosts = configuredHosts.size();

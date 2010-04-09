@@ -1,27 +1,26 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+  Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
 
- This program is free software; you can redistribute it and/or modify
- it under the terms of version 2 of the GNU General Public License as
- published by the Free Software Foundation.
+  The MySQL Connector/J is licensed under the terms of the GPL,
+  like most MySQL Connectors. There are special exceptions to the
+  terms and conditions of the GPL as it is applied to this software,
+  see the FLOSS License Exception available on mysql.com.
 
- There are special exceptions to the terms and conditions of the GPL
- as it is applied to this software. View the full text of the
- exception in file EXCEPTIONS-CONNECTOR-J in the directory of this
- software distribution.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation; version 2 of the
+  License.
 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,  
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-
-
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  02110-1301 USA
+ 
  */
 package com.mysql.jdbc;
 
@@ -289,7 +288,8 @@ public class StatementImpl implements Statement {
 
 		this.connection = c;
 		this.connectionId = this.connection.getId();
-		this.exceptionInterceptor = c.getExceptionInterceptor();
+		this.exceptionInterceptor = this.connection
+				.getExceptionInterceptor();
 
 		this.currentCatalog = catalog;
 		this.pedantic = this.connection.getPedantic();
@@ -317,8 +317,7 @@ public class StatementImpl implements Statement {
 		if (this.connection.getUseUnicode()) {
 			this.charEncoding = this.connection.getEncoding();
 
-			this.charConverter = this.connection
-					.getCharsetConverter(this.charEncoding);
+			this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
 		}
 
 		boolean profiling = this.connection.getProfileSql()
@@ -670,9 +669,9 @@ public class StatementImpl implements Statement {
 			// This is reset by RowDataDynamic.close().
 
 			if (doStreaming
-					&& this.connection.getNetTimeoutForStreamingResults() > 0) {
+					&& locallyScopedConn.getNetTimeoutForStreamingResults() > 0) {
 				executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout="
-						+ this.connection.getNetTimeoutForStreamingResults());
+						+ locallyScopedConn.getNetTimeoutForStreamingResults());
 			}
 
 			if (this.doEscapeProcessing) {

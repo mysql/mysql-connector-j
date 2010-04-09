@@ -2796,7 +2796,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			forceFutureServerTimes = times;
 		}
 
-		public com.mysql.jdbc.Connection pickConnection(
+		public com.mysql.jdbc.ConnectionImpl pickConnection(
 				LoadBalancingConnectionProxy proxy, List configuredHosts,
 				Map liveConnections, long[] responseTimes, int numRetries)
 				throws SQLException {
