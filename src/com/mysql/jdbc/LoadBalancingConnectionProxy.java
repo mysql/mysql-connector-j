@@ -30,9 +30,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -162,7 +161,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		if(group != null){
 			this.connectionGroup = ConnectionGroupManager.getConnectionGroupInstance(group);
 			this.connectionGroupProxyID = this.connectionGroup.registerConnectionProxy(this, hosts);
-			hosts = this.connectionGroup.getInitialHostList();
+			hosts = new ArrayList(this.connectionGroup.getInitialHosts());
 		}
 		
 		this.hostList = hosts;
@@ -461,12 +460,14 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 				// connectionsToHostsMap
 				// in invalidateCurrenctConnection()
 				if (host != null) {
-					int hostIndex = ((Integer) this.hostsToListIndexMap
-							.get(host)).intValue();
-
 					synchronized (this.responseTimes) {
-						this.responseTimes[hostIndex] = getLocalTimeBestResolution()
-								- this.transactionStartTime;
+						int hostIndex = ((Integer) this.hostsToListIndexMap
+								.get(host)).intValue();
+
+						if(hostIndex < this.responseTimes.length){
+							this.responseTimes[hostIndex] = getLocalTimeBestResolution()
+									- this.transactionStartTime;
+						}
 					}
 				}
 				pickNewConnection();
@@ -748,7 +749,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		
 	}
 	
-	public void removeHostWhenNotInUse(String host){
+	public void removeHostWhenNotInUse(String host) throws SQLException {
 		int timeBetweenChecks = 1000;
 		long timeBeforeHardFail = 15000;
 		addToGlobalBlacklist(host, timeBeforeHardFail + 1000);
@@ -771,13 +772,17 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		removeHost(host);
 	}
 	
-	public void removeHost(String host){
+	public void removeHost(String host) throws SQLException {
 		synchronized(this){
+			if(this.connectionGroup != null){
+				if(this.connectionGroup.getInitialHosts().size() == 1 && this.connectionGroup.getInitialHosts().contains(host)){
+					throw SQLError.createSQLException("Cannot remove only configured host.", null);
+				}
+			}
 			this.hostToRemove = host;
 			if(host.equals(this.currentConn.getHost())){
 				closeAllConnections();
 			} else {
-				this.hostList.remove(host);
 				this.connectionsToHostsMap.remove(this.liveConnections.remove(host));
 				Integer idx = (Integer) this.hostsToListIndexMap.remove(host);
 				long[] newResponseTimes = new long[this.responseTimes.length - 1];
@@ -786,6 +791,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 					String copyHost = i.next().toString();
 					if(idx != null && idx.intValue() < this.responseTimes.length){
 						newResponseTimes[newIdx] = this.responseTimes[idx.intValue()];
+						this.hostsToListIndexMap.put(copyHost, new Integer(newIdx));
 					}
 				}
 				this.responseTimes = newResponseTimes;

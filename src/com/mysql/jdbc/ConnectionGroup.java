@@ -24,7 +24,10 @@
  */
 package com.mysql.jdbc;
 
+import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -34,14 +37,13 @@ public class ConnectionGroup {
 	private String groupName;
 	private long connections = 0;
 	private long activeConnections = 0;
-	private HashMap connectionData = new HashMap();
 	private HashMap connectionProxies = new HashMap();
-	private List hostList;
+	private Set hostList = new HashSet();
 	private boolean isInitialized = false;
 	private long closedProxyTotalPhysicalConnections = 0;
 	private long closedProxyTotalTransactions = 0;
 	private int activeHosts = 0;
-	private int totalHosts = 0;
+	private Set closedHosts = new HashSet();
 
 	ConnectionGroup(String groupName){
 		this.groupName = groupName;
@@ -52,10 +54,9 @@ public class ConnectionGroup {
 
 		synchronized (this){
 			if(!this.isInitialized){
-				this.hostList = hostList;
+				this.hostList.addAll(hostList);
 				this.isInitialized = true;
 				this.activeHosts = hostList.size();
-				this.totalHosts = this.activeHosts;
 			}
 			currentConnectionId = ++connections;
 			this.connectionProxies.put(new Long(currentConnectionId), proxy);
@@ -66,30 +67,49 @@ public class ConnectionGroup {
 		
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.mysql.jdbc.ConnectionGroupMBean#getGroupName()
+	 */
 	public String getGroupName(){
 		return this.groupName;
 	}
 	
-	public List getInitialHostList(){
+	/* (non-Javadoc)
+	 * @see com.mysql.jdbc.ConnectionGroupMBean#getInitialHostList()
+	 */
+	public Collection getInitialHosts(){
 		return this.hostList;
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.mysql.jdbc.ConnectionGroupMBean#getActiveHostCount()
+	 */
 	public int getActiveHostCount(){
 		return this.activeHosts;
 	}
 	
-	public int getTotalHostCount(){
-		return this.totalHosts;
+	
+	public Collection getClosedHosts(){
+		return this.closedHosts;
 	}
 	
 	
+	/* (non-Javadoc)
+	 * @see com.mysql.jdbc.ConnectionGroupMBean#getTotalLogicalConnectionCount()
+	 */
 	public long getTotalLogicalConnectionCount(){
 		return this.connections;
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.mysql.jdbc.ConnectionGroupMBean#getActiveLogicalConnectionCount()
+	 */
 	public long getActiveLogicalConnectionCount(){
 		return this.activeConnections;
 	}
+	/* (non-Javadoc)
+	 * @see com.mysql.jdbc.ConnectionGroupMBean#getActivePhysicalConnectionCount()
+	 */
 	public long getActivePhysicalConnectionCount(){
 		long connections = 0;
 		Map proxyMap = new HashMap();
@@ -108,6 +128,9 @@ public class ConnectionGroup {
 		return connections;
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.mysql.jdbc.ConnectionGroupMBean#getTotalPhysicalConnectionCount()
+	 */
 	public long getTotalPhysicalConnectionCount(){
 		long allConnections = this.closedProxyTotalPhysicalConnections;
 		Map proxyMap = new HashMap();
@@ -126,6 +149,9 @@ public class ConnectionGroup {
 		return allConnections;
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.mysql.jdbc.ConnectionGroupMBean#getTotalTransactionCount()
+	 */
 	public long getTotalTransactionCount(){
 		// need to account for closed connection proxies
 		long transactions = this.closedProxyTotalTransactions;
@@ -154,17 +180,26 @@ public class ConnectionGroup {
 		
 	}
 	
-	public void removeHost(String host){
+	public void removeHost(String host) throws SQLException {
 		removeHost(host, false);
 	}
 	
-	public void removeHost(String host, boolean killExistingConnections) {
+	public void removeHost(String host, boolean killExistingConnections) throws SQLException {
 		this.removeHost(host, killExistingConnections, true);
 
 	}
-	public void removeHost(String host, boolean killExistingConnections, boolean waitForGracefulFailover) {
+	/* (non-Javadoc)
+	 * @see com.mysql.jdbc.ConnectionGroupMBean#removeHost(java.lang.String, boolean, boolean)
+	 */
+	public synchronized void removeHost(String host, boolean killExistingConnections, boolean waitForGracefulFailover) throws SQLException {
+		if(this.activeHosts == 1){
+			throw SQLError.createSQLException("Cannot remove host, only one configured host active.", null);
+		}
+		
 		if(this.hostList.remove(host)){
 			this.activeHosts--;
+		} else {
+			throw SQLError.createSQLException("Host is not configured: " + host, null);
 		}
 		
 		if(killExistingConnections){
@@ -186,6 +221,7 @@ public class ConnectionGroup {
 				}
 			}			
 		}
+		this.closedHosts.add(host);
 	}
 	
 	
@@ -194,12 +230,14 @@ public class ConnectionGroup {
 	}
 	
 	
+	/* (non-Javadoc)
+	 * @see com.mysql.jdbc.ConnectionGroupMBean#addHost(java.lang.String, boolean)
+	 */
 	public void addHost(String host, boolean forExisting){
 		
 		synchronized(this){
 			if(this.hostList.add(host)){
 				this.activeHosts++;
-				this.totalHosts++;
 			}
 		}
 		// all new connections will have this host
