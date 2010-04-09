@@ -41,6 +41,8 @@ public class ConnectionGroupManager {
 
 	private static LoadBalanceConnectionGroupManager mbean = new LoadBalanceConnectionGroupManager();
 	
+	private static boolean hasRegisteredJmx = false;
+	
 	
 	public static synchronized ConnectionGroup getConnectionGroupInstance(String groupName){
 		if(GROUP_MAP.containsKey(groupName)){
@@ -49,6 +51,15 @@ public class ConnectionGroupManager {
 		ConnectionGroup group = new ConnectionGroup(groupName);
 		GROUP_MAP.put(groupName, group);
 		return group;
+	}
+	
+	public static void registerJmx() throws SQLException {
+		if(hasRegisteredJmx){
+			return;
+		}
+		
+		mbean.registerJmx();
+		hasRegisteredJmx = true;
 	}
 	
 	public static ConnectionGroup getConnectionGroup(String groupName){

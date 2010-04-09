@@ -31,19 +31,30 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import com.mysql.jdbc.ConnectionGroupManager;
+import com.mysql.jdbc.SQLError;
 
 public class LoadBalanceConnectionGroupManager implements
 		LoadBalanceConnectionGroupManagerMBean {
 	
+	private boolean isJmxRegistered = false;
+	
 	public LoadBalanceConnectionGroupManager(){
+
+	}
+	
+	public synchronized void registerJmx() throws SQLException {
+		if(this.isJmxRegistered){
+			return;
+		}
 		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
-	      try {
+		  try {
 			ObjectName name = new ObjectName("com.mysql.jdbc.jmx:type=LoadBalanceConnectionGroupManager"); 
 			  mbs.registerMBean(this, name);
+			  this.isJmxRegistered = true;
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw SQLError.createSQLException("Uable to register load-balance management bean with JMX", null, e, null);
 		} 
-
+		
 	}
 
 	public void addHost(String group, String host, boolean forExisting) {

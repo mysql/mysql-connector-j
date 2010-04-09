@@ -2468,5 +2468,62 @@ public class ReplicationConnection implements Connection, PingTarget {
  	public int getMaxAllowedPacket() {
 		return currentConnection.getMaxAllowedPacket();
 	}
+ 	
+	public String getLoadBalanceConnectionGroup() {
+		return currentConnection.getLoadBalanceConnectionGroup();
+	}
+
+	public boolean getLoadBalanceEnableJMX() {
+		return currentConnection.getLoadBalanceEnableJMX();
+	}
+
+	public String getLoadBalanceExceptionChecker() {
+		return currentConnection
+				.getLoadBalanceExceptionChecker();
+	}
+
+	public String getLoadBalanceSQLExceptionSubclassFailover() {
+		return currentConnection
+				.getLoadBalanceSQLExceptionSubclassFailover();
+	}
+
+	public String getLoadBalanceSQLStateFailover() {
+		return currentConnection
+				.getLoadBalanceSQLStateFailover();
+	}
+
+	public void setLoadBalanceConnectionGroup(String loadBalanceConnectionGroup) {
+		currentConnection
+				.setLoadBalanceConnectionGroup(loadBalanceConnectionGroup);
+		
+	}
+
+	public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
+		currentConnection
+				.setLoadBalanceEnableJMX(loadBalanceEnableJMX);
+		
+	}
+
+	public void setLoadBalanceExceptionChecker(
+			String loadBalanceExceptionChecker) {
+		currentConnection
+				.setLoadBalanceExceptionChecker(loadBalanceExceptionChecker);
+		
+	}
+
+	public void setLoadBalanceSQLExceptionSubclassFailover(
+			String loadBalanceSQLExceptionSubclassFailover) {
+		currentConnection
+				.setLoadBalanceSQLExceptionSubclassFailover(loadBalanceSQLExceptionSubclassFailover);
+		
+	}
+
+	public void setLoadBalanceSQLStateFailover(
+			String loadBalanceSQLStateFailover) {
+		currentConnection
+				.setLoadBalanceSQLStateFailover(loadBalanceSQLStateFailover);
+		
+	}
+	
 
 }

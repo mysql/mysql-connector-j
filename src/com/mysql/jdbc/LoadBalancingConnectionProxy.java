@@ -165,9 +165,24 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	LoadBalancingConnectionProxy(List hosts, Properties props)
 			throws SQLException {
 		String group = props.getProperty("loadBalanceConnectionGroup",
-		null);
+				null);
+		boolean enableJMX = false;
+		String enableJMXAsString = props.getProperty("loadBalanceEnableJMX",
+				"false");
+		try{
+			enableJMX = Boolean.parseBoolean(enableJMXAsString);
+		} catch (Exception e){
+			throw SQLError.createSQLException(Messages.getString(
+					"LoadBalancingConnectionProxy.badValueForLoadBalanceEnableJMX",
+					new Object[] { enableJMXAsString }),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);			
+		}
+		
 		if(group != null){
 			this.connectionGroup = ConnectionGroupManager.getConnectionGroupInstance(group);
+			if(enableJMX){
+				ConnectionGroupManager.registerJmx();
+			}
 			this.connectionGroupProxyID = this.connectionGroup.registerConnectionProxy(this, hosts);
 			hosts = new ArrayList(this.connectionGroup.getInitialHosts());
 		}
