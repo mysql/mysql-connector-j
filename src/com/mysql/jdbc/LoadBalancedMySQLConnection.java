@@ -2425,4 +2425,61 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 				.getHoldResultsOpenOverStatementClose();
 	}
 
+	public String getLoadBalanceConnectionGroup() {
+		return getActiveMySQLConnection().getLoadBalanceConnectionGroup();
+	}
+
+	public boolean getLoadBalanceEnableJMX() {
+		return getActiveMySQLConnection().getLoadBalanceEnableJMX();
+	}
+
+	public String getLoadBalanceExceptionChecker() {
+		return getActiveMySQLConnection()
+				.getLoadBalanceExceptionChecker();
+	}
+
+	public String getLoadBalanceSQLExceptionSubclassFailover() {
+		return getActiveMySQLConnection()
+				.getLoadBalanceSQLExceptionSubclassFailover();
+	}
+
+	public String getLoadBalanceSQLStateFailover() {
+		return getActiveMySQLConnection()
+				.getLoadBalanceSQLStateFailover();
+	}
+
+	public void setLoadBalanceConnectionGroup(String loadBalanceConnectionGroup) {
+		getActiveMySQLConnection()
+				.setLoadBalanceConnectionGroup(loadBalanceConnectionGroup);
+		
+	}
+
+	public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
+		getActiveMySQLConnection()
+				.setLoadBalanceEnableJMX(loadBalanceEnableJMX);
+		
+	}
+
+	public void setLoadBalanceExceptionChecker(
+			String loadBalanceExceptionChecker) {
+		getActiveMySQLConnection()
+				.setLoadBalanceExceptionChecker(loadBalanceExceptionChecker);
+		
+	}
+
+	public void setLoadBalanceSQLExceptionSubclassFailover(
+			String loadBalanceSQLExceptionSubclassFailover) {
+		getActiveMySQLConnection()
+				.setLoadBalanceSQLExceptionSubclassFailover(loadBalanceSQLExceptionSubclassFailover);
+		
+	}
+
+	public void setLoadBalanceSQLStateFailover(
+			String loadBalanceSQLStateFailover) {
+		getActiveMySQLConnection()
+				.setLoadBalanceSQLStateFailover(loadBalanceSQLStateFailover);
+		
+	}
+	
+
 }

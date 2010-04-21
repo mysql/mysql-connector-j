@@ -29,6 +29,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -62,6 +63,13 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		PingTarget {
 
 	private static Method getLocalTimeMethod;
+	
+	private long totalPhysicalConnections = 0;
+	private long activePhysicalConnections = 0;
+	private String hostToRemove = null;
+	private long lastUsed = 0;
+	private long transactionCount = 0;
+	private ConnectionGroup connectionGroup = null;
 
 	public static final String BLACKLIST_TIMEOUT_PROPERTY_KEY = "loadBalanceBlacklistTimeout";
 
@@ -132,11 +140,16 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 	private int globalBlacklistTimeout = 0;
 	
+	private long connectionGroupProxyID = 0;
+
+	private LoadBalanceExceptionChecker exceptionChecker;
+
 	private Map jdbcInterfacesForProxyCache = new HashMap();
 	
 	private MySQLConnection thisAsConnection = null;
 	
 	
+
 
 
 
@@ -151,6 +164,29 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	 */
 	LoadBalancingConnectionProxy(List hosts, Properties props)
 			throws SQLException {
+		String group = props.getProperty("loadBalanceConnectionGroup",
+				null);
+		boolean enableJMX = false;
+		String enableJMXAsString = props.getProperty("loadBalanceEnableJMX",
+				"false");
+		try{
+			enableJMX = Boolean.parseBoolean(enableJMXAsString);
+		} catch (Exception e){
+			throw SQLError.createSQLException(Messages.getString(
+					"LoadBalancingConnectionProxy.badValueForLoadBalanceEnableJMX",
+					new Object[] { enableJMXAsString }),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);			
+		}
+		
+		if(group != null){
+			this.connectionGroup = ConnectionGroupManager.getConnectionGroupInstance(group);
+			if(enableJMX){
+				ConnectionGroupManager.registerJmx();
+			}
+			this.connectionGroupProxyID = this.connectionGroup.registerConnectionProxy(this, hosts);
+			hosts = new ArrayList(this.connectionGroup.getInitialHosts());
+		}
+		
 		this.hostList = hosts;
 
 		int numHosts = this.hostList.size();
@@ -177,6 +213,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		String strategy = this.localProps.getProperty("loadBalanceStrategy",
 				"random");
+		
+		String lbExceptionChecker = this.localProps.getProperty("loadBalanceExceptionChecker",
+		"com.mysql.jdbc.StandardLoadBalanceExceptionChecker");
+
 
 		String retriesAllDownAsString = this.localProps.getProperty(
 				"retriesAllDown", "120");
@@ -220,10 +260,18 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		this.balancer.init(null, props);
 		
+
+		this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props,
+				lbExceptionChecker, "InvalidLoadBalanceExceptionChecker", null).get(0);
+		this.exceptionChecker.init(null, props);
+
 		thisAsConnection = new LoadBalancedMySQLConnection(this);
-		
+
 		
 		pickNewConnection();
+		
+		
+		
 	}
 
 	/**
@@ -277,8 +325,11 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		this.liveConnections.put(hostPortSpec, conn);
 		this.connectionsToHostsMap.put(conn, hostPortSpec);
 		
+
+		this.activePhysicalConnections++;
+		this.totalPhysicalConnections++;
+
 		conn.setProxy(this.thisAsConnection);
-		
 
 		return conn;
 	}
@@ -347,6 +398,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 			while (allConnections.hasNext()) {
 				try {
+					this.activePhysicalConnections--;
 					((Connection) allConnections.next()).close();
 				} catch (SQLException e) {
 				}
@@ -354,6 +406,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 			if (!this.isClosed) {
 				this.balancer.destroy();
+				if(this.connectionGroup != null){
+					this.connectionGroup.closeConnectionProxy(this);
+				}
 			}
 
 			this.liveConnections.clear();
@@ -410,11 +465,13 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		if (!inTransaction) {
 			this.inTransaction = true;
 			this.transactionStartTime = getLocalTimeBestResolution();
+			this.transactionCount++;
 		}
 
 		Object result = null;
 
 		try {
+			this.lastUsed = System.currentTimeMillis();
 			result = method.invoke(thisAsConnection, args);
 
 			if (result != null) {
@@ -437,12 +494,14 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 				// connectionsToHostsMap
 				// in invalidateCurrenctConnection()
 				if (host != null) {
-					int hostIndex = ((Integer) this.hostsToListIndexMap
-							.get(host)).intValue();
-
 					synchronized (this.responseTimes) {
-						this.responseTimes[hostIndex] = getLocalTimeBestResolution()
-								- this.transactionStartTime;
+						int hostIndex = ((Integer) this.hostsToListIndexMap
+								.get(host)).intValue();
+
+						if(hostIndex < this.responseTimes.length){
+							this.responseTimes[hostIndex] = getLocalTimeBestResolution()
+									- this.transactionStartTime;
+						}
 					}
 				}
 				pickNewConnection();
@@ -464,7 +523,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 					.unmodifiableList(this.hostList), Collections
 					.unmodifiableMap(this.liveConnections),
 					(long[]) this.responseTimes.clone(), this.retriesAllDown);
-	
 			return;
 		}
 		
@@ -605,6 +663,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 					}
 					foundHost = true;
 				} catch (SQLException e) {
+					this.activePhysicalConnections--;
 					// give up if it is the current connection, otherwise NPE
 					// faking resultset later.
 					if (host.equals(this.connectionsToHostsMap
@@ -655,13 +714,18 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		}
 	}
 
-	public void addToGlobalBlacklist(String host) {
+	public void addToGlobalBlacklist(String host, long timeout) {
 		if (this.isGlobalBlacklistEnabled()) {
 			synchronized (globalBlacklist) {
-				globalBlacklist.put(host, new Long(System.currentTimeMillis()
-						+ this.globalBlacklistTimeout));
+				globalBlacklist.put(host, new Long(timeout));
 			}
 		}
+	}
+	
+	public void addToGlobalBlacklist(String host){
+		addToGlobalBlacklist(host, System.currentTimeMillis()
+						+ this.globalBlacklistTimeout);
+		
 	}
 
 	public boolean isGlobalBlacklistEnabled() {
@@ -670,6 +734,12 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 	public Map getGlobalBlacklist() {
 		if (!this.isGlobalBlacklistEnabled()) {
+			String localHostToRemove = this.hostToRemove;
+			if(hostToRemove != null){
+				HashMap fakedBlacklist = new HashMap();
+				fakedBlacklist.put(localHostToRemove, new Long(System.currentTimeMillis() + 5000));
+				return fakedBlacklist;
+			}
 			return new HashMap(1);
 		}
 
@@ -709,23 +779,106 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			}
 
 		}
-
+		
 		return blacklistClone;
 	}
 
 	public boolean shouldExceptionTriggerFailover(SQLException ex){
-		String sqlState = ex.getSQLState();
-
-		if (sqlState != null) {
-			if (sqlState.startsWith("08")) {
-				// connection error
-				return true;
-			}
-		}
-		if(ex instanceof CommunicationsException){
-			return true;
-		}
-		return false;
+		return this.exceptionChecker.shouldExceptionTriggerFailover(ex);
 		
 	}
+	
+	public void removeHostWhenNotInUse(String host) throws SQLException {
+		int timeBetweenChecks = 1000;
+		long timeBeforeHardFail = 15000;
+		addToGlobalBlacklist(host, timeBeforeHardFail + 1000);
+		long cur = System.currentTimeMillis();
+		while(System.currentTimeMillis() - timeBeforeHardFail < cur){
+			synchronized (this){
+				this.hostToRemove = host;
+				if(!host.equals(this.currentConn.getHost())){
+					removeHost(host);
+					return;
+				}
+			}
+			try {
+				Thread.currentThread().sleep(timeBetweenChecks);
+			} catch (InterruptedException e) {
+				// better to swallow this and retry.
+			}
+			
+		}
+		removeHost(host);
+	}
+	
+	public void removeHost(String host) throws SQLException {
+		synchronized(this){
+			if(this.connectionGroup != null){
+				if(this.connectionGroup.getInitialHosts().size() == 1 && this.connectionGroup.getInitialHosts().contains(host)){
+					throw SQLError.createSQLException("Cannot remove only configured host.", null);
+				}
+			}
+			this.hostToRemove = host;
+			if(host.equals(this.currentConn.getHost())){
+				closeAllConnections();
+			} else {
+				this.connectionsToHostsMap.remove(this.liveConnections.remove(host));
+				Integer idx = (Integer) this.hostsToListIndexMap.remove(host);
+				long[] newResponseTimes = new long[this.responseTimes.length - 1];
+				int newIdx = 0;
+				for(Iterator i = this.hostList.iterator(); i.hasNext(); newIdx++){
+					String copyHost = i.next().toString();
+					if(idx != null && idx.intValue() < this.responseTimes.length){
+						newResponseTimes[newIdx] = this.responseTimes[idx.intValue()];
+						this.hostsToListIndexMap.put(copyHost, new Integer(newIdx));
+					}
+				}
+				this.responseTimes = newResponseTimes;
+			}
+		}
+		
+	}
+	
+	public synchronized boolean addHost(String host){
+		synchronized(this){
+			if(this.hostsToListIndexMap.containsKey(host)){
+				return false;
+			}
+			long[] newResponseTimes = new long[this.responseTimes.length + 1];
+			for(int i = 0; i < this.responseTimes.length; i++){
+				newResponseTimes[i] = this.responseTimes[i];
+			}
+			this.responseTimes = newResponseTimes;
+			this.hostList.add(host);
+			this.hostsToListIndexMap.put(host, new Integer(this.responseTimes.length - 1));
+		}
+		return true;
+	}
+	
+
+	
+	public long getLastUsed(){
+		return this.lastUsed;
+	}
+	
+	public boolean inTransaction(){
+		return this.inTransaction;
+	}
+	
+	public long getTransactionCount(){
+		return this.transactionCount;
+	}
+	
+	public long getActivePhysicalConnectionCount(){
+		return this.activePhysicalConnections;
+	}
+	public long getTotalPhysicalConnectionCount(){
+		return this.totalPhysicalConnections;
+	}
+	
+	public long getConnectionGroupProxyID(){
+		return this.connectionGroupProxyID;
+	}
+		
+	
 }

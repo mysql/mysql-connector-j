@@ -64,6 +64,9 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 
 		for (int attempts = 0; attempts < numRetries;) {
 			int random = (int) Math.floor((Math.random() * whiteList.size()));
+			if(whiteList.size() == 0){
+				throw SQLError.createSQLException("No hosts configured", null);
+			}
 
 			String hostPortSpec = (String) whiteList.get(random);
 

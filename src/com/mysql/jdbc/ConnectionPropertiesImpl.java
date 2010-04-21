@@ -1,6 +1,5 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008-2010 Sun Microsystems
- All rights reserved. Use is subject to license terms.
+  Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
   like most MySQL Connectors. There are special exceptions to the
@@ -21,9 +20,8 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   02110-1301 USA
-
+ 
  */
-
 package com.mysql.jdbc;
 
 import java.io.Serializable;
@@ -1040,6 +1038,38 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			false,
 			Messages.getString("ConnectionProperties.loadBalanceValidateConnectionOnSwapServer"), //$NON-NLS-1$
 			"5.1.13", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+	
+	private StringConnectionProperty loadBalanceConnectionGroup = new StringConnectionProperty(
+			"loadBalanceConnectionGroup", //$NON-NLS-1$
+			null, //$NON-NLS-1$ //$NON-NLS-2$
+			Messages.getString("ConnectionProperties.loadBalanceConnectionGroup"), //$NON-NLS-1$
+			"5.1.13", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+	
+	private StringConnectionProperty loadBalanceExceptionChecker = new StringConnectionProperty(
+			"loadBalanceExceptionChecker", //$NON-NLS-1$
+			"com.mysql.jdbc.StandardLoadBalanceExceptionChecker", //$NON-NLS-1$
+			null, //$NON-NLS-1$ //$NON-NLS-2$
+			Messages.getString("ConnectionProperties.loadBalanceExceptionChecker"), //$NON-NLS-1$
+			"5.1.13", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+	
+	private StringConnectionProperty loadBalanceSQLStateFailover = new StringConnectionProperty(
+			"loadBalanceSQLStateFailover", //$NON-NLS-1$
+			null, //$NON-NLS-1$ //$NON-NLS-2$
+			Messages.getString("ConnectionProperties.loadBalanceSQLStateFailover"), //$NON-NLS-1$
+			"5.1.13", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+	
+	private StringConnectionProperty loadBalanceSQLExceptionSubclassFailover = new StringConnectionProperty(
+			"loadBalanceSQLExceptionSubclassFailover", //$NON-NLS-1$
+			null, //$NON-NLS-1$ //$NON-NLS-2$
+			Messages.getString("ConnectionProperties.loadBalanceSQLExceptionSubclassFailover"), //$NON-NLS-1$
+			"5.1.13", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+	
+	private BooleanConnectionProperty loadBalanceEnableJMX = new BooleanConnectionProperty(
+			"loadBalanceEnableJMX", //$NON-NLS-1$
+			false,
+			Messages.getString("ConnectionProperties.loadBalanceEnableJMX"), //$NON-NLS-1$
+			"5.1.13", MISC_CATEGORY, Integer.MAX_VALUE); //$NON-NLS-1$
+	
 	
 	private StringConnectionProperty localSocketAddress = new StringConnectionProperty("localSocketAddress", //$NON-NLS-1$
 			null, Messages.getString("ConnectionProperties.localSocketAddress"), //$NON-NLS-1$
@@ -4514,4 +4544,45 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		this.loadBalanceValidateConnectionOnSwapServer.setValue(loadBalanceValidateConnectionOnSwapServer);
 		
 	}
+	
+	public String getLoadBalanceConnectionGroup() {
+		return loadBalanceConnectionGroup.getValueAsString();
+	}
+
+	public void setLoadBalanceConnectionGroup(String loadBalanceConnectionGroup) {
+		this.loadBalanceConnectionGroup.setValue(loadBalanceConnectionGroup);
+	}
+
+	public String getLoadBalanceExceptionChecker() {
+		return loadBalanceExceptionChecker.getValueAsString();
+	}
+
+	public void setLoadBalanceExceptionChecker(String loadBalanceExceptionChecker) {
+		this.loadBalanceExceptionChecker.setValue(loadBalanceExceptionChecker);
+	}
+
+	public String getLoadBalanceSQLStateFailover() {
+		return loadBalanceSQLStateFailover.getValueAsString();
+	}
+
+	public void setLoadBalanceSQLStateFailover(String loadBalanceSQLStateFailover) {
+		this.loadBalanceSQLStateFailover.setValue(loadBalanceSQLStateFailover);
+	}
+
+	public String getLoadBalanceSQLExceptionSubclassFailover() {
+		return loadBalanceSQLExceptionSubclassFailover.getValueAsString();
+	}
+
+	public void setLoadBalanceSQLExceptionSubclassFailover(String loadBalanceSQLExceptionSubclassFailover) {
+		this.loadBalanceSQLExceptionSubclassFailover.setValue(loadBalanceSQLExceptionSubclassFailover);
+	}
+
+	public boolean getLoadBalanceEnableJMX() {
+		return loadBalanceEnableJMX.getValueAsBoolean();
+	}
+
+	public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
+		this.loadBalanceEnableJMX.setValue(loadBalanceEnableJMX);
+	}
+
 }

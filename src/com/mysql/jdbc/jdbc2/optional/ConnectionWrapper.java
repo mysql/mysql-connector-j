@@ -2664,6 +2664,62 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
    public int getMaxAllowedPacket() {
 		return this.mc.getMaxAllowedPacket();
 	}
+   
+	public String getLoadBalanceConnectionGroup() {
+		return this.mc.getLoadBalanceConnectionGroup();
+	}
+
+	public boolean getLoadBalanceEnableJMX() {
+		return this.mc.getLoadBalanceEnableJMX();
+	}
+
+	public String getLoadBalanceExceptionChecker() {
+		return this.mc
+				.getLoadBalanceExceptionChecker();
+	}
+
+	public String getLoadBalanceSQLExceptionSubclassFailover() {
+		return this.mc
+				.getLoadBalanceSQLExceptionSubclassFailover();
+	}
+
+	public String getLoadBalanceSQLStateFailover() {
+		return this.mc
+				.getLoadBalanceSQLStateFailover();
+	}
+
+	public void setLoadBalanceConnectionGroup(String loadBalanceConnectionGroup) {
+		this.mc
+				.setLoadBalanceConnectionGroup(loadBalanceConnectionGroup);
+		
+	}
+
+	public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
+		this.mc
+				.setLoadBalanceEnableJMX(loadBalanceEnableJMX);
+		
+	}
+
+	public void setLoadBalanceExceptionChecker(
+			String loadBalanceExceptionChecker) {
+		this.mc
+				.setLoadBalanceExceptionChecker(loadBalanceExceptionChecker);
+		
+	}
+
+	public void setLoadBalanceSQLExceptionSubclassFailover(
+			String loadBalanceSQLExceptionSubclassFailover) {
+		this.mc
+				.setLoadBalanceSQLExceptionSubclassFailover(loadBalanceSQLExceptionSubclassFailover);
+		
+	}
+
+	public void setLoadBalanceSQLStateFailover(
+			String loadBalanceSQLStateFailover) {
+		this.mc
+				.setLoadBalanceSQLStateFailover(loadBalanceSQLStateFailover);
+		
+	}
 
 
 }
