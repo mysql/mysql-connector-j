@@ -59,6 +59,30 @@ nn-nn-10 - Version 5.1.13
 
     - More aggressively purge the statement timeout timers after they've been cancelled to
       trade time for memory. This purge only happens if statement timeouts are in use.
+      
+    - Added management of running load-balanced connections.  Statistics can be obtained,
+      and hosts added/dropped via com.mysql.jdbc.ConnectionGroupManager or the JMX
+      implementation.  This functionality is enabled by setting the new paramenter,
+      loadBalanceConnectionGroup to the name of the logical grouping of connections.
+      All load-balanced connections sharing the same loadBalanceConnectionGroup value,
+      regardless of how the application creates them, will be managed together.  To
+      enable JMX-based management, set loadBalanceEnableJMX=true and ensure that remote
+      JMX is enabled in the JRE (eg, use -Dcom.sun.management.jmxremote).
+      
+    - Added loadBalanceExceptionChecker property, which takes a fully-qualified class
+      name implementing com.mysql.jdbc.LoadBalancedExceptionChecker interface.  This
+      allows custom evaluation of SQLExceptions thrown to determine whether they should
+      trigger failover to an alternate host in load-balanced deployments.  The default
+      is com.mysql.jdbc.StandardLoadBalanceExceptionChecker.
+      
+    - Added two new properties which allow more flexibility in determining which
+      SQLExceptions should trigger failover in a load-balanced deployment.  The new
+      loadBalanceSQLStateFailover property takes a comma-delimited list of SQLState
+      codes which are compared to the SQLState of the SQLException (matching done
+      with trailing wildcard), while loadBalanceSQLExceptionSubclassFailover takes
+      a comma-delimited list of fully-qualified class/interface names, against
+      which the SQLException is checked to determine if it is an instance of any.
+      Matches trigger failover to an alternate host.
     
 02-18-10 - Version 5.1.12
 
