@@ -3,6 +3,9 @@
 
 nn-nn-10 - Version 5.1.13
 
+	- Minor fix in previous patch for Bug#51904. Function ConnectionImpl.setCatalog() was passed quoted
+	  argument thus breaking with "...for the right syntax to use near 'test``'"
+	  
 	- Fix for Bug#51912 - Passing NULL as cat. param to getProcedureColumns with !nullCatalogMeansCurrent
 	
 	- Fix for Bug#52167 - Can't parse parameter list with special characters inside

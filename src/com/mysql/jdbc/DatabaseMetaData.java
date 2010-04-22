@@ -1517,7 +1517,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				ResultSet rs = null;
 				
 				try {
-					this.conn.setCatalog(catalog);
+					this.conn.setCatalog(catalog.replaceAll(quoteChar, ""));
 					rs = paramRetrievalStmt.executeQuery("SELECT DATABASE()");
 					rs.next();
 					
