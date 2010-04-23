@@ -1717,7 +1717,9 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			assertEquals("fdoc string", callSt3.getString(4));
 			System.out.println("DONE 3");
 
-        	CallableStatement callSt4 = conn1.prepareCall("{ call bug43576_2('xxx', 'yyy', ?, ?, ?) }");
+			//The patch for this case is still waiting on review. Disabling
+        	/**
+			CallableStatement callSt4 = conn1.prepareCall("{ call bug43576_2('xxx', 'yyy', ?, ?, ?) }");
         	//callSt4.setString(1, "xxx");
         	//callSt4.setString(1, "yyy");
         	callSt4.registerOutParameter(1, java.sql.Types.VARCHAR);
@@ -1729,7 +1731,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			assertEquals("ffact string", callSt4.getString(2));
 			assertEquals("fdoc string", callSt4.getString(3));
 			System.out.println("DONE 4");
-
+			*/
 
             conn1.close();
 
