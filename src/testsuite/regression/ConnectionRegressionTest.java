@@ -609,7 +609,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			String originalConnectionId = getSingleIndexedValueWithQuery(
 					failoverConnection, 1, "SELECT CONNECTION_ID()").toString();
 			
-			for (int i = 0; i < 49; i++) {
+			for (int i = 0; i < 50; i++) {
 				failoverConnection.createStatement().executeQuery("SELECT 1");
 			}
 

@@ -116,7 +116,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 	protected List hostList;
 
-	private Map liveConnections;
+	protected Map liveConnections;
 
 	private Map connectionsToHostsMap;
 

@@ -26,9 +26,12 @@
 
 package com.mysql.jdbc;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
@@ -75,8 +78,30 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 			Object toProxy) {
 		return new FailoverInvocationHandler(toProxy);
 	}
-	
-	
+
+	// slightly different behavior than load balancing, we only pick a new
+	// connection if we've issued enough queries or enough time has passed
+	// since we failed over, and that's all handled in pickNewConnection().
+	void dealWithInvocationException(InvocationTargetException e)
+			throws SQLException, Throwable, InvocationTargetException {
+		Throwable t = e.getTargetException();
+
+		if (t != null) {
+			if (failedOver) { // try and fall back
+				createPrimaryConnection();
+				
+				if (this.currentConn != null) {
+					throw t;
+				}
+			}
+			
+			failOver();
+			
+			throw t;
+		}
+
+		throw e;
+	}
 
 	public Object invoke(Object proxy, Method method, Object[] args)
 			throws Throwable {
@@ -92,8 +117,13 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 			if (failedOver) {
 				return null; // no-op when failed over
 			}
+		} else if ("setAutoCommit".equals(methodName) && failedOver && 
+				shouldFallBack() && Boolean.TRUE.equals(args[0]) && failedOver) {
+			createPrimaryConnection();
+			
+			return super.invoke(proxy, method, args);
 		}
-		
+
 		return super.invoke(proxy, method, args);
 	}
 
@@ -131,6 +161,21 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 			if (this.currentConn != null) {
 				return;
 			}
+		}
+		
+		failOver();
+	}
+
+	private void failOver() throws SQLException {
+		if (failedOver) {
+			Iterator iter = liveConnections.entrySet().iterator();
+			
+			while (iter.hasNext()) {
+				Map.Entry entry = ((Map.Entry)iter.next());
+					((Connection)entry.getValue()).close();
+			}
+			
+			liveConnections.clear();
 		}
 		
 		super.pickNewConnection();

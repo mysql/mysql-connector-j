@@ -343,7 +343,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
 		// People tend to drop this in, it doesn't make sense
 		parsedProps.remove("roundRobinLoadBalance");
-
+		parsedProps.setProperty("autoReconnect", "false");
+		
 		if (parsedProps == null) {
 			return null;
 		}
