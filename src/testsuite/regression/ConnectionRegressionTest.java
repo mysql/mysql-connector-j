@@ -2754,11 +2754,18 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		props.setProperty("loadBalanceBlacklistTimeout", "5000");
 		props.setProperty("loadBalancePingTimeout", "100");
 		props.setProperty("loadBalanceValidateConnectionOnSwapServer", "true");
-		ForcedLoadBalanceStrategy.forceFutureServer("first:3306", -1);
+		
+		String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		
+		if (portNumber == null) {
+			portNumber = "3306";
+		}
+		
+		ForcedLoadBalanceStrategy.forceFutureServer("first:" + portNumber, -1);
 		Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
 		conn2.setAutoCommit(false);
 		conn2.createStatement().execute("SELECT 1");
-		ForcedLoadBalanceStrategy.forceFutureServer("second:3306", -1);
+		ForcedLoadBalanceStrategy.forceFutureServer("second:" + portNumber, -1);
 		UnreliableSocketFactory.downHost("second");
 		try{
 			conn2.commit();  // will be on second after this
@@ -2773,11 +2780,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		props.setProperty("loadBalanceBlacklistTimeout", "5000");
 		props.setProperty("loadBalancePingTimeout", "100");
 		props.setProperty("loadBalanceValidateConnectionOnSwapServer", "false");
-		ForcedLoadBalanceStrategy.forceFutureServer("first:3306", -1);
+		ForcedLoadBalanceStrategy.forceFutureServer("first:" + portNumber, -1);
 		conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
 		conn2.setAutoCommit(false);
 		conn2.createStatement().execute("SELECT 1");
-		ForcedLoadBalanceStrategy.forceFutureServer("second:3306", 1);
+		ForcedLoadBalanceStrategy.forceFutureServer("second:" + portNumber, 1);
 		UnreliableSocketFactory.downHost("second");
 		try{
 			conn2.commit();  // will be on second after this
