@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -2226,6 +2227,12 @@ public class StatementRegressionTest extends BaseTestCase {
 			return; // test not valid on JDK-1.3.1
 		}
 
+		try {
+			"".getBytes("Windows-31J");
+		} catch (UnsupportedEncodingException ex) {
+			return; // test doesn't work on this platform
+		}
+		
 		Connection sjisConn = null;
 		Connection windows31JConn = null;
 
@@ -6024,6 +6031,12 @@ public class StatementRegressionTest extends BaseTestCase {
 	 * Bug #41730 - SQL Injection when using U+00A5 and SJIS/Windows-31J
 	 */
 	public void testBug41730() throws Exception {
+		try {
+			"".getBytes("sjis");
+		} catch (UnsupportedEncodingException ex) {
+			return; // test doesn't work on this platform
+		}
+		
 		Connection conn2 = null;
 		PreparedStatement pstmt2 = null;
 		try {
