@@ -320,7 +320,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
 		int numHosts = Integer.parseInt(parsedProps.getProperty(NUM_HOSTS_PROPERTY_KEY));
 
-		List hostList = new ArrayList();
+		List<String> hostList = new ArrayList<String>();
 
 		for (int i = 0; i < numHosts; i++) {
 			int index = i + 1;
@@ -352,8 +352,8 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		int numHosts = Integer.parseInt(parsedProps
 				.getProperty(NUM_HOSTS_PROPERTY_KEY));
 
-		List hostList = new ArrayList();
-
+		List<String> hostList = new ArrayList<String>();
+		
 		for (int i = 0; i < numHosts; i++) {
 			int index = i + 1;
 

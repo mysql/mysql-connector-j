@@ -64,7 +64,7 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 	long queriesIssuedFailedOver;
 	private int secondsBeforeRetryMaster;
 	
-	FailoverConnectionProxy(List hosts, Properties props) throws SQLException {
+	FailoverConnectionProxy(List<String> hosts, Properties props) throws SQLException {
 		super(hosts, props);
 		ConnectionPropertiesImpl connectionProps = new ConnectionPropertiesImpl();
 		connectionProps.initializeProperties(props);
@@ -168,11 +168,11 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 
 	private void failOver() throws SQLException {
 		if (failedOver) {
-			Iterator iter = liveConnections.entrySet().iterator();
+			Iterator<Map.Entry<String,ConnectionImpl>> iter = liveConnections.entrySet().iterator();
 			
 			while (iter.hasNext()) {
-				Map.Entry entry = ((Map.Entry)iter.next());
-					((Connection)entry.getValue()).close();
+				Map.Entry<String,ConnectionImpl> entry = iter.next();
+					entry.getValue().close();
 			}
 			
 			liveConnections.clear();

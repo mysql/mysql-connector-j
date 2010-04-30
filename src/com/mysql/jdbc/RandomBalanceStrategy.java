@@ -46,20 +46,20 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 	}
 
 	public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy,
-			List configuredHosts, Map liveConnections, long[] responseTimes,
+			List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections, long[] responseTimes,
 			int numRetries) throws SQLException {
 		int numHosts = configuredHosts.size();
 
 		SQLException ex = null;
 
-		List whiteList = new ArrayList(numHosts);
+		List<String> whiteList = new ArrayList<String>(numHosts);
 		whiteList.addAll(configuredHosts);
 		
-		Map blackList = proxy.getGlobalBlacklist();
+		Map<String, Long> blackList = proxy.getGlobalBlacklist();
 
 		whiteList.removeAll(blackList.keySet());
 		
-		Map whiteListMap = this.getArrayIndexMap(whiteList);
+		Map<String, Integer> whiteListMap = this.getArrayIndexMap(whiteList);
 		
 
 		for (int attempts = 0; attempts < numRetries;) {
@@ -68,9 +68,9 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 				throw SQLError.createSQLException("No hosts configured", null);
 			}
 
-			String hostPortSpec = (String) whiteList.get(random);
+			String hostPortSpec = whiteList.get(random);
 
-			ConnectionImpl conn = (ConnectionImpl) liveConnections.get(hostPortSpec);
+			ConnectionImpl conn = liveConnections.get(hostPortSpec);
 
 			if (conn == null) {
 				try {
@@ -80,8 +80,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 
 					if (proxy.shouldExceptionTriggerFailover(sqlEx)) {
 
-						Integer whiteListIndex = (Integer) whiteListMap
-								.get(hostPortSpec);
+						Integer whiteListIndex = whiteListMap.get(hostPortSpec);
 
 						// exclude this host from being picked again
 						if (whiteListIndex != null) {
@@ -98,7 +97,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 							}
 
 							// start fresh
-							whiteListMap = new HashMap(numHosts);
+							whiteListMap = new HashMap<String, Integer>(numHosts);
 							whiteList.addAll(configuredHosts);
 							blackList = proxy.getGlobalBlacklist();
 
@@ -123,8 +122,8 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 		return null; // we won't get here, compiler can't tell
 	}
 	
-	private Map getArrayIndexMap(List l) {
-		Map m = new HashMap(l.size());
+	private Map<String, Integer> getArrayIndexMap(List<String> l) {
+		Map<String, Integer> m = new HashMap<String, Integer>(l.size());
 		for (int i = 0; i < l.size(); i++) {
 			m.put(l.get(i), new Integer(i));
 		}

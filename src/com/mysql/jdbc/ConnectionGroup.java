@@ -37,26 +37,26 @@ public class ConnectionGroup {
 	private String groupName;
 	private long connections = 0;
 	private long activeConnections = 0;
-	private HashMap connectionProxies = new HashMap();
-	private Set hostList = new HashSet();
+	private HashMap<Long, LoadBalancingConnectionProxy> connectionProxies = new HashMap<Long, LoadBalancingConnectionProxy>();
+	private Set<String> hostList = new HashSet<String>();
 	private boolean isInitialized = false;
 	private long closedProxyTotalPhysicalConnections = 0;
 	private long closedProxyTotalTransactions = 0;
 	private int activeHosts = 0;
-	private Set closedHosts = new HashSet();
+	private Set<String> closedHosts = new HashSet<String>();
 
 	ConnectionGroup(String groupName){
 		this.groupName = groupName;
 	}
 	
-	public long registerConnectionProxy(LoadBalancingConnectionProxy proxy, List hostList){
+	public long registerConnectionProxy(LoadBalancingConnectionProxy proxy, List<String> localHostList){
 		long currentConnectionId;
 
 		synchronized (this){
 			if(!this.isInitialized){
-				this.hostList.addAll(hostList);
+				this.hostList.addAll(localHostList);
 				this.isInitialized = true;
-				this.activeHosts = hostList.size();
+				this.activeHosts = localHostList.size();
 			}
 			currentConnectionId = ++connections;
 			this.connectionProxies.put(new Long(currentConnectionId), proxy);
@@ -77,7 +77,7 @@ public class ConnectionGroup {
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.ConnectionGroupMBean#getInitialHostList()
 	 */
-	public Collection getInitialHosts(){
+	public Collection<String> getInitialHosts(){
 		return this.hostList;
 	}
 	
@@ -89,7 +89,7 @@ public class ConnectionGroup {
 	}
 	
 	
-	public Collection getClosedHosts(){
+	public Collection<String> getClosedHosts(){
 		return this.closedHosts;
 	}
 	
@@ -112,16 +112,13 @@ public class ConnectionGroup {
 	 */
 	public long getActivePhysicalConnectionCount(){
 		long connections = 0;
-		Map proxyMap = new HashMap();
+		Map<Long, LoadBalancingConnectionProxy> proxyMap = new HashMap<Long, LoadBalancingConnectionProxy>();
 		synchronized(this.connectionProxies){
 			proxyMap.putAll(this.connectionProxies);
 		}
-		
-		Set proxyKeys = proxyMap.keySet();
-		
-		Iterator i = proxyKeys.iterator();
+		Iterator<Map.Entry<Long, LoadBalancingConnectionProxy>> i = proxyMap.entrySet().iterator();
 		while(i.hasNext()){
-			LoadBalancingConnectionProxy proxy = (LoadBalancingConnectionProxy) proxyMap.get(i.next());
+			LoadBalancingConnectionProxy proxy = i.next().getValue();
 			connections += proxy.getActivePhysicalConnectionCount();
 			
 		}
@@ -133,16 +130,13 @@ public class ConnectionGroup {
 	 */
 	public long getTotalPhysicalConnectionCount(){
 		long allConnections = this.closedProxyTotalPhysicalConnections;
-		Map proxyMap = new HashMap();
+		Map<Long, LoadBalancingConnectionProxy> proxyMap = new HashMap<Long, LoadBalancingConnectionProxy>();
 		synchronized(this.connectionProxies){
 			proxyMap.putAll(this.connectionProxies);
 		}
-		
-		Set proxyKeys = proxyMap.keySet();
-		
-		Iterator i = proxyKeys.iterator();
+		Iterator<Map.Entry<Long, LoadBalancingConnectionProxy>> i = proxyMap.entrySet().iterator();
 		while(i.hasNext()){
-			LoadBalancingConnectionProxy proxy = (LoadBalancingConnectionProxy) proxyMap.get(i.next());
+			LoadBalancingConnectionProxy proxy = i.next().getValue();
 			allConnections += proxy.getTotalPhysicalConnectionCount();
 			
 		}
@@ -155,16 +149,13 @@ public class ConnectionGroup {
 	public long getTotalTransactionCount(){
 		// need to account for closed connection proxies
 		long transactions = this.closedProxyTotalTransactions;
-		Map proxyMap = new HashMap();
+		Map<Long, LoadBalancingConnectionProxy> proxyMap = new HashMap<Long, LoadBalancingConnectionProxy>();
 		synchronized(this.connectionProxies){
 			proxyMap.putAll(this.connectionProxies);
 		}
-		
-		Set proxyKeys = proxyMap.keySet();
-		
-		Iterator i = proxyKeys.iterator();
+		Iterator<Map.Entry<Long, LoadBalancingConnectionProxy>> i = proxyMap.entrySet().iterator();
 		while(i.hasNext()){
-			LoadBalancingConnectionProxy proxy = (LoadBalancingConnectionProxy) proxyMap.get(i.next());
+			LoadBalancingConnectionProxy proxy = i.next().getValue();
 			transactions += proxy.getTransactionCount();
 			
 		}
@@ -204,16 +195,14 @@ public class ConnectionGroup {
 		
 		if(killExistingConnections){
 			// make a local copy to keep synchronization overhead to minimum
-			Map proxyMap = new HashMap();
+			Map<Long, LoadBalancingConnectionProxy> proxyMap = new HashMap<Long, LoadBalancingConnectionProxy>();
 			synchronized(this.connectionProxies){
 				proxyMap.putAll(this.connectionProxies);
 			}
 			
-			Set proxyKeys = proxyMap.keySet();
-			
-			Iterator i = proxyKeys.iterator();
+			Iterator<Map.Entry<Long, LoadBalancingConnectionProxy>> i = proxyMap.entrySet().iterator();
 			while(i.hasNext()){
-				LoadBalancingConnectionProxy proxy = (LoadBalancingConnectionProxy) proxyMap.get(i.next());
+				LoadBalancingConnectionProxy proxy = i.next().getValue();
 				if(waitForGracefulFailover){
 					proxy.removeHostWhenNotInUse(host);
 				} else {
@@ -247,16 +236,14 @@ public class ConnectionGroup {
 		
 		
 		// make a local copy to keep synchronization overhead to minimum
-		Map proxyMap = new HashMap();
+		Map<Long, LoadBalancingConnectionProxy> proxyMap = new HashMap<Long, LoadBalancingConnectionProxy>();
 		synchronized(this.connectionProxies){
 			proxyMap.putAll(this.connectionProxies);
 		}
 		
-		Set proxyKeys = proxyMap.keySet();
-		
-		Iterator i = proxyKeys.iterator();
+		Iterator<Map.Entry<Long, LoadBalancingConnectionProxy>> i = proxyMap.entrySet().iterator();
 		while(i.hasNext()){
-			LoadBalancingConnectionProxy proxy = (LoadBalancingConnectionProxy) proxyMap.get(i.next());
+			LoadBalancingConnectionProxy proxy = i.next().getValue();
 			proxy.addHost(host);
 		}
 		

@@ -49,10 +49,10 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 	}
 
 	public ConnectionImpl pickConnection(LoadBalancingConnectionProxy proxy,
-			List configuredHosts, Map liveConnections, long[] responseTimes,
+			List<String> configuredHosts, Map<String, ConnectionImpl> liveConnections, long[] responseTimes,
 			int numRetries) throws SQLException {
 				
-		Map blackList = proxy.getGlobalBlacklist();
+		Map<String, Long> blackList = proxy.getGlobalBlacklist();
 				
 		SQLException ex = null;
 
@@ -82,9 +82,9 @@ public class BestResponseTimeBalanceStrategy implements BalanceStrategy {
 				}
 			}
 
-			String bestHost = (String) configuredHosts.get(bestHostIndex);
+			String bestHost = configuredHosts.get(bestHostIndex);
 
-			ConnectionImpl conn = (ConnectionImpl) liveConnections.get(bestHost);
+			ConnectionImpl conn = liveConnections.get(bestHost);
 
 			if (conn == null) {
 				try {
