@@ -548,13 +548,15 @@ public abstract class BaseTestCase extends TestCase {
 			}
 		}
 
-		for (int i = 0; i < this.createdObjects.size(); i++) {
-			try {
-				String[] objectInfo = (String[])this.createdObjects.get(i);
-				
-				dropSchemaObject(objectInfo[0], objectInfo[1]);
-			} catch (SQLException SQLE) {
-				;
+		if (System.getProperty("com.mysql.jdbc.testsuite.retainArtifacts") == null) {
+			for (int i = 0; i < this.createdObjects.size(); i++) {
+				try {
+					String[] objectInfo = (String[])this.createdObjects.get(i);
+					
+					dropSchemaObject(objectInfo[0], objectInfo[1]);
+				} catch (SQLException SQLE) {
+					;
+				}
 			}
 		}
 
