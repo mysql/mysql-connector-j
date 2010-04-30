@@ -324,16 +324,6 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 */
 	public PreparedStatement prepareStatement(String sql) throws SQLException {
 		PreparedStatement pstmt = this.currentConnection.prepareStatement(sql);
-
-		System.out.println("<<<<< pstmt is a ");
-		System.out.println(pstmt.getClass());
-		System.out.println("  and implements ");
-		
-		Class[] declared = pstmt.getClass().getInterfaces();
-		
-		for (int i = 0; i < declared.length; i++) {
-			System.out.println(declared[i]);
-		}
 		
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		

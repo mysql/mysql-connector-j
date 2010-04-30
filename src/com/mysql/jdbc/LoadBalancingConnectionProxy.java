@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -582,12 +583,46 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	Object proxyIfInterfaceIsJdbc(Object toProxy, Class clazz) {
 		
 		if(isInterfaceJdbc(clazz)){
-				return Proxy.newProxyInstance(toProxy.getClass()
-						.getClassLoader(), clazz.getInterfaces(),
-						createConnectionProxy(toProxy));
-			}
+			
+		Class[] interfacesToProxy = getAllInterfacesToProxy(clazz);
+		
+		return Proxy.newProxyInstance(toProxy.getClass()
+				.getClassLoader(), interfacesToProxy,
+				createConnectionProxy(toProxy));
+		}
 
 		return toProxy;
+	}
+
+	private Map allInterfacesToProxy = new HashMap();
+	
+	private Class[] getAllInterfacesToProxy(Class clazz) {
+		Class[] interfacesToProxy = (Class[]) this.allInterfacesToProxy.get(clazz);
+		
+		if (interfacesToProxy != null) {
+			return interfacesToProxy;
+		}
+		
+		List interfaces = new LinkedList();
+		
+		Class superClass = clazz;
+		
+		while (!(superClass.equals(Object.class))) {
+			Class[] declared = superClass.getInterfaces();
+			
+			for (int i = 0; i < declared.length; i++) {
+				interfaces.add(declared[i]);
+			}
+			
+			superClass = superClass.getSuperclass();
+		}
+		
+		interfacesToProxy = new Class[interfaces.size()];
+		interfaces.toArray(interfacesToProxy);
+		
+		this.allInterfacesToProxy.put(clazz, interfacesToProxy);
+		
+		return interfacesToProxy;
 	}
 	
 	
@@ -595,6 +630,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		if(this.jdbcInterfacesForProxyCache.containsKey(clazz)){
 			return ((Boolean) this.jdbcInterfacesForProxyCache.get(clazz)).booleanValue();
 		}
+		
 		Class[] interfaces = clazz.getInterfaces();
 
 		for (int i = 0; i < interfaces.length; i++) {
