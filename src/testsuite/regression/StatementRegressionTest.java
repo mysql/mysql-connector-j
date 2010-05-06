@@ -6508,4 +6508,34 @@ public class StatementRegressionTest extends BaseTestCase {
 		}
 		
 	}
+	
+	/**
+	 * Tests fix for Bug#51704, rewritten batched statements don't honor
+	 * escape processing flag of Statement that they are created for
+	 */
+	public void testBug51704() throws Exception {
+		createTable("testBug51704", "(field1 TIMESTAMP)");
+		Connection rewriteConn = getConnectionWithProps("rewriteBatchedStatements=true");
+		Statement rewriteStmt = rewriteConn.createStatement();
+		
+		try {
+			rewriteStmt.setEscapeProcessing(false);
+			
+			for (int i = 0; i < 20; i++) {
+				rewriteStmt.addBatch("INSERT INTO testBug51704 VALUES ({tsp '2002-11-12 10:00:00'})");
+			}
+			
+			rewriteStmt.executeBatch(); // this should pass, because mysqld 
+										// doesn't validate any escape sequences, 
+										// it just strips them, where our escape 
+										// processor validates them
+			
+			Statement batchStmt = conn.createStatement();
+			batchStmt.setEscapeProcessing(false);
+			batchStmt.addBatch("INSERT INTO testBug51704 VALUES ({tsp '2002-11-12 10:00:00'})");
+			batchStmt.executeBatch(); // same here
+		} finally {
+			rewriteConn.close();
+		}
+	}
 }

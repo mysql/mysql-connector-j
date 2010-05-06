@@ -86,6 +86,9 @@ nn-nn-10 - Version 5.1.13
       a comma-delimited list of fully-qualified class/interface names, against
       which the SQLException is checked to determine if it is an instance of any.
       Matches trigger failover to an alternate host.
+      
+    - Fixed Bug#51704 - Re-written batched statements don't honor escape processing 
+      flag of their creator.
     
 02-18-10 - Version 5.1.12
 

@@ -1174,7 +1174,10 @@ public class StatementImpl implements Statement {
 
 			int escapeAdjust = 1;
 
+			batchStmt.setEscapeProcessing(this.doEscapeProcessing);
+			
 			if (this.doEscapeProcessing) {
+				
 				escapeAdjust = 2; /* We assume packet _could_ grow by this amount, as we're not
 				                     sure how big statement will end up after
 				                     escape processing */
