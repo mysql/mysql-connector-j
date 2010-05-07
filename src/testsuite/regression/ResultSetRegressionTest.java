@@ -5047,8 +5047,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		
 		this.rs = noBlobsConn.createStatement().executeQuery("SELECT PASSWORD ('SOMETHING')");
 		this.rs.first();
-		assertEquals("*7AFEFD08B6B720E781FB000CAA418F54FA662626", this.rs
-				.getString(1));
+		
+		String fromPlainResultSet = this.rs.getString(1);
 
 		this.rs = noBlobsConn.createStatement().executeQuery("SELECT PASSWORD ('SOMETHING')");
 
@@ -5056,8 +5056,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		crs.populate(this.rs);
 		crs.first();
 
-		assertEquals("*7AFEFD08B6B720E781FB000CAA418F54FA662626", crs
-				.getString(1));
+		assertEquals(fromPlainResultSet, crs.getString(1));
 
 	}
 }
