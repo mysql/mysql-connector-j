@@ -554,7 +554,9 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 			<formatter type="xml"/>
 
-			<batchtest todir="${junit.unitregress.results}" >
+			<test if="test" name="${test}" todir="${junit.unitregress.results}" />
+			
+			<batchtest unless="test" todir="${junit.unitregress.results}" >
 				<fileset dir="${buildDir}/${fullProdName}">
 					<include name="**/*Test.java" />
 					<exclude name="**/perf/*.java"/>
@@ -587,10 +589,9 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 			<formatter type="xml"/>
 
-			<batchtest todir="${junit.unitregress.results}" >
+			<batchtest unless="test" todir="${junit.unitregress.results}" >
 				<fileset dir="${buildDir}/${fullProdName}">
 					<include name="**/jdbc4/*Test.java" />
-
 				</fileset>
 			</batchtest>
 		</junit>
