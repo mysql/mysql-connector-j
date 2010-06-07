@@ -3326,15 +3326,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			this.connectionLifecycleInterceptors = Util.loadExtensions(this, this.props, 
 					connectionInterceptorClasses, 
 					"Connection.badLifecycleInterceptor", getExceptionInterceptor());
-			
-			Iterator iter = this.connectionLifecycleInterceptors.iterator();
-			
-			new IterateBlock(iter) {
-				void forEach(Object each) throws SQLException {
-					// TODO: Fully initialize, or continue on error?
-					((ConnectionLifecycleInterceptor)each).init(ConnectionImpl.this, props);
-				}
-			}.doForAll();
 		}
 		
 		setSessionVariables();
