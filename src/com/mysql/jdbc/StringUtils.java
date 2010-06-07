@@ -100,7 +100,7 @@ public class StringUtils {
 
 		if (toPlainStringMethod != null) {
 			try {
-				return (String) toPlainStringMethod.invoke(decimal, null);
+				return (String) toPlainStringMethod.invoke(decimal, (Object[])null);
 			} catch (InvocationTargetException invokeEx) {
 				// that's okay, we fall-through to decimal.toString()
 			} catch (IllegalAccessException accessEx) {

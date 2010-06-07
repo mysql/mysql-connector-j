@@ -54,7 +54,7 @@ public class Util {
 
 	static {
 		try {
-			systemNanoTimeMethod = System.class.getMethod("nanoTime", null);
+			systemNanoTimeMethod = System.class.getMethod("nanoTime", (Class[])null);
 		} catch (SecurityException e) {
 			systemNanoTimeMethod = null;
 		} catch (NoSuchMethodException e) {
@@ -447,7 +447,7 @@ public class Util {
 		try {
 			Class networkInterfaceClass = Class
 					.forName("java.net.NetworkInterface");
-			return networkInterfaceClass.getMethod("getByName", null).invoke(
+			return networkInterfaceClass.getMethod("getByName", (Class[])null).invoke(
 					networkInterfaceClass, new Object[] { hostname }) != null;
 		} catch (Throwable t) {
 			return false;
@@ -477,7 +477,7 @@ public class Util {
 	public static long getCurrentTimeNanosOrMillis() {
 		if (systemNanoTimeMethod != null) {
 			try {
-				return ((Long) systemNanoTimeMethod.invoke(null, null))
+				return ((Long) systemNanoTimeMethod.invoke(null, (Object[])null))
 						.longValue();
 			} catch (IllegalArgumentException e) {
 				// ignore - fall through to currentTimeMillis()

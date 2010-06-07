@@ -797,8 +797,8 @@ public abstract class BaseTestCase extends TestCase {
 	 */
 	protected long currentTimeMillis() {
 		try {
-			Method mNanoTime = System.class.getDeclaredMethod("nanoTime", null);
-			return ((Long)mNanoTime.invoke(null, null)).longValue() / 1000000;
+			Method mNanoTime = System.class.getDeclaredMethod("nanoTime", (Class[])null);
+			return ((Long)mNanoTime.invoke(null, (Object[])null)).longValue() / 1000000;
 		} catch(Exception ex) {
 			return System.currentTimeMillis();
 		}

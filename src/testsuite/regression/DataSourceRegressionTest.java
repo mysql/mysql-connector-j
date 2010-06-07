@@ -403,7 +403,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
 		Method enableStreamingResultsMethodStmt = Class.forName(
 				"com.mysql.jdbc.jdbc2.optional.StatementWrapper").getMethod(
 				"enableStreamingResults", new Class[0]);
-		enableStreamingResultsMethodStmt.invoke(physStatement, new Class[0]);
+		enableStreamingResultsMethodStmt.invoke(physStatement, (Object[])null);
 		this.rs = physStatement.executeQuery("SELECT 1");
 
 		try {
@@ -422,8 +422,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
 		PreparedStatement physPrepStmt = physConn.prepareStatement("SELECT 1");
 		Method enableStreamingResultsMethodPstmt = Class.forName(
 				"com.mysql.jdbc.jdbc2.optional.PreparedStatementWrapper")
-				.getMethod("enableStreamingResults", new Class[0]);
-		enableStreamingResultsMethodPstmt.invoke(physPrepStmt, new Class[0]);
+				.getMethod("enableStreamingResults", (Class[])null);
+		enableStreamingResultsMethodPstmt.invoke(physPrepStmt, (Object[])null);
 
 		this.rs = physPrepStmt.executeQuery();
 

@@ -660,12 +660,12 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 	/**
 	 * Returns best-resolution representation of local time, using nanoTime() if
-	 * availble, otherwise defaulting to currentTimeMillis().
+	 * available, otherwise defaulting to currentTimeMillis().
 	 */
 	private static long getLocalTimeBestResolution() {
 		if (getLocalTimeMethod != null) {
 			try {
-				return ((Long) getLocalTimeMethod.invoke(null, null))
+				return ((Long) getLocalTimeMethod.invoke(null, (Object[])null))
 						.longValue();
 			} catch (IllegalArgumentException e) {
 				// ignore - we fall through to currentTimeMillis()

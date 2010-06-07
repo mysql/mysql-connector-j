@@ -1910,7 +1910,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			accessorName.append(propertyName.substring(1));
 			
 			try {
-				clazz.getMethod(accessorName.toString(), null);
+				clazz.getMethod(accessorName.toString(), (Class[])null);
 			} catch (NoSuchMethodException nsme) {
 				missingGettersBuf.append(accessorName.toString());
 				missingGettersBuf.append("\n");

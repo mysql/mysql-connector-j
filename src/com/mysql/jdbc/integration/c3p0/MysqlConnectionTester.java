@@ -54,7 +54,7 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
 	public MysqlConnectionTester() {
 		try {
 			pingMethod = com.mysql.jdbc.Connection.class
-					.getMethod("ping", null);
+					.getMethod("ping", (Class[])null);
 		} catch (Exception ex) {
 			// punt, we have no way to recover, other than we now use 'SELECT 1'
 			// for
