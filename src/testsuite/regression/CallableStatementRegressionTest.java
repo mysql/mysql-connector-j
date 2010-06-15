@@ -1651,95 +1651,6 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 		
 	}
 	
-	
-	public void testBug43576() throws Exception {
-           Connection conn1 = null;
-        	conn1 = getConnectionWithProps("jdbcCompliantTruncation=true,useInformationSchema=true,autoReconnect=false,connectTimeout=5000,socketTimeout=30000,useInformationSchema=true,useServerPrepStmts=true,useAffectedRows=false,useUnicode=true,characterSetResults=utf8");
-        	this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS bug43576_1");
-        	this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS bug43576_2");
-        	
-        	this.stmt.executeUpdate(
-					"CREATE PROCEDURE bug43576_1(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100),"
-							+ "\nOUT ffact VARCHAR(100),"
-							+ "\nOUT fdoc VARCHAR(100))"
-							+ "\nBEGIN"
-							+ "\nSET nfact = 'ncfact string';"
-							+ "\nSET ffact = 'ffact string';"
-							+ "\nSET fdoc = 'fdoc string';"
-							+ "\nEND");
-			
-        	this.stmt.executeUpdate(
-					"CREATE PROCEDURE bug43576_2(IN ccuent1 VARCHAR(100), IN ccuent2 VARCHAR(100),"
-							+ "\nOUT nfact VARCHAR(100),"
-							+ "\nOUT ffact VARCHAR(100),"
-							+ "\nOUT fdoc VARCHAR(100))"
-							+ "\nBEGIN"
-							+ "\nSET nfact = 'ncfact string';"
-							+ "\nSET ffact = 'ffact string';"
-							+ "\nSET fdoc = 'fdoc string';"
-							+ "\nEND");
-        	
-        	CallableStatement callSt = conn1.prepareCall("{ call bug43576_1(?, ?, ?, ?) }");
-        	callSt.setString(2, "xxx");
-        	callSt.registerOutParameter(1, java.sql.Types.VARCHAR);
-        	callSt.registerOutParameter(3, java.sql.Types.VARCHAR);
-        	callSt.registerOutParameter(4, java.sql.Types.VARCHAR);
-        	callSt.execute();
-
-        	assertEquals("ncfact string", callSt.getString(1));
-			assertEquals("ffact string", callSt.getString(3));
-			assertEquals("fdoc string", callSt.getString(4));
-			System.out.println("DONE 1");
-			
-        	CallableStatement callSt2 = conn1.prepareCall("{ call bug43576_2(?, ?, ?, ?, ?) }");
-        	callSt2.setString(1, "xxx");
-        	callSt2.setString(2, "yyy");
-        	callSt2.registerOutParameter(3, java.sql.Types.VARCHAR);
-        	callSt2.registerOutParameter(4, java.sql.Types.VARCHAR);
-        	callSt2.registerOutParameter(5, java.sql.Types.VARCHAR);
-        	callSt2.execute();
-
-        	assertEquals("ncfact string", callSt2.getString(3));
-			assertEquals("ffact string", callSt2.getString(4));
-			assertEquals("fdoc string", callSt2.getString(5));
-			System.out.println("DONE 2");
-
-        	CallableStatement callSt3 = conn1.prepareCall("{ call bug43576_2(?, 'yyy', ?, ?, ?) }");
-        	callSt3.setString(1, "xxx");
-        	//callSt3.setString(2, "yyy");
-        	callSt3.registerOutParameter(2, java.sql.Types.VARCHAR);
-        	callSt3.registerOutParameter(3, java.sql.Types.VARCHAR);
-        	callSt3.registerOutParameter(4, java.sql.Types.VARCHAR);
-        	callSt3.execute();
-
-        	assertEquals("ncfact string", callSt3.getString(2));
-			assertEquals("ffact string", callSt3.getString(3));
-			assertEquals("fdoc string", callSt3.getString(4));
-			System.out.println("DONE 3");
-
-			//The patch for this case is still waiting on review. Disabling
-        	/**
-			CallableStatement callSt4 = conn1.prepareCall("{ call bug43576_2('xxx', 'yyy', ?, ?, ?) }");
-        	//callSt4.setString(1, "xxx");
-        	//callSt4.setString(1, "yyy");
-        	callSt4.registerOutParameter(1, java.sql.Types.VARCHAR);
-        	callSt4.registerOutParameter(2, java.sql.Types.VARCHAR);
-        	callSt4.registerOutParameter(3, java.sql.Types.VARCHAR);
-        	callSt4.execute();
-
-        	assertEquals("ncfact string", callSt4.getString(1));
-			assertEquals("ffact string", callSt4.getString(2));
-			assertEquals("fdoc string", callSt4.getString(3));
-			System.out.println("DONE 4");
-			*/
-
-            conn1.close();
-
-    		closeMemberJDBCResources();
-
-}
-
-	
 	private void execProcBug49831(Connection c) throws Exception {
 		CallableStatement cstmt = c.prepareCall("{call pTestBug49831(?)}");
 		cstmt.setObject(1, "abc", Types.VARCHAR, 32);
@@ -1753,5 +1664,115 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 		assertEquals("abc", this.rs.getString(1));
 		this.rs.next();
 		assertEquals("def", this.rs.getString(1));
+	}
+	
+	public void testBug43576() throws Exception {
+		createTable("TMIX91P", "(F01SMALLINT         SMALLINT NOT NULL,"
+				+ " F02INTEGER          INTEGER," + "F03REAL             REAL,"
+				+ "F04FLOAT            FLOAT,"
+				+ "F05NUMERIC31X4      NUMERIC(31,4),"
+				+ " F06NUMERIC16X16     NUMERIC(16,16),"
+				+ " F07CHAR_10          CHAR(10),"
+				+ " F08VARCHAR_10       VARCHAR(10),"
+				+ " F09CHAR_20          CHAR(20),"
+				+ " F10VARCHAR_20       VARCHAR(20),"
+				+ " F11DATE         DATE," + " F12DATETIME         DATETIME,"
+				+ " PRIMARY KEY (F01SMALLINT))");
+
+		this.stmt
+				.executeUpdate("INSERT INTO TMIX91P VALUES (1,1,1234567.12,1234567.12,111111111111111111111111111.1111,.111111111111111,'1234567890','1234567890','CHAR20CHAR20','VARCHAR20ABCD','2001-01-01','2001-01-01 01:01:01.111')");
+
+		this.stmt
+				.executeUpdate("INSERT INTO TMIX91P VALUES (7,1,1234567.12,1234567.12,22222222222.0001,.99999999999,'1234567896','1234567896','CHAR20','VARCHAR20ABCD','2001-01-01','2001-01-01 01:01:01.111')");
+
+		this.stmt
+				.executeUpdate("INSERT INTO TMIX91P VALUES (12,12,1234567.12,1234567.12,111222333.4444,.1234567890,'2234567891','2234567891','CHAR20','VARCHAR20VARCHAR20','2001-01-01','2001-01-01 01:01:01.111')");
+
+		createProcedure(
+				"MSQSPR100",
+				"\n"
+						+ "( p1_in  INTEGER , p2_in  CHAR(20), OUT p3_out INTEGER, OUT p4_out CHAR(11))"
+						+ "\nBEGIN "
+						+ "\n SELECT F01SMALLINT,F02INTEGER, F11DATE,F12DATETIME,F03REAL "
+						+ "\n FROM TMIX91P WHERE F02INTEGER = p1_in; "
+						+ "\n SELECT F02INTEGER,F07CHAR_10,F08VARCHAR_10,F09CHAR_20 "
+						+ "\n FROM TMIX91P WHERE  F09CHAR_20 = p2_in ORDER BY F02INTEGER ; "
+						+ "\n SET p3_out  = 144; "
+						+ "\n SET p4_out  = 'CHARACTER11'; "
+						+ "\n SELECT p3_out, p4_out; " + "END");
+
+		String sql = "{call MSQSPR100(1,'CHAR20',?,?)}";
+
+		CallableStatement cs = conn.prepareCall(sql);
+
+		cs.registerOutParameter(1, Types.INTEGER);
+		cs.registerOutParameter(2, Types.CHAR);
+
+		cs.execute();
+		cs.close();
+		
+		createProcedure("bug43576_1", "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100),"
+						+ "\nOUT ffact VARCHAR(100),"
+						+ "\nOUT fdoc VARCHAR(100))"
+						+ "\nBEGIN"
+						+ "\nSET nfact = 'ncfact string';"
+						+ "\nSET ffact = 'ffact string';"
+						+ "\nSET fdoc = 'fdoc string';"
+						+ "\nEND");
+		
+		createProcedure("bug43576_2", "(IN ccuent1 VARCHAR(100), IN ccuent2 VARCHAR(100),"
+						+ "\nOUT nfact VARCHAR(100),"
+						+ "\nOUT ffact VARCHAR(100),"
+						+ "\nOUT fdoc VARCHAR(100))"
+						+ "\nBEGIN"
+						+ "\nSET nfact = 'ncfact string';"
+						+ "\nSET ffact = 'ffact string';"
+						+ "\nSET fdoc = 'fdoc string';"
+						+ "\nEND");
+    	
+		Properties props = new Properties();
+        props.put("jdbcCompliantTruncation", "true");
+        props.put("useInformationSchema","true");
+        Connection conn1 = null;
+        conn1 = getConnectionWithProps(props);
+        try {
+	    	CallableStatement callSt = conn1.prepareCall("{ call bug43576_1(?, ?, ?, ?) }");
+	    	callSt.setString(2, "xxx");
+	    	callSt.registerOutParameter(1, java.sql.Types.VARCHAR);
+	    	callSt.registerOutParameter(3, java.sql.Types.VARCHAR);
+	    	callSt.registerOutParameter(4, java.sql.Types.VARCHAR);
+	    	callSt.execute();
+	
+	    	assertEquals("ncfact string", callSt.getString(1));
+			assertEquals("ffact string", callSt.getString(3));
+			assertEquals("fdoc string", callSt.getString(4));
+	
+			
+	    	CallableStatement callSt2 = conn1.prepareCall("{ call bug43576_2(?, ?, ?, ?, ?) }");
+	    	callSt2.setString(1, "xxx");
+	    	callSt2.setString(2, "yyy");
+	    	callSt2.registerOutParameter(3, java.sql.Types.VARCHAR);
+	    	callSt2.registerOutParameter(4, java.sql.Types.VARCHAR);
+	    	callSt2.registerOutParameter(5, java.sql.Types.VARCHAR);
+	    	callSt2.execute();
+	
+	    	assertEquals("ncfact string", callSt2.getString(3));
+			assertEquals("ffact string", callSt2.getString(4));
+			assertEquals("fdoc string", callSt2.getString(5));
+	
+	    	CallableStatement callSt3 = conn1.prepareCall("{ call bug43576_2(?, 'yyy', ?, ?, ?) }");
+	    	callSt3.setString(1, "xxx");
+	    	//callSt3.setString(2, "yyy");
+	    	callSt3.registerOutParameter(2, java.sql.Types.VARCHAR);
+	    	callSt3.registerOutParameter(3, java.sql.Types.VARCHAR);
+	    	callSt3.registerOutParameter(4, java.sql.Types.VARCHAR);
+	    	callSt3.execute();
+	
+	    	assertEquals("ncfact string", callSt3.getString(2));
+			assertEquals("ffact string", callSt3.getString(3));
+			assertEquals("fdoc string", callSt3.getString(4));
+        } finally {
+        	conn1.close();
+        }
 	}
 }

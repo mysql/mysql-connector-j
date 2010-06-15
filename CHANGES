@@ -89,6 +89,9 @@ nn-nn-10 - Version 5.1.13
       
     - Fixed Bug#51704 - Re-written batched statements don't honor escape processing 
       flag of their creator.
+      
+    - Fixed Bug#43576 - Sometimes not able to register OUT parameters for 
+      CallableStatements.
     
 02-18-10 - Version 5.1.12
 

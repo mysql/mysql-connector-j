@@ -2201,12 +2201,25 @@ public class CallableStatement extends PreparedStatement implements
 				if (!this.callingStoredFunction && outParamInfo.isOut) {
 					String outParameterName = mangleParameterName(outParamInfo.paramName);
 
-					int outParamIndex;
+					int outParamIndex = 0;
 					
 					if (this.placeholderToParameterIndexMap == null) { 
 							outParamIndex = outParamInfo.index + 1;
 					} else {
-							outParamIndex = this.placeholderToParameterIndexMap[outParamInfo.index - 1 /* JDBC is 1-based */];
+							// Find it, todo: remove this linear search
+							boolean found = false;
+							
+							for (int i = 0; i < this.placeholderToParameterIndexMap.length; i++) {
+								if (this.placeholderToParameterIndexMap[i] == outParamInfo.index) {
+									outParamIndex = i + 1; /* JDBC is 1-based */
+									found = true;
+									break;
+								}
+							}
+							
+							if (!found) {
+								throw SQLError.createSQLException("boo!", "S1000", this.connection.getExceptionInterceptor());
+							}
 					}
 					
 					this.setBytesNoEscapeNoQuotes(outParamIndex,
