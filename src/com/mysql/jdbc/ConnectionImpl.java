@@ -1799,9 +1799,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 								|| realJavaEncoding.equalsIgnoreCase("UTF8")) {
 							// charset names are case-sensitive
 
+							boolean utf8mb4Supported = versionMeetsMinimum(5, 5, 2);
+							
 							if (!getUseOldUTF8Behavior()) {
-								if (dontCheckServerMatch || !characterSetNamesMatches("utf8")) {
-									execSQL(null, "SET NAMES utf8", -1, null,
+								if (dontCheckServerMatch || !characterSetNamesMatches("utf8") 
+										|| (utf8mb4Supported && !characterSetNamesMatches("utf8mb4"))) {
+									execSQL(null, "SET NAMES " + (utf8mb4Supported ? "utf8mb4" : "utf8"), -1, null,
 											DEFAULT_RESULT_SET_TYPE,
 											DEFAULT_RESULT_SET_CONCURRENCY,
 											false, this.database, null, false);

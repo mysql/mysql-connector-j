@@ -1,5 +1,6 @@
 /*
- Copyright  2002-2006 MySQL AB, 2008 Sun Microsystems
+ Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ 
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -117,6 +118,7 @@ public class CharsetMapping {
 		tempNumBytesMap.put("geostd8", Constants.integerValueOf(1));
 		tempNumBytesMap.put("cp932", Constants.integerValueOf(2));
 		tempNumBytesMap.put("eucjpms", Constants.integerValueOf(3));
+		tempNumBytesMap.put("utf8mb4", Constants.integerValueOf(4));
 		
 		STATIC_CHARSET_TO_NUM_BYTES_MAP = Collections.unmodifiableMap(
 				tempNumBytesMap);
@@ -176,6 +178,7 @@ public class CharsetMapping {
 			+ "Cp1257 = 			cp1257,"
 			+ "MacRoman = 			macroman,"
 			+ "MacCentralEurope = 	macce,"
+			+ "UTF-8 =				*> 5.5.2 utf8mb4,"
 			+ "UTF-8 = 		utf8,"
 			+ "UnicodeBig = 	ucs2,"
 			+ "US-ASCII =		binary,"
@@ -367,10 +370,10 @@ public class CharsetMapping {
 					null);
 			INDEX_TO_CHARSET[44] = getJavaEncodingForMysqlEncoding("macce",
 					null);
-			INDEX_TO_CHARSET[45] = getJavaEncodingForMysqlEncoding("macce",
-					null);
-			INDEX_TO_CHARSET[46] = getJavaEncodingForMysqlEncoding("macce",
-					null);
+			INDEX_TO_CHARSET[45] = getJavaEncodingForMysqlEncoding("utf8mb4",
+ 					null);
+			INDEX_TO_CHARSET[46] = getJavaEncodingForMysqlEncoding("utf8mb4",
+ 					null);
 			INDEX_TO_CHARSET[47] = getJavaEncodingForMysqlEncoding("latin1",
 					null);
 			INDEX_TO_CHARSET[48] = getJavaEncodingForMysqlEncoding(
@@ -631,6 +634,8 @@ public class CharsetMapping {
 		INDEX_TO_COLLATION[42] = "latin7_general_cs";
 		INDEX_TO_COLLATION[43] = "macce_bin";
 		INDEX_TO_COLLATION[44] = "cp1250_croatian_ci";
+		INDEX_TO_COLLATION[45] = "utf8mb4_general_ci";
+		INDEX_TO_COLLATION[46] = "utf8mb4_bin";
 		INDEX_TO_COLLATION[47] = "latin1_bin";
 		INDEX_TO_COLLATION[48] = "latin1_general_ci";
 		INDEX_TO_COLLATION[49] = "latin1_general_cs";
@@ -742,28 +747,6 @@ public class CharsetMapping {
 		INDEX_TO_COLLATION[211] ="utf8mb3_sinhala_ci";
 		INDEX_TO_COLLATION[254] ="utf8mb3_general_cs";
 		
-		INDEX_TO_COLLATION[45] ="utf8_general_ci";
-		INDEX_TO_COLLATION[46] ="utf8_bin";
-		INDEX_TO_COLLATION[224] ="utf8_unicode_ci";
-		INDEX_TO_COLLATION[225] ="utf8_icelandic_ci";
-		INDEX_TO_COLLATION[226] ="utf8_latvian_ci";
-		INDEX_TO_COLLATION[227] ="utf8_romanian_ci";
-		INDEX_TO_COLLATION[228] ="utf8_slovenian_ci";
-		INDEX_TO_COLLATION[229] ="utf8_polish_ci";
-		INDEX_TO_COLLATION[230] ="utf8_estonian_ci";
-		INDEX_TO_COLLATION[231] ="utf8_spanish_ci";
-		INDEX_TO_COLLATION[232] ="utf8_swedish_ci";
-		INDEX_TO_COLLATION[233] ="utf8_turkish_ci";
-		INDEX_TO_COLLATION[234] ="utf8_czech_ci";
-		INDEX_TO_COLLATION[235] ="utf8_danish_ci";
-		INDEX_TO_COLLATION[236] ="utf8_lithuanian_ci";
-		INDEX_TO_COLLATION[237] ="utf8_slovak_ci";
-		INDEX_TO_COLLATION[238] ="utf8_spanish2_ci";
-		INDEX_TO_COLLATION[239] ="utf8_roman_ci";
-		INDEX_TO_COLLATION[240] ="utf8_persian_ci";
-		INDEX_TO_COLLATION[241] ="utf8_esperanto_ci";
-		INDEX_TO_COLLATION[242] ="utf8_hungarian_ci";
-		INDEX_TO_COLLATION[243] ="utf8_sinhala_ci";
 		
 		INDEX_TO_COLLATION[54] = "utf16_general_ci";
 		INDEX_TO_COLLATION[55] = "utf16_bin";
@@ -810,6 +793,28 @@ public class CharsetMapping {
 		INDEX_TO_COLLATION[177] = "utf32_esperanto_ci";
 		INDEX_TO_COLLATION[178] = "utf32_hungarian_ci";
 		INDEX_TO_COLLATION[179] = "utf32_sinhala_ci";
+		
+		INDEX_TO_COLLATION[224] = "utf8mb4_unicode_ci";
+		INDEX_TO_COLLATION[225] = "utf8mb4_icelandic_ci";
+		INDEX_TO_COLLATION[226] = "utf8mb4_latvian_ci";
+		INDEX_TO_COLLATION[227] = "utf8mb4_romanian_ci";
+		INDEX_TO_COLLATION[228] = "utf8mb4_slovenian_ci";
+		INDEX_TO_COLLATION[229] = "utf8mb4_polish_ci";
+		INDEX_TO_COLLATION[230] = "utf8mb4_estonian_ci";
+		INDEX_TO_COLLATION[231] = "utf8mb4_spanish_ci";
+		INDEX_TO_COLLATION[232] = "utf8mb4_swedish_ci";
+		INDEX_TO_COLLATION[233] = "utf8mb4_turkish_ci";
+		INDEX_TO_COLLATION[234] = "utf8mb4_czech_ci";
+		INDEX_TO_COLLATION[235] = "utf8mb4_danish_ci";
+		INDEX_TO_COLLATION[236] = "utf8mb4_lithuanian_ci";
+		INDEX_TO_COLLATION[237] = "utf8mb4_slovak_ci";
+		INDEX_TO_COLLATION[238] = "utf8mb4_spanish2_ci";
+		INDEX_TO_COLLATION[239] = "utf8mb4_roman_ci";
+		INDEX_TO_COLLATION[240] = "utf8mb4_persian_ci";
+		INDEX_TO_COLLATION[241] = "utf8mb4_esperanto_ci";
+		INDEX_TO_COLLATION[242] = "utf8mb4_hungarian_ci";
+		INDEX_TO_COLLATION[243] = "utf8mb4_sinhala_ci";
+		INDEX_TO_COLLATION[244] = "utf8mb4_german2_ci";
 		
 		Map indexMap = new TreeMap(String.CASE_INSENSITIVE_ORDER);
 		

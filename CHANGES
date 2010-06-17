@@ -92,6 +92,11 @@ nn-nn-10 - Version 5.1.13
       
     - Fixed Bug#43576 - Sometimes not able to register OUT parameters for 
       CallableStatements.
+      
+    - Fixed Bug#54175 - Driver doesn't support utf8mb4 for servers 5.5.2 and newer. The
+      driver now auto-detects servers configured with character_set_server=utf8mb4 or
+      treats the Java encoding "utf-8" passed via "characterEncoding=..." as utf8mb4 in
+      the "SET NAMES=" calls it makes when establishing the connection. 
     
 02-18-10 - Version 5.1.12
 

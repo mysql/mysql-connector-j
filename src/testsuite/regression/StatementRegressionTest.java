@@ -1,5 +1,6 @@
 /*
- Copyright  2002-2007 MySQL AB, 2008 Sun Microsystems
+ Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ 
  All rights reserved. Use is subject to license terms.
 
   The MySQL Connector/J is licensed under the terms of the GPL,
@@ -378,7 +379,7 @@ public class StatementRegressionTest extends BaseTestCase {
 
 		createTable(tableName, "(id int not null primary key auto_increment,"
 				+ " strdata1 varchar(255) not null, strdata2 varchar(255),"
-				+ " UNIQUE INDEX (strdata1))");
+				+ " UNIQUE INDEX (strdata1(100)))");
 
 		PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO "
 				+ tableName + " (strdata1, strdata2) VALUES (?,?)");
@@ -1263,7 +1264,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			this.stmt.executeUpdate("CREATE TABLE testBug3557 ( "
 					+ "`a` varchar(255) NOT NULL default 'XYZ', "
 					+ "`b` varchar(255) default '123', "
-					+ "PRIMARY KEY  (`a`))");
+					+ "PRIMARY KEY  (`a`(100)))");
 
 			Statement updStmt = this.conn
 					.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
@@ -1577,7 +1578,7 @@ public class StatementRegressionTest extends BaseTestCase {
 					+ "`field6` varchar(75) default NULL,"
 					+ "`field7` varchar(75) default NULL,"
 					+ "`field8` datetime default NULL,"
-					+ " PRIMARY KEY  (`field1`)" + ")");
+					+ " PRIMARY KEY  (`field1`(100))" + ")");
 
 			PreparedStatement pStmt = this.conn
 					.prepareStatement("insert into testBug4119 (field2, field3,"
@@ -3881,7 +3882,7 @@ public class StatementRegressionTest extends BaseTestCase {
 	}
 	
 	public void testBustedGGKWithPSExecute() throws Exception {
-		createTable("sequence", "(sequence_name VARCHAR(255) NOT NULL PRIMARY KEY, next_val BIGINT NOT NULL)");
+		createTable("sequence", "(sequence_name VARCHAR(32) NOT NULL PRIMARY KEY, next_val BIGINT NOT NULL)");
 		
 		// Populate with the initial value
 		stmt.executeUpdate("INSERT INTO sequence VALUES ('test-sequence', 1234)");
@@ -5368,7 +5369,7 @@ public class StatementRegressionTest extends BaseTestCase {
 	
 	private void checkBug34093(Connection rewriteConn) throws Exception {
 		try {
-			String ddl = "(autoIncId INT NOT NULL PRIMARY KEY AUTO_INCREMENT, uniqueTextKey VARCHAR(255) UNIQUE KEY)";
+			String ddl = "(autoIncId INT NOT NULL PRIMARY KEY AUTO_INCREMENT, uniqueTextKey VARCHAR(255), UNIQUE KEY (uniqueTextKey(100)))";
 			
 			String [] sequence = {"c", "a", "d", "b"};
 			String sql = "insert into testBug30493 (uniqueTextKey) values (?) on duplicate key UPDATE autoIncId = last_insert_id( autoIncId )";
@@ -6537,5 +6538,20 @@ public class StatementRegressionTest extends BaseTestCase {
 		} finally {
 			rewriteConn.close();
 		}
+	}
+	
+	public void testBug54175() throws Exception {
+		if (!versionMeetsMinimum(5, 5)) {
+			return;
+		}
+		
+		Connection utf8conn = getConnectionWithProps("characterEncoding=utf8");
+
+		createTable("testBug54175", "(a VARCHAR(10)) CHARACTER SET utf8mb4");
+		stmt.execute("INSERT INTO testBug54175 VALUES(0xF0AFA6B2)");
+		rs = utf8conn.createStatement().executeQuery(
+				"SELECT * FROM testBug54175");
+		assertTrue(rs.next());
+		assertEquals(55422, rs.getString(1).charAt(0));
 	}
 }
