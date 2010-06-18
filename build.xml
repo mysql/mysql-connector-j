@@ -338,7 +338,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 		<!-- Fix CRLF for various platforms -->
 		<copy file="${packageDest}/README" tofile="${packageDest}/README.txt"/>
-		<copy file="${packageDest}/docs/README.txt" tofile="${packageDest}/docs/README"/>
+		<copy file="${packageDest}/docs/README.txt" tofile="${packageDest}/docs/README" failOnError="false"/>
 
 		<!-- For Windows-y platforms -->
 
@@ -448,13 +448,13 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 	<target name="-bundle-docs" depends="init">
 		<copy file="${com.mysql.jdbc.docs.sourceDir}/en/html/connector-j.html"
 		  	todir="${buildDir}/${fullProdName}/docs"
-		  	failonerror="true"/>
+		  	failonerror="false"/>
 		<copy file="${com.mysql.jdbc.docs.sourceDir}/en/pdf/connector-j.pdf"
 			todir="${buildDir}/${fullProdName}/docs"
-			failonerror="true"/>
+			failonerror="false"/>
 		<copy file="${com.mysql.jdbc.docs.sourceDir}/en/txt/connector-j.txt"
 			tofile="${buildDir}/${fullProdName}/docs/README.txt"
-			failonerror="true"/>
+			failonerror="false"/>
 		<copy todir="${buildDir}/${fullProdName}/docs/release-test-output" failonerror="false">
 			<fileset dir="${com.mysql.jdbc.docs.sourceDir}/release-test-output" excludes="**/CVS">
 			</fileset>
