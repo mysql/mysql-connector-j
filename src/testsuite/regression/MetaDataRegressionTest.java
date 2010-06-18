@@ -778,9 +778,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
 						.executeQuery("SELECT field1, field2, field3 FROM testBug6399");
 				ResultSetMetaData rsmd = this.rs.getMetaData();
 
-				assertTrue(3 == rsmd.getColumnDisplaySize(1));
-				assertTrue(3 == rsmd.getColumnDisplaySize(2));
-				assertTrue(3 == rsmd.getColumnDisplaySize(3));
+				assertEquals(3, rsmd.getColumnDisplaySize(1));
+				assertEquals(3, rsmd.getColumnDisplaySize(2));
+				assertEquals(3, rsmd.getColumnDisplaySize(3));
 			} finally {
 				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug6399");
 			}
