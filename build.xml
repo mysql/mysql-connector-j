@@ -1197,4 +1197,16 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			</sequential>
 		</for>
 	</target>
+
+	<!-- Builds and installs the driver jar into the local maven repository -->
+
+	<target name="install" depends="full-package">
+		<exec executable="mvn" osfamily="unix" failonerror="true" failifexecutionfails="true">
+			<arg line="install:install-file 
+				-Dfile=${buildDir}/mysql-connector-java-${full.version}/mysql-connector-java-${full.version}-bin.jar
+				-DgroupId=mysql -DartifactId=mysql-connector-java -Dversion=${full.version}
+				-Dpackaging=jar -DgeneratePom=true" />
+		</exec>
+	</target>
+
 </project>
