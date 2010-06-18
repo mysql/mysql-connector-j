@@ -5648,7 +5648,9 @@ public class StatementRegressionTest extends BaseTestCase {
 						|| "FEDERATED".equalsIgnoreCase(engineName)
 						|| "MRG_MYISAM".equalsIgnoreCase(engineName)
 						|| "PARTITION".equalsIgnoreCase(engineName)
-						|| "EXAMPLE".equalsIgnoreCase(engineName)) {
+						|| "EXAMPLE".equalsIgnoreCase(engineName)
+						|| "PERFORMANCE_SCHEMA".equalsIgnoreCase(engineName)
+						|| engineName.endsWith("_SCHEMA")) {
 					continue; // not supported
 				}
 
