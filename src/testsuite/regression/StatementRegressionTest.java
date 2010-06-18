@@ -5538,7 +5538,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			this.conn.createStatement().executeQuery(
 					"SELECT * FROM t1 WHERE id=0 FOR UPDATE");
 			
-			Connection deadlockConn = getConnectionWithProps("includeInnodbStatusInDeadlockExceptions=true");
+			final Connection deadlockConn = getConnectionWithProps("includeInnodbStatusInDeadlockExceptions=true");
 			deadlockConn.setAutoCommit(false);
 			
 			final Statement deadlockStmt = deadlockConn.createStatement();
@@ -5554,6 +5554,11 @@ public class StatementRegressionTest extends BaseTestCase {
 						deadlockStmt.executeBatch();
 					} catch (SQLException sqlEx) {
 						sqlEx.printStackTrace();
+						try {
+							deadlockConn.rollback();
+						} catch (SQLException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}.run();
@@ -5566,6 +5571,7 @@ public class StatementRegressionTest extends BaseTestCase {
 				System.out.println(updateCounts[i]);
 			}
 		} finally {
+			this.conn.rollback();
 			this.conn.setAutoCommit(true);
 			closeMemberJDBCResources();
 		}
