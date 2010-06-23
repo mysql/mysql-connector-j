@@ -37,9 +37,10 @@
 
 	<property name="version" value="${major_version}.${minor_version}.${subminor_version}${version_status}"/>
 	<property name="prodName" value="mysql-connector-java"/>
-	<property name="extra.version" value="-SNAPSHOT"/>
-	<property name="full.version" value="${version}${extra.version}"/>
-	<property name="fullProdName" value="${prodName}-${version}${extra.version}"/>
+	<property name="snapshot.version" value="-SNAPSHOT" />
+	<property name="extra.version" value=""/>
+	<property name="full.version" value="${version}${extra.version}${snapshot.version}"/>
+	<property name="fullProdName" value="${prodName}-${full.version}"/>
 	<property name="sourceDir" value="./src"/>
 	<property name="buildDir" value="./build"/>
 	<property name="distDir" value="./dist"/>
