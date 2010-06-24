@@ -1,32 +1,27 @@
 # Changelog
 # $Id$
 
-07-07-10 - Version 5.1.14
+mm-dd-10 - Version 5.1.14
 
-	- Added ability to load-balance while auto-commit is enabled.  This introduces two new properties:
-	  loadBalanceAutoCommitStatementThreshold defines the number of matching statements which will trigger the
-	  driver to (potentially) swap physical server connections, and loadBalanceAutoCommitStatementRegex defines
-	  the regular expression against which statements must match.  The default values (0 and blank, respectively)
-	  retain the previously-established behavior that connections with auto-commit enabled are never balanced.
-	  Feature request documented in Bug#55723.
+   - Added ability to load-balance while auto-commit is enabled.  This introduces two new properties:
 
-	- Minor fix in getProcedureColumns() DisplaySize for Bug#51712. Fix for Bug#41269 is not complete without this.
-	  getColumnDisplaySize on resultset already consisting of metadata is now functional thanks to Bogdan.
+	  loadBalanceAutoCommitStatementThreshold defines the number of matching statements which will trigger the driver to (potentially) swap physical server connections, and loadBalanceAutoCommitStatementRegex defines the regular expression against which statements must match.  The default values (0 and blank, respectively) retain the previously-established behavior that connections with auto-commit enabled are never balanced.  Feature request documented in Bug#55723.
 
-	- Minor fix for Bug#55217, return 4 as a result of DataBaseMetadata.getJDBCMajorVersion() as per manual.
+   - Minor fix in getProcedureColumns() DisplaySize for Bug#51712. Fix for Bug#41269 is not complete without this.  getColumnDisplaySize on resultset already consisting of metadata is now functional thanks to Bogdan.
+
+   - Minor fix for Bug#55217, return 4 as a result of DataBaseMetadata.getJDBCMajorVersion() as per manual.
 
 06-24-10 - Version 5.1.13
 
-	- Minor fix in previous patch for Bug#51904. Function ConnectionImpl.setCatalog() was passed quoted
-	  argument thus breaking with "...for the right syntax to use near 'test``'"
+   - Minor fix in previous patch for Bug#51904. Function ConnectionImpl.setCatalog() was passed quoted argument thus breaking with "...for the right syntax to use near 'test``'"
 	  
-	- Fix for Bug#51912 - Passing NULL as cat. param to getProcedureColumns with !nullCatalogMeansCurrent
+    - Fix for Bug#51912 - Passing NULL as cat. param to getProcedureColumns with !nullCatalogMeansCurrent
 	
-	- Fix for Bug#52167 - Can't parse parameter list with special characters inside
+    - Fix for Bug#52167 - Can't parse parameter list with special characters inside
 	
-	- Fix for Bug#51904 - getProcedureColumns() always returns PROCEDURE_CAT result column as NULL
+    - Fix for Bug#51904 - getProcedureColumns() always returns PROCEDURE_CAT result column as NULL
 	
-	- Fix for Bug#51712 - Display Size is always 0 for columns returned by getProcedureColumns()
+    - Fix for Bug#51712 - Display Size is always 0 for columns returned by getProcedureColumns()
 
     - Fix for Bug#51908 - db variable might have end up unassigned when calling
       getProcedureColumns()/Functions(). This is a followup on code changes made
