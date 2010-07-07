@@ -4083,19 +4083,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	protected Field[] createProcedureColumnsFields() {
 		Field[] fields = new Field[13];
 
-		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
-		fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 0);
-		fields[2] = new Field("", "PROCEDURE_NAME", Types.CHAR, 0);
-		fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 0);
-		fields[4] = new Field("", "COLUMN_TYPE", Types.CHAR, 0);
-		fields[5] = new Field("", "DATA_TYPE", Types.SMALLINT, 0);
-		fields[6] = new Field("", "TYPE_NAME", Types.CHAR, 0);
-		fields[7] = new Field("", "PRECISION", Types.INTEGER, 0);
-		fields[8] = new Field("", "LENGTH", Types.INTEGER, 0);
-		fields[9] = new Field("", "SCALE", Types.SMALLINT, 0);
-		fields[10] = new Field("", "RADIX", Types.SMALLINT, 0);
-		fields[11] = new Field("", "NULLABLE", Types.SMALLINT, 0);
-		fields[12] = new Field("", "REMARKS", Types.CHAR, 0);
+		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 512);
+		fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 512);
+		fields[2] = new Field("", "PROCEDURE_NAME", Types.CHAR, 512);
+		fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 512);
+		fields[4] = new Field("", "COLUMN_TYPE", Types.CHAR, 64);
+		fields[5] = new Field("", "DATA_TYPE", Types.SMALLINT, 6);
+		fields[6] = new Field("", "TYPE_NAME", Types.CHAR, 64);
+		fields[7] = new Field("", "PRECISION", Types.INTEGER, 12);
+		fields[8] = new Field("", "LENGTH", Types.INTEGER, 12);
+		fields[9] = new Field("", "SCALE", Types.SMALLINT, 12);
+		fields[10] = new Field("", "RADIX", Types.SMALLINT, 6);
+		fields[11] = new Field("", "NULLABLE", Types.SMALLINT, 6);
+		fields[12] = new Field("", "REMARKS", Types.CHAR, 512);
 		return fields;
 	}
 	
@@ -8158,23 +8158,23 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 	protected Field[] createFunctionColumnsFields() {
 		Field[] fields = {
-    			new Field("", "FUNCTION_CAT", Types.VARCHAR, 0),
-    			new Field("", "FUNCTION_SCHEM", Types.VARCHAR, 0),
-    			new Field("", "FUNCTION_NAME", Types.VARCHAR, 0),
-    			new Field("", "COLUMN_NAME", Types.VARCHAR, 0),
-    			new Field("", "COLUMN_TYPE", Types.VARCHAR, 0),
-    			new Field("", "DATA_TYPE", Types.SMALLINT, 0),
-    			new Field("", "TYPE_NAME", Types.VARCHAR, 0),
-    			new Field("", "PRECISION", Types.INTEGER, 0),
-    			new Field("", "LENGTH", Types.INTEGER, 0),
-    			new Field("", "SCALE", Types.SMALLINT, 0),
-    			new Field("", "RADIX", Types.SMALLINT, 0),
-    			new Field("", "NULLABLE", Types.SMALLINT, 0),
-    			new Field("", "REMARKS", Types.VARCHAR, 0),
-    			new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, 0),
-    			new Field("", "ORDINAL_POSITION", Types.INTEGER, 0),
-    			new Field("", "IS_NULLABLE", Types.VARCHAR, 3),
-    			new Field("", "SPECIFIC_NAME", Types.VARCHAR, 0)};
+    			new Field("", "FUNCTION_CAT", Types.VARCHAR, 512),
+    			new Field("", "FUNCTION_SCHEM", Types.VARCHAR, 512),
+    			new Field("", "FUNCTION_NAME", Types.VARCHAR, 512),
+    			new Field("", "COLUMN_NAME", Types.VARCHAR, 512),
+    			new Field("", "COLUMN_TYPE", Types.VARCHAR, 64),
+    			new Field("", "DATA_TYPE", Types.SMALLINT, 6),
+    			new Field("", "TYPE_NAME", Types.VARCHAR, 64),
+    			new Field("", "PRECISION", Types.INTEGER, 12),
+    			new Field("", "LENGTH", Types.INTEGER, 12),
+    			new Field("", "SCALE", Types.SMALLINT, 12),
+    			new Field("", "RADIX", Types.SMALLINT, 6),
+    			new Field("", "NULLABLE", Types.SMALLINT, 6),
+    			new Field("", "REMARKS", Types.VARCHAR, 512),
+    			new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, 32),
+    			new Field("", "ORDINAL_POSITION", Types.INTEGER, 32),
+    			new Field("", "IS_NULLABLE", Types.VARCHAR, 12),
+    			new Field("", "SPECIFIC_NAME", Types.VARCHAR, 64)};
 		return fields;
 	}
 
