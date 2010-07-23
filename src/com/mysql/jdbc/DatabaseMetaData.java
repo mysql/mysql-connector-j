@@ -3642,7 +3642,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * @see DatabaseMetaData#getJDBCMajorVersion()
 	 */
 	public int getJDBCMajorVersion() throws SQLException {
-		return 3;
+		return 4;
 	}
 
 	/**
