@@ -5,9 +5,8 @@
 
 	- Minor fix in getProcedureColumns() DisplaySize for Bug#51712. Fix for Bug#41269 is not complete without this.
 	  getColumnDisplaySize on resultset already consisting of metadata is now functional thanks to Bogdan.
-    
-	- Minor fix in DatabaseMetadata.getJDBCMajorVersion(). Retruning 4 now as per manual.
 
+	- Minor fix for Bug#55217, return 4 as a result of DataBaseMetadata.getJDBCMajorVersion() as per manual.
 
 06-24-10 - Version 5.1.13
 
