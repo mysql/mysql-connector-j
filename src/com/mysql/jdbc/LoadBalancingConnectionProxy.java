@@ -148,6 +148,8 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	private Map<Class, Boolean> jdbcInterfacesForProxyCache = new HashMap<Class, Boolean>();
 	
 	private MySQLConnection thisAsConnection = null;
+
+	private int autoCommitSwapThreshold = 0;
 	
 	
 
@@ -259,6 +261,39 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 					strategy, "InvalidLoadBalanceStrategy", null).get(0);
 		}
 
+		String autoCommitSwapThresholdAsString = props.getProperty("loadBalanceAutoCommitStatementThreshold",
+		"0");
+		try {
+			this.autoCommitSwapThreshold  = Integer.parseInt(autoCommitSwapThresholdAsString);
+		} catch (NumberFormatException nfe) {
+			throw SQLError.createSQLException(Messages.getString(
+					"LoadBalancingConnectionProxy.badValueForLoadBalanceAutoCommitStatementThreshold",
+					new Object[] { autoCommitSwapThresholdAsString }),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+		}
+		
+		String autoCommitSwapRegex = props.getProperty("loadBalanceAutoCommitStatementRegex","");
+		if(!("".equals(autoCommitSwapRegex))){
+			try{
+				"".matches(autoCommitSwapRegex);
+			} catch (Exception e){
+				throw SQLError.createSQLException(Messages.getString(
+						"LoadBalancingConnectionProxy.badValueForLoadBalanceAutoCommitStatementRegex",
+						new Object[] { autoCommitSwapRegex }),
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+			}
+		}
+		
+		if(this.autoCommitSwapThreshold > 0){
+			String statementInterceptors = this.localProps.getProperty("statementInterceptors");
+			if(statementInterceptors == null){
+				this.localProps.setProperty("statementInterceptors", "com.mysql.jdbc.LoadBalancedAutoCommitInterceptor");
+			} else if(statementInterceptors.length() > 0){
+				this.localProps.setProperty("statementInterceptors", statementInterceptors + ",com.mysql.jdbc.LoadBalancedAutoCommitInterceptor");
+			}
+			props.setProperty("statementInterceptors", this.localProps.getProperty("statementInterceptors"));
+			
+		}
 		this.balancer.init(null, props);
 		
 
@@ -266,9 +301,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 				lbExceptionChecker, "InvalidLoadBalanceExceptionChecker", null).get(0);
 		this.exceptionChecker.init(null, props);
 
+
 		thisAsConnection = new LoadBalancedMySQLConnection(this);
 
-		
 		pickNewConnection();
 		
 		
@@ -933,6 +968,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		}
 		return 0;
 	}
+	
 		
 	
 }

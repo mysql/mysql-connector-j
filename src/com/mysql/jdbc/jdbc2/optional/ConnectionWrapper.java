@@ -2722,4 +2722,25 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	}
 
 
+	public String getLoadBalanceAutoCommitStatementRegex() {
+		return this.mc.getLoadBalanceAutoCommitStatementRegex();
+	}
+
+	public int getLoadBalanceAutoCommitStatementThreshold() {
+		return this.mc.getLoadBalanceAutoCommitStatementThreshold();
+	}
+
+	public void setLoadBalanceAutoCommitStatementRegex(
+			String loadBalanceAutoCommitStatementRegex) {
+		this.mc.setLoadBalanceAutoCommitStatementRegex(loadBalanceAutoCommitStatementRegex);
+		
+	}
+
+	public void setLoadBalanceAutoCommitStatementThreshold(
+			int loadBalanceAutoCommitStatementThreshold) {
+		this.mc.setLoadBalanceAutoCommitStatementThreshold(loadBalanceAutoCommitStatementThreshold);
+		
+	}
+
+
 }

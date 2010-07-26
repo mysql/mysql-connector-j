@@ -2835,4 +2835,101 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		
 	}
 	
+	public void testAutoCommitLB() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("loadBalanceStrategy", CountingReBalanceStrategy.class.getName());
+		props.setProperty("loadBalanceAutoCommitStatementThreshold", "3");
+		
+		String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		
+		if (portNumber == null) {
+			portNumber = "3306";
+		}
+		
+		Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
+		conn2.setAutoCommit(true);
+		CountingReBalanceStrategy.resetTimesRebalanced();
+		conn2.createStatement().execute("SELECT 1");
+		conn2.createStatement().execute("SELECT 2");
+		assertEquals(0, CountingReBalanceStrategy.getTimesRebalanced());
+		conn2.createStatement().execute("SELECT 3");
+		assertEquals(1, CountingReBalanceStrategy.getTimesRebalanced());
+		conn2.setAutoCommit(false);
+		CountingReBalanceStrategy.resetTimesRebalanced();
+		assertEquals(0, CountingReBalanceStrategy.getTimesRebalanced());
+		conn2.createStatement().execute("SELECT 1");
+		conn2.createStatement().execute("SELECT 2");
+		conn2.createStatement().execute("SELECT 3");
+		assertEquals(0, CountingReBalanceStrategy.getTimesRebalanced());
+		conn2.close();
+		
+		props.remove("loadBalanceAutoCommitStatementThreshold");
+		conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
+		conn2.setAutoCommit(true);
+		CountingReBalanceStrategy.resetTimesRebalanced();
+		conn2.createStatement().execute("SELECT 1");
+		conn2.createStatement().execute("SELECT 2");
+		conn2.createStatement().execute("SELECT 3");
+		assertEquals(0, CountingReBalanceStrategy.getTimesRebalanced());
+		conn2.setAutoCommit(false);
+		CountingReBalanceStrategy.resetTimesRebalanced();
+		assertEquals(0, CountingReBalanceStrategy.getTimesRebalanced());
+		conn2.createStatement().execute("SELECT 1");
+		conn2.createStatement().execute("SELECT 2");
+		conn2.createStatement().execute("SELECT 3");
+		assertEquals(0, CountingReBalanceStrategy.getTimesRebalanced());
+		conn2.close();
+		
+		props.setProperty("loadBalanceAutoCommitStatementThreshold", "3");
+		props.setProperty("loadBalanceAutoCommitStatementRegex", ".*2.*");
+		conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
+		conn2.setAutoCommit(true);
+		CountingReBalanceStrategy.resetTimesRebalanced();
+		conn2.createStatement().execute("SELECT 1");
+		conn2.createStatement().execute("SELECT 2");
+		conn2.createStatement().execute("SELECT 3");
+		conn2.createStatement().execute("SELECT 2");
+		assertEquals(0, CountingReBalanceStrategy.getTimesRebalanced());
+		conn2.createStatement().execute("SELECT 2");
+		assertEquals(1, CountingReBalanceStrategy.getTimesRebalanced());
+		conn2.close();
+		
+
+	
+	}
+	
+	public static class CountingReBalanceStrategy extends RandomBalanceStrategy {
+		
+		private static int rebalancedTimes = 0;
+		
+		public static int getTimesRebalanced(){
+			return rebalancedTimes;
+		}
+		
+		public static void resetTimesRebalanced(){
+			rebalancedTimes = 0;
+		}
+		
+		public com.mysql.jdbc.ConnectionImpl pickConnection(
+				LoadBalancingConnectionProxy proxy, List configuredHosts,
+				Map liveConnections, long[] responseTimes, int numRetries)
+				throws SQLException {
+			rebalancedTimes++;
+			return super.pickConnection(proxy, configuredHosts, liveConnections, responseTimes, numRetries);
+			
+		}
+
+		public void destroy() {
+			super.destroy();
+			
+		}
+
+		public void init(com.mysql.jdbc.Connection conn, Properties props)
+				throws SQLException {
+			super.init(conn, props);
+			
+		}
+		
+	}
+	
 }

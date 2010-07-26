@@ -84,6 +84,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
    }
 
    private MySQLConnection proxy = null;
+   
+   public boolean isProxySet(){
+	   return this.proxy != null;
+   }
 
    public void setProxy(MySQLConnection proxy) {
       this.proxy = proxy;

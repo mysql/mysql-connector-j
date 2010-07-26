@@ -1070,6 +1070,18 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.loadBalanceEnableJMX"), //$NON-NLS-1$
 			"5.1.13", MISC_CATEGORY, Integer.MAX_VALUE); //$NON-NLS-1$
 	
+	private StringConnectionProperty loadBalanceAutoCommitStatementRegex = new StringConnectionProperty(
+			"loadBalanceAutoCommitStatementRegex", //$NON-NLS-1$
+			null, //$NON-NLS-1$ //$NON-NLS-2$
+			Messages.getString("ConnectionProperties.loadBalanceAutoCommitStatementRegex"), //$NON-NLS-1$
+			"5.1.15", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+	
+	private IntegerConnectionProperty loadBalanceAutoCommitStatementThreshold = new IntegerConnectionProperty(
+			"loadBalanceAutoCommitStatementThreshold", 0, //$NON-NLS-1$
+			0, Integer.MAX_VALUE,
+			Messages.getString("ConnectionProperties.loadBalanceAutoCommitStatementThreshold"), //$NON-NLS-1$
+			"5.1.15", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
+
 	
 	private StringConnectionProperty localSocketAddress = new StringConnectionProperty("localSocketAddress", //$NON-NLS-1$
 			null, Messages.getString("ConnectionProperties.localSocketAddress"), //$NON-NLS-1$
@@ -4583,6 +4595,22 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX) {
 		this.loadBalanceEnableJMX.setValue(loadBalanceEnableJMX);
+	}
+
+	public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) {
+		this.loadBalanceAutoCommitStatementThreshold.setValue(loadBalanceAutoCommitStatementThreshold);
+	}
+
+	public int getLoadBalanceAutoCommitStatementThreshold() {
+		return loadBalanceAutoCommitStatementThreshold.getValueAsInt();
+	}
+
+	public void setLoadBalanceAutoCommitStatementRegex(String loadBalanceAutoCommitStatementRegex) {
+		this.loadBalanceAutoCommitStatementRegex.setValue(loadBalanceAutoCommitStatementRegex);
+	}
+
+	public String getLoadBalanceAutoCommitStatementRegex() {
+		return loadBalanceAutoCommitStatementRegex.getValueAsString();
 	}
 
 }

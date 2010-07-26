@@ -34,6 +34,8 @@ import java.util.Timer;
 import com.mysql.jdbc.log.Log;
 
 public interface MySQLConnection extends Connection, ConnectionProperties {
+	
+	public boolean isProxySet();
 
 	void abortInternal() throws SQLException;
 

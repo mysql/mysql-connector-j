@@ -2524,6 +2524,26 @@ public class ReplicationConnection implements Connection, PingTarget {
 				.setLoadBalanceSQLStateFailover(loadBalanceSQLStateFailover);
 		
 	}
+
+	public String getLoadBalanceAutoCommitStatementRegex() {
+		return currentConnection.getLoadBalanceAutoCommitStatementRegex();
+	}
+
+	public int getLoadBalanceAutoCommitStatementThreshold() {
+		return currentConnection.getLoadBalanceAutoCommitStatementThreshold();
+	}
+
+	public void setLoadBalanceAutoCommitStatementRegex(
+			String loadBalanceAutoCommitStatementRegex) {
+		currentConnection.setLoadBalanceAutoCommitStatementRegex(loadBalanceAutoCommitStatementRegex);
+		
+	}
+
+	public void setLoadBalanceAutoCommitStatementThreshold(
+			int loadBalanceAutoCommitStatementThreshold) {
+		currentConnection.setLoadBalanceAutoCommitStatementThreshold(loadBalanceAutoCommitStatementThreshold);
+		
+	}
 	
 
 }

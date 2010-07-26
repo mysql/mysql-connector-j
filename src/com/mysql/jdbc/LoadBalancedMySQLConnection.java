@@ -43,6 +43,10 @@ import com.mysql.jdbc.log.Log;
 public class LoadBalancedMySQLConnection implements MySQLConnection {
 
 	private LoadBalancingConnectionProxy proxy;
+	
+	public LoadBalancingConnectionProxy getProxy(){
+		return this.proxy;
+	}
 
 	protected MySQLConnection getActiveMySQLConnection() {
 		return this.proxy.currentConn;
@@ -2354,9 +2358,6 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		getActiveMySQLConnection().setTransactionIsolation(level);
 	}
 
-	public synchronized void setTypeMap(Map map) throws SQLException {
-		getActiveMySQLConnection().setTypeMap(map);
-	}
 
 	public void shutdownServer() throws SQLException {
 		getActiveMySQLConnection().shutdownServer();
@@ -2480,6 +2481,45 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 				.setLoadBalanceSQLStateFailover(loadBalanceSQLStateFailover);
 		
 	}
+	
+	public boolean shouldExecutionTriggerServerSwapAfter(String SQL){
+		return false;
+	}
+
+	public boolean isProxySet() {
+		return this.getActiveMySQLConnection().isProxySet();
+	}
+
+
+	public String getLoadBalanceAutoCommitStatementRegex() {
+		return getActiveMySQLConnection()
+			.getLoadBalanceAutoCommitStatementRegex();
+	}
+
+	public int getLoadBalanceAutoCommitStatementThreshold() {
+		return getActiveMySQLConnection()
+			.getLoadBalanceAutoCommitStatementThreshold();
+	}
+
+	public void setLoadBalanceAutoCommitStatementRegex(
+			String loadBalanceAutoCommitStatementRegex) {
+		getActiveMySQLConnection()
+			.setLoadBalanceAutoCommitStatementRegex(loadBalanceAutoCommitStatementRegex);
+		
+	}
+
+	public void setLoadBalanceAutoCommitStatementThreshold(
+			int loadBalanceAutoCommitStatementThreshold) {
+		getActiveMySQLConnection()
+			.setLoadBalanceAutoCommitStatementThreshold(loadBalanceAutoCommitStatementThreshold);
+		
+	}
+
+	public synchronized void setTypeMap(Map map) throws SQLException {
+		getActiveMySQLConnection().setTypeMap(map);
+	}
+	
+	
 	
 
 }

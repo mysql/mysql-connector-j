@@ -27,6 +27,9 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 
+import com.mysql.jdbc.ConnectionPropertiesImpl.IntegerConnectionProperty;
+import com.mysql.jdbc.ConnectionPropertiesImpl.StringConnectionProperty;
+
 public interface ConnectionProperties {
 
 	/**
@@ -1667,5 +1670,14 @@ public interface ConnectionProperties {
 	public abstract boolean getLoadBalanceEnableJMX();
 
 	public abstract void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX);	
+	
+	public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold);
+	
+	public int getLoadBalanceAutoCommitStatementThreshold();
+
+	public void setLoadBalanceAutoCommitStatementRegex(String loadBalanceAutoCommitStatementRegex);
+	
+	public String getLoadBalanceAutoCommitStatementRegex();
+
 	
 }
