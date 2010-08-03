@@ -3,6 +3,13 @@
 
 07-07-10 - Version 5.1.14
 
+	- Added ability to load-balance while auto-commit is enabled.  This introduces two new properties:
+	  loadBalanceAutoCommitStatementThreshold defines the number of matching statements which will trigger the
+	  driver to (potentially) swap physical server connections, and loadBalanceAutoCommitStatementRegex defines
+	  the regular expression against which statements must match.  The default values (0 and blank, respectively)
+	  retain the previously-established behavior that connections with auto-commit enabled are never balanced.
+	  Feature request documented in Bug#55723.
+
 	- Minor fix in getProcedureColumns() DisplaySize for Bug#51712. Fix for Bug#41269 is not complete without this.
 	  getColumnDisplaySize on resultset already consisting of metadata is now functional thanks to Bogdan.
 
