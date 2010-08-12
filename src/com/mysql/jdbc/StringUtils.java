@@ -1002,7 +1002,7 @@ public class StringUtils {
 
 			if (allowBackslashEscapes && c == '\\') {
 				escaped = !escaped;
-			} else if (c == markerCloses.charAt(markerTypeFound) && !escaped) {
+			} else if (contextMarker != Character.MIN_VALUE && c == markerCloses.charAt(markerTypeFound) && !escaped) {
 				contextMarker = Character.MIN_VALUE;
 			} else if ((ind = marker.indexOf(c)) != -1 && !escaped
 					&& contextMarker == Character.MIN_VALUE) {
@@ -1109,10 +1109,10 @@ public class StringUtils {
 	 * @throws IllegalArgumentException
 	 *             DOCUMENT ME!
 	 */
-	public static final List split(String stringToSplit, String delimiter,
+	public static final List<String> split(String stringToSplit, String delimiter,
 			String markers, String markerCloses, boolean trim) {
 		if (stringToSplit == null) {
-			return new ArrayList();
+			return new ArrayList<String>();
 		}
 
 		if (delimiter == null) {
@@ -1122,7 +1122,7 @@ public class StringUtils {
 		int delimPos = 0;
 		int currentPos = 0;
 
-		List splitTokens = new ArrayList();
+		List<String> splitTokens = new ArrayList<String>();
 
 		while ((delimPos = indexOfIgnoreCaseRespectMarker(currentPos,
 				stringToSplit, delimiter, markers, markerCloses, false)) != -1) {
