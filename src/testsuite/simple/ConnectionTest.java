@@ -1647,4 +1647,25 @@ public class ConnectionTest extends BaseTestCase {
 		}
 		
 	}
+	
+	public void testNewHostParsing() throws Exception {
+		String socket = (String)getSingleIndexedValueWithQuery(this.conn, 2, "SHOW VARIABLES LIKE 'socket'");
+		
+		Properties parsedProps = new NonRegisteringDriver().parseURL(dbUrl, null);
+		String host = parsedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		String port = parsedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		String user = parsedProps.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
+		String password = parsedProps.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+		String database = parsedProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		
+		if (socket != null) {
+			getConnectionWithProps(String.format("jdbc:mysql://address=(protocol=unix)(path='%s')(user=%s)(password=%s)/%s",
+					socket, user != null ? user : "", password != null ? password : "", database), new Properties());
+		}
+		
+		
+		
+		getConnectionWithProps(String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s",
+				host, port, user != null ? user : "", password != null ? password : "", database), new Properties());
+	}
 }

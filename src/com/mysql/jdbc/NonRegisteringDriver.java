@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.StringTokenizer;
 /**
@@ -66,6 +67,8 @@ import java.util.StringTokenizer;
  * @see java.sql.Driver
  */
 public class NonRegisteringDriver implements java.sql.Driver {
+	private static final String ALLOWED_QUOTES = "\"'";
+
 	private static final String REPLICATION_URL_PREFIX = "jdbc:mysql:replication://";
 
 	private static final String URL_PREFIX = "jdbc:mysql://";
@@ -122,6 +125,10 @@ public class NonRegisteringDriver implements java.sql.Driver {
 	 */
 	public static final String USER_PROPERTY_KEY = "user";
 
+	public static final String PROTOCOL_PROPERTY_KEY = "PROTOCOL";
+
+	public static final String PATH_PROPERTY_KEY = "PATH";
+
 	/**
 	 * Gets the drivers major version number
 	 * 
@@ -156,10 +163,19 @@ public class NonRegisteringDriver implements java.sql.Driver {
 	 */
 	protected static String[] parseHostPortPair(String hostPortPair)
 			throws SQLException {
-		int portIndex = hostPortPair.indexOf(":"); //$NON-NLS-1$
+		
 
 		String[] splitValues = new String[2];
 
+		if (StringUtils.startsWithIgnoreCaseAndWs(hostPortPair, "address")) {
+			splitValues[HOST_NAME_INDEX] = hostPortPair.trim();
+			splitValues[PORT_NUMBER_INDEX] = null;
+			
+			return splitValues;
+		}
+		
+		int portIndex = hostPortPair.indexOf(":"); //$NON-NLS-1$
+		
 		String hostname = null;
 
 		if (portIndex != -1) {
@@ -631,7 +647,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
 		String hostStuff = null;
 
-		int slashIndex = url.indexOf("/"); //$NON-NLS-1$
+		int slashIndex = StringUtils.indexOfIgnoreCaseRespectMarker(0, url, "/", ALLOWED_QUOTES, ALLOWED_QUOTES, true); //$NON-NLS-1$
 
 		if (slashIndex != -1) {
 			hostStuff = url.substring(0, slashIndex);
@@ -647,19 +663,20 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		int numHosts = 0;
 		
 		if ((hostStuff != null) && (hostStuff.trim().length() > 0)) {
-			StringTokenizer st = new StringTokenizer(hostStuff, ",");
+			List<String> hosts = StringUtils.split(hostStuff, ",", ALLOWED_QUOTES, ALLOWED_QUOTES, false);
 			
-			while (st.hasMoreTokens()) {
+
+			for (String hostAndPort : hosts) {
 				numHosts++;
 			
-				String[] hostPortPair = parseHostPortPair(st.nextToken());
+				String[] hostPortPair = parseHostPortPair(hostAndPort);
 
 				if (hostPortPair[HOST_NAME_INDEX] != null && hostPortPair[HOST_NAME_INDEX].trim().length() > 0) {
 					urlProps.setProperty(HOST_PROPERTY_KEY + "." + numHosts, hostPortPair[HOST_NAME_INDEX]);
 				} else {
 					urlProps.setProperty(HOST_PROPERTY_KEY + "." + numHosts, "localhost");
 				}
-
+				
 				if (hostPortPair[PORT_NUMBER_INDEX] != null) {
 					urlProps.setProperty(PORT_PROPERTY_KEY + "." + numHosts, hostPortPair[PORT_NUMBER_INDEX]);
 				} else {
@@ -826,5 +843,56 @@ public class NonRegisteringDriver implements java.sql.Driver {
 	 */
 	public String property(String name, Properties props) {
 		return props.getProperty(name);
+	}
+	
+	
+	/**
+	 * Expands hosts of the form address=(protocol=tcp)(host=localhost)(port=3306)
+	 * into a java.util.Properties. Special characters (in this case () and =) must be quoted.
+	 * Any values that are string-quoted ("" or '') are also stripped of quotes.
+	 */
+	public static Properties expandHostKeyValues(String host) {
+		Properties hostProps = new Properties();
+		
+		if (isHostPropertiesList(host)) {
+			host = host.substring("address=".length() + 1);
+			List<String> hostPropsList = StringUtils.split(host, ")", "'\"", "'\"", true);
+			
+			for (String propDef : hostPropsList) {
+				if (propDef.startsWith("(")) {
+					propDef = propDef.substring(1);
+				}
+				
+				List<String> kvp = StringUtils.split(propDef, "=", "'\"", "'\"", true);
+				
+				String key = kvp.get(0);
+				String value = kvp.size() > 1 ? kvp.get(1) : null;
+				
+				if (value != null && ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'")))) {
+					value = value.substring(1, value.length() - 1);
+				}
+				
+				if (value != null) {
+					if (HOST_PROPERTY_KEY.equalsIgnoreCase(key) ||
+							DBNAME_PROPERTY_KEY.equalsIgnoreCase(key) ||
+							PORT_PROPERTY_KEY.equalsIgnoreCase(key) ||
+							PROTOCOL_PROPERTY_KEY.equalsIgnoreCase(key) ||
+							PATH_PROPERTY_KEY.equalsIgnoreCase(key)) {
+						key = key.toUpperCase(Locale.ENGLISH);
+					} else if (USER_PROPERTY_KEY.equalsIgnoreCase(key) ||
+							PASSWORD_PROPERTY_KEY.equalsIgnoreCase(key)) {
+						key = key.toLowerCase(Locale.ENGLISH);
+					}
+					
+					hostProps.setProperty(key, value);
+				}
+			}
+		}
+		
+		return hostProps;
+	}
+	
+	public static boolean isHostPropertiesList(String host) {
+		return host != null && StringUtils.startsWithIgnoreCase(host, "address=");
 	}
 }

@@ -172,7 +172,7 @@ public class NamedPipeSocketFactory implements SocketFactory {
 		}
 	}
 
-	private static final String NAMED_PIPE_PROP_NAME = "namedPipePath"; //$NON-NLS-1$
+	public static final String NAMED_PIPE_PROP_NAME = "namedPipePath"; //$NON-NLS-1$
 
 	private Socket namedPipeSocket;
 

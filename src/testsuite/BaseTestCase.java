@@ -813,11 +813,19 @@ public abstract class BaseTestCase extends TestCase {
 	}
 
 	protected String getMasterSlaveUrl() throws SQLException {
-		StringBuffer urlBuf = new StringBuffer("jdbc:mysql://");
+		
 		Properties defaultProps = getPropertiesFromTestsuiteUrl();
 		String hostname = defaultProps
 				.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 	
+		if (NonRegisteringDriver.isHostPropertiesList(hostname)) {
+			String url = String.format("jdbc:mysql://%s,%s/", hostname, hostname);
+			
+			return url;
+		}
+		
+		StringBuffer urlBuf = new StringBuffer("jdbc:mysql://");
+		
 		String portNumber = defaultProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
 	
 		hostname = (hostname == null ? "localhost" : hostname);
@@ -839,49 +847,70 @@ public abstract class BaseTestCase extends TestCase {
 	protected Properties getMasterSlaveProps() throws SQLException {
 		Properties props = getPropertiesFromTestsuiteUrl();
 	
-		props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
-		props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		removeHostRelatedProps(props);
 	
 		return props;
+	}
+	
+	protected void removeHostRelatedProps(Properties props) {
+		props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		
+		int numHosts = Integer.parseInt(props.getProperty(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY));
+		
+		for (int i = 1; i <= numHosts; i++) {
+			props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + "." + i);
+			props.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + "." + i);
+		}
+		
+		props.remove(NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY);
 	}
 
 	protected Connection getLoadBalancedConnection(int badHostLocation, String badHost,
 			Properties props) throws SQLException {
-				int indexOfHostStart = dbUrl.indexOf("://") + 3;
-				int indexOfHostEnd = dbUrl.indexOf("/", indexOfHostStart);
-				
-				String firstHost = dbUrl.substring(indexOfHostStart, indexOfHostEnd);
-				
-				if (firstHost.length() == 0) {
-					firstHost = "localhost:3306";
-				}
-				
-				String dbAndConfigs = dbUrl.substring(indexOfHostEnd);
-				
-				if (badHost != null) {
-					badHost = badHost + ",";
-				}
-				
-				String hostsString = null;
-				
-				switch (badHostLocation) {
-				case 1:
-					hostsString = badHost + firstHost;
-					break;
-				case 2:
-					hostsString = firstHost + "," + badHost + firstHost;
-					break;
-				case 3:
-					hostsString = firstHost + "," + badHost;
-					break;
-				default:
-						throw new IllegalArgumentException();
-				}
-				
-				Connection lbConn = DriverManager.getConnection("jdbc:mysql:loadbalance://" + hostsString + dbAndConfigs, props);
-				
-				return lbConn;
+		Properties parsedProps = new NonRegisteringDriver().parseURL(dbUrl, null);
+		
+		String firstHost = parsedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		
+		if (!NonRegisteringDriver.isHostPropertiesList(firstHost)) {
+			String port = parsedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+			
+			if (firstHost == null) {
+				firstHost = "localhost";
 			}
+			
+			
+			firstHost = firstHost + ":" + port;
+		}
+
+		if (badHost != null) {
+			badHost = badHost + ",";
+		}
+		
+		String hostsString = null;
+		
+		switch (badHostLocation) {
+		case 1:
+			hostsString = badHost + firstHost;
+			break;
+		case 2:
+			hostsString = firstHost + "," + badHost + firstHost;
+			break;
+		case 3:
+			hostsString = firstHost + "," + badHost;
+			break;
+		default:
+				throw new IllegalArgumentException();
+		}
+		
+		if (props != null) {
+			parsedProps.putAll(props);
+		}
+
+		Connection lbConn = DriverManager.getConnection("jdbc:mysql:loadbalance://" + hostsString, parsedProps);
+		
+		return lbConn;
+	}
 
 	protected Connection getLoadBalancedConnection() throws SQLException {
 		return getLoadBalancedConnection(1, "", null);

@@ -646,65 +646,29 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
 		props.setProperty("autoReconnect", "true");
 
-		// Re-build the connection information
-		int firstIndexOfHost = BaseTestCase.dbUrl.indexOf("//") + 2;
-		int lastIndexOfHost = BaseTestCase.dbUrl.indexOf("/", firstIndexOfHost);
-
-		String hostPortPair = BaseTestCase.dbUrl.substring(firstIndexOfHost,
-				lastIndexOfHost);
-
-		StringTokenizer st = new StringTokenizer(hostPortPair, ":");
-
-		String host = null;
-		String port = null;
-
-		if (st.hasMoreTokens()) {
-			String possibleHostOrPort = st.nextToken();
-
-			if (possibleHostOrPort.indexOf(".") == -1
-					&& Character.isDigit(possibleHostOrPort.charAt(0))) {
-				port = possibleHostOrPort;
-				host = "localhost";
-			} else {
-				host = possibleHostOrPort;
-			}
+		String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		
+		if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+			String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+			
+			host = host + ":" + port;
 		}
 
-		if (st.hasMoreTokens()) {
-			port = st.nextToken();
-		}
-
-		if (host == null) {
-			host = "";
-		}
-
-		if (port == null) {
-			port = "3306";
-		}
-
-		StringBuffer newHostBuf = new StringBuffer();
-		newHostBuf.append(host);
-		newHostBuf.append(":");
-		newHostBuf.append(port);
-		newHostBuf.append(",");
-		newHostBuf.append(host);
-		if (port != null) {
-			newHostBuf.append(":");
-			newHostBuf.append(port);
-		}
-
+		host = host + "," + host;
+		
 		props.remove("PORT");
+		props.remove("HOST");
 
-		props.setProperty("HOST", newHostBuf.toString());
 		props.setProperty("queriesBeforeRetryMaster", "10");
 		props.setProperty("maxReconnects", "1");
 
+		
 		Connection failoverConnection = null;
 		Connection killerConnection = getConnectionWithProps((String)null);
 
 		try {
 			failoverConnection = getConnectionWithProps("jdbc:mysql://"
-					+ newHostBuf + "/", props);
+					+ host + "/", props);
 			((com.mysql.jdbc.Connection) failoverConnection)
 					.setPreferSlaveDuringFailover(true);
 			failoverConnection.setAutoCommit(false);
@@ -1686,50 +1650,22 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			props.setProperty("connectTimeout", "5000");
 		}
 		
-		// Re-build the connection information
-		int firstIndexOfHost = BaseTestCase.dbUrl.indexOf("//") + 2;
-		int lastIndexOfHost = BaseTestCase.dbUrl.indexOf("/", firstIndexOfHost);
-	
-		String hostPortPair = BaseTestCase.dbUrl.substring(firstIndexOfHost,
-				lastIndexOfHost);
-	
-		StringTokenizer st = new StringTokenizer(hostPortPair, ":");
-	
-		String host = null;
-		String port = null;
-	
-		if (st.hasMoreTokens()) {
-			String possibleHostOrPort = st.nextToken();
-	
-			if (Character.isDigit(possibleHostOrPort.charAt(0)) && 
-					(possibleHostOrPort.indexOf(".") == -1 /* IPV4 */)  &&
-					(possibleHostOrPort.indexOf("::") == -1 /* IPV6 */)) {
-				port = possibleHostOrPort;
-				host = "localhost";
-			} else {
-				host = possibleHostOrPort;
-			}
+String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		
+		if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+			String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+			
+			host = host + ":" + port;
 		}
-	
-		if (st.hasMoreTokens()) {
-			port = st.nextToken();
-		}
-	
-		if (host == null) {
-			host = "";
-		}
-	
-		if (port == null) {
-			port = "3306";
-		}
+
+		props.remove("PORT");
+		props.remove("HOST");
+
 	
 		StringBuffer newHostBuf = new StringBuffer();
 		
 		newHostBuf.append(host);
-		if (port != null) {
-			newHostBuf.append(":");
-			newHostBuf.append(port);
-		}
+
 	
 		newHostBuf.append(",");
 		//newHostBuf.append(host);
@@ -2635,16 +2571,31 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	}
 	
 	public void testBug48486() throws Exception {
-		int beginHost = dbUrl.indexOf("//");
 		
-		int endHost = dbUrl.indexOf("/", beginHost + 2);
-		String databaseStuff = dbUrl.substring(endHost + 1);
 		
 		Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
-		String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-		String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
+		String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
 		
-		String newUrl =  "jdbc:mysql:loadbalance://" + host + ":" + port + "," + host + ":" + port + "/" + databaseStuff;
+		String hostSpec = host;
+		
+		if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+			hostSpec = host + ":" + port;
+		}
+		
+		String database = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		removeHostRelatedProps(props);
+		props.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		
+		StringBuilder configs = new StringBuilder();
+		for (@SuppressWarnings("rawtypes") Map.Entry entry : props.entrySet()) {
+			configs.append(entry.getKey());
+			configs.append("=");
+			configs.append(entry.getValue());
+			configs.append("&");
+		}
+		
+		String newUrl =  String.format("jdbc:mysql:loadbalance://%s,%s/%s?%s", hostSpec, hostSpec, database, configs.toString());
 		
 		MysqlConnectionPoolDataSource ds = new MysqlConnectionPoolDataSource();
 		ds.setUrl(newUrl);

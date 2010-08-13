@@ -42,6 +42,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.mysql.jdbc.NamedPipeSocketFactory;
+import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.jdbc.SocketFactory;
 import com.mysql.jdbc.StandardSocketFactory;
 
 /**
@@ -135,6 +138,39 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 		
 		if (hostnameToConnectTo == null) {
 			hostnameToConnectTo = hostname;
+		}
+		
+		if (NonRegisteringDriver.isHostPropertiesList(hostnameToConnectTo)) {
+			Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(hostnameToConnectTo);
+			
+			String protocol = hostSpecificProps.getProperty(NonRegisteringDriver.PROTOCOL_PROPERTY_KEY);
+			
+			if ("unix".equalsIgnoreCase(protocol)) {
+				SocketFactory factory;
+				try {
+					factory = (SocketFactory) Class
+							.forName(
+									"org.newsclub.net.mysql.AFUNIXDatabaseSocketFactory")
+							.newInstance();
+				} catch (InstantiationException e) {
+					throw new SocketException(e.getMessage());
+				} catch (IllegalAccessException e) {
+					throw new SocketException(e.getMessage());
+				} catch (ClassNotFoundException e) {
+					throw new SocketException(e.getMessage());
+				}
+
+				String path = hostSpecificProps
+						.getProperty(NonRegisteringDriver.PATH_PROPERTY_KEY);
+
+				if (path != null) {
+					hostSpecificProps.setProperty("junixsocket.file", path);
+				}
+
+				return new HangingSocket(factory.connect(hostnameToConnectTo,
+						portNumber, hostSpecificProps), props, hostname);
+			}
+
 		}
 		
 		return new HangingSocket(super.connect(hostnameToConnectTo, portNumber, props), props, hostname);

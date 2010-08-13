@@ -5,11 +5,26 @@ mm-dd-10 - Version 5.1.14
 
    - Added ability to load-balance while auto-commit is enabled.  This introduces two new properties:
 
-	  loadBalanceAutoCommitStatementThreshold defines the number of matching statements which will trigger the driver to (potentially) swap physical server connections, and loadBalanceAutoCommitStatementRegex defines the regular expression against which statements must match.  The default values (0 and blank, respectively) retain the previously-established behavior that connections with auto-commit enabled are never balanced.  Feature request documented in Bug#55723.
+       loadBalanceAutoCommitStatementThreshold defines the number of matching statements which will trigger the driver to (potentially) swap physical server connections, 
+
+       loadBalanceAutoCommitStatementRegex defines the regular expression against which statements must match.  The default values (0 and blank, respectively) retain the previously-established behavior that connections with auto-commit enabled are never balanced.  Feature request documented in Bug#55723.
 
    - Minor fix in getProcedureColumns() DisplaySize for Bug#51712. Fix for Bug#41269 is not complete without this.  getColumnDisplaySize on resultset already consisting of metadata is now functional thanks to Bogdan.
 
    - Minor fix for Bug#55217, return 4 as a result of DataBaseMetadata.getJDBCMajorVersion() as per manual.
+
+   -  Added support for hosts specified in the URL of the form: address=(key=value), supported keys are:
+       
+       (protocol=tcp or pipe (for named pipes on Windows)
+       (path=[] for named pipes)
+       (host=[]) for TCP connections 
+       (port=[]) for TCP connections 
+       
+       An example would be:
+       
+       jdbc:mysql://address=(protocol=tcp)(host=localhost)(port=3306)(user=test)/db
+       
+       Any other parameters are treated as host-specific properties that follow the conventions of the JDBC URL properties. This now allows per-host overrides of any configuration property for multi-host connections (failover, loadbalance, replication). We do recommend that the overrides are limited to user, password, network timeouts and statement and metadata cache sizes. Unexpected behavior may be observed with other per-host overrides.
 
 06-24-10 - Version 5.1.13
 

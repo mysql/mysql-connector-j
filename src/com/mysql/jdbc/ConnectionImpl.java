@@ -42,6 +42,7 @@ import java.sql.SQLWarning;
 import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -739,16 +740,30 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		this.openStatements = new HashMap();
 		this.serverVariables = new HashMap();
 
-		if (hostToConnectTo == null) {
-			this.host = "localhost";
-			this.hostPortPair = this.host + ":" + portToConnectTo;
-		} else {
-			this.host = hostToConnectTo;
+		if (NonRegisteringDriver.isHostPropertiesList(hostToConnectTo)) {
+			Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(hostToConnectTo);
 			
-			if (hostToConnectTo.indexOf(":") == -1) {
+			Enumeration<?> propertyNames = hostSpecificProps.propertyNames();
+			
+			while (propertyNames.hasMoreElements()) {
+				String propertyName = propertyNames.nextElement().toString();
+				String propertyValue = hostSpecificProps.getProperty(propertyName);
+				
+				info.setProperty(propertyName, propertyValue);
+			}
+		} else {
+		
+			if (hostToConnectTo == null) {
+				this.host = "localhost";
 				this.hostPortPair = this.host + ":" + portToConnectTo;
 			} else {
-				this.hostPortPair = this.host;
+				this.host = hostToConnectTo;
+				
+				if (hostToConnectTo.indexOf(":") == -1) {
+					this.hostPortPair = this.host + ":" + portToConnectTo;
+				} else {
+					this.hostPortPair = this.host;
+				}
 			}
 		}
 
@@ -769,6 +784,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 
 		this.props = info;
+		
+		
+		
 		initializeDriverProperties(info);
 		
 		
@@ -2146,35 +2164,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					this.io.forceClose();
 				}
 
-				int newPort = 3306;
-
-				String[] parsedHostPortPair = NonRegisteringDriver
-						.parseHostPortPair(this.hostPortPair);
-				String newHost = parsedHostPortPair[NonRegisteringDriver.HOST_NAME_INDEX];
-
-				if (newHost == null || StringUtils.isEmptyOrWhitespaceOnly(newHost)) {
-					newHost = "localhost";
-				}
-
-				if (parsedHostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX] != null) {
-					try {
-						newPort = Integer
-								.parseInt(parsedHostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]);
-					} catch (NumberFormatException nfe) {
-						throw SQLError.createSQLException(
-								"Illegal connection port value '"
-										+ parsedHostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]
-										+ "'",
-								SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
-					}
-				}
-
-				this.io = new MysqlIO(newHost, newPort,
-						mergedProps, getSocketFactoryClassName(),
-						getProxy(), getSocketTimeout(),
-						this.largeRowSizeThreshold.getValueAsInt());
-				this.io.doHandshake(this.user, this.password,
-						this.database);
+				coreConnect(mergedProps);
 				pingInternal(false, 0);
 				this.connectionId = this.io.getThreadId();
 				this.isClosed = false;
@@ -2280,41 +2270,91 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
+	private void coreConnect(Properties mergedProps) throws SQLException,
+			IOException {
+		int newPort = 3306;
+		String newHost = "localhost";
+		
+		String protocol = mergedProps.getProperty(NonRegisteringDriver.PROTOCOL_PROPERTY_KEY);
+		
+		if (protocol != null) {
+			// "new" style URL
+
+			if ("tcp".equalsIgnoreCase(protocol)) {
+				newHost = normalizeHost(mergedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY));
+				port = parsePortNumber(mergedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY));
+			} else if ("pipe".equalsIgnoreCase(protocol)) {
+				setSocketFactoryClassName(NamedPipeSocketFactory.class.getName());
+				
+				String path = mergedProps.getProperty(NonRegisteringDriver.PATH_PROPERTY_KEY);
+				
+				if (path != null) {
+					mergedProps.setProperty(NamedPipeSocketFactory.NAMED_PIPE_PROP_NAME, path);
+				}
+			} else if ("unix".equalsIgnoreCase(protocol)) {
+				setSocketFactoryClassName("org.newsclub.net.mysql.AFUNIXDatabaseSocketFactory");
+				
+				String path = mergedProps.getProperty(NonRegisteringDriver.PATH_PROPERTY_KEY);
+				
+				if (path != null) {
+					mergedProps.setProperty("junixsocket.file", path);
+				}
+			} else {
+				// normalize for all unknown protocols
+				newHost = normalizeHost(mergedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY));
+				port = parsePortNumber(mergedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY));
+			}
+		} else {
+		
+			String[] parsedHostPortPair = NonRegisteringDriver
+					.parseHostPortPair(this.hostPortPair);
+			newHost = parsedHostPortPair[NonRegisteringDriver.HOST_NAME_INDEX];
+
+			newHost = normalizeHost(newHost);
+
+			if (parsedHostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX] != null) {
+				newPort = parsePortNumber(parsedHostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]);
+			}
+		}
+
+		this.io = new MysqlIO(newHost, newPort,
+				mergedProps, getSocketFactoryClassName(),
+				getProxy(), getSocketTimeout(),
+				this.largeRowSizeThreshold.getValueAsInt());
+		this.io.doHandshake(this.user, this.password,
+				this.database);
+	}
+
+	private String normalizeHost(String host) {
+		if (host == null || StringUtils.isEmptyOrWhitespaceOnly(host)) {
+			return "localhost";
+		}
+		
+		return host;
+	}
+	private int parsePortNumber(String portAsString)
+			throws SQLException {
+		int portNumber = 3306;
+		try {
+			portNumber = Integer
+					.parseInt(portAsString);
+		} catch (NumberFormatException nfe) {
+			throw SQLError.createSQLException(
+					"Illegal connection port value '"
+							+ portAsString
+							+ "'",
+					SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
+		}
+		return portNumber;
+	}
+
 	private void connectOneTryOnly(boolean isForReconnect,
 			Properties mergedProps) throws SQLException {
 		Exception connectionNotEstablishedBecause = null;
 
 		try {
 			
-			int newPort = 3306;
-
-			String[] parsedHostPortPair = NonRegisteringDriver
-					.parseHostPortPair(this.hostPortPair);
-			String newHost = parsedHostPortPair[NonRegisteringDriver.HOST_NAME_INDEX];
-
-			if (newHost == null || StringUtils.isEmptyOrWhitespaceOnly(newHost)) {
-				newHost = "localhost";
-			}
-
-			if (parsedHostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX] != null) {
-				try {
-					newPort = Integer
-							.parseInt(parsedHostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]);
-				} catch (NumberFormatException nfe) {
-					throw SQLError.createSQLException(
-							"Illegal connection port value '"
-									+ parsedHostPortPair[NonRegisteringDriver.PORT_NUMBER_INDEX]
-									+ "'",
-							SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
-				}
-			}
-
-			this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(),
-		                   getProxy(), getSocketTimeout(),
-		                   this.largeRowSizeThreshold.getValueAsInt());
-
-			this.io.doHandshake(this.user, this.password,
-					this.database);
+			coreConnect(mergedProps);
 			this.connectionId = this.io.getThreadId();
 			this.isClosed = false;
 
