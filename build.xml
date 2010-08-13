@@ -423,7 +423,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				<attribute name="Implementation-Title" value="MySQL Connector/J" />
 				<attribute name="Implementation-Version" value="${full.version}" />
 				<attribute name="Implementation-Vendor-Id" value="com.mysql" />
-				<attribute name="Implementation-Vendor" value="Sun Microsystems Inc." />
+				<attribute name="Implementation-Vendor" value="Oracle" />
 			</section>
 
 			<!-- OSGi -->
