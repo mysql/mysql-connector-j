@@ -1,6 +1,6 @@
 MySQL Connector/J @MYSQL_CJ_VERSION@ (formerly MM.MySQL)
-Sun Microsystem's JDBC Driver for MySQL
-Copyright 2003-2008 MySQL AB, 2008 Sun Microsystems
+Oracle's JDBC Driver for MySQL
+Copyright 2003, 2010 Oracle and/or its affiliates. All rights reserved.
 
 CONTENTS
 
@@ -10,23 +10,12 @@ CONTENTS
 
 LICENSE
 
-MySQL Connector/J is licensed under the GPL or a commercial license
-from Sun Microsystems. 
+MySQL Connector/J is licensed under the GPLv2 or a commercial license
+from Oracle Corporation. 
 
-If you have licensed this product under the GPL, please see the COPYING
-file for more information. 
+If you have licensed this product under the GPLv2, please see the COPYING file for more information. 
 
-There are special exceptions to the terms and conditions of the GPL 
-as it is applied to this software. View the full text of the 
-exception in file EXCEPTIONS-CONNECTOR-J in the directory of this 
-software distribution.
-
-If you have licensed this product under a commercial license from
-MySQL AB, please see the file "LICENSE.mysql" that comes with this 
-distribution for the terms of the license.
-
-If you need non-GPL licenses for commercial distribution please contact 
-me <mark@mysql.com> or <sales@mysql.com>.
+There are special exceptions to the terms and conditions of the GPLv2 as it is applied to this software, see the FLOSS License Exception <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 
 
 DOCUMENTATION LOCATION
@@ -36,20 +25,17 @@ The documentation formerly contained in this file has moved into the
 forms.
 
 You may also find the latest copy of the documentation on the MySQL
-website at http://dev.mysql.com/doc/refman/5.0/en/connector-j.html
+website at http://dev.mysql.com/doc/refman/5.1/en/connector-j.html
 
 LICENSE NOTICES
-***************************************************************************
+*******************************************************************
 
-"For the avoidance of doubt, except that if any license choice other
-than GPL or LGPL is available it will apply instead, Sun elects to use
-only the Lesser General Public License version 2.1 (LGPLv2.1) at this
-time for any software where a choice of LGPL license versions is made
-available with the language indicating that LGPLv2.1 or any later
+For the avoidance of doubt, except that if any license choice other
+than GPL or LGPL is available it will apply instead, Oracle elects to use only the Lesser General Public License version 2.1 (LGPLv2.1) at this time for any software where a choice of LGPL license versions is made available with the language indicating that LGPLv2.1 or any later
 version may be used, or where a choice of which version of the LGPL is
-applied is otherwise unspecified."
+applied is otherwise unspecified.
 
-***************************************************************************
+*******************************************************************
 
 %%The following software may be included in this product:
 Ant-Contrib
@@ -104,7 +90,7 @@ Use of any of this software is governed by the terms of the license below:
 * ====================================================================
 */
 
-***************************************************************************
+*******************************************************************
 
 %%The following software may be included in this product:
 c3p0:JDBC DataSources/Resource Pools
@@ -614,7 +600,7 @@ necessary.  Here is a sample; alter the names:
 
 That's all there is to it!
 
-***************************************************************************
+*******************************************************************
 
 %%The following software may be included in this product:
 Commons-logging
@@ -823,7 +809,7 @@ Apache License
   See the License for the specific language governing permissions and
   limitations under the License.
 
-***************************************************************************
+*******************************************************************
 
 %%The following software may be included in this product:
 jboss-common-jdbc-wrapper.jar
@@ -2694,15 +2680,12 @@ That's all there is to it!
 
 504
 
-***************************************************************************
+*******************************************************************
 
 %%The following software may be included in this product:
 JUnit
 
 Use of any of this software is governed by the terms of the license below:
-
-License for Request for Full Review #1221
-
 
 Common Public License - v 1.0
 
@@ -2912,23 +2895,10 @@ expressly, by implication, estoppel or otherwise. All rights in the Program not
 expressly granted under this Agreement are reserved.
 
 This Agreement is governed by the laws of the State of New York and the
-intellectual property laws of the United States of America. No party to this
-Agreement will bring a legal action under this Agreement more than one year
-after the cause of action arose. Each party waives its rights to a jury trial in
-any resulting litigation. 
+intellectual property laws of the United States of America. No party to this Agreement will bring a legal action under this Agreement more than one year after the cause of action arose. Each party waives its rights to a jury trial in any resulting litigation. 
 
 
-
-              Sun Proprietary/Confidential: Internal Use Only
-help@legalreview.east.sun.com
-                                                      Help
-
-
-Additional License(s)
-
-Nothing found in any source file.
-
-***************************************************************************
+*******************************************************************
 
 %%The following software may be included in this product:
 log4j.jar
@@ -3137,10 +3107,4 @@ Apache License
   See the License for the specific language governing permissions and
   limitations under the License.
 
-***************************************************************************
-
--- 
-This software is OSI Certified Open Source Software.
-OSI Certified is a certification mark of the Open Source Initiative.
-
-
+*******************************************************************
