@@ -40,7 +40,7 @@ import com.mysql.jdbc.log.Log;
 
 public class LoadBalancedMySQLConnection implements MySQLConnection {
 
-	private LoadBalancingConnectionProxy proxy;
+	protected LoadBalancingConnectionProxy proxy;
 	
 	public LoadBalancingConnectionProxy getProxy(){
 		return this.proxy;

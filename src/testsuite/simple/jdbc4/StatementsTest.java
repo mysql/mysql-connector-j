@@ -36,7 +36,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
+import com.mysql.jdbc.NonRegisteringDriver;
+
 import testsuite.BaseTestCase;
+import testsuite.regression.ConnectionRegressionTest.CountingReBalanceStrategy;
 
 public class StatementsTest extends BaseTestCase {
 
@@ -621,4 +624,25 @@ public class StatementsTest extends BaseTestCase {
 	    stmt2.close();
 	    conn2.close();      
 	}
+	
+	public void testJdbc4LoadBalancing() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("loadBalanceStrategy", CountingReBalanceStrategy.class.getName());
+		props.setProperty("loadBalanceAutoCommitStatementThreshold", "3");
+		
+		String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null).getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		
+		if (portNumber == null) {
+			portNumber = "3306";
+		}
+		
+		Connection conn2 = this.getUnreliableLoadBalancedConnection(new String[]{"first", "second"}, props);
+		try{
+			conn2.createNClob();
+		} catch (SQLException e){
+			fail("Unable to call Connection.createNClob() in load-balanced connection");
+		}
+		
+	}
+
 }

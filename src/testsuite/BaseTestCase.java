@@ -999,4 +999,40 @@ public abstract class BaseTestCase extends TestCase {
 				return getConnectionWithProps("jdbc:mysql:loadbalance://" + hostString.toString() +"/" + db, props);
 				
 			}
+	protected Connection getUnreliableReplicationConnection(String[] hostNames,
+			Properties props) throws Exception {
+		return getUnreliableReplicationConnection(hostNames,
+				props, new HashSet());
+	}
+	protected Connection getUnreliableReplicationConnection(String[] hostNames,
+			Properties props, Set downedHosts) throws Exception {
+				if(props == null){
+					props = new Properties();
+				}
+				NonRegisteringDriver d = new NonRegisteringDriver();
+				this.copyBasePropertiesIntoProps(props, d);
+				props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+				Properties parsed = d.parseURL(BaseTestCase.dbUrl, props);
+				String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+				String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+				String host = getPortFreeHostname(props, d);
+				UnreliableSocketFactory.flushAllHostLists();
+				StringBuffer hostString = new StringBuffer();
+				String glue = "";
+				for(int i = 0; i < hostNames.length; i++){
+					UnreliableSocketFactory.mapHost(hostNames[i], host);
+					hostString.append(glue);
+					glue = ",";
+					hostString.append(hostNames[i] + ":" + (port == null ? "3306" : port));
+					
+					if (downedHosts.contains(hostNames[i])) {
+						UnreliableSocketFactory.downHost(hostNames[i]);
+					}
+				}
+				
+				props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
+					
+				return getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() +"/" + db, props);
+				
+			}
 }
