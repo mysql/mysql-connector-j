@@ -116,7 +116,7 @@
 				</or>
 			</and>
 			<then>
-				<echo>This version of MySQL Connector/J requires a compiler from Java-1.4 or Java-1.5 to be used, set your JAVA_HOME property to point to one of these versions of the JDK.
+				<echo>This version of MySQL Connector/J requires a compiler Java-1.5 to be used, set your JAVA_HOME property to point to one of these versions of the JDK.
 							
 Compiling this version also requires Java-6 for compiling the JDBC-4.0 implementation, please set the full path to the javac executable with the property &quot;com.mysql.jdbc.java6.javac&quot;
 and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jdbc.java6.rtjar&quot;.
@@ -209,7 +209,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 	</target>
 
 	<target name="-init-no-crypto" depends="-init-copy" if="com.mysql.jdbc.noCryptoBuild">
-		<copy file="${sourceDir}//lib-nodist/ExportControlledNoCrypto.notjava"
+		<copy file="${sourceDir}/lib-nodist/ExportControlledNoCrypto.notjava"
 			toFile="${buildDir}/${fullProdName}/com/mysql/jdbc/ExportControlled.java"
 			overwrite="true"/>
 	</target>
@@ -294,9 +294,6 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				<copy file="./COPYING"
 					toDir="${mavenUploadDir}" />
 
-				<copy file="./EXCEPTIONS-CONNECTOR-J"
-							toDir="${mavenUploadDir}" />
-
 				<jar jarfile="${distDir}/${fullProdName}.bundle.jar" 
 							basedir="${mavenUploadDir}" />
 			</else>
@@ -330,14 +327,43 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				<patternset refid="non.test.sources"/>
 			</fileset>
 
-			<fileset dir="." includes="src/com/**, src/doc/**, src/lib/*, src/org/**, src/testsuite/**, build.xml, CHANGES, COPYING, EXCEPTIONS-CONNECTOR-J, README">
+			<fileset dir="." includes="src/com/**, src/doc/**, src/lib/*, src/org/**, src/testsuite/**, build.xml, CHANGES, COPYING">
 				<patternset refid="non.test.sources"/>
 			</fileset>
 		</copy>
 
 		<!-- Fix CRLF for various platforms -->
-		<copy file="${packageDest}/README" tofile="${packageDest}/README.txt"/>
-		<copy file="${packageDest}/docs/README.txt" tofile="${packageDest}/docs/README" failOnError="false"/>
+		<if>
+			<isset property="com.mysql.jdbc.commercialBuild"/>
+			<then>
+				<copy file="${sourceDir}/lib-nodist/README-commercial" tofile="${packageDest}/README.txt" filtering="true">
+					<filterset>
+						<filter token="MYSQL_CJ_MAJOR_VERSION" value="${major_version}"/>
+						<filter token="MYSQL_CJ_MINOR_VERSION" value="${minor_version}"/>
+						<filter token="MYSQL_CJ_SUBMINOR_VERSION" value="${subminor_version}"/>
+						<filter token="MYSQL_CJ_VERSION_STATUS" value="${version_status}"/>
+						<filter token="MYSQL_CJ_VERSION" value="${version}"/>
+						<filter token="MYSQL_CJ_REVISION" value="${bzr.revision-id}" />
+						<filter token="MYSQL_CJ_FULL_PROD_NAME" value="${fullProdName}"/>
+					</filterset>
+				</copy>
+				<copy file="${packageDest}/README.txt" tofile="${packageDest}/README" overwrite="true" />
+			</then>
+			<else>
+				<copy file="${basedir}/README" tofile="${packageDest}/README.txt" filtering="true">
+					<filterset>
+						<filter token="MYSQL_CJ_MAJOR_VERSION" value="${major_version}"/>
+						<filter token="MYSQL_CJ_MINOR_VERSION" value="${minor_version}"/>
+						<filter token="MYSQL_CJ_SUBMINOR_VERSION" value="${subminor_version}"/>
+						<filter token="MYSQL_CJ_VERSION_STATUS" value="${version_status}"/>
+						<filter token="MYSQL_CJ_VERSION" value="${version}"/>
+						<filter token="MYSQL_CJ_REVISION" value="${bzr.revision-id}" />
+						<filter token="MYSQL_CJ_FULL_PROD_NAME" value="${fullProdName}"/>
+					</filterset>
+				</copy>
+				<copy file="${packageDest}/README.txt" tofile="${packageDest}/README" overwrite="true" />
+			</else>
+		</if>
 
 		<!-- For Windows-y platforms -->
 
@@ -354,21 +380,11 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<if>
 			<isset property="com.mysql.jdbc.commercialBuild"/>
 			<then>
-				<!-- These are the GPL and FLOSS exceptions. They don't get shipped with
-									 commercial builds -->
-
 				<delete file="${packageDest}/COPYING"/>
-				<delete file="${packageDest}/EXCEPTIONS-CONNECTOR-J"/>
 
-				<!-- Pull in the commercial license itself -->
-
-				<copy file="${sourceDir}/lib-nodist/LICENSE.mysql" toDir="${packageDest}"/>
-
-				<loadfile property="commercialLicenseText"
-					srcFile="${sourceDir}/lib-nodist/commercialLicense.txt"/>
 				<replaceregexp 
-					match="Copyright.*1307.[^replaceregexp]*USA"
-					replace="${commercialLicenseText}"
+					match="The MySQL Connector.*1301.[^replaceregexp]*USA"
+					replace=""
 					flags="s">
 					<fileset dir="${packageDest}" includes="**/*"/>
 				</replaceregexp>
