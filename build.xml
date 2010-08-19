@@ -44,6 +44,8 @@
 	<property name="distDir" value="./dist"/>
 	<property name="junit.results" value="${buildDir}/junit"/>
 	<property name="debug.enable" value="on" />
+	
+	
 
 	<!-- Send class files to correct location if running in eclipse -->
 
@@ -127,17 +129,6 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 	</target>
 
 	<target name="init" depends="-compiler-check, -init-copy, -init-no-crypto">
-		<!-- If we're building under cruise control, update ourself -->
-
-		<if>
-			<isset property="cctimestamp"/>
-			<then>
-				<exec executable="svn">
-					<arg line="up"/>
-				</exec>
-			</then>
-		</if>
-
 		<!-- We need the following for source distributions as there we
              can't dynamically alter the classpath, and not having this
 		     directory present causes the build to fail -->
@@ -180,6 +171,16 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 		<property prefix="bzr" file="${buildDir}/bzr.properties" />
 
+		<filterset id="versionFilterset">
+			<filter token="MYSQL_CJ_MAJOR_VERSION" value="${major_version}"/>
+			<filter token="MYSQL_CJ_MINOR_VERSION" value="${minor_version}"/>
+			<filter token="MYSQL_CJ_SUBMINOR_VERSION" value="${subminor_version}"/>
+			<filter token="MYSQL_CJ_VERSION_STATUS" value="${version_status}"/>
+			<filter token="MYSQL_CJ_VERSION" value="${version}"/>
+			<filter token="MYSQL_CJ_REVISION" value="${bzr.revision-id}" />
+			<filter token="MYSQL_CJ_FULL_PROD_NAME" value="${fullProdName}"/>
+		</filterset>
+		
 		<copy todir="${buildDir}/${fullProdName}" filtering="true">
 			<fileset dir="${sourceDir}/" excludes="**/CVS">
 				<patternset id="classjar" >
@@ -188,15 +189,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				</patternset>
 			</fileset>
 
-			<filterset>
-				<filter token="MYSQL_CJ_MAJOR_VERSION" value="${major_version}"/>
-				<filter token="MYSQL_CJ_MINOR_VERSION" value="${minor_version}"/>
-				<filter token="MYSQL_CJ_SUBMINOR_VERSION" value="${subminor_version}"/>
-				<filter token="MYSQL_CJ_VERSION_STATUS" value="${version_status}"/>
-				<filter token="MYSQL_CJ_VERSION" value="${version}"/>
-				<filter token="MYSQL_CJ_REVISION" value="${bzr.revision-id}" />
-				<filter token="MYSQL_CJ_FULL_PROD_NAME" value="${fullProdName}"/>
-			</filterset>
+			<filterset refid="versionFilterset" />
 		</copy>
 
 		<copy todir="${buildDir}/${fullProdName}" filtering="false">
@@ -337,29 +330,13 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<isset property="com.mysql.jdbc.commercialBuild"/>
 			<then>
 				<copy file="${sourceDir}/lib-nodist/README-commercial" tofile="${packageDest}/README.txt" filtering="true">
-					<filterset>
-						<filter token="MYSQL_CJ_MAJOR_VERSION" value="${major_version}"/>
-						<filter token="MYSQL_CJ_MINOR_VERSION" value="${minor_version}"/>
-						<filter token="MYSQL_CJ_SUBMINOR_VERSION" value="${subminor_version}"/>
-						<filter token="MYSQL_CJ_VERSION_STATUS" value="${version_status}"/>
-						<filter token="MYSQL_CJ_VERSION" value="${version}"/>
-						<filter token="MYSQL_CJ_REVISION" value="${bzr.revision-id}" />
-						<filter token="MYSQL_CJ_FULL_PROD_NAME" value="${fullProdName}"/>
-					</filterset>
+					<filterset refid="versionFilterset" />
 				</copy>
 				<copy file="${packageDest}/README.txt" tofile="${packageDest}/README" overwrite="true" />
 			</then>
 			<else>
 				<copy file="${basedir}/README" tofile="${packageDest}/README.txt" filtering="true">
-					<filterset>
-						<filter token="MYSQL_CJ_MAJOR_VERSION" value="${major_version}"/>
-						<filter token="MYSQL_CJ_MINOR_VERSION" value="${minor_version}"/>
-						<filter token="MYSQL_CJ_SUBMINOR_VERSION" value="${subminor_version}"/>
-						<filter token="MYSQL_CJ_VERSION_STATUS" value="${version_status}"/>
-						<filter token="MYSQL_CJ_VERSION" value="${version}"/>
-						<filter token="MYSQL_CJ_REVISION" value="${bzr.revision-id}" />
-						<filter token="MYSQL_CJ_FULL_PROD_NAME" value="${fullProdName}"/>
-					</filterset>
+					<filterset refid="versionFilterset" />
 				</copy>
 				<copy file="${packageDest}/README.txt" tofile="${packageDest}/README" overwrite="true" />
 			</else>
