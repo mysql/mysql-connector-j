@@ -70,6 +70,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	private long lastUsed = 0;
 	private long transactionCount = 0;
 	private ConnectionGroup connectionGroup = null;
+	private String closedReason = null;
 
 	public static final String BLACKLIST_TIMEOUT_PROPERTY_KEY = "loadBalanceBlacklistTimeout";
 
@@ -501,6 +502,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		if ("close".equals(methodName)) {
 			closeAllConnections();
 			this.isClosed = true;
+			this.closedReason = "Connection explicitly closed.";
 			return null;
 		}
 
@@ -509,8 +511,12 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		}
 
 		if (this.isClosed) {
+			String reason = "No operations allowed after connection closed.";
+			if(this.closedReason != null){
+				reason += ("  " + this.closedReason);
+			}
 			throw SQLError.createSQLException(
-					"No operations allowed after connection closed.",
+					reason,
 					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /*
 																 * no access to
 																 * a interceptor
@@ -623,6 +629,8 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		}
 		// no hosts available to swap connection to, close up.
 		this.isClosed = true;
+		this.closedReason = "Connection closed after inability to pick valid new connection during fail-over.";
+
 	}
 
 	/**
@@ -762,6 +770,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 						// pool won't do it
 						closeAllConnections();
 						this.isClosed = true;
+						this.closedReason = "Connection closed because ping of current connection failed.";
 						throw e;
 					}
 
@@ -793,6 +802,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		if (!foundHost) {
 			closeAllConnections();
 			this.isClosed = true;
+			this.closedReason = "Connection closed due to inability to ping any active connections.";
 			// throw the stored Exception, if exists
 			if (se != null) {
 				throw se;

@@ -28,6 +28,10 @@ mm-dd-10 - Version 5.1.14
 
     - Fix for Bug#56099 - Added support for JDBC4-specific functionality when using load-balanced connections.
 
+    - Fix for Bug#56200 - Added diagnostic information to SQLException message thrown when a closed
+      load-balanced connection is reused.  This information will identify the conditions which caused
+      the connection to be closed.
+
 
 06-24-10 - Version 5.1.13
 
