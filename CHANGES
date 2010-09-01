@@ -31,7 +31,12 @@ mm-dd-10 - Version 5.1.14
     - Fix for Bug#56200 - Added diagnostic information to SQLException message thrown when a closed
       load-balanced connection is reused.  This information will identify the conditions which caused
       the connection to be closed.
-
+      
+    - Fix for Bug#56429 - When using Connector/J configured for failover (jdbc:mysql://host1,host2,... URLs), the non-primary 
+      servers re-balance and spawned new idle connections when the transactions on the master were committed or rolled-back,
+      eventually exceeding max_connections. It was also discovered that session state (autocommit, isolation level, catalog) wasn't 
+      being copied from the primary connection to secondary connections correctly because of the same changes that caused this bug, 
+      and this was fixed as well.
 
 06-24-10 - Version 5.1.13
 

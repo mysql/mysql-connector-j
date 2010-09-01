@@ -2881,4 +2881,73 @@ String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 		
 	}
 	
+	public void testBug56429() throws Exception {
+		Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+		props.setProperty("autoReconnect", "true");
+		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+
+		Properties urlProps = new NonRegisteringDriver().parseURL(BaseTestCase.dbUrl, null);
+		
+		String host = urlProps.getProperty(Driver.HOST_PROPERTY_KEY);
+		String port = urlProps.getProperty(Driver.PORT_PROPERTY_KEY);
+		
+		props.remove(Driver.HOST_PROPERTY_KEY);
+		props.remove(Driver.NUM_HOSTS_PROPERTY_KEY);
+		props.remove(Driver.HOST_PROPERTY_KEY + ".1");
+		props.remove(Driver.PORT_PROPERTY_KEY + ".1");
+		
+		props.setProperty("queriesBeforeRetryMaster", "50");
+		props.setProperty("maxReconnects", "1");
+
+		UnreliableSocketFactory.mapHost("master", host);
+		UnreliableSocketFactory.mapHost("slave", host);
+
+		Connection failoverConnection = null;
+
+		try {
+			failoverConnection = getConnectionWithProps("jdbc:mysql://master:" + port + ",slave:" + port + "/", props);
+			
+			String userHost = getSingleIndexedValueWithQuery(1, "SELECT USER()").toString();
+			String[] userParts = userHost.split("@");
+			
+			this.rs = this.stmt.executeQuery("SHOW PROCESSLIST");
+			
+			int startConnCount = 0;
+			
+			while (this.rs.next()) {
+				if (this.rs.getString("User").equals(userParts[0]) && this.rs.getString("Host").equals(userParts[1])) {
+					startConnCount++;
+				}
+			}
+			
+			assert(startConnCount > 0);
+			
+			failoverConnection.setAutoCommit(false); // this will fail if state not copied over
+			
+			for (int i = 0; i < 20; i++) {
+				
+				failoverConnection.commit();
+			}
+			
+			this.rs = this.stmt.executeQuery("SHOW PROCESSLIST");
+			
+			int endConnCount = 0;
+			
+			while (this.rs.next()) {
+				if (this.rs.getString("User").equals(userParts[0]) && this.rs.getString("Host").equals(userParts[1])) {
+					endConnCount++;
+				}
+			}
+			
+			assert(endConnCount > 0);
+			
+			if (endConnCount - startConnCount >= 20) { // this may be bogus if run on a real system, we should probably look to see they're coming from this testsuite?
+				fail("We're leaking connections even when not failed over");
+			}
+		} finally {
+			if (failoverConnection != null) {
+				failoverConnection.close();
+			}
+		}
+	}
 }

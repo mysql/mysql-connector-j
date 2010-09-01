@@ -119,10 +119,10 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 				shouldFallBack() && Boolean.TRUE.equals(args[0]) && failedOver) {
 			createPrimaryConnection();
 			
-			return super.invoke(proxy, method, args);
+			return super.invoke(proxy, method, args, failedOver);
 		}
 
-		return super.invoke(proxy, method, args);
+		return super.invoke(proxy, method, args, failedOver);
 	}
 
 	private void createPrimaryConnection() throws SQLException {

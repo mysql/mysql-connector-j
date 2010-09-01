@@ -473,13 +473,18 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		}
 
 	}
+	
+		
+	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		return this.invoke(proxy, method, args, true);
+	}
 
 	/**
 	 * Proxies method invocation on the java.sql.Connection interface, trapping
 	 * "close", "isClosed" and "commit/rollback" (to switch connections for load
 	 * balancing).
 	 */
-	public Object invoke(Object proxy, Method method, Object[] args)
+	public Object invoke(Object proxy, Method method, Object[] args, boolean swapAtTransactionBoundary)
 			throws Throwable {
 
 		String methodName = method.getName();
@@ -546,7 +551,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		} catch (InvocationTargetException e) {
 			dealWithInvocationException(e);
 		} finally {
-			if ("commit".equals(methodName) || "rollback".equals(methodName)) {
+			if (swapAtTransactionBoundary && ("commit".equals(methodName) || "rollback".equals(methodName))) {
 				this.inTransaction = false;
 
 				// Update stats
@@ -591,10 +596,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			invalidateCurrentConnection();
 		}
 
-		boolean currentAutoCommit = this.currentConn.getAutoCommit();
-		int currentTransIsolation = this.currentConn.getTransactionIsolation();
 		int pingTimeout = this.currentConn.getLoadBalancePingTimeout();
 		boolean pingBeforeReturn = this.currentConn.getLoadBalanceValidateConnectionOnSwapServer();
+		
 		for(int hostsTried = 0, hostsToTry = this.hostList.size(); hostsTried <= hostsToTry; hostsTried++){
 			try{
 				ConnectionImpl newConn = this.balancer.pickConnection(
@@ -611,8 +615,8 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 							newConn.pingInternal(true, pingTimeout);
 						}
 					}
-					newConn.setTransactionIsolation(currentTransIsolation);
-					newConn.setAutoCommit(currentAutoCommit);
+					
+					syncSessionState(this.currentConn, newConn);
 				}
 				
 				this.currentConn = newConn;
@@ -993,12 +997,22 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	
 	public long getCurrentTransactionDuration(){
 		long st = 0;
+		
 		if(this.inTransaction && (st = this.transactionStartTime) > 0){
 			return getLocalTimeBestResolution() - this.transactionStartTime;
 		}
 		return 0;
 	}
 	
-		
-	
+	protected void syncSessionState(Connection initial, Connection target)
+			throws SQLException {
+		if (initial == null || target == null) {
+			return;
+		}
+		target.setAutoCommit(initial.getAutoCommit());
+		target.setCatalog(initial.getCatalog());
+		target.setTransactionIsolation(initial.getTransactionIsolation());
+
+	}
+
 }
