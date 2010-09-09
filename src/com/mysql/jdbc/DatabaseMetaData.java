@@ -4345,6 +4345,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						boolean hasTypeColumn = false;
 
 						if (db != null) {
+							if(conn.lowerCaseTableNames()){
+								db = db.toLowerCase();
+							}
 							proceduresStmt.setString(2, db);
 						} else {
 							proceduresStmt.setNull(2, Types.VARCHAR);
