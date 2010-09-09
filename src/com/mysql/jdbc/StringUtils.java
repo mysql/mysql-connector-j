@@ -1679,6 +1679,89 @@ public class StringUtils {
 		return buf.toString();
 	}
 	
+	/**
+	 * Next two functions are to help DBMD check if 
+	 * the given string is in form of database.name and return it 
+	 * as "database";"name" with comments removed.
+	 * If string is NULL or wildcard (%), returns null and exits.
+	 * 
+	 * First, we sanitize...
+	 * 
+	 * @param src
+	 *            the source string
+	 * @return the input string with all comment-delimited data removed
+	 */
+	public static String sanitizeProcOrFuncName(String src) {
+		if ((src == null) || (src == "%")) {
+			return null;
+		} else {
+			return src;
+		}
+	}
+
+	/**
+	 * Next we check if there is anything to split. If so 
+	 * we return result in form of "database";"name"
+	 * If string is NULL or wildcard (%), returns null and exits.
+	 * 
+	 * @param src
+	 *            the source string
+	 * @param cat
+	 *            Catalog, if available
+	 * @param quotId
+	 *            quoteId as defined on server
+	 * @param isNoBslashEscSet
+	 *            Is our connection in BackSlashEscape mode
+	 * @return the input string with all comment-delimited data removed
+	 */
+	public static List splitDBdotName(String src, String cat, String quotId,
+			boolean isNoBslashEscSet) {
+		if ((src == null) || (src == "%")) {
+			return new ArrayList();
+		}
+		String retval = src;
+		//So we have a name to check, meaning more actual processing
+		String tmpCat = cat;
+		//This is NOT enough. I.e., what if database is named `MyDatabase 1.0.0`... thus trueDotIndex
+		int trueDotIndex = -1;
+		if (!" ".equals(quotId)) {
+			//Presumably, if there is a database name attached and it contains dots, then it should
+			//be quoted so we first check for that
+			trueDotIndex = StringUtils.indexOfIgnoreCaseRespectQuotes(0,
+					retval, quotId + ".", quotId.charAt(0), !isNoBslashEscSet);
+			if (trueDotIndex == -1){
+				trueDotIndex = StringUtils.indexOfIgnoreCaseRespectQuotes(0,
+						retval, ".", quotId.charAt(0), !isNoBslashEscSet);
+			}
+		} else {
+			trueDotIndex = retval.indexOf(".");
+		}
+
+		List retTokens = new ArrayList(2);
+
+		//trueDotIndex being still -1 means there's no
+		//catalog attached!
+		if (trueDotIndex != -1) {
+			//There is a catalog attached
+			tmpCat = retval.substring(0, trueDotIndex);
+			if (StringUtils.startsWithIgnoreCaseAndWs(tmpCat, quotId) && tmpCat.trim().endsWith(quotId)) {
+				tmpCat = tmpCat.substring(1, tmpCat.length() - 1);
+			}
+
+			retval = retval.substring(trueDotIndex + 1);
+			retval = new String(StringUtils.stripEnclosure(retval
+				.getBytes(), quotId, quotId));
+		} else {
+			//No catalog attached, strip retval and return
+			retval = new String(StringUtils.stripEnclosure(retval
+				.getBytes(), quotId, quotId));
+		}
+		
+		retTokens.add(tmpCat);
+		retTokens.add(retval);
+		return retTokens;
+	}
+	
 	public static final boolean isEmptyOrWhitespaceOnly(String str) {
 		if (str == null || str.length() == 0) {
 			return true;

@@ -4104,17 +4104,43 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			boolean returnFunctions) throws SQLException {
 
 		List proceduresToExtractList = new ArrayList();
-
+		//Main container to be passed to getProceduresAndOrFunctions
+		ResultSet procedureNameRs = null;
+		
 		if (supportsStoredProcedures()) {
-				
-			ResultSet procedureNameRs = null;
-
 			try {
+				//getProceduresAndOrFunctions does NOT expect procedureOrFunctionNamePattern 
+				//in form of DB_NAME.SP_NAME thus we need to remove it
+				String tmpProcedureOrFunctionNamePattern = null;
+				//Check if NOT a pattern first, then "sanitize"
+				if ((procedureOrFunctionNamePattern != null) && (procedureOrFunctionNamePattern != "%")) {
+					tmpProcedureOrFunctionNamePattern = StringUtils.sanitizeProcOrFuncName(procedureOrFunctionNamePattern);
+				}
 
+				//Sanity check, if NamePattern is still NULL, we have a wildcard and not the name
+				if (tmpProcedureOrFunctionNamePattern == null) {
+					tmpProcedureOrFunctionNamePattern = procedureOrFunctionNamePattern;
+				} else {
+					//So we have a name to check meaning more actual processing
+					//Keep the Catalog parsed, maybe we'll need it at some point
+					//in the future...
+					String tmpCatalog = catalog;
+					List parseList = StringUtils.splitDBdotName(tmpProcedureOrFunctionNamePattern, tmpCatalog, 
+							this.quotedId, this.conn.isNoBackslashEscapesSet());
+					
+					//There *should* be 2 rows, if any.
+					if (parseList.size() == 2) {
+						tmpCatalog = (String) parseList.get(0);
+						tmpProcedureOrFunctionNamePattern = (String) parseList.get(1);			
+					} else {
+						//keep values as they are
+					}
+				}
+				
 				procedureNameRs = getProceduresAndOrFunctions(
 						createFieldMetadataForGetProcedures(),
 						catalog, schemaPattern,
-						procedureOrFunctionNamePattern, returnProcedures,
+						tmpProcedureOrFunctionNamePattern, returnProcedures,
 						returnFunctions);
 
 				// Demand: PARAM_CAT for SP.
@@ -4126,6 +4152,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				String tmpstrPNameRs = null; 
 				String tmpstrCatNameRs = null;
 
+				boolean hasResults = false;
 				while (procedureNameRs.next()) {
 					tmpstrCatNameRs = procedureNameRs.getString(1);
 					tmpstrPNameRs = procedureNameRs.getString(3);
@@ -4142,6 +4169,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					if (proceduresToExtractList.indexOf(tmpstrCatNameRs + "." + tmpstrPNameRs) < 0) {
 						proceduresToExtractList.add(tmpstrCatNameRs + "." + tmpstrPNameRs);
 					}
+					hasResults = true;
+				}
+
+				// FIX for Bug#56305, allowing the code to proceed with empty fields causing NPE later
+				if (!hasResults) {
+					throw SQLError.createSQLException(
+							"User does not have access to metadata required to determine " +
+							"stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" " +
+							"to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
+							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());		
 				}
 
 				// Required to be sorted in name-order by JDBC spec,
@@ -4378,12 +4415,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 							proceduresRs = proceduresStmt.executeQuery();
 
-							if (returnFunctions) {
-								convertToJdbcFunctionList(db, proceduresRs,
-									needsClientFiltering, db,
-									procedureRowsOrderedByName, nameIndex,
-									fields);
-							}
+						}
+						//Should be here, not in IF block!
+						if (returnFunctions) {
+							convertToJdbcFunctionList(db, proceduresRs,
+								needsClientFiltering, db,
+								procedureRowsOrderedByName, nameIndex,
+								fields);
 						}
 
 						// Now, sort them

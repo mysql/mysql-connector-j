@@ -2,6 +2,10 @@
 # $Id$
 
 mm-dd-10 - Version 5.1.14
+   - Patch for Bug#56305, unhandled NPE in DatabaseMetaData.java when calling wrong-cased function without access to mysql.proc.
+   Although simple by itself, some more enhancements were needed for everything to function properly.
+   So, along with catching potential NPE due to server bug, a guard against calling JDBC functions with db_name.proc_name
+   notation was also added. Necessary changes added to StringUtils.java too.
 
    - Added ability to load-balance while auto-commit is enabled.  This introduces two new properties:
 
