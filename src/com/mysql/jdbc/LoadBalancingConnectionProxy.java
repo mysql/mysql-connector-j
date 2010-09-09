@@ -1012,6 +1012,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		target.setAutoCommit(initial.getAutoCommit());
 		target.setCatalog(initial.getCatalog());
 		target.setTransactionIsolation(initial.getTransactionIsolation());
+		target.setReadOnly(initial.isReadOnly());
 
 	}
 
