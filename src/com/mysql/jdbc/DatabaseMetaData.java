@@ -4174,18 +4174,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 				// FIX for Bug#56305, allowing the code to proceed with empty fields causing NPE later
 				if (!hasResults) {
-					throw SQLError.createSQLException(
-							"User does not have access to metadata required to determine " +
-							"stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" " +
-							"to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
-							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());		
+//					throw SQLError.createSQLException(
+//							"User does not have access to metadata required to determine " +
+//							"stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" " +
+//							"to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
+//							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());		
+				} else {
+					Collections.sort(proceduresToExtractList);					
 				}
 
 				// Required to be sorted in name-order by JDBC spec,
 				// in 'normal' case getProcedures takes care of this for us,
 				// but if system tables are inaccessible, we need to sort...
 				// so just do this to be safe...
-				Collections.sort(proceduresToExtractList);
+				//Collections.sort(proceduresToExtractList);
 			} finally {
 				SQLException rethrowSqlEx = null;
 

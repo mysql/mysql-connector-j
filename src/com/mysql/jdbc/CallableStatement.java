@@ -805,11 +805,11 @@ public class CallableStatement extends PreparedStatement implements
 	}
 	
 	private void determineParameterTypes() throws SQLException {
-		if (this.connection.getNoAccessToProcedureBodies()) {
-			fakeParameterTypes(true);
-			
-			return;
-		}
+//		if (this.connection.getNoAccessToProcedureBodies()) {
+//			fakeParameterTypes(true);
+//			
+//			return;
+//		}
 		
 		java.sql.ResultSet paramTypesRs = null;
 
@@ -828,8 +828,21 @@ public class CallableStatement extends PreparedStatement implements
 					.versionMeetsMinimum(5, 0, 2)
 					&& useCatalog ? this.currentCatalog : null, null, procName,
 					"%"); //$NON-NLS-1$
-
-			convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
+			
+			boolean hasResults = false;
+			try {
+				if (paramTypesRs.next()) {
+					paramTypesRs.previous();
+					hasResults = true;
+				}
+			} catch (Exception e) {
+				// paramTypesRs is empty, proceed with fake params. swallow, was expected 
+			}
+			if (hasResults){
+				convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
+			} else {
+				fakeParameterTypes(true);
+			}
 		} finally {
 			SQLException sqlExRethrow = null;
 
