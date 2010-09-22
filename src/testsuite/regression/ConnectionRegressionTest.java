@@ -2950,4 +2950,9 @@ String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 			}
 		}
 	}
+	
+	public void testBug56955() throws Exception {
+		assertEquals("JKS", ((com.mysql.jdbc.Connection) this.conn).getTrustCertificateKeyStoreType());
+		assertEquals("JKS", ((com.mysql.jdbc.Connection) this.conn).getClientCertificateKeyStoreType());
+	}
 }

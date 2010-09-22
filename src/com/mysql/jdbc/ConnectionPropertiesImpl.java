@@ -1727,7 +1727,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			SECURITY_CATEGORY, 8);
 	
 	private StringConnectionProperty clientCertificateKeyStoreType = new StringConnectionProperty(
-			"clientCertificateKeyStoreType", null, //$NON-NLS-1$
+			"clientCertificateKeyStoreType", "JKS", //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.clientCertificateKeyStoreType"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
 			SECURITY_CATEGORY, 6);
 	
@@ -1737,7 +1737,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			SECURITY_CATEGORY, 7);
 	
 	private StringConnectionProperty trustCertificateKeyStoreType = new StringConnectionProperty(
-			"trustCertificateKeyStoreType", null, //$NON-NLS-1$
+			"trustCertificateKeyStoreType", "JKS", //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.trustCertificateKeyStoreType"), "5.1.0", //$NON-NLS-1$ //$NON-NLS-2$
 			SECURITY_CATEGORY, 9);
 	
