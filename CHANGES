@@ -79,6 +79,9 @@ mm-dd-10 - Version 5.1.14
       from JSSE unless "JKS" has been specified for both of these properties. 
       The default value for these properties is now "JKS", and thus it no 
       longer has to be specified.
+      
+    - Fixed Bug#56979 - Improper connection closing logic leads to TIME_WAIT 
+      sockets on server
 
 06-24-10 - Version 5.1.13
 

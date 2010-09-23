@@ -497,9 +497,15 @@ public class MysqlIO {
      */
     protected final void forceClose() {	
         try {
-            if (this.mysqlInput != null) {
-                this.mysqlInput.close();
-            }
+        	try {
+	            if (this.mysqlInput != null) {
+	                this.mysqlInput.close();
+	            }
+        	} finally {
+	            if (!this.mysqlConnection.isInputShutdown()) {
+	            	this.mysqlConnection.shutdownInput();
+	            }
+        	}
         } catch (IOException ioEx) {
             // we can't do anything constructive about this
             // Let the JVM clean it up later
@@ -507,9 +513,15 @@ public class MysqlIO {
         }
 
         try {
-            if (this.mysqlOutput != null) {
-                this.mysqlOutput.close();
-            }
+        	try {
+	            if (this.mysqlOutput != null) {
+	                this.mysqlOutput.close();
+	            }
+        	} finally {
+        		if (!this.mysqlConnection.isOutputShutdown()) {
+        			this.mysqlConnection.shutdownOutput();
+        		}
+    		}
         } catch (IOException ioEx) {
             // we can't do anything constructive about this
             // Let the JVM clean it up later
@@ -1661,11 +1673,23 @@ public class MysqlIO {
      * @throws SQLException DOCUMENT ME!
      */
     final void quit() throws SQLException {
-        Buffer packet = new Buffer(6);
-        this.packetSequence = -1;
-        packet.writeByte((byte) MysqlDefs.QUIT);
-        send(packet, packet.getPosition());
-        forceClose();
+    	try {
+    		// we're not going to read the response, fixes BUG#56979 Improper connection closing logic 
+    		// leads to TIME_WAIT sockets on server
+
+    		try {
+    			this.mysqlConnection.shutdownInput();
+    		} catch (IOException ioEx) {
+    			this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
+    		}
+    		
+	        Buffer packet = new Buffer(6);
+	        this.packetSequence = -1;
+	        packet.writeByte((byte) MysqlDefs.QUIT);
+	        send(packet, packet.getPosition());
+    	} finally {
+    		forceClose();
+    	}
     }
 
     /**
