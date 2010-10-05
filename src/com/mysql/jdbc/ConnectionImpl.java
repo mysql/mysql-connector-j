@@ -1829,6 +1829,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 											DEFAULT_RESULT_SET_CONCURRENCY,
 											false, this.database, null, false);
 								}
+							} else {
+								execSQL(null, "SET NAMES latin1", -1, null,
+										DEFAULT_RESULT_SET_TYPE,
+										DEFAULT_RESULT_SET_CONCURRENCY,
+										false, this.database, null, false);
 							}
 
 							setEncoding(realJavaEncoding);
@@ -1871,6 +1876,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						String mysqlEncodingName = CharsetMapping
 								.getMysqlEncodingForJavaEncoding(getEncoding()
 										.toUpperCase(Locale.ENGLISH), this);
+						
+						if(getUseOldUTF8Behavior()){
+							mysqlEncodingName = "latin1";
+						}
 
 						if (dontCheckServerMatch || !characterSetNamesMatches(mysqlEncodingName)) {
 							execSQL(null, "SET NAMES " + mysqlEncodingName, -1,
@@ -1921,6 +1930,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						}
 					}
 				} else {
+
+					if(getUseOldUTF8Behavior()){
+						execSQL(null, "SET NAMES " + "latin1", -1,
+							null, DEFAULT_RESULT_SET_TYPE,
+							DEFAULT_RESULT_SET_CONCURRENCY, false,
+							this.database, null, false);
+					}
 					String charsetResults = getCharacterSetResults();
 					String mysqlEncodingName = null;
 

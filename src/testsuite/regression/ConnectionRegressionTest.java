@@ -2955,4 +2955,11 @@ String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 		assertEquals("JKS", ((com.mysql.jdbc.Connection) this.conn).getTrustCertificateKeyStoreType());
 		assertEquals("JKS", ((com.mysql.jdbc.Connection) this.conn).getClientCertificateKeyStoreType());
 	}
+	
+	public void testBug57262() throws Exception {
+		Connection c = getConnectionWithProps("characterEncoding=utf-8&useUnicode=true&useOldUTF8Behavior=true");
+		ResultSet rs = c.createStatement().executeQuery("SHOW SESSION VARIABLES LIKE 'character_set_connection'");
+		rs.next();
+		assertEquals("latin1", rs.getString(2));
+	}
 }

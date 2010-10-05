@@ -3,6 +3,10 @@
 
 mm-dd-10 - Version 5.1.14
 
+   - Fix for Bug#57262 - "useOldUTF8Behavior" behavior was broken since 5.1.3,
+     now explicitly sets connection character set to latin1 ("SET NAMES latin1")
+     during connection post-handshake process.
+     
    - Patch for problem where "noAccessToProcedureBodies=true" was causing 
      "underprivileged" user not to have access to procedures created by him.
 
