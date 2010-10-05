@@ -2957,7 +2957,12 @@ String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 	}
 	
 	public void testBug57262() throws Exception {
-		Connection c = getConnectionWithProps("characterEncoding=utf-8&useUnicode=true&useOldUTF8Behavior=true");
+		Properties props = new Properties();
+		props.setProperty("characterEncoding", "utf-8");
+		props.setProperty("useUnicode", "true");
+		props.setProperty("useOldUTF8Behavior", "true");
+		
+		Connection c = getConnectionWithProps(props);
 		ResultSet rs = c.createStatement().executeQuery("SHOW SESSION VARIABLES LIKE 'character_set_connection'");
 		rs.next();
 		assertEquals("latin1", rs.getString(2));
