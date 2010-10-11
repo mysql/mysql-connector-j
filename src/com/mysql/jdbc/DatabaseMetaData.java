@@ -7732,7 +7732,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public boolean supportsMultipleResultSets() throws SQLException {
-		return false;
+		return this.conn.versionMeetsMinimum(4, 1, 0);
 	}
 
 	/**
