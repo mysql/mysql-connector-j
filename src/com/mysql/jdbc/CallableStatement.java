@@ -479,7 +479,7 @@ public class CallableStatement extends PreparedStatement implements
 	protected CallableStatementParamInfo paramInfo;
 
 	private CallableStatementParam returnValueParam;
-
+	
 	/**
 	 * Creates a new CallableStatement
 	 * 
@@ -597,7 +597,7 @@ public class CallableStatement extends PreparedStatement implements
 			}
 		}
 	}
-
+	
 	/**
 	 * Creates a new CallableStatement
 	 * 
@@ -805,28 +805,45 @@ public class CallableStatement extends PreparedStatement implements
 	}
 	
 	private void determineParameterTypes() throws SQLException {
-//		if (this.connection.getNoAccessToProcedureBodies()) {
-//			fakeParameterTypes(true);
-//			
-//			return;
-//		}
 		
 		java.sql.ResultSet paramTypesRs = null;
 
 		try {
+			//Bug#57022, we need to check for db.SPname notation first
+			//  and pass on only SPname
 			String procName = extractProcedureName();
-
+			String quotedId = "";
+			try {
+				quotedId = this.connection.supportsQuotedIdentifiers() ? 
+						this.connection.getMetaData().getIdentifierQuoteString()	: "";
+			} catch (SQLException sqlEx) {
+				// Forced by API, never thrown from getIdentifierQuoteString() in
+				// this implementation.
+				AssertionFailedException.shouldNotHappen(sqlEx);
+			}
+			
+			List parseList = StringUtils.splitDBdotName(procName, "", 
+					quotedId , this.connection.isNoBackslashEscapesSet());
+			String tmpCatalog = "";
+			//There *should* be 2 rows, if any.
+			if (parseList.size() == 2) {
+				tmpCatalog = (String) parseList.get(0);
+				procName = (String) parseList.get(1);			
+			} else {
+				//keep values as they are
+			}
+			
 			java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
 
 			boolean useCatalog = false;
 
-			if (procName.indexOf(".") == -1) {
+			if (tmpCatalog.length() <= 0) {
 				useCatalog = true;
 			}
-
+			
 			paramTypesRs = dbmd.getProcedureColumns(this.connection
 					.versionMeetsMinimum(5, 0, 2)
-					&& useCatalog ? this.currentCatalog : null, null, procName,
+					&& useCatalog ? this.currentCatalog : tmpCatalog/*null*/, null, procName,
 					"%"); //$NON-NLS-1$
 			
 			boolean hasResults = false;

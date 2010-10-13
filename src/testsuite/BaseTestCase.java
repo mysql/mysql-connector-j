@@ -205,6 +205,14 @@ public abstract class BaseTestCase extends TestCase {
 		dropSchemaObject("TABLE", tableName);
 	}
 
+	protected void createDatabase(String databaseName) throws SQLException {
+		createSchemaObject("DATABASE", databaseName, "");
+	}
+
+	protected void dropDatabase(String databaseName) throws SQLException {
+		dropSchemaObject("DATABASE", databaseName);
+	}
+
 	protected void dropSchemaObject(String objectType, String objectName)
 			throws SQLException {
 		this.stmt.executeUpdate("DROP " + objectType + " IF EXISTS "

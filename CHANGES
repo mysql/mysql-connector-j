@@ -3,6 +3,11 @@
 
 mm-dd-10 - Version 5.1.14
 
+   - Fix for Bug#57022 - cannot execute a store procedure with output parameters,
+     database parameter was ignored in db.sp notation. The fix is to "sanitize" 
+	 db.sp call just like in patch for noAccessToProcedureBodies. BaseTestCase
+	 extended with createDatabase and dropDatabase. Regression test added.
+
    - Fix for Bug#57262 - "useOldUTF8Behavior" behavior was broken since 5.1.3,
      now explicitly sets connection character set to latin1 ("SET NAMES latin1")
      during connection post-handshake process.

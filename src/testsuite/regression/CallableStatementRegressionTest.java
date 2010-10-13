@@ -1773,4 +1773,69 @@ public class CallableStatementRegressionTest extends BaseTestCase {
         	conn1.close();
         }
 	}
+	
+	/**
+	 * Tests fix for Bug#57022 - cannot execute a store procedure with output parameters
+	 * Problem was in CallableStatement.java, 
+	 * private void determineParameterTypes() throws SQLException
+		if (procName.indexOf(".") == -1) {
+			useCatalog = true;
+		}
+	 * The fix will be to "sanitize" db.sp call just like in noAccessToProcedureBodies.
+	 * 
+	 * @throws Exception
+	 *             if the test fails
+	 */
+
+	public void testBug57022() throws Exception {
+		if (!serverSupportsStoredProcedures()) {
+			return;
+		}
+
+		String originalCatalog = this.conn.getCatalog();
+		
+		createDatabase("bug57022");
+		
+		createProcedure("bug57022.procbug57022","(x int, out y int)\n"
+				+ "begin\n"
+				+ "declare z int;\n"
+				+ "set z = x+1, y = z;\n" + "end\n");
+
+		CallableStatement cStmt = null;
+     	try {
+     		cStmt = this.conn.prepareCall("{call `bug57022`.`procbug57022`(?, ?)}");
+     		cStmt.setInt(1, 5);
+     		cStmt.registerOutParameter(2, Types.INTEGER);
+
+     		cStmt.execute();
+     		assertEquals(6, cStmt.getInt(2));
+     		cStmt.clearParameters();
+     		cStmt.close();
+     		
+     		this.conn.setCatalog("bug57022");
+     		cStmt = this.conn.prepareCall("{call bug57022.procbug57022(?, ?)}");
+     		cStmt.setInt(1, 5);
+     		cStmt.registerOutParameter(2, Types.INTEGER);
+
+     		cStmt.execute();
+     		assertEquals(6, cStmt.getInt(2));
+     		cStmt.clearParameters();
+     		cStmt.close();
+
+     		this.conn.setCatalog("mysql");
+     		cStmt = this.conn.prepareCall("{call `bug57022`.`procbug57022`(?, ?)}");
+     		cStmt.setInt(1, 5);
+     		cStmt.registerOutParameter(2, Types.INTEGER);
+
+     		cStmt.execute();
+     		assertEquals(6, cStmt.getInt(2));
+     	} finally {
+     		cStmt.clearParameters();
+     		cStmt.close();
+     		this.conn.setCatalog(originalCatalog);
+         	closeMemberJDBCResources();
+     	}
+
+	}
+	
 }
