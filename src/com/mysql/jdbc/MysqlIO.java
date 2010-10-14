@@ -1175,7 +1175,7 @@ public class MysqlIO {
         this.colDecimalNeedsBump = versionMeetsMinimum(3, 23, 0);
         this.colDecimalNeedsBump = !versionMeetsMinimum(3, 23, 15); // guess? Not noted in changelog
         this.useNewUpdateCounts = versionMeetsMinimum(3, 22, 5);
-
+        	  
         threadId = buf.readLong();
         this.seed = buf.readString("ASCII", getExceptionInterceptor());
 
@@ -1185,7 +1185,7 @@ public class MysqlIO {
             this.serverCapabilities = buf.readInt();
         }
 
-        if (versionMeetsMinimum(4, 1, 1)) {
+        if ((versionMeetsMinimum(4, 1, 1) || ((this.protocolVersion > 9) && (this.serverCapabilities & CLIENT_PROTOCOL_41) != 0))) {
             int position = buf.getPosition();
 
             /* New protocol with 16 bytes to describe server characteristics */
@@ -1255,8 +1255,8 @@ public class MysqlIO {
         //
         // 4.1 has some differences in the protocol
         //
-        if (versionMeetsMinimum(4, 1, 0)) {
-            if (versionMeetsMinimum(4, 1, 1)) {
+        if ((versionMeetsMinimum(4, 1, 0) || ((this.protocolVersion > 9) && (this.serverCapabilities & CLIENT_RESERVED) != 0))) {
+            if ((versionMeetsMinimum(4, 1, 1) || ((this.protocolVersion > 9) && (this.serverCapabilities & CLIENT_PROTOCOL_41) != 0))) {
                 this.clientParam |= CLIENT_PROTOCOL_41;
                 this.has41NewNewProt = true;
 
@@ -1292,7 +1292,7 @@ public class MysqlIO {
             if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
                 this.clientParam |= CLIENT_SECURE_CONNECTION;
 
-                if (versionMeetsMinimum(4, 1, 1)) {
+                if ((versionMeetsMinimum(4, 1, 1) || ((this.protocolVersion > 9) && (this.serverCapabilities & CLIENT_PROTOCOL_41) != 0))) {
                     secureAuth411(null, packLength, user, password, database,
                         true);
                 } else {
@@ -1303,7 +1303,7 @@ public class MysqlIO {
                 packet = new Buffer(packLength);
 
                 if ((this.clientParam & CLIENT_RESERVED) != 0) {
-                    if (versionMeetsMinimum(4, 1, 1)) {
+                    if ((versionMeetsMinimum(4, 1, 1) || ((this.protocolVersion > 9) && (this.serverCapabilities & CLIENT_PROTOCOL_41) != 0))) {
                         packet.writeLong(this.clientParam);
                         packet.writeLong(this.maxThreeBytes);
 
@@ -1345,7 +1345,8 @@ public class MysqlIO {
         // Check for errors, not for 4.1.1 or newer,
         // as the new auth protocol doesn't work that way
         // (see secureAuth411() for more details...)
-        if (!versionMeetsMinimum(4, 1, 1)) {
+        //if (!versionMeetsMinimum(4, 1, 1)) {
+        if (!(versionMeetsMinimum(4, 1, 1) || !((this.protocolVersion > 9) && (this.serverCapabilities & CLIENT_PROTOCOL_41) != 0))) {
             checkErrorPacket();
         }
 
