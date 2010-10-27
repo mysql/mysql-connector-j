@@ -1666,4 +1666,21 @@ public class ConnectionTest extends BaseTestCase {
 		getConnectionWithProps(String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s",
 				host, port, user != null ? user : "", password != null ? password : "", database), new Properties());
 	}
+	
+	public void testCompression() throws Exception {
+		Connection compressedConn = getConnectionWithProps("useCompression=true,maxAllowedPacket=33554432");
+		Statement compressedStmt = compressedConn.createStatement();
+		compressedStmt.setFetchSize(Integer.MIN_VALUE);
+		this.rs = compressedStmt.executeQuery("select repeat('a', 256 * 256 * 256 - 5)");
+		this.rs.next();
+		String str = rs.getString(1);
+		
+		assertEquals((256 * 256 * 256 - 5), str.length());
+		
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) != 'a') {
+				fail();
+			}
+		}
+	}
 }
