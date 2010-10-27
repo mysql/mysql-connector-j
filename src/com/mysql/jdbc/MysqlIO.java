@@ -502,7 +502,7 @@ public class MysqlIO {
 	                this.mysqlInput.close();
 	            }
         	} finally {
-	            if (!this.mysqlConnection.isInputShutdown()) {
+	            if (!this.mysqlConnection.isClosed() && !this.mysqlConnection.isInputShutdown()) {
 	            	this.mysqlConnection.shutdownInput();
 	            }
         	}
@@ -518,7 +518,7 @@ public class MysqlIO {
 	                this.mysqlOutput.close();
 	            }
         	} finally {
-        		if (!this.mysqlConnection.isOutputShutdown()) {
+        		if (!this.mysqlConnection.isClosed() && !this.mysqlConnection.isOutputShutdown()) {
         			this.mysqlConnection.shutdownOutput();
         		}
     		}
@@ -1679,7 +1679,9 @@ public class MysqlIO {
     		// leads to TIME_WAIT sockets on server
 
     		try {
-    			this.mysqlConnection.shutdownInput();
+    			if (!this.mysqlConnection.isClosed()) {
+    				this.mysqlConnection.shutdownInput();
+    			}
     		} catch (IOException ioEx) {
     			this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
     		}
