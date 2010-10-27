@@ -656,6 +656,10 @@ public class MetadataTest extends BaseTestCase {
 	                this.rs.next();
 	                String user = this.rs.getString(1);
 	                List userHost = StringUtils.split(user, "@", false);
+	                if (userHost.size() < 2) {
+	                	fail("This test requires a JDBC URL with a user, and won't work with the anonymous user. " +
+	                			"You can skip this test by setting the system property " + dontRunPropertyName);
+	                }
 	                userHostQuoted = "'" + userHost.get(0) + "'@'" + userHost.get(1) + "'";
 	                
 	                try {
@@ -664,11 +668,9 @@ public class MetadataTest extends BaseTestCase {
 	                	grantFailed = false;
 	                	
 	                } catch (SQLException sqlEx) {
-	                	logDebug("This testcase needs to be run with a URL that allows the user to issue GRANTs "
+	                	fail("This testcase needs to be run with a URL that allows the user to issue GRANTs "
 	                			+ " in the current database. You can skip this test by setting the system property \""
 	                			+ dontRunPropertyName + "\".");
-	                	
-	                	grantFailed = true;
 	                }
 	                
 	                if (!grantFailed) {
