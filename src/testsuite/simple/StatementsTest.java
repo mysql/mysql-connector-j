@@ -779,6 +779,20 @@ public class StatementsTest extends BaseTestCase {
 					// expected
 				}
 				
+				int count = 1000;
+				
+				for (; count > 0; count--) {
+					if (forceCancel.isClosed()) {
+						break;
+					}
+					
+					Thread.sleep(100);
+				}
+				
+				if (count == 0) {
+					fail("Connection was never killed");
+				}
+				
 				try {
 					forceCancel.setAutoCommit(true); // should fail too
 				} catch (SQLException sqlEx) {
