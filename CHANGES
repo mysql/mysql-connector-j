@@ -3,6 +3,8 @@
 
 mm-dd-10 - Version 5.1.14
 
+   - Fix for Bug#57701 - StatementsTest.testBatchRewriteErrors() failing on new servers.
+   
    - Fix for Bug#54756 - Cannot retrieve data from ResultSet by column name from a Sphinx daemon.
      We were relying only on "server version string" passed. Now, determining
 	 server version is done via protocol flags too, where applicable.

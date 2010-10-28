@@ -1591,7 +1591,7 @@ public class StatementsTest extends BaseTestCase {
 	}
 	
 	public void testBatchRewriteErrors() throws Exception {
-		createTable("rewriteErrors", "(field1 int not null primary key)");
+		createTable("rewriteErrors", "(field1 int not null primary key) ENGINE=MyISAM");
 
 		Properties props = new Properties();
 		Connection multiConn = null;
@@ -1605,7 +1605,7 @@ public class StatementsTest extends BaseTestCase {
 				props.setProperty("continueBatchOnError", "true");
 			}
 			
-			props.setProperty("maxAllowedPacket", "1024");
+			props.setProperty("maxAllowedPacket", "4096");
 			props.setProperty("rewriteBatchedStatements", "true");
 			multiConn = getConnectionWithProps(props);
 			this.pstmt = multiConn.prepareStatement("INSERT INTO rewriteErrors VALUES (?)");
