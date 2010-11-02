@@ -590,9 +590,13 @@ public class Field {
 
 	public synchronized int getMaxBytesPerCharacter() throws SQLException {
 		if (this.maxBytesPerChar == 0) {
-			this.maxBytesPerChar = this.connection.getMaxBytesPerChar(getCharacterSet());
+			if ((this.charsetIndex == 33) && (this.charsetName.equalsIgnoreCase("UTF-8"))) {
+				//Avoid mix with UTF8MB4 on 5.5.3+
+				this.maxBytesPerChar = 3;
+			} else {
+				this.maxBytesPerChar = this.connection.getMaxBytesPerChar(getCharacterSet());
+			}
 		}
-
 		return this.maxBytesPerChar;
 	}
 

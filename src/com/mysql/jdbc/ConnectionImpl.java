@@ -1820,11 +1820,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							// charset names are case-sensitive
 
 							boolean utf8mb4Supported = versionMeetsMinimum(5, 5, 2);
+							boolean useutf8mb4 = false;
+							
+							if (utf8mb4Supported) {
+								useutf8mb4 = ((this.io.serverCharsetIndex == 45) && (this.io.serverCharsetIndex == 45));
+							}
 							
 							if (!getUseOldUTF8Behavior()) {
 								if (dontCheckServerMatch || !characterSetNamesMatches("utf8") 
 										|| (utf8mb4Supported && !characterSetNamesMatches("utf8mb4"))) {
-									execSQL(null, "SET NAMES " + (utf8mb4Supported ? "utf8mb4" : "utf8"), -1, null,
+									execSQL(null, "SET NAMES " + (useutf8mb4 ? "utf8mb4" : "utf8"), -1, null,
 											DEFAULT_RESULT_SET_TYPE,
 											DEFAULT_RESULT_SET_CONCURRENCY,
 											false, this.database, null, false);
@@ -2986,6 +2991,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		String charset = CharsetMapping.getMysqlEncodingForJavaEncoding(
 				javaCharsetName, this);
 		
+		if ((this.io.serverCharsetIndex == 33) && (versionMeetsMinimum(5, 5, 3)) && (javaCharsetName.equalsIgnoreCase("UTF-8"))) {
+			//Avoid UTF8mb4
+			charset = "utf8";
+		}
+
 		if (versionMeetsMinimum(4, 1, 0)) {
 			Map mapToCheck = null;
 			
@@ -3031,6 +3041,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			}
 		
+			//Pin down the case when user with 5.5.3 server actually uses 3 byte UTF8
+			//We have already overridden users preference by mapping UTF8 to UTF8mb4
+			
 			Integer mbPerChar = (Integer) mapToCheck.get(charset);
 		
 			if (mbPerChar != null) {
