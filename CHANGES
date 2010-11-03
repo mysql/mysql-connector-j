@@ -3,6 +3,7 @@
 
 mm-dd-10 - Version 5.1.14
 
+   - Fix for Bug#57697 - Metadata getTables() was not checking for table_name already been quoted.
    - Fix for Bug#57694 - 3byte UTF8 can not be used with 5.5.3+ server.
    - Fix for Bug#57701 - StatementsTest.testBatchRewriteErrors() failing on new servers.
    

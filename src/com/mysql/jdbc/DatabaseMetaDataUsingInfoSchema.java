@@ -25,6 +25,7 @@ package com.mysql.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.List;
 
 /**
  * DatabaseMetaData implementation that uses INFORMATION_SCHEMA available in
@@ -1465,6 +1466,18 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			}
 		}
 
+		final String tableNamePat;
+		List parseList = StringUtils.splitDBdotName(tableNamePattern, "", 
+				quotedId , conn.isNoBackslashEscapesSet());
+		//There *should* be 2 rows, if any.
+		if (parseList.size() == 2) {
+			//tableNamePattmp = (String) parseList.get(1);
+			tableNamePat = (String) parseList.get(1);
+		} else {
+			//keep values as they are
+			tableNamePat = tableNamePattern;
+		}
+		
 		java.sql.PreparedStatement pStmt = null;
 
 		String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, "
@@ -1483,7 +1496,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				pStmt.setString(1, "%");
 			}
 			
-			pStmt.setString(2, tableNamePattern);
+			pStmt.setString(2, tableNamePat);
 
 			// This overloading of IN (...) allows us to cache this
 			// prepared statement
