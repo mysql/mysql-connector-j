@@ -4920,10 +4920,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				quotedId , conn.isNoBackslashEscapesSet());
 		//There *should* be 2 rows, if any.
 		if (parseList.size() == 2) {
-			//tableNamePattmp = (String) parseList.get(1);
 			tableNamePat = (String) parseList.get(1);
 		} else {
-			//keep values as they are
 			tableNamePat = tableNamePattern;
 		}
 
