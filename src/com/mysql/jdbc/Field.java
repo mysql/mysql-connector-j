@@ -113,6 +113,8 @@ public class Field {
 	private boolean isSingleBit;
 
 	private int maxBytesPerChar;
+	
+	private final boolean valueNeedsQuoting;
 
 	/**
 	 * Constructor used when communicating with 4.1 and newer servers
@@ -288,6 +290,7 @@ public class Field {
 				break;
 			}
 		}
+		this.valueNeedsQuoting = determineNeedsQuoting();
 	}
 
 	private boolean shouldSetupForUtf8StringInBlob() throws SQLException {
@@ -372,6 +375,7 @@ public class Field {
 		this.sqlType = jdbcType;
 		this.colFlag = 0;
 		this.colDecimals = 0;
+		this.valueNeedsQuoting = determineNeedsQuoting();
 	}
 	
 	/**
@@ -399,6 +403,7 @@ public class Field {
 		this.colFlag = 0;
 		this.colDecimals = 0;
 		this.charsetIndex = charsetIndex;
+		this.valueNeedsQuoting = determineNeedsQuoting();
 		
 		switch (this.sqlType) {
 		case Types.BINARY:
@@ -1053,5 +1058,32 @@ public class Field {
 
 	protected boolean isSingleBit() {
 		return this.isSingleBit;
+	}
+
+	protected boolean getvalueNeedsQuoting() {
+		return this.valueNeedsQuoting;
+	}
+
+	private boolean determineNeedsQuoting() {
+		boolean retVal = false;
+		
+		switch (this.sqlType) {
+		case Types.BIGINT:
+		case Types.BIT:
+		case Types.DECIMAL:
+		case Types.DOUBLE:
+		case Types.FLOAT:
+		case Types.INTEGER:
+		case Types.NUMERIC:
+		case Types.REAL:
+		case Types.SMALLINT:
+		case Types.TINYINT:
+			retVal = false;
+			break;
+		default: 
+			retVal = true;
+		}
+		return retVal;
+
 	}
 }

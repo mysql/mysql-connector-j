@@ -1352,7 +1352,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 				}
 			}
 
-			this.refresher.setBytesNoEscape(1, dataFrom);
+			if (this.fields[index].getvalueNeedsQuoting()) {
+				this.refresher.setBytesNoEscape(1, dataFrom);	
+			} else {
+				this.refresher.setBytesNoEscapeNoQuotes(1, dataFrom);
+			}
+			
 		} else {
 			for (int i = 0; i < numKeys; i++) {
 				byte[] dataFrom = null;
@@ -1548,8 +1553,13 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 		for (int i = 0; i < numFields; i++) {
 			if (this.thisRow.getColumnValue(i) != null) {
-				this.updater.setBytes(i + 1, (byte[]) this.thisRow.getColumnValue(i),
-						this.fields[i].isBinary(), false);
+
+				if (this.fields[i].getvalueNeedsQuoting()) {
+					this.updater.setBytes(i + 1, (byte[]) this.thisRow.getColumnValue(i),
+							this.fields[i].isBinary(), false);
+				} else {
+					this.updater.setBytesNoEscapeNoQuotes(i + 1, (byte[]) this.thisRow.getColumnValue(i));
+				}
 			} else {
 				this.updater.setNull(i + 1, 0);
 			}
