@@ -107,10 +107,18 @@ public class StatementsTest extends BaseTestCase {
 		this.stmt
 				.executeUpdate("CREATE TABLE statement_test (id int not null primary key auto_increment, strdata1 varchar(255) not null, strdata2 varchar(255))");
 
-		this.stmt.executeUpdate("CREATE TABLE statement_batch_test "
+		try {
+			this.stmt.executeUpdate("CREATE TABLE statement_batch_test "
 				+ "(id int not null primary key auto_increment, "
 				+ "strdata1 varchar(255) not null, strdata2 varchar(255), "
 				+ "UNIQUE INDEX (strdata1))");
+		} catch (SQLException sqlEx) {
+			if (sqlEx.getMessage().indexOf("max key length") != -1) {
+				createTable("statement_batch_test", "(id int not null primary key auto_increment, "
+						+ "strdata1 varchar(175) not null, strdata2 varchar(175), "
+						+ "UNIQUE INDEX (strdata1))");
+			}
+		}
 
 		for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS statement_col_test_"

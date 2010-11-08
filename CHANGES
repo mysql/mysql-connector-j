@@ -3,6 +3,8 @@
 
 mm-dd-10 - Version 5.1.14
 
+   - Fix for Bug#58042 - Statements test failure not handled.
+
    - Fix for Bug#57850 - Refresh SELECT statement doesn't use correct data type.
      Added Field.valueNeedsQuoting (private final boolean) and protected boolean getvalueNeedsQuoting().
 	 UpdatableResultSet refresher and updater call upon this value now.
