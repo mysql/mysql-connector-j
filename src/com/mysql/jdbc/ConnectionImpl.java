@@ -2310,14 +2310,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				if (path != null) {
 					mergedProps.setProperty(NamedPipeSocketFactory.NAMED_PIPE_PROP_NAME, path);
 				}
-			} else if ("unix".equalsIgnoreCase(protocol)) {
-				setSocketFactoryClassName("org.newsclub.net.mysql.AFUNIXDatabaseSocketFactory");
-				
-				String path = mergedProps.getProperty(NonRegisteringDriver.PATH_PROPERTY_KEY);
-				
-				if (path != null) {
-					mergedProps.setProperty("junixsocket.file", path);
-				}
 			} else {
 				// normalize for all unknown protocols
 				newHost = normalizeHost(mergedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY));
