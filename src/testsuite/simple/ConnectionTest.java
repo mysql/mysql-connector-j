@@ -1654,8 +1654,14 @@ public class ConnectionTest extends BaseTestCase {
 		String password = parsedProps.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
 		String database = parsedProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 
-		getConnectionWithProps(String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s",
-				host, port, user != null ? user : "", password != null ? password : "", database), new Properties());
+		String newUrl = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s",
+				host, port, user != null ? user : "", password != null ? password : "", database);
+		
+		try {
+			getConnectionWithProps(newUrl, new Properties());
+		} catch (SQLException sqlEx) {
+			throw new RuntimeException("Failed to connect with URL " + newUrl, sqlEx);
+		}
 	}
 	
 	public void testCompression() throws Exception {
