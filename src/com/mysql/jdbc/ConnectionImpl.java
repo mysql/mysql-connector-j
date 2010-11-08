@@ -2301,7 +2301,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 			if ("tcp".equalsIgnoreCase(protocol)) {
 				newHost = normalizeHost(mergedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY));
-				port = parsePortNumber(mergedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY));
+				newPort = parsePortNumber(mergedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306"));
 			} else if ("pipe".equalsIgnoreCase(protocol)) {
 				setSocketFactoryClassName(NamedPipeSocketFactory.class.getName());
 				
@@ -2313,7 +2313,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			} else {
 				// normalize for all unknown protocols
 				newHost = normalizeHost(mergedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY));
-				port = parsePortNumber(mergedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY));
+				newPort = parsePortNumber(mergedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306"));
 			}
 		} else {
 		
@@ -2328,6 +2328,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 		}
 
+		this.port = newPort;
+		this.host = newHost;
+		
 		this.io = new MysqlIO(newHost, newPort,
 				mergedProps, getSocketFactoryClassName(),
 				getProxy(), getSocketTimeout(),
