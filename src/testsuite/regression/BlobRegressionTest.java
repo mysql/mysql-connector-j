@@ -33,6 +33,7 @@ import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
@@ -80,9 +81,7 @@ public class BlobRegressionTest extends BaseTestCase {
 					blobData[i] = 1;
 				}
 
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug2670");
-				this.stmt
-						.executeUpdate("CREATE TABLE testBug2670(blobField LONGBLOB)");
+				createTable("testBug2670", "(blobField LONGBLOB)");
 
 				PreparedStatement pStmt = this.conn
 						.prepareStatement("INSERT INTO testBug2670 (blobField) VALUES (?)");
@@ -118,15 +117,14 @@ public class BlobRegressionTest extends BaseTestCase {
 				assertTrue("Blob length should be 3 larger",
 						blob.length() == (blobData.length + 3));
 			} finally {
-				this.stmt
-						.executeUpdate("DROP TABLE IF EXISTS testUpdateLongBlob");
+				closeMemberJDBCResources();
 			}
 		}
 	}
 
 	/**
 	 * 
-	 * 
+	 * http://bugs.mysql.com/bug.php?id=22891
 	 * @throws Exception
 	 *             ...
 	 */
@@ -135,20 +133,21 @@ public class BlobRegressionTest extends BaseTestCase {
 			try {
 				byte[] blobData = new byte[18 * 1024 * 1024]; // 18M blob
 
-				this.stmt
-						.executeUpdate("DROP TABLE IF EXISTS testUpdateLongBlob");
-				this.stmt
-						.executeUpdate("CREATE TABLE testUpdateLongBlob(blobField LONGBLOB)");
+				createTable("testUpdateLongBlob","(blobField LONGBLOB)");
 				this.stmt
 						.executeUpdate("INSERT INTO testUpdateLongBlob (blobField) VALUES (NULL)");
 
-				PreparedStatement pStmt = this.conn
-						.prepareStatement("UPDATE testUpdateLongBlob SET blobField=?");
-				pStmt.setBytes(1, blobData);
-				pStmt.executeUpdate();
+				this.pstmt = this.conn.prepareStatement("UPDATE testUpdateLongBlob SET blobField=?");
+				this.pstmt.setBytes(1, blobData);
+				try {
+					this.pstmt.executeUpdate();
+				} catch (SQLException sqlEx){
+					if (sqlEx.getMessage().indexOf("max_allowed_packet") != -1) {
+						fail("You need to increase max_allowed_packet to at least 18M before running this test!");
+					}					
+				}
 			} finally {
-				this.stmt
-						.executeUpdate("DROP TABLE IF EXISTS testUpdateLongBlob");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -165,16 +164,12 @@ public class BlobRegressionTest extends BaseTestCase {
 		}
 
 		try {
-			this.stmt
-					.executeUpdate("DROP TABLE IF EXISTS testUpdatableBlobsWithCharsets");
-			this.stmt
-					.executeUpdate("CREATE TABLE testUpdatableBlobsWithCharsets(pk INT NOT NULL PRIMARY KEY, field1 BLOB)");
-
-			PreparedStatement pStmt = this.conn
+			createTable("testUpdatableBlobsWithCharsets", "(pk INT NOT NULL PRIMARY KEY, field1 BLOB)");
+			this.pstmt = this.conn
 					.prepareStatement("INSERT INTO testUpdatableBlobsWithCharsets (pk, field1) VALUES (1, ?)");
-			pStmt.setBinaryStream(1, new ByteArrayInputStream(smallBlob),
+			this.pstmt.setBinaryStream(1, new ByteArrayInputStream(smallBlob),
 					smallBlob.length);
-			pStmt.executeUpdate();
+			this.pstmt.executeUpdate();
 
 			Statement updStmt = this.conn
 					.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
@@ -209,30 +204,27 @@ public class BlobRegressionTest extends BaseTestCase {
 			}
 
 		} finally {
-			this.stmt
-					.executeUpdate("DROP TABLE IF EXISTS testUpdatableBlobsWithCharsets");
+			closeMemberJDBCResources();
 		}
 	}
 
 	public void testBug5490() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5490");
-			this.stmt.executeUpdate("CREATE TABLE testBug5490"
-					+ "(pk INT NOT NULL PRIMARY KEY, blobField BLOB)");
+			createTable("testBug5490", "(pk INT NOT NULL PRIMARY KEY, blobField BLOB)");
 			String sql = "insert into testBug5490 values(?,?)";
 
 			int blobFileSize = 871;
 			File blobFile = newTempBinaryFile("Bug5490", blobFileSize);
 
-			PreparedStatement pStmt = this.conn.prepareStatement(sql,
+			this.pstmt = this.conn.prepareStatement(sql,
 					ResultSet.TYPE_SCROLL_INSENSITIVE,
 					ResultSet.CONCUR_READ_ONLY);
-			pStmt.setInt(1, 2);
+			this.pstmt.setInt(1, 2);
 			FileInputStream fis = new FileInputStream(blobFile);
-			pStmt.setBinaryStream(2, fis, blobFileSize);
-			pStmt.execute();
+			this.pstmt.setBinaryStream(2, fis, blobFileSize);
+			this.pstmt.execute();
 			fis.close();
-			pStmt.close();
+			this.pstmt.close();
 
 			this.rs = this.stmt
 					.executeQuery("SELECT blobField FROM testBug5490");
@@ -243,7 +235,7 @@ public class BlobRegressionTest extends BaseTestCase {
 
 			assertEquals(blobFileSize, returned.length);
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5490");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -262,8 +254,6 @@ public class BlobRegressionTest extends BaseTestCase {
 			props.setProperty("emulateLocators", "true");
 			Connection locatorConn = getConnectionWithProps(props);
 
-			String createTable = "CREATE TABLE testBug8096 (ID VARCHAR(10) "
-					+ "PRIMARY KEY, DATA LONGBLOB)";
 			String select = "SELECT ID, 'DATA' AS BLOB_DATA FROM testBug8096 "
 					+ "WHERE ID = ?";
 			String insert = "INSERT INTO testBug8096 (ID, DATA) VALUES (?, '')";
@@ -276,18 +266,16 @@ public class BlobRegressionTest extends BaseTestCase {
 			}
 
 			try {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug8096");
 
-				this.stmt.executeUpdate(createTable);
+				createTable("testBug8096","(ID VARCHAR(10) PRIMARY KEY, DATA LONGBLOB)");
+				this.pstmt = locatorConn.prepareStatement(insert);
+				this.pstmt.setString(1, id);
+				this.pstmt.execute();
 
-				PreparedStatement ps = locatorConn.prepareStatement(insert);
-				ps.setString(1, id);
-				ps.execute();
+				this.pstmt = locatorConn.prepareStatement(select);
+				this.pstmt.setString(1, id);
 
-				ps = locatorConn.prepareStatement(select);
-				ps.setString(1, id);
-
-				this.rs = ps.executeQuery();
+				this.rs = this.pstmt.executeQuery();
 
 				if (this.rs.next()) {
 					Blob b = rs.getBlob("BLOB_DATA");
@@ -295,12 +283,12 @@ public class BlobRegressionTest extends BaseTestCase {
 				}
 
 				this.rs.close();
-				ps.close();
+				this.pstmt.close();
 
-				ps = locatorConn.prepareStatement(select);
-				ps.setString(1, id);
+				this.pstmt = locatorConn.prepareStatement(select);
+				this.pstmt.setString(1, id);
 
-				this.rs = ps.executeQuery();
+				this.rs = this.pstmt.executeQuery();
 
 				byte[] result = null;
 				if (this.rs.next()) {
@@ -310,7 +298,7 @@ public class BlobRegressionTest extends BaseTestCase {
 				}
 
 				this.rs.close();
-				ps.close();
+				this.pstmt.close();
 
 				assertNotNull(result);
 
@@ -323,7 +311,7 @@ public class BlobRegressionTest extends BaseTestCase {
 				}
 
 			} finally {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug8096");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -337,11 +325,7 @@ public class BlobRegressionTest extends BaseTestCase {
 	 */
 	public void testBug9040() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug9040");
-
-			this.stmt.executeUpdate("create table if not exists testBug9040 "
-					+ "(primary_key int not null primary key, "
-					+ "data mediumblob)");
+			createTable("testBug9040", "(primary_key int not null primary key, data mediumblob)");
 
 			this.pstmt = this.conn
 					.prepareStatement("replace into testBug9040 (primary_key, data) values(?,?)");
@@ -362,11 +346,10 @@ public class BlobRegressionTest extends BaseTestCase {
 
 			this.pstmt.executeBatch();
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug9040");
-
 			if (this.pstmt != null) {
 				this.pstmt.close();
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -399,6 +382,7 @@ public class BlobRegressionTest extends BaseTestCase {
 			if (pStmt != null) {
 				pStmt.close();
 			}
+			closeMemberJDBCResources();
 		}
 	}
 	
