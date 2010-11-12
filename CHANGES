@@ -3,6 +3,8 @@
 
 mm-dd-10 - Version 5.1.14
 
+   - Bringing testsuite.regression.CachedRowsetTest up to date.
+
    - Bringing BLOBregression tests up to date.
 
    - Fix for Bug#58042 - Statements test failure not handled.

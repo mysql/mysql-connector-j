@@ -76,9 +76,7 @@ public class CachedRowsetTest extends BaseTestCase {
 		populate = c.getMethod("populate", new Class[] { ResultSet.class });
 
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5188");
-			this.stmt.executeUpdate("CREATE TABLE testBug5188 "
-					+ "(ID int NOT NULL AUTO_INCREMENT, "
+			createTable("testBug5188", "(ID int NOT NULL AUTO_INCREMENT, "
 					+ "datafield VARCHAR(64), " + "PRIMARY KEY(ID))");
 
 			this.stmt.executeUpdate("INSERT INTO testBug5188(datafield) "
@@ -101,7 +99,7 @@ public class CachedRowsetTest extends BaseTestCase {
 					.getString("datafield"));
 			assertFalse(cachedRowSet.next());
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5188");
+			closeMemberJDBCResources();
 		}
 	}
 }
