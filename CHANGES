@@ -3,6 +3,8 @@
 
 mm-dd-10 - Version 5.1.14
 
+   - Testsuite.regression.CallableStatement, tests for BUG#26959 failing against 5.5+ server.
+
    - Bringing testsuite.regression.CachedRowsetTest up to date.
 
    - Bringing BLOBregression tests up to date.

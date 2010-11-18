@@ -1165,7 +1165,19 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				assertEquals(parameterNames[index], this.rs
 						.getString("COLUMN_NAME"));
 				assertEquals(parameterTypes[index], this.rs.getInt("DATA_TYPE"));
-				assertEquals(precision[index], this.rs.getInt("PRECISION"));
+				
+				switch (index) {
+					case 0:
+					case 6:
+					case 7:
+					case 8:
+					case 10:
+					case 11:
+						assertEquals(precision[index], this.rs.getInt("LENGTH"));
+						break;
+					default: assertEquals(precision[index], this.rs.getInt("PRECISION"));
+				}
+				
 				assertEquals(direction[index], this.rs.getInt("COLUMN_TYPE"));
 				index++;
 			}
@@ -1189,7 +1201,17 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 				assertEquals(parameterNames[index], this.rs
 						.getString("COLUMN_NAME"));
 				assertEquals(parameterTypes[index], this.rs.getInt("DATA_TYPE"));
-				assertEquals(precision[index], this.rs.getInt("PRECISION"));
+				switch (index) {
+					case 0:
+					case 6:
+					case 7:
+					case 8:
+					case 10:
+					case 11:
+						assertEquals(precision[index], this.rs.getInt("LENGTH"));
+						break;
+					default: assertEquals(precision[index], this.rs.getInt("PRECISION"));
+				}
 				assertEquals(scale[index], this.rs.getInt("SCALE"));
 				assertEquals(direction[index], this.rs.getInt("COLUMN_TYPE"));
 
