@@ -3,6 +3,8 @@
 
 mm-dd-10 - Version 5.1.14
 
+   - Fix for Bug#58232 - CallableStatement fails to fetch OUT parameter against 5.5 server
+   
    - Testsuite.regression.Connection, tests for BUG#45419 refined by Todd so not to cause failures.
 
    - Testsuite.regression.CallableStatement, tests for BUG#26959 failing against 5.5+ server.

@@ -442,6 +442,7 @@ public class CallableStatement extends PreparedStatement implements
 	private final static String PARAMETER_NAMESPACE_PREFIX = "@com_mysql_jdbc_outparam_"; //$NON-NLS-1$
 
 	private static String mangleParameterName(String origParameterName) {
+		//Fixed for 5.5+ in callers
 		if (origParameterName == null) {
 			return null;
 		}
@@ -1029,12 +1030,17 @@ public class CallableStatement extends PreparedStatement implements
 	 *             if the parameter name is null or empty.
 	 */
 	protected String fixParameterName(String paramNameIn) throws SQLException {
-		if ((paramNameIn == null) || (paramNameIn.length() == 0)) {
+		//Fixed for 5.5+
+		if (((paramNameIn == null) || (paramNameIn.length() == 0)) && (!hasParametersView())) {
 			throw SQLError.createSQLException(
 					((Messages.getString("CallableStatement.0") + paramNameIn) == null) //$NON-NLS-1$
 							? Messages.getString("CallableStatement.15") : Messages.getString("CallableStatement.16"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, 
 									getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
+
+		if ((paramNameIn == null) && (hasParametersView())) {
+			paramNameIn = "nullpn";
+		};
 
 		if (this.connection.getNoAccessToProcedureBodies()) {
 			throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
@@ -1462,6 +1468,7 @@ public class CallableStatement extends PreparedStatement implements
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 		
+		//Fixed for 5.5+ in callers
 		if ((paramName == null) || (paramName.length() == 0)) {
 			throw SQLError.createSQLException(Messages.getString("CallableStatement.2"), //$NON-NLS-1$
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -1953,6 +1960,10 @@ public class CallableStatement extends PreparedStatement implements
 
 					this.parameterIndexToRsIndex[retrParamInfo.index] = localParamIndex++;
 
+					if ((retrParamInfo.paramName == null) && (hasParametersView())) {
+						retrParamInfo.paramName = "nullnp" + retrParamInfo.index;
+					}
+					
 					String outParameterName = mangleParameterName(retrParamInfo.paramName);
 
 					if (!firstParam) {
@@ -2100,7 +2111,12 @@ public class CallableStatement extends PreparedStatement implements
 				CallableStatementParam inParamInfo = (CallableStatementParam) paramIter
 						.next();
 
+				//Fix for 5.5+
 				if (inParamInfo.isOut && inParamInfo.isIn) {
+					if ((inParamInfo.paramName == null) && (hasParametersView())) {
+						inParamInfo.paramName = "nullnp" + inParamInfo.index;
+					};
+					
 					String inOutParameterName = mangleParameterName(inParamInfo.paramName);
 					StringBuffer queryBuf = new StringBuffer(
 							4 + inOutParameterName.length() + 1 + 1);
@@ -2227,6 +2243,11 @@ public class CallableStatement extends PreparedStatement implements
 						.next();
 
 				if (!this.callingStoredFunction && outParamInfo.isOut) {
+
+					if ((outParamInfo.paramName == null) && (hasParametersView())) {
+						outParamInfo.paramName = "nullnp" + outParamInfo.index;
+					};
+
 					String outParameterName = mangleParameterName(outParamInfo.paramName);
 
 					int outParamIndex = 0;
@@ -2489,6 +2510,20 @@ public class CallableStatement extends PreparedStatement implements
 	protected boolean checkReadOnlySafeStatement() throws SQLException {
 		return (super.checkReadOnlySafeStatement() || this.checkReadOnlyProcedure());
 	}
+	
+	private boolean hasParametersView() throws SQLException {
+		try {
+			if (this.connection.versionMeetsMinimum(5, 5, 0)) {
+				java.sql.DatabaseMetaData dbmd1 = new DatabaseMetaDataUsingInfoSchema(this.connection, this.connection.getCatalog());
+				return ((DatabaseMetaDataUsingInfoSchema)dbmd1).gethasParametersView();
+			} else {
+				return false;
+			}
+		} catch (SQLException e) {
+			return false;
+		}
+	}
 
 
+   
 }

@@ -37,7 +37,7 @@ import java.util.List;
 public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 	private boolean hasReferentialConstraintsView;
-	private boolean hasParametersView;
+	private final boolean hasParametersView;
 	
    protected DatabaseMetaDataUsingInfoSchema(MySQLConnection connToSet,
 			String databaseToSet) throws SQLException {
@@ -1538,6 +1538,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				pStmt.close();
 			}
 		}
+	}
+	
+	public boolean gethasParametersView() {
+		return this.hasParametersView;
 	}
 
 
