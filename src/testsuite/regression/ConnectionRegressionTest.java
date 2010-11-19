@@ -2417,10 +2417,10 @@ String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
 				System.currentTimeMillis() - 2000,
 				e, 
 				false);
-		Matcher m = Pattern.compile("([\\d\\,]+)").matcher(msg);
+		Matcher m = Pattern.compile("([\\d\\,\\.]+)", Pattern.MULTILINE).matcher(msg);
 		assertTrue(m.find());
-		assertTrue(Long.parseLong(m.group(0).replaceAll(",", "")) >= 2000);
-		assertTrue(Long.parseLong(m.group(1).replaceAll(",", "")) >= 1000);
+		assertTrue(Long.parseLong(m.group(0).replaceAll("[,.]", "")) >= 2000);
+		assertTrue(Long.parseLong(m.group(1).replaceAll("[,.]", "")) >= 1000);
 	}
 	
 	public static boolean containsMessage(String msg, String key) {
