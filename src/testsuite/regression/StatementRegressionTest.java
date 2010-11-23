@@ -166,10 +166,7 @@ public class StatementRegressionTest extends BaseTestCase {
 	private void createGGKTables() throws Exception {
 		// Delete and recreate table
 		dropGGKTables();
-
-		this.stmt.executeUpdate("CREATE TABLE testggk ("
-				+ "id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,"
-				+ "val INT NOT NULL" + ")");
+		createTable("testggk", "(id INT AUTO_INCREMENT NOT NULL PRIMARY KEY,val INT NOT NULL)", "MYISAM");
 	}
 
 	private void doGGKTestPreparedStatement(int[] values, boolean useUpdate)
@@ -3373,7 +3370,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			this.pstmt = noBackslashEscapesConn.prepareStatement(select_sql);
 			this.pstmt.setString(1, "c:\\j%");
 			// if we comment out the previous line and uncomment the following, the like clause matches
-			// stmt.setString(1,"c:\\\\j%");
+			//this.pstmt.setString(1,"c:\\\\j%");
 			System.out.println("about to execute query " + select_sql);
 			this.rs = this.pstmt.executeQuery();
 			assertTrue(this.rs.next());
@@ -5444,7 +5441,13 @@ public class StatementRegressionTest extends BaseTestCase {
 			String sql = "insert into testBug30493 (uniqueTextKey) values ('c') on duplicate key UPDATE autoIncId = last_insert_id( autoIncId )";
 			String tablePrimeSql = "INSERT INTO testBug30493 (uniqueTextKey) VALUES ('a'), ('b'), ('c'), ('d')";
 
-			createTable("testBug30493", ddl);
+			try {
+				createTable("testBug30493", ddl);
+			} catch (SQLException sqlEx) {
+				if (sqlEx.getMessage().indexOf("max key length") != -1) {
+					createTable("testBug30493", "(autoIncId INT NOT NULL PRIMARY KEY AUTO_INCREMENT, uniqueTextKey VARCHAR(180) UNIQUE KEY)");
+				}
+			}
 			stmt.executeUpdate(tablePrimeSql);
 
 			stmt.execute(sql, Statement.RETURN_GENERATED_KEYS);
@@ -5454,7 +5457,13 @@ public class StatementRegressionTest extends BaseTestCase {
 			ResultSet stmtKeys = stmt.getGeneratedKeys();
 			assertResultSetLength(stmtKeys, 1);
 
-			createTable("testBug30493", ddl);
+			try {
+				createTable("testBug30493", ddl);
+			} catch (SQLException sqlEx) {
+				if (sqlEx.getMessage().indexOf("max key length") != -1) {
+					createTable("testBug30493", "(autoIncId INT NOT NULL PRIMARY KEY AUTO_INCREMENT, uniqueTextKey VARCHAR(180) UNIQUE KEY)");
+				}
+			}
 			stmt.executeUpdate(tablePrimeSql);
 			
 			pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -6229,7 +6238,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		Connection c = null;
 		try {
 			createTable("testBug39426", "(x int)");
-			c = getConnectionWithProps("statementInterceptors=testsuite.regression.StatementRegressionTest$Bug39426Interceptor");
+			c = getConnectionWithProps("statementInterceptors=testsuite.regression.StatementRegressionTest$Bug39426Interceptor,useServerPrepStmts=false");
 			PreparedStatement ps = c.prepareStatement("insert into testBug39426 values (?)");
 			ps.setInt(1, 1);
 			ps.addBatch();

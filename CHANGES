@@ -3,6 +3,9 @@
 
 mm-dd-10 - Version 5.1.14
 
+   - Typo in StatementRegressionTest.testLikeWithBackslashes fixed. StatementRegressionTest
+     is up to date.
+
    - Fix for Bug#58232 - CallableStatement fails to fetch OUT parameter against 5.5 server
    
    - Testsuite.regression.Connection, tests for BUG#45419 refined by Todd so not to cause failures.
