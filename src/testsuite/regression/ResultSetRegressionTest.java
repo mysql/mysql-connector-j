@@ -213,8 +213,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testBug2654() throws Exception {
 		if (false) { // this is currently a server-level bug
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS foo");
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS bar");
 	
 			createTable("foo", "("
 					+ "  id tinyint(3) default NULL,"
@@ -246,6 +244,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.rs.next();
 	
 			String fooData = this.rs.getString(column);
+
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -261,9 +261,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}
 
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testClobTruncate");
-			this.stmt
-					.executeUpdate("CREATE TABLE testClobTruncate (field1 TEXT)");
+			createTable("testClobTruncate", "(field1 TEXT)");
 			this.stmt
 					.executeUpdate("INSERT INTO testClobTruncate VALUES ('abcdefg')");
 
@@ -281,7 +279,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 			assertTrue(clobAsString.equals("abc"));
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testClobTruncate");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -398,12 +396,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testFixForBug2006() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testFixForBug2006_1");
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testFixForBug2006_2");
-			this.stmt
-					.executeUpdate("CREATE TABLE testFixForBug2006_1 (key_field INT NOT NULL)");
-			this.stmt
-					.executeUpdate("CREATE TABLE testFixForBug2006_2 (key_field INT NULL)");
+			createTable("testFixForBug2006_1", "(key_field INT NOT NULL)");
+			createTable("testFixForBug2006_2", "(key_field INT NULL)");
 			this.stmt
 					.executeUpdate("INSERT INTO testFixForBug2006_1 VALUES (1)");
 
@@ -428,9 +422,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 				this.rs = null;
 			}
-
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testFixForBug2006_1");
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testFixForBug2006_2");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -441,9 +433,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 *             if any errors occur
 	 */
 	public void testGetLongBug() throws Exception {
-		this.stmt.executeUpdate("DROP TABLE IF EXISTS getLongBug");
-		this.stmt
-				.executeUpdate("CREATE TABLE IF NOT EXISTS getLongBug (int_col int, bigint_col bigint)");
+		createTable("getLongBug", "(int_col int, bigint_col bigint)");
 
 		int intVal = 123456;
 		long longVal1 = 123456789012345678L;
@@ -472,7 +462,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				}
 			}
 
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS getLongBug");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -484,8 +474,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testGetTimestampWithDate() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testGetTimestamp");
-			this.stmt.executeUpdate("CREATE TABLE testGetTimestamp (d date)");
+			createTable("testGetTimestamp", "(d date)");
 			this.stmt
 					.executeUpdate("INSERT INTO testGetTimestamp values (now())");
 
@@ -493,7 +482,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.rs.next();
 			System.out.println(this.rs.getTimestamp(1));
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testGetTimestamp");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -554,9 +543,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testNextAndPrevious() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testNextAndPrevious");
-			this.stmt
-					.executeUpdate("CREATE TABLE testNextAndPrevious (field1 int)");
+			createTable("testNextAndPrevious", "(field1 int)");
 			this.stmt
 					.executeUpdate("INSERT INTO testNextAndPrevious VALUES (1)");
 
@@ -590,7 +577,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				assertTrue(sqlEx.getMessage().startsWith("After end"));
 			}
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testNextAndPrevious");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -646,9 +633,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testStreamingRegBug() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS StreamingRegBug");
-			this.stmt
-					.executeUpdate("CREATE TABLE StreamingRegBug ( DUMMYID "
+			createTable("StreamingRegBug", "( DUMMYID "
 							+ " INTEGER NOT NULL, DUMMYNAME VARCHAR(32),PRIMARY KEY (DUMMYID) )");
 			this.stmt
 					.executeUpdate("INSERT INTO StreamingRegBug (DUMMYID, DUMMYNAME) VALUES (0, NULL)");
@@ -688,7 +673,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				}
 			}
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS StreamingRegBug");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -747,7 +732,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				}
 			}
 
-			this.stmt.execute("DROP TABLE IF EXISTS updatabilityBug");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -803,9 +788,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		Statement updStmt = null;
 
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testUpdWithQuotes");
-			this.stmt
-					.executeUpdate("CREATE TABLE testUpdWithQuotes (keyField CHAR(32) PRIMARY KEY NOT NULL, field2 int)");
+			createTable("testUpdWithQuotes", "(keyField CHAR(32) PRIMARY KEY NOT NULL, field2 int)");
 
 			PreparedStatement pStmt = this.conn
 					.prepareStatement("INSERT INTO testUpdWithQuotes VALUES (?, ?)");
@@ -822,7 +805,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.rs.updateInt(2, 2);
 			this.rs.updateRow();
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testUpdWithQuotes");
+			closeMemberJDBCResources();
 
 			if (this.rs != null) {
 				this.rs.close();
@@ -853,9 +836,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
 
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testUpdateClob");
-			this.stmt
-					.executeUpdate("CREATE TABLE testUpdateClob(intField INT NOT NULL PRIMARY KEY, clobField TEXT)");
+			createTable("testUpdateClob", "(intField INT NOT NULL PRIMARY KEY, clobField TEXT)");
 			this.stmt
 					.executeUpdate("INSERT INTO testUpdateClob VALUES (1, 'foo')");
 
@@ -899,7 +880,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			assertTrue((this.rs.getInt(1) == 3)
 					&& this.rs.getString(2).equals("bat"));
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testUpdateClob");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -922,9 +903,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testBug4689() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4689");
-			this.stmt
-					.executeUpdate("CREATE TABLE testBug4689 (tinyintField tinyint, tinyintFieldNull tinyint, "
+			createTable("testBug4689", "(tinyintField tinyint, tinyintFieldNull tinyint, "
 							+ "intField int, intFieldNull int, "
 							+ "bigintField bigint, bigintFieldNull bigint, "
 							+ "shortField smallint, shortFieldNull smallint, "
@@ -967,7 +946,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			assertTrue(this.rs.getDouble(10) == 0);
 			assertTrue(this.rs.wasNull() == true);
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4689");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -983,8 +962,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			PreparedStatement pStmt = null;
 
 			try {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5032");
-				this.stmt.executeUpdate("CREATE TABLE testBug5032(field1 BIT)");
+				createTable("testBug5032", "(field1 BIT)");
 				this.stmt.executeUpdate("INSERT INTO testBug5032 VALUES (1)");
 
 				pStmt = this.conn
@@ -993,7 +971,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				assertTrue(this.rs.next());
 				assertTrue(this.rs.getObject(1) instanceof Boolean);
 			} finally {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5032");
+				closeMemberJDBCResources();
 
 				if (pStmt != null) {
 					pStmt.close();
@@ -1160,8 +1138,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testBug5235() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5235");
-			this.stmt.executeUpdate("CREATE TABLE testBug5235(field1 DATE)");
+			createTable("testBug5235", "(field1 DATE)");
 			this.stmt
 					.executeUpdate("INSERT INTO testBug5235 (field1) VALUES ('0000-00-00')");
 
@@ -1175,7 +1152,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.rs.next();
 			assertTrue(null == this.rs.getObject(1));
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5235");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1235,9 +1212,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testBug5664() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5664");
-			this.stmt
-					.executeUpdate("CREATE TABLE testBug5664 (pkfield int PRIMARY KEY NOT NULL, field1 SMALLINT)");
+			createTable("testBug5664", "(pkfield int PRIMARY KEY NOT NULL, field1 SMALLINT)");
 			this.stmt.executeUpdate("INSERT INTO testBug5664 VALUES (1, 1)");
 
 			Statement updatableStmt = this.conn
@@ -1251,7 +1226,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.rs.updateInt(1, 2);
 			this.rs.updateByte(2, (byte) 2);
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5664");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1272,8 +1247,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testBug5717() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5717");
-			this.stmt.executeUpdate("CREATE TABLE testBug5717 (field1 DOUBLE)");
+			createTable("testBug5717", "(field1 DOUBLE)");
 			this.pstmt = this.conn
 					.prepareStatement("INSERT INTO testBug5717 VALUES (?)");
 
@@ -1301,8 +1275,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			if (this.pstmt != null) {
 				this.pstmt.close();
 			}
-
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5717");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1350,7 +1323,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 						.toString()));
 
 			} finally {
-				dropTable(tableName);
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -1365,8 +1338,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	public void testBug6231() throws Exception {
 
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug6231");
-			this.stmt.executeUpdate("CREATE TABLE testBug6231 (field1 TIME)");
+			createTable("testBug6231", "(field1 TIME)");
 			this.stmt
 					.executeUpdate("INSERT INTO testBug6231 VALUES ('09:16:00')");
 
@@ -1385,14 +1357,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			assertEquals(16, cal.get(Calendar.MINUTE));
 			assertEquals(0, cal.get(Calendar.SECOND));
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug6231");
+			closeMemberJDBCResources();
 		}
 	}
 
 	public void testBug6619() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug6619");
-			this.stmt.executeUpdate("CREATE TABLE testBug6619 (field1 int)");
+			createTable("testBug6619", "(field1 int)");
 			this.stmt.executeUpdate("INSERT INTO testBug6619 VALUES (1), (2)");
 
 			PreparedStatement pStmt = this.conn
@@ -1403,7 +1374,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			System.out.println(this.rs.getString(1));
 
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug6619");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1480,9 +1451,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 			Connection zeroConn = getConnectionWithProps(props);
 
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug6561");
-			this.stmt
-					.executeUpdate("CREATE TABLE testBug6561 (ofield int, field1 DATE, field2 integer, field3 integer)");
+			createTable("testBug6561", "(ofield int, field1 DATE, field2 integer, field3 integer)");
 			this.stmt
 					.executeUpdate("INSERT INTO testBug6561 (ofield, field1,field2,field3)	VALUES (1, 0,NULL,0)");
 			this.stmt
@@ -1504,7 +1473,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 			ps.close();
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS test");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1546,6 +1515,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		this.rs.updateRow();
 		this.conn.commit();
 		this.conn.setAutoCommit(true);
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -1559,10 +1529,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		PreparedStatement pStmt = null;
 
 		try {
-			this.stmt
-					.executeUpdate("DROP TABLE IF EXISTS testConvertedBinaryTimestamp");
-			this.stmt
-					.executeUpdate("CREATE TABLE testConvertedBinaryTimestamp (field1 VARCHAR(32), field2 VARCHAR(32), field3 VARCHAR(32), field4 TIMESTAMP)");
+			createTable("testConvertedBinaryTimestamp", "(field1 VARCHAR(32), field2 VARCHAR(32), field3 VARCHAR(32), field4 TIMESTAMP)");
 			this.stmt
 					.executeUpdate("INSERT INTO testConvertedBinaryTimestamp VALUES ('abc', 'def', 'ghi', NOW())");
 
@@ -1577,8 +1544,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 			this.rs.getObject(4); // fails if bug exists
 		} finally {
-			this.stmt
-					.executeUpdate("DROP TABLE IF EXISTS testConvertedBinaryTimestamp");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1593,9 +1559,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		Connection noSyncConn = null;
 
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug8428");
-			this.stmt
-					.executeUpdate("CREATE TABLE testBug8428 (field1 YEAR, field2 DATETIME)");
+			createTable("testBug8428", "(field1 YEAR, field2 DATETIME)");
 			this.stmt
 					.executeUpdate("INSERT INTO testBug8428 VALUES ('1999', '2005-02-11 12:54:41')");
 
@@ -1618,7 +1582,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			assertEquals("1999", this.rs.getString(1));
 			assertEquals("2005-02-11 12:54:41", this.rs.getString(2));
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug8428");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1645,6 +1609,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				if (this.rs != null) {
 					this.rs.close();
 				}
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -1661,10 +1626,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			Statement updatableStmt = null;
 
 			try {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug9098");
-				this.stmt
-						.executeUpdate("CREATE TABLE testBug9098(pkfield INT PRIMARY KEY NOT NULL AUTO_INCREMENT, \n"
-								+ "tsfield TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, tsfield2 TIMESTAMP NOT NULL DEFAULT '2005-12-25 12:20:52', charfield VARCHAR(4) NOT NULL DEFAULT 'abcd')");
+				createTable("testBug9098", "(pkfield INT PRIMARY KEY NOT NULL AUTO_INCREMENT, \n"
+						+ "tsfield TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, tsfield2 TIMESTAMP NOT NULL DEFAULT '2005-12-25 12:20:52', charfield VARCHAR(4) NOT NULL DEFAULT 'abcd')");
 				updatableStmt = this.conn.createStatement(
 						ResultSet.TYPE_SCROLL_INSENSITIVE,
 						ResultSet.CONCUR_UPDATABLE);
@@ -1674,7 +1637,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				this.rs.insertRow();
 
 			} finally {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug9098");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -1773,6 +1736,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 					this.rs.close();
 					this.rs = null;
 				}
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -1842,6 +1806,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 					this.pstmt.close();
 					this.pstmt = null;
 				}
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -1866,6 +1831,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 					this.rs.close();
 					this.rs = null;
 				}
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -1903,6 +1869,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				this.rs.close();
 				this.rs = null;
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1934,6 +1901,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				this.rs.close();
 				this.rs = null;
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1976,6 +1944,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			if (updStmt != null) {
 				updStmt.close();
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1999,7 +1968,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				assertTrue(this.rs.next());
 				System.out.println(this.rs.getObject(1));
 			} finally {
-
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -2119,20 +2088,14 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				CallableStatement storedProc = null;
 
 				try {
-					this.stmt
-							.executeUpdate("DROP PROCEDURE IF EXISTS sp_testBug14562");
-					this.stmt
-							.executeUpdate("CREATE PROCEDURE sp_testBug14562() BEGIN SELECT signed_field, unsigned_field FROM testBug14562 ORDER BY row_order; END");
+					createProcedure("sp_testBug14562", "() BEGIN SELECT signed_field, unsigned_field FROM testBug14562 ORDER BY row_order; END");
 					storedProc = this.conn
 							.prepareCall("{call sp_testBug14562()}");
 					storedProc.execute();
 					this.rs = storedProc.getResultSet();
 					traverseResultSetBug14562();
 
-					this.stmt
-							.executeUpdate("DROP PROCEDURE IF EXISTS sp_testBug14562_1");
-					this.stmt
-							.executeUpdate("CREATE PROCEDURE sp_testBug14562_1(OUT param_1 MEDIUMINT, OUT param_2 MEDIUMINT UNSIGNED) BEGIN SELECT signed_field, unsigned_field INTO param_1, param_2 FROM testBug14562 WHERE row_order=1; END");
+					createProcedure("sp_testBug14562_1", "(OUT param_1 MEDIUMINT, OUT param_2 MEDIUMINT UNSIGNED) BEGIN SELECT signed_field, unsigned_field INTO param_1, param_2 FROM testBug14562 WHERE row_order=1; END");
 					storedProc = this.conn
 							.prepareCall("{call sp_testBug14562_1(?, ?)}");
 					storedProc.registerOutParameter(1, Types.INTEGER);
@@ -2155,9 +2118,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 					if (storedProc != null) {
 						storedProc.close();
 					}
-
-					this.stmt
-							.executeUpdate("DROP PROCEDURE IF EXISTS sp_testBug14562");
+					closeMemberJDBCResources();
 				}
 			}
 
@@ -2212,7 +2173,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				}
 			}
 		} finally {
-
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -2269,6 +2230,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				.executeQuery("select table1.*, table2.* FROM table1, table2");
 		this.rs.findColumn("table1.id");
 		this.rs.findColumn("table2.id");
+
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -2301,6 +2264,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				if (updatableStmt != null) {
 					updatableStmt.close();
 				}
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -2338,6 +2302,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				this.pstmt = null;
 				toCloseStmt.close();
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -2385,6 +2350,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			if (updStmt != null) {
 				updStmt.close();
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -2423,6 +2389,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.rs = this.stmt
 					.executeQuery("select * from testBug17450 where foo is null");
 			checkResult17450();
+
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -2459,6 +2427,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				this.pstmt = null;
 				toClose.close();
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -2682,6 +2651,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.rs = this.pstmt.executeQuery();
 
 		} finally {
+			closeMemberJDBCResources();
 		}
 	}
 	
@@ -2804,6 +2774,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.rs = conn2.prepareStatement("SELECT * FROM testAllTypes")
 					.executeQuery();
 			testAllFieldsForNotNull(this.rs, wasDatetimeTypeList);
+
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -2959,9 +2931,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 	public void testNPEWithStatementsAndTime() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testNPETime");
-			this.stmt
-					.executeUpdate("CREATE TABLE testNPETime (field1 TIME NULL, field2 DATETIME NULL, field3 DATE NULL)");
+			createTable("testNPETime", "(field1 TIME NULL, field2 DATETIME NULL, field3 DATE NULL)");
 			this.stmt
 					.executeUpdate("INSERT INTO testNPETime VALUES (null, null, null)");
 			this.pstmt = this.conn
@@ -2984,7 +2954,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				assertEquals(true, this.rs.wasNull());
 			}
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testNPETime");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -3069,6 +3039,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 				this.rs = null;
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -3100,6 +3071,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				if (tinyInt1IsBitConn != null) {
 					tinyInt1IsBitConn.close();
 				}
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -3224,10 +3196,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 		if (versionMeetsMinimum(5, 0)) {
 			try {
-				this.stmt
-						.executeUpdate("DROP PROCEDURE IF EXISTS testBug10485");
-				this.stmt
-						.executeUpdate("CREATE PROCEDURE testBug10485()\nBEGIN\nSELECT field1 FROM "
+				createProcedure("testBug10485", "()\nBEGIN\nSELECT field1 FROM "
 								+ tableName + ";\nEND");
 
 				this.rs = this.conn.prepareCall("{CALL testBug10485()}")
@@ -3240,8 +3209,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				assertTrue(this.rs.next());
 				assertEquals("05", this.rs.getString(1));
 			} finally {
-				this.stmt
-						.executeUpdate("DROP PROCEDURE IF EXISTS testBug10485");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -3303,6 +3271,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				this.rs.close();
 				this.rs = null;
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -3335,6 +3304,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			} catch (MysqlDataTruncation truncEx) {
 				// We expect this
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -3375,6 +3345,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			if (updStmt != null) {
 				updStmt.close();
 			}		
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -3407,6 +3378,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			if (updStmt != null) {
 				updStmt.close();
 			}		
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -3480,6 +3452,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			assertEquals(4095, this.rs.getInt(3));
 			assertEquals(4095, this.rs.getShort(3));
 			assertEquals(4095, this.rs.getLong(3));
+
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -4427,7 +4401,9 @@ public class ResultSetRegressionTest extends BaseTestCase {
         
         if (versionMeetsMinimum(4, 1)) {
         	assertEquals("java.lang.String", this.rs.getObject(1).getClass().getName());
+
         }
+		closeMemberJDBCResources();
 	}
 
 	
@@ -4640,6 +4616,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		while (this.rs.relative(1)) {
 			this.rs.getTimestamp(1);
 		}
+		closeMemberJDBCResources();
 	}
 	
 	/**
@@ -4683,6 +4660,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		this.stmt.executeUpdate("INSERT INTO testBug35610 VALUES (1, 2, 3)");
 		exercise35610(this.stmt, false);
 		exercise35610(getConnectionWithProps("useColumnNamesInFindColumn=true").createStatement(), true);
+		closeMemberJDBCResources();
 	}
 	
 	private void exercise35610(Statement configuredStmt, boolean force30Behavior) throws Exception {
@@ -4793,6 +4771,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	        }
 		} finally {
 			noBlobConn.close();
+			closeMemberJDBCResources();
 		}
 
 	}
@@ -4810,6 +4789,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		
 		checkRangeMatrix(this.conn);
 		checkRangeMatrix(getConnectionWithProps("useFastIntParsing=false"));
+
+		closeMemberJDBCResources();
 	}
 	
 	private void checkRangeMatrix(Connection c) throws Exception {
@@ -4918,6 +4899,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.pstmt.close();
 		} finally {
 			cachedRsmdConn.close();
+			closeMemberJDBCResources();
 		}
 	}
 	
@@ -4936,6 +4918,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}
 		
 		assertEquals(0, getRowCount("bug27431"));
+		closeMemberJDBCResources();
 	}
 	
 	public void testBug43759() throws Exception {
@@ -4971,6 +4954,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
         
         this.rs = this.stmt.executeQuery("SELECT * FROM testtable_bincolumn WHERE bincolumn = unhex('"+pkValue2+"')");
         assertFalse(rs.next());
+
+        closeMemberJDBCResources();
 	}
 	
 	public void testBug32525() throws Exception {
@@ -4985,6 +4970,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			assertEquals("0000-00-00 00:00:00", this.rs.getString(2));
 		} finally {
 			noStringSyncConn.close();
+			closeMemberJDBCResources();
 		}
 		
 	}
@@ -5006,6 +4992,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			assertEquals(0, getRowCount("testBug49797"));
 		} finally {
 			updStmt.close();
+			closeMemberJDBCResources();
 		}
 	}
 	
@@ -5034,7 +5021,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		crs.first();
 
 		assertEquals("John", crs.getString(1));
-
+		closeMemberJDBCResources();
 	}
 	
 	public void testBug48820() throws Exception {
@@ -5055,6 +5042,6 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		crs.first();
 
 		assertEquals(fromPlainResultSet, crs.getString(1));
-
+		closeMemberJDBCResources();
 	}
 }

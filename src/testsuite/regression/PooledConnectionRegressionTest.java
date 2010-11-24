@@ -307,9 +307,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 		pc.addConnectionEventListener(conListener);
 
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testPacketTooLarge");
-			this.stmt
-					.executeUpdate("CREATE TABLE testPacketTooLarge(field1 LONGBLOB)");
+			createTable("testPacketTooLarge", "(field1 LONGBLOB)");
 
 			Connection connFromPool = pc.getConnection();
 			PreparedStatement pstmtFromPool = ((ConnectionWrapper) connFromPool)
@@ -343,7 +341,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 			assertTrue(this.connectionErrorEventCount == 0);
 			assertTrue(this.closeEventCount == 0);
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testPacketTooLarge");
+			closeMemberJDBCResources();
 		}
 	}
 

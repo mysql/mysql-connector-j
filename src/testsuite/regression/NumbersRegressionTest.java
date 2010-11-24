@@ -68,9 +68,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 	 */
 	public void testBigInt() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS bigIntRegression");
-			this.stmt
-					.executeUpdate("CREATE TABLE bigIntRegression ( val BIGINT NOT NULL)");
+			createTable("bigIntRegression","(val BIGINT NOT NULL)");
 			this.stmt
 					.executeUpdate("INSERT INTO bigIntRegression VALUES (6692730313872877584)");
 			this.rs = this.stmt
@@ -93,7 +91,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 			assertTrue(bigIntAsString
 					.equals(String.valueOf(parsedBigIntAsLong)));
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS bigIntRegression");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -105,9 +103,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 	 */
 	public void testFloatsAndReals() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS floatsAndReals");
-			this.stmt
-					.executeUpdate("CREATE TABLE IF NOT EXISTS floatsAndReals(floatCol FLOAT, realCol REAL, doubleCol DOUBLE)");
+			createTable("floatsAndReals", "(floatCol FLOAT, realCol REAL, doubleCol DOUBLE)");
 			this.stmt
 					.executeUpdate("INSERT INTO floatsAndReals VALUES (0, 0, 0)");
 
@@ -131,7 +127,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 					"java.lang.Double"));
 
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS floatsAndReals");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -222,8 +218,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 
 	public void testIntShouldReturnLong() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testIntRetLong");
-			this.stmt.executeUpdate("CREATE TABLE testIntRetLong(field1 INT)");
+			createTable("testIntRetLong", "(field1 INT)");
 			this.stmt.executeUpdate("INSERT INTO testIntRetLong VALUES (1)");
 
 			this.rs = this.stmt.executeQuery("SELECT * FROM testIntRetLong");
@@ -242,8 +237,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 				this.rs = null;
 			}
 
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testIntRetLong");
-
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -258,9 +252,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 			String valueAsString = "1095923280000";
 
 			try {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5729");
-				this.stmt
-						.executeUpdate("CREATE TABLE testBug5729(field1 BIGINT UNSIGNED)");
+				createTable("testBug5729", "(field1 BIGINT UNSIGNED)");
 				this.stmt.executeUpdate("INSERT INTO testBug5729 VALUES ("
 						+ valueAsString + ")");
 
@@ -271,7 +263,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 				assertTrue(this.rs.getObject(1).toString()
 						.equals(valueAsString));
 			} finally {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug5729");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -286,9 +278,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 	 */
 	public void testBug8484() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug8484");
-			this.stmt
-					.executeUpdate("CREATE TABLE testBug8484 (field1 DECIMAL(16, 8), field2 varchar(32))");
+			createTable("testBug8484", "(field1 DECIMAL(16, 8), field2 varchar(32))");
 			this.stmt
 					.executeUpdate("INSERT INTO testBug8484 VALUES (12345678.12345678, '')");
 			this.rs = this.stmt
@@ -304,7 +294,7 @@ public class NumbersRegressionTest extends BaseTestCase {
 			assertEquals("12345678.123", this.rs.getBigDecimal(1, 3).toString());
 			assertEquals("0.000", this.rs.getBigDecimal(2, 3).toString());
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug8484");
+			closeMemberJDBCResources();
 		}
 	}
 }

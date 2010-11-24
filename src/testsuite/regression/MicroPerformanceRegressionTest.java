@@ -116,9 +116,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 	 */
 	public void testResultSetAccessors() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS marktest");
-			this.stmt
-					.executeUpdate("CREATE TABLE marktest(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
+			createTable("marktest", "(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
 			this.stmt
 					.executeUpdate("INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
 
@@ -206,15 +204,13 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
 			checkTime("ResultSet.getObject() on a string", getStringObjAvgMs);
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS marktest");
+			closeMemberJDBCResources();
 		}
 	}
 
 	public void testPreparedStatementTimes() throws Exception {
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS marktest");
-			this.stmt
-					.executeUpdate("CREATE TABLE marktest(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
+			createTable("marktest", "(intField INT, floatField DOUBLE, timeField TIME, datetimeField DATETIME, stringField VARCHAR(64))");
 			this.stmt
 					.executeUpdate("INSERT INTO marktest VALUES (123456789, 12345.6789, NOW(), NOW(), 'abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@')");
 
@@ -370,7 +366,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 			start = currentTimeMillis();
 
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS marktest");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -440,9 +436,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 			int numSelects = 100000;
 
 			try {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug6359");
-				this.stmt
-						.executeUpdate("CREATE TABLE testBug6359 (pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT, field2 INT, field3 INT, field4 INT, field5 INT, field6 INT, field7 INT, field8 INT, field9 INT,  INDEX (field1))");
+				createTable("testBug6359", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT, field2 INT, field3 INT, field4 INT, field5 INT, field6 INT, field7 INT, field8 INT, field9 INT,  INDEX (field1))");
 
 				PreparedStatement pStmt = this.conn
 						.prepareStatement("INSERT INTO testBug6359 (field1, field2, field3, field4, field5, field6, field7, field8, field9) VALUES (?, 1, 2, 3, 4, 5, 6, 7, 8)");
@@ -510,7 +504,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
 				checkTime("total time all queries", seconds);
 			} finally {
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug6359");
+				closeMemberJDBCResources();
 			}
 		}
 	}

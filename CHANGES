@@ -2,6 +2,9 @@
 # $Id$
 
 mm-dd-10 - Version 5.1.14
+   
+   - Testsuite.regression MicroPerformanceRegressionTest, NumbersRegressionTest, PooledConnectionRegressionTest,
+     ResultSetRegressionTest are up to date.
 
    - Testsuite.regression.MetaDataRegressionTest up to date.
    
