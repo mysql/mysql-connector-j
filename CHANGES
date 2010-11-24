@@ -3,6 +3,8 @@
 
 mm-dd-10 - Version 5.1.14
 
+   - Testsuite.regression.MetaDataRegressionTest up to date.
+   
    - Typo in StatementRegressionTest.testLikeWithBackslashes fixed. StatementRegressionTest
      is up to date.
 

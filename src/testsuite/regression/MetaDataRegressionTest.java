@@ -44,9 +44,11 @@ import junit.framework.ComparisonFailure;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.MySQLConnection;
 
 /**
  * Regression tests for DatabaseMetaData
@@ -1526,7 +1528,15 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 	private void checkRsmdForBug13277(ResultSetMetaData rsmd)
 			throws SQLException {
-		assertEquals(17, rsmd.getColumnDisplaySize(1));
+
+		int i = ((com.mysql.jdbc.ConnectionImpl)this.conn).getMaxBytesPerChar(
+				CharsetMapping.getJavaEncodingForMysqlEncoding(((com.mysql.jdbc.Connection)this.conn).
+						getServerCharacterEncoding(),
+						 ((com.mysql.jdbc.ConnectionImpl)this.conn))); 
+		if (i == 1) {
+			//This is INT field but still processed in ResultsetMetaData.getColumnDisplaySize
+			assertEquals(17, rsmd.getColumnDisplaySize(1));
+		}
 
 		if (versionMeetsMinimum(4, 1)) {
 			assertEquals(false, rsmd.isDefinitelyWritable(1));
@@ -1928,6 +1938,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
 						          // for a default
 					}
 					
+					if ("CHAR_OCTET_LENGTH".equals(metadataExpected.getColumnName(i + 1))) {
+						if (((com.mysql.jdbc.ConnectionImpl)this.conn).getMaxBytesPerChar(
+								CharsetMapping.getJavaEncodingForMysqlEncoding(((com.mysql.jdbc.Connection)this.conn).getServerCharacterEncoding(),
+										  ((com.mysql.jdbc.ConnectionImpl)this.conn))) > 1) {
+							continue; // SHOW CREATE and CHAR_OCT *will* differ
+						}
+					}
+					
 					if (messageBuf == null) {
 						messageBuf = new StringBuffer();
 					} else {
@@ -2183,11 +2201,20 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		if (!versionMeetsMinimum(5, 0, 7)) {
 			return;
 		}
+		boolean max_key_l_bug = false;
 
 		try {
-			createTable(
-					"bug33594",
-					"(fid varchar(255) not null primary key, id INT, geom linestring, name varchar(255))");
+			
+			try {
+				createTable(
+						"bug33594",
+						"(fid varchar(255) not null primary key, id INT, geom linestring, name varchar(255))");
+			} catch (SQLException sqlEx) {
+				if (sqlEx.getMessage().indexOf("max key length") != -1) {
+				  createTable("bug33594", "(fid varchar(180) not null primary key, id INT, geom linestring, name varchar(255))");
+				  max_key_l_bug = true;
+				}
+			}
 
 			Properties props = new Properties();
 			props.put("useInformationSchema", "false");
@@ -2202,7 +2229,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
 				assertEquals("bug33594", this.rs.getString("TABLE_NAME"));
 				assertEquals("fid", this.rs.getString("COLUMN_NAME"));
 				assertEquals("VARCHAR", this.rs.getString("TYPE_NAME"));
-				assertEquals("255", this.rs.getString("COLUMN_SIZE"));
+				if (!max_key_l_bug) {
+				  assertEquals("255", this.rs.getString("COLUMN_SIZE"));
+				} else {
+				  assertEquals("180", this.rs.getString("COLUMN_SIZE"));
+				}
 
 				Properties props2 = new Properties();
 				props2.put("useInformationSchema", "false");
@@ -2220,7 +2251,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
 					assertEquals("bug33594", this.rs.getString("TABLE_NAME"));
 					assertEquals("fid", this.rs.getString("COLUMN_NAME"));
 					assertEquals("VARCHAR", this.rs.getString("TYPE_NAME"));
-					assertEquals("255", this.rs.getString("COLUMN_SIZE"));
+					if (!max_key_l_bug) {
+					  assertEquals("255", this.rs.getString("COLUMN_SIZE"));
+					} else {
+					  assertEquals("180", this.rs.getString("COLUMN_SIZE"));
+					}
 					
 					// we should only see one server-side prepared statement, and that's
 					// caused by us going off to ask about the count!
