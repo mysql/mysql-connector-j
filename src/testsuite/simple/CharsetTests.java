@@ -89,7 +89,6 @@ public class CharsetTests extends BaseTestCase {
 				Connection conn2 = getConnectionWithProps(props);
 				Statement stmt2 = conn2.createStatement();
 	
-				stmt2.executeUpdate("DROP TABLE IF EXISTS t_eucjpms");
 				createTable("t_eucjpms", "(c1 char(1))"
 						+ " default character set = eucjpms");
 				stmt2.executeUpdate("INSERT INTO t_eucjpms VALUES ('"
@@ -110,10 +109,10 @@ public class CharsetTests extends BaseTestCase {
 				this.rs.next();
 				assertEquals(necExtendedCharString, rs.getString("c1"));
 	
-				stmt2.executeUpdate("DROP TABLE t_eucjpms");
 				this.rs.close();
 				stmt2.close();
 				conn2.close();
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -306,6 +305,7 @@ public class CharsetTests extends BaseTestCase {
 					}
 					String query5 = "DROP TABLE t1";
 					stmt2.executeUpdate(query5);
+					closeMemberJDBCResources();
 				}
 			}
 		}
@@ -448,7 +448,7 @@ public class CharsetTests extends BaseTestCase {
 		} catch (SQLException sqlEx) {
 			assertNull(sqlEx.getCause());
 		}
-		
+		closeMemberJDBCResources();
 	}
 	
 	private boolean bytesAreSame(byte[] byte1, byte[] byte2) {

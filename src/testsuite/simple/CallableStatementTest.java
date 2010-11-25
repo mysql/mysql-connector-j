@@ -68,10 +68,7 @@ public class CallableStatementTest extends BaseTestCase {
 			CallableStatement storedProc = null;
 
 			try {
-				this.stmt
-						.executeUpdate("DROP PROCEDURE IF EXISTS testInOutParam");
-				this.stmt
-						.executeUpdate("create procedure testInOutParam(IN p1 VARCHAR(255), INOUT p2 INT)\n"
+				createProcedure("testInOutParam", "(IN p1 VARCHAR(255), INOUT p2 INT)\n"
 								+ "begin\n"
 								+ " DECLARE z INT;\n"
 								+ "SET z = p2 + 1;\n"
@@ -90,7 +87,7 @@ public class CallableStatementTest extends BaseTestCase {
 		
 				assertEquals(5, storedProc.getInt(2));
 			} finally {
-				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testInOutParam");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -174,10 +171,7 @@ public class CallableStatementTest extends BaseTestCase {
 			CallableStatement storedProc = null;
 
 			try {
-				this.stmt
-						.executeUpdate("DROP PROCEDURE IF EXISTS testOutParam");
-				this.stmt
-						.executeUpdate("CREATE PROCEDURE testOutParam(x int, out y int)\n"
+				createProcedure("testOutParam", "(x int, out y int)\n"
 								+ "begin\n"
 								+ "declare z int;\n"
 								+ "set z = x+1, y = z;\n" + "end\n");
@@ -253,7 +247,7 @@ public class CallableStatementTest extends BaseTestCase {
 					}
 				}				
 			} finally {
-				this.stmt.executeUpdate("DROP PROCEDURE testOutParam");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -269,23 +263,14 @@ public class CallableStatementTest extends BaseTestCase {
 			CallableStatement storedProc = null;
 
 			try {
-				this.stmt
-						.executeUpdate("DROP TABLE IF EXISTS testSpResultTbl1");
-				this.stmt
-						.executeUpdate("DROP TABLE IF EXISTS testSpResultTbl2");
-				this.stmt
-						.executeUpdate("CREATE TABLE testSpResultTbl1 (field1 INT)");
+				createTable("testSpResultTbl1", "(field1 INT)");
 				this.stmt
 						.executeUpdate("INSERT INTO testSpResultTbl1 VALUES (1), (2)");
-				this.stmt
-						.executeUpdate("CREATE TABLE testSpResultTbl2 (field2 varchar(255))");
+				createTable("testSpResultTbl2", "(field2 varchar(255))");
 				this.stmt
 						.executeUpdate("INSERT INTO testSpResultTbl2 VALUES ('abc'), ('def')");
 
-				this.stmt
-						.executeUpdate("DROP PROCEDURE IF EXISTS testSpResult");
-				this.stmt
-						.executeUpdate("CREATE PROCEDURE testSpResult()\n"
+				createProcedure("testSpResult", "()\n"
 								+ "BEGIN\n"
 								+ "SELECT field2 FROM testSpResultTbl2 WHERE field2='abc';\n"
 								+ "UPDATE testSpResultTbl1 SET field1=2;\n"
@@ -332,12 +317,7 @@ public class CallableStatementTest extends BaseTestCase {
 				storedProc.execute();
 
 			} finally {
-				this.stmt
-						.executeUpdate("DROP PROCEDURE IF EXISTS testSpResult");
-				this.stmt
-						.executeUpdate("DROP TABLE IF EXISTS testSpResultTbl1");
-				this.stmt
-						.executeUpdate("DROP TABLE IF EXISTS testSpResultTbl2");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -356,15 +336,13 @@ public class CallableStatementTest extends BaseTestCase {
 
 			try {
 
-				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testSpParse");
-				this.stmt
-						.executeUpdate("CREATE PROCEDURE testSpParse(IN FOO VARCHAR(15))\n"
+				createProcedure("testSpParse", "(IN FOO VARCHAR(15))\n"
 								+ "BEGIN\n" + "SELECT 1;\n" + "end\n");
 
 				storedProc = this.conn.prepareCall("{call testSpParse()}");
 
 			} finally {
-				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testSpParse");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -383,17 +361,14 @@ public class CallableStatementTest extends BaseTestCase {
 
 			try {
 
-				this.stmt
-						.executeUpdate("DROP PROCEDURE IF EXISTS testSPNoParams");
-				this.stmt.executeUpdate("CREATE PROCEDURE testSPNoParams()\n"
+				createProcedure("testSPNoParams", "()\n"
 						+ "BEGIN\n" + "SELECT 1;\n" + "end\n");
 
 				storedProc = this.conn.prepareCall("{call testSPNoParams()}");
 				storedProc.execute();
 
 			} finally {
-				this.stmt
-						.executeUpdate("DROP PROCEDURE IF EXISTS testSPNoParams");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -415,9 +390,7 @@ public class CallableStatementTest extends BaseTestCase {
 
 			try {
 
-				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testSpParse");
-				this.stmt
-						.executeUpdate("CREATE PROCEDURE testSpParse(IN FOO VARCHAR(15))\n"
+				createProcedure("testSpParse", "(IN FOO VARCHAR(15))\n"
 								+ "BEGIN\n" + "SELECT 1;\n" + "end\n");
 
 				int numIterations = 10;
@@ -467,7 +440,7 @@ public class CallableStatementTest extends BaseTestCase {
 				assertTrue(this.rs.getInt(1) == 1);
 
 			} finally {
-				this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testSpParse");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -482,10 +455,7 @@ public class CallableStatementTest extends BaseTestCase {
 			Connection spConn = getConnectionWithProps(props);
 			
 			try {
-				this.stmt
-						.executeUpdate("DROP PROCEDURE IF EXISTS testOutParam");
-				this.stmt
-						.executeUpdate("CREATE PROCEDURE testOutParam(x int, out y int)\n"
+				createProcedure("testOutParam", "(x int, out y int)\n"
 								+ "begin\n"
 								+ "declare z int;\n"
 								+ "set z = x+1, y = z;\n" + "end\n");
@@ -514,7 +484,7 @@ public class CallableStatementTest extends BaseTestCase {
 				assertTrue("Output value not returned correctly",
 						indexedOutParamToTest == 33);
 			} finally {
-				this.stmt.executeUpdate("DROP PROCEDURE testOutParam");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -577,6 +547,7 @@ public class CallableStatementTest extends BaseTestCase {
 			if (cstmt != null) {
 				cstmt.close();
 			}
+			closeMemberJDBCResources();
 		}
 	}
 }
