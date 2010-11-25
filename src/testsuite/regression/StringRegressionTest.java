@@ -149,6 +149,7 @@ public class StringRegressionTest extends BaseTestCase {
 			System.err
 					.println("WARN: Test not valid for MySQL version > 4.1.0, skipping");
 		}
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -163,6 +164,7 @@ public class StringRegressionTest extends BaseTestCase {
 		props.put("characterEncoding", "UTF-8");
 		props.put("useUnicode", "true");
 		DriverManager.getConnection(dbUrl, props).close();
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -235,6 +237,7 @@ public class StringRegressionTest extends BaseTestCase {
 						.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
 			}
 		}
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -276,6 +279,8 @@ public class StringRegressionTest extends BaseTestCase {
 			assertTrue(lower.equals(this.rs.getString(2)));
 			assertTrue(accented.equals(this.rs.getString(3)));
 			assertTrue(special.equals(this.rs.getString(4)));
+			
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -324,9 +329,7 @@ public class StringRegressionTest extends BaseTestCase {
 		PreparedStatement pStmt = null;
 
 		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS latin1RegressTest");
-			this.stmt
-					.executeUpdate("CREATE TABLE latin1RegressTest (stringField TEXT)");
+			createTable("latin1RegressTest", "(stringField TEXT)");
 
 			pStmt = this.conn
 					.prepareStatement("INSERT INTO latin1RegressTest VALUES (?)");
@@ -380,7 +383,7 @@ public class StringRegressionTest extends BaseTestCase {
 				}
 			}
 
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS latin1RegressTest");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -393,9 +396,7 @@ public class StringRegressionTest extends BaseTestCase {
 	public void testNewlines() throws Exception {
 		String newlineStr = "Foo\nBar\n\rBaz";
 
-		this.stmt.executeUpdate("DROP TABLE IF EXISTS newlineRegressTest");
-		this.stmt
-				.executeUpdate("CREATE TABLE newlineRegressTest (field1 MEDIUMTEXT)");
+		createTable("newlineRegressTest", "(field1 MEDIUMTEXT)");
 
 		try {
 			this.stmt.executeUpdate("INSERT INTO newlineRegressTest VALUES ('"
@@ -412,7 +413,7 @@ public class StringRegressionTest extends BaseTestCase {
 				assertTrue(this.rs.getString(1).equals(newlineStr));
 			}
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS newlineRegressTest");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -529,6 +530,7 @@ public class StringRegressionTest extends BaseTestCase {
 			}
 		} finally {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS sjisTest");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -546,6 +548,7 @@ public class StringRegressionTest extends BaseTestCase {
 
 		Connection utfConn = DriverManager.getConnection(dbUrl, props);
 		testConversionForString("UTF8", utfConn, "\u043c\u0438\u0445\u0438");
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -603,6 +606,7 @@ public class StringRegressionTest extends BaseTestCase {
 			assertTrue(bytesAreSame(field2AsBytes, rs.getBytes(2)));
 		} finally {
 			utfStmt.executeUpdate("DROP TABLE IF EXISTS testUtf8");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -626,20 +630,16 @@ public class StringRegressionTest extends BaseTestCase {
 
 		try {
 			this.stmt = convConn.createStatement();
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS charConvTest");
-			this.stmt
-					.executeUpdate("CREATE TABLE charConvTest (field1 varchar(255))");
+			createTable("charConvTest", "(field1 varchar(255))");
 			this.stmt.executeUpdate("INSERT INTO charConvTest VALUES ('"
 					+ charsToTest + "')");
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS charConvTest_"
-					+ charsetName);
 
 			if (!versionMeetsMinimum(4, 1)) {
-				this.stmt.executeUpdate("CREATE TABLE charConvTest_"
-						+ charsetName + "(field1 CHAR(50))");
+				createTable("CREATE TABLE charConvTest_"
+						+ charsetName, "(field1 CHAR(50))");
 			} else {
-				this.stmt.executeUpdate("CREATE TABLE charConvTest_"
-						+ charsetName + "(field1 CHAR(50) CHARACTER SET "
+				createTable("charConvTest_"
+						+ charsetName, "(field1 CHAR(50) CHARACTER SET "
 						+ charsetName + ")");
 			}
 
@@ -658,8 +658,7 @@ public class StringRegressionTest extends BaseTestCase {
 			System.out.println(testValue);
 			assertTrue(testValue.equals(charsToTest));
 		} finally {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS charConvTest_"
-					+ charsetName);
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -788,6 +787,7 @@ public class StringRegressionTest extends BaseTestCase {
 				if (utf8Conn != null) {
 					utf8Conn.close();
 				}
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -827,6 +827,7 @@ public class StringRegressionTest extends BaseTestCase {
 					"SELECT field1 FROM testCp1252");
 			this.rs.next();
 			assertEquals(this.rs.getString(1), codePage1252);
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -887,6 +888,7 @@ public class StringRegressionTest extends BaseTestCase {
 		props.setProperty("characterEncoding", "US-ASCII");
 		
 		getConnectionWithProps(props).close();
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -909,5 +911,6 @@ public class StringRegressionTest extends BaseTestCase {
 				"insert into Test (TestID) values (?)", "values", '`', false),
 				StringUtils.indexOfIgnoreCaseRespectQuotes(0, 
 						"insert into Test (TestID) VALUES (?)", "values", '`', false));
+		closeMemberJDBCResources();
 	}
 }

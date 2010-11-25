@@ -95,6 +95,7 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 					if (this.rs != null) {
 						this.rs.close();
 					}
+					closeMemberJDBCResources();
 				}
 			}
 		}
@@ -119,6 +120,7 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 					if (this.rs != null) {
 						this.rs.close();
 					}
+					closeMemberJDBCResources();
 				}
 			}
 		}
@@ -144,7 +146,7 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 					if (this.rs != null) {
 						this.rs.close();
 					}
-
+					closeMemberJDBCResources();
 				}
 			}
 		}
@@ -197,6 +199,7 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 					if (this.rs != null) {
 						this.rs.close();
 					}
+					closeMemberJDBCResources();
 				}
 			}
 		}
@@ -226,25 +229,17 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 					if (this.rs != null) {
 						this.rs.close();
 					}
+					closeMemberJDBCResources();
 				}
 			}
 		}
 	}
 
 	private void createTables() throws Exception {
-		this.stmt.executeUpdate("drop table if exists t1");
-		this.stmt.executeUpdate("drop table if exists t1");
-		this.stmt.executeUpdate("drop table if exists t2");
-		this.stmt.executeUpdate("drop table if exists t3");
-		this.stmt.executeUpdate("drop table if exists t4");
-		this.stmt
-				.executeUpdate("create table t1(colA varchar(10), colB decimal(3,0))");
-		this.stmt
-				.executeUpdate("create table t2(colA varchar(10), colB varchar(10))");
-		this.stmt
-				.executeUpdate("create table t3(colA varchar(10), colB varchar(10))");
-		this.stmt
-				.executeUpdate("create table t4(colA varchar(10), colB varchar(10))");
+		createTable("t1", "(colA varchar(10), colB decimal(3,0))");
+		createTable("t2", "(colA varchar(10), colB varchar(10))");
+		createTable("t3", "(colA varchar(10), colB varchar(10))");
+		createTable("t4", "(colA varchar(10), colB varchar(10))");
 		this.stmt
 				.executeUpdate("insert into t1 values ('abcd', 1), ('efgh', 2), ('ijkl', 3)");
 		this.stmt
@@ -256,10 +251,6 @@ public class SubqueriesRegressionTest extends BaseTestCase {
 	}
 
 	private void dropTables() throws Exception {
-		this.stmt.executeUpdate("drop table if exists t1");
-		this.stmt.executeUpdate("drop table if exists t1");
-		this.stmt.executeUpdate("drop table if exists t2");
-		this.stmt.executeUpdate("drop table if exists t3");
-		this.stmt.executeUpdate("drop table if exists t4");
+		closeMemberJDBCResources();
 	}
 }
