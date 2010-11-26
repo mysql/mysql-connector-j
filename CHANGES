@@ -4,7 +4,7 @@
 mm-dd-10 - Version 5.1.14
 
    - Testsuite.simple, ConenctionTest & DataSourceTest are up to date. Major rework on 
-     ConnectionTest.testDeadlockDetection and testUseCompress.
+     ConnectionTest.testDeadlockDetection (Sveta) and testUseCompress.
    
    - Testsuite.simple, CallableStatementTest & CharsetTests are up to date.
    
