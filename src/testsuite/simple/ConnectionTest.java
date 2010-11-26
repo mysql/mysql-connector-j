@@ -25,7 +25,11 @@
  */
 package testsuite.simple;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
@@ -95,6 +99,7 @@ public class ConnectionTest extends BaseTestCase {
 		String currentCatalog = this.conn.getCatalog();
 		this.conn.setCatalog(currentCatalog);
 		assertTrue(currentCatalog.equals(this.conn.getCatalog()));
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -173,6 +178,8 @@ public class ConnectionTest extends BaseTestCase {
 					if (clusterConn != null) {
 						clusterConn.close();
 					}
+
+					closeMemberJDBCResources();
 				}
 			}
 		}
@@ -182,7 +189,7 @@ public class ConnectionTest extends BaseTestCase {
 	 * DOCUMENT ME!
 	 * 
 	 * @throws Exception
-	 *             DOCUMENT ME!
+	 *         Old test was passing due to http://bugs.mysql.com/bug.php?id=989 which is fixed for 5.5+
 	 */
 	public void testDeadlockDetection() throws Exception {
 		try {
@@ -195,8 +202,6 @@ public class ConnectionTest extends BaseTestCase {
 			createTable("t1", "(id INTEGER, x INTEGER) ", "INNODB");
 			this.stmt.executeUpdate("INSERT INTO t1 VALUES(0, 0)");
 			this.conn.setAutoCommit(false);
-			this.conn.createStatement().executeQuery(
-					"SELECT * FROM t1 WHERE id=0 FOR UPDATE");
 
 			Properties props = new Properties();
 			props.setProperty("includeInnodbStatusInDeadlockExceptions", "true");
@@ -204,11 +209,20 @@ public class ConnectionTest extends BaseTestCase {
 			Connection deadlockConn = getConnectionWithProps(props);
 			deadlockConn.setAutoCommit(false);
 
-			// The following query should hang because con1 is locking the page
-			deadlockConn.createStatement().executeUpdate(
-					"UPDATE t1 SET x=2 WHERE id=0");
-			deadlockConn.commit();
-
+			try {
+				this.conn.createStatement().executeQuery(
+						"SELECT * FROM t1 WHERE id=0 FOR UPDATE");
+				
+				// The following query should hang because con1 is locking the page
+				deadlockConn.createStatement().executeUpdate(
+						"UPDATE t1 SET x=2 WHERE id=0");
+			} finally {
+				if (versionMeetsMinimum(5, 5)) {
+					this.conn.commit();
+					deadlockConn.commit();
+				}
+			}
+			
 			Thread.sleep(timeoutSecs * 2 * 1000);
 		} catch (SQLException sqlEx) {
 			System.out
@@ -231,6 +245,7 @@ public class ConnectionTest extends BaseTestCase {
 			assertTrue("Can't find INNODB MONITOR in:\n\n" + sqlEx.getMessage(), sqlEx.getMessage().indexOf("INNODB MONITOR") != -1);
 		} finally {
 			this.conn.setAutoCommit(true);
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -251,10 +266,7 @@ public class ConnectionTest extends BaseTestCase {
 
 				this.stmt = utfConn.createStatement();
 
-				this.stmt.executeUpdate("DROP TABLE IF EXISTS t1");
-				// this.stmt.executeUpdate("SET CHARACTER SET latin1");
-
-				this.stmt.executeUpdate("CREATE TABLE t1 ("
+				createTable("t1", "("
 						+ "comment CHAR(32) ASCII NOT NULL,"
 						+ "koi8_ru_f CHAR(32) CHARACTER SET koi8r NOT NULL"
 						+ ") CHARSET=latin5");
@@ -543,7 +555,7 @@ public class ConnectionTest extends BaseTestCase {
 				System.out.println(new String(c));
 				System.out.println("\u0430");
 			} finally {
-				// this.stmt.executeUpdate("DROP TABLE IF EXISTS t1");
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -584,6 +596,7 @@ public class ConnectionTest extends BaseTestCase {
 				}
 			}
 		}
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -658,6 +671,7 @@ public class ConnectionTest extends BaseTestCase {
 			} else {
 				System.out.println("MySQL version does not support SAVEPOINTs");
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -695,6 +709,7 @@ public class ConnectionTest extends BaseTestCase {
 					collConn.close();
 				}
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -718,10 +733,7 @@ public class ConnectionTest extends BaseTestCase {
 		}
 
 		try {
-			this.stmt
-					.executeUpdate("DROP TABLE IF EXISTS testDumpQueriesOnException");
-			this.stmt
-					.executeUpdate("CREATE TABLE testDumpQueriesOnException (field1 int UNIQUE)");
+			createTable("testDumpQueriesOnException", "(field1 int UNIQUE)");
 			this.stmt
 					.executeUpdate("INSERT INTO testDumpQueriesOnException VALUES (1)");
 
@@ -733,8 +745,7 @@ public class ConnectionTest extends BaseTestCase {
 			assertTrue(sqlEx.getMessage().indexOf(
 					"INSERT INTO testDumpQueriesOnException") != -1);
 		} finally {
-			this.stmt
-					.executeUpdate("DROP TABLE IF EXISTS testDumpQueriesOnException");
+			closeMemberJDBCResources();
 		}
 
 		try {
@@ -765,6 +776,7 @@ public class ConnectionTest extends BaseTestCase {
 
 		assertTrue("albequerque".equals(transformedProps
 				.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY)));
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -783,10 +795,7 @@ public class ConnectionTest extends BaseTestCase {
 		output.close();
 
 		try {
-			this.stmt
-					.executeUpdate("DROP TABLE IF EXISTS testLocalInfileWithUrl");
-			this.stmt
-					.executeUpdate("CREATE TABLE testLocalInfileWithUrl (field1 LONGTEXT)");
+			createTable("testLocalInfileWithUrl", "(field1 LONGTEXT)");
 
 			Properties props = new Properties();
 			props.setProperty("allowUrlInLocalInfile", "true");
@@ -841,8 +850,7 @@ public class ConnectionTest extends BaseTestCase {
 			}
 
 		} finally {
-			this.stmt
-					.executeUpdate("DROP TABLE IF EXISTS testLocalInfileWithUrl");
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -873,6 +881,7 @@ public class ConnectionTest extends BaseTestCase {
 			assertFalse(loadConn.createStatement().executeQuery("SELECT * FROM testLocalInfileDisabled").next());
 		} finally {
 			loadConn.close();
+			closeMemberJDBCResources();
 		}
 	}
 	
@@ -901,6 +910,7 @@ public class ConnectionTest extends BaseTestCase {
 							"SHOW COLLATION") == -1);
 
 		}
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -935,6 +945,7 @@ public class ConnectionTest extends BaseTestCase {
 				&& logAsString.indexOf("SHOW VARIABLES LIKE 'tx_isolation'") == -1
 				&& logAsString.indexOf("SET autocommit=") == -1);
 
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -1006,6 +1017,7 @@ public class ConnectionTest extends BaseTestCase {
 				if (failoverConnection != null) {
 					failoverConnection.close();
 				}
+				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -1050,6 +1062,7 @@ public class ConnectionTest extends BaseTestCase {
 					.toString(), "SET NAMES utf8") == -1);
 		} finally {
 			StandardLogger.bufferedLog = null;
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1097,6 +1110,7 @@ public class ConnectionTest extends BaseTestCase {
 			if (noTrackConn != null && !noTrackConn.isClosed()) {
 				noTrackConn.close();
 			}
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -1120,6 +1134,7 @@ public class ConnectionTest extends BaseTestCase {
 		props.setProperty("autoReconnect", "true");
 
 		getConnectionWithProps(props);
+		closeMemberJDBCResources();
 	}
 
 	public void testSessionVariables() throws Exception {
@@ -1136,6 +1151,7 @@ public class ConnectionTest extends BaseTestCase {
 
 		assertTrue(!getInitialWaitTimeout.equals(getMysqlVariable(varConn,
 				"wait_timeout")));
+		closeMemberJDBCResources();
 	}
 
 	/**
@@ -1149,6 +1165,7 @@ public class ConnectionTest extends BaseTestCase {
 		stmt.executeQuery("SELECT 1");
 		((com.mysql.jdbc.Connection) this.conn).setProfileSql(true);
 		stmt.executeQuery("SELECT 1");
+		closeMemberJDBCResources();
 	}
 
 	public void testCreateDatabaseIfNotExist() throws Exception {
@@ -1161,6 +1178,7 @@ public class ConnectionTest extends BaseTestCase {
 			Connection newConn = getAdminConnectionWithProps(props);
 			newConn.createStatement().executeUpdate(
 					"DROP DATABASE testcreatedatabaseifnotexists");
+			closeMemberJDBCResources();
 		}
 	}
     
@@ -1190,6 +1208,7 @@ public class ConnectionTest extends BaseTestCase {
                 e.printStackTrace();
                 fail();
             }
+    		closeMemberJDBCResources();
         }
     }
 
@@ -1199,16 +1218,77 @@ public class ConnectionTest extends BaseTestCase {
      * @throws Exception if the test fails
      */
     public void testUseCompress() throws Exception {
-        Properties props = new Properties();
+    	
+//		  Original test    	
+//        Properties props = new Properties();
+//        props.put("useCompression", "true");
+//        props.put("traceProtocol", "true");
+//        Connection conn1 = getConnectionWithProps(props);
+//        Statement stmt1 = conn1.createStatement();
+//        ResultSet rs1 = stmt1.executeQuery("SELECT VERSION()");
+//        rs1.next();
+//        rs1.getString(1);
+//        stmt1.close();
+//        conn1.close();
+    	
+    	File testBlobFile = null;
+    	int requiredSize = 0;
+    	
+    	Properties props = new Properties();
         props.put("useCompression", "true");
-        props.put("traceProtocol", "true");
         Connection conn1 = getConnectionWithProps(props);
+        
         Statement stmt1 = conn1.createStatement();
-        ResultSet rs1 = stmt1.executeQuery("SELECT VERSION()");
-        rs1.next();
-        rs1.getString(1);
-        stmt1.close();
-        conn1.close();
+        //Get real value
+        this.rs = stmt1.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
+		this.rs.next();
+		//Create smaller than maximum allowed BLOB for testing
+		requiredSize = this.rs.getInt(2) / 8;
+		System.out.println("Required size: " + requiredSize);
+		this.rs.close();
+		
+		//http://dev.mysql.com/doc/refman/5.1/en/server-system-variables.html#sysvar_max_allowed_packet
+		// setting GLOBAL variable during test is not ok
+		// The protocol limit for max_allowed_packet is 1GB.
+		if (testBlobFile == null || testBlobFile.length() != requiredSize) {
+			if (testBlobFile != null && testBlobFile.length() != requiredSize) {
+				testBlobFile.delete();
+			}
+
+			testBlobFile = File.createTempFile("cmj-testblob", ".dat");
+			testBlobFile.deleteOnExit();
+			
+			cleanupTempFiles(testBlobFile, "cmj-testblob");
+
+			BufferedOutputStream bOut = new BufferedOutputStream(
+					new FileOutputStream(testBlobFile));
+
+			int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
+
+			for (int i = 0; i < requiredSize; i++) {
+				bOut.write((byte) ((Math.random() * dataRange) + Byte.MIN_VALUE));
+			}
+
+			bOut.flush();
+			bOut.close();
+		}
+		
+        
+        createTable("BLOBTEST", "(pos int PRIMARY KEY auto_increment, blobdata LONGBLOB)");
+        BufferedInputStream bIn = new BufferedInputStream(new FileInputStream(testBlobFile));
+        
+        this.pstmt = conn1.prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)");
+		this.pstmt.setBinaryStream(1, bIn, (int) testBlobFile.length());
+		this.pstmt.execute();
+		this.pstmt.clearParameters();
+        
+		this.rs = stmt1.executeQuery("SELECT blobdata from BLOBTEST LIMIT 1");
+		this.rs.next();
+		
+		if (bIn != null) {
+			bIn.close();
+		}
+		closeMemberJDBCResources();
     }
     
     /**
@@ -1309,6 +1389,7 @@ public class ConnectionTest extends BaseTestCase {
     			assertTrue("At least one connection didn't fail with localSocketAddress set", didOneFail);
     		}
     	}
+		closeMemberJDBCResources();
     }
     
     class SpawnedWorkerCounter {
@@ -1384,6 +1465,7 @@ public class ConnectionTest extends BaseTestCase {
     		if (uaConn != null) {
     			uaConn.close();
     		}
+    		closeMemberJDBCResources();
     	}
     }
     
@@ -1459,6 +1541,7 @@ public class ConnectionTest extends BaseTestCase {
     	}
     	
     	assertEquals(1, commitCount);
+		closeMemberJDBCResources();
     }
     
     /**
@@ -1491,6 +1574,7 @@ public class ConnectionTest extends BaseTestCase {
     		if (fetchConn != null) {
     			fetchConn.close();
     		}
+    		closeMemberJDBCResources();
     	}
     }
     
@@ -1499,6 +1583,7 @@ public class ConnectionTest extends BaseTestCase {
     	MysqlConnectionPoolDataSource cpds = new MysqlConnectionPoolDataSource();
     	cpds.setUrl(dbUrl);
     	testInterfaceImplementation(cpds.getPooledConnection().getConnection());
+		closeMemberJDBCResources();
     }
     
     private void testInterfaceImplementation(Connection connToCheck) throws Exception {
@@ -1536,6 +1621,7 @@ public class ConnectionTest extends BaseTestCase {
     		checkInterfaceImplemented(java.sql.CallableStatement.class.getMethods(), cstmt.getClass(), cstmt);
     	}
     	checkInterfaceImplemented(java.sql.Connection.class.getMethods(), connToCheck.getClass(), connToCheck);
+		closeMemberJDBCResources();
     }
 
 	private void checkInterfaceImplemented(Method[] interfaceMethods,
@@ -1565,6 +1651,7 @@ public class ConnectionTest extends BaseTestCase {
 	
 	public void testNonVerifyServerCert() throws Exception {
 		getConnectionWithProps("useSSL=true,verifyServerCertificate=false,requireSSL=true");
+		closeMemberJDBCResources();
 	}
 	
 	public void testSelfDestruct() throws Exception {
@@ -1617,7 +1704,7 @@ public class ConnectionTest extends BaseTestCase {
 		if (!failed) {
 			fail("Connection should've self-destructed");
 		}
-		
+		closeMemberJDBCResources();
 	}
 	
 	public void testLifecyleInterceptor() throws Exception {
@@ -1642,6 +1729,7 @@ public class ConnectionTest extends BaseTestCase {
 				liConn.createStatement().executeUpdate("DROP TABLE IF EXISTS testLifecycleFoo");
 				liConn.close();
 			}
+			closeMemberJDBCResources();
 		}
 		
 	}
@@ -1662,6 +1750,7 @@ public class ConnectionTest extends BaseTestCase {
 		} catch (SQLException sqlEx) {
 			throw new RuntimeException("Failed to connect with URL " + newUrl, sqlEx);
 		}
+		closeMemberJDBCResources();
 	}
 	
 	public void testCompression() throws Exception {
@@ -1679,5 +1768,6 @@ public class ConnectionTest extends BaseTestCase {
 				fail();
 			}
 		}
+		closeMemberJDBCResources();
 	}
 }

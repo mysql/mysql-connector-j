@@ -181,7 +181,9 @@ public class DataSourceTest extends BaseTestCase {
 			this.rs = connToMySQL.createStatement().executeQuery(
 					"SHOW SESSION VARIABLES LIKE 'character_set_client'");
 			assertTrue(this.rs.next());
-			assertEquals("utf8", this.rs.getString(2));
+			
+			//Cause of utf8mb4
+			assertEquals(0, this.rs.getString(2).indexOf("utf8"));
 
 			connToMySQL.close();
 
@@ -194,9 +196,12 @@ public class DataSourceTest extends BaseTestCase {
 			this.rs = connToMySQL.createStatement().executeQuery(
 					"SHOW SESSION VARIABLES LIKE 'character_set_client'");
 			assertTrue(this.rs.next());
-			assertEquals("utf8", this.rs.getString(2));
+
+			//Cause of utf8mb4
+			assertEquals(0, this.rs.getString(2).indexOf("utf8"));
 
 			pooledConnection.getConnection().close();
+			closeMemberJDBCResources();
 		}
 	}
 
@@ -242,5 +247,6 @@ public class DataSourceTest extends BaseTestCase {
 		ds = new com.mysql.jdbc.jdbc2.optional.MysqlDataSource();
 		ds.setUrl(dbUrl); // from BaseTestCase
 		this.ctx.bind("_test", ds);
+		closeMemberJDBCResources();
 	}
 }
