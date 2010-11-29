@@ -100,10 +100,13 @@ public class DataSourceTest extends BaseTestCase {
 	 *             if an error occurs
 	 */
 	public void tearDown() throws Exception {
-		this.ctx.unbind(this.tempDir.getAbsolutePath() + "/test");
-		this.ctx.close();
-		this.tempDir.delete();
-		super.tearDown();
+		try {
+			this.ctx.unbind(this.tempDir.getAbsolutePath() + "/test");
+			this.ctx.close();
+			this.tempDir.delete();
+		} finally {
+			super.tearDown();
+		}
 	}
 
 	/**
@@ -201,7 +204,6 @@ public class DataSourceTest extends BaseTestCase {
 			assertEquals(0, this.rs.getString(2).indexOf("utf8"));
 
 			pooledConnection.getConnection().close();
-			closeMemberJDBCResources();
 		}
 	}
 
@@ -247,6 +249,5 @@ public class DataSourceTest extends BaseTestCase {
 		ds = new com.mysql.jdbc.jdbc2.optional.MysqlDataSource();
 		ds.setUrl(dbUrl); // from BaseTestCase
 		this.ctx.bind("_test", ds);
-		closeMemberJDBCResources();
 	}
 }

@@ -177,8 +177,9 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 	/**
 	 * After the test is run.
 	 */
-	public void tearDown() {
+	public void tearDown() throws Exception {
 		this.cpds = null;
+		super.tearDown();
 	}
 
 	/**
@@ -306,43 +307,39 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 
 		pc.addConnectionEventListener(conListener);
 
+		createTable("testPacketTooLarge", "(field1 LONGBLOB)");
+
+		Connection connFromPool = pc.getConnection();
+		PreparedStatement pstmtFromPool = ((ConnectionWrapper) connFromPool)
+				.clientPrepare("INSERT INTO testPacketTooLarge VALUES (?)");
+
+		this.rs = this.stmt
+				.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
+		this.rs.next();
+
+		int maxAllowedPacket = this.rs.getInt(2);
+
+		int numChars = (int) (maxAllowedPacket * 1.2);
+
+		pstmtFromPool.setBinaryStream(
+				1,
+				new BufferedInputStream(new FileInputStream(newTempBinaryFile(
+						"testPacketTooLargeException", numChars))), numChars);
+
 		try {
-			createTable("testPacketTooLarge", "(field1 LONGBLOB)");
-
-			Connection connFromPool = pc.getConnection();
-			PreparedStatement pstmtFromPool = ((ConnectionWrapper) connFromPool)
-					.clientPrepare("INSERT INTO testPacketTooLarge VALUES (?)");
-
-			this.rs = this.stmt
-					.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
-			this.rs.next();
-
-			int maxAllowedPacket = this.rs.getInt(2);
-
-			int numChars = (int) (maxAllowedPacket * 1.2);
-
-			pstmtFromPool.setBinaryStream(1, new BufferedInputStream(
-					new FileInputStream(newTempBinaryFile(
-							"testPacketTooLargeException", numChars))),
-					numChars);
-
-			try {
-				pstmtFromPool.executeUpdate();
-				fail("Expecting PacketTooLargeException");
-			} catch (PacketTooBigException ptbe) {
-				// We're expecting this one...
-			}
-
-			// This should still work okay, even though the last query on the
-			// same
-			// connection didn't...
-			connFromPool.createStatement().executeQuery("SELECT 1");
-
-			assertTrue(this.connectionErrorEventCount == 0);
-			assertTrue(this.closeEventCount == 0);
-		} finally {
-			closeMemberJDBCResources();
+			pstmtFromPool.executeUpdate();
+			fail("Expecting PacketTooLargeException");
+		} catch (PacketTooBigException ptbe) {
+			// We're expecting this one...
 		}
+
+		// This should still work okay, even though the last query on the
+		// same
+		// connection didn't...
+		connFromPool.createStatement().executeQuery("SELECT 1");
+
+		assertTrue(this.connectionErrorEventCount == 0);
+		assertTrue(this.closeEventCount == 0);
 	}
 
 	/**
@@ -408,35 +405,35 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 			System.out.println("Connection error: " + event.getSQLException());
 		}
 	}
-	
+
 	/**
-	 * Tests fix for BUG#35489 - Prepared statements from pooled connections cause NPE
-	 * when closed() under JDBC4
+	 * Tests fix for BUG#35489 - Prepared statements from pooled connections
+	 * cause NPE when closed() under JDBC4
 	 * 
-	 * @throws Exception if the test fails
+	 * @throws Exception
+	 *             if the test fails
 	 */
 	public void testBug35489() throws Exception {
-		try {
-			MysqlConnectionPoolDataSource pds = new MysqlConnectionPoolDataSource();
-			pds.setUrl(dbUrl);
-			this.pstmt = pds.getPooledConnection().getConnection().prepareStatement("SELECT 1");
-			this.pstmt.execute();
-			this.pstmt.close();
-			
-			MysqlXADataSource xads = new MysqlXADataSource();
-			xads.setUrl(dbUrl);
-			this.pstmt = xads.getXAConnection().getConnection().prepareStatement("SELECT 1");
-			this.pstmt.execute();
-			this.pstmt.close();
-			
-			xads = new MysqlXADataSource();
-			xads.setUrl(dbUrl);
-			xads.setPinGlobalTxToPhysicalConnection(true);
-			this.pstmt = xads.getXAConnection().getConnection().prepareStatement("SELECT 1");
-			this.pstmt.execute();
-			this.pstmt.close();
-		} finally {
-			closeMemberJDBCResources();
-		}
+		MysqlConnectionPoolDataSource pds = new MysqlConnectionPoolDataSource();
+		pds.setUrl(dbUrl);
+		this.pstmt = pds.getPooledConnection().getConnection()
+				.prepareStatement("SELECT 1");
+		this.pstmt.execute();
+		this.pstmt.close();
+
+		MysqlXADataSource xads = new MysqlXADataSource();
+		xads.setUrl(dbUrl);
+		this.pstmt = xads.getXAConnection().getConnection()
+				.prepareStatement("SELECT 1");
+		this.pstmt.execute();
+		this.pstmt.close();
+
+		xads = new MysqlXADataSource();
+		xads.setUrl(dbUrl);
+		xads.setPinGlobalTxToPhysicalConnection(true);
+		this.pstmt = xads.getXAConnection().getConnection()
+				.prepareStatement("SELECT 1");
+		this.pstmt.execute();
+		this.pstmt.close();
 	}
 }

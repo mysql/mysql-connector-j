@@ -643,30 +643,6 @@ public abstract class BaseTestCase extends TestCase {
 		}
 	}
 
-	protected void closeMemberJDBCResources() {
-		if (this.rs != null) {
-			ResultSet toClose = this.rs;
-			this.rs = null;
-
-			try {
-				toClose.close();
-			} catch (SQLException sqlEx) {
-				// ignore
-			}
-		}
-
-		if (this.pstmt != null) {
-			PreparedStatement toClose = this.pstmt;
-			this.pstmt = null;
-
-			try {
-				toClose.close();
-			} catch (SQLException sqlEx) {
-				// ignore
-			}
-		}
-	}
-
 	protected boolean isRunningOnJRockit() {
 		String vmVendor = System.getProperty("java.vm.vendor");
 

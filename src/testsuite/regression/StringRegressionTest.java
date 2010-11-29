@@ -93,8 +93,8 @@ public class StringRegressionTest extends BaseTestCase {
 			System.out.println((byte) convertedString.charAt(i));
 		}
 
-		assertTrue("Converted string != test string", testString
-				.equals(convertedString));
+		assertTrue("Converted string != test string",
+				testString.equals(convertedString));
 	}
 
 	/**
@@ -132,8 +132,8 @@ public class StringRegressionTest extends BaseTestCase {
 					assertTrue(this.rs.next());
 
 					String stringFromDb = this.rs.getString(1);
-					assertTrue("Retrieved string != sent string", origString
-							.equals(stringFromDb));
+					assertTrue("Retrieved string != sent string",
+							origString.equals(stringFromDb));
 				} finally {
 					unicodeStmt
 							.executeUpdate("DROP TABLE IF EXISTS testBug4010");
@@ -149,7 +149,6 @@ public class StringRegressionTest extends BaseTestCase {
 			System.err
 					.println("WARN: Test not valid for MySQL version > 4.1.0, skipping");
 		}
-		closeMemberJDBCResources();
 	}
 
 	/**
@@ -164,7 +163,6 @@ public class StringRegressionTest extends BaseTestCase {
 		props.put("characterEncoding", "UTF-8");
 		props.put("useUnicode", "true");
 		DriverManager.getConnection(dbUrl, props).close();
-		closeMemberJDBCResources();
 	}
 
 	/**
@@ -214,10 +212,8 @@ public class StringRegressionTest extends BaseTestCase {
 			Statement sjisStmt = sjisConn.createStatement();
 
 			try {
-				sjisStmt
-						.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
-				sjisStmt
-						.executeUpdate("CREATE TABLE doubleEscapeSJISTest (field1 BLOB)");
+				sjisStmt.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
+				sjisStmt.executeUpdate("CREATE TABLE doubleEscapeSJISTest (field1 BLOB)");
 
 				PreparedStatement sjisPStmt = sjisConn
 						.prepareStatement("INSERT INTO doubleEscapeSJISTest VALUES (?)");
@@ -233,11 +229,9 @@ public class StringRegressionTest extends BaseTestCase {
 
 				System.out.println(retrString.equals(testString));
 			} finally {
-				sjisStmt
-						.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
+				sjisStmt.executeUpdate("DROP TABLE IF EXISTS doubleEscapeSJISTest");
 			}
 		}
-		closeMemberJDBCResources();
 	}
 
 	/**
@@ -256,9 +250,11 @@ public class StringRegressionTest extends BaseTestCase {
 
 			Statement utfStmt = utf8Conn.createStatement();
 
-			createTable("greekunicode", "(ID INTEGER NOT NULL "
+			createTable(
+					"greekunicode",
+					"(ID INTEGER NOT NULL "
 							+ " AUTO_INCREMENT,UpperCase VARCHAR (30),LowerCase VARCHAR (30),Accented "
-							+ " VARCHAR (30),Special VARCHAR (30),PRIMARY KEY(ID)) " 
+							+ " VARCHAR (30),Special VARCHAR (30),PRIMARY KEY(ID)) "
 							+ "DEFAULT CHARACTER SET utf8", "InnoDB");
 
 			String upper = "\u0394\u930F\u039A\u0399\u039C\u0397";
@@ -266,9 +262,9 @@ public class StringRegressionTest extends BaseTestCase {
 			String accented = "\u03B4\u03CC\u03BA\u03AF\u03BC\u03AE";
 			String special = "\u037E\u03C2\u03B0";
 
-			utfStmt.executeUpdate("INSERT INTO greekunicode VALUES "
-					+ "('1','" + upper + "','" + lower + "','" + accented
-					+ "','" + special + "')");
+			utfStmt.executeUpdate("INSERT INTO greekunicode VALUES " + "('1','"
+					+ upper + "','" + lower + "','" + accented + "','"
+					+ special + "')");
 
 			this.rs = utfStmt
 					.executeQuery("SELECT UpperCase, LowerCase, Accented, Special from greekunicode");
@@ -279,8 +275,6 @@ public class StringRegressionTest extends BaseTestCase {
 			assertTrue(lower.equals(this.rs.getString(2)));
 			assertTrue(accented.equals(this.rs.getString(3)));
 			assertTrue(special.equals(this.rs.getString(4)));
-			
-			closeMemberJDBCResources();
 		}
 	}
 
@@ -382,8 +376,6 @@ public class StringRegressionTest extends BaseTestCase {
 					// ignore
 				}
 			}
-
-			closeMemberJDBCResources();
 		}
 	}
 
@@ -398,23 +390,19 @@ public class StringRegressionTest extends BaseTestCase {
 
 		createTable("newlineRegressTest", "(field1 MEDIUMTEXT)");
 
-		try {
-			this.stmt.executeUpdate("INSERT INTO newlineRegressTest VALUES ('"
-					+ newlineStr + "')");
-			this.pstmt = this.conn
-					.prepareStatement("INSERT INTO newlineRegressTest VALUES (?)");
-			this.pstmt.setString(1, newlineStr);
-			this.pstmt.executeUpdate();
+		this.stmt.executeUpdate("INSERT INTO newlineRegressTest VALUES ('"
+				+ newlineStr + "')");
+		this.pstmt = this.conn
+				.prepareStatement("INSERT INTO newlineRegressTest VALUES (?)");
+		this.pstmt.setString(1, newlineStr);
+		this.pstmt.executeUpdate();
 
-			this.rs = this.stmt
-					.executeQuery("SELECT * FROM newlineRegressTest");
+		this.rs = this.stmt.executeQuery("SELECT * FROM newlineRegressTest");
 
-			while (this.rs.next()) {
-				assertTrue(this.rs.getString(1).equals(newlineStr));
-			}
-		} finally {
-			closeMemberJDBCResources();
+		while (this.rs.next()) {
+			assertTrue(this.rs.getString(1).equals(newlineStr));
 		}
+
 	}
 
 	/**
@@ -429,8 +417,7 @@ public class StringRegressionTest extends BaseTestCase {
 	 * public void testSingleByteConversion() throws Exception {
 	 * testConversionForString("latin1", "��� ����");
 	 * testConversionForString("latin1", "Kaarle ��nis Ilmari");
-	 * testConversionForString("latin1",
-	 * "������������������"); }
+	 * testConversionForString("latin1", "������������������"); }
 	 */
 
 	/**
@@ -496,11 +483,9 @@ public class StringRegressionTest extends BaseTestCase {
 			sjisStmt.executeUpdate("DROP TABLE IF EXISTS sjisTest");
 
 			if (versionMeetsMinimum(4, 1)) {
-				sjisStmt
-						.executeUpdate("CREATE TABLE sjisTest (field1 char(50)) DEFAULT CHARACTER SET SJIS");
+				sjisStmt.executeUpdate("CREATE TABLE sjisTest (field1 char(50)) DEFAULT CHARACTER SET SJIS");
 			} else {
-				sjisStmt
-						.executeUpdate("CREATE TABLE sjisTest (field1 char(50))");
+				sjisStmt.executeUpdate("CREATE TABLE sjisTest (field1 char(50))");
 			}
 
 			this.pstmt = sjisConn
@@ -530,7 +515,6 @@ public class StringRegressionTest extends BaseTestCase {
 			}
 		} finally {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS sjisTest");
-			closeMemberJDBCResources();
 		}
 	}
 
@@ -548,7 +532,6 @@ public class StringRegressionTest extends BaseTestCase {
 
 		Connection utfConn = DriverManager.getConnection(dbUrl, props);
 		testConversionForString("UTF8", utfConn, "\u043c\u0438\u0445\u0438");
-		closeMemberJDBCResources();
 	}
 
 	/**
@@ -572,8 +555,7 @@ public class StringRegressionTest extends BaseTestCase {
 
 		try {
 			utfStmt.executeUpdate("DROP TABLE IF EXISTS testUtf8");
-			utfStmt
-					.executeUpdate("CREATE TABLE testUtf8 (field1 varchar(32), field2 varchar(32)) CHARACTER SET UTF8");
+			utfStmt.executeUpdate("CREATE TABLE testUtf8 (field1 varchar(32), field2 varchar(32)) CHARACTER SET UTF8");
 			utfStmt.executeUpdate("INSERT INTO testUtf8 VALUES ('" + field1
 					+ "','" + field2 + "')");
 
@@ -606,7 +588,6 @@ public class StringRegressionTest extends BaseTestCase {
 			assertTrue(bytesAreSame(field2AsBytes, rs.getBytes(2)));
 		} finally {
 			utfStmt.executeUpdate("DROP TABLE IF EXISTS testUtf8");
-			closeMemberJDBCResources();
 		}
 	}
 
@@ -628,38 +609,34 @@ public class StringRegressionTest extends BaseTestCase {
 			Connection convConn, String charsToTest) throws Exception {
 		PreparedStatement pStmt = null;
 
-		try {
-			this.stmt = convConn.createStatement();
-			createTable("charConvTest", "(field1 varchar(255))");
-			this.stmt.executeUpdate("INSERT INTO charConvTest VALUES ('"
-					+ charsToTest + "')");
+		this.stmt = convConn.createStatement();
+		createTable("charConvTest", "(field1 varchar(255))");
+		this.stmt.executeUpdate("INSERT INTO charConvTest VALUES ('"
+				+ charsToTest + "')");
 
-			if (!versionMeetsMinimum(4, 1)) {
-				createTable("CREATE TABLE charConvTest_"
-						+ charsetName, "(field1 CHAR(50))");
-			} else {
-				createTable("charConvTest_"
-						+ charsetName, "(field1 CHAR(50) CHARACTER SET "
-						+ charsetName + ")");
-			}
-
-			this.stmt.executeUpdate("INSERT INTO charConvTest_" + charsetName
-					+ " VALUES ('" + charsToTest + "')");
-			pStmt = convConn.prepareStatement("INSERT INTO charConvTest_"
-					+ charsetName + " VALUES (?)");
-			pStmt.setString(1, charsToTest);
-			pStmt.executeUpdate();
-			this.rs = this.stmt.executeQuery("SELECT * FROM charConvTest_"
-					+ charsetName);
-
-			assertTrue(this.rs.next());
-
-			String testValue = this.rs.getString(1);
-			System.out.println(testValue);
-			assertTrue(testValue.equals(charsToTest));
-		} finally {
-			closeMemberJDBCResources();
+		if (!versionMeetsMinimum(4, 1)) {
+			createTable("CREATE TABLE charConvTest_" + charsetName,
+					"(field1 CHAR(50))");
+		} else {
+			createTable("charConvTest_" + charsetName,
+					"(field1 CHAR(50) CHARACTER SET " + charsetName + ")");
 		}
+
+		this.stmt.executeUpdate("INSERT INTO charConvTest_" + charsetName
+				+ " VALUES ('" + charsToTest + "')");
+		pStmt = convConn.prepareStatement("INSERT INTO charConvTest_"
+				+ charsetName + " VALUES (?)");
+		pStmt.setString(1, charsToTest);
+		pStmt.executeUpdate();
+		this.rs = this.stmt.executeQuery("SELECT * FROM charConvTest_"
+				+ charsetName);
+
+		assertTrue(this.rs.next());
+
+		String testValue = this.rs.getString(1);
+		System.out.println(testValue);
+		assertTrue(testValue.equals(charsToTest));
+
 	}
 
 	private void testConversionForString(String charsetName, String charsToTest)
@@ -741,8 +718,7 @@ public class StringRegressionTest extends BaseTestCase {
 			try {
 				utf8Conn = getConnectionWithProps(props);
 
-				utf8Conn
-						.createStatement()
+				utf8Conn.createStatement()
 						.executeUpdate(
 								"INSERT INTO testBug11614  (`id`,`text`) values (1,'')");
 				this.rs = utf8Conn.createStatement().executeQuery(
@@ -773,21 +749,10 @@ public class StringRegressionTest extends BaseTestCase {
 						1, "SELECT `text` FROM testBug11614").toString();
 				assertEquals(valueToTest, fromDatabase);
 			} finally {
-				if (this.rs != null) {
-					this.rs.close();
-					this.rs = null;
-				}
-
-				if (this.pstmt != null) {
-					this.pstmt.close();
-
-					this.pstmt = null;
-				}
-
 				if (utf8Conn != null) {
 					utf8Conn.close();
 				}
-				closeMemberJDBCResources();
+
 			}
 		}
 	}
@@ -796,7 +761,8 @@ public class StringRegressionTest extends BaseTestCase {
 		if (versionMeetsMinimum(4, 1, 0)) {
 			/*
 			 * from
-			 * ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP1252.TXT
+			 * ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/
+			 * CP1252.TXT
 			 * 
 			 * 0x80 0x20AC #EURO SIGN 0x81 #UNDEFINED 0x82 0x201A #SINGLE LOW-9
 			 * QUOTATION MARK 0x83 0x0192 #LATIN SMALL LETTER F WITH HOOK 0x84
@@ -827,90 +793,103 @@ public class StringRegressionTest extends BaseTestCase {
 					"SELECT field1 FROM testCp1252");
 			this.rs.next();
 			assertEquals(this.rs.getString(1), codePage1252);
-			closeMemberJDBCResources();
 		}
 	}
 
 	/**
-	 * Tests fix for BUG#23645 - Some collations/character sets reported as "unknown"
-	 * (specifically cias variants of existing character sets), and inability to override
-	 * the detected server character set.
+	 * Tests fix for BUG#23645 - Some collations/character sets reported as
+	 * "unknown" (specifically cias variants of existing character sets), and
+	 * inability to override the detected server character set.
 	 * 
-	 * @throws Exception if the test fails.
+	 * @throws Exception
+	 *             if the test fails.
 	 */
 	public void testBug23645() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
-			// Part of this isn't easily testable, hence the assertion in CharsetMapping
+			// Part of this isn't easily testable, hence the assertion in
+			// CharsetMapping
 			// that checks for mappings existing in both directions...
-			
-			// What we test here is the ability to override the character mapping
+
+			// What we test here is the ability to override the character
+			// mapping
 			// when the server returns an "unknown" character encoding.
-			
-			String currentlyConfiguredCharacterSet = getSingleIndexedValueWithQuery(2, "SHOW VARIABLES LIKE 'character_set_connection'").toString();
+
+			String currentlyConfiguredCharacterSet = getSingleIndexedValueWithQuery(
+					2, "SHOW VARIABLES LIKE 'character_set_connection'")
+					.toString();
 			System.out.println(currentlyConfiguredCharacterSet);
-			
-			String javaNameForMysqlName = CharsetMapping.getJavaEncodingForMysqlEncoding(currentlyConfiguredCharacterSet, null);
+
+			String javaNameForMysqlName = CharsetMapping
+					.getJavaEncodingForMysqlEncoding(
+							currentlyConfiguredCharacterSet, null);
 			System.out.println(javaNameForMysqlName);
-			
+
 			for (int i = 1; i < CharsetMapping.INDEX_TO_CHARSET.length; i++) {
 				String possibleCharset = CharsetMapping.INDEX_TO_CHARSET[i];
-				
+
 				if (!javaNameForMysqlName.equals(possibleCharset)) {
 					System.out.println(possibleCharset);
-					
+
 					Properties props = new Properties();
 					props.setProperty("characterEncoding", possibleCharset);
-					props.setProperty("com.mysql.jdbc.faultInjection.serverCharsetIndex", "65535");
-					
+					props.setProperty(
+							"com.mysql.jdbc.faultInjection.serverCharsetIndex",
+							"65535");
+
 					Connection forcedCharConn = null;
-					
+
 					forcedCharConn = getConnectionWithProps(props);
-					
-					String forcedCharset = getSingleIndexedValueWithQuery(forcedCharConn, 2, "SHOW VARIABLES LIKE 'character_set_connection'").toString();
-					
+
+					String forcedCharset = getSingleIndexedValueWithQuery(
+							forcedCharConn, 2,
+							"SHOW VARIABLES LIKE 'character_set_connection'")
+							.toString();
+
 					System.out.println(forcedCharset);
-					
+
 					break;
 				}
 			}
-			
+
 		}
 	}
-	
+
 	/**
-	 * Tests fix for BUG#24840 - character encoding of "US-ASCII"
-	 * doesn't map correctly for 4.1 or newer
+	 * Tests fix for BUG#24840 - character encoding of "US-ASCII" doesn't map
+	 * correctly for 4.1 or newer
 	 * 
-	 * @throws Exception if the test fails.
+	 * @throws Exception
+	 *             if the test fails.
 	 */
 	public void testBug24840() throws Exception {
 		Properties props = new Properties();
 		props.setProperty("characterEncoding", "US-ASCII");
-		
+
 		getConnectionWithProps(props).close();
-		closeMemberJDBCResources();
 	}
 
 	/**
-	 * Tests fix for BUG#25047 - StringUtils.indexOfIgnoreCaseRespectQuotes() isn't
-	 * case-insensitive on the first character of the target.
+	 * Tests fix for BUG#25047 - StringUtils.indexOfIgnoreCaseRespectQuotes()
+	 * isn't case-insensitive on the first character of the target.
 	 * 
-	 * @throws Exception if the test fails.
+	 * @throws Exception
+	 *             if the test fails.
 	 */
 	public void testBug25047() throws Exception {
-		assertEquals(26, StringUtils.indexOfIgnoreCaseRespectQuotes(0, "insert into Test (TestID) values (?)",
-				"VALUES", '`', false));
-		assertEquals(26, StringUtils.indexOfIgnoreCaseRespectQuotes(0, "insert into Test (TestID) VALUES (?)",
-				"values", '`', false));
-		
-		assertEquals(StringUtils.indexOfIgnoreCaseRespectQuotes(0, 
-				"insert into Test (TestID) values (?)", "VALUES",'`', false),
-				StringUtils.indexOfIgnoreCaseRespectQuotes(0, 
-						"insert into Test (TestID) VALUES (?)",  "VALUES",'`', false));
-		assertEquals(StringUtils.indexOfIgnoreCaseRespectQuotes(0,  
+		assertEquals(26, StringUtils.indexOfIgnoreCaseRespectQuotes(0,
+				"insert into Test (TestID) values (?)", "VALUES", '`', false));
+		assertEquals(26, StringUtils.indexOfIgnoreCaseRespectQuotes(0,
+				"insert into Test (TestID) VALUES (?)", "values", '`', false));
+
+		assertEquals(StringUtils.indexOfIgnoreCaseRespectQuotes(0,
+				"insert into Test (TestID) values (?)", "VALUES", '`', false),
+				StringUtils.indexOfIgnoreCaseRespectQuotes(0,
+						"insert into Test (TestID) VALUES (?)", "VALUES", '`',
+						false));
+		assertEquals(StringUtils.indexOfIgnoreCaseRespectQuotes(0,
 				"insert into Test (TestID) values (?)", "values", '`', false),
-				StringUtils.indexOfIgnoreCaseRespectQuotes(0, 
-						"insert into Test (TestID) VALUES (?)", "values", '`', false));
-		closeMemberJDBCResources();
+				StringUtils.indexOfIgnoreCaseRespectQuotes(0,
+						"insert into Test (TestID) VALUES (?)", "values", '`',
+						false));
 	}
 }

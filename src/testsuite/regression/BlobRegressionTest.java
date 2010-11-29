@@ -74,81 +74,77 @@ public class BlobRegressionTest extends BaseTestCase {
 	 */
 	public void testBug2670() throws Exception {
 		if (!isRunningOnJdk131()) {
-			try {
-				byte[] blobData = new byte[32];
 
-				for (int i = 0; i < blobData.length; i++) {
-					blobData[i] = 1;
-				}
+			byte[] blobData = new byte[32];
 
-				createTable("testBug2670", "(blobField LONGBLOB)");
-
-				PreparedStatement pStmt = this.conn
-						.prepareStatement("INSERT INTO testBug2670 (blobField) VALUES (?)");
-				pStmt.setBytes(1, blobData);
-				pStmt.executeUpdate();
-
-				this.rs = this.stmt
-						.executeQuery("SELECT blobField FROM testBug2670");
-				this.rs.next();
-
-				Blob blob = this.rs.getBlob(1);
-
-				//
-				// Test mid-point insertion
-				//
-				blob.setBytes(4, new byte[] { 2, 2, 2, 2 });
-
-				byte[] newBlobData = blob.getBytes(1L, (int) blob.length());
-
-				assertTrue("Blob changed length",
-						blob.length() == blobData.length);
-
-				assertTrue(
-						"New data inserted wrongly",
-						((newBlobData[3] == 2) && (newBlobData[4] == 2)
-								&& (newBlobData[5] == 2) && (newBlobData[6] == 2)));
-
-				//
-				// Test end-point insertion
-				//
-				blob.setBytes(32, new byte[] { 2, 2, 2, 2 });
-
-				assertTrue("Blob length should be 3 larger",
-						blob.length() == (blobData.length + 3));
-			} finally {
-				closeMemberJDBCResources();
+			for (int i = 0; i < blobData.length; i++) {
+				blobData[i] = 1;
 			}
+
+			createTable("testBug2670", "(blobField LONGBLOB)");
+
+			PreparedStatement pStmt = this.conn
+					.prepareStatement("INSERT INTO testBug2670 (blobField) VALUES (?)");
+			pStmt.setBytes(1, blobData);
+			pStmt.executeUpdate();
+
+			this.rs = this.stmt
+					.executeQuery("SELECT blobField FROM testBug2670");
+			this.rs.next();
+
+			Blob blob = this.rs.getBlob(1);
+
+			//
+			// Test mid-point insertion
+			//
+			blob.setBytes(4, new byte[] { 2, 2, 2, 2 });
+
+			byte[] newBlobData = blob.getBytes(1L, (int) blob.length());
+
+			assertTrue("Blob changed length", blob.length() == blobData.length);
+
+			assertTrue("New data inserted wrongly",
+					((newBlobData[3] == 2) && (newBlobData[4] == 2)
+							&& (newBlobData[5] == 2) && (newBlobData[6] == 2)));
+
+			//
+			// Test end-point insertion
+			//
+			blob.setBytes(32, new byte[] { 2, 2, 2, 2 });
+
+			assertTrue("Blob length should be 3 larger",
+					blob.length() == (blobData.length + 3));
+
 		}
 	}
 
 	/**
 	 * 
 	 * http://bugs.mysql.com/bug.php?id=22891
+	 * 
 	 * @throws Exception
 	 *             ...
 	 */
 	public void testUpdateLongBlobGT16M() throws Exception {
 		if (versionMeetsMinimum(4, 0)) {
+
+			byte[] blobData = new byte[18 * 1024 * 1024]; // 18M blob
+
+			createTable("testUpdateLongBlob", "(blobField LONGBLOB)");
+			this.stmt
+					.executeUpdate("INSERT INTO testUpdateLongBlob (blobField) VALUES (NULL)");
+
+			this.pstmt = this.conn
+					.prepareStatement("UPDATE testUpdateLongBlob SET blobField=?");
+			this.pstmt.setBytes(1, blobData);
 			try {
-				byte[] blobData = new byte[18 * 1024 * 1024]; // 18M blob
-
-				createTable("testUpdateLongBlob","(blobField LONGBLOB)");
-				this.stmt
-						.executeUpdate("INSERT INTO testUpdateLongBlob (blobField) VALUES (NULL)");
-
-				this.pstmt = this.conn.prepareStatement("UPDATE testUpdateLongBlob SET blobField=?");
-				this.pstmt.setBytes(1, blobData);
-				try {
-					this.pstmt.executeUpdate();
-				} catch (SQLException sqlEx){
-					if (sqlEx.getMessage().indexOf("max_allowed_packet") != -1) {
-						fail("You need to increase max_allowed_packet to at least 18M before running this test!");
-					}					
+				this.pstmt.executeUpdate();
+			} catch (SQLException sqlEx) {
+				if (sqlEx.getMessage().indexOf("max_allowed_packet") != -1) {
+					fail("You need to increase max_allowed_packet to at least 18M before running this test!");
 				}
-			} finally {
-				closeMemberJDBCResources();
 			}
+
 		}
 	}
 
@@ -163,80 +159,73 @@ public class BlobRegressionTest extends BaseTestCase {
 			smallBlob[i] = i;
 		}
 
-		try {
-			createTable("testUpdatableBlobsWithCharsets", "(pk INT NOT NULL PRIMARY KEY, field1 BLOB)");
-			this.pstmt = this.conn
-					.prepareStatement("INSERT INTO testUpdatableBlobsWithCharsets (pk, field1) VALUES (1, ?)");
-			this.pstmt.setBinaryStream(1, new ByteArrayInputStream(smallBlob),
-					smallBlob.length);
-			this.pstmt.executeUpdate();
+		createTable("testUpdatableBlobsWithCharsets",
+				"(pk INT NOT NULL PRIMARY KEY, field1 BLOB)");
+		this.pstmt = this.conn
+				.prepareStatement("INSERT INTO testUpdatableBlobsWithCharsets (pk, field1) VALUES (1, ?)");
+		this.pstmt.setBinaryStream(1, new ByteArrayInputStream(smallBlob),
+				smallBlob.length);
+		this.pstmt.executeUpdate();
 
-			Statement updStmt = this.conn
-					.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
-							ResultSet.CONCUR_UPDATABLE);
+		Statement updStmt = this.conn.createStatement(
+				ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
 
-			this.rs = updStmt
-					.executeQuery("SELECT pk, field1 FROM testUpdatableBlobsWithCharsets");
-			System.out.println(this.rs);
-			this.rs.next();
+		this.rs = updStmt
+				.executeQuery("SELECT pk, field1 FROM testUpdatableBlobsWithCharsets");
+		System.out.println(this.rs);
+		this.rs.next();
 
-			for (byte i = 0; i < smallBlob.length; i++) {
-				smallBlob[i] = (byte) (i + 32);
-			}
-
-			this.rs.updateBinaryStream(2, new ByteArrayInputStream(smallBlob),
-					smallBlob.length);
-			this.rs.updateRow();
-
-			ResultSet newRs = this.stmt
-					.executeQuery("SELECT field1 FROM testUpdatableBlobsWithCharsets");
-
-			newRs.next();
-
-			byte[] updatedBlob = newRs.getBytes(1);
-
-			for (byte i = 0; i < smallBlob.length; i++) {
-				byte origValue = smallBlob[i];
-				byte newValue = updatedBlob[i];
-
-				assertTrue("Original byte at position " + i + ", " + origValue
-						+ " != new value, " + newValue, origValue == newValue);
-			}
-
-		} finally {
-			closeMemberJDBCResources();
+		for (byte i = 0; i < smallBlob.length; i++) {
+			smallBlob[i] = (byte) (i + 32);
 		}
+
+		this.rs.updateBinaryStream(2, new ByteArrayInputStream(smallBlob),
+				smallBlob.length);
+		this.rs.updateRow();
+
+		ResultSet newRs = this.stmt
+				.executeQuery("SELECT field1 FROM testUpdatableBlobsWithCharsets");
+
+		newRs.next();
+
+		byte[] updatedBlob = newRs.getBytes(1);
+
+		for (byte i = 0; i < smallBlob.length; i++) {
+			byte origValue = smallBlob[i];
+			byte newValue = updatedBlob[i];
+
+			assertTrue("Original byte at position " + i + ", " + origValue
+					+ " != new value, " + newValue, origValue == newValue);
+		}
+
 	}
 
 	public void testBug5490() throws Exception {
-		try {
-			createTable("testBug5490", "(pk INT NOT NULL PRIMARY KEY, blobField BLOB)");
-			String sql = "insert into testBug5490 values(?,?)";
 
-			int blobFileSize = 871;
-			File blobFile = newTempBinaryFile("Bug5490", blobFileSize);
+		createTable("testBug5490",
+				"(pk INT NOT NULL PRIMARY KEY, blobField BLOB)");
+		String sql = "insert into testBug5490 values(?,?)";
 
-			this.pstmt = this.conn.prepareStatement(sql,
-					ResultSet.TYPE_SCROLL_INSENSITIVE,
-					ResultSet.CONCUR_READ_ONLY);
-			this.pstmt.setInt(1, 2);
-			FileInputStream fis = new FileInputStream(blobFile);
-			this.pstmt.setBinaryStream(2, fis, blobFileSize);
-			this.pstmt.execute();
-			fis.close();
-			this.pstmt.close();
+		int blobFileSize = 871;
+		File blobFile = newTempBinaryFile("Bug5490", blobFileSize);
 
-			this.rs = this.stmt
-					.executeQuery("SELECT blobField FROM testBug5490");
+		this.pstmt = this.conn.prepareStatement(sql,
+				ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+		this.pstmt.setInt(1, 2);
+		FileInputStream fis = new FileInputStream(blobFile);
+		this.pstmt.setBinaryStream(2, fis, blobFileSize);
+		this.pstmt.execute();
+		fis.close();
+		this.pstmt.close();
 
-			this.rs.next();
+		this.rs = this.stmt.executeQuery("SELECT blobField FROM testBug5490");
 
-			byte[] returned = this.rs.getBytes(1);
+		this.rs.next();
 
-			assertEquals(blobFileSize, returned.length);
-		} finally {
-			closeMemberJDBCResources();
-		}
+		byte[] returned = this.rs.getBytes(1);
+
+		assertEquals(blobFileSize, returned.length);
+
 	}
 
 	/**
@@ -265,54 +254,50 @@ public class BlobRegressionTest extends BaseTestCase {
 				testData[i] = (byte) i;
 			}
 
-			try {
+			createTable("testBug8096",
+					"(ID VARCHAR(10) PRIMARY KEY, DATA LONGBLOB)");
+			this.pstmt = locatorConn.prepareStatement(insert);
+			this.pstmt.setString(1, id);
+			this.pstmt.execute();
 
-				createTable("testBug8096","(ID VARCHAR(10) PRIMARY KEY, DATA LONGBLOB)");
-				this.pstmt = locatorConn.prepareStatement(insert);
-				this.pstmt.setString(1, id);
-				this.pstmt.execute();
+			this.pstmt = locatorConn.prepareStatement(select);
+			this.pstmt.setString(1, id);
 
-				this.pstmt = locatorConn.prepareStatement(select);
-				this.pstmt.setString(1, id);
+			this.rs = this.pstmt.executeQuery();
 
-				this.rs = this.pstmt.executeQuery();
-
-				if (this.rs.next()) {
-					Blob b = rs.getBlob("BLOB_DATA");
-					b.setBytes(1, testData);
-				}
-
-				this.rs.close();
-				this.pstmt.close();
-
-				this.pstmt = locatorConn.prepareStatement(select);
-				this.pstmt.setString(1, id);
-
-				this.rs = this.pstmt.executeQuery();
-
-				byte[] result = null;
-				if (this.rs.next()) {
-					Blob b = this.rs.getBlob("BLOB_DATA");
-
-					result = b.getBytes(1, dataSize - 1);
-				}
-
-				this.rs.close();
-				this.pstmt.close();
-
-				assertNotNull(result);
-
-				for (int i = 0; i < result.length && i < testData.length; i++) {
-					// Will print out all of the values that don't match.
-					// All negative values will instead be replaced with 63.
-					if (result[i] != testData[i]) {
-						assertEquals("At position " + i, testData[i], result[i]);
-					}
-				}
-
-			} finally {
-				closeMemberJDBCResources();
+			if (this.rs.next()) {
+				Blob b = rs.getBlob("BLOB_DATA");
+				b.setBytes(1, testData);
 			}
+
+			this.rs.close();
+			this.pstmt.close();
+
+			this.pstmt = locatorConn.prepareStatement(select);
+			this.pstmt.setString(1, id);
+
+			this.rs = this.pstmt.executeQuery();
+
+			byte[] result = null;
+			if (this.rs.next()) {
+				Blob b = this.rs.getBlob("BLOB_DATA");
+
+				result = b.getBytes(1, dataSize - 1);
+			}
+
+			this.rs.close();
+			this.pstmt.close();
+
+			assertNotNull(result);
+
+			for (int i = 0; i < result.length && i < testData.length; i++) {
+				// Will print out all of the values that don't match.
+				// All negative values will instead be replaced with 63.
+				if (result[i] != testData[i]) {
+					assertEquals("At position " + i, testData[i], result[i]);
+				}
+			}
+
 		}
 	}
 
@@ -324,33 +309,29 @@ public class BlobRegressionTest extends BaseTestCase {
 	 *             if the test fails.
 	 */
 	public void testBug9040() throws Exception {
-		try {
-			createTable("testBug9040", "(primary_key int not null primary key, data mediumblob)");
 
-			this.pstmt = this.conn
-					.prepareStatement("replace into testBug9040 (primary_key, data) values(?,?)");
+		createTable("testBug9040",
+				"(primary_key int not null primary key, data mediumblob)");
 
-			int primaryKey = 1;
-			byte[] data = "First Row".getBytes();
-			this.pstmt.setInt(1, primaryKey);
-			this.pstmt.setBinaryStream(2, new ByteArrayInputStream(data),
-					data.length);
-			this.pstmt.addBatch();
+		this.pstmt = this.conn
+				.prepareStatement("replace into testBug9040 (primary_key, data) values(?,?)");
 
-			primaryKey = 2;
-			data = "Second Row".getBytes();
-			this.pstmt.setInt(1, primaryKey);
-			this.pstmt.setBinaryStream(2, new ByteArrayInputStream(data),
-					data.length);
-			this.pstmt.addBatch();
+		int primaryKey = 1;
+		byte[] data = "First Row".getBytes();
+		this.pstmt.setInt(1, primaryKey);
+		this.pstmt.setBinaryStream(2, new ByteArrayInputStream(data),
+				data.length);
+		this.pstmt.addBatch();
 
-			this.pstmt.executeBatch();
-		} finally {
-			if (this.pstmt != null) {
-				this.pstmt.close();
-			}
-			closeMemberJDBCResources();
-		}
+		primaryKey = 2;
+		data = "Second Row".getBytes();
+		this.pstmt.setInt(1, primaryKey);
+		this.pstmt.setBinaryStream(2, new ByteArrayInputStream(data),
+				data.length);
+		this.pstmt.addBatch();
+
+		this.pstmt.executeBatch();
+
 	}
 
 	public void testBug10850() throws Exception {
@@ -358,47 +339,40 @@ public class BlobRegressionTest extends BaseTestCase {
 
 		createTable(tableName, "(field1 TEXT)");
 
-		PreparedStatement pStmt = null;
+		this.pstmt = this.conn.prepareStatement("INSERT INTO " +
 
-		try {
-			pStmt = this.conn.prepareStatement("INSERT INTO " +
+		tableName + " VALUES (?)");
+		this.pstmt.setCharacterStream(1, new StringReader(""), 0);
+		this.pstmt.executeUpdate();
 
-			tableName + " VALUES (?)");
-			pStmt.setCharacterStream(1, new StringReader(""), 0);
-			pStmt.executeUpdate();
+		assertEquals(
+				"0",
+				getSingleIndexedValueWithQuery(1,
+						"SELECT LENGTH(field1) FROM " + tableName).toString());
+		this.stmt.executeUpdate("TRUNCATE TABLE " + tableName);
 
-			assertEquals("0", getSingleIndexedValueWithQuery(1,
-					"SELECT LENGTH(field1) FROM " + tableName).toString());
-			this.stmt.executeUpdate("TRUNCATE TABLE " + tableName);
+		this.pstmt.clearParameters();
+		this.pstmt.setBinaryStream(1, new ByteArrayInputStream(new byte[0]), 0);
+		this.pstmt.executeUpdate();
 
-			pStmt.clearParameters();
-			pStmt.setBinaryStream(1, new ByteArrayInputStream(new byte[0]), 0);
-			pStmt.executeUpdate();
+		assertEquals(
+				"0",
+				getSingleIndexedValueWithQuery(1,
+						"SELECT LENGTH(field1) FROM " + tableName).toString());
+		this.stmt.executeUpdate("TRUNCATE TABLE " + tableName);
 
-			assertEquals("0", getSingleIndexedValueWithQuery(1,
-					"SELECT LENGTH(field1) FROM " + tableName).toString());
-			this.stmt.executeUpdate("TRUNCATE TABLE " + tableName);
-		} finally {
-			if (pStmt != null) {
-				pStmt.close();
-			}
-			closeMemberJDBCResources();
-		}
 	}
-	
+
 	public void testBug34677() throws Exception {
 		createTable("testBug34677", "(field1 BLOB)");
 		this.stmt.executeUpdate("INSERT INTO testBug34677 VALUES ('abc')");
-		
-		try {
-			this.rs = this.stmt.executeQuery("SELECT field1 FROM testBug34677");
-			this.rs.next();
-			Blob blob = this.rs.getBlob(1);
-			blob.truncate(0L);
-			assertEquals(0, blob.length());
-			assertEquals(-1, blob.getBinaryStream().read());
-		} finally {
-			closeMemberJDBCResources();
-		}
+
+		this.rs = this.stmt.executeQuery("SELECT field1 FROM testBug34677");
+		this.rs.next();
+		Blob blob = this.rs.getBlob(1);
+		blob.truncate(0L);
+		assertEquals(0, blob.length());
+		assertEquals(-1, blob.getBinaryStream().read());
+
 	}
 }

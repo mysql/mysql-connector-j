@@ -48,8 +48,6 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
 				
 			} finally {
 			
-				closeMemberJDBCResources();
-				
 				if (replConn != null) {
 					replConn.close();
 				}
@@ -111,8 +109,6 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
 				
 			} finally {
 			
-				closeMemberJDBCResources();
-				
 				if (replConn != null) {
 					replConn.close();
 				}

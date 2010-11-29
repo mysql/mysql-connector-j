@@ -107,25 +107,10 @@ public class BlobTest extends BaseTestCase {
 		createTestTable();
 	}
 
-	/**
-	 * Destroy resources created by test case
-	 * 
-	 * @throws Exception
-	 *             if an error occurs
-	 */
-	public void tearDown() throws Exception {
-		try {
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS BLOBTEST");
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			super.tearDown();
-		}
-	}
-
 	public void testByteStreamInsert() throws Exception {
 		testByteStreamInsert(this.conn);
 	}
+	
 	/**
 	 * Tests inserting blob data as a stream
 	 * 
@@ -186,17 +171,7 @@ public class BlobTest extends BaseTestCase {
 	}
 
 	private void createTestTable() throws Exception {
-		//
-		// Catch the error, the table might exist
-		//
-		try {
-			this.stmt.executeUpdate("DROP TABLE BLOBTEST");
-		} catch (SQLException SQLE) {
-			;
-		}
-
-		this.stmt
-				.executeUpdate("CREATE TABLE BLOBTEST (pos int PRIMARY KEY auto_increment, "
+		createTable("BLOBTEST", "(pos int PRIMARY KEY auto_increment, "
 						+ "blobdata LONGBLOB)");
 	}
 

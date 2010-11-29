@@ -600,8 +600,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	public void testBug4138() throws Exception {
 		try {
 			String[] typesToTest = new String[] { "TINYINT", "SMALLINT",
-					"MEDIUMINT", "INT", "BIGINT", "FLOAT", "DOUBLE",
-					"DECIMAL" };
+					"MEDIUMINT", "INT", "BIGINT", "FLOAT", "DOUBLE", "DECIMAL" };
 
 			short[] jdbcMapping = new short[] { Types.TINYINT, Types.SMALLINT,
 					Types.INTEGER, Types.INTEGER, Types.BIGINT, Types.REAL,
@@ -677,8 +676,9 @@ public class MetaDataRegressionTest extends BaseTestCase {
 				String desiredTypeName = typesToTest[i] + " unsigned";
 
 				assertTrue(rsmd.getColumnTypeName((i + 1)) + " != "
-						+ desiredTypeName, desiredTypeName
-						.equalsIgnoreCase(rsmd.getColumnTypeName(i + 1)));
+						+ desiredTypeName,
+						desiredTypeName.equalsIgnoreCase(rsmd
+								.getColumnTypeName(i + 1)));
 			}
 		} finally {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4138");
@@ -914,12 +914,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	 */
 
 	public void testBug8800() throws Exception {
-		assertEquals(((com.mysql.jdbc.Connection) this.conn)
-				.lowerCaseTableNames(), !this.conn.getMetaData()
-				.supportsMixedCaseIdentifiers());
-		assertEquals(((com.mysql.jdbc.Connection) this.conn)
-				.lowerCaseTableNames(), !this.conn.getMetaData()
-				.supportsMixedCaseQuotedIdentifiers());
+		assertEquals(
+				((com.mysql.jdbc.Connection) this.conn).lowerCaseTableNames(),
+				!this.conn.getMetaData().supportsMixedCaseIdentifiers());
+		assertEquals(
+				((com.mysql.jdbc.Connection) this.conn).lowerCaseTableNames(),
+				!this.conn.getMetaData().supportsMixedCaseQuotedIdentifiers());
 
 	}
 
@@ -1084,8 +1084,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			}
 		} catch (SQLException sqlEx) {
 			if (!defaultPatternConfig) {
-				assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx
-						.getSQLState());
+				assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+						sqlEx.getSQLState());
 			} else {
 				throw sqlEx; // we shouldn't have gotten an exception here
 			}
@@ -1149,8 +1149,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 			} catch (SQLException sqlEx) {
 				if (!defaultCatalogConfig) {
-					assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, sqlEx
-							.getSQLState());
+					assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+							sqlEx.getSQLState());
 				} else {
 					throw sqlEx; // we shouldn't have gotten an exception
 					// here
@@ -1201,14 +1201,14 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		if (versionMeetsMinimum(5, 1)) {
 			if (!versionMeetsMinimum(5, 2)) {
 				// server bug prevents this test from functioning
-				
+
 				return;
 			}
 		}
-		
-		createTable(
-				"`app tab`",
-				"( C1 int(11) NULL, INDEX NEWINX (C1), INDEX NEWINX2 (C1))", "InnoDB");
+
+		createTable("`app tab`",
+				"( C1 int(11) NULL, INDEX NEWINX (C1), INDEX NEWINX2 (C1))",
+				"InnoDB");
 
 		this.stmt
 				.executeUpdate("ALTER TABLE `app tab` ADD CONSTRAINT APPFK FOREIGN KEY (C1) REFERENCES `app tab` (C1)");
@@ -1529,12 +1529,15 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	private void checkRsmdForBug13277(ResultSetMetaData rsmd)
 			throws SQLException {
 
-		int i = ((com.mysql.jdbc.ConnectionImpl)this.conn).getMaxBytesPerChar(
-				CharsetMapping.getJavaEncodingForMysqlEncoding(((com.mysql.jdbc.Connection)this.conn).
-						getServerCharacterEncoding(),
-						 ((com.mysql.jdbc.ConnectionImpl)this.conn))); 
+		int i = ((com.mysql.jdbc.ConnectionImpl) this.conn)
+				.getMaxBytesPerChar(CharsetMapping
+						.getJavaEncodingForMysqlEncoding(
+								((com.mysql.jdbc.Connection) this.conn)
+										.getServerCharacterEncoding(),
+								((com.mysql.jdbc.ConnectionImpl) this.conn)));
 		if (i == 1) {
-			//This is INT field but still processed in ResultsetMetaData.getColumnDisplaySize
+			// This is INT field but still processed in
+			// ResultsetMetaData.getColumnDisplaySize
 			assertEquals(17, rsmd.getColumnDisplaySize(1));
 		}
 
@@ -1548,8 +1551,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	public void testSupportsCorrelatedSubqueries() throws Exception {
 		DatabaseMetaData dbmd = this.conn.getMetaData();
 
-		assertEquals(versionMeetsMinimum(4, 1), dbmd
-				.supportsCorrelatedSubqueries());
+		assertEquals(versionMeetsMinimum(4, 1),
+				dbmd.supportsCorrelatedSubqueries());
 	}
 
 	public void testSupportesGroupByUnrelated() throws Exception {
@@ -1568,168 +1571,161 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		if (isRunningOnJdk131()) {
 			return; // no parameter metadata on JDK-1.3.1
 		}
-		
+
 		createTable(
 				"bug21267",
 				"(`Col1` int(11) NOT NULL,`Col2` varchar(45) default NULL,`Col3` varchar(45) default NULL,PRIMARY KEY  (`Col1`))");
 
+		this.pstmt = this.conn
+				.prepareStatement("SELECT Col1, Col2,Col4 FROM bug21267 WHERE Col1=?");
+		this.pstmt.setInt(1, 1);
+
+		java.sql.ParameterMetaData psMeta = this.pstmt.getParameterMetaData();
+
 		try {
-			this.pstmt = this.conn
-					.prepareStatement("SELECT Col1, Col2,Col4 FROM bug21267 WHERE Col1=?");
-			this.pstmt.setInt(1, 1);
-
-			java.sql.ParameterMetaData psMeta = this.pstmt
-					.getParameterMetaData();
-
-			try {
-				assertEquals(0, psMeta.getParameterType(1));
-			} catch (SQLException sqlEx) {
-				assertEquals(SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, sqlEx.getSQLState());
-			}
-			
-			this.pstmt.close();
-			
-			Properties props = new Properties();
-			props.setProperty("generateSimpleParameterMetadata", "true");
-			
-			this.pstmt = getConnectionWithProps(props).prepareStatement("SELECT Col1, Col2,Col4 FROM bug21267 WHERE Col1=?");
-			
-			psMeta = this.pstmt.getParameterMetaData();
-			
-			assertEquals(Types.VARCHAR, psMeta.getParameterType(1));
-		} finally {
-			closeMemberJDBCResources();
+			assertEquals(0, psMeta.getParameterType(1));
+		} catch (SQLException sqlEx) {
+			assertEquals(SQLError.SQL_STATE_DRIVER_NOT_CAPABLE,
+					sqlEx.getSQLState());
 		}
+
+		this.pstmt.close();
+
+		Properties props = new Properties();
+		props.setProperty("generateSimpleParameterMetadata", "true");
+
+		this.pstmt = getConnectionWithProps(props).prepareStatement(
+				"SELECT Col1, Col2,Col4 FROM bug21267 WHERE Col1=?");
+
+		psMeta = this.pstmt.getParameterMetaData();
+
+		assertEquals(Types.VARCHAR, psMeta.getParameterType(1));
 	}
 
 	/**
-	 * Tests fix for BUG#21544 - When using information_schema for metadata, 
-	 * COLUMN_SIZE for getColumns() is not clamped to range of 
-	 * java.lang.Integer as is the case when not using 
-	 * information_schema, thus leading to a truncation exception that 
-	 * isn't present when not using information_schema.
+	 * Tests fix for BUG#21544 - When using information_schema for metadata,
+	 * COLUMN_SIZE for getColumns() is not clamped to range of java.lang.Integer
+	 * as is the case when not using information_schema, thus leading to a
+	 * truncation exception that isn't present when not using
+	 * information_schema.
 	 * 
-	 * @throws Exception if the test fails
+	 * @throws Exception
+	 *             if the test fails
 	 */
 	public void testBug21544() throws Exception {
 		if (!versionMeetsMinimum(5, 0)) {
 			return;
 		}
-		
-		createTable("testBug21544",
-	            "(foo_id INT NOT NULL, stuff LONGTEXT"
-	            + ", PRIMARY KEY (foo_id))", "INNODB");
-		
+
+		createTable("testBug21544", "(foo_id INT NOT NULL, stuff LONGTEXT"
+				+ ", PRIMARY KEY (foo_id))", "INNODB");
+
 		Connection infoSchemConn = null;
-		
+
 		Properties props = new Properties();
 		props.setProperty("useInformationSchema", "true");
 		props.setProperty("jdbcCompliantTruncation", "false");
-		
+
 		infoSchemConn = getConnectionWithProps(props);
-		
-		try {
-	        this.rs = infoSchemConn.getMetaData().getColumns(null, null, 
-	        		"testBug21544",
-	                null);
-	        
-	        while (rs.next()) {
-	        	rs.getInt("COLUMN_SIZE");   
-	        }
-	    } finally {
-	        if (infoSchemConn != null) {
-	        	infoSchemConn.close();
-	        }
-	        
-	        closeMemberJDBCResources();
-	    }
-	}
-
-	/** 
-	 * Tests fix for BUG#22613 - DBMD.getColumns() does not return expected
-	 * COLUMN_SIZE for the SET type (fixed to be consistent with the ODBC driver)
-	 * 
-	 * @throws Exception if the test fails
-	 */
-	public void testBug22613() throws Exception {
-		
-		createTable("bug22613", "( s set('a','bc','def','ghij') default NULL, t enum('a', 'ab', 'cdef'), s2 SET('1','2','3','4','1585','ONE','TWO','Y','N','THREE'))");
 
 		try {
-			checkMetadataForBug22613(this.conn);
-			
-			if (versionMeetsMinimum(5, 0)) {
-				Connection infoSchemConn = null;
-			
-				try {
-					Properties props = new Properties();
-					props.setProperty("useInformationSchema", "true");
-					
-					infoSchemConn = getConnectionWithProps(props);
-					
-					checkMetadataForBug22613(infoSchemConn);
-				} finally {
-					if (infoSchemConn != null) {
-						infoSchemConn.close();
-					}
-				}
+			this.rs = infoSchemConn.getMetaData().getColumns(null, null,
+					"testBug21544", null);
+
+			while (rs.next()) {
+				rs.getInt("COLUMN_SIZE");
 			}
 		} finally {
-			closeMemberJDBCResources();
-		}
-	}
-	
-	private void checkMetadataForBug22613(Connection c) throws Exception {
-		String maxValue = "a,bc,def,ghij";
-		String maxValue2 = "1,2,3,4,1585,ONE,TWO,Y,N,THREE";
-		
-		try {
-			DatabaseMetaData meta = c.getMetaData();
-			this.rs = meta.getColumns(null, this.conn.getCatalog(), "bug22613", "s");
-			this.rs.first();
-			
-			assertEquals(maxValue.length(), rs.getInt("COLUMN_SIZE"));
-			
-			this.rs = meta.getColumns(null, this.conn.getCatalog(), "bug22613", "s2");
-			this.rs.first();
-			
-			assertEquals(maxValue2.length(), rs.getInt("COLUMN_SIZE"));
-			
-			this.rs = meta.getColumns(null, c.getCatalog(), "bug22613", "t");
-			this.rs.first();
-
-			assertEquals(4, rs.getInt("COLUMN_SIZE"));			
-		} finally {
-			closeMemberJDBCResources();
+			if (infoSchemConn != null) {
+				infoSchemConn.close();
+			}
 		}
 	}
 
 	/**
-	 * Fix for BUG#22628 - Driver.getPropertyInfo() throws NullPointerException for URL that only specifies
-	 * host and/or port.
+	 * Tests fix for BUG#22613 - DBMD.getColumns() does not return expected
+	 * COLUMN_SIZE for the SET type (fixed to be consistent with the ODBC
+	 * driver)
 	 * 
-	 * @throws Exception if the test fails.
+	 * @throws Exception
+	 *             if the test fails
+	 */
+	public void testBug22613() throws Exception {
+
+		createTable(
+				"bug22613",
+				"( s set('a','bc','def','ghij') default NULL, t enum('a', 'ab', 'cdef'), s2 SET('1','2','3','4','1585','ONE','TWO','Y','N','THREE'))");
+
+		checkMetadataForBug22613(this.conn);
+
+		if (versionMeetsMinimum(5, 0)) {
+			Connection infoSchemConn = null;
+
+			try {
+				Properties props = new Properties();
+				props.setProperty("useInformationSchema", "true");
+
+				infoSchemConn = getConnectionWithProps(props);
+
+				checkMetadataForBug22613(infoSchemConn);
+			} finally {
+				if (infoSchemConn != null) {
+					infoSchemConn.close();
+				}
+			}
+		}
+	}
+
+	private void checkMetadataForBug22613(Connection c) throws Exception {
+		String maxValue = "a,bc,def,ghij";
+		String maxValue2 = "1,2,3,4,1585,ONE,TWO,Y,N,THREE";
+
+		DatabaseMetaData meta = c.getMetaData();
+		this.rs = meta
+				.getColumns(null, this.conn.getCatalog(), "bug22613", "s");
+		this.rs.first();
+
+		assertEquals(maxValue.length(), rs.getInt("COLUMN_SIZE"));
+
+		this.rs = meta.getColumns(null, this.conn.getCatalog(), "bug22613",
+				"s2");
+		this.rs.first();
+
+		assertEquals(maxValue2.length(), rs.getInt("COLUMN_SIZE"));
+
+		this.rs = meta.getColumns(null, c.getCatalog(), "bug22613", "t");
+		this.rs.first();
+
+		assertEquals(4, rs.getInt("COLUMN_SIZE"));
+	}
+
+	/**
+	 * Fix for BUG#22628 - Driver.getPropertyInfo() throws NullPointerException
+	 * for URL that only specifies host and/or port.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
 	 */
 	public void testBug22628() throws Exception {
-		DriverPropertyInfo[] dpi = new NonRegisteringDriver().getPropertyInfo("jdbc:mysql://bogus:9999", 
-				new Properties());
-		
+		DriverPropertyInfo[] dpi = new NonRegisteringDriver().getPropertyInfo(
+				"jdbc:mysql://bogus:9999", new Properties());
+
 		boolean foundHost = false;
 		boolean foundPort = false;
-		
+
 		for (int i = 0; i < dpi.length; i++) {
 			if ("bogus".equals(dpi[i].value)) {
 				foundHost = true;
 			}
-			
+
 			if ("9999".equals(dpi[i].value)) {
 				foundPort = true;
 			}
 		}
-		
+
 		assertTrue(foundHost && foundPort);
 	}
-	
+
 	private void testAbsenceOfMetadataForQuery(String query) throws Exception {
 		try {
 			this.pstmt = this.conn.prepareStatement(query);
@@ -1750,72 +1746,71 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	}
 
 	public void testRSMDToStringFromDBMD() throws Exception {
-		try {		
-			this.rs = this.conn.getMetaData().getTypeInfo();
-			
-			this.rs.getMetaData().toString(); // used to cause NPE
-		} finally {
-			closeMemberJDBCResources();
-		}
+
+		this.rs = this.conn.getMetaData().getTypeInfo();
+
+		this.rs.getMetaData().toString(); // used to cause NPE
+
 	}
-	
+
 	public void testCharacterSetForDBMD() throws Exception {
 		if (versionMeetsMinimum(4, 0)) {
 			// server is broken, fixed in 5.2/6.0?
-			
+
 			if (!versionMeetsMinimum(5, 2)) {
 				return;
 			}
 		}
-		
+
 		String quoteChar = this.conn.getMetaData().getIdentifierQuoteString();
-		
+
 		String tableName = quoteChar + "\u00e9\u0074\u00e9" + quoteChar;
 		createTable(tableName, "(field1 int)");
-		this.rs = this.conn.getMetaData().getTables(this.conn.getCatalog(), 
-				null, tableName, new String[] {"TABLE"});
+		this.rs = this.conn.getMetaData().getTables(this.conn.getCatalog(),
+				null, tableName, new String[] { "TABLE" });
 		assertEquals(true, this.rs.next());
 		System.out.println(this.rs.getString("TABLE_NAME"));
 		System.out.println(new String(this.rs.getBytes("TABLE_NAME"), "UTF-8"));
 	}
 
 	/**
-	 * Tests fix for BUG#18258 - Nonexistent catalog/database causes SQLException
-	 * to be raised, rather than returning empty result set.
+	 * Tests fix for BUG#18258 - Nonexistent catalog/database causes
+	 * SQLException to be raised, rather than returning empty result set.
 	 * 
-	 * @throws Exception if the test fails.
+	 * @throws Exception
+	 *             if the test fails.
 	 */
 	public void testBug18258() throws Exception {
 		String bogusDatabaseName = "abcdefghijklmnopqrstuvwxyz";
-		this.conn.getMetaData().getTables(bogusDatabaseName, "%", "%", new String[] {"TABLE", "VIEW"});
+		this.conn.getMetaData().getTables(bogusDatabaseName, "%", "%",
+				new String[] { "TABLE", "VIEW" });
 		this.conn.getMetaData().getColumns(bogusDatabaseName, "%", "%", "%");
 		this.conn.getMetaData().getProcedures(bogusDatabaseName, "%", "%");
 	}
 
-
 	/**
-	 * Tests fix for BUG#23303 - DBMD.getSchemas() doesn't return a TABLE_CATALOG column.
+	 * Tests fix for BUG#23303 - DBMD.getSchemas() doesn't return a
+	 * TABLE_CATALOG column.
 	 * 
-	 * @throws Exception if the test fails.
+	 * @throws Exception
+	 *             if the test fails.
 	 */
 	public void testBug23303() throws Exception {
-		try {
-			this.rs = this.conn.getMetaData().getSchemas();
-			this.rs.findColumn("TABLE_CATALOG");
-		} finally {
-			closeMemberJDBCResources();
-		}
+
+		this.rs = this.conn.getMetaData().getSchemas();
+		this.rs.findColumn("TABLE_CATALOG");
+
 	}
-	
+
 	/**
-	 * Tests fix for BUG#23304 - DBMD using "show" and DBMD using 
+	 * Tests fix for BUG#23304 - DBMD using "show" and DBMD using
 	 * information_schema do not return results consistent with eachother.
 	 * 
-	 * (note this fix only addresses the inconsistencies, not the issue that
-	 * the driver is treating schemas differently than some users expect.
+	 * (note this fix only addresses the inconsistencies, not the issue that the
+	 * driver is treating schemas differently than some users expect.
 	 * 
-	 * We will revisit this behavior when there is full support for schemas
-	 * in MySQL).
+	 * We will revisit this behavior when there is full support for schemas in
+	 * MySQL).
 	 * 
 	 * @throws Exception
 	 */
@@ -1823,66 +1818,76 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		if (!versionMeetsMinimum(5, 0)) {
 			return;
 		}
-		
+
 		Connection connShow = null;
 		Connection connInfoSchema = null;
-		
+
 		ResultSet rsShow = null;
 		ResultSet rsInfoSchema = null;
-		
+
 		try {
 			Properties noInfoSchemaProps = new Properties();
 			noInfoSchemaProps.setProperty("useInformationSchema", "false");
-			
+
 			Properties infoSchemaProps = new Properties();
 			infoSchemaProps.setProperty("useInformationSchema", "true");
 			infoSchemaProps.setProperty("dumpQueriesOnException", "true");
-			
+
 			connShow = getConnectionWithProps(noInfoSchemaProps);
 			connInfoSchema = getConnectionWithProps(infoSchemaProps);
-			
+
 			DatabaseMetaData dbmdUsingShow = connShow.getMetaData();
 			DatabaseMetaData dbmdUsingInfoSchema = connInfoSchema.getMetaData();
-			
-			assertNotSame(dbmdUsingShow.getClass(), dbmdUsingInfoSchema.getClass());
-			
+
+			assertNotSame(dbmdUsingShow.getClass(),
+					dbmdUsingInfoSchema.getClass());
+
 			if (!isRunningOnJdk131()) {
 				rsShow = dbmdUsingShow.getSchemas();
 				rsInfoSchema = dbmdUsingInfoSchema.getSchemas();
-			
-				compareResultSets(rsShow, rsInfoSchema);	
+
+				compareResultSets(rsShow, rsInfoSchema);
 			}
-			
+
 			/*
-			rsShow = dbmdUsingShow.getTables(connShow.getCatalog(), null, "%", new String[] {"TABLE", "VIEW"});
-			rsInfoSchema = dbmdUsingInfoSchema.getTables(connInfoSchema.getCatalog(), null, "%", new String[] {"TABLE", "VIEW"});
-			
-			compareResultSets(rsShow, rsInfoSchema);
-			
-			rsShow = dbmdUsingShow.getTables(null, null, "%", new String[] {"TABLE", "VIEW"});
-			rsInfoSchema = dbmdUsingInfoSchema.getTables(null, null, "%", new String[] {"TABLE", "VIEW"});
-		
-			compareResultSets(rsShow, rsInfoSchema);
-			*/
-			
-			createTable("t_testBug23304", "(field1 int primary key not null, field2 tinyint, field3 mediumint, field4 mediumint, field5 bigint, field6 float, field7 double, field8 decimal, field9 char(32), field10 varchar(32), field11 blob, field12 mediumblob, field13 longblob, field14 text, field15 mediumtext, field16 longtext, field17 date, field18 time, field19 datetime, field20 timestamp)");
-			
-			rsShow = dbmdUsingShow.getColumns(connShow.getCatalog(), null, "t_testBug23304", "%");
-			rsInfoSchema = dbmdUsingInfoSchema.getColumns(connInfoSchema.getCatalog(), null, "t_testBug23304", "%");
-			
+			 * rsShow = dbmdUsingShow.getTables(connShow.getCatalog(), null,
+			 * "%", new String[] {"TABLE", "VIEW"}); rsInfoSchema =
+			 * dbmdUsingInfoSchema.getTables(connInfoSchema.getCatalog(), null,
+			 * "%", new String[] {"TABLE", "VIEW"});
+			 * 
+			 * compareResultSets(rsShow, rsInfoSchema);
+			 * 
+			 * rsShow = dbmdUsingShow.getTables(null, null, "%", new String[]
+			 * {"TABLE", "VIEW"}); rsInfoSchema =
+			 * dbmdUsingInfoSchema.getTables(null, null, "%", new String[]
+			 * {"TABLE", "VIEW"});
+			 * 
+			 * compareResultSets(rsShow, rsInfoSchema);
+			 */
+
+			createTable(
+					"t_testBug23304",
+					"(field1 int primary key not null, field2 tinyint, field3 mediumint, field4 mediumint, field5 bigint, field6 float, field7 double, field8 decimal, field9 char(32), field10 varchar(32), field11 blob, field12 mediumblob, field13 longblob, field14 text, field15 mediumtext, field16 longtext, field17 date, field18 time, field19 datetime, field20 timestamp)");
+
+			rsShow = dbmdUsingShow.getColumns(connShow.getCatalog(), null,
+					"t_testBug23304", "%");
+			rsInfoSchema = dbmdUsingInfoSchema.getColumns(
+					connInfoSchema.getCatalog(), null, "t_testBug23304", "%");
+
 			compareResultSets(rsShow, rsInfoSchema);
 		} finally {
 			if (rsShow != null) {
 				rsShow.close();
 			}
-			
+
 			if (rsInfoSchema != null) {
 				rsInfoSchema.close();
 			}
 		}
 	}
-	
-	private void compareResultSets(ResultSet expected, ResultSet actual) throws Exception {
+
+	private void compareResultSets(ResultSet expected, ResultSet actual)
+			throws Exception {
 		if (expected == null && actual != null) {
 			fail("Expected null result set, actual was not null.");
 		} else if (expected != null && actual == null) {
@@ -1890,82 +1895,103 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		} else if (expected == null && actual == null) {
 			return;
 		}
-		
+
 		expected.last();
-		
+
 		int expectedRows = expected.getRow();
-		
+
 		actual.last();
-		
+
 		int actualRows = actual.getRow();
-		
+
 		assertEquals(expectedRows, actualRows);
-		
+
 		ResultSetMetaData metadataExpected = expected.getMetaData();
 		ResultSetMetaData metadataActual = actual.getMetaData();
-		
-		assertEquals(metadataExpected.getColumnCount(), metadataActual.getColumnCount());
-		
+
+		assertEquals(metadataExpected.getColumnCount(),
+				metadataActual.getColumnCount());
+
 		for (int i = 0; i < metadataExpected.getColumnCount(); i++) {
-			assertEquals(metadataExpected.getColumnName(i + 1), metadataActual.getColumnName(i + 1));
-			assertEquals(metadataExpected.getColumnType(i + 1), metadataActual.getColumnType(i + 1));
-			assertEquals(metadataExpected.getColumnClassName(i + 1), metadataActual.getColumnClassName(i + 1));
+			assertEquals(metadataExpected.getColumnName(i + 1),
+					metadataActual.getColumnName(i + 1));
+			assertEquals(metadataExpected.getColumnType(i + 1),
+					metadataActual.getColumnType(i + 1));
+			assertEquals(metadataExpected.getColumnClassName(i + 1),
+					metadataActual.getColumnClassName(i + 1));
 		}
-		
+
 		expected.beforeFirst();
 		actual.beforeFirst();
-		
+
 		StringBuffer messageBuf = null;
-		
+
 		while (expected.next() && actual.next()) {
-			
+
 			if (messageBuf != null) {
 				messageBuf.append("\n");
 			}
-			
+
 			for (int i = 0; i < metadataExpected.getColumnCount(); i++) {
-				if (expected.getObject(i + 1) == null && actual.getObject(i + 1) == null) {
+				if (expected.getObject(i + 1) == null
+						&& actual.getObject(i + 1) == null) {
 					continue;
 				}
-				
-				if ((expected.getObject(i + 1) == null && actual.getObject(i + 1) != null) ||
-						(expected.getObject(i + 1) != null && actual.getObject(i + 1) == null) ||
-						(!expected.getObject(i + 1).equals(actual.getObject(i + 1)))) {
-					if ("COLUMN_DEF".equals(metadataExpected.getColumnName(i + 1)) && 
-							(expected.getObject(i + 1) == null && actual.getString(i + 1).length() == 0) ||
-							(expected.getString(i + 1).length() == 0 && actual.getObject(i + 1) == null)) {
-						continue; // known bug with SHOW FULL COLUMNS, and we can't distinguish between null and ''
-						          // for a default
+
+				if ((expected.getObject(i + 1) == null && actual
+						.getObject(i + 1) != null)
+						|| (expected.getObject(i + 1) != null && actual
+								.getObject(i + 1) == null)
+						|| (!expected.getObject(i + 1).equals(
+								actual.getObject(i + 1)))) {
+					if ("COLUMN_DEF".equals(metadataExpected
+							.getColumnName(i + 1))
+							&& (expected.getObject(i + 1) == null && actual
+									.getString(i + 1).length() == 0)
+							|| (expected.getString(i + 1).length() == 0 && actual
+									.getObject(i + 1) == null)) {
+						continue; // known bug with SHOW FULL COLUMNS, and we
+									// can't distinguish between null and ''
+									// for a default
 					}
-					
-					if ("CHAR_OCTET_LENGTH".equals(metadataExpected.getColumnName(i + 1))) {
-						if (((com.mysql.jdbc.ConnectionImpl)this.conn).getMaxBytesPerChar(
-								CharsetMapping.getJavaEncodingForMysqlEncoding(((com.mysql.jdbc.Connection)this.conn).getServerCharacterEncoding(),
-										  ((com.mysql.jdbc.ConnectionImpl)this.conn))) > 1) {
+
+					if ("CHAR_OCTET_LENGTH".equals(metadataExpected
+							.getColumnName(i + 1))) {
+						if (((com.mysql.jdbc.ConnectionImpl) this.conn)
+								.getMaxBytesPerChar(CharsetMapping
+										.getJavaEncodingForMysqlEncoding(
+												((com.mysql.jdbc.Connection) this.conn)
+														.getServerCharacterEncoding(),
+												((com.mysql.jdbc.ConnectionImpl) this.conn))) > 1) {
 							continue; // SHOW CREATE and CHAR_OCT *will* differ
 						}
 					}
-					
+
 					if (messageBuf == null) {
 						messageBuf = new StringBuffer();
 					} else {
 						messageBuf.append("\n");
 					}
-					
-					messageBuf.append("On row " + expected.getRow() + " ,for column named " + metadataExpected.getColumnName(i + 1) + ", expected '" + expected.getObject(i + 1) + "', found '" + actual.getObject(i + 1) + "'");
-					
+
+					messageBuf.append("On row " + expected.getRow()
+							+ " ,for column named "
+							+ metadataExpected.getColumnName(i + 1)
+							+ ", expected '" + expected.getObject(i + 1)
+							+ "', found '" + actual.getObject(i + 1) + "'");
+
 				}
 			}
 		}
-		
+
 		if (messageBuf != null) {
 			fail(messageBuf.toString());
 		}
 	}
 
 	/**
-	 * Tests fix for BUG#25624 - Whitespace surrounding storage/size specifiers in stored procedure
-	 * declaration causes NumberFormatException to be thrown when calling stored procedure.
+	 * Tests fix for BUG#25624 - Whitespace surrounding storage/size specifiers
+	 * in stored procedure declaration causes NumberFormatException to be thrown
+	 * when calling stored procedure.
 	 * 
 	 * @throws Exception
 	 */
@@ -1978,46 +2004,40 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		// we changed up the parameters to get coverage of the fixes,
 		// also note that whitespace _is_ significant in the DDL...
 		//
-		createProcedure(
-				"testBug25624",
+		createProcedure("testBug25624",
 				"(in _par1 decimal( 10 , 2 ) , in _par2 varchar( 4 )) BEGIN select 1; END");
 
 		this.conn.prepareCall("{call testBug25624(?,?)}").close();
 	}
 
-	
 	/**
-	 * Tests fix for BUG#27867 - Schema objects with identifiers other than
-	 * the connection character aren't retrieved correctly in ResultSetMetadata.
+	 * Tests fix for BUG#27867 - Schema objects with identifiers other than the
+	 * connection character aren't retrieved correctly in ResultSetMetadata.
 	 * 
-	 * @throws Exception if the test fails.
+	 * @throws Exception
+	 *             if the test fails.
 	 */
 	public void testBug27867() throws Exception {
 		if (!versionMeetsMinimum(4, 1)) {
 			return;
 		}
-		
-		try {
-			String gbkColumnName = "\u00e4\u00b8\u00ad\u00e6\u2013\u2021\u00e6\u00b5\u2039\u00e8\u00af\u2022";
-			createTable("ColumnNameEncoding", "(" + "`" + gbkColumnName
-					+ "` varchar(1) default NULL,"
-					+ "`ASCIIColumn` varchar(1) default NULL"
-					+ ")ENGINE=MyISAM DEFAULT CHARSET=utf8");
-			
-			this.rs = this.stmt
-					.executeQuery("SELECT * FROM ColumnNameEncoding");
-			java.sql.ResultSetMetaData tblMD = this.rs.getMetaData();
 
-			assertEquals(gbkColumnName, tblMD.getColumnName(1));
-			assertEquals("ASCIIColumn", tblMD.getColumnName(2));
-		} finally {
-			closeMemberJDBCResources();
-		}
+		String gbkColumnName = "\u00e4\u00b8\u00ad\u00e6\u2013\u2021\u00e6\u00b5\u2039\u00e8\u00af\u2022";
+		createTable("ColumnNameEncoding", "(" + "`" + gbkColumnName
+				+ "` varchar(1) default NULL,"
+				+ "`ASCIIColumn` varchar(1) default NULL"
+				+ ")ENGINE=MyISAM DEFAULT CHARSET=utf8");
+
+		this.rs = this.stmt.executeQuery("SELECT * FROM ColumnNameEncoding");
+		java.sql.ResultSetMetaData tblMD = this.rs.getMetaData();
+
+		assertEquals(gbkColumnName, tblMD.getColumnName(1));
+		assertEquals("ASCIIColumn", tblMD.getColumnName(2));
 	}
-	
+
 	/**
-	 * Fixed BUG#27915 - DatabaseMetaData.getColumns() doesn't
-	 * contain SCOPE_* or IS_AUTOINCREMENT columns.
+	 * Fixed BUG#27915 - DatabaseMetaData.getColumns() doesn't contain SCOPE_*
+	 * or IS_AUTOINCREMENT columns.
 	 * 
 	 * @throws Exception
 	 */
@@ -2026,23 +2046,19 @@ public class MetaDataRegressionTest extends BaseTestCase {
 				"(field1 int not null primary key auto_increment, field2 int)");
 		DatabaseMetaData dbmd = this.conn.getMetaData();
 
-		try {
-			this.rs = dbmd.getColumns(this.conn.getCatalog(), null,
-					"testBug27915", "%");
+		this.rs = dbmd.getColumns(this.conn.getCatalog(), null, "testBug27915",
+				"%");
+		this.rs.next();
+
+		checkBug27915();
+
+		if (versionMeetsMinimum(5, 0)) {
+			this.rs = getConnectionWithProps("useInformationSchema=true")
+					.getMetaData().getColumns(this.conn.getCatalog(), null,
+							"testBug27915", "%");
 			this.rs.next();
 
 			checkBug27915();
-
-			if (versionMeetsMinimum(5, 0)) {
-				this.rs = getConnectionWithProps("useInformationSchema=true")
-						.getMetaData().getColumns(this.conn.getCatalog(), null,
-								"testBug27915", "%");
-				this.rs.next();
-
-				checkBug27915();
-			}
-		} finally {
-			closeMemberJDBCResources();
 		}
 	}
 
@@ -2054,22 +2070,21 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		assertEquals("YES", this.rs.getString("IS_AUTOINCREMENT"));
 
 		this.rs.next();
-		
+
 		assertNull(this.rs.getString("SCOPE_CATALOG"));
 		assertNull(this.rs.getString("SCOPE_SCHEMA"));
 		assertNull(this.rs.getString("SCOPE_TABLE"));
 		assertNull(this.rs.getString("SOURCE_DATA_TYPE"));
 		assertEquals("NO", this.rs.getString("IS_AUTOINCREMENT"));
 	}
-	
+
 	/**
-	 * Tests fix for BUG#27916 - UNSIGNED types not reported
-	 * via DBMD.getTypeInfo(), and capitalization of types is
-	 * not consistent between DBMD.getColumns(), RSMD.getColumnTypeName()
-	 * and DBMD.getTypeInfo().
+	 * Tests fix for BUG#27916 - UNSIGNED types not reported via
+	 * DBMD.getTypeInfo(), and capitalization of types is not consistent between
+	 * DBMD.getColumns(), RSMD.getColumnTypeName() and DBMD.getTypeInfo().
 	 * 
-	 * This fix also ensures that the precision of UNSIGNED MEDIUMINT
-	 * and UNSIGNED BIGINT is reported correctly via DBMD.getColumns().
+	 * This fix also ensures that the precision of UNSIGNED MEDIUMINT and
+	 * UNSIGNED BIGINT is reported correctly via DBMD.getColumns().
 	 * 
 	 * @throws Exception
 	 */
@@ -2085,8 +2100,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		this.rs = this.conn.getMetaData().getTypeInfo();
 
 		while (this.rs.next()) {
-			typeNameToPrecision.put(this.rs.getString("TYPE_NAME"), this.rs
-					.getObject("PRECISION"));
+			typeNameToPrecision.put(this.rs.getString("TYPE_NAME"),
+					this.rs.getObject("PRECISION"));
 		}
 
 		this.rs = this.conn.getMetaData().getColumns(this.conn.getCatalog(),
@@ -2097,105 +2112,102 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			String typeName = this.rs.getString("TYPE_NAME");
 
 			assertEquals(typeName, rsmd.getColumnTypeName(i + 1));
-			assertEquals(typeName, this.rs.getInt("COLUMN_SIZE"), rsmd
-					.getPrecision(i + 1));
+			assertEquals(typeName, this.rs.getInt("COLUMN_SIZE"),
+					rsmd.getPrecision(i + 1));
 			assertEquals(typeName, new Integer(rsmd.getPrecision(i + 1)),
 					typeNameToPrecision.get(typeName));
 		}
 	}
-	
-	public void testBug20491() throws Exception {
-		try {
-			String[] fields = { "field1_ae_\u00e4", "field2_ue_\u00fc", "field3_oe_\u00f6",
-			"field4_sz_\u00df" };
-			
-			createTable("tst",
-					"(`" + fields[0] + "` int(10) unsigned NOT NULL default '0',"
-							+ "`" + fields[1] + "` varchar(45) default '',"
-							+ "`" + fields[2] + "` varchar(45) default '',"
-							+ "`" + fields[3] + "` varchar(45) default '',"
-							+ "PRIMARY KEY  (`" + fields[0] + "`))");
 
-			// demonstrate that these are all in the Cp1252 encoding
-			
-			for (int i = 0; i < fields.length; i++) {
-				try {
-					assertEquals(fields[i], new String(fields[i].getBytes("Cp1252"), "Cp1252"));
-				} catch (ComparisonFailure cfEx) {
-					if (i == 3) {
-						// If we're on a mac, we're out of luck
-						// we can't store this in the filesystem...
-						
-						if (!System.getProperty("os.name").startsWith("Mac")) {
-							throw cfEx;
-						}
+	public void testBug20491() throws Exception {
+		String[] fields = { "field1_ae_\u00e4", "field2_ue_\u00fc",
+				"field3_oe_\u00f6", "field4_sz_\u00df" };
+
+		createTable("tst", "(`" + fields[0]
+				+ "` int(10) unsigned NOT NULL default '0'," + "`" + fields[1]
+				+ "` varchar(45) default ''," + "`" + fields[2]
+				+ "` varchar(45) default ''," + "`" + fields[3]
+				+ "` varchar(45) default ''," + "PRIMARY KEY  (`" + fields[0]
+				+ "`))");
+
+		// demonstrate that these are all in the Cp1252 encoding
+
+		for (int i = 0; i < fields.length; i++) {
+			try {
+				assertEquals(fields[i], new String(
+						fields[i].getBytes("Cp1252"), "Cp1252"));
+			} catch (ComparisonFailure cfEx) {
+				if (i == 3) {
+					// If we're on a mac, we're out of luck
+					// we can't store this in the filesystem...
+
+					if (!System.getProperty("os.name").startsWith("Mac")) {
+						throw cfEx;
 					}
 				}
 			}
-			
-			byte[] asBytes = fields[0].getBytes("utf-8");
-			
-			DatabaseMetaData md = this.conn.getMetaData();
-			
-			this.rs = md.getColumns(null, "%", "tst", "%");
-			
-			int j = 0;
-			
-			while (this.rs.next()) {
-				try {
-					assertEquals("Wrong column name:" + this.rs.getString(4),
+		}
+
+		byte[] asBytes = fields[0].getBytes("utf-8");
+
+		DatabaseMetaData md = this.conn.getMetaData();
+
+		this.rs = md.getColumns(null, "%", "tst", "%");
+
+		int j = 0;
+
+		while (this.rs.next()) {
+			try {
+				assertEquals("Wrong column name:" + this.rs.getString(4),
 						fields[j++], this.rs.getString(4));
-				} catch (ComparisonFailure cfEx) {
-					if (j == 3) {
-						// If we're on a mac, we're out of luck
-						// we can't store this in the filesystem...
-						
-						if (!System.getProperty("os.name").startsWith("Mac")) {
-							throw cfEx;
-						}
+			} catch (ComparisonFailure cfEx) {
+				if (j == 3) {
+					// If we're on a mac, we're out of luck
+					// we can't store this in the filesystem...
+
+					if (!System.getProperty("os.name").startsWith("Mac")) {
+						throw cfEx;
 					}
 				}
 			}
-			
-			this.rs.close();
-			
-			this.rs = this.stmt.executeQuery("SELECT * FROM tst");
-			
-			ResultSetMetaData rsmd = this.rs.getMetaData();
-			
-			for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-				try {
-					assertEquals("Wrong column name:" + rsmd.getColumnName(i),
+		}
+
+		this.rs.close();
+
+		this.rs = this.stmt.executeQuery("SELECT * FROM tst");
+
+		ResultSetMetaData rsmd = this.rs.getMetaData();
+
+		for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+			try {
+				assertEquals("Wrong column name:" + rsmd.getColumnName(i),
 						fields[i - 1], rsmd.getColumnName(i));
-				} catch (ComparisonFailure cfEx) {
-					if (i - 1 == 3) {
-						// If we're on a mac, we're out of luck
-						// we can't store this in the filesystem...
-						
-						if (!System.getProperty("os.name").startsWith("Mac")) {
-							throw cfEx;
-						}
+			} catch (ComparisonFailure cfEx) {
+				if (i - 1 == 3) {
+					// If we're on a mac, we're out of luck
+					// we can't store this in the filesystem...
+
+					if (!System.getProperty("os.name").startsWith("Mac")) {
+						throw cfEx;
 					}
 				}
 			}
-		} finally {
-			closeMemberJDBCResources();
 		}
 	}
-	
+
 	/**
-	 * Tests fix for Bug#33594 - When cursor fetch is enabled,
-	 * wrong metadata is returned from DBMD. 
+	 * Tests fix for Bug#33594 - When cursor fetch is enabled, wrong metadata is
+	 * returned from DBMD.
 	 * 
-	 * The fix is two parts. 
+	 * The fix is two parts.
 	 * 
-	 * First, when asking for the first column value
-	 * twice from a cursor-fetched row, the driver didn't re-position,
-	 * and thus the "next" column was returned.
+	 * First, when asking for the first column value twice from a cursor-fetched
+	 * row, the driver didn't re-position, and thus the "next" column was
+	 * returned.
 	 * 
-	 * Second, metadata statements and internal statements the driver
-	 * uses shouldn't use cursor-based fetching at all, so we've
-	 * ensured that internal statements have their fetch size set to "0".
+	 * Second, metadata statements and internal statements the driver uses
+	 * shouldn't use cursor-based fetching at all, so we've ensured that
+	 * internal statements have their fetch size set to "0".
 	 */
 	public void testBug33594() throws Exception {
 		if (!versionMeetsMinimum(5, 0, 7)) {
@@ -2204,311 +2216,417 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		boolean max_key_l_bug = false;
 
 		try {
-			
-			try {
+			createTable(
+					"bug33594",
+					"(fid varchar(255) not null primary key, id INT, geom linestring, name varchar(255))");
+		} catch (SQLException sqlEx) {
+			if (sqlEx.getMessage().indexOf("max key length") != -1) {
 				createTable(
 						"bug33594",
-						"(fid varchar(255) not null primary key, id INT, geom linestring, name varchar(255))");
-			} catch (SQLException sqlEx) {
-				if (sqlEx.getMessage().indexOf("max key length") != -1) {
-				  createTable("bug33594", "(fid varchar(180) not null primary key, id INT, geom linestring, name varchar(255))");
-				  max_key_l_bug = true;
-				}
+						"(fid varchar(180) not null primary key, id INT, geom linestring, name varchar(255))");
+				max_key_l_bug = true;
+			}
+		}
+
+		Properties props = new Properties();
+		props.put("useInformationSchema", "false");
+		props.put("useCursorFetch", "false");
+		props.put("defaultFetchSize", "100");
+		Connection conn1 = null;
+		try {
+			conn1 = getConnectionWithProps(props);
+			DatabaseMetaData metaData = conn1.getMetaData();
+			this.rs = metaData.getColumns(null, null, "bug33594", null);
+			this.rs.next();
+			assertEquals("bug33594", this.rs.getString("TABLE_NAME"));
+			assertEquals("fid", this.rs.getString("COLUMN_NAME"));
+			assertEquals("VARCHAR", this.rs.getString("TYPE_NAME"));
+			if (!max_key_l_bug) {
+				assertEquals("255", this.rs.getString("COLUMN_SIZE"));
+			} else {
+				assertEquals("180", this.rs.getString("COLUMN_SIZE"));
 			}
 
-			Properties props = new Properties();
-			props.put("useInformationSchema", "false");
-			props.put("useCursorFetch", "false");
-			props.put("defaultFetchSize", "100");
-			Connection conn1 = null;
+			Properties props2 = new Properties();
+			props2.put("useInformationSchema", "false");
+			props2.put("useCursorFetch", "true");
+			props2.put("defaultFetchSize", "100");
+
+			Connection conn2 = null;
+
 			try {
-				conn1 = getConnectionWithProps(props);
-				DatabaseMetaData metaData = conn1.getMetaData();
-				this.rs = metaData.getColumns(null, null, "bug33594", null);
+				conn2 = getConnectionWithProps(props2);
+				DatabaseMetaData metaData2 = conn2.getMetaData();
+				this.rs = metaData2.getColumns(null, null, "bug33594", null);
 				this.rs.next();
 				assertEquals("bug33594", this.rs.getString("TABLE_NAME"));
 				assertEquals("fid", this.rs.getString("COLUMN_NAME"));
 				assertEquals("VARCHAR", this.rs.getString("TYPE_NAME"));
 				if (!max_key_l_bug) {
-				  assertEquals("255", this.rs.getString("COLUMN_SIZE"));
+					assertEquals("255", this.rs.getString("COLUMN_SIZE"));
 				} else {
-				  assertEquals("180", this.rs.getString("COLUMN_SIZE"));
+					assertEquals("180", this.rs.getString("COLUMN_SIZE"));
 				}
 
-				Properties props2 = new Properties();
-				props2.put("useInformationSchema", "false");
-				props2.put("useCursorFetch", "true");
-				props2.put("defaultFetchSize", "100");
-
-				Connection conn2 = null;
-
-				try {
-					conn2 = getConnectionWithProps(props2);
-					DatabaseMetaData metaData2 = conn2.getMetaData();
-					this.rs = metaData2
-							.getColumns(null, null, "bug33594", null);
-					this.rs.next();
-					assertEquals("bug33594", this.rs.getString("TABLE_NAME"));
-					assertEquals("fid", this.rs.getString("COLUMN_NAME"));
-					assertEquals("VARCHAR", this.rs.getString("TYPE_NAME"));
-					if (!max_key_l_bug) {
-					  assertEquals("255", this.rs.getString("COLUMN_SIZE"));
-					} else {
-					  assertEquals("180", this.rs.getString("COLUMN_SIZE"));
-					}
-					
-					// we should only see one server-side prepared statement, and that's
-					// caused by us going off to ask about the count!
-					assertEquals("1", getSingleIndexedValueWithQuery(conn2, 2,
-							"SHOW SESSION STATUS LIKE 'Com_stmt_prepare'")
-							.toString());
-				} finally {
-					if (conn2 != null) {
-						conn2.close();
-					}
-				}
+				// we should only see one server-side prepared statement, and
+				// that's
+				// caused by us going off to ask about the count!
+				assertEquals(
+						"1",
+						getSingleIndexedValueWithQuery(conn2, 2,
+								"SHOW SESSION STATUS LIKE 'Com_stmt_prepare'")
+								.toString());
 			} finally {
-				if (conn1 != null) {
-					conn1.close();
+				if (conn2 != null) {
+					conn2.close();
 				}
 			}
-
 		} finally {
-			closeMemberJDBCResources();
+			if (conn1 != null) {
+				conn1.close();
+			}
 		}
+
 	}
-	
+
 	public void testBug34194() throws Exception {
 		createTable("bug34194", "(id integer,geom geometry)");
-		try {
-			this.stmt
-					.execute("insert into bug34194 values('1',GeomFromText('POINT(622572.881 5156121.034)'))");
-			this.rs = this.stmt.executeQuery("select * from bug34194");
-			ResultSetMetaData RSMD = this.rs.getMetaData();
-			assertEquals("GEOMETRY", RSMD.getColumnTypeName(2));
 
-		} finally {
-			closeMemberJDBCResources();
-		}
+		this.stmt
+				.execute("insert into bug34194 values('1',GeomFromText('POINT(622572.881 5156121.034)'))");
+		this.rs = this.stmt.executeQuery("select * from bug34194");
+		ResultSetMetaData RSMD = this.rs.getMetaData();
+		assertEquals("GEOMETRY", RSMD.getColumnTypeName(2));
 	}
-	
+
 	public void testNoSystemTablesReturned() throws Exception {
 		if (!versionMeetsMinimum(5, 0)) {
 			return; // no information schema
 		}
-		
-		try {
-			this.rs = this.conn.getMetaData().getTables("information_schema", "null", "%", new String[] {"SYSTEM TABLE"});
-			assertTrue(this.rs.next());
-			this.rs = this.conn.getMetaData().getTables("information_schema", "null", "%", new String[] {"TABLE"});
-			assertFalse(this.rs.next());
-			this.rs = this.conn.getMetaData().getTables("information_schema", "null", "%", new String[] {"TABLE", "SYSTEM TABLE"});
-			assertTrue(this.rs.next());
-			this.rs = this.conn.getMetaData().getColumns("information_schema", null, "TABLES", "%");
-			assertTrue(this.rs.next());
-		} finally {
-			closeMemberJDBCResources();
-		}
+
+		this.rs = this.conn.getMetaData().getTables("information_schema",
+				"null", "%", new String[] { "SYSTEM TABLE" });
+		assertTrue(this.rs.next());
+		this.rs = this.conn.getMetaData().getTables("information_schema",
+				"null", "%", new String[] { "TABLE" });
+		assertFalse(this.rs.next());
+		this.rs = this.conn.getMetaData().getTables("information_schema",
+				"null", "%", new String[] { "TABLE", "SYSTEM TABLE" });
+		assertTrue(this.rs.next());
+		this.rs = this.conn.getMetaData().getColumns("information_schema",
+				null, "TABLES", "%");
+		assertTrue(this.rs.next());
 	}
-	
+
 	public void testABunchOfReturnTypes() throws Exception {
 		checkABunchOfReturnTypesForConnection(this.conn);
-		
+
 		if (versionMeetsMinimum(5, 0)) {
 			checkABunchOfReturnTypesForConnection(getConnectionWithProps("useInformationSchema=true"));
 		}
 	}
-	
-	private void checkABunchOfReturnTypesForConnection(Connection mdConn) throws Exception {
-		
+
+	private void checkABunchOfReturnTypesForConnection(Connection mdConn)
+			throws Exception {
+
 		DatabaseMetaData md = mdConn.getMetaData();
-		
-		// Bug#44862 - getBestRowIdentifier does not return resultset as per JDBC API specifications
-		this.rs = md.getBestRowIdentifier(this.conn.getCatalog(), null, "returnTypesTest", DatabaseMetaData.bestRowSession, false);
-		
-		int[] types = new int[] { 
-				Types.SMALLINT, // 1.  SCOPE short => actual scope of result
-				Types.CHAR,     // 2. COLUMN_NAME String => column name
-				Types.INTEGER,  // 3. DATA_TYPE int => SQL data type from java.sql.Types
-				Types.CHAR,     // 4. TYPE_NAME String => Data source dependent type name, for a UDT the type name is fully qualified
-				Types.INTEGER,  // 5. COLUMN_SIZE int => precision
-				Types.INTEGER,  // 6. BUFFER_LENGTH int => not used
+
+		// Bug#44862 - getBestRowIdentifier does not return resultset as per
+		// JDBC API specifications
+		this.rs = md.getBestRowIdentifier(this.conn.getCatalog(), null,
+				"returnTypesTest", DatabaseMetaData.bestRowSession, false);
+
+		int[] types = new int[] { Types.SMALLINT, // 1. SCOPE short => actual
+													// scope of result
+				Types.CHAR, // 2. COLUMN_NAME String => column name
+				Types.INTEGER, // 3. DATA_TYPE int => SQL data type from
+								// java.sql.Types
+				Types.CHAR, // 4. TYPE_NAME String => Data source dependent type
+							// name, for a UDT the type name is fully qualified
+				Types.INTEGER, // 5. COLUMN_SIZE int => precision
+				Types.INTEGER, // 6. BUFFER_LENGTH int => not used
 				Types.SMALLINT, // 7. DECIMAL_DIGITS short => scale
-				Types.SMALLINT, // 8. PSEUDO_COLUMN short => is this a pseudo column like an Oracle ROWID
-		}; 
-		
+				Types.SMALLINT, // 8. PSEUDO_COLUMN short => is this a pseudo
+								// column like an Oracle ROWID
+		};
+
 		checkTypes(this.rs, types);
-		
-		// Bug#44683 - getVersionColumns does not return resultset as per JDBC API specifications
-		this.rs = md.getVersionColumns(this.conn.getCatalog(), null, "returnTypesTest");
-		
-		types = new int[] {
-				Types.SMALLINT, // SCOPE short => is not used
-				Types.CHAR,     // COLUMN_NAME String => column name
-				Types.INTEGER,  // DATA_TYPE int => SQL data type from java.sql.Types
-				Types.CHAR,     // TYPE_NAME String => Data source-dependent type name
-				Types.INTEGER,  // COLUMN_SIZE int => precision
-				Types.INTEGER,  // BUFFER_LENGTH int => length of column value in bytes
+
+		// Bug#44683 - getVersionColumns does not return resultset as per JDBC
+		// API specifications
+		this.rs = md.getVersionColumns(this.conn.getCatalog(), null,
+				"returnTypesTest");
+
+		types = new int[] { Types.SMALLINT, // SCOPE short => is not used
+				Types.CHAR, // COLUMN_NAME String => column name
+				Types.INTEGER, // DATA_TYPE int => SQL data type from
+								// java.sql.Types
+				Types.CHAR, // TYPE_NAME String => Data source-dependent type
+							// name
+				Types.INTEGER, // COLUMN_SIZE int => precision
+				Types.INTEGER, // BUFFER_LENGTH int => length of column value in
+								// bytes
 				Types.SMALLINT, // DECIMAL_DIGITS short => scale
-				Types.SMALLINT  // PSEUDO_COLUMN short => whether this is pseudo column like an Oracle ROWID 	
+				Types.SMALLINT // PSEUDO_COLUMN short => whether this is pseudo
+								// column like an Oracle ROWID
 		};
-		
-		checkTypes(this.rs, types);
-		
-		// Bug#44865 - getColumns does not return resultset as per JDBC API specifications
-		this.rs = md.getColumns(this.conn.getCatalog(), null, "returnTypesTest", "foo");
-		
-		types = new int[] {
-				Types.CHAR,     //  1. TABLE_CAT String => table catalog (may be null)
-				Types.CHAR,     //  2. TABLE_SCHEM String => table schema (may be null)
-				Types.CHAR,     //  3. TABLE_NAME String => table name
-				Types.CHAR,     //  4. COLUMN_NAME String => column name
-				Types.INTEGER,  //  5. DATA_TYPE int => SQL type from java.sql.Types
-				Types.CHAR,     //  6. TYPE_NAME String => Data source dependent type name, for a UDT the type name is fully qualified
-				Types.INTEGER,  //  7. COLUMN_SIZE int => column size. For char or date types this is the maximum number of characters, for numeric or decimal types this is precision.
-				Types.INTEGER,  //  8. BUFFER_LENGTH is not used.
-				Types.INTEGER,  //  9. DECIMAL_DIGITS int => the number of fractional digits
-				Types.INTEGER,  // 10. NUM_PREC_RADIX int => Radix (typically either 10 or 2)
-				Types.INTEGER,  // 11. NULLABLE int => is NULL allowed.
-				Types.CHAR,     // 12. REMARKS String => comment describing column (may be null)
-				Types.CHAR,     // 13. COLUMN_DEF String => default value (may be null)
-				Types.INTEGER,  // 14. SQL_DATA_TYPE int => unused
-				Types.INTEGER,  // 15. SQL_DATETIME_SUB int => unused
-				Types.INTEGER,  // 16. CHAR_OCTET_LENGTH int => for char types the maximum number of bytes in the column
-				Types.INTEGER,  // 17. ORDINAL_POSITION int => index of column in table (starting at 1)
-				Types.CHAR,     // 18. IS_NULLABLE String => "NO" means column definitely does not allow NULL values; "YES" means the column might allow NULL values. An empty string means nobody knows.
-				Types.CHAR,     // 19. SCOPE_CATLOG String => catalog of table that is the scope of a reference attribute (null if DATA_TYPE isn't REF)
-				Types.CHAR,     // 20. SCOPE_SCHEMA String => schema of table that is the scope of a reference attribute (null if the DATA_TYPE isn't REF)
-				Types.CHAR,     // 21. SCOPE_TABLE String => table name that this the scope of a reference attribure (null if the DATA_TYPE isn't REF)
-				Types.SMALLINT, // 22. SOURCE_DATA_TYPE short => source type of a distinct type or user-generated Ref type, SQL type from java.sql.Types (null if DATA_TYPE isn't DISTINCT or user-generated REF) 	
-				Types.CHAR, // 23. IS_AUTOINCREMENT String => Indicates whether this column is auto incremented 
-		};
-		
+
 		checkTypes(this.rs, types);
 
-		// Bug#44868 - getTypeInfo does not return resultset as per JDBC API specifications
+		// Bug#44865 - getColumns does not return resultset as per JDBC API
+		// specifications
+		this.rs = md.getColumns(this.conn.getCatalog(), null,
+				"returnTypesTest", "foo");
+
+		types = new int[] { Types.CHAR, // 1. TABLE_CAT String => table catalog
+										// (may be null)
+				Types.CHAR, // 2. TABLE_SCHEM String => table schema (may be
+							// null)
+				Types.CHAR, // 3. TABLE_NAME String => table name
+				Types.CHAR, // 4. COLUMN_NAME String => column name
+				Types.INTEGER, // 5. DATA_TYPE int => SQL type from
+								// java.sql.Types
+				Types.CHAR, // 6. TYPE_NAME String => Data source dependent type
+							// name, for a UDT the type name is fully qualified
+				Types.INTEGER, // 7. COLUMN_SIZE int => column size. For char or
+								// date types this is the maximum number of
+								// characters, for numeric or decimal types this
+								// is precision.
+				Types.INTEGER, // 8. BUFFER_LENGTH is not used.
+				Types.INTEGER, // 9. DECIMAL_DIGITS int => the number of
+								// fractional digits
+				Types.INTEGER, // 10. NUM_PREC_RADIX int => Radix (typically
+								// either 10 or 2)
+				Types.INTEGER, // 11. NULLABLE int => is NULL allowed.
+				Types.CHAR, // 12. REMARKS String => comment describing column
+							// (may be null)
+				Types.CHAR, // 13. COLUMN_DEF String => default value (may be
+							// null)
+				Types.INTEGER, // 14. SQL_DATA_TYPE int => unused
+				Types.INTEGER, // 15. SQL_DATETIME_SUB int => unused
+				Types.INTEGER, // 16. CHAR_OCTET_LENGTH int => for char types
+								// the maximum number of bytes in the column
+				Types.INTEGER, // 17. ORDINAL_POSITION int => index of column in
+								// table (starting at 1)
+				Types.CHAR, // 18. IS_NULLABLE String => "NO" means column
+							// definitely does not allow NULL values; "YES"
+							// means the column might allow NULL values. An
+							// empty string means nobody knows.
+				Types.CHAR, // 19. SCOPE_CATLOG String => catalog of table that
+							// is the scope of a reference attribute (null if
+							// DATA_TYPE isn't REF)
+				Types.CHAR, // 20. SCOPE_SCHEMA String => schema of table that
+							// is the scope of a reference attribute (null if
+							// the DATA_TYPE isn't REF)
+				Types.CHAR, // 21. SCOPE_TABLE String => table name that this
+							// the scope of a reference attribure (null if the
+							// DATA_TYPE isn't REF)
+				Types.SMALLINT, // 22. SOURCE_DATA_TYPE short => source type of
+								// a distinct type or user-generated Ref type,
+								// SQL type from java.sql.Types (null if
+								// DATA_TYPE isn't DISTINCT or user-generated
+								// REF)
+				Types.CHAR, // 23. IS_AUTOINCREMENT String => Indicates whether
+							// this column is auto incremented
+		};
+
+		checkTypes(this.rs, types);
+
+		// Bug#44868 - getTypeInfo does not return resultset as per JDBC API
+		// specifications
 		this.rs = md.getTypeInfo();
-		
-		types = new int[] {
-			Types.CHAR,     //  1. TYPE_NAME String => Type name
-			Types.INTEGER,  //  2. DATA_TYPE int => SQL data type from java.sql.Types
-			Types.INTEGER,  //  3. PRECISION int => maximum precision
-			Types.CHAR,     //  4. LITERAL_PREFIX String => prefix used to quote a literal (may be null)
-			Types.CHAR,     //  5. LITERAL_SUFFIX String => suffix used to quote a literal (may be null)
-			Types.CHAR,     //  6. CREATE_PARAMS String => parameters used in creating the type (may be null)
-			Types.SMALLINT, //  7. NULLABLE short => can you use NULL for this type.
-			Types.BOOLEAN,  //  8. CASE_SENSITIVE boolean=> is it case sensitive.
-			Types.SMALLINT, //  9. SEARCHABLE short => can you use "WHERE" based on this type:
-			Types.BOOLEAN,  // 10. UNSIGNED_ATTRIBUTE boolean => is it unsigned.
-			Types.BOOLEAN,  // 11. FIXED_PREC_SCALE boolean => can it be a money value.
-			Types.BOOLEAN,  // 12. AUTO_INCREMENT boolean => can it be used for an auto-increment value.
-			Types.CHAR,     // 13. LOCAL_TYPE_NAME String => localized version of type name (may be null)
-			Types.SMALLINT, // 14. MINIMUM_SCALE short => minimum scale supported
-			Types.SMALLINT, // 15. MAXIMUM_SCALE short => maximum scale supported
-			Types.INTEGER,  // 16. SQL_DATA_TYPE int => unused
-			Types.INTEGER,  // 17. SQL_DATETIME_SUB int => unused
-			Types.INTEGER   // 18. NUM_PREC_RADIX int => usually 2 or 10 
-		};
-		
-		checkTypes(this.rs, types);
-		
-		// Bug#44869 - getIndexInfo does not return resultset as per JDBC API specifications
-		this.rs = md.getIndexInfo(this.conn.getCatalog(), null, "returnTypesTest", false, false);
 
-		types = new int[] {
-			Types.CHAR,     //  1. TABLE_CAT String => table catalog (may be null)
-			Types.CHAR,     //  2. TABLE_SCHEM String => table schema (may be null)
-			Types.CHAR,     //  3. TABLE_NAME String => table name
-			Types.BOOLEAN,  //  4. NON_UNIQUE boolean => Can index values be non-unique. false when TYPE is tableIndexStatistic
-			Types.CHAR,     //  5. INDEX_QUALIFIER String => index catalog (may be null); null when TYPE is tableIndexStatistic
-			Types.CHAR,     //  6. INDEX_NAME String => index name; null when TYPE is tableIndexStatistic
-			Types.SMALLINT, //  7. TYPE short => index type:
-			Types.SMALLINT, //  8. ORDINAL_POSITION short => column sequence number within index; zero when TYPE is tableIndexStatistic
-			Types.CHAR,     //  9. COLUMN_NAME String => column name; null when TYPE is tableIndexStatistic
-			Types.CHAR,     // 10. ASC_OR_DESC String => column sort sequence, "A" => ascending, "D" => descending, may be null if sort sequence is not supported; null when TYPE is tableIndexStatistic
-			Types.INTEGER,  // 11. CARDINALITY int => When TYPE is tableIndexStatistic, then this is the number of rows in the table; otherwise, it is the number of unique values in the index.
-			Types.INTEGER,  // 12. PAGES int => When TYPE is tableIndexStatisic then this is the number of pages used for the table, otherwise it is the number of pages used for the current index.
-			Types.CHAR      // 13. FILTER_CONDITION String => Filter condition, if any. (may be null) 	
+		types = new int[] { Types.CHAR, // 1. TYPE_NAME String => Type name
+				Types.INTEGER, // 2. DATA_TYPE int => SQL data type from
+								// java.sql.Types
+				Types.INTEGER, // 3. PRECISION int => maximum precision
+				Types.CHAR, // 4. LITERAL_PREFIX String => prefix used to quote
+							// a literal (may be null)
+				Types.CHAR, // 5. LITERAL_SUFFIX String => suffix used to quote
+							// a literal (may be null)
+				Types.CHAR, // 6. CREATE_PARAMS String => parameters used in
+							// creating the type (may be null)
+				Types.SMALLINT, // 7. NULLABLE short => can you use NULL for
+								// this type.
+				Types.BOOLEAN, // 8. CASE_SENSITIVE boolean=> is it case
+								// sensitive.
+				Types.SMALLINT, // 9. SEARCHABLE short => can you use "WHERE"
+								// based on this type:
+				Types.BOOLEAN, // 10. UNSIGNED_ATTRIBUTE boolean => is it
+								// unsigned.
+				Types.BOOLEAN, // 11. FIXED_PREC_SCALE boolean => can it be a
+								// money value.
+				Types.BOOLEAN, // 12. AUTO_INCREMENT boolean => can it be used
+								// for an auto-increment value.
+				Types.CHAR, // 13. LOCAL_TYPE_NAME String => localized version
+							// of type name (may be null)
+				Types.SMALLINT, // 14. MINIMUM_SCALE short => minimum scale
+								// supported
+				Types.SMALLINT, // 15. MAXIMUM_SCALE short => maximum scale
+								// supported
+				Types.INTEGER, // 16. SQL_DATA_TYPE int => unused
+				Types.INTEGER, // 17. SQL_DATETIME_SUB int => unused
+				Types.INTEGER // 18. NUM_PREC_RADIX int => usually 2 or 10
 		};
-		
+
 		checkTypes(this.rs, types);
 
-		// Bug#44867 - getImportedKeys/exportedKeys/crossReference doesn't have correct type for DEFERRABILITY
-		this.rs = md.getImportedKeys(this.conn.getCatalog(), null, "returnTypesTest");
-		
-		types = new int[] {
-			Types.CHAR,     // PKTABLE_CAT String => primary key table catalog being imported (may be null)
-			Types.CHAR,     // PKTABLE_SCHEM String => primary key table schema being imported (may be null)
-			Types.CHAR,     // PKTABLE_NAME String => primary key table name being imported
-			Types.CHAR,     // PKCOLUMN_NAME String => primary key column name being imported
-			Types.CHAR,     // FKTABLE_CAT String => foreign key table catalog (may be null)
-			Types.CHAR,     // FKTABLE_SCHEM String => foreign key table schema (may be null)
-			Types.CHAR,     // FKTABLE_NAME String => foreign key table name
-			Types.CHAR,     // FKCOLUMN_NAME String => foreign key column name
-			Types.SMALLINT, // KEY_SEQ short => sequence number within a foreign key
-			Types.SMALLINT, // UPDATE_RULE short => What happens to a foreign key when the primary key is updated:
-			Types.SMALLINT, // DELETE_RULE short => What happens to the foreign key when primary is deleted
-			Types.CHAR,     // FK_NAME String => foreign key name (may be null)
-			Types.CHAR,     // PK_NAME String => primary key name (may be null)
-			Types.SMALLINT  // DEFERRABILITY short => can the evaluation of foreign key constraints be deferred until commit 
+		// Bug#44869 - getIndexInfo does not return resultset as per JDBC API
+		// specifications
+		this.rs = md.getIndexInfo(this.conn.getCatalog(), null,
+				"returnTypesTest", false, false);
+
+		types = new int[] { Types.CHAR, // 1. TABLE_CAT String => table catalog
+										// (may be null)
+				Types.CHAR, // 2. TABLE_SCHEM String => table schema (may be
+							// null)
+				Types.CHAR, // 3. TABLE_NAME String => table name
+				Types.BOOLEAN, // 4. NON_UNIQUE boolean => Can index values be
+								// non-unique. false when TYPE is
+								// tableIndexStatistic
+				Types.CHAR, // 5. INDEX_QUALIFIER String => index catalog (may
+							// be null); null when TYPE is tableIndexStatistic
+				Types.CHAR, // 6. INDEX_NAME String => index name; null when
+							// TYPE is tableIndexStatistic
+				Types.SMALLINT, // 7. TYPE short => index type:
+				Types.SMALLINT, // 8. ORDINAL_POSITION short => column sequence
+								// number within index; zero when TYPE is
+								// tableIndexStatistic
+				Types.CHAR, // 9. COLUMN_NAME String => column name; null when
+							// TYPE is tableIndexStatistic
+				Types.CHAR, // 10. ASC_OR_DESC String => column sort sequence,
+							// "A" => ascending, "D" => descending, may be null
+							// if sort sequence is not supported; null when TYPE
+							// is tableIndexStatistic
+				Types.INTEGER, // 11. CARDINALITY int => When TYPE is
+								// tableIndexStatistic, then this is the number
+								// of rows in the table; otherwise, it is the
+								// number of unique values in the index.
+				Types.INTEGER, // 12. PAGES int => When TYPE is
+								// tableIndexStatisic then this is the number of
+								// pages used for the table, otherwise it is the
+								// number of pages used for the current index.
+				Types.CHAR // 13. FILTER_CONDITION String => Filter condition,
+							// if any. (may be null)
 		};
-		
+
 		checkTypes(this.rs, types);
-		
-		this.rs = md.getExportedKeys(this.conn.getCatalog(), null, "returnTypesTest");
-		
-		types = new int[] {
-			Types.CHAR,     // PKTABLE_CAT String => primary key table catalog being imported (may be null)
-			Types.CHAR,     // PKTABLE_SCHEM String => primary key table schema being imported (may be null)
-			Types.CHAR,     // PKTABLE_NAME String => primary key table name being imported
-			Types.CHAR,     // PKCOLUMN_NAME String => primary key column name being imported
-			Types.CHAR,     // FKTABLE_CAT String => foreign key table catalog (may be null)
-			Types.CHAR,     // FKTABLE_SCHEM String => foreign key table schema (may be null)
-			Types.CHAR,     // FKTABLE_NAME String => foreign key table name
-			Types.CHAR,     // FKCOLUMN_NAME String => foreign key column name
-			Types.SMALLINT, // KEY_SEQ short => sequence number within a foreign key
-			Types.SMALLINT, // UPDATE_RULE short => What happens to a foreign key when the primary key is updated:
-			Types.SMALLINT, // DELETE_RULE short => What happens to the foreign key when primary is deleted
-			Types.CHAR,     // FK_NAME String => foreign key name (may be null)
-			Types.CHAR,     // PK_NAME String => primary key name (may be null)
-			Types.SMALLINT  // DEFERRABILITY short => can the evaluation of foreign key constraints be deferred until commit 
+
+		// Bug#44867 - getImportedKeys/exportedKeys/crossReference doesn't have
+		// correct type for DEFERRABILITY
+		this.rs = md.getImportedKeys(this.conn.getCatalog(), null,
+				"returnTypesTest");
+
+		types = new int[] { Types.CHAR, // PKTABLE_CAT String => primary key
+										// table catalog being imported (may be
+										// null)
+				Types.CHAR, // PKTABLE_SCHEM String => primary key table schema
+							// being imported (may be null)
+				Types.CHAR, // PKTABLE_NAME String => primary key table name
+							// being imported
+				Types.CHAR, // PKCOLUMN_NAME String => primary key column name
+							// being imported
+				Types.CHAR, // FKTABLE_CAT String => foreign key table catalog
+							// (may be null)
+				Types.CHAR, // FKTABLE_SCHEM String => foreign key table schema
+							// (may be null)
+				Types.CHAR, // FKTABLE_NAME String => foreign key table name
+				Types.CHAR, // FKCOLUMN_NAME String => foreign key column name
+				Types.SMALLINT, // KEY_SEQ short => sequence number within a
+								// foreign key
+				Types.SMALLINT, // UPDATE_RULE short => What happens to a
+								// foreign key when the primary key is updated:
+				Types.SMALLINT, // DELETE_RULE short => What happens to the
+								// foreign key when primary is deleted
+				Types.CHAR, // FK_NAME String => foreign key name (may be null)
+				Types.CHAR, // PK_NAME String => primary key name (may be null)
+				Types.SMALLINT // DEFERRABILITY short => can the evaluation of
+								// foreign key constraints be deferred until
+								// commit
 		};
-		
+
 		checkTypes(this.rs, types);
-		
-		this.rs = md.getCrossReference(this.conn.getCatalog(), null, "returnTypesTest", this.conn.getCatalog(), null, "bar");
-		
-		types = new int[] {
-			Types.CHAR,     // PKTABLE_CAT String => primary key table catalog being imported (may be null)
-			Types.CHAR,     // PKTABLE_SCHEM String => primary key table schema being imported (may be null)
-			Types.CHAR,     // PKTABLE_NAME String => primary key table name being imported
-			Types.CHAR,     // PKCOLUMN_NAME String => primary key column name being imported
-			Types.CHAR,     // FKTABLE_CAT String => foreign key table catalog (may be null)
-			Types.CHAR,     // FKTABLE_SCHEM String => foreign key table schema (may be null)
-			Types.CHAR,     // FKTABLE_NAME String => foreign key table name
-			Types.CHAR,     // FKCOLUMN_NAME String => foreign key column name
-			Types.SMALLINT, // KEY_SEQ short => sequence number within a foreign key
-			Types.SMALLINT, // UPDATE_RULE short => What happens to a foreign key when the primary key is updated:
-			Types.SMALLINT, // DELETE_RULE short => What happens to the foreign key when primary is deleted
-			Types.CHAR,     // FK_NAME String => foreign key name (may be null)
-			Types.CHAR,     // PK_NAME String => primary key name (may be null)
-			Types.SMALLINT  // DEFERRABILITY short => can the evaluation of foreign key constraints be deferred until commit 
+
+		this.rs = md.getExportedKeys(this.conn.getCatalog(), null,
+				"returnTypesTest");
+
+		types = new int[] { Types.CHAR, // PKTABLE_CAT String => primary key
+										// table catalog being imported (may be
+										// null)
+				Types.CHAR, // PKTABLE_SCHEM String => primary key table schema
+							// being imported (may be null)
+				Types.CHAR, // PKTABLE_NAME String => primary key table name
+							// being imported
+				Types.CHAR, // PKCOLUMN_NAME String => primary key column name
+							// being imported
+				Types.CHAR, // FKTABLE_CAT String => foreign key table catalog
+							// (may be null)
+				Types.CHAR, // FKTABLE_SCHEM String => foreign key table schema
+							// (may be null)
+				Types.CHAR, // FKTABLE_NAME String => foreign key table name
+				Types.CHAR, // FKCOLUMN_NAME String => foreign key column name
+				Types.SMALLINT, // KEY_SEQ short => sequence number within a
+								// foreign key
+				Types.SMALLINT, // UPDATE_RULE short => What happens to a
+								// foreign key when the primary key is updated:
+				Types.SMALLINT, // DELETE_RULE short => What happens to the
+								// foreign key when primary is deleted
+				Types.CHAR, // FK_NAME String => foreign key name (may be null)
+				Types.CHAR, // PK_NAME String => primary key name (may be null)
+				Types.SMALLINT // DEFERRABILITY short => can the evaluation of
+								// foreign key constraints be deferred until
+								// commit
 		};
-		
+
+		checkTypes(this.rs, types);
+
+		this.rs = md.getCrossReference(this.conn.getCatalog(), null,
+				"returnTypesTest", this.conn.getCatalog(), null, "bar");
+
+		types = new int[] { Types.CHAR, // PKTABLE_CAT String => primary key
+										// table catalog being imported (may be
+										// null)
+				Types.CHAR, // PKTABLE_SCHEM String => primary key table schema
+							// being imported (may be null)
+				Types.CHAR, // PKTABLE_NAME String => primary key table name
+							// being imported
+				Types.CHAR, // PKCOLUMN_NAME String => primary key column name
+							// being imported
+				Types.CHAR, // FKTABLE_CAT String => foreign key table catalog
+							// (may be null)
+				Types.CHAR, // FKTABLE_SCHEM String => foreign key table schema
+							// (may be null)
+				Types.CHAR, // FKTABLE_NAME String => foreign key table name
+				Types.CHAR, // FKCOLUMN_NAME String => foreign key column name
+				Types.SMALLINT, // KEY_SEQ short => sequence number within a
+								// foreign key
+				Types.SMALLINT, // UPDATE_RULE short => What happens to a
+								// foreign key when the primary key is updated:
+				Types.SMALLINT, // DELETE_RULE short => What happens to the
+								// foreign key when primary is deleted
+				Types.CHAR, // FK_NAME String => foreign key name (may be null)
+				Types.CHAR, // PK_NAME String => primary key name (may be null)
+				Types.SMALLINT // DEFERRABILITY short => can the evaluation of
+								// foreign key constraints be deferred until
+								// commit
+		};
+
 		checkTypes(this.rs, types);
 	}
-	
+
 	private final static Map TYPES_MAP = new HashMap();
-	
+
 	static {
 		Field[] typeFields = Types.class.getFields();
-		
+
 		for (int i = 0; i < typeFields.length; i++) {
-			System.out.println(typeFields[i].getName() + " -> " + typeFields[i].getType().getClass());
-			
+			System.out.println(typeFields[i].getName() + " -> "
+					+ typeFields[i].getType().getClass());
+
 			if (Modifier.isStatic(typeFields[i].getModifiers())) {
 				try {
-					TYPES_MAP.put(new Integer(typeFields[i].getInt(null)), "java.sql.Types." + typeFields[i].getName());
+					TYPES_MAP.put(new Integer(typeFields[i].getInt(null)),
+							"java.sql.Types." + typeFields[i].getName());
 				} catch (IllegalArgumentException e) {
 					// ignore
 				} catch (IllegalAccessException e) {
@@ -2517,78 +2635,84 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			}
 		}
 	}
-	
+
 	private void checkTypes(ResultSet rsToCheck, int[] types) throws Exception {
 		ResultSetMetaData rsmd = rsToCheck.getMetaData();
 		assertEquals(types.length, rsmd.getColumnCount());
 		for (int i = 0; i < types.length; i++) {
-			String expectedType = (String)TYPES_MAP.get(new Integer(types[i]));
-			String actualType = (String)TYPES_MAP.get(new Integer(rsmd.getColumnType(i + 1)));
+			String expectedType = (String) TYPES_MAP.get(new Integer(types[i]));
+			String actualType = (String) TYPES_MAP.get(new Integer(rsmd
+					.getColumnType(i + 1)));
 			assertNotNull(expectedType);
 			assertNotNull(actualType);
-			assertEquals("Unexpected type in column " + (i + 1), expectedType, actualType);
+			assertEquals("Unexpected type in column " + (i + 1), expectedType,
+					actualType);
 		}
 	}
 
 	/**
-	 * Bug #43714 - useInformationSchema with DatabaseMetaData.getExportedKeys() throws exception
+	 * Bug #43714 - useInformationSchema with DatabaseMetaData.getExportedKeys()
+	 * throws exception
 	 */
 	public void testBug43714() throws Exception {
 		Connection c_IS = null;
 		try {
 			c_IS = getConnectionWithProps("useInformationSchema=true");
-    		DatabaseMetaData dbmd = c_IS.getMetaData();
-    		rs = dbmd.getExportedKeys("x", "y", "z");
+			DatabaseMetaData dbmd = c_IS.getMetaData();
+			rs = dbmd.getExportedKeys("x", "y", "z");
 		} finally {
 			try {
 				c_IS.close();
-			} catch (SQLException ex) {}
-			closeMemberJDBCResources();
+			} catch (SQLException ex) {
+			}
 		}
 	}
-	
+
 	/**
-	 * Bug #41269 - DatabaseMetadata.getProcedureColumns() returns wrong value for column length
+	 * Bug #41269 - DatabaseMetadata.getProcedureColumns() returns wrong value
+	 * for column length
 	 */
 	public void testBug41269() throws Exception {
 		createProcedure("bug41269",
 				"(in param1 int, out result varchar(197)) BEGIN select 1, ''; END");
-		try {
-			ResultSet procMD = this.conn.getMetaData()
-							.getProcedureColumns(null, null, "bug41269", "%");
-			assertTrue(procMD.next());
-			assertEquals("Int param length", 10, procMD.getInt(9));
-			assertTrue(procMD.next());
-			assertEquals("String param length", 197, procMD.getInt(9));
-			assertFalse(procMD.next());
-		} finally {
-			closeMemberJDBCResources();
-		}
+
+		ResultSet procMD = this.conn.getMetaData().getProcedureColumns(null,
+				null, "bug41269", "%");
+		assertTrue(procMD.next());
+		assertEquals("Int param length", 10, procMD.getInt(9));
+		assertTrue(procMD.next());
+		assertEquals("String param length", 197, procMD.getInt(9));
+		assertFalse(procMD.next());
+
 	}
-	
+
 	public void testBug31187() throws Exception {
 		createTable("testBug31187", "(field1 int)");
-		
+
 		Connection nullCatConn = getConnectionWithProps("nullCatalogMeansCurrent=false");
 		DatabaseMetaData dbmd = nullCatConn.getMetaData();
 		ResultSet dbTblCols = dbmd.getColumns(null, null, "testBug31187", "%");
-		
+
 		boolean found = false;
-		
+
 		while (dbTblCols.next()) {
 			String catalog = dbTblCols.getString("TABLE_CAT");
 			String table = dbTblCols.getString("TABLE_NAME");
 			boolean useLowerCaseTableNames = dbmd.storesLowerCaseIdentifiers();
-			
-			if (catalog.equals(nullCatConn.getCatalog()) && 
-					(((useLowerCaseTableNames && "testBug31187".equalsIgnoreCase(table)) || "testBug31187".equals(table)))) {
+
+			if (catalog.equals(nullCatConn.getCatalog())
+					&& (((useLowerCaseTableNames && "testBug31187"
+							.equalsIgnoreCase(table)) || "testBug31187"
+							.equals(table)))) {
 				found = true;
 			}
 		}
-		
-		assertTrue("Didn't find any columns for table named 'testBug31187' in database " + this.conn.getCatalog(), found);
+
+		assertTrue(
+				"Didn't find any columns for table named 'testBug31187' in database "
+						+ this.conn.getCatalog(), found);
 	}
-	
+
 	public void testBug44508() throws Exception {
 		DatabaseMetaData dbmd = this.conn.getMetaData();
 
@@ -2598,9 +2722,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		assertEquals("TYPE_CAT", rsmd.getColumnName(1)); // Gives TABLE_CAT
 		assertEquals("TYPE_SCHEM", rsmd.getColumnName(2)); // Gives TABLE_SCHEM
 	}
-	
+
 	/**
-	 * Tests fix for BUG#52167 - Can't parse parameter list with special characters inside
+	 * Tests fix for BUG#52167 - Can't parse parameter list with special
+	 * characters inside
 	 * 
 	 * @throws Exception
 	 */
@@ -2610,24 +2735,20 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 
 		// DatabaseMetaData.java (~LN 1730)
-		// +	//Bug#52167, tokenizer will break if declaration contains special characters like \n
-		// +	declaration = declaration.replaceAll("[\\t\\n\\x0B\\f\\r]", " ");		
-		//	StringTokenizer declarationTok = new StringTokenizer(
-		//				declaration, " \t");
-		try {
-			createProcedure(
-					"testBug52167",
-					"(in _par1 decimal( 10 , 2 ) , in _par2\n varchar( 4 )) BEGIN select 1; END");
+		// + //Bug#52167, tokenizer will break if declaration contains special
+		// characters like \n
+		// + declaration = declaration.replaceAll("[\\t\\n\\x0B\\f\\r]", " ");
+		// StringTokenizer declarationTok = new StringTokenizer(
+		// declaration, " \t");
+		createProcedure("testBug52167",
+				"(in _par1 decimal( 10 , 2 ) , in _par2\n varchar( 4 )) BEGIN select 1; END");
 
-			this.conn.prepareCall("{call testBug52167(?,?)}").close();
-		} finally {
-			closeMemberJDBCResources();
-		}
+		this.conn.prepareCall("{call testBug52167(?,?)}").close();
 	}
 
 	/**
-	 * Tests fix for BUG#51912 - Passing NULL as cat. param to getProcedureColumns 
-	 * with nullCatalogMeansCurrent = false
+	 * Tests fix for BUG#51912 - Passing NULL as cat. param to
+	 * getProcedureColumns with nullCatalogMeansCurrent = false
 	 * 
 	 * @throws Exception
 	 *             if the test fails.
@@ -2640,19 +2761,18 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		Connection overrideConn = null;
 		try {
 			Properties props = new Properties();
-			props.setProperty("nullCatalogMeansCurrent","false");
+			props.setProperty("nullCatalogMeansCurrent", "false");
 			overrideConn = getConnectionWithProps(props);
 
-        	DatabaseMetaData dbmd = overrideConn.getMetaData();
-            this.rs = dbmd.getProcedureColumns(null, null, "%", null);
-            this.rs.close();
-            
+			DatabaseMetaData dbmd = overrideConn.getMetaData();
+			this.rs = dbmd.getProcedureColumns(null, null, "%", null);
+			this.rs.close();
+
 		} finally {
 			if (overrideConn != null) {
 				overrideConn.close();
 			}
-			closeMemberJDBCResources();
 		}
 	}
-	
+
 }

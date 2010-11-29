@@ -99,7 +99,6 @@ public class ConnectionTest extends BaseTestCase {
 		String currentCatalog = this.conn.getCatalog();
 		this.conn.setCatalog(currentCatalog);
 		assertTrue(currentCatalog.equals(this.conn.getCatalog()));
-		closeMemberJDBCResources();
 	}
 
 	/**
@@ -127,8 +126,8 @@ public class ConnectionTest extends BaseTestCase {
 					clusterStmt
 							.executeQuery("DROP TABLE IF EXISTS testClusterConn");
 					clusterStmt
-							.executeQuery("CREATE TABLE testClusterConn (field1 INT) " +
-									getTableTypeDecl() + " =ndbcluster");
+							.executeQuery("CREATE TABLE testClusterConn (field1 INT) "
+									+ getTableTypeDecl() + " =ndbcluster");
 					clusterStmt
 							.executeQuery("INSERT INTO testClusterConn VALUES (1)");
 
@@ -178,8 +177,6 @@ public class ConnectionTest extends BaseTestCase {
 					if (clusterConn != null) {
 						clusterConn.close();
 					}
-
-					closeMemberJDBCResources();
 				}
 			}
 		}
@@ -189,7 +186,8 @@ public class ConnectionTest extends BaseTestCase {
 	 * DOCUMENT ME!
 	 * 
 	 * @throws Exception
-	 *         Old test was passing due to http://bugs.mysql.com/bug.php?id=989 which is fixed for 5.5+
+	 *             Old test was passing due to
+	 *             http://bugs.mysql.com/bug.php?id=989 which is fixed for 5.5+
 	 */
 	public void testDeadlockDetection() throws Exception {
 		try {
@@ -205,15 +203,16 @@ public class ConnectionTest extends BaseTestCase {
 
 			Properties props = new Properties();
 			props.setProperty("includeInnodbStatusInDeadlockExceptions", "true");
-			
+
 			Connection deadlockConn = getConnectionWithProps(props);
 			deadlockConn.setAutoCommit(false);
 
 			try {
 				this.conn.createStatement().executeQuery(
 						"SELECT * FROM t1 WHERE id=0 FOR UPDATE");
-				
-				// The following query should hang because con1 is locking the page
+
+				// The following query should hang because con1 is locking the
+				// page
 				deadlockConn.createStatement().executeUpdate(
 						"UPDATE t1 SET x=2 WHERE id=0");
 			} finally {
@@ -222,7 +221,7 @@ public class ConnectionTest extends BaseTestCase {
 					deadlockConn.commit();
 				}
 			}
-			
+
 			Thread.sleep(timeoutSecs * 2 * 1000);
 		} catch (SQLException sqlEx) {
 			System.out
@@ -237,15 +236,16 @@ public class ConnectionTest extends BaseTestCase {
 			assertTrue(SQLError.SQL_STATE_DEADLOCK.equals(sqlEx.getSQLState()));
 			assertTrue(sqlEx.getErrorCode() == 1205);
 			// Make sure INNODB Status is getting dumped into error message
-			
+
 			if (sqlEx.getMessage().indexOf("PROCESS privilege") != -1) {
 				fail("This test requires user with process privilege");
 			}
 
-			assertTrue("Can't find INNODB MONITOR in:\n\n" + sqlEx.getMessage(), sqlEx.getMessage().indexOf("INNODB MONITOR") != -1);
+			assertTrue(
+					"Can't find INNODB MONITOR in:\n\n" + sqlEx.getMessage(),
+					sqlEx.getMessage().indexOf("INNODB MONITOR") != -1);
 		} finally {
 			this.conn.setAutoCommit(true);
-			closeMemberJDBCResources();
 		}
 	}
 
@@ -257,306 +257,299 @@ public class ConnectionTest extends BaseTestCase {
 	 */
 	public void testCharsets() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
-			try {
-				Properties props = new Properties();
-				props.setProperty("useUnicode", "true");
-				props.setProperty("characterEncoding", "UTF-8");
+			Properties props = new Properties();
+			props.setProperty("useUnicode", "true");
+			props.setProperty("characterEncoding", "UTF-8");
 
-				Connection utfConn = getConnectionWithProps(props);
+			Connection utfConn = getConnectionWithProps(props);
 
-				this.stmt = utfConn.createStatement();
+			this.stmt = utfConn.createStatement();
 
-				createTable("t1", "("
-						+ "comment CHAR(32) ASCII NOT NULL,"
-						+ "koi8_ru_f CHAR(32) CHARACTER SET koi8r NOT NULL"
-						+ ") CHARSET=latin5");
+			createTable("t1", "(" + "comment CHAR(32) ASCII NOT NULL,"
+					+ "koi8_ru_f CHAR(32) CHARACTER SET koi8r NOT NULL"
+					+ ") CHARSET=latin5");
 
-				this.stmt
-						.executeUpdate("ALTER TABLE t1 CHANGE comment comment CHAR(32) CHARACTER SET latin2 NOT NULL");
-				this.stmt
-						.executeUpdate("ALTER TABLE t1 ADD latin5_f CHAR(32) NOT NULL");
-				this.stmt.executeUpdate("ALTER TABLE t1 CHARSET=latin2");
-				this.stmt
-						.executeUpdate("ALTER TABLE t1 ADD latin2_f CHAR(32) NOT NULL");
-				this.stmt
-						.executeUpdate("ALTER TABLE t1 DROP latin2_f, DROP latin5_f");
+			this.stmt
+					.executeUpdate("ALTER TABLE t1 CHANGE comment comment CHAR(32) CHARACTER SET latin2 NOT NULL");
+			this.stmt
+					.executeUpdate("ALTER TABLE t1 ADD latin5_f CHAR(32) NOT NULL");
+			this.stmt.executeUpdate("ALTER TABLE t1 CHARSET=latin2");
+			this.stmt
+					.executeUpdate("ALTER TABLE t1 ADD latin2_f CHAR(32) NOT NULL");
+			this.stmt
+					.executeUpdate("ALTER TABLE t1 DROP latin2_f, DROP latin5_f");
 
-				this.stmt
-						.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment) VALUES ('a','LAT SMALL A')");
-				/*
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('b','LAT SMALL B')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('c','LAT SMALL C')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('d','LAT SMALL D')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('e','LAT SMALL E')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('f','LAT SMALL F')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('g','LAT SMALL G')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('h','LAT SMALL H')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('i','LAT SMALL I')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('j','LAT SMALL J')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('k','LAT SMALL K')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('l','LAT SMALL L')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('m','LAT SMALL M')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('n','LAT SMALL N')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('o','LAT SMALL O')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('p','LAT SMALL P')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('q','LAT SMALL Q')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('r','LAT SMALL R')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('s','LAT SMALL S')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('t','LAT SMALL T')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('u','LAT SMALL U')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('v','LAT SMALL V')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('w','LAT SMALL W')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('x','LAT SMALL X')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('y','LAT SMALL Y')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('z','LAT SMALL Z')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('A','LAT CAPIT A')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('B','LAT CAPIT B')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('C','LAT CAPIT C')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('D','LAT CAPIT D')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('E','LAT CAPIT E')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('F','LAT CAPIT F')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('G','LAT CAPIT G')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('H','LAT CAPIT H')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('I','LAT CAPIT I')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('J','LAT CAPIT J')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('K','LAT CAPIT K')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('L','LAT CAPIT L')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('M','LAT CAPIT M')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('N','LAT CAPIT N')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('O','LAT CAPIT O')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('P','LAT CAPIT P')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('Q','LAT CAPIT Q')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('R','LAT CAPIT R')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('S','LAT CAPIT S')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('T','LAT CAPIT T')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('U','LAT CAPIT U')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('V','LAT CAPIT V')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('W','LAT CAPIT W')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('X','LAT CAPIT X')"); this.stmt.executeUpdate("INSERT
-				 * INTO t1 (koi8_ru_f,comment) VALUES ('Y','LAT CAPIT Y')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES ('Z','LAT CAPIT Z')");
-				 */
+			this.stmt
+					.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment) VALUES ('a','LAT SMALL A')");
+			/*
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('b','LAT SMALL B')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('c','LAT SMALL C')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('d','LAT SMALL D')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('e','LAT SMALL E')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('f','LAT SMALL F')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('g','LAT SMALL G')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('h','LAT SMALL H')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('i','LAT SMALL I')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('j','LAT SMALL J')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('k','LAT SMALL K')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('l','LAT SMALL L')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('m','LAT SMALL M')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('n','LAT SMALL N')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('o','LAT SMALL O')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('p','LAT SMALL P')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('q','LAT SMALL Q')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('r','LAT SMALL R')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('s','LAT SMALL S')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('t','LAT SMALL T')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('u','LAT SMALL U')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('v','LAT SMALL V')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('w','LAT SMALL W')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('x','LAT SMALL X')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('y','LAT SMALL Y')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('z','LAT SMALL Z')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('A','LAT CAPIT A')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('B','LAT CAPIT B')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('C','LAT CAPIT C')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('D','LAT CAPIT D')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('E','LAT CAPIT E')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('F','LAT CAPIT F')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('G','LAT CAPIT G')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('H','LAT CAPIT H')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('I','LAT CAPIT I')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('J','LAT CAPIT J')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('K','LAT CAPIT K')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('L','LAT CAPIT L')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('M','LAT CAPIT M')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('N','LAT CAPIT N')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('O','LAT CAPIT O')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('P','LAT CAPIT P')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('Q','LAT CAPIT Q')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('R','LAT CAPIT R')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('S','LAT CAPIT S')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('T','LAT CAPIT T')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('U','LAT CAPIT U')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('V','LAT CAPIT V')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('W','LAT CAPIT W')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('X','LAT CAPIT X')"); this.stmt.executeUpdate("INSERT
+			 * INTO t1 (koi8_ru_f,comment) VALUES ('Y','LAT CAPIT Y')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES ('Z','LAT CAPIT Z')");
+			 */
 
-				String cyrillicSmallA = "\u0430";
-				this.stmt
-						.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment) VALUES ('"
-								+ cyrillicSmallA + "','CYR SMALL A')");
+			String cyrillicSmallA = "\u0430";
+			this.stmt
+					.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment) VALUES ('"
+							+ cyrillicSmallA + "','CYR SMALL A')");
 
-				/*
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL BE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL VE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL GE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL DE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL IE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL IO')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL ZHE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL ZE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL I')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL KA')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL EL')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL EM')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL EN')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL O')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL PE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL ER')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL ES')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL TE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL U')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL EF')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL HA')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL TSE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL CHE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL SHA')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL SCHA')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL HARD SIGN')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL YERU')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL SOFT SIGN')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL E')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL YU')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR SMALL YA')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT A')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT BE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT VE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT GE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT DE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT IE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT IO')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT ZHE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT ZE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT I')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT KA')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT EL')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT EM')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT EN')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT O')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT PE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT ER')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT ES')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT TE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT U')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT EF')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT HA')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT TSE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT CHE')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT SHA')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT SCHA')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT HARD SIGN')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT YERU')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT SOFT SIGN')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT E')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT YU')");
-				 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
-				 * VALUES (_koi8r'?��','CYR CAPIT YA')");
-				 */
+			/*
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL BE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL VE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL GE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL DE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL IE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL IO')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL ZHE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL ZE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL I')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL KA')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL EL')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL EM')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL EN')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL O')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL PE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL ER')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL ES')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL TE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL U')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL EF')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL HA')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL TSE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL CHE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL SHA')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL SCHA')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL HARD SIGN')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL YERU')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL SOFT SIGN')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL E')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL YU')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR SMALL YA')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT A')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT BE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT VE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT GE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT DE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT IE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT IO')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT ZHE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT ZE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT I')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT KA')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT EL')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT EM')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT EN')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT O')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT PE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT ER')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT ES')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT TE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT U')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT EF')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT HA')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT TSE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT CHE')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT SHA')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT SCHA')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT HARD SIGN')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT YERU')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT SOFT SIGN')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT E')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT YU')");
+			 * this.stmt.executeUpdate("INSERT INTO t1 (koi8_ru_f,comment)
+			 * VALUES (_koi8r'?��','CYR CAPIT YA')");
+			 */
 
-				this.stmt
-						.executeUpdate("ALTER TABLE t1 ADD utf8_f CHAR(32) CHARACTER SET utf8 NOT NULL");
-				this.stmt
-						.executeUpdate("UPDATE t1 SET utf8_f=CONVERT(koi8_ru_f USING utf8)");
-				this.stmt.executeUpdate("SET CHARACTER SET koi8r");
-				// this.stmt.executeUpdate("SET CHARACTER SET UTF8");
-				this.rs = this.stmt.executeQuery("SELECT * FROM t1");
+			this.stmt
+					.executeUpdate("ALTER TABLE t1 ADD utf8_f CHAR(32) CHARACTER SET utf8 NOT NULL");
+			this.stmt
+					.executeUpdate("UPDATE t1 SET utf8_f=CONVERT(koi8_ru_f USING utf8)");
+			this.stmt.executeUpdate("SET CHARACTER SET koi8r");
+			// this.stmt.executeUpdate("SET CHARACTER SET UTF8");
+			this.rs = this.stmt.executeQuery("SELECT * FROM t1");
 
-				ResultSetMetaData rsmd = this.rs.getMetaData();
+			ResultSetMetaData rsmd = this.rs.getMetaData();
 
-				int numColumns = rsmd.getColumnCount();
+			int numColumns = rsmd.getColumnCount();
 
-				for (int i = 0; i < numColumns; i++) {
-					System.out.print(rsmd.getColumnName(i + 1));
-					System.out.print("\t\t");
-				}
-
-				System.out.println();
-
-				while (this.rs.next()) {
-					System.out.println(this.rs.getString(1) + "\t\t"
-							+ this.rs.getString(2) + "\t\t"
-							+ this.rs.getString(3));
-
-					if (this.rs.getString(1).equals("CYR SMALL A")) {
-						this.rs.getString(2);
-					}
-				}
-
-				System.out.println();
-
-				this.stmt.executeUpdate("SET NAMES utf8");
-				this.rs = this.stmt.executeQuery("SELECT _koi8r 0xC1;");
-
-				rsmd = this.rs.getMetaData();
-
-				numColumns = rsmd.getColumnCount();
-
-				for (int i = 0; i < numColumns; i++) {
-					System.out.print(rsmd.getColumnName(i + 1));
-					System.out.print("\t\t");
-				}
-
-				System.out.println();
-
-				while (this.rs.next()) {
-					System.out.println(this.rs.getString(1).equals("\u0430")
-							+ "\t\t");
-					System.out
-							.println(new String(this.rs.getBytes(1), "KOI8_R"));
-
-				}
-
-				char[] c = new char[] { 0xd0b0 };
-
-				System.out.println(new String(c));
-				System.out.println("\u0430");
-			} finally {
-				closeMemberJDBCResources();
+			for (int i = 0; i < numColumns; i++) {
+				System.out.print(rsmd.getColumnName(i + 1));
+				System.out.print("\t\t");
 			}
+
+			System.out.println();
+
+			while (this.rs.next()) {
+				System.out.println(this.rs.getString(1) + "\t\t"
+						+ this.rs.getString(2) + "\t\t" + this.rs.getString(3));
+
+				if (this.rs.getString(1).equals("CYR SMALL A")) {
+					this.rs.getString(2);
+				}
+			}
+
+			System.out.println();
+
+			this.stmt.executeUpdate("SET NAMES utf8");
+			this.rs = this.stmt.executeQuery("SELECT _koi8r 0xC1;");
+
+			rsmd = this.rs.getMetaData();
+
+			numColumns = rsmd.getColumnCount();
+
+			for (int i = 0; i < numColumns; i++) {
+				System.out.print(rsmd.getColumnName(i + 1));
+				System.out.print("\t\t");
+			}
+
+			System.out.println();
+
+			while (this.rs.next()) {
+				System.out.println(this.rs.getString(1).equals("\u0430")
+						+ "\t\t");
+				System.out.println(new String(this.rs.getBytes(1), "KOI8_R"));
+
+			}
+
+			char[] c = new char[] { 0xd0b0 };
+
+			System.out.println(new String(c));
+			System.out.println("\u0430");
 		}
 	}
 
@@ -596,7 +589,6 @@ public class ConnectionTest extends BaseTestCase {
 				}
 			}
 		}
-		closeMemberJDBCResources();
 	}
 
 	/**
@@ -608,62 +600,74 @@ public class ConnectionTest extends BaseTestCase {
 	public void testSavepoint() throws Exception {
 		if (!isRunningOnJdk131()) {
 			DatabaseMetaData dbmd = this.conn.getMetaData();
-	
+
 			if (dbmd.supportsSavepoints()) {
 				System.out.println("Testing SAVEPOINTs");
-	
+
 				try {
 					this.conn.setAutoCommit(true);
-	
+
 					createTable("testSavepoints", "(field1 int)", "InnoDB");
-	
+
 					// Try with named save points
 					this.conn.setAutoCommit(false);
 					this.stmt
 							.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
-	
-					Savepoint afterInsert = this.conn.setSavepoint("afterInsert");
-					this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
-	
-					Savepoint afterUpdate = this.conn.setSavepoint("afterUpdate");
+
+					Savepoint afterInsert = this.conn
+							.setSavepoint("afterInsert");
+					this.stmt
+							.executeUpdate("UPDATE testSavepoints SET field1=2");
+
+					Savepoint afterUpdate = this.conn
+							.setSavepoint("afterUpdate");
 					this.stmt.executeUpdate("DELETE FROM testSavepoints");
-	
+
 					assertTrue("Row count should be 0",
 							getRowCount("testSavepoints") == 0);
 					this.conn.rollback(afterUpdate);
 					assertTrue("Row count should be 1",
 							getRowCount("testSavepoints") == 1);
-					assertTrue("Value should be 2", "2".equals(getSingleValue(
-							"testSavepoints", "field1", null).toString()));
+					assertTrue(
+							"Value should be 2",
+							"2".equals(getSingleValue("testSavepoints",
+									"field1", null).toString()));
 					this.conn.rollback(afterInsert);
-					assertTrue("Value should be 1", "1".equals(getSingleValue(
-							"testSavepoints", "field1", null).toString()));
+					assertTrue(
+							"Value should be 1",
+							"1".equals(getSingleValue("testSavepoints",
+									"field1", null).toString()));
 					this.conn.rollback();
 					assertTrue("Row count should be 0",
 							getRowCount("testSavepoints") == 0);
-	
+
 					// Try with 'anonymous' save points
 					this.conn.rollback();
-	
+
 					this.stmt
 							.executeUpdate("INSERT INTO testSavepoints VALUES (1)");
 					afterInsert = this.conn.setSavepoint();
-					this.stmt.executeUpdate("UPDATE testSavepoints SET field1=2");
+					this.stmt
+							.executeUpdate("UPDATE testSavepoints SET field1=2");
 					afterUpdate = this.conn.setSavepoint();
 					this.stmt.executeUpdate("DELETE FROM testSavepoints");
-	
+
 					assertTrue("Row count should be 0",
 							getRowCount("testSavepoints") == 0);
 					this.conn.rollback(afterUpdate);
 					assertTrue("Row count should be 1",
 							getRowCount("testSavepoints") == 1);
-					assertTrue("Value should be 2", "2".equals(getSingleValue(
-							"testSavepoints", "field1", null).toString()));
+					assertTrue(
+							"Value should be 2",
+							"2".equals(getSingleValue("testSavepoints",
+									"field1", null).toString()));
 					this.conn.rollback(afterInsert);
-					assertTrue("Value should be 1", "1".equals(getSingleValue(
-							"testSavepoints", "field1", null).toString()));
+					assertTrue(
+							"Value should be 1",
+							"1".equals(getSingleValue("testSavepoints",
+									"field1", null).toString()));
 					this.conn.rollback();
-	
+
 					this.conn.releaseSavepoint(this.conn.setSavepoint());
 				} finally {
 					this.conn.setAutoCommit(true);
@@ -671,7 +675,6 @@ public class ConnectionTest extends BaseTestCase {
 			} else {
 				System.out.println("MySQL version does not support SAVEPOINTs");
 			}
-			closeMemberJDBCResources();
 		}
 	}
 
@@ -709,7 +712,6 @@ public class ConnectionTest extends BaseTestCase {
 					collConn.close();
 				}
 			}
-			closeMemberJDBCResources();
 		}
 	}
 
@@ -744,8 +746,6 @@ public class ConnectionTest extends BaseTestCase {
 		} catch (SQLException sqlEx) {
 			assertTrue(sqlEx.getMessage().indexOf(
 					"INSERT INTO testDumpQueriesOnException") != -1);
-		} finally {
-			closeMemberJDBCResources();
 		}
 
 		try {
@@ -776,7 +776,6 @@ public class ConnectionTest extends BaseTestCase {
 
 		assertTrue("albequerque".equals(transformedProps
 				.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY)));
-		closeMemberJDBCResources();
 	}
 
 	/**
@@ -794,69 +793,63 @@ public class ConnectionTest extends BaseTestCase {
 		output.flush();
 		output.close();
 
+		createTable("testLocalInfileWithUrl", "(field1 LONGTEXT)");
+
+		Properties props = new Properties();
+		props.setProperty("allowUrlInLocalInfile", "true");
+
+		Connection loadConn = getConnectionWithProps(props);
+		Statement loadStmt = loadConn.createStatement();
+
 		try {
-			createTable("testLocalInfileWithUrl", "(field1 LONGTEXT)");
-
-			Properties props = new Properties();
-			props.setProperty("allowUrlInLocalInfile", "true");
-
-			Connection loadConn = getConnectionWithProps(props);
-			Statement loadStmt = loadConn.createStatement();
-
-			try {
-				loadStmt.executeQuery("LOAD DATA LOCAL INFILE '" + url
-						+ "' INTO TABLE testLocalInfileWithUrl");
-			} catch (SQLException sqlEx) {
-				sqlEx.printStackTrace();
-
-				throw sqlEx;
-			}
-
-			this.rs = this.stmt
-					.executeQuery("SELECT * FROM testLocalInfileWithUrl");
-			assertTrue(this.rs.next());
-			assertTrue("Test".equals(this.rs.getString(1)));
-			int count = this.stmt
-					.executeUpdate("DELETE FROM testLocalInfileWithUrl");
-			assertTrue(count == 1);
-
-			StringBuffer escapedPath = new StringBuffer();
-			String path = infile.getCanonicalPath();
-
-			for (int i = 0; i < path.length(); i++) {
-				char c = path.charAt(i);
-
-				if (c == '\\') {
-					escapedPath.append('\\');
-				}
-
-				escapedPath.append(c);
-			}
-
-			loadStmt.executeQuery("LOAD DATA LOCAL INFILE '"
-					+ escapedPath.toString()
+			loadStmt.executeQuery("LOAD DATA LOCAL INFILE '" + url
 					+ "' INTO TABLE testLocalInfileWithUrl");
-			this.rs = this.stmt
-					.executeQuery("SELECT * FROM testLocalInfileWithUrl");
-			assertTrue(this.rs.next());
-			assertTrue("Test".equals(this.rs.getString(1)));
+		} catch (SQLException sqlEx) {
+			sqlEx.printStackTrace();
 
-			try {
-				loadStmt
-						.executeQuery("LOAD DATA LOCAL INFILE 'foo:///' INTO TABLE testLocalInfileWithUrl");
-			} catch (SQLException sqlEx) {
-				assertTrue(sqlEx.getMessage() != null);
-				assertTrue(sqlEx.getMessage().indexOf("FileNotFoundException") != -1);
+			throw sqlEx;
+		}
+
+		this.rs = this.stmt
+				.executeQuery("SELECT * FROM testLocalInfileWithUrl");
+		assertTrue(this.rs.next());
+		assertTrue("Test".equals(this.rs.getString(1)));
+		int count = this.stmt
+				.executeUpdate("DELETE FROM testLocalInfileWithUrl");
+		assertTrue(count == 1);
+
+		StringBuffer escapedPath = new StringBuffer();
+		String path = infile.getCanonicalPath();
+
+		for (int i = 0; i < path.length(); i++) {
+			char c = path.charAt(i);
+
+			if (c == '\\') {
+				escapedPath.append('\\');
 			}
 
-		} finally {
-			closeMemberJDBCResources();
+			escapedPath.append(c);
+		}
+
+		loadStmt.executeQuery("LOAD DATA LOCAL INFILE '"
+				+ escapedPath.toString()
+				+ "' INTO TABLE testLocalInfileWithUrl");
+		this.rs = this.stmt
+				.executeQuery("SELECT * FROM testLocalInfileWithUrl");
+		assertTrue(this.rs.next());
+		assertTrue("Test".equals(this.rs.getString(1)));
+
+		try {
+			loadStmt.executeQuery("LOAD DATA LOCAL INFILE 'foo:///' INTO TABLE testLocalInfileWithUrl");
+		} catch (SQLException sqlEx) {
+			assertTrue(sqlEx.getMessage() != null);
+			assertTrue(sqlEx.getMessage().indexOf("FileNotFoundException") != -1);
 		}
 	}
 
 	public void testLocalInfileDisabled() throws Exception {
 		createTable("testLocalInfileDisabled", "(field1 varchar(255))");
-		
+
 		File infile = File.createTempFile("foo", "txt");
 		infile.deleteOnExit();
 		String url = infile.toURL().toExternalForm();
@@ -864,27 +857,32 @@ public class ConnectionTest extends BaseTestCase {
 		output.write("Test");
 		output.flush();
 		output.close();
-		
+
 		Connection loadConn = getConnectionWithProps(new Properties());
-		
+
 		try {
 			// have to do this after connect, otherwise it's the server
 			// that's enforcing it
-			((com.mysql.jdbc.Connection)loadConn).setAllowLoadLocalInfile(false);
+			((com.mysql.jdbc.Connection) loadConn)
+					.setAllowLoadLocalInfile(false);
 			try {
-				loadConn.createStatement().execute("LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath() + "' INTO TABLE testLocalInfileDisabled");
+				loadConn.createStatement().execute(
+						"LOAD DATA LOCAL INFILE '" + infile.getCanonicalPath()
+								+ "' INTO TABLE testLocalInfileDisabled");
 				fail("Should've thrown an exception.");
 			} catch (SQLException sqlEx) {
-				assertEquals(SQLError.SQL_STATE_GENERAL_ERROR, sqlEx.getSQLState());
+				assertEquals(SQLError.SQL_STATE_GENERAL_ERROR,
+						sqlEx.getSQLState());
 			}
-			
-			assertFalse(loadConn.createStatement().executeQuery("SELECT * FROM testLocalInfileDisabled").next());
+
+			assertFalse(loadConn.createStatement()
+					.executeQuery("SELECT * FROM testLocalInfileDisabled")
+					.next());
 		} finally {
 			loadConn.close();
-			closeMemberJDBCResources();
 		}
 	}
-	
+
 	public void testServerConfigurationCache() throws Exception {
 		Properties props = new Properties();
 
@@ -896,7 +894,7 @@ public class ConnectionTest extends BaseTestCase {
 
 		// eliminate side-effects when not run in isolation
 		StandardLogger.bufferedLog = new StringBuffer();
-		
+
 		Connection conn2 = getConnectionWithProps(props);
 
 		StandardLogger.saveLogsToBuffer();
@@ -905,12 +903,12 @@ public class ConnectionTest extends BaseTestCase {
 				.toString().indexOf("SHOW VARIABLES") == -1);
 
 		if (versionMeetsMinimum(4, 1)) {
-			assertTrue("Configuration wasn't cached",
+			assertTrue(
+					"Configuration wasn't cached",
 					StandardLogger.bufferedLog.toString().indexOf(
 							"SHOW COLLATION") == -1);
 
 		}
-		closeMemberJDBCResources();
 	}
 
 	/**
@@ -944,8 +942,6 @@ public class ConnectionTest extends BaseTestCase {
 		assertTrue(logAsString.indexOf("SET SESSION") == -1
 				&& logAsString.indexOf("SHOW VARIABLES LIKE 'tx_isolation'") == -1
 				&& logAsString.indexOf("SET autocommit=") == -1);
-
-		closeMemberJDBCResources();
 	}
 
 	/**
@@ -957,16 +953,17 @@ public class ConnectionTest extends BaseTestCase {
 	public void testFailoverConnection() throws Exception {
 
 		if (!isServerRunningOnWindows()) { // windows sockets don't
-			                               // work for this test
+											// work for this test
 			Properties props = new Properties();
 			props.setProperty("autoReconnect", "true");
 			props.setProperty("failOverReadOnly", "false");
-	
-			Properties urlProps = new NonRegisteringDriver().parseURL(this.dbUrl, null);
-			
+
+			Properties urlProps = new NonRegisteringDriver().parseURL(
+					this.dbUrl, null);
+
 			String host = urlProps.getProperty(Driver.HOST_PROPERTY_KEY);
 			String port = urlProps.getProperty(Driver.PORT_PROPERTY_KEY);
-	
+
 			props.setProperty(Driver.HOST_PROPERTY_KEY + ".1", host);
 			props.setProperty(Driver.PORT_PROPERTY_KEY + ".1", port);
 			props.setProperty(Driver.HOST_PROPERTY_KEY + ".2", host);
@@ -974,40 +971,43 @@ public class ConnectionTest extends BaseTestCase {
 			props.setProperty(Driver.NUM_HOSTS_PROPERTY_KEY, "2");
 
 			Connection failoverConnection = null;
-	
+
 			try {
 				failoverConnection = getConnectionWithProps(props);
-	
+
 				String originalConnectionId = getSingleIndexedValueWithQuery(
-						failoverConnection, 1, "SELECT connection_id()").toString();
+						failoverConnection, 1, "SELECT connection_id()")
+						.toString();
 				System.out.println("Original Connection Id = "
 						+ originalConnectionId);
-	
+
 				assertTrue("Connection should not be in READ_ONLY state",
 						!failoverConnection.isReadOnly());
-	
+
 				// Kill the connection
 				this.stmt.executeUpdate("KILL " + originalConnectionId);
-	
+
 				// This takes a bit to occur
-	
+
 				Thread.sleep(3000);
-	
+
 				try {
-					failoverConnection.createStatement().executeQuery("SELECT 1");
+					failoverConnection.createStatement().executeQuery(
+							"SELECT 1");
 					fail("We expect an exception here, because the connection should be gone until the reconnect code picks it up again");
 				} catch (SQLException sqlEx) {
 					; // do-nothing
 				}
-	
+
 				// Tickle re-connect
-	
+
 				failoverConnection.setAutoCommit(true);
-	
+
 				String newConnectionId = getSingleIndexedValueWithQuery(
-						failoverConnection, 1, "SELECT connection_id()").toString();
+						failoverConnection, 1, "SELECT connection_id()")
+						.toString();
 				System.out.println("new Connection Id = " + newConnectionId);
-	
+
 				assertTrue(
 						"We should have a new connection to the server in this case",
 						!newConnectionId.equals(originalConnectionId));
@@ -1017,7 +1017,6 @@ public class ConnectionTest extends BaseTestCase {
 				if (failoverConnection != null) {
 					failoverConnection.close();
 				}
-				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -1058,11 +1057,10 @@ public class ConnectionTest extends BaseTestCase {
 		try {
 			getConnectionWithProps(props);
 
-			assertTrue(StringUtils.indexOfIgnoreCase(StandardLogger.bufferedLog
-					.toString(), "SET NAMES utf8") == -1);
+			assertTrue(StringUtils.indexOfIgnoreCase(
+					StandardLogger.bufferedLog.toString(), "SET NAMES utf8") == -1);
 		} finally {
 			StandardLogger.bufferedLog = null;
-			closeMemberJDBCResources();
 		}
 	}
 
@@ -1110,12 +1108,11 @@ public class ConnectionTest extends BaseTestCase {
 			if (noTrackConn != null && !noTrackConn.isClosed()) {
 				noTrackConn.close();
 			}
-			closeMemberJDBCResources();
 		}
 	}
 
 	public void testPing() throws SQLException {
-		Connection conn2 = getConnectionWithProps((String)null);
+		Connection conn2 = getConnectionWithProps((String) null);
 
 		((com.mysql.jdbc.Connection) conn2).ping();
 		conn2.close();
@@ -1134,7 +1131,6 @@ public class ConnectionTest extends BaseTestCase {
 		props.setProperty("autoReconnect", "true");
 
 		getConnectionWithProps(props);
-		closeMemberJDBCResources();
 	}
 
 	public void testSessionVariables() throws Exception {
@@ -1143,15 +1139,13 @@ public class ConnectionTest extends BaseTestCase {
 		int newWaitTimeout = Integer.parseInt(getInitialWaitTimeout) + 10000;
 
 		Properties props = new Properties();
-		props.setProperty("sessionVariables", "wait_timeout="
-				+ newWaitTimeout);
+		props.setProperty("sessionVariables", "wait_timeout=" + newWaitTimeout);
 		props.setProperty("profileSQL", "true");
 
 		Connection varConn = getConnectionWithProps(props);
 
 		assertTrue(!getInitialWaitTimeout.equals(getMysqlVariable(varConn,
 				"wait_timeout")));
-		closeMemberJDBCResources();
 	}
 
 	/**
@@ -1165,7 +1159,6 @@ public class ConnectionTest extends BaseTestCase {
 		stmt.executeQuery("SELECT 1");
 		((com.mysql.jdbc.Connection) this.conn).setProfileSql(true);
 		stmt.executeQuery("SELECT 1");
-		closeMemberJDBCResources();
 	}
 
 	public void testCreateDatabaseIfNotExist() throws Exception {
@@ -1178,76 +1171,78 @@ public class ConnectionTest extends BaseTestCase {
 			Connection newConn = getAdminConnectionWithProps(props);
 			newConn.createStatement().executeUpdate(
 					"DROP DATABASE testcreatedatabaseifnotexists");
-			closeMemberJDBCResources();
 		}
 	}
-    
-    /**
-     * Tests if gatherPerfMetrics works.
-     * 
-     * @throws Exception if the test fails
-     */
-    public void testGatherPerfMetrics() throws Exception {
-        if(versionMeetsMinimum(4, 1)) {
-            try {
-                Properties props = new Properties();
-                props.put("autoReconnect", "true");
-                props.put("relaxAutoCommit", "true");
-                props.put("logSlowQueries", "true");
-                props.put("slowQueryThresholdMillis", "2000");
-                // these properties were reported as the cause of NullPointerException
-                props.put("gatherPerfMetrics", "true"); 
-                props.put("reportMetricsIntervalMillis", "3000"); 
-                
-                Connection conn1 = getConnectionWithProps(props);
-                Statement stmt1 = conn1.createStatement();
-                ResultSet rs1 = stmt1.executeQuery("SELECT 1");
-                rs1.next();
-                conn1.close();
-            } catch (NullPointerException e) {
-                e.printStackTrace();
-                fail();
-            }
-    		closeMemberJDBCResources();
-        }
-    }
 
-    /**
-     * Tests if useCompress works.
-     * 
-     * @throws Exception if the test fails
-     */
-    public void testUseCompress() throws Exception {
-    	
-//		  Original test    	
-//        Properties props = new Properties();
-//        props.put("useCompression", "true");
-//        props.put("traceProtocol", "true");
-//        Connection conn1 = getConnectionWithProps(props);
-//        Statement stmt1 = conn1.createStatement();
-//        ResultSet rs1 = stmt1.executeQuery("SELECT VERSION()");
-//        rs1.next();
-//        rs1.getString(1);
-//        stmt1.close();
-//        conn1.close();
-    	
-    	File testBlobFile = null;
-    	int requiredSize = 0;
-    	
-    	Properties props = new Properties();
-        props.put("useCompression", "true");
-        Connection conn1 = getConnectionWithProps(props);
-        
-        Statement stmt1 = conn1.createStatement();
-        //Get real value
-        this.rs = stmt1.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
+	/**
+	 * Tests if gatherPerfMetrics works.
+	 * 
+	 * @throws Exception
+	 *             if the test fails
+	 */
+	public void testGatherPerfMetrics() throws Exception {
+		if (versionMeetsMinimum(4, 1)) {
+			try {
+				Properties props = new Properties();
+				props.put("autoReconnect", "true");
+				props.put("relaxAutoCommit", "true");
+				props.put("logSlowQueries", "true");
+				props.put("slowQueryThresholdMillis", "2000");
+				// these properties were reported as the cause of
+				// NullPointerException
+				props.put("gatherPerfMetrics", "true");
+				props.put("reportMetricsIntervalMillis", "3000");
+
+				Connection conn1 = getConnectionWithProps(props);
+				Statement stmt1 = conn1.createStatement();
+				ResultSet rs1 = stmt1.executeQuery("SELECT 1");
+				rs1.next();
+				conn1.close();
+			} catch (NullPointerException e) {
+				e.printStackTrace();
+				fail();
+			}
+		}
+	}
+
+	/**
+	 * Tests if useCompress works.
+	 * 
+	 * @throws Exception
+	 *             if the test fails
+	 */
+	public void testUseCompress() throws Exception {
+
+		// Original test
+		// Properties props = new Properties();
+		// props.put("useCompression", "true");
+		// props.put("traceProtocol", "true");
+		// Connection conn1 = getConnectionWithProps(props);
+		// Statement stmt1 = conn1.createStatement();
+		// ResultSet rs1 = stmt1.executeQuery("SELECT VERSION()");
+		// rs1.next();
+		// rs1.getString(1);
+		// stmt1.close();
+		// conn1.close();
+
+		File testBlobFile = null;
+		int requiredSize = 0;
+
+		Properties props = new Properties();
+		props.put("useCompression", "true");
+		Connection conn1 = getConnectionWithProps(props);
+
+		Statement stmt1 = conn1.createStatement();
+		// Get real value
+		this.rs = stmt1
+				.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
 		this.rs.next();
-		//Create smaller than maximum allowed BLOB for testing
+		// Create smaller than maximum allowed BLOB for testing
 		requiredSize = this.rs.getInt(2) / 8;
 		System.out.println("Required size: " + requiredSize);
 		this.rs.close();
-		
-		//http://dev.mysql.com/doc/refman/5.1/en/server-system-variables.html#sysvar_max_allowed_packet
+
+		// http://dev.mysql.com/doc/refman/5.1/en/server-system-variables.html#sysvar_max_allowed_packet
 		// setting GLOBAL variable during test is not ok
 		// The protocol limit for max_allowed_packet is 1GB.
 		if (testBlobFile == null || testBlobFile.length() != requiredSize) {
@@ -1257,7 +1252,7 @@ public class ConnectionTest extends BaseTestCase {
 
 			testBlobFile = File.createTempFile("cmj-testblob", ".dat");
 			testBlobFile.deleteOnExit();
-			
+
 			cleanupTempFiles(testBlobFile, "cmj-testblob");
 
 			BufferedOutputStream bOut = new BufferedOutputStream(
@@ -1272,502 +1267,543 @@ public class ConnectionTest extends BaseTestCase {
 			bOut.flush();
 			bOut.close();
 		}
-		
-        
-        createTable("BLOBTEST", "(pos int PRIMARY KEY auto_increment, blobdata LONGBLOB)");
-        BufferedInputStream bIn = new BufferedInputStream(new FileInputStream(testBlobFile));
-        
-        this.pstmt = conn1.prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)");
+
+		createTable("BLOBTEST",
+				"(pos int PRIMARY KEY auto_increment, blobdata LONGBLOB)");
+		BufferedInputStream bIn = new BufferedInputStream(new FileInputStream(
+				testBlobFile));
+
+		this.pstmt = conn1
+				.prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)");
 		this.pstmt.setBinaryStream(1, bIn, (int) testBlobFile.length());
 		this.pstmt.execute();
 		this.pstmt.clearParameters();
-        
+
 		this.rs = stmt1.executeQuery("SELECT blobdata from BLOBTEST LIMIT 1");
 		this.rs.next();
-		
+
 		if (bIn != null) {
 			bIn.close();
 		}
-		closeMemberJDBCResources();
-    }
-    
-    /**
-     * Tests feature of "localSocketAddress", by enumerating local IF's and
-     * trying each one in turn. This test might take a long time to run, since
-     * we can't set timeouts if we're using localSocketAddress. We try and keep
-     * the time down on the testcase by spawning the checking of each interface
-     * off into separate threads.
-     * 
-     * @throws Exception if the test can't use at least one of the local machine's
-     *                   interfaces to make an outgoing connection to the server.
-     */
-    public void testLocalSocketAddress() throws Exception {
-    	if (isRunningOnJdk131()) { 
-    		return;
-    	}
-    	
-    	Enumeration allInterfaces = NetworkInterface.getNetworkInterfaces();
-    	
-    	
-    	SpawnedWorkerCounter counter = new SpawnedWorkerCounter();
-    	
-    	List allChecks = new ArrayList();
-    	
-    	while (allInterfaces.hasMoreElements()) {
-    		NetworkInterface intf = (NetworkInterface)allInterfaces.nextElement();
-    		
-    		Enumeration allAddresses = intf.getInetAddresses();
+	}
 
-    		allChecks.add(new LocalSocketAddressCheckThread(allAddresses, counter));
-    	}
-    	
-    	counter.setWorkerCount(allChecks.size());
-    	
-    	for (Iterator it = allChecks.iterator(); it.hasNext();) {
-    		LocalSocketAddressCheckThread t = (LocalSocketAddressCheckThread)it.next();
-    		t.start();
-    	}
-    	
-    	// Wait for tests to complete....
-    	synchronized (counter) {
-    	
-    		while (counter.workerCount > 0 /* safety valve */) {
-    		
-    			counter.wait();
+	/**
+	 * Tests feature of "localSocketAddress", by enumerating local IF's and
+	 * trying each one in turn. This test might take a long time to run, since
+	 * we can't set timeouts if we're using localSocketAddress. We try and keep
+	 * the time down on the testcase by spawning the checking of each interface
+	 * off into separate threads.
+	 * 
+	 * @throws Exception
+	 *             if the test can't use at least one of the local machine's
+	 *             interfaces to make an outgoing connection to the server.
+	 */
+	public void testLocalSocketAddress() throws Exception {
+		if (isRunningOnJdk131()) {
+			return;
+		}
 
-    			if (counter.workerCount == 0) {
-    				System.out.println("Done!");
-    				break;
-    			}
-    		}
-    	}
-    	
-    	boolean didOneWork = false;
-    	boolean didOneFail = false;
-    	
-    	for (Iterator it = allChecks.iterator(); it.hasNext();) {
-    		LocalSocketAddressCheckThread t = (LocalSocketAddressCheckThread)it.next();
+		Enumeration allInterfaces = NetworkInterface.getNetworkInterfaces();
 
-    		if (t.atLeastOneWorked) {
-    			didOneWork = true;
-    			
-    			break;
-    		} else {
-    			if (!didOneFail) {
-    				didOneFail = true;
-    			}
-    		}
-    	}
-    	
-    	assertTrue("At least one connection was made with the localSocketAddress set", didOneWork);
-    	
-    	NonRegisteringDriver d = new NonRegisteringDriver();
-    	
-    	String hostname = d.host(d.parseURL(dbUrl, null));
-    	
-    	if (!hostname.startsWith(":") && !hostname.startsWith("localhost")) {
-    		
-    		int indexOfColon = hostname.indexOf(":");
-    		
-    		if (indexOfColon != -1) {
-    			hostname = hostname.substring(0, indexOfColon);
-    		}
-    		
-    		boolean isLocalIf = false;
-    		
-    		isLocalIf = (null != NetworkInterface.getByName(hostname));
-    		
-    		if (!isLocalIf) {
-    			try {
-    				isLocalIf = (null != NetworkInterface.getByInetAddress(InetAddress.getByName(hostname)));
-    			} catch (Throwable t) {
-    				isLocalIf = false;
-    			}
-    		}
-    		
-    		if (!isLocalIf) {
-    			assertTrue("At least one connection didn't fail with localSocketAddress set", didOneFail);
-    		}
-    	}
-		closeMemberJDBCResources();
-    }
-    
-    class SpawnedWorkerCounter {
-    	private int workerCount = 0;
-    	
-    	synchronized void setWorkerCount(int i) {
-    		workerCount = i;
-    	}
-    	
-    	synchronized void decrementWorkerCount() {
-    		workerCount--;
-    		notify();
-    	}
-    }
-    
-    class LocalSocketAddressCheckThread extends Thread {
-    	boolean atLeastOneWorked = false;
-    	Enumeration allAddresses = null;
-    	SpawnedWorkerCounter counter = null;
-    	
-    	LocalSocketAddressCheckThread(Enumeration e, SpawnedWorkerCounter c) {
-    		allAddresses = e;
-    		counter = c;
-    	}
-    	
-    	public void run() {
-    		
-    		while (allAddresses.hasMoreElements()) {
-    			InetAddress addr = (InetAddress)allAddresses.nextElement();
-    			
-    			try {
-    				Properties props = new Properties();
-    				props.setProperty("localSocketAddress", addr.getHostAddress());
-    				props.setProperty("connectTimeout", "2000");
-    				getConnectionWithProps(props).close();
-    				
-    				atLeastOneWorked = true;
-    				
-    				break;
-    			} catch (SQLException sqlEx) {
-    				// ignore, we're only seeing if one of these tests succeeds
-    			}
-    		}
-    		
-    		counter.decrementWorkerCount();
-    	}
-    }
-    
-    public void testUsageAdvisorTooLargeResultSet() throws Exception {
-    	Connection uaConn = null;
-    	
-    	PrintStream stderr = System.err;
-    	
-    	StringBuffer logBuf = new StringBuffer();
-    	
-    	StandardLogger.bufferedLog = logBuf;
-    	
-    	try {
-    		Properties props = new Properties();
-    		props.setProperty("useUsageAdvisor", "true");
-    		props.setProperty("resultSetSizeThreshold", "4");
-    		props.setProperty("logger", "StandardLogger");
-    		
-    		uaConn = getConnectionWithProps(props);
-    		
-    		assertTrue("Result set threshold message not present", 
-    				logBuf.toString().indexOf("larger than \"resultSetSizeThreshold\" of 4 rows") != -1);
-    	} finally {
-    		System.setErr(stderr);
-    		
-    		closeMemberJDBCResources();
-    		
-    		if (uaConn != null) {
-    			uaConn.close();
-    		}
-    		closeMemberJDBCResources();
-    	}
-    }
-    
-    public void testUseLocalSessionStateRollback() throws Exception {
-    	if (!versionMeetsMinimum(6, 0, 0)) {
-    		return;
-    	}
-    	
-    	Properties props = new Properties();
-    	props.setProperty("useLocalSessionState", "true");
-    	props.setProperty("useLocalTransactionState", "true");
-    	props.setProperty("profileSQL", "true");
-    	
-    	StringBuffer buf = new StringBuffer();
-    	StandardLogger.bufferedLog = buf;
-    	
-    	createTable("testUseLocalSessionState", "(field1 varchar(32))", "InnoDB");
-    	
-    	Connection localStateConn = null;
-    	Statement localStateStmt = null;
-    	
-    	try {
-    		localStateConn = getConnectionWithProps(props);
-        	localStateStmt = localStateConn.createStatement();
-        	
-	    	localStateConn.setAutoCommit(false);
-	    	localStateStmt.executeUpdate("INSERT INTO testUseLocalSessionState VALUES ('abc')");
-	    	localStateConn.rollback();
-	    	localStateConn.rollback();
-	    	localStateStmt.executeUpdate("INSERT INTO testUseLocalSessionState VALUES ('abc')");
-	    	localStateConn.commit();
-	    	localStateConn.commit();
-	    	localStateStmt.close();
-    	} finally {
-    		StandardLogger.bufferedLog = null;
-    		 
-    		if (localStateStmt != null) {
-    			localStateStmt.close();
-    		}
-    		
-    		if (localStateConn != null) {
-    			localStateConn.close();
-    		}
-    	}
-    	
-    	int rollbackCount = 0;
-    	int rollbackPos = 0;
-    	
-    	String searchIn = buf.toString();
-    	
-    	while (rollbackPos != -1) {
-    		rollbackPos = searchIn.indexOf("rollback", rollbackPos);
-    		
-    		if (rollbackPos != -1) {
-    			rollbackPos += "rollback".length();
-    			rollbackCount++;
-    		}
-    	}
-    	
-    	assertEquals(1, rollbackCount);
-    	
-    	int commitCount = 0;
-    	int commitPos = 0;
-    	
-    	// space is important here, we don't want to count "autocommit"
-    	while (commitPos != -1) {
-    		commitPos = searchIn.indexOf(" commit", commitPos);
-    		
-    		if (commitPos != -1) {
-    			commitPos += " commit".length();
-    			commitCount++;
-    		}
-    	}
-    	
-    	assertEquals(1, commitCount);
-		closeMemberJDBCResources();
-    }
-    
-    /**
-     * Checks if setting useCursorFetch to "true" automatically
-     * enables server-side prepared statements.
-     */
-     
-    public void testCouplingOfCursorFetch() throws Exception {
-    	if (!versionMeetsMinimum(5, 0)) {
-    		return;
-    	}
-    	
-    	Connection fetchConn = null;
-    	
-    	try {
-    		Properties props = new Properties();
-    		props.setProperty("useServerPrepStmts", "false"); // force the issue
-    		props.setProperty("useCursorFetch", "true");
-    		fetchConn = getConnectionWithProps(props);
-    		
-    		String classname = "com.mysql.jdbc.ServerPreparedStatement";
-    		
-    		if (Util.isJdbc4()) {
-    			classname = "com.mysql.jdbc.JDBC4ServerPreparedStatement";
-    		}
-    		
-    		assertEquals(classname,
-    				fetchConn.prepareStatement("SELECT 1").getClass().getName());
-    	} finally {
-    		if (fetchConn != null) {
-    			fetchConn.close();
-    		}
-    		closeMemberJDBCResources();
-    	}
-    }
-    
-    public void testInterfaceImplementation() throws Exception {
-    	testInterfaceImplementation(getConnectionWithProps((Properties)null));
-    	MysqlConnectionPoolDataSource cpds = new MysqlConnectionPoolDataSource();
-    	cpds.setUrl(dbUrl);
-    	testInterfaceImplementation(cpds.getPooledConnection().getConnection());
-		closeMemberJDBCResources();
-    }
-    
-    private void testInterfaceImplementation(Connection connToCheck) throws Exception {
-    	Method[] dbmdMethods = java.sql.DatabaseMetaData.class.getMethods();
-    	
-    	// can't do this statically, as we return different
-    	// implementations depending on JDBC version
-    	DatabaseMetaData dbmd = connToCheck.getMetaData();
-    	
-    	checkInterfaceImplemented(dbmdMethods, dbmd.getClass(), dbmd);
-    	
-    	Statement stmtToCheck = connToCheck.createStatement();
-    	
-    	checkInterfaceImplemented(java.sql.Statement.class.getMethods(), stmtToCheck.getClass(), stmtToCheck);
-    	
-    	PreparedStatement pStmtToCheck = connToCheck.prepareStatement("SELECT 1");
-    	ParameterMetaData paramMd = pStmtToCheck.getParameterMetaData();
-    	
-    	checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
-    	checkInterfaceImplemented(java.sql.ParameterMetaData.class.getMethods(), paramMd.getClass(), paramMd);
-    	
-    	pStmtToCheck = ((com.mysql.jdbc.Connection) connToCheck).serverPrepareStatement("SELECT 1");
-    	
-    	checkInterfaceImplemented(java.sql.PreparedStatement.class.getMethods(), pStmtToCheck.getClass(), pStmtToCheck);
-    	ResultSet toCheckRs = connToCheck.createStatement().executeQuery("SELECT 1");
-    	checkInterfaceImplemented(java.sql.ResultSet.class.getMethods(), toCheckRs.getClass(), toCheckRs);
-    	toCheckRs = connToCheck.createStatement().executeQuery("SELECT 1");
-    	checkInterfaceImplemented(java.sql.ResultSetMetaData.class.getMethods(), toCheckRs.getMetaData().getClass(), toCheckRs.getMetaData());
-    	
-    	if (versionMeetsMinimum(5, 0, 0)) {
-    		createProcedure("interfaceImpl", "(IN p1 INT)\nBEGIN\nSELECT 1;\nEND");
-    		
-    		CallableStatement cstmt = connToCheck.prepareCall("{CALL interfaceImpl(?)}");
-    		
-    		checkInterfaceImplemented(java.sql.CallableStatement.class.getMethods(), cstmt.getClass(), cstmt);
-    	}
-    	checkInterfaceImplemented(java.sql.Connection.class.getMethods(), connToCheck.getClass(), connToCheck);
-		closeMemberJDBCResources();
-    }
+		SpawnedWorkerCounter counter = new SpawnedWorkerCounter();
+
+		List allChecks = new ArrayList();
+
+		while (allInterfaces.hasMoreElements()) {
+			NetworkInterface intf = (NetworkInterface) allInterfaces
+					.nextElement();
+
+			Enumeration allAddresses = intf.getInetAddresses();
+
+			allChecks.add(new LocalSocketAddressCheckThread(allAddresses,
+					counter));
+		}
+
+		counter.setWorkerCount(allChecks.size());
+
+		for (Iterator it = allChecks.iterator(); it.hasNext();) {
+			LocalSocketAddressCheckThread t = (LocalSocketAddressCheckThread) it
+					.next();
+			t.start();
+		}
+
+		// Wait for tests to complete....
+		synchronized (counter) {
+
+			while (counter.workerCount > 0 /* safety valve */) {
+
+				counter.wait();
+
+				if (counter.workerCount == 0) {
+					System.out.println("Done!");
+					break;
+				}
+			}
+		}
+
+		boolean didOneWork = false;
+		boolean didOneFail = false;
+
+		for (Iterator it = allChecks.iterator(); it.hasNext();) {
+			LocalSocketAddressCheckThread t = (LocalSocketAddressCheckThread) it
+					.next();
+
+			if (t.atLeastOneWorked) {
+				didOneWork = true;
+
+				break;
+			} else {
+				if (!didOneFail) {
+					didOneFail = true;
+				}
+			}
+		}
+
+		assertTrue(
+				"At least one connection was made with the localSocketAddress set",
+				didOneWork);
+
+		NonRegisteringDriver d = new NonRegisteringDriver();
+
+		String hostname = d.host(d.parseURL(dbUrl, null));
+
+		if (!hostname.startsWith(":") && !hostname.startsWith("localhost")) {
+
+			int indexOfColon = hostname.indexOf(":");
+
+			if (indexOfColon != -1) {
+				hostname = hostname.substring(0, indexOfColon);
+			}
+
+			boolean isLocalIf = false;
+
+			isLocalIf = (null != NetworkInterface.getByName(hostname));
+
+			if (!isLocalIf) {
+				try {
+					isLocalIf = (null != NetworkInterface
+							.getByInetAddress(InetAddress.getByName(hostname)));
+				} catch (Throwable t) {
+					isLocalIf = false;
+				}
+			}
+
+			if (!isLocalIf) {
+				assertTrue(
+						"At least one connection didn't fail with localSocketAddress set",
+						didOneFail);
+			}
+		}
+	}
+
+	class SpawnedWorkerCounter {
+		private int workerCount = 0;
+
+		synchronized void setWorkerCount(int i) {
+			workerCount = i;
+		}
+
+		synchronized void decrementWorkerCount() {
+			workerCount--;
+			notify();
+		}
+	}
+
+	class LocalSocketAddressCheckThread extends Thread {
+		boolean atLeastOneWorked = false;
+		Enumeration allAddresses = null;
+		SpawnedWorkerCounter counter = null;
+
+		LocalSocketAddressCheckThread(Enumeration e, SpawnedWorkerCounter c) {
+			allAddresses = e;
+			counter = c;
+		}
+
+		public void run() {
+
+			while (allAddresses.hasMoreElements()) {
+				InetAddress addr = (InetAddress) allAddresses.nextElement();
+
+				try {
+					Properties props = new Properties();
+					props.setProperty("localSocketAddress",
+							addr.getHostAddress());
+					props.setProperty("connectTimeout", "2000");
+					getConnectionWithProps(props).close();
+
+					atLeastOneWorked = true;
+
+					break;
+				} catch (SQLException sqlEx) {
+					// ignore, we're only seeing if one of these tests succeeds
+				}
+			}
+
+			counter.decrementWorkerCount();
+		}
+	}
+
+	public void testUsageAdvisorTooLargeResultSet() throws Exception {
+		Connection uaConn = null;
+
+		PrintStream stderr = System.err;
+
+		StringBuffer logBuf = new StringBuffer();
+
+		StandardLogger.bufferedLog = logBuf;
+
+		try {
+			Properties props = new Properties();
+			props.setProperty("useUsageAdvisor", "true");
+			props.setProperty("resultSetSizeThreshold", "4");
+			props.setProperty("logger", "StandardLogger");
+
+			uaConn = getConnectionWithProps(props);
+
+			assertTrue(
+					"Result set threshold message not present",
+					logBuf.toString().indexOf(
+							"larger than \"resultSetSizeThreshold\" of 4 rows") != -1);
+		} finally {
+			System.setErr(stderr);
+
+			if (uaConn != null) {
+				uaConn.close();
+			}
+		}
+	}
+
+	public void testUseLocalSessionStateRollback() throws Exception {
+		if (!versionMeetsMinimum(6, 0, 0)) {
+			return;
+		}
+
+		Properties props = new Properties();
+		props.setProperty("useLocalSessionState", "true");
+		props.setProperty("useLocalTransactionState", "true");
+		props.setProperty("profileSQL", "true");
+
+		StringBuffer buf = new StringBuffer();
+		StandardLogger.bufferedLog = buf;
+
+		createTable("testUseLocalSessionState", "(field1 varchar(32))",
+				"InnoDB");
+
+		Connection localStateConn = null;
+		Statement localStateStmt = null;
+
+		try {
+			localStateConn = getConnectionWithProps(props);
+			localStateStmt = localStateConn.createStatement();
+
+			localStateConn.setAutoCommit(false);
+			localStateStmt
+					.executeUpdate("INSERT INTO testUseLocalSessionState VALUES ('abc')");
+			localStateConn.rollback();
+			localStateConn.rollback();
+			localStateStmt
+					.executeUpdate("INSERT INTO testUseLocalSessionState VALUES ('abc')");
+			localStateConn.commit();
+			localStateConn.commit();
+			localStateStmt.close();
+		} finally {
+			StandardLogger.bufferedLog = null;
+
+			if (localStateStmt != null) {
+				localStateStmt.close();
+			}
+
+			if (localStateConn != null) {
+				localStateConn.close();
+			}
+		}
+
+		int rollbackCount = 0;
+		int rollbackPos = 0;
+
+		String searchIn = buf.toString();
+
+		while (rollbackPos != -1) {
+			rollbackPos = searchIn.indexOf("rollback", rollbackPos);
+
+			if (rollbackPos != -1) {
+				rollbackPos += "rollback".length();
+				rollbackCount++;
+			}
+		}
+
+		assertEquals(1, rollbackCount);
+
+		int commitCount = 0;
+		int commitPos = 0;
+
+		// space is important here, we don't want to count "autocommit"
+		while (commitPos != -1) {
+			commitPos = searchIn.indexOf(" commit", commitPos);
+
+			if (commitPos != -1) {
+				commitPos += " commit".length();
+				commitCount++;
+			}
+		}
+
+		assertEquals(1, commitCount);
+	}
+
+	/**
+	 * Checks if setting useCursorFetch to "true" automatically enables
+	 * server-side prepared statements.
+	 */
+
+	public void testCouplingOfCursorFetch() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+
+		Connection fetchConn = null;
+
+		try {
+			Properties props = new Properties();
+			props.setProperty("useServerPrepStmts", "false"); // force the issue
+			props.setProperty("useCursorFetch", "true");
+			fetchConn = getConnectionWithProps(props);
+
+			String classname = "com.mysql.jdbc.ServerPreparedStatement";
+
+			if (Util.isJdbc4()) {
+				classname = "com.mysql.jdbc.JDBC4ServerPreparedStatement";
+			}
+
+			assertEquals(classname, fetchConn.prepareStatement("SELECT 1")
+					.getClass().getName());
+		} finally {
+			if (fetchConn != null) {
+				fetchConn.close();
+			}
+		}
+	}
+
+	public void testInterfaceImplementation() throws Exception {
+		testInterfaceImplementation(getConnectionWithProps((Properties) null));
+		MysqlConnectionPoolDataSource cpds = new MysqlConnectionPoolDataSource();
+		cpds.setUrl(dbUrl);
+		testInterfaceImplementation(cpds.getPooledConnection().getConnection());
+	}
+
+	private void testInterfaceImplementation(Connection connToCheck)
+			throws Exception {
+		Method[] dbmdMethods = java.sql.DatabaseMetaData.class.getMethods();
+
+		// can't do this statically, as we return different
+		// implementations depending on JDBC version
+		DatabaseMetaData dbmd = connToCheck.getMetaData();
+
+		checkInterfaceImplemented(dbmdMethods, dbmd.getClass(), dbmd);
+
+		Statement stmtToCheck = connToCheck.createStatement();
+
+		checkInterfaceImplemented(java.sql.Statement.class.getMethods(),
+				stmtToCheck.getClass(), stmtToCheck);
+
+		PreparedStatement pStmtToCheck = connToCheck
+				.prepareStatement("SELECT 1");
+		ParameterMetaData paramMd = pStmtToCheck.getParameterMetaData();
+
+		checkInterfaceImplemented(
+				java.sql.PreparedStatement.class.getMethods(),
+				pStmtToCheck.getClass(), pStmtToCheck);
+		checkInterfaceImplemented(
+				java.sql.ParameterMetaData.class.getMethods(),
+				paramMd.getClass(), paramMd);
+
+		pStmtToCheck = ((com.mysql.jdbc.Connection) connToCheck)
+				.serverPrepareStatement("SELECT 1");
+
+		checkInterfaceImplemented(
+				java.sql.PreparedStatement.class.getMethods(),
+				pStmtToCheck.getClass(), pStmtToCheck);
+		ResultSet toCheckRs = connToCheck.createStatement().executeQuery(
+				"SELECT 1");
+		checkInterfaceImplemented(java.sql.ResultSet.class.getMethods(),
+				toCheckRs.getClass(), toCheckRs);
+		toCheckRs = connToCheck.createStatement().executeQuery("SELECT 1");
+		checkInterfaceImplemented(
+				java.sql.ResultSetMetaData.class.getMethods(), toCheckRs
+						.getMetaData().getClass(), toCheckRs.getMetaData());
+
+		if (versionMeetsMinimum(5, 0, 0)) {
+			createProcedure("interfaceImpl",
+					"(IN p1 INT)\nBEGIN\nSELECT 1;\nEND");
+
+			CallableStatement cstmt = connToCheck
+					.prepareCall("{CALL interfaceImpl(?)}");
+
+			checkInterfaceImplemented(
+					java.sql.CallableStatement.class.getMethods(),
+					cstmt.getClass(), cstmt);
+		}
+		checkInterfaceImplemented(java.sql.Connection.class.getMethods(),
+				connToCheck.getClass(), connToCheck);
+	}
 
 	private void checkInterfaceImplemented(Method[] interfaceMethods,
-			Class implementingClass, Object invokeOn) throws NoSuchMethodException {
+			Class implementingClass, Object invokeOn)
+			throws NoSuchMethodException {
 		for (int i = 0; i < interfaceMethods.length; i++) {
-    		Method toFind = interfaceMethods[i];
-    		Method toMatch = implementingClass.getMethod(toFind.getName(), toFind.getParameterTypes());
-    		assertNotNull(toFind.toString(), toMatch);
-    		Class paramTypes[] = toFind.getParameterTypes();
+			Method toFind = interfaceMethods[i];
+			Method toMatch = implementingClass.getMethod(toFind.getName(),
+					toFind.getParameterTypes());
+			assertNotNull(toFind.toString(), toMatch);
+			Class paramTypes[] = toFind.getParameterTypes();
 
-    		Object[] args = new Object[paramTypes.length];
+			Object[] args = new Object[paramTypes.length];
 			fillPrimitiveDefaults(paramTypes, args, paramTypes.length);
-    		
-    		try {
+
+			try {
 				toMatch.invoke(invokeOn, args);
 			} catch (IllegalArgumentException e) {
-				
+
 			} catch (IllegalAccessException e) {
-				
+
 			} catch (InvocationTargetException e) {
-				
+
 			} catch (java.lang.AbstractMethodError e) {
 				throw e;
 			}
-    	}
+		}
 	}
-	
+
 	public void testNonVerifyServerCert() throws Exception {
 		getConnectionWithProps("useSSL=true,verifyServerCertificate=false,requireSSL=true");
-		closeMemberJDBCResources();
 	}
-	
+
 	public void testSelfDestruct() throws Exception {
 		Connection selfDestructingConn = getConnectionWithProps("selfDestructOnPingMaxOperations=2");
-		
+
 		boolean failed = false;
-		
+
 		for (int i = 0; i < 20; i++) {
 			selfDestructingConn.createStatement().executeQuery("SELECT 1");
-			
+
 			try {
-				selfDestructingConn.createStatement().executeQuery("/* ping */ SELECT 1");
+				selfDestructingConn.createStatement().executeQuery(
+						"/* ping */ SELECT 1");
 			} catch (SQLException sqlEx) {
 				String sqlState = sqlEx.getSQLState();
-				
+
 				assertEquals("08S01", sqlState);
-				
+
 				failed = true;
-				
+
 				break;
 			}
 		}
-			
+
 		if (!failed) {
 			fail("Connection should've self-destructed");
 		}
-		
+
 		failed = false;
-		
+
 		selfDestructingConn = getConnectionWithProps("selfDestructOnPingSecondsLifetime=1");
-		
+
 		long begin = System.currentTimeMillis();
-			
+
 		for (int i = 0; i < 20; i++) {
-			selfDestructingConn.createStatement().executeQuery("SELECT SLEEP(1)");
-			
+			selfDestructingConn.createStatement().executeQuery(
+					"SELECT SLEEP(1)");
+
 			try {
-				selfDestructingConn.createStatement().executeQuery("/* ping */ SELECT 1");
+				selfDestructingConn.createStatement().executeQuery(
+						"/* ping */ SELECT 1");
 			} catch (SQLException sqlEx) {
 				String sqlState = sqlEx.getSQLState();
-				
+
 				assertEquals("08S01", sqlState);
-				
+
 				failed = true;
-				
+
 				break;
 			}
 		}
-		
+
 		if (!failed) {
 			fail("Connection should've self-destructed");
 		}
-		closeMemberJDBCResources();
 	}
-	
+
 	public void testLifecyleInterceptor() throws Exception {
 		createTable("testLifecycleInterceptor", "(field1 int)", "InnoDB");
 		Connection liConn = null;
-		
+
 		try {
 			liConn = getConnectionWithProps("connectionLifecycleInterceptors=testsuite.simple.TestLifecycleInterceptor");
 			liConn.setAutoCommit(false);
-		
-			liConn.createStatement().executeUpdate("INSERT INTO testLifecycleInterceptor VALUES (1)");
+
+			liConn.createStatement().executeUpdate(
+					"INSERT INTO testLifecycleInterceptor VALUES (1)");
 			liConn.commit();
 			assertEquals(TestLifecycleInterceptor.transactionsBegun, 1);
 			assertEquals(TestLifecycleInterceptor.transactionsCompleted, 1);
-			liConn.createStatement().executeQuery("SELECT * FROM testLifecycleInterceptor");
+			liConn.createStatement().executeQuery(
+					"SELECT * FROM testLifecycleInterceptor");
 			assertEquals(TestLifecycleInterceptor.transactionsBegun, 2);
 			// implicit commit
-			liConn.createStatement().executeUpdate("CREATE TABLE testLifecycleFoo (field1 int)");
+			liConn.createStatement().executeUpdate(
+					"CREATE TABLE testLifecycleFoo (field1 int)");
 			assertEquals(TestLifecycleInterceptor.transactionsCompleted, 2);
 		} finally {
 			if (liConn != null) {
-				liConn.createStatement().executeUpdate("DROP TABLE IF EXISTS testLifecycleFoo");
+				liConn.createStatement().executeUpdate(
+						"DROP TABLE IF EXISTS testLifecycleFoo");
 				liConn.close();
 			}
-			closeMemberJDBCResources();
 		}
-		
-	}
-	
-	public void testNewHostParsing() throws Exception {
-		Properties parsedProps = new NonRegisteringDriver().parseURL(dbUrl, null);
-		String host = parsedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-		String port = parsedProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
-		String user = parsedProps.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
-		String password = parsedProps.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
-		String database = parsedProps.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 
-		String newUrl = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s",
-				host, port, user != null ? user : "", password != null ? password : "", database);
-		
+	}
+
+	public void testNewHostParsing() throws Exception {
+		Properties parsedProps = new NonRegisteringDriver().parseURL(dbUrl,
+				null);
+		String host = parsedProps
+				.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
+		String port = parsedProps
+				.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		String user = parsedProps
+				.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
+		String password = parsedProps
+				.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+		String database = parsedProps
+				.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+
+		String newUrl = String
+				.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%s)(user=%s)(password=%s)/%s",
+						host, port, user != null ? user : "",
+						password != null ? password : "", database);
+
 		try {
 			getConnectionWithProps(newUrl, new Properties());
 		} catch (SQLException sqlEx) {
-			throw new RuntimeException("Failed to connect with URL " + newUrl, sqlEx);
+			throw new RuntimeException("Failed to connect with URL " + newUrl,
+					sqlEx);
 		}
-		closeMemberJDBCResources();
 	}
-	
+
 	public void testCompression() throws Exception {
 		Connection compressedConn = getConnectionWithProps("useCompression=true,maxAllowedPacket=33554432");
 		Statement compressedStmt = compressedConn.createStatement();
 		compressedStmt.setFetchSize(Integer.MIN_VALUE);
-		this.rs = compressedStmt.executeQuery("select repeat('a', 256 * 256 * 256 - 5)");
+		this.rs = compressedStmt
+				.executeQuery("select repeat('a', 256 * 256 * 256 - 5)");
 		this.rs.next();
 		String str = rs.getString(1);
-		
+
 		assertEquals((256 * 256 * 256 - 5), str.length());
-		
+
 		for (int i = 0; i < str.length(); i++) {
 			if (str.charAt(i) != 'a') {
 				fail();
 			}
 		}
-		closeMemberJDBCResources();
 	}
 }

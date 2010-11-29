@@ -129,8 +129,6 @@ public class ResultSetTest extends BaseTestCase {
 
 			testPaddingForConnection(paddedConn, numChars, selectBuf);
 		} finally {
-			closeMemberJDBCResources();
-
 			if (paddedConn != null) {
 				paddedConn.close();
 			}

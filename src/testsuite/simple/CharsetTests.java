@@ -112,7 +112,6 @@ public class CharsetTests extends BaseTestCase {
 				this.rs.close();
 				stmt2.close();
 				conn2.close();
-				closeMemberJDBCResources();
 			}
 		}
 	}
@@ -305,7 +304,6 @@ public class CharsetTests extends BaseTestCase {
 					}
 					String query5 = "DROP TABLE t1";
 					stmt2.executeUpdate(query5);
-					closeMemberJDBCResources();
 				}
 			}
 		}
@@ -448,7 +446,6 @@ public class CharsetTests extends BaseTestCase {
 		} catch (SQLException sqlEx) {
 			assertNull(sqlEx.getCause());
 		}
-		closeMemberJDBCResources();
 	}
 	
 	private boolean bytesAreSame(byte[] byte1, byte[] byte2) {

@@ -179,22 +179,24 @@ public class StatementsTest extends BaseTestCase {
 	 *             DOCUMENT ME!
 	 */
 	public void tearDown() throws Exception {
-		this.stmt.executeUpdate("DROP TABLE statement_test");
-
-		for (int i = 0; i < MAX_COLUMNS_TO_TEST; i += STEP) {
-			StringBuffer stmtBuf = new StringBuffer(
-					"DROP TABLE IF EXISTS statement_col_test_");
-			stmtBuf.append(i);
-			this.stmt.executeUpdate(stmtBuf.toString());
-		}
-
 		try {
-			this.stmt.executeUpdate("DROP TABLE statement_batch_test");
-		} catch (SQLException sqlEx) {
-			;
+			this.stmt.executeUpdate("DROP TABLE statement_test");
+	
+			for (int i = 0; i < MAX_COLUMNS_TO_TEST; i += STEP) {
+				StringBuffer stmtBuf = new StringBuffer(
+						"DROP TABLE IF EXISTS statement_col_test_");
+				stmtBuf.append(i);
+				this.stmt.executeUpdate(stmtBuf.toString());
+			}
+	
+			try {
+				this.stmt.executeUpdate("DROP TABLE statement_batch_test");
+			} catch (SQLException sqlEx) {
+				;
+			}
+		} finally {
+			super.tearDown();
 		}
-
-		super.tearDown();
 	}
 
 	/**
@@ -1907,8 +1909,6 @@ public class StatementsTest extends BaseTestCase {
 			interceptedConn = getConnectionWithProps(props);
 			this.rs = interceptedConn.createStatement().executeQuery("SELECT 'abc'");
 		} finally {
-			closeMemberJDBCResources();
-
 			if (interceptedConn != null) {
 				interceptedConn.close();
 			}
@@ -1984,7 +1984,6 @@ public class StatementsTest extends BaseTestCase {
             assertEquals("ijkl", this.rs.getString(1));
 	    } finally {
 	        ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(null);
-	        closeMemberJDBCResources();
 	    }
 	}
 }

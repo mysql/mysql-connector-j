@@ -67,32 +67,26 @@ public class NumbersRegressionTest extends BaseTestCase {
 	 *             if any errors occur
 	 */
 	public void testBigInt() throws Exception {
-		try {
-			createTable("bigIntRegression","(val BIGINT NOT NULL)");
-			this.stmt
-					.executeUpdate("INSERT INTO bigIntRegression VALUES (6692730313872877584)");
-			this.rs = this.stmt
-					.executeQuery("SELECT val FROM bigIntRegression");
+		createTable("bigIntRegression", "(val BIGINT NOT NULL)");
+		this.stmt
+				.executeUpdate("INSERT INTO bigIntRegression VALUES (6692730313872877584)");
+		this.rs = this.stmt.executeQuery("SELECT val FROM bigIntRegression");
 
-			while (this.rs.next()) {
-				// check retrieval
-				long retrieveAsLong = this.rs.getLong(1);
-				assertTrue(retrieveAsLong == 6692730313872877584L);
-			}
-
-			this.rs.close();
-			this.stmt.executeUpdate("DROP TABLE IF EXISTS bigIntRegression");
-
-			String bigIntAsString = "6692730313872877584";
-
-			long parsedBigIntAsLong = Long.parseLong(bigIntAsString);
-
-			// check JDK parsing
-			assertTrue(bigIntAsString
-					.equals(String.valueOf(parsedBigIntAsLong)));
-		} finally {
-			closeMemberJDBCResources();
+		while (this.rs.next()) {
+			// check retrieval
+			long retrieveAsLong = this.rs.getLong(1);
+			assertTrue(retrieveAsLong == 6692730313872877584L);
 		}
+
+		this.rs.close();
+		this.stmt.executeUpdate("DROP TABLE IF EXISTS bigIntRegression");
+
+		String bigIntAsString = "6692730313872877584";
+
+		long parsedBigIntAsLong = Long.parseLong(bigIntAsString);
+
+		// check JDK parsing
+		assertTrue(bigIntAsString.equals(String.valueOf(parsedBigIntAsLong)));
 	}
 
 	/**
@@ -102,33 +96,29 @@ public class NumbersRegressionTest extends BaseTestCase {
 	 *             if the test fails.
 	 */
 	public void testFloatsAndReals() throws Exception {
-		try {
-			createTable("floatsAndReals", "(floatCol FLOAT, realCol REAL, doubleCol DOUBLE)");
-			this.stmt
-					.executeUpdate("INSERT INTO floatsAndReals VALUES (0, 0, 0)");
+		createTable("floatsAndReals",
+				"(floatCol FLOAT, realCol REAL, doubleCol DOUBLE)");
+		this.stmt.executeUpdate("INSERT INTO floatsAndReals VALUES (0, 0, 0)");
 
-			this.rs = this.stmt
-					.executeQuery("SELECT floatCol, realCol, doubleCol FROM floatsAndReals");
+		this.rs = this.stmt
+				.executeQuery("SELECT floatCol, realCol, doubleCol FROM floatsAndReals");
 
-			ResultSetMetaData rsmd = this.rs.getMetaData();
+		ResultSetMetaData rsmd = this.rs.getMetaData();
 
-			this.rs.next();
+		this.rs.next();
 
-			assertTrue(rsmd.getColumnClassName(1).equals("java.lang.Float"));
-			assertTrue(this.rs.getObject(1).getClass().getName().equals(
-					"java.lang.Float"));
+		assertTrue(rsmd.getColumnClassName(1).equals("java.lang.Float"));
+		assertTrue(this.rs.getObject(1).getClass().getName()
+				.equals("java.lang.Float"));
 
-			assertTrue(rsmd.getColumnClassName(2).equals("java.lang.Double"));
-			assertTrue(this.rs.getObject(2).getClass().getName().equals(
-					"java.lang.Double"));
+		assertTrue(rsmd.getColumnClassName(2).equals("java.lang.Double"));
+		assertTrue(this.rs.getObject(2).getClass().getName()
+				.equals("java.lang.Double"));
 
-			assertTrue(rsmd.getColumnClassName(3).equals("java.lang.Double"));
-			assertTrue(this.rs.getObject(3).getClass().getName().equals(
-					"java.lang.Double"));
+		assertTrue(rsmd.getColumnClassName(3).equals("java.lang.Double"));
+		assertTrue(this.rs.getObject(3).getClass().getName()
+				.equals("java.lang.Double"));
 
-		} finally {
-			closeMemberJDBCResources();
-		}
 	}
 
 	/**
@@ -193,14 +183,16 @@ public class NumbersRegressionTest extends BaseTestCase {
 					.executeQuery("SELECT val FROM precisionAndScaleRegression");
 
 			ResultSetMetaData rsmd = this.rs.getMetaData();
-			assertTrue("Precision returned incorrectly for type " + typeName
-					+ ", " + m + " != rsmd.getPrecision() = "
-					+ rsmd.getPrecision(1), rsmd.getPrecision(1) == m);
+			assertTrue(
+					"Precision returned incorrectly for type " + typeName
+							+ ", " + m + " != rsmd.getPrecision() = "
+							+ rsmd.getPrecision(1), rsmd.getPrecision(1) == m);
 
 			if (d != -1) {
-				assertTrue("Scale returned incorrectly for type " + typeName
-						+ ", " + d + " != rsmd.getScale() = "
-						+ rsmd.getScale(1), rsmd.getScale(1) == d);
+				assertTrue(
+						"Scale returned incorrectly for type " + typeName
+								+ ", " + d + " != rsmd.getScale() = "
+								+ rsmd.getScale(1), rsmd.getScale(1) == d);
 			}
 		} finally {
 			if (this.rs != null) {
@@ -217,28 +209,14 @@ public class NumbersRegressionTest extends BaseTestCase {
 	}
 
 	public void testIntShouldReturnLong() throws Exception {
-		try {
-			createTable("testIntRetLong", "(field1 INT)");
-			this.stmt.executeUpdate("INSERT INTO testIntRetLong VALUES (1)");
+		createTable("testIntRetLong", "(field1 INT)");
+		this.stmt.executeUpdate("INSERT INTO testIntRetLong VALUES (1)");
 
-			this.rs = this.stmt.executeQuery("SELECT * FROM testIntRetLong");
-			this.rs.next();
+		this.rs = this.stmt.executeQuery("SELECT * FROM testIntRetLong");
+		this.rs.next();
 
-			assertTrue(this.rs.getObject(1).getClass().equals(
-					java.lang.Integer.class));
-		} finally {
-			if (this.rs != null) {
-				try {
-					this.rs.close();
-				} catch (SQLException sqlEx) {
-					// ignore
-				}
-
-				this.rs = null;
-			}
-
-			closeMemberJDBCResources();
-		}
+		assertTrue(this.rs.getObject(1).getClass()
+				.equals(java.lang.Integer.class));
 	}
 
 	/**
@@ -251,20 +229,15 @@ public class NumbersRegressionTest extends BaseTestCase {
 		if (versionMeetsMinimum(4, 1)) {
 			String valueAsString = "1095923280000";
 
-			try {
-				createTable("testBug5729", "(field1 BIGINT UNSIGNED)");
-				this.stmt.executeUpdate("INSERT INTO testBug5729 VALUES ("
-						+ valueAsString + ")");
+			createTable("testBug5729", "(field1 BIGINT UNSIGNED)");
+			this.stmt.executeUpdate("INSERT INTO testBug5729 VALUES ("
+					+ valueAsString + ")");
 
-				this.rs = this.conn.prepareStatement(
-						"SELECT * FROM testBug5729").executeQuery();
-				this.rs.next();
+			this.rs = this.conn.prepareStatement("SELECT * FROM testBug5729")
+					.executeQuery();
+			this.rs.next();
 
-				assertTrue(this.rs.getObject(1).toString()
-						.equals(valueAsString));
-			} finally {
-				closeMemberJDBCResources();
-			}
+			assertTrue(this.rs.getObject(1).toString().equals(valueAsString));
 		}
 	}
 
@@ -277,24 +250,21 @@ public class NumbersRegressionTest extends BaseTestCase {
 	 * @deprecated
 	 */
 	public void testBug8484() throws Exception {
-		try {
-			createTable("testBug8484", "(field1 DECIMAL(16, 8), field2 varchar(32))");
-			this.stmt
-					.executeUpdate("INSERT INTO testBug8484 VALUES (12345678.12345678, '')");
-			this.rs = this.stmt
-					.executeQuery("SELECT field1, field2 FROM testBug8484");
-			this.rs.next();
-			assertEquals("12345678.123", this.rs.getBigDecimal(1, 3).toString());
-			assertEquals("0.000", this.rs.getBigDecimal(2, 3).toString());
+		createTable("testBug8484",
+				"(field1 DECIMAL(16, 8), field2 varchar(32))");
+		this.stmt
+				.executeUpdate("INSERT INTO testBug8484 VALUES (12345678.12345678, '')");
+		this.rs = this.stmt
+				.executeQuery("SELECT field1, field2 FROM testBug8484");
+		this.rs.next();
+		assertEquals("12345678.123", this.rs.getBigDecimal(1, 3).toString());
+		assertEquals("0.000", this.rs.getBigDecimal(2, 3).toString());
 
-			this.pstmt = this.conn
-					.prepareStatement("SELECT field1, field2 FROM testBug8484");
-			this.rs = this.pstmt.executeQuery();
-			this.rs.next();
-			assertEquals("12345678.123", this.rs.getBigDecimal(1, 3).toString());
-			assertEquals("0.000", this.rs.getBigDecimal(2, 3).toString());
-		} finally {
-			closeMemberJDBCResources();
-		}
+		this.pstmt = this.conn
+				.prepareStatement("SELECT field1, field2 FROM testBug8484");
+		this.rs = this.pstmt.executeQuery();
+		this.rs.next();
+		assertEquals("12345678.123", this.rs.getBigDecimal(1, 3).toString());
+		assertEquals("0.000", this.rs.getBigDecimal(2, 3).toString());
 	}
 }
