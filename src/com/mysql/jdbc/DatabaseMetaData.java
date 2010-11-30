@@ -1174,7 +1174,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		try {
 			for (int i = 0; i < numTables; i++) {
 				String tableToExtract = (String) tableList.get(i);
-
+				if (tableToExtract.indexOf(quoteChar) > 0) {
+					tableToExtract = StringUtils.escapeQuote(tableToExtract, quoteChar);
+				}
+				
 				String query = new StringBuffer("SHOW CREATE TABLE ").append(
 						quoteChar).append(catalog).append(quoteChar)
 						.append(".").append(quoteChar).append(tableToExtract)

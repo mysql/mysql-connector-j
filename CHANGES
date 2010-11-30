@@ -3,6 +3,9 @@
 
 mm-dd-10 - Version 5.1.14
 
+   - Fix for BUG#58590
+   - Testsuite.Simple.DateTest, MetadataTest, NumbersTest and StatementsTest cleaned and fixed.
+
    - Testsuite.simple, ConenctionTest & DataSourceTest are up to date. Major rework on 
      ConnectionTest.testDeadlockDetection (Sveta) and testUseCompress.
    

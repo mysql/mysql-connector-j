@@ -82,7 +82,6 @@ public class DateTest extends BaseTestCase {
 	 */
 	public void setUp() throws Exception {
 		super.setUp();
-		createTestTable();
 	}
 
 	/**
@@ -92,6 +91,8 @@ public class DateTest extends BaseTestCase {
 	 *             DOCUMENT ME!
 	 */
 	public void testTimestamp() throws SQLException {
+		createTable("DATETEST", "(tstamp TIMESTAMP, dt DATE, dtime DATETIME, tm TIME)");
+
 		this.pstmt = this.conn
 				.prepareStatement("INSERT INTO DATETEST(tstamp, dt, dtime, tm) VALUES (?, ?, ?, ?)");
 
@@ -214,20 +215,6 @@ public class DateTest extends BaseTestCase {
 		} finally {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS testNanosParsing");
 		}
-	}
-
-	private void createTestTable() throws SQLException {
-		//
-		// Catch the error, the table might exist
-		//
-		try {
-			this.stmt.executeUpdate("DROP TABLE DATETEST");
-		} catch (SQLException SQLE) {
-			;
-		}
-
-		this.stmt
-				.executeUpdate("CREATE TABLE DATETEST (tstamp TIMESTAMP, dt DATE, dtime DATETIME, tm TIME)");
 	}
 
 	/**

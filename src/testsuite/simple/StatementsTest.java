@@ -182,7 +182,7 @@ public class StatementsTest extends BaseTestCase {
 		try {
 			this.stmt.executeUpdate("DROP TABLE statement_test");
 	
-			for (int i = 0; i < MAX_COLUMNS_TO_TEST; i += STEP) {
+			for (int i = 6; i < MAX_COLUMNS_TO_TEST; i += STEP) {
 				StringBuffer stmtBuf = new StringBuffer(
 						"DROP TABLE IF EXISTS statement_col_test_");
 				stmtBuf.append(i);
@@ -1297,8 +1297,7 @@ public class StatementsTest extends BaseTestCase {
 		props.put("noDatetimeStringSync", "true"); // value=true for #5
 		Connection conn1 = getConnectionWithProps(props);
 		Statement stmt1 = conn1.createStatement();
-		stmt1.executeUpdate("DROP TABLE IF EXISTS t1");
-		stmt1.executeUpdate("CREATE TABLE t1 (" + "c1 DECIMAL," // instance of
+		createTable("t1", " (" + "c1 DECIMAL," // instance of
 																// String
 				+ "c2 VARCHAR(255)," // instance of String
 				+ "c3 BLOB," // instance of byte[]

@@ -99,14 +99,7 @@ public class NumbersTest extends BaseTestCase {
 	}
 
 	private void createTestTable() throws SQLException {
-		try {
-			this.stmt.executeUpdate("DROP TABLE number_test");
-		} catch (SQLException sqlEx) {
-			;
-		}
-
-		this.stmt
-				.executeUpdate("CREATE TABLE number_test (minBigInt bigint, maxBigInt bigint, testBigInt bigint)");
+		createTable("number_test", "(minBigInt bigint, maxBigInt bigint, testBigInt bigint)");
 		this.stmt
 				.executeUpdate("INSERT INTO number_test (minBigInt,maxBigInt,testBigInt) values ("
 						+ Long.MIN_VALUE

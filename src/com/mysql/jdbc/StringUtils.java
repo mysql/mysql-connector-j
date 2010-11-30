@@ -1777,4 +1777,36 @@ public class StringUtils {
 		
 		return true;
 	}
+	
+	public static String escapeQuote(String src, String quotChar) {
+		if (src == null) {
+			return null;
+		}
+
+		src = new String(stripEnclosure(src.getBytes(), quotChar, quotChar));
+
+		int lastNdx = src.indexOf(quotChar);
+		String tmpSrc;
+		String tmpRest;
+
+		tmpSrc = src.substring(0, lastNdx);
+		tmpSrc = tmpSrc + quotChar + quotChar;
+		
+		tmpRest = src.substring(lastNdx+1, src.length());
+		
+		lastNdx = tmpRest.indexOf(quotChar);
+		while (lastNdx > -1) {
+			
+			tmpSrc = tmpSrc + tmpRest.substring(0, lastNdx);
+			tmpSrc = tmpSrc + quotChar + quotChar;
+			tmpRest = tmpRest.substring(lastNdx+1, tmpRest.length());
+			
+			lastNdx = tmpRest.indexOf(quotChar);
+		}
+		tmpSrc = tmpSrc + tmpRest;
+		src = tmpSrc;
+
+		return src;
+	}
+	
 }
