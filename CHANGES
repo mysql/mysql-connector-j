@@ -140,6 +140,9 @@ mm-dd-10 - Version 5.1.14
       
     - Fixed Bug#58706 - Failover connections didn't honor "failOverReadOnly=false", and in some
       situations would not fall back.
+      
+    - Removed logging integrations with log4j and apache-commons-logging due to license 
+      incompatibility. Replacing with SLF4J integration in next release.
 
 06-24-10 - Version 5.1.13
 
