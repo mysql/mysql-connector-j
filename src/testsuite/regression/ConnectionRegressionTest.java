@@ -3014,4 +3014,69 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		rs.next();
 		assertEquals("latin1", rs.getString(2));
 	}
+	
+	public void testBug58706() throws Exception {
+		Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+		props.setProperty("autoReconnect", "true");
+		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+
+		Properties urlProps = new NonRegisteringDriver().parseURL(this.dbUrl,
+				null);
+
+		String host = urlProps.getProperty(Driver.HOST_PROPERTY_KEY);
+		String port = urlProps.getProperty(Driver.PORT_PROPERTY_KEY);
+
+		props.remove(Driver.HOST_PROPERTY_KEY);
+		props.remove(Driver.NUM_HOSTS_PROPERTY_KEY);
+		props.remove(Driver.HOST_PROPERTY_KEY + ".1");
+		props.remove(Driver.PORT_PROPERTY_KEY + ".1");
+
+		props.setProperty("queriesBeforeRetryMaster", "0");
+		props.setProperty("failOverReadOnly", "false");
+		props.setProperty("secondsBeforeRetryMaster", "1");
+
+		UnreliableSocketFactory.mapHost("master", host);
+		UnreliableSocketFactory.mapHost("slave", host);
+
+		Connection failoverConnection = null;
+
+		try {
+			failoverConnection = getConnectionWithProps("jdbc:mysql://master:"
+					+ port + ",slave:" + port + "/", props);
+			failoverConnection.setAutoCommit(false);
+
+			assertTrue(((com.mysql.jdbc.Connection)failoverConnection).isMasterConnection());
+			
+			for (int i = 0; i < 50; i++) {
+				failoverConnection.createStatement().executeQuery("SELECT 1");
+			}
+
+			UnreliableSocketFactory.downHost("master");
+			
+			try {
+				failoverConnection.createStatement().executeQuery("SELECT 1"); // this should fail and trigger failover
+				fail("Expected exception");
+			} catch (SQLException sqlEx) {
+				assertEquals("08S01", sqlEx.getSQLState());
+			}
+
+			failoverConnection.setAutoCommit(true);
+			assertTrue(!((com.mysql.jdbc.Connection)failoverConnection).isMasterConnection());
+			assertTrue(!failoverConnection.isReadOnly());
+			failoverConnection.createStatement().executeQuery("SELECT 1");
+			failoverConnection.createStatement().executeQuery("SELECT 1");
+			UnreliableSocketFactory.dontDownHost("master");
+			Thread.sleep(2000);
+			failoverConnection.setAutoCommit(true);
+			failoverConnection.createStatement().executeQuery("SELECT 1");
+			assertTrue(((com.mysql.jdbc.Connection)failoverConnection).isMasterConnection());
+			failoverConnection.createStatement().executeQuery("SELECT 1");
+		} finally {
+			UnreliableSocketFactory.flushAllHostLists();
+
+			if (failoverConnection != null) {
+				failoverConnection.close();
+			}
+		}
+	}
 }

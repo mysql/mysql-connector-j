@@ -111,6 +111,10 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 			hasTriedMaster = false;
 		} else if ("hasTriedMaster".equals(methodName)) {
 			return Boolean.valueOf(hasTriedMaster);
+		} else if ("isMasterConnection".equals(methodName)) {
+			return Boolean.valueOf(!failedOver);
+		} else if ("isSlaveConnection".equals(methodName)) {
+			return Boolean.valueOf(failedOver);
 		} else if ("setReadOnly".equals(methodName)) {
 			if (failedOver) {
 				return null; // no-op when failed over
@@ -130,9 +134,12 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 			this.currentConn = createConnectionForHost(this.primaryHostPortSpec);
 			this.failedOver = false;
 			this.hasTriedMaster = true;
+			
+			// reset failed-over state
+			this.queriesIssuedFailedOver = 0;
 		} catch (SQLException sqlEx) {
 			this.failedOver = true;
-			
+
 			if (this.currentConn != null) {
 				this.currentConn.getLog().logWarn("Connection to primary host failed", sqlEx);
 			}
@@ -177,7 +184,13 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 		}
 		
 		super.pickNewConnection();
-		this.currentConn.setReadOnly(true);
+		
+		if (this.currentConn.getFailOverReadOnly()) {
+			this.currentConn.setReadOnly(true);
+		} else {
+			this.currentConn.setReadOnly(false);
+		}
+		
 		this.failedOver = true;
 	}
 
@@ -191,9 +204,15 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 	private boolean shouldFallBack() {
 		long secondsSinceFailedOver = (System.currentTimeMillis() - this.masterFailTimeMillis) / 1000;
 
-		// Done this way so we can set a condition in the debugger
-		boolean tryFallback = ((secondsSinceFailedOver >= this.secondsBeforeRetryMaster) || (this.queriesIssuedFailedOver >= this.queriesBeforeRetryMaster));
-
-		return tryFallback;
+		if (secondsSinceFailedOver >= this.secondsBeforeRetryMaster) {
+			// reset the timer
+			this.masterFailTimeMillis = System.currentTimeMillis();
+			
+			return true;
+		} else if (this.queriesBeforeRetryMaster != 0 && this.queriesIssuedFailedOver >= this.queriesBeforeRetryMaster) {
+			return true;
+		}
+		
+		return false;
 	}
 }

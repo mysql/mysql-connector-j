@@ -135,8 +135,11 @@ mm-dd-10 - Version 5.1.14
     - Fixed Bug#56979 - Improper connection closing logic leads to TIME_WAIT 
       sockets on server
       
-    - Fixed Bug#57380 -  DatabaseMetaData.supportsMultipleResultSets() now returns
-      true when connected to a 4.1 version or later server. 
+    - Fixed Bug#57380 - DatabaseMetaData.supportsMultipleResultSets() now returns
+      true when connected to a 4.1 version or later server.
+      
+    - Fixed Bug#58706 - Failover connections didn't honor "failOverReadOnly=false", and in some
+      situations would not fall back.
 
 06-24-10 - Version 5.1.13
 
