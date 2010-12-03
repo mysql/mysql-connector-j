@@ -358,6 +358,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<isset property="com.mysql.jdbc.commercialBuild"/>
 			<then>
 				<delete file="${packageDest}/COPYING"/>
+                                <copy file="${sourceDir}/lib-nodist/LICENSE.mysql" toDir="${packageDest}"/>
 
 				<replaceregexp 
 					match="The MySQL Connector.*1301.[^replaceregexp]*USA"
