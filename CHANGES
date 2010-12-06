@@ -1,7 +1,7 @@
 # Changelog
 # $Id$
 
-12-07-10 - Version 5.1.14
+12-06-10 - Version 5.1.14
 
    - Fix for Bug#58728, NPE in com.mysql.jdbc.jdbc2.optional.StatementWrappe.getResultSet()
      if rs is null. Regression test case added to Statement regression tests.
