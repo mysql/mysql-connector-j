@@ -1,12 +1,13 @@
 # Changelog
 # $Id$
 
-mm-dd-10 - Version 5.1.14
-   - Fix for Bug#58728, NPE in com.mysql.jdbc.jdbc2.optional.StatementWrappe.getResultSet()
-     if rs is null. Regression test case added to Statementys regression tests.
+12-07-10 - Version 5.1.14
 
-   - Fix for Bug#58751, DatabaseMetadata.getIndexInfo() CARDINALITY changed to Types.BIGINT.
-     MetadataRegression test changed accordingly.
+   - Fix for Bug#58728, NPE in com.mysql.jdbc.jdbc2.optional.StatementWrappe.getResultSet()
+     if rs is null. Regression test case added to Statement regression tests.
+
+   - Fix for Bug#58751, DatabaseMetadata.getIndexInfo() CARDINALITY now clamped
+     to Integer.MAX_VALUE.
 
    - Fix for BUG#58590
    - Testsuite.Simple.DateTest, MetadataTest, NumbersTest and StatementsTest cleaned and fixed.

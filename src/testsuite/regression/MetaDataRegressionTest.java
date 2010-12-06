@@ -2498,7 +2498,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 							// "A" => ascending, "D" => descending, may be null
 							// if sort sequence is not supported; null when TYPE
 							// is tableIndexStatistic
-				Types.BIGINT, // 11. CARDINALITY int => When TYPE is
+				Types.INTEGER, // 11. CARDINALITY int => When TYPE is
 								// tableIndexStatistic, then this is the number
 								// of rows in the table; otherwise, it is the
 								// number of unique values in the index.
