@@ -84,6 +84,7 @@ import com.mysql.jdbc.StatementInterceptor;
 import com.mysql.jdbc.StatementInterceptorV2;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
 /**
  * Regression tests for the Statement class
@@ -6540,5 +6541,25 @@ public class StatementRegressionTest extends BaseTestCase {
 				"SELECT * FROM testBug54175");
 		assertTrue(rs.next());
 		assertEquals(55422, rs.getString(1).charAt(0));
+	}
+
+	/**
+	 * Tests fix for Bug#58728, NPE in com.mysql.jdbc.jdbc2.optional.StatementWrappe.getResultSet()
+	 * ((com.mysql.jdbc.ResultSetInternalMethods) rs).setWrapperStatement(this);
+	 * when rs is null
+	 */
+	public void testBug58728() throws Exception {
+		createTable("testbug58728", "(Id INT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY, txt VARCHAR(50))","InnoDB");
+		this.stmt.executeUpdate("INSERT INTO testbug58728 VALUES (NULL, 'Text 1'), (NULL, 'Text 2')");
+		
+		MysqlConnectionPoolDataSource pds = new MysqlConnectionPoolDataSource();
+		pds.setUrl(dbUrl);
+		Statement stmt1 = pds.getPooledConnection().getConnection().createStatement();
+		stmt1.executeUpdate("UPDATE testbug58728 SET txt = 'New text' WHERE Id > 0");
+		ResultSet rs1 = stmt1.getResultSet();
+		stmt1.close();
+		if (rs1 != null) {
+			rs1.close();
+		}
 	}
 }

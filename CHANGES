@@ -2,6 +2,9 @@
 # $Id$
 
 mm-dd-10 - Version 5.1.14
+   - Fix for Bug#58728, NPE in com.mysql.jdbc.jdbc2.optional.StatementWrappe.getResultSet()
+     if rs is null. Regression test case added to Statementys regression tests.
+
    - Fix for Bug#58751, DatabaseMetadata.getIndexInfo() CARDINALITY changed to Types.BIGINT.
      MetadataRegression test changed accordingly.
 
