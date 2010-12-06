@@ -3633,7 +3633,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[7] = new Field("", "ORDINAL_POSITION", Types.SMALLINT, 5);
 		fields[8] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
 		fields[9] = new Field("", "ASC_OR_DESC", Types.CHAR, 1);
-		fields[10] = new Field("", "CARDINALITY", Types.INTEGER, 10);
+		fields[10] = new Field("", "CARDINALITY", Types.BIGINT, 20);
 		fields[11] = new Field("", "PAGES", Types.INTEGER, 10);
 		fields[12] = new Field("", "FILTER_CONDITION", Types.CHAR, 32);
 		return fields;
