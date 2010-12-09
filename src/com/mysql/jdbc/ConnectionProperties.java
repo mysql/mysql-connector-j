@@ -1566,6 +1566,10 @@ public interface ConnectionProperties {
 	
 	public abstract void setIncludeThreadDumpInDeadlockExceptions(boolean flag);
 	
+	public abstract boolean getIncludeThreadNamesAsStatementComment();
+	
+	public abstract void setIncludeThreadNamesAsStatementComment(boolean flag);
+	
 	public abstract boolean getBlobsAreStrings();
 
 	public abstract void setBlobsAreStrings(boolean flag);

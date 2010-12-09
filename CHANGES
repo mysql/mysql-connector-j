@@ -8,6 +8,10 @@ nn-nn-11 - Version 5.1.15
    - Added ability to include the current java thread dump in the exception message
      given for deadlock/wait lock timeout exceptions, enable with 
      "includeThreadDumpInDeadlockExceptions=true" in your JDBC url.
+
+   - Added ability to include current thread name as a statement comment visible
+     in MySQL's "SHOW PROCESSLIST" and Innodb deadlock diagnostics, enable with
+     "includeThreadNamesAsStatementComment=true".
      
 12-06-10 - Version 5.1.14
 

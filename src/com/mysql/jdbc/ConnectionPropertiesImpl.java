@@ -987,6 +987,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.includeThreadDumpInDeadlockExceptions"),
 			"5.1.15", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 	
+	private BooleanConnectionProperty includeThreadNamesAsStatementComment = new BooleanConnectionProperty(
+			"includeThreadNamesAsStatementComment",
+			false,
+			Messages.getString("ConnectionProperties.includeThreadNamesAsStatementComment"),
+			"5.1.15", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+	
 	private BooleanConnectionProperty ignoreNonTxTables = new BooleanConnectionProperty(
 			"ignoreNonTxTables", //$NON-NLS-1$
 			false,
@@ -4623,6 +4629,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public boolean getIncludeThreadDumpInDeadlockExceptions() {
 		return includeThreadDumpInDeadlockExceptions.getValueAsBoolean();
+	}
+
+	public void setIncludeThreadNamesAsStatementComment(boolean flag) {
+		this.includeThreadNamesAsStatementComment.setValue(flag);
+	}
+
+	public boolean getIncludeThreadNamesAsStatementComment() {
+		return includeThreadNamesAsStatementComment.getValueAsBoolean();
 	}
 
 }

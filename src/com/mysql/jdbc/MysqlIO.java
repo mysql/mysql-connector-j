@@ -2052,7 +2052,11 @@ public class MysqlIO {
 	    	long queryEndTime = 0;
 
     		String statementComment = this.connection.getStatementComment();
-
+    		
+    		if (this.connection.getIncludeThreadNamesAsStatementComment()) {
+    			statementComment = (statementComment != null ? statementComment + ", " : "") + "java thread: " + Thread.currentThread().getName();
+    		}
+    		
 	    	if (query != null) {
 	    		// We don't know exactly how many bytes we're going to get
 	    		// from the query. Since we're dealing with Unicode, the

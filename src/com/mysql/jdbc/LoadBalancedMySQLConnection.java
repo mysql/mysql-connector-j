@@ -2524,4 +2524,12 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
 		getActiveMySQLConnection().setTypeMap(map);
 	}
+
+	public boolean getIncludeThreadNamesAsStatementComment() {
+		return getActiveMySQLConnection().getIncludeThreadNamesAsStatementComment();
+	}
+
+	public void setIncludeThreadNamesAsStatementComment(boolean flag) {
+		getActiveMySQLConnection().setIncludeThreadNamesAsStatementComment(flag);
+	}
 }

@@ -2743,4 +2743,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setIncludeThreadDumpInDeadlockExceptions(flag);
 		
 	}
+
+	public boolean getIncludeThreadNamesAsStatementComment() {
+		return this.mc.getIncludeThreadNamesAsStatementComment();
+	}
+
+	public void setIncludeThreadNamesAsStatementComment(boolean flag) {
+		this.mc.setIncludeThreadNamesAsStatementComment(flag);
+	}
 }

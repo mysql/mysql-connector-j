@@ -2546,4 +2546,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 		currentConnection.setIncludeThreadDumpInDeadlockExceptions(flag);
 		
 	}
+
+	public boolean getIncludeThreadNamesAsStatementComment() {
+		return currentConnection.getIncludeThreadNamesAsStatementComment();
+	}
+
+	public void setIncludeThreadNamesAsStatementComment(boolean flag) {
+		currentConnection.setIncludeThreadNamesAsStatementComment(flag);
+	}
 }
