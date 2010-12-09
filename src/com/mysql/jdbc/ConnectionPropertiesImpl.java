@@ -978,8 +978,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	private BooleanConnectionProperty includeInnodbStatusInDeadlockExceptions = new BooleanConnectionProperty(
 			"includeInnodbStatusInDeadlockExceptions",
 			false,
-			"Include the output of \"SHOW ENGINE INNODB STATUS\" in exception messages when deadlock exceptions are detected?",
+			Messages.getString("ConnectionProperties.includeInnodbStatusInDeadlockExceptions"),
 			"5.0.7", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
+	
+	private BooleanConnectionProperty includeThreadDumpInDeadlockExceptions = new BooleanConnectionProperty(
+			"includeThreadDumpInDeadlockExceptions",
+			false,
+			Messages.getString("ConnectionProperties.includeThreadDumpInDeadlockExceptions"),
+			"5.1.15", DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
 	
 	private BooleanConnectionProperty ignoreNonTxTables = new BooleanConnectionProperty(
 			"ignoreNonTxTables", //$NON-NLS-1$
@@ -4609,6 +4615,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public String getLoadBalanceAutoCommitStatementRegex() {
 		return loadBalanceAutoCommitStatementRegex.getValueAsString();
+	}
+
+	public void setIncludeThreadDumpInDeadlockExceptions(boolean flag) {
+		this.includeThreadDumpInDeadlockExceptions.setValue(flag);
+	}
+
+	public boolean getIncludeThreadDumpInDeadlockExceptions() {
+		return includeThreadDumpInDeadlockExceptions.getValueAsBoolean();
 	}
 
 }

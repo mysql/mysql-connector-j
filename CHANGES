@@ -5,6 +5,10 @@ nn-nn-11 - Version 5.1.15
    - Fixed an issue where statement comments set via Connection.setStatementComment()
      weren't represented in autoGenerateTestcaseScript=true output.
      
+   - Added ability to include the current java thread dump in the exception message
+     given for deadlock/wait lock timeout exceptions, enable with 
+     "includeThreadDumpInDeadlockExceptions=true" in your JDBC url.
+     
 12-06-10 - Version 5.1.14
 
    - Fix for Bug#58728, NPE in com.mysql.jdbc.jdbc2.optional.StatementWrappe.getResultSet()

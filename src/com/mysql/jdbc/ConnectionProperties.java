@@ -1559,8 +1559,12 @@ public interface ConnectionProperties {
 	public abstract void setUtf8OutsideBmpIncludedColumnNamePattern(String regexPattern);
 	
 	public abstract boolean getIncludeInnodbStatusInDeadlockExceptions();
-	
+
 	public abstract void setIncludeInnodbStatusInDeadlockExceptions(boolean flag);
+	
+	public abstract boolean getIncludeThreadDumpInDeadlockExceptions();
+	
+	public abstract void setIncludeThreadDumpInDeadlockExceptions(boolean flag);
 	
 	public abstract boolean getBlobsAreStrings();
 

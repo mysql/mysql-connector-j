@@ -397,21 +397,6 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		// compiler can't tell
 	}
 
-	/**
-	 * Passes call to method on physical connection instance. Notifies listeners
-	 * of any caught exceptions before re-throwing to client.
-	 * 
-	 * @see java.sql.Connection#setTypeMap()
-	 */
-	public void setTypeMap(java.util.Map map) throws SQLException {
-		checkClosed();
-
-		try {
-			this.mc.setTypeMap(map);
-		} catch (SQLException sqlException) {
-			checkAndFireConnectionError(sqlException);
-		}
-	}
 
 	/**
 	 * Passes call to method on physical connection instance. Notifies listeners
@@ -2740,5 +2725,22 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		
 	}
 
+	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+		checkClosed();
 
+		try {
+			this.mc.setTypeMap(map);
+		} catch (SQLException sqlException) {
+			checkAndFireConnectionError(sqlException);
+		}
+	}
+
+	public boolean getIncludeThreadDumpInDeadlockExceptions() {
+		return this.mc.getIncludeThreadDumpInDeadlockExceptions();
+	}
+
+	public void setIncludeThreadDumpInDeadlockExceptions(boolean flag) {
+		this.mc.setIncludeThreadDumpInDeadlockExceptions(flag);
+		
+	}
 }

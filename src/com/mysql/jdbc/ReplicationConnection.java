@@ -506,15 +506,6 @@ public class ReplicationConnection implements Connection, PingTarget {
 
 	// For testing
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.sql.Connection#setTypeMap(java.util.Map)
-	 */
-	public synchronized void setTypeMap(Map arg0) throws SQLException {
-		this.currentConnection.setTypeMap(arg0);
-	}
-
 	private synchronized void switchToMasterConnection() throws SQLException {
 		swapConnections(this.masterConnection, this.slavesConnection);
 	}
@@ -2541,6 +2532,18 @@ public class ReplicationConnection implements Connection, PingTarget {
 		currentConnection.setLoadBalanceAutoCommitStatementThreshold(loadBalanceAutoCommitStatementThreshold);
 		
 	}
-	
 
+	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public boolean getIncludeThreadDumpInDeadlockExceptions() {
+		return currentConnection.getIncludeThreadDumpInDeadlockExceptions();
+	}
+
+	public void setIncludeThreadDumpInDeadlockExceptions(boolean flag) {
+		currentConnection.setIncludeThreadDumpInDeadlockExceptions(flag);
+		
+	}
 }

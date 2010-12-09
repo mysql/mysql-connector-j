@@ -2513,11 +2513,15 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		
 	}
 
-	public synchronized void setTypeMap(Map map) throws SQLException {
+	public boolean getIncludeThreadDumpInDeadlockExceptions() {
+		return getActiveMySQLConnection().getIncludeThreadDumpInDeadlockExceptions();
+	}
+
+	public void setIncludeThreadDumpInDeadlockExceptions(boolean flag) {
+		getActiveMySQLConnection().setIncludeThreadDumpInDeadlockExceptions(flag);
+	}
+
+	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
 		getActiveMySQLConnection().setTypeMap(map);
 	}
-	
-	
-	
-
 }

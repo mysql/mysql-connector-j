@@ -203,6 +203,7 @@ public class ConnectionTest extends BaseTestCase {
 
 			Properties props = new Properties();
 			props.setProperty("includeInnodbStatusInDeadlockExceptions", "true");
+			props.setProperty("includeThreadDumpInDeadlockExceptions", "true");
 
 			Connection deadlockConn = getConnectionWithProps(props);
 			deadlockConn.setAutoCommit(false);
@@ -244,6 +245,11 @@ public class ConnectionTest extends BaseTestCase {
 			assertTrue(
 					"Can't find INNODB MONITOR in:\n\n" + sqlEx.getMessage(),
 					sqlEx.getMessage().indexOf("INNODB MONITOR") != -1);
+			
+			assertTrue(
+					"Can't find thread dump in:\n\n" + sqlEx.getMessage(),
+					sqlEx.getMessage().indexOf("testsuite.simple.ConnectionTest.testDeadlockDetection") != -1);
+			
 		} finally {
 			this.conn.setAutoCommit(true);
 		}
