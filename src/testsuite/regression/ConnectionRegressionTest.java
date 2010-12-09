@@ -3079,4 +3079,33 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	public void testStatementComment() throws Exception {
+		Connection c = getConnectionWithProps("autoGenerateTestcaseScript=true,logger=StandardLogger");
+		PrintStream oldErr = System.err;
+		
+		try {
+			ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+			PrintStream printStream = new PrintStream(bOut);
+			System.setErr(printStream);
+			
+			((com.mysql.jdbc.Connection)c).setStatementComment("Hi there");
+			c.setAutoCommit(false);
+			
+			c.createStatement().execute("SELECT 1");
+			c.commit();
+			c.rollback();
+			Pattern pattern = Pattern.compile("Hi");
+			String loggedData = new String(bOut.toByteArray());
+			Matcher matcher = pattern.matcher(loggedData);
+			int count = 0;
+			while (matcher.find()) {
+				count++;
+			}
+			
+			assertEquals(4, count);
+		} finally {
+			System.setErr(oldErr);
+		}
+	}
 }

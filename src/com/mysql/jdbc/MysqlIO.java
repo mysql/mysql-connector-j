@@ -2048,14 +2048,13 @@ public class MysqlIO {
 	    	long queryStartTime = 0;
 	    	long queryEndTime = 0;
 
-	    	if (query != null) {
+    		String statementComment = this.connection.getStatementComment();
 
+	    	if (query != null) {
 	    		// We don't know exactly how many bytes we're going to get
 	    		// from the query. Since we're dealing with Unicode, the
 	    		// max is 2, so pad it (2 * query) + space for headers
 	    		int packLength = HEADER_LENGTH + 1 + (query.length() * 2) + 2;
-
-	    		String statementComment = this.connection.getStatementComment();
 
 	    		byte[] commentAsBytes = null;
 
@@ -2123,7 +2122,11 @@ public class MysqlIO {
 	    		String testcaseQuery = null;
 
 	    		if (query != null) {
-	    			testcaseQuery = query;
+	    			if (statementComment != null) {
+	    				testcaseQuery = "/* " + statementComment + " */ " + query;
+	    			} else {
+	    				testcaseQuery = query;
+	    			}
 	    		} else {
 	    			testcaseQuery = new String(queryBuf, 5,
 	    					(oldPacketPosition - 5));
