@@ -13,6 +13,12 @@ nn-nn-11 - Version 5.1.15
      in MySQL's "SHOW PROCESSLIST" and Innodb deadlock diagnostics, enable with
      "includeThreadNamesAsStatementComment=true".
      
+   - Added an SLF4J logging adapter. Enable by adding setting the connection 
+     property "logger" to "Slf4JLogger" and placing the appropriate bridge
+     from SLF4J to the logging framework of choice in your CLASSPATH. As with
+     other Connector/J logging adapters, the log category name used by the 
+     driver is "MySQL". See http://www.slf4j.org/manual.html for more details. 
+     
 12-06-10 - Version 5.1.14
 
    - Fix for Bug#58728, NPE in com.mysql.jdbc.jdbc2.optional.StatementWrappe.getResultSet()
