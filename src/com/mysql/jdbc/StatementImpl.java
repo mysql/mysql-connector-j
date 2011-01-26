@@ -1315,9 +1315,11 @@ public class StatementImpl implements Statement {
 			System.arraycopy(updateCounts, 0,
 					newUpdateCounts, 0, endOfBatchIndex);
 
-			throw new java.sql.BatchUpdateException(ex
+			BatchUpdateException batchException = new BatchUpdateException(ex
 					.getMessage(), ex.getSQLState(), ex
 					.getErrorCode(), newUpdateCounts);
+			batchException.initCause(ex);
+			throw batchException;
 		}
 		
 		return sqlEx;

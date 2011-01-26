@@ -1630,9 +1630,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					}
 					
 					if (sqlEx != null) {
-						throw new java.sql.BatchUpdateException(sqlEx
+						SQLException batchUpdateException = new java.sql.BatchUpdateException(sqlEx
 								.getMessage(), sqlEx.getSQLState(), sqlEx
 								.getErrorCode(), updateCounts);
+						batchUpdateException.initCause(sqlEx);
+						throw batchUpdateException;
 					}
 					
 					return updateCounts;
@@ -1807,9 +1809,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				}
 
 				if (sqlEx != null) {
-					throw new java.sql.BatchUpdateException(sqlEx
+					SQLException batchUpdateException = new java.sql.BatchUpdateException(sqlEx
 							.getMessage(), sqlEx.getSQLState(), sqlEx
 							.getErrorCode(), updateCounts);
+					batchUpdateException.initCause(sqlEx);
+					throw batchUpdateException;
 				}
 				
 				return updateCounts;
@@ -2006,17 +2010,21 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 								System.arraycopy(updateCounts, 0,
 										newUpdateCounts, 0, batchCommandIndex);
 	
-								throw new java.sql.BatchUpdateException(ex
+								SQLException batchUpdateException = new java.sql.BatchUpdateException(ex
 										.getMessage(), ex.getSQLState(), ex
 										.getErrorCode(), newUpdateCounts);
+								batchUpdateException.initCause(ex);
+								throw batchUpdateException;
 							}
 						}
 					}
 				}
 	
 				if (sqlEx != null) {
-					throw new java.sql.BatchUpdateException(sqlEx.getMessage(),
+					SQLException batchUpdateException = new java.sql.BatchUpdateException(sqlEx.getMessage(),
 							sqlEx.getSQLState(), sqlEx.getErrorCode(), updateCounts);
+					batchUpdateException.initCause(sqlEx);
+					throw batchUpdateException;
 				}
 			} catch (NullPointerException npe) {
 				try {
