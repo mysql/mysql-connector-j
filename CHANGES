@@ -1,6 +1,10 @@
 # Changelog
 # $Id$
 nn-nn-11 - Version 5.1.15
+   - Fix for Bug#38367, parameters metadata did not reflect the fact that NULL is allowed 
+     parameter value. So DatabaseMetaData.getProcedureColumns will set isNullable member to
+	 java.sql.DatabaseMetaData.procedureNullable now.
+
    - Completed fix for Bug#27916.
 
    - Fix for Bug#59224, adding 5.5 reserved words to DatabaseMetaData.getSQLKeywords().

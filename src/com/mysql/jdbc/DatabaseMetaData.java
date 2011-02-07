@@ -1694,7 +1694,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 					String returnsDefn = procedureDef.substring(declarationStart, endReturnsDef).trim();
 					TypeDescriptor returnDescriptor = new TypeDescriptor(
-							returnsDefn, null);
+							returnsDefn, "YES"); //null);
 
 					resultRows.add(convertTypeDescriptorToProcedureRow(
 							procNameAsBytes, procCatAsBytes, "", false, false, true,
@@ -1821,7 +1821,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 						String typeInfo = typeInfoBuf.toString();
 
-						typeDesc = new TypeDescriptor(typeInfo, null);
+						typeDesc = new TypeDescriptor(typeInfo, "YES"); //null);
 					} else {
 						throw SQLError.createSQLException(
 								"Internal error when parsing callable statement metadata (missing parameter type)",

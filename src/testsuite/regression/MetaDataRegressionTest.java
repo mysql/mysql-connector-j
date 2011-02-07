@@ -2833,5 +2833,40 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	/**
+	 * Tests fix for BUG#38367 - DatabaseMetaData dbMeta = this.conn.getMetaData();
+	 * this.rs = dbMeta.getProcedureColumns("test", null, "nullableParameterTest", null);
+	 * ...
+	 * Short columnNullable = new Short(this.rs.getShort(12));
+	 * assertTrue("Parameter " + columnName + " do not allow null arguments",
+	 * columnNullable.intValue() == java.sql.DatabaseMetaData.procedureNullable);
+	 * was failing for no good reason.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+
+	public void testBug38367() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return;
+		}
+
+		try {
+        	createProcedure("sptestBug38367", "(OUT nfact VARCHAR(100), IN ccuenta VARCHAR(100),"
+							+ "\nOUT ffact VARCHAR(100),"
+							+ "\nOUT fdoc VARCHAR(100))"
+							+ "\nBEGIN"
+							+ "\nEND");
+
+        	DatabaseMetaData dbMeta = this.conn.getMetaData();
+			this.rs = dbMeta.getProcedureColumns(this.conn.getCatalog(), null, "sptestBug38367", null);
+		    while (this.rs.next()) {
+		        String columnName = this.rs.getString(4);
+		        Short columnNullable = new Short(this.rs.getShort(12));
+		        assertTrue("Parameter " + columnName + " is not java.sql.DatabaseMetaData.procedureNullable.", columnNullable.intValue() == java.sql.DatabaseMetaData.procedureNullable);
+		      }
+    	} finally {
+		}
+	}
 
 }
