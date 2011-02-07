@@ -191,9 +191,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 			boolean isUnsigned = false;
 			
-			if (StringUtils.indexOfIgnoreCase(typeInfo, "unsigned") != -1) {
-				fullMysqlType = mysqlType + " unsigned";
-				isUnsigned = true;
+			if ((StringUtils.indexOfIgnoreCase(typeInfo, "unsigned") != -1) && 
+				(StringUtils.indexOfIgnoreCase(typeInfo, "set") != 0) &&
+				(StringUtils.indexOfIgnoreCase(typeInfo, "enum") != 0)) {
+					fullMysqlType = mysqlType + " unsigned";
+					isUnsigned = true;
 			} else {
 				fullMysqlType = mysqlType;
 			}

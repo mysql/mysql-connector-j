@@ -1,6 +1,7 @@
 # Changelog
 # $Id$
 nn-nn-11 - Version 5.1.15
+   - Completed fix for Bug#27916.
 
    - Fix for Bug#59224, adding 5.5 reserved words to DatabaseMetaData.getSQLKeywords().
 
