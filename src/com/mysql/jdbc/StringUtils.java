@@ -1719,19 +1719,25 @@ public class StringUtils {
 		if ((src == null) || (src == "%")) {
 			return new ArrayList();
 		}
+		
+		boolean isQuoted = StringUtils.indexOfIgnoreCase(0,src, quotId) > -1;
+		
+		
 		String retval = src;
-		//So we have a name to check, meaning more actual processing
 		String tmpCat = cat;
-		//This is NOT enough. I.e., what if database is named `MyDatabase 1.0.0`... thus trueDotIndex
+		//I.e., what if database is named `MyDatabase 1.0.0`... thus trueDotIndex
 		int trueDotIndex = -1;
 		if (!" ".equals(quotId)) {
 			//Presumably, if there is a database name attached and it contains dots, then it should
 			//be quoted so we first check for that
-			trueDotIndex = StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-					retval, quotId + ".", quotId.charAt(0), !isNoBslashEscSet);
-			if (trueDotIndex == -1){
-				trueDotIndex = StringUtils.indexOfIgnoreCaseRespectQuotes(0,
-						retval, ".", quotId.charAt(0), !isNoBslashEscSet);
+			if (isQuoted) {
+				trueDotIndex = StringUtils.indexOfIgnoreCase(0,
+					retval, quotId + "." + quotId);
+			} else {
+				//NOT quoted, fetch first DOT
+				// ex: cStmt = this.conn.prepareCall("{call bug57022.procbug57022(?, ?)}");
+				trueDotIndex = StringUtils.indexOfIgnoreCase(0,
+						retval, ".");
 			}
 		} else {
 			trueDotIndex = retval.indexOf(".");
@@ -1739,18 +1745,23 @@ public class StringUtils {
 
 		List retTokens = new ArrayList(2);
 
-		//trueDotIndex being still -1 means there's no
-		//catalog attached!
 		if (trueDotIndex != -1) {
 			//There is a catalog attached
-			tmpCat = retval.substring(0, trueDotIndex);
-			if (StringUtils.startsWithIgnoreCaseAndWs(tmpCat, quotId) && tmpCat.trim().endsWith(quotId)) {
-				tmpCat = tmpCat.substring(1, tmpCat.length() - 1);
-			}
+			if (isQuoted) {
+				tmpCat = new String (StringUtils.stripEnclosure(retval.substring(0, trueDotIndex+1)
+						.getBytes(), quotId, quotId));
+				if (StringUtils.startsWithIgnoreCaseAndWs(tmpCat, quotId)) {
+					tmpCat = tmpCat.substring(1, tmpCat.length() - 1);
+				}
 
-			retval = retval.substring(trueDotIndex + 1);
-			retval = new String(StringUtils.stripEnclosure(retval
-				.getBytes(), quotId, quotId));
+				retval = retval.substring(trueDotIndex + 2);
+				retval = new String(StringUtils.stripEnclosure(retval
+						.getBytes(), quotId, quotId));
+			} else {
+				//NOT quoted, adjust indexOf
+				tmpCat = retval.substring(0, trueDotIndex);
+				retval = retval.substring(trueDotIndex + 1);
+			}
 		} else {
 			//No catalog attached, strip retval and return
 			retval = new String(StringUtils.stripEnclosure(retval

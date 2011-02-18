@@ -1,5 +1,11 @@
 # Changelog
 # $Id$
+
+nn-nn-11 - Version 5.1.16
+
+  - Fix for bug 11782297, DBMD.getTables (so thus getColumns too) fails with table names containing dot (like "junk_[Sp:e,c/ C-h+a=.r]").
+  
+
 02-08-11 - Version 5.1.15
    - Fix for Bug#38367, parameters metadata did not reflect the fact that NULL is allowed 
      parameter value. So DatabaseMetaData.getProcedureColumns will set isNullable member to

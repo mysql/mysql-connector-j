@@ -1467,7 +1467,17 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		}
 
 		final String tableNamePat;
-		List parseList = StringUtils.splitDBdotName(tableNamePattern, "", 
+		String tmpCat = "";
+		
+		if ((catalog == null) || (catalog.length() == 0)) {
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				tmpCat = this.database;
+			}
+		} else {
+			tmpCat = catalog;
+		}
+		
+		List parseList = StringUtils.splitDBdotName(tableNamePattern, tmpCat, 
 				quotedId , conn.isNoBackslashEscapesSet());
 		//There *should* be 2 rows, if any.
 		if (parseList.size() == 2) {
@@ -1475,7 +1485,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		} else {
 			tableNamePat = tableNamePattern;
 		}
-		
+
 		java.sql.PreparedStatement pStmt = null;
 
 		String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, "
