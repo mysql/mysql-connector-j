@@ -511,16 +511,4 @@ public class DataSourceRegressionTest extends BaseTestCase {
 		assertEquals("Connect timeout spec'd by URL didn't take", nonDefaultConnectTimeout, configuredConnectTimeout);
 		assertFalse("Connect timeout spec'd by URL didn't take", defaultConnectTimeout == configuredConnectTimeout);
 	}
-	
-	public void testBug54425() throws Exception {
-		MysqlConnectionPoolDataSource pds = new MysqlConnectionPoolDataSource();
-		pds.setUrl("jdbc:mysql://localhost/test?user=root&password=l00py123$");
-		
-		Connection c = pds.getPooledConnection().getConnection();
-		PreparedStatement pstmt = c.prepareStatement("SELECT 1");
-		pstmt.execute();
-		pstmt.close();
-		c.close();
-		
-	}
 }
