@@ -901,7 +901,7 @@ public class CallableStatement extends PreparedStatement implements
 
 		checkStreamability();
 
-		synchronized (this.connection.getMutex()) {
+		synchronized (this.connection) {
 			setInOutParamsOnServer();
 			setOutParams();
 
@@ -936,7 +936,7 @@ public class CallableStatement extends PreparedStatement implements
 
 		java.sql.ResultSet execResults = null;
 
-		synchronized (this.connection.getMutex()) {
+		synchronized (this.connection) {
 			setInOutParamsOnServer();
 			setOutParams();
 
@@ -966,7 +966,7 @@ public class CallableStatement extends PreparedStatement implements
 			return -1;
 		}
 
-		synchronized (this.connection.getMutex()) {
+		synchronized (this.connection) {
 			setInOutParamsOnServer();
 			setOutParams();
 

@@ -161,7 +161,7 @@ public class RowDataDynamic implements RowData {
 			conn = this.owner.connection;
 
 			if (conn != null) {
-				mutex = conn.getMutex();
+				mutex = conn;
 			}
 		}
 

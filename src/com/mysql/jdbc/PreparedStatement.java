@@ -1269,7 +1269,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 		CachedResultSetMetaData cachedMetadata = null;
 
-		synchronized (locallyScopedConn.getMutex()) {
+		synchronized (locallyScopedConn) {
 			lastQueryIsOnDupKeyUpdate = false;
 			if (retrieveGeneratedKeys)
 				lastQueryIsOnDupKeyUpdate = containsOnDuplicateKeyUpdateInSQL();
@@ -1416,7 +1416,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
 		}
 
-		synchronized (this.connection.getMutex()) {
+		synchronized (this.connection) {
 			if (this.batchedArgs == null || this.batchedArgs.size() == 0) {
                 return new int[0];
             }
@@ -1472,7 +1472,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	
 	protected int[] executePreparedBatchAsMultiStatement(int batchTimeout) throws SQLException {
-		synchronized (this.connection.getMutex()) {
+		synchronized (this.connection) {
 			// This is kind of an abuse, but it gets the job done
 			if (this.batchedValuesClause == null) {
 				this.batchedValuesClause = this.originalSql + ";";
@@ -2187,7 +2187,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		// So synchronize on the Connection's mutex (because
 		// even queries going through there synchronize
 		// on the same mutex.
-		synchronized (locallyScopedConn.getMutex()) {
+		synchronized (locallyScopedConn) {
 			clearWarnings();
 
 			boolean doStreaming = createStreamingResultSet();
@@ -2385,7 +2385,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		// The checking and changing of catalogs
 		// must happen in sequence, so synchronize
 		// on the same mutex that _conn is using
-		synchronized (locallyScopedConn.getMutex()) {
+		synchronized (locallyScopedConn) {
 			Buffer sendPacket = fillSendPacket(batchedParameterStrings,
 					batchedParameterStreams, batchedIsStream,
 					batchedStreamLengths);

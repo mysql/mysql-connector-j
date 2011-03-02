@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Stack;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -150,7 +151,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * current catalog...In 5.0.x, they don't (currently), but stored procedure
 	 * names soon will, so current catalog is a (hidden) component of the name.
 	 */
-	class CompoundCacheKey {
+	static class CompoundCacheKey {
 		String componentOne;
 
 		String componentTwo;
@@ -242,7 +243,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private double queryTimeSumSquares;
 	private double queryTimeMean;
 	
-	private Timer cancelTimer;
+	private transient Timer cancelTimer;
 	
 	private List connectionLifecycleInterceptors;
 	
@@ -381,6 +382,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							databaseToConnectTo, url }, null);
 	}
 
+	private static final Random random = new Random();
+	
 	private static synchronized int getNextRoundRobinHostIndex(String url,
 			List hostList) {
 		// we really do "random" here, because you don't get even
@@ -388,7 +391,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		int indexRange = hostList.size();
 		
-		int index = (int)(Math.random() * indexRange);
+		int index = random.nextInt(indexRange);
 		
 		return index;
 	}
@@ -402,7 +405,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			return false;
 		}
 
-		return s1.equals(s2);
+		return s1 != null && s1.equals(s2);
 	}
 
 	/** Are we in autoCommit mode? */
@@ -456,9 +459,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	/** Why was this connection implicitly closed, if known? (for diagnostics) */
 	private Throwable forceClosedReason;
 
-	/** Where was this connection implicitly closed? (for diagnostics) */
-	private Throwable forcedClosedLocation;
-
 	/** Does the server suuport isolation levels? */
 	private boolean hasIsolationLevels = false;
 
@@ -475,7 +475,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private String[] indexToCharsetMapping = CharsetMapping.INDEX_TO_CHARSET;
 	
 	/** The I/O abstraction interface (network conn to MySQL server */
-	private MysqlIO io = null;
+	private transient MysqlIO io = null;
 	
 	private boolean isClientTzUTC = false;
 
@@ -497,7 +497,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private long lastQueryFinishedTime = 0;
 
 	/** The logger we're going to use */
-	private Log log = NULL_LOGGER;
+	private transient Log log = NULL_LOGGER;
 
 	/**
 	 * If gathering metrics, what was the execution time of the longest query so
@@ -520,9 +520,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private long metricsLastReportedMs;
 
 	private long minimumNumberTablesAccessed = Long.MAX_VALUE;
-
-	/** Mutex */
-	private final Object mutex = new Object();
 
 	/** The JDBC URL we're using */
 	private String myURL = null;
@@ -1205,11 +1202,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		StringBuffer messageBuf = new StringBuffer(
 				"No operations allowed after connection closed.");
 
-		if (this.forcedClosedLocation != null || this.forceClosedReason != null) {
-			messageBuf
-			.append("Connection was implicitly closed by the driver.");
-		}
-
 		SQLException ex = SQLError.createSQLException(messageBuf.toString(),
 				SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
 		
@@ -1560,7 +1552,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			}.doForAll();
 		}
-		
+	
 		realClose(true, true, false, null);
 	}
 
@@ -1628,61 +1620,59 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *                if a database access error occurs
 	 * @see setAutoCommit
 	 */
-	public void commit() throws SQLException {
-		synchronized (getMutex()) {
-			checkClosed();
+	public synchronized void commit() throws SQLException {
+		checkClosed();
 
-			try {
-				if (this.connectionLifecycleInterceptors != null) {
-					IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+		try {
+			if (this.connectionLifecycleInterceptors != null) {
+				IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
 
-						void forEach(Object each) throws SQLException {
-							if (!((ConnectionLifecycleInterceptor)each).commit()) {
-								this.stopIterating = true;
-							}
+					void forEach(Object each) throws SQLException {
+						if (!((ConnectionLifecycleInterceptor)each).commit()) {
+							this.stopIterating = true;
 						}
-					};
-					
-					iter.doForAll();
-					
-					if (!iter.fullIteration()) {
-						return;
 					}
-				}
+				};
 				
-				// no-op if _relaxAutoCommit == true
-				if (this.autoCommit && !getRelaxAutoCommit()) {
-					throw SQLError.createSQLException("Can't call commit when autocommit=true", getExceptionInterceptor());
-				} else if (this.transactionsSupported) {
-					if (getUseLocalTransactionState() && versionMeetsMinimum(5, 0, 0)) {
-						if (!this.io.inTransactionOnServer()) {
-							return; // effectively a no-op
-						}
+				iter.doForAll();
+				
+				if (!iter.fullIteration()) {
+					return;
+				}
+			}
+			
+			// no-op if _relaxAutoCommit == true
+			if (this.autoCommit && !getRelaxAutoCommit()) {
+				throw SQLError.createSQLException("Can't call commit when autocommit=true", getExceptionInterceptor());
+			} else if (this.transactionsSupported) {
+				if (getUseLocalTransactionState() && versionMeetsMinimum(5, 0, 0)) {
+					if (!this.io.inTransactionOnServer()) {
+						return; // effectively a no-op
 					}
-
-					execSQL(null, "commit", -1, null,
-							DEFAULT_RESULT_SET_TYPE,
-							DEFAULT_RESULT_SET_CONCURRENCY, false,
-							this.database, null,
-							false);
-				}
-			} catch (SQLException sqlException) {
-				if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE
-						.equals(sqlException.getSQLState())) {
-					throw SQLError
-							.createSQLException(
-									"Communications link failure during commit(). Transaction resolution unknown.",
-									SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
-									getExceptionInterceptor());
 				}
 
-				throw sqlException;
-			} finally {
-				this.needsPing = this.getReconnectAtTxEnd();
+				execSQL(null, "commit", -1, null,
+						DEFAULT_RESULT_SET_TYPE,
+						DEFAULT_RESULT_SET_CONCURRENCY, false,
+						this.database, null,
+						false);
+			}
+		} catch (SQLException sqlException) {
+			if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE
+					.equals(sqlException.getSQLState())) {
+				throw SQLError
+						.createSQLException(
+								"Communications link failure during commit(). Transaction resolution unknown.",
+								SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN,
+								getExceptionInterceptor());
 			}
 
-			return;
+			throw sqlException;
+		} finally {
+			this.needsPing = this.getReconnectAtTxEnd();
 		}
+
+		return;
 	}
 	
 	/**
@@ -1823,7 +1813,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							boolean useutf8mb4 = false;
 							
 							if (utf8mb4Supported) {
-								useutf8mb4 = ((this.io.serverCharsetIndex == 45) && (this.io.serverCharsetIndex == 45));
+								useutf8mb4 = (this.io.serverCharsetIndex == 45);
 							}
 							
 							if (!getUseOldUTF8Behavior()) {
@@ -2035,11 +2025,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		} catch(java.nio.charset.UnsupportedCharsetException ucex) {
 			// fallback to String API - for Java 1.4
 			try {
-				byte bbuf[] = new String("\u00a5").getBytes(getEncoding());
+				byte bbuf[] = "\u00a5".getBytes(getEncoding());
 				if (bbuf[0] == '\\') {
 					requiresEscapingEncoder = true;
 				} else {
-					bbuf = new String("\u20a9").getBytes(getEncoding());
+					bbuf = "\u20a9".getBytes(getEncoding());
 					if (bbuf[0] == '\\') {
 						requiresEscapingEncoder = true;
 					}
@@ -2148,7 +2138,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws CommunicationsException
 	 *             DOCUMENT ME!
 	 */
-	public void createNewIO(boolean isForReconnect)
+	public synchronized void createNewIO(boolean isForReconnect)
 			throws SQLException {
 		// Synchronization Not needed for *new* connections, but defintely for
 		// connections going through fail-over, since we might get the
@@ -2156,17 +2146,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		// cached or still-open server-side prepared statements over
 		// to the backend before we get a chance to re-prepare them...
 		
-		synchronized (this.mutex) {
-			Properties mergedProps  = exposeAsProperties(this.props);
 
-			if (!getHighAvailability()) {
-				connectOneTryOnly(isForReconnect, mergedProps);
-				
-				return;
-			} 
+		Properties mergedProps  = exposeAsProperties(this.props);
 
-			connectWithRetries(isForReconnect, mergedProps);
-		}
+		if (!getHighAvailability()) {
+			connectOneTryOnly(isForReconnect, mergedProps);
+			
+			return;
+		} 
+
+		connectWithRetries(isForReconnect, mergedProps);
+		
 	}
 
 	private void connectWithRetries(boolean isForReconnect,
@@ -2185,16 +2175,24 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 				coreConnect(mergedProps);
 				pingInternal(false, 0);
-				this.connectionId = this.io.getThreadId();
-				this.isClosed = false;
+				
+				boolean oldAutoCommit;
+				int oldIsolationLevel;
+				boolean oldReadOnly;
+				String oldCatalog;
+				
+				synchronized (this) {
+					this.connectionId = this.io.getThreadId();
+					this.isClosed = false;
 
-				// save state from old connection
-				boolean oldAutoCommit = getAutoCommit();
-				int oldIsolationLevel = this.isolationLevel;
-				boolean oldReadOnly = isReadOnly();
-				String oldCatalog = getCatalog();
-
-				this.io.setStatementInterceptors(this.statementInterceptors);
+					// save state from old connection
+					oldAutoCommit = getAutoCommit();
+					oldIsolationLevel = this.isolationLevel;
+					oldReadOnly = isReadOnly();
+					oldCatalog = getCatalog();
+	
+					this.io.setStatementInterceptors(this.statementInterceptors);
+				}
 				
 				// Server properties might be different
 				// from previous connection, so initialize
@@ -2238,7 +2236,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			// We've really failed!
 			SQLException chainedEx = SQLError.createSQLException(
 					Messages.getString("Connection.UnableToConnectWithRetries",
-							new Object[] {new Integer(getMaxReconnects())}),
+							new Object[] {Integer.valueOf(getMaxReconnects())}),
 					SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
 			chainedEx.initCause(connectionException);
 			
@@ -2419,7 +2417,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
-	private void createPreparedStatementCaches() {
+	private synchronized void createPreparedStatementCaches() {
 		int cacheSize = getPreparedStatementCacheSize();
 		
 		this.cachedPreparedStatementParams = new HashMap(cacheSize);
@@ -2572,7 +2570,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				catalog, cachedMetadata, false);
 	}
 
-	public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows,
+	public synchronized ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows,
 			Buffer packet, int resultSetType, int resultSetConcurrency,
 			boolean streamResults, String catalog,
 			Field[] cachedMetadata,
@@ -2582,105 +2580,104 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		// issued queriesBeforeRetryMaster queries since
 		// we failed over
 		//
-		synchronized (this.mutex) {
-			long queryStartTime = 0;
 
-			int endOfQueryPacketPosition = 0;
+		long queryStartTime = 0;
 
-			if (packet != null) {
-				endOfQueryPacketPosition = packet.getPosition();
-			}
+		int endOfQueryPacketPosition = 0;
 
-			if (getGatherPerformanceMetrics()) {
-				queryStartTime = System.currentTimeMillis();
-			}
+		if (packet != null) {
+			endOfQueryPacketPosition = packet.getPosition();
+		}
 
-			this.lastQueryFinishedTime = 0; // we're busy!
+		if (getGatherPerformanceMetrics()) {
+			queryStartTime = System.currentTimeMillis();
+		}
 
-			if ((getHighAvailability())
-					&& (this.autoCommit || getAutoReconnectForPools())
-					&& this.needsPing && !isBatch) {
-				try {
-					pingInternal(false, 0);
+		this.lastQueryFinishedTime = 0; // we're busy!
 
-					this.needsPing = false;
-				} catch (Exception Ex) {
-					createNewIO(true);
-				}
-			}
-
+		if ((getHighAvailability())
+				&& (this.autoCommit || getAutoReconnectForPools())
+				&& this.needsPing && !isBatch) {
 			try {
-				if (packet == null) {
-					String encoding = null;
+				pingInternal(false, 0);
 
-					if (getUseUnicode()) {
-						encoding = getEncoding();
-					}
+				this.needsPing = false;
+			} catch (Exception Ex) {
+				createNewIO(true);
+			}
+		}
 
-					return this.io.sqlQueryDirect(callingStatement, sql,
-							encoding, null, maxRows, resultSetType,
-							resultSetConcurrency, streamResults, catalog,
-							cachedMetadata);
+		try {
+			if (packet == null) {
+				String encoding = null;
+
+				if (getUseUnicode()) {
+					encoding = getEncoding();
 				}
 
-				return this.io.sqlQueryDirect(callingStatement, null, null,
-						packet, maxRows, resultSetType,
+				return this.io.sqlQueryDirect(callingStatement, sql,
+						encoding, null, maxRows, resultSetType,
 						resultSetConcurrency, streamResults, catalog,
 						cachedMetadata);
-			} catch (java.sql.SQLException sqlE) {
-				// don't clobber SQL exceptions
+			}
 
-				if (getDumpQueriesOnException()) {
-					String extractedSql = extractSqlFromPacket(sql, packet,
-							endOfQueryPacketPosition);
-					StringBuffer messageBuf = new StringBuffer(extractedSql
-							.length() + 32);
-					messageBuf
-							.append("\n\nQuery being executed when exception was thrown:\n");
-					messageBuf.append(extractedSql);
-					messageBuf.append("\n\n");
+			return this.io.sqlQueryDirect(callingStatement, null, null,
+					packet, maxRows, resultSetType,
+					resultSetConcurrency, streamResults, catalog,
+					cachedMetadata);
+		} catch (java.sql.SQLException sqlE) {
+			// don't clobber SQL exceptions
 
-					sqlE = appendMessageToException(sqlE, messageBuf.toString(), getExceptionInterceptor());
+			if (getDumpQueriesOnException()) {
+				String extractedSql = extractSqlFromPacket(sql, packet,
+						endOfQueryPacketPosition);
+				StringBuffer messageBuf = new StringBuffer(extractedSql
+						.length() + 32);
+				messageBuf
+						.append("\n\nQuery being executed when exception was thrown:\n");
+				messageBuf.append(extractedSql);
+				messageBuf.append("\n\n");
+
+				sqlE = appendMessageToException(sqlE, messageBuf.toString(), getExceptionInterceptor());
+			}
+
+			if ((getHighAvailability())) {
+				this.needsPing = true;
+			} else {
+				String sqlState = sqlE.getSQLState();
+
+				if ((sqlState != null)
+						&& sqlState
+								.equals(SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE)) {
+					cleanup(sqlE);
 				}
+			}
 
-				if ((getHighAvailability())) {
-					this.needsPing = true;
-				} else {
-					String sqlState = sqlE.getSQLState();
+			throw sqlE;
+		} catch (Exception ex) {
+			if (getHighAvailability()) {
+				this.needsPing = true;
+			} else if (ex instanceof IOException) {
+				cleanup(ex);
+			}
 
-					if ((sqlState != null)
-							&& sqlState
-									.equals(SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE)) {
-						cleanup(sqlE);
-					}
-				}
-
-				throw sqlE;
-			} catch (Exception ex) {
-				if (getHighAvailability()) {
-					this.needsPing = true;
-				} else if (ex instanceof IOException) {
-					cleanup(ex);
-				}
-
-				SQLException sqlEx = SQLError.createSQLException(
-						Messages.getString("Connection.UnexpectedException"),
-						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-				sqlEx.initCause(ex);
-				
-				throw sqlEx;
-			} finally {
-				if (getMaintainTimeStats()) {
-					this.lastQueryFinishedTime = System.currentTimeMillis();
-				}
+			SQLException sqlEx = SQLError.createSQLException(
+					Messages.getString("Connection.UnexpectedException"),
+					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+			sqlEx.initCause(ex);
+			
+			throw sqlEx;
+		} finally {
+			if (getMaintainTimeStats()) {
+				this.lastQueryFinishedTime = System.currentTimeMillis();
+			}
 
 
-				if (getGatherPerformanceMetrics()) {
-					long queryTime = System.currentTimeMillis()
-							- queryStartTime;
+			if (getGatherPerformanceMetrics()) {
+				long queryTime = System.currentTimeMillis()
+						- queryStartTime;
 
-					registerQueryExecutionTime(queryTime);
-				}
+				registerQueryExecutionTime(queryTime);
 			}
 		}
 	}
@@ -2727,13 +2724,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 	}
 
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @throws Throwable
-	 *             DOCUMENT ME!
-	 */
-	public void finalize() throws Throwable {
+	protected void finalize() throws Throwable {
 		cleanup(null);
 		
 		super.finalize();
@@ -2769,7 +2760,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *                if an error occurs
 	 * @see setAutoCommit
 	 */
-	public boolean getAutoCommit() throws SQLException {
+	public synchronized boolean getAutoCommit() throws SQLException {
 		return this.autoCommit;
 	}
 
@@ -2796,14 +2787,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public String getCatalog() throws SQLException {
+	public synchronized String getCatalog() throws SQLException {
 		return this.database;
 	}
 
 	/**
 	 * @return Returns the characterSetMetadata.
 	 */
-	public String getCharacterSetMetadata() {
+	public synchronized String getCharacterSetMetadata() {
 		return this.characterSetMetadata;
 	}
 
@@ -2940,7 +2931,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @return number of ms that this connection has been idle, 0 if the driver
 	 *         is busy retrieving results.
 	 */
-	public long getIdleFor() {
+	public synchronized long getIdleFor() {
 		if (this.lastQueryFinishedTime == 0) {
 			return 0;
 		}
@@ -3090,23 +3081,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	}
 
 	/**
-	 * Returns the Mutex all queries are locked against
-	 * 
-	 * @return DOCUMENT ME!
-	 * @throws SQLException
-	 *             DOCUMENT ME!
-	 */
-	public Object getMutex() throws SQLException {
-		if (this.io == null) {
-			throwConnectionClosedException();
-		}
-
-		reportMetricsIfNeeded();
-
-		return this.mutex;
-	}
-
-	/**
 	 * Returns the packet buffer size the MySQL server reported upon connection
 	 * 
 	 * @return DOCUMENT ME!
@@ -3174,7 +3148,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public int getTransactionIsolation() throws SQLException {
+	public synchronized int getTransactionIsolation() throws SQLException {
 
 		if (this.hasIsolationLevels && !getUseLocalSessionState()) {
 			java.sql.Statement stmt = null;
@@ -3626,7 +3600,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					.get(variableName));
 		} catch (NumberFormatException nfe) {
 			getLog().logWarn(Messages.getString("Connection.BadValueInServerVariables", new Object[] {variableName, 
-					this.serverVariables.get(variableName), new Integer(fallbackValue)}));
+					this.serverVariables.get(variableName), Integer.valueOf(fallbackValue)}));
 			
 			return fallbackValue;
 		}
@@ -3887,11 +3861,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			
 			results = stmt.executeQuery(query);
 
+		
 			while (results.next()) {
 				this.serverVariables.put(results.getString(1), results
 						.getString(2));
 			}
 
+			results.close();
+			results = null;
+			
 			if (versionMeetsMinimum(5, 0, 2)) {
 				results = stmt.executeQuery(versionComment + "SELECT @@session.auto_increment_increment");
 				
@@ -3905,6 +3883,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					serverConfigByUrl.put(getURL(), this.serverVariables);
 				}
 			}
+			
 			
 			
 		} catch (SQLException e) {
@@ -3949,16 +3928,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @param stmt
 	 *            DOCUMENT ME!
 	 */
-	public void maxRowsChanged(Statement stmt) {
-		synchronized (this.mutex) {
-			if (this.statementsUsingMaxRows == null) {
-				this.statementsUsingMaxRows = new HashMap();
-			}
-
-			this.statementsUsingMaxRows.put(stmt, stmt);
-
-			this.maxRowsChanged = true;
+	public synchronized void maxRowsChanged(Statement stmt) {
+		if (this.statementsUsingMaxRows == null) {
+			this.statementsUsingMaxRows = new HashMap();
 		}
+
+		this.statementsUsingMaxRows.put(stmt, stmt);
+
+		this.maxRowsChanged = true;
 	}
 
 	/**
@@ -4198,7 +4175,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
-	public java.sql.PreparedStatement prepareStatement(String sql,
+	public synchronized java.sql.PreparedStatement prepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency) throws SQLException {
 		checkClosed();
 
@@ -4426,7 +4403,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 	}
 
-	public void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
+	public synchronized void recachePreparedStatement(ServerPreparedStatement pstmt) throws SQLException {
 		if (pstmt.isPoolable()) {
 			synchronized (this.serverSideStatementCache) {
 				this.serverSideStatementCache.put(pstmt.originalSql, pstmt);
@@ -4706,8 +4683,64 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *                if a database access error occurs
 	 * @see commit
 	 */
-	public void rollback() throws SQLException {
-		synchronized (getMutex()) {
+	public synchronized void rollback() throws SQLException {
+		checkClosed();
+
+		try {
+			if (this.connectionLifecycleInterceptors != null) {
+				IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+
+					void forEach(Object each) throws SQLException {
+						if (!((ConnectionLifecycleInterceptor)each).rollback()) {
+							this.stopIterating = true;
+						}
+					}
+				};
+				
+				iter.doForAll();
+				
+				if (!iter.fullIteration()) {
+					return;
+				}
+			}
+			// no-op if _relaxAutoCommit == true
+			if (this.autoCommit && !getRelaxAutoCommit()) {
+				throw SQLError.createSQLException(
+						"Can't call rollback when autocommit=true",
+						SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
+			} else if (this.transactionsSupported) {
+				try {
+					rollbackNoChecks();
+				} catch (SQLException sqlEx) {
+					// We ignore non-transactional tables if told to do so
+					if (getIgnoreNonTxTables()
+							&& (sqlEx.getErrorCode() == SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
+						return;
+					}
+					throw sqlEx;
+
+				}
+			}
+		} catch (SQLException sqlException) {
+			if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE
+					.equals(sqlException.getSQLState())) {
+				throw SQLError.createSQLException(
+						"Communications link failure during rollback(). Transaction resolution unknown.",
+						SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
+			}
+
+			throw sqlException;
+		} finally {
+			this.needsPing = this.getReconnectAtTxEnd();
+		}
+	}
+
+	/**
+	 * @see Connection#rollback(Savepoint)
+	 */
+	public synchronized void rollback(final Savepoint savepoint) throws SQLException {
+
+		if (versionMeetsMinimum(4, 0, 14) || versionMeetsMinimum(4, 1, 1)) {
 			checkClosed();
 	
 			try {
@@ -4715,7 +4748,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
 
 						void forEach(Object each) throws SQLException {
-							if (!((ConnectionLifecycleInterceptor)each).rollback()) {
+							if (!((ConnectionLifecycleInterceptor)each).rollback(savepoint)) {
 								this.stopIterating = true;
 							}
 						}
@@ -4727,117 +4760,57 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						return;
 					}
 				}
-				// no-op if _relaxAutoCommit == true
-				if (this.autoCommit && !getRelaxAutoCommit()) {
-					throw SQLError.createSQLException(
-							"Can't call rollback when autocommit=true",
-							SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
-				} else if (this.transactionsSupported) {
-					try {
-						rollbackNoChecks();
-					} catch (SQLException sqlEx) {
-						// We ignore non-transactional tables if told to do so
-						if (getIgnoreNonTxTables()
-								&& (sqlEx.getErrorCode() == SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
-							return;
-						}
-						throw sqlEx;
+				
+				StringBuffer rollbackQuery = new StringBuffer(
+						"ROLLBACK TO SAVEPOINT ");
+				rollbackQuery.append('`');
+				rollbackQuery.append(savepoint.getSavepointName());
+				rollbackQuery.append('`');
 
+				java.sql.Statement stmt = null;
+
+				try {
+					stmt = getMetadataSafeStatement();
+
+					stmt.executeUpdate(rollbackQuery.toString());
+				} catch (SQLException sqlEx) {
+					int errno = sqlEx.getErrorCode();
+
+					if (errno == 1181) {
+						String msg = sqlEx.getMessage();
+
+						if (msg != null) {
+							int indexOfError153 = msg.indexOf("153");
+
+							if (indexOfError153 != -1) {
+								throw SQLError.createSQLException("Savepoint '"
+										+ savepoint.getSavepointName()
+										+ "' does not exist",
+										SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
+										errno, getExceptionInterceptor());
+							}
+						}
 					}
+
+					// We ignore non-transactional tables if told to do so
+					if (getIgnoreNonTxTables()
+							&& (sqlEx.getErrorCode() != SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
+						throw sqlEx;
+					}
+
+					if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE
+							.equals(sqlEx.getSQLState())) {
+						throw SQLError.createSQLException(
+								"Communications link failure during rollback(). Transaction resolution unknown.",
+								SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
+					}
+
+					throw sqlEx;
+				} finally {
+					closeStatement(stmt);
 				}
-			} catch (SQLException sqlException) {
-				if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE
-						.equals(sqlException.getSQLState())) {
-					throw SQLError.createSQLException(
-							"Communications link failure during rollback(). Transaction resolution unknown.",
-							SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
-				}
-	
-				throw sqlException;
 			} finally {
 				this.needsPing = this.getReconnectAtTxEnd();
-			}
-		}
-	}
-
-	/**
-	 * @see Connection#rollback(Savepoint)
-	 */
-	public void rollback(final Savepoint savepoint) throws SQLException {
-
-		if (versionMeetsMinimum(4, 0, 14) || versionMeetsMinimum(4, 1, 1)) {
-			synchronized (getMutex()) {
-				checkClosed();
-	
-				try {
-					if (this.connectionLifecycleInterceptors != null) {
-						IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
-
-							void forEach(Object each) throws SQLException {
-								if (!((ConnectionLifecycleInterceptor)each).rollback(savepoint)) {
-									this.stopIterating = true;
-								}
-							}
-						};
-						
-						iter.doForAll();
-						
-						if (!iter.fullIteration()) {
-							return;
-						}
-					}
-					
-					StringBuffer rollbackQuery = new StringBuffer(
-							"ROLLBACK TO SAVEPOINT ");
-					rollbackQuery.append('`');
-					rollbackQuery.append(savepoint.getSavepointName());
-					rollbackQuery.append('`');
-	
-					java.sql.Statement stmt = null;
-	
-					try {
-						stmt = getMetadataSafeStatement();
-	
-						stmt.executeUpdate(rollbackQuery.toString());
-					} catch (SQLException sqlEx) {
-						int errno = sqlEx.getErrorCode();
-	
-						if (errno == 1181) {
-							String msg = sqlEx.getMessage();
-	
-							if (msg != null) {
-								int indexOfError153 = msg.indexOf("153");
-	
-								if (indexOfError153 != -1) {
-									throw SQLError.createSQLException("Savepoint '"
-											+ savepoint.getSavepointName()
-											+ "' does not exist",
-											SQLError.SQL_STATE_ILLEGAL_ARGUMENT,
-											errno, getExceptionInterceptor());
-								}
-							}
-						}
-	
-						// We ignore non-transactional tables if told to do so
-						if (getIgnoreNonTxTables()
-								&& (sqlEx.getErrorCode() != SQLError.ER_WARNING_NOT_COMPLETE_ROLLBACK)) {
-							throw sqlEx;
-						}
-	
-						if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE
-								.equals(sqlEx.getSQLState())) {
-							throw SQLError.createSQLException(
-									"Communications link failure during rollback(). Transaction resolution unknown.",
-									SQLError.SQL_STATE_TRANSACTION_RESOLUTION_UNKNOWN, getExceptionInterceptor());
-						}
-	
-						throw sqlEx;
-					} finally {
-						closeStatement(stmt);
-					}
-				} finally {
-					this.needsPing = this.getReconnectAtTxEnd();
-				}
 			}
 		} else {
 			throw SQLError.notImplemented();
@@ -4971,84 +4944,76 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public void setAutoCommit(final boolean autoCommitFlag) throws SQLException {
-		synchronized (getMutex()) {
-			checkClosed();
-			
-			if (this.connectionLifecycleInterceptors != null) {
-				IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+	public synchronized void setAutoCommit(final boolean autoCommitFlag) throws SQLException {
+		checkClosed();
+		
+		if (this.connectionLifecycleInterceptors != null) {
+			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
 
-					void forEach(Object each) throws SQLException {
-						if (!((ConnectionLifecycleInterceptor)each).setAutoCommit(autoCommitFlag)) {
-							this.stopIterating = true;
-						}
+				void forEach(Object each) throws SQLException {
+					if (!((ConnectionLifecycleInterceptor)each).setAutoCommit(autoCommitFlag)) {
+						this.stopIterating = true;
 					}
-				};
-				
-				iter.doForAll();
-				
-				if (!iter.fullIteration()) {
-					return;
 				}
-			}
-	
-			if (getAutoReconnectForPools()) {
-				setHighAvailability(true);
-			}
-	
-			try {
-				if (this.transactionsSupported) {
-	
-					boolean needsSetOnServer = true;
-	
-					if (this.getUseLocalSessionState()
-							&& this.autoCommit == autoCommitFlag) {
-						needsSetOnServer = false;
-					} else if (!this.getHighAvailability()) {
-						needsSetOnServer = this.getIO()
-								.isSetNeededForAutoCommitMode(autoCommitFlag);
-					}
-	
-					// this internal value must be set first as failover depends on
-					// it
-					// being set to true to fail over (which is done by most
-					// app servers and connection pools at the end of
-					// a transaction), and the driver issues an implicit set
-					// based on this value when it (re)-connects to a server
-					// so the value holds across connections
-					this.autoCommit = autoCommitFlag;
-	
-					if (needsSetOnServer) {
-						execSQL(null, autoCommitFlag ? "SET autocommit=1"
-								: "SET autocommit=0", -1, null,
-								DEFAULT_RESULT_SET_TYPE,
-								DEFAULT_RESULT_SET_CONCURRENCY, false,
-								this.database, null, false);
-					}
-	
-				} else {
-					if ((autoCommitFlag == false) && !getRelaxAutoCommit()) {
-						throw SQLError.createSQLException("MySQL Versions Older than 3.23.15 "
-								+ "do not support transactions",
-								SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
-					}
-	
-					this.autoCommit = autoCommitFlag;
-				}
-			} finally {
-				if (this.getAutoReconnectForPools()) {
-					setHighAvailability(false);
-				}
-			}
-	
-			//if (autoCommitFlag) {
-			//	if (this.io.isSetNeededForAutoCommitMode(true)) {
-			//		throw new RuntimeException();
-			//	}
-			//}
+			};
 			
-			return;
+			iter.doForAll();
+			
+			if (!iter.fullIteration()) {
+				return;
+			}
 		}
+
+		if (getAutoReconnectForPools()) {
+			setHighAvailability(true);
+		}
+
+		try {
+			if (this.transactionsSupported) {
+
+				boolean needsSetOnServer = true;
+
+				if (this.getUseLocalSessionState()
+						&& this.autoCommit == autoCommitFlag) {
+					needsSetOnServer = false;
+				} else if (!this.getHighAvailability()) {
+					needsSetOnServer = this.getIO()
+							.isSetNeededForAutoCommitMode(autoCommitFlag);
+				}
+
+				// this internal value must be set first as failover depends on
+				// it
+				// being set to true to fail over (which is done by most
+				// app servers and connection pools at the end of
+				// a transaction), and the driver issues an implicit set
+				// based on this value when it (re)-connects to a server
+				// so the value holds across connections
+				this.autoCommit = autoCommitFlag;
+
+				if (needsSetOnServer) {
+					execSQL(null, autoCommitFlag ? "SET autocommit=1"
+							: "SET autocommit=0", -1, null,
+							DEFAULT_RESULT_SET_TYPE,
+							DEFAULT_RESULT_SET_CONCURRENCY, false,
+							this.database, null, false);
+				}
+
+			} else {
+				if ((autoCommitFlag == false) && !getRelaxAutoCommit()) {
+					throw SQLError.createSQLException("MySQL Versions Older than 3.23.15 "
+							+ "do not support transactions",
+							SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor());
+				}
+
+				this.autoCommit = autoCommitFlag;
+			}
+		} finally {
+			if (this.getAutoReconnectForPools()) {
+				setHighAvailability(false);
+			}
+		}
+		
+		return;
 	}
 
 	/**
@@ -5064,62 +5029,60 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             if a database access error occurs
 	 */
-	public void setCatalog(final String catalog) throws SQLException {
-		synchronized (getMutex()) {
-			checkClosed();
-	
-			if (catalog == null) {
-				throw SQLError.createSQLException("Catalog can not be null",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-			}
-			
-			if (this.connectionLifecycleInterceptors != null) {
-				IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+	public synchronized void setCatalog(final String catalog) throws SQLException {
+		checkClosed();
 
-					void forEach(Object each) throws SQLException {
-						if (!((ConnectionLifecycleInterceptor)each).setCatalog(catalog)) {
-							this.stopIterating = true;
-						}
+		if (catalog == null) {
+			throw SQLError.createSQLException("Catalog can not be null",
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+		}
+		
+		if (this.connectionLifecycleInterceptors != null) {
+			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+
+				void forEach(Object each) throws SQLException {
+					if (!((ConnectionLifecycleInterceptor)each).setCatalog(catalog)) {
+						this.stopIterating = true;
 					}
-				};
-				
-				iter.doForAll();
-				
-				if (!iter.fullIteration()) {
+				}
+			};
+			
+			iter.doForAll();
+			
+			if (!iter.fullIteration()) {
+				return;
+			}
+		}
+		
+		if (getUseLocalSessionState()) {
+			if (this.lowerCaseTableNames) {
+				if (this.database.equalsIgnoreCase(catalog)) {
+					return;
+				}
+			} else {
+				if (this.database.equals(catalog)) {
 					return;
 				}
 			}
-			
-			if (getUseLocalSessionState()) {
-				if (this.lowerCaseTableNames) {
-					if (this.database.equalsIgnoreCase(catalog)) {
-						return;
-					}
-				} else {
-					if (this.database.equals(catalog)) {
-						return;
-					}
-				}
-			}
-			
-			String quotedId = this.dbmd.getIdentifierQuoteString();
-	
-			if ((quotedId == null) || quotedId.equals(" ")) {
-				quotedId = "";
-			}
-	
-			StringBuffer query = new StringBuffer("USE ");
-			query.append(quotedId);
-			query.append(catalog);
-			query.append(quotedId);
-	
-			execSQL(null, query.toString(), -1, null,
-					DEFAULT_RESULT_SET_TYPE,
-					DEFAULT_RESULT_SET_CONCURRENCY, false,
-					this.database, null, false);
-			
-			this.database = catalog;
 		}
+		
+		String quotedId = this.dbmd.getIdentifierQuoteString();
+
+		if ((quotedId == null) || quotedId.equals(" ")) {
+			quotedId = "";
+		}
+
+		StringBuffer query = new StringBuffer("USE ");
+		query.append(quotedId);
+		query.append(catalog);
+		query.append(quotedId);
+
+		execSQL(null, query.toString(), -1, null,
+				DEFAULT_RESULT_SET_TYPE,
+				DEFAULT_RESULT_SET_CONCURRENCY, false,
+				this.database, null, false);
+		
+		this.database = catalog;
 	}
 
 	/**
@@ -5185,26 +5148,24 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return savepoint;
 	}
 
-	private void setSavepoint(MysqlSavepoint savepoint) throws SQLException {
+	private synchronized void setSavepoint(MysqlSavepoint savepoint) throws SQLException {
 
 		if (versionMeetsMinimum(4, 0, 14) || versionMeetsMinimum(4, 1, 1)) {
-			synchronized (getMutex()) {
-				checkClosed();
-	
-				StringBuffer savePointQuery = new StringBuffer("SAVEPOINT ");
-				savePointQuery.append('`');
-				savePointQuery.append(savepoint.getSavepointName());
-				savePointQuery.append('`');
-	
-				java.sql.Statement stmt = null;
-	
-				try {
-					stmt = getMetadataSafeStatement();
-	
-					stmt.executeUpdate(savePointQuery.toString());
-				} finally {
-					closeStatement(stmt);
-				}
+			checkClosed();
+
+			StringBuffer savePointQuery = new StringBuffer("SAVEPOINT ");
+			savePointQuery.append('`');
+			savePointQuery.append(savepoint.getSavepointName());
+			savePointQuery.append('`');
+
+			java.sql.Statement stmt = null;
+
+			try {
+				stmt = getMetadataSafeStatement();
+
+				stmt.executeUpdate(savePointQuery.toString());
+			} finally {
+				closeStatement(stmt);
 			}
 		} else {
 			throw SQLError.notImplemented();
@@ -5448,25 +5409,23 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *             if a database error occurs issuing the statement that sets
 	 *             the limit default.
 	 */
-	public void unsetMaxRows(Statement stmt) throws SQLException {
-		synchronized (this.mutex) {
-			if (this.statementsUsingMaxRows != null) {
-				Object found = this.statementsUsingMaxRows.remove(stmt);
+	public synchronized void unsetMaxRows(Statement stmt) throws SQLException {
+		if (this.statementsUsingMaxRows != null) {
+			Object found = this.statementsUsingMaxRows.remove(stmt);
 
-				if ((found != null)
-						&& (this.statementsUsingMaxRows.size() == 0)) {
-					execSQL(null, "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1,
-							null, DEFAULT_RESULT_SET_TYPE,
-							DEFAULT_RESULT_SET_CONCURRENCY, false, 
-							this.database, null, false);
+			if ((found != null)
+					&& (this.statementsUsingMaxRows.size() == 0)) {
+				execSQL(null, "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1,
+						null, DEFAULT_RESULT_SET_TYPE,
+						DEFAULT_RESULT_SET_CONCURRENCY, false, 
+						this.database, null, false);
 
-					this.maxRowsChanged = false;
-				}
+				this.maxRowsChanged = false;
 			}
 		}
 	}
 	
-	public boolean useAnsiQuotedIdentifiers() {
+	public synchronized boolean useAnsiQuotedIdentifiers() {
 		return this.useAnsiQuotes;
 	}
 	
@@ -5475,10 +5434,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * 
 	 * @return DOCUMENT ME!
 	 */
-	public boolean useMaxRows() {
-		synchronized (this.mutex) {
-			return this.maxRowsChanged;
-		}
+	public synchronized boolean useMaxRows() {
+		return this.maxRowsChanged;
 	}
 	
 	public boolean versionMeetsMinimum(int major, int minor, int subminor)
@@ -5603,7 +5560,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		ex.init(this, this.props);
 	}
 	
-	public void transactionBegun() throws SQLException {
+	public synchronized void transactionBegun() throws SQLException {
 		if (this.connectionLifecycleInterceptors != null) {
 			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
 
@@ -5616,7 +5573,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 	
-	public void transactionCompleted() throws SQLException {
+	public synchronized void transactionCompleted() throws SQLException {
 		if (this.connectionLifecycleInterceptors != null) {
 			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
 

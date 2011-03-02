@@ -389,7 +389,7 @@ public class RowDataCursor implements RowData {
 			return;
 		}
 
-		synchronized (this.owner.connection.getMutex()) {
+		synchronized (this.owner.connection) {
 			boolean oldFirstFetchCompleted = this.firstFetchCompleted;
 			
 			if (!this.firstFetchCompleted) {

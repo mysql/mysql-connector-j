@@ -688,7 +688,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 		checkClosed();
 
-		synchronized (locallyScopedConn.getMutex()) {
+		synchronized (locallyScopedConn) {
 			clearWarnings();
 
 			// Store this for later, we're going to 'swap' them out
@@ -1059,7 +1059,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			SQLException exceptionDuringClose = null;
 
 			if (calledExplicitly && !this.connection.isClosed()) {
-				synchronized (this.connection.getMutex()) {
+				synchronized (this.connection) {
 					try {
 
 						MysqlIO mysql = this.connection.getIO();
@@ -1176,7 +1176,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	private com.mysql.jdbc.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve,
 			boolean createStreamingResultSet, 
 			Field[] metadataFromCache) throws SQLException {
-		synchronized (this.connection.getMutex()) {
+		synchronized (this.connection) {
 			MysqlIO mysql = this.connection.getIO();
 
 			if (mysql.shouldIntercept()) {
@@ -1537,7 +1537,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 */
 	private void serverLongData(int parameterIndex, BindValue longData)
 			throws SQLException {
-		synchronized (this.connection.getMutex()) {
+		synchronized (this.connection) {
 			MysqlIO mysql = this.connection.getIO();
 
 			Buffer packet = mysql.getSharedSendPacket();
@@ -1571,7 +1571,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	}
 
 	private void serverPrepare(String sql) throws SQLException {
-		synchronized (this.connection.getMutex()) {
+		synchronized (this.connection) {
 			MysqlIO mysql = this.connection.getIO();
 
 			if (this.connection.getAutoGenerateTestcaseScript()) {
@@ -1710,7 +1710,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 	}
 
 	private void serverResetStatement() throws SQLException {
-		synchronized (this.connection.getMutex()) {
+		synchronized (this.connection) {
 
 			MysqlIO mysql = this.connection.getIO();
 

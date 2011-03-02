@@ -1898,11 +1898,6 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().getMetadataSafeStatement();
 	}
 
-	public Object getMutex() throws SQLException {
-
-		return getActiveMySQLConnection().getMutex();
-	}
-
 	public int getNetBufferLength() {
 
 		return getActiveMySQLConnection().getNetBufferLength();

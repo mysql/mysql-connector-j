@@ -627,7 +627,7 @@ public class StatementImpl implements Statement {
 
 		MySQLConnection locallyScopedConn = this.connection;
 
-		synchronized (locallyScopedConn.getMutex()) {
+		synchronized (locallyScopedConn) {
 			this.retrieveGeneratedKeys = returnGeneratedKeys;
 			lastQueryIsOnDupKeyUpdate = false;
 			if (returnGeneratedKeys)
@@ -865,7 +865,7 @@ public class StatementImpl implements Statement {
 
 			MySQLConnection locallyScopedConn = this.connection;
 
-			synchronized (locallyScopedConn.getMutex()) {
+			synchronized (locallyScopedConn) {
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
 				// the actual number of keys generated.
@@ -894,7 +894,7 @@ public class StatementImpl implements Statement {
 
 			MySQLConnection locallyScopedConn = this.connection;
 
-			synchronized (locallyScopedConn.getMutex()) {
+			synchronized (locallyScopedConn) {
 				this.retrieveGeneratedKeys = true;
 				
 				// If this is a 'REPLACE' query, we need to be able to parse
@@ -925,7 +925,7 @@ public class StatementImpl implements Statement {
 
 			MySQLConnection locallyScopedConn = this.connection;
 
-			synchronized (locallyScopedConn.getMutex()) {
+			synchronized (locallyScopedConn) {
 				this.retrieveGeneratedKeys = true;
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
@@ -977,7 +977,7 @@ public class StatementImpl implements Statement {
 			}
 		}
 
-		synchronized (locallyScopedConn.getMutex()) {
+		synchronized (locallyScopedConn) {
 			if (this.batchedArgs == null || this.batchedArgs.size() == 0) {
                 return new int[0];
             }
@@ -1342,7 +1342,7 @@ public class StatementImpl implements Statement {
 
 		MySQLConnection locallyScopedConn = this.connection;
 
-		synchronized (locallyScopedConn.getMutex()) {
+		synchronized (locallyScopedConn) {
 			this.retrieveGeneratedKeys = false;
 			
 			resetCancelledState();
@@ -1594,7 +1594,7 @@ public class StatementImpl implements Statement {
 
 		ResultSetInternalMethods rs = null;
 
-		synchronized (locallyScopedConn.getMutex()) {
+		synchronized (locallyScopedConn) {
 			this.retrieveGeneratedKeys = returnGeneratedKeys;
 			
 			resetCancelledState();
@@ -1738,7 +1738,7 @@ public class StatementImpl implements Statement {
 
 			MySQLConnection locallyScopedConn = this.connection;
 
-			synchronized (locallyScopedConn.getMutex()) {
+			synchronized (locallyScopedConn) {
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
 				// the actual number of keys generated.
@@ -1767,7 +1767,7 @@ public class StatementImpl implements Statement {
 
 			MySQLConnection locallyScopedConn = this.connection;
 
-			synchronized (locallyScopedConn.getMutex()) {
+			synchronized (locallyScopedConn) {
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
 				// the actual number of keys generated.
@@ -1796,7 +1796,7 @@ public class StatementImpl implements Statement {
 
 			MySQLConnection locallyScopedConn = this.connection;
 
-			synchronized (locallyScopedConn.getMutex()) {
+			synchronized (locallyScopedConn) {
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
 				// the actual number of keys generated.

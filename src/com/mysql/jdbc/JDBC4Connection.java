@@ -95,19 +95,18 @@ public class JDBC4Connection extends ConnectionImpl {
 		}
 		
 		try {
-			synchronized (getMutex()) {
+			try {
+				pingInternal(false, timeout * 1000);
+			} catch (Throwable t) {
 				try {
-					pingInternal(false, timeout * 1000);
-				} catch (Throwable t) {
-					try {
-						abortInternal();
-					} catch (Throwable ignoreThrown) {
-						// we're dead now anyway
-					}
-					
-					return false;
+					abortInternal();
+				} catch (Throwable ignoreThrown) {
+					// we're dead now anyway
 				}
+				
+				return false;
 			}
+
 		} catch (Throwable t) {
 			return false;
 		}

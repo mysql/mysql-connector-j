@@ -97,8 +97,6 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	java.sql.Statement getMetadataSafeStatement() throws SQLException;
 
-	Object getMutex() throws SQLException;
-
 	int getNetBufferLength();
 
 	Properties getProperties();
