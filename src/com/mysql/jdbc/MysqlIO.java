@@ -1,5 +1,5 @@
 /*
-      Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+      Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
       
 
       This program is free software; you can redistribute it and/or modify
@@ -235,7 +235,6 @@ public class MysqlIO {
     protected long lastPacketReceivedTimeMs = 0;
     private boolean traceProtocol = false;
     private boolean enablePacketDebug = false;
-    private Calendar sessionCalendar;
 	private boolean useConnectWithDb;
 	private boolean needToGrabQueryFromPacket;
 	private boolean autoGenerateTestcaseScript;
@@ -323,7 +322,6 @@ public class MysqlIO {
 	
 	        this.isInteractiveClient = this.connection.getInteractiveClient();
 	        this.profileSql = this.connection.getProfileSql();
-	        this.sessionCalendar = Calendar.getInstance();
 	        this.autoGenerateTestcaseScript = this.connection.getAutoGenerateTestcaseScript();
 	
 	        this.needToGrabQueryFromPacket = (this.profileSql ||
@@ -505,7 +503,7 @@ public class MysqlIO {
 	                this.mysqlInput.close();
 	            }
         	} finally {
-	            if (!this.mysqlConnection.isClosed() && !this.mysqlConnection.isInputShutdown()) {
+	            if (this.mysqlConnection != null && !this.mysqlConnection.isClosed() && !this.mysqlConnection.isInputShutdown()) {
 	            	this.mysqlConnection.shutdownInput();
 	            }
         	}
@@ -521,7 +519,7 @@ public class MysqlIO {
 	                this.mysqlOutput.close();
 	            }
         	} finally {
-        		if (!this.mysqlConnection.isClosed() && !this.mysqlConnection.isOutputShutdown()) {
+        		if (this.mysqlConnection != null && !this.mysqlConnection.isClosed() && !this.mysqlConnection.isOutputShutdown()) {
         			this.mysqlConnection.shutdownOutput();
         		}
     		}
@@ -2214,9 +2212,9 @@ public class MysqlIO {
 	    				profileQueryToLog.length());
 
 	    		mesgBuf.append(Messages.getString("MysqlIO.SlowQuery",
-	    				new Object[] {new Long(this.slowQueryThreshold),
+	    				new Object[] {Long.valueOf(this.slowQueryThreshold),
 	    				queryTimingUnits,
-	    				new Long(queryEndTime - queryStartTime)}));
+	    				Long.valueOf(queryEndTime - queryStartTime)}));
 	    		mesgBuf.append(profileQueryToLog);
 
 	    		ProfilerEventHandler eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
@@ -2537,7 +2535,7 @@ public class MysqlIO {
 
             if (count < 0) {
                 throw new EOFException(Messages.getString("MysqlIO.EOF",
-                		new Object[] {new Integer(len), new Integer(n)}));
+                		new Object[] {Integer.valueOf(len), Integer.valueOf(n)}));
             }
 
             n += count;
@@ -2558,7 +2556,7 @@ public class MysqlIO {
 
     		if (count < 0) {
     			throw new EOFException(Messages.getString("MysqlIO.EOF",
-                		new Object[] {new Long(len), new Long(n)}));
+                		new Object[] {Long.valueOf(len), Long.valueOf(n)}));
     		}
 
     		n += count;
@@ -3070,13 +3068,10 @@ public class MysqlIO {
     		if (packetLength == this.maxThreeBytes) {
     			reuse.setPosition(this.maxThreeBytes);
 
-    			int packetEndPoint = packetLength;
-
     			// it's multi-packet
     			isMultiPacket = true;
 
-    			packetLength = readRemainingMultiPackets(reuse, multiPacketSeq,
-						packetEndPoint);
+    			packetLength = readRemainingMultiPackets(reuse, multiPacketSeq);
     		}
 
     		if (!isMultiPacket) {
@@ -3106,8 +3101,8 @@ public class MysqlIO {
 
     }
 
-	private int readRemainingMultiPackets(Buffer reuse, byte multiPacketSeq,
-			int packetEndPoint) throws IOException, SQLException {
+	private int readRemainingMultiPackets(Buffer reuse, byte multiPacketSeq) 
+		throws IOException, SQLException {
 		int lengthRead;
 		int packetLength;
 		lengthRead = readFully(this.mysqlInput,
@@ -3183,8 +3178,6 @@ public class MysqlIO {
 
 				reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
 
-				packetEndPoint += lengthToWrite;
-
 				break; // end of multipacket sequence
 			}
 
@@ -3221,8 +3214,6 @@ public class MysqlIO {
 			}
 
 			reuse.writeBytesNoNull(byteBuf, 0, lengthToWrite);
-
-			packetEndPoint += lengthToWrite;
 		}
 
 		reuse.setPosition(0);
