@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
  This program is free software; you can redistribute it and/or modify
@@ -167,7 +167,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
         - Double.parseDouble(Float.toString(Float.MAX_VALUE));
     
 	/** Counter used to generate IDs for profiling. */
-	protected static int resultCounter = 1;
+	static int resultCounter = 1;
 
 	/**
 	 * Converts the given value as a java long, to an 'unsigned' long, using the
@@ -338,7 +338,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	
 	private ExceptionInterceptor exceptionInterceptor;
 	
-	protected final static char[] EMPTY_SPACE = new char[255];
+	final static char[] EMPTY_SPACE = new char[255];
 	
 	static {
 		for (int i = 0; i < EMPTY_SPACE.length; i++) {
@@ -408,21 +408,21 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		this.connection = conn;
 		this.owningStatement = creatorStmt;
-		
-		this.exceptionInterceptor = this.connection.getExceptionInterceptor();
-		
+
 		this.retainOwningStatement = false;
 		
 		if (this.connection != null) {
+			this.exceptionInterceptor = this.connection.getExceptionInterceptor();
+			
 			this.retainOwningStatement = 
 				this.connection.getRetainStatementAfterResultSetClose();
 			
 			this.connectionId = this.connection.getId();
 			this.serverTimeZoneTz = this.connection.getServerTimezoneTZ();
 			this.padCharsWithSpace = this.connection.getPadCharsWithSpace();
+			
+			useLegacyDatetimeCode = this.connection.getUseLegacyDatetimeCode();
 		}
-		
-		useLegacyDatetimeCode = this.connection.getUseLegacyDatetimeCode();
 	}
 
 	/**
@@ -502,7 +502,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		setRowPositionValidity();
 	}
 
-	public void initializeWithMetadata() throws SQLException {
+	public synchronized void initializeWithMetadata() throws SQLException {
 		this.rowData.setMetadata(this.fields);
 		
 		this.columnToIndexCache = new HashMap();
@@ -807,7 +807,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @throws SQLException
 	 *             if the index is out of bounds
 	 */
-	protected final void checkColumnBounds(int columnIndex) throws SQLException {
+	protected synchronized final void checkColumnBounds(int columnIndex) throws SQLException {
 		if ((columnIndex < 1)) {
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Column_Index_out_of_range_low", new Object[] {
@@ -871,7 +871,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * We can't do this ourselves, otherwise the contract for
 	 * Statement.getMoreResults() won't work correctly.
 	 */
-	public void clearNextResult() {
+	public synchronized void clearNextResult() {
 		this.nextResultSet = null;
 	}
 
@@ -882,7 +882,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public void clearWarnings() throws SQLException {
+	public synchronized void clearWarnings() throws SQLException {
 		this.warningChain = null;
 	}
 
@@ -933,7 +933,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	//
 	// Note, row data is linked between these two result sets
 	//
-	public ResultSetInternalMethods copy() throws SQLException {
+	public synchronized ResultSetInternalMethods copy() throws SQLException {
 		ResultSetInternalMethods rs = ResultSetImpl.getInstance(this.catalog, this.fields, this.rowData,
 				this.connection, this.owningStatement, false); // note, doesn't work for updatable result sets
 
@@ -1355,7 +1355,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							throw SQLError.createSQLException(
 									Messages
 											.getString("ResultSet.Bad_format_for_BigDecimal", //$NON-NLS-1$
-											 new Object[] {stringVal, new Integer(columnIndex)}),
+											 new Object[] {stringVal, Integer.valueOf(columnIndex)}),
 									SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 						}
 					}
@@ -2534,7 +2534,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
-	public int getFetchDirection() throws SQLException {
+	public synchronized int getFetchDirection() throws SQLException {
 		return this.fetchDirection;
 	}
 
@@ -2546,7 +2546,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
-	public int getFetchSize() throws SQLException {
+	public synchronized int getFetchSize() throws SQLException {
 		return this.fetchSize;
 	}
 
@@ -2556,7 +2556,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * 
 	 * @return the first character of the query...uppercased
 	 */
-	public char getFirstCharOfQuery() {
+	public synchronized char getFirstCharOfQuery() {
 		return this.firstCharOfQuery;
 	}
 
@@ -3334,16 +3334,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 			return 0;
 		}
-
-		if (value == null) {
-			this.wasNullFlag = true;
-		} else {
-			this.wasNullFlag = false;
-		}
-			
-		if (this.wasNullFlag) {
-			return 0;
-		}
+		
+		this.wasNullFlag = false;
 
 		columnIndex--;
 
@@ -4822,7 +4814,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * 
 	 * @return Returns the nextResultSet, if any, null if none exists.
 	 */
-	public ResultSetInternalMethods getNextResultSet() {
+	public synchronized ResultSetInternalMethods getNextResultSet() {
 		return this.nextResultSet;
 	}
 
@@ -4939,7 +4931,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					throw SQLError.createSQLException(
 							Messages
 							.getString("ResultSet.Bad_format_for_BigDecimal", //$NON-NLS-1$
-							 new Object[] {stringVal, new Integer(columnIndex)}),
+							 new Object[] {stringVal, Integer.valueOf(columnIndex)}),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
@@ -5167,7 +5159,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					throw SQLError.createSQLException(
 							Messages
 							.getString("ResultSet.Bad_format_for_BigDecimal", //$NON-NLS-1$
-							 new Object[] {stringVal, new Integer(columnIndex)}),
+							 new Object[] {stringVal, Integer.valueOf(columnIndex)}),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
@@ -5313,7 +5305,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * 
 	 * @return server info created for this ResultSet
 	 */
-	public String getServerInfo() {
+	public synchronized String getServerInfo() {
 		return this.serverInfo;
 	}
 
@@ -5544,7 +5536,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
-	public java.sql.Statement getStatement() throws SQLException {
+	public synchronized java.sql.Statement getStatement() throws SQLException {
 		if (this.isClosed && !this.retainOwningStatement) {
 			throw SQLError.createSQLException(
 					"Operation not allowed on closed ResultSet. Statements "
@@ -5845,7 +5837,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return getTime(findColumn(columnName), cal);
 	}
 
-	private Time getTimeFromString(String timeAsString, Calendar targetCalendar,
+	private synchronized Time getTimeFromString(String timeAsString, Calendar targetCalendar,
 			int columnIndex,
 			TimeZone tz, 
 			boolean rollForward) throws SQLException {
@@ -6002,7 +5994,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						this.connection.getServerTimezoneTZ(),
 						tz, rollForward);
 			}
-		} catch (Exception ex) {
+		} catch (RuntimeException ex) {
 			SQLException sqlEx = SQLError.createSQLException(ex.toString(),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			sqlEx.initCause(ex);
@@ -6424,7 +6416,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 									.getServerTimezoneTZ(), tz, rollForward);
 				}
 			}
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 			SQLException sqlEx = SQLError.createSQLException("Cannot convert value '"
 					+ timestampValue + "' from column " + columnIndex
 					+ " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -6485,7 +6477,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						return null;
 					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 							.equals(this.connection.getZeroDateTimeBehavior())) {
-						throw SQLError.createSQLException("Value '" + timestampAsBytes
+						throw SQLError.createSQLException("Value '" + new String(timestampAsBytes)
 								+ "' can not be represented as java.sql.Timestamp",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 					}
@@ -6707,7 +6699,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 								.getServerTimezoneTZ(), tz, rollForward);
 				}
 			}
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 			SQLException sqlEx = SQLError.createSQLException("Cannot convert value '"
 					+ new String(timestampAsBytes) + "' from column " + columnIndex
 					+ " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -6889,7 +6881,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database access error occurs.
 	 */
-	public java.sql.SQLWarning getWarnings() throws SQLException {
+	public synchronized java.sql.SQLWarning getWarnings() throws SQLException {
 		return this.warningChain;
 	}
 
@@ -6992,7 +6984,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @param mysqlType
 	 * @param s
 	 */
-	private void issueConversionViaParsingWarning(String methodName,
+	private synchronized void issueConversionViaParsingWarning(String methodName,
 			int columnIndex, Object value, Field fieldInfo,
 			int[] typesWithNoParseConversion) throws SQLException {
 		
@@ -7017,7 +7009,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		
 		String message = Messages.getString("ResultSet.CostlyConversion", new Object[] {
 				methodName,
-				new Integer(columnIndex + 1),
+				Integer.valueOf(columnIndex + 1),
 				fieldInfo.getOriginalName(),
 				fieldInfo.getOriginalTableName(),
 				originalQueryBuf.toString(),
@@ -7479,7 +7471,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public void realClose(boolean calledExplicitly) throws SQLException {
+	public synchronized void realClose(boolean calledExplicitly) throws SQLException {
 		if (this.isClosed) {
 			return;
 		}
@@ -7535,10 +7527,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 												.getString(
 														"ResultSet.Too_Large_Result_Set",
 														new Object[] {
-																new Integer(
+																Integer.valueOf(
 																		this.rowData
 																				.size()),
-																new Integer(
+																Integer.valueOf(
 																		this.connection
 																				.getResultSetSizeThreshold()) })));
 					}
@@ -7565,9 +7557,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 												.getString(
 														"ResultSet.Possible_incomplete_traversal_of_result_set", //$NON-NLS-1$
 														new Object[] {
-																new Integer(
+																Integer.valueOf(
 																		getRow()),
-																new Integer(
+																Integer.valueOf(
 																		this.rowData
 																				.size()) })));
 					}
@@ -7826,7 +7818,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                MM.MySQL actually ignores this, because it has the whole
 	 *                result set anyway, so the direction is immaterial.
 	 */
-	public void setFetchDirection(int direction) throws SQLException {
+	public synchronized void setFetchDirection(int direction) throws SQLException {
 		if ((direction != FETCH_FORWARD) && (direction != FETCH_REVERSE)
 				&& (direction != FETCH_UNKNOWN)) {
 			throw SQLError.createSQLException(
@@ -7854,7 +7846,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                rows lteq this.getMaxRows() is not satisfied. Currently
 	 *                ignored by this driver.
 	 */
-	public void setFetchSize(int rows) throws SQLException {
+	public synchronized void setFetchSize(int rows) throws SQLException {
 		if (rows < 0) { /* || rows > getMaxRows() */
 			throw SQLError.createSQLException(
 					Messages
@@ -7872,7 +7864,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @param c
 	 *            the first character of the query...uppercased
 	 */
-	public void setFirstCharOfQuery(char c) {
+	public synchronized void setFirstCharOfQuery(char c) {
 		this.firstCharOfQuery = c;
 	}
 
@@ -7883,11 +7875,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *            Sets the next result set in the result set chain for multiple
 	 *            result sets.
 	 */
-	protected void setNextResultSet(ResultSetInternalMethods nextResultSet) {
+	protected synchronized void setNextResultSet(ResultSetInternalMethods nextResultSet) {
 		this.nextResultSet = nextResultSet;
 	}
 
-	public void setOwningStatement(com.mysql.jdbc.StatementImpl owningStatement) {
+	public synchronized void setOwningStatement(com.mysql.jdbc.StatementImpl owningStatement) {
 		this.owningStatement = owningStatement;
 	}
 
@@ -7897,7 +7889,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @param concurrencyFlag
 	 *            CONCUR_UPDATABLE or CONCUR_READONLY
 	 */
-	protected void setResultSetConcurrency(int concurrencyFlag) {
+	protected synchronized void setResultSetConcurrency(int concurrencyFlag) {
 		this.resultSetConcurrency = concurrencyFlag;
 	}
 
@@ -7908,7 +7900,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *            SCROLL_SENSITIVE or SCROLL_INSENSITIVE (we only support
 	 *            SCROLL_INSENSITIVE)
 	 */
-	protected void setResultSetType(int typeFlag) {
+	protected synchronized void setResultSetType(int typeFlag) {
 		this.resultSetType = typeFlag;
 	}
 
@@ -7918,11 +7910,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @param info
 	 *            the server info message
 	 */
-	protected void setServerInfo(String info) {
+	protected synchronized void setServerInfo(String info) {
 		this.serverInfo = info;
 	}
 
-	public void setStatementUsedForFetchingRows(PreparedStatement stmt) {
+	public synchronized void setStatementUsedForFetchingRows(PreparedStatement stmt) {
 		this.statementUsedForFetchingRows = stmt;
 	}
 
@@ -7930,7 +7922,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @param wrapperStatement
 	 *            The wrapperStatement to set.
 	 */
-	public void setWrapperStatement(java.sql.Statement wrapperStatement) {
+	public synchronized void setWrapperStatement(java.sql.Statement wrapperStatement) {
 		this.wrapperStatement = wrapperStatement;
 	}
 

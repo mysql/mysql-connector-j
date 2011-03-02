@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
  This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
  */
 public class UpdatableResultSet extends ResultSetImpl {
 	/** Marker for 'stream' data when doing INSERT rows */
-	protected final static byte[] STREAM_DATA_MARKER = "** STREAM DATA **" //$NON-NLS-1$
+	final static byte[] STREAM_DATA_MARKER = "** STREAM DATA **" //$NON-NLS-1$
 	.getBytes();
 
 	protected SingleByteCharsetConverter charConverter;
@@ -474,12 +474,6 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 		this.deleter.clearParameters();
 
-		String characterEncoding = null;
-
-		if (this.connection.getUseUnicode()) {
-			characterEncoding = this.connection.getEncoding();
-		}
-
 		int numKeys = this.primaryKeyIndicies.size();
 
 		if (numKeys == 1) {
@@ -717,7 +711,7 @@ public class UpdatableResultSet extends ResultSetImpl {
                         tableNamesSoFar.put(fqTableName, fqTableName);
                     }
 
-                    columnIndicesToTable.put(new Integer(i), fqTableName);
+                    columnIndicesToTable.put(Integer.valueOf(i), fqTableName);
 
                     updColumnNameToIndex = getColumnsToIndexMapForTableAndDB(this.catalog, tableOnlyName);
 	            }
@@ -735,7 +729,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 			}
 
 			if (updColumnNameToIndex != null && columnName != null) {
-			    updColumnNameToIndex.put(columnName, new Integer(i));
+			    updColumnNameToIndex.put(columnName, Integer.valueOf(i));
 			}
 
 			String originalTableName = this.fields[i].getOriginalTableName();
@@ -1214,7 +1208,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	public void realClose(boolean calledExplicitly) throws SQLException {
+	public synchronized void realClose(boolean calledExplicitly) throws SQLException {
 		if (this.isClosed) {
 			return;
 		}
