@@ -299,7 +299,7 @@ public class ProfilerEvent {
 			pos += eventDurationUnits.length;
 		}
 		
-		int eventCreationPointIndex = readInt(buf, pos);
+		readInt(buf, pos);
 		pos += 4;
 		byte[] eventCreationAsBytes = readBytes(buf, pos);
 		pos += 4;
@@ -361,6 +361,7 @@ public class ProfilerEvent {
 			len += (4 + durationUnitsAsBytes.length);
 		} else {
 			len += 4;
+			durationUnitsAsBytes = "".getBytes("ISO8859_1");
 		}
 
 		byte[] buf = new byte[len];
