@@ -3270,7 +3270,7 @@ public class StatementRegressionTest extends BaseTestCase {
 				t.start();
 
 				try {
-					if (toBeKilledConn.isClosed()) {
+					if (!toBeKilledConn.isClosed()) {
 						initialTimeout *= 2;
 						continue;
 					}
@@ -3279,6 +3279,9 @@ public class StatementRegressionTest extends BaseTestCase {
 					fail("Should've caught a SQLException for the statement being closed here");
 				} catch (BatchUpdateException batchEx) {
 					assertEquals("08003", batchEx.getSQLState());
+					break;
+				} catch (SQLException sqlEx) {
+					assertEquals("08003", sqlEx.getSQLState());
 					break;
 				}
 
