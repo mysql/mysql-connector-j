@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -87,7 +87,7 @@ public class CallableStatement extends PreparedStatement implements
 		}
 	}
 	
-	protected class CallableStatementParam {
+	protected static class CallableStatementParam {
 		int desiredJdbcType;
 
 		int index;
@@ -544,7 +544,7 @@ public class CallableStatement extends PreparedStatement implements
 	
 	private int[] placeholderToParameterIndexMap;
 	
-	private void generateParameterMap() throws SQLException {
+	private synchronized void generateParameterMap() throws SQLException {
 		if (this.paramInfo == null) {
 			return;
 		}
@@ -648,7 +648,7 @@ public class CallableStatement extends PreparedStatement implements
 		super.addBatch();
 	}
 
-	private CallableStatementParam checkIsOutputParam(int paramIndex)
+	private synchronized CallableStatementParam checkIsOutputParam(int paramIndex)
 			throws SQLException {
 
 		if (this.callingStoredFunction) {
@@ -705,7 +705,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 * @throws SQLException
 	 */
-	private void checkParameterIndexBounds(int paramIndex) throws SQLException {
+	private synchronized void checkParameterIndexBounds(int paramIndex) throws SQLException {
 		this.paramInfo.checkBounds(paramIndex);
 	}
 
@@ -742,7 +742,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 * @throws SQLException if we can't build the metadata.
 	 */
-	private void fakeParameterTypes(boolean isReallyProcedure) throws SQLException {
+	private synchronized void fakeParameterTypes(boolean isReallyProcedure) throws SQLException {
 		Field[] fields = new Field[13];
 
 		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
@@ -805,7 +805,7 @@ public class CallableStatement extends PreparedStatement implements
 		convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
 	}
 	
-	private void determineParameterTypes() throws SQLException {
+	private synchronized void determineParameterTypes() throws SQLException {
 		
 		java.sql.ResultSet paramTypesRs = null;
 
@@ -880,7 +880,7 @@ public class CallableStatement extends PreparedStatement implements
 		}
 	}
 
-	private void convertGetProcedureColumnsToInternalDescriptors(java.sql.ResultSet paramTypesRs) throws SQLException {
+	private synchronized void convertGetProcedureColumnsToInternalDescriptors(java.sql.ResultSet paramTypesRs) throws SQLException {
 		if (!this.connection.isRunningOnJDK13()) {
 			this.paramInfo = new CallableStatementParamInfoJDBC3(
 					paramTypesRs);
@@ -894,7 +894,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 * @see java.sql.PreparedStatement#execute()
 	 */
-	public boolean execute() throws SQLException {
+	public synchronized boolean execute() throws SQLException {
 		boolean returnVal = false;
 
 		checkClosed();
@@ -929,7 +929,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 * @see java.sql.PreparedStatement#executeQuery()
 	 */
-	public java.sql.ResultSet executeQuery() throws SQLException {
+	public synchronized java.sql.ResultSet executeQuery() throws SQLException {
 		checkClosed();
 
 		checkStreamability();
@@ -953,7 +953,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 * @see java.sql.PreparedStatement#executeUpdate()
 	 */
-	public int executeUpdate() throws SQLException {
+	public synchronized int executeUpdate() throws SQLException {
 		int returnVal = -1;
 
 		checkClosed();
@@ -1029,7 +1029,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @throws SQLException
 	 *             if the parameter name is null or empty.
 	 */
-	protected String fixParameterName(String paramNameIn) throws SQLException {
+	protected synchronized String fixParameterName(String paramNameIn) throws SQLException {
 		//Fixed for 5.5+
 		if (((paramNameIn == null) || (paramNameIn.length() == 0)) && (!hasParametersView())) {
 			throw SQLError.createSQLException(
@@ -1461,7 +1461,7 @@ public class CallableStatement extends PreparedStatement implements
 		return retValue;
 	}
 
-	protected int getNamedParamIndex(String paramName, boolean forOut)
+	protected synchronized int getNamedParamIndex(String paramName, boolean forOut)
 	throws SQLException {
 		if (this.connection.getNoAccessToProcedureBodies()) {
 			throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
@@ -1579,7 +1579,7 @@ public class CallableStatement extends PreparedStatement implements
 	 *             if no output parameters were defined, or if no output
 	 *             parameters were returned.
 	 */
-	protected ResultSetInternalMethods getOutputParameters(int paramIndex) throws SQLException {
+	protected synchronized ResultSetInternalMethods getOutputParameters(int paramIndex) throws SQLException {
 		this.outputParamWasNull = false;
 
 		if (paramIndex == 1 && this.callingStoredFunction
@@ -1846,7 +1846,7 @@ public class CallableStatement extends PreparedStatement implements
 		return retValue;
 	}
 
-	protected int mapOutputParameterIndexToRsIndex(int paramIndex)
+	protected synchronized int mapOutputParameterIndexToRsIndex(int paramIndex)
 			throws SQLException {
 
 		if (this.returnValueParam != null && paramIndex == 1) {
@@ -1933,7 +1933,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	private void retrieveOutParams() throws SQLException {
+	private synchronized void retrieveOutParams() throws SQLException {
 		int numParameters = this.paramInfo.numberOfParameters();
 
 		this.parameterIndexToRsIndex = new int[numParameters];
@@ -2101,7 +2101,7 @@ public class CallableStatement extends PreparedStatement implements
 	/**
 	 * 
 	 */
-	private void setInOutParamsOnServer() throws SQLException {
+	private synchronized void setInOutParamsOnServer() throws SQLException {
 		if (this.paramInfo.numParameters > 0) {
 			int parameterIndex = 0;
 
@@ -2235,7 +2235,7 @@ public class CallableStatement extends PreparedStatement implements
 			int scale) throws SQLException {
 	}
 
-	private void setOutParams() throws SQLException {
+	private synchronized void setOutParams() throws SQLException {
 		if (this.paramInfo.numParameters > 0) {
 			for (Iterator paramIter = this.paramInfo.iterator(); paramIter
 					.hasNext();) {
@@ -2438,7 +2438,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @return true if procedure does not alter data
 	 * @throws SQLException
 	 */
-	private boolean checkReadOnlyProcedure() throws SQLException {
+	private synchronized boolean checkReadOnlyProcedure() throws SQLException {
 		if (this.connection.getNoAccessToProcedureBodies()) {
 			return false;
 		}
@@ -2511,7 +2511,7 @@ public class CallableStatement extends PreparedStatement implements
 		return (super.checkReadOnlySafeStatement() || this.checkReadOnlyProcedure());
 	}
 	
-	private boolean hasParametersView() throws SQLException {
+	private synchronized boolean hasParametersView() throws SQLException {
 		try {
 			if (this.connection.versionMeetsMinimum(5, 5, 0)) {
 				java.sql.DatabaseMetaData dbmd1 = new DatabaseMetaDataUsingInfoSchema(this.connection, this.connection.getCatalog());

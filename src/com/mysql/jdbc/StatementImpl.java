@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -149,7 +149,7 @@ public class StatementImpl implements Statement {
 	protected Object cancelTimeoutMutex = new Object();
 
 	/** Used to generate IDs when profiling. */
-	protected static int statementCounter = 1;
+	static int statementCounter = 1;
 
 	public final static byte USES_VARIABLES_FALSE = 0;
 
@@ -308,35 +308,37 @@ public class StatementImpl implements Statement {
 			if (defaultFetchSize != 0) {
 				setFetchSize(defaultFetchSize);
 			}
+			
+			if (this.connection.getUseUnicode()) {
+				this.charEncoding = this.connection.getEncoding();
+
+				this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
+			}
+			
+			
+
+			boolean profiling = this.connection.getProfileSql()
+					|| this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
+
+			if (this.connection.getAutoGenerateTestcaseScript() || profiling) {
+				this.statementId = statementCounter++;
+			}
+
+			if (profiling) {
+				this.pointOfOrigin = new Throwable();
+				this.profileSQL = this.connection.getProfileSql();
+				this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
+				this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
+			}
+
+			int maxRowsConn = this.connection.getMaxRows();
+
+			if (maxRowsConn != -1) {
+				setMaxRows(maxRowsConn);
+			}
+			
+			this.holdResultsOpenOverClose = this.connection.getHoldResultsOpenOverStatementClose();
 		}
-
-		if (this.connection.getUseUnicode()) {
-			this.charEncoding = this.connection.getEncoding();
-
-			this.charConverter = this.connection.getCharsetConverter(this.charEncoding);
-		}
-
-		boolean profiling = this.connection.getProfileSql()
-				|| this.connection.getUseUsageAdvisor() || this.connection.getLogSlowQueries();
-
-		if (this.connection.getAutoGenerateTestcaseScript() || profiling) {
-			this.statementId = statementCounter++;
-		}
-
-		if (profiling) {
-			this.pointOfOrigin = new Throwable();
-			this.profileSQL = this.connection.getProfileSql();
-			this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
-			this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
-		}
-
-		int maxRowsConn = this.connection.getMaxRows();
-
-		if (maxRowsConn != -1) {
-			setMaxRows(maxRowsConn);
-		}
-		
-		this.holdResultsOpenOverClose = this.connection.getHoldResultsOpenOverStatementClose();
 	}
 
 	/**
@@ -397,7 +399,7 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if this statement has been closed
 	 */
-	protected void checkClosed() throws SQLException {
+	protected synchronized void checkClosed() throws SQLException {
 		if (this.isClosed) {
 			throw SQLError.createSQLException(Messages
 					.getString("Statement.49"), //$NON-NLS-1$
@@ -482,7 +484,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs (why?)
 	 */
-	public void clearWarnings() throws SQLException {
+	public synchronized void clearWarnings() throws SQLException {
 		this.warningChain = null;
 	}
 
@@ -542,7 +544,7 @@ public class StatementImpl implements Statement {
 	 * @param sql
 	 * @return
 	 */
-	private ResultSetInternalMethods createResultSetUsingServerFetch(String sql)
+	private synchronized ResultSetInternalMethods createResultSetUsingServerFetch(String sql)
 			throws SQLException {
 		java.sql.PreparedStatement pStmt = this.connection.prepareStatement(
 				sql, this.resultSetType, this.resultSetConcurrency);
@@ -577,7 +579,7 @@ public class StatementImpl implements Statement {
 	 * @return true if this result set should be streamed row at-a-time, rather
 	 *         than read all at once.
 	 */
-	protected boolean createStreamingResultSet() {
+	protected synchronized boolean createStreamingResultSet() {
 		return ((this.resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY)
 				&& (this.resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY) && (this.fetchSize == Integer.MIN_VALUE));
 	}
@@ -588,7 +590,7 @@ public class StatementImpl implements Statement {
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IStatement#enableStreamingResults()
 	 */
-	public void enableStreamingResults() throws SQLException {
+	public synchronized void enableStreamingResults() throws SQLException {
 		this.originalResultSetType = this.resultSetType;
 		this.originalFetchSize = this.fetchSize;
 
@@ -596,7 +598,7 @@ public class StatementImpl implements Statement {
 		setResultSetType(ResultSet.TYPE_FORWARD_ONLY);
 	}
 
-	public void disableStreamingResults() throws SQLException {
+	public synchronized void disableStreamingResults() throws SQLException {
 		if (this.fetchSize == Integer.MIN_VALUE &&
 				this.resultSetType == ResultSet.TYPE_FORWARD_ONLY) {
 			setFetchSize(this.originalFetchSize);
@@ -622,7 +624,7 @@ public class StatementImpl implements Statement {
 		return execute(sql, false);
 	}
 	
-	private boolean execute(String sql, boolean returnGeneratedKeys) throws SQLException {
+	private synchronized boolean execute(String sql, boolean returnGeneratedKeys) throws SQLException {
 		checkClosed();
 
 		MySQLConnection locallyScopedConn = this.connection;
@@ -887,7 +889,7 @@ public class StatementImpl implements Statement {
 	/**
 	 * @see StatementImpl#execute(String, int[])
 	 */
-	public boolean execute(String sql, int[] generatedKeyIndices)
+	public synchronized boolean execute(String sql, int[] generatedKeyIndices)
 			throws SQLException {
 		if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
 			checkClosed();
@@ -918,7 +920,7 @@ public class StatementImpl implements Statement {
 	/**
 	 * @see StatementImpl#execute(String, String[])
 	 */
-	public boolean execute(String sql, String[] generatedKeyNames)
+	public synchronized boolean execute(String sql, String[] generatedKeyNames)
 			throws SQLException {
 		if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
 			checkClosed();
@@ -1097,7 +1099,7 @@ public class StatementImpl implements Statement {
 		}
 	}
 
-	protected final boolean hasDeadlockOrTimeoutRolledBackTx(SQLException ex) {
+	protected synchronized final boolean hasDeadlockOrTimeoutRolledBackTx(SQLException ex) {
 		int vendorCode = ex.getErrorCode();
 		
 		switch (vendorCode) {
@@ -1124,7 +1126,7 @@ public class StatementImpl implements Statement {
 	 * @return update counts in the same manner as executeBatch()
 	 * @throws SQLException
 	 */
-	private int[] executeBatchUsingMultiQueries(boolean multiQueriesEnabled,
+	private synchronized int[] executeBatchUsingMultiQueries(boolean multiQueriesEnabled,
 			int nbrCommands, int individualStatementTimeout) throws SQLException {
 
 		MySQLConnection locallyScopedConn = this.connection;
@@ -1263,7 +1265,7 @@ public class StatementImpl implements Statement {
 		}
 	}
 	
-	protected int processMultiCountsAndKeys(
+	protected synchronized int processMultiCountsAndKeys(
 			StatementImpl batchedStatement,
 			int updateCountCounter, int[] updateCounts) throws SQLException {
 		updateCounts[updateCountCounter++] = batchedStatement.getUpdateCount();
@@ -1336,7 +1338,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public java.sql.ResultSet executeQuery(String sql)
+	public synchronized java.sql.ResultSet executeQuery(String sql)
 			throws SQLException {
 		checkClosed();
 
@@ -1534,7 +1536,7 @@ public class StatementImpl implements Statement {
 		}
 	}
 
-	protected void doPingInstead() throws SQLException {
+	protected synchronized void doPingInstead() throws SQLException {
 		if (this.pingTarget != null) {
 			this.pingTarget.doPing();
 		} else {
@@ -1545,7 +1547,7 @@ public class StatementImpl implements Statement {
 		this.results = fakeSelectOneResultSet;
 	}
 
-	protected ResultSetInternalMethods generatePingResultSet() throws SQLException {
+	protected synchronized ResultSetInternalMethods generatePingResultSet() throws SQLException {
 		Field[] fields = { new Field(null, "1", Types.BIGINT, 1) };
 		ArrayList rows = new ArrayList();
 		byte[] colVal = new byte[] { (byte) '1' };
@@ -1583,7 +1585,7 @@ public class StatementImpl implements Statement {
 		return executeUpdate(sql, false, false);
 	}
 
-	protected int executeUpdate(String sql, boolean isBatch, boolean returnGeneratedKeys)
+	protected synchronized int executeUpdate(String sql, boolean isBatch, boolean returnGeneratedKeys)
 		throws SQLException {
 		checkClosed();
 
@@ -1731,7 +1733,7 @@ public class StatementImpl implements Statement {
 	/**
 	 * @see StatementImpl#executeUpdate(String, int)
 	 */
-	public int executeUpdate(String sql, int returnGeneratedKeys)
+	public synchronized int executeUpdate(String sql, int returnGeneratedKeys)
 			throws SQLException {
 		if (returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS) {
 			checkClosed();
@@ -1760,7 +1762,7 @@ public class StatementImpl implements Statement {
 	/**
 	 * @see StatementImpl#executeUpdate(String, int[])
 	 */
-	public int executeUpdate(String sql, int[] generatedKeyIndices)
+	public synchronized int executeUpdate(String sql, int[] generatedKeyIndices)
 			throws SQLException {
 		if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
 			checkClosed();
@@ -1789,7 +1791,7 @@ public class StatementImpl implements Statement {
 	/**
 	 * @see StatementImpl#executeUpdate(String, String[])
 	 */
-	public int executeUpdate(String sql, String[] generatedKeyNames)
+	public synchronized int executeUpdate(String sql, String[] generatedKeyNames)
 			throws SQLException {
 		if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
 			checkClosed();
@@ -1819,7 +1821,7 @@ public class StatementImpl implements Statement {
 	 * Optimization to only use one calendar per-session, or calculate it for
 	 * each call, depending on user configuration
 	 */
-	protected Calendar getCalendarInstanceForSessionOrNew() {
+	protected synchronized Calendar getCalendarInstanceForSessionOrNew() {
 		if (this.connection != null) {
 			return this.connection.getCalendarInstanceForSessionOrNew();
 		} else {
@@ -1836,7 +1838,7 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public java.sql.Connection getConnection() throws SQLException {
+	public synchronized java.sql.Connection getConnection() throws SQLException {
 		return this.connection;
 	}
 
@@ -1860,7 +1862,7 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public int getFetchSize() throws SQLException {
+	public synchronized int getFetchSize() throws SQLException {
 		return this.fetchSize;
 	}
 
@@ -1988,7 +1990,7 @@ public class StatementImpl implements Statement {
 	 *
 	 * @return the last update ID.
 	 */
-	public long getLastInsertID() {
+	public synchronized long getLastInsertID() {
 		return this.lastInsertId;
 	}
 
@@ -2004,7 +2006,7 @@ public class StatementImpl implements Statement {
 	 *
 	 * @return the current update count.
 	 */
-	public long getLongUpdateCount() {
+	public synchronized long getLongUpdateCount() {
 		if (this.results == null) {
 			return -1;
 		}
@@ -2027,7 +2029,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public int getMaxFieldSize() throws SQLException {
+	public synchronized int getMaxFieldSize() throws SQLException {
 		return this.maxFieldSize;
 	}
 
@@ -2041,7 +2043,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public int getMaxRows() throws SQLException {
+	public synchronized int getMaxRows() throws SQLException {
 		if (this.maxRows <= 0) {
 			return 0;
 		}
@@ -2151,7 +2153,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public int getQueryTimeout() throws SQLException {
+	public synchronized int getQueryTimeout() throws SQLException {
 		return this.timeoutInMillis / 1000;
 	}
 
@@ -2233,7 +2235,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs (why?)
 	 */
-	public java.sql.ResultSet getResultSet() throws SQLException {
+	public synchronized java.sql.ResultSet getResultSet() throws SQLException {
 		return ((this.results != null) && this.results.reallyResult()) ? (java.sql.ResultSet) this.results
 				: null;
 	}
@@ -2246,7 +2248,7 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public int getResultSetConcurrency() throws SQLException {
+	public synchronized int getResultSetConcurrency() throws SQLException {
 		return this.resultSetConcurrency;
 	}
 
@@ -2257,7 +2259,7 @@ public class StatementImpl implements Statement {
 		return java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT;
 	}
 
-	protected ResultSetInternalMethods getResultSetInternal() {
+	protected synchronized ResultSetInternalMethods getResultSetInternal() {
 		return this.results;
 	}
 
@@ -2269,7 +2271,7 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	public int getResultSetType() throws SQLException {
+	public synchronized int getResultSetType() throws SQLException {
 		return this.resultSetType;
 	}
 
@@ -2283,7 +2285,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public int getUpdateCount() throws SQLException {
+	public synchronized int getUpdateCount() throws SQLException {
 		if (this.results == null) {
 			return -1;
 		}
@@ -2324,7 +2326,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public java.sql.SQLWarning getWarnings() throws SQLException {
+	public synchronized java.sql.SQLWarning getWarnings() throws SQLException {
 		checkClosed();
 
 		if (this.connection != null && !this.connection.isClosed()
@@ -2443,7 +2445,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public void setEscapeProcessing(boolean enable)
+	public synchronized void setEscapeProcessing(boolean enable)
 			throws SQLException {
 		this.doEscapeProcessing = enable;
 	}
@@ -2489,7 +2491,7 @@ public class StatementImpl implements Statement {
 	 *                if a database-access error occurs, or the condition 0
 	 *                &lt;= rows &lt;= this.getMaxRows() is not satisfied.
 	 */
-	public void setFetchSize(int rows) throws SQLException {
+	public synchronized void setFetchSize(int rows) throws SQLException {
 		if (((rows < 0) && (rows != Integer.MIN_VALUE))
 				|| ((this.maxRows != 0) && (this.maxRows != -1) && (rows > this
 						.getMaxRows()))) {
@@ -2501,7 +2503,7 @@ public class StatementImpl implements Statement {
 		this.fetchSize = rows;
 	}
 
-	public void setHoldResultsOpenOverClose(boolean holdResultsOpenOverClose) {
+	public synchronized void setHoldResultsOpenOverClose(boolean holdResultsOpenOverClose) {
 		this.holdResultsOpenOverClose = holdResultsOpenOverClose;
 	}
 
@@ -2514,7 +2516,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if size exceeds buffer size
 	 */
-	public void setMaxFieldSize(int max) throws SQLException {
+	public synchronized void setMaxFieldSize(int max) throws SQLException {
 		if (max < 0) {
 			throw SQLError.createSQLException(Messages
 					.getString("Statement.11"), //$NON-NLS-1$
@@ -2545,7 +2547,7 @@ public class StatementImpl implements Statement {
 	 *
 	 * @see getMaxRows
 	 */
-	public void setMaxRows(int max) throws SQLException {
+	public synchronized void setMaxRows(int max) throws SQLException {
 		if ((max > MysqlDefs.MAX_ROWS) || (max < 0)) {
 			throw SQLError
 					.createSQLException(
@@ -2583,7 +2585,7 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public void setQueryTimeout(int seconds) throws SQLException {
+	public synchronized void setQueryTimeout(int seconds) throws SQLException {
 		if (seconds < 0) {
 			throw SQLError.createSQLException(Messages
 					.getString("Statement.21"), //$NON-NLS-1$
@@ -2599,7 +2601,7 @@ public class StatementImpl implements Statement {
 	 * @param concurrencyFlag
 	 *            DOCUMENT ME!
 	 */
-	void setResultSetConcurrency(int concurrencyFlag) {
+	synchronized void setResultSetConcurrency(int concurrencyFlag) {
 		this.resultSetConcurrency = concurrencyFlag;
 	}
 
@@ -2609,11 +2611,11 @@ public class StatementImpl implements Statement {
 	 * @param typeFlag
 	 *            DOCUMENT ME!
 	 */
-	void setResultSetType(int typeFlag) {
+	synchronized void setResultSetType(int typeFlag) {
 		this.resultSetType = typeFlag;
 	}
 
-	protected void getBatchedGeneratedKeys(java.sql.Statement batchedStatement) throws SQLException {
+	protected synchronized void getBatchedGeneratedKeys(java.sql.Statement batchedStatement) throws SQLException {
 		if (this.retrieveGeneratedKeys) {
 			java.sql.ResultSet rs = null;
 
@@ -2632,7 +2634,7 @@ public class StatementImpl implements Statement {
 		}
 	}
 	
-	protected void getBatchedGeneratedKeys(int maxKeys) throws SQLException {
+	protected synchronized void getBatchedGeneratedKeys(int maxKeys) throws SQLException {
 		if (this.retrieveGeneratedKeys) {
 			java.sql.ResultSet rs = null;
 
@@ -2657,7 +2659,7 @@ public class StatementImpl implements Statement {
 	/**
 	 * @return
 	 */
-	private boolean useServerFetch() throws SQLException {
+	private synchronized boolean useServerFetch() throws SQLException {
 
 		return this.connection.isCursorFetchEnabled() && this.fetchSize > 0
 				&& this.resultSetConcurrency == ResultSet.CONCUR_READ_ONLY
@@ -2775,7 +2777,7 @@ public class StatementImpl implements Statement {
 		return getOnDuplicateKeyLocation(sql) != -1;
 	}
 	
-	protected int getOnDuplicateKeyLocation(String sql) {
+	protected synchronized int getOnDuplicateKeyLocation(String sql) {
 		return StringUtils.indexOfIgnoreCaseRespectMarker(0, 
 				sql, " ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet());
 	}
