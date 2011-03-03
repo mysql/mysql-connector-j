@@ -4079,7 +4079,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					} else {
 						cStmt = parseCallableStatement(sql);
 	
-						cachedParamInfo = cStmt.paramInfo;
+						synchronized (cStmt) {
+							cachedParamInfo = cStmt.paramInfo;
+						}
 	
 						this.parsedCallableStatementCache.put(key, cachedParamInfo);
 					}

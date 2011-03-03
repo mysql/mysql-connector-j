@@ -484,7 +484,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	 * "close", "isClosed" and "commit/rollback" (to switch connections for load
 	 * balancing).
 	 */
-	public Object invoke(Object proxy, Method method, Object[] args, boolean swapAtTransactionBoundary)
+	public synchronized Object invoke(Object proxy, Method method, Object[] args, boolean swapAtTransactionBoundary)
 			throws Throwable {
 
 		String methodName = method.getName();
@@ -506,8 +506,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		if ("close".equals(methodName)) {
 			closeAllConnections();
+
 			this.isClosed = true;
 			this.closedReason = "Connection explicitly closed.";
+
 			return null;
 		}
 
@@ -705,12 +707,14 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			if ("java.sql".equals(packageName)
 					|| "javax.sql".equals(packageName)
 					|| "com.mysql.jdbc".equals(packageName)) {
-				this.jdbcInterfacesForProxyCache.put(clazz, new Boolean(true));
+				this.jdbcInterfacesForProxyCache.put(clazz, Boolean.valueOf(true));
+				
 				return true;
 			}
 
 			if(isInterfaceJdbc(interfaces[i])){
-				this.jdbcInterfacesForProxyCache.put(clazz, new Boolean(true));
+				this.jdbcInterfacesForProxyCache.put(clazz, Boolean.valueOf(true));
+				
 				return true;
 			}
 		}
@@ -836,14 +840,16 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		return (this.globalBlacklistTimeout > 0);
 	}
 
-	public Map<String, Long> getGlobalBlacklist() {
+	public synchronized Map<String, Long> getGlobalBlacklist() {
 		if (!this.isGlobalBlacklistEnabled()) {
 			String localHostToRemove = this.hostToRemove;
+			
 			if(hostToRemove != null){
 				HashMap<String, Long> fakedBlacklist = new HashMap<String, Long>();
 				fakedBlacklist.put(localHostToRemove, Long.valueOf(System.currentTimeMillis() + 5000));
 				return fakedBlacklist;
 			}
+			
 			return new HashMap<String, Long>(1);
 		}
 
@@ -892,99 +898,116 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		
 	}
 	
-	public void removeHostWhenNotInUse(String host) throws SQLException {
+	public void removeHostWhenNotInUse(String host)
+			throws SQLException {
 		int timeBetweenChecks = 1000;
 		long timeBeforeHardFail = 15000;
-		addToGlobalBlacklist(host, timeBeforeHardFail + 1000);
-		long cur = System.currentTimeMillis();
-		while(System.currentTimeMillis() - timeBeforeHardFail < cur){
-			synchronized (this){
+		
+		synchronized (this) {
+			addToGlobalBlacklist(host, timeBeforeHardFail + 1000);
+			
+			long cur = System.currentTimeMillis();
+			
+			while (System.currentTimeMillis() - timeBeforeHardFail < cur) {
+	
 				this.hostToRemove = host;
-				if(!host.equals(this.currentConn.getHost())){
+				
+				if (!host.equals(this.currentConn.getHost())) {
 					removeHost(host);
 					return;
 				}
 			}
-			try {
-				Thread.sleep(timeBetweenChecks);
-			} catch (InterruptedException e) {
-				// better to swallow this and retry.
-			}
-			
 		}
+		
+		try {
+			Thread.sleep(timeBetweenChecks);
+		} catch (InterruptedException e) {
+			// better to swallow this and retry.
+		}
+
 		removeHost(host);
 	}
 	
-	public void removeHost(String host) throws SQLException {
-		synchronized(this){
-			if(this.connectionGroup != null){
-				if(this.connectionGroup.getInitialHosts().size() == 1 && this.connectionGroup.getInitialHosts().contains(host)){
-					throw SQLError.createSQLException("Cannot remove only configured host.", null);
-				}
+	public synchronized void removeHost(String host) throws SQLException {
+
+		if (this.connectionGroup != null) {
+			if (this.connectionGroup.getInitialHosts().size() == 1
+					&& this.connectionGroup.getInitialHosts().contains(host)) {
+				throw SQLError.createSQLException(
+						"Cannot remove only configured host.", null);
 			}
+
 			this.hostToRemove = host;
-			if(host.equals(this.currentConn.getHost())){
+			
+			if (host.equals(this.currentConn.getHost())) {
 				closeAllConnections();
 			} else {
-				this.connectionsToHostsMap.remove(this.liveConnections.remove(host));
+				this.connectionsToHostsMap.remove(this.liveConnections
+						.remove(host));
 				Integer idx = this.hostsToListIndexMap.remove(host);
 				long[] newResponseTimes = new long[this.responseTimes.length - 1];
 				int newIdx = 0;
-				for(Iterator<String> i = this.hostList.iterator(); i.hasNext(); newIdx++){
+				for (Iterator<String> i = this.hostList.iterator(); i.hasNext(); newIdx++) {
 					String copyHost = i.next();
-					if(idx != null && idx.intValue() < this.responseTimes.length){
-						newResponseTimes[newIdx] = this.responseTimes[idx.intValue()];
-						this.hostsToListIndexMap.put(copyHost, Integer.valueOf(newIdx));
+					if (idx != null
+							&& idx.intValue() < this.responseTimes.length) {
+						newResponseTimes[newIdx] = this.responseTimes[idx
+								.intValue()];
+						this.hostsToListIndexMap.put(copyHost,
+								Integer.valueOf(newIdx));
 					}
 				}
 				this.responseTimes = newResponseTimes;
 			}
 		}
-		
+
 	}
-	
-	public synchronized boolean addHost(String host){
-		synchronized(this){
-			if(this.hostsToListIndexMap.containsKey(host)){
-				return false;
-			}
-			long[] newResponseTimes = new long[this.responseTimes.length + 1];
-			for(int i = 0; i < this.responseTimes.length; i++){
-				newResponseTimes[i] = this.responseTimes[i];
-			}
-			this.responseTimes = newResponseTimes;
-			this.hostList.add(host);
-			this.hostsToListIndexMap.put(host, Integer.valueOf(this.responseTimes.length - 1));
+
+	public synchronized boolean addHost(String host) {
+
+		if (this.hostsToListIndexMap.containsKey(host)) {
+			return false;
 		}
+		
+		long[] newResponseTimes = new long[this.responseTimes.length + 1];
+		
+		for (int i = 0; i < this.responseTimes.length; i++) {
+			newResponseTimes[i] = this.responseTimes[i];
+		}
+		
+		this.responseTimes = newResponseTimes;
+		this.hostList.add(host);
+		this.hostsToListIndexMap.put(host,
+				Integer.valueOf(this.responseTimes.length - 1));
+		
 		return true;
 	}
 	
-
-	
-	public long getLastUsed(){
+	public synchronized long getLastUsed(){
 		return this.lastUsed;
 	}
 	
-	public boolean inTransaction(){
+	public synchronized boolean inTransaction(){
 		return this.inTransaction;
 	}
 	
-	public long getTransactionCount(){
+	public synchronized long getTransactionCount(){
 		return this.transactionCount;
 	}
 	
-	public long getActivePhysicalConnectionCount(){
+	public synchronized long getActivePhysicalConnectionCount(){
 		return this.activePhysicalConnections;
 	}
-	public long getTotalPhysicalConnectionCount(){
+	
+	public synchronized long getTotalPhysicalConnectionCount(){
 		return this.totalPhysicalConnections;
 	}
 	
-	public long getConnectionGroupProxyID(){
+	public synchronized long getConnectionGroupProxyID(){
 		return this.connectionGroupProxyID;
 	}
 	
-	public String getCurrentActiveHost() {
+	public synchronized String getCurrentActiveHost() {
 		MySQLConnection c = this.currentConn;
 		if(c != null){
 			Object o = this.connectionsToHostsMap.get(c);
@@ -995,12 +1018,12 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		return null;
 	}
 	
-	public long getCurrentTransactionDuration(){
-		long st = 0;
-		
-		if(this.inTransaction && (st = this.transactionStartTime) > 0){
+	public synchronized long getCurrentTransactionDuration(){
+
+		if (this.inTransaction && this.transactionStartTime > 0) {
 			return getLocalTimeBestResolution() - this.transactionStartTime;
 		}
+		
 		return 0;
 	}
 	

@@ -46,7 +46,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return this.proxy;
 	}
 
-	protected MySQLConnection getActiveMySQLConnection() {
+	protected synchronized MySQLConnection getActiveMySQLConnection() {
 		return this.proxy.currentConn;
 	}
 

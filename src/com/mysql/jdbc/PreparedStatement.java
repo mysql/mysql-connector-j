@@ -1660,7 +1660,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 	
-	private String generateMultiStatementForBatch(int numBatches) {
+	private synchronized String generateMultiStatementForBatch(int numBatches) {
 		StringBuffer newStatementSql = new StringBuffer((this.originalSql
 				.length() + 1) * numBatches);
 				
@@ -2586,7 +2586,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		return this.rewrittenBatchSize;
 	}
 	
-	public String getNonRewrittenSql() {
+	public synchronized String getNonRewrittenSql() {
 		int indexOfBatch = this.originalSql.indexOf(" of: ");
 		
 		if (indexOfBatch != -1) {
@@ -2930,7 +2930,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		return this.pstmtResultMetaData;
 	}
 
-	protected boolean isSelectQuery() {
+	protected synchronized boolean isSelectQuery() {
 		return StringUtils.startsWithIgnoreCaseAndWs(
 				StringUtils.stripComments(this.originalSql,
 						"'\"", "'\"", true, false, true, true), 
@@ -3017,7 +3017,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 
-	boolean isNull(int paramIndex) {
+	synchronized boolean isNull(int paramIndex) {
 		return this.isNull[paramIndex];
 	}
 
@@ -3777,7 +3777,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public void setNull(int parameterIndex, int sqlType) throws SQLException {
+	public synchronized void setNull(int parameterIndex, int sqlType) throws SQLException {
 		setInternal(parameterIndex, "null"); //$NON-NLS-1$
 		this.isNull[parameterIndex - 1 + getParameterIndexOffset()] = true;
 		
@@ -5438,7 +5438,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	    }
 	}
 	
-	public ParameterBindings getParameterBindings() throws SQLException {
+	public synchronized ParameterBindings getParameterBindings() throws SQLException {
 		return new EmulatedPreparedStatementBindings();
 	}
 	
@@ -5447,7 +5447,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		private ResultSetImpl bindingsAsRs;
 		private boolean[] parameterIsNull;
 		
-		public EmulatedPreparedStatementBindings() throws SQLException {
+		EmulatedPreparedStatementBindings() throws SQLException {
 			List rows = new ArrayList();
 			parameterIsNull = new boolean[parameterCount];
 			System
@@ -5621,7 +5621,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}	
 	}
 	
-	public String getPreparedSql() {
+	public synchronized String getPreparedSql() {
 		if (this.rewrittenBatchSize == 0) {
 			return this.originalSql;
 		}

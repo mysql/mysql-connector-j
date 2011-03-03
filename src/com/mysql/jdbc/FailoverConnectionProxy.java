@@ -80,7 +80,7 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 	// slightly different behavior than load balancing, we only pick a new
 	// connection if we've issued enough queries or enough time has passed
 	// since we failed over, and that's all handled in pickNewConnection().
-	void dealWithInvocationException(InvocationTargetException e)
+	synchronized void dealWithInvocationException(InvocationTargetException e)
 			throws SQLException, Throwable, InvocationTargetException {
 		Throwable t = e.getTargetException();
 
@@ -171,7 +171,7 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 		failOver();
 	}
 
-	private void failOver() throws SQLException {
+	private synchronized void failOver() throws SQLException {
 		if (failedOver) {
 			Iterator<Map.Entry<String,ConnectionImpl>> iter = liveConnections.entrySet().iterator();
 			
