@@ -353,7 +353,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 
 		return (ResultSetImpl) Util.handleNewInstance(JDBC_4_RS_4_ARG_CTOR,
-				new Object[] { Constants.longValueOf(updateCount), Constants.longValueOf(updateID), conn,
+				new Object[] { Long.valueOf(updateCount), Long.valueOf(updateID), conn,
 						creatorStmt}, conn.getExceptionInterceptor());
 	}
 
@@ -588,7 +588,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or row is 0, or result
 	 *                set type is TYPE_FORWARD_ONLY.
 	 */
-	public boolean absolute(int row) throws SQLException {
+	public synchronized boolean absolute(int row) throws SQLException {
 		checkClosed();
 
 		boolean b;
@@ -659,7 +659,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY.
 	 */
-	public void afterLast() throws SQLException {
+	public synchronized void afterLast() throws SQLException {
 		checkClosed();
 
 		if (this.onInsertRow) {
@@ -694,7 +694,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY
 	 */
-	public void beforeFirst() throws SQLException {
+	public synchronized void beforeFirst() throws SQLException {
 		checkClosed();
 
 		if (this.onInsertRow) {
@@ -745,7 +745,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		// matching column will be returned. "
 		//
 		for (int i = numFields - 1; i >= 0; i--) {
-			Integer index = Constants.integerValueOf(i);
+			Integer index = Integer.valueOf(i);
 			String columnName = this.fields[i].getOriginalName();
 			String columnLabel = this.fields[i].getName();
 			String fullColumnName = this.fields[i].getFullName();
@@ -811,14 +811,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if ((columnIndex < 1)) {
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Column_Index_out_of_range_low", new Object[] {
-							Constants.integerValueOf(columnIndex),
-							Constants.integerValueOf(this.fields.length) }),
+							Integer.valueOf(columnIndex),
+							Integer.valueOf(this.fields.length) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		} else if ((columnIndex > this.fields.length)) {
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Column_Index_out_of_range_high", new Object[] {
-							Constants.integerValueOf(columnIndex),
-							Constants.integerValueOf(this.fields.length) }),
+							Integer.valueOf(columnIndex),
+							Integer.valueOf(this.fields.length) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
@@ -1160,7 +1160,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY.
 	 */
-	public boolean first() throws SQLException {
+	public synchronized boolean first() throws SQLException {
 		checkClosed();
 
 		boolean b = true;
@@ -1307,7 +1307,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					throw SQLError.createSQLException(Messages
 							.getString("ResultSet.Bad_format_for_BigDecimal",
 									new Object[] { stringVal,
-											Constants.integerValueOf(columnIndex) }),
+											Integer.valueOf(columnIndex) }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 				}
 			}
@@ -1371,7 +1371,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					} else {
 						throw SQLError.createSQLException(Messages
 							.getString("ResultSet.Bad_format_for_BigDecimal",
-									new Object[] { Constants.integerValueOf(columnIndex),
+									new Object[] { Integer.valueOf(columnIndex),
 											stringVal }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 						}
@@ -1385,7 +1385,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					} catch (ArithmeticException arithEx) {
 						throw SQLError.createSQLException(Messages.getString(
 								"ResultSet.Bad_format_for_BigDecimal",
-								new Object[] { Constants.integerValueOf(columnIndex),
+								new Object[] { Integer.valueOf(columnIndex),
 										stringVal }),
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 					}
@@ -1451,7 +1451,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						throw new SQLException(Messages
 								.getString("ResultSet.Bad_format_for_BigDecimal",
 										new Object[] { stringVal,
-												Constants.integerValueOf(columnIndex) }),
+												Integer.valueOf(columnIndex) }),
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 					}
 				}
@@ -1468,7 +1468,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						throw new SQLException(Messages
 								.getString("ResultSet.Bad_format_for_BigDecimal",
 										new Object[] { stringVal,
-												Constants.integerValueOf(columnIndex) }),
+												Integer.valueOf(columnIndex) }),
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 					}
 				}
@@ -1486,7 +1486,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							throw new SQLException(Messages
 									.getString("ResultSet.Bad_format_for_BigDecimal",
 											new Object[] { stringVal,
-													Constants.integerValueOf(columnIndex) }),
+													Integer.valueOf(columnIndex) }),
 									SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 						}
 					}
@@ -1500,7 +1500,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				throw new SQLException(Messages
 						.getString("ResultSet.Bad_format_for_BigDecimal",
 								new Object[] { stringVal,
-										Constants.integerValueOf(columnIndex) }),
+										Integer.valueOf(columnIndex) }),
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$
 			}
 		}
@@ -2337,7 +2337,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				default:
 					throw SQLError.createSQLException(Messages.getString(
 							"ResultSet.Bad_format_for_Date", new Object[] {
-									stringVal, Constants.integerValueOf(columnIndex) }),
+									stringVal, Integer.valueOf(columnIndex) }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 				} /* endswitch */
 			} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
@@ -2365,7 +2365,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					
 					throw SQLError.createSQLException(Messages.getString(
 							"ResultSet.Bad_format_for_Date", new Object[] {
-									stringVal, Constants.integerValueOf(columnIndex) }),
+									stringVal, Integer.valueOf(columnIndex) }),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 				}
 
@@ -2389,7 +2389,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		} catch (Exception e) {
 			SQLException sqlEx = SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_Date", new Object[] { stringVal,
-							Constants.integerValueOf(columnIndex) }),
+							Integer.valueOf(columnIndex) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 			
 			sqlEx.initCause(e);
@@ -2521,7 +2521,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			throw SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_number", new Object[] {
-							stringVal, Constants.integerValueOf(colIndex) }),
+							stringVal, Integer.valueOf(colIndex) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 	}
@@ -3591,7 +3591,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return getClobFromString(stringVal, columnIndex);
 	}
 
-	private String getNativeConvertToString(int columnIndex, 
+	private synchronized String getNativeConvertToString(int columnIndex, 
 			Field field)
 			throws SQLException {
 
@@ -3719,7 +3719,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					throw SQLError.createSQLException(
 							Messages
 									.getString("ResultSet.Bad_format_for_BigDecimal", 
-											new Object[] {stringVal, Constants.integerValueOf(columnIndex)}),
+											new Object[] {stringVal, Integer.valueOf(columnIndex)}),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
 
@@ -4873,28 +4873,28 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 		case Types.TINYINT:
 			if (!field.isUnsigned()) {
-				return Constants.integerValueOf(getByte(columnIndex));
+				return Integer.valueOf(getByte(columnIndex));
 			}
 
-			return Constants.integerValueOf(getInt(columnIndex));
+			return Integer.valueOf(getInt(columnIndex));
 
 		case Types.SMALLINT:
 
-			return Constants.integerValueOf(getInt(columnIndex));
+			return Integer.valueOf(getInt(columnIndex));
 
 		case Types.INTEGER:
 
 			if (!field.isUnsigned() || 
 					field.getMysqlType() == MysqlDefs.FIELD_TYPE_INT24) {
-				return Constants.integerValueOf(getInt(columnIndex));
+				return Integer.valueOf(getInt(columnIndex));
 			}
 
-			return Constants.longValueOf(getLong(columnIndex));
+			return Long.valueOf(getLong(columnIndex));
 			
 		case Types.BIGINT:
 
 			if (!field.isUnsigned()) {
-				return Constants.longValueOf(getLong(columnIndex));
+				return Long.valueOf(getLong(columnIndex));
 			}
 
 			String stringVal = getString(columnIndex);
@@ -4908,7 +4908,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			} catch (NumberFormatException nfe) {
 				throw SQLError.createSQLException(Messages.getString(
 						"ResultSet.Bad_format_for_BigInteger", new Object[] {
-								Constants.integerValueOf(columnIndex), stringVal }),
+								Integer.valueOf(columnIndex), stringVal }),
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 			}
 
@@ -5009,7 +5009,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case Types.DATE:
 			if (field.getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR
 					&& !this.connection.getYearIsDateType()) {
-				return Constants.shortValueOf(getShort(columnIndex));
+				return Short.valueOf(getShort(columnIndex));
 			}
 
 			return getDate(columnIndex);
@@ -5118,19 +5118,19 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return Boolean.valueOf(getBoolean(columnIndex));
 
 		case Types.TINYINT:
-			return Constants.integerValueOf(getInt(columnIndex));
+			return Integer.valueOf(getInt(columnIndex));
 
 		case Types.SMALLINT:
-			return Constants.integerValueOf(getInt(columnIndex));
+			return Integer.valueOf(getInt(columnIndex));
 
 		case Types.INTEGER:
 
 			if (!field.isUnsigned() || 
 					field.getMysqlType() == MysqlDefs.FIELD_TYPE_INT24) {
-				return Constants.integerValueOf(getInt(columnIndex));
+				return Integer.valueOf(getInt(columnIndex));
 			}
 
-			return Constants.longValueOf(getLong(columnIndex));
+			return Long.valueOf(getLong(columnIndex));
 
 		case Types.BIGINT:
 
@@ -5138,7 +5138,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				return getBigDecimal(columnIndex);
 			}
 
-			return Constants.longValueOf(getLong(columnIndex));
+			return Long.valueOf(getLong(columnIndex));
 
 		case Types.DECIMAL:
 		case Types.NUMERIC:
@@ -5198,7 +5198,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case Types.DATE:
 			if (field.getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR
 					&& !this.connection.getYearIsDateType()) {
-				return Constants.shortValueOf(getShort(columnIndex));
+				return Short.valueOf(getShort(columnIndex));
 			}
 
 			return getDate(columnIndex);
@@ -7045,7 +7045,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY.
 	 */
-	public boolean last() throws SQLException {
+	public synchronized boolean last() throws SQLException {
 		checkClosed();
 
 		boolean b = true;
@@ -7133,7 +7133,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public boolean next() throws SQLException {
+	public synchronized boolean next() throws SQLException {
 		checkClosed();
 
 		if (this.onInsertRow) {
@@ -7450,7 +7450,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWAR_DONLY.
 	 */
-	public boolean previous() throws SQLException {
+	public synchronized boolean previous() throws SQLException {
 		if (this.onInsertRow) {
 			this.onInsertRow = false;
 		}
@@ -7799,7 +7799,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		this.isBinaryEncoded = true;
 	}
 
-	private void setDefaultTimeZone(TimeZone defaultTimeZone) {
+	private synchronized void setDefaultTimeZone(TimeZone defaultTimeZone) {
 		this.defaultTimeZone = defaultTimeZone;
 	}
 

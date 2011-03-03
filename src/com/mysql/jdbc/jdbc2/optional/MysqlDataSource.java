@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -48,7 +48,7 @@ import com.mysql.jdbc.NonRegisteringDriver;
 public class MysqlDataSource extends ConnectionPropertiesImpl implements
 		DataSource, Referenceable, Serializable  {
 	/** The driver to create connections with */
-	protected static NonRegisteringDriver mysqlDriver = null;
+	protected final static NonRegisteringDriver mysqlDriver;
 
 	static {
 		try {
@@ -60,7 +60,7 @@ public class MysqlDataSource extends ConnectionPropertiesImpl implements
 	}
 
 	/** Log stream */
-	protected PrintWriter logWriter = null;
+	protected transient PrintWriter logWriter = null;
 
 	/** Database Name */
 	protected String databaseName = null;

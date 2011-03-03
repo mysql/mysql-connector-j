@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -587,7 +587,7 @@ public class BlobFromLocator implements java.sql.Blob {
 			if (pos + len > blobLength) {
 				throw SQLError.createSQLException(
 						Messages.getString("Blob.invalidStreamLength", 
-								new Object[] {new Long(blobLength), new Long(pos), new Long(len)}),
+								new Object[] {Long.valueOf(blobLength), Long.valueOf(pos), Long.valueOf(len)}),
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 			}
 			

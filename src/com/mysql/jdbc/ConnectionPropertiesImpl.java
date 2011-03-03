@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -331,7 +331,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				int defaultValueToSet, int lowerBoundToSet,
 				int upperBoundToSet, String descriptionToSet,
 				String sinceVersionToSet, String category, int orderInCategory) {
-			super(propertyNameToSet, new Integer(defaultValueToSet), null,
+			super(propertyNameToSet, Integer.valueOf(defaultValueToSet), null,
 					lowerBoundToSet, upperBoundToSet, descriptionToSet,
 					sinceVersionToSet, category, orderInCategory);
 		}
@@ -403,7 +403,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					 * the value '" + extractedValue + "' exceeds this range.",
 					 * SQLError.SQL_STATE_ILLEGAL_ARGUMENT); } }
 					 */
-					this.valueAsObject = new Integer(intValue * multiplier);
+					this.valueAsObject = Integer.valueOf(intValue * multiplier);
 				} catch (NumberFormatException nfe) {
 					throw SQLError.createSQLException("The connection property '" //$NON-NLS-1$
 							+ getPropertyName()
@@ -425,7 +425,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 
 		void setValue(int valueFlag) {
-			this.valueAsObject = new Integer(valueFlag);
+			this.valueAsObject = Integer.valueOf(valueFlag);
 		}
 	}
 	
@@ -437,7 +437,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				long defaultValueToSet, long lowerBoundToSet,
 				long upperBoundToSet, String descriptionToSet,
 				String sinceVersionToSet, String category, int orderInCategory) {
-			super(propertyNameToSet, new Long(defaultValueToSet), null,
+			super(propertyNameToSet, Long.valueOf(defaultValueToSet), null,
 					(int)lowerBoundToSet, (int)upperBoundToSet, descriptionToSet,
 					sinceVersionToSet, category, orderInCategory);
 		}
@@ -453,7 +453,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 		
 		void setValue(long value) {
-			this.valueAsObject = new Long(value);
+			this.valueAsObject = Long.valueOf(value);
 		}
 		
 		long getValueAsLong() {
@@ -466,7 +466,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					// Parse decimals, too
 					long longValue = Double.valueOf(extractedValue).longValue();
 
-					this.valueAsObject = new Long(longValue);
+					this.valueAsObject = Long.valueOf(longValue);
 				} catch (NumberFormatException nfe) {
 					throw SQLError.createSQLException("The connection property '" //$NON-NLS-1$
 							+ getPropertyName()
@@ -1880,7 +1880,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		TreeMap userMap = new TreeMap();
 		userMap.put(userProp.getPropertyName(), userProp);
 		
-		connectionSortMaps[0].put(new Integer(userProp.getOrder()), userMap);
+		connectionSortMaps[0].put(Integer.valueOf(userProp.getOrder()), userMap);
 		
 		TreeMap passwordMap = new TreeMap();
 		passwordMap.put(passwordProp.getPropertyName(), passwordProp);
@@ -1901,7 +1901,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				if (orderInCategory == Integer.MIN_VALUE) {
 					sortMaps[1].put(propToGet.getPropertyName(), propToGet);
 				} else {
-					Integer order = new Integer(orderInCategory);
+					Integer order = Integer.valueOf(orderInCategory);
 					
 					Map orderMap = (Map)sortMaps[0].get(order);
 					
@@ -2795,7 +2795,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		if (this.getMaxRows() == 0) {
 			// adjust so that it will become MysqlDefs.MAX_ROWS
 			// in execSQL()
-			this.maxRows.setValueAsObject(Constants.integerValueOf(-1));
+			this.maxRows.setValueAsObject(Integer.valueOf(-1));
 		}
 
 		//

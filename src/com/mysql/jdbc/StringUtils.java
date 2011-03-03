@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -1692,11 +1692,11 @@ public class StringUtils {
 	 * @return the input string with all comment-delimited data removed
 	 */
 	public static String sanitizeProcOrFuncName(String src) {
-		if ((src == null) || (src == "%")) {
+		if ((src == null) || (src.equals("%"))) {
 			return null;
-		} else {
-			return src;
 		}
+			
+		return src;
 	}
 
 	/**
@@ -1716,7 +1716,7 @@ public class StringUtils {
 	 */
 	public static List splitDBdotName(String src, String cat, String quotId,
 			boolean isNoBslashEscSet) {
-		if ((src == null) || (src == "%")) {
+		if ((src == null) || (src.equals("%"))) {
 			return new ArrayList();
 		}
 		

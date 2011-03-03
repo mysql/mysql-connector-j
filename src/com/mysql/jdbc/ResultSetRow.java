@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -228,8 +228,7 @@ public abstract class ResultSetRow {
 													new Object[] {
 															new String(
 																	dateAsBytes),
-															Constants
-																	.integerValueOf(columnIndex + 1) }),
+															Integer.valueOf(columnIndex + 1) }),
 									SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor); //$NON-NLS-1$
 				} /* endswitch */
 			} else if (this.metadata[columnIndex].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
@@ -267,8 +266,7 @@ public abstract class ResultSetRow {
 													new Object[] {
 															new String(
 																	dateAsBytes),
-															Constants
-																	.integerValueOf(columnIndex + 1) }),
+															Integer.valueOf(columnIndex + 1) }),
 									SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor); //$NON-NLS-1$
 				}
 
@@ -298,7 +296,7 @@ public abstract class ResultSetRow {
 			SQLException sqlEx = SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_Date", new Object[] {
 							new String(dateAsBytes),
-							Constants.integerValueOf(columnIndex + 1) }),
+							Integer.valueOf(columnIndex + 1) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor); //$NON-NLS-1$
 			sqlEx.initCause(e);
 			
@@ -974,7 +972,7 @@ public abstract class ResultSetRow {
 								min, sec), conn.getServerTimezoneTZ(), tz,
 						rollForward);
 			}
-		} catch (Exception ex) {
+		} catch (RuntimeException ex) {
 			SQLException sqlEx = SQLError.createSQLException(ex.toString(),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 			sqlEx.initCause(ex);
@@ -1035,7 +1033,7 @@ public abstract class ResultSetRow {
 						throw SQLError
 								.createSQLException(
 										"Value '"
-												+ timestampAsBytes
+												+ new String(timestampAsBytes)
 												+ "' can not be represented as java.sql.Timestamp",
 										SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 					}
@@ -1333,7 +1331,7 @@ public abstract class ResultSetRow {
 									rollForward);
 				}
 			}
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 			SQLException sqlEx = SQLError.createSQLException("Cannot convert value '"
 					+ getString(columnIndex, "ISO8859_1", conn)
 					+ "' from column " + (columnIndex + 1) + " to TIMESTAMP.",

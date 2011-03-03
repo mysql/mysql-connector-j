@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -158,7 +158,7 @@ public class StandardSocketFactory implements SocketFactory {
 
 			if (trafficClass > 0 && setTraficClassMethod != null) {
 				setTraficClassMethod.invoke(sock,
-						new Object[] { new Integer(trafficClass) });
+						new Object[] { Integer.valueOf(trafficClass) });
 			}
 		} catch (Throwable t) {
 			unwrapExceptionToProperClassAndThrowIt(t);
@@ -317,7 +317,7 @@ public class StandardSocketFactory implements SocketFactory {
 								Object sockAddr = addrConstructor
 										.newInstance(new Object[] {
 												possibleAddresses[i],
-												new Integer(port) });
+												Integer.valueOf(port) });
 								// bind to the local port, null is 'ok', it
 								// means
 								// use the ephemeral port
@@ -326,7 +326,7 @@ public class StandardSocketFactory implements SocketFactory {
 
 								connectWithTimeoutMethod.invoke(rawSocket,
 										new Object[] { sockAddr,
-												new Integer(connectTimeout) });
+												Integer.valueOf(connectTimeout) });
 
 								break;
 							} catch (Exception ex) {	

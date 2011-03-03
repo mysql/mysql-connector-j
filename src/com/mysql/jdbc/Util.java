@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -48,16 +48,20 @@ import java.util.TimeZone;
  * @author Mark Matthews
  */
 public class Util {
-	protected static Method systemNanoTimeMethod;
+	protected final static Method systemNanoTimeMethod;
 
 	static {
+		Method aMethod;
+		
 		try {
-			systemNanoTimeMethod = System.class.getMethod("nanoTime", (Class[])null);
+			aMethod = System.class.getMethod("nanoTime", (Class[])null);
 		} catch (SecurityException e) {
-			systemNanoTimeMethod = null;
+			aMethod = null;
 		} catch (NoSuchMethodException e) {
-			systemNanoTimeMethod = null;
+			aMethod = null;
 		}
+		
+		systemNanoTimeMethod = aMethod;
 	}
 
 	public static boolean nanoTimeAvailable() {
@@ -526,25 +530,25 @@ public class Util {
 			}
 			
 			if (value1 instanceof Byte) {
-				diffMap.put(key, new Byte(
+				diffMap.put(key, Byte.valueOf(
 						(byte) (((Byte) value2).byteValue() - ((Byte) value1)
 								.byteValue())));
 			} else if (value1 instanceof Short) {
-				diffMap.put(key, new Short((short) (((Short) value2)
+				diffMap.put(key, Short.valueOf((short) (((Short) value2)
 						.shortValue() - ((Short) value1).shortValue())));
 			} else if (value1 instanceof Integer) {
-				diffMap.put(key, new Integer(
+				diffMap.put(key, Integer.valueOf(
 						(((Integer) value2).intValue() - ((Integer) value1)
 								.intValue())));
 			} else if (value1 instanceof Long) {
-				diffMap.put(key, new Long(
+				diffMap.put(key, Long.valueOf(
 						(((Long) value2).longValue() - ((Long) value1)
 								.longValue())));
 			} else if (value1 instanceof Float) {
-				diffMap.put(key, new Float(((Float) value2).floatValue()
+				diffMap.put(key, Float.valueOf(((Float) value2).floatValue()
 						- ((Float) value1).floatValue()));
 			} else if (value1 instanceof Double) {
-				diffMap.put(key, new Double(
+				diffMap.put(key, Double.valueOf(
 						(((Double) value2).shortValue() - ((Double) value1)
 								.shortValue())));
 			} else if (value1 instanceof BigDecimal) {

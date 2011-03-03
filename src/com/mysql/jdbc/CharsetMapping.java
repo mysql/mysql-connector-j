@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  
  
 
@@ -80,43 +80,43 @@ public class CharsetMapping {
 	static {	
 		HashMap tempNumBytesMap = new HashMap();
 		
-		tempNumBytesMap.put("big5", Constants.integerValueOf(2));
-		tempNumBytesMap.put("dec8" , Constants.integerValueOf(1));
-		tempNumBytesMap.put("cp850", Constants.integerValueOf(1));
-		tempNumBytesMap.put("hp8", Constants.integerValueOf(1));
-		tempNumBytesMap.put("koi8r", Constants.integerValueOf(1));
-		tempNumBytesMap.put("latin1", Constants.integerValueOf(1));
-		tempNumBytesMap.put("latin2", Constants.integerValueOf(1));
-		tempNumBytesMap.put("swe7", Constants.integerValueOf(1));
-		tempNumBytesMap.put("ascii", Constants.integerValueOf(1));
-		tempNumBytesMap.put("ujis", Constants.integerValueOf(3));
-		tempNumBytesMap.put("sjis", Constants.integerValueOf(2));
-		tempNumBytesMap.put("hebrew", Constants.integerValueOf(1));
-		tempNumBytesMap.put("tis620", Constants.integerValueOf(1));
-		tempNumBytesMap.put("euckr", Constants.integerValueOf(2));
-		tempNumBytesMap.put("koi8u", Constants.integerValueOf(1));
-		tempNumBytesMap.put("gb2312", Constants.integerValueOf(2));
-		tempNumBytesMap.put("greek", Constants.integerValueOf(1));
-		tempNumBytesMap.put("cp1250", Constants.integerValueOf(1));
-		tempNumBytesMap.put("gbk", Constants.integerValueOf(2));
-		tempNumBytesMap.put("latin5", Constants.integerValueOf(1));
-		tempNumBytesMap.put("armscii8", Constants.integerValueOf(1));
-		tempNumBytesMap.put("utf8", Constants.integerValueOf(3));
-		tempNumBytesMap.put("ucs2", Constants.integerValueOf(2));
-		tempNumBytesMap.put("cp866", Constants.integerValueOf(1));
-		tempNumBytesMap.put("keybcs2", Constants.integerValueOf(1));
-		tempNumBytesMap.put("macce", Constants.integerValueOf(1));
-		tempNumBytesMap.put("macroman", Constants.integerValueOf(1));
-		tempNumBytesMap.put("cp852" , Constants.integerValueOf(1));
-		tempNumBytesMap.put("latin7", Constants.integerValueOf(1));
-		tempNumBytesMap.put("cp1251", Constants.integerValueOf(1));
-		tempNumBytesMap.put("cp1256" , Constants.integerValueOf(1));
-		tempNumBytesMap.put("cp1257", Constants.integerValueOf(1));
-		tempNumBytesMap.put("binary", Constants.integerValueOf(1));
-		tempNumBytesMap.put("geostd8", Constants.integerValueOf(1));
-		tempNumBytesMap.put("cp932", Constants.integerValueOf(2));
-		tempNumBytesMap.put("eucjpms", Constants.integerValueOf(3));
-		tempNumBytesMap.put("utf8mb4", Constants.integerValueOf(4));
+		tempNumBytesMap.put("big5", Integer.valueOf(2));
+		tempNumBytesMap.put("dec8" , Integer.valueOf(1));
+		tempNumBytesMap.put("cp850", Integer.valueOf(1));
+		tempNumBytesMap.put("hp8", Integer.valueOf(1));
+		tempNumBytesMap.put("koi8r", Integer.valueOf(1));
+		tempNumBytesMap.put("latin1", Integer.valueOf(1));
+		tempNumBytesMap.put("latin2", Integer.valueOf(1));
+		tempNumBytesMap.put("swe7", Integer.valueOf(1));
+		tempNumBytesMap.put("ascii", Integer.valueOf(1));
+		tempNumBytesMap.put("ujis", Integer.valueOf(3));
+		tempNumBytesMap.put("sjis", Integer.valueOf(2));
+		tempNumBytesMap.put("hebrew", Integer.valueOf(1));
+		tempNumBytesMap.put("tis620", Integer.valueOf(1));
+		tempNumBytesMap.put("euckr", Integer.valueOf(2));
+		tempNumBytesMap.put("koi8u", Integer.valueOf(1));
+		tempNumBytesMap.put("gb2312", Integer.valueOf(2));
+		tempNumBytesMap.put("greek", Integer.valueOf(1));
+		tempNumBytesMap.put("cp1250", Integer.valueOf(1));
+		tempNumBytesMap.put("gbk", Integer.valueOf(2));
+		tempNumBytesMap.put("latin5", Integer.valueOf(1));
+		tempNumBytesMap.put("armscii8", Integer.valueOf(1));
+		tempNumBytesMap.put("utf8", Integer.valueOf(3));
+		tempNumBytesMap.put("ucs2", Integer.valueOf(2));
+		tempNumBytesMap.put("cp866", Integer.valueOf(1));
+		tempNumBytesMap.put("keybcs2", Integer.valueOf(1));
+		tempNumBytesMap.put("macce", Integer.valueOf(1));
+		tempNumBytesMap.put("macroman", Integer.valueOf(1));
+		tempNumBytesMap.put("cp852" , Integer.valueOf(1));
+		tempNumBytesMap.put("latin7", Integer.valueOf(1));
+		tempNumBytesMap.put("cp1251", Integer.valueOf(1));
+		tempNumBytesMap.put("cp1256" , Integer.valueOf(1));
+		tempNumBytesMap.put("cp1257", Integer.valueOf(1));
+		tempNumBytesMap.put("binary", Integer.valueOf(1));
+		tempNumBytesMap.put("geostd8", Integer.valueOf(1));
+		tempNumBytesMap.put("cp932", Integer.valueOf(2));
+		tempNumBytesMap.put("eucjpms", Integer.valueOf(3));
+		tempNumBytesMap.put("utf8mb4", Integer.valueOf(4));
 		
 		STATIC_CHARSET_TO_NUM_BYTES_MAP = Collections.unmodifiableMap(
 				tempNumBytesMap);
@@ -820,7 +820,7 @@ public class CharsetMapping {
 			String mysqlEncodingName = INDEX_TO_CHARSET[i];
 			
 			if (mysqlEncodingName != null) {
-				indexMap.put(INDEX_TO_CHARSET[i], Constants.integerValueOf(i));
+				indexMap.put(INDEX_TO_CHARSET[i], Integer.valueOf(i));
 			}
 		}
 		

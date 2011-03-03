@@ -1004,7 +1004,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * 
 	 * @see StatementImpl#addBatch
 	 */
-	public void addBatch() throws SQLException {
+	public synchronized void addBatch() throws SQLException {
 		if (this.batchedArgs == null) {
 			this.batchedArgs = new ArrayList();
 		}
@@ -1864,7 +1864,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *  the number of arguments in the batch.
 	 * @throws SQLException 
 	 */
-	protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) throws SQLException {
+	protected synchronized long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) throws SQLException {
 		long sizeOfEntireBatch = 0;
 		long maxSizeOfParameterSet = 0;
 		
@@ -2464,7 +2464,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	protected Buffer fillSendPacket() throws SQLException {
+	protected synchronized Buffer fillSendPacket() throws SQLException {
 		return fillSendPacket(this.parameterValues, this.parameterStreams,
 				this.isStream, this.streamLengths);
 	}
@@ -2739,16 +2739,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		ArrayList vecRemovelist = new ArrayList();
 		Object[] nv = new Object[3];
 		Object[] v;
-		nv[0] = Constants.characterValueOf('y');
+		nv[0] = Character.valueOf('y');
 		nv[1] = new StringBuffer();
-		nv[2] = Constants.integerValueOf(0);
+		nv[2] = Integer.valueOf(0);
 		vec.add(nv);
 
 		if (toTime) {
 			nv = new Object[3];
-			nv[0] = Constants.characterValueOf('h');
+			nv[0] = Character.valueOf('h');
 			nv[1] = new StringBuffer();
-			nv[2] = Constants.integerValueOf(0);
+			nv[2] = Integer.valueOf(0);
 			vec.add(nv);
 		}
 
@@ -2768,7 +2768,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						((StringBuffer) v[1]).append(separator);
 
 						if ((c == 'X') || (c == 'Y')) {
-							v[2] = Constants.integerValueOf(4);
+							v[2] = Integer.valueOf(4);
 						}
 					}
 				} else {
@@ -2777,26 +2777,26 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						nv = new Object[3];
 						nv[1] = (new StringBuffer(((StringBuffer) v[1])
 								.toString())).append('M');
-						nv[0] = Constants.characterValueOf('M');
-						nv[2] = Constants.integerValueOf(1);
+						nv[0] = Character.valueOf('M');
+						nv[2] = Integer.valueOf(1);
 						vec.add(nv);
 					} else if (c == 'Y') {
 						c = 'M';
 						nv = new Object[3];
 						nv[1] = (new StringBuffer(((StringBuffer) v[1])
 								.toString())).append('d');
-						nv[0] = Constants.characterValueOf('d');
-						nv[2] = Constants.integerValueOf(1);
+						nv[0] = Character.valueOf('d');
+						nv[2] = Integer.valueOf(1);
 						vec.add(nv);
 					}
 
 					((StringBuffer) v[1]).append(c);
 
 					if (c == ((Character) v[0]).charValue()) {
-						v[2] = Constants.integerValueOf(n + 1);
+						v[2] = Integer.valueOf(n + 1);
 					} else {
-						v[0] = Constants.characterValueOf(c);
-						v[2] = Constants.integerValueOf(1);
+						v[0] = Character.valueOf(c);
+						v[2] = Integer.valueOf(1);
 					}
 				}
 			}
@@ -2995,7 +2995,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 
-	private void initializeFromParseInfo() throws SQLException {
+	private synchronized void initializeFromParseInfo() throws SQLException {
 		this.staticSqlStrings = this.parseInfo.staticSql;
 		this.hasLimitClause = this.parseInfo.foundLimitClause;
 		this.isLoadDataQuery = this.parseInfo.foundLoadData;
@@ -3061,7 +3061,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	protected void realClose(boolean calledExplicitly, 
+	protected synchronized void realClose(boolean calledExplicitly, 
 			boolean closeOpenResults) throws SQLException {
 		if (this.useUsageAdvisor) {
 			if (this.numberOfExecutions <= 1) {
@@ -3182,7 +3182,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if a database access error occurs
 	 */
-	public void setBinaryStream(int parameterIndex, InputStream x, int length)
+	public synchronized void setBinaryStream(int parameterIndex, InputStream x, int length)
 			throws SQLException {
 		if (x == null) {
 			setNull(parameterIndex, java.sql.Types.BINARY);
@@ -3706,7 +3706,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		this.parameterValues[paramIndex - 1 + parameterIndexOffset] = val;
 	}
 
-	private void checkBounds(int paramIndex, int parameterIndexOffset)
+	private synchronized void checkBounds(int paramIndex, int parameterIndexOffset)
 			throws SQLException {
 		if ((paramIndex < 1)) {
 			throw SQLError.createSQLException(
@@ -3813,7 +3813,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 		if (parameterObj instanceof Boolean) {
 			parameterAsNum = ((Boolean) parameterObj)
-					.booleanValue() ? Constants.integerValueOf(1) : Constants.integerValueOf(
+					.booleanValue() ? Integer.valueOf(1) : Integer.valueOf(
 					0);
 		} else if (parameterObj instanceof String) {
 			switch (targetSqlType) {
@@ -3825,8 +3825,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					boolean parameterAsBoolean = "true"
 							.equalsIgnoreCase((String) parameterObj);
 
-				parameterAsNum = parameterAsBoolean ? Constants.integerValueOf(1)
-						: Constants.integerValueOf(0);
+				parameterAsNum = parameterAsBoolean ? Integer.valueOf(1)
+						: Integer.valueOf(0);
 				}
 				
 				break;
@@ -5574,17 +5574,17 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			
 			switch (parameterTypes[parameterIndex - 1]) {
 			case Types.TINYINT:
-				return new Byte(getByte(parameterIndex));
+				return Byte.valueOf(getByte(parameterIndex));
 			case Types.SMALLINT:
-				return new Short(getShort(parameterIndex));
+				return Short.valueOf(getShort(parameterIndex));
 			case Types.INTEGER:
-				return new Integer(getInt(parameterIndex));
+				return Integer.valueOf(getInt(parameterIndex));
 			case Types.BIGINT:
-				return new Long(getLong(parameterIndex));
+				return Long.valueOf(getLong(parameterIndex));
 			case Types.FLOAT:
-				return new Float(getFloat(parameterIndex));
+				return Float.valueOf(getFloat(parameterIndex));
 			case Types.DOUBLE: 
-				return new Double(getDouble(parameterIndex));
+				return Double.valueOf(getDouble(parameterIndex));
 			default:
 				return this.bindingsAsRs.getObject(parameterIndex);
 			}

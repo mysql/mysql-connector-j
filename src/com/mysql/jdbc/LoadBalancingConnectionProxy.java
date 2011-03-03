@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -223,7 +223,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		this.localProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
 
 		for (int i = 0; i < numHosts; i++) {
-			this.hostsToListIndexMap.put(this.hostList.get(i), new Integer(i));
+			this.hostsToListIndexMap.put(this.hostList.get(i), Integer.valueOf(i));
 			this.localProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY + "."
 					+ (i + 1));
 			this.localProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY + "."
@@ -501,7 +501,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		}
 
 		if ("hashCode".equals(methodName)) {
-			return new Integer(this.hashCode());
+			return Integer.valueOf(this.hashCode());
 		}
 
 		if ("close".equals(methodName)) {
@@ -715,7 +715,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			}
 		}
 
-		this.jdbcInterfacesForProxyCache.put(clazz, new Boolean(false));
+		this.jdbcInterfacesForProxyCache.put(clazz, Boolean.valueOf(false));
 		return false;
 		
 	}
@@ -821,7 +821,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	public void addToGlobalBlacklist(String host, long timeout) {
 		if (this.isGlobalBlacklistEnabled()) {
 			synchronized (globalBlacklist) {
-				globalBlacklist.put(host, new Long(timeout));
+				globalBlacklist.put(host, Long.valueOf(timeout));
 			}
 		}
 	}
@@ -841,7 +841,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			String localHostToRemove = this.hostToRemove;
 			if(hostToRemove != null){
 				HashMap<String, Long> fakedBlacklist = new HashMap<String, Long>();
-				fakedBlacklist.put(localHostToRemove, new Long(System.currentTimeMillis() + 5000));
+				fakedBlacklist.put(localHostToRemove, Long.valueOf(System.currentTimeMillis() + 5000));
 				return fakedBlacklist;
 			}
 			return new HashMap<String, Long>(1);
@@ -934,7 +934,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 					String copyHost = i.next();
 					if(idx != null && idx.intValue() < this.responseTimes.length){
 						newResponseTimes[newIdx] = this.responseTimes[idx.intValue()];
-						this.hostsToListIndexMap.put(copyHost, new Integer(newIdx));
+						this.hostsToListIndexMap.put(copyHost, Integer.valueOf(newIdx));
 					}
 				}
 				this.responseTimes = newResponseTimes;
@@ -954,7 +954,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			}
 			this.responseTimes = newResponseTimes;
 			this.hostList.add(host);
-			this.hostsToListIndexMap.put(host, new Integer(this.responseTimes.length - 1));
+			this.hostsToListIndexMap.put(host, Integer.valueOf(this.responseTimes.length - 1));
 		}
 		return true;
 	}

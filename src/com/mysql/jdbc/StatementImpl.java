@@ -2529,7 +2529,7 @@ public class StatementImpl implements Statement {
 		if (max > maxBuf) {
 			throw SQLError.createSQLException(Messages.getString(
 					"Statement.13", //$NON-NLS-1$
-					new Object[] { Constants.longValueOf(maxBuf) }), //$NON-NLS-1$
+					new Object[] { Long.valueOf(maxBuf) }), //$NON-NLS-1$
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 		}
 

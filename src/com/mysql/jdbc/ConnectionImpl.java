@@ -255,15 +255,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	static {
 		mapTransIsolationNameToValue = new HashMap(8);
-		mapTransIsolationNameToValue.put("READ-UNCOMMITED", Constants.integerValueOf(
+		mapTransIsolationNameToValue.put("READ-UNCOMMITED", Integer.valueOf(
 				TRANSACTION_READ_UNCOMMITTED));
-		mapTransIsolationNameToValue.put("READ-UNCOMMITTED", Constants.integerValueOf(
+		mapTransIsolationNameToValue.put("READ-UNCOMMITTED", Integer.valueOf(
 				TRANSACTION_READ_UNCOMMITTED));
-		mapTransIsolationNameToValue.put("READ-COMMITTED", Constants.integerValueOf(
+		mapTransIsolationNameToValue.put("READ-COMMITTED", Integer.valueOf(
 				TRANSACTION_READ_COMMITTED));
-		mapTransIsolationNameToValue.put("REPEATABLE-READ", Constants.integerValueOf(
+		mapTransIsolationNameToValue.put("REPEATABLE-READ", Integer.valueOf(
 				TRANSACTION_REPEATABLE_READ));
-		mapTransIsolationNameToValue.put("SERIALIZABLE", Constants.integerValueOf(
+		mapTransIsolationNameToValue.put("SERIALIZABLE", Integer.valueOf(
 				TRANSACTION_SERIALIZABLE));
 
 		if (Util.isJdbc4()) {
@@ -378,7 +378,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		return (Connection) Util.handleNewInstance(JDBC_4_CONNECTION_CTOR,
 				new Object[] {
-							hostToConnectTo, Constants.integerValueOf(portToConnectTo), info,
+							hostToConnectTo, Integer.valueOf(portToConnectTo), info,
 							databaseToConnectTo, url }, null);
 	}
 
@@ -948,7 +948,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 					while (results.next()) {
 						String charsetName = results.getString(2);
-						Integer charsetIndex = Constants.integerValueOf(results.getInt(3));
+						Integer charsetIndex = Integer.valueOf(results.getInt(3));
 
 						sortedCollationMap.put(charsetIndex, charsetName);
 					}
@@ -3003,7 +3003,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 							while (rs.next()) {
 								this.charsetToNumBytesMap.put(rs.getString("Charset"),
-										Constants.integerValueOf(rs.getInt("Maxlen")));
+										Integer.valueOf(rs.getInt("Maxlen")));
 							}
 		
 							rs.close();

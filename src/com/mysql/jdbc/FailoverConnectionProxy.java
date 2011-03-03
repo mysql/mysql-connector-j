@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -129,7 +129,7 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 		return super.invoke(proxy, method, args, failedOver);
 	}
 
-	private void createPrimaryConnection() throws SQLException {
+	private synchronized void createPrimaryConnection() throws SQLException {
 		try {
 			this.currentConn = createConnectionForHost(this.primaryHostPortSpec);
 			this.failedOver = false;

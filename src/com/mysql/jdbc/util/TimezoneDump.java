@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -72,16 +72,23 @@ public class TimezoneDump {
 
 		Class.forName("com.mysql.jdbc.Driver").newInstance();
 
-		ResultSet rs = DriverManager.getConnection(jdbcUrl).createStatement()
-				.executeQuery("SHOW VARIABLES LIKE 'timezone'");
+		ResultSet rs = null;
+		
+		try {
+			rs = DriverManager.getConnection(jdbcUrl).createStatement().executeQuery("SHOW VARIABLES LIKE 'timezone'");
 
-		while (rs.next()) {
-			String timezoneFromServer = rs.getString(2);
-			System.out.println("MySQL timezone name: " + timezoneFromServer);
-
-			String canonicalTimezone = TimeUtil
-					.getCanoncialTimezone(timezoneFromServer, null);
-			System.out.println("Java timezone name: " + canonicalTimezone);
+			while (rs.next()) {
+				String timezoneFromServer = rs.getString(2);
+				System.out.println("MySQL timezone name: " + timezoneFromServer);
+	
+				String canonicalTimezone = TimeUtil
+						.getCanoncialTimezone(timezoneFromServer, null);
+				System.out.println("Java timezone name: " + canonicalTimezone);
+			}
+		} finally {
+			if (rs != null) {
+				rs.close();
+			}
 		}
 	}
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -57,7 +57,7 @@ public class ConnectionGroup {
 				this.activeHosts = localHostList.size();
 			}
 			currentConnectionId = ++connections;
-			this.connectionProxies.put(new Long(currentConnectionId), proxy);
+			this.connectionProxies.put(Long.valueOf(currentConnectionId), proxy);
 		}
 		this.activeConnections++;
 		
@@ -163,7 +163,7 @@ public class ConnectionGroup {
 	
 	public void closeConnectionProxy(LoadBalancingConnectionProxy proxy){
 		this.activeConnections--;
-		this.connectionProxies.remove(new Long(proxy.getConnectionGroupProxyID()));
+		this.connectionProxies.remove(Long.valueOf(proxy.getConnectionGroupProxyID()));
 		this.closedProxyTotalPhysicalConnections += proxy.getTotalPhysicalConnectionCount();
 		this.closedProxyTotalTransactions += proxy.getTransactionCount();
 		

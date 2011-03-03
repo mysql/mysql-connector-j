@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -177,9 +177,9 @@ public class ConnectionGroupManager {
 				String host = j.next().toString();
 				Object o = hosts.get(host);
 				if(o == null){
-					o = new Integer(1);
+					o = Integer.valueOf(1);
 				} else {
-					o = new Integer(((Integer) o).intValue() + 1);
+					o = Integer.valueOf(((Integer) o).intValue() + 1);
 				}
 				hosts.put(host, o);
 				

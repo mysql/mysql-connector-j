@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -47,7 +47,7 @@ public final class MysqlConnectionTester implements QueryConnectionTester {
 
 	private static final Object[] NO_ARGS_ARRAY = new Object[0];
 
-	private Method pingMethod;
+	private transient Method pingMethod;
 
 	public MysqlConnectionTester() {
 		try {

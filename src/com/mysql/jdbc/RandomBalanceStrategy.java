@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -123,7 +123,7 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 	private Map<String, Integer> getArrayIndexMap(List<String> l) {
 		Map<String, Integer> m = new HashMap<String, Integer>(l.size());
 		for (int i = 0; i < l.size(); i++) {
-			m.put(l.get(i), new Integer(i));
+			m.put(l.get(i), Integer.valueOf(i));
 		}
 		return m;
 		

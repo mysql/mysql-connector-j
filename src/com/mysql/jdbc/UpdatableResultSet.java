@@ -221,7 +221,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	 *
 	 * @see com.mysql.jdbc.ResultSet#checkRowPos()
 	 */
-	protected void checkRowPos() throws SQLException {
+	protected synchronized void checkRowPos() throws SQLException {
 		checkClosed();
 
 		if (!this.onInsertRow) {
@@ -689,7 +689,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	                tableNamesSoFar.put(fqTableName, fqTableName);
 	            }
 
-	            columnIndicesToTable.put(new Integer(i), fqTableName);
+	            columnIndicesToTable.put(Integer.valueOf(i), fqTableName);
 
 	            updColumnNameToIndex = getColumnsToIndexMapForTableAndDB(databaseName, tableOnlyName);
 	        } else {
@@ -764,7 +764,7 @@ public class UpdatableResultSet extends ResultSetImpl {
             String qualifiedColumnName = fqcnBuf.toString();
             
 			if (this.fields[i].isPrimaryKey()) {
-				this.primaryKeyIndicies.add(Constants.integerValueOf(i));
+				this.primaryKeyIndicies.add(Integer.valueOf(i));
 
 				if (!keysFirstTime) {
 					keyValues.append(" AND "); //$NON-NLS-1$
