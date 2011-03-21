@@ -1111,10 +1111,10 @@ public abstract class ResultSetRow {
 							if (decimalIndex != -1) {
 								if ((decimalIndex + 2) <= length) {
 									nanos = StringUtils.getInt(
-											timestampAsBytes, decimalIndex + 1,
+											timestampAsBytes, offset + decimalIndex + 1,
 											offset + length);
 									
-									int numDigits = (offset + length) - (decimalIndex + 1);
+									int numDigits = (length) - (decimalIndex + 1);
 									
 									if (numDigits < 9) {
 										int factor = (int)(Math.pow(10, 9 - numDigits));

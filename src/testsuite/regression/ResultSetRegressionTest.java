@@ -4718,4 +4718,33 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 		assertEquals(fromPlainResultSet, crs.getString(1));
 	}
+
+	/**
+	 * Bug #60313 bug in com.mysql.jdbc.ResultSetRow.getTimestampFast
+	 * 
+	 */
+	public void testBug60313() throws Exception {
+        this.stmt.executeQuery("select repeat('Z', 3000), now() + interval 1 microsecond"); 
+        this.rs = this.stmt.getResultSet();
+        assertTrue(this.rs.next());
+       	assertEquals(1000, this.rs.getTimestamp(2).getNanos());
+       	this.rs.close();
+       	
+		this.pstmt = this.conn.prepareStatement("select repeat('Z', 3000), now() + interval 1 microsecond"); 
+		this.rs = this.pstmt.executeQuery();
+		assertTrue(this.rs.next());
+       	assertEquals(1000, this.rs.getTimestamp(2).getNanos());
+       	this.rs.close();
+       	
+		Properties props = new Properties();
+		props.setProperty("useServerPrepStmts", "true");
+		Connection sspsCon = getConnectionWithProps(props);
+		PreparedStatement ssPStmt = sspsCon.prepareStatement("select repeat('Z', 3000), now() + interval 1 microsecond");
+		this.rs = ssPStmt.executeQuery();
+		assertTrue(this.rs.next());
+       	assertEquals(1000, this.rs.getTimestamp(2).getNanos());
+       	this.rs.close();
+       	ssPStmt.close();
+       	sspsCon.close();
+	}
 }
