@@ -171,7 +171,7 @@ public class MysqlIO {
 
     /** The connection to the server */
     protected Socket mysqlConnection = null;
-    private SocketFactory socketFactory = null;
+    protected SocketFactory socketFactory = null;
 
     //
     // Packet used for 'LOAD DATA LOCAL INFILE'

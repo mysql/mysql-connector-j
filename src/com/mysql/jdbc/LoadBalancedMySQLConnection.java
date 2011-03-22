@@ -2527,4 +2527,8 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 	public void setIncludeThreadNamesAsStatementComment(boolean flag) {
 		getActiveMySQLConnection().setIncludeThreadNamesAsStatementComment(flag);
 	}
+
+	public synchronized boolean isServerLocal() throws SQLException {
+		return getActiveMySQLConnection().isServerLocal();
+	}
 }

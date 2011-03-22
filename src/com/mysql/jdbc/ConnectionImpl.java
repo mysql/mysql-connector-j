@@ -28,6 +28,8 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -5600,5 +5602,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	public boolean getRequiresEscapingEncoder() {
 		return requiresEscapingEncoder;
+	}
+	
+	public synchronized boolean isServerLocal() throws SQLException {
+		SocketFactory factory = getIO().socketFactory;
+		
+		if (factory instanceof SocketMetadata) {
+			return ((SocketMetadata)factory).isLocallyConnected(this);
+		} else {
+			getLog().logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
+			
+			return false;
+		}
 	}
 }

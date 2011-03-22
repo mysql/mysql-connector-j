@@ -2751,4 +2751,8 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void setIncludeThreadNamesAsStatementComment(boolean flag) {
 		this.mc.setIncludeThreadNamesAsStatementComment(flag);
 	}
+
+	public boolean isServerLocal() throws SQLException {
+		return this.mc.isServerLocal();
+	}
 }

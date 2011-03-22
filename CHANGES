@@ -3,12 +3,17 @@
 
 nn-nn-11 - Version 5.1.16
 
-  - Fix for Bug#60313 (11890729), bug in com.mysql.jdbc.ResultSetRow.getTimestampFast.
-    Regression test case added to ResultSetRegressionTest tests.
-  - Fix for bug 11782297, DBMD.getTables (so thus getColumns too) fails with table names 
-    containing dot (like "junk_[Sp:e,c/ C-h+a=.r]").
+  - Fix for Bug#60313 (11890729), bug in 
+    com.mysql.jdbc.ResultSetRow.getTimestampFast().
+
+  - Fix for bug 11782297, DBMD.getTables (so thus getColumns too) fails with 
+    table names containing dot (like "junk_[Sp:e,c/ C-h+a=.r]").
+  
+  - Added the ability to determine if the connection is against a server on the 
+    same host via the Connection.isServerLocal() method.
 
 02-08-11 - Version 5.1.15
+
    - Fix for Bug#38367, parameters metadata did not reflect the fact that NULL is allowed 
      parameter value. So DatabaseMetaData.getProcedureColumns will set isNullable member to
 	 java.sql.DatabaseMetaData.procedureNullable now.

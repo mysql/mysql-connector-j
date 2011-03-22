@@ -2554,4 +2554,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public void setIncludeThreadNamesAsStatementComment(boolean flag) {
 		currentConnection.setIncludeThreadNamesAsStatementComment(flag);
 	}
+
+	public synchronized boolean isServerLocal() throws SQLException {
+		return this.currentConnection.isServerLocal();
+	}
 }

@@ -1812,4 +1812,15 @@ public class ConnectionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	public void testIsLocal() throws Exception {
+		Properties parsedProps = new NonRegisteringDriver().parseURL(dbUrl, null);
+		String host = parsedProps.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
+		
+		if (host.equals("localhost") || host.equals("127.0.0.1")) {
+			// we can actually test this
+			assertTrue(((com.mysql.jdbc.ConnectionImpl) this.conn).isServerLocal());
+		}
+		
+	}
 }

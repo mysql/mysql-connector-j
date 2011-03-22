@@ -32,6 +32,9 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Properties;
 
 /**
@@ -39,7 +42,7 @@ import java.util.Properties;
  * 
  * @author Mark Matthews
  */
-public class StandardSocketFactory implements SocketFactory {
+public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
 	public static final String TCP_NO_DELAY_PROPERTY_NAME = "tcpNoDelay";
 
@@ -403,5 +406,50 @@ public class StandardSocketFactory implements SocketFactory {
 		}
 
 		throw new SocketException(caughtWhileConnecting.toString());
+	}
+
+	public boolean isLocallyConnected(com.mysql.jdbc.ConnectionImpl conn) throws SQLException {
+		long threadId = conn.getId();
+		java.sql.Statement processListStmt = conn.getMetadataSafeStatement();
+		ResultSet rs = null;
+		
+		try {
+			String processHost = null;
+			
+			rs = processListStmt.executeQuery("SHOW PROCESSLIST");
+			
+			while (rs.next()) {
+				 long id = rs.getLong(1);
+
+                 if (threadId == id) {
+                	 processHost = rs.getString(3);
+                     
+                     break;
+                 }
+			}
+             
+             if (processHost != null) {
+                 if (processHost.indexOf(":") != -1) {
+                	 processHost = processHost.split(":")[0];
+
+                     try {
+                         boolean isLocal;
+
+                    	 isLocal = InetAddress.getByName(processHost).equals(
+                    			 rawSocket.getLocalAddress());
+
+                         return isLocal;
+                     } catch (UnknownHostException e) {
+                         conn.getLog().logWarn(Messages.getString("Connection.CantDetectLocalConnect", new Object[] {host}), e);
+
+                         return false;
+                     }
+                 }
+             }
+             
+             return false;
+		} finally {
+			processListStmt.close();
+		}
 	}
 }

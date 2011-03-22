@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.net.SocketException;
+import java.sql.SQLException;
 import java.util.Properties;
 
 /**
@@ -38,7 +39,7 @@ import java.util.Properties;
  * 
  * @author Mark Matthews
  */
-public class NamedPipeSocketFactory implements SocketFactory {
+public class NamedPipeSocketFactory implements SocketFactory, SocketMetadata {
 	/**
 	 * A socket that encapsulates named pipes on Windows
 	 */
@@ -214,5 +215,10 @@ public class NamedPipeSocketFactory implements SocketFactory {
 		this.namedPipeSocket = new NamedPipeSocket(namedPipePath);
 
 		return this.namedPipeSocket;
+	}
+
+	public boolean isLocallyConnected(ConnectionImpl conn) throws SQLException {
+		// Until I learn otherwise (or learn how to detect it), I assume that we are
+		return true;
 	}
 }

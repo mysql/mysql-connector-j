@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -398,4 +398,11 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
    public String getHost();
 
    public void setProxy(MySQLConnection proxy);
+   
+   /**
+    * Is the server this connection is connected to "local" (i.e. same host)
+    * as the application?
+    * @return
+    */
+   public boolean isServerLocal() throws SQLException;
 }
