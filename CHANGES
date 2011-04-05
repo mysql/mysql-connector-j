@@ -11,6 +11,12 @@ nn-nn-11 - Version 5.1.16
   
   - Added the ability to determine if the connection is against a server on the 
     same host via the Connection.isServerLocal() method.
+    
+  - Fix for bug 12325877, Setting "autoReconnect=true" and 
+    "cacheServerConfiguration=true" would cause connections created after
+    an existing connection fails to have non-existent values for server
+    variables which lead to exceeding of max allowed packet exceptions when the
+    new connections were used.
 
 02-08-11 - Version 5.1.15
 

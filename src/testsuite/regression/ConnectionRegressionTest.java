@@ -3108,4 +3108,27 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			System.setErr(oldErr);
 		}
 	}
+	
+	public void testReconnectWithCachedConfig() throws Exception {
+		Connection rConn = getConnectionWithProps("autoReconnect=true,initialTimeout=2,maxReconnects=3,cacheServerConfiguration=true,elideSetAutoCommits=true");
+		String threadId = getSingleIndexedValueWithQuery(rConn, 1, "select connection_id()").toString();
+		killConnection(this.conn, threadId);
+		boolean detectedDeadConn = false;
+		
+		for (int i = 0; i < 100; i++) {
+			try {
+				rConn.createStatement().executeQuery("SELECT 1");
+			} catch (SQLException sqlEx) {
+				detectedDeadConn = true;
+				break;
+			}
+		}
+		
+		assertTrue(detectedDeadConn);
+		rConn.prepareStatement("SELECT 1").executeQuery();
+		
+		Connection rConn2 = getConnectionWithProps("autoReconnect=true,initialTimeout=2,maxReconnects=3,cacheServerConfiguration=true,elideSetAutoCommits=true");
+		rConn2.prepareStatement("SELECT 1").executeQuery();
+		
+	}
 }

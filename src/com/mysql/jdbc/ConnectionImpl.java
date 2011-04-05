@@ -735,7 +735,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 
 		this.openStatements = new HashMap();
-		this.serverVariables = new HashMap();
 
 		if (NonRegisteringDriver.isHostPropertiesList(hostToConnectTo)) {
 			Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(hostToConnectTo);
@@ -3398,8 +3397,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 		}
 
-		this.serverVariables.clear();
-
 		//
 		// If version is greater than 3.21.22 get the server
 		// variables.
@@ -3793,10 +3790,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             if the 'SHOW VARIABLES' query fails for any reason.
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void loadServerVariables() throws SQLException {
 
 		if (getCacheServerConfiguration()) {
 			synchronized (serverConfigByUrl) {
+				@SuppressWarnings("rawtypes")
 				Map cachedVariableMap = (Map) serverConfigByUrl.get(getURL());
 
 				if (cachedVariableMap != null) {
@@ -3861,9 +3860,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					+ " OR Variable_name = 'init_connect'";
 			}
 			
-			results = stmt.executeQuery(query);
+			this.serverVariables = new HashMap();
 
-		
+			results = stmt.executeQuery(query);
+			
 			while (results.next()) {
 				this.serverVariables.put(results.getString(1), results
 						.getString(2));
@@ -3883,11 +3883,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			if (getCacheServerConfiguration()) {
 				synchronized (serverConfigByUrl) {
 					serverConfigByUrl.put(getURL(), this.serverVariables);
+					
+					this.usingCachedConfig = true;
 				}
 			}
-			
-			
-			
 		} catch (SQLException e) {
 			throw e;
 		} finally {
