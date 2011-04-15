@@ -24,6 +24,7 @@ package com.mysql.jdbc;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.sql.BatchUpdateException;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -34,6 +35,7 @@ import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TimerTask;
 
@@ -71,12 +73,18 @@ public class StatementImpl implements Statement {
 	class CancelTask extends TimerTask {
 
 		long connectionId = 0;
+		String origHost = "";
 		SQLException caughtWhileCancelling = null;
 		StatementImpl toCancel;
+		Properties origConProps = null; 
+		String origConnURL = "";
 		
 		CancelTask(StatementImpl cancellee) throws SQLException {
-			connectionId = connection.getIO().getThreadId();
+			connectionId = cancellee.connectionId;
+			origHost = connection.getHost();
 			toCancel = cancellee;
+			origConProps = connection.getProperties();
+			origConnURL = connection.getURL();
 		}
 
 		public void run() {
@@ -101,9 +109,20 @@ public class StatementImpl implements Statement {
 	
 						try {
 							synchronized (cancelTimeoutMutex) {
-								cancelConn = connection.duplicate();
-								cancelStmt = cancelConn.createStatement();
-								cancelStmt.execute("KILL QUERY " + connectionId);
+								if (origConnURL == connection.getURL()) {
+									//All's fine
+									cancelConn = connection.duplicate();
+									cancelStmt = cancelConn.createStatement();
+									cancelStmt.execute("KILL QUERY " + connectionId);
+								} else {
+									try {
+										cancelConn = (Connection) DriverManager.getConnection(origConnURL, origConProps);
+										cancelStmt = cancelConn.createStatement();
+										cancelStmt.execute("KILL QUERY " + connectionId);
+									} catch (NullPointerException npe){
+										//Log this? "Failed to connect to " + origConnURL + " and KILL query"
+									}
+								}
 								toCancel.wasCancelled = true;
 								toCancel.wasCancelledByTimeout = true;
 							}
@@ -134,6 +153,8 @@ public class StatementImpl implements Statement {
 							}
 							
 							toCancel = null;
+							origConProps = null;
+							origConnURL = null;
 						}
 					}
 				}
