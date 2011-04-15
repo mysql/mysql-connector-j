@@ -11,7 +11,6 @@ import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
 import testsuite.BaseTestCase;
-import testsuite.regression.ConnectionRegressionTest;
 
 /**
  * @author Tonci
