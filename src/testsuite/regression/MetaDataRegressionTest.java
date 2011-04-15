@@ -37,6 +37,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -2869,4 +2870,37 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Tests fix for BUG#57808 - wasNull not set
+	 * for DATE field with value 0000-00-00
+	 * in getDate() although 
+	 * zeroDateTimeBehavior is convertToNull.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug57808() throws Exception {
+		try {
+			createTable("bug57808", "(ID INT(3) NOT NULL PRIMARY KEY, ADate DATE NOT NULL)");
+            Properties props = new Properties();
+            props.put("zeroDateTimeBehavior", "convertToNull");
+            Connection conn1 = null;
+
+            conn1 = getConnectionWithProps(props);
+            this.stmt = conn1.createStatement();
+            this.stmt.executeUpdate("INSERT INTO bug57808(ID, ADate) VALUES(1, 0000-00-00)");	
+			
+			this.rs = this.stmt.executeQuery( "SELECT ID, ADate FROM bug57808 WHERE ID = 1" );
+			if( this.rs.first() ) {
+				Date theDate = this.rs.getDate("ADate");
+				if( theDate == null ) {
+					assertTrue("wasNull is FALSE", this.rs.wasNull());
+				} else {
+					fail("Original date was not NULL!");
+				}
+			}
+    	} finally {
+		}
+	}
+	
 }

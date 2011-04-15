@@ -2182,8 +2182,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		checkColumnBounds(columnIndex);
 		
 		int columnIndexMinusOne = columnIndex - 1;
+		Date tmpDate = this.thisRow.getDateFast(columnIndexMinusOne, this.connection, this, cal);
+		if ((this.thisRow.isNull(columnIndexMinusOne)) 
+				|| (tmpDate == null)) {
 		
-		if (this.thisRow.isNull(columnIndexMinusOne)) {
 			this.wasNullFlag = true;
 			
 			return null;
@@ -2191,7 +2193,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		
 		this.wasNullFlag = false;
 		
-		return this.thisRow.getDateFast(columnIndexMinusOne, this.connection, this, cal);
+		return tmpDate;
 	}
 
 	/**

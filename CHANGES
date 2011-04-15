@@ -3,6 +3,9 @@
 
 nn-nn-11 - Version 5.1.16
 
+  - Fix for BUG#57808 - wasNull not set for DATE field with value 0000-00-00
+	in getDate() although zeroDateTimeBehavior is convertToNull.
+
   - Fix for Bug#54425 - Bypassing the server protocol bug where DB should be null-terminated
     whether it exists or not. Affects COM_CHANGE_USER.
 	
