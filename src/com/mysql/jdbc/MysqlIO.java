@@ -909,6 +909,9 @@ public class MysqlIO {
 
             if (localUseConnectWithDb) {
                 packet.writeString(database);
+            } else {
+            	//Not needed, old server does not require \0 
+            	//packet.writeString("");
             }
 
             send(packet, packet.getPosition());
@@ -4086,6 +4089,9 @@ public class MysqlIO {
 
         if (this.useConnectWithDb) {
             packet.writeString(database, "utf-8", this.connection);
+        } else {
+            /* For empty database*/
+            packet.writeByte((byte) 0);
         }
 
         send(packet, packet.getPosition());

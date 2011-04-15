@@ -3,6 +3,9 @@
 
 nn-nn-11 - Version 5.1.16
 
+  - Fix for Bug#54425 - Bypassing the server protocol bug where DB should be null-terminated
+    whether it exists or not. Affects COM_CHANGE_USER.
+	
   - Fix for Bug#60313 (11890729), bug in 
     com.mysql.jdbc.ResultSetRow.getTimestampFast().
 
