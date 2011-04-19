@@ -31,6 +31,7 @@ import java.sql.SQLWarning;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -76,14 +77,24 @@ public class StatementImpl implements Statement {
 		String origHost = "";
 		SQLException caughtWhileCancelling = null;
 		StatementImpl toCancel;
-		Properties origConProps = null; 
+		Properties origConnProps = null; 
 		String origConnURL = "";
 		
 		CancelTask(StatementImpl cancellee) throws SQLException {
 			connectionId = cancellee.connectionId;
 			origHost = connection.getHost();
 			toCancel = cancellee;
-			origConProps = connection.getProperties();
+			origConnProps = new Properties();
+			
+			Properties props = connection.getProperties();
+			
+			Enumeration<?> keys = props.propertyNames();
+			
+			while (keys.hasMoreElements()) {
+				String key = keys.nextElement().toString();
+				origConnProps.setProperty(key, props.getProperty(key));
+			}
+			
 			origConnURL = connection.getURL();
 		}
 
@@ -116,7 +127,7 @@ public class StatementImpl implements Statement {
 									cancelStmt.execute("KILL QUERY " + connectionId);
 								} else {
 									try {
-										cancelConn = (Connection) DriverManager.getConnection(origConnURL, origConProps);
+										cancelConn = (Connection) DriverManager.getConnection(origConnURL, origConnProps);
 										cancelStmt = cancelConn.createStatement();
 										cancelStmt.execute("KILL QUERY " + connectionId);
 									} catch (NullPointerException npe){
@@ -153,7 +164,7 @@ public class StatementImpl implements Statement {
 							}
 							
 							toCancel = null;
-							origConProps = null;
+							origConnProps = null;
 							origConnURL = null;
 						}
 					}
