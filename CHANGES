@@ -1,7 +1,8 @@
 # Changelog
 # $Id$
 
-nn-nn-11 - Version 5.1.16
+04-21-11 - Version 5.1.16
+
   - Partial fix for BUG#54135 - setQueryTimeout unsafe across VIP. Fix prevents c/J from 
     killing the right ConnectionID but on wrong server.
 
