@@ -139,7 +139,7 @@ public abstract class ResultSetRow {
 				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 						.equals(conn.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException("Value '"
-							+ new String(dateAsBytes)
+							+ StringUtils.toString(dateAsBytes)
 							+ "' can not be represented as java.sql.Date",
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 				}
@@ -226,7 +226,7 @@ public abstract class ResultSetRow {
 											.getString(
 													"ResultSet.Bad_format_for_Date",
 													new Object[] {
-															new String(
+															StringUtils.toString(
 																	dateAsBytes),
 															Integer.valueOf(columnIndex + 1) }),
 									SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor); //$NON-NLS-1$
@@ -264,7 +264,7 @@ public abstract class ResultSetRow {
 											.getString(
 													"ResultSet.Bad_format_for_Date",
 													new Object[] {
-															new String(
+															StringUtils.toString(
 																	dateAsBytes),
 															Integer.valueOf(columnIndex + 1) }),
 									SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor); //$NON-NLS-1$
@@ -280,7 +280,7 @@ public abstract class ResultSetRow {
 				} else {
 					// JDK-1.3 timestamp format, not real easy to parse
 					// positionally :p
-					StringTokenizer st = new StringTokenizer(new String(
+					StringTokenizer st = new StringTokenizer(StringUtils.toString(
 							dateAsBytes, offset, length, "ISO8859_1"), "- ");
 
 					year = Integer.parseInt(st.nextToken());
@@ -295,7 +295,7 @@ public abstract class ResultSetRow {
 		} catch (Exception e) {
 			SQLException sqlEx = SQLError.createSQLException(Messages.getString(
 					"ResultSet.Bad_format_for_Date", new Object[] {
-							new String(dateAsBytes),
+							StringUtils.toString(dateAsBytes),
 							Integer.valueOf(columnIndex + 1) }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor); //$NON-NLS-1$
 			sqlEx.initCause(e);
@@ -784,7 +784,7 @@ public abstract class ResultSetRow {
 		if ((conn != null) && conn.getUseUnicode()) {
 			try {
 				if (encoding == null) {
-					stringVal = new String(value);
+					stringVal = StringUtils.toString(value);
 				} else {
 					SingleByteCharsetConverter converter = conn
 							.getCharsetConverter(encoding);
@@ -792,7 +792,7 @@ public abstract class ResultSetRow {
 					if (converter != null) {
 						stringVal = converter.toString(value, offset, length);
 					} else {
-						stringVal = new String(value, offset, length, encoding);
+						stringVal = StringUtils.toString(value, offset, length, encoding);
 					}
 				}
 			} catch (java.io.UnsupportedEncodingException E) {
@@ -856,7 +856,7 @@ public abstract class ResultSetRow {
 				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 						.equals(conn.getZeroDateTimeBehavior())) {
 					throw SQLError.createSQLException("Value '"
-							+ new String(timeAsBytes)
+							+ StringUtils.toString(timeAsBytes)
 							+ "' can not be represented as java.sql.Time",
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 				}
@@ -948,7 +948,7 @@ public abstract class ResultSetRow {
 				if ((length != 5) && (length != 8)) {
 					throw SQLError.createSQLException(Messages
 							.getString("ResultSet.Bad_format_for_Time____267") //$NON-NLS-1$
-							+ new String(timeAsBytes)
+							+ StringUtils.toString(timeAsBytes)
 							+ Messages.getString("ResultSet.___in_column__268")
 							+ (columnIndex + 1),
 							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
@@ -1033,7 +1033,7 @@ public abstract class ResultSetRow {
 						throw SQLError
 								.createSQLException(
 										"Value '"
-												+ new String(timestampAsBytes)
+												+ StringUtils.toString(timestampAsBytes)
 												+ "' can not be represented as java.sql.Timestamp",
 										SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 					}
@@ -1308,7 +1308,7 @@ public abstract class ResultSetRow {
 					default:
 						throw new java.sql.SQLException(
 								"Bad format for Timestamp '"
-										+ new String(timestampAsBytes)
+										+ StringUtils.toString(timestampAsBytes)
 										+ "' in column " + (columnIndex + 1)
 										+ ".",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);

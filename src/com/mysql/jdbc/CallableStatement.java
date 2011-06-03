@@ -764,7 +764,7 @@ public class CallableStatement extends PreparedStatement implements
 		byte[] procNameAsBytes = null;
 
 		try {
-			procNameAsBytes = procName == null ? null : procName.getBytes("UTF-8");
+			procNameAsBytes = procName == null ? null : StringUtils.getBytes(procName, "UTF-8");
 		} catch (UnsupportedEncodingException ueEx) {
 			procNameAsBytes = StringUtils.s2b(procName, this.connection);
 		}
@@ -2464,8 +2464,8 @@ public class CallableStatement extends PreparedStatement implements
 					}
 					
 					procName = procName.substring(procName.indexOf(".") + 1);
-					procName = new String(StringUtils.stripEnclosure(procName
-							.getBytes(), "`", "`"));
+					procName = StringUtils.toString(StringUtils.stripEnclosure(
+							StringUtils.getBytes(procName), "`", "`"));
 				}
 				ps = this.connection
 						.prepareStatement("SELECT SQL_DATA_ACCESS FROM "

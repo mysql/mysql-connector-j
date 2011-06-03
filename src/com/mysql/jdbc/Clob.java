@@ -58,7 +58,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 	 */
 	public InputStream getAsciiStream() throws SQLException {
 		if (this.charData != null) {
-			return new ByteArrayInputStream(this.charData.getBytes());
+			return new ByteArrayInputStream(StringUtils.getBytes(this.charData));
 		}
 
 		return null;
@@ -156,7 +156,7 @@ public class Clob implements java.sql.Clob, OutputStreamWatcher, WriterWatcher {
 		bytesOut.setWatcher(this);
 
 		if (indexToWriteAt > 0) {
-			bytesOut.write(this.charData.getBytes(), 0,
+			bytesOut.write(StringUtils.getBytes(this.charData), 0,
 					(int) (indexToWriteAt - 1));
 		}
 

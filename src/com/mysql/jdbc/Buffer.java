@@ -417,7 +417,7 @@ public class Buffer {
 			i++;
 		}
 
-		String s = new String(this.byteBuffer, this.position, len);
+		String s = StringUtils.toString(this.byteBuffer, this.position, len);
 		this.position += (len + 1); // update cursor
 
 		return s;
@@ -434,7 +434,7 @@ public class Buffer {
 		}
 
 		try {
-			return new String(this.byteBuffer, this.position, len, encoding);
+			return StringUtils.toString(this.byteBuffer, this.position, len, encoding);
 		} catch (UnsupportedEncodingException uEE) {
 			throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.1") //$NON-NLS-1$
 					+ encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
@@ -647,7 +647,7 @@ public class Buffer {
 	final void writeStringNoNull(String s) throws SQLException {
 		int len = s.length();
 		ensureCapacity(len * 2);
-		System.arraycopy(s.getBytes(), 0, this.byteBuffer, this.position, len);
+		System.arraycopy(StringUtils.getBytes(s), 0, this.byteBuffer, this.position, len);
 		this.position += len;
 
 		// for (int i = 0; i < len; i++)

@@ -32,10 +32,15 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Various utility methods for converting to/from byte arrays in the platform
@@ -59,6 +64,32 @@ public class StringUtils {
 
 	static final int WILD_COMPARE_NO_MATCH = -1;
 
+	private static final ConcurrentHashMap<String,Charset> charsetsByAlias = 
+	     new ConcurrentHashMap<String,Charset>();
+
+	private static final String platformEncoding = System.getProperty("file.encoding");
+	
+	static Charset findCharset(String alias) throws UnsupportedEncodingException {
+		try {
+			Charset cs = charsetsByAlias.get(alias);
+			
+			if (cs == null) {
+				cs = Charset.forName(alias);
+				charsetsByAlias.putIfAbsent(alias, cs);
+			}
+		
+			return cs;
+			
+			// We re-throw these runtimes for compatibility with java.io
+		} catch (UnsupportedCharsetException uce) {
+			throw new UnsupportedEncodingException(alias);
+		} catch (IllegalCharsetNameException icne) {
+			throw new UnsupportedEncodingException(alias);
+		} catch (IllegalArgumentException iae) {
+			throw new UnsupportedEncodingException(alias);
+		}
+	}
+	
 	static {
 		for (int i = Byte.MIN_VALUE; i <= Byte.MAX_VALUE; i++) {
 			allBytes[i - Byte.MIN_VALUE] = (byte) i;
@@ -702,7 +733,7 @@ public class StringUtils {
 		}
 
 		if (s == endPos) {
-			throw new NumberFormatException(new String(buf));
+			throw new NumberFormatException(StringUtils.toString(buf));
 		}
 
 		/* Check for a sign. */
@@ -754,11 +785,11 @@ public class StringUtils {
 		}
 
 		if (s == save) {
-			throw new NumberFormatException(new String(buf));
+			throw new NumberFormatException(StringUtils.toString(buf));
 		}
 
 		if (overflow) {
-			throw new NumberFormatException(new String(buf));
+			throw new NumberFormatException(StringUtils.toString(buf));
 		}
 
 		/* Return the result of the appropriate sign. */
@@ -784,7 +815,7 @@ public class StringUtils {
 		}
 
 		if (s == endpos) {
-			throw new NumberFormatException(new String(buf));
+			throw new NumberFormatException(StringUtils.toString(buf));
 		}
 
 		/* Check for a sign. */
@@ -835,11 +866,11 @@ public class StringUtils {
 		}
 
 		if (s == save) {
-			throw new NumberFormatException(new String(buf));
+			throw new NumberFormatException(StringUtils.toString(buf));
 		}
 
 		if (overflow) {
-			throw new NumberFormatException(new String(buf));
+			throw new NumberFormatException(StringUtils.toString(buf));
 		}
 
 		/* Return the result of the appropriate sign. */
@@ -857,7 +888,7 @@ public class StringUtils {
 		}
 
 		if (s == buf.length) {
-			throw new NumberFormatException(new String(buf));
+			throw new NumberFormatException(StringUtils.toString(buf));
 		}
 
 		/* Check for a sign. */
@@ -908,11 +939,11 @@ public class StringUtils {
 		}
 
 		if (s == save) {
-			throw new NumberFormatException(new String(buf));
+			throw new NumberFormatException(StringUtils.toString(buf));
 		}
 
 		if (overflow) {
-			throw new NumberFormatException(new String(buf));
+			throw new NumberFormatException(StringUtils.toString(buf));
 		}
 
 		/* Return the result of the appropriate sign. */
@@ -1748,14 +1779,14 @@ public class StringUtils {
 		if (trueDotIndex != -1) {
 			//There is a catalog attached
 			if (isQuoted) {
-				tmpCat = new String (StringUtils.stripEnclosure(retval.substring(0, trueDotIndex+1)
+				tmpCat = StringUtils.toString(StringUtils.stripEnclosure(retval.substring(0, trueDotIndex+1)
 						.getBytes(), quotId, quotId));
 				if (StringUtils.startsWithIgnoreCaseAndWs(tmpCat, quotId)) {
 					tmpCat = tmpCat.substring(1, tmpCat.length() - 1);
 				}
 
 				retval = retval.substring(trueDotIndex + 2);
-				retval = new String(StringUtils.stripEnclosure(retval
+				retval = StringUtils.toString(StringUtils.stripEnclosure(retval
 						.getBytes(), quotId, quotId));
 			} else {
 				//NOT quoted, adjust indexOf
@@ -1764,7 +1795,7 @@ public class StringUtils {
 			}
 		} else {
 			//No catalog attached, strip retval and return
-			retval = new String(StringUtils.stripEnclosure(retval
+			retval = StringUtils.toString(StringUtils.stripEnclosure(retval
 				.getBytes(), quotId, quotId));
 		}
 		
@@ -1794,7 +1825,7 @@ public class StringUtils {
 			return null;
 		}
 
-		src = new String(stripEnclosure(src.getBytes(), quotChar, quotChar));
+		src = StringUtils.toString(stripEnclosure(src.getBytes(), quotChar, quotChar));
 
 		int lastNdx = src.indexOf(quotChar);
 		String tmpSrc;
@@ -1814,10 +1845,91 @@ public class StringUtils {
 			
 			lastNdx = tmpRest.indexOf(quotChar);
 		}
+		
 		tmpSrc = tmpSrc + tmpRest;
 		src = tmpSrc;
 
 		return src;
 	}
 	
+	// The following methods all exist because of the Java bug
+	//
+	// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6790402
+	// 
+	// which has been observed by users and reported as MySQL Bug#61105
+	//
+	// We can turn around and replace them with their java.lang.String
+	// equivalents if/when that bug is ever fixed.
+	
+	public static String toString(byte[] value, int offset, int length,
+			String encoding) throws UnsupportedEncodingException {
+		Charset cs = findCharset(encoding);
+
+		return cs.decode(ByteBuffer.wrap(value, offset, length)).toString();
+	}
+
+	public static String toString(byte[] value, String encoding)
+			throws UnsupportedEncodingException {
+		Charset cs = findCharset(encoding);
+
+		return cs.decode(ByteBuffer.wrap(value)).toString();
+	}
+
+	public static String toString(byte[] value, int offset, int length) {
+		try {
+			Charset cs = findCharset(platformEncoding);
+			
+			return cs.decode(ByteBuffer.wrap(value, offset, length)).toString();
+		} catch (UnsupportedEncodingException e) {
+			// can't happen, emulating new String(byte[])
+		}
+		
+		return null;
+	}
+
+	public static String toString(byte[] value) {
+		try {
+			Charset cs = findCharset(platformEncoding);
+			
+			return cs.decode(ByteBuffer.wrap(value)).toString();
+		} catch (UnsupportedEncodingException e) {
+			// can't happen, emulating new String(byte[])
+		}
+		
+		return null;
+	}
+
+	public static byte[] getBytes(String value, String encoding)
+			throws UnsupportedEncodingException {
+		Charset cs = findCharset(encoding);
+
+		// can't simply .array() this to get the bytes
+		// especially with variable-length charsets the 
+		// buffer is sometimes larger than the actual encoded data
+		ByteBuffer buf = cs.encode(value);
+		
+		int encodedLen = buf.limit();
+		byte[] asBytes = new byte[encodedLen];
+		buf.get(asBytes, 0, encodedLen);
+		
+		return asBytes;
+	}
+	
+	public static byte[] getBytes(String value) {
+		try {
+			Charset cs = findCharset(platformEncoding);
+			
+			ByteBuffer buf = cs.encode(value);
+			
+			int encodedLen = buf.limit();
+			byte[] asBytes = new byte[encodedLen];
+			buf.get(asBytes, 0, encodedLen);
+			
+			return asBytes;
+		} catch (UnsupportedEncodingException e) {
+			// can't happen, emulating new String(byte[])
+		}
+		
+		return null;
+	}
 }

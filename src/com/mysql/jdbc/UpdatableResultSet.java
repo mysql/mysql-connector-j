@@ -44,8 +44,7 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
  */
 public class UpdatableResultSet extends ResultSetImpl {
 	/** Marker for 'stream' data when doing INSERT rows */
-	final static byte[] STREAM_DATA_MARKER = "** STREAM DATA **" //$NON-NLS-1$
-	.getBytes();
+	final static byte[] STREAM_DATA_MARKER = StringUtils.getBytes("** STREAM DATA **"); //$NON-NLS-1$
 
 	protected SingleByteCharsetConverter charConverter;
 
@@ -912,7 +911,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 			// than one auto-increment key (which is the way it is _today_)
 			//
 			if (this.fields[i].isAutoIncrement() && autoIncrementId > 0) {
-				newRow[i] = String.valueOf(autoIncrementId).getBytes();
+				newRow[i] = StringUtils.getBytes(String.valueOf(autoIncrementId));
 				this.inserter.setBytesNoEscapeNoQuotes(i + 1, newRow[i]);
 			}
 		}
@@ -1089,7 +1088,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 		for (int i = 0; i < numFields; i++) {
 			if (!this.populateInserterWithDefaultValues) {
 				this.inserter.setBytesNoEscapeNoQuotes(i + 1,
-						"DEFAULT".getBytes());
+						StringUtils.getBytes("DEFAULT"));
 				newRowData = null;
 			} else {
 				if (this.defaultColumnValue[i] != null) {
@@ -1657,7 +1656,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 			if (x == null) {
 				this.thisRow.setColumnValue(columnIndex - 1, null);
 			} else {
-				this.thisRow.setColumnValue(columnIndex - 1, x.toString().getBytes());
+				this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x.toString()));
 			}
 		}
 	}
@@ -2507,7 +2506,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 							this.connection.getServerCharacterEncoding(),
 							this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
 				} else {
-					this.thisRow.setColumnValue(columnIndex - 1, x.getBytes());
+					this.thisRow.setColumnValue(columnIndex - 1, StringUtils.getBytes(x));
 				}
 			}
 		}

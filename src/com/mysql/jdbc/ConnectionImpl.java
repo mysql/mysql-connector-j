@@ -1285,7 +1285,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			// can't be used
 			//
 			try {
-				"abc".getBytes(mappedServerEncoding);
+				StringUtils.getBytes("abc",mappedServerEncoding);
 				setEncoding(mappedServerEncoding);
 				setUseUnicode(true);
 			} catch (UnsupportedEncodingException UE) {
@@ -1688,7 +1688,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			// can't be used
 			try {
 				String testString = "abc";
-				testString.getBytes(getEncoding());
+				StringUtils.getBytes(testString, getEncoding());
 			} catch (UnsupportedEncodingException UE) {
 				// Try the MySQL character encoding, then....
 				String oldEncoding = getEncoding();
@@ -1705,7 +1705,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 				try {
 					String testString = "abc";
-					testString.getBytes(getEncoding());
+					StringUtils.getBytes(testString, getEncoding());
 				} catch (UnsupportedEncodingException encodingEx) {
 					throw SQLError.createSQLException("Unsupported character "
 							+ "encoding '" + getEncoding() + "'.",
@@ -2026,11 +2026,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		} catch(java.nio.charset.UnsupportedCharsetException ucex) {
 			// fallback to String API - for Java 1.4
 			try {
-				byte bbuf[] = "\u00a5".getBytes(getEncoding());
+				byte bbuf[] = StringUtils.getBytes("\u00a5", getEncoding());
 				if (bbuf[0] == '\\') {
 					requiresEscapingEncoder = true;
 				} else {
-					bbuf = "\u20a9".getBytes(getEncoding());
+					bbuf = StringUtils.getBytes("\u20a9", getEncoding());
 					if (bbuf[0] == '\\') {
 						requiresEscapingEncoder = true;
 					}
@@ -2713,7 +2713,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				truncated = true;
 			}
 
-			extractedSql = new String(queryPacket.getByteBuffer(), 5,
+			extractedSql = StringUtils.toString(queryPacket.getByteBuffer(), 5,
 					(extractPosition - 5));
 
 			if (truncated) {

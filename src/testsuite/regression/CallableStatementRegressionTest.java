@@ -113,12 +113,12 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 					"testBug3540%", "%");
 
 			assertTrue(this.rs.next());
-			assertTrue("testBug3540".equals(this.rs.getString(3)));
-			assertTrue("x".equals(this.rs.getString(4)));
+			assertEquals("testBug3540", this.rs.getString(3));
+			assertEquals("x", this.rs.getString(4));
 
 			assertTrue(this.rs.next());
-			assertTrue("testBug3540".equals(this.rs.getString(3)));
-			assertTrue("y".equals(this.rs.getString(4)));
+			assertEquals("testBug3540", this.rs.getString(3));
+			assertEquals("y", this.rs.getString(4));
 
 			assertTrue(!this.rs.next());
 		} finally {

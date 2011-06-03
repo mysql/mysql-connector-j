@@ -332,7 +332,7 @@ public class Util {
 				to[i] ^= extra;
 			}
 
-			val = new String(to);
+			val = StringUtils.toString(to);
 		}
 
 		return val;

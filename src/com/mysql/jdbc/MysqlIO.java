@@ -2098,7 +2098,7 @@ public class MysqlIO {
 	    						this.connection);
 	    			} else {
 	    				if (StringUtils.startsWithIgnoreCaseAndWs(query, "LOAD DATA")) { //$NON-NLS-1$
-	    					this.sendPacket.writeBytesNoNull(query.getBytes());
+	    					this.sendPacket.writeBytesNoNull(StringUtils.getBytes(query));
 	    				} else {
 	    					this.sendPacket.writeStringNoNull(query,
 	    							characterEncoding,
@@ -2136,7 +2136,7 @@ public class MysqlIO {
 	    				testcaseQuery = query;
 	    			}
 	    		} else {
-	    			testcaseQuery = new String(queryBuf, 5,
+	    			testcaseQuery = StringUtils.toString(queryBuf, 5,
 	    					(oldPacketPosition - 5));
 	    		}
 
@@ -2195,7 +2195,7 @@ public class MysqlIO {
 	    				truncated = true;
 	    			}
 
-	    			profileQueryToLog = new String(queryBuf, 5,
+	    			profileQueryToLog = StringUtils.toString(queryBuf, 5,
 	    					(extractPosition - 5));
 
 	    			if (truncated) {
@@ -3987,7 +3987,7 @@ public class MysqlIO {
                             passwordHash, 20);
 
                         /* Finally scramble decoded scramble with password */
-                        String scrambledPassword = Util.scramble(new String(
+                        String scrambledPassword = Util.scramble(StringUtils.toString(
                                     mysqlScrambleBuff), password);
 
                         Buffer packet2 = new Buffer(packLength);
@@ -4275,13 +4275,13 @@ public class MysqlIO {
     		byte tinyVal = binaryData.readByte();
 
     		if (!curField.isUnsigned()) {
-    			unpackedRowData[columnIndex] = String.valueOf(tinyVal)
-    			.getBytes();
+    			unpackedRowData[columnIndex] = StringUtils.getBytes(
+    					String.valueOf(tinyVal));
     		} else {
     			short unsignedTinyVal = (short) (tinyVal & 0xff);
 
-    			unpackedRowData[columnIndex] = String.valueOf(unsignedTinyVal)
-    			.getBytes();
+    			unpackedRowData[columnIndex] = StringUtils.getBytes(
+    					String.valueOf(unsignedTinyVal));
     		}
 
     		break;
@@ -4292,13 +4292,13 @@ public class MysqlIO {
     		short shortVal = (short) binaryData.readInt();
 
     		if (!curField.isUnsigned()) {
-    			unpackedRowData[columnIndex] = String.valueOf(shortVal)
-    			.getBytes();
+    			unpackedRowData[columnIndex] = StringUtils.getBytes(
+    					String.valueOf(shortVal));
     		} else {
     			int unsignedShortVal = shortVal & 0xffff;
 
-    			unpackedRowData[columnIndex] = String.valueOf(unsignedShortVal)
-    			.getBytes();
+    			unpackedRowData[columnIndex] = StringUtils.getBytes(
+    					String.valueOf(unsignedShortVal));
     		}
 
     		break;
@@ -4309,13 +4309,13 @@ public class MysqlIO {
     		int intVal = (int) binaryData.readLong();
 
     		if (!curField.isUnsigned()) {
-    			unpackedRowData[columnIndex] = String.valueOf(intVal)
-    			.getBytes();
+    			unpackedRowData[columnIndex] = StringUtils.getBytes(
+    					String.valueOf(intVal));
     		} else {
     			long longVal = intVal & 0xffffffffL;
 
-    			unpackedRowData[columnIndex] = String.valueOf(longVal)
-    			.getBytes();
+    			unpackedRowData[columnIndex] = StringUtils.getBytes(
+    					String.valueOf(longVal));
     		}
 
     		break;
@@ -4325,13 +4325,13 @@ public class MysqlIO {
     		long longVal = binaryData.readLongLong();
 
     		if (!curField.isUnsigned()) {
-    			unpackedRowData[columnIndex] = String.valueOf(longVal)
-    			.getBytes();
+    			unpackedRowData[columnIndex] = StringUtils.getBytes(
+    					String.valueOf(longVal));
     		} else {
     			BigInteger asBigInteger = ResultSetImpl.convertLongToUlong(longVal);
 
-    			unpackedRowData[columnIndex] = asBigInteger.toString()
-    			.getBytes();
+    			unpackedRowData[columnIndex] = StringUtils.getBytes(
+    					asBigInteger.toString());
     		}
 
     		break;
@@ -4340,7 +4340,8 @@ public class MysqlIO {
 
     		float floatVal = Float.intBitsToFloat(binaryData.readIntAsLong());
 
-    		unpackedRowData[columnIndex] = String.valueOf(floatVal).getBytes();
+    		unpackedRowData[columnIndex] = StringUtils.getBytes(
+    				String.valueOf(floatVal));
 
     		break;
 
@@ -4348,7 +4349,8 @@ public class MysqlIO {
 
     		double doubleVal = Double.longBitsToDouble(binaryData.readLongLong());
 
-    		unpackedRowData[columnIndex] = String.valueOf(doubleVal).getBytes();
+    		unpackedRowData[columnIndex] = StringUtils.getBytes(
+    				String.valueOf(doubleVal));
 
     		break;
 
@@ -4516,7 +4518,7 @@ public class MysqlIO {
 
     		int stringLength = 19;
 
-    		byte[] nanosAsBytes = Integer.toString(nanos).getBytes();
+    		byte[] nanosAsBytes = StringUtils.getBytes(Integer.toString(nanos));
 
     		stringLength += (1 + nanosAsBytes.length); // '.' + # of digits
 

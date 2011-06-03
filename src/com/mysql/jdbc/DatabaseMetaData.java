@@ -1569,7 +1569,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			String tmpProcName = procName;
 			tmpProcName = tmpProcName.replaceAll(quoteChar, "");
 			try {
-				procNameAsBytes = tmpProcName.getBytes("UTF-8");
+				procNameAsBytes = StringUtils.getBytes(tmpProcName, "UTF-8");
 			} catch (UnsupportedEncodingException ueEx) {
 				procNameAsBytes = s2b(tmpProcName);
 
@@ -1579,7 +1579,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			tmpProcName = dbName;
 			tmpProcName = tmpProcName.replaceAll(quoteChar, "");
 			try {
-				procCatAsBytes = tmpProcName.getBytes("UTF-8");
+				procCatAsBytes = StringUtils.getBytes(tmpProcName, "UTF-8");
 			} catch (UnsupportedEncodingException ueEx) {
 				procCatAsBytes = s2b(tmpProcName);
 

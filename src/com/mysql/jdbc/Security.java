@@ -276,7 +276,7 @@ class Security {
 			cleansedPassword.append(c);
 		}
 
-		return md.digest(cleansedPassword.toString().getBytes());
+		return md.digest(StringUtils.getBytes(cleansedPassword.toString()));
 	}
 
 	/**
@@ -327,15 +327,15 @@ class Security {
 		String passwordEncoding = conn.getPasswordCharacterEncoding();
 		
 		byte[] passwordHashStage1 = md
-				.digest((passwordEncoding == null || passwordEncoding.length() == 0) ? password
-						.getBytes()
-						: password.getBytes(passwordEncoding));
+				.digest((passwordEncoding == null || passwordEncoding.length() == 0) ? 
+						StringUtils.getBytes(password)
+						: StringUtils.getBytes(password, passwordEncoding));
 		md.reset();
 
 		byte[] passwordHashStage2 = md.digest(passwordHashStage1);
 		md.reset();
 
-		byte[] seedAsBytes = seed.getBytes("ASCII"); // for debugging
+		byte[] seedAsBytes = StringUtils.getBytes(seed, "ASCII"); // for debugging
 		md.update(seedAsBytes);
 		md.update(passwordHashStage2);
 

@@ -5397,7 +5397,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					} catch (NumberFormatException nfe) {
 						try {
 							// To do: Warn of over/underflow???
-							return parseShortAsDouble(columnIndex, new String(
+							return parseShortAsDouble(columnIndex, StringUtils.toString(
 									shortAsBytes));
 						} catch (NumberFormatException newNfe) {
 							; // ignore, it's not a number
@@ -5419,7 +5419,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						throw SQLError.createSQLException(
 								Messages
 										.getString("ResultSet.Invalid_value_for_getShort()_-____96")
-										+ new String(shortAsBytes) //$NON-NLS-1$
+										+ StringUtils.toString(shortAsBytes) //$NON-NLS-1$
 										+ "'",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 					}
@@ -5633,7 +5633,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				}
 				
 				if (asBytes != null) {
-					asString = new String(asBytes, forcedEncoding);
+					asString = StringUtils.toString(asBytes, forcedEncoding);
 				}
 			} catch (UnsupportedEncodingException uee) {
 				throw SQLError.createSQLException("Unsupported character encoding " + 
@@ -6479,7 +6479,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						return null;
 					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
 							.equals(this.connection.getZeroDateTimeBehavior())) {
-						throw SQLError.createSQLException("Value '" + new String(timestampAsBytes)
+						throw SQLError.createSQLException("Value '" + StringUtils.toString(timestampAsBytes)
 								+ "' can not be represented as java.sql.Timestamp",
 								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 					}
@@ -7221,12 +7221,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				}
 				
 				long valueAsLong = Long
-						.parseLong(valueAsString == null ? new String(
+						.parseLong(valueAsString == null ? StringUtils.toString(
 								valueAsBytes) : valueAsString);
 
 				if (valueAsLong < Integer.MIN_VALUE
 						|| valueAsLong > Integer.MAX_VALUE) {
-					throwRangeException(valueAsString == null ? new String(
+					throwRangeException(valueAsString == null ? StringUtils.toString(
 							valueAsBytes) : valueAsString, columnIndex + 1,
 							Types.INTEGER);
 				}
@@ -7307,12 +7307,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			}
 			
 			double valueAsDouble = Double
-					.parseDouble(valueAsString == null ? new String(
+					.parseDouble(valueAsString == null ? StringUtils.toString(
 							valueAsBytes) : valueAsString);
 
 			if (valueAsDouble < Long.MIN_VALUE
 					|| valueAsDouble > Long.MAX_VALUE) {
-				throwRangeException(valueAsString == null ? new String(
+				throwRangeException(valueAsString == null ? StringUtils.toString(
 						valueAsBytes) : valueAsString, columnIndexZeroBased + 1,
 						Types.BIGINT);
 			}
@@ -7367,12 +7367,12 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (this.jdbcCompliantTruncationForReads) {
 			if (shortValue == Short.MIN_VALUE || shortValue == Short.MAX_VALUE) {
 				long valueAsLong = Long
-						.parseLong(valueAsString == null ? new String(
+						.parseLong(valueAsString == null ? StringUtils.toString(
 								valueAsBytes) : valueAsString);
 
 				if (valueAsLong < Short.MIN_VALUE
 						|| valueAsLong > Short.MAX_VALUE) {
-					throwRangeException(valueAsString == null ? new String(
+					throwRangeException(valueAsString == null ? StringUtils.toString(
 							valueAsBytes) : valueAsString, columnIndex,
 							Types.SMALLINT);
 				}

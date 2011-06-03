@@ -1310,7 +1310,7 @@ public class StatementImpl implements Statement {
 			long generatedKey = batchedStatement.getLastInsertID();
 		
 			row = new byte[1][];
-			row[0] = Long.toString(generatedKey).getBytes();
+			row[0] = StringUtils.getBytes(Long.toString(generatedKey));
 			this.batchedGeneratedKeys.add(new ByteArrayRow(row, getExceptionInterceptor()));
 		}
 
@@ -1322,7 +1322,7 @@ public class StatementImpl implements Statement {
 				long generatedKey = batchedStatement.getLastInsertID();
 				
 				row = new byte[1][];
-				row[0] = Long.toString(generatedKey).getBytes();
+				row[0] = StringUtils.getBytes(Long.toString(generatedKey));
 				this.batchedGeneratedKeys.add(new ByteArrayRow(row, getExceptionInterceptor()));
 			}
 		}
@@ -1970,7 +1970,7 @@ public class StatementImpl implements Statement {
 				for (int i = 0; i < numKeys; i++) {
 					byte[][] row = new byte[1][];
 					if (beginAt > 0) {
-						row[0] = Long.toString(beginAt).getBytes();
+						row[0] = StringUtils.getBytes(Long.toString(beginAt));
 					} else {
 						byte[] asBytes = new byte[8];
 						asBytes[7] = (byte) (beginAt & 0xff);

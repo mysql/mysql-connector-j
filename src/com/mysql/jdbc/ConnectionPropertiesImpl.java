@@ -2808,7 +2808,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			// can't be used
 			try {
 				String testString = "abc"; //$NON-NLS-1$
-				testString.getBytes(testEncoding);
+				StringUtils.getBytes(testString, testEncoding);
 			} catch (UnsupportedEncodingException UE) {
 				throw SQLError.createSQLException(Messages.getString(
 						"ConnectionProperties.unsupportedCharacterEncoding", 

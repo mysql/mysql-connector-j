@@ -26,6 +26,7 @@ package com.mysql.jdbc.profiler;
 
 import java.util.Date;
 
+import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
 
 /**
@@ -317,9 +318,9 @@ public class ProfilerEvent {
 
 		return new ProfilerEvent(eventType, "", "", connectionId, statementId,
 				resultSetId, eventCreationTime, eventDuration,
-				new String(eventDurationUnits, "ISO8859_1"),
-				new String(eventCreationAsBytes, "ISO8859_1"), null,
-				new String(message, "ISO8859_1"));
+				StringUtils.toString(eventDurationUnits, "ISO8859_1"),
+				StringUtils.toString(eventCreationAsBytes, "ISO8859_1"), null,
+				StringUtils.toString(message, "ISO8859_1"));
 	}
 
 	/**
@@ -338,8 +339,8 @@ public class ProfilerEvent {
 		getEventCreationPointAsString();
 
 		if (this.eventCreationPointDesc != null) {
-			eventCreationAsBytes = this.eventCreationPointDesc
-					.getBytes("ISO8859_1");
+			eventCreationAsBytes = StringUtils.getBytes(
+					this.eventCreationPointDesc, "ISO8859_1");
 			len += (4 + eventCreationAsBytes.length);
 		} else {
 			len += 4;
@@ -348,7 +349,7 @@ public class ProfilerEvent {
 		byte[] messageAsBytes = null;
 
 		if (messageAsBytes != null) {
-			messageAsBytes = this.message.getBytes("ISO8859_1");
+			messageAsBytes = StringUtils.getBytes(this.message, "ISO8859_1");
 			len += (4 + messageAsBytes.length);
 		} else {
 			len += 4;
@@ -357,11 +358,11 @@ public class ProfilerEvent {
 		byte[] durationUnitsAsBytes = null;
 		
 		if (durationUnits != null) {
-			durationUnitsAsBytes = this.durationUnits.getBytes("ISO8859_1");
+			durationUnitsAsBytes = StringUtils.getBytes(this.durationUnits, "ISO8859_1");
 			len += (4 + durationUnitsAsBytes.length);
 		} else {
 			len += 4;
-			durationUnitsAsBytes = "".getBytes("ISO8859_1");
+			durationUnitsAsBytes = StringUtils.getBytes("", "ISO8859_1");
 		}
 
 		byte[] buf = new byte[len];

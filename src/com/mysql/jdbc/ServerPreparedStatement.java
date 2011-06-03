@@ -1470,7 +1470,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 				if (queryWasSlow && this.connection.getExplainSlowQueries()) {
 					String queryAsString = asSql(true);
 
-					mysql.explainSlowQuery(queryAsString.getBytes(),
+					mysql.explainSlowQuery(StringUtils.getBytes(queryAsString),
 							queryAsString);
 				}
 				
@@ -2385,7 +2385,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 									.parserKnowsUnicode(),
 									this.connection);
 				} else {
-					packet.writeLenBytes(((String) value).getBytes());
+					packet.writeLenBytes(StringUtils.getBytes((String) value));
 				}
 
 				return;

@@ -736,7 +736,7 @@ public class Field {
 						}
 
 						try {
-							stringVal = new String(stringBytes, encoding);
+							stringVal = StringUtils.toString(stringBytes, encoding);
 						} catch (UnsupportedEncodingException ue) {
 							throw new RuntimeException(Messages
 									.getString("Field.12") + encoding //$NON-NLS-1$
