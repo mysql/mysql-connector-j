@@ -99,7 +99,7 @@ public class CallableStatementTest extends BaseTestCase {
 
 				executeBatchedStoredProc(this.conn);
 
-				batchedConn = getConnectionWithProps("rewriteBatchedStatements=true,profileSQL=true");
+				batchedConn = getConnectionWithProps("logger=StandardLogger,rewriteBatchedStatements=true,profileSQL=true");
 
 				StringBuffer outBuf = new StringBuffer();
 				StandardLogger.bufferedLog = outBuf;
