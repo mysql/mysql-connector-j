@@ -31,6 +31,7 @@ import java.sql.SQLWarning;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
@@ -390,6 +391,16 @@ public class StatementImpl implements Statement {
 		if (sql != null) {
 			this.batchedArgs.add(sql);
 		}
+	}
+
+	/** Get the batched args as added by the addBatch method(s).
+	 * The list is unmodifiable and might contain any combination of String,
+	 * BatchParams, or BatchedBindValues depending on how the parameters were
+	 * batched.
+	 * @return an unmodifiable List of batched args
+	 */
+	public List getBatchedArgs() {
+		return batchedArgs==null?null:Collections.unmodifiableList(batchedArgs);
 	}
 
 	/**

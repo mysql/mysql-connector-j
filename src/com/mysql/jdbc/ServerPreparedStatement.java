@@ -84,8 +84,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 	
 	protected static final int BLOB_STREAM_READ_BUF_SIZE = 8192;
 
-	static class BatchedBindValues {
-		BindValue[] batchedParameterValues;
+	public static class BatchedBindValues {
+		public BindValue[] batchedParameterValues;
 
 		BatchedBindValues(BindValue[] paramVals) {
 			int numParams = paramVals.length;
@@ -100,29 +100,23 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 	public static class BindValue {
 
-		long boundBeforeExecutionNum = 0;
+		public long boundBeforeExecutionNum = 0;
 		
 		public long bindLength; /* Default length of data */
 
-		int bufferType; /* buffer type */
+		public int bufferType; /* buffer type */
 
-		byte byteBinding;
+		public double doubleBinding;
 
-		double doubleBinding;
-
-		float floatBinding;
-
-		int intBinding;
+		public float floatBinding;
 
 		public boolean isLongData; /* long data indicator */
 
 		public boolean isNull; /* NULL indicator */
 
-		boolean isSet = false; /* has this parameter been set? */
+		public boolean isSet = false; /* has this parameter been set? */
 
-		long longBinding;
-
-		short shortBinding;
+		public long longBinding; /* all integral values are stored here */
 
 		public Object value; /* The value to store */
 
@@ -136,9 +130,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 			this.isNull = copyMe.isNull;
 			this.bufferType = copyMe.bufferType;
 			this.bindLength = copyMe.bindLength;
-			this.byteBinding = copyMe.byteBinding;
-			this.shortBinding = copyMe.shortBinding;
-			this.intBinding = copyMe.intBinding;
 			this.longBinding = copyMe.longBinding;
 			this.floatBinding = copyMe.floatBinding;
 			this.doubleBinding = copyMe.doubleBinding;
@@ -149,9 +140,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 			this.value = null;
 			this.isLongData = false;
 
-			this.byteBinding = 0;
-			this.shortBinding = 0;
-			this.intBinding = 0;
 			this.longBinding = 0L;
 			this.floatBinding = 0;
 			this.doubleBinding = 0D;
@@ -168,11 +156,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 			switch (this.bufferType) {
 			case MysqlDefs.FIELD_TYPE_TINY:
-				return String.valueOf(byteBinding);
 			case MysqlDefs.FIELD_TYPE_SHORT:
-				return String.valueOf(shortBinding);
 			case MysqlDefs.FIELD_TYPE_LONG:
-				return String.valueOf(intBinding);
 			case MysqlDefs.FIELD_TYPE_LONGLONG:
 				return String.valueOf(longBinding);
 			case MysqlDefs.FIELD_TYPE_FLOAT:
@@ -486,13 +471,13 @@ public class ServerPreparedStatement extends PreparedStatement {
 						switch (bindValue.bufferType) {
 
 						case MysqlDefs.FIELD_TYPE_TINY:
-							pStmtForSub.setByte(i + 1, bindValue.byteBinding);
+							pStmtForSub.setByte(i + 1, (byte)bindValue.longBinding);
 							break;
 						case MysqlDefs.FIELD_TYPE_SHORT:
-							pStmtForSub.setShort(i + 1, bindValue.shortBinding);
+							pStmtForSub.setShort(i + 1, (short)bindValue.longBinding);
 							break;
 						case MysqlDefs.FIELD_TYPE_LONG:
-							pStmtForSub.setInt(i + 1, bindValue.intBinding);
+							pStmtForSub.setInt(i + 1, (int)bindValue.longBinding);
 							break;
 						case MysqlDefs.FIELD_TYPE_LONGLONG:
 							pStmtForSub.setLong(i + 1, bindValue.longBinding);
@@ -1858,7 +1843,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		setType(binding, MysqlDefs.FIELD_TYPE_TINY);
 
 		binding.value = null;
-		binding.byteBinding = x;
+		binding.longBinding = x;
 		binding.isNull = false;
 		binding.isLongData = false;
 	}
@@ -2024,7 +2009,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		setType(binding, MysqlDefs.FIELD_TYPE_LONG);
 
 		binding.value = null;
-		binding.intBinding = x;
+		binding.longBinding = x;
 		binding.isNull = false;
 		binding.isLongData = false;
 	}
@@ -2104,7 +2089,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		setType(binding, MysqlDefs.FIELD_TYPE_SHORT);
 
 		binding.value = null;
-		binding.shortBinding = x;
+		binding.longBinding = x;
 		binding.isNull = false;
 		binding.isLongData = false;
 	}
@@ -2341,15 +2326,15 @@ public class ServerPreparedStatement extends PreparedStatement {
 			switch (bindValue.bufferType) {
 
 			case MysqlDefs.FIELD_TYPE_TINY:
-				packet.writeByte(bindValue.byteBinding);
+				packet.writeByte((byte)bindValue.longBinding);
 				return;
 			case MysqlDefs.FIELD_TYPE_SHORT:
 				packet.ensureCapacity(2);
-				packet.writeInt(bindValue.shortBinding);
+				packet.writeInt((int)bindValue.longBinding);
 				return;
 			case MysqlDefs.FIELD_TYPE_LONG:
 				packet.ensureCapacity(4);
-				packet.writeLong(bindValue.intBinding);
+				packet.writeLong((int)bindValue.longBinding);
 				return;
 			case MysqlDefs.FIELD_TYPE_LONGLONG:
 				packet.ensureCapacity(8);
@@ -2883,15 +2868,15 @@ public class ServerPreparedStatement extends PreparedStatement {
 	
 					case MysqlDefs.FIELD_TYPE_TINY:
 						batchedStatement.setByte(batchedParamIndex++,
-								paramArg[j].byteBinding);
+								(byte)paramArg[j].longBinding);
 						break;
 					case MysqlDefs.FIELD_TYPE_SHORT:
 						batchedStatement.setShort(batchedParamIndex++,
-								paramArg[j].shortBinding);
+								(short)paramArg[j].longBinding);
 						break;
 					case MysqlDefs.FIELD_TYPE_LONG:
 						batchedStatement.setInt(batchedParamIndex++,
-								paramArg[j].intBinding);
+								(int)paramArg[j].longBinding);
 						break;
 					case MysqlDefs.FIELD_TYPE_LONGLONG:
 						batchedStatement.setLong(batchedParamIndex++,

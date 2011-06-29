@@ -126,16 +126,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 	
-	class BatchParams {
-		boolean[] isNull = null;
+	public class BatchParams {
+		public boolean[] isNull = null;
 
-		boolean[] isStream = null;
+		public boolean[] isStream = null;
 
-		InputStream[] parameterStreams = null;
+		public InputStream[] parameterStreams = null;
 
-		byte[][] parameterStrings = null;
+		public byte[][] parameterStrings = null;
 
-		int[] streamLengths = null;
+		public int[] streamLengths = null;
 
 		BatchParams(byte[][] strings, InputStream[] streams,
 				boolean[] isStreamFlags, int[] lengths, boolean[] isNullFlags) {
