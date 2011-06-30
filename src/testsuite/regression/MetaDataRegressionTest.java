@@ -2966,13 +2966,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			}
 		}
         
-        
-        
         Connection conn1 = DriverManager.getConnection(newUrlToTestNoDB.toString());
-		if (!((MySQLConnection) conn1).lowerCaseTableNames()) {
-			//Not repeatable on CS FS
-			return;
-		}
 		
         this.stmt = conn1.createStatement();
         createDatabase("TST1");
