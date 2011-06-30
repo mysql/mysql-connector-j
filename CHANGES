@@ -3,7 +3,18 @@
 
 nn-nn-11 - Version 5.1.17
 
-  - Fix for Bug#61105 - Avoid a concurrent bottleneck in Java's character set
+  - Fix for Bug#61332 - LIKE not optimized in server when run against I__S tables and no wildcards used.
+    Databases/tables with "_" and/or "%" in their names (escaped or not) will be handled by this code path,
+	although slower, since it's rare to find these characters in table names in SQL. If there's a "_" or "%"
+	in the string, LIKE will take care of that, otherwise we now use = . The only exception is
+	information_schema database which is handled separately. Patch covers both getTables() and getColumns().
+
+  - Fix for Bug#61150 - First call to stored procedure fails with "No Database Selected".
+	The workaround introduced in DatabaseMetaData.getCallStmtParameterTypes to fix
+	the bug in server where SHOW CREATE PROCEDURE was not respecting lower-case table names
+	is misbehaving when connection is not attached to database and on non-casesensitive OS.
+
+	- Fix for Bug#61105 - Avoid a concurrent bottleneck in Java's character set
     encoding/decoding when converting bytes to/from Strings.
     
 04-21-11 - Version 5.1.16

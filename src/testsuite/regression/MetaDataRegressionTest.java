@@ -27,6 +27,7 @@ package testsuite.regression;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverPropertyInfo;
@@ -49,8 +50,11 @@ import testsuite.BaseTestCase;
 import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.MySQLConnection;
+import com.mysql.jdbc.StatementInterceptorV2;
+import com.mysql.jdbc.StringUtils;
 
 /**
  * Regression tests for DatabaseMetaData
@@ -2903,4 +2907,124 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 	}
 	
+	
+	/**
+	 * Tests fix for BUG#61150 - First call to SP
+	 * fails with "No Database Selected"
+	 * The workaround introduced in DatabaseMetaData.getCallStmtParameterTypes
+	 * to fix the bug in server where SHOW CREATE PROCEDURE was not respecting
+	 * lower-case table names is misbehaving when connection is not attached to
+	 * database and on non-casesensitive OS.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug61150() throws Exception {
+        Properties props = new Properties();
+        Connection conn1 = getConnectionWithProps("jdbc:mysql:///", props);
+		if (!((MySQLConnection) conn1).lowerCaseTableNames()) {
+			//Not repeatable on CS FS
+			return;
+		}
+		
+        this.stmt = conn1.createStatement();
+        createDatabase("TST1");
+		createProcedure("TST1.PROC", "(x int, out y int)\n"
+				+ "begin\n"
+				+ "declare z int;\n"
+				+ "set z = x+1, y = z;\n" + "end\n");
+     
+     	CallableStatement cStmt = null;
+		cStmt = conn1.prepareCall("{call `TST1`.`PROC`(?, ?)}");
+		cStmt.setInt(1, 5);
+		cStmt.registerOutParameter(2, Types.INTEGER);
+
+		cStmt.execute();
+		assertEquals(6, cStmt.getInt(2));
+		cStmt.clearParameters();
+		cStmt.close();
+        
+        conn1.setCatalog("TST1");
+        cStmt = null;
+		cStmt = conn1.prepareCall("{call TST1.PROC(?, ?)}");
+		cStmt.setInt(1, 5);
+		cStmt.registerOutParameter(2, Types.INTEGER);
+
+		cStmt.execute();
+		assertEquals(6, cStmt.getInt(2));
+		cStmt.clearParameters();
+        cStmt.close();
+        
+        conn1.setCatalog("mysql");
+        cStmt = null;
+		cStmt = conn1.prepareCall("{call `TST1`.`PROC`(?, ?)}");
+		cStmt.setInt(1, 5);
+		cStmt.registerOutParameter(2, Types.INTEGER);
+
+		cStmt.execute();
+		assertEquals(6, cStmt.getInt(2));
+		cStmt.clearParameters();
+        cStmt.close();
+	}
+	
+	
+	/**
+	 * Tests fix for BUG#61332 - Check if "LIKE" or "=" is sent
+	 * to server in I__S query when no wildcards are supplied
+	 * for schema parameter. 
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug61332() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("useInformationSchema", "true");
+		props.setProperty("statementInterceptors", StatementInterceptorBug61332.class.getName());
+		Connection testConn = getConnectionWithProps(props);
+		
+		if (versionMeetsMinimum(5, 0, 7)) {
+			try {
+        		createTable("bug61332", "(c1 char(1))");
+               	DatabaseMetaData metaData = testConn.getMetaData();
+
+               	this.rs = metaData.getColumns(null, null, "bug61332", null);
+               	this.rs.next();
+			} finally {
+			}
+		}					
+	}
+		
+	public static class StatementInterceptorBug61332 implements StatementInterceptorV2{
+		public void destroy() {}
+
+		public boolean executeTopLevelOnly() {
+			return false;
+		}
+
+		public void init(com.mysql.jdbc.Connection conn, Properties props)
+				throws SQLException {}
+
+		public ResultSetInternalMethods postProcess(String sql,
+				com.mysql.jdbc.Statement interceptedStatement,
+				ResultSetInternalMethods originalResultSet,
+				com.mysql.jdbc.Connection connection, int warningCount,
+				boolean noIndexUsed, boolean noGoodIndexUsed,
+				SQLException statementException) throws SQLException {
+			return null;
+		}
+
+		public ResultSetInternalMethods preProcess(String sql,
+				com.mysql.jdbc.Statement interceptedStatement,
+				com.mysql.jdbc.Connection conn) throws SQLException {
+			java.sql.Statement test = conn.createStatement();
+			if (interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
+				sql = ((com.mysql.jdbc.PreparedStatement) interceptedStatement).getPreparedSql();
+				assertTrue(StringUtils.indexOfIgnoreCase(0,sql, 
+						"WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME LIKE ?") > -1);
+			}
+			return null;
+		}
+		
+	}	
+
 }

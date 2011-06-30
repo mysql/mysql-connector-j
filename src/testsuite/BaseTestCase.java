@@ -107,6 +107,8 @@ public abstract class BaseTestCase extends TestCase {
 
 	private boolean runningOnJdk131 = false;
 
+	private boolean isOnCSFS = true;
+	
 	/**
 	 * Creates a new BaseTestCase object.
 	 * 
@@ -517,6 +519,7 @@ public abstract class BaseTestCase extends TestCase {
 		}
 
 		System.out.println("Done.\n");
+		
 		this.stmt = this.conn.createStatement();
 
 		try {
@@ -537,6 +540,8 @@ public abstract class BaseTestCase extends TestCase {
 				this.rs.close();
 			}
 		}
+
+		this.isOnCSFS = !this.conn.getMetaData().storesLowerCaseIdentifiers();
 	}
 
 	/**
@@ -1019,4 +1024,11 @@ public abstract class BaseTestCase extends TestCase {
 				return getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() +"/" + db, props);
 				
 			}
+	
+	protected boolean assertEqualsFSAware(String matchStr, String inStr) throws Exception {
+		if (this.isOnCSFS)
+			return matchStr.equals(inStr);
+		else
+			return matchStr.equalsIgnoreCase(inStr);
+	}
 }

@@ -26,6 +26,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
+import com.mysql.jdbc.StringUtils;
 
 /**
  * DatabaseMetaData implementation that uses INFORMATION_SCHEMA available in
@@ -255,11 +256,42 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 						+ "NULL AS SCOPE_TABLE,"
 						+ "NULL AS SOURCE_DATA_TYPE,"
 						+ "IF (EXTRA LIKE '%auto_increment%','YES','NO') AS IS_AUTOINCREMENT "
-						+ "FROM INFORMATION_SCHEMA.COLUMNS WHERE "
-						+ "TABLE_SCHEMA LIKE ? AND "
-						+ "TABLE_NAME LIKE ? AND COLUMN_NAME LIKE ? "
-						+ "ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
+						+ "FROM INFORMATION_SCHEMA.COLUMNS WHERE ");
 
+		final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
+		
+		if (catalog != null) {
+			if ((operatingOnInformationSchema) || ((StringUtils.indexOfIgnoreCase(0, catalog, "%") == -1) 
+					&& (StringUtils.indexOfIgnoreCase(0, catalog, "_") == -1))) {
+				sqlBuf.append("TABLE_SCHEMA = ? AND ");
+			} else {
+				sqlBuf.append("TABLE_SCHEMA LIKE ? AND ");
+			}
+			
+		} else {
+			sqlBuf.append("TABLE_SCHEMA LIKE ? AND ");
+		}
+
+		if (tableName != null) {
+			if ((StringUtils.indexOfIgnoreCase(0, tableName, "%") == -1) 
+					&& (StringUtils.indexOfIgnoreCase(0, tableName, "_") == -1)) {
+				sqlBuf.append("TABLE_NAME = ? AND ");
+			} else {
+				sqlBuf.append("TABLE_NAME LIKE ? AND ");
+			}
+			
+		} else {
+			sqlBuf.append("TABLE_NAME LIKE ? AND ");
+		}
+		
+		if ((StringUtils.indexOfIgnoreCase(0, columnNamePattern, "%") == -1) 
+				&& (StringUtils.indexOfIgnoreCase(0, columnNamePattern, "_") == -1)) {
+			sqlBuf.append("COLUMN_NAME = ? ");
+		} else {
+			sqlBuf.append("COLUMN_NAME LIKE ? ");
+		}
+		sqlBuf.append("ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION");
+		
 		java.sql.PreparedStatement pStmt = null;
 
 		try {
@@ -1492,9 +1524,34 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "NULL AS TABLE_SCHEM, TABLE_NAME, "
 				+ "CASE WHEN TABLE_TYPE='BASE TABLE' THEN 'TABLE' WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, "
 				+ "TABLE_COMMENT AS REMARKS "
-				+ "FROM INFORMATION_SCHEMA.TABLES WHERE "
-				+ "TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ? AND TABLE_TYPE IN (?,?,?) "
-				+ "ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME";
+				+ "FROM INFORMATION_SCHEMA.TABLES WHERE ";
+		
+		final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
+		if (catalog != null) {
+			if ((operatingOnInformationSchema) || ((StringUtils.indexOfIgnoreCase(0, catalog, "%") == -1) 
+					&& (StringUtils.indexOfIgnoreCase(0, catalog, "_") == -1))) {
+				sql = sql + "TABLE_SCHEMA = ? AND ";
+			} else {
+				sql = sql + "TABLE_SCHEMA LIKE ? AND ";
+			}
+			
+		} else {
+			sql = sql + "TABLE_SCHEMA LIKE ? AND ";
+		}
+
+		if (tableNamePat != null) {
+			if ((StringUtils.indexOfIgnoreCase(0, tableNamePat, "%") == -1) 
+					&& (StringUtils.indexOfIgnoreCase(0, tableNamePat, "_") == -1)) {
+				sql = sql + "TABLE_NAME = ? AND ";
+			} else {
+				sql = sql + "TABLE_NAME LIKE ? AND ";
+			}
+			
+		} else {
+			sql = sql + "TABLE_NAME LIKE ? AND ";
+		}
+		sql = sql + "TABLE_TYPE IN (?,?,?) ";
+		sql = sql + "ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME";
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
 			

@@ -1514,13 +1514,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		try {
 			paramRetrievalStmt = this.conn.getMetadataSafeStatement();
 			
+			String oldCatalog = this.conn.getCatalog();
 			if (this.conn.lowerCaseTableNames() && catalog != null 
-					&& catalog.length() != 0) {
+					&& catalog.length() != 0 && oldCatalog != null 
+					&& oldCatalog.length() != 0) {
 				// Workaround for bug in server wrt. to 
 				// SHOW CREATE PROCEDURE not respecting
 				// lower-case table names
 				
-				String oldCatalog = this.conn.getCatalog();
 				ResultSet rs = null;
 				
 				try {
