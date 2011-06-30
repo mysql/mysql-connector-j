@@ -1186,14 +1186,17 @@ public class SQLError {
 		}
 
 		StringBuffer exceptionMessageBuf = new StringBuffer();
-
+		
+		long nowMs = System.currentTimeMillis();
+		
 		if (lastPacketSentTimeMs == 0) {
-			lastPacketSentTimeMs = System.currentTimeMillis();
+			lastPacketSentTimeMs = nowMs;
 		}
 
-		long timeSinceLastPacket = (System.currentTimeMillis() - lastPacketSentTimeMs) / 1000;
-		long timeSinceLastPacketMs = (System.currentTimeMillis() - lastPacketSentTimeMs);
-		long timeSinceLastPacketReceivedMs = (System.currentTimeMillis() - lastPacketReceivedTimeMs);
+		long timeSinceLastPacketSentMs = (nowMs - lastPacketSentTimeMs);
+		long timeSinceLastPacketSeconds = timeSinceLastPacketSentMs / 1000;
+		
+		long timeSinceLastPacketReceivedMs = (nowMs - lastPacketReceivedTimeMs);
 		
 		int dueToTimeout = DUE_TO_TIMEOUT_FALSE;
 
@@ -1204,7 +1207,7 @@ public class SQLError {
 					.getString("CommunicationsException.ClientWasStreaming")); //$NON-NLS-1$
 		} else {
 			if (serverTimeoutSeconds != 0) {
-				if (timeSinceLastPacket > serverTimeoutSeconds) {
+				if (timeSinceLastPacketSeconds > serverTimeoutSeconds) {
 					dueToTimeout = DUE_TO_TIMEOUT_TRUE;
 
 					timeoutMessageBuf = new StringBuffer();
@@ -1221,7 +1224,7 @@ public class SQLError {
 					}
 
 				}
-			} else if (timeSinceLastPacket > DEFAULT_WAIT_TIMEOUT_SECONDS) {
+			} else if (timeSinceLastPacketSeconds > DEFAULT_WAIT_TIMEOUT_SECONDS) {
 				dueToTimeout = DUE_TO_TIMEOUT_MAYBE;
 
 				timeoutMessageBuf = new StringBuffer();
@@ -1242,7 +1245,7 @@ public class SQLError {
 				if (lastPacketReceivedTimeMs != 0) {
 					Object[] timingInfo = {
 							Long.valueOf(timeSinceLastPacketReceivedMs),
-							Long.valueOf(timeSinceLastPacketMs)
+							Long.valueOf(timeSinceLastPacketSentMs)
 					};
 					exceptionMessageBuf.append(Messages
 							.getString("CommunicationsException.ServerPacketTimingInfo", //$NON-NLS-1$
@@ -1250,7 +1253,7 @@ public class SQLError {
 				} else {
 					exceptionMessageBuf.append(Messages
 							.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", //$NON-NLS-1$
-									new Object[] { Long.valueOf(timeSinceLastPacketMs)}));
+									new Object[] { Long.valueOf(timeSinceLastPacketSentMs)}));
 				}
 
 				if (timeoutMessageBuf != null) {
@@ -1304,7 +1307,7 @@ public class SQLError {
 				if (lastPacketReceivedTimeMs != 0) {
 					Object[] timingInfo = {
 							Long.valueOf(timeSinceLastPacketReceivedMs),
-							Long.valueOf(timeSinceLastPacketMs)
+							Long.valueOf(timeSinceLastPacketSentMs)
 					};
 					exceptionMessageBuf.append(Messages
 							.getString("CommunicationsException.ServerPacketTimingInfo", //$NON-NLS-1$
@@ -1312,7 +1315,7 @@ public class SQLError {
 				} else {
 					exceptionMessageBuf.append(Messages
 							.getString("CommunicationsException.ServerPacketTimingInfoNoRecv", //$NON-NLS-1$
-									new Object[] {Long.valueOf(timeSinceLastPacketMs)}));
+									new Object[] {Long.valueOf(timeSinceLastPacketSentMs)}));
 				}
 			}
 		}
