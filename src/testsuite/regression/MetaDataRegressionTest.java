@@ -3060,7 +3060,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			java.sql.Statement test = conn.createStatement();
 			if (interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
 				sql = ((com.mysql.jdbc.PreparedStatement) interceptedStatement).getPreparedSql();
-				assertTrue(StringUtils.indexOfIgnoreCase(0,sql, 
+				assertTrue("Assereet failed on: " + sql, StringUtils.indexOfIgnoreCase(0,sql, 
 						"WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME LIKE ?") > -1);
 			}
 			return null;
