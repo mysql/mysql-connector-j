@@ -30,6 +30,7 @@ import java.lang.reflect.Modifier;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -2920,8 +2921,54 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	 *             if the test fails.
 	 */
 	public void testBug61150() throws Exception {
-        Properties props = new Properties();
-        Connection conn1 = getConnectionWithProps("jdbc:mysql:///", props);
+        NonRegisteringDriver driver = new NonRegisteringDriver();
+		Properties oldProps = driver.parseURL(BaseTestCase.dbUrl, null);
+
+		String host = driver.host(oldProps);
+		int port = driver.port(oldProps);
+		String database = oldProps
+				.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		String user = oldProps
+				.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
+		String password = oldProps
+				.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+
+		StringBuffer newUrlToTestNoDB = new StringBuffer(
+				"jdbc:mysql://");
+
+		if (host != null) {
+			newUrlToTestNoDB.append(host);
+		}
+
+		newUrlToTestNoDB.append(":").append(port);
+		newUrlToTestNoDB.append(",");
+
+		if (host != null) {
+			newUrlToTestNoDB.append(host);
+		}
+
+		newUrlToTestNoDB.append("/");
+
+		if ((user != null) || (password != null)) {
+			newUrlToTestNoDB.append("?");
+
+			if (user != null) {
+				newUrlToTestNoDB.append("user=").append(user);
+
+				if (password != null) {
+					newUrlToTestNoDB.append("&");
+				}
+			}
+
+			if (password != null) {
+				newUrlToTestNoDB.append("password=")
+						.append(password);
+			}
+		}
+        
+        
+        
+        Connection conn1 = DriverManager.getConnection(newUrlToTestNoDB.toString());
 		if (!((MySQLConnection) conn1).lowerCaseTableNames()) {
 			//Not repeatable on CS FS
 			return;
