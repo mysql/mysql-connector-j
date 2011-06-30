@@ -3021,6 +3021,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		Properties props = new Properties();
 		props.setProperty("useInformationSchema", "true");
 		props.setProperty("statementInterceptors", StatementInterceptorBug61332.class.getName());
+		props.setProperty("nullCatalogMeansCurrent", "true");
+		
 		Connection testConn = getConnectionWithProps(props);
 		
 		if (versionMeetsMinimum(5, 0, 7)) {
