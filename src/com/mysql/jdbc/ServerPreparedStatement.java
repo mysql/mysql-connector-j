@@ -935,6 +935,16 @@ public class ServerPreparedStatement extends PreparedStatement {
 	}
 
 	/**
+	 * Return current bind values for use by Statement Interceptors.
+	 * @return the bind values as set by setXXX and stored by addBatch
+	 * @see #executeBatch()
+	 * @see #addBatch()
+	 */
+	public BindValue[] getParameterBindValues() {
+		return parameterBindings;
+	}
+
+	/**
 	 * @see com.mysql.jdbc.PreparedStatement#getBytes(int)
 	 */
 	synchronized byte[] getBytes(int parameterIndex) throws SQLException {
