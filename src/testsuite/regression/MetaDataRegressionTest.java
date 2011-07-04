@@ -3014,16 +3014,16 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		Properties props = new Properties();
 		props.setProperty("useInformationSchema", "true");
 		props.setProperty("statementInterceptors", StatementInterceptorBug61332.class.getName());
-		props.setProperty("nullCatalogMeansCurrent", "true");
-		
+
+		createDatabase("dbbug61332");
 		Connection testConn = getConnectionWithProps(props);
 		
 		if (versionMeetsMinimum(5, 0, 7)) {
 			try {
-        		createTable("cjtest_5_1.bug61332", "(c1 char(1))");
+        		createTable("dbbug61332.bug61332", "(c1 char(1))");
                	DatabaseMetaData metaData = testConn.getMetaData();
 
-               	this.rs = metaData.getColumns("cjtest_5_1", null, "bug61332", null);
+               	this.rs = metaData.getColumns("dbbug61332", null, "bug61332", null);
                	this.rs.next();
 			} finally {
 			}
