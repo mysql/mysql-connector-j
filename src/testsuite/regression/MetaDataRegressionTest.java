@@ -2908,7 +2908,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 	}
 	
-	
 	/**
 	 * Tests fix for BUG#61150 - First call to SP
 	 * fails with "No Database Selected"
@@ -2941,11 +2940,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 
 		newUrlToTestNoDB.append(":").append(port);
-		newUrlToTestNoDB.append(",");
-
-		if (host != null) {
-			newUrlToTestNoDB.append(host);
-		}
 
 		newUrlToTestNoDB.append("/");
 
@@ -3007,7 +3001,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		cStmt.clearParameters();
         cStmt.close();
 	}
-	
 	
 	/**
 	 * Tests fix for BUG#61332 - Check if "LIKE" or "=" is sent
