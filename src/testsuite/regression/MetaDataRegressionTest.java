@@ -3027,10 +3027,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		
 		if (versionMeetsMinimum(5, 0, 7)) {
 			try {
-        		createTable("bug61332", "(c1 char(1))");
+        		createTable("cjtest_5_1.bug61332", "(c1 char(1))");
                	DatabaseMetaData metaData = testConn.getMetaData();
 
-               	this.rs = metaData.getColumns(null, null, "bug61332", null);
+               	this.rs = metaData.getColumns("cjtest_5_1", null, "bug61332", null);
                	this.rs.next();
 			} finally {
 			}
