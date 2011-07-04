@@ -1,7 +1,8 @@
 # Changelog
 # $Id$
 
-nn-nn-11 - Version 5.1.17
+
+07-04-11 - Version 5.1.17
 
   - Fix for Bug#61332 - LIKE not optimized in server when run against I__S tables and no wildcards used.
     Databases/tables with "_" and/or "%" in their names (escaped or not) will be handled by this code path,
