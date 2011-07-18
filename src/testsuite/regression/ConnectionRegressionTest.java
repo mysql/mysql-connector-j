@@ -3131,4 +3131,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		rConn2.prepareStatement("SELECT 1").executeQuery();
 		
 	}
+	
+	public void testBug61201() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("sessionVariables", "FOREIGN_KEY_CHECKS=0");
+		props.setProperty("characterEncoding", "latin1");
+		props.setProperty("profileSQL", "true");
+
+   		Connection varConn = getConnectionWithProps(props);
+   		varConn.close();
+	}
+
 }

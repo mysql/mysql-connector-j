@@ -3097,7 +3097,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public String getServerCharacterEncoding() {
 		if (this.io.versionMeetsMinimum(4, 1, 0)) {
-			return (String) this.serverVariables.get("character_set_server");
+			return (String) CharsetMapping.INDEX_TO_CHARSET[this.io.serverCharsetIndex];
 		} else {
 			return (String) this.serverVariables.get("character_set");
 		}
