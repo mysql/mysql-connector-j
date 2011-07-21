@@ -735,7 +735,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 
 		this.openStatements = new HashMap();
-
+		
 		if (NonRegisteringDriver.isHostPropertiesList(hostToConnectTo)) {
 			Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(hostToConnectTo);
 			
@@ -1167,10 +1167,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private boolean characterSetNamesMatches(String mysqlEncodingName) {
 		// set names is equivalent to character_set_client ..._results and ..._connection,
 		// but we set _results later, so don't check it here.
-		
-		return (mysqlEncodingName != null && 
-				mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_client")) &&
-				mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_connection")));
+		if (this.io.serverCharsetIndex < 65535) {
+			return (mysqlEncodingName != null && 
+				mysqlEncodingName.equalsIgnoreCase(CharsetMapping.MYSQL_INDEX_TO_MYSQL_CHARSET[this.io.serverCharsetIndex]));
+		} else {
+			return (mysqlEncodingName != null && 
+					mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_client")) &&
+					mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_connection")));
+		}
 	}
 
 	private void checkAndCreatePerformanceHistogram() {
@@ -3097,7 +3101,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public String getServerCharacterEncoding() {
 		if (this.io.versionMeetsMinimum(4, 1, 0)) {
-			return (String) CharsetMapping.INDEX_TO_CHARSET[this.io.serverCharsetIndex];
+			if (this.io.serverCharsetIndex < 65535) {
+				return CharsetMapping.MYSQL_INDEX_TO_MYSQL_CHARSET[this.io.serverCharsetIndex];
+			} else {
+				return (String) this.serverVariables.get("character_set_server"); 				
+			}
 		} else {
 			return (String) this.serverVariables.get("character_set");
 		}
@@ -3396,7 +3404,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				// don't work on these versions
 			}
 		}
-
+		
 		//
 		// If version is greater than 3.21.22 get the server
 		// variables.
