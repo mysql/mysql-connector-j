@@ -6,13 +6,16 @@ nn-nn-11 - Version 5.1.18
     Added new ant flag, com.mysql.jdbc.junit.fork, which controls whether JUnit will fork new processes
     for testing ("on", default and legacy behavior) or not ("off", required for Windows).  
 
-  - Added function MYSQL_INDEX_TO_MYSQL_CHARSET to retrieve server charset name using index instead of parsing
-    variables to CharsetMapping.java
-  
+  - Reverting changes made to ConnectionImpl.java,
+    private boolean characterSetNamesMatches function.
+
+  - Added function MYSQL_INDEX_TO_MYSQL_CHARSET to retrieve server charset name
+    using index instead of parsing variables to CharsetMapping.java
+
   - Completed fix for Bug#61201/12649557, fixed tests failures.
   
-  - Fix for Bug#61201/12649557, Can't establish connection when url has sessionVariables and characterEncoding
-    Fix covers only MySQL server 4.1+
+  - Fix for Bug#61201/12649557, Can't establish connection when url has
+    sessionVariables and characterEncoding. Fix covers only MySQL server 4.1+
 
 07-04-11 - Version 5.1.17
 

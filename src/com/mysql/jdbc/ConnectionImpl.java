@@ -1167,14 +1167,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private boolean characterSetNamesMatches(String mysqlEncodingName) {
 		// set names is equivalent to character_set_client ..._results and ..._connection,
 		// but we set _results later, so don't check it here.
-		if (this.io.serverCharsetIndex < 65535) {
-			return (mysqlEncodingName != null && 
-				mysqlEncodingName.equalsIgnoreCase(CharsetMapping.MYSQL_INDEX_TO_MYSQL_CHARSET[this.io.serverCharsetIndex]));
-		} else {
-			return (mysqlEncodingName != null && 
-					mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_client")) &&
-					mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_connection")));
-		}
+		return (mysqlEncodingName != null && 
+				mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_client")) &&
+				mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_connection")));
 	}
 
 	private void checkAndCreatePerformanceHistogram() {
