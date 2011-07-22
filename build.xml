@@ -70,6 +70,13 @@
 	<property name="com.mysql.jdbc.java6.rtjar" value="/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Classes/classes.jar" />
 
 	<!-- 
+			The following property allows Windows to run JUnit tests without forking,
+			which causes problems due to large classpath arguments added by Ant.
+	-->
+
+	<property name="com.mysql.jdbc.junit.fork"  value="on" />
+
+	<!-- 
 	     The following property is needed for building the docs. It's
 	     set to the defaults for my development environment, but can be passed
 	     on the command line to ant via -D switches. 
@@ -519,7 +526,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<mkdir dir="${junit.unitregress.results}/report"/>
 
 		<junit printSummary="yes" 
-			fork="on" 
+			fork="${com.mysql.jdbc.junit.fork}" 
 			forkmode="once"
 			jvm="${com.mysql.jdbc.testsuite.jvm}"
 			errorProperty="tests.failed"
@@ -558,7 +565,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 
 		<junit printSummary="yes" 
-		            fork="on" 
+		            fork="${com.mysql.jdbc.junit.fork}" 
 		            forkmode="once"
 		            jvm="${com.mysql.jdbc.java6.java}"
 		            errorProperty="tests.failed"
@@ -671,7 +678,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<mkdir dir="${junit.compliance.results}"/>
 		<mkdir dir="${junit.compliance.results}/report"/>
 
-		<junit fork="on" forkmode="once"
+		<junit fork="${com.mysql.jdbc.junit.fork}" forkmode="once"
 		    printsummary="yes" jvm="${com.mysql.jdbc.testsuite.jvm}"
 			errorProperty="tests.compliance.failed"
 			failureProperty="tests.compliance.failed">
@@ -972,7 +979,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 		<mkdir dir="${junit.unitregress.results}/report"/>
 
-		<junit printSummary="yes" fork="on" jvm="${com.mysql.jdbc.testsuite.jvm}">
+		<junit printSummary="yes" fork="${com.mysql.jdbc.junit.fork}" jvm="${com.mysql.jdbc.testsuite.jvm}">
 			<jvmarg value="-Xmx128m" />
 			<jvmarg value="-Xverify:none" />
 			<!-- For java.sql.SavePoint on old JVMs -->

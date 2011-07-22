@@ -2,6 +2,10 @@
 # $Id$
 
 nn-nn-11 - Version 5.1.18
+  - Fix for Bug#12784170, "process fork failure" errors while running test suite via ant on Windows.
+    Added new ant flag, com.mysql.jdbc.junit.fork, which controls whether JUnit will fork new processes
+    for testing ("on", default and legacy behavior) or not ("off", required for Windows).  
+
   - Added function MYSQL_INDEX_TO_MYSQL_CHARSET to retrieve server charset name using index instead of parsing
     variables to CharsetMapping.java
   
