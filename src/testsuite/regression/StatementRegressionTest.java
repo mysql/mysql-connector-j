@@ -6646,4 +6646,14 @@ public class StatementRegressionTest extends BaseTestCase {
 		
 		
 	}
+	
+	public void testbug61866() throws Exception {
+			
+			createProcedure("WARN_PROCEDURE", "() BEGIN	DECLARE l_done INT;	SELECT 1 	INTO l_done	FROM DUAL	WHERE 1=2; END");
+			this.pstmt = this.conn.prepareCall("{CALL WARN_PROCEDURE()}");
+			this.pstmt.execute();
+			assertTrue("No warning when expected", this.pstmt.getWarnings().toString().contentEquals("java.sql.SQLWarning: No data - zero rows fetched, selected, or processed"));
+			this.pstmt.clearWarnings();
+			assertNull("Warning when not expected", this.pstmt.getWarnings());
+	}
 }

@@ -1428,7 +1428,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			resetCancelledState();
 			
 			try {
-				this.statementExecuting.set(true);
+				statementBegins();
 				
 				clearWarnings();
 
@@ -2121,7 +2121,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				}
 
 				if (!isBatch) {
-					this.statementExecuting.set(true); 
+					statementBegins();
 				}
 				
 				rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket,

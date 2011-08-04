@@ -1334,7 +1334,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 							this.timeoutInMillis);
 				}
 				
-				this.statementExecuting.set(true);
+				statementBegins();
 
 				Buffer resultPacket = mysql.sendCommand(MysqlDefs.COM_EXECUTE,
 					null, packet, false, null, 0);

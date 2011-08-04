@@ -276,6 +276,9 @@ public class StatementImpl implements Statement {
 
 	/** The warnings chain. */
 	protected SQLWarning warningChain = null;
+	
+	/** Has clearWarnings() been called? */
+	protected boolean clearWarningsCalled = false;
 
 	/**
 	 * Should this statement hold results open over .close() irregardless of
@@ -536,6 +539,7 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs (why?)
 	 */
 	public synchronized void clearWarnings() throws SQLException {
+		this.clearWarningsCalled = true;
 		this.warningChain = null;
 	}
 
@@ -606,7 +610,7 @@ public class StatementImpl implements Statement {
 			pStmt.setMaxRows(this.maxRows);
 		}
 
-		this.statementExecuting.set(true);
+		statementBegins();
 
 		pStmt.execute();
 
@@ -825,7 +829,7 @@ public class StatementImpl implements Statement {
 							}
 	
 
-							this.statementExecuting.set(true);
+							statementBegins();
 
 							// Finally, execute the query
 							rs = locallyScopedConn.execSQL(this, sql, rowLimit, null,
@@ -833,7 +837,7 @@ public class StatementImpl implements Statement {
 									doStreaming,
 									this.currentCatalog, cachedFields);
 						} else {
-							this.statementExecuting.set(true);
+							statementBegins();
 
 							rs = locallyScopedConn.execSQL(this, sql, -1, null,
 									this.resultSetType, this.resultSetConcurrency,
@@ -902,6 +906,11 @@ public class StatementImpl implements Statement {
 				this.statementExecuting.set(false);
 			}
 		}
+	}
+
+	protected void statementBegins() {
+		this.clearWarningsCalled = false;
+		this.statementExecuting.set(true);
 	}
 
 	protected synchronized void resetCancelledState() {
@@ -1053,7 +1062,7 @@ public class StatementImpl implements Statement {
 			try {
 				resetCancelledState();
 
-				this.statementExecuting.set(true);
+				statementBegins();
 				
 				try {
 					this.retrieveGeneratedKeys = true; // The JDBC spec doesn't forbid this, but doesn't provide for it either...we do..
@@ -1530,7 +1539,7 @@ public class StatementImpl implements Statement {
 											"SET OPTION SQL_SELECT_LIMIT=" + this.maxRows);
 						}
 
-						this.statementExecuting.set(true);
+						statementBegins();
 						
 						this.results = locallyScopedConn.execSQL(this, sql, -1,
 								null, this.resultSetType,
@@ -1543,7 +1552,7 @@ public class StatementImpl implements Statement {
 						}
 					}
 				} else {
-					this.statementExecuting.set(true);
+					statementBegins();
 					
 					this.results = locallyScopedConn.execSQL(this, sql, -1, null,
 							this.resultSetType, this.resultSetConcurrency,
@@ -1735,7 +1744,7 @@ public class StatementImpl implements Statement {
 							"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
 				}
 
-				this.statementExecuting.set(true);
+				statementBegins();
 				
 				rs = locallyScopedConn.execSQL(this, sql, -1, null,
 						java.sql.ResultSet.TYPE_FORWARD_ONLY,
@@ -2407,6 +2416,10 @@ public class StatementImpl implements Statement {
 	public synchronized java.sql.SQLWarning getWarnings() throws SQLException {
 		checkClosed();
 
+		if (this.clearWarningsCalled) {
+			return null;
+		}
+		
 		if (this.connection != null && !this.connection.isClosed()
 				&& this.connection.versionMeetsMinimum(4, 1, 0)) {
 			SQLWarning pendingWarningsFromServer = SQLError
