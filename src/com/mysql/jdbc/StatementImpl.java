@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
@@ -297,6 +298,9 @@ public class StatementImpl implements Statement {
 	/** Whether or not the last query was of the form ON DUPLICATE KEY UPDATE */
 	protected boolean lastQueryIsOnDupKeyUpdate = false;
 	
+	/** Are we currently executing a statement? */
+	protected final AtomicBoolean statementExecuting = new AtomicBoolean(false);
+	
 	/**
 	 * Constructor for a Statement.
 	 *
@@ -409,6 +413,10 @@ public class StatementImpl implements Statement {
 	 * cancel a statement that is being executed by another thread.
 	 */
 	public void cancel() throws SQLException {
+		if (!this.statementExecuting.get()) {
+			return;
+		}
+		
 		if (!this.isClosed &&
 				this.connection != null &&
 				this.connection.versionMeetsMinimum(5, 0, 0)) {
@@ -598,6 +606,8 @@ public class StatementImpl implements Statement {
 			pStmt.setMaxRows(this.maxRows);
 		}
 
+		this.statementExecuting.set(true);
+
 		pStmt.execute();
 
 		//
@@ -701,189 +711,196 @@ public class StatementImpl implements Statement {
 
 			boolean doStreaming = createStreamingResultSet();
 
-			// Adjust net_write_timeout to a higher value if we're
-			// streaming result sets. More often than not, someone runs into
-			// an issue where they blow net_write_timeout when using this
-			// feature, and if they're willing to hold a result set open
-			// for 30 seconds or more, one more round-trip isn't going to hurt
-			//
-			// This is reset by RowDataDynamic.close().
-
-			if (doStreaming
-					&& locallyScopedConn.getNetTimeoutForStreamingResults() > 0) {
-				executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout="
-						+ locallyScopedConn.getNetTimeoutForStreamingResults());
-			}
-
-			if (this.doEscapeProcessing) {
-				Object escapedSqlResult = EscapeProcessor.escapeSQL(sql,
-						locallyScopedConn.serverSupportsConvertFn(), locallyScopedConn);
-
-				if (escapedSqlResult instanceof String) {
-					sql = (String) escapedSqlResult;
+			try {
+				// Adjust net_write_timeout to a higher value if we're
+				// streaming result sets. More often than not, someone runs into
+				// an issue where they blow net_write_timeout when using this
+				// feature, and if they're willing to hold a result set open
+				// for 30 seconds or more, one more round-trip isn't going to hurt
+				//
+				// This is reset by RowDataDynamic.close().
+	
+				if (doStreaming
+						&& locallyScopedConn.getNetTimeoutForStreamingResults() > 0) {
+					executeSimpleNonQuery(locallyScopedConn, "SET net_write_timeout="
+							+ locallyScopedConn.getNetTimeoutForStreamingResults());
+				}
+	
+				if (this.doEscapeProcessing) {
+					Object escapedSqlResult = EscapeProcessor.escapeSQL(sql,
+							locallyScopedConn.serverSupportsConvertFn(), locallyScopedConn);
+	
+					if (escapedSqlResult instanceof String) {
+						sql = (String) escapedSqlResult;
+					} else {
+						sql = ((EscapeProcessorResult) escapedSqlResult).escapedSql;
+					}
+				}
+	
+				if (this.results != null) {
+					if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+						this.results.realClose(false);
+					}
+				}
+	
+				if (sql.charAt(0) == '/') {
+					if (sql.startsWith(PING_MARKER)) {
+						doPingInstead();
+					
+						return true;
+					}
+				}
+	
+				CachedResultSetMetaData cachedMetaData = null;
+	
+				ResultSetInternalMethods rs = null;
+	
+				// If there isn't a limit clause in the SQL
+				// then limit the number of rows to return in
+				// an efficient manner. Only do this if
+				// setMaxRows() hasn't been used on any Statements
+				// generated from the current Connection (saves
+				// a query, and network traffic).
+	
+				this.batchedGeneratedKeys = null;
+	
+				if (useServerFetch()) {
+					rs = createResultSetUsingServerFetch(sql);
 				} else {
-					sql = ((EscapeProcessorResult) escapedSqlResult).escapedSql;
-				}
-			}
-
-			if (this.results != null) {
-				if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
-					this.results.realClose(false);
-				}
-			}
-
-			if (sql.charAt(0) == '/') {
-				if (sql.startsWith(PING_MARKER)) {
-					doPingInstead();
-				
-					return true;
-				}
-			}
-
-			CachedResultSetMetaData cachedMetaData = null;
-
-			ResultSetInternalMethods rs = null;
-
-			// If there isn't a limit clause in the SQL
-			// then limit the number of rows to return in
-			// an efficient manner. Only do this if
-			// setMaxRows() hasn't been used on any Statements
-			// generated from the current Connection (saves
-			// a query, and network traffic).
-
-			this.batchedGeneratedKeys = null;
-
-			if (useServerFetch()) {
-				rs = createResultSetUsingServerFetch(sql);
-			} else {
-				CancelTask timeoutTask = null;
-
-				String oldCatalog = null;
-
-				try {
-					if (locallyScopedConn.getEnableQueryTimeouts() &&
-							this.timeoutInMillis != 0
-							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
-						timeoutTask = new CancelTask(this);
-						locallyScopedConn.getCancelTimer().schedule(timeoutTask,
-								this.timeoutInMillis);
-					}
-
-
-
-					if (!locallyScopedConn.getCatalog().equals(
-							this.currentCatalog)) {
-						oldCatalog = locallyScopedConn.getCatalog();
-						locallyScopedConn.setCatalog(this.currentCatalog);
-					}
-
-					//
-					// Check if we have cached metadata for this query...
-					//
-
-					Field[] cachedFields = null;
-
-					if (locallyScopedConn.getCacheResultSetMetadata()) {
-						cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
-
-						if (cachedMetaData != null) {
-							cachedFields = cachedMetaData.fields;
+					CancelTask timeoutTask = null;
+	
+					String oldCatalog = null;
+	
+					try {
+						if (locallyScopedConn.getEnableQueryTimeouts() &&
+								this.timeoutInMillis != 0
+								&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+							timeoutTask = new CancelTask(this);
+							locallyScopedConn.getCancelTimer().schedule(timeoutTask,
+									this.timeoutInMillis);
 						}
-					}
 
-					//
-					// Only apply max_rows to selects
-					//
-					if (locallyScopedConn.useMaxRows()) {
-						int rowLimit = -1;
-
-						if (isSelect) {
-							if (StringUtils.indexOfIgnoreCase(sql, "LIMIT") != -1) { //$NON-NLS-1$
-								rowLimit = this.maxRows;
-							} else {
-								if (this.maxRows <= 0) {
-									executeSimpleNonQuery(locallyScopedConn,
-											"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
+						if (!locallyScopedConn.getCatalog().equals(
+								this.currentCatalog)) {
+							oldCatalog = locallyScopedConn.getCatalog();
+							locallyScopedConn.setCatalog(this.currentCatalog);
+						}
+	
+						//
+						// Check if we have cached metadata for this query...
+						//
+	
+						Field[] cachedFields = null;
+	
+						if (locallyScopedConn.getCacheResultSetMetadata()) {
+							cachedMetaData = locallyScopedConn.getCachedMetaData(sql);
+	
+							if (cachedMetaData != null) {
+								cachedFields = cachedMetaData.fields;
+							}
+						}
+	
+						//
+						// Only apply max_rows to selects
+						//
+						if (locallyScopedConn.useMaxRows()) {
+							int rowLimit = -1;
+	
+							if (isSelect) {
+								if (StringUtils.indexOfIgnoreCase(sql, "LIMIT") != -1) { //$NON-NLS-1$
+									rowLimit = this.maxRows;
 								} else {
-									executeSimpleNonQuery(locallyScopedConn,
-											"SET OPTION SQL_SELECT_LIMIT="
-													+ this.maxRows);
+									if (this.maxRows <= 0) {
+										executeSimpleNonQuery(locallyScopedConn,
+												"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
+									} else {
+										executeSimpleNonQuery(locallyScopedConn,
+												"SET OPTION SQL_SELECT_LIMIT="
+														+ this.maxRows);
+									}
 								}
-							}
-						} else {
-							executeSimpleNonQuery(locallyScopedConn,
-									"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
-						}
-
-						// Finally, execute the query
-						rs = locallyScopedConn.execSQL(this, sql, rowLimit, null,
-								this.resultSetType, this.resultSetConcurrency,
-								doStreaming,
-								this.currentCatalog, cachedFields);
-					} else {
-						rs = locallyScopedConn.execSQL(this, sql, -1, null,
-								this.resultSetType, this.resultSetConcurrency,
-								doStreaming,
-								this.currentCatalog, cachedFields);
-					}
-
-					if (timeoutTask != null) {
-						if (timeoutTask.caughtWhileCancelling != null) {
-							throw timeoutTask.caughtWhileCancelling;
-						}
-
-						timeoutTask.cancel();
-						timeoutTask = null;
-					}
-
-					synchronized (this.cancelTimeoutMutex) {
-						if (this.wasCancelled) {
-							SQLException cause = null;
-							
-							if (this.wasCancelledByTimeout) {
-								cause = new MySQLTimeoutException();
 							} else {
-								cause = new MySQLStatementCancelledException();
+								executeSimpleNonQuery(locallyScopedConn,
+										"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
 							}
-							
-							resetCancelledState();
-							
-							throw cause;
+	
+
+							this.statementExecuting.set(true);
+
+							// Finally, execute the query
+							rs = locallyScopedConn.execSQL(this, sql, rowLimit, null,
+									this.resultSetType, this.resultSetConcurrency,
+									doStreaming,
+									this.currentCatalog, cachedFields);
+						} else {
+							this.statementExecuting.set(true);
+
+							rs = locallyScopedConn.execSQL(this, sql, -1, null,
+									this.resultSetType, this.resultSetConcurrency,
+									doStreaming,
+									this.currentCatalog, cachedFields);
+						}
+	
+						if (timeoutTask != null) {
+							if (timeoutTask.caughtWhileCancelling != null) {
+								throw timeoutTask.caughtWhileCancelling;
+							}
+	
+							timeoutTask.cancel();
+							timeoutTask = null;
+						}
+	
+						synchronized (this.cancelTimeoutMutex) {
+							if (this.wasCancelled) {
+								SQLException cause = null;
+								
+								if (this.wasCancelledByTimeout) {
+									cause = new MySQLTimeoutException();
+								} else {
+									cause = new MySQLStatementCancelledException();
+								}
+								
+								resetCancelledState();
+								
+								throw cause;
+							}
+						}
+					} finally {
+						if (timeoutTask != null) {
+							timeoutTask.cancel();
+							locallyScopedConn.getCancelTimer().purge();
+						}
+	
+						if (oldCatalog != null) {
+							locallyScopedConn.setCatalog(oldCatalog);
 						}
 					}
-				} finally {
-					if (timeoutTask != null) {
-						timeoutTask.cancel();
-						locallyScopedConn.getCancelTimer().purge();
-					}
-
-					if (oldCatalog != null) {
-						locallyScopedConn.setCatalog(oldCatalog);
-					}
 				}
-			}
-
-			if (rs != null) {
-				this.lastInsertId = rs.getUpdateID();
-
-				this.results = rs;
-
-				rs.setFirstCharOfQuery(firstNonWsChar);
-
-				if (rs.reallyResult()) {
-					if (cachedMetaData != null) {
-						locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData,
-								this.results);
-					} else {
-						if (this.connection.getCacheResultSetMetadata()) {
-							locallyScopedConn.initializeResultsMetadataFromCache(sql,
-									null /* will be created */, this.results);
+	
+				if (rs != null) {
+					this.lastInsertId = rs.getUpdateID();
+	
+					this.results = rs;
+	
+					rs.setFirstCharOfQuery(firstNonWsChar);
+	
+					if (rs.reallyResult()) {
+						if (cachedMetaData != null) {
+							locallyScopedConn.initializeResultsMetadataFromCache(sql, cachedMetaData,
+									this.results);
+						} else {
+							if (this.connection.getCacheResultSetMetadata()) {
+								locallyScopedConn.initializeResultsMetadataFromCache(sql,
+										null /* will be created */, this.results);
+							}
 						}
 					}
 				}
+	
+				return ((rs != null) && rs.reallyResult());
+			} finally {
+				this.statementExecuting.set(false);
 			}
-
-			return ((rs != null) && rs.reallyResult());
 		}
 	}
 
@@ -1036,95 +1053,101 @@ public class StatementImpl implements Statement {
 			try {
 				resetCancelledState();
 
-				this.retrieveGeneratedKeys = true; // The JDBC spec doesn't forbid this, but doesn't provide for it either...we do..
-
-				int[] updateCounts = null;
-
+				this.statementExecuting.set(true);
 				
-				if (this.batchedArgs != null) {
-					int nbrCommands = this.batchedArgs.size();
-
-					this.batchedGeneratedKeys = new ArrayList(this.batchedArgs.size());
-
-					boolean multiQueriesEnabled = locallyScopedConn.getAllowMultiQueries();
-
-					if (locallyScopedConn.versionMeetsMinimum(4, 1, 1) &&
-							(multiQueriesEnabled ||
-							(locallyScopedConn.getRewriteBatchedStatements() &&
-									nbrCommands > 4))) {
-						return executeBatchUsingMultiQueries(multiQueriesEnabled, nbrCommands, individualStatementTimeout);
-					}
-
-					if (locallyScopedConn.getEnableQueryTimeouts() &&
-							individualStatementTimeout != 0
-							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
-						timeoutTask = new CancelTask(this);
-						locallyScopedConn.getCancelTimer().schedule(timeoutTask,
-								individualStatementTimeout);
-					}
+				try {
+					this.retrieveGeneratedKeys = true; // The JDBC spec doesn't forbid this, but doesn't provide for it either...we do..
+	
+					int[] updateCounts = null;
+	
 					
-					updateCounts = new int[nbrCommands];
-
-					for (int i = 0; i < nbrCommands; i++) {
-						updateCounts[i] = -3;
-					}
-
-					SQLException sqlEx = null;
-
-					int commandIndex = 0;
-
-					for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
-						try {
-							String sql = (String) this.batchedArgs.get(commandIndex);
-							updateCounts[commandIndex] = executeUpdate(sql, true, true);
-							// limit one generated key per OnDuplicateKey statement
-							getBatchedGeneratedKeys(containsOnDuplicateKeyInString(sql) ? 1 : 0);
-						} catch (SQLException ex) {
-							updateCounts[commandIndex] = EXECUTE_FAILED;
-
-							if (this.continueBatchOnError && 
-									!(ex instanceof MySQLTimeoutException) && 
-									!(ex instanceof MySQLStatementCancelledException) &&
-                                    !hasDeadlockOrTimeoutRolledBackTx(ex)) {
-								sqlEx = ex;
-							} else {
-								int[] newUpdateCounts = new int[commandIndex];
-								
-								if (hasDeadlockOrTimeoutRolledBackTx(ex)) {
-									for (int i = 0; i < newUpdateCounts.length; i++) {
-										newUpdateCounts[i] = Statement.EXECUTE_FAILED;
-									}
+					if (this.batchedArgs != null) {
+						int nbrCommands = this.batchedArgs.size();
+	
+						this.batchedGeneratedKeys = new ArrayList(this.batchedArgs.size());
+	
+						boolean multiQueriesEnabled = locallyScopedConn.getAllowMultiQueries();
+	
+						if (locallyScopedConn.versionMeetsMinimum(4, 1, 1) &&
+								(multiQueriesEnabled ||
+								(locallyScopedConn.getRewriteBatchedStatements() &&
+										nbrCommands > 4))) {
+							return executeBatchUsingMultiQueries(multiQueriesEnabled, nbrCommands, individualStatementTimeout);
+						}
+	
+						if (locallyScopedConn.getEnableQueryTimeouts() &&
+								individualStatementTimeout != 0
+								&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+							timeoutTask = new CancelTask(this);
+							locallyScopedConn.getCancelTimer().schedule(timeoutTask,
+									individualStatementTimeout);
+						}
+						
+						updateCounts = new int[nbrCommands];
+	
+						for (int i = 0; i < nbrCommands; i++) {
+							updateCounts[i] = -3;
+						}
+	
+						SQLException sqlEx = null;
+	
+						int commandIndex = 0;
+	
+						for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
+							try {
+								String sql = (String) this.batchedArgs.get(commandIndex);
+								updateCounts[commandIndex] = executeUpdate(sql, true, true);
+								// limit one generated key per OnDuplicateKey statement
+								getBatchedGeneratedKeys(containsOnDuplicateKeyInString(sql) ? 1 : 0);
+							} catch (SQLException ex) {
+								updateCounts[commandIndex] = EXECUTE_FAILED;
+	
+								if (this.continueBatchOnError && 
+										!(ex instanceof MySQLTimeoutException) && 
+										!(ex instanceof MySQLStatementCancelledException) &&
+	                                    !hasDeadlockOrTimeoutRolledBackTx(ex)) {
+									sqlEx = ex;
 								} else {
-									System.arraycopy(updateCounts, 0,
-										newUpdateCounts, 0, commandIndex);
+									int[] newUpdateCounts = new int[commandIndex];
+									
+									if (hasDeadlockOrTimeoutRolledBackTx(ex)) {
+										for (int i = 0; i < newUpdateCounts.length; i++) {
+											newUpdateCounts[i] = Statement.EXECUTE_FAILED;
+										}
+									} else {
+										System.arraycopy(updateCounts, 0,
+											newUpdateCounts, 0, commandIndex);
+									}
+	
+									throw new java.sql.BatchUpdateException(ex
+											.getMessage(), ex.getSQLState(), ex
+											.getErrorCode(), newUpdateCounts);
 								}
-
-								throw new java.sql.BatchUpdateException(ex
-										.getMessage(), ex.getSQLState(), ex
-										.getErrorCode(), newUpdateCounts);
 							}
 						}
+	
+						if (sqlEx != null) {
+							throw new java.sql.BatchUpdateException(sqlEx
+									.getMessage(), sqlEx.getSQLState(), sqlEx
+									.getErrorCode(), updateCounts);
+						}
 					}
-
-					if (sqlEx != null) {
-						throw new java.sql.BatchUpdateException(sqlEx
-								.getMessage(), sqlEx.getSQLState(), sqlEx
-								.getErrorCode(), updateCounts);
+	
+					if (timeoutTask != null) {
+						if (timeoutTask.caughtWhileCancelling != null) {
+							throw timeoutTask.caughtWhileCancelling;
+						}
+	
+						timeoutTask.cancel();
+						
+						locallyScopedConn.getCancelTimer().purge();
+						timeoutTask = null;
 					}
-				}
-
-				if (timeoutTask != null) {
-					if (timeoutTask.caughtWhileCancelling != null) {
-						throw timeoutTask.caughtWhileCancelling;
-					}
-
-					timeoutTask.cancel();
 					
-					locallyScopedConn.getCancelTimer().purge();
-					timeoutTask = null;
+					return (updateCounts != null) ? updateCounts : new int[0];
+				} finally {
+					this.statementExecuting.set(false);
 				}
-				
-				return (updateCounts != null) ? updateCounts : new int[0];
 			} finally {
 				
 				if (timeoutTask != null) {
@@ -1507,6 +1530,8 @@ public class StatementImpl implements Statement {
 											"SET OPTION SQL_SELECT_LIMIT=" + this.maxRows);
 						}
 
+						this.statementExecuting.set(true);
+						
 						this.results = locallyScopedConn.execSQL(this, sql, -1,
 								null, this.resultSetType,
 								this.resultSetConcurrency,
@@ -1518,6 +1543,8 @@ public class StatementImpl implements Statement {
 						}
 					}
 				} else {
+					this.statementExecuting.set(true);
+					
 					this.results = locallyScopedConn.execSQL(this, sql, -1, null,
 							this.resultSetType, this.resultSetConcurrency,
 							doStreaming,
@@ -1552,6 +1579,8 @@ public class StatementImpl implements Statement {
 					}
 				}
 			} finally {
+				this.statementExecuting.set(false);
+				
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
 					
@@ -1706,6 +1735,8 @@ public class StatementImpl implements Statement {
 							"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
 				}
 
+				this.statementExecuting.set(true);
+				
 				rs = locallyScopedConn.execSQL(this, sql, -1, null,
 						java.sql.ResultSet.TYPE_FORWARD_ONLY,
 						java.sql.ResultSet.CONCUR_READ_ONLY, false,
@@ -1749,6 +1780,10 @@ public class StatementImpl implements Statement {
 
 				if (oldCatalog != null) {
 					locallyScopedConn.setCatalog(oldCatalog);
+				}
+				
+				if (!isBatch) {
+					this.statementExecuting.set(false);
 				}
 			}
 		}

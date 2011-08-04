@@ -1334,6 +1334,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 							this.timeoutInMillis);
 				}
 				
+				this.statementExecuting.set(true);
+
 				Buffer resultPacket = mysql.sendCommand(MysqlDefs.COM_EXECUTE,
 					null, packet, false, null, 0);
 				
@@ -1490,6 +1492,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 				
 				throw sqlEx;
 			} finally {
+				this.statementExecuting.set(false);
+				
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
 					this.connection.getCancelTimer().purge();

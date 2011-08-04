@@ -2,6 +2,7 @@
 # $Id$
 
 nn-nn-11 - Version 5.1.18
+
   - Fix for Bug#12784170, "process fork failure" errors while running test suite via ant on Windows.
     Added new ant flag, com.mysql.jdbc.junit.fork, which controls whether JUnit will fork new processes
     for testing ("on", default and legacy behavior) or not ("off", required for Windows).  
@@ -16,6 +17,14 @@ nn-nn-11 - Version 5.1.18
   
   - Fix for Bug#61201/12649557, Can't establish connection when url has
     sessionVariables and characterEncoding. Fix covers only MySQL server 4.1+
+    
+  - Fix for Bug#61501 - Calling Statement.cancel() on a statement that isn't
+    currently executing will cause some later-executed query on the same
+    connection to be cancelled unexpectedly. The driver now guards against this
+    condition, but it is an underlying server issue. The MySQL statement "KILL QUERY"
+    (which is what the driver uses to implement Statement.cancel()) is rather
+    non-deterministic, and thus the use of Statement.cancel() should be avoided
+    if possible.
 
 07-04-11 - Version 5.1.17
 
@@ -30,7 +39,7 @@ nn-nn-11 - Version 5.1.18
 	the bug in server where SHOW CREATE PROCEDURE was not respecting lower-case table names
 	is misbehaving when connection is not attached to database and on non-casesensitive OS.
 
-	- Fix for Bug#61105 - Avoid a concurrent bottleneck in Java's character set
+  - Fix for Bug#61105 - Avoid a concurrent bottleneck in Java's character set
     encoding/decoding when converting bytes to/from Strings.
     
 04-21-11 - Version 5.1.16

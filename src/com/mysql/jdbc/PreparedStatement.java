@@ -1428,6 +1428,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			resetCancelledState();
 			
 			try {
+				this.statementExecuting.set(true);
+				
 				clearWarnings();
 
 				if (!this.batchHasPlainStatements
@@ -1448,6 +1450,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 				return executeBatchSerially(batchTimeout);
 			} finally {
+				this.statementExecuting.set(false);
+				
 				clearBatch();
 			}
 		}
@@ -2116,6 +2120,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 							this.timeoutInMillis);
 				}
 
+				if (!isBatch) {
+					this.statementExecuting.set(true); 
+				}
+				
 				rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket,
 					this.resultSetType, this.resultSetConcurrency,
 					createStreamingResultSet, this.currentCatalog,
@@ -2149,6 +2157,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					}
 				}
 			} finally {
+				if (!isBatch) {
+					this.statementExecuting.set(false);
+				}
+				
 				if (timeoutTask != null) {
 					timeoutTask.cancel();
 					locallyScopedConnection.getCancelTimer().purge();

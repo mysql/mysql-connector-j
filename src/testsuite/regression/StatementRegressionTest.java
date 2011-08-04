@@ -6565,4 +6565,85 @@ public class StatementRegressionTest extends BaseTestCase {
 			rs1.close();
 		}
 	}
+	
+	public void testBug61501() throws Exception {
+		createTable("testBug61501", "(id int)");
+		stmt.executeUpdate("INSERT INTO testBug61501 VALUES (1)");
+		String sql = "SELECT id FROM testBug61501 where id=1";
+		pstmt = conn.prepareStatement(sql);
+		pstmt.executeQuery();
+		pstmt.cancel();
+		pstmt.close();
+		
+		pstmt = conn.prepareStatement(sql);
+		rs = pstmt.executeQuery();
+		
+		stmt.cancel();
+		stmt.executeQuery(sql);
+		stmt.cancel();
+		stmt.execute(sql);
+		pstmt = ((com.mysql.jdbc.Connection) conn).serverPrepareStatement(sql);
+		pstmt.execute();
+		pstmt.cancel();
+		pstmt.execute();
+		
+		sql = "INSERT INTO testBug61501 VALUES (2)";
+		pstmt = conn.prepareStatement(sql);
+		pstmt.execute();
+		assertEquals(1, pstmt.getUpdateCount());
+		pstmt.cancel();
+		pstmt.close();
+		
+		pstmt = conn.prepareStatement(sql);
+		assertEquals(1, pstmt.executeUpdate());
+		
+		stmt.cancel();
+		assertEquals(1, stmt.executeUpdate(sql));
+		stmt.cancel();
+		stmt.execute(sql);
+		assertEquals(1, stmt.getUpdateCount());
+		
+		pstmt = ((com.mysql.jdbc.Connection) conn).serverPrepareStatement(sql);
+		pstmt.execute();
+		assertEquals(1, pstmt.getUpdateCount());
+		pstmt.cancel();
+		pstmt.close();
+		
+		pstmt = ((com.mysql.jdbc.Connection) conn).serverPrepareStatement(sql);
+		assertEquals(1, pstmt.executeUpdate());
+		
+		pstmt.cancel();
+		pstmt.addBatch();
+		pstmt.addBatch();
+		pstmt.addBatch();
+		int[] counts = pstmt.executeBatch();
+		
+		for (int i = 0; i < counts.length; i++) {
+			assertEquals(1, counts[i]);
+		}
+		
+		pstmt = conn.prepareStatement(sql);
+		pstmt.cancel();
+		pstmt.addBatch();
+		pstmt.addBatch();
+		pstmt.addBatch();
+		counts = pstmt.executeBatch();
+		
+		for (int i = 0; i < counts.length; i++) {
+			assertEquals(1, counts[i]);
+		}
+		
+		stmt.cancel();
+		stmt.addBatch(sql);
+		stmt.addBatch(sql);
+		stmt.addBatch(sql);
+
+		counts = stmt.executeBatch();
+		
+		for (int i = 0; i < counts.length; i++) {
+			assertEquals(1, counts[i]);
+		}
+		
+		
+	}
 }
