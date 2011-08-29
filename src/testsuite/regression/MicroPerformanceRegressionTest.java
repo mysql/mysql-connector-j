@@ -49,7 +49,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
 	private final static int ORIGINAL_LOOP_TIME_MS = 2300;
 
-	private final static double LEEWAY = 3.0;
+	private final static double LEEWAY = 10.0; // account for VMs
 
 	private final static Map BASELINE_TIMES = new HashMap();
 
