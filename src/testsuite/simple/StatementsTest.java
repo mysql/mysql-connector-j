@@ -1640,7 +1640,8 @@ public class StatementsTest extends BaseTestCase {
 					assertEquals(counts[i], Statement.EXECUTE_FAILED);
 				}
 				
-				assertEquals(4096, getRowCount("rewriteErrors"));
+				// this depends on max_allowed_packet, only a sanity check
+				assertTrue(getRowCount("rewriteErrors") >= 4000);
 			}
 			
 			this.stmt.execute("TRUNCATE TABLE rewriteErrors");
@@ -1654,7 +1655,8 @@ public class StatementsTest extends BaseTestCase {
 					assertEquals(counts[i], Statement.EXECUTE_FAILED);
 				}
 				
-				assertEquals(4096, getRowCount("rewriteErrors"));
+				// this depends on max_allowed_packet, only a sanity check
+				assertTrue(getRowCount("rewriteErrors") >= 4000);
 			}
 			
 			if (versionMeetsMinimum(5, 0)) {
@@ -1681,7 +1683,8 @@ public class StatementsTest extends BaseTestCase {
 						assertEquals(counts[i], Statement.EXECUTE_FAILED);
 					}
 					
-					assertEquals(4096, getRowCount("rewriteErrors"));
+					// this depends on max_allowed_packet, only a sanity check
+					assertTrue(getRowCount("rewriteErrors") >= 4000);
 				}
 			}
 		}
