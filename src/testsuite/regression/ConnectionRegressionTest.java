@@ -3141,5 +3141,23 @@ public class ConnectionRegressionTest extends BaseTestCase {
    		Connection varConn = getConnectionWithProps(props);
    		varConn.close();
 	}
+	
+	public void testChangeUser() throws Exception {
+		Properties props = getPropertiesFromTestsuiteUrl();
+		
+		for (int i = 0; i < 500; i++) {
+			((com.mysql.jdbc.Connection) this.conn).changeUser(props.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY), props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY));
+			
+			if (i % 10 == 0) {
+				try {
+					((com.mysql.jdbc.Connection) this.conn).changeUser("bubba", props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY));
+				} catch (SQLException sqlEx) {
+					// expect
+				}
+			}
+			
+			this.stmt.executeQuery("SELECT 1");
+		}
+	}
 
 }
