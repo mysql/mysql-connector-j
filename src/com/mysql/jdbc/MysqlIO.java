@@ -504,7 +504,11 @@ public class MysqlIO {
 	            }
         	} finally {
 	            if (this.mysqlConnection != null && !this.mysqlConnection.isClosed() && !this.mysqlConnection.isInputShutdown()) {
-	            	this.mysqlConnection.shutdownInput();
+	            	try {
+	            		this.mysqlConnection.shutdownInput();
+	            	} catch (UnsupportedOperationException ex) {
+	            		// ignore, some sockets do not support this method
+	            	}
 	            }
         	}
         } catch (IOException ioEx) {
@@ -520,7 +524,11 @@ public class MysqlIO {
 	            }
         	} finally {
         		if (this.mysqlConnection != null && !this.mysqlConnection.isClosed() && !this.mysqlConnection.isOutputShutdown()) {
-        			this.mysqlConnection.shutdownOutput();
+        			try {
+        				this.mysqlConnection.shutdownOutput();
+        			} catch (UnsupportedOperationException ex) {
+	            		// ignore, some sockets do not support this method
+	            	}
         		}
     		}
         } catch (IOException ioEx) {
@@ -1684,7 +1692,11 @@ public class MysqlIO {
 
     		try {
     			if (!this.mysqlConnection.isClosed()) {
-    				this.mysqlConnection.shutdownInput();
+    				try {
+    					this.mysqlConnection.shutdownInput();
+    				} catch (UnsupportedOperationException ex) {
+	            		// ignore, some sockets do not support this method
+	            	}
     			}
     		} catch (IOException ioEx) {
     			this.connection.getLog().logWarn("Caught while disconnecting...", ioEx);
