@@ -2870,6 +2870,6 @@ public class StatementImpl implements Statement {
 	
 	protected synchronized int getOnDuplicateKeyLocation(String sql) {
 		return StringUtils.indexOfIgnoreCaseRespectMarker(0, 
-				sql, " ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet());
+				sql, "ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet());
 	}
 }

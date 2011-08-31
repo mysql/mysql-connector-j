@@ -3,6 +3,10 @@
 
 nn-nn-11 - Version 5.1.18
 
+  - Fix for Bug#12565726, not putting the space between VALUES() and ON DUPLICATE KEY UPDATE
+	causes C/J a) enter rewriting the query altrhough it has ON UPDATE 
+	and b) to generate the wrong query with multiple ON DUPLICATE KEY
+
   - Fix for Bug#12784170, "process fork failure" errors while running test suite via ant on Windows.
     Added new ant flag, com.mysql.jdbc.junit.fork, which controls whether JUnit will fork new processes
     for testing ("on", default and legacy behavior) or not ("off", required for Windows).  

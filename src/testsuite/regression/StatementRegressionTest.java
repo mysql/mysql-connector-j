@@ -6656,4 +6656,42 @@ public class StatementRegressionTest extends BaseTestCase {
 			this.pstmt.clearWarnings();
 			assertNull("Warning when not expected", this.pstmt.getWarnings());
 	}
+	
+	public void testbug12565726() throws Exception {
+		// Not putting the space between VALUES() and ON DUPLICATE KEY UPDATE
+		// causes C/J a) enter rewriting the query altrhough it has ON UPDATE 
+		// and b) to generate the wrong query with multiple ON DUPLICATE KEY
+
+		Properties props = new Properties();
+        props.put("rewriteBatchedStatements","true");
+        props.put("useServerPrepStmts","false");
+        props.put("enablePacketDebug","true");
+		this.conn = getConnectionWithProps(props);
+		this.stmt = this.conn.createStatement();
+		
+		try {
+			createTable("testbug12565726", "(id int primary key, txt1 varchar(32))");
+            this.stmt.executeUpdate("INSERT INTO testbug12565726 " +
+            	"(id, txt1) VALUES (1, 'something')");
+			
+
+            this.pstmt = this.conn.prepareStatement("INSERT INTO " +
+                    "testbug12565726 (id, txt1) " +
+                    "VALUES (?, ?)ON DUPLICATE KEY UPDATE " +
+                    "id=LAST_INSERT_ID(id)+10");            
+            
+            this.pstmt.setInt(1, 1);
+            this.pstmt.setString(2, "something else");
+            this.pstmt.addBatch();
+            
+            this.pstmt.setInt(1, 2);
+            this.pstmt.setString(2, "hope it is not error again!");
+            this.pstmt.addBatch();
+
+            this.pstmt.executeBatch();
+			
+		} finally {
+		}
+		
+	}
 }
