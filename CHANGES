@@ -33,6 +33,9 @@ nn-nn-11 - Version 5.1.18
   - Fix for Bug#61866/12791594 - Calling Statement.getWarnings() after
     Statement.clearWarnings() has been called, returns the "old" warnings.
 
+  - Fix for Bug#13036309, Correcting parameter name in maxPerformance.properties
+
+
 07-04-11 - Version 5.1.17
 
   - Fix for Bug#61332 - LIKE not optimized in server when run against I__S tables and no wildcards used.
