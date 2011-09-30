@@ -2182,7 +2182,7 @@ public class MysqlIO {
 	    			
 	    			boolean logSlow = false;
 	    			
-	    			if (this.useAutoSlowLog) {
+	    			if (!this.useAutoSlowLog) {
 	    				logSlow = queryTime > this.connection.getSlowQueryThresholdMillis();
 	    			} else {
 	    				logSlow = this.connection.isAbonormallyLongQuery(queryTime);
@@ -2227,7 +2227,8 @@ public class MysqlIO {
 	    				profileQueryToLog.length());
 
 	    		mesgBuf.append(Messages.getString("MysqlIO.SlowQuery",
-	    				new Object[] {Long.valueOf(this.slowQueryThreshold),
+	    				new Object[] {String.valueOf(this.useAutoSlowLog ? 
+	    						" 95% of all queries " : this.slowQueryThreshold),
 	    				queryTimingUnits,
 	    				Long.valueOf(queryEndTime - queryStartTime)}));
 	    		mesgBuf.append(profileQueryToLog);
