@@ -1,6 +1,9 @@
 # Changelog
 # $Id$
 
+nn-nn-11 - Version 5.1.19
+
+
 10-03-11 - Version 5.1.18
  
   - Fix for Bug#12565726, not putting the space between VALUES() and ON DUPLICATE KEY UPDATE
