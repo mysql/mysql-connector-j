@@ -1,7 +1,7 @@
 # Changelog
 # $Id$
 
-nn-nn-11 - Version 5.1.18
+10-03-11 - Version 5.1.18
  
   - Fix for Bug#12565726, not putting the space between VALUES() and ON DUPLICATE KEY UPDATE
 	causes C/J a) enter rewriting the query altrhough it has ON UPDATE 
