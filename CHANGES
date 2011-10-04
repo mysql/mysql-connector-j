@@ -7,7 +7,7 @@ nn-nn-11 - Version 5.1.19
 10-03-11 - Version 5.1.18
  
   - Fix for Bug#12565726, not putting the space between VALUES() and ON DUPLICATE KEY UPDATE
-	causes C/J a) enter rewriting the query altrhough it has ON UPDATE 
+	causes C/J a) enter rewriting the query although it has ON UPDATE 
 	and b) to generate the wrong query with multiple ON DUPLICATE KEY
 
   - Fix for Bug#12784170, "process fork failure" errors while running test suite via ant on Windows.
@@ -18,7 +18,7 @@ nn-nn-11 - Version 5.1.19
     private boolean characterSetNamesMatches function.
 
   - Added function MYSQL_INDEX_TO_MYSQL_CHARSET to retrieve server charset name
-    using index instead of parsing variables to CharsetMapping.java
+    using index instead of parsing variables to CharsetMapping.java.
 
   - Completed fix for Bug#61201/12649557, fixed tests failures.
   
@@ -38,7 +38,7 @@ nn-nn-11 - Version 5.1.19
     
   - Fix for Bug#13036537 - LRUCache was really a least-recently-added cache.
 
-  - Fix for Bug#13036309, Correcting parameter name in maxPerformance.properties
+  - Fix for Bug#13036309, Correcting parameter name in maxPerformance.properties.
 
 
 07-04-11 - Version 5.1.17
