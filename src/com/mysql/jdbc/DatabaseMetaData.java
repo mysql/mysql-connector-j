@@ -2042,18 +2042,43 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		IteratorWithCleanup allCatalogsIter;
 		if (catalogSpec != null) {
 			if (!catalogSpec.equals("")) {
-				allCatalogsIter = new SingleStringIterator(catalogSpec);
+				allCatalogsIter = new SingleStringIterator(unQuoteQuotedIdentifier(catalogSpec));
 			} else {
 				// legacy mode of operation
 				allCatalogsIter = new SingleStringIterator(this.database);
 			}
 		} else if (this.conn.getNullCatalogMeansCurrent()) {
+			
 			allCatalogsIter = new SingleStringIterator(this.database);
 		} else {
 			allCatalogsIter = new ResultSetIterator(getCatalogs(), 1);
 		}
 
 		return allCatalogsIter;
+	}
+	
+	protected String unQuoteQuotedIdentifier(String identifier) {
+		boolean trimQuotes = false;
+		
+		if (identifier != null) {
+			
+			// Backquotes are always valid identifier quotes
+			if (identifier.startsWith("`") && identifier.endsWith("`")) {
+				trimQuotes = true;
+			}
+			
+			if (this.conn.useAnsiQuotedIdentifiers()) {
+				if (identifier.startsWith("\"") && identifier.endsWith("\"")) {
+					trimQuotes = true;
+				}
+			}
+		}
+		
+		if (trimQuotes) {
+			return identifier.substring(1, (identifier.length() - 1));
+		}
+		
+		return identifier;
 	}
 
 	/**

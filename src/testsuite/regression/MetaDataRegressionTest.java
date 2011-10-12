@@ -3062,5 +3062,23 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 		
 	}	
+	
+	public void testQuotedGunk() throws Exception {
+		createTable("testQuotedGunk", "(field1 int)");
+		
+		String quotedCatalog = "`" + this.conn.getCatalog() + "`";
+		String unquotedCatalog = this.conn.getCatalog();
+		
+		DatabaseMetaData dbmd = this.conn.getMetaData();
+		this.rs = dbmd.getTables(quotedCatalog, null, "testQuotedGunk", new String[] {"TABLE"});
+		assertTrue(this.rs.next());
+		this.rs = dbmd.getTables(unquotedCatalog, null, "testQuotedGunk", new String[] {"TABLE"});
+		assertTrue(this.rs.next());
+		this.rs = dbmd.getColumns(quotedCatalog, null, "testQuotedGunk", "field1");
+		assertTrue(this.rs.next());
+		this.rs = dbmd.getColumns(unquotedCatalog, null, "testQuotedGunk", "field1");
+		assertTrue(this.rs.next());
+
+	}
 
 }
