@@ -206,6 +206,18 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				</patternset>
 			</fileset>
 		</copy>
+		
+		<if>
+			<isset property="com.mysql.jdbc.commercialBuild"/>
+			<then>
+				<replaceregexp 
+					match="The MySQL Connector.*1301.[^replaceregexp]*USA"
+					replace=""
+					flags="s">
+					<fileset dir="${buildDir}/${fullProdName}" includes="**/*"/>
+				</replaceregexp>
+			</then>
+		</if>
 	</target>
 
 	<target name="-init-no-crypto" depends="-init-copy" if="com.mysql.jdbc.noCryptoBuild">
@@ -367,6 +379,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				<delete file="${packageDest}/COPYING"/>
                                 <copy file="${sourceDir}/lib-nodist/LICENSE.mysql" toDir="${packageDest}"/>
 
+				<!-- For safety -->
 				<replaceregexp 
 					match="The MySQL Connector.*1301.[^replaceregexp]*USA"
 					replace=""
