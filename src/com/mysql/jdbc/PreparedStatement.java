@@ -44,7 +44,6 @@ import java.sql.DatabaseMetaData;
 import java.sql.Date;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -59,10 +58,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.mysql.jdbc.exceptions.DeadlockTimeoutRollbackMarker;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
-import com.mysql.jdbc.exceptions.MySQLTransactionRollbackException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
@@ -839,6 +836,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	/** Command index of currently executing batch command. */
 	private int batchCommandIndex = -1;
 	
+	protected boolean serverSupportsFracSecs;
+	
 	/**
 	 * Creates a prepared statement instance -- We need to provide factory-style
 	 * methods so we can support both JDBC3 (and older) and JDBC4 runtimes,
@@ -906,7 +905,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			throws SQLException {
 		super(conn, catalog);
 		
+		detectFractionalSecondsSupport();
 		this.compensateForOnDuplicateKeyUpdate = this.connection.getCompensateOnDuplicateKeyUpdateCounts();
+	}
+
+	protected void detectFractionalSecondsSupport() throws SQLException {
+		this.serverSupportsFracSecs = this.connection != null && 
+				this.connection.versionMeetsMinimum(5, 6, 4);
 	}
 
 	/**
@@ -931,6 +936,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
+		detectFractionalSecondsSupport();
 		this.originalSql = sql;
 
 		if (this.originalSql.startsWith(PING_MARKER)) {
@@ -978,6 +984,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
+		detectFractionalSecondsSupport();
 		this.originalSql = sql;
 
 		this.dbmd = this.connection.getMetaData();
@@ -4819,7 +4826,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 	
 	private String formatNanos(int nanos) {
-		if (true /* for now */ || nanos == 0) {
+		if (!this.serverSupportsFracSecs || nanos == 0) {
 		    return "0";
 		}
 		
