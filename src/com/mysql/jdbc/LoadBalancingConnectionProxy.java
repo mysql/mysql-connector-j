@@ -864,14 +864,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		// we're only interested in blacklisted hosts that are in the hostList
 		keys.retainAll(this.hostList);
-		if (keys.size() == this.hostList.size()) {
-			// return an empty blacklist, let the BalanceStrategy
-			// implementations try to connect to everything
-			// since it appears that all hosts are unavailable - we don't want
-			// to wait for
-			// loadBalanceBlacklistTimeout to expire.
-			return new HashMap<String, Long>(1);
-		}
 
 		// Don't need to synchronize here as we using a local copy
 		for (Iterator<String> i = keys.iterator(); i.hasNext();) {
@@ -888,6 +880,14 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 				i.remove();
 			}
 
+		}
+		if (keys.size() == this.hostList.size()) {
+			// return an empty blacklist, let the BalanceStrategy
+			// implementations try to connect to everything
+			// since it appears that all hosts are unavailable - we don't want
+			// to wait for
+			// loadBalanceBlacklistTimeout to expire.
+			return new HashMap<String, Long>(1);
 		}
 		
 		return blacklistClone;
