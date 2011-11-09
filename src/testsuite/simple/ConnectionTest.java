@@ -1217,7 +1217,7 @@ public class ConnectionTest extends BaseTestCase {
 	 * @throws Exception
 	 *             if the test fails
 	 */
-	public void testUseCompress() throws Exception {
+	public void x_testUseCompress() throws Exception {
 
 		// Original test
 		// Properties props = new Properties();

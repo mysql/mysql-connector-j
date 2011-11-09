@@ -2568,7 +2568,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	 * @see com.mysql.jdbc.IConnectionProperties#getUseCompression()
 	 */
 	public boolean getUseCompression() {
-		return this.useCompression.getValueAsBoolean();
+		// FIXME: Re-enable this once protocol fixes are in
+		//return this.useCompression.getValueAsBoolean();
+		return false;
 	}
 
 	/* (non-Javadoc)
