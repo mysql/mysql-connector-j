@@ -122,7 +122,7 @@ public class StatementImpl implements Statement {
 	
 						try {
 							synchronized (cancelTimeoutMutex) {
-								if (origConnURL == connection.getURL()) {
+								if (origConnURL.equals(connection.getURL())) {
 									//All's fine
 									cancelConn = connection.duplicate();
 									cancelStmt = cancelConn.createStatement();
