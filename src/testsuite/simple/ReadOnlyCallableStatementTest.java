@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import testsuite.BaseTestCase;
-import testsuite.regression.ConnectionRegressionTest;
 
 public class ReadOnlyCallableStatementTest extends BaseTestCase {
 	public ReadOnlyCallableStatementTest(String name) {

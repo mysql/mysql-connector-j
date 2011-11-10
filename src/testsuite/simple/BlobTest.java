@@ -33,7 +33,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.SQLException;
 
 import testsuite.BaseTestCase;
 

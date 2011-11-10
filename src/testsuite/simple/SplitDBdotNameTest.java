@@ -28,9 +28,9 @@ package testsuite.simple;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mysql.jdbc.StringUtils;
-
 import testsuite.BaseTestCase;
+
+import com.mysql.jdbc.StringUtils;
 
 /**
  * Tests new StringUtils functions in the driver:

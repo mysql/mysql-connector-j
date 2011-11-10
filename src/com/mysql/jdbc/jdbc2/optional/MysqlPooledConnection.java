@@ -35,7 +35,6 @@ import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
 import javax.sql.PooledConnection;
 
-import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Util;

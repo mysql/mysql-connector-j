@@ -25,9 +25,6 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 
-import com.mysql.jdbc.ConnectionPropertiesImpl.IntegerConnectionProperty;
-import com.mysql.jdbc.ConnectionPropertiesImpl.StringConnectionProperty;
-
 public interface ConnectionProperties {
 
 	/**

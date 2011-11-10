@@ -40,7 +40,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import com.mysql.jdbc.NamedPipeSocketFactory;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SocketFactory;
 import com.mysql.jdbc.StandardSocketFactory;

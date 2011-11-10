@@ -26,7 +26,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
-import com.mysql.jdbc.StringUtils;
 
 /**
  * DatabaseMetaData implementation that uses INFORMATION_SCHEMA available in

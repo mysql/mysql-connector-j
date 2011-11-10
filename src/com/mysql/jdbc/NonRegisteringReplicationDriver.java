@@ -28,7 +28,6 @@ package com.mysql.jdbc;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
-import java.util.StringTokenizer;
 
 /**
  * Driver that opens two connections, one two a replication master, and another

@@ -82,7 +82,6 @@ import com.mysql.jdbc.ServerPreparedStatement;
 import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.StatementInterceptor;
 import com.mysql.jdbc.StatementInterceptorV2;
-import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 

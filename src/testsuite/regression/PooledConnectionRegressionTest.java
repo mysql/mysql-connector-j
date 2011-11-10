@@ -43,7 +43,6 @@ import testsuite.BaseTestCase;
 import com.mysql.jdbc.PacketTooBigException;
 import com.mysql.jdbc.jdbc2.optional.ConnectionWrapper;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlPooledConnection;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 
 /**

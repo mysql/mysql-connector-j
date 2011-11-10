@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.ComparisonFailure;
-
 import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.CharsetMapping;
@@ -53,7 +52,6 @@ import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ResultSetInternalMethods;
 import com.mysql.jdbc.SQLError;
-import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.StatementInterceptorV2;
 import com.mysql.jdbc.StringUtils;
 

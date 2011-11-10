@@ -40,7 +40,6 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import com.mysql.jdbc.ConnectionImpl;
-import com.mysql.jdbc.Constants;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.Log;
 

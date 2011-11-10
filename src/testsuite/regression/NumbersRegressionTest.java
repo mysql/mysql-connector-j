@@ -26,7 +26,6 @@
 package testsuite.regression;
 
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 
 import testsuite.BaseTestCase;
 

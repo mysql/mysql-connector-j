@@ -24,7 +24,6 @@
 
 package com.mysql.jdbc;
 
-import java.sql.ResultSetMetaData;
 import java.util.Map;
 
 public class CachedResultSetMetaData {
