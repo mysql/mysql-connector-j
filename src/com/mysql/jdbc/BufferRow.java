@@ -95,7 +95,7 @@ public class BufferRow extends ResultSetRow {
 	 */
 	private boolean[] isNull;
 
-	private List openStreams;
+	private List<InputStream> openStreams;
 
 	public BufferRow(Buffer buf, Field[] fields, boolean isBinaryEncoded, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
@@ -119,12 +119,12 @@ public class BufferRow extends ResultSetRow {
 			// close (they probably won't ever)
 			// to be more robust and close everything we _can_
 
-			Iterator iter = this.openStreams.iterator();
+			Iterator<InputStream> iter = this.openStreams.iterator();
 
 			while (iter.hasNext()) {
 
 				try {
-					((InputStream) iter.next()).close();
+					iter.next().close();
 				} catch (IOException e) {
 					// ignore - it can't really happen in this case
 				}
@@ -318,7 +318,7 @@ public class BufferRow extends ResultSetRow {
 				.getByteBuffer(), offset, (int) length);
 
 		if (this.openStreams == null) {
-			this.openStreams = new LinkedList();
+			this.openStreams = new LinkedList<InputStream>();
 		}
 
 		return stream;

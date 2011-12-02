@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -28,18 +28,18 @@ import java.util.Map;
 
 public class CachedResultSetMetaData {
 		/** Map column names (and all of their permutations) to column indices */
-		Map columnNameToIndex = null;
+		Map<String, Integer> columnNameToIndex = null;
 
 		/** Cached Field info */
 		Field[] fields;
 
 		/** Map of fully-specified column names to column indices */
-		Map fullColumnNameToIndex = null;
+		Map<String, Integer> fullColumnNameToIndex = null;
 
 		/** Cached ResultSetMetaData */
 		java.sql.ResultSetMetaData metadata;
 
-		public Map getColumnNameToIndex() {
+		public Map<String, Integer> getColumnNameToIndex() {
 			return columnNameToIndex;
 		}
 
@@ -47,7 +47,7 @@ public class CachedResultSetMetaData {
 			return fields;
 		}
 
-		public Map getFullColumnNameToIndex() {
+		public Map<String, Integer> getFullColumnNameToIndex() {
 			return fullColumnNameToIndex;
 		}
 

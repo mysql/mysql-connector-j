@@ -55,9 +55,9 @@ import java.util.Map;
  */
 public class CallableStatement extends PreparedStatement implements
 		java.sql.CallableStatement {
-	protected final static Constructor JDBC_4_CSTMT_2_ARGS_CTOR;
+	protected final static Constructor<?> JDBC_4_CSTMT_2_ARGS_CTOR;
 	
-	protected final static Constructor JDBC_4_CSTMT_4_ARGS_CTOR;
+	protected final static Constructor<?> JDBC_4_CSTMT_4_ARGS_CTOR;
 	
 	static {
 		if (Util.isJdbc4()) {
@@ -144,9 +144,9 @@ public class CallableStatement extends PreparedStatement implements
 
 		int numParameters;
 
-		List parameterList;
+		List<CallableStatementParam> parameterList;
 
-		Map parameterMap;
+		Map<String, CallableStatementParam> parameterMap;
 
 		
 		/**
@@ -170,13 +170,14 @@ public class CallableStatement extends PreparedStatement implements
 			this.nativeSql = originalSql;
 			this.catalogInUse = currentCatalog;
 			isFunctionCall = fullParamInfo.isFunctionCall;
+			@SuppressWarnings("synthetic-access")
 			int[] localParameterMap = placeholderToParameterIndexMap;
 			int parameterMapLength = localParameterMap.length;
 			
 			this.isReadOnlySafeProcedure = fullParamInfo.isReadOnlySafeProcedure;
 			this.isReadOnlySafeChecked = fullParamInfo.isReadOnlySafeChecked;
-			parameterList = new ArrayList(fullParamInfo.numParameters);
-			parameterMap = new HashMap(fullParamInfo.numParameters);
+			parameterList = new ArrayList<CallableStatementParam>(fullParamInfo.numParameters);
+			parameterMap = new HashMap<String, CallableStatementParam>(fullParamInfo.numParameters);
 			
 			if (isFunctionCall) {
 				// Take the return value
@@ -187,7 +188,7 @@ public class CallableStatement extends PreparedStatement implements
 			
 			for (int i = 0; i < parameterMapLength; i++) {
 				if (localParameterMap[i] != 0) {
-					CallableStatementParam param = (CallableStatementParam)fullParamInfo.parameterList.get(localParameterMap[i] + offset);
+					CallableStatementParam param = fullParamInfo.parameterList.get(localParameterMap[i] + offset);
 					
 					parameterList.add(param);
 					parameterMap.put(param.paramName, param);
@@ -197,6 +198,7 @@ public class CallableStatement extends PreparedStatement implements
 			this.numParameters = parameterList.size();
 		}
 		
+		@SuppressWarnings("synthetic-access")
 		CallableStatementParamInfo(java.sql.ResultSet paramTypesRs)
 				throws SQLException {
 			boolean hadRows = paramTypesRs.last();
@@ -208,8 +210,8 @@ public class CallableStatement extends PreparedStatement implements
 			if (hadRows) {
 				this.numParameters = paramTypesRs.getRow();
 
-				this.parameterList = new ArrayList(this.numParameters);
-				this.parameterMap = new HashMap(this.numParameters);
+				this.parameterList = new ArrayList<CallableStatementParam>(this.numParameters);
+				this.parameterMap = new HashMap<String, CallableStatementParam>(this.numParameters);
 
 				paramTypesRs.beforeFirst();
 
@@ -285,11 +287,11 @@ public class CallableStatement extends PreparedStatement implements
 		}
 
 		CallableStatementParam getParameter(int index) {
-			return (CallableStatementParam) this.parameterList.get(index);
+			return this.parameterList.get(index);
 		}
 
 		CallableStatementParam getParameter(String name) {
-			return (CallableStatementParam) this.parameterMap.get(name);
+			return this.parameterMap.get(name);
 		}
 
 		public String getParameterClassName(int arg0) throws SQLException {
@@ -360,7 +362,7 @@ public class CallableStatement extends PreparedStatement implements
 			return false;
 		}
 
-		Iterator iterator() {
+		Iterator<CallableStatementParam> iterator() {
 			return this.parameterList.iterator();
 		}
 
@@ -402,7 +404,7 @@ public class CallableStatement extends PreparedStatement implements
 	     * for an object with the given interface.
 	     * @since 1.6
 	     */
-		public boolean isWrapperFor(Class iface) throws SQLException {
+		public boolean isWrapperFor(Class<?> iface) throws SQLException {
 			checkClosed();
 			
 			// This works for classes that aren't actually wrapping
@@ -424,7 +426,7 @@ public class CallableStatement extends PreparedStatement implements
 	     * @throws java.sql.SQLException If no object found that implements the interface 
 	     * @since 1.6
 	     */
-		public Object unwrap(Class iface) throws java.sql.SQLException {
+		public Object unwrap(Class<?> iface) throws java.sql.SQLException {
 	    	try {
 	    		// This works for classes that aren't actually wrapping
 	    		// anything
@@ -575,7 +577,7 @@ public class CallableStatement extends PreparedStatement implements
 							this.originalSql, ")", '\'', true);
 					
 					if (parenClosePos != -1) {
-						List parsedParameters = StringUtils.split(this.originalSql.substring(parenOpenPos + 1, parenClosePos), ",", "'\"", "'\"", true);
+						List<?> parsedParameters = StringUtils.split(this.originalSql.substring(parenOpenPos + 1, parenClosePos), ",", "'\"", "'\"", true);
 						
 						int numParsedParameters = parsedParameters.size();
 						
@@ -768,7 +770,7 @@ public class CallableStatement extends PreparedStatement implements
 			procNameAsBytes = StringUtils.s2b(procName, this.connection);
 		}
 
-		ArrayList resultRows = new ArrayList();
+		ArrayList<ByteArrayRow> resultRows = new ArrayList<ByteArrayRow>();
 
 		for (int i = 0; i < this.parameterCount; i++) {
 			byte[][] row = new byte[13][];
@@ -822,7 +824,7 @@ public class CallableStatement extends PreparedStatement implements
 				AssertionFailedException.shouldNotHappen(sqlEx);
 			}
 			
-			List parseList = StringUtils.splitDBdotName(procName, "", 
+			List<?> parseList = StringUtils.splitDBdotName(procName, "", 
 					quotedId , this.connection.isNoBackslashEscapesSet());
 			String tmpCatalog = "";
 			//There *should* be 2 rows, if any.
@@ -1525,7 +1527,7 @@ public class CallableStatement extends PreparedStatement implements
 	/**
 	 * @see java.sql.CallableStatement#getObject(int, java.util.Map)
 	 */
-	public synchronized Object getObject(int parameterIndex, Map map)
+	public synchronized Object getObject(int parameterIndex, Map<String, Class<?>> map)
 			throws SQLException {
 		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 
@@ -1556,7 +1558,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getObject(java.lang.String,
 	 *      java.util.Map)
 	 */
-	public synchronized Object getObject(String parameterName, Map map)
+	public synchronized Object getObject(String parameterName, Map<String, Class<?>> map)
 			throws SQLException {
 		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 		// from ?=
@@ -1604,9 +1606,9 @@ public class CallableStatement extends PreparedStatement implements
 			throws SQLException {
 		if (this.placeholderToParameterIndexMap == null) {
 			return (CallableStatementParamInfoJDBC3) this.paramInfo;
-		} else {
-			return new CallableStatementParamInfoJDBC3(this.paramInfo);
 		}
+			
+		return new CallableStatementParamInfoJDBC3(this.paramInfo);
 	}
 
 	/**
@@ -1949,9 +1951,9 @@ public class CallableStatement extends PreparedStatement implements
 			boolean firstParam = true;
 			boolean hadOutputParams = false;
 
-			for (Iterator paramIter = this.paramInfo.iterator(); paramIter
+			for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter
 					.hasNext();) {
-				CallableStatementParam retrParamInfo = (CallableStatementParam) paramIter
+				CallableStatementParam retrParamInfo = paramIter
 						.next();
 
 				if (retrParamInfo.isOut) {
@@ -2102,12 +2104,10 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	private synchronized void setInOutParamsOnServer() throws SQLException {
 		if (this.paramInfo.numParameters > 0) {
-			int parameterIndex = 0;
-
-			for (Iterator paramIter = this.paramInfo.iterator(); paramIter
+			for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter
 					.hasNext();) {
 
-				CallableStatementParam inParamInfo = (CallableStatementParam) paramIter
+				CallableStatementParam inParamInfo = paramIter
 						.next();
 
 				//Fix for 5.5+
@@ -2173,8 +2173,6 @@ public class CallableStatement extends PreparedStatement implements
 						}
 					}
 				}
-
-				parameterIndex++;
 			}
 		}
 	}
@@ -2236,9 +2234,9 @@ public class CallableStatement extends PreparedStatement implements
 
 	private synchronized void setOutParams() throws SQLException {
 		if (this.paramInfo.numParameters > 0) {
-			for (Iterator paramIter = this.paramInfo.iterator(); paramIter
+			for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter
 					.hasNext();) {
-				CallableStatementParam outParamInfo = (CallableStatementParam) paramIter
+				CallableStatementParam outParamInfo = paramIter
 						.next();
 
 				if (!this.callingStoredFunction && outParamInfo.isOut) {
@@ -2515,9 +2513,9 @@ public class CallableStatement extends PreparedStatement implements
 			if (this.connection.versionMeetsMinimum(5, 5, 0)) {
 				java.sql.DatabaseMetaData dbmd1 = new DatabaseMetaDataUsingInfoSchema(this.connection, this.connection.getCatalog());
 				return ((DatabaseMetaDataUsingInfoSchema)dbmd1).gethasParametersView();
-			} else {
-				return false;
 			}
+				
+			return false;
 		} catch (SQLException e) {
 			return false;
 		}

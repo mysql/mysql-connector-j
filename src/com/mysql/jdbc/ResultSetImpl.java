@@ -47,8 +47,10 @@ import java.sql.Types;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.TreeMap;
@@ -115,9 +117,9 @@ import com.mysql.jdbc.profiler.ProfilerEventHandler;
  */
 public class ResultSetImpl implements ResultSetInternalMethods {
 
-	private static final Constructor JDBC_4_RS_4_ARG_CTOR;
-	private static final Constructor JDBC_4_RS_6_ARG_CTOR;;
-	private static final Constructor JDBC_4_UPD_RS_6_ARG_CTOR;
+	private static final Constructor<?> JDBC_4_RS_4_ARG_CTOR;
+	private static final Constructor<?> JDBC_4_RS_6_ARG_CTOR;;
+	private static final Constructor<?> JDBC_4_UPD_RS_6_ARG_CTOR;
 	
 	static {
 		if (Util.isJdbc4()) {
@@ -191,13 +193,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	protected String catalog = null;
 
 	/** Map column names (and all of their permutations) to column indices */
-	protected Map columnLabelToIndex = null;
+	protected Map<String, Integer> columnLabelToIndex = null;
 
 	/** The above map is a case-insensitive tree-map, it can be slow, this caches
 	 *  lookups into that map, because the other alternative is to create new
 	 *  object instances for every call to findColumn()....
 	 */
-	protected Map columnToIndexCache = null;
+	protected Map<String, Integer> columnToIndexCache = null;
 	
 	/** Keep track of columns accessed */
 	protected boolean[] columnUsed = null;
@@ -237,9 +239,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	protected char firstCharOfQuery;
 
 	/** Map of fully-specified column names to column indices */
-	protected Map fullColumnNameToIndex = null;
+	protected Map<String, Integer> fullColumnNameToIndex = null;
 
-	protected Map columnNameToIndex = null;
+	protected Map<String, Integer> columnNameToIndex = null;
 	
 	protected boolean hasBuiltIndexMapping = false;
 
@@ -505,7 +507,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public synchronized void initializeWithMetadata() throws SQLException {
 		this.rowData.setMetadata(this.fields);
 		
-		this.columnToIndexCache = new HashMap();
+		this.columnToIndexCache = new HashMap<String, Integer>();
 		
 		if (this.profileSql || this.connection.getUseUsageAdvisor()) {
 			this.columnUsed = new boolean[this.fields.length];
@@ -518,7 +520,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		if (this.connection.getGatherPerformanceMetrics()) {
 			this.connection.incrementNumberOfResultSetsCreated();
 
-			Map tableNamesMap = new HashMap();
+			Set<String> tableNamesSet = new HashSet<String>();
 
 			for (int i = 0; i < this.fields.length; i++) {
 				Field f = this.fields[i];
@@ -535,11 +537,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						// names are not case-sens.
 					}
 
-					tableNamesMap.put(tableName, null);
+					tableNamesSet.add(tableName);
 				}
 			}
 
-			this.connection.reportNumberOfTablesAccessed(tableNamesMap.size());
+			this.connection.reportNumberOfTablesAccessed(tableNamesSet.size());
 		}
 	}
 
@@ -728,9 +730,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	public void buildIndexMapping() throws SQLException {
 		int numFields = this.fields.length;
-		this.columnLabelToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
-		this.fullColumnNameToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
-		this.columnNameToIndex = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+		this.columnLabelToIndex = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER);
+		this.fullColumnNameToIndex = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER);
+		this.columnNameToIndex = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER);
 		
 		// We do this in reverse order, so that the 'first' column
 		// with a given name ends up as the final mapping in the
@@ -1108,20 +1110,20 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			buildIndexMapping();
 		}
 
-		index = (Integer) this.columnToIndexCache.get(columnName);
+		index = this.columnToIndexCache.get(columnName);
 
 		if (index != null) {
 			return index.intValue() + 1;
 		}
 
-		index = (Integer) this.columnLabelToIndex.get(columnName);
+		index = this.columnLabelToIndex.get(columnName);
 
 		if (index == null && this.useColumnNamesInFindColumn) {
-			index = (Integer) this.columnNameToIndex.get(columnName);
+			index = this.columnNameToIndex.get(columnName);
 		}
 		
 		if (index == null) {
-			index = (Integer) this.fullColumnNameToIndex.get(columnName);
+			index = this.fullColumnNameToIndex.get(columnName);
 		}
 		
 		if (index != null) {
@@ -1653,7 +1655,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			if (field.getMysqlType() == -1) { // from dbmd
 				String stringVal = getString(columnIndex);
 
-				return getBooleanFromString(stringVal, columnIndex);
+				return getBooleanFromString(stringVal);
 			}
 				
 			long boolVal = getLong(columnIndex, false);
@@ -1716,7 +1718,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		
 			String stringVal = getString(columnIndex);
 
-			return getBooleanFromString(stringVal, columnIndex);
+			return getBooleanFromString(stringVal);
 		}
 	}
 
@@ -1761,7 +1763,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return getBoolean(findColumn(columnName));
 	}
 
-	private final boolean getBooleanFromString(String stringVal, int columnIndex)
+	private final boolean getBooleanFromString(String stringVal)
 			throws SQLException {
 		if ((stringVal != null) && (stringVal.length() > 0)) {
 			int c = Character.toLowerCase(stringVal.charAt(0));
@@ -1932,7 +1934,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return getBytes(findColumn(columnName));
 	}
 
-	private final byte[] getBytesFromString(String stringVal, int columnIndex)
+	private final byte[] getBytesFromString(String stringVal)
 			throws SQLException {
 		if (stringVal != null) {
 			return StringUtils.getBytes(stringVal, this.connection
@@ -1972,10 +1974,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	protected Calendar getCalendarInstanceForSessionOrNew() {
 		if (this.connection != null) {
 			return this.connection.getCalendarInstanceForSessionOrNew();
-		} else {
-			// punt, no connection around
-			return new GregorianCalendar();
 		}
+		
+		// punt, no connection around
+		return new GregorianCalendar();
 	}
 
 	/**
@@ -2034,8 +2036,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return getCharacterStream(findColumn(columnName));
 	}
 
-	private final java.io.Reader getCharacterStreamFromString(String stringVal,
-			int columnIndex) throws SQLException {
+	private final java.io.Reader getCharacterStreamFromString(String stringVal) 
+			throws SQLException {
 		if (stringVal != null) {
 			return new StringReader(stringVal);
 		}
@@ -2083,8 +2085,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return getClob(findColumn(colName));
 	}
 
-	private final java.sql.Clob getClobFromString(String stringVal,
-			int columnIndex) throws SQLException {
+	private final java.sql.Clob getClobFromString(String stringVal) throws SQLException {
 		return new com.mysql.jdbc.Clob(stringVal, getExceptionInterceptor());
 	}
 
@@ -3522,7 +3523,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				return (byte[]) value;
 			}
 		
-			return getBytesFromString(getNativeString(columnIndex), columnIndex);
+			return getBytesFromString(getNativeString(columnIndex));
 		}
 	}
 
@@ -3561,15 +3562,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return this.thisRow.getReader(columnIndexMinusOne);
 		}
 		
-		String asString = null;
-		
-		asString = getStringForClob(columnIndex);
+		String asString = getStringForClob(columnIndex);
 
 		if (asString == null) {
 			return null;
 		}
 		
-		return getCharacterStreamFromString(asString, columnIndex);
+		return getCharacterStreamFromString(asString);
 	}
 
 	/**
@@ -3590,7 +3589,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return null;
 		}
 
-		return getClobFromString(stringVal, columnIndex);
+		return getClobFromString(stringVal);
 	}
 
 	private synchronized String getNativeConvertToString(int columnIndex, 
@@ -3702,7 +3701,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		case Types.DECIMAL:
 		case Types.NUMERIC:
 			String stringVal = StringUtils
-					.toAsciiString((byte[]) this.thisRow.getColumnValue(columnIndex - 1));
+					.toAsciiString(this.thisRow.getColumnValue(columnIndex - 1));
 
 			BigDecimal val;
 
@@ -4010,29 +4009,29 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return this.thisRow.getNativeDouble(columnIndex);
 		case MysqlDefs.FIELD_TYPE_TINY:
 			if (!f.isUnsigned()) {
-				return (double) getNativeByte(columnIndex + 1);
+				return getNativeByte(columnIndex + 1);
 			}
 			
-			return (double) getNativeShort(columnIndex + 1);
+			return getNativeShort(columnIndex + 1);
 		case MysqlDefs.FIELD_TYPE_SHORT:
 		case MysqlDefs.FIELD_TYPE_YEAR:
 			if (!f.isUnsigned()) {
-				return (double) getNativeShort(columnIndex + 1);
+				return getNativeShort(columnIndex + 1);
 			}
 			
-			return (double) getNativeInt(columnIndex + 1);
+			return getNativeInt(columnIndex + 1);
 		case MysqlDefs.FIELD_TYPE_INT24:
 		case MysqlDefs.FIELD_TYPE_LONG:
 			if (!f.isUnsigned()) {
-				return (double) getNativeInt(columnIndex + 1);
+				return getNativeInt(columnIndex + 1);
 			}
 			
-			return (double) getNativeLong(columnIndex + 1);
+			return getNativeLong(columnIndex + 1);
 		case MysqlDefs.FIELD_TYPE_LONGLONG:
 			long valueAsLong = getNativeLong(columnIndex + 1);
 			
 			if (!f.isUnsigned()) {
-				return (double) valueAsLong;
+				return valueAsLong;
 			}
 			
 			BigInteger asBigInt = convertLongToUlong(valueAsLong);
@@ -4041,7 +4040,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			return asBigInt.doubleValue();
 		case MysqlDefs.FIELD_TYPE_FLOAT:
-			return (double) getNativeFloat(columnIndex + 1);
+			return getNativeFloat(columnIndex + 1);
 		case MysqlDefs.FIELD_TYPE_BIT:
 			return getNumericRepresentationOfSQLBitType(columnIndex + 1);
 		default:
@@ -4114,29 +4113,29 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return (float) getNativeDouble(columnIndex + 1);
 		case MysqlDefs.FIELD_TYPE_TINY:
 			if (!f.isUnsigned()) {
-				return (float) getNativeByte(columnIndex + 1);
+				return getNativeByte(columnIndex + 1);
 			}
 			
-			return (float) getNativeShort(columnIndex + 1);
+			return getNativeShort(columnIndex + 1);
 		case MysqlDefs.FIELD_TYPE_SHORT:
 		case MysqlDefs.FIELD_TYPE_YEAR:
 			if (!f.isUnsigned()) {
-				return (float) getNativeShort(columnIndex + 1);
+				return getNativeShort(columnIndex + 1);
 			}
 			
-			return (float) getNativeInt(columnIndex + 1);
+			return getNativeInt(columnIndex + 1);
 		case MysqlDefs.FIELD_TYPE_INT24:
 		case MysqlDefs.FIELD_TYPE_LONG:
 			if (!f.isUnsigned()) {
-				return (float) getNativeInt(columnIndex + 1);
+				return getNativeInt(columnIndex + 1);
 			}
 			
-			return (float) getNativeLong(columnIndex + 1);
+			return getNativeLong(columnIndex + 1);
 		case MysqlDefs.FIELD_TYPE_LONGLONG:
 			valueAsLong = getNativeLong(columnIndex + 1);
 			
 			if (!f.isUnsigned()) {
-				return (float) valueAsLong;
+				return valueAsLong;
 			}
 			
 			BigInteger asBigInt = convertLongToUlong(valueAsLong);
@@ -6185,16 +6184,17 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 						return TimeUtil.fastTimestampCreate(tz, Integer
 										.parseInt(timestampValue.substring(0, 4)), 1,
 										1, 0, 0, 0, 0);
-					} else {
-						return TimeUtil.changeTimezone(this.connection,
-								sessionCalendar, 
-								targetCalendar,
-								fastTimestampCreate(sessionCalendar, 
-										Integer
-										.parseInt(timestampValue.substring(0, 4)), 1,
-										1, 0, 0, 0, 0), this.connection
-										.getServerTimezoneTZ(), tz, rollForward);
 					}
+					
+					return TimeUtil.changeTimezone(this.connection,
+							sessionCalendar, 
+							targetCalendar,
+							fastTimestampCreate(sessionCalendar, 
+									Integer
+									.parseInt(timestampValue.substring(0, 4)), 1,
+									1, 0, 0, 0, 0), this.connection
+									.getServerTimezoneTZ(), tz, rollForward);
+
 				} else {
 					if (timestampValue.endsWith(".")) {
 						timestampValue = timestampValue.substring(0, timestampValue
@@ -6429,288 +6429,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		
 	}
 
-	private Timestamp getTimestampFromBytes(int columnIndex,
-			Calendar targetCalendar,
-			byte[] timestampAsBytes, TimeZone tz, boolean rollForward)
-	throws java.sql.SQLException {
-		checkColumnBounds(columnIndex);
-		
-		try {
-			this.wasNullFlag = false;
-			
-			if (timestampAsBytes == null) {
-				this.wasNullFlag = true;
-				
-				return null;
-			}
-
-			int length = timestampAsBytes.length;
-			
-			Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
-					this.connection.getUtcCalendar() : 
-						getCalendarInstanceForSessionOrNew();
-			
-			synchronized (sessionCalendar) {
-				boolean allZeroTimestamp = true;
-				
-				boolean onlyTimePresent = StringUtils.indexOf(timestampAsBytes, ':') != -1;
-				
-				for (int i = 0; i < length; i++) {
-					byte b = timestampAsBytes[i];
-
-					if (b == ' ' || b == '-' || b == '/') {
-						onlyTimePresent = false;
-					}
-
-					if (b != '0' && b != ' ' && b != ':' && b != '-' && b != '/'
-							&& b != '.') {
-						allZeroTimestamp = false;
-
-						break;
-					}
-				}
-
-				if (!onlyTimePresent && allZeroTimestamp) {
-					
-					if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
-							.equals(this.connection.getZeroDateTimeBehavior())) {
-						this.wasNullFlag = true;
-						
-						return null;
-					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
-							.equals(this.connection.getZeroDateTimeBehavior())) {
-						throw SQLError.createSQLException("Value '" + StringUtils.toString(timestampAsBytes)
-								+ "' can not be represented as java.sql.Timestamp",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-					}
-					
-					// We're left with the case of 'round' to a date Java _can_
-					// represent, which is '0001-01-01'.
-					if (!this.useLegacyDatetimeCode) {
-						return TimeUtil.fastTimestampCreate(tz,
-								1, 1, 1, 0, 0, 0, 0);
-					}
-
-					return fastTimestampCreate(null, 1, 1, 1, 0, 0, 0, 0);
-				} else if (this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_YEAR) {
-					
-					if (!this.useLegacyDatetimeCode) {
-						return TimeUtil.fastTimestampCreate(tz,
-								StringUtils.getInt(timestampAsBytes, 0, 4), 1, 1, 0, 0, 0, 0);
-					}
-					
-					return TimeUtil.changeTimezone(this.connection,
-						sessionCalendar, 
-						targetCalendar,
-						fastTimestampCreate(sessionCalendar, 
-								StringUtils.getInt(timestampAsBytes, 0, 4), 1,
-								1, 0, 0, 0, 0), this.connection
-								.getServerTimezoneTZ(), tz, rollForward);
-				} else {
-					if (timestampAsBytes[length - 1] == '.') {
-						length--;
-					}
-					
-					// Convert from TIMESTAMP or DATE
-					
-					int year = 0;
-					int month = 0;
-					int day = 0;
-					int hour = 0;
-					int minutes = 0;
-					int seconds = 0;
-					int nanos = 0;
-					
-					switch (length) {
-					case 26:
-					case 25:
-					case 24:
-					case 23:
-					case 22:
-					case 21:
-					case 20:
-					case 19: {
-						year = StringUtils.getInt(timestampAsBytes, 0, 4);
-						month = StringUtils.getInt(timestampAsBytes, 5, 7);
-						day = StringUtils.getInt(timestampAsBytes, 8, 10);
-						hour = StringUtils.getInt(timestampAsBytes, 11, 13);
-						minutes = StringUtils.getInt(timestampAsBytes, 14, 16);
-						seconds = StringUtils.getInt(timestampAsBytes, 17, 19);
-						
-						nanos = 0;
-						
-						if (length > 19) {
-							int decimalIndex = StringUtils.lastIndexOf(timestampAsBytes, '.');
-							
-							if (decimalIndex != -1) {
-								if ((decimalIndex + 2) <= length) {
-									nanos = StringUtils.getInt(timestampAsBytes, decimalIndex + 1, length);
-								} else {
-									throw new IllegalArgumentException(); // re-thrown
-									// further
-									// down
-									// with
-									// a
-									// much better error message
-								}
-							}
-						}
-						
-						break;
-					}
-					
-					case 14: {
-						year = StringUtils.getInt(timestampAsBytes, 0, 4);
-						month = StringUtils.getInt(timestampAsBytes, 4, 6);
-						day = StringUtils.getInt(timestampAsBytes, 6, 8);
-						hour = StringUtils.getInt(timestampAsBytes, 8, 10);
-						minutes = StringUtils.getInt(timestampAsBytes, 10, 12);
-						seconds = StringUtils.getInt(timestampAsBytes, 12, 14);
-						
-						break;
-					}
-					
-					case 12: {
-						year = StringUtils.getInt(timestampAsBytes, 0, 2);
-						
-						if (year <= 69) {
-							year = (year + 100);
-						}
-						
-						year += 1900;
-						
-						month = StringUtils.getInt(timestampAsBytes, 2, 4);
-						day = StringUtils.getInt(timestampAsBytes, 4, 6);
-						hour = StringUtils.getInt(timestampAsBytes, 6, 8);
-						minutes = StringUtils.getInt(timestampAsBytes, 8,	10);
-						seconds = StringUtils.getInt(timestampAsBytes, 10, 12);
-						
-						break;
-					}
-					
-					case 10: {
-						if ((this.fields[columnIndex - 1].getMysqlType() == MysqlDefs.FIELD_TYPE_DATE)
-								|| (StringUtils.indexOf(timestampAsBytes, '-') != -1)) {
-							year = StringUtils.getInt(timestampAsBytes, 0, 4);
-							month = StringUtils.getInt(timestampAsBytes, 5, 7);
-							day = StringUtils.getInt(timestampAsBytes, 8, 10);
-							hour = 0;
-							minutes = 0;
-						} else {
-							year = StringUtils.getInt(timestampAsBytes, 0, 2);
-							
-							if (year <= 69) {
-								year = (year + 100);
-							}
-							
-							month = StringUtils.getInt(timestampAsBytes, 2, 4);
-							day = StringUtils.getInt(timestampAsBytes, 4, 6);
-							hour = StringUtils.getInt(timestampAsBytes, 6, 8);
-							minutes = StringUtils.getInt(timestampAsBytes, 8, 10);
-							
-							year += 1900; // two-digit year
-						}
-						
-						break;
-					}
-					
-					case 8: {
-						if (StringUtils.indexOf(timestampAsBytes, ':') != -1) {
-							hour = StringUtils.getInt(timestampAsBytes, 0, 2);
-							minutes = StringUtils.getInt(timestampAsBytes, 3, 5);
-							seconds = StringUtils.getInt(timestampAsBytes, 6, 8);
-							
-							year = 1970;
-							month = 1;
-							day = 1;
-							
-							break;
-						}
-						
-						year = StringUtils.getInt(timestampAsBytes, 0, 4);
-						month = StringUtils.getInt(timestampAsBytes, 4, 6);
-						day = StringUtils.getInt(timestampAsBytes, 6, 8);
-						
-						year -= 1900;
-						month--;
-						
-						break;
-					}
-					
-					case 6: {
-						year = StringUtils.getInt(timestampAsBytes, 0, 2);
-						
-						if (year <= 69) {
-							year = (year + 100);
-						}
-						
-						year += 1900;
-						
-						month = StringUtils.getInt(timestampAsBytes, 2, 4);
-						day = StringUtils.getInt(timestampAsBytes, 4, 6);
-						
-						break;
-					}
-					
-					case 4: {
-						year = StringUtils.getInt(timestampAsBytes, 0, 2);
-						
-						if (year <= 69) {
-							year = (year + 100);
-						}
-						
-						year += 1900;
-						
-						month = StringUtils.getInt(timestampAsBytes, 2, 4);
-						day = 1;
-						
-						break;
-					}
-					
-					case 2: {
-						year = StringUtils.getInt(timestampAsBytes, 0, 2);
-						
-						if (year <= 69) {
-							year = (year + 100);
-						}
-						
-						year += 1900;
-						month = 1;
-						day = 1;
-						
-						break;
-					}
-					
-					default:
-						throw new java.sql.SQLException(
-								"Bad format for Timestamp '" + new String(timestampAsBytes)
-								+ "' in column " + columnIndex + ".",
-								SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-					}
-					
-					if (!this.useLegacyDatetimeCode) {
-						return TimeUtil.fastTimestampCreate(tz,
-								year, month, day, hour, minutes, seconds, nanos);
-					}
-					
-					return TimeUtil.changeTimezone(this.connection,
-						sessionCalendar,
-						targetCalendar,
-						fastTimestampCreate(sessionCalendar, year, month, day, hour,
-								minutes, seconds, nanos), this.connection
-								.getServerTimezoneTZ(), tz, rollForward);
-				}
-			}
-		} catch (RuntimeException e) {
-			SQLException sqlEx = SQLError.createSQLException("Cannot convert value '"
-					+ new String(timestampAsBytes) + "' from column " + columnIndex
-					+ " to TIMESTAMP.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-			sqlEx.initCause(e);
-			
-			throw sqlEx;
-		}	
-	}
-	
 	/**
 	 * Get the value of a column in the current row as a java.sql.Timestamp
 	 * object in the given timezone
@@ -6936,7 +6654,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
-	public boolean isBeforeFirst() throws SQLException {
+	public synchronized boolean isBeforeFirst() throws SQLException {
 		checkClosed();
 
 		return this.rowData.isBeforeFirst();
@@ -6954,7 +6672,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
-	public boolean isFirst() throws SQLException {
+	public synchronized boolean isFirst() throws SQLException {
 		checkClosed();
 
 		return this.rowData.isFirst();

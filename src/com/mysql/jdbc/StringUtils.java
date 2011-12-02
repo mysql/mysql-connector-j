@@ -1095,10 +1095,10 @@ public class StringUtils {
 	 * @throws IllegalArgumentException
 	 *             DOCUMENT ME!
 	 */
-	public static final List split(String stringToSplit, String delimitter,
+	public static final List<String> split(String stringToSplit, String delimitter,
 			boolean trim) {
 		if (stringToSplit == null) {
-			return new ArrayList();
+			return new ArrayList<String>();
 		}
 
 		if (delimitter == null) {
@@ -1108,7 +1108,7 @@ public class StringUtils {
 		StringTokenizer tokenizer = new StringTokenizer(stringToSplit,
 				delimitter, false);
 
-		List splitTokens = new ArrayList(tokenizer.countTokens());
+		List<String> splitTokens = new ArrayList<String>(tokenizer.countTokens());
 
 		while (tokenizer.hasMoreTokens()) {
 			String token = tokenizer.nextToken();

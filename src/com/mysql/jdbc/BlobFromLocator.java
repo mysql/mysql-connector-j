@@ -53,9 +53,9 @@ import java.util.List;
  *          Exp $
  */
 public class BlobFromLocator implements java.sql.Blob {
-	private List primaryKeyColumns = null;
+	private List<String> primaryKeyColumns = null;
 
-	private List primaryKeyValues = null;
+	private List<String> primaryKeyValues = null;
 
 	/** The ResultSet that created this BLOB */
 	private ResultSetImpl creatorResultSet;
@@ -85,8 +85,8 @@ public class BlobFromLocator implements java.sql.Blob {
 				.getIdentifierQuoteString();
 
 		if (this.numColsInResultSet > 1) {
-			this.primaryKeyColumns = new ArrayList();
-			this.primaryKeyValues = new ArrayList();
+			this.primaryKeyColumns = new ArrayList<String>();
+			this.primaryKeyValues = new ArrayList<String>();
 
 			for (int i = 0; i < this.numColsInResultSet; i++) {
 				if (this.creatorResultSet.fields[i].isPrimaryKey()) {
@@ -210,12 +210,12 @@ public class BlobFromLocator implements java.sql.Blob {
 		query.append(length);
 		query.append(", ?) WHERE ");
 
-		query.append((String) this.primaryKeyColumns.get(0));
+		query.append(this.primaryKeyColumns.get(0));
 		query.append(" = ?");
 
 		for (int i = 1; i < this.numPrimaryKeys; i++) {
 			query.append(" AND ");
-			query.append((String) this.primaryKeyColumns.get(i));
+			query.append(this.primaryKeyColumns.get(i));
 			query.append(" = ?");
 		}
 
@@ -227,7 +227,7 @@ public class BlobFromLocator implements java.sql.Blob {
 			pStmt.setBytes(1, bytesToWrite);
 
 			for (int i = 0; i < this.numPrimaryKeys; i++) {
-				pStmt.setString(i + 2, (String) this.primaryKeyValues.get(i));
+				pStmt.setString(i + 2, this.primaryKeyValues.get(i));
 			}
 
 			int rowsUpdated = pStmt.executeUpdate();
@@ -315,12 +315,12 @@ public class BlobFromLocator implements java.sql.Blob {
 		query.append(this.tableName);
 		query.append(" WHERE ");
 
-		query.append((String) this.primaryKeyColumns.get(0));
+		query.append(this.primaryKeyColumns.get(0));
 		query.append(" = ?");
 
 		for (int i = 1; i < this.numPrimaryKeys; i++) {
 			query.append(" AND ");
-			query.append((String) this.primaryKeyColumns.get(i));
+			query.append(this.primaryKeyColumns.get(i));
 			query.append(" = ?");
 		}
 
@@ -330,7 +330,7 @@ public class BlobFromLocator implements java.sql.Blob {
 					.toString());
 
 			for (int i = 0; i < this.numPrimaryKeys; i++) {
-				pStmt.setString(i + 1, (String) this.primaryKeyValues.get(i));
+				pStmt.setString(i + 1, this.primaryKeyValues.get(i));
 			}
 
 			blobRs = pStmt.executeQuery();
@@ -400,12 +400,12 @@ public class BlobFromLocator implements java.sql.Blob {
 		query.append(this.tableName);
 		query.append(" WHERE ");
 
-		query.append((String) this.primaryKeyColumns.get(0));
+		query.append(this.primaryKeyColumns.get(0));
 		query.append(" = ?");
 
 		for (int i = 1; i < this.numPrimaryKeys; i++) {
 			query.append(" AND ");
-			query.append((String) this.primaryKeyColumns.get(i));
+			query.append(this.primaryKeyColumns.get(i));
 			query.append(" = ?");
 		}
 
@@ -416,7 +416,7 @@ public class BlobFromLocator implements java.sql.Blob {
 			pStmt.setBytes(1, pattern);
 
 			for (int i = 0; i < this.numPrimaryKeys; i++) {
-				pStmt.setString(i + 2, (String) this.primaryKeyValues.get(i));
+				pStmt.setString(i + 2, this.primaryKeyValues.get(i));
 			}
 
 			blobRs = pStmt.executeQuery();
@@ -468,12 +468,12 @@ public class BlobFromLocator implements java.sql.Blob {
 		query.append(length);
 		query.append(") WHERE ");
 
-		query.append((String) this.primaryKeyColumns.get(0));
+		query.append(this.primaryKeyColumns.get(0));
 		query.append(" = ?");
 
 		for (int i = 1; i < this.numPrimaryKeys; i++) {
 			query.append(" AND ");
-			query.append((String) this.primaryKeyColumns.get(i));
+			query.append(this.primaryKeyColumns.get(i));
 			query.append(" = ?");
 		}
 
@@ -483,7 +483,7 @@ public class BlobFromLocator implements java.sql.Blob {
 					.toString());
 
 			for (int i = 0; i < this.numPrimaryKeys; i++) {
-				pStmt.setString(i + 1, (String) this.primaryKeyValues.get(i));
+				pStmt.setString(i + 1, this.primaryKeyValues.get(i));
 			}
 
 			int rowsUpdated = pStmt.executeUpdate();
@@ -518,12 +518,12 @@ public class BlobFromLocator implements java.sql.Blob {
 		query.append(this.tableName);
 		query.append(" WHERE ");
 
-		query.append((String) this.primaryKeyColumns.get(0));
+		query.append(this.primaryKeyColumns.get(0));
 		query.append(" = ?");
 
 		for (int i = 1; i < this.numPrimaryKeys; i++) {
 			query.append(" AND ");
-			query.append((String) this.primaryKeyColumns.get(i));
+			query.append(this.primaryKeyColumns.get(i));
 			query.append(" = ?");
 		}
 
@@ -542,7 +542,7 @@ public class BlobFromLocator implements java.sql.Blob {
 			pStmt.setInt(2, length);
 
 			for (int i = 0; i < this.numPrimaryKeys; i++) {
-				pStmt.setString(i + 3, (String) this.primaryKeyValues.get(i));
+				pStmt.setString(i + 3, this.primaryKeyValues.get(i));
 			}
 
 			blobRs = pStmt.executeQuery();
@@ -579,6 +579,7 @@ public class BlobFromLocator implements java.sql.Blob {
 			pStmt = createGetBytesStatement();
 		}
 
+		@SuppressWarnings("synthetic-access")
 		LocatorInputStream(long pos, long len) throws SQLException {
 			length = pos + len;
 			currentPositionInBlob = pos;
