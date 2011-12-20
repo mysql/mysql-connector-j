@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -47,6 +47,8 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
 
+import javax.sql.rowset.CachedRowSet;
+
 import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.Messages;
@@ -55,7 +57,7 @@ import com.mysql.jdbc.NotUpdatable;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.StandardLogger;
-import com.sun.rowset.CachedRowSetImpl;
+
 
 /**
  * Regression test cases for the ResultSet class.
@@ -4671,7 +4673,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 	public void testBug49516() throws Exception {
 
-		CachedRowSetImpl crs;
+		CachedRowSet crs;
 
 		createTable(
 				"bug49516",
@@ -4688,7 +4690,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		this.rs = this.stmt
 				.executeQuery("select firstName as 'first person' from bug49516");
 
-		crs = new CachedRowSetImpl();
+		crs = (CachedRowSet)Class.forName("com.sun.rowset.CachedRowSetImpl").newInstance();
 		crs.populate(this.rs);
 		crs.first();
 
@@ -4697,7 +4699,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 	public void testBug48820() throws Exception {
 
-		CachedRowSetImpl crs;
+		CachedRowSet crs;
 
 		Connection noBlobsConn = getConnectionWithProps("functionsNeverReturnBlobs=true");
 
@@ -4710,7 +4712,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		this.rs = noBlobsConn.createStatement().executeQuery(
 				"SELECT PASSWORD ('SOMETHING')");
 
-		crs = new CachedRowSetImpl();
+		crs = (CachedRowSet)Class.forName("com.sun.rowset.CachedRowSetImpl").newInstance();
 		crs.populate(this.rs);
 		crs.first();
 
