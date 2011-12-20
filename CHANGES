@@ -3,7 +3,9 @@
 
 nn-nn-11 - Version 5.1.19
 
-
+  - Fix for Bug#63811, pointless Socket.bind() when using ephemeral ports and interfaces, 
+    which limits scalability on some platforms.
+  
 10-03-11 - Version 5.1.18
  
   - Fix for Bug#12565726, not putting the space between VALUES() and ON DUPLICATE KEY UPDATE

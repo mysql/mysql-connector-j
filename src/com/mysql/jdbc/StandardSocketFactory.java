@@ -321,11 +321,11 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 										.newInstance(new Object[] {
 												possibleAddresses[i],
 												Integer.valueOf(port) });
-								// bind to the local port, null is 'ok', it
-								// means
-								// use the ephemeral port
-								socketBindMethod.invoke(rawSocket,
-										new Object[] { localSockAddr });
+								// bind to the local port if not using the ephemeral port
+								if (localSockAddr != null) {
+									socketBindMethod.invoke(rawSocket,
+											new Object[] { localSockAddr });
+								}
 
 								connectWithTimeoutMethod.invoke(rawSocket,
 										new Object[] { sockAddr,
