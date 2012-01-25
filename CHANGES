@@ -3,6 +3,8 @@
 
 nn-nn-11 - Version 5.1.19
 
+  - Fix for Bug#61203, noAccessToProcedureBodies does not work anymore.
+
   - Fix for Bug#63811, pointless Socket.bind() when using ephemeral ports and interfaces, 
     which limits scalability on some platforms.
   

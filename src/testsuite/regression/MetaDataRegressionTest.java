@@ -3079,4 +3079,92 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 	}
 
+	/**
+	 * Tests fix for BUG#61203 - noAccessToProcedureBodies does not work anymore. 
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug61203() throws Exception {
+		if (!versionMeetsMinimum(5, 0)) {
+			return; // no stored procedures
+		}
+
+		Connection rootConn = null;
+		Connection userConn = null;
+		CallableStatement cStmt = null;
+
+		try {
+			//this.stmt = this.conn.createStatement();
+			this.stmt.executeUpdate("grant usage on *.* to 'bug61203user'@'%' identified by 'foo'");
+			this.stmt.executeUpdate("delete from mysql.db where user='bug61203user'");
+			this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'test', 'bug61203user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+			this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'bug61203user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+			this.stmt.executeUpdate("flush privileges");
+			
+			// 1. underprivileged user is the creator
+			this.stmt.executeUpdate("DROP FUNCTION IF EXISTS testbug61203fn;"); 
+			this.stmt.executeUpdate("CREATE DEFINER='bug61203user'@'%' FUNCTION testbug61203fn(a float) RETURNS INT NO SQL BEGIN RETURN a; END");
+			this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testbug61203pr;"); 
+			this.stmt.executeUpdate("CREATE DEFINER='bug61203user'@'%' PROCEDURE testbug61203pr(INOUT a float, b bigint, c int) NO SQL BEGIN SET @a = b + c; END");
+			testBug61203checks(rootConn, userConn);
+			this.stmt.executeUpdate("DROP FUNCTION IF EXISTS testbug61203fn;"); 
+			this.stmt.executeUpdate("DROP PROCEDURE IF EXISTS testbug61203pr;"); 
+
+			// 2. root user is the creator
+			createFunction("testbug61203fn", "(a float) RETURNS INT NO SQL BEGIN RETURN a; END");
+			createProcedure("testbug61203pr", "(INOUT a float, b bigint, c int) NO SQL BEGIN SET @a = b + c; END");
+			testBug61203checks(rootConn, userConn);
+
+		} finally {
+			dropFunction("testbug61203fn");
+			dropProcedure("testbug61203pr");
+			this.stmt.executeUpdate("drop user 'bug61203user'@'%'");
+
+			if (cStmt != null) cStmt.close();
+			if (rootConn != null) rootConn.close();
+			if (userConn != null) userConn.close();
+		}
+	}
+	
+	private void testBug61203checks(Connection rootConn, Connection userConn) throws SQLException {
+		CallableStatement cStmt = null;
+		// 1.1. with information schema
+		rootConn = getConnectionWithProps("noAccessToProcedureBodies=true,useInformationSchema=true");
+		userConn = getConnectionWithProps("noAccessToProcedureBodies=true,useInformationSchema=true,user=bug61203user,password=foo");
+		// 1.1.1. root call;
+		callFunction(cStmt, rootConn);
+		callProcedure(cStmt, rootConn);
+		// 1.1.2. underprivileged user call;
+		callFunction(cStmt, userConn);
+		callProcedure(cStmt, userConn);
+
+		// 1.2. no information schema
+		rootConn = getConnectionWithProps("noAccessToProcedureBodies=true,useInformationSchema=false");
+		userConn = getConnectionWithProps("noAccessToProcedureBodies=true,useInformationSchema=false,user=bug61203user,password=foo");
+		// 1.2.1. root call;
+		callFunction(cStmt, rootConn);
+		callProcedure(cStmt, rootConn);
+		// 1.2.2. underprivileged user call;
+		callFunction(cStmt, userConn);
+		callProcedure(cStmt, userConn);
+	}
+
+	private void callFunction(CallableStatement cStmt, Connection c) throws SQLException {
+		cStmt = c.prepareCall("{? = CALL testbug61203fn(?)}");
+		cStmt.registerOutParameter(1, Types.INTEGER);
+		cStmt.setFloat(2, 2);
+		cStmt.execute();
+		assertEquals(2f, cStmt.getInt(1), .001);
+	}
+
+	private void callProcedure(CallableStatement cStmt, Connection c) throws SQLException {
+		cStmt = c.prepareCall("{CALL testbug61203pr(?,?,?)}");
+		cStmt.setFloat(1, 2);
+		cStmt.setInt(2, 1);
+		cStmt.setInt(3, 1);
+		cStmt.registerOutParameter(1, Types.INTEGER);
+		cStmt.execute();
+		assertEquals(2f, cStmt.getInt(1), .001);
+	}
 }

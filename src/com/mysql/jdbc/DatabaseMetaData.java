@@ -1634,11 +1634,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						.getString("Create Function") : paramRetrievalRs
 						.getString("Create Procedure");
 						
-				if (procedureDef == null || procedureDef.length() == 0) {
+				if (!this.conn.getNoAccessToProcedureBodies() &&
+						(procedureDef == null || procedureDef.length() == 0)) {
 					throw SQLError.createSQLException("User does not have access to metadata required to determine " +
 							"stored procedure parameter types. If rights can not be granted, configure connection with \"noAccessToProcedureBodies=true\" " +
 							"to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
-							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());		
+							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 				}
 
 				try {
@@ -1656,63 +1657,66 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				storageDefnDelims = "(" + identifierMarkers;
 				storageDefnClosures = ")" + identifierMarkers;
 				
-				// sanitize/normalize by stripping out comments
-				procedureDef = StringUtils.stripComments(procedureDef, 
-						identifierAndStringMarkers, identifierAndStringMarkers, true, false, true, true);
-				
-				int openParenIndex = StringUtils
-				.indexOfIgnoreCaseRespectQuotes(0, procedureDef, "(",
-						quoteChar.charAt(0), !this.conn
-						.isNoBackslashEscapesSet());
-				int endOfParamDeclarationIndex = 0;
+				if (procedureDef != null && procedureDef.length() != 0) {
+					// sanitize/normalize by stripping out comments
+					procedureDef = StringUtils.stripComments(procedureDef, 
+							identifierAndStringMarkers, identifierAndStringMarkers, true, false, true, true);
+					
+					int openParenIndex = StringUtils
+					.indexOfIgnoreCaseRespectQuotes(0, procedureDef, "(",
+							quoteChar.charAt(0), !this.conn
+							.isNoBackslashEscapesSet());
+					int endOfParamDeclarationIndex = 0;
 
-				endOfParamDeclarationIndex = endPositionOfParameterDeclaration(
-						openParenIndex, procedureDef, quoteChar);
+					endOfParamDeclarationIndex = endPositionOfParameterDeclaration(
+							openParenIndex, procedureDef, quoteChar);
 
-				if (parsingFunction) {
+					if (parsingFunction) {
 
-					// Grab the return column since it needs
-					// to go first in the output result set
-					int returnsIndex = StringUtils
-					.indexOfIgnoreCaseRespectQuotes(0, procedureDef,
-							" RETURNS ", quoteChar.charAt(0),
-							!this.conn.isNoBackslashEscapesSet());
+						// Grab the return column since it needs
+						// to go first in the output result set
+						int returnsIndex = StringUtils
+						.indexOfIgnoreCaseRespectQuotes(0, procedureDef,
+								" RETURNS ", quoteChar.charAt(0),
+								!this.conn.isNoBackslashEscapesSet());
 
-					int endReturnsDef = findEndOfReturnsClause(procedureDef,
-							quoteChar, returnsIndex);
+						int endReturnsDef = findEndOfReturnsClause(procedureDef,
+								quoteChar, returnsIndex);
 
-					// Trim off whitespace after "RETURNS"
+						// Trim off whitespace after "RETURNS"
 
-					int declarationStart = returnsIndex + "RETURNS ".length();
+						int declarationStart = returnsIndex + "RETURNS ".length();
 
-					while (declarationStart < procedureDef.length()) {
-						if (Character.isWhitespace(procedureDef.charAt(declarationStart))) {
-							declarationStart++;
-						} else {
-							break;
+						while (declarationStart < procedureDef.length()) {
+							if (Character.isWhitespace(procedureDef.charAt(declarationStart))) {
+								declarationStart++;
+							} else {
+								break;
+							}
 						}
+
+						String returnsDefn = procedureDef.substring(declarationStart, endReturnsDef).trim();
+						TypeDescriptor returnDescriptor = new TypeDescriptor(
+								returnsDefn, "YES"); //null);
+
+						resultRows.add(convertTypeDescriptorToProcedureRow(
+								procNameAsBytes, procCatAsBytes, "", false, false, true,
+								returnDescriptor, forGetFunctionColumns, 0));
 					}
 
-					String returnsDefn = procedureDef.substring(declarationStart, endReturnsDef).trim();
-					TypeDescriptor returnDescriptor = new TypeDescriptor(
-							returnsDefn, "YES"); //null);
+					if ((openParenIndex == -1)
+							|| (endOfParamDeclarationIndex == -1)) {
+						// parse error?
+						throw SQLError
+						.createSQLException(
+								"Internal error when parsing callable statement metadata",
+								SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+					}
 
-					resultRows.add(convertTypeDescriptorToProcedureRow(
-							procNameAsBytes, procCatAsBytes, "", false, false, true,
-							returnDescriptor, forGetFunctionColumns, 0));
+					parameterDef = procedureDef.substring(openParenIndex + 1,
+							endOfParamDeclarationIndex);
 				}
-
-				if ((openParenIndex == -1)
-						|| (endOfParamDeclarationIndex == -1)) {
-					// parse error?
-					throw SQLError
-					.createSQLException(
-							"Internal error when parsing callable statement metadata",
-							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-				}
-
-				parameterDef = procedureDef.substring(openParenIndex + 1,
-						endOfParamDeclarationIndex);
+				
 			}
 		} finally {
 			SQLException sqlExRethrow = null;
