@@ -1138,8 +1138,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *             if authentication fails, or some other error occurs while
 	 *             performing the command.
 	 */
-	public void changeUser(String userName, String newPassword)
+	public synchronized void changeUser(String userName, String newPassword)
 			throws SQLException {
+		checkClosed();
+		
 		if ((userName == null) || userName.equals("")) {
 			userName = "";
 		}

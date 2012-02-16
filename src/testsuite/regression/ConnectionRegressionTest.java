@@ -67,6 +67,7 @@ import com.mysql.jdbc.RandomBalanceStrategy;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
+import com.mysql.jdbc.exceptions.MySQLNonTransientException;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
@@ -3156,6 +3157,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 			
 			this.stmt.executeQuery("SELECT 1");
+		}
+	}
+	
+	public void testChangeUserClosedConn() throws Exception {
+		Properties props = getPropertiesFromTestsuiteUrl();
+		Connection newConn = getConnectionWithProps((Properties)null);
+		
+		try {
+			newConn.close();
+			((com.mysql.jdbc.Connection) newConn).changeUser(props.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY), props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY));
+			fail("Expected SQL Exception");
+		} catch (MySQLNonTransientException ex) {
+			// expected
+		} finally {
+			newConn.close();
 		}
 	}
 
