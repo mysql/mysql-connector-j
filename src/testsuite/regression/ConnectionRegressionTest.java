@@ -3175,4 +3175,68 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 
+	public void testBug63284() throws Exception {
+		Properties props = new Driver().parseURL(BaseTestCase.dbUrl, null);
+		props.setProperty("autoReconnect", "true");
+		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+
+		Properties urlProps = new NonRegisteringDriver().parseURL(
+            BaseTestCase.dbUrl, null);
+
+		String host = urlProps.getProperty(Driver.HOST_PROPERTY_KEY);
+		String port = urlProps.getProperty(Driver.PORT_PROPERTY_KEY);
+
+		props.remove(Driver.HOST_PROPERTY_KEY);
+		props.remove(Driver.NUM_HOSTS_PROPERTY_KEY);
+		props.remove(Driver.HOST_PROPERTY_KEY + ".1");
+		props.remove(Driver.PORT_PROPERTY_KEY + ".1");
+
+		props.setProperty("queriesBeforeRetryMaster", "50");
+		props.setProperty("maxReconnects", "1");
+
+		UnreliableSocketFactory.mapHost("master", host);
+		UnreliableSocketFactory.mapHost("slave", host);
+
+		Connection failoverConnection1 = null;
+		Connection failoverConnection2 = null;
+	
+		try{
+			failoverConnection1 = getConnectionWithProps("jdbc:mysql://master:"
+                + port + ",slave:" + port + "/", props);
+
+			failoverConnection2 = getConnectionWithProps("jdbc:mysql://master:"
+                + port + ",slave:" + port + "/", props);
+       
+			assert(((com.mysql.jdbc.Connection)failoverConnection1).isMasterConnection());
+
+			// Two different Connection objects should not equal each other:
+			assert(!failoverConnection1.equals(failoverConnection2));
+
+			int hc = failoverConnection1.hashCode();
+       
+			UnreliableSocketFactory.downHost("master");
+       
+			for(int i = 0; i < 3; i++ ){
+				try{
+					failoverConnection1.createStatement().execute("SELECT 1");
+				} catch (SQLException e){
+                // do nothing, expect SQLException when failing over initially
+                // goal here is to ensure valid connection against a slave
+				}
+			}
+			// ensure we're now connected to the slave
+			assert(!((com.mysql.jdbc.Connection)failoverConnection1).isMasterConnection());
+       
+			// ensure that hashCode() result is persistent across failover events when proxy state changes
+			assert(failoverConnection1.hashCode() == hc);
+		} finally {
+			if (failoverConnection1 != null) {
+				failoverConnection1.close();
+			}
+			if (failoverConnection2 != null) {
+				failoverConnection2.close();
+			}
+		}
+	}
+	
 }

@@ -10,6 +10,10 @@ nn-nn-12 - Version 5.1.19
     
   - Connection.changeUser() would not check for closed connections, leading to NPEs when
     this method was called on a closed connection.
+	
+  - Fix for Bug#63284, memory leak with Failover proxied Statement/PreparedStatement with
+    DBCP due to improper implementation of equals().
+
   
 10-03-11 - Version 5.1.18
  

@@ -26,6 +26,7 @@ package com.mysql.jdbc;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
@@ -124,8 +125,14 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 			createPrimaryConnection();
 			
 			return super.invoke(proxy, method, args, failedOver);
+		} else if ("hashCode".equals(methodName)) {
+	        return Integer.valueOf(this.hashCode());
+		} else if ("equals".equals(methodName)) {
+			if (args[0] instanceof Proxy) {
+				return Boolean.valueOf((((Proxy) args[0]).equals(this)));
+			}
+			return Boolean.valueOf(this.equals(args[0])); 
 		}
-
 		return super.invoke(proxy, method, args, failedOver);
 	}
 
