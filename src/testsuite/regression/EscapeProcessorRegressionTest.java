@@ -86,4 +86,13 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
 		assertEquals("\\' {d}",
 				getSingleValueWithQuery("SELECT '\\\\\\' {d}'"));
 	}
+	
+	/**
+	 * Tests fix for BUG#63526 - Unhandled case of {data...}
+	 * 
+	 * @throws Exception if the test fails.
+	 */
+	public void testBug63526() throws Exception {
+		createTable("bug63526", "(`{123}` INT UNSIGNED NOT NULL)","INNODB");
+		}
 }

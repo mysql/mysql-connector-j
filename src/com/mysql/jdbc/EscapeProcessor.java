@@ -297,6 +297,9 @@ class EscapeProcessor {
 						// MySQL already handles this escape sequence
 						// because of ODBC. Cool.
 						newSql.append(token);
+					} else {
+						// not an escape code, just part of the query
+						newSql.append(token);
 					}
 				} else {
 					newSql.append(token); // it's just part of the query

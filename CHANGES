@@ -2,6 +2,13 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.19
+  - Fix for Bug#63526. The problem happens in com.mysql.jdbc.EscapeProcessor#escapeSQL.
+    The function recognizes the string in the create table statement as an escape
+	sequence (line 136+138). The "if" construct beginning in line 182 tries to match a
+	white-space collapsed version of the string to prefixes for valid jdbc-escapes
+	(till line 300). Since no matching escape sequence is found and no "else" clause
+	is defined, neither the token, nor replacement are added to the resulting escaped
+	SQL string.
 
   - Fix for Bug#61203, noAccessToProcedureBodies does not work anymore.
 
