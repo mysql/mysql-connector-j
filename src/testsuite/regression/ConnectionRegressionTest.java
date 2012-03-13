@@ -3268,7 +3268,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				if (testConn != null) testConn.close();
 			}
 
-			props.setProperty("defaultAuthenticationPlugin", "testsuite.simple.TestWL5851$AuthTestPlugin");
+			props.setProperty("defaultAuthenticationPlugin", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
 			try {
 				testConn = getConnectionWithProps(props);
 				assertTrue("Exception is expected due to defaultAuthenticationPlugin value is not listed", false);
@@ -3278,8 +3278,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				if (testConn != null) testConn.close();
 			}
 
-			props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$AuthTestPlugin");
-			props.setProperty("defaultAuthenticationPlugin", "testsuite.simple.TestWL5851$AuthTestPlugin");
+			props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
+			props.setProperty("defaultAuthenticationPlugin", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
 			try {
 				testConn = getConnectionWithProps(props);
 				assertTrue(true);
@@ -3317,8 +3317,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				if (testConn != null) testConn.close();
 			}
 
-			props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$AuthTestPlugin");
-			props.setProperty("defaultAuthenticationPlugin", "testsuite.simple.TestWL5851$AuthTestPlugin");
+			props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
+			props.setProperty("defaultAuthenticationPlugin", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
 			props.setProperty("disabledAuthenticationPlugins", "auth_test_plugin");
 			try {
 				testConn = getConnectionWithProps(props);
@@ -3330,8 +3330,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 
 			props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
-			props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$AuthTestPlugin");
-			props.setProperty("disabledAuthenticationPlugins", "testsuite.simple.TestWL5851$AuthTestPlugin");
+			props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
+			props.setProperty("disabledAuthenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
 			try {
 				testConn = getConnectionWithProps(props);
 				assertTrue(true);
@@ -3372,7 +3372,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				Properties props = new Properties();
 				props.setProperty("user", "wl5851user");
 				props.setProperty("password", "plug_dest");
-				props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$AuthTestPlugin");
+				props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
 
 				Connection testConn = null;
 				Statement testSt = null;
@@ -3427,7 +3427,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				Properties props = new Properties();
 				props.setProperty("user", "wl5851user2");
 				props.setProperty("password", "two_questions_password");
-				props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$TwoQuestionsPlugin");
+				props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$TwoQuestionsPlugin");
 
 				Connection testConn = null;
 				Statement testSt = null;
@@ -3480,7 +3480,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				Properties props = new Properties();
 				props.setProperty("user", "wl5851user3");
 				props.setProperty("password", "three_attempts_password");
-				props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$ThreeAttemptsPlugin");
+				props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$ThreeAttemptsPlugin");
 
 				Connection testConn = null;
 				Statement testSt = null;
