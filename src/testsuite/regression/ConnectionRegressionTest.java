@@ -56,6 +56,8 @@ import javax.transaction.xa.Xid;
 import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
+import com.mysql.jdbc.AuthenticationPlugin;
+import com.mysql.jdbc.Buffer;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
@@ -67,6 +69,7 @@ import com.mysql.jdbc.RandomBalanceStrategy;
 import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
+import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.exceptions.MySQLNonTransientException;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -3239,4 +3242,390 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 	
+	public void testDefaultPlugin() throws Exception {
+		if (versionMeetsMinimum(5, 5, 7)) {
+
+			Connection testConn = null;
+			Properties props = new Properties();
+
+			props.setProperty("defaultAuthenticationPlugin", "");
+			try {
+				testConn = getConnectionWithProps(props);
+				assertTrue("Exception is expected due to incorrect defaultAuthenticationPlugin value", false);
+			} catch (SQLException sqlEx) {
+				assertTrue(true);
+			} finally {
+				if (testConn != null) testConn.close();
+			}
+
+			props.setProperty("defaultAuthenticationPlugin", "mysql_native_password");
+			try {
+				testConn = getConnectionWithProps(props);
+				assertTrue("Exception is expected due to incorrect defaultAuthenticationPlugin value (mechanism name instead of class name)", false);
+			} catch (SQLException sqlEx) {
+				assertTrue(true);
+			} finally {
+				if (testConn != null) testConn.close();
+			}
+
+			props.setProperty("defaultAuthenticationPlugin", "testsuite.simple.TestWL5851$AuthTestPlugin");
+			try {
+				testConn = getConnectionWithProps(props);
+				assertTrue("Exception is expected due to defaultAuthenticationPlugin value is not listed", false);
+			} catch (SQLException sqlEx) {
+				assertTrue(true);
+			} finally {
+				if (testConn != null) testConn.close();
+			}
+
+			props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$AuthTestPlugin");
+			props.setProperty("defaultAuthenticationPlugin", "testsuite.simple.TestWL5851$AuthTestPlugin");
+			try {
+				testConn = getConnectionWithProps(props);
+				assertTrue(true);
+			} catch (SQLException sqlEx) {
+				assertTrue("Exception is not expected due to defaultAuthenticationPlugin value is correctly listed", false);
+			} finally {
+				if (testConn != null) testConn.close();
+			}
+		}
+	}
+
+	public void testDisabledPlugins() throws Exception {
+		if (versionMeetsMinimum(5, 5, 7)) {
+
+			Connection testConn = null;
+			Properties props = new Properties();
+
+			props.setProperty("disabledAuthenticationPlugins", "mysql_native_password");
+			try {
+				testConn = getConnectionWithProps(props);
+				assertTrue("Exception is expected due to disabled defaultAuthenticationPlugin", false);
+			} catch (SQLException sqlEx) {
+				assertTrue(true);
+			} finally {
+				if (testConn != null) testConn.close();
+			}
+
+			props.setProperty("disabledAuthenticationPlugins", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+			try {
+				testConn = getConnectionWithProps(props);
+				assertTrue("Exception is expected due to disabled defaultAuthenticationPlugin", false);
+			} catch (SQLException sqlEx) {
+				assertTrue(true);
+			} finally {
+				if (testConn != null) testConn.close();
+			}
+
+			props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$AuthTestPlugin");
+			props.setProperty("defaultAuthenticationPlugin", "testsuite.simple.TestWL5851$AuthTestPlugin");
+			props.setProperty("disabledAuthenticationPlugins", "auth_test_plugin");
+			try {
+				testConn = getConnectionWithProps(props);
+				assertTrue("Exception is expected due to disabled defaultAuthenticationPlugin", false);
+			} catch (SQLException sqlEx) {
+				assertTrue(true);
+			} finally {
+				if (testConn != null) testConn.close();
+			}
+
+			props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlNativePasswordPlugin");
+			props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$AuthTestPlugin");
+			props.setProperty("disabledAuthenticationPlugins", "testsuite.simple.TestWL5851$AuthTestPlugin");
+			try {
+				testConn = getConnectionWithProps(props);
+				assertTrue(true);
+			} catch (SQLException sqlEx) {
+				assertTrue("Exception is not expected due to disabled plugin is not default", false);
+			} finally {
+				if (testConn != null) testConn.close();
+			}
+		}
+	}
+
+	public void testAuthTestPlugin() throws Exception {
+		if (versionMeetsMinimum(5, 5, 7)) {
+
+			boolean install_plugin_in_runtime = false;
+			try {
+
+				// install plugin if required
+				this.rs = this.stmt.executeQuery(
+						"select (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') as `TRUE`" +
+						" FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='test_plugin_server'");
+				if (rs.next()) {
+					if (!rs.getBoolean(1)) install_plugin_in_runtime = true;
+				} else {
+					install_plugin_in_runtime = true;
+				}
+
+				if (install_plugin_in_runtime) {
+					this.stmt.executeUpdate("INSTALL PLUGIN test_plugin_server SONAME 'auth_test_plugin.so'");
+				}
+				
+				// create proxy users
+				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user'@'localhost' identified WITH test_plugin_server AS 'plug_dest'");
+				this.stmt.executeUpdate("grant usage on *.* to 'plug_dest'@'localhost' IDENTIFIED BY 'plug_dest_passwd'");
+				this.stmt.executeUpdate("GRANT PROXY ON 'plug_dest'@'localhost' TO 'wl5851user'@'localhost'");
+				this.stmt.executeUpdate("flush privileges");
+				
+				Properties props = new Properties();
+				props.setProperty("user", "wl5851user");
+				props.setProperty("password", "plug_dest");
+				props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$AuthTestPlugin");
+
+				Connection testConn = null;
+				Statement testSt = null;
+				ResultSet testRs = null;
+				try {
+					testConn = getConnectionWithProps(props);
+					testSt = testConn.createStatement();
+					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+					testRs.next();
+					assertEquals("wl5851user@localhost", testRs.getString(1));
+					assertEquals("plug_dest@localhost", testRs.getString(2));
+					
+				} finally {
+					if (testRs != null) testRs.close();
+					if (testSt != null) testSt.close();
+					if (testConn != null) testConn.close();
+				}
+
+			} finally {
+				this.stmt.executeUpdate("drop user 'wl5851user'@'localhost'");
+				this.stmt.executeUpdate("drop user 'plug_dest'@'localhost'");
+				if (install_plugin_in_runtime) {
+					this.stmt.executeUpdate("UNINSTALL PLUGIN test_plugin_server");
+				}
+			}
+		}
+	}
+
+	public void testTwoQuestionsPlugin() throws Exception {
+		if (versionMeetsMinimum(5, 5, 7)) {
+
+			boolean install_plugin_in_runtime = false;
+			try {
+
+				// install plugin if required
+				this.rs = this.stmt.executeQuery(
+						"select (PLUGIN_LIBRARY LIKE 'two_questions%') as `TRUE`" +
+						" FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='two_questions'");
+				if (rs.next()) {
+					if (!rs.getBoolean(1)) install_plugin_in_runtime = true;
+				} else {
+					install_plugin_in_runtime = true;
+				}
+
+				if (install_plugin_in_runtime) {
+					this.stmt.executeUpdate("INSTALL PLUGIN two_questions SONAME 'auth.so'");
+				}
+				
+				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user2'@'localhost' identified WITH two_questions AS 'two_questions_password'");
+				this.stmt.executeUpdate("flush privileges");
+				
+				Properties props = new Properties();
+				props.setProperty("user", "wl5851user2");
+				props.setProperty("password", "two_questions_password");
+				props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$TwoQuestionsPlugin");
+
+				Connection testConn = null;
+				Statement testSt = null;
+				ResultSet testRs = null;
+				try {
+					testConn = getConnectionWithProps(props);
+					testSt = testConn.createStatement();
+					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+					testRs.next();
+					assertEquals("wl5851user2@localhost", testRs.getString(1));
+					
+				} finally {
+					if (testRs != null) testRs.close();
+					if (testSt != null) testSt.close();
+					if (testConn != null) testConn.close();
+				}
+
+			} finally {
+				this.stmt.executeUpdate("drop user 'wl5851user2'@'localhost'");
+				if (install_plugin_in_runtime) {
+					this.stmt.executeUpdate("UNINSTALL PLUGIN two_questions");
+				}
+			}
+		}
+	}
+
+	public void testThreeAttemptsPlugin() throws Exception {
+		if (versionMeetsMinimum(5, 5, 7)) {
+
+			boolean install_plugin_in_runtime = false;
+			try {
+
+				// install plugin if required
+				this.rs = this.stmt.executeQuery(
+						"select (PLUGIN_LIBRARY LIKE 'three_attempts%') as `TRUE`" +
+						" FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='three_attempts'");
+				if (rs.next()) {
+					if (!rs.getBoolean(1)) install_plugin_in_runtime = true;
+				} else {
+					install_plugin_in_runtime = true;
+				}
+
+				if (install_plugin_in_runtime) {
+					this.stmt.executeUpdate("INSTALL PLUGIN three_attempts SONAME 'auth.so'");
+				}
+				
+				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user3'@'localhost' identified WITH three_attempts AS 'three_attempts_password'");
+				this.stmt.executeUpdate("flush privileges");
+				
+				Properties props = new Properties();
+				props.setProperty("user", "wl5851user3");
+				props.setProperty("password", "three_attempts_password");
+				props.setProperty("authenticationPlugins", "testsuite.simple.TestWL5851$ThreeAttemptsPlugin");
+
+				Connection testConn = null;
+				Statement testSt = null;
+				ResultSet testRs = null;
+				try {
+					testConn = getConnectionWithProps(props);
+					testSt = testConn.createStatement();
+					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+					testRs.next();
+					assertEquals("wl5851user3@localhost", testRs.getString(1));
+					
+				} finally {
+					if (testRs != null) testRs.close();
+					if (testSt != null) testSt.close();
+					if (testConn != null) testConn.close();
+				}
+
+			} finally {
+				this.stmt.executeUpdate("drop user 'wl5851user3'@'localhost'");
+				if (install_plugin_in_runtime) {
+					this.stmt.executeUpdate("UNINSTALL PLUGIN three_attempts");
+				}
+			}
+		}
+	}
+
+	public static class AuthTestPlugin implements AuthenticationPlugin {
+		
+		private String password = null;
+
+		public void init(com.mysql.jdbc.Connection conn1, Properties props) throws SQLException {
+		}
+
+		public void destroy() {
+			this.password = null;
+		}
+
+		public String getProtocolPluginName() {
+			return "auth_test_plugin";
+		}
+
+		public boolean requiresConfidentiality() {
+			return false;
+		}
+
+		public boolean isReusable() {
+			return true;
+		}
+
+		public void setAuthenticationParameters(String user, String password) {
+			this.password = password;
+		}
+
+		public boolean nextAuthenticationStep(Buffer fromServer, List<Buffer> toServer) throws SQLException {
+				toServer.clear();
+				Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
+				toServer.add(bresp);
+			return true;
+		}
+
+	}
+
+	public static class TwoQuestionsPlugin implements AuthenticationPlugin {
+		
+		private String password = null;
+
+		public void init(com.mysql.jdbc.Connection conn1, Properties props) throws SQLException {
+		}
+
+		public void destroy() {
+			this.password = null;
+		}
+
+		public String getProtocolPluginName() {
+			return "dialog";
+		}
+
+		public boolean requiresConfidentiality() {
+			return false;
+		}
+
+		public boolean isReusable() {
+			return true;
+		}
+
+		public void setAuthenticationParameters(String user, String password) {
+			this.password = password;
+		}
+
+		public boolean nextAuthenticationStep(Buffer fromServer, List<Buffer> toServer) throws SQLException {
+				toServer.clear();
+				if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
+					Buffer bresp = new Buffer(StringUtils.getBytes(this.password));
+					toServer.add(bresp);
+				} else {
+					Buffer bresp = new Buffer(StringUtils.getBytes("yes, of course"));
+					toServer.add(bresp);
+				}
+			return true;
+		}
+
+	}
+
+	public static class ThreeAttemptsPlugin implements AuthenticationPlugin {
+		
+		private String password = null;
+		private int counter = 0;
+
+		public void init(com.mysql.jdbc.Connection conn1, Properties props) throws SQLException {
+			this.counter = 0;
+		}
+
+		public void destroy() {
+			this.password = null;
+			this.counter = 0;
+		}
+
+		public String getProtocolPluginName() {
+			return "dialog";
+		}
+
+		public boolean requiresConfidentiality() {
+			return false;
+		}
+
+		public boolean isReusable() {
+			return true;
+		}
+
+		public void setAuthenticationParameters(String user, String password) {
+			this.password = password;
+		}
+
+		public boolean nextAuthenticationStep(Buffer fromServer, List<Buffer> toServer) throws SQLException {
+			toServer.clear();
+			this.counter++;
+			if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
+				Buffer bresp = new Buffer(StringUtils.getBytes(counter>2 ? this.password : "wrongpassword"+counter));
+				toServer.add(bresp);
+			} else {
+				Buffer bresp = new Buffer(StringUtils.getBytes("unexpected question"));
+				toServer.add(bresp);
+			}
+			return true;
+		}
+
+	}
 }

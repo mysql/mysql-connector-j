@@ -50,7 +50,7 @@ public class Buffer {
 
 	protected boolean wasMultiPacket = false;
 
-	Buffer(byte[] buf) {
+	public Buffer(byte[] buf) {
 		this.byteBuffer = buf;
 		setBufLength(buf.length);
 	}
@@ -190,7 +190,7 @@ public class Buffer {
 		return this.byteBuffer;
 	}
 
-	int getBufLength() {
+	public int getBufLength() {
 		return this.bufLength;
 	}
 
@@ -244,6 +244,18 @@ public class Buffer {
 	// 2000-06-05 Changed
 	final boolean isLastDataPacket() {
 		return ((getBufLength() < 9) && ((this.byteBuffer[0] & 0xff) == 254));
+	}
+
+	final boolean isAuthMethodSwitchRequestPacket() {
+		return ((this.byteBuffer[0] & 0xff) == 254);
+	}
+
+	final boolean isOKPacket() {
+		return ((this.byteBuffer[0] & 0xff) == 0);
+	}
+
+	final boolean isRawPacket() {
+		return ((this.byteBuffer[0] & 0xff) == 1);
 	}
 
 	final long newReadLength() {
@@ -407,7 +419,7 @@ public class Buffer {
 	// To avoid alloc'ing a new byte array, we
 	// do this by hand, rather than calling getNullTerminatedBytes()
 	//
-	final String readString() {
+	public final String readString() {
 		int i = this.position;
 		int len = 0;
 		int maxLen = getBufLength();
@@ -440,6 +452,34 @@ public class Buffer {
 					+ encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
 		} finally {
 			this.position += (len + 1); // update cursor
+		}
+	}
+
+	/**
+	 * Read a fixed length string
+	 */
+	final String readString(String encoding, ExceptionInterceptor exceptionInterceptor, int expectedLength) throws SQLException {
+		int i = this.position;
+		int len = 0;
+		int maxLen = getBufLength();
+
+		while ((i < maxLen) && (len < expectedLength) && (this.byteBuffer[i] != 0)) {
+			len++;
+			i++;
+		}
+		
+		if (len < expectedLength) {
+			throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.2"),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+		}
+
+		try {
+			return StringUtils.toString(this.byteBuffer, this.position, len, encoding);
+		} catch (UnsupportedEncodingException uEE) {
+			throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.1") //$NON-NLS-1$
+					+ encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
+		} finally {
+			this.position += len; // update cursor
 		}
 	}
 
@@ -494,7 +534,7 @@ public class Buffer {
 		return this.wasMultiPacket;
 	}
 
-	final void writeByte(byte b) throws SQLException {
+	public final void writeByte(byte b) throws SQLException {
 		ensureCapacity(1);
 
 		this.byteBuffer[this.position++] = b;

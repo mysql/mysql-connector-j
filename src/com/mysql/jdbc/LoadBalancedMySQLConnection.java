@@ -2531,4 +2531,30 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 	public synchronized boolean isServerLocal() throws SQLException {
 		return getActiveMySQLConnection().isServerLocal();
 	}
+
+	public void setAuthenticationPlugins(String authenticationPlugins) {
+		getActiveMySQLConnection().setAuthenticationPlugins(authenticationPlugins);
+	}
+
+	public String getAuthenticationPlugins() {
+		return getActiveMySQLConnection().getAuthenticationPlugins();
+	}
+
+	public void setDisabledAuthenticationPlugins(
+			String disabledAuthenticationPlugins) {
+		getActiveMySQLConnection().setDisabledAuthenticationPlugins(disabledAuthenticationPlugins);
+	}
+
+	public String getDisabledAuthenticationPlugins() {
+		return getActiveMySQLConnection().getDisabledAuthenticationPlugins();
+	}
+
+	public void setDefaultAuthenticationPlugin(
+			String defaultAuthenticationPlugin) {
+		getActiveMySQLConnection().setDefaultAuthenticationPlugin(defaultAuthenticationPlugin);
+	}
+
+	public String getDefaultAuthenticationPlugin() {
+		return getActiveMySQLConnection().getDefaultAuthenticationPlugin();
+	}
 }

@@ -1777,6 +1777,24 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	private IntegerConnectionProperty maxAllowedPacket = new IntegerConnectionProperty("maxAllowedPacket",
 			-1, Messages.getString("ConnectionProperties.maxAllowedPacket"), "5.1.8", NETWORK_CATEGORY,
 			Integer.MIN_VALUE);
+
+	private StringConnectionProperty authenticationPlugins = new StringConnectionProperty(
+			"authenticationPlugins",
+			null,
+			Messages.getString("ConnectionProperties.authenticationPlugins"),
+			"5.1.19", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
+	
+	private StringConnectionProperty disabledAuthenticationPlugins = new StringConnectionProperty(
+			"disabledAuthenticationPlugins",
+			null,
+			Messages.getString("ConnectionProperties.disabledAuthenticationPlugins"),
+			"5.1.19", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
+	
+	private StringConnectionProperty defaultAuthenticationPlugin = new StringConnectionProperty(
+			"defaultAuthenticationPlugin",
+			"com.mysql.jdbc.authentication.MysqlNativePasswordPlugin",
+			Messages.getString("ConnectionProperties.defaultAuthenticationPlugin"),
+			"5.1.19", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
 	
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
 			Properties info, int slotsToReserve) throws SQLException {
@@ -4639,6 +4657,31 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public boolean getIncludeThreadNamesAsStatementComment() {
 		return includeThreadNamesAsStatementComment.getValueAsBoolean();
+	}
+
+	public void setAuthenticationPlugins(String authenticationPlugins) {
+		this.authenticationPlugins.setValue(authenticationPlugins);
+	}
+
+	public String getAuthenticationPlugins() {
+		return this.authenticationPlugins.getValueAsString();
+	}
+
+	public void setDisabledAuthenticationPlugins(String disabledAuthenticationPlugins) {
+		this.disabledAuthenticationPlugins.setValue(disabledAuthenticationPlugins);
+	}
+
+	public String getDisabledAuthenticationPlugins() {
+		return this.disabledAuthenticationPlugins.getValueAsString();
+	}
+
+	public void setDefaultAuthenticationPlugin(String defaultAuthenticationPlugin) {
+		this.defaultAuthenticationPlugin.setValue(defaultAuthenticationPlugin);
+		
+	}
+
+	public String getDefaultAuthenticationPlugin() {
+		return this.defaultAuthenticationPlugin.getValueAsString();
 	}
 
 }

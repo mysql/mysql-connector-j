@@ -138,7 +138,7 @@ public class Util {
 	}
 
 	// Right from Monty's code
-	static String newCrypt(String password, String seed) {
+	public static String newCrypt(String password, String seed) {
 		byte b;
 		double d;
 
@@ -197,7 +197,7 @@ public class Util {
 		return result;
 	}
 
-	static String oldCrypt(String password, String seed) {
+	public static String oldCrypt(String password, String seed) {
 		long hp;
 		long hm;
 		long s1;
@@ -563,15 +563,15 @@ public class Util {
 		return diffMap;
 	}
 	
-	public static List loadExtensions(Connection conn,
+	public static List<Extension> loadExtensions(Connection conn,
 			Properties props, String extensionClassNames,
 			String errorMessageKey, ExceptionInterceptor exceptionInterceptor) throws SQLException {
-		List extensionList = new LinkedList();
+		List<Extension> extensionList = new LinkedList<Extension>();
 
-		List interceptorsToCreate = StringUtils.split(extensionClassNames, ",",
+		List<String> interceptorsToCreate = StringUtils.split(extensionClassNames, ",",
 				true);
 
-		Iterator iter = interceptorsToCreate.iterator();
+		Iterator<String> iter = interceptorsToCreate.iterator();
 
 		String className = null;
 

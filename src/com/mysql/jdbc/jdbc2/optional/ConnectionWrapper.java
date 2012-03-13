@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 
+import com.mysql.jdbc.AuthenticationPlugin;
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.Extension;
@@ -2754,5 +2755,32 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
 	public boolean isServerLocal() throws SQLException {
 		return this.mc.isServerLocal();
+	}
+
+	public void setAuthenticationPlugins(String authenticationPlugins) {
+		this.mc.setAuthenticationPlugins(authenticationPlugins);
+	}
+
+	public String getAuthenticationPlugins() {
+		return this.mc.getAuthenticationPlugins();
+	}
+
+	public void setDisabledAuthenticationPlugins(
+			String disabledAuthenticationPlugins) {
+		this.mc.setDisabledAuthenticationPlugins(disabledAuthenticationPlugins);
+	}
+
+	public String getDisabledAuthenticationPlugins() {
+		return this.mc.getDisabledAuthenticationPlugins();
+	}
+
+	public void setDefaultAuthenticationPlugin(
+			String defaultAuthenticationPlugin) {
+		this.mc.setDefaultAuthenticationPlugin(defaultAuthenticationPlugin);
+		
+	}
+
+	public String getDefaultAuthenticationPlugin() {
+		return this.mc.getDefaultAuthenticationPlugin();
 	}
 }

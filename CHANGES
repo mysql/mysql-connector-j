@@ -2,6 +2,31 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.19
+  - Added support for pluggable authentication via the com.mysql.jdbc.AuthenticationPlugin
+    interface (which extends standard "extension" interface). Examples are in
+    com/mysql/jdbc/authentication and in testsuite.regression.ConnectionRegressionTest.
+    This introduces three new properties:
+
+       authenticationPlugins defines comma-delimited list of classes that implement
+       com.mysql.jdbc.AuthenticationPlugin and which will be used for authentication
+       unless disabled by "disabledAuthenticationPlugins" property.
+
+       disabledAuthenticationPlugins defines comma-delimited list of classes implementing
+       com.mysql.jdbc.AuthenticationPlugin or mechanisms, i.e. "mysql_native_password".
+       The authentication plugins or mechanisms listed will not be used for authentication
+       which will fail if it requires one of them. It is an error to disable the default
+       authentication plugin (either the one named by "defaultAuthenticationPlugin" property
+       or the hard-coded one if "defaultAuthenticationPlugin" propery is not set).
+
+       defaultAuthenticationPlugin defines name of a class implementing
+       com.mysql.jdbc.AuthenticationPlugin which will be used as the default authentication
+       plugin. It is an error to use a class which is not listed in "authenticationPlugins"
+       nor it is one of the built-in plugins. It is an error to set as default a plugin
+       which was disabled with "disabledAuthenticationPlugins" property. It is an error
+       to set this value to null or the empty string (i.e. there must be at least a valid
+       default authentication plugin specified for the connection, meeting all constraints
+       listed above).
+
   - Fix for Bug#63526. The problem happens in com.mysql.jdbc.EscapeProcessor#escapeSQL.
     The function recognizes the string in the create table statement as an escape
 	sequence (line 136+138). The "if" construct beginning in line 182 tries to match a

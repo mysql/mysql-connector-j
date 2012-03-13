@@ -48,12 +48,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.zip.Deflater;
 
+import com.mysql.jdbc.authentication.MysqlNativePasswordPlugin;
+import com.mysql.jdbc.authentication.MysqlOldPasswordPlugin;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
@@ -99,6 +103,7 @@ public class MysqlIO {
     protected static final int CLIENT_SECURE_CONNECTION = 32768;
     private static final int CLIENT_MULTI_QUERIES = 65536; // Enable/disable multiquery support
     private static final int CLIENT_MULTI_RESULTS = 131072; // Enable/disable multi-results
+    private static final int CLIENT_PLUGIN_AUTH = 524288;
     private static final int SERVER_STATUS_IN_TRANS = 1;
     private static final int SERVER_STATUS_AUTOCOMMIT = 2; // Server in auto_commit mode
     static final int SERVER_MORE_RESULTS_EXISTS = 8; // Multi query - next query exists
@@ -245,6 +250,7 @@ public class MysqlIO {
 	private int commandCount = 0;
 	private List statementInterceptors;
 	private ExceptionInterceptor exceptionInterceptor;
+    private int authPluginDataLength = 0;
 	
     /**
      * Constructor:  Connect to the MySQL server and setup a stream connection.
@@ -885,7 +891,11 @@ public class MysqlIO {
 
         int packLength = ((userLength + passwordLength + databaseLength) * 2) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
 
-        if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
+    	if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
+
+            proceedHandshakeWithPluggableAuthentication(userName, password, database, null);
+            
+        } else if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
             Buffer changeUserPacket = new Buffer(packLength + 1);
             changeUserPacket.writeByte((byte) MysqlDefs.COM_CHANGE_USER);
 
@@ -1202,6 +1212,10 @@ public class MysqlIO {
             this.serverCharsetIndex = buf.readByte() & 0xff;
             this.serverStatus = buf.readInt();
             checkTransactionState(0);
+            
+           	this.serverCapabilities += 65536 * buf.readInt();
+           	this.authPluginDataLength = buf.readByte() & 0xff;
+            
             buf.setPosition(position + 16);
 
             String seedPart2 = buf.readString("ASCII", getExceptionInterceptor());
@@ -1255,6 +1269,14 @@ public class MysqlIO {
             this.clientParam |= CLIENT_INTERACTIVE;
         }
 
+        //
+        // switch to pluggable authentication if available
+        //
+    	if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
+            proceedHandshakeWithPluggableAuthentication(user, password, database, buf);
+            return;
+        }
+        
         // Authenticate
         if (this.protocolVersion > 9) {
             this.clientParam |= CLIENT_LONG_PASSWORD; // for long passwords
@@ -1350,6 +1372,41 @@ public class MysqlIO {
             }
         } else {
             negotiateSSLConnection(user, password, database, packLength);
+
+            if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
+                if (versionMeetsMinimum(4, 1, 1)) {
+                    secureAuth411(null, packLength, user, password, database, true);
+                } else {
+                    secureAuth411(null, packLength, user, password, database, true);
+                }
+            } else {
+            	
+            	packet = new Buffer(packLength);
+            	
+                if (this.use41Extensions) {
+                    packet.writeLong(this.clientParam);
+                    packet.writeLong(this.maxThreeBytes);
+                } else {
+                    packet.writeInt((int) this.clientParam);
+                    packet.writeLongInt(this.maxThreeBytes);
+                }
+
+                // User/Password data
+                packet.writeString(user);
+
+                if (this.protocolVersion > 9) {
+                    packet.writeString(Util.newCrypt(password, this.seed));
+                } else {
+                    packet.writeString(Util.oldCrypt(password, this.seed));
+                }
+
+                if (((this.serverCapabilities & CLIENT_CONNECT_WITH_DB) != 0) &&
+                        (database != null) && (database.length() > 0)) {
+                    packet.writeString(database);
+                }
+
+                send(packet, packet.getPosition());
+            }
         }
 
         // Check for errors, not for 4.1.1 or newer,
@@ -1383,6 +1440,443 @@ public class MysqlIO {
         	throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
         }
     }
+
+
+	/**
+	 * Contains instances of authentication plugins which implements
+	 * {@link AuthenticationPlugin} interface. Key values are mysql
+	 * protocol plugin names, for example "mysql_native_password" and
+	 * "mysql_old_password" for built-in plugins.
+	 */
+    private Map<String, AuthenticationPlugin> authenticationPlugins = null;
+	/**
+	 * Contains names of classes or mechanisms ("mysql_native_password"
+	 * for example) of authentication plugins which must be disabled.
+	 */
+    private List<String> disabledAuthenticationPlugins = null;
+	/**
+	 * Name of class for default authentication plugin
+	 */
+    private String defaultAuthenticationPlugin = null;
+	/**
+	 * Protocol name of default authentication plugin
+	 */
+    private String defaultAuthenticationPluginProtocolName = null;
+	
+	/**
+	 * Fill the {@link MysqlIO#authenticationPlugins} map.
+	 * First this method fill the map with instances of {@link MysqlOldPasswordPlugin} and {@link MysqlNativePasswordPlugin}.
+	 * Then it gets instances of plugins listed in "authenticationPlugins" connection property by
+	 * {@link Util#loadExtensions(Connection, Properties, String, String, ExceptionInterceptor)} call and adds them to the map too.
+	 * 
+	 * The key for the map entry is getted by {@link AuthenticationPlugin#getProtocolPluginName()}.
+	 * Thus it is possible to replace built-in plugin with custom one, to do it custom plugin should return value
+	 * "mysql_native_password" or "mysql_old_password" from it's own getProtocolPluginName() method.
+	 * 
+	 * All plugin instances in the map are initialized by {@link Extension#init(Connection, Properties)} call
+	 * with this.connection and this.connection.getProperties() values.
+	 *  
+	 * @throws SQLException
+	 */
+	private void loadAuthenticationPlugins() throws SQLException {
+		
+		// default plugin
+		this.defaultAuthenticationPlugin = this.connection.getDefaultAuthenticationPlugin();
+		if (this.defaultAuthenticationPlugin == null || "".equals(defaultAuthenticationPlugin.trim())) {
+			throw SQLError.createSQLException(
+				Messages.getString("Connection.BadDefaultAuthenticationPlugin",
+				new Object[] { this.defaultAuthenticationPlugin }),
+				getExceptionInterceptor());
+		}
+
+		// disabled plugins
+		String disabledPlugins = this.connection.getDisabledAuthenticationPlugins();
+		if (disabledPlugins != null && !"".equals(disabledPlugins)) {
+			this.disabledAuthenticationPlugins = new ArrayList<String>();
+			List<String> pluginsToDisable = StringUtils.split(disabledPlugins, ",", true);
+			Iterator<String> iter = pluginsToDisable.iterator();
+			while (iter.hasNext()) {
+				this.disabledAuthenticationPlugins.add(iter.next());
+			}
+		}
+
+		this.authenticationPlugins = new HashMap<String, AuthenticationPlugin>();
+		
+		// embedded plugins
+		AuthenticationPlugin plugin = new MysqlOldPasswordPlugin();
+		plugin.init(this.connection, this.connection.getProperties());
+		boolean defaultIsFound = addAuthenticationPlugin(plugin);
+
+		plugin = new MysqlNativePasswordPlugin();
+		plugin.init(this.connection, this.connection.getProperties());
+		if (addAuthenticationPlugin(plugin)) defaultIsFound = true;
+
+		// plugins from authenticationPluginClasses connection parameter
+		String authenticationPluginClasses = this.connection.getAuthenticationPlugins();
+		if (authenticationPluginClasses != null && !"".equals(authenticationPluginClasses)) {
+			
+			List<Extension> plugins = Util.loadExtensions(
+				this.connection, this.connection.getProperties(), authenticationPluginClasses,
+				"Connection.BadAuthenticationPlugin",  getExceptionInterceptor());
+
+			for (Extension object : plugins) {
+				plugin = (AuthenticationPlugin) object;
+				if (addAuthenticationPlugin(plugin)) defaultIsFound = true;
+			}
+		}
+
+		// check if default plugin is listed
+		if (!defaultIsFound) {
+			throw SQLError.createSQLException(
+				Messages.getString("Connection.DefaultAuthenticationPluginIsNotListed",
+				new Object[] { this.defaultAuthenticationPlugin }),
+				getExceptionInterceptor());
+		}
+
+	}
+
+	/**
+	 * Add plugin to {@link MysqlIO#authenticationPlugins} if it is not disabled by
+	 * "disabledAuthenticationPlugins" property, check is it a default plugin.
+	 * @param plugin Instance of AuthenticationPlugin
+	 * @return True if plugin is default, false if plugin is not default.
+	 * @throws SQLException if plugin is default but disabled.
+	 */
+	private boolean addAuthenticationPlugin(AuthenticationPlugin plugin) throws SQLException {
+		boolean isDefault = false;
+		String pluginClassName = plugin.getClass().getName();
+		String pluginProtocolName = plugin.getProtocolPluginName();
+		boolean disabledByClassName =
+			this.disabledAuthenticationPlugins != null &&
+			this.disabledAuthenticationPlugins.contains(pluginClassName);
+		boolean disabledByMechanism =
+			this.disabledAuthenticationPlugins != null &&
+			this.disabledAuthenticationPlugins.contains(pluginProtocolName);
+		
+		if (disabledByClassName || disabledByMechanism) {
+			// if disabled then check is it default					
+			if (this.defaultAuthenticationPlugin.equals(pluginClassName)) { 
+				throw SQLError.createSQLException(
+					Messages.getString("Connection.BadDisabledAuthenticationPlugin",
+					new Object[] { disabledByClassName ? pluginClassName : pluginProtocolName}),
+					getExceptionInterceptor());
+			}
+		} else {
+			this.authenticationPlugins.put(pluginProtocolName , plugin);
+			if (this.defaultAuthenticationPlugin.equals(pluginClassName)) {
+				this.defaultAuthenticationPluginProtocolName = pluginProtocolName;
+				isDefault = true;
+			}
+		}
+		return isDefault;
+	}
+	
+	/**
+	 * Get authentication plugin instance from {@link MysqlIO#authenticationPlugins} map by
+	 * pluginName key. If such plugin is found it's {@link AuthenticationPlugin#isReusable()} method
+	 * is checked, when it's false this method returns a new instance of plugin
+	 * and the same instance otherwise.
+	 * 
+	 * If plugin is not found method returns null, in such case the subsequent behavior
+	 * of handshake process depends on type of last packet received from server:
+	 * if it was Auth Challenge Packet then handshake will proceed with default plugin,
+	 * if it was Auth Method Switch Request Packet then handshake will be interrupted with exception. 
+	 * 
+	 * @param pluginName mysql protocol plugin names, for example "mysql_native_password" and "mysql_old_password" for built-in plugins
+	 * @return null if plugin is not found or authentication plugin instance initialized with current connection properties
+	 * @throws SQLException 
+	 */
+	private AuthenticationPlugin getAuthenticationPlugin(String pluginName) throws SQLException {
+
+		AuthenticationPlugin plugin = this.authenticationPlugins.get(pluginName);
+
+		if (plugin != null && !plugin.isReusable()) {
+			try {
+				plugin = plugin.getClass().newInstance();
+				plugin.init(this.connection, this.connection.getProperties());
+			} catch (Throwable t) {
+				SQLException sqlEx = SQLError.createSQLException(Messages
+						.getString("Connection.BadAuthenticationPlugin", new Object[] { plugin.getClass().getName() }), getExceptionInterceptor());
+				sqlEx.initCause(t);
+				throw sqlEx;
+			}
+		}
+		
+		return plugin;
+	}
+	
+	/**
+	 * Check if given plugin requires confidentiality, but connection is without SSL
+	 * @param plugin
+	 * @throws SQLException
+	 */
+	private void checkConfidentiality(AuthenticationPlugin plugin) throws SQLException {
+		if (plugin.requiresConfidentiality() && !(this.connection.getUseSSL() && this.connection.getRequireSSL())) {
+			throw SQLError.createSQLException(
+					Messages.getString("Connection.AuthenticationPluginRequiresSSL", new Object[] {plugin.getProtocolPluginName()}), getExceptionInterceptor());
+		}
+	}
+	
+	/**
+	 * Performs an authentication handshake to authorize connection to a
+	 * given database as a given MySQL user. This can happen upon initial
+	 * connection to the server, after receiving Auth Challenge Packet, or
+	 * at any moment during the connection life-time via a Change User
+	 * request.
+	 *
+	 * This method is aware of pluggable authentication and will use
+	 * registered authentication plugins as requested by the server.
+	 *
+	 * @param user       the MySQL user account to log into
+	 * @param password   authentication data for the user account (depends
+	 *                   on authentication method used - can be empty)
+	 * @param database   database to connect to (can be empty)
+	 * @param challenge  the Auth Challenge Packet received from server if
+	 *                   this method is used during the initial connection.
+	 *                   Otherwise null.
+	 *
+	 * @throws SQLException
+	 */	
+	private void proceedHandshakeWithPluggableAuthentication(String user, String password, String database, Buffer challenge) throws SQLException {
+
+		if (this.authenticationPlugins == null) {
+			loadAuthenticationPlugins();
+		}
+
+		int passwordLength = 16;
+		int userLength = (user != null) ? user.length() : 0;
+		int databaseLength = (database != null) ? database.length() : 0;
+
+		int packLength = ((userLength + passwordLength + databaseLength) * 2) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
+
+		AuthenticationPlugin plugin = null;
+		Buffer fromServer = null;
+		ArrayList<Buffer> toServer = new ArrayList<Buffer>();
+		Boolean done = null;
+		Buffer last_sent = null;
+		
+		int counter = 100;
+
+		while (0 < counter--) {
+			
+			if (done == null) {
+
+				if (challenge != null) {
+					// read Auth Challenge Packet
+
+					this.clientParam |=
+							  CLIENT_PLUGIN_AUTH
+							| CLIENT_LONG_PASSWORD
+							| CLIENT_PROTOCOL_41
+							| CLIENT_TRANSACTIONS		// Need this to get server status values
+							| CLIENT_MULTI_RESULTS		// We always allow multiple result sets
+							| CLIENT_SECURE_CONNECTION	// protocol with pluggable authentication always support this
+							;
+
+					// We allow the user to configure whether
+					// or not they want to support multiple queries
+					// (by default, this is disabled).
+					if (this.connection.getAllowMultiQueries()) {
+						this.clientParam |= CLIENT_MULTI_QUERIES;
+					}
+
+					this.has41NewNewProt = true;
+					this.use41Extensions = true;
+
+					if (this.connection.getUseSSL()) {
+						negotiateSSLConnection(user, password, database, packLength);
+					}
+
+					String pluginName = null;
+					// Due to Bug#59453 the auth-plugin-name is missing the terminating NUL-char in versions prior to 5.5.10 and 5.6.2.
+		            if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
+		                if (!versionMeetsMinimum(5, 5, 10) || versionMeetsMinimum(5, 6, 0) && !versionMeetsMinimum(5, 6, 2)) {
+		                	pluginName = challenge.readString("ASCII", getExceptionInterceptor(), this.authPluginDataLength);
+		                } else {
+		                	pluginName = challenge.readString("ASCII", getExceptionInterceptor());
+		                }
+		            }
+
+					plugin = getAuthenticationPlugin(pluginName);
+					// if plugin is not found for pluginName get default instead 
+					if (plugin == null) plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
+
+					checkConfidentiality(plugin);
+					fromServer = new Buffer(StringUtils.getBytes(this.seed));
+				} else {
+					// no challenge so this is a changeUser call
+					plugin = getAuthenticationPlugin(this.defaultAuthenticationPluginProtocolName);
+					checkConfidentiality(plugin);
+				}
+
+			} else {
+				
+				// read packet from server and check if it's an ERROR packet
+				challenge = checkErrorPacket();
+
+				if (challenge.isOKPacket()) {
+					// if OK packet then finish handshake
+					if (!done) {
+						throw SQLError.createSQLException(Messages.getString("Connection.UnexpectedAuthenticationApproval", new Object[] {plugin.getProtocolPluginName()}), getExceptionInterceptor());
+					}
+					plugin.destroy();
+					break;
+					
+				} else if (challenge.isAuthMethodSwitchRequestPacket()) {
+					// read Auth Method Switch Request Packet
+					String pluginName = challenge.readString("ASCII", getExceptionInterceptor());
+					
+					// get new plugin
+					if (plugin != null && !plugin.getProtocolPluginName().equals(pluginName)) {
+						plugin.destroy();
+						plugin = getAuthenticationPlugin(pluginName);
+						// if plugin is not found for pluginName throw exception
+						if (plugin == null) {
+							throw SQLError.createSQLException(Messages.getString("Connection.BadAuthenticationPlugin", new Object[] {pluginName}), getExceptionInterceptor());
+						}
+					}
+
+					fromServer = new Buffer(StringUtils.getBytes(challenge.readString("ASCII", getExceptionInterceptor())));
+					
+				} else {
+					// read raw packet
+					fromServer = new Buffer(challenge.getBufLength());
+					fromServer.setPosition(0);
+					fromServer.writeLenBytes(challenge.readLenByteArray(1));
+				}
+				
+			}
+
+			// call plugin
+			try {
+				plugin.setAuthenticationParameters(user, password);
+				done = plugin.nextAuthenticationStep(fromServer, toServer);
+			} catch (SQLException e) {
+				throw SQLError.createSQLException(e.getMessage(), e.getSQLState(), e, getExceptionInterceptor());
+			}
+
+			// send response
+			if (toServer.size() > 0) {
+				if (challenge == null) {
+					// write COM_CHANGE_USER Packet
+					last_sent = new Buffer(packLength + 1);
+					last_sent.writeByte((byte) MysqlDefs.COM_CHANGE_USER);
+					
+					// User/Password data
+					last_sent.writeString(user, "utf-8", this.connection);
+
+					if (password.length() != 0) {
+						last_sent.writeByte((byte) 0x14);
+						last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer());
+					} else {
+						/* For empty password*/
+						last_sent.writeByte((byte) 0);
+					}
+
+					if (this.useConnectWithDb) {
+						last_sent.writeString(database, "utf-8", this.connection);
+					} else {
+						/* For empty database*/
+						last_sent.writeByte((byte) 0);
+					}
+
+					if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
+						last_sent.writeString(plugin.getProtocolPluginName(), "utf-8", this.connection);
+					}
+
+					send(last_sent, last_sent.getPosition());
+					
+				} else if (challenge.isAuthMethodSwitchRequestPacket()) {
+					// write Auth Method Switch Response Packet
+					
+					byte savePacketSequence = this.packetSequence++;
+					this.packetSequence = ++savePacketSequence;
+
+					last_sent = new Buffer(toServer.get(0).getBufLength()+HEADER_LENGTH);
+					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer());
+					send(last_sent, last_sent.getPosition());
+
+				} else if (challenge.isRawPacket()) {
+					// write raw packet(s)
+					byte savePacketSequence = this.packetSequence++;
+					
+					for (Buffer buffer : toServer) {
+						this.packetSequence = ++savePacketSequence;
+
+						last_sent = new Buffer(buffer.getBufLength()+HEADER_LENGTH);
+						last_sent.writeBytesNoNull(buffer.getByteBuffer());
+						send(last_sent, last_sent.getPosition());
+					}
+
+				} else {
+					// write Auth Response Packet
+
+					last_sent = new Buffer(packLength);
+					last_sent.writeLong(this.clientParam);
+					last_sent.writeLong(this.maxThreeBytes);
+
+					// charset, JDBC will connect as 'utf8',
+					// and use 'SET NAMES' to change to the desired
+					// charset after the connection is established.
+					last_sent.writeByte((byte) UTF8_CHARSET_INDEX);
+
+					last_sent.writeBytesNoNull(new byte[23]);	// Set of bytes reserved for future use.
+
+					// User/Password data
+					last_sent.writeString(user, "utf-8", this.connection);
+
+					if (password.length() != 0) {
+						last_sent.writeByte((byte) 0x14);
+						last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer());
+					} else {
+						/* For empty password*/
+						last_sent.writeByte((byte) 0);
+					}
+
+					if (this.useConnectWithDb) {
+						last_sent.writeString(database, "utf-8", this.connection);
+					} else {
+						/* For empty database*/
+						last_sent.writeByte((byte) 0);
+					}
+
+					if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
+						last_sent.writeString(plugin.getProtocolPluginName(), "utf-8", this.connection);
+					}
+
+					send(last_sent, last_sent.getPosition());
+				}
+				
+			}
+			
+		}
+		
+		if (counter == 0) {
+			throw SQLError.createSQLException(Messages.getString("CommunicationsException.TooManyAuthenticationPluginNegotiations"), getExceptionInterceptor());
+		}
+		
+		//
+		// Can't enable compression until after handshake
+		//
+		if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) &&
+				this.connection.getUseCompression()) {
+			// The following matches with ZLIB's
+			// compress()
+			this.deflater = new Deflater();
+			this.useCompression = true;
+			this.mysqlInput = new CompressedInputStream(this.connection, this.mysqlInput);
+		}
+
+		if (!this.useConnectWithDb) {
+			changeDatabaseTo(database);
+		}
+
+		try {
+			this.mysqlConnection = this.socketFactory.afterHandshake();
+		} catch (IOException ioEx) {
+			throw SQLError.createCommunicationsException(this.connection, this.lastPacketSentTimeMs, this.lastPacketReceivedTimeMs, ioEx, getExceptionInterceptor());
+		}
+	}
 
 	private void changeDatabaseTo(String database) throws SQLException {
 		if (database == null || database.length() == 0) {
@@ -2916,7 +3410,7 @@ public class MysqlIO {
         int resultSetConcurrency, boolean isBinaryEncoded, Field[] fields)
         throws SQLException {
         RowData rowData;
-        ArrayList rows = new ArrayList();
+        ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 
         boolean useBufferRowExplicit = useBufferRowExplicit(fields);
 
@@ -4641,11 +5135,8 @@ public class MysqlIO {
                 this.lastPacketSentTimeMs, null);
         }
 
-        boolean doSecureAuth = false;
-
         if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
             this.clientParam |= CLIENT_SECURE_CONNECTION;
-            doSecureAuth = true;
         }
 
         this.clientParam |= CLIENT_SSL;
@@ -4661,40 +5152,6 @@ public class MysqlIO {
         send(packet, packet.getPosition());
 
         ExportControlled.transformSocketToSSLSocket(this);
-
-        packet.clear();
-
-        if (doSecureAuth) {
-            if (versionMeetsMinimum(4, 1, 1)) {
-                secureAuth411(null, packLength, user, password, database, true);
-            } else {
-                secureAuth411(null, packLength, user, password, database, true);
-            }
-        } else {
-            if (this.use41Extensions) {
-                packet.writeLong(this.clientParam);
-                packet.writeLong(this.maxThreeBytes);
-            } else {
-                packet.writeInt((int) this.clientParam);
-                packet.writeLongInt(this.maxThreeBytes);
-            }
-
-            // User/Password data
-            packet.writeString(user);
-
-            if (this.protocolVersion > 9) {
-                packet.writeString(Util.newCrypt(password, this.seed));
-            } else {
-                packet.writeString(Util.oldCrypt(password, this.seed));
-            }
-
-            if (((this.serverCapabilities & CLIENT_CONNECT_WITH_DB) != 0) &&
-                    (database != null) && (database.length() > 0)) {
-                packet.writeString(database);
-            }
-
-            send(packet, packet.getPosition());
-        }
     }
 
 	protected int getServerStatus() {

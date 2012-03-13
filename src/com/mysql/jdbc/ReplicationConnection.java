@@ -2558,4 +2558,30 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public synchronized boolean isServerLocal() throws SQLException {
 		return this.currentConnection.isServerLocal();
 	}
+
+	public void setAuthenticationPlugins(String authenticationPlugins) {
+		this.currentConnection.setAuthenticationPlugins(authenticationPlugins);
+	}
+
+	public String getAuthenticationPlugins() {
+		return this.currentConnection.getAuthenticationPlugins();
+	}
+
+	public void setDisabledAuthenticationPlugins(
+			String disabledAuthenticationPlugins) {
+		this.currentConnection.setDisabledAuthenticationPlugins(disabledAuthenticationPlugins);
+	}
+
+	public String getDisabledAuthenticationPlugins() {
+		return this.currentConnection.getDisabledAuthenticationPlugins();
+	}
+
+	public void setDefaultAuthenticationPlugin(
+			String defaultAuthenticationPlugin) {
+		this.currentConnection.setDefaultAuthenticationPlugin(defaultAuthenticationPlugin);
+	}
+
+	public String getDefaultAuthenticationPlugin() {
+		return this.currentConnection.getDefaultAuthenticationPlugin();
+	}
 }

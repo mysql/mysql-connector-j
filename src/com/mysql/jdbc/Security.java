@@ -36,7 +36,7 @@ import java.security.NoSuchAlgorithmException;
  * 
  * @version $Id$
  */
-class Security {
+public class Security {
 	private static final char PVERSION41_CHAR = '*';
 
 	private static final int SHA1_HASH_SIZE = 20;
@@ -321,7 +321,7 @@ class Security {
 	// hash_stage1=xor(reply, sha1(public_seed,hash_stage2))
 	// candidate_hash2=sha1(hash_stage1)
 	// check(candidate_hash2==hash_stage2)
-	static byte[] scramble411(String password, String seed, Connection conn)
+	public static byte[] scramble411(String password, String seed, Connection conn)
 			throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		MessageDigest md = MessageDigest.getInstance("SHA-1"); //$NON-NLS-1$
 		String passwordEncoding = conn.getPasswordCharacterEncoding();

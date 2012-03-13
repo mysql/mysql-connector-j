@@ -1682,5 +1682,15 @@ public interface ConnectionProperties {
 	
 	public String getLoadBalanceAutoCommitStatementRegex();
 
+	public abstract void setAuthenticationPlugins(String authenticationPlugins);
+
+	public abstract String getAuthenticationPlugins();
 	
+	public abstract void setDisabledAuthenticationPlugins(String disabledAuthenticationPlugins);
+
+	public abstract String getDisabledAuthenticationPlugins();
+	
+	public abstract void setDefaultAuthenticationPlugin(String defaultAuthenticationPlugin);
+
+	public abstract String getDefaultAuthenticationPlugin(); 
 }
