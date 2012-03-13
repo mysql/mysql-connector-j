@@ -30,6 +30,7 @@ import java.util.Properties;
 import com.mysql.jdbc.AuthenticationPlugin;
 import com.mysql.jdbc.Buffer;
 import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.Security;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
 
@@ -70,15 +71,14 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin {
 		toServer.clear();
 		
 		Buffer bresp = null;
-		if (fromServer == null) {
+
+		String pwd = this.password;
+		if (pwd == null) pwd = this.properties.getProperty("password");
+		
+		if (fromServer == null || pwd == null || pwd.length() == 0) {
 			bresp = new Buffer(new byte[0]);
 		} else {
-			bresp = new Buffer(StringUtils.getBytes(
-				Util.oldCrypt(
-						(this.password == null ? this.properties.getProperty("password") : this.password),
-						fromServer.readString()
-						)
-				));
+			bresp = new Buffer(StringUtils.getBytes(Util.oldCrypt(pwd, fromServer.readString())));
 		}
 		toServer.add(bresp);
 		
