@@ -5107,6 +5107,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	private synchronized final byte[] streamToBytes(InputStream in, boolean escape,
 			int streamLength, boolean useLength) throws SQLException {
 		try {
+			if (streamConvertBuf == null) {
+				streamConvertBuf = new byte[4096];
+			}
 			if (streamLength == -1) {
 				useLength = false;
 			}
