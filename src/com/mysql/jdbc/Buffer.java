@@ -541,7 +541,7 @@ public class Buffer {
 	}
 
 	// Write a byte array
-	final void writeBytesNoNull(byte[] bytes) throws SQLException {
+	public final void writeBytesNoNull(byte[] bytes) throws SQLException {
 		int len = bytes.length;
 		ensureCapacity(len);
 		System.arraycopy(bytes, 0, this.byteBuffer, this.position, len);

@@ -69,13 +69,17 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin {
 	public boolean nextAuthenticationStep(Buffer fromServer, List<Buffer> toServer) {
 		toServer.clear();
 		
-		Buffer bresp = new Buffer(StringUtils.getBytes(
+		Buffer bresp = null;
+		if (fromServer == null) {
+			bresp = new Buffer(new byte[0]);
+		} else {
+			bresp = new Buffer(StringUtils.getBytes(
 				Util.oldCrypt(
 						(this.password == null ? this.properties.getProperty("password") : this.password),
-						(fromServer == null ? "" : fromServer.readString())
+						fromServer.readString()
 						)
 				));
-
+		}
 		toServer.add(bresp);
 		
 		return true;

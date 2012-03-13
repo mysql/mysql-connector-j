@@ -75,13 +75,18 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
 
 		try {
 			toServer.clear();
-			
-			Buffer bresp = new Buffer(
+
+			Buffer bresp = null;
+			if (fromServer == null) {
+				bresp = new Buffer(new byte[0]);
+			} else {
+				bresp = new Buffer(
 					Security.scramble411(
-							(this.password == null ? this.properties.getProperty("password") : this.password),
-							(fromServer == null ? "" : fromServer.readString()),
-							this.connection)
+						(this.password == null ? this.properties.getProperty("password") : this.password),
+						fromServer.readString(),
+						this.connection)
 					);
+			}
 			toServer.add(bresp);
 			
 		} catch (NoSuchAlgorithmException nse) {

@@ -1765,13 +1765,8 @@ public class MysqlIO {
 					// User/Password data
 					last_sent.writeString(user, "utf-8", this.connection);
 
-					if (password.length() != 0) {
-						last_sent.writeByte((byte) 0x14);
-						last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer());
-					} else {
-						/* For empty password*/
-						last_sent.writeByte((byte) 0);
-					}
+					last_sent.writeByte((byte) toServer.get(0).getByteBuffer().length);
+					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer());
 
 					if (this.useConnectWithDb) {
 						last_sent.writeString(database, "utf-8", this.connection);
@@ -1825,13 +1820,8 @@ public class MysqlIO {
 					// User/Password data
 					last_sent.writeString(user, "utf-8", this.connection);
 
-					if (password.length() != 0) {
-						last_sent.writeByte((byte) 0x14);
-						last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer());
-					} else {
-						/* For empty password*/
-						last_sent.writeByte((byte) 0);
-					}
+					last_sent.writeByte((byte) toServer.get(0).getByteBuffer().length);
+					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer());
 
 					if (this.useConnectWithDb) {
 						last_sent.writeString(database, "utf-8", this.connection);
