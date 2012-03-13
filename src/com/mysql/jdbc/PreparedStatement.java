@@ -809,7 +809,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 	private byte[][] staticSqlStrings = null;
 
-	private byte[] streamConvertBuf = new byte[4096];
+	private byte[] streamConvertBuf = null;
 
 	private int[] streamLengths = null;
 
@@ -5028,6 +5028,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			boolean escape, int streamLength, boolean useLength)
 			throws SQLException {
 		try {
+			if (streamConvertBuf == null) {
+				streamConvertBuf = new byte[4096];
+			}
+			
 			String connectionEncoding = this.connection.getEncoding();
 
 			boolean hexEscape = false;
