@@ -1655,6 +1655,8 @@ public class MysqlIO {
 		Boolean done = null;
 		Buffer last_sent = null;
 		
+		boolean old_raw_challenge = false;
+		
 		int counter = 100;
 
 		while (0 < counter--) {
@@ -1713,6 +1715,7 @@ public class MysqlIO {
 				
 				// read packet from server and check if it's an ERROR packet
 				challenge = checkErrorPacket();
+				old_raw_challenge = false;
 
 				if (challenge.isOKPacket()) {
 					// if OK packet then finish handshake
@@ -1742,7 +1745,12 @@ public class MysqlIO {
 					// read raw packet
 					fromServer = new Buffer(challenge.getBufLength());
 					fromServer.setPosition(0);
-					fromServer.writeLenBytes(challenge.readLenByteArray(1));
+					if (versionMeetsMinimum(5, 5, 16)) {
+						fromServer.writeLenBytes(challenge.readLenByteArray(1));
+					} else {
+						old_raw_challenge = true;
+						fromServer.writeLenBytes(challenge.readLenByteArray(0));
+					}
 				}
 				
 			}
@@ -1791,7 +1799,7 @@ public class MysqlIO {
 					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer());
 					send(last_sent, last_sent.getPosition());
 
-				} else if (challenge.isRawPacket()) {
+				} else if (challenge.isRawPacket() || old_raw_challenge) {
 					// write raw packet(s)
 					byte savePacketSequence = this.packetSequence++;
 					

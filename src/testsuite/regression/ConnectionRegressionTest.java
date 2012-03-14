@@ -3364,9 +3364,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				}
 				
 				// create proxy users
-				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user'@'localhost' identified WITH test_plugin_server AS 'plug_dest'");
-				this.stmt.executeUpdate("grant usage on *.* to 'plug_dest'@'localhost' IDENTIFIED BY 'plug_dest_passwd'");
-				this.stmt.executeUpdate("GRANT PROXY ON 'plug_dest'@'localhost' TO 'wl5851user'@'localhost'");
+				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user'@'%' identified WITH test_plugin_server AS 'plug_dest'");
+				this.stmt.executeUpdate("grant usage on *.* to 'plug_dest'@'%' IDENTIFIED BY 'foo'");
+				this.stmt.executeUpdate("GRANT PROXY ON 'plug_dest'@'%' TO 'wl5851user'@'%'");
 				this.stmt.executeUpdate("flush privileges");
 				
 				Properties props = new Properties();
@@ -3382,8 +3382,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					testSt = testConn.createStatement();
 					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
 					testRs.next();
-					assertEquals("wl5851user@localhost", testRs.getString(1));
-					assertEquals("plug_dest@localhost", testRs.getString(2));
+					assertEquals("wl5851user", testRs.getString(1).split("@")[0]);
+					assertEquals("plug_dest", testRs.getString(2).split("@")[0]);
 					
 				} finally {
 					if (testRs != null) testRs.close();
@@ -3392,8 +3392,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				}
 
 			} finally {
-				this.stmt.executeUpdate("drop user 'wl5851user'@'localhost'");
-				this.stmt.executeUpdate("drop user 'plug_dest'@'localhost'");
+				this.stmt.executeUpdate("drop user 'wl5851user'@'%'");
+				this.stmt.executeUpdate("drop user 'plug_dest'@'%'");
 				if (install_plugin_in_runtime) {
 					this.stmt.executeUpdate("UNINSTALL PLUGIN test_plugin_server");
 				}
@@ -3421,7 +3421,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("INSTALL PLUGIN two_questions SONAME 'auth.so'");
 				}
 				
-				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user2'@'localhost' identified WITH two_questions AS 'two_questions_password'");
+				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user2'@'%' identified WITH two_questions AS 'two_questions_password'");
 				this.stmt.executeUpdate("flush privileges");
 				
 				Properties props = new Properties();
@@ -3437,7 +3437,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					testSt = testConn.createStatement();
 					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
 					testRs.next();
-					assertEquals("wl5851user2@localhost", testRs.getString(1));
+					assertEquals("wl5851user2", testRs.getString(1).split("@")[0]);
 					
 				} finally {
 					if (testRs != null) testRs.close();
@@ -3446,7 +3446,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				}
 
 			} finally {
-				this.stmt.executeUpdate("drop user 'wl5851user2'@'localhost'");
+				this.stmt.executeUpdate("drop user 'wl5851user2'@'%'");
 				if (install_plugin_in_runtime) {
 					this.stmt.executeUpdate("UNINSTALL PLUGIN two_questions");
 				}
@@ -3474,7 +3474,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("INSTALL PLUGIN three_attempts SONAME 'auth.so'");
 				}
 				
-				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user3'@'localhost' identified WITH three_attempts AS 'three_attempts_password'");
+				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user3'@'%' identified WITH three_attempts AS 'three_attempts_password'");
 				this.stmt.executeUpdate("flush privileges");
 				
 				Properties props = new Properties();
@@ -3490,7 +3490,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					testSt = testConn.createStatement();
 					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
 					testRs.next();
-					assertEquals("wl5851user3@localhost", testRs.getString(1));
+					assertEquals("wl5851user3", testRs.getString(1).split("@")[0]);
 					
 				} finally {
 					if (testRs != null) testRs.close();
@@ -3499,7 +3499,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				}
 
 			} finally {
-				this.stmt.executeUpdate("drop user 'wl5851user3'@'localhost'");
+				this.stmt.executeUpdate("drop user 'wl5851user3'@'%'");
 				if (install_plugin_in_runtime) {
 					this.stmt.executeUpdate("UNINSTALL PLUGIN three_attempts");
 				}
