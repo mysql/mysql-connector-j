@@ -1743,13 +1743,11 @@ public class MysqlIO {
 					
 				} else {
 					// read raw packet
-					fromServer = new Buffer(challenge.getBufLength());
-					fromServer.setPosition(0);
 					if (versionMeetsMinimum(5, 5, 16)) {
-						fromServer.writeLenBytes(challenge.readLenByteArray(1));
+						fromServer = new Buffer(challenge.getBytes(challenge.getPosition(), challenge.getBufLength()-challenge.getPosition()));
 					} else {
 						old_raw_challenge = true;
-						fromServer.writeLenBytes(challenge.readLenByteArray(0));
+						fromServer = new Buffer(challenge.getBytes(challenge.getPosition(), challenge.getBufLength()-challenge.getPosition()));
 					}
 				}
 				

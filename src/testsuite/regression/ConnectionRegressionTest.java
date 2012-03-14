@@ -3648,10 +3648,16 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			toServer.clear();
 			this.counter++;
 			if ((fromServer.getByteBuffer()[0] & 0xff) == 4) {
-				Buffer bresp = new Buffer(StringUtils.getBytes(counter>2 ? this.password : "wrongpassword"+counter));
+				Buffer bresp = null;//new Buffer(StringUtils.getBytes(counter>2 ? this.password : "wrongpassword"+counter));
+				if (counter>2) {
+					bresp = new Buffer(StringUtils.getBytes(this.password));
+				} else {
+					bresp = new Buffer(fromServer.getByteBuffer());
+				}
 				toServer.add(bresp);
 			} else {
-				Buffer bresp = new Buffer(StringUtils.getBytes("unexpected question"));
+//				Buffer bresp = new Buffer(StringUtils.getBytes("unexpected question"));
+				Buffer bresp = new Buffer(fromServer.getByteBuffer());
 				toServer.add(bresp);
 			}
 			return true;
