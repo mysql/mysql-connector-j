@@ -1747,7 +1747,7 @@ public class MysqlIO {
 						fromServer = new Buffer(challenge.getBytes(challenge.getPosition(), challenge.getBufLength()-challenge.getPosition()));
 					} else {
 						old_raw_challenge = true;
-						fromServer = new Buffer(challenge.getBytes(challenge.getPosition(), challenge.getBufLength()-challenge.getPosition()));
+						fromServer = new Buffer(challenge.getBytes(challenge.getPosition()-1, challenge.getBufLength()-challenge.getPosition()+1));
 					}
 				}
 				
