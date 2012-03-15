@@ -2,6 +2,9 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.19
+  - Fix for Bug#64621, setMaxRows was not correctly processed during CS PS metadata
+    collection causing entire resultset to be fetched and possibly leading to OOM.
+
   - Fix for Bug#63456, MetaData precision is different when using UTF8 or Latin1 tables.
 	The problem was in finding maxBytesPerChar through versioned mapping from Java charset to MySQL charset.
 	That map returns "utf8mb4" instead "utf8" for server versions starting with 5.5.2.
