@@ -128,8 +128,13 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 		String javaName = null;
 
 		if (mysqlName != null) {
-			javaName = CharsetMapping.getJavaEncodingForMysqlEncoding(
-					mysqlName, null);
+			try {
+				javaName = CharsetMapping.MYSQL_TO_JAVA_CHARSET_MAP.get(mysqlName);
+			} catch (RuntimeException ex) {
+				SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+				sqlEx.initCause(ex);
+				throw sqlEx;
+			}
 		}
 
 		return javaName;

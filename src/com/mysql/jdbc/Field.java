@@ -434,8 +434,14 @@ public class Field {
 
 	public void setCharacterSet(String javaEncodingName) throws SQLException {
 		this.charsetName = javaEncodingName;
-		this.charsetIndex = CharsetMapping
+		try {
+			this.charsetIndex = CharsetMapping
 				.getCharsetIndexForMysqlEncodingName(javaEncodingName);
+		} catch (RuntimeException ex) {
+			SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+			sqlEx.initCause(ex);
+			throw sqlEx;
+		}
 	}
 	
 	public synchronized String getCollation() throws SQLException {
@@ -503,7 +509,13 @@ public class Field {
 							}
 						}
 					} else {
-						this.collationName = CharsetMapping.INDEX_TO_COLLATION[charsetIndex];
+						try {
+							this.collationName = CharsetMapping.INDEX_TO_COLLATION[charsetIndex];
+						} catch (RuntimeException ex) {
+							SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+							sqlEx.initCause(ex);
+							throw sqlEx;
+						}
 					}
 				}
 			}
@@ -595,12 +607,7 @@ public class Field {
 
 	public synchronized int getMaxBytesPerCharacter() throws SQLException {
 		if (this.maxBytesPerChar == 0) {
-			if ((this.charsetIndex == 33) && (this.charsetName.equalsIgnoreCase("UTF-8"))) {
-				//Avoid mix with UTF8MB4 on 5.5.3+
-				this.maxBytesPerChar = 3;
-			} else {
-				this.maxBytesPerChar = this.connection.getMaxBytesPerChar(getCharacterSet());
-			}
+			this.maxBytesPerChar = this.connection.getMaxBytesPerChar(this.charsetIndex, getCharacterSet());
 		}
 		return this.maxBytesPerChar;
 	}

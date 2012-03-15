@@ -2,6 +2,13 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.19
+  - Fix for Bug#63456, MetaData precision is different when using UTF8 or Latin1 tables.
+	The problem was in finding maxBytesPerChar through versioned mapping from Java charset to MySQL charset.
+	That map returns "utf8mb4" instead "utf8" for server versions starting with 5.5.2.
+	CharsetMapping, ConnectionImpl and Field have been reorganized to use static maps INDEX_TO_MYSQL_CHARSET,
+	STATIC_CHARSET_TO_NUM_BYTES_MAP instead. Also dynamic maps ConnectionImpl.indexToCustomMysqlCharset
+	and ConnectionImpl.mysqlCharsetToCustomMblen have been added for custom charsets.
+
   - Added support for pluggable authentication via the com.mysql.jdbc.AuthenticationPlugin
     interface (which extends standard "extension" interface). Examples are in
     com/mysql/jdbc/authentication and in testsuite.regression.ConnectionRegressionTest.

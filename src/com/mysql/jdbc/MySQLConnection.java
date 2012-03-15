@@ -95,6 +95,8 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	int getMaxBytesPerChar(String javaCharsetName) throws SQLException;
 
+	int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException;
+
 	java.sql.Statement getMetadataSafeStatement() throws SQLException;
 
 	int getNetBufferLength();
@@ -121,7 +123,7 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	String getStatementComment();
 
-	List getStatementInterceptorsInstances();
+	List<StatementInterceptorV2> getStatementInterceptorsInstances();
 
 	String getURL();
 

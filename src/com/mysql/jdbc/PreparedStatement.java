@@ -3331,32 +3331,40 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		} else {
 			String connectionEncoding = this.connection.getEncoding();
 
-			if (this.connection.isNoBackslashEscapesSet()
-					|| (escapeForMBChars 
-							&& this.connection.getUseUnicode()
-							&& connectionEncoding != null
-							&& CharsetMapping.isMultibyteCharset(connectionEncoding))) {
-
-				// Send as hex
-
-				ByteArrayOutputStream bOut = new ByteArrayOutputStream(
-						(x.length * 2) + 3);
-				bOut.write('x');
-				bOut.write('\'');
-
-				for (int i = 0; i < x.length; i++) {
-					int lowBits = (x[i] & 0xff) / 16;
-					int highBits = (x[i] & 0xff) % 16;
-
-					bOut.write(HEX_DIGITS[lowBits]);
-					bOut.write(HEX_DIGITS[highBits]);
+			try {
+				if (this.connection.isNoBackslashEscapesSet()
+						|| (escapeForMBChars 
+								&& this.connection.getUseUnicode()
+								&& connectionEncoding != null
+								&& CharsetMapping.isMultibyteCharset(connectionEncoding))) {
+	
+					// Send as hex
+	
+					ByteArrayOutputStream bOut = new ByteArrayOutputStream(
+							(x.length * 2) + 3);
+					bOut.write('x');
+					bOut.write('\'');
+	
+					for (int i = 0; i < x.length; i++) {
+						int lowBits = (x[i] & 0xff) / 16;
+						int highBits = (x[i] & 0xff) % 16;
+	
+						bOut.write(HEX_DIGITS[lowBits]);
+						bOut.write(HEX_DIGITS[highBits]);
+					}
+	
+					bOut.write('\'');
+	
+					setInternal(parameterIndex, bOut.toByteArray());
+	
+					return;
 				}
-
-				bOut.write('\'');
-
-				setInternal(parameterIndex, bOut.toByteArray());
-
-				return;
+			} catch (SQLException ex) {
+				throw ex;
+			} catch (RuntimeException ex) {
+				SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+				sqlEx.initCause(ex);
+				throw sqlEx;
 			}
 
 			// escape them
@@ -5036,12 +5044,18 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 			boolean hexEscape = false;
 
-			if (this.connection.isNoBackslashEscapesSet()
-					|| (this.connection.getUseUnicode() 
-							&& connectionEncoding != null
-							&& CharsetMapping.isMultibyteCharset(connectionEncoding)
-							&& !this.connection.parserKnowsUnicode())) {
-				hexEscape = true;
+			try {
+				if (this.connection.isNoBackslashEscapesSet()
+						|| (this.connection.getUseUnicode() 
+								&& connectionEncoding != null
+								&& CharsetMapping.isMultibyteCharset(connectionEncoding)
+								&& !this.connection.parserKnowsUnicode())) {
+					hexEscape = true;
+				}
+			} catch (RuntimeException ex) {
+				SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+				sqlEx.initCause(ex);
+				throw sqlEx;
 			}
 
 			if (streamLength == -1) {
@@ -5494,11 +5508,19 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						|| parameterTypes[i] == Types.BLOB) {
 					charsetIndex = 63;
 				} else {
-					String mysqlEncodingName = CharsetMapping
-							.getMysqlEncodingForJavaEncoding(connection
-									.getEncoding(), connection);
-					charsetIndex = CharsetMapping
-							.getCharsetIndexForMysqlEncodingName(mysqlEncodingName);
+					try {
+						String mysqlEncodingName = CharsetMapping
+								.getMysqlEncodingForJavaEncoding(connection
+										.getEncoding(), connection);
+						charsetIndex = CharsetMapping
+								.getCharsetIndexForMysqlEncodingName(mysqlEncodingName);
+					} catch (SQLException ex) {
+						throw ex;
+					} catch (RuntimeException ex) {
+						SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+						sqlEx.initCause(ex);
+						throw sqlEx;
+					}
 				}
 
 				Field parameterMetadata = new Field(null, "parameter_"

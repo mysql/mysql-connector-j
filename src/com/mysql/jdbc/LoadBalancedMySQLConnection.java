@@ -1888,6 +1888,11 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().getMaxBytesPerChar(javaCharsetName);
 	}
 
+	public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
+
+		return getActiveMySQLConnection().getMaxBytesPerChar(charsetIndex, javaCharsetName);
+	}
+
 	public DatabaseMetaData getMetaData() throws SQLException {
 
 		return getActiveMySQLConnection().getMetaData();
@@ -1958,7 +1963,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().getStatementComment();
 	}
 
-	public List getStatementInterceptorsInstances() {
+	public List<StatementInterceptorV2> getStatementInterceptorsInstances() {
 
 		return getActiveMySQLConnection().getStatementInterceptorsInstances();
 	}

@@ -500,6 +500,20 @@ public class Util {
 		}
 	}
 
+	public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, int key, int value)
+			throws SQLException {
+		while (rs.next()) {
+			mappedValues.put(rs.getObject(key), rs.getObject(value));
+		}
+	}
+	
+	public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, String key, String value)
+			throws SQLException {
+		while (rs.next()) {
+			mappedValues.put(rs.getObject(key), rs.getObject(value));
+		}
+	}
+	
 	public static Map calculateDifferences(Map map1, Map map2) {
 		Map diffMap = new HashMap();
 

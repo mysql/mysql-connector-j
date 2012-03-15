@@ -101,8 +101,14 @@ public class SingleByteCharsetConverter {
 	 */
 	public static SingleByteCharsetConverter initCharset(String javaEncodingName)
 			throws UnsupportedEncodingException, SQLException {
-		if (CharsetMapping.isMultibyteCharset(javaEncodingName)) {
-			return null;
+		try {
+			if (CharsetMapping.isMultibyteCharset(javaEncodingName)) {
+				return null;
+			}
+		} catch (RuntimeException ex) {
+			SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+			sqlEx.initCause(ex);
+			throw sqlEx;
 		}
 
 		SingleByteCharsetConverter converter = new SingleByteCharsetConverter(

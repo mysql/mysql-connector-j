@@ -47,7 +47,6 @@ import java.util.Properties;
 import junit.framework.ComparisonFailure;
 import testsuite.BaseTestCase;
 
-import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -362,11 +361,11 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 			StringBuffer types = new StringBuffer();
 
-			HashMap alreadyDoneTypes = new HashMap();
+			HashMap<String, String> alreadyDoneTypes = new HashMap<String, String>();
 
 			while (this.rs.next()) {
 				String typeName = this.rs.getString("TYPE_NAME");
-				String createParams = this.rs.getString("CREATE_PARAMS");
+				//String createParams = this.rs.getString("CREATE_PARAMS");
 
 				if ((typeName.indexOf("BINARY") == -1)
 						&& !typeName.equals("LONG VARCHAR")) {
@@ -583,7 +582,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	 *             if the test fails.
 	 */
 	public void testBug4742() throws Exception {
-		HashMap clashMap = new HashMap();
+		HashMap<String, String> clashMap = new HashMap<String, String>();
 
 		this.rs = this.conn.getMetaData().getTypeInfo();
 
@@ -1535,11 +1534,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			throws SQLException {
 
 		int i = ((com.mysql.jdbc.ConnectionImpl) this.conn)
-				.getMaxBytesPerChar(CharsetMapping
+				.getMaxBytesPerChar(((com.mysql.jdbc.ConnectionImpl) this.conn)
 						.getJavaEncodingForMysqlEncoding(
 								((com.mysql.jdbc.Connection) this.conn)
-										.getServerCharacterEncoding(),
-								((com.mysql.jdbc.ConnectionImpl) this.conn)));
+										.getServerCharacterEncoding()));
 		if (i == 1) {
 			// This is INT field but still processed in
 			// ResultsetMetaData.getColumnDisplaySize
@@ -1963,11 +1961,10 @@ public class MetaDataRegressionTest extends BaseTestCase {
 					if ("CHAR_OCTET_LENGTH".equals(metadataExpected
 							.getColumnName(i + 1))) {
 						if (((com.mysql.jdbc.ConnectionImpl) this.conn)
-								.getMaxBytesPerChar(CharsetMapping
+								.getMaxBytesPerChar(((com.mysql.jdbc.ConnectionImpl) this.conn)
 										.getJavaEncodingForMysqlEncoding(
 												((com.mysql.jdbc.Connection) this.conn)
-														.getServerCharacterEncoding(),
-												((com.mysql.jdbc.ConnectionImpl) this.conn))) > 1) {
+														.getServerCharacterEncoding())) > 1) {
 							continue; // SHOW CREATE and CHAR_OCT *will* differ
 						}
 					}
@@ -2132,7 +2129,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 		Properties props = new Properties();
 		props.setProperty("useInformationSchema","false");
-		ArrayList types = new ArrayList();
+		ArrayList<String> types = new ArrayList<String>();
 		Connection PropConn = getConnectionWithProps(props);
 		try {
 			DatabaseMetaData dbmd = PropConn.getMetaData();
@@ -2677,7 +2674,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		checkTypes(this.rs, types);
 	}
 
-	private final static Map TYPES_MAP = new HashMap();
+	private final static Map<Integer, String> TYPES_MAP = new HashMap<Integer, String>();
 
 	static {
 		Field[] typeFields = Types.class.getFields();
@@ -2703,8 +2700,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		ResultSetMetaData rsmd = rsToCheck.getMetaData();
 		assertEquals(types.length, rsmd.getColumnCount());
 		for (int i = 0; i < types.length; i++) {
-			String expectedType = (String) TYPES_MAP.get(new Integer(types[i]));
-			String actualType = (String) TYPES_MAP.get(new Integer(rsmd
+			String expectedType = TYPES_MAP.get(new Integer(types[i]));
+			String actualType = TYPES_MAP.get(new Integer(rsmd
 					.getColumnType(i + 1)));
 			assertNotNull(expectedType);
 			assertNotNull(actualType);
@@ -3172,5 +3169,36 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		cStmt.registerOutParameter(1, Types.INTEGER);
 		cStmt.execute();
 		assertEquals(2f, cStmt.getInt(1), .001);
+	}
+
+	/**
+	 * Tests fix for BUG#63456 - MetaData precision is different when using UTF8 or Latin1 tables 
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug63456() throws Exception {
+
+		//createTable("testBug63456_custom1", "(TEST VARCHAR(10)) ENGINE = MyISAM CHARACTER SET custom1 COLLATE custom1_general_ci");
+		createTable("testBug63456_latin1", "(TEST VARCHAR(10)) DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci");
+		createTable("testBug63456_utf8","(TEST VARCHAR(10)) DEFAULT CHARACTER SET utf8");
+		createTable("testBug63456_utf8_bin","(TEST VARCHAR(10)) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin");
+
+		//this.rs = this.stmt.executeQuery("select * from testBug63456_custom1"); 
+		//int precision_custom1 = this.rs.getMetaData().getPrecision(1); 
+		//assertEquals(10, precision_custom1);
+
+		this.rs = this.stmt.executeQuery("select * from testBug63456_latin1"); 
+		int precision_latin1 = this.rs.getMetaData().getPrecision(1); 
+
+		this.rs = this.stmt.executeQuery("select * from testBug63456_utf8");
+		int precision_utf8 = this.rs.getMetaData().getPrecision(1); 
+
+		this.rs = this.stmt.executeQuery("select * from testBug63456_utf8_bin");
+		int precision_utf8bin = this.rs.getMetaData().getPrecision(1); 
+
+		assertEquals(precision_latin1, precision_utf8);
+		assertEquals(precision_utf8, precision_utf8bin);
+
 	}
 }

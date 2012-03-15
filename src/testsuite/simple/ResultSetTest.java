@@ -28,12 +28,15 @@ package testsuite.simple;
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.CharsetMapping;
+import com.mysql.jdbc.ConnectionImpl;
 
 public class ResultSetTest extends BaseTestCase {
 
@@ -59,8 +62,17 @@ public class ResultSetTest extends BaseTestCase {
 
 		int numChars = 32;
 
-		Iterator charsetNames = CharsetMapping.STATIC_CHARSET_TO_NUM_BYTES_MAP
-				.keySet().iterator();
+		// build map of charsets supported by server
+		Map<String, Integer> charsetsMap = new HashMap<String, Integer>();
+		Iterator<Integer> collationIndexes = ((ConnectionImpl)this.conn).indexToJavaCharset.keySet().iterator();
+		while (collationIndexes.hasNext()) {
+			Integer index = collationIndexes.next();
+			String charsetName = ((ConnectionImpl)this.conn).indexToCustomMysqlCharset.get(index);
+			if (charsetName == null) charsetName = CharsetMapping.STATIC_INDEX_TO_MYSQL_CHARSET_MAP.get(index);
+			if (charsetName != null) charsetsMap.put(charsetName, index);
+		}
+		
+		Iterator<String> charsetNames = charsetsMap.keySet().iterator();
 		StringBuffer columns = new StringBuffer();
 		StringBuffer emptyBuf = new StringBuffer();
 		StringBuffer abcBuf = new StringBuffer();
@@ -70,7 +82,7 @@ public class ResultSetTest extends BaseTestCase {
 		int counter = 0;
 
 		while (charsetNames.hasNext()) {
-			String charsetName = charsetNames.next().toString();
+			String charsetName = charsetNames.next();
 
 			if (charsetName.equalsIgnoreCase("LATIN7")
 					|| charsetName.equalsIgnoreCase("BINARY")) {

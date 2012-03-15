@@ -819,9 +819,7 @@ public class StringRegressionTest extends BaseTestCase {
 					.toString();
 			System.out.println(currentlyConfiguredCharacterSet);
 
-			String javaNameForMysqlName = CharsetMapping
-					.getJavaEncodingForMysqlEncoding(
-							currentlyConfiguredCharacterSet, null);
+			String javaNameForMysqlName = CharsetMapping.MYSQL_TO_JAVA_CHARSET_MAP.get(currentlyConfiguredCharacterSet);
 			System.out.println(javaNameForMysqlName);
 
 			for (int i = 1; i < CharsetMapping.INDEX_TO_CHARSET.length; i++) {

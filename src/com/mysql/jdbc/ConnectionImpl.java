@@ -39,6 +39,7 @@ import java.sql.SQLWarning;
 import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -105,7 +106,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
    
 
 	class ExceptionInterceptorChain implements ExceptionInterceptor {
-		List interceptors;
+		List<Extension> interceptors;
 		
 		ExceptionInterceptorChain(String interceptorClasses) throws SQLException {
 			interceptors = Util.loadExtensions(ConnectionImpl.this, props, interceptorClasses, "Connection.BadExceptionInterceptor",  this);
@@ -113,7 +114,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		public SQLException interceptException(SQLException sqlEx, Connection conn) {
 			if (interceptors != null) {
-				Iterator iter = interceptors.iterator();
+				Iterator<Extension> iter = interceptors.iterator();
 				
 				while (iter.hasNext()) {
 					sqlEx = ((ExceptionInterceptor)iter.next()).interceptException(sqlEx, ConnectionImpl.this);
@@ -125,7 +126,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		public void destroy() {
 			if (interceptors != null) {
-				Iterator iter = interceptors.iterator();
+				Iterator<Extension> iter = interceptors.iterator();
 				
 				while (iter.hasNext()) {
 					((ExceptionInterceptor)iter.next()).destroy();
@@ -134,12 +135,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			
 		}
 
-		public void init(Connection conn, Properties props) throws SQLException {
+		public void init(Connection conn, Properties properties) throws SQLException {
 			if (interceptors != null) {
-				Iterator iter = interceptors.iterator();
+				Iterator<Extension> iter = interceptors.iterator();
 				
 				while (iter.hasNext()) {
-					((ExceptionInterceptor)iter.next()).init(conn, props);
+					((ExceptionInterceptor)iter.next()).init(conn, properties);
 				}
 			}
 		}
@@ -212,7 +213,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * The mapping between MySQL charset names and Java charset names.
 	 * Initialized by loadCharacterSetMapping()
 	 */
-	public static Map charsetMap;
+	public static Map<?, ?> charsetMap;
 
 	/** Default logger class name */
 	protected static final String DEFAULT_LOGGER_CLASS = "com.mysql.jdbc.log.StandardLogger";
@@ -226,16 +227,32 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * Map mysql transaction isolation level name to
 	 * java.sql.Connection.TRANSACTION_XXX
 	 */
-	private static Map mapTransIsolationNameToValue = null;
+	private static Map<String, Integer> mapTransIsolationNameToValue = null;
 
 	/** Null logger shared by all connections at startup */
 	private static final Log NULL_LOGGER = new NullLogger(LOGGER_INSTANCE_NAME);
 
-	private static Map roundRobinStatsMap;
+	private static Map<?, ?> roundRobinStatsMap;
 
-	private static final Map serverCollationByUrl = new HashMap();
+	private static final Map<String, Map<Long, String>> serverCollationByUrl = new HashMap<String, Map<Long,String>>();
 
-	private static final Map serverConfigByUrl = new HashMap();
+	/**
+	 * Map for Java charsets of user defined charsets. We can't map them statically, because
+	 * they can be different for different server URLs.
+	 */
+	private static final Map<String, Map<Integer, String>> serverJavaCharsetByUrl = new HashMap<String, Map<Integer,String>>();
+	/**
+	 * Map for user defined charsets. We can't map them statically, because
+	 * they can be different for different server URLs.
+	 */
+	private static final Map<String, Map<Integer, String>> serverCustomCharsetByUrl = new HashMap<String, Map<Integer,String>>();
+	/**
+	 * Map for user defined charsets. We can't map them statically, because
+	 * they can be different for different server URLs.
+	 */
+	private static final Map<String, Map<String, Integer>> serverCustomMblenByUrl = new HashMap<String, Map<String, Integer>>();
+	
+	private static final Map<String, Map<String, String>> serverConfigByUrl = new HashMap<String, Map<String,String>>();
 
 	private long queryTimeCount;
 	private double queryTimeSum;
@@ -244,26 +261,21 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	private transient Timer cancelTimer;
 	
-	private List connectionLifecycleInterceptors;
+	private List<Extension> connectionLifecycleInterceptors;
 	
-	private static final Constructor JDBC_4_CONNECTION_CTOR;
+	private static final Constructor<?> JDBC_4_CONNECTION_CTOR;
 	
 	private static final int DEFAULT_RESULT_SET_TYPE = ResultSet.TYPE_FORWARD_ONLY;
 	
 	private static final int DEFAULT_RESULT_SET_CONCURRENCY = ResultSet.CONCUR_READ_ONLY;
 	
 	static {
-		mapTransIsolationNameToValue = new HashMap(8);
-		mapTransIsolationNameToValue.put("READ-UNCOMMITED", Integer.valueOf(
-				TRANSACTION_READ_UNCOMMITTED));
-		mapTransIsolationNameToValue.put("READ-UNCOMMITTED", Integer.valueOf(
-				TRANSACTION_READ_UNCOMMITTED));
-		mapTransIsolationNameToValue.put("READ-COMMITTED", Integer.valueOf(
-				TRANSACTION_READ_COMMITTED));
-		mapTransIsolationNameToValue.put("REPEATABLE-READ", Integer.valueOf(
-				TRANSACTION_REPEATABLE_READ));
-		mapTransIsolationNameToValue.put("SERIALIZABLE", Integer.valueOf(
-				TRANSACTION_SERIALIZABLE));
+		mapTransIsolationNameToValue = new HashMap<String, Integer>(8);
+		mapTransIsolationNameToValue.put("READ-UNCOMMITED", TRANSACTION_READ_UNCOMMITTED);
+		mapTransIsolationNameToValue.put("READ-UNCOMMITTED", TRANSACTION_READ_UNCOMMITTED);
+		mapTransIsolationNameToValue.put("READ-COMMITTED", TRANSACTION_READ_COMMITTED);
+		mapTransIsolationNameToValue.put("REPEATABLE-READ", TRANSACTION_REPEATABLE_READ);
+		mapTransIsolationNameToValue.put("SERIALIZABLE", TRANSACTION_SERIALIZABLE);
 
 		if (Util.isJdbc4()) {
 			try {
@@ -308,9 +320,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			Method setStackTraceMethod = null;
 			Object theStackTraceAsObject = null;
 
-			Class stackTraceElementClass = Class
-					.forName("java.lang.StackTraceElement");
-			Class stackTraceElementArrayClass = Array.newInstance(
+			Class<?> stackTraceElementClass = Class.forName("java.lang.StackTraceElement");
+			Class<?> stackTraceElementArrayClass = Array.newInstance(
 					stackTraceElementClass, new int[] { 0 }).getClass();
 
 			getStackTraceMethod = Throwable.class.getMethod("getStackTrace",
@@ -343,9 +354,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			// Use reflection magic to try this on JDK's 1.5 and newer, fallback to non-named
 			// timer on older VMs.
 			try {
-				Constructor ctr = Timer.class.getConstructor(new Class[] {String.class, Boolean.TYPE});
+				Constructor<Timer> ctr = Timer.class.getConstructor(new Class[] {String.class, Boolean.TYPE});
 				
-				cancelTimer = (Timer)ctr.newInstance(new Object[] { "MySQL Statement Cancellation Timer", Boolean.TRUE});
+				cancelTimer = ctr.newInstance(new Object[] { "MySQL Statement Cancellation Timer", Boolean.TRUE});
 				createdNamedTimer = true;
 			} catch (Throwable t) {
 				createdNamedTimer = false;
@@ -384,7 +395,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private static final Random random = new Random();
 	
 	private static synchronized int getNextRoundRobinHostIndex(String url,
-			List hostList) {
+			List<?> hostList) {
 		// we really do "random" here, because you don't get even
 		// distribution when this is coupled with connection pools
 		
@@ -411,7 +422,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private boolean autoCommit = true;
 
 	/** A map of SQL to parsed prepared statement parameters. */
-	private Map cachedPreparedStatementParams;
+	private Map<Object, Object> cachedPreparedStatementParams;
 
 	/**
 	 * For servers > 4.1.0, what character set is the metadata returned in?
@@ -429,14 +440,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * synchronization and at the same time save memory (each charset converter
 	 * takes approx 65K of static data).
 	 */
-	private Map charsetConverterMap = new HashMap(CharsetMapping
+	private Map<String, Object> charsetConverterMap = new HashMap<String, Object>(CharsetMapping
 			.getNumberOfCharsetsConfigured());
-
-	/**
-	 * The mapping between MySQL charset names and the max number of chars in
-	 * them. Lazily instantiated via getMaxBytesPerChar().
-	 */
-	private Map charsetToNumBytesMap;
 
 	/** The point in time when this connection was created */
 	private long connectionCreationTimeMillis = 0;
@@ -471,7 +476,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * We need this 'bootstrapped', because 4.1 and newer will send fields back
 	 * with this even before we fill this dynamically from the server.
 	 */
-	private String[] indexToCharsetMapping = CharsetMapping.INDEX_TO_CHARSET;
+	public Map<Integer, String> indexToJavaCharset = new HashMap<Integer, String>();
+
+	public Map<Integer, String> indexToCustomMysqlCharset = new HashMap<Integer, String>();
+
+	private Map<String, Integer> mysqlCharsetToCustomMblen = new HashMap<String, Integer>();
 	
 	/** The I/O abstraction interface (network conn to MySQL server */
 	private transient MysqlIO io = null;
@@ -508,7 +517,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private boolean lowerCaseTableNames = false;
 
 	/** When did the master fail? */
-	private long masterFailTimeMillis = 0L;
+//	private long masterFailTimeMillis = 0L;
 
 	private long maximumNumberTablesAccessed = 0;
 
@@ -547,7 +556,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private int[] oldHistCounts = null;
 
 	/** A map of currently open statements */
-	private Map openStatements;
+	private Map<Statement, Statement> openStatements;
 
 	private LRUCache parsedCallableStatementCache;
 
@@ -582,12 +591,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private TimeZone serverTimezoneTZ = null;
 
 	/** The map of server variables that we retrieve at connection init. */
-	private Map serverVariables = null;
+	private Map<String, String> serverVariables = null;
 
 	private long shortestQueryTimeMs = Long.MAX_VALUE;
 
 	/** A map of statements that have had setMaxRows() called on them */
-	private Map statementsUsingMaxRows;
+	private Map<Statement, Statement> statementsUsingMaxRows;
 
 	private double totalQueryTimeMs = 0;
 
@@ -598,7 +607,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * The type map for UDTs (not implemented, but used by some third-party
 	 * vendors, most notably IBM WebSphere)
 	 */
-	private Map typeMap;
+	private Map<?, ?> typeMap;
 
 	/** Has ANSI_QUOTES been enabled on the server? */
 	private boolean useAnsiQuotes = false;
@@ -643,7 +652,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 	private boolean storesLowerCaseTableName;
 
-	private List statementInterceptors;
+	private List<StatementInterceptorV2> statementInterceptors;
 	
 	/**
 	 * If a CharsetEncoder is required for escaping. Needed for SJIS and related
@@ -680,7 +689,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	protected ConnectionImpl(String hostToConnectTo, int portToConnectTo, Properties info,
 			String databaseToConnectTo, String url)
 			throws SQLException {
-		this.charsetToNumBytesMap = new HashMap();
 	
 		this.connectionCreationTimeMillis = System.currentTimeMillis();
 		this.pointOfOrigin = new Throwable();
@@ -731,7 +739,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			this.isClientTzUTC = false;
 		}
 
-		this.openStatements = new HashMap();
+		this.openStatements = new HashMap<Statement, Statement>();
 		
 		if (NonRegisteringDriver.isHostPropertiesList(hostToConnectTo)) {
 			Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(hostToConnectTo);
@@ -830,7 +838,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
     public void unSafeStatementInterceptors() throws SQLException {
     	
-    	ArrayList unSafedStatementInterceptors = new ArrayList(this.statementInterceptors.size());
+    	ArrayList<StatementInterceptorV2> unSafedStatementInterceptors = new ArrayList<StatementInterceptorV2>(this.statementInterceptors.size());
 
     	for (int i = 0; i < this.statementInterceptors.size(); i++) {
     		NoSubInterceptorWrapper wrappedInterceptor = (NoSubInterceptorWrapper) this.statementInterceptors.get(i);
@@ -848,14 +856,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
     public void initializeSafeStatementInterceptors() throws SQLException {
     	this.isClosed = false;
     	
-    	List unwrappedInterceptors = Util.loadExtensions(this, this.props, 
+    	List<Extension> unwrappedInterceptors = Util.loadExtensions(this, this.props, 
 				getStatementInterceptors(),
 				"MysqlIo.BadStatementInterceptor", getExceptionInterceptor());
     	
-    	this.statementInterceptors = new ArrayList(unwrappedInterceptors.size());
+    	this.statementInterceptors = new ArrayList<StatementInterceptorV2>(unwrappedInterceptors.size());
 
     	for (int i = 0; i < unwrappedInterceptors.size(); i++) {
-    		Object interceptor = unwrappedInterceptors.get(i);
+    		Extension interceptor = unwrappedInterceptors.get(i);
     		
     		// adapt older versions of statement interceptors, handle the case where something wants v2
     		// functionality but wants to run with an older driver
@@ -873,7 +881,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
     	
     }
     
-    public List getStatementInterceptorsInstances() {
+    public List<StatementInterceptorV2> getStatementInterceptorsInstances() {
     	return this.statementInterceptors;
     }
     
@@ -921,14 +929,21 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *             DOCUMENT ME!
 	 */
 	private void buildCollationMapping() throws SQLException {
+
+		HashMap<Integer, String> javaCharset = null;
+
 		if (versionMeetsMinimum(4, 1, 0)) {
 
-			TreeMap sortedCollationMap = null;
+			TreeMap<Long, String> sortedCollationMap = null;
+			HashMap<Integer, String> customCharset = null;
+			HashMap<String, Integer> customMblen = null;
 
 			if (getCacheServerConfiguration()) {
 				synchronized (serverConfigByUrl) {
-					sortedCollationMap = (TreeMap) serverCollationByUrl
-							.get(getURL());
+					sortedCollationMap = (TreeMap<Long, String>) serverCollationByUrl.get(getURL());
+					javaCharset = (HashMap<Integer, String>) serverJavaCharsetByUrl.get(getURL());
+					customCharset = (HashMap<Integer, String>) serverCustomCharsetByUrl.get(getURL());
+					customMblen = (HashMap<String, Integer>) serverCustomMblenByUrl.get(getURL());
 				}
 			}
 
@@ -937,56 +952,71 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 			try {
 				if (sortedCollationMap == null) {
-					sortedCollationMap = new TreeMap();
+					sortedCollationMap = new TreeMap<Long, String>();
+					javaCharset = new HashMap<Integer, String>();
+					customCharset = new HashMap<Integer, String>();
+					customMblen = new HashMap<String, Integer>();
 
 					stmt = getMetadataSafeStatement();
 
-					results = stmt
-							.executeQuery("SHOW COLLATION");
+					results = stmt.executeQuery("SHOW COLLATION");
+					Util.resultSetToMap(sortedCollationMap, results, 3, 2);
 
-					while (results.next()) {
-						String charsetName = results.getString(2);
-						Integer charsetIndex = Integer.valueOf(results.getInt(3));
+					for (Iterator<Map.Entry<Long, String>> indexIter = sortedCollationMap.entrySet().iterator(); indexIter.hasNext();) {
+						Map.Entry<Long, String> indexEntry = indexIter.next();
 
-						sortedCollationMap.put(charsetIndex, charsetName);
+						int collationIndex = indexEntry.getKey().intValue();
+						String charsetName = indexEntry.getValue();
+
+						javaCharset.put(collationIndex, getJavaEncodingForMysqlEncoding(charsetName));
+
+						// if no static map for charsetIndex
+						// or server has a different mapping then our static map,
+						// adding it to custom map 
+						if (collationIndex >= CharsetMapping.MAP_SIZE ||
+							!charsetName.equals(CharsetMapping.STATIC_INDEX_TO_MYSQL_CHARSET_MAP.get(collationIndex))) {
+							customCharset.put(collationIndex, charsetName);
+						}
+
+						// if no static map for charsetName adding to custom map
+						if (!CharsetMapping.STATIC_CHARSET_TO_NUM_BYTES_MAP.containsKey(charsetName) &&
+							!CharsetMapping.STATIC_4_0_CHARSET_TO_NUM_BYTES_MAP.containsKey(charsetName)) {
+							customMblen.put(charsetName, null);
+						}
+					}
+					
+					// if there is a number of custom charsets we should execute SHOW CHARACTER SET to know theirs mblen
+					if (customMblen.size() > 0) {
+						results = stmt.executeQuery("SHOW CHARACTER SET");
+						while (results.next()) {
+							String charsetName = results.getString("Charset");
+							if (customMblen.containsKey(charsetName)) {
+								customMblen.put(charsetName, results.getInt("Maxlen"));
+							}
+						}
 					}
 
 					if (getCacheServerConfiguration()) {
 						synchronized (serverConfigByUrl) {
-							serverCollationByUrl.put(getURL(),
-									sortedCollationMap);
+							serverCollationByUrl.put(getURL(), sortedCollationMap);
+							serverJavaCharsetByUrl.put(getURL(), javaCharset);
+							serverCustomCharsetByUrl.put(getURL(), customCharset);
+							serverCustomMblenByUrl.put(getURL(), customMblen);
 						}
 					}
 
 				}
 
-				// Now, merge with what we already know
-				int highestIndex = ((Integer) sortedCollationMap.lastKey())
-						.intValue();
-
-				if (CharsetMapping.INDEX_TO_CHARSET.length > highestIndex) {
-					highestIndex = CharsetMapping.INDEX_TO_CHARSET.length;
-				}
-
-				this.indexToCharsetMapping = new String[highestIndex + 1];
-
-				for (int i = 0; i < CharsetMapping.INDEX_TO_CHARSET.length; i++) {
-					this.indexToCharsetMapping[i] = CharsetMapping.INDEX_TO_CHARSET[i];
-				}
-
-				for (Iterator indexIter = sortedCollationMap.entrySet()
-						.iterator(); indexIter.hasNext();) {
-					Map.Entry indexEntry = (Map.Entry) indexIter.next();
-
-					String mysqlCharsetName = (String) indexEntry.getValue();
-
-					this.indexToCharsetMapping[((Integer) indexEntry.getKey())
-							.intValue()] = CharsetMapping
-							.getJavaEncodingForMysqlEncoding(mysqlCharsetName,
-									this);
-				}
-			} catch (java.sql.SQLException e) {
-				throw e;
+				this.indexToJavaCharset = Collections.unmodifiableMap(javaCharset);
+				this.indexToCustomMysqlCharset = Collections.unmodifiableMap(customCharset);
+				this.mysqlCharsetToCustomMblen = Collections.unmodifiableMap(customMblen);
+				
+			} catch (SQLException ex) {
+				throw ex;
+			} catch (RuntimeException ex) {
+				SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+				sqlEx.initCause(ex);
+				throw sqlEx;
 			} finally {
 				if (results != null) {
 					try {
@@ -1005,10 +1035,21 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			}
 		} else {
-			// Safety, we already do this as an initializer, but this makes
-			// the intent more clear
-			this.indexToCharsetMapping = CharsetMapping.INDEX_TO_CHARSET;
+			javaCharset = new HashMap<Integer, String>();
+			for (int i = 0; i < CharsetMapping.INDEX_TO_CHARSET.length; i++) {
+				javaCharset.put(i, CharsetMapping.INDEX_TO_CHARSET[i]);
+			}
+			this.indexToJavaCharset = Collections.unmodifiableMap(javaCharset);
 		}
+	}
+
+	public String getJavaEncodingForMysqlEncoding(String mysqlEncoding) throws SQLException {
+		
+		if (versionMeetsMinimum(4, 1, 0) && "latin1".equalsIgnoreCase(mysqlEncoding)) {
+			return "Cp1252";
+		}
+		
+		return CharsetMapping.MYSQL_TO_JAVA_CHARSET_MAP.get(mysqlEncoding);
 	}
 
 	private boolean canHandleAsServerPreparedStatement(String sql) 
@@ -1167,8 +1208,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		// set names is equivalent to character_set_client ..._results and ..._connection,
 		// but we set _results later, so don't check it here.
 		return (mysqlEncodingName != null && 
-				mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_client")) &&
-				mysqlEncodingName.equalsIgnoreCase((String)this.serverVariables.get("character_set_connection")));
+				mysqlEncodingName.equalsIgnoreCase(this.serverVariables.get("character_set_client")) &&
+				mysqlEncodingName.equalsIgnoreCase(this.serverVariables.get("character_set_connection")));
 	}
 
 	private void checkAndCreatePerformanceHistogram() {
@@ -1224,21 +1265,26 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			return;
 		}
 
-		String serverEncoding = (String) this.serverVariables
-				.get("character_set");
+		String serverEncoding = this.serverVariables.get("character_set");
 
 		if (serverEncoding == null) {
 			// must be 4.1.1 or newer?
-			serverEncoding = (String) this.serverVariables
-					.get("character_set_server");
+			serverEncoding = this.serverVariables.get("character_set_server");
 		}
 
 		String mappedServerEncoding = null;
 
 		if (serverEncoding != null) {
-			mappedServerEncoding = CharsetMapping
-					.getJavaEncodingForMysqlEncoding(serverEncoding
-							.toUpperCase(Locale.ENGLISH), this);
+			try {
+				mappedServerEncoding = getJavaEncodingForMysqlEncoding(serverEncoding
+							.toUpperCase(Locale.ENGLISH));
+			} catch (SQLException ex) {
+				throw ex;
+			} catch (RuntimeException ex) {
+				SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+				sqlEx.initCause(ex);
+				throw sqlEx;
+			}
 		}
 
 		//
@@ -1315,10 +1361,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			txIsolationName = "transaction_isolation";
 		}
 
-		String s = (String) this.serverVariables.get(txIsolationName);
+		String s = this.serverVariables.get(txIsolationName);
 
 		if (s != null) {
-			Integer intTI = (Integer) mapTransIsolationNameToValue.get(s);
+			Integer intTI = mapTransIsolationNameToValue.get(s);
 
 			if (intTI != null) {
 				this.isolationLevel = intTI.intValue();
@@ -1454,7 +1500,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 					if (parseInfo.statementLength < getPreparedStatementCacheSqlLimit()) {
 						if (this.cachedPreparedStatementParams.size() >= getPreparedStatementCacheSize()) {
-							Iterator oldestIter = this.cachedPreparedStatementParams
+							Iterator<Object> oldestIter = this.cachedPreparedStatementParams
 									.keySet().iterator();
 							long lruTime = Long.MAX_VALUE;
 							String oldestSql = null;
@@ -1565,12 +1611,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		SQLException postponedException = null;
 
 		if (this.openStatements != null) {
-			List currentlyOpenStatements = new ArrayList(); // we need this to
+			List<Statement> currentlyOpenStatements = new ArrayList<Statement>(); // we need this to
 			// avoid
 			// ConcurrentModificationEx
 
-			for (Iterator iter = this.openStatements.keySet().iterator(); iter
-					.hasNext();) {
+			for (Iterator<Statement> iter = this.openStatements.keySet().iterator(); iter.hasNext();) {
 				currentlyOpenStatements.add(iter.next());
 			}
 
@@ -1691,8 +1736,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				// Try the MySQL character encoding, then....
 				String oldEncoding = getEncoding();
 
-				setEncoding(CharsetMapping.getJavaEncodingForMysqlEncoding(
-						oldEncoding, this));
+				try {
+					setEncoding(getJavaEncodingForMysqlEncoding(oldEncoding));
+				} catch (SQLException ex) {
+					throw ex;
+				} catch (RuntimeException ex) {
+					SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+					sqlEx.initCause(ex);
+					throw sqlEx;
+				}
 
 				if (getEncoding() == null) {
 					throw SQLError.createSQLException(
@@ -1786,6 +1838,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 										+ "' received from server. Initial client character set can be forced via the 'characterEncoding' property.",
 								SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 					}
+				} catch (SQLException ex) {
+					throw ex;
+				} catch (RuntimeException ex) {
+					SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+					sqlEx.initCause(ex);
+					throw sqlEx;
 				}
 
 				if (getEncoding() == null) {
@@ -1897,7 +1955,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				boolean isNullOnServer = false;
 				
 				if (this.serverVariables != null) {
-					onServer = (String)this.serverVariables.get("character_set_results");
+					onServer = this.serverVariables.get("character_set_results");
 					
 					isNullOnServer = onServer == null || "NULL".equalsIgnoreCase(onServer) || onServer.length() == 0;
 				}
@@ -1948,7 +2006,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					//
 					
 					if (!mysqlEncodingName.equalsIgnoreCase(
-							(String)this.serverVariables.get("character_set_results"))) {
+							this.serverVariables.get("character_set_results"))) {
 						StringBuffer setBuf = new StringBuffer(
 								"SET character_set_results = ".length()
 										+ mysqlEncodingName.length());
@@ -2051,16 +2109,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 *             mapped to a Java timezone.
 	 */
 	private void configureTimezone() throws SQLException {
-		String configuredTimeZoneOnServer = (String) this.serverVariables
-				.get("timezone");
+		String configuredTimeZoneOnServer = this.serverVariables.get("timezone");
 
 		if (configuredTimeZoneOnServer == null) {
-			configuredTimeZoneOnServer = (String) this.serverVariables
-					.get("time_zone");
+			configuredTimeZoneOnServer = this.serverVariables.get("time_zone");
 
 			if ("SYSTEM".equalsIgnoreCase(configuredTimeZoneOnServer)) {
-				configuredTimeZoneOnServer = (String) this.serverVariables
-						.get("system_time_zone");
+				configuredTimeZoneOnServer = this.serverVariables.get("system_time_zone");
 			}
 		}
 
@@ -2251,8 +2306,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			//
 			// Retrieve any 'lost' prepared statements if re-connecting
 			//
-			Iterator statementIter = this.openStatements.values()
-					.iterator();
+			Iterator<Statement> statementIter = this.openStatements.values().iterator();
 
 			//
 			// We build a list of these outside the map of open statements,
@@ -2263,14 +2317,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			// generating
 			// a ConcurrentModificationException
 			//
-			Stack serverPreparedStatements = null;
+			Stack<Statement> serverPreparedStatements = null;
 
 			while (statementIter.hasNext()) {
-				Object statementObj = statementIter.next();
+				Statement statementObj = statementIter.next();
 
 				if (statementObj instanceof ServerPreparedStatement) {
 					if (serverPreparedStatements == null) {
-						serverPreparedStatements = new Stack();
+						serverPreparedStatements = new Stack<Statement>();
 					}
 
 					serverPreparedStatements.add(statementObj);
@@ -2336,12 +2390,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				this.database);
 	}
 
-	private String normalizeHost(String host) {
-		if (host == null || StringUtils.isEmptyOrWhitespaceOnly(host)) {
+	private String normalizeHost(String hostname) {
+		if (hostname == null || StringUtils.isEmptyOrWhitespaceOnly(hostname)) {
 			return "localhost";
 		}
 		
-		return host;
+		return hostname;
 	}
 	private int parsePortNumber(String portAsString)
 			throws SQLException {
@@ -2419,13 +2473,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private synchronized void createPreparedStatementCaches() {
 		int cacheSize = getPreparedStatementCacheSize();
 		
-		this.cachedPreparedStatementParams = new HashMap(cacheSize);
+		this.cachedPreparedStatementParams = new HashMap<Object, Object>(cacheSize);
 		
 		if (getUseServerPreparedStmts()) {
 			this.serverSideStatementCheckCache = new LRUCache(cacheSize);
 			
 			this.serverSideStatementCache = new LRUCache(cacheSize) {
-				protected boolean removeEldestEntry(java.util.Map.Entry eldest) {
+				protected boolean removeEldestEntry(java.util.Map.Entry<Object, Object> eldest) {
 					if (this.maxElements <= 1) {
 						return false;
 					}
@@ -2871,7 +2925,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		if (charsetIndex != MysqlDefs.NO_CHARSET_INFO) {
 			try {
-				charsetName = this.indexToCharsetMapping[charsetIndex];
+				charsetName = this.indexToJavaCharset.get(charsetIndex);
+				// checking against static maps if no custom charset found
+				if (charsetName==null) charsetName = CharsetMapping.INDEX_TO_CHARSET[charsetIndex];
 
 				if ("sjis".equalsIgnoreCase(charsetName) || 
 						"MS932".equalsIgnoreCase(charsetName) /* for JDK6 */) {
@@ -2885,6 +2941,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						"Unknown character set index for field '"
 								+ charsetIndex + "' received from server.",
 						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+			} catch (RuntimeException ex) {
+				SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+				sqlEx.initCause(ex);
+				throw sqlEx;
 			}
 
 			// Punt
@@ -2970,74 +3030,49 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return this.log;
 	}
 
-	public int getMaxBytesPerChar(String javaCharsetName)
-	throws SQLException {
-		// TODO: Check if we can actually run this query at this point in time
-		String charset = CharsetMapping.getMysqlEncodingForJavaEncoding(
-				javaCharsetName, this);
+	public int getMaxBytesPerChar(String javaCharsetName) throws SQLException {
+		return getMaxBytesPerChar(null, javaCharsetName);
+	}
+	
+	public int getMaxBytesPerChar(Integer charsetIndex, String javaCharsetName) throws SQLException {
 		
-		if ((this.io.serverCharsetIndex == 33) && (versionMeetsMinimum(5, 5, 3)) && (javaCharsetName.equalsIgnoreCase("UTF-8"))) {
-			//Avoid UTF8mb4
-			charset = "utf8";
-		}
+		String charset = null;
+		
+		try {
+			// if we can get it by charsetIndex just doing it
 
-		if (versionMeetsMinimum(4, 1, 0)) {
-			Map mapToCheck = null;
-			
-			if (!getUseDynamicCharsetInfo()) {
-				mapToCheck = CharsetMapping.STATIC_CHARSET_TO_NUM_BYTES_MAP;
-			} else {
-				mapToCheck = this.charsetToNumBytesMap;
-			
-				synchronized (this.charsetToNumBytesMap) {
-					if (this.charsetToNumBytesMap.isEmpty()) {
-						
-						java.sql.Statement stmt = null;
-						java.sql.ResultSet rs = null;
-		
-						try {
-							stmt = getMetadataSafeStatement();
-		
-							rs = stmt.executeQuery("SHOW CHARACTER SET");
-		
-							while (rs.next()) {
-								this.charsetToNumBytesMap.put(rs.getString("Charset"),
-										Integer.valueOf(rs.getInt("Maxlen")));
-							}
-		
-							rs.close();
-							rs = null;
-		
-							stmt.close();
-		
-							stmt = null;
-						} finally {
-							if (rs != null) {
-								rs.close();
-								rs = null;
-							}
-		
-							if (stmt != null) {
-								stmt.close();
-								stmt = null;
-							}
-						}
-					}
+			// getting charset name from dynamic maps in connection;
+			// we do it before checking against static maps because custom charset on server
+			// can be mapped to index from our static map key's diapason 
+			charset = this.indexToCustomMysqlCharset.get(charsetIndex);
+			// checking against static maps if no custom charset found
+			if (charset==null) charset = CharsetMapping.STATIC_INDEX_TO_MYSQL_CHARSET_MAP.get(charsetIndex);
+
+			// if we didn't find charset name by index
+			if (charset == null) {
+				charset = CharsetMapping.getMysqlEncodingForJavaEncoding(javaCharsetName, this);
+				if ((this.io.serverCharsetIndex == 33) && (versionMeetsMinimum(5, 5, 3)) && (javaCharsetName.equalsIgnoreCase("UTF-8"))) {
+					//Avoid UTF8mb4
+					charset = "utf8";
 				}
 			}
-		
-			//Pin down the case when user with 5.5.3 server actually uses 3 byte UTF8
-			//We have already overridden users preference by mapping UTF8 to UTF8mb4
-			
-			Integer mbPerChar = (Integer) mapToCheck.get(charset);
-		
-			if (mbPerChar != null) {
-				return mbPerChar.intValue();
-			}
-		
-			return 1; // we don't know
+	
+			// checking against dynamic maps in connection
+			Integer mblen = this.mysqlCharsetToCustomMblen.get(charset);
+
+			// checking against static maps
+			if (mblen == null) mblen = CharsetMapping.STATIC_CHARSET_TO_NUM_BYTES_MAP.get(charset);
+			if (mblen == null) mblen = CharsetMapping.STATIC_4_0_CHARSET_TO_NUM_BYTES_MAP.get(charset);
+	
+			if (mblen != null) return mblen.intValue();
+		} catch (SQLException ex) {
+			throw ex;
+		} catch (RuntimeException ex) {
+			SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+			sqlEx.initCause(ex);
+			throw sqlEx;
 		}
-		
+
 		return 1; // we don't know
 	}
 
@@ -3095,14 +3130,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public String getServerCharacterEncoding() {
 		if (this.io.versionMeetsMinimum(4, 1, 0)) {
-			if (this.io.serverCharsetIndex < 65535) {
-				return CharsetMapping.MYSQL_INDEX_TO_MYSQL_CHARSET[this.io.serverCharsetIndex];
-			} else {
-				return (String) this.serverVariables.get("character_set_server"); 				
-			}
-		} else {
-			return (String) this.serverVariables.get("character_set");
+			String charset = this.indexToCustomMysqlCharset.get(this.io.serverCharsetIndex);
+			if (charset == null) charset = CharsetMapping.STATIC_INDEX_TO_MYSQL_CHARSET_MAP.get(this.io.serverCharsetIndex);
+			return charset != null ? charset : this.serverVariables.get("character_set_server");
 		}
+		return this.serverVariables.get("character_set");
 	}
 
 	public int getServerMajorVersion() {
@@ -3129,7 +3161,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	public String getServerVariable(String variableName) {
 		if (this.serverVariables != null) {
-			return (String) this.serverVariables.get(variableName);
+			return this.serverVariables.get(variableName);
 		}
 
 		return null;
@@ -3178,8 +3210,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					String s = rs.getString(offset);
 
 					if (s != null) {
-						Integer intTI = (Integer) mapTransIsolationNameToValue
-								.get(s);
+						Integer intTI = mapTransIsolationNameToValue.get(s);
 
 						if (intTI != null) {
 							return intTI.intValue();
@@ -3415,8 +3446,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 			LicenseConfiguration.checkLicenseType(this.serverVariables);
 
-			String lowerCaseTables = (String) this.serverVariables
-					.get("lower_case_table_names");
+			String lowerCaseTables = this.serverVariables.get("lower_case_table_names");
 
 			this.lowerCaseTableNames = "on".equalsIgnoreCase(lowerCaseTables)
 					|| "1".equalsIgnoreCase(lowerCaseTables)
@@ -3461,8 +3491,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			if (this.serverVariables.containsKey("sql_mode")) {
 				int sqlMode = 0;
 
-				String sqlModeAsString = (String) this.serverVariables
-						.get("sql_mode");
+				String sqlModeAsString = this.serverVariables.get("sql_mode");
 				try {
 					sqlMode = Integer.parseInt(sqlModeAsString);
 				} catch (NumberFormatException nfe) {
@@ -3489,8 +3518,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 		}
 		
-		this.errorMessageEncoding = 
-			CharsetMapping.getCharacterEncodingForErrorMessages(this);
+		try {
+			this.errorMessageEncoding = 
+				CharsetMapping.getCharacterEncodingForErrorMessages(this);
+		} catch (SQLException ex) {
+			throw ex;
+		} catch (RuntimeException ex) {
+			SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+			sqlEx.initCause(ex);
+			throw sqlEx;
+		}
 		
 		
 		boolean overrideDefaultAutocommit = isAutoCommitNonDefaultOnServer();
@@ -3529,30 +3566,24 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		// was originally on the server, which is why we use the
 		// "special" key to retrieve it
 		if (this.io.versionMeetsMinimum(4, 1, 0)) {
-			String characterSetResultsOnServerMysql = (String) this.serverVariables
-					.get(JDBC_LOCAL_CHARACTER_SET_RESULTS);
+			String characterSetResultsOnServerMysql = this.serverVariables.get(JDBC_LOCAL_CHARACTER_SET_RESULTS);
 
 			if (characterSetResultsOnServerMysql == null
 					|| StringUtils.startsWithIgnoreCaseAndWs(
 							characterSetResultsOnServerMysql, "NULL")
 					|| characterSetResultsOnServerMysql.length() == 0) {
-				String defaultMetadataCharsetMysql = (String) this.serverVariables
-						.get("character_set_system");
+				String defaultMetadataCharsetMysql = this.serverVariables.get("character_set_system");
 				String defaultMetadataCharset = null;
 
 				if (defaultMetadataCharsetMysql != null) {
-					defaultMetadataCharset = CharsetMapping
-							.getJavaEncodingForMysqlEncoding(
-									defaultMetadataCharsetMysql, this);
+					defaultMetadataCharset = getJavaEncodingForMysqlEncoding(defaultMetadataCharsetMysql);
 				} else {
 					defaultMetadataCharset = "UTF-8";
 				}
 
 				this.characterSetMetadata = defaultMetadataCharset;
 			} else {
-				this.characterSetResultsOnServer = CharsetMapping
-						.getJavaEncodingForMysqlEncoding(
-								characterSetResultsOnServerMysql, this);
+				this.characterSetResultsOnServer = getJavaEncodingForMysqlEncoding(characterSetResultsOnServerMysql);
 				this.characterSetMetadata = this.characterSetResultsOnServer;
 			}
 		} else {
@@ -3588,17 +3619,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	}
 
 	private boolean isQueryCacheEnabled() {
-		return "ON".equalsIgnoreCase((String) this.serverVariables
-				.get("query_cache_type"))
-				&& !"0".equalsIgnoreCase((String) this.serverVariables
-						.get("query_cache_size"));
+		return "ON".equalsIgnoreCase(this.serverVariables.get("query_cache_type"))
+				&& !"0".equalsIgnoreCase(this.serverVariables.get("query_cache_size"));
 	}
 
 	private int getServerVariableAsInt(String variableName, int fallbackValue)
 			throws SQLException {
 		try {
-			return Integer.parseInt((String) this.serverVariables
-					.get(variableName));
+			return Integer.parseInt(this.serverVariables.get(variableName));
 		} catch (NumberFormatException nfe) {
 			getLog().logWarn(Messages.getString("Connection.BadValueInServerVariables", new Object[] {variableName, 
 					this.serverVariables.get(variableName), Integer.valueOf(fallbackValue)}));
@@ -3618,8 +3646,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private boolean isAutoCommitNonDefaultOnServer() throws SQLException {
 		boolean overrideDefaultAutocommit = false;
 		
-		String initConnectValue = (String) this.serverVariables
-		.get("init_connect");
+		String initConnectValue = this.serverVariables.get("init_connect");
 
 		if (versionMeetsMinimum(4, 1, 2) && initConnectValue != null
 				&& initConnectValue.length() > 0) {
@@ -3792,13 +3819,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             if the 'SHOW VARIABLES' query fails for any reason.
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void loadServerVariables() throws SQLException {
 
 		if (getCacheServerConfiguration()) {
 			synchronized (serverConfigByUrl) {
-				@SuppressWarnings("rawtypes")
-				Map cachedVariableMap = (Map) serverConfigByUrl.get(getURL());
+				Map<String, String> cachedVariableMap = serverConfigByUrl.get(getURL());
 
 				if (cachedVariableMap != null) {
 					this.serverVariables = cachedVariableMap;
@@ -3862,7 +3887,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					+ " OR Variable_name = 'init_connect'";
 			}
 			
-			this.serverVariables = new HashMap();
+			this.serverVariables = new HashMap<String, String>();
 
 			results = stmt.executeQuery(query);
 			
@@ -3933,7 +3958,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public synchronized void maxRowsChanged(Statement stmt) {
 		if (this.statementsUsingMaxRows == null) {
-			this.statementsUsingMaxRows = new HashMap();
+			this.statementsUsingMaxRows = new HashMap<Statement, Statement>();
 		}
 
 		this.statementsUsingMaxRows.put(stmt, stmt);
@@ -4379,7 +4404,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			
 	    	if (this.statementInterceptors != null) {
 	    		for (int i = 0; i < this.statementInterceptors.size(); i++) {
-	    			((StatementInterceptorV2)this.statementInterceptors.get(i)).destroy();
+	    			this.statementInterceptors.get(i).destroy();
 	    		}
 	    	}
 	    	
@@ -5193,7 +5218,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	private void setSessionVariables() throws SQLException {
 		if (this.versionMeetsMinimum(4, 0, 0) && getSessionVariables() != null) {
-			List variablesToSet = StringUtils.split(getSessionVariables(), ",", "\"'", "\"'",
+			List<String> variablesToSet = StringUtils.split(getSessionVariables(), ",", "\"'", "\"'",
 					false);
 
 			int numVariablesToSet = variablesToSet.size();
@@ -5204,7 +5229,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				stmt = getMetadataSafeStatement();
 
 				for (int i = 0; i < numVariablesToSet; i++) {
-					String variableValuePair = (String) variablesToSet.get(i);
+					String variableValuePair = variablesToSet.get(i);
 
 					if (variableValuePair.startsWith("@")) {
 						stmt.executeUpdate("SET " + variableValuePair);
@@ -5312,7 +5337,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		if (getJdbcCompliantTruncation()) {
 			if (versionMeetsMinimum(5, 0, 2)) {
 				String currentSqlMode = 
-					(String)this.serverVariables.get("sql_mode");
+					this.serverVariables.get("sql_mode");
 				
 				boolean strictTransTablesIsSet = StringUtils.indexOfIgnoreCase(currentSqlMode, "STRICT_TRANS_TABLES") != -1;
 				
@@ -5610,10 +5635,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		if (factory instanceof SocketMetadata) {
 			return ((SocketMetadata)factory).isLocallyConnected(this);
-		} else {
-			getLog().logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
-			
-			return false;
-		}
+		} 
+		getLog().logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
+		return false;
 	}
 }
