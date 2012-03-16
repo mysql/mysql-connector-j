@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
