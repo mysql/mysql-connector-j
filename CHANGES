@@ -1,6 +1,9 @@
 # Changelog
 # $Id$
 
+nn-nn-12 - Version 5.1.20
+
+
 04-02-12 - Version 5.1.19
   - Fix for Bug#64621, setMaxRows was not correctly processed during CS PS metadata
     collection causing entire resultset to be fetched and possibly leading to OOM.
