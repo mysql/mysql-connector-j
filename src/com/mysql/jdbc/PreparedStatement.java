@@ -232,7 +232,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 				this.statementLength = sql.length();
 
-				ArrayList endpointList = new ArrayList();
+				ArrayList<int[]> endpointList = new ArrayList<int[]>();
 				boolean inQuotes = false;
 				char quoteChar = 0;
 				boolean inQuotedId = false;
@@ -344,7 +344,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						}
 					}
 
-					if (!inQuotes && (i < stopLookingForLimitClause)) {
+					if (!inQuotes && !inQuotedId && (i < stopLookingForLimitClause)) {
 						if ((c == 'L') || (c == 'l')) {
 							char posI1 = sql.charAt(i + 1);
 
@@ -358,7 +358,18 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 										char posT = sql.charAt(i + 4);
 
 										if ((posT == 'T') || (posT == 't')) {
-											foundLimitClause = true;
+
+											boolean hasPreviosIdChar = false;
+											boolean hasFollowingIdChar = false;
+											if (i>statementStartPos && StringUtils.isValidIdChar(sql.charAt(i - 1))) {
+												hasPreviosIdChar = true;
+											}
+											if (i + 5 < this.statementLength && StringUtils.isValidIdChar(sql.charAt(i + 5))) {
+												hasFollowingIdChar = true;
+											}
+											if (!hasPreviosIdChar && !hasFollowingIdChar) {
+												foundLimitClause = true;
+											}
 										}
 									}
 								}
@@ -382,7 +393,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				char[] asCharArray = sql.toCharArray();
 
 				for (i = 0; i < this.staticSql.length; i++) {
-					int[] ep = (int[]) endpointList.get(i);
+					int[] ep = endpointList.get(i);
 					int end = ep[1];
 					int begin = ep[0];
 					int len = end - begin;

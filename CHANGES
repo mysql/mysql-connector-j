@@ -2,6 +2,7 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.20
+  - Fix for Bug#36478, Client prepared statement bugged if word 'limit' included in the query.
 
 
 04-02-12 - Version 5.1.19

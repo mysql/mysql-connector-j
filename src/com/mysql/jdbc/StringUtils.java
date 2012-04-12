@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -68,6 +68,8 @@ public class StringUtils {
 	     new ConcurrentHashMap<String,Charset>();
 
 	private static final String platformEncoding = System.getProperty("file.encoding");
+	
+	private static final String VALID_ID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIGKLMNOPQRSTUVWXYZ0123456789$_#@";
 	
 	static Charset findCharset(String alias) throws UnsupportedEncodingException {
 		try {
@@ -1931,5 +1933,9 @@ public class StringUtils {
 		}
 		
 		return null;
+	}
+
+	public static final boolean isValidIdChar(char c) {
+		return VALID_ID_CHARS.indexOf(c) != -1;
 	}
 }

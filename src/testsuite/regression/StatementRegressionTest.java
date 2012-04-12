@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
  
 
@@ -6690,6 +6690,61 @@ public class StatementRegressionTest extends BaseTestCase {
             this.pstmt.executeBatch();
 			
 		} finally {
+		}
+		
+	}
+
+	public void testBug36478() throws Exception {
+
+		createTable("testBug36478", "(`limit` varchar(255) not null primary key, id_limit INT, limit1 INT, maxlimit2 INT)");
+		
+		this.stmt.execute("INSERT INTO testBug36478 VALUES ('bahblah',1,1,1)");
+		this.stmt.execute("INSERT INTO testBug36478 VALUES ('bahblah2',2,2,2)");
+		this.pstmt = this.conn.prepareStatement("select 1 FROM testBug36478");
+
+		this.pstmt.setMaxRows(1);
+		this.rs = this.pstmt.executeQuery();
+		this.rs.first();
+		assertTrue(this.rs.isFirst());
+		assertTrue(this.rs.isLast());
+
+		this.pstmt = this.conn.prepareStatement("select `limit`, id_limit, limit1, maxlimit2 FROM testBug36478");
+		this.pstmt.setMaxRows(0);
+		this.rs = this.pstmt.executeQuery();
+		this.rs.first();
+		assertTrue(this.rs.isFirst());
+		assertFalse(this.rs.isLast());		
+		
+		//SSPS
+		Connection _conn = null;
+		PreparedStatement s = null;
+		try {
+			Properties props = new Properties();
+			props.setProperty("useServerPrepStmts", "true");
+
+			_conn = getConnectionWithProps(props);
+			s = _conn.prepareStatement("select 1 FROM testBug36478");
+
+			s.setMaxRows(1);
+			ResultSet _rs = s.executeQuery();
+			_rs.first();
+			assertTrue(_rs.isFirst());
+			assertTrue(_rs.isLast());
+
+			s = _conn.prepareStatement("select `limit`, id_limit, limit1, maxlimit2 FROM testBug36478");
+			s.setMaxRows(0);
+			_rs = s.executeQuery();
+			_rs.first();
+			assertTrue(_rs.isFirst());
+			assertFalse(_rs.isLast());		
+			
+		} finally {
+			if (s != null) {
+				s.close();
+			}
+			if (_conn != null) {
+				_conn.close();
+			}
 		}
 		
 	}

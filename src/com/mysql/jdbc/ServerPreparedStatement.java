@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -390,7 +390,29 @@ public class ServerPreparedStatement extends PreparedStatement {
 		
 		this.useAutoSlowLog = this.connection.getAutoSlowLog();
 		this.useTrueBoolean = this.connection.versionMeetsMinimum(3, 21, 23);
-		this.hasLimitClause = (StringUtils.indexOfIgnoreCase(sql, "LIMIT") != -1); //$NON-NLS-1$
+		int lim_id = StringUtils.indexOfIgnoreCase(sql, "LIMIT");
+		if (lim_id != -1) {
+			boolean hasPreviosIdChar = false;
+			boolean hasFollowingIdChar = false;
+			if (lim_id > 0 && (
+					sql.charAt(lim_id - 1) == '`' ||
+					StringUtils.isValidIdChar(sql.charAt(lim_id - 1))
+					)) {
+				hasPreviosIdChar = true;
+			}
+			if (lim_id + 5 < sql.length() && (
+					sql.charAt(lim_id + 5) == '`' ||
+					StringUtils.isValidIdChar(sql.charAt(lim_id + 5))
+					)) {
+				hasFollowingIdChar = true;
+			}
+			if (!hasPreviosIdChar && !hasFollowingIdChar) {
+				this.hasLimitClause = true;
+			}
+		} else {
+			this.hasLimitClause = false;
+		}
+		
 		
 		String statementComment = this.connection.getStatementComment();
 
