@@ -2,6 +2,8 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.20
+  - Fix for Bug#13958793, ClassCastException in ConnectionImpl.buildCollationMapping() with 4.1 server.
+
   - Fix for Bug#36478, Client prepared statement bugged if word 'limit' included in the query.
 
 

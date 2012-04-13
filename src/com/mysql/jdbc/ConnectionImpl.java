@@ -960,7 +960,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					stmt = getMetadataSafeStatement();
 
 					results = stmt.executeQuery("SHOW COLLATION");
-					Util.resultSetToMap(sortedCollationMap, results, 3, 2);
+					if (versionMeetsMinimum(5, 0, 0)) {
+						Util.resultSetToMap(sortedCollationMap, results, 3, 2);
+					} else {
+						while (results.next()) {
+							sortedCollationMap.put(results.getLong(3), results.getString(2));
+						}
+					}
 
 					for (Iterator<Map.Entry<Long, String>> indexIter = sortedCollationMap.entrySet().iterator(); indexIter.hasNext();) {
 						Map.Entry<Long, String> indexEntry = indexIter.next();
