@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -816,16 +816,15 @@ public class StatementImpl implements Statement {
 								} else {
 									if (this.maxRows <= 0) {
 										executeSimpleNonQuery(locallyScopedConn,
-												"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
+												"SET SQL_SELECT_LIMIT=DEFAULT");
 									} else {
 										executeSimpleNonQuery(locallyScopedConn,
-												"SET OPTION SQL_SELECT_LIMIT="
-														+ this.maxRows);
+												"SET SQL_SELECT_LIMIT=" + this.maxRows);
 									}
 								}
 							} else {
 								executeSimpleNonQuery(locallyScopedConn,
-										"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
+										"SET SQL_SELECT_LIMIT=DEFAULT");
 							}
 	
 
@@ -1533,10 +1532,10 @@ public class StatementImpl implements Statement {
 					} else {
 						if (this.maxRows <= 0) {
 							executeSimpleNonQuery(locallyScopedConn,
-									"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
+									"SET SQL_SELECT_LIMIT=DEFAULT");
 						} else {
 							executeSimpleNonQuery(locallyScopedConn,
-											"SET OPTION SQL_SELECT_LIMIT=" + this.maxRows);
+									"SET SQL_SELECT_LIMIT=" + this.maxRows);
 						}
 
 						statementBegins();
@@ -1741,7 +1740,7 @@ public class StatementImpl implements Statement {
 				//
 				if (locallyScopedConn.useMaxRows()) {
 					executeSimpleNonQuery(locallyScopedConn,
-							"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
+							"SET SQL_SELECT_LIMIT=DEFAULT");
 				}
 
 				statementBegins();

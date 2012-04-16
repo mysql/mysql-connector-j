@@ -5451,7 +5451,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 			if ((found != null)
 					&& (this.statementsUsingMaxRows.size() == 0)) {
-				execSQL(null, "SET OPTION SQL_SELECT_LIMIT=DEFAULT", -1,
+				execSQL(null, "SET SQL_SELECT_LIMIT=DEFAULT", -1,
 						null, DEFAULT_RESULT_SET_TYPE,
 						DEFAULT_RESULT_SET_CONCURRENCY, false, 
 						this.database, null, false);

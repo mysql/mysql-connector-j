@@ -1360,16 +1360,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					} else {
 						if (this.maxRows <= 0) {
 							executeSimpleNonQuery(locallyScopedConn,
-									"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
+									"SET SQL_SELECT_LIMIT=DEFAULT");
 						} else {
 							executeSimpleNonQuery(locallyScopedConn,
-									"SET OPTION SQL_SELECT_LIMIT="
-											+ this.maxRows);
+									"SET SQL_SELECT_LIMIT=" + this.maxRows);
 						}
 					}
 				} else {
 					executeSimpleNonQuery(locallyScopedConn,
-							"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
+							"SET SQL_SELECT_LIMIT=DEFAULT");
 				}
 
 				// Finally, execute the query
@@ -2293,10 +2292,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				} else {
 					if (this.maxRows <= 0) {
 						executeSimpleNonQuery(locallyScopedConn,
-								"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
+								"SET SQL_SELECT_LIMIT=DEFAULT");
 					} else {
 						executeSimpleNonQuery(locallyScopedConn,
-								"SET OPTION SQL_SELECT_LIMIT=" + this.maxRows);
+								"SET SQL_SELECT_LIMIT=" + this.maxRows);
 					}
 
 					this.results = executeInternal(-1, sendPacket,
@@ -2432,7 +2431,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			//
 			if (locallyScopedConn.useMaxRows()) {
 				executeSimpleNonQuery(locallyScopedConn,
-						"SET OPTION SQL_SELECT_LIMIT=DEFAULT");
+						"SET SQL_SELECT_LIMIT=DEFAULT");
 			}
 
 			boolean oldInfoMsgState = false;
