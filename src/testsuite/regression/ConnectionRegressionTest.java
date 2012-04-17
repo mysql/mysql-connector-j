@@ -1914,6 +1914,54 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	}
 
 	/**
+	 * Tests fix for BUG#36948 - Trying to use trustCertificateKeyStoreUrl
+	 * causes an IllegalStateException.
+	 * 
+	 * Requires test certificates from testsuite/ssl-test-certs to be installed
+	 * on the server being tested.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug36948() throws Exception {
+
+		Connection _conn = null;
+
+		try {
+			
+			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
+			String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY,	"3306");
+			String db = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY,	"test");
+
+			String hostSpec = host;
+
+			if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+				hostSpec = host + ":" + port;
+			}
+			
+			final String url = "jdbc:mysql://"+hostSpec+"/"+db+"?"
+                    + "useSSL=true"
+                    + "&requireSSL=true"
+                    + "&verifyServerCertificate=true"
+                    + "&trustCertificateKeyStoreUrl=file:src/testsuite/ssl-test-certs/test-cert-store"
+                    + "&trustCertificateKeyStoreType=JKS"
+                    + "&trustCertificateKeyStorePassword=password";
+			
+            _conn = DriverManager.getConnection(url,
+            		(String) this.getPropertiesFromTestsuiteUrl().get("user"),
+            		(String) this.getPropertiesFromTestsuiteUrl().get("password"));
+            
+            assertTrue(true);
+		} finally {
+			if (_conn != null) {
+				_conn.close();
+			}
+		}
+
+	}
+
+	/**
 	 * Tests fix for BUG#27655 - getTransactionIsolation() uses
 	 * "SHOW VARIABLES LIKE" which is very inefficient on MySQL-5.0+
 	 * 
