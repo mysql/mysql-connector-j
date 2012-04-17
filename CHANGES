@@ -2,6 +2,8 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.20
+  - Fix for Bug#55962, Savepoint identifier is occasionally considered as floating point numbers.
+
   - Fix for Bug#13955027, SET OPTION syntax was removed starting from 5.6.5 server version.
 
   - Fix for Bug#13958793, ClassCastException in ConnectionImpl.buildCollationMapping() with 4.1 server.

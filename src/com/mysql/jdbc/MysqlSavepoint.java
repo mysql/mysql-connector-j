@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -43,7 +43,8 @@ public class MysqlSavepoint implements Savepoint {
 
 		int uidLength = uidStr.length();
 
-		StringBuffer safeString = new StringBuffer(uidLength);
+		StringBuffer safeString = new StringBuffer(uidLength+1);
+		safeString.append('_');
 
 		for (int i = 0; i < uidLength; i++) {
 			char c = uidStr.charAt(i);
