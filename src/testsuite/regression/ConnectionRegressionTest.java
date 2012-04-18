@@ -3408,7 +3408,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				}
 
 				if (install_plugin_in_runtime) {
-					this.stmt.executeUpdate("INSTALL PLUGIN test_plugin_server SONAME 'auth_test_plugin.so'");
+					String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
+					this.stmt.executeUpdate("INSTALL PLUGIN test_plugin_server SONAME 'auth_test_plugin"+ext+"'");
 				}
 
 				String dbname = null;
@@ -3476,7 +3477,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				}
 
 				if (install_plugin_in_runtime) {
-					this.stmt.executeUpdate("INSTALL PLUGIN two_questions SONAME 'auth.so'");
+					String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
+					this.stmt.executeUpdate("INSTALL PLUGIN two_questions SONAME 'auth"+ext+"'");
 				}
 
 				String dbname = null;
@@ -3539,7 +3541,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				}
 
 				if (install_plugin_in_runtime) {
-					this.stmt.executeUpdate("INSTALL PLUGIN three_attempts SONAME 'auth.so'");
+					String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
+					this.stmt.executeUpdate("INSTALL PLUGIN three_attempts SONAME 'auth"+ext+"'");
 				}
 
 				String dbname = null;

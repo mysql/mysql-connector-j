@@ -1040,7 +1040,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
 				assertTrue(!this.rs.next());
 			} finally {
-				maxRowsConn.close();
+				if (maxRowsConn != null) {
+					maxRowsConn.close();
+				}
 			}
 		}
 	}

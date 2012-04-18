@@ -4862,7 +4862,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	    nanosString = zeroPadding.substring(0, (digitCount-nanosString.length())) +
 		nanosString; 
 	    
-	    int pos = digitCount; // the end, we're padded to the end by the code above
+	    int pos = digitCount-1; // the end, we're padded to the end by the code above
 	    
 	    while (nanosString.charAt(pos) == '0') {
 	    	pos--;
