@@ -33,6 +33,12 @@ nn-nn-12 - Version 5.1.21
 
   - Fix for Bug#36478, Client prepared statement bugged if word 'limit' included in the query.
 
+  - Fix a scalability/memory footprint issue where Object.finalize() was being used on 
+    ConnectionImpl to clean up the low-level network connection to MySQL should a 
+    connection be abandoned by the application before being cleanly close()d. We now
+    track connections in a phantom reference queue, and have a single thread per-vm
+    clean these up when the VM notices the connection is no longer referenced by
+    anything else.
 
 04-02-12 - Version 5.1.19
   - Fix for Bug#64621, setMaxRows was not correctly processed during CS PS metadata
