@@ -834,6 +834,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			
 			throw sqlEx;
 		}
+		
+		NonRegisteringDriver.trackConnection(this);
 	}
 
     public void unSafeStatementInterceptors() throws SQLException {
@@ -2796,12 +2798,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		return extractedSql;
 
-	}
-
-	protected void finalize() throws Throwable {
-		cleanup(null);
-		
-		super.finalize();
 	}
 
 	public StringBuffer generateConnectionCommentBlock(StringBuffer buf) {

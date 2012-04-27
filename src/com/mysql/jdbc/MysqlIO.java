@@ -498,58 +498,24 @@ public class MysqlIO {
         return rs;
     }
 
+    // We do this to break the chain between MysqlIO and Connection, so that
+    // we can have PhantomReferences on connections that let the driver
+    // clean up the socket connection without having to use finalize() somewhere
+    // (which although more straightforward, is horribly inefficent).
+    protected NetworkResources getNetworkResources() {
+    	return new NetworkResources(this.mysqlConnection, this.mysqlInput, this.mysqlOutput);
+    }
+    
     /**
      * Forcibly closes the underlying socket to MySQL.
      */
     protected final void forceClose() {	
         try {
-        	try {
-	            if (this.mysqlInput != null) {
-	                this.mysqlInput.close();
-	            }
-        	} finally {
-	            if (this.mysqlConnection != null && !this.mysqlConnection.isClosed() && !this.mysqlConnection.isInputShutdown()) {
-	            	try {
-	            		this.mysqlConnection.shutdownInput();
-	            	} catch (UnsupportedOperationException ex) {
-	            		// ignore, some sockets do not support this method
-	            	}
-	            }
-        	}
-        } catch (IOException ioEx) {
-            // we can't do anything constructive about this
-            // Let the JVM clean it up later
-            this.mysqlInput = null;
-        }
-
-        try {
-        	try {
-	            if (this.mysqlOutput != null) {
-	                this.mysqlOutput.close();
-	            }
-        	} finally {
-        		if (this.mysqlConnection != null && !this.mysqlConnection.isClosed() && !this.mysqlConnection.isOutputShutdown()) {
-        			try {
-        				this.mysqlConnection.shutdownOutput();
-        			} catch (UnsupportedOperationException ex) {
-	            		// ignore, some sockets do not support this method
-	            	}
-        		}
-    		}
-        } catch (IOException ioEx) {
-            // we can't do anything constructive about this
-            // Let the JVM clean it up later
-            this.mysqlOutput = null;
-        }
-
-        try {
-            if (this.mysqlConnection != null) {
-                this.mysqlConnection.close();
-            }
-        } catch (IOException ioEx) {
-            // we can't do anything constructive about this
-            // Let the JVM clean it up later
-            this.mysqlConnection = null;
+        	getNetworkResources().forceClose();
+        } finally {
+        	this.mysqlConnection = null;
+        	this.mysqlInput = null;
+        	this.mysqlOutput = null;
         }
     }
 

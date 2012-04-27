@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
  This program is free software; you can redistribute it and/or modify
@@ -28,15 +28,22 @@ package com.mysql.jdbc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.PhantomReference;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.net.URLDecoder;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 /**
  * The Java SQL framework allows for multiple database drivers. Each driver
  * should supply a class that implements the Driver interface
@@ -77,6 +84,31 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
 	private static final String LOADBALANCE_URL_PREFIX = "jdbc:mysql:loadbalance://";
 
+	private static final ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference> connectionPhantomRefs = new ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference>();
+	
+	private static final ReferenceQueue<ConnectionImpl> refQueue = new ReferenceQueue<ConnectionImpl>();
+	
+	static {
+		Thread referenceThread = new Thread("Abandoned connection cleanup thread") {
+	          public void run() {
+	              while (true) {
+	                  try {
+	                      Reference<? extends ConnectionImpl> ref = refQueue.remove();
+	                      try {
+	                    	  ((ConnectionPhantomReference) ref).cleanup();
+	                      } finally {
+	                    	  connectionPhantomRefs.remove(ref);
+	                      }
+	                  } catch (Exception ex) {
+	                    // no where to really log this if we're static
+	                  }
+	              }
+	          }
+	      };
+	      
+	      referenceThread.setDaemon(true);
+	      referenceThread.start();
+	}
 	/**
 	 * Key used to retreive the database value from the properties instance
 	 * passed to the driver.
@@ -304,7 +336,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		try {
 			Connection newConn = com.mysql.jdbc.ConnectionImpl.getInstance(
 					host(props), port(props), props, database(props), url);
-
+			
 			return newConn;
 		} catch (SQLException sqlEx) {
 			// Don't wrap SQLExceptions, throw
@@ -321,6 +353,13 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			
 			throw sqlEx;
 		}
+	}
+
+	protected static void trackConnection(Connection newConn) {
+		
+		ConnectionPhantomReference phantomRef = new ConnectionPhantomReference((ConnectionImpl) newConn, refQueue);
+		connectionPhantomRefs.put(phantomRef, phantomRef);
+		System.out.println("Refs is " + connectionPhantomRefs.size() + " ref queue is " + refQueue);
 	}
 
 	private java.sql.Connection connectLoadBalanced(String url, Properties info)
@@ -894,5 +933,29 @@ public class NonRegisteringDriver implements java.sql.Driver {
 	
 	public static boolean isHostPropertiesList(String host) {
 		return host != null && StringUtils.startsWithIgnoreCase(host, "address=");
+	}
+	
+	static class ConnectionPhantomReference extends PhantomReference<ConnectionImpl> {
+		private NetworkResources io;
+		
+		ConnectionPhantomReference(ConnectionImpl connectionImpl, ReferenceQueue<ConnectionImpl> q) {
+			super(connectionImpl, q);
+			
+			try {
+				io = connectionImpl.getIO().getNetworkResources();
+			} catch (SQLException e) {
+				// if we somehow got here and there's really no i/o, we deal with it later
+			}
+		}
+		
+		void cleanup() {
+			if (io != null) {
+				try {
+					io.forceClose();
+				} finally {
+					io = null;
+				}
+			}
+		}
 	}
 }
