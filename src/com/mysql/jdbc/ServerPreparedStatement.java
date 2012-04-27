@@ -455,78 +455,78 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * 
 	 * @see StatementImpl#addBatch
 	 */
-	public synchronized void addBatch() throws SQLException {
-		checkClosed();
+	public void addBatch() throws SQLException {
+		synchronized (checkClosed()) {
 
-		if (this.batchedArgs == null) {
-			this.batchedArgs = new ArrayList();
+			if (this.batchedArgs == null) {
+				this.batchedArgs = new ArrayList();
+			}
+	
+			this.batchedArgs.add(new BatchedBindValues(this.parameterBindings));
 		}
-
-		this.batchedArgs.add(new BatchedBindValues(this.parameterBindings));
 	}
 
-	protected synchronized String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
+	protected String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
 
-		if (this.isClosed) {
-			return "statement has been closed, no further internal information available";
-		}
-		
-		PreparedStatement pStmtForSub = null;
-
-		try {
-			pStmtForSub = PreparedStatement.getInstance(this.connection,
-					this.originalSql, this.currentCatalog);
-
-			int numParameters = pStmtForSub.parameterCount;
-			int ourNumParameters = this.parameterCount;
-
-			for (int i = 0; (i < numParameters) && (i < ourNumParameters); i++) {
-				if (this.parameterBindings[i] != null) {
-					if (this.parameterBindings[i].isNull) {
-						pStmtForSub.setNull(i + 1, Types.NULL);
-					} else {
-						BindValue bindValue = this.parameterBindings[i];
-
-						//
-						// Handle primitives first
-						//
-						switch (bindValue.bufferType) {
-
-						case MysqlDefs.FIELD_TYPE_TINY:
-							pStmtForSub.setByte(i + 1, (byte)bindValue.longBinding);
-							break;
-						case MysqlDefs.FIELD_TYPE_SHORT:
-							pStmtForSub.setShort(i + 1, (short)bindValue.longBinding);
-							break;
-						case MysqlDefs.FIELD_TYPE_LONG:
-							pStmtForSub.setInt(i + 1, (int)bindValue.longBinding);
-							break;
-						case MysqlDefs.FIELD_TYPE_LONGLONG:
-							pStmtForSub.setLong(i + 1, bindValue.longBinding);
-							break;
-						case MysqlDefs.FIELD_TYPE_FLOAT:
-							pStmtForSub.setFloat(i + 1, bindValue.floatBinding);
-							break;
-						case MysqlDefs.FIELD_TYPE_DOUBLE:
-							pStmtForSub.setDouble(i + 1,
-									bindValue.doubleBinding);
-							break;
-						default:
-							pStmtForSub.setObject(i + 1,
-									this.parameterBindings[i].value);
-							break;
+		synchronized (checkClosed()) {
+			
+			PreparedStatement pStmtForSub = null;
+	
+			try {
+				pStmtForSub = PreparedStatement.getInstance(this.connection,
+						this.originalSql, this.currentCatalog);
+	
+				int numParameters = pStmtForSub.parameterCount;
+				int ourNumParameters = this.parameterCount;
+	
+				for (int i = 0; (i < numParameters) && (i < ourNumParameters); i++) {
+					if (this.parameterBindings[i] != null) {
+						if (this.parameterBindings[i].isNull) {
+							pStmtForSub.setNull(i + 1, Types.NULL);
+						} else {
+							BindValue bindValue = this.parameterBindings[i];
+	
+							//
+							// Handle primitives first
+							//
+							switch (bindValue.bufferType) {
+	
+							case MysqlDefs.FIELD_TYPE_TINY:
+								pStmtForSub.setByte(i + 1, (byte)bindValue.longBinding);
+								break;
+							case MysqlDefs.FIELD_TYPE_SHORT:
+								pStmtForSub.setShort(i + 1, (short)bindValue.longBinding);
+								break;
+							case MysqlDefs.FIELD_TYPE_LONG:
+								pStmtForSub.setInt(i + 1, (int)bindValue.longBinding);
+								break;
+							case MysqlDefs.FIELD_TYPE_LONGLONG:
+								pStmtForSub.setLong(i + 1, bindValue.longBinding);
+								break;
+							case MysqlDefs.FIELD_TYPE_FLOAT:
+								pStmtForSub.setFloat(i + 1, bindValue.floatBinding);
+								break;
+							case MysqlDefs.FIELD_TYPE_DOUBLE:
+								pStmtForSub.setDouble(i + 1,
+										bindValue.doubleBinding);
+								break;
+							default:
+								pStmtForSub.setObject(i + 1,
+										this.parameterBindings[i].value);
+								break;
+							}
 						}
 					}
 				}
-			}
-
-			return pStmtForSub.asSql(quoteStreamsAndUnknowns);
-		} finally {
-			if (pStmtForSub != null) {
-				try {
-					pStmtForSub.close();
-				} catch (SQLException sqlEx) {
-					; // ignore
+	
+				return pStmtForSub.asSql(quoteStreamsAndUnknowns);
+			} finally {
+				if (pStmtForSub != null) {
+					try {
+						pStmtForSub.close();
+					} catch (SQLException sqlEx) {
+						; // ignore
+					}
 				}
 			}
 		}
@@ -537,23 +537,24 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * 
 	 * @see com.mysql.jdbc.Statement#checkClosed()
 	 */
-	protected synchronized void checkClosed() throws SQLException {
+	protected MySQLConnection checkClosed() throws SQLException {
 		if (this.invalid) {
 			throw this.invalidationException;
 		}
 
-		super.checkClosed();
+		return super.checkClosed();
 	}
 
 	/**
 	 * @see java.sql.PreparedStatement#clearParameters()
 	 */
 	public void clearParameters() throws SQLException {
-		checkClosed();
-		clearParametersInternal(true);
+		synchronized (checkClosed()) {
+			clearParametersInternal(true);
+		}
 	}
 
-	private synchronized void clearParametersInternal(boolean clearServerParameters)
+	private void clearParametersInternal(boolean clearServerParameters)
 			throws SQLException {
 		boolean hadLongData = false;
 
@@ -583,114 +584,124 @@ public class ServerPreparedStatement extends PreparedStatement {
 
 	private Calendar defaultTzCalendar;
 
-	protected synchronized void setClosed(boolean flag) {
+	protected void setClosed(boolean flag) {
 		this.isClosed = flag;
 	}
 	
 	/**
 	 * @see java.sql.Statement#close()
 	 */
-	public synchronized void close() throws SQLException {
-		if (this.isCached && !this.isClosed) {
-			clearParameters();
-			
-			this.isClosed = true;
-			
-			this.connection.recachePreparedStatement(this);
-			return;
-		}
-		
-		realClose(true, true);
-	}
-
-	private synchronized void dumpCloseForTestcase() {
-		StringBuffer buf = new StringBuffer();
-		this.connection.generateConnectionCommentBlock(buf);
-		buf.append("DEALLOCATE PREPARE debug_stmt_");
-		buf.append(this.statementId);
-		buf.append(";\n");
-
-		this.connection.dumpTestcaseQuery(buf.toString());
-	}
-
-	private synchronized void dumpExecuteForTestcase() throws SQLException {
-		StringBuffer buf = new StringBuffer();
-
-		for (int i = 0; i < this.parameterCount; i++) {
-			this.connection.generateConnectionCommentBlock(buf);
-
-			buf.append("SET @debug_stmt_param");
-			buf.append(this.statementId);
-			buf.append("_");
-			buf.append(i);
-			buf.append("=");
-
-			if (this.parameterBindings[i].isNull) {
-				buf.append("NULL");
-			} else {
-				buf.append(this.parameterBindings[i].toString(true));
-			}
-
-			buf.append(";\n");
-		}
-
-		this.connection.generateConnectionCommentBlock(buf);
-
-		buf.append("EXECUTE debug_stmt_");
-		buf.append(this.statementId);
-
-		if (this.parameterCount > 0) {
-			buf.append(" USING ");
-			for (int i = 0; i < this.parameterCount; i++) {
-				if (i > 0) {
-					buf.append(", ");
+	public void close() throws SQLException {
+		try {
+			synchronized (checkClosed()) {
+				if (this.isCached && !this.isClosed) {
+					clearParameters();
+					
+					this.isClosed = true;
+					
+					this.connection.recachePreparedStatement(this);
+					return;
 				}
+				
+				realClose(true, true);
+			}
+		} catch (SQLException sqlEx) {
+			if (SQLError.SQL_STATE_CONNECTION_NOT_OPEN.equals(sqlEx.getSQLState())) {
+				return;
+			}
+			
+			throw sqlEx;
+		}
+	}
 
-				buf.append("@debug_stmt_param");
+	private void dumpCloseForTestcase() throws SQLException {
+		synchronized (checkClosed()) {
+			StringBuffer buf = new StringBuffer();
+			this.connection.generateConnectionCommentBlock(buf);
+			buf.append("DEALLOCATE PREPARE debug_stmt_");
+			buf.append(this.statementId);
+			buf.append(";\n");
+	
+			this.connection.dumpTestcaseQuery(buf.toString());
+		}
+	}
+
+	private void dumpExecuteForTestcase() throws SQLException {
+		synchronized (checkClosed()) {
+			StringBuffer buf = new StringBuffer();
+	
+			for (int i = 0; i < this.parameterCount; i++) {
+				this.connection.generateConnectionCommentBlock(buf);
+	
+				buf.append("SET @debug_stmt_param");
 				buf.append(this.statementId);
 				buf.append("_");
 				buf.append(i);
-
+				buf.append("=");
+	
+				if (this.parameterBindings[i].isNull) {
+					buf.append("NULL");
+				} else {
+					buf.append(this.parameterBindings[i].toString(true));
+				}
+	
+				buf.append(";\n");
 			}
+	
+			this.connection.generateConnectionCommentBlock(buf);
+	
+			buf.append("EXECUTE debug_stmt_");
+			buf.append(this.statementId);
+	
+			if (this.parameterCount > 0) {
+				buf.append(" USING ");
+				for (int i = 0; i < this.parameterCount; i++) {
+					if (i > 0) {
+						buf.append(", ");
+					}
+	
+					buf.append("@debug_stmt_param");
+					buf.append(this.statementId);
+					buf.append("_");
+					buf.append(i);
+	
+				}
+			}
+	
+			buf.append(";\n");
+	
+			this.connection.dumpTestcaseQuery(buf.toString());
 		}
-
-		buf.append(";\n");
-
-		this.connection.dumpTestcaseQuery(buf.toString());
 	}
 
-	private synchronized void dumpPrepareForTestcase() throws SQLException {
-
-		StringBuffer buf = new StringBuffer(this.originalSql.length() + 64);
-
-		this.connection.generateConnectionCommentBlock(buf);
-
-		buf.append("PREPARE debug_stmt_");
-		buf.append(this.statementId);
-		buf.append(" FROM \"");
-		buf.append(this.originalSql);
-		buf.append("\";\n");
-
-		this.connection.dumpTestcaseQuery(buf.toString());
+	private void dumpPrepareForTestcase() throws SQLException {
+		synchronized (checkClosed()) {
+			StringBuffer buf = new StringBuffer(this.originalSql.length() + 64);
+	
+			this.connection.generateConnectionCommentBlock(buf);
+	
+			buf.append("PREPARE debug_stmt_");
+			buf.append(this.statementId);
+			buf.append(" FROM \"");
+			buf.append(this.originalSql);
+			buf.append("\";\n");
+	
+			this.connection.dumpTestcaseQuery(buf.toString());
+		}
 	}
 
-	protected synchronized int[] executeBatchSerially(int batchTimeout) throws SQLException {
-		MySQLConnection locallyScopedConn = this.connection;
-		
-		if (locallyScopedConn == null) {
-			checkClosed();
-		}
-		
-		if (locallyScopedConn.isReadOnly()) {
-			throw SQLError.createSQLException(Messages
-					.getString("ServerPreparedStatement.2") //$NON-NLS-1$
-					+ Messages.getString("ServerPreparedStatement.3"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-
-		checkClosed();
-
-		synchronized (locallyScopedConn) {
+	protected int[] executeBatchSerially(int batchTimeout) throws SQLException {
+		synchronized (checkClosed()) {
+			MySQLConnection locallyScopedConn = this.connection;
+			
+			
+			if (locallyScopedConn.isReadOnly()) {
+				throw SQLError.createSQLException(Messages
+						.getString("ServerPreparedStatement.2") //$NON-NLS-1$
+						+ Messages.getString("ServerPreparedStatement.3"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+			
 			clearWarnings();
 
 			// Store this for later, we're going to 'swap' them out
@@ -835,61 +846,63 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @see com.mysql.jdbc.PreparedStatement#executeInternal(int,
 	 *      com.mysql.jdbc.Buffer, boolean, boolean)
 	 */
-	protected synchronized com.mysql.jdbc.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve,
+	protected com.mysql.jdbc.ResultSetInternalMethods executeInternal(int maxRowsToRetrieve,
 			Buffer sendPacket, boolean createStreamingResultSet,
 			boolean queryIsSelectOnly, Field[] metadataFromCache,
 			boolean isBatch)
 			throws SQLException {
-		this.numberOfExecutions++;
-
-		// We defer to server-side execution
-		try {
-			return serverExecute(maxRowsToRetrieve, createStreamingResultSet, 
-					metadataFromCache);
-		} catch (SQLException sqlEx) {
-			// don't wrap SQLExceptions
-			if (this.connection.getEnablePacketDebug()) {
-				this.connection.getIO().dumpPacketRingBuffer();
+		synchronized (checkClosed()) {
+			this.numberOfExecutions++;
+	
+			// We defer to server-side execution
+			try {
+				return serverExecute(maxRowsToRetrieve, createStreamingResultSet, 
+						metadataFromCache);
+			} catch (SQLException sqlEx) {
+				// don't wrap SQLExceptions
+				if (this.connection.getEnablePacketDebug()) {
+					this.connection.getIO().dumpPacketRingBuffer();
+				}
+	
+				if (this.connection.getDumpQueriesOnException()) {
+					String extractedSql = toString();
+					StringBuffer messageBuf = new StringBuffer(extractedSql
+							.length() + 32);
+					messageBuf
+							.append("\n\nQuery being executed when exception was thrown:\n");
+					messageBuf.append(extractedSql);
+	            messageBuf.append("\n\n");
+	
+					sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf
+							.toString(), getExceptionInterceptor());
+				}
+	
+				throw sqlEx;
+			} catch (Exception ex) {
+				if (this.connection.getEnablePacketDebug()) {
+					this.connection.getIO().dumpPacketRingBuffer();
+				}
+	
+				SQLException sqlEx = SQLError.createSQLException(ex.toString(),
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+	
+				if (this.connection.getDumpQueriesOnException()) {
+					String extractedSql = toString();
+					StringBuffer messageBuf = new StringBuffer(extractedSql
+							.length() + 32);
+					messageBuf
+							.append("\n\nQuery being executed when exception was thrown:\n");
+					messageBuf.append(extractedSql);
+	            messageBuf.append("\n\n");
+	
+					sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf
+							.toString(), getExceptionInterceptor());
+				}
+	
+				sqlEx.initCause(ex);
+				
+				throw sqlEx;
 			}
-
-			if (this.connection.getDumpQueriesOnException()) {
-				String extractedSql = toString();
-				StringBuffer messageBuf = new StringBuffer(extractedSql
-						.length() + 32);
-				messageBuf
-						.append("\n\nQuery being executed when exception was thrown:\n");
-				messageBuf.append(extractedSql);
-            messageBuf.append("\n\n");
-
-				sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf
-						.toString(), getExceptionInterceptor());
-			}
-
-			throw sqlEx;
-		} catch (Exception ex) {
-			if (this.connection.getEnablePacketDebug()) {
-				this.connection.getIO().dumpPacketRingBuffer();
-			}
-
-			SQLException sqlEx = SQLError.createSQLException(ex.toString(),
-					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-
-			if (this.connection.getDumpQueriesOnException()) {
-				String extractedSql = toString();
-				StringBuffer messageBuf = new StringBuffer(extractedSql
-						.length() + 32);
-				messageBuf
-						.append("\n\nQuery being executed when exception was thrown:\n");
-				messageBuf.append(extractedSql);
-            messageBuf.append("\n\n");
-
-				sqlEx = ConnectionImpl.appendMessageToException(sqlEx, messageBuf
-						.toString(), getExceptionInterceptor());
-			}
-
-			sqlEx.initCause(ex);
-			
-			throw sqlEx;
 		}
 	}
 
@@ -919,41 +932,42 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @return
 	 * @throws SQLException
 	 */
-	protected synchronized BindValue getBinding(int parameterIndex, boolean forLongData)
+	protected  BindValue getBinding(int parameterIndex, boolean forLongData)
 			throws SQLException {
-		checkClosed();
+		synchronized (checkClosed()) {
 		
-		if (this.parameterBindings.length == 0) {
-			throw SQLError.createSQLException(Messages
-					.getString("ServerPreparedStatement.8"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-
-		parameterIndex--;
-
-		if ((parameterIndex < 0)
-				|| (parameterIndex >= this.parameterBindings.length)) {
-			throw SQLError.createSQLException(Messages
-					.getString("ServerPreparedStatement.9") //$NON-NLS-1$
-					+ (parameterIndex + 1)
-					+ Messages.getString("ServerPreparedStatement.10") //$NON-NLS-1$
-					+ this.parameterBindings.length,
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-
-		if (this.parameterBindings[parameterIndex] == null) {
-			this.parameterBindings[parameterIndex] = new BindValue();
-		} else {
-			if (this.parameterBindings[parameterIndex].isLongData
-					&& !forLongData) {
-				this.detectedLongParameterSwitch = true;
+			if (this.parameterBindings.length == 0) {
+				throw SQLError.createSQLException(Messages
+						.getString("ServerPreparedStatement.8"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
+	
+			parameterIndex--;
+	
+			if ((parameterIndex < 0)
+					|| (parameterIndex >= this.parameterBindings.length)) {
+				throw SQLError.createSQLException(Messages
+						.getString("ServerPreparedStatement.9") //$NON-NLS-1$
+						+ (parameterIndex + 1)
+						+ Messages.getString("ServerPreparedStatement.10") //$NON-NLS-1$
+						+ this.parameterBindings.length,
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+	
+			if (this.parameterBindings[parameterIndex] == null) {
+				this.parameterBindings[parameterIndex] = new BindValue();
+			} else {
+				if (this.parameterBindings[parameterIndex].isLongData
+						&& !forLongData) {
+					this.detectedLongParameterSwitch = true;
+				}
+			}
+	
+			this.parameterBindings[parameterIndex].isSet = true;
+			this.parameterBindings[parameterIndex].boundBeforeExecutionNum = this.numberOfExecutions;
+	
+			return this.parameterBindings[parameterIndex];
 		}
-
-		this.parameterBindings[parameterIndex].isSet = true;
-		this.parameterBindings[parameterIndex].boundBeforeExecutionNum = this.numberOfExecutions;
-
-		return this.parameterBindings[parameterIndex];
 	}
 
 	/**
@@ -969,64 +983,68 @@ public class ServerPreparedStatement extends PreparedStatement {
 	/**
 	 * @see com.mysql.jdbc.PreparedStatement#getBytes(int)
 	 */
-	synchronized byte[] getBytes(int parameterIndex) throws SQLException {
-		BindValue bindValue = getBinding(parameterIndex, false);
-
-		if (bindValue.isNull) {
-			return null;
-		} else if (bindValue.isLongData) {
-			throw SQLError.notImplemented();
-		} else {
-			if (this.outByteBuffer == null) {
-				this.outByteBuffer = new Buffer(this.connection
-						.getNetBufferLength());
+	byte[] getBytes(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			BindValue bindValue = getBinding(parameterIndex, false);
+	
+			if (bindValue.isNull) {
+				return null;
+			} else if (bindValue.isLongData) {
+				throw SQLError.notImplemented();
+			} else {
+				if (this.outByteBuffer == null) {
+					this.outByteBuffer = new Buffer(this.connection
+							.getNetBufferLength());
+				}
+	
+				this.outByteBuffer.clear();
+	
+				int originalPosition = this.outByteBuffer.getPosition();
+	
+				storeBinding(this.outByteBuffer, bindValue, this.connection.getIO());
+	
+				int newPosition = this.outByteBuffer.getPosition();
+	
+				int length = newPosition - originalPosition;
+	
+				byte[] valueAsBytes = new byte[length];
+	
+				System.arraycopy(this.outByteBuffer.getByteBuffer(),
+						originalPosition, valueAsBytes, 0, length);
+	
+				return valueAsBytes;
 			}
-
-			this.outByteBuffer.clear();
-
-			int originalPosition = this.outByteBuffer.getPosition();
-
-			storeBinding(this.outByteBuffer, bindValue, this.connection.getIO());
-
-			int newPosition = this.outByteBuffer.getPosition();
-
-			int length = newPosition - originalPosition;
-
-			byte[] valueAsBytes = new byte[length];
-
-			System.arraycopy(this.outByteBuffer.getByteBuffer(),
-					originalPosition, valueAsBytes, 0, length);
-
-			return valueAsBytes;
 		}
 	}
 
 	/**
 	 * @see java.sql.PreparedStatement#getMetaData()
 	 */
-	public synchronized java.sql.ResultSetMetaData getMetaData() throws SQLException {
-		checkClosed();
+	public java.sql.ResultSetMetaData getMetaData() throws SQLException {
+		synchronized (checkClosed()) {
 
-		if (this.resultFields == null) {
-			return null;
+			if (this.resultFields == null) {
+				return null;
+			}
+	
+			return new ResultSetMetaData(this.resultFields, 
+					this.connection.getUseOldAliasMetadataBehavior(), getExceptionInterceptor());
 		}
-
-		return new ResultSetMetaData(this.resultFields, 
-				this.connection.getUseOldAliasMetadataBehavior(), getExceptionInterceptor());
 	}
 
 	/**
 	 * @see java.sql.PreparedStatement#getParameterMetaData()
 	 */
-	public synchronized ParameterMetaData getParameterMetaData() throws SQLException {
-		checkClosed();
+	public ParameterMetaData getParameterMetaData() throws SQLException {
+		synchronized (checkClosed()) {
 		
-		if (this.parameterMetaData == null) {
-			this.parameterMetaData = new MysqlParameterMetadata(
-					this.parameterFields, this.parameterCount, getExceptionInterceptor());
+			if (this.parameterMetaData == null) {
+				this.parameterMetaData = new MysqlParameterMetadata(
+						this.parameterFields, this.parameterCount, getExceptionInterceptor());
+			}
+			
+			return this.parameterMetaData;
 		}
-		
-		return this.parameterMetaData;
 	}
 
 	/**
@@ -1046,59 +1064,66 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	protected synchronized void realClose(boolean calledExplicitly, 
+	protected void realClose(boolean calledExplicitly, 
 			boolean closeOpenResults) throws SQLException {
-		if (this.isClosed) {
-			return;
+		MySQLConnection locallyScopedConn;
+		
+		try {
+			locallyScopedConn = checkClosed();
+		} catch (SQLException sqlEx) {
+			return; // already closed
 		}
+		
+		synchronized (locallyScopedConn) {
 
-		if (this.connection != null) {
-			if (this.connection.getAutoGenerateTestcaseScript()) {
-				dumpCloseForTestcase();
-			}
-
-			//
-			// Don't communicate with the server if we're being
-			// called from the finalizer...
-			// 
-			// This will leak server resources, but if we don't do this,
-			// we'll deadlock (potentially, because there's no guarantee
-			// when, what order, and what concurrency finalizers will be
-			// called with). Well-behaved programs won't rely on finalizers
-			// to clean up their statements.
-			//
-
-			SQLException exceptionDuringClose = null;
-
-			if (calledExplicitly && !this.connection.isClosed()) {
-				synchronized (this.connection) {
-					try {
-
-						MysqlIO mysql = this.connection.getIO();
-
-						Buffer packet = mysql.getSharedSendPacket();
-
-						packet.writeByte((byte) MysqlDefs.COM_CLOSE_STATEMENT);
-						packet.writeLong(this.serverStatementId);
-
-						mysql.sendCommand(MysqlDefs.COM_CLOSE_STATEMENT, null,
-								packet, true, null, 0);
-					} catch (SQLException sqlEx) {
-						exceptionDuringClose = sqlEx;
+			if (this.connection != null) {
+				if (this.connection.getAutoGenerateTestcaseScript()) {
+					dumpCloseForTestcase();
+				}
+	
+				//
+				// Don't communicate with the server if we're being
+				// called from the finalizer...
+				// 
+				// This will leak server resources, but if we don't do this,
+				// we'll deadlock (potentially, because there's no guarantee
+				// when, what order, and what concurrency finalizers will be
+				// called with). Well-behaved programs won't rely on finalizers
+				// to clean up their statements.
+				//
+	
+				SQLException exceptionDuringClose = null;
+	
+				if (calledExplicitly && !this.connection.isClosed()) {
+					synchronized (this.connection) {
+						try {
+	
+							MysqlIO mysql = this.connection.getIO();
+	
+							Buffer packet = mysql.getSharedSendPacket();
+	
+							packet.writeByte((byte) MysqlDefs.COM_CLOSE_STATEMENT);
+							packet.writeLong(this.serverStatementId);
+	
+							mysql.sendCommand(MysqlDefs.COM_CLOSE_STATEMENT, null,
+									packet, true, null, 0);
+						} catch (SQLException sqlEx) {
+							exceptionDuringClose = sqlEx;
+						}
 					}
 				}
-			}
-
-			super.realClose(calledExplicitly, closeOpenResults);
-
-			clearParametersInternal(false);
-			this.parameterBindings = null;
-
-			this.parameterFields = null;
-			this.resultFields = null;
-
-			if (exceptionDuringClose != null) {
-				throw exceptionDuringClose;
+	
+				super.realClose(calledExplicitly, closeOpenResults);
+	
+				clearParametersInternal(false);
+				this.parameterBindings = null;
+	
+				this.parameterFields = null;
+				this.resultFields = null;
+	
+				if (exceptionDuringClose != null) {
+					throw exceptionDuringClose;
+				}
 			}
 		}
 	}
@@ -1110,43 +1135,45 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	protected synchronized void rePrepare() throws SQLException {
-		this.invalidationException = null;
-
-		try {
-			serverPrepare(this.originalSql);
-		} catch (SQLException sqlEx) {
-			// don't wrap SQLExceptions
-			this.invalidationException = sqlEx;
-		} catch (Exception ex) {
-			this.invalidationException = SQLError.createSQLException(ex.toString(),
-					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-			this.invalidationException.initCause(ex);
-		}
-
-		if (this.invalidationException != null) {
-			this.invalid = true;
-
-			this.parameterBindings = null;
-
-			this.parameterFields = null;
-			this.resultFields = null;
-
-			if (this.results != null) {
-				try {
-					this.results.close();
-				} catch (Exception ex) {
-					;
-				}
+	protected void rePrepare() throws SQLException {
+		synchronized (checkClosed()) {
+			this.invalidationException = null;
+	
+			try {
+				serverPrepare(this.originalSql);
+			} catch (SQLException sqlEx) {
+				// don't wrap SQLExceptions
+				this.invalidationException = sqlEx;
+			} catch (Exception ex) {
+				this.invalidationException = SQLError.createSQLException(ex.toString(),
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+				this.invalidationException.initCause(ex);
 			}
-
-			if (this.connection != null) {
-				if (this.maxRowsChanged) {
-					this.connection.unsetMaxRows(this);
+	
+			if (this.invalidationException != null) {
+				this.invalid = true;
+	
+				this.parameterBindings = null;
+	
+				this.parameterFields = null;
+				this.resultFields = null;
+	
+				if (this.results != null) {
+					try {
+						this.results.close();
+					} catch (Exception ex) {
+						;
+					}
 				}
-
-				if (!this.connection.getDontTrackOpenResources()) {
-					this.connection.unregisterStatement(this);
+	
+				if (this.connection != null) {
+					if (this.maxRowsChanged) {
+						this.connection.unsetMaxRows(this);
+					}
+	
+					if (!this.connection.getDontTrackOpenResources()) {
+						this.connection.unregisterStatement(this);
+					}
 				}
 			}
 		}
@@ -1185,10 +1212,10 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * 
 	 * @throws SQLException
 	 */
-	private synchronized com.mysql.jdbc.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve,
+	private com.mysql.jdbc.ResultSetInternalMethods serverExecute(int maxRowsToRetrieve,
 			boolean createStreamingResultSet, 
 			Field[] metadataFromCache) throws SQLException {
-		synchronized (this.connection) {
+		synchronized (checkClosed()) {
 			MysqlIO mysql = this.connection.getIO();
 
 			if (mysql.shouldIntercept()) {
@@ -1551,9 +1578,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	private synchronized void serverLongData(int parameterIndex, BindValue longData)
+	private void serverLongData(int parameterIndex, BindValue longData)
 			throws SQLException {
-		synchronized (this.connection) {
+		synchronized (checkClosed()) {
 			MysqlIO mysql = this.connection.getIO();
 
 			Buffer packet = mysql.getSharedSendPacket();
@@ -1586,8 +1613,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 	}
 
-	private synchronized void serverPrepare(String sql) throws SQLException {
-		synchronized (this.connection) {
+	private void serverPrepare(String sql) throws SQLException {
+		synchronized (checkClosed()) {
 			MysqlIO mysql = this.connection.getIO();
 
 			if (this.connection.getAutoGenerateTestcaseScript()) {
@@ -1708,25 +1735,27 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 	}
 
-	private synchronized String truncateQueryToLog(String sql) {
-		String query = null;
-		
-		if (sql.length() > this.connection.getMaxQuerySizeToLog()) {
-			StringBuffer queryBuf = new StringBuffer(
-					this.connection.getMaxQuerySizeToLog() + 12);
-			queryBuf.append(sql.substring(0, this.connection.getMaxQuerySizeToLog()));
-			queryBuf.append(Messages.getString("MysqlIO.25"));
+	private String truncateQueryToLog(String sql) throws SQLException {
+		synchronized (checkClosed()) {
+			String query = null;
 			
-			query = queryBuf.toString();
-		} else {
-			query = sql;
+			if (sql.length() > this.connection.getMaxQuerySizeToLog()) {
+				StringBuffer queryBuf = new StringBuffer(
+						this.connection.getMaxQuerySizeToLog() + 12);
+				queryBuf.append(sql.substring(0, this.connection.getMaxQuerySizeToLog()));
+				queryBuf.append(Messages.getString("MysqlIO.25"));
+				
+				query = queryBuf.toString();
+			} else {
+				query = sql;
+			}
+			
+			return query;
 		}
-		
-		return query;
 	}
 
-	private synchronized void serverResetStatement() throws SQLException {
-		synchronized (this.connection) {
+	private void serverResetStatement() throws SQLException {
+		synchronized (checkClosed()) {
 
 			MysqlIO mysql = this.connection.getIO();
 
@@ -1764,24 +1793,24 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @see java.sql.PreparedStatement#setAsciiStream(int, java.io.InputStream,
 	 *      int)
 	 */
-	public synchronized void setAsciiStream(int parameterIndex, InputStream x, int length)
+	public void setAsciiStream(int parameterIndex, InputStream x, int length)
 			throws SQLException {
-		checkClosed();
-
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.BINARY);
-		} else {
-			BindValue binding = getBinding(parameterIndex, true);
-			setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
-
-			binding.value = x;
-			binding.isNull = false;
-			binding.isLongData = true;
-
-			if (this.connection.getUseStreamLengthsInPrepStmts()) {
-				binding.bindLength = length;
+		synchronized (checkClosed()) {
+			if (x == null) {
+				setNull(parameterIndex, java.sql.Types.BINARY);
 			} else {
-				binding.bindLength = -1;
+				BindValue binding = getBinding(parameterIndex, true);
+				setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+	
+				binding.value = x;
+				binding.isNull = false;
+				binding.isLongData = true;
+	
+				if (this.connection.getUseStreamLengthsInPrepStmts()) {
+					binding.bindLength = length;
+				} else {
+					binding.bindLength = -1;
+				}
 			}
 		}
 	}
@@ -1789,26 +1818,27 @@ public class ServerPreparedStatement extends PreparedStatement {
 	/**
 	 * @see java.sql.PreparedStatement#setBigDecimal(int, java.math.BigDecimal)
 	 */
-	public synchronized void setBigDecimal(int parameterIndex, BigDecimal x)
+	public void setBigDecimal(int parameterIndex, BigDecimal x)
 			throws SQLException {
-		checkClosed();
+		synchronized (checkClosed()) {
 
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.DECIMAL);
-		} else {
-		
-			BindValue binding = getBinding(parameterIndex, false);
-
-			if (this.connection.versionMeetsMinimum(5, 0, 3)) {
-				setType(binding, MysqlDefs.FIELD_TYPE_NEW_DECIMAL);
+			if (x == null) {
+				setNull(parameterIndex, java.sql.Types.DECIMAL);
 			} else {
-				setType(binding, this.stringTypeCode);
+			
+				BindValue binding = getBinding(parameterIndex, false);
+	
+				if (this.connection.versionMeetsMinimum(5, 0, 3)) {
+					setType(binding, MysqlDefs.FIELD_TYPE_NEW_DECIMAL);
+				} else {
+					setType(binding, this.stringTypeCode);
+				}
+	
+				binding.value = StringUtils
+					.fixDecimalExponent(StringUtils.consistentToString(x));
+				binding.isNull = false;
+				binding.isLongData = false;
 			}
-
-			binding.value = StringUtils
-				.fixDecimalExponent(StringUtils.consistentToString(x));
-			binding.isNull = false;
-			binding.isLongData = false;
 		}
 	}
 
@@ -1816,24 +1846,25 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @see java.sql.PreparedStatement#setBinaryStream(int, java.io.InputStream,
 	 *      int)
 	 */
-	public synchronized void setBinaryStream(int parameterIndex, InputStream x, int length)
+	public void setBinaryStream(int parameterIndex, InputStream x, int length)
 			throws SQLException {
-		checkClosed();
+		synchronized (checkClosed()) {
 
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.BINARY);
-		} else {
-			BindValue binding = getBinding(parameterIndex, true);
-			setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
-
-			binding.value = x;
-			binding.isNull = false;
-			binding.isLongData = true;
-
-			if (this.connection.getUseStreamLengthsInPrepStmts()) {
-				binding.bindLength = length;
+			if (x == null) {
+				setNull(parameterIndex, java.sql.Types.BINARY);
 			} else {
-				binding.bindLength = -1;
+				BindValue binding = getBinding(parameterIndex, true);
+				setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+	
+				binding.value = x;
+				binding.isNull = false;
+				binding.isLongData = true;
+	
+				if (this.connection.getUseStreamLengthsInPrepStmts()) {
+					binding.bindLength = length;
+				} else {
+					binding.bindLength = -1;
+				}
 			}
 		}
 	}
@@ -1841,23 +1872,24 @@ public class ServerPreparedStatement extends PreparedStatement {
 	/**
 	 * @see java.sql.PreparedStatement#setBlob(int, java.sql.Blob)
 	 */
-	public synchronized void setBlob(int parameterIndex, Blob x) throws SQLException {
-		checkClosed();
+	public void setBlob(int parameterIndex, Blob x) throws SQLException {
+		synchronized (checkClosed()) {
 
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.BINARY);
-		} else {
-			BindValue binding = getBinding(parameterIndex, true);
-			setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
-
-			binding.value = x;
-			binding.isNull = false;
-			binding.isLongData = true;
-
-			if (this.connection.getUseStreamLengthsInPrepStmts()) {
-				binding.bindLength = x.length();
+			if (x == null) {
+				setNull(parameterIndex, java.sql.Types.BINARY);
 			} else {
-				binding.bindLength = -1;
+				BindValue binding = getBinding(parameterIndex, true);
+				setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+	
+				binding.value = x;
+				binding.isNull = false;
+				binding.isLongData = true;
+	
+				if (this.connection.getUseStreamLengthsInPrepStmts()) {
+					binding.bindLength = x.length();
+				} else {
+					binding.bindLength = -1;
+				}
 			}
 		}
 	}
@@ -1906,24 +1938,25 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @see java.sql.PreparedStatement#setCharacterStream(int, java.io.Reader,
 	 *      int)
 	 */
-	public synchronized void setCharacterStream(int parameterIndex, Reader reader, int length)
+	public void setCharacterStream(int parameterIndex, Reader reader, int length)
 			throws SQLException {
-		checkClosed();
+		synchronized (checkClosed()) {
 
-		if (reader == null) {
-			setNull(parameterIndex, java.sql.Types.BINARY);
-		} else {
-			BindValue binding = getBinding(parameterIndex, true);
-			setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
-
-			binding.value = reader;
-			binding.isNull = false;
-			binding.isLongData = true;
-
-			if (this.connection.getUseStreamLengthsInPrepStmts()) {
-				binding.bindLength = length;
+			if (reader == null) {
+				setNull(parameterIndex, java.sql.Types.BINARY);
 			} else {
-				binding.bindLength = -1;
+				BindValue binding = getBinding(parameterIndex, true);
+				setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+	
+				binding.value = reader;
+				binding.isNull = false;
+				binding.isLongData = true;
+	
+				if (this.connection.getUseStreamLengthsInPrepStmts()) {
+					binding.bindLength = length;
+				} else {
+					binding.bindLength = -1;
+				}
 			}
 		}
 	}
@@ -1931,23 +1964,24 @@ public class ServerPreparedStatement extends PreparedStatement {
 	/**
 	 * @see java.sql.PreparedStatement#setClob(int, java.sql.Clob)
 	 */
-	public synchronized void setClob(int parameterIndex, Clob x) throws SQLException {
-		checkClosed();
+	public void setClob(int parameterIndex, Clob x) throws SQLException {
+		synchronized (checkClosed()) {
 
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.BINARY);
-		} else {
-			BindValue binding = getBinding(parameterIndex, true);
-			setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
-
-			binding.value = x.getCharacterStream();
-			binding.isNull = false;
-			binding.isLongData = true;
-
-			if (this.connection.getUseStreamLengthsInPrepStmts()) {
-				binding.bindLength = x.length();
+			if (x == null) {
+				setNull(parameterIndex, java.sql.Types.BINARY);
 			} else {
-				binding.bindLength = -1;
+				BindValue binding = getBinding(parameterIndex, true);
+				setType(binding, MysqlDefs.FIELD_TYPE_BLOB);
+	
+				binding.value = x.getCharacterStream();
+				binding.isNull = false;
+				binding.isLongData = true;
+	
+				if (this.connection.getUseStreamLengthsInPrepStmts()) {
+					binding.bindLength = x.length();
+				} else {
+					binding.bindLength = -1;
+				}
 			}
 		}
 	}
@@ -1999,25 +2033,26 @@ public class ServerPreparedStatement extends PreparedStatement {
 	/**
 	 * @see java.sql.PreparedStatement#setDouble(int, double)
 	 */
-	public synchronized void setDouble(int parameterIndex, double x) throws SQLException {
-		checkClosed();
+	public void setDouble(int parameterIndex, double x) throws SQLException {
+		synchronized (checkClosed()) {
 
-		if (!this.connection.getAllowNanAndInf()
-				&& (x == Double.POSITIVE_INFINITY
-						|| x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
-			throw SQLError.createSQLException("'" + x
-					+ "' is not a valid numeric or approximate numeric value",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-
+			if (!this.connection.getAllowNanAndInf()
+					&& (x == Double.POSITIVE_INFINITY
+							|| x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
+				throw SQLError.createSQLException("'" + x
+						+ "' is not a valid numeric or approximate numeric value",
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+	
+			}
+	
+			BindValue binding = getBinding(parameterIndex, false);
+			setType(binding, MysqlDefs.FIELD_TYPE_DOUBLE);
+	
+			binding.value = null;
+			binding.doubleBinding = x;
+			binding.isNull = false;
+			binding.isLongData = false;
 		}
-
-		BindValue binding = getBinding(parameterIndex, false);
-		setType(binding, MysqlDefs.FIELD_TYPE_DOUBLE);
-
-		binding.value = null;
-		binding.doubleBinding = x;
-		binding.isNull = false;
-		binding.isLongData = false;
 	}
 
 	/**
@@ -2160,9 +2195,11 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 *             if a database access error occurs
 	 */
-	public synchronized void setTime(int parameterIndex, java.sql.Time x)
+	public void setTime(int parameterIndex, java.sql.Time x)
 			throws SQLException {
-		setTimeInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false);
+		synchronized (checkClosed()) {
+			setTimeInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false);
+		}
 	}
 
 	/**
@@ -2200,21 +2237,21 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 *             if a database access error occurs
 	 */
-	protected synchronized void setTimeInternal(int parameterIndex, java.sql.Time x,
+	protected void setTimeInternal(int parameterIndex, java.sql.Time x,
 			Calendar targetCalendar,
 			TimeZone tz, boolean rollForward) throws SQLException {
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.TIME);
-		} else {
-			BindValue binding = getBinding(parameterIndex, false);
-			setType(binding, MysqlDefs.FIELD_TYPE_TIME);
-
-			if (!this.useLegacyDatetimeCode) {
-				binding.value = x;
+		synchronized (checkClosed()) {
+			if (x == null) {
+				setNull(parameterIndex, java.sql.Types.TIME);
 			} else {
-				Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
-				
-				synchronized (sessionCalendar) {
+				BindValue binding = getBinding(parameterIndex, false);
+				setType(binding, MysqlDefs.FIELD_TYPE_TIME);
+	
+				if (!this.useLegacyDatetimeCode) {
+					binding.value = x;
+				} else {
+					Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
+
 					binding.value = TimeUtil.changeTimezone(this.connection, 
 							sessionCalendar,
 							targetCalendar,
@@ -2222,10 +2259,10 @@ public class ServerPreparedStatement extends PreparedStatement {
 							this.connection.getServerTimezoneTZ(), 
 							rollForward);
 				}
+				
+				binding.isNull = false;
+				binding.isLongData = false;
 			}
-			
-			binding.isNull = false;
-			binding.isLongData = false;
 		}
 	}
 
@@ -2241,9 +2278,11 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 *             if a database-access error occurs.
 	 */
-	public synchronized void setTimestamp(int parameterIndex, java.sql.Timestamp x)
+	public void setTimestamp(int parameterIndex, java.sql.Timestamp x)
 			throws SQLException {
-		setTimestampInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false);
+		synchronized (checkClosed()) {
+			setTimestampInternal(parameterIndex, x, null, this.connection.getDefaultTimeZone(), false);
+		}
 	}
 
 	/**
@@ -2262,47 +2301,51 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 */
 	public void setTimestamp(int parameterIndex, java.sql.Timestamp x,
 			Calendar cal) throws SQLException {
-		setTimestampInternal(parameterIndex, x, cal, cal.getTimeZone(), true);
+		synchronized (checkClosed()) {
+			setTimestampInternal(parameterIndex, x, cal, cal.getTimeZone(), true);
+		}
 	}
 
-	protected synchronized void setTimestampInternal(int parameterIndex,
+	protected void setTimestampInternal(int parameterIndex,
 			java.sql.Timestamp x, Calendar targetCalendar,
 			TimeZone tz, boolean rollForward)
 			throws SQLException {
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.TIMESTAMP);
-		} else {
-			BindValue binding = getBinding(parameterIndex, false);
-			setType(binding, MysqlDefs.FIELD_TYPE_DATETIME);
-
-			if (!this.useLegacyDatetimeCode) {
-				binding.value = x;
+		synchronized (checkClosed()) {
+			if (x == null) {
+				setNull(parameterIndex, java.sql.Types.TIMESTAMP);
 			} else {
-				Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
-						this.connection.getUtcCalendar() : 
-							getCalendarInstanceForSessionOrNew();
-				
-				synchronized (sessionCalendar) {
+				BindValue binding = getBinding(parameterIndex, false);
+				setType(binding, MysqlDefs.FIELD_TYPE_DATETIME);
+	
+				if (!this.useLegacyDatetimeCode) {
+					binding.value = x;
+				} else {
+					Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
+							this.connection.getUtcCalendar() : 
+								getCalendarInstanceForSessionOrNew();
+					
 					binding.value = TimeUtil.changeTimezone(this.connection, 
 							sessionCalendar,
 							targetCalendar,
 							x, tz,
 							this.connection.getServerTimezoneTZ(), 
 							rollForward);
+
+					binding.isNull = false;
+					binding.isLongData = false;
 				}
-				
-				binding.isNull = false;
-				binding.isLongData = false;
 			}
 		}
 	}
 
-	protected synchronized void setType(BindValue oldValue, int bufferType) {
-		if (oldValue.bufferType != bufferType) {
-			this.sendTypesToServer = true;
+	protected void setType(BindValue oldValue, int bufferType) throws SQLException {
+		synchronized (checkClosed()) {
+			if (oldValue.bufferType != bufferType) {
+				this.sendTypesToServer = true;
+			}
+	
+			oldValue.bufferType = bufferType;
 		}
-
-		oldValue.bufferType = bufferType;
 	}
 
 	/**
@@ -2351,94 +2394,95 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	private synchronized void storeBinding(Buffer packet, BindValue bindValue, MysqlIO mysql)
+	private void storeBinding(Buffer packet, BindValue bindValue, MysqlIO mysql)
 			throws SQLException {
-		try {
-			Object value = bindValue.value;
-
-			//
-			// Handle primitives first
-			//
-			switch (bindValue.bufferType) {
-
-			case MysqlDefs.FIELD_TYPE_TINY:
-				packet.writeByte((byte)bindValue.longBinding);
-				return;
-			case MysqlDefs.FIELD_TYPE_SHORT:
-				packet.ensureCapacity(2);
-				packet.writeInt((int)bindValue.longBinding);
-				return;
-			case MysqlDefs.FIELD_TYPE_LONG:
-				packet.ensureCapacity(4);
-				packet.writeLong((int)bindValue.longBinding);
-				return;
-			case MysqlDefs.FIELD_TYPE_LONGLONG:
-				packet.ensureCapacity(8);
-				packet.writeLongLong(bindValue.longBinding);
-				return;
-			case MysqlDefs.FIELD_TYPE_FLOAT:
-				packet.ensureCapacity(4);
-				packet.writeFloat(bindValue.floatBinding);
-				return;
-			case MysqlDefs.FIELD_TYPE_DOUBLE:
-				packet.ensureCapacity(8);
-				packet.writeDouble(bindValue.doubleBinding);
-				return;
-			case MysqlDefs.FIELD_TYPE_TIME:
-				storeTime(packet, (Time) value);
-				return;
-			case MysqlDefs.FIELD_TYPE_DATE:
-			case MysqlDefs.FIELD_TYPE_DATETIME:
-			case MysqlDefs.FIELD_TYPE_TIMESTAMP:
-				storeDateTime(packet, (java.util.Date) value, mysql, bindValue.bufferType);
-				return;
-			case MysqlDefs.FIELD_TYPE_VAR_STRING:
-			case MysqlDefs.FIELD_TYPE_STRING:
-			case MysqlDefs.FIELD_TYPE_VARCHAR:
-			case MysqlDefs.FIELD_TYPE_DECIMAL:
-			case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
-				if (value instanceof byte[]) {
-					packet.writeLenBytes((byte[]) value);
-				} else if (!this.isLoadDataQuery) {
-					packet.writeLenString((String) value, this.charEncoding,
-							this.connection.getServerCharacterEncoding(),
-							this.charConverter, this.connection
-									.parserKnowsUnicode(),
-									this.connection);
-				} else {
-					packet.writeLenBytes(StringUtils.getBytes((String) value));
+		synchronized (checkClosed()) {
+			try {
+				Object value = bindValue.value;
+	
+				//
+				// Handle primitives first
+				//
+				switch (bindValue.bufferType) {
+	
+				case MysqlDefs.FIELD_TYPE_TINY:
+					packet.writeByte((byte)bindValue.longBinding);
+					return;
+				case MysqlDefs.FIELD_TYPE_SHORT:
+					packet.ensureCapacity(2);
+					packet.writeInt((int)bindValue.longBinding);
+					return;
+				case MysqlDefs.FIELD_TYPE_LONG:
+					packet.ensureCapacity(4);
+					packet.writeLong((int)bindValue.longBinding);
+					return;
+				case MysqlDefs.FIELD_TYPE_LONGLONG:
+					packet.ensureCapacity(8);
+					packet.writeLongLong(bindValue.longBinding);
+					return;
+				case MysqlDefs.FIELD_TYPE_FLOAT:
+					packet.ensureCapacity(4);
+					packet.writeFloat(bindValue.floatBinding);
+					return;
+				case MysqlDefs.FIELD_TYPE_DOUBLE:
+					packet.ensureCapacity(8);
+					packet.writeDouble(bindValue.doubleBinding);
+					return;
+				case MysqlDefs.FIELD_TYPE_TIME:
+					storeTime(packet, (Time) value);
+					return;
+				case MysqlDefs.FIELD_TYPE_DATE:
+				case MysqlDefs.FIELD_TYPE_DATETIME:
+				case MysqlDefs.FIELD_TYPE_TIMESTAMP:
+					storeDateTime(packet, (java.util.Date) value, mysql, bindValue.bufferType);
+					return;
+				case MysqlDefs.FIELD_TYPE_VAR_STRING:
+				case MysqlDefs.FIELD_TYPE_STRING:
+				case MysqlDefs.FIELD_TYPE_VARCHAR:
+				case MysqlDefs.FIELD_TYPE_DECIMAL:
+				case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
+					if (value instanceof byte[]) {
+						packet.writeLenBytes((byte[]) value);
+					} else if (!this.isLoadDataQuery) {
+						packet.writeLenString((String) value, this.charEncoding,
+								this.connection.getServerCharacterEncoding(),
+								this.charConverter, this.connection
+										.parserKnowsUnicode(),
+										this.connection);
+					} else {
+						packet.writeLenBytes(StringUtils.getBytes((String) value));
+					}
+	
+					return;
 				}
-
-				return;
+	
+				
+			} catch (UnsupportedEncodingException uEE) {
+				throw SQLError.createSQLException(Messages
+						.getString("ServerPreparedStatement.22") //$NON-NLS-1$
+						+ this.connection.getEncoding() + "'", //$NON-NLS-1$
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			}
-
-			
-		} catch (UnsupportedEncodingException uEE) {
-			throw SQLError.createSQLException(Messages
-					.getString("ServerPreparedStatement.22") //$NON-NLS-1$
-					+ this.connection.getEncoding() + "'", //$NON-NLS-1$
-					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 	}
 
-	private synchronized void storeDateTime412AndOlder(Buffer intoBuf, java.util.Date dt, int bufferType)
+	private void storeDateTime412AndOlder(Buffer intoBuf, java.util.Date dt, int bufferType)
 			throws SQLException {
-		
-		Calendar sessionCalendar = null;
-		
-		if (!this.useLegacyDatetimeCode) {
-			if (bufferType == MysqlDefs.FIELD_TYPE_DATE) {
-				sessionCalendar = getDefaultTzCalendar();
+		synchronized (checkClosed()) {
+			Calendar sessionCalendar = null;
+			
+			if (!this.useLegacyDatetimeCode) {
+				if (bufferType == MysqlDefs.FIELD_TYPE_DATE) {
+					sessionCalendar = getDefaultTzCalendar();
+				} else {
+					sessionCalendar = getServerTzCalendar();
+				}
 			} else {
-				sessionCalendar = getServerTzCalendar();
+				sessionCalendar = (dt instanceof Timestamp && 
+					this.connection.getUseJDBCCompliantTimezoneShift()) ? 
+					this.connection.getUtcCalendar() : getCalendarInstanceForSessionOrNew();
 			}
-		} else {
-			sessionCalendar = (dt instanceof Timestamp && 
-				this.connection.getUseJDBCCompliantTimezoneShift()) ? 
-				this.connection.getUtcCalendar() : getCalendarInstanceForSessionOrNew();
-		}
-		
-		synchronized (sessionCalendar) {
+
 			java.util.Date oldTime = sessionCalendar.getTime();
 			
 			try {
@@ -2473,32 +2517,35 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 	}
 
-	private synchronized void storeDateTime(Buffer intoBuf, java.util.Date dt, MysqlIO mysql, int bufferType)
+	private void storeDateTime(Buffer intoBuf, java.util.Date dt, MysqlIO mysql, int bufferType)
 			throws SQLException {
-		if (this.connection.versionMeetsMinimum(4, 1, 3)) {
-			storeDateTime413AndNewer(intoBuf, dt, bufferType);
-		} else {
-			storeDateTime412AndOlder(intoBuf, dt, bufferType);
+		synchronized (checkClosed()) {
+			if (this.connection.versionMeetsMinimum(4, 1, 3)) {
+				storeDateTime413AndNewer(intoBuf, dt, bufferType);
+			} else {
+				storeDateTime412AndOlder(intoBuf, dt, bufferType);
+			}
 		}
 	}
 
-	private synchronized void storeDateTime413AndNewer(Buffer intoBuf, java.util.Date dt, int bufferType)
+	private void storeDateTime413AndNewer(Buffer intoBuf, java.util.Date dt, int bufferType)
 			throws SQLException {
-		Calendar sessionCalendar = null;
-		
-		if (!this.useLegacyDatetimeCode) {
-			if (bufferType == MysqlDefs.FIELD_TYPE_DATE) {
-				sessionCalendar = getDefaultTzCalendar();
+		synchronized (checkClosed()) {
+			Calendar sessionCalendar = null;
+			
+			if (!this.useLegacyDatetimeCode) {
+				if (bufferType == MysqlDefs.FIELD_TYPE_DATE) {
+					sessionCalendar = getDefaultTzCalendar();
+				} else {
+					sessionCalendar = getServerTzCalendar();
+				}
 			} else {
-				sessionCalendar = getServerTzCalendar();
+				sessionCalendar = (dt instanceof Timestamp && 
+					this.connection.getUseJDBCCompliantTimezoneShift()) ? 
+					this.connection.getUtcCalendar() : getCalendarInstanceForSessionOrNew();
 			}
-		} else {
-			sessionCalendar = (dt instanceof Timestamp && 
-				this.connection.getUseJDBCCompliantTimezoneShift()) ? 
-				this.connection.getUtcCalendar() : getCalendarInstanceForSessionOrNew();
-		}
-		
-		synchronized (sessionCalendar) {
+			
+
 			java.util.Date oldTime = sessionCalendar.getTime();
 
 			try {
@@ -2552,8 +2599,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 	}
 
-	private Calendar getServerTzCalendar() {
-		synchronized (this) {
+	private Calendar getServerTzCalendar() throws SQLException {
+		synchronized (checkClosed()) {
 			if (serverTzCalendar == null) {
 				serverTzCalendar = new GregorianCalendar(this.connection.getServerTimezoneTZ());
 			}
@@ -2562,8 +2609,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 	}
 	
-	private Calendar getDefaultTzCalendar() {
-		synchronized (this) {
+	private Calendar getDefaultTzCalendar() throws SQLException {
+		synchronized (checkClosed()) {
 			if (defaultTzCalendar == null) {
 				defaultTzCalendar = new GregorianCalendar(TimeZone.getDefault());
 			}
@@ -2575,166 +2622,170 @@ public class ServerPreparedStatement extends PreparedStatement {
 	//
 	// TO DO: Investigate using NIO to do this faster
 	//
-	private synchronized void storeReader(MysqlIO mysql, int parameterIndex, Buffer packet,
+	private void storeReader(MysqlIO mysql, int parameterIndex, Buffer packet,
 			Reader inStream) throws SQLException {
-		String forcedEncoding = this.connection.getClobCharacterEncoding();
-		
-		String clobEncoding = 
-			(forcedEncoding == null ? this.connection.getEncoding() : forcedEncoding);
-		
-		int maxBytesChar = 2;
+		synchronized (checkClosed()) {
+			String forcedEncoding = this.connection.getClobCharacterEncoding();
 			
-		if (clobEncoding != null) {
-			if (!clobEncoding.equals("UTF-16")) {
-				maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
+			String clobEncoding = 
+				(forcedEncoding == null ? this.connection.getEncoding() : forcedEncoding);
+			
+			int maxBytesChar = 2;
 				
-				if (maxBytesChar == 1) {
-					maxBytesChar = 2; // for safety
-				}
-			} else {
-				maxBytesChar = 4;
-			}
-		}
-			
-		char[] buf = new char[BLOB_STREAM_READ_BUF_SIZE / maxBytesChar];
-		
-		int numRead = 0;
-
-		int bytesInPacket = 0;
-		int totalBytesRead = 0;
-		int bytesReadAtLastSend = 0;
-		int packetIsFullAt = this.connection.getBlobSendChunkSize();
-		
-		
-		
-		try {
-			packet.clear();
-			packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
-			packet.writeLong(this.serverStatementId);
-			packet.writeInt((parameterIndex));
-
-			boolean readAny = false;
-			
-			while ((numRead = inStream.read(buf)) != -1) {
-				readAny = true;
-			
-				byte[] valueAsBytes = StringUtils.getBytes(buf, null,
-						clobEncoding, this.connection
-								.getServerCharacterEncoding(), 0, numRead,
-						this.connection.parserKnowsUnicode(), getExceptionInterceptor());
-
-				packet.writeBytesNoNull(valueAsBytes, 0, valueAsBytes.length);
-
-				bytesInPacket += valueAsBytes.length;
-				totalBytesRead += valueAsBytes.length;
-
-				if (bytesInPacket >= packetIsFullAt) {
-					bytesReadAtLastSend = totalBytesRead;
-
-					mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet,
-							true, null, 0);
-
-					bytesInPacket = 0;
-					packet.clear();
-					packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
-					packet.writeLong(this.serverStatementId);
-					packet.writeInt((parameterIndex));
+			if (clobEncoding != null) {
+				if (!clobEncoding.equals("UTF-16")) {
+					maxBytesChar = this.connection.getMaxBytesPerChar(clobEncoding);
+					
+					if (maxBytesChar == 1) {
+						maxBytesChar = 2; // for safety
+					}
+				} else {
+					maxBytesChar = 4;
 				}
 			}
-
-			if (totalBytesRead != bytesReadAtLastSend) {
-				mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
-						null, 0);
-			}
+				
+			char[] buf = new char[BLOB_STREAM_READ_BUF_SIZE / maxBytesChar];
 			
-			if (!readAny) {
-				mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
-						null, 0);
-			}
-		} catch (IOException ioEx) {
-			SQLException sqlEx = SQLError.createSQLException(Messages
-					.getString("ServerPreparedStatement.24") //$NON-NLS-1$
-					+ ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-			sqlEx.initCause(ioEx);
+			int numRead = 0;
+	
+			int bytesInPacket = 0;
+			int totalBytesRead = 0;
+			int bytesReadAtLastSend = 0;
+			int packetIsFullAt = this.connection.getBlobSendChunkSize();
 			
-			throw sqlEx;
-		} finally {
-			if (this.connection.getAutoClosePStmtStreams()) {
-				if (inStream != null) {
-					try {
-						inStream.close();
-					} catch (IOException ioEx) {
-						; // ignore
+			
+			
+			try {
+				packet.clear();
+				packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
+				packet.writeLong(this.serverStatementId);
+				packet.writeInt((parameterIndex));
+	
+				boolean readAny = false;
+				
+				while ((numRead = inStream.read(buf)) != -1) {
+					readAny = true;
+				
+					byte[] valueAsBytes = StringUtils.getBytes(buf, null,
+							clobEncoding, this.connection
+									.getServerCharacterEncoding(), 0, numRead,
+							this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+	
+					packet.writeBytesNoNull(valueAsBytes, 0, valueAsBytes.length);
+	
+					bytesInPacket += valueAsBytes.length;
+					totalBytesRead += valueAsBytes.length;
+	
+					if (bytesInPacket >= packetIsFullAt) {
+						bytesReadAtLastSend = totalBytesRead;
+	
+						mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet,
+								true, null, 0);
+	
+						bytesInPacket = 0;
+						packet.clear();
+						packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
+						packet.writeLong(this.serverStatementId);
+						packet.writeInt((parameterIndex));
+					}
+				}
+	
+				if (totalBytesRead != bytesReadAtLastSend) {
+					mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
+							null, 0);
+				}
+				
+				if (!readAny) {
+					mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
+							null, 0);
+				}
+			} catch (IOException ioEx) {
+				SQLException sqlEx = SQLError.createSQLException(Messages
+						.getString("ServerPreparedStatement.24") //$NON-NLS-1$
+						+ ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+				sqlEx.initCause(ioEx);
+				
+				throw sqlEx;
+			} finally {
+				if (this.connection.getAutoClosePStmtStreams()) {
+					if (inStream != null) {
+						try {
+							inStream.close();
+						} catch (IOException ioEx) {
+							; // ignore
+						}
 					}
 				}
 			}
 		}
 	}
 
-	private synchronized void storeStream(MysqlIO mysql, int parameterIndex, Buffer packet,
+	private void storeStream(MysqlIO mysql, int parameterIndex, Buffer packet,
 			InputStream inStream) throws SQLException {
-		byte[] buf = new byte[BLOB_STREAM_READ_BUF_SIZE];
-
-		int numRead = 0;
-		
-		try {
-			int bytesInPacket = 0;
-			int totalBytesRead = 0;
-			int bytesReadAtLastSend = 0;
-			int packetIsFullAt = this.connection.getBlobSendChunkSize();
-
-			packet.clear();
-			packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
-			packet.writeLong(this.serverStatementId);
-			packet.writeInt((parameterIndex));
-
-			boolean readAny = false;
+		synchronized (checkClosed()) {
+			byte[] buf = new byte[BLOB_STREAM_READ_BUF_SIZE];
+	
+			int numRead = 0;
 			
-			while ((numRead = inStream.read(buf)) != -1) {
-
-				readAny = true;
+			try {
+				int bytesInPacket = 0;
+				int totalBytesRead = 0;
+				int bytesReadAtLastSend = 0;
+				int packetIsFullAt = this.connection.getBlobSendChunkSize();
+	
+				packet.clear();
+				packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
+				packet.writeLong(this.serverStatementId);
+				packet.writeInt((parameterIndex));
+	
+				boolean readAny = false;
 				
-				packet.writeBytesNoNull(buf, 0, numRead);
-				bytesInPacket += numRead;
-				totalBytesRead += numRead;
-
-				if (bytesInPacket >= packetIsFullAt) {
-					bytesReadAtLastSend = totalBytesRead;
-
-					mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet,
-							true, null, 0);
-
-					bytesInPacket = 0;
-					packet.clear();
-					packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
-					packet.writeLong(this.serverStatementId);
-					packet.writeInt((parameterIndex));
+				while ((numRead = inStream.read(buf)) != -1) {
+	
+					readAny = true;
+					
+					packet.writeBytesNoNull(buf, 0, numRead);
+					bytesInPacket += numRead;
+					totalBytesRead += numRead;
+	
+					if (bytesInPacket >= packetIsFullAt) {
+						bytesReadAtLastSend = totalBytesRead;
+	
+						mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet,
+								true, null, 0);
+	
+						bytesInPacket = 0;
+						packet.clear();
+						packet.writeByte((byte) MysqlDefs.COM_LONG_DATA);
+						packet.writeLong(this.serverStatementId);
+						packet.writeInt((parameterIndex));
+					}
 				}
-			}
-
-			if (totalBytesRead != bytesReadAtLastSend) {
-				mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
-						null, 0);
-			}
-			
-			if (!readAny) {
-				mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
-						null, 0);
-			}
-		} catch (IOException ioEx) {
-			SQLException sqlEx = SQLError.createSQLException(Messages
-					.getString("ServerPreparedStatement.25") //$NON-NLS-1$
-					+ ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-			sqlEx.initCause(ioEx);
-			
-			throw sqlEx;
-		} finally {
-			if (this.connection.getAutoClosePStmtStreams()) {
-				if (inStream != null) {
-					try {
-						inStream.close();
-					} catch (IOException ioEx) {
-						; // ignore
+	
+				if (totalBytesRead != bytesReadAtLastSend) {
+					mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
+							null, 0);
+				}
+				
+				if (!readAny) {
+					mysql.sendCommand(MysqlDefs.COM_LONG_DATA, null, packet, true,
+							null, 0);
+				}
+			} catch (IOException ioEx) {
+				SQLException sqlEx = SQLError.createSQLException(Messages
+						.getString("ServerPreparedStatement.25") //$NON-NLS-1$
+						+ ioEx.toString(), SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+				sqlEx.initCause(ioEx);
+				
+				throw sqlEx;
+			} finally {
+				if (this.connection.getAutoClosePStmtStreams()) {
+					if (inStream != null) {
+						try {
+							inStream.close();
+						} catch (IOException ioEx) {
+							; // ignore
+						}
 					}
 				}
 			}
@@ -2768,68 +2819,76 @@ public class ServerPreparedStatement extends PreparedStatement {
 	private boolean hasCheckedRewrite = false;
 	private boolean canRewrite = false;
 	
-	public synchronized boolean canRewriteAsMultiValueInsertAtSqlLevel() throws SQLException {
-		if (!hasCheckedRewrite) {
-			this.hasCheckedRewrite = true;
-			this.canRewrite = canRewrite(this.originalSql, isOnDuplicateKeyUpdate(), getLocationOfOnDuplicateKeyUpdate(), 0);
-			// We need to client-side parse this to get the VALUES clause, etc.
-			this.parseInfo = new ParseInfo(this.originalSql, this.connection, this.connection.getMetaData(), this.charEncoding, this.charConverter);
+	public boolean canRewriteAsMultiValueInsertAtSqlLevel() throws SQLException {
+		synchronized (checkClosed()) {
+			if (!hasCheckedRewrite) {
+				this.hasCheckedRewrite = true;
+				this.canRewrite = canRewrite(this.originalSql, isOnDuplicateKeyUpdate(), getLocationOfOnDuplicateKeyUpdate(), 0);
+				// We need to client-side parse this to get the VALUES clause, etc.
+				this.parseInfo = new ParseInfo(this.originalSql, this.connection, this.connection.getMetaData(), this.charEncoding, this.charConverter);
+			}
+			
+			return this.canRewrite;
 		}
-		
-		return this.canRewrite;
 	}
 
 	
-	public synchronized boolean canRewriteAsMultivalueInsertStatement() throws SQLException {
-		if (!canRewriteAsMultiValueInsertAtSqlLevel()) {
-			return false;
-		}
-	
-		BindValue[] currentBindValues = null;
-		BindValue[] previousBindValues = null;
-	
-		int nbrCommands = this.batchedArgs.size();
-	
-		// Can't have type changes between sets of bindings for this to work...
-	
-		for (int commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
-			Object arg = this.batchedArgs.get(commandIndex);
-	
-			if (!(arg instanceof String)) {
-	
-				currentBindValues = ((BatchedBindValues) arg).batchedParameterValues;
-	
-				// We need to check types each time, as
-				// the user might have bound different
-				// types in each addBatch()
-	
-				if (previousBindValues != null) {
-					for (int j = 0; j < this.parameterBindings.length; j++) {
-						if (currentBindValues[j].bufferType != previousBindValues[j].bufferType) {
-							return false;
+	public boolean canRewriteAsMultivalueInsertStatement() throws SQLException {
+		synchronized (checkClosed()) {
+			if (!canRewriteAsMultiValueInsertAtSqlLevel()) {
+				return false;
+			}
+		
+			BindValue[] currentBindValues = null;
+			BindValue[] previousBindValues = null;
+		
+			int nbrCommands = this.batchedArgs.size();
+		
+			// Can't have type changes between sets of bindings for this to work...
+		
+			for (int commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
+				Object arg = this.batchedArgs.get(commandIndex);
+		
+				if (!(arg instanceof String)) {
+		
+					currentBindValues = ((BatchedBindValues) arg).batchedParameterValues;
+		
+					// We need to check types each time, as
+					// the user might have bound different
+					// types in each addBatch()
+		
+					if (previousBindValues != null) {
+						for (int j = 0; j < this.parameterBindings.length; j++) {
+							if (currentBindValues[j].bufferType != previousBindValues[j].bufferType) {
+								return false;
+							}
 						}
 					}
 				}
 			}
+			
+			
+			
+			return true;
 		}
-		
-		
-		
-		return true;
 	}
 	
 	private int locationOfOnDuplicateKeyUpdate = -2;
 	
-	protected synchronized int getLocationOfOnDuplicateKeyUpdate() {
-		if (this.locationOfOnDuplicateKeyUpdate == -2) {
-			this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(this.originalSql);
+	protected int getLocationOfOnDuplicateKeyUpdate() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.locationOfOnDuplicateKeyUpdate == -2) {
+				this.locationOfOnDuplicateKeyUpdate = getOnDuplicateKeyLocation(this.originalSql);
+			}
+			
+			return this.locationOfOnDuplicateKeyUpdate;
 		}
-		
-		return this.locationOfOnDuplicateKeyUpdate;
 	}
 	
-	protected synchronized boolean isOnDuplicateKeyUpdate() {
-		return getLocationOfOnDuplicateKeyUpdate() != -1;
+	protected boolean isOnDuplicateKeyUpdate() throws SQLException {
+		synchronized (checkClosed()) {
+			return getLocationOfOnDuplicateKeyUpdate() != -1;
+		}
 	}
 
 	
@@ -2838,43 +2897,46 @@ public class ServerPreparedStatement extends PreparedStatement {
 	/** 
 	 *  Computes the maximum parameter set size, and entire batch size given 
 	 *  the number of arguments in the batch.
+	 * @throws SQLException 
 	 */
-	protected synchronized long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) {
-		long sizeOfEntireBatch = 1 + /* com_execute */ + 4 /* stmt id */ + 1 /* flags */ + 4 /* batch count padding */; 
-		long maxSizeOfParameterSet = 0;
+	protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) throws SQLException {
+		synchronized (checkClosed()) {
+			long sizeOfEntireBatch = 1 + /* com_execute */ + 4 /* stmt id */ + 1 /* flags */ + 4 /* batch count padding */; 
+			long maxSizeOfParameterSet = 0;
+			
+			for (int i = 0; i < numBatchedArgs; i++) {
+				BindValue[] paramArg = ((BatchedBindValues) this.batchedArgs.get(i)).batchedParameterValues;
 		
-		for (int i = 0; i < numBatchedArgs; i++) {
-			BindValue[] paramArg = ((BatchedBindValues) this.batchedArgs.get(i)).batchedParameterValues;
-	
-			long sizeOfParameterSet = 0;
-			
-			sizeOfParameterSet += (this.parameterCount + 7) / 8; // for isNull
-			
-			sizeOfParameterSet += this.parameterCount * 2; // have to send types
-			
-			for (int j = 0; j < this.parameterBindings.length; j++) {
-				if (!paramArg[j].isNull) {
-	
-					long size = paramArg[j].getBoundLength();
-					
-					if (paramArg[j].isLongData) {
-						if (size != -1) {
+				long sizeOfParameterSet = 0;
+				
+				sizeOfParameterSet += (this.parameterCount + 7) / 8; // for isNull
+				
+				sizeOfParameterSet += this.parameterCount * 2; // have to send types
+				
+				for (int j = 0; j < this.parameterBindings.length; j++) {
+					if (!paramArg[j].isNull) {
+		
+						long size = paramArg[j].getBoundLength();
+						
+						if (paramArg[j].isLongData) {
+							if (size != -1) {
+								sizeOfParameterSet += size;
+							}
+						} else {
 							sizeOfParameterSet += size;
 						}
-					} else {
-						sizeOfParameterSet += size;
 					}
 				}
-			}
+				
+				sizeOfEntireBatch += sizeOfParameterSet;
+				
+				if (sizeOfParameterSet > maxSizeOfParameterSet) {
+					maxSizeOfParameterSet = sizeOfParameterSet;
+				}
+			}	
 			
-			sizeOfEntireBatch += sizeOfParameterSet;
-			
-			if (sizeOfParameterSet > maxSizeOfParameterSet) {
-				maxSizeOfParameterSet = sizeOfParameterSet;
-			}
-		}	
-		
-		return new long[] {maxSizeOfParameterSet, sizeOfEntireBatch};
+			return new long[] {maxSizeOfParameterSet, sizeOfEntireBatch};
+		}
 	}
 
 	protected int setOneBatchedParameterSet(
@@ -2983,18 +3045,19 @@ public class ServerPreparedStatement extends PreparedStatement {
 		return this.hasOnDuplicateKeyUpdate;
 	}
 	
-	protected synchronized PreparedStatement prepareBatchedInsertSQL(MySQLConnection localConn, int numBatches) throws SQLException {
-		try {
-			PreparedStatement pstmt = new ServerPreparedStatement(localConn, this.parseInfo.getSqlForBatch(numBatches), this.currentCatalog, this.resultSetConcurrency, this.resultSetType);
-			pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
-			
-			return pstmt;
-		} catch (UnsupportedEncodingException e) {
-			SQLException sqlEx = SQLError.createSQLException("Unable to prepare batch statement", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-			sqlEx.initCause(e);
-			
-			throw sqlEx;
+	protected PreparedStatement prepareBatchedInsertSQL(MySQLConnection localConn, int numBatches) throws SQLException {
+		synchronized (checkClosed()) {
+			try {
+				PreparedStatement pstmt = new ServerPreparedStatement(localConn, this.parseInfo.getSqlForBatch(numBatches), this.currentCatalog, this.resultSetConcurrency, this.resultSetType);
+				pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
+				
+				return pstmt;
+			} catch (UnsupportedEncodingException e) {
+				SQLException sqlEx = SQLError.createSQLException("Unable to prepare batch statement", SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+				sqlEx.initCause(e);
+				
+				throw sqlEx;
+			}
 		}
-		
 	}
 }

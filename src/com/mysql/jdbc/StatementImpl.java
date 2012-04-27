@@ -204,7 +204,7 @@ public class StatementImpl implements Statement {
 	protected String charEncoding = null;
 
 	/** The connection that created us */
-	protected MySQLConnection connection = null;
+	protected volatile MySQLConnection connection = null;
 
 	protected long connectionId = 0;
 
@@ -379,6 +379,8 @@ public class StatementImpl implements Statement {
 			
 			this.holdResultsOpenOverClose = this.connection.getHoldResultsOpenOverStatementClose();
 		}
+		
+		version5013OrNewer = this.connection.versionMeetsMinimum(5, 0, 13);
 	}
 
 	/**
@@ -390,13 +392,15 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	public synchronized void addBatch(String sql) throws SQLException {
-		if (this.batchedArgs == null) {
-			this.batchedArgs = new ArrayList();
-		}
-
-		if (sql != null) {
-			this.batchedArgs.add(sql);
+	public void addBatch(String sql) throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.batchedArgs == null) {
+				this.batchedArgs = new ArrayList();
+			}
+	
+			if (sql != null) {
+				this.batchedArgs.add(sql);
+			}
 		}
 	}
 
@@ -453,12 +457,16 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if this statement has been closed
 	 */
-	protected synchronized void checkClosed() throws SQLException {
-		if (this.isClosed) {
+	protected MySQLConnection checkClosed() throws SQLException {
+		MySQLConnection c = this.connection;
+		
+		if (c == null) {
 			throw SQLError.createSQLException(Messages
 					.getString("Statement.49"), //$NON-NLS-1$
 					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, getExceptionInterceptor()); //$NON-NLS-1$
 		}
+		
+		return c;
 	}
 
 	/**
@@ -525,9 +533,11 @@ public class StatementImpl implements Statement {
 	 *                if a database-access error occurs, or the driver does not
 	 *                support batch statements
 	 */
-	public synchronized void clearBatch() throws SQLException {
-		if (this.batchedArgs != null) {
-			this.batchedArgs.clear();
+	public void clearBatch() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.batchedArgs != null) {
+				this.batchedArgs.clear();
+			}
 		}
 	}
 
@@ -538,9 +548,11 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs (why?)
 	 */
-	public synchronized void clearWarnings() throws SQLException {
-		this.clearWarningsCalled = true;
-		this.warningChain = null;
+	public void clearWarnings() throws SQLException {
+		synchronized (checkClosed()) {
+			this.clearWarningsCalled = true;
+			this.warningChain = null;
+		}
 	}
 
 	/**
@@ -558,75 +570,103 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized void close() throws SQLException {
-		realClose(true, true);
+	public void close() throws SQLException {
+		try {
+			synchronized (checkClosed()) {
+				realClose(true, true);
+			}
+		} catch (SQLException sqlEx) {
+			if (SQLError.SQL_STATE_CONNECTION_NOT_OPEN.equals(sqlEx.getSQLState())) {
+				return;
+			}
+			
+			throw sqlEx;
+		}
 	}
 
 	/**
 	 * Close any open result sets that have been 'held open'
 	 */
-	protected synchronized void closeAllOpenResults() {
-		if (this.openResults != null) {
-			for (Iterator iter = this.openResults.iterator(); iter.hasNext();) {
-				ResultSetInternalMethods element = (ResultSetInternalMethods) iter.next();
-
-				try {
-					element.realClose(false);
-				} catch (SQLException sqlEx) {
-					AssertionFailedException.shouldNotHappen(sqlEx);
+	protected void closeAllOpenResults() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.openResults != null) {
+				for (Iterator iter = this.openResults.iterator(); iter.hasNext();) {
+					ResultSetInternalMethods element = (ResultSetInternalMethods) iter.next();
+	
+					try {
+						element.realClose(false);
+					} catch (SQLException sqlEx) {
+						AssertionFailedException.shouldNotHappen(sqlEx);
+					}
 				}
+	
+				this.openResults.clear();
 			}
-
-			this.openResults.clear();
 		}
 	}
 
-	public synchronized void removeOpenResultSet(ResultSet rs) {
-		if (this.openResults != null) {
-			this.openResults.remove(rs);
+	public void removeOpenResultSet(ResultSet rs) {
+		try {
+			synchronized (checkClosed()) {
+				if (this.openResults != null) {
+					this.openResults.remove(rs);
+				}
+			}
+		} catch (SQLException e) {
+			// we can't break the interface, having this be no-op in case of error is ok
 		}
 	}
 	
-	public synchronized int getOpenResultSetCount() {
-		if (this.openResults != null) {
-			return this.openResults.size();
+	public int getOpenResultSetCount() {
+		try {
+			synchronized (checkClosed()) {
+				if (this.openResults != null) {
+					return this.openResults.size();
+				}
+				
+				return 0;
+			}
+		} catch (SQLException e) {
+			// we can't break the interface, having this be no-op in case of error is ok
+			
+			return 0;
 		}
-		
-		return 0;
 	}
 	
 	/**
 	 * @param sql
 	 * @return
 	 */
-	private synchronized ResultSetInternalMethods createResultSetUsingServerFetch(String sql)
+	private ResultSetInternalMethods createResultSetUsingServerFetch(String sql)
 			throws SQLException {
-		java.sql.PreparedStatement pStmt = this.connection.prepareStatement(
-				sql, this.resultSetType, this.resultSetConcurrency);
-
-		pStmt.setFetchSize(this.fetchSize);
-
-		if (this.maxRows > -1) {
-			pStmt.setMaxRows(this.maxRows);
+		synchronized (checkClosed()) {
+			java.sql.PreparedStatement pStmt = this.connection.prepareStatement(
+					sql, this.resultSetType, this.resultSetConcurrency);
+	
+			pStmt.setFetchSize(this.fetchSize);
+	
+			if (this.maxRows > -1) {
+				pStmt.setMaxRows(this.maxRows);
+			}
+	
+			statementBegins();
+	
+			pStmt.execute();
+	
+			//
+			// Need to be able to get resultset irrespective if we issued DML or
+			// not to make this work.
+			//
+			ResultSetInternalMethods rs = ((com.mysql.jdbc.StatementImpl) pStmt)
+					.getResultSetInternal();
+	
+			rs
+					.setStatementUsedForFetchingRows((com.mysql.jdbc.PreparedStatement) pStmt);
+	
+			this.results = rs;
+	
+			return rs;
 		}
-
-		statementBegins();
-
-		pStmt.execute();
-
-		//
-		// Need to be able to get resultset irrespective if we issued DML or
-		// not to make this work.
-		//
-		ResultSetInternalMethods rs = ((com.mysql.jdbc.StatementImpl) pStmt)
-				.getResultSetInternal();
-
-		rs
-				.setStatementUsedForFetchingRows((com.mysql.jdbc.PreparedStatement) pStmt);
-
-		this.results = rs;
-
-		return rs;
 	}
 
 	/**
@@ -636,9 +676,17 @@ public class StatementImpl implements Statement {
 	 * @return true if this result set should be streamed row at-a-time, rather
 	 *         than read all at once.
 	 */
-	protected synchronized boolean createStreamingResultSet() {
-		return ((this.resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY)
-				&& (this.resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY) && (this.fetchSize == Integer.MIN_VALUE));
+	protected boolean createStreamingResultSet() {
+		try {
+			synchronized (checkClosed()) {
+				return ((this.resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY)
+						&& (this.resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY) && (this.fetchSize == Integer.MIN_VALUE));
+			}
+		} catch (SQLException e) {
+			// we can't break the interface, having this be no-op in case of error is ok
+			
+			return false;
+		}
 	}
 
 	private int originalResultSetType = 0;
@@ -647,19 +695,23 @@ public class StatementImpl implements Statement {
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IStatement#enableStreamingResults()
 	 */
-	public synchronized void enableStreamingResults() throws SQLException {
-		this.originalResultSetType = this.resultSetType;
-		this.originalFetchSize = this.fetchSize;
-
-		setFetchSize(Integer.MIN_VALUE);
-		setResultSetType(ResultSet.TYPE_FORWARD_ONLY);
+	public void enableStreamingResults() throws SQLException {
+		synchronized (checkClosed()) {
+			this.originalResultSetType = this.resultSetType;
+			this.originalFetchSize = this.fetchSize;
+	
+			setFetchSize(Integer.MIN_VALUE);
+			setResultSetType(ResultSet.TYPE_FORWARD_ONLY);
+		}
 	}
 
-	public synchronized void disableStreamingResults() throws SQLException {
-		if (this.fetchSize == Integer.MIN_VALUE &&
-				this.resultSetType == ResultSet.TYPE_FORWARD_ONLY) {
-			setFetchSize(this.originalFetchSize);
-			setResultSetType(this.originalResultSetType);
+	public void disableStreamingResults() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.fetchSize == Integer.MIN_VALUE &&
+					this.resultSetType == ResultSet.TYPE_FORWARD_ONLY) {
+				setFetchSize(this.originalFetchSize);
+				setResultSetType(this.originalResultSetType);
+			}
 		}
 	}
 
@@ -681,10 +733,8 @@ public class StatementImpl implements Statement {
 		return execute(sql, false);
 	}
 	
-	private synchronized boolean execute(String sql, boolean returnGeneratedKeys) throws SQLException {
-		checkClosed();
-
-		MySQLConnection locallyScopedConn = this.connection;
+	private boolean execute(String sql, boolean returnGeneratedKeys) throws SQLException {
+		MySQLConnection locallyScopedConn = checkClosed();
 
 		synchronized (locallyScopedConn) {
 			this.retrieveGeneratedKeys = returnGeneratedKeys;
@@ -912,14 +962,16 @@ public class StatementImpl implements Statement {
 		this.statementExecuting.set(true);
 	}
 
-	protected synchronized void resetCancelledState() {
-		if (this.cancelTimeoutMutex == null) {
-			return;
-		}
-		
-		synchronized (this.cancelTimeoutMutex) {
-			this.wasCancelled = false;
-			this.wasCancelledByTimeout = false;
+	protected void resetCancelledState() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.cancelTimeoutMutex == null) {
+				return;
+			}
+			
+			synchronized (this.cancelTimeoutMutex) {
+				this.wasCancelled = false;
+				this.wasCancelledByTimeout = false;
+			}
 		}
 	}
 
@@ -957,14 +1009,13 @@ public class StatementImpl implements Statement {
 	/**
 	 * @see StatementImpl#execute(String, int[])
 	 */
-	public synchronized boolean execute(String sql, int[] generatedKeyIndices)
+	public boolean execute(String sql, int[] generatedKeyIndices)
 			throws SQLException {
-		if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
-			checkClosed();
+		MySQLConnection locallyScopedConn = checkClosed();
 
-			MySQLConnection locallyScopedConn = this.connection;
+		synchronized (locallyScopedConn) {
+			if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
 
-			synchronized (locallyScopedConn) {
 				this.retrieveGeneratedKeys = true;
 				
 				// If this is a 'REPLACE' query, we need to be able to parse
@@ -980,22 +1031,21 @@ public class StatementImpl implements Statement {
 					locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 				}
 			}
-		}
-
-		return execute(sql);
+			
+			return execute(sql);
+		}	
 	}
 
 	/**
 	 * @see StatementImpl#execute(String, String[])
 	 */
-	public synchronized boolean execute(String sql, String[] generatedKeyNames)
+	public boolean execute(String sql, String[] generatedKeyNames)
 			throws SQLException {
-		if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
-			checkClosed();
+		MySQLConnection locallyScopedConn = checkClosed();
 
-			MySQLConnection locallyScopedConn = this.connection;
+		synchronized (locallyScopedConn) {
+			if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
 
-			synchronized (locallyScopedConn) {
 				this.retrieveGeneratedKeys = true;
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
@@ -1010,9 +1060,9 @@ public class StatementImpl implements Statement {
 					locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 				}
 			}
-		}
 
-		return execute(sql);
+			return execute(sql);
+		}
 	}
 
 	/**
@@ -1029,25 +1079,24 @@ public class StatementImpl implements Statement {
 	 * @throws java.sql.BatchUpdateException
 	 *             DOCUMENT ME!
 	 */
-	public synchronized int[] executeBatch() throws SQLException {
-		checkClosed();
-
-		MySQLConnection locallyScopedConn = this.connection;
-
-		if (locallyScopedConn.isReadOnly()) {
-			throw SQLError.createSQLException(Messages
-					.getString("Statement.34") //$NON-NLS-1$
-					+ Messages.getString("Statement.35"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
-		}
-
-		if (this.results != null) {
-			if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
-				this.results.realClose(false);
-			}
-		}
+	public int[] executeBatch() throws SQLException {
+		MySQLConnection locallyScopedConn = checkClosed();
 
 		synchronized (locallyScopedConn) {
+			if (locallyScopedConn.isReadOnly()) {
+				throw SQLError.createSQLException(Messages
+						.getString("Statement.34") //$NON-NLS-1$
+						+ Messages.getString("Statement.35"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+			}
+	
+			if (this.results != null) {
+				if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+					this.results.realClose(false);
+				}
+			}
+
+		
 			if (this.batchedArgs == null || this.batchedArgs.size() == 0) {
                 return new int[0];
             }
@@ -1173,7 +1222,7 @@ public class StatementImpl implements Statement {
 		}
 	}
 
-	protected synchronized final boolean hasDeadlockOrTimeoutRolledBackTx(SQLException ex) {
+	protected final boolean hasDeadlockOrTimeoutRolledBackTx(SQLException ex) {
 		int vendorCode = ex.getErrorCode();
 		
 		switch (vendorCode) {
@@ -1181,12 +1230,7 @@ public class StatementImpl implements Statement {
 		case MysqlErrorNumbers.ER_LOCK_TABLE_FULL:
 			return true;
 		case MysqlErrorNumbers.ER_LOCK_WAIT_TIMEOUT:
-			try {
-				return !this.connection.versionMeetsMinimum(5, 0, 13);
-			} catch (SQLException sqlEx) {
-				// won't actually be thrown in this case
-				return false;
-			}
+				return !version5013OrNewer;
 		default:
 			return false;
 		}
@@ -1200,176 +1244,180 @@ public class StatementImpl implements Statement {
 	 * @return update counts in the same manner as executeBatch()
 	 * @throws SQLException
 	 */
-	private synchronized int[] executeBatchUsingMultiQueries(boolean multiQueriesEnabled,
+	private int[] executeBatchUsingMultiQueries(boolean multiQueriesEnabled,
 			int nbrCommands, int individualStatementTimeout) throws SQLException {
-
-		MySQLConnection locallyScopedConn = this.connection;
-
-		if (!multiQueriesEnabled) {
-			locallyScopedConn.getIO().enableMultiQueries();
-		}
-
-		java.sql.Statement batchStmt = null;
-
-		CancelTask timeoutTask = null;
 		
-		try {
-			int[] updateCounts = new int[nbrCommands];
+		MySQLConnection locallyScopedConn = checkClosed();
 
-			for (int i = 0; i < nbrCommands; i++) {
-				updateCounts[i] = -3;
+		synchronized (locallyScopedConn) {
+			if (!multiQueriesEnabled) {
+				locallyScopedConn.getIO().enableMultiQueries();
 			}
-
-			int commandIndex = 0;
-
-			StringBuffer queryBuf = new StringBuffer();
-
-			batchStmt = locallyScopedConn.createStatement();
-
-			if (locallyScopedConn.getEnableQueryTimeouts() &&
-					individualStatementTimeout != 0
-					&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
-				timeoutTask = new CancelTask((StatementImpl)batchStmt);
-				locallyScopedConn.getCancelTimer().schedule(timeoutTask,
-						individualStatementTimeout);
-			}
+	
+			java.sql.Statement batchStmt = null;
+	
+			CancelTask timeoutTask = null;
 			
-			int counter = 0;
-
-			int numberOfBytesPerChar = 1;
-
-			String connectionEncoding = locallyScopedConn.getEncoding();
-
-			if (StringUtils.startsWithIgnoreCase(connectionEncoding, "utf")) {
-				numberOfBytesPerChar = 3;
-			} else if (CharsetMapping.isMultibyteCharset(connectionEncoding)) {
-				numberOfBytesPerChar = 2;
-			}
-
-			int escapeAdjust = 1;
-
-			batchStmt.setEscapeProcessing(this.doEscapeProcessing);
-			
-			if (this.doEscapeProcessing) {
+			try {
+				int[] updateCounts = new int[nbrCommands];
+	
+				for (int i = 0; i < nbrCommands; i++) {
+					updateCounts[i] = -3;
+				}
+	
+				int commandIndex = 0;
+	
+				StringBuffer queryBuf = new StringBuffer();
+	
+				batchStmt = locallyScopedConn.createStatement();
+	
+				if (locallyScopedConn.getEnableQueryTimeouts() &&
+						individualStatementTimeout != 0
+						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+					timeoutTask = new CancelTask((StatementImpl)batchStmt);
+					locallyScopedConn.getCancelTimer().schedule(timeoutTask,
+							individualStatementTimeout);
+				}
 				
-				escapeAdjust = 2; /* We assume packet _could_ grow by this amount, as we're not
-				                     sure how big statement will end up after
-				                     escape processing */
-			}
-
-			SQLException sqlEx = null;
-			
-			int argumentSetsInBatchSoFar = 0;
-			
-			for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
-				String nextQuery = (String) this.batchedArgs.get(commandIndex);
-
-				if (((((queryBuf.length() + nextQuery.length())
-						* numberOfBytesPerChar) + 1 /* for semicolon */
-						+ MysqlIO.HEADER_LENGTH) * escapeAdjust)  + 32 > this.connection
-						.getMaxAllowedPacket()) {
+				int counter = 0;
+	
+				int numberOfBytesPerChar = 1;
+	
+				String connectionEncoding = locallyScopedConn.getEncoding();
+	
+				if (StringUtils.startsWithIgnoreCase(connectionEncoding, "utf")) {
+					numberOfBytesPerChar = 3;
+				} else if (CharsetMapping.isMultibyteCharset(connectionEncoding)) {
+					numberOfBytesPerChar = 2;
+				}
+	
+				int escapeAdjust = 1;
+	
+				batchStmt.setEscapeProcessing(this.doEscapeProcessing);
+				
+				if (this.doEscapeProcessing) {
+					
+					escapeAdjust = 2; /* We assume packet _could_ grow by this amount, as we're not
+					                     sure how big statement will end up after
+					                     escape processing */
+				}
+	
+				SQLException sqlEx = null;
+				
+				int argumentSetsInBatchSoFar = 0;
+				
+				for (commandIndex = 0; commandIndex < nbrCommands; commandIndex++) {
+					String nextQuery = (String) this.batchedArgs.get(commandIndex);
+	
+					if (((((queryBuf.length() + nextQuery.length())
+							* numberOfBytesPerChar) + 1 /* for semicolon */
+							+ MysqlIO.HEADER_LENGTH) * escapeAdjust)  + 32 > this.connection
+							.getMaxAllowedPacket()) {
+						try {
+							batchStmt.execute(queryBuf.toString(), Statement.RETURN_GENERATED_KEYS);
+						} catch (SQLException ex) {
+							sqlEx = handleExceptionForBatch(commandIndex,
+									argumentSetsInBatchSoFar, updateCounts, ex);
+						}
+	
+						counter = processMultiCountsAndKeys((StatementImpl)batchStmt, counter, 
+								updateCounts);
+	
+						queryBuf = new StringBuffer();
+						argumentSetsInBatchSoFar = 0;
+					}
+	
+					queryBuf.append(nextQuery);
+					queryBuf.append(";");
+					argumentSetsInBatchSoFar++;
+				}
+	
+				if (queryBuf.length() > 0) {
 					try {
 						batchStmt.execute(queryBuf.toString(), Statement.RETURN_GENERATED_KEYS);
 					} catch (SQLException ex) {
-						sqlEx = handleExceptionForBatch(commandIndex,
+						sqlEx = handleExceptionForBatch(commandIndex - 1,
 								argumentSetsInBatchSoFar, updateCounts, ex);
 					}
-
+	
 					counter = processMultiCountsAndKeys((StatementImpl)batchStmt, counter, 
 							updateCounts);
-
-					queryBuf = new StringBuffer();
-					argumentSetsInBatchSoFar = 0;
 				}
-
-				queryBuf.append(nextQuery);
-				queryBuf.append(";");
-				argumentSetsInBatchSoFar++;
-			}
-
-			if (queryBuf.length() > 0) {
-				try {
-					batchStmt.execute(queryBuf.toString(), Statement.RETURN_GENERATED_KEYS);
-				} catch (SQLException ex) {
-					sqlEx = handleExceptionForBatch(commandIndex - 1,
-							argumentSetsInBatchSoFar, updateCounts, ex);
+	
+				if (timeoutTask != null) {
+					if (timeoutTask.caughtWhileCancelling != null) {
+						throw timeoutTask.caughtWhileCancelling;
+					}
+	
+					timeoutTask.cancel();
+					
+					locallyScopedConn.getCancelTimer().purge();
+					
+					timeoutTask = null;
 				}
-
-				counter = processMultiCountsAndKeys((StatementImpl)batchStmt, counter, 
-						updateCounts);
-			}
-
-			if (timeoutTask != null) {
-				if (timeoutTask.caughtWhileCancelling != null) {
-					throw timeoutTask.caughtWhileCancelling;
-				}
-
-				timeoutTask.cancel();
 				
-				locallyScopedConn.getCancelTimer().purge();
-				
-				timeoutTask = null;
-			}
-			
-			if (sqlEx != null) {
-				throw new java.sql.BatchUpdateException(sqlEx
-						.getMessage(), sqlEx.getSQLState(), sqlEx
-						.getErrorCode(), updateCounts);
-			}
-			
-			return (updateCounts != null) ? updateCounts : new int[0];
-		} finally {
-			if (timeoutTask != null) {
-				timeoutTask.cancel();
-				
-				locallyScopedConn.getCancelTimer().purge();
-			}
-			
-			resetCancelledState();
-			
-			try {
-				if (batchStmt != null) {
-					batchStmt.close();
+				if (sqlEx != null) {
+					throw new java.sql.BatchUpdateException(sqlEx
+							.getMessage(), sqlEx.getSQLState(), sqlEx
+							.getErrorCode(), updateCounts);
 				}
+				
+				return (updateCounts != null) ? updateCounts : new int[0];
 			} finally {
-				if (!multiQueriesEnabled) {
-					locallyScopedConn.getIO().disableMultiQueries();
+				if (timeoutTask != null) {
+					timeoutTask.cancel();
+					
+					locallyScopedConn.getCancelTimer().purge();
+				}
+				
+				resetCancelledState();
+				
+				try {
+					if (batchStmt != null) {
+						batchStmt.close();
+					}
+				} finally {
+					if (!multiQueriesEnabled) {
+						locallyScopedConn.getIO().disableMultiQueries();
+					}
 				}
 			}
 		}
 	}
 	
-	protected synchronized int processMultiCountsAndKeys(
+	protected int processMultiCountsAndKeys(
 			StatementImpl batchedStatement,
 			int updateCountCounter, int[] updateCounts) throws SQLException {
-		updateCounts[updateCountCounter++] = batchedStatement.getUpdateCount();
-		
-		boolean doGenKeys = this.batchedGeneratedKeys != null;
-
-		byte[][] row = null;
-		
-		if (doGenKeys) {
-			long generatedKey = batchedStatement.getLastInsertID();
-		
-			row = new byte[1][];
-			row[0] = StringUtils.getBytes(Long.toString(generatedKey));
-			this.batchedGeneratedKeys.add(new ByteArrayRow(row, getExceptionInterceptor()));
-		}
-
-		while (batchedStatement.getMoreResults()
-				|| batchedStatement.getUpdateCount() != -1) {
+		synchronized (checkClosed()) {
 			updateCounts[updateCountCounter++] = batchedStatement.getUpdateCount();
+			
+			boolean doGenKeys = this.batchedGeneratedKeys != null;
+	
+			byte[][] row = null;
 			
 			if (doGenKeys) {
 				long generatedKey = batchedStatement.getLastInsertID();
-				
+			
 				row = new byte[1][];
 				row[0] = StringUtils.getBytes(Long.toString(generatedKey));
 				this.batchedGeneratedKeys.add(new ByteArrayRow(row, getExceptionInterceptor()));
 			}
+	
+			while (batchedStatement.getMoreResults()
+					|| batchedStatement.getUpdateCount() != -1) {
+				updateCounts[updateCountCounter++] = batchedStatement.getUpdateCount();
+				
+				if (doGenKeys) {
+					long generatedKey = batchedStatement.getLastInsertID();
+					
+					row = new byte[1][];
+					row[0] = StringUtils.getBytes(Long.toString(generatedKey));
+					this.batchedGeneratedKeys.add(new ByteArrayRow(row, getExceptionInterceptor()));
+				}
+			}
+			
+			return updateCountCounter;
 		}
-		
-		return updateCountCounter;
 	}
 	
 	protected SQLException handleExceptionForBatch(int endOfBatchIndex,
@@ -1412,13 +1460,11 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized java.sql.ResultSet executeQuery(String sql)
+	public java.sql.ResultSet executeQuery(String sql)
 			throws SQLException {
-		checkClosed();
-
-		MySQLConnection locallyScopedConn = this.connection;
-
-		synchronized (locallyScopedConn) {
+		synchronized (checkClosed()) {
+			MySQLConnection locallyScopedConn = this.connection;
+			
 			this.retrieveGeneratedKeys = false;
 			
 			resetCancelledState();
@@ -1616,26 +1662,30 @@ public class StatementImpl implements Statement {
 		}
 	}
 
-	protected synchronized void doPingInstead() throws SQLException {
-		if (this.pingTarget != null) {
-			this.pingTarget.doPing();
-		} else {
-			this.connection.ping();
+	protected void doPingInstead() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.pingTarget != null) {
+				this.pingTarget.doPing();
+			} else {
+				this.connection.ping();
+			}
+	
+			ResultSetInternalMethods fakeSelectOneResultSet = generatePingResultSet();
+			this.results = fakeSelectOneResultSet;
 		}
-
-		ResultSetInternalMethods fakeSelectOneResultSet = generatePingResultSet();
-		this.results = fakeSelectOneResultSet;
 	}
 
-	protected synchronized ResultSetInternalMethods generatePingResultSet() throws SQLException {
-		Field[] fields = { new Field(null, "1", Types.BIGINT, 1) };
-		ArrayList rows = new ArrayList();
-		byte[] colVal = new byte[] { (byte) '1' };
-
-		rows.add(new ByteArrayRow(new byte[][] { colVal }, getExceptionInterceptor()));
-
-		return (ResultSetInternalMethods) DatabaseMetaData.buildResultSet(fields, rows,
-				this.connection);
+	protected ResultSetInternalMethods generatePingResultSet() throws SQLException {
+		synchronized (checkClosed()) {
+			Field[] fields = { new Field(null, "1", Types.BIGINT, 1) };
+			ArrayList rows = new ArrayList();
+			byte[] colVal = new byte[] { (byte) '1' };
+	
+			rows.add(new ByteArrayRow(new byte[][] { colVal }, getExceptionInterceptor()));
+	
+			return (ResultSetInternalMethods) DatabaseMetaData.buildResultSet(fields, rows,
+					this.connection);
+		}
 	}
 	
 	protected void executeSimpleNonQuery(MySQLConnection c, String nonQuery)
@@ -1665,18 +1715,17 @@ public class StatementImpl implements Statement {
 		return executeUpdate(sql, false, false);
 	}
 
-	protected synchronized int executeUpdate(String sql, boolean isBatch, boolean returnGeneratedKeys)
+	protected int executeUpdate(String sql, boolean isBatch, boolean returnGeneratedKeys)
 		throws SQLException {
-		checkClosed();
-
-		MySQLConnection locallyScopedConn = this.connection;
-
-		char firstStatementChar = StringUtils.firstAlphaCharUc(sql,
-				findStartOfStatement(sql));
-
-		ResultSetInternalMethods rs = null;
-
-		synchronized (locallyScopedConn) {
+		
+		synchronized (checkClosed()) {
+			MySQLConnection locallyScopedConn = this.connection;
+	
+			char firstStatementChar = StringUtils.firstAlphaCharUc(sql,
+					findStartOfStatement(sql));
+	
+			ResultSetInternalMethods rs = null;
+		
 			this.retrieveGeneratedKeys = returnGeneratedKeys;
 			
 			resetCancelledState();
@@ -1794,39 +1843,37 @@ public class StatementImpl implements Statement {
 					this.statementExecuting.set(false);
 				}
 			}
+			
+			this.results = rs;
+
+			rs.setFirstCharOfQuery(firstStatementChar);
+
+			this.updateCount = rs.getUpdateCount();
+
+			int truncatedUpdateCount = 0;
+
+			if (this.updateCount > Integer.MAX_VALUE) {
+				truncatedUpdateCount = Integer.MAX_VALUE;
+			} else {
+				truncatedUpdateCount = (int) this.updateCount;
+			}
+
+			this.lastInsertId = rs.getUpdateID();
+
+			return truncatedUpdateCount;
 		}
-
-		this.results = rs;
-
-		rs.setFirstCharOfQuery(firstStatementChar);
-
-		this.updateCount = rs.getUpdateCount();
-
-		int truncatedUpdateCount = 0;
-
-		if (this.updateCount > Integer.MAX_VALUE) {
-			truncatedUpdateCount = Integer.MAX_VALUE;
-		} else {
-			truncatedUpdateCount = (int) this.updateCount;
-		}
-
-		this.lastInsertId = rs.getUpdateID();
-
-		return truncatedUpdateCount;
 	}
 
 
 	/**
 	 * @see StatementImpl#executeUpdate(String, int)
 	 */
-	public synchronized int executeUpdate(String sql, int returnGeneratedKeys)
+	public int executeUpdate(String sql, int returnGeneratedKeys)
 			throws SQLException {
-		if (returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS) {
-			checkClosed();
-
-			MySQLConnection locallyScopedConn = this.connection;
-
-			synchronized (locallyScopedConn) {
+		synchronized (checkClosed()) {
+			if (returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS) {
+				MySQLConnection locallyScopedConn = this.connection;
+			
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
 				// the actual number of keys generated.
@@ -1840,22 +1887,22 @@ public class StatementImpl implements Statement {
 					locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 				}
 			}
+			
+			return executeUpdate(sql);
 		}
-
-		return executeUpdate(sql);
 	}
 
 	/**
 	 * @see StatementImpl#executeUpdate(String, int[])
 	 */
-	public synchronized int executeUpdate(String sql, int[] generatedKeyIndices)
+	public int executeUpdate(String sql, int[] generatedKeyIndices)
 			throws SQLException {
-		if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
-			checkClosed();
-
-			MySQLConnection locallyScopedConn = this.connection;
-
-			synchronized (locallyScopedConn) {
+		synchronized (checkClosed()) {
+			if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
+				checkClosed();
+	
+				MySQLConnection locallyScopedConn = this.connection;
+				
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
 				// the actual number of keys generated.
@@ -1869,22 +1916,19 @@ public class StatementImpl implements Statement {
 					locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 				}
 			}
+			
+			return executeUpdate(sql);
 		}
-
-		return executeUpdate(sql);
 	}
 
 	/**
 	 * @see StatementImpl#executeUpdate(String, String[])
 	 */
-	public synchronized int executeUpdate(String sql, String[] generatedKeyNames)
+	public int executeUpdate(String sql, String[] generatedKeyNames)
 			throws SQLException {
-		if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
-			checkClosed();
-
-			MySQLConnection locallyScopedConn = this.connection;
-
-			synchronized (locallyScopedConn) {
+		synchronized (checkClosed()) {
+			if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
+				MySQLConnection locallyScopedConn = this.connection;
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
 				// the actual number of keys generated.
@@ -1897,22 +1941,24 @@ public class StatementImpl implements Statement {
 				} finally {
 					locallyScopedConn.setReadInfoMsgEnabled(readInfoMsgState);
 				}
-			}
-		}
+			}	
 
-		return executeUpdate(sql);
+			return executeUpdate(sql);
+		}
 	}
 
 	/**
 	 * Optimization to only use one calendar per-session, or calculate it for
 	 * each call, depending on user configuration
 	 */
-	protected synchronized Calendar getCalendarInstanceForSessionOrNew() {
-		if (this.connection != null) {
-			return this.connection.getCalendarInstanceForSessionOrNew();
-		} else {
-			// punt, no connection around
-			return new GregorianCalendar();
+	protected Calendar getCalendarInstanceForSessionOrNew() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.connection != null) {
+				return this.connection.getCalendarInstanceForSessionOrNew();
+			} else {
+				// punt, no connection around
+				return new GregorianCalendar();
+			}
 		}
 	}
 
@@ -1924,8 +1970,10 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public synchronized java.sql.Connection getConnection() throws SQLException {
-		return this.connection;
+	public java.sql.Connection getConnection() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.connection;
+		}
 	}
 
 	/**
@@ -1948,8 +1996,10 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public synchronized int getFetchSize() throws SQLException {
-		return this.fetchSize;
+	public int getFetchSize() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.fetchSize;
+		}
 	}
 
 	/**
@@ -1960,26 +2010,29 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	public synchronized java.sql.ResultSet getGeneratedKeys()
+	public java.sql.ResultSet getGeneratedKeys()
 			throws SQLException {
-		if (!this.retrieveGeneratedKeys) {
-			throw SQLError.createSQLException(Messages.getString("Statement.GeneratedKeysNotRequested"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+		synchronized (checkClosed()) {
+			if (!this.retrieveGeneratedKeys) {
+				throw SQLError.createSQLException(Messages.getString("Statement.GeneratedKeysNotRequested"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+			
+			if (this.batchedGeneratedKeys == null) {
+				if (lastQueryIsOnDupKeyUpdate) {
+					return getGeneratedKeysInternal(1);
+				} else {
+					return getGeneratedKeysInternal();
+				}
+			}
+	
+			Field[] fields = new Field[1];
+			fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17); //$NON-NLS-1$ //$NON-NLS-2$
+			fields[0].setConnection(this.connection);
+	
+			return com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields,
+					new RowDataStatic(this.batchedGeneratedKeys), this.connection,
+					this, false);
 		}
-		
-		if (this.batchedGeneratedKeys == null) {
-			if (lastQueryIsOnDupKeyUpdate)
-				return getGeneratedKeysInternal(1);
-			else
-				return getGeneratedKeysInternal();
-		}
-
-		Field[] fields = new Field[1];
-		fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17); //$NON-NLS-1$ //$NON-NLS-2$
-		fields[0].setConnection(this.connection);
-
-		return com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields,
-				new RowDataStatic(this.batchedGeneratedKeys), this.connection,
-				this, false);
 	}
 
 	/*
@@ -1993,65 +2046,67 @@ public class StatementImpl implements Statement {
 		return getGeneratedKeysInternal(numKeys);
 	}
 
-	protected synchronized java.sql.ResultSet getGeneratedKeysInternal(int numKeys)
+	protected java.sql.ResultSet getGeneratedKeysInternal(int numKeys)
 			throws SQLException {
-		Field[] fields = new Field[1];
-		fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17); //$NON-NLS-1$ //$NON-NLS-2$
-		fields[0].setConnection(this.connection);
-		fields[0].setUseOldNameMetadata(true);
-
-		ArrayList rowSet = new ArrayList();
-
-		long beginAt = getLastInsertID();
-		
-		if (beginAt < 0) { // looking at an UNSIGNED BIGINT that has overflowed
-			fields[0].setUnsigned();
-		}
-
-		if (this.results != null) {
-			String serverInfo = this.results.getServerInfo();
-
-			//
-			// Only parse server info messages for 'REPLACE'
-			// queries
-			//
-			if ((numKeys > 0) && (this.results.getFirstCharOfQuery() == 'R')
-					&& (serverInfo != null) && (serverInfo.length() > 0)) {
-				numKeys = getRecordCountFromInfo(serverInfo);
+		synchronized (checkClosed()) {
+			Field[] fields = new Field[1];
+			fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17); //$NON-NLS-1$ //$NON-NLS-2$
+			fields[0].setConnection(this.connection);
+			fields[0].setUseOldNameMetadata(true);
+	
+			ArrayList rowSet = new ArrayList();
+	
+			long beginAt = getLastInsertID();
+			
+			if (beginAt < 0) { // looking at an UNSIGNED BIGINT that has overflowed
+				fields[0].setUnsigned();
 			}
-
-			if ((beginAt != 0 /* BIGINT UNSIGNED can wrap the protocol representation */) && (numKeys > 0)) {
-				for (int i = 0; i < numKeys; i++) {
-					byte[][] row = new byte[1][];
-					if (beginAt > 0) {
-						row[0] = StringUtils.getBytes(Long.toString(beginAt));
-					} else {
-						byte[] asBytes = new byte[8];
-						asBytes[7] = (byte) (beginAt & 0xff);
-						asBytes[6] = (byte) (beginAt >>> 8);
-						asBytes[5] = (byte) (beginAt >>> 16);
-						asBytes[4] = (byte) (beginAt >>> 24);
-						asBytes[3] = (byte) (beginAt >>> 32);
-						asBytes[2] = (byte) (beginAt >>> 40);
-						asBytes[1] = (byte) (beginAt >>> 48);
-						asBytes[0] = (byte) (beginAt >>> 56);
-						
-						BigInteger val = new BigInteger(1, asBytes);
-
-						row[0] = val.toString().getBytes();
+	
+			if (this.results != null) {
+				String serverInfo = this.results.getServerInfo();
+	
+				//
+				// Only parse server info messages for 'REPLACE'
+				// queries
+				//
+				if ((numKeys > 0) && (this.results.getFirstCharOfQuery() == 'R')
+						&& (serverInfo != null) && (serverInfo.length() > 0)) {
+					numKeys = getRecordCountFromInfo(serverInfo);
+				}
+	
+				if ((beginAt != 0 /* BIGINT UNSIGNED can wrap the protocol representation */) && (numKeys > 0)) {
+					for (int i = 0; i < numKeys; i++) {
+						byte[][] row = new byte[1][];
+						if (beginAt > 0) {
+							row[0] = StringUtils.getBytes(Long.toString(beginAt));
+						} else {
+							byte[] asBytes = new byte[8];
+							asBytes[7] = (byte) (beginAt & 0xff);
+							asBytes[6] = (byte) (beginAt >>> 8);
+							asBytes[5] = (byte) (beginAt >>> 16);
+							asBytes[4] = (byte) (beginAt >>> 24);
+							asBytes[3] = (byte) (beginAt >>> 32);
+							asBytes[2] = (byte) (beginAt >>> 40);
+							asBytes[1] = (byte) (beginAt >>> 48);
+							asBytes[0] = (byte) (beginAt >>> 56);
+							
+							BigInteger val = new BigInteger(1, asBytes);
+	
+							row[0] = val.toString().getBytes();
+						}
+						rowSet.add(new ByteArrayRow(row, getExceptionInterceptor()));
+						beginAt  += this.connection.getAutoIncrementIncrement();
 					}
-					rowSet.add(new ByteArrayRow(row, getExceptionInterceptor()));
-					beginAt  += this.connection.getAutoIncrementIncrement();
 				}
 			}
+			
+			com.mysql.jdbc.ResultSetImpl gkRs = com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields,
+					new RowDataStatic(rowSet), this.connection, this, false);
+			
+			this.openResults.add(gkRs);
+			
+			return gkRs;
 		}
-
-		com.mysql.jdbc.ResultSetImpl gkRs = com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields,
-				new RowDataStatic(rowSet), this.connection, this, false);
-		
-		this.openResults.add(gkRs);
-		
-		return gkRs;
 	}
 
 	/**
@@ -2076,8 +2131,14 @@ public class StatementImpl implements Statement {
 	 *
 	 * @return the last update ID.
 	 */
-	public synchronized long getLastInsertID() {
-		return this.lastInsertId;
+	public long getLastInsertID() {
+		try {
+			synchronized (checkClosed()) {
+				return this.lastInsertId;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // evolve interface to throw SQLException
+		}
 	}
 
 	/**
@@ -2092,16 +2153,22 @@ public class StatementImpl implements Statement {
 	 *
 	 * @return the current update count.
 	 */
-	public synchronized long getLongUpdateCount() {
-		if (this.results == null) {
-			return -1;
-		}
+	public long getLongUpdateCount() {
+		try {
+			synchronized (checkClosed()) {
+				if (this.results == null) {
+					return -1;
+				}
 
-		if (this.results.reallyResult()) {
-			return -1;
-		}
+				if (this.results.reallyResult()) {
+					return -1;
+				}
 
-		return this.updateCount;
+				return this.updateCount;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // evolve interface to throw SQLException
+		}
 	}
 
 	/**
@@ -2115,8 +2182,10 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized int getMaxFieldSize() throws SQLException {
-		return this.maxFieldSize;
+	public int getMaxFieldSize() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.maxFieldSize;
+		}
 	}
 
 	/**
@@ -2129,12 +2198,14 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized int getMaxRows() throws SQLException {
-		if (this.maxRows <= 0) {
-			return 0;
-		}
+	public int getMaxRows() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.maxRows <= 0) {
+				return 0;
+			}
 
-		return this.maxRows;
+			return this.maxRows;
+		}
 	}
 
 	/**
@@ -2153,80 +2224,81 @@ public class StatementImpl implements Statement {
 	/**
 	 * @see StatementImpl#getMoreResults(int)
 	 */
-	public synchronized boolean getMoreResults(int current) throws SQLException {
-
-		if (this.results == null) {
-			return false;
-		}
-
-		boolean streamingMode = createStreamingResultSet();
-		
-		if (streamingMode) {
-			if (this.results.reallyResult()) {
-				while (this.results.next()); // need to drain remaining rows to get to server status 
-										 // which tells us whether more results actually exist or not
+	public boolean getMoreResults(int current) throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.results == null) {
+				return false;
 			}
-		}
-		
-		ResultSetInternalMethods nextResultSet = this.results.getNextResultSet();
-
-		switch (current) {
-		case java.sql.Statement.CLOSE_CURRENT_RESULT:
-
-			if (this.results != null) {
-				if (!streamingMode) { 
-					this.results.close();
+	
+			boolean streamingMode = createStreamingResultSet();
+			
+			if (streamingMode) {
+				if (this.results.reallyResult()) {
+					while (this.results.next()); // need to drain remaining rows to get to server status 
+											 // which tells us whether more results actually exist or not
 				}
-				
-				this.results.clearNextResult();
 			}
-
-			break;
-
-		case java.sql.Statement.CLOSE_ALL_RESULTS:
-
-			if (this.results != null) {
-				if (!streamingMode) { 
-					this.results.close();
+			
+			ResultSetInternalMethods nextResultSet = this.results.getNextResultSet();
+	
+			switch (current) {
+			case java.sql.Statement.CLOSE_CURRENT_RESULT:
+	
+				if (this.results != null) {
+					if (!streamingMode) { 
+						this.results.close();
+					}
+					
+					this.results.clearNextResult();
 				}
-				
-				this.results.clearNextResult();
+	
+				break;
+	
+			case java.sql.Statement.CLOSE_ALL_RESULTS:
+	
+				if (this.results != null) {
+					if (!streamingMode) { 
+						this.results.close();
+					}
+					
+					this.results.clearNextResult();
+				}
+	
+				closeAllOpenResults();
+	
+				break;
+	
+			case java.sql.Statement.KEEP_CURRENT_RESULT:
+				if (!this.connection.getDontTrackOpenResources()) {
+					this.openResults.add(this.results);
+				}
+	
+				this.results.clearNextResult(); // nobody besides us should
+				// ever need this value...
+				break;
+	
+			default:
+				throw SQLError.createSQLException(Messages
+						.getString("Statement.19"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 			}
-
-			closeAllOpenResults();
-
-			break;
-
-		case java.sql.Statement.KEEP_CURRENT_RESULT:
-			if (!this.connection.getDontTrackOpenResources()) {
-				this.openResults.add(this.results);
+	
+			this.results = nextResultSet;
+	
+			if (this.results == null) {
+				this.updateCount = -1;
+				this.lastInsertId = -1;
+			} else if (this.results.reallyResult()) {
+				this.updateCount = -1;
+				this.lastInsertId = -1;
+			} else {
+				this.updateCount = this.results.getUpdateCount();
+				this.lastInsertId = this.results.getUpdateID();
 			}
-
-			this.results.clearNextResult(); // nobody besides us should
-			// ever need this value...
-			break;
-
-		default:
-			throw SQLError.createSQLException(Messages
-					.getString("Statement.19"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+	
+			return ((this.results != null) && this.results.reallyResult()) ? true
+					: false;
 		}
-
-		this.results = nextResultSet;
-
-		if (this.results == null) {
-			this.updateCount = -1;
-			this.lastInsertId = -1;
-		} else if (this.results.reallyResult()) {
-			this.updateCount = -1;
-			this.lastInsertId = -1;
-		} else {
-			this.updateCount = this.results.getUpdateCount();
-			this.lastInsertId = this.results.getUpdateID();
-		}
-
-		return ((this.results != null) && this.results.reallyResult()) ? true
-				: false;
 	}
 
 	/**
@@ -2239,8 +2311,10 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized int getQueryTimeout() throws SQLException {
-		return this.timeoutInMillis / 1000;
+	public int getQueryTimeout() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.timeoutInMillis / 1000;
+		}
 	}
 
 	/**
@@ -2321,9 +2395,11 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs (why?)
 	 */
-	public synchronized java.sql.ResultSet getResultSet() throws SQLException {
-		return ((this.results != null) && this.results.reallyResult()) ? (java.sql.ResultSet) this.results
-				: null;
+	public java.sql.ResultSet getResultSet() throws SQLException {
+		synchronized (checkClosed()) {
+			return ((this.results != null) && this.results.reallyResult()) ? (java.sql.ResultSet) this.results
+					: null;
+		}
 	}
 
 	/**
@@ -2334,8 +2410,10 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public synchronized int getResultSetConcurrency() throws SQLException {
-		return this.resultSetConcurrency;
+	public int getResultSetConcurrency() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.resultSetConcurrency;
+		}
 	}
 
 	/**
@@ -2345,8 +2423,14 @@ public class StatementImpl implements Statement {
 		return java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT;
 	}
 
-	protected synchronized ResultSetInternalMethods getResultSetInternal() {
-		return this.results;
+	protected ResultSetInternalMethods getResultSetInternal() {
+		try {
+			synchronized (checkClosed()) {
+				return this.results;
+			}
+		} catch (SQLException e) {
+			return this.results; // you end up with the same thing as before, you'll get exception when actually trying to use it
+		}
 	}
 
 	/**
@@ -2357,8 +2441,10 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	public synchronized int getResultSetType() throws SQLException {
-		return this.resultSetType;
+	public int getResultSetType() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.resultSetType;
+		}
 	}
 
 	/**
@@ -2371,24 +2457,26 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized int getUpdateCount() throws SQLException {
-		if (this.results == null) {
-			return -1;
+	public int getUpdateCount() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.results == null) {
+				return -1;
+			}
+	
+			if (this.results.reallyResult()) {
+				return -1;
+			}
+	
+			int truncatedUpdateCount = 0;
+	
+			if (this.results.getUpdateCount() > Integer.MAX_VALUE) {
+				truncatedUpdateCount = Integer.MAX_VALUE;
+			} else {
+				truncatedUpdateCount = (int) this.results.getUpdateCount();
+			}
+	
+			return truncatedUpdateCount;
 		}
-
-		if (this.results.reallyResult()) {
-			return -1;
-		}
-
-		int truncatedUpdateCount = 0;
-
-		if (this.results.getUpdateCount() > Integer.MAX_VALUE) {
-			truncatedUpdateCount = Integer.MAX_VALUE;
-		} else {
-			truncatedUpdateCount = (int) this.results.getUpdateCount();
-		}
-
-		return truncatedUpdateCount;
 	}
 
 	/**
@@ -2412,28 +2500,28 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized java.sql.SQLWarning getWarnings() throws SQLException {
-		checkClosed();
+	public java.sql.SQLWarning getWarnings() throws SQLException {
+		synchronized (checkClosed()) {
 
-		if (this.clearWarningsCalled) {
-			return null;
-		}
-		
-		if (this.connection != null && !this.connection.isClosed()
-				&& this.connection.versionMeetsMinimum(4, 1, 0)) {
-			SQLWarning pendingWarningsFromServer = SQLError
-					.convertShowWarningsToSQLWarnings(this.connection);
-
-			if (this.warningChain != null) {
-				this.warningChain.setNextWarning(pendingWarningsFromServer);
-			} else {
-				this.warningChain = pendingWarningsFromServer;
+			if (this.clearWarningsCalled) {
+				return null;
 			}
-
+			
+			if (this.connection.versionMeetsMinimum(4, 1, 0)) {
+				SQLWarning pendingWarningsFromServer = SQLError
+						.convertShowWarningsToSQLWarnings(this.connection);
+	
+				if (this.warningChain != null) {
+					this.warningChain.setNextWarning(pendingWarningsFromServer);
+				} else {
+					this.warningChain = pendingWarningsFromServer;
+				}
+	
+				return this.warningChain;
+			}
+	
 			return this.warningChain;
 		}
-
-		return this.warningChain;
 	}
 
 	/**
@@ -2445,63 +2533,70 @@ public class StatementImpl implements Statement {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	protected synchronized void realClose(boolean calledExplicitly, boolean closeOpenResults)
+	protected void realClose(boolean calledExplicitly, boolean closeOpenResults)
 			throws SQLException {
-		if (this.isClosed) {
-			return;
-		}
-
-		if (this.useUsageAdvisor) {
-			if (!calledExplicitly) {
-				String message = Messages.getString("Statement.63") //$NON-NLS-1$
-						+ Messages.getString("Statement.64"); //$NON-NLS-1$
-
-				this.eventSink.consumeEvent(new ProfilerEvent(
-						ProfilerEvent.TYPE_WARN,
-						"", //$NON-NLS-1$
-						this.currentCatalog, this.connectionId, this.getId(),
-						-1, System.currentTimeMillis(), 0,
-						Constants.MILLIS_I18N, null, this.pointOfOrigin,
-						message));
-			}
-		}
-
-		if (closeOpenResults) {
-			closeOpenResults = !this.holdResultsOpenOverClose;
+		MySQLConnection locallyScopedConn;
+		
+		try {
+			locallyScopedConn = checkClosed();
+		} catch (SQLException sqlEx) {
+			return; // already closed
 		}
 		
-		if (closeOpenResults) {
-			if (this.results != null) {
-				
-				try {
-					this.results.close();
-				} catch (Exception ex) {
-					;
+		synchronized (locallyScopedConn) {
+	
+			if (this.useUsageAdvisor) {
+				if (!calledExplicitly) {
+					String message = Messages.getString("Statement.63") //$NON-NLS-1$
+							+ Messages.getString("Statement.64"); //$NON-NLS-1$
+	
+					this.eventSink.consumeEvent(new ProfilerEvent(
+							ProfilerEvent.TYPE_WARN,
+							"", //$NON-NLS-1$
+							this.currentCatalog, this.connectionId, this.getId(),
+							-1, System.currentTimeMillis(), 0,
+							Constants.MILLIS_I18N, null, this.pointOfOrigin,
+							message));
 				}
 			}
+	
+			if (closeOpenResults) {
+				closeOpenResults = !this.holdResultsOpenOverClose;
+			}
 			
-			closeAllOpenResults();
-		}
-
-		if (this.connection != null) {
-			if (this.maxRowsChanged) {
-				this.connection.unsetMaxRows(this);
+			if (closeOpenResults) {
+				if (this.results != null) {
+					
+					try {
+						this.results.close();
+					} catch (Exception ex) {
+						;
+					}
+				}
+				
+				closeAllOpenResults();
 			}
-
-			if (!this.connection.getDontTrackOpenResources()) {
-				this.connection.unregisterStatement(this);
+	
+			if (this.connection != null) {
+				if (this.maxRowsChanged) {
+					this.connection.unsetMaxRows(this);
+				}
+	
+				if (!this.connection.getDontTrackOpenResources()) {
+					this.connection.unregisterStatement(this);
+				}
 			}
+	
+			this.isClosed = true;
+	
+			this.results = null;
+			this.connection = null;
+			this.warningChain = null;
+			this.openResults = null;
+			this.batchedGeneratedKeys = null;
+			this.localInfileInputStream = null;
+			this.pingTarget = null;
 		}
-
-		this.isClosed = true;
-
-		this.results = null;
-		this.connection = null;
-		this.warningChain = null;
-		this.openResults = null;
-		this.batchedGeneratedKeys = null;
-		this.localInfileInputStream = null;
-		this.pingTarget = null;
 	}
 
 	/**
@@ -2535,9 +2630,11 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized void setEscapeProcessing(boolean enable)
+	public void setEscapeProcessing(boolean enable)
 			throws SQLException {
-		this.doEscapeProcessing = enable;
+		synchronized (checkClosed()) {
+			this.doEscapeProcessing = enable;
+		}
 	}
 
 	/**
@@ -2581,20 +2678,28 @@ public class StatementImpl implements Statement {
 	 *                if a database-access error occurs, or the condition 0
 	 *                &lt;= rows &lt;= this.getMaxRows() is not satisfied.
 	 */
-	public synchronized void setFetchSize(int rows) throws SQLException {
-		if (((rows < 0) && (rows != Integer.MIN_VALUE))
-				|| ((this.maxRows != 0) && (this.maxRows != -1) && (rows > this
-						.getMaxRows()))) {
-			throw SQLError.createSQLException(
-					Messages.getString("Statement.7"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
+	public void setFetchSize(int rows) throws SQLException {
+		synchronized (checkClosed()) {
+			if (((rows < 0) && (rows != Integer.MIN_VALUE))
+					|| ((this.maxRows != 0) && (this.maxRows != -1) && (rows > this
+							.getMaxRows()))) {
+				throw SQLError.createSQLException(
+						Messages.getString("Statement.7"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+	
+			this.fetchSize = rows;
 		}
-
-		this.fetchSize = rows;
 	}
 
-	public synchronized void setHoldResultsOpenOverClose(boolean holdResultsOpenOverClose) {
-		this.holdResultsOpenOverClose = holdResultsOpenOverClose;
+	public void setHoldResultsOpenOverClose(boolean holdResultsOpenOverClose) {
+		try {
+			synchronized (checkClosed()) {
+				this.holdResultsOpenOverClose = holdResultsOpenOverClose;
+			}
+		} catch (SQLException e) {
+			// FIXME: can't break interface at this point
+		}
 	}
 
 	/**
@@ -2606,24 +2711,26 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if size exceeds buffer size
 	 */
-	public synchronized void setMaxFieldSize(int max) throws SQLException {
-		if (max < 0) {
-			throw SQLError.createSQLException(Messages
-					.getString("Statement.11"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+	public void setMaxFieldSize(int max) throws SQLException {
+		synchronized (checkClosed()) {
+			if (max < 0) {
+				throw SQLError.createSQLException(Messages
+						.getString("Statement.11"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+			}
+	
+			int maxBuf = (this.connection != null) ? this.connection
+					.getMaxAllowedPacket() : MysqlIO.getMaxBuf();
+	
+			if (max > maxBuf) {
+				throw SQLError.createSQLException(Messages.getString(
+						"Statement.13", //$NON-NLS-1$
+						new Object[] { Long.valueOf(maxBuf) }), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+			}
+	
+			this.maxFieldSize = max;
 		}
-
-		int maxBuf = (this.connection != null) ? this.connection
-				.getMaxAllowedPacket() : MysqlIO.getMaxBuf();
-
-		if (max > maxBuf) {
-			throw SQLError.createSQLException(Messages.getString(
-					"Statement.13", //$NON-NLS-1$
-					new Object[] { Long.valueOf(maxBuf) }), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
-		}
-
-		this.maxFieldSize = max;
 	}
 
 	/**
@@ -2637,32 +2744,34 @@ public class StatementImpl implements Statement {
 	 *
 	 * @see getMaxRows
 	 */
-	public synchronized void setMaxRows(int max) throws SQLException {
-		if ((max > MysqlDefs.MAX_ROWS) || (max < 0)) {
-			throw SQLError
-					.createSQLException(
-							Messages.getString("Statement.15") + max //$NON-NLS-1$
-									+ " > " //$NON-NLS-1$ //$NON-NLS-2$
-									+ MysqlDefs.MAX_ROWS + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
-		}
-
-		if (max == 0) {
-			max = -1;
-		}
-
-		this.maxRows = max;
-		this.maxRowsChanged = true;
-
-		if (this.maxRows == -1) {
-			this.connection.unsetMaxRows(this);
-			this.maxRowsChanged = false;
-		} else {
-			// Most people don't use setMaxRows()
-			// so don't penalize them
-			// with the extra query it takes
-			// to do it efficiently unless we need
-			// to.
-			this.connection.maxRowsChanged(this);
+	public void setMaxRows(int max) throws SQLException {
+		synchronized (checkClosed()) {
+			if ((max > MysqlDefs.MAX_ROWS) || (max < 0)) {
+				throw SQLError
+						.createSQLException(
+								Messages.getString("Statement.15") + max //$NON-NLS-1$
+										+ " > " //$NON-NLS-1$ //$NON-NLS-2$
+										+ MysqlDefs.MAX_ROWS + ".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+	
+			if (max == 0) {
+				max = -1;
+			}
+	
+			this.maxRows = max;
+			this.maxRowsChanged = true;
+	
+			if (this.maxRows == -1) {
+				this.connection.unsetMaxRows(this);
+				this.maxRowsChanged = false;
+			} else {
+				// Most people don't use setMaxRows()
+				// so don't penalize them
+				// with the extra query it takes
+				// to do it efficiently unless we need
+				// to.
+				this.connection.maxRowsChanged(this);
+			}
 		}
 	}
 
@@ -2675,14 +2784,16 @@ public class StatementImpl implements Statement {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized void setQueryTimeout(int seconds) throws SQLException {
-		if (seconds < 0) {
-			throw SQLError.createSQLException(Messages
-					.getString("Statement.21"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+	public void setQueryTimeout(int seconds) throws SQLException {
+		synchronized (checkClosed()) {
+			if (seconds < 0) {
+				throw SQLError.createSQLException(Messages
+						.getString("Statement.21"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+			}
+	
+			this.timeoutInMillis = seconds * 1000;
 		}
-
-		this.timeoutInMillis = seconds * 1000;
 	}
 
 	/**
@@ -2691,8 +2802,15 @@ public class StatementImpl implements Statement {
 	 * @param concurrencyFlag
 	 *            DOCUMENT ME!
 	 */
-	synchronized void setResultSetConcurrency(int concurrencyFlag) {
-		this.resultSetConcurrency = concurrencyFlag;
+	void setResultSetConcurrency(int concurrencyFlag) {
+		try {
+			synchronized (checkClosed()) {
+				this.resultSetConcurrency = concurrencyFlag;
+			}
+		} catch (SQLException e) {
+			// FIXME: Can't break interface atm, we'll get the exception later when
+			// you try and do something useful with a closed statement...
+		}
 	}
 
 	/**
@@ -2701,46 +2819,57 @@ public class StatementImpl implements Statement {
 	 * @param typeFlag
 	 *            DOCUMENT ME!
 	 */
-	synchronized void setResultSetType(int typeFlag) {
-		this.resultSetType = typeFlag;
+	void setResultSetType(int typeFlag) {
+		try {
+			synchronized (checkClosed()) {
+				this.resultSetType = typeFlag;
+			}
+		} catch (SQLException e) {
+			// FIXME: Can't break interface atm, we'll get the exception later when
+			// you try and do something useful with a closed statement...
+		}
 	}
 
-	protected synchronized void getBatchedGeneratedKeys(java.sql.Statement batchedStatement) throws SQLException {
-		if (this.retrieveGeneratedKeys) {
-			java.sql.ResultSet rs = null;
-
-			try {
-				rs = batchedStatement.getGeneratedKeys();
-
-				while (rs.next()) {
-					this.batchedGeneratedKeys
-							.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }, getExceptionInterceptor()));
-				}
-			} finally {
-				if (rs != null) {
-					rs.close();
+	protected void getBatchedGeneratedKeys(java.sql.Statement batchedStatement) throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.retrieveGeneratedKeys) {
+				java.sql.ResultSet rs = null;
+	
+				try {
+					rs = batchedStatement.getGeneratedKeys();
+	
+					while (rs.next()) {
+						this.batchedGeneratedKeys
+								.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }, getExceptionInterceptor()));
+					}
+				} finally {
+					if (rs != null) {
+						rs.close();
+					}
 				}
 			}
 		}
 	}
 	
-	protected synchronized void getBatchedGeneratedKeys(int maxKeys) throws SQLException {
-		if (this.retrieveGeneratedKeys) {
-			java.sql.ResultSet rs = null;
-
-			try {
-				if (maxKeys == 0)
-					rs = getGeneratedKeysInternal();
-				else
-					rs = getGeneratedKeysInternal(maxKeys);
-
-				while (rs.next()) {
-					this.batchedGeneratedKeys
-							.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }, getExceptionInterceptor()));
-				}
-			} finally {
-				if (rs != null) {
-					rs.close();
+	protected void getBatchedGeneratedKeys(int maxKeys) throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.retrieveGeneratedKeys) {
+				java.sql.ResultSet rs = null;
+	
+				try {
+					if (maxKeys == 0)
+						rs = getGeneratedKeysInternal();
+					else
+						rs = getGeneratedKeysInternal(maxKeys);
+	
+					while (rs.next()) {
+						this.batchedGeneratedKeys
+								.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }, getExceptionInterceptor()));
+					}
+				} finally {
+					if (rs != null) {
+						rs.close();
+					}
 				}
 			}
 		}
@@ -2749,15 +2878,26 @@ public class StatementImpl implements Statement {
 	/**
 	 * @return
 	 */
-	private synchronized boolean useServerFetch() throws SQLException {
-
-		return this.connection.isCursorFetchEnabled() && this.fetchSize > 0
-				&& this.resultSetConcurrency == ResultSet.CONCUR_READ_ONLY
-				&& this.resultSetType == ResultSet.TYPE_FORWARD_ONLY;
+	private boolean useServerFetch() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.connection.isCursorFetchEnabled() && this.fetchSize > 0
+					&& this.resultSetConcurrency == ResultSet.CONCUR_READ_ONLY
+					&& this.resultSetType == ResultSet.TYPE_FORWARD_ONLY;
+		}
 	}
 
-	public synchronized boolean isClosed() throws SQLException {
-		return this.isClosed;
+	public boolean isClosed() throws SQLException {
+		try {
+			synchronized (checkClosed()) {
+				return this.isClosed;
+			}
+		} catch (SQLException sqlEx) {
+			if (SQLError.SQL_STATE_CONNECTION_NOT_OPEN.equals(sqlEx.getSQLState())) {
+				return true;
+			}
+			
+			throw sqlEx;
+		}
 	}
 
 	private boolean isPoolable = true;
@@ -2847,15 +2987,17 @@ public class StatementImpl implements Statement {
 
 	private InputStream localInfileInputStream;
 
-    public synchronized InputStream getLocalInfileInputStream() {
+	protected final boolean version5013OrNewer;
+
+    public InputStream getLocalInfileInputStream() {
         return this.localInfileInputStream;
     }
 
-    public synchronized void setLocalInfileInputStream(InputStream stream) {
+    public void setLocalInfileInputStream(InputStream stream) {
         this.localInfileInputStream = stream;
     }
     
-    public synchronized void setPingTarget(PingTarget pingTarget) {
+    public void setPingTarget(PingTarget pingTarget) {
 		this.pingTarget = pingTarget;
 	}
     
@@ -2867,7 +3009,7 @@ public class StatementImpl implements Statement {
 		return getOnDuplicateKeyLocation(sql) != -1;
 	}
 	
-	protected synchronized int getOnDuplicateKeyLocation(String sql) {
+	protected int getOnDuplicateKeyLocation(String sql) {
 		return StringUtils.indexOfIgnoreCaseRespectMarker(0, 
 				sql, "ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet());
 	}

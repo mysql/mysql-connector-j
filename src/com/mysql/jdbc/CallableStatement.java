@@ -545,53 +545,55 @@ public class CallableStatement extends PreparedStatement implements
 	
 	private int[] placeholderToParameterIndexMap;
 	
-	private synchronized void generateParameterMap() throws SQLException {
-		if (this.paramInfo == null) {
-			return;
-		}
-		
-		// if the user specified some parameters as literals, we need to
-		// provide a map from the specified placeholders to the actual
-		// parameter numbers
-		
-		int parameterCountFromMetaData = this.paramInfo.getParameterCount();
-		
-		// Ignore the first ? if this is a stored function, it doesn't count
-		
-		if (this.callingStoredFunction) {
-			parameterCountFromMetaData--;
-		}
-		
-		if (this.paramInfo != null &&
-				this.parameterCount != parameterCountFromMetaData) {
-			this.placeholderToParameterIndexMap = new int[this.parameterCount];
+	private void generateParameterMap() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.paramInfo == null) {
+				return;
+			}
 			
-			int startPos = this.callingStoredFunction ? StringUtils.indexOfIgnoreCase(this.originalSql, 
-			"SELECT") : StringUtils.indexOfIgnoreCase(this.originalSql, "CALL");
+			// if the user specified some parameters as literals, we need to
+			// provide a map from the specified placeholders to the actual
+			// parameter numbers
 			
-			if (startPos != -1) {
-				int parenOpenPos = this.originalSql.indexOf('(', startPos + 4);
+			int parameterCountFromMetaData = this.paramInfo.getParameterCount();
+			
+			// Ignore the first ? if this is a stored function, it doesn't count
+			
+			if (this.callingStoredFunction) {
+				parameterCountFromMetaData--;
+			}
+			
+			if (this.paramInfo != null &&
+					this.parameterCount != parameterCountFromMetaData) {
+				this.placeholderToParameterIndexMap = new int[this.parameterCount];
 				
-				if (parenOpenPos != -1) {
-					int parenClosePos = StringUtils.indexOfIgnoreCaseRespectQuotes(parenOpenPos, 
-							this.originalSql, ")", '\'', true);
+				int startPos = this.callingStoredFunction ? StringUtils.indexOfIgnoreCase(this.originalSql, 
+				"SELECT") : StringUtils.indexOfIgnoreCase(this.originalSql, "CALL");
+				
+				if (startPos != -1) {
+					int parenOpenPos = this.originalSql.indexOf('(', startPos + 4);
 					
-					if (parenClosePos != -1) {
-						List<?> parsedParameters = StringUtils.split(this.originalSql.substring(parenOpenPos + 1, parenClosePos), ",", "'\"", "'\"", true);
+					if (parenOpenPos != -1) {
+						int parenClosePos = StringUtils.indexOfIgnoreCaseRespectQuotes(parenOpenPos, 
+								this.originalSql, ")", '\'', true);
 						
-						int numParsedParameters = parsedParameters.size();
-						
-						// sanity check
-						
-						if (numParsedParameters != this.parameterCount) {
-							// bail?
-						}
-						
-						int placeholderCount = 0;
-						
-						for (int i = 0; i < numParsedParameters; i++) {
-							if (((String)parsedParameters.get(i)).equals("?")) {
-								this.placeholderToParameterIndexMap[placeholderCount++] = i;
+						if (parenClosePos != -1) {
+							List<?> parsedParameters = StringUtils.split(this.originalSql.substring(parenOpenPos + 1, parenClosePos), ",", "'\"", "'\"", true);
+							
+							int numParsedParameters = parsedParameters.size();
+							
+							// sanity check
+							
+							if (numParsedParameters != this.parameterCount) {
+								// bail?
+							}
+							
+							int placeholderCount = 0;
+							
+							for (int i = 0; i < numParsedParameters; i++) {
+								if (((String)parsedParameters.get(i)).equals("?")) {
+									this.placeholderToParameterIndexMap[placeholderCount++] = i;
+								}
 							}
 						}
 					}
@@ -649,54 +651,56 @@ public class CallableStatement extends PreparedStatement implements
 		super.addBatch();
 	}
 
-	private synchronized CallableStatementParam checkIsOutputParam(int paramIndex)
+	private CallableStatementParam checkIsOutputParam(int paramIndex)
 			throws SQLException {
 
-		if (this.callingStoredFunction) {
-			if (paramIndex == 1) {
-
-				if (this.returnValueParam == null) {
-					this.returnValueParam = new CallableStatementParam("", 0,
-							false, true, Types.VARCHAR, "VARCHAR", 0, 0,
-							DatabaseMetaData.attributeNullableUnknown,
-							DatabaseMetaData.procedureColumnReturn);
+		synchronized (checkClosed()) {
+			if (this.callingStoredFunction) {
+				if (paramIndex == 1) {
+	
+					if (this.returnValueParam == null) {
+						this.returnValueParam = new CallableStatementParam("", 0,
+								false, true, Types.VARCHAR, "VARCHAR", 0, 0,
+								DatabaseMetaData.attributeNullableUnknown,
+								DatabaseMetaData.procedureColumnReturn);
+					}
+	
+					return this.returnValueParam;
 				}
-
-				return this.returnValueParam;
+	
+				// Move to position in output result set
+				paramIndex--;
 			}
-
-			// Move to position in output result set
-			paramIndex--;
+	
+			checkParameterIndexBounds(paramIndex);
+	
+			int localParamIndex = paramIndex - 1;
+	
+			if (this.placeholderToParameterIndexMap != null) {
+				localParamIndex = this.placeholderToParameterIndexMap[localParamIndex];
+			}
+			
+			CallableStatementParam paramDescriptor = this.paramInfo
+					.getParameter(localParamIndex);
+	
+			// We don't have reliable metadata in this case, trust
+			// the caller
+			
+			if (this.connection.getNoAccessToProcedureBodies()) {
+				paramDescriptor.isOut = true;
+				paramDescriptor.isIn = true;
+				paramDescriptor.inOutModifier = DatabaseMetaData.procedureColumnInOut;
+			} else if (!paramDescriptor.isOut) {
+				throw SQLError.createSQLException(
+						Messages.getString("CallableStatement.9") + paramIndex //$NON-NLS-1$
+								+ Messages.getString("CallableStatement.10"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+	
+			this.hasOutputParams = true;
+	
+			return paramDescriptor;
 		}
-
-		checkParameterIndexBounds(paramIndex);
-
-		int localParamIndex = paramIndex - 1;
-
-		if (this.placeholderToParameterIndexMap != null) {
-			localParamIndex = this.placeholderToParameterIndexMap[localParamIndex];
-		}
-		
-		CallableStatementParam paramDescriptor = this.paramInfo
-				.getParameter(localParamIndex);
-
-		// We don't have reliable metadata in this case, trust
-		// the caller
-		
-		if (this.connection.getNoAccessToProcedureBodies()) {
-			paramDescriptor.isOut = true;
-			paramDescriptor.isIn = true;
-			paramDescriptor.inOutModifier = DatabaseMetaData.procedureColumnInOut;
-		} else if (!paramDescriptor.isOut) {
-			throw SQLError.createSQLException(
-					Messages.getString("CallableStatement.9") + paramIndex //$NON-NLS-1$
-							+ Messages.getString("CallableStatement.10"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-
-		this.hasOutputParams = true;
-
-		return paramDescriptor;
 	}
 
 	/**
@@ -706,8 +710,10 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 * @throws SQLException
 	 */
-	private synchronized void checkParameterIndexBounds(int paramIndex) throws SQLException {
-		this.paramInfo.checkBounds(paramIndex);
+	private void checkParameterIndexBounds(int paramIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			this.paramInfo.checkBounds(paramIndex);
+		}
 	}
 
 	/**
@@ -725,15 +731,17 @@ public class CallableStatement extends PreparedStatement implements
 		}
 	}
 
-	public synchronized void clearParameters() throws SQLException {
-		super.clearParameters();
-
-		try {
-			if (this.outputParameterResults != null) {
-				this.outputParameterResults.close();
+	public void clearParameters() throws SQLException {
+		synchronized (checkClosed()) {
+			super.clearParameters();
+	
+			try {
+				if (this.outputParameterResults != null) {
+					this.outputParameterResults.close();
+				}
+			} finally {
+				this.outputParameterResults = null;
 			}
-		} finally {
-			this.outputParameterResults = null;
 		}
 	}
 
@@ -743,150 +751,155 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 * @throws SQLException if we can't build the metadata.
 	 */
-	private synchronized void fakeParameterTypes(boolean isReallyProcedure) throws SQLException {
-		Field[] fields = new Field[13];
-
-		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
-		fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 0);
-		fields[2] = new Field("", "PROCEDURE_NAME", Types.CHAR, 0);
-		fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 0);
-		fields[4] = new Field("", "COLUMN_TYPE", Types.CHAR, 0);
-		fields[5] = new Field("", "DATA_TYPE", Types.SMALLINT, 0);
-		fields[6] = new Field("", "TYPE_NAME", Types.CHAR, 0);
-		fields[7] = new Field("", "PRECISION", Types.INTEGER, 0);
-		fields[8] = new Field("", "LENGTH", Types.INTEGER, 0);
-		fields[9] = new Field("", "SCALE", Types.SMALLINT, 0);
-		fields[10] = new Field("", "RADIX", Types.SMALLINT, 0);
-		fields[11] = new Field("", "NULLABLE", Types.SMALLINT, 0);
-		fields[12] = new Field("", "REMARKS", Types.CHAR, 0);
-
-		String procName = isReallyProcedure ? extractProcedureName() : null;
-
-		byte[] procNameAsBytes = null;
-
-		try {
-			procNameAsBytes = procName == null ? null : StringUtils.getBytes(procName, "UTF-8");
-		} catch (UnsupportedEncodingException ueEx) {
-			procNameAsBytes = StringUtils.s2b(procName, this.connection);
+	private void fakeParameterTypes(boolean isReallyProcedure) throws SQLException {
+		synchronized (checkClosed()) {
+			Field[] fields = new Field[13];
+	
+			fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
+			fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 0);
+			fields[2] = new Field("", "PROCEDURE_NAME", Types.CHAR, 0);
+			fields[3] = new Field("", "COLUMN_NAME", Types.CHAR, 0);
+			fields[4] = new Field("", "COLUMN_TYPE", Types.CHAR, 0);
+			fields[5] = new Field("", "DATA_TYPE", Types.SMALLINT, 0);
+			fields[6] = new Field("", "TYPE_NAME", Types.CHAR, 0);
+			fields[7] = new Field("", "PRECISION", Types.INTEGER, 0);
+			fields[8] = new Field("", "LENGTH", Types.INTEGER, 0);
+			fields[9] = new Field("", "SCALE", Types.SMALLINT, 0);
+			fields[10] = new Field("", "RADIX", Types.SMALLINT, 0);
+			fields[11] = new Field("", "NULLABLE", Types.SMALLINT, 0);
+			fields[12] = new Field("", "REMARKS", Types.CHAR, 0);
+	
+			String procName = isReallyProcedure ? extractProcedureName() : null;
+	
+			byte[] procNameAsBytes = null;
+	
+			try {
+				procNameAsBytes = procName == null ? null : StringUtils.getBytes(procName, "UTF-8");
+			} catch (UnsupportedEncodingException ueEx) {
+				procNameAsBytes = StringUtils.s2b(procName, this.connection);
+			}
+	
+			ArrayList<ByteArrayRow> resultRows = new ArrayList<ByteArrayRow>();
+	
+			for (int i = 0; i < this.parameterCount; i++) {
+				byte[][] row = new byte[13][];
+				row[0] = null; // PROCEDURE_CAT
+				row[1] = null; // PROCEDURE_SCHEM
+				row[2] = procNameAsBytes; // PROCEDURE/NAME
+				row[3] = StringUtils.s2b(String.valueOf(i), this.connection); // COLUMN_NAME
+	
+				row[4] = StringUtils.s2b(String
+						.valueOf(DatabaseMetaData.procedureColumnIn),
+						this.connection);
+	
+				row[5] = StringUtils.s2b(String.valueOf(Types.VARCHAR),
+						this.connection); // DATA_TYPE
+				row[6] = StringUtils.s2b("VARCHAR", this.connection); // TYPE_NAME
+				row[7] = StringUtils.s2b(Integer.toString(65535), this.connection); // PRECISION
+				row[8] = StringUtils.s2b(Integer.toString(65535), this.connection); // LENGTH
+				row[9] = StringUtils.s2b(Integer.toString(0), this.connection); // SCALE
+				row[10] = StringUtils.s2b(Integer.toString(10), this.connection); // RADIX
+	
+				row[11] = StringUtils.s2b(Integer
+						.toString(DatabaseMetaData.procedureNullableUnknown),
+						this.connection); // nullable
+	
+				row[12] = null;
+	
+				resultRows.add(new ByteArrayRow(row, getExceptionInterceptor()));
+			}
+	
+			java.sql.ResultSet paramTypesRs = DatabaseMetaData.buildResultSet(
+					fields, resultRows, this.connection);
+	
+			convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
 		}
-
-		ArrayList<ByteArrayRow> resultRows = new ArrayList<ByteArrayRow>();
-
-		for (int i = 0; i < this.parameterCount; i++) {
-			byte[][] row = new byte[13][];
-			row[0] = null; // PROCEDURE_CAT
-			row[1] = null; // PROCEDURE_SCHEM
-			row[2] = procNameAsBytes; // PROCEDURE/NAME
-			row[3] = StringUtils.s2b(String.valueOf(i), this.connection); // COLUMN_NAME
-
-			row[4] = StringUtils.s2b(String
-					.valueOf(DatabaseMetaData.procedureColumnIn),
-					this.connection);
-
-			row[5] = StringUtils.s2b(String.valueOf(Types.VARCHAR),
-					this.connection); // DATA_TYPE
-			row[6] = StringUtils.s2b("VARCHAR", this.connection); // TYPE_NAME
-			row[7] = StringUtils.s2b(Integer.toString(65535), this.connection); // PRECISION
-			row[8] = StringUtils.s2b(Integer.toString(65535), this.connection); // LENGTH
-			row[9] = StringUtils.s2b(Integer.toString(0), this.connection); // SCALE
-			row[10] = StringUtils.s2b(Integer.toString(10), this.connection); // RADIX
-
-			row[11] = StringUtils.s2b(Integer
-					.toString(DatabaseMetaData.procedureNullableUnknown),
-					this.connection); // nullable
-
-			row[12] = null;
-
-			resultRows.add(new ByteArrayRow(row, getExceptionInterceptor()));
-		}
-
-		java.sql.ResultSet paramTypesRs = DatabaseMetaData.buildResultSet(
-				fields, resultRows, this.connection);
-
-		convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
 	}
 	
-	private synchronized void determineParameterTypes() throws SQLException {
-		
-		java.sql.ResultSet paramTypesRs = null;
-
-		try {
-			//Bug#57022, we need to check for db.SPname notation first
-			//  and pass on only SPname
-			String procName = extractProcedureName();
-			String quotedId = "";
+	private void determineParameterTypes() throws SQLException {
+		synchronized (checkClosed()) {
+			java.sql.ResultSet paramTypesRs = null;
+	
 			try {
-				quotedId = this.connection.supportsQuotedIdentifiers() ? 
-						this.connection.getMetaData().getIdentifierQuoteString()	: "";
-			} catch (SQLException sqlEx) {
-				// Forced by API, never thrown from getIdentifierQuoteString() in
-				// this implementation.
-				AssertionFailedException.shouldNotHappen(sqlEx);
-			}
-			
-			List<?> parseList = StringUtils.splitDBdotName(procName, "", 
-					quotedId , this.connection.isNoBackslashEscapesSet());
-			String tmpCatalog = "";
-			//There *should* be 2 rows, if any.
-			if (parseList.size() == 2) {
-				tmpCatalog = (String) parseList.get(0);
-				procName = (String) parseList.get(1);			
-			} else {
-				//keep values as they are
-			}
-			
-			java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
-
-			boolean useCatalog = false;
-
-			if (tmpCatalog.length() <= 0) {
-				useCatalog = true;
-			}
-			
-			paramTypesRs = dbmd.getProcedureColumns(this.connection
-					.versionMeetsMinimum(5, 0, 2)
-					&& useCatalog ? this.currentCatalog : tmpCatalog/*null*/, null, procName,
-					"%"); //$NON-NLS-1$
-			
-			boolean hasResults = false;
-			try {
-				if (paramTypesRs.next()) {
-					paramTypesRs.previous();
-					hasResults = true;
-				}
-			} catch (Exception e) {
-				// paramTypesRs is empty, proceed with fake params. swallow, was expected 
-			}
-			if (hasResults){
-				convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
-			} else {
-				fakeParameterTypes(true);
-			}
-		} finally {
-			SQLException sqlExRethrow = null;
-
-			if (paramTypesRs != null) {
+				//Bug#57022, we need to check for db.SPname notation first
+				//  and pass on only SPname
+				String procName = extractProcedureName();
+				String quotedId = "";
 				try {
-					paramTypesRs.close();
+					quotedId = this.connection.supportsQuotedIdentifiers() ? 
+							this.connection.getMetaData().getIdentifierQuoteString()	: "";
 				} catch (SQLException sqlEx) {
-					sqlExRethrow = sqlEx;
+					// Forced by API, never thrown from getIdentifierQuoteString() in
+					// this implementation.
+					AssertionFailedException.shouldNotHappen(sqlEx);
 				}
-
-				paramTypesRs = null;
-			}
-
-			if (sqlExRethrow != null) {
-				throw sqlExRethrow;
+				
+				List<?> parseList = StringUtils.splitDBdotName(procName, "", 
+						quotedId , this.connection.isNoBackslashEscapesSet());
+				String tmpCatalog = "";
+				//There *should* be 2 rows, if any.
+				if (parseList.size() == 2) {
+					tmpCatalog = (String) parseList.get(0);
+					procName = (String) parseList.get(1);			
+				} else {
+					//keep values as they are
+				}
+				
+				java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
+	
+				boolean useCatalog = false;
+	
+				if (tmpCatalog.length() <= 0) {
+					useCatalog = true;
+				}
+				
+				paramTypesRs = dbmd.getProcedureColumns(this.connection
+						.versionMeetsMinimum(5, 0, 2)
+						&& useCatalog ? this.currentCatalog : tmpCatalog/*null*/, null, procName,
+						"%"); //$NON-NLS-1$
+				
+				boolean hasResults = false;
+				try {
+					if (paramTypesRs.next()) {
+						paramTypesRs.previous();
+						hasResults = true;
+					}
+				} catch (Exception e) {
+					// paramTypesRs is empty, proceed with fake params. swallow, was expected 
+				}
+				if (hasResults){
+					convertGetProcedureColumnsToInternalDescriptors(paramTypesRs);
+				} else {
+					fakeParameterTypes(true);
+				}
+			} finally {
+				SQLException sqlExRethrow = null;
+	
+				if (paramTypesRs != null) {
+					try {
+						paramTypesRs.close();
+					} catch (SQLException sqlEx) {
+						sqlExRethrow = sqlEx;
+					}
+	
+					paramTypesRs = null;
+				}
+	
+				if (sqlExRethrow != null) {
+					throw sqlExRethrow;
+				}
 			}
 		}
 	}
 
-	private synchronized void convertGetProcedureColumnsToInternalDescriptors(java.sql.ResultSet paramTypesRs) throws SQLException {
-		if (!this.connection.isRunningOnJDK13()) {
-			this.paramInfo = new CallableStatementParamInfoJDBC3(
-					paramTypesRs);
-		} else {
-			this.paramInfo = new CallableStatementParamInfo(paramTypesRs);
+	private void convertGetProcedureColumnsToInternalDescriptors(java.sql.ResultSet paramTypesRs) throws SQLException {
+		synchronized (checkClosed()) {
+			if (!this.connection.isRunningOnJDK13()) {
+				this.paramInfo = new CallableStatementParamInfoJDBC3(
+						paramTypesRs);
+			} else {
+				this.paramInfo = new CallableStatementParamInfo(paramTypesRs);
+			}
 		}
 	}
 
@@ -895,14 +908,12 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 * @see java.sql.PreparedStatement#execute()
 	 */
-	public synchronized boolean execute() throws SQLException {
-		boolean returnVal = false;
+	public boolean execute() throws SQLException {
+		synchronized (checkClosed()) {
+			boolean returnVal = false;
 
-		checkClosed();
+			checkStreamability();
 
-		checkStreamability();
-
-		synchronized (this.connection) {
 			setInOutParamsOnServer();
 			setOutParams();
 
@@ -915,14 +926,15 @@ public class CallableStatement extends PreparedStatement implements
 			}
 
 			retrieveOutParams();
-		}
+		
 
-		if (!this.callingStoredFunction) {
-			return returnVal;
+			if (!this.callingStoredFunction) {
+				return returnVal;
+			}
+	
+			// Functions can't return results
+			return false;
 		}
-
-		// Functions can't return results
-		return false;
 	}
 
 	/*
@@ -930,23 +942,22 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 * @see java.sql.PreparedStatement#executeQuery()
 	 */
-	public synchronized java.sql.ResultSet executeQuery() throws SQLException {
-		checkClosed();
+	public java.sql.ResultSet executeQuery() throws SQLException {
+		synchronized (checkClosed()) {
 
-		checkStreamability();
+			checkStreamability();
+	
+			java.sql.ResultSet execResults = null;
 
-		java.sql.ResultSet execResults = null;
-
-		synchronized (this.connection) {
 			setInOutParamsOnServer();
 			setOutParams();
 
 			execResults = super.executeQuery();
 
 			retrieveOutParams();
+			
+			return execResults;
 		}
-
-		return execResults;
 	}
 
 	/*
@@ -954,29 +965,28 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 * @see java.sql.PreparedStatement#executeUpdate()
 	 */
-	public synchronized int executeUpdate() throws SQLException {
-		int returnVal = -1;
+	public int executeUpdate() throws SQLException {
+		synchronized (checkClosed()) {
+			int returnVal = -1;
+	
+			
+			checkStreamability();
+	
+			if (this.callingStoredFunction) {
+				execute();
+	
+				return -1;
+			}
 
-		checkClosed();
-
-		checkStreamability();
-
-		if (this.callingStoredFunction) {
-			execute();
-
-			return -1;
-		}
-
-		synchronized (this.connection) {
 			setInOutParamsOnServer();
 			setOutParams();
 
 			returnVal = super.executeUpdate();
 
 			retrieveOutParams();
-		}
 
-		return returnVal;
+			return returnVal;
+		}
 	}
 
 	private String extractProcedureName() throws SQLException {
@@ -1030,76 +1040,76 @@ public class CallableStatement extends PreparedStatement implements
 	 * @throws SQLException
 	 *             if the parameter name is null or empty.
 	 */
-	protected synchronized String fixParameterName(String paramNameIn) throws SQLException {
-		//Fixed for 5.5+
-		if (((paramNameIn == null) || (paramNameIn.length() == 0)) && (!hasParametersView())) {
-			throw SQLError.createSQLException(
-					((Messages.getString("CallableStatement.0") + paramNameIn) == null) //$NON-NLS-1$
-							? Messages.getString("CallableStatement.15") : Messages.getString("CallableStatement.16"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, 
-									getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
+	protected String fixParameterName(String paramNameIn) throws SQLException {
+		synchronized (checkClosed()) {
+			//Fixed for 5.5+
+			if (((paramNameIn == null) || (paramNameIn.length() == 0)) && (!hasParametersView())) {
+				throw SQLError.createSQLException(
+						((Messages.getString("CallableStatement.0") + paramNameIn) == null) //$NON-NLS-1$
+								? Messages.getString("CallableStatement.15") : Messages.getString("CallableStatement.16"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, 
+										getExceptionInterceptor()); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+	
+			if ((paramNameIn == null) && (hasParametersView())) {
+				paramNameIn = "nullpn";
+			};
+	
+			if (this.connection.getNoAccessToProcedureBodies()) {
+				throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+			
+			return mangleParameterName(paramNameIn);
 		}
-
-		if ((paramNameIn == null) && (hasParametersView())) {
-			paramNameIn = "nullpn";
-		};
-
-		if (this.connection.getNoAccessToProcedureBodies()) {
-			throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-		
-		return mangleParameterName(paramNameIn);
-
-		/*
-		 * if (paramNameIn.startsWith("@")) { return paramNameIn; } else {
-		 * StringBuffer paramNameBuf = new StringBuffer("@");
-		 * paramNameBuf.append(paramNameIn);
-		 * 
-		 * return paramNameBuf.toString(); }
-		 */
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getArray(int)
 	 */
-	public synchronized Array getArray(int i) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(i);
-
-		Array retValue = rs.getArray(mapOutputParameterIndexToRsIndex(i));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public Array getArray(int i) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(i);
+	
+			Array retValue = rs.getArray(mapOutputParameterIndexToRsIndex(i));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getArray(java.lang.String)
 	 */
-	public synchronized Array getArray(String parameterName)
+	public Array getArray(String parameterName)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Array retValue = rs.getArray(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Array retValue = rs.getArray(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getBigDecimal(int)
 	 */
-	public synchronized BigDecimal getBigDecimal(int parameterIndex)
+	public BigDecimal getBigDecimal(int parameterIndex)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		BigDecimal retValue = rs
-				.getBigDecimal(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			BigDecimal retValue = rs
+					.getBigDecimal(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
@@ -1118,456 +1128,514 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getBigDecimal(int, int)
 	 * @deprecated
 	 */
-	public synchronized BigDecimal getBigDecimal(int parameterIndex, int scale)
+	public BigDecimal getBigDecimal(int parameterIndex, int scale)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		BigDecimal retValue = rs.getBigDecimal(
-				mapOutputParameterIndexToRsIndex(parameterIndex), scale);
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			BigDecimal retValue = rs.getBigDecimal(
+					mapOutputParameterIndexToRsIndex(parameterIndex), scale);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getBigDecimal(java.lang.String)
 	 */
-	public synchronized BigDecimal getBigDecimal(String parameterName)
+	public BigDecimal getBigDecimal(String parameterName)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		BigDecimal retValue = rs.getBigDecimal(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			BigDecimal retValue = rs.getBigDecimal(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getBlob(int)
 	 */
-	public synchronized Blob getBlob(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		Blob retValue = rs
-				.getBlob(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public Blob getBlob(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			Blob retValue = rs
+					.getBlob(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getBlob(java.lang.String)
 	 */
-	public synchronized Blob getBlob(String parameterName) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Blob retValue = rs.getBlob(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public Blob getBlob(String parameterName) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Blob retValue = rs.getBlob(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getBoolean(int)
 	 */
-	public synchronized boolean getBoolean(int parameterIndex)
+	public boolean getBoolean(int parameterIndex)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		boolean retValue = rs
-				.getBoolean(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			boolean retValue = rs
+					.getBoolean(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getBoolean(java.lang.String)
 	 */
-	public synchronized boolean getBoolean(String parameterName)
+	public boolean getBoolean(String parameterName)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		boolean retValue = rs.getBoolean(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			boolean retValue = rs.getBoolean(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getByte(int)
 	 */
-	public synchronized byte getByte(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		byte retValue = rs
-				.getByte(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public byte getByte(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			byte retValue = rs
+					.getByte(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getByte(java.lang.String)
 	 */
-	public synchronized byte getByte(String parameterName) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		byte retValue = rs.getByte(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public byte getByte(String parameterName) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			byte retValue = rs.getByte(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getBytes(int)
 	 */
-	public synchronized byte[] getBytes(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		byte[] retValue = rs
-				.getBytes(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public byte[] getBytes(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			byte[] retValue = rs
+					.getBytes(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getBytes(java.lang.String)
 	 */
-	public synchronized byte[] getBytes(String parameterName)
+	public byte[] getBytes(String parameterName)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		byte[] retValue = rs.getBytes(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			byte[] retValue = rs.getBytes(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getClob(int)
 	 */
-	public synchronized Clob getClob(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		Clob retValue = rs
-				.getClob(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public Clob getClob(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			Clob retValue = rs
+					.getClob(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getClob(java.lang.String)
 	 */
-	public synchronized Clob getClob(String parameterName) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Clob retValue = rs.getClob(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public Clob getClob(String parameterName) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Clob retValue = rs.getClob(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getDate(int)
 	 */
-	public synchronized Date getDate(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		Date retValue = rs
-				.getDate(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public Date getDate(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			Date retValue = rs
+					.getDate(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getDate(int, java.util.Calendar)
 	 */
-	public synchronized Date getDate(int parameterIndex, Calendar cal)
+	public Date getDate(int parameterIndex, Calendar cal)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		Date retValue = rs.getDate(
-				mapOutputParameterIndexToRsIndex(parameterIndex), cal);
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			Date retValue = rs.getDate(
+					mapOutputParameterIndexToRsIndex(parameterIndex), cal);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getDate(java.lang.String)
 	 */
-	public synchronized Date getDate(String parameterName) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Date retValue = rs.getDate(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public Date getDate(String parameterName) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Date retValue = rs.getDate(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getDate(java.lang.String,
 	 *      java.util.Calendar)
 	 */
-	public synchronized Date getDate(String parameterName, Calendar cal)
+	public Date getDate(String parameterName, Calendar cal)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Date retValue = rs.getDate(fixParameterName(parameterName), cal);
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Date retValue = rs.getDate(fixParameterName(parameterName), cal);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getDouble(int)
 	 */
-	public synchronized double getDouble(int parameterIndex)
+	public double getDouble(int parameterIndex)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		double retValue = rs
-				.getDouble(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			double retValue = rs
+					.getDouble(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getDouble(java.lang.String)
 	 */
-	public synchronized double getDouble(String parameterName)
+	public double getDouble(String parameterName)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		double retValue = rs.getDouble(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			double retValue = rs.getDouble(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getFloat(int)
 	 */
-	public synchronized float getFloat(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		float retValue = rs
-				.getFloat(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public float getFloat(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			float retValue = rs
+					.getFloat(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getFloat(java.lang.String)
 	 */
-	public synchronized float getFloat(String parameterName)
+	public float getFloat(String parameterName)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		float retValue = rs.getFloat(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			float retValue = rs.getFloat(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getInt(int)
 	 */
-	public synchronized int getInt(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		int retValue = rs
-				.getInt(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public int getInt(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			int retValue = rs
+					.getInt(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getInt(java.lang.String)
 	 */
-	public synchronized int getInt(String parameterName) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		int retValue = rs.getInt(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public int getInt(String parameterName) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			int retValue = rs.getInt(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getLong(int)
 	 */
-	public synchronized long getLong(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		long retValue = rs
-				.getLong(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public long getLong(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			long retValue = rs
+					.getLong(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getLong(java.lang.String)
 	 */
-	public synchronized long getLong(String parameterName) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		long retValue = rs.getLong(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public long getLong(String parameterName) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			long retValue = rs.getLong(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
-	protected synchronized int getNamedParamIndex(String paramName, boolean forOut)
+	protected int getNamedParamIndex(String paramName, boolean forOut)
 	throws SQLException {
-		if (this.connection.getNoAccessToProcedureBodies()) {
-			throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-		
-		//Fixed for 5.5+ in callers
-		if ((paramName == null) || (paramName.length() == 0)) {
-			throw SQLError.createSQLException(Messages.getString("CallableStatement.2"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-
-		if (this.paramInfo == null) {
-			throw SQLError.createSQLException(
-					Messages.getString("CallableStatement.3") + paramName + Messages.getString("CallableStatement.4"), //$NON-NLS-1$ //$NON-NLS-2$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-
-		CallableStatementParam namedParamInfo = this.paramInfo
-			.getParameter(paramName);
-
-		if (forOut && !namedParamInfo.isOut) {
-			throw SQLError.createSQLException(
-					Messages.getString("CallableStatement.5") + paramName //$NON-NLS-1$
-					+ Messages.getString("CallableStatement.6"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-
-
-		if (this.placeholderToParameterIndexMap == null) {
-			return namedParamInfo.index + 1; // JDBC indices are 1-based
-		} 
-
-		for (int i = 0; i < this.placeholderToParameterIndexMap.length; i++) {
-			if (this.placeholderToParameterIndexMap[i] == namedParamInfo.index) {
-				return i + 1;
+		synchronized (checkClosed()) {
+			if (this.connection.getNoAccessToProcedureBodies()) {
+				throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
+			
+			//Fixed for 5.5+ in callers
+			if ((paramName == null) || (paramName.length() == 0)) {
+				throw SQLError.createSQLException(Messages.getString("CallableStatement.2"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+	
+			if (this.paramInfo == null) {
+				throw SQLError.createSQLException(
+						Messages.getString("CallableStatement.3") + paramName + Messages.getString("CallableStatement.4"), //$NON-NLS-1$ //$NON-NLS-2$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+	
+			CallableStatementParam namedParamInfo = this.paramInfo
+				.getParameter(paramName);
+	
+			if (forOut && !namedParamInfo.isOut) {
+				throw SQLError.createSQLException(
+						Messages.getString("CallableStatement.5") + paramName //$NON-NLS-1$
+						+ Messages.getString("CallableStatement.6"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+	
+	
+			if (this.placeholderToParameterIndexMap == null) {
+				return namedParamInfo.index + 1; // JDBC indices are 1-based
+			} 
+	
+			for (int i = 0; i < this.placeholderToParameterIndexMap.length; i++) {
+				if (this.placeholderToParameterIndexMap[i] == namedParamInfo.index) {
+					return i + 1;
+				}
+			}
+	
+			throw SQLError.createSQLException("Can't find local placeholder mapping for parameter named \"" + 
+					paramName + "\".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
-
-		throw SQLError.createSQLException("Can't find local placeholder mapping for parameter named \"" + 
-				paramName + "\".", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getObject(int)
 	 */
-	public synchronized Object getObject(int parameterIndex)
+	public Object getObject(int parameterIndex)
 			throws SQLException {
-		CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
-
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		Object retVal = rs.getObjectStoredProc(
-				mapOutputParameterIndexToRsIndex(parameterIndex),
-				paramDescriptor.desiredJdbcType);
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retVal;
+		synchronized (checkClosed()) {
+			CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
+	
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			Object retVal = rs.getObjectStoredProc(
+					mapOutputParameterIndexToRsIndex(parameterIndex),
+					paramDescriptor.desiredJdbcType);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retVal;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getObject(int, java.util.Map)
 	 */
-	public synchronized Object getObject(int parameterIndex, Map<String, Class<?>> map)
+	public Object getObject(int parameterIndex, Map<String, Class<?>> map)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		Object retVal = rs.getObject(
-				mapOutputParameterIndexToRsIndex(parameterIndex), map);
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retVal;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			Object retVal = rs.getObject(
+					mapOutputParameterIndexToRsIndex(parameterIndex), map);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retVal;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getObject(java.lang.String)
 	 */
-	public synchronized Object getObject(String parameterName)
+	public Object getObject(String parameterName)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Object retValue = rs.getObject(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Object retValue = rs.getObject(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getObject(java.lang.String,
 	 *      java.util.Map)
 	 */
-	public synchronized Object getObject(String parameterName, Map<String, Class<?>> map)
+	public Object getObject(String parameterName, Map<String, Class<?>> map)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Object retValue = rs.getObject(fixParameterName(parameterName), map);
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Object retValue = rs.getObject(fixParameterName(parameterName), map);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
@@ -1580,298 +1648,335 @@ public class CallableStatement extends PreparedStatement implements
 	 *             if no output parameters were defined, or if no output
 	 *             parameters were returned.
 	 */
-	protected synchronized ResultSetInternalMethods getOutputParameters(int paramIndex) throws SQLException {
-		this.outputParamWasNull = false;
-
-		if (paramIndex == 1 && this.callingStoredFunction
-				&& this.returnValueParam != null) {
-			return this.functionReturnValueResults;
-		}
-
-		if (this.outputParameterResults == null) {
-			if (this.paramInfo.numberOfParameters() == 0) {
-				throw SQLError.createSQLException(Messages
-						.getString("CallableStatement.7"), //$NON-NLS-1$
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+	protected ResultSetInternalMethods getOutputParameters(int paramIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			this.outputParamWasNull = false;
+	
+			if (paramIndex == 1 && this.callingStoredFunction
+					&& this.returnValueParam != null) {
+				return this.functionReturnValueResults;
 			}
-			throw SQLError.createSQLException(Messages.getString("CallableStatement.8"), //$NON-NLS-1$
-					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+	
+			if (this.outputParameterResults == null) {
+				if (this.paramInfo.numberOfParameters() == 0) {
+					throw SQLError.createSQLException(Messages
+							.getString("CallableStatement.7"), //$NON-NLS-1$
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+				}
+				throw SQLError.createSQLException(Messages.getString("CallableStatement.8"), //$NON-NLS-1$
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+			}
+	
+			return this.outputParameterResults;
 		}
-
-		return this.outputParameterResults;
-
 	}
 
-	public synchronized ParameterMetaData getParameterMetaData()
+	public ParameterMetaData getParameterMetaData()
 			throws SQLException {
-		if (this.placeholderToParameterIndexMap == null) {
-			return (CallableStatementParamInfoJDBC3) this.paramInfo;
+		synchronized (checkClosed()) {
+			if (this.placeholderToParameterIndexMap == null) {
+				return (CallableStatementParamInfoJDBC3) this.paramInfo;
+			}
+				
+			return new CallableStatementParamInfoJDBC3(this.paramInfo);
 		}
-			
-		return new CallableStatementParamInfoJDBC3(this.paramInfo);
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getRef(int)
 	 */
-	public synchronized Ref getRef(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		Ref retValue = rs
-				.getRef(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public Ref getRef(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			Ref retValue = rs
+					.getRef(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getRef(java.lang.String)
 	 */
-	public synchronized Ref getRef(String parameterName) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Ref retValue = rs.getRef(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public Ref getRef(String parameterName) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Ref retValue = rs.getRef(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getShort(int)
 	 */
-	public synchronized short getShort(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		short retValue = rs
-				.getShort(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public short getShort(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			short retValue = rs
+					.getShort(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getShort(java.lang.String)
 	 */
-	public synchronized short getShort(String parameterName)
+	public short getShort(String parameterName)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		short retValue = rs.getShort(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			short retValue = rs.getShort(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getString(int)
 	 */
-	public synchronized String getString(int parameterIndex)
+	public String getString(int parameterIndex)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		String retValue = rs
-				.getString(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			String retValue = rs
+					.getString(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getString(java.lang.String)
 	 */
-	public synchronized String getString(String parameterName)
+	public String getString(String parameterName)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		String retValue = rs.getString(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			String retValue = rs.getString(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getTime(int)
 	 */
-	public synchronized Time getTime(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		Time retValue = rs
-				.getTime(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public Time getTime(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			Time retValue = rs
+					.getTime(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getTime(int, java.util.Calendar)
 	 */
-	public synchronized Time getTime(int parameterIndex, Calendar cal)
+	public Time getTime(int parameterIndex, Calendar cal)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		Time retValue = rs.getTime(
-				mapOutputParameterIndexToRsIndex(parameterIndex), cal);
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+			synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			Time retValue = rs.getTime(
+					mapOutputParameterIndexToRsIndex(parameterIndex), cal);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getTime(java.lang.String)
 	 */
-	public synchronized Time getTime(String parameterName) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Time retValue = rs.getTime(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public Time getTime(String parameterName) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Time retValue = rs.getTime(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getTime(java.lang.String,
 	 *      java.util.Calendar)
 	 */
-	public synchronized Time getTime(String parameterName, Calendar cal)
+	public Time getTime(String parameterName, Calendar cal)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Time retValue = rs.getTime(fixParameterName(parameterName), cal);
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Time retValue = rs.getTime(fixParameterName(parameterName), cal);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getTimestamp(int)
 	 */
-	public synchronized Timestamp getTimestamp(int parameterIndex)
+	public Timestamp getTimestamp(int parameterIndex)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		Timestamp retValue = rs
-				.getTimestamp(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			Timestamp retValue = rs
+					.getTimestamp(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getTimestamp(int, java.util.Calendar)
 	 */
-	public synchronized Timestamp getTimestamp(int parameterIndex, Calendar cal)
+	public Timestamp getTimestamp(int parameterIndex, Calendar cal)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		Timestamp retValue = rs.getTimestamp(
-				mapOutputParameterIndexToRsIndex(parameterIndex), cal);
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			Timestamp retValue = rs.getTimestamp(
+					mapOutputParameterIndexToRsIndex(parameterIndex), cal);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getTimestamp(java.lang.String)
 	 */
-	public synchronized Timestamp getTimestamp(String parameterName)
+	public Timestamp getTimestamp(String parameterName)
 			throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Timestamp retValue = rs.getTimestamp(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Timestamp retValue = rs.getTimestamp(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getTimestamp(java.lang.String,
 	 *      java.util.Calendar)
 	 */
-	public synchronized Timestamp getTimestamp(String parameterName,
+	public Timestamp getTimestamp(String parameterName,
 			Calendar cal) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		Timestamp retValue = rs.getTimestamp(fixParameterName(parameterName),
-				cal);
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			Timestamp retValue = rs.getTimestamp(fixParameterName(parameterName),
+					cal);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getURL(int)
 	 */
-	public synchronized URL getURL(int parameterIndex) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
-
-		URL retValue = rs
-				.getURL(mapOutputParameterIndexToRsIndex(parameterIndex));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public URL getURL(int parameterIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			URL retValue = rs
+					.getURL(mapOutputParameterIndexToRsIndex(parameterIndex));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
 	/**
 	 * @see java.sql.CallableStatement#getURL(java.lang.String)
 	 */
-	public synchronized URL getURL(String parameterName) throws SQLException {
-		ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
-		// from ?=
-
-		URL retValue = rs.getURL(fixParameterName(parameterName));
-
-		this.outputParamWasNull = rs.wasNull();
-
-		return retValue;
+	public URL getURL(String parameterName) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			URL retValue = rs.getURL(fixParameterName(parameterName));
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
 	}
 
-	protected synchronized int mapOutputParameterIndexToRsIndex(int paramIndex)
+	protected int mapOutputParameterIndexToRsIndex(int paramIndex)
 			throws SQLException {
 
-		if (this.returnValueParam != null && paramIndex == 1) {
-			return 1;
+		synchronized (checkClosed()) {
+			if (this.returnValueParam != null && paramIndex == 1) {
+				return 1;
+			}
+	
+			checkParameterIndexBounds(paramIndex);
+	
+			int localParamIndex = paramIndex - 1;
+	
+			if (this.placeholderToParameterIndexMap != null) {
+				localParamIndex = this.placeholderToParameterIndexMap[localParamIndex];
+			}
+	
+			int rsIndex = this.parameterIndexToRsIndex[localParamIndex];
+	
+			if (rsIndex == NOT_OUTPUT_PARAMETER_INDICATOR) {
+				throw SQLError.createSQLException(
+						Messages.getString("CallableStatement.21") + paramIndex //$NON-NLS-1$
+								+ Messages.getString("CallableStatement.22"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+	
+			return rsIndex + 1;
 		}
-
-		checkParameterIndexBounds(paramIndex);
-
-		int localParamIndex = paramIndex - 1;
-
-		if (this.placeholderToParameterIndexMap != null) {
-			localParamIndex = this.placeholderToParameterIndexMap[localParamIndex];
-		}
-
-		int rsIndex = this.parameterIndexToRsIndex[localParamIndex];
-
-		if (rsIndex == NOT_OUTPUT_PARAMETER_INDICATOR) {
-			throw SQLError.createSQLException(
-					Messages.getString("CallableStatement.21") + paramIndex //$NON-NLS-1$
-							+ Messages.getString("CallableStatement.22"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-
-		return rsIndex + 1;
 	}
 
 	/**
@@ -1904,9 +2009,11 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#registerOutParameter(java.lang.String,
 	 *      int)
 	 */
-	public synchronized void registerOutParameter(String parameterName,
+	public void registerOutParameter(String parameterName,
 			int sqlType) throws SQLException {
-		registerOutParameter(getNamedParamIndex(parameterName, true), sqlType);
+		synchronized (checkClosed()) {
+			registerOutParameter(getNamedParamIndex(parameterName, true), sqlType);
+		}
 	}
 
 	/**
@@ -1934,80 +2041,82 @@ public class CallableStatement extends PreparedStatement implements
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	private synchronized void retrieveOutParams() throws SQLException {
-		int numParameters = this.paramInfo.numberOfParameters();
-
-		this.parameterIndexToRsIndex = new int[numParameters];
-
-		for (int i = 0; i < numParameters; i++) {
-			this.parameterIndexToRsIndex[i] = NOT_OUTPUT_PARAMETER_INDICATOR;
-		}
-
-		int localParamIndex = 0;
-
-		if (numParameters > 0) {
-			StringBuffer outParameterQuery = new StringBuffer("SELECT "); //$NON-NLS-1$
-
-			boolean firstParam = true;
-			boolean hadOutputParams = false;
-
-			for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter
-					.hasNext();) {
-				CallableStatementParam retrParamInfo = paramIter
-						.next();
-
-				if (retrParamInfo.isOut) {
-					hadOutputParams = true;
-
-					this.parameterIndexToRsIndex[retrParamInfo.index] = localParamIndex++;
-
-					if ((retrParamInfo.paramName == null) && (hasParametersView())) {
-						retrParamInfo.paramName = "nullnp" + retrParamInfo.index;
-					}
-					
-					String outParameterName = mangleParameterName(retrParamInfo.paramName);
-
-					if (!firstParam) {
-						outParameterQuery.append(","); //$NON-NLS-1$
-					} else {
-						firstParam = false;
-					}
-
-					if (!outParameterName.startsWith("@")) { //$NON-NLS-1$
-						outParameterQuery.append('@');
-					}
-
-					outParameterQuery.append(outParameterName);
-				}
+	private void retrieveOutParams() throws SQLException {
+		synchronized (checkClosed()) {
+			int numParameters = this.paramInfo.numberOfParameters();
+	
+			this.parameterIndexToRsIndex = new int[numParameters];
+	
+			for (int i = 0; i < numParameters; i++) {
+				this.parameterIndexToRsIndex[i] = NOT_OUTPUT_PARAMETER_INDICATOR;
 			}
-
-			if (hadOutputParams) {
-				// We can't use 'ourself' to execute this query, or any
-				// pending result sets would be overwritten
-				java.sql.Statement outParameterStmt = null;
-				java.sql.ResultSet outParamRs = null;
-
-				try {
-					outParameterStmt = this.connection.createStatement();
-					outParamRs = outParameterStmt
-							.executeQuery(outParameterQuery.toString());
-					this.outputParameterResults = ((com.mysql.jdbc.ResultSetInternalMethods) outParamRs)
-							.copy();
-
-					if (!this.outputParameterResults.next()) {
-						this.outputParameterResults.close();
-						this.outputParameterResults = null;
+	
+			int localParamIndex = 0;
+	
+			if (numParameters > 0) {
+				StringBuffer outParameterQuery = new StringBuffer("SELECT "); //$NON-NLS-1$
+	
+				boolean firstParam = true;
+				boolean hadOutputParams = false;
+	
+				for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter
+						.hasNext();) {
+					CallableStatementParam retrParamInfo = paramIter
+							.next();
+	
+					if (retrParamInfo.isOut) {
+						hadOutputParams = true;
+	
+						this.parameterIndexToRsIndex[retrParamInfo.index] = localParamIndex++;
+	
+						if ((retrParamInfo.paramName == null) && (hasParametersView())) {
+							retrParamInfo.paramName = "nullnp" + retrParamInfo.index;
+						}
+						
+						String outParameterName = mangleParameterName(retrParamInfo.paramName);
+	
+						if (!firstParam) {
+							outParameterQuery.append(","); //$NON-NLS-1$
+						} else {
+							firstParam = false;
+						}
+	
+						if (!outParameterName.startsWith("@")) { //$NON-NLS-1$
+							outParameterQuery.append('@');
+						}
+	
+						outParameterQuery.append(outParameterName);
 					}
-				} finally {
-					if (outParameterStmt != null) {
-						outParameterStmt.close();
+				}
+	
+				if (hadOutputParams) {
+					// We can't use 'ourself' to execute this query, or any
+					// pending result sets would be overwritten
+					java.sql.Statement outParameterStmt = null;
+					java.sql.ResultSet outParamRs = null;
+	
+					try {
+						outParameterStmt = this.connection.createStatement();
+						outParamRs = outParameterStmt
+								.executeQuery(outParameterQuery.toString());
+						this.outputParameterResults = ((com.mysql.jdbc.ResultSetInternalMethods) outParamRs)
+								.copy();
+	
+						if (!this.outputParameterResults.next()) {
+							this.outputParameterResults.close();
+							this.outputParameterResults = null;
+						}
+					} finally {
+						if (outParameterStmt != null) {
+							outParameterStmt.close();
+						}
 					}
+				} else {
+					this.outputParameterResults = null;
 				}
 			} else {
 				this.outputParameterResults = null;
 			}
-		} else {
-			this.outputParameterResults = null;
 		}
 	}
 
@@ -2102,74 +2211,76 @@ public class CallableStatement extends PreparedStatement implements
 	/**
 	 * 
 	 */
-	private synchronized void setInOutParamsOnServer() throws SQLException {
-		if (this.paramInfo.numParameters > 0) {
-			for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter
-					.hasNext();) {
-
-				CallableStatementParam inParamInfo = paramIter
-						.next();
-
-				//Fix for 5.5+
-				if (inParamInfo.isOut && inParamInfo.isIn) {
-					if ((inParamInfo.paramName == null) && (hasParametersView())) {
-						inParamInfo.paramName = "nullnp" + inParamInfo.index;
-					};
-					
-					String inOutParameterName = mangleParameterName(inParamInfo.paramName);
-					StringBuffer queryBuf = new StringBuffer(
-							4 + inOutParameterName.length() + 1 + 1);
-					queryBuf.append("SET "); //$NON-NLS-1$
-					queryBuf.append(inOutParameterName);
-					queryBuf.append("=?"); //$NON-NLS-1$
-
-					PreparedStatement setPstmt = null;
-
-					try {
-						setPstmt = (PreparedStatement) this.connection
-								.clientPrepareStatement(queryBuf.toString());
-
-						byte[] parameterAsBytes = getBytesRepresentation(
-								inParamInfo.index);
-
-						if (parameterAsBytes != null) {
-							if (parameterAsBytes.length > 8
-									&& parameterAsBytes[0] == '_'
-									&& parameterAsBytes[1] == 'b'
-									&& parameterAsBytes[2] == 'i'
-									&& parameterAsBytes[3] == 'n'
-									&& parameterAsBytes[4] == 'a'
-									&& parameterAsBytes[5] == 'r'
-									&& parameterAsBytes[6] == 'y'
-									&& parameterAsBytes[7] == '\'') {
-								setPstmt.setBytesNoEscapeNoQuotes(1,
-										parameterAsBytes);
-							} else {
-								int sqlType = inParamInfo.desiredJdbcType;
-								
-								switch (sqlType) {
-								case Types.BIT:
-								case Types.BINARY: 
-								case Types.BLOB: 
-								case Types.JAVA_OBJECT:
-								case Types.LONGVARBINARY: 
-								case Types.VARBINARY:
-									setPstmt.setBytes(1, parameterAsBytes);
-									break;
-								default:
-									// the inherited PreparedStatement methods
-									// have already escaped and quoted these parameters
-									setPstmt.setBytesNoEscape(1, parameterAsBytes);
+	private void setInOutParamsOnServer() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.paramInfo.numParameters > 0) {
+				for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter
+						.hasNext();) {
+	
+					CallableStatementParam inParamInfo = paramIter
+							.next();
+	
+					//Fix for 5.5+
+					if (inParamInfo.isOut && inParamInfo.isIn) {
+						if ((inParamInfo.paramName == null) && (hasParametersView())) {
+							inParamInfo.paramName = "nullnp" + inParamInfo.index;
+						};
+						
+						String inOutParameterName = mangleParameterName(inParamInfo.paramName);
+						StringBuffer queryBuf = new StringBuffer(
+								4 + inOutParameterName.length() + 1 + 1);
+						queryBuf.append("SET "); //$NON-NLS-1$
+						queryBuf.append(inOutParameterName);
+						queryBuf.append("=?"); //$NON-NLS-1$
+	
+						PreparedStatement setPstmt = null;
+	
+						try {
+							setPstmt = (PreparedStatement) this.connection
+									.clientPrepareStatement(queryBuf.toString());
+	
+							byte[] parameterAsBytes = getBytesRepresentation(
+									inParamInfo.index);
+	
+							if (parameterAsBytes != null) {
+								if (parameterAsBytes.length > 8
+										&& parameterAsBytes[0] == '_'
+										&& parameterAsBytes[1] == 'b'
+										&& parameterAsBytes[2] == 'i'
+										&& parameterAsBytes[3] == 'n'
+										&& parameterAsBytes[4] == 'a'
+										&& parameterAsBytes[5] == 'r'
+										&& parameterAsBytes[6] == 'y'
+										&& parameterAsBytes[7] == '\'') {
+									setPstmt.setBytesNoEscapeNoQuotes(1,
+											parameterAsBytes);
+								} else {
+									int sqlType = inParamInfo.desiredJdbcType;
+									
+									switch (sqlType) {
+									case Types.BIT:
+									case Types.BINARY: 
+									case Types.BLOB: 
+									case Types.JAVA_OBJECT:
+									case Types.LONGVARBINARY: 
+									case Types.VARBINARY:
+										setPstmt.setBytes(1, parameterAsBytes);
+										break;
+									default:
+										// the inherited PreparedStatement methods
+										// have already escaped and quoted these parameters
+										setPstmt.setBytesNoEscape(1, parameterAsBytes);
+									}
 								}
+							} else {
+								setPstmt.setNull(1, Types.NULL);
 							}
-						} else {
-							setPstmt.setNull(1, Types.NULL);
-						}
-
-						setPstmt.executeUpdate();
-					} finally {
-						if (setPstmt != null) {
-							setPstmt.close();
+	
+							setPstmt.executeUpdate();
+						} finally {
+							if (setPstmt != null) {
+								setPstmt.close();
+							}
 						}
 					}
 				}
@@ -2232,48 +2343,50 @@ public class CallableStatement extends PreparedStatement implements
 			int scale) throws SQLException {
 	}
 
-	private synchronized void setOutParams() throws SQLException {
-		if (this.paramInfo.numParameters > 0) {
-			for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter
-					.hasNext();) {
-				CallableStatementParam outParamInfo = paramIter
-						.next();
-
-				if (!this.callingStoredFunction && outParamInfo.isOut) {
-
-					if ((outParamInfo.paramName == null) && (hasParametersView())) {
-						outParamInfo.paramName = "nullnp" + outParamInfo.index;
-					};
-
-					String outParameterName = mangleParameterName(outParamInfo.paramName);
-
-					int outParamIndex = 0;
-					
-					if (this.placeholderToParameterIndexMap == null) { 
-							outParamIndex = outParamInfo.index + 1;
-					} else {
-							// Find it, todo: remove this linear search
-							boolean found = false;
-							
-							for (int i = 0; i < this.placeholderToParameterIndexMap.length; i++) {
-								if (this.placeholderToParameterIndexMap[i] == outParamInfo.index) {
-									outParamIndex = i + 1; /* JDBC is 1-based */
-									found = true;
-									break;
+	private void setOutParams() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.paramInfo.numParameters > 0) {
+				for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter
+						.hasNext();) {
+					CallableStatementParam outParamInfo = paramIter
+							.next();
+	
+					if (!this.callingStoredFunction && outParamInfo.isOut) {
+	
+						if ((outParamInfo.paramName == null) && (hasParametersView())) {
+							outParamInfo.paramName = "nullnp" + outParamInfo.index;
+						};
+	
+						String outParameterName = mangleParameterName(outParamInfo.paramName);
+	
+						int outParamIndex = 0;
+						
+						if (this.placeholderToParameterIndexMap == null) { 
+								outParamIndex = outParamInfo.index + 1;
+						} else {
+								// Find it, todo: remove this linear search
+								boolean found = false;
+								
+								for (int i = 0; i < this.placeholderToParameterIndexMap.length; i++) {
+									if (this.placeholderToParameterIndexMap[i] == outParamInfo.index) {
+										outParamIndex = i + 1; /* JDBC is 1-based */
+										found = true;
+										break;
+									}
 								}
-							}
-							
-							if (!found) {
-								throw SQLError.createSQLException("boo!", "S1000", this.connection.getExceptionInterceptor());
-							}
+								
+								if (!found) {
+									throw SQLError.createSQLException("boo!", "S1000", this.connection.getExceptionInterceptor());
+								}
+						}
+						
+						this.setBytesNoEscapeNoQuotes(outParamIndex,
+								StringUtils.getBytes(outParameterName,
+										this.charConverter, this.charEncoding,
+										this.connection
+												.getServerCharacterEncoding(),
+										this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
 					}
-					
-					this.setBytesNoEscapeNoQuotes(outParamIndex,
-							StringUtils.getBytes(outParameterName,
-									this.charConverter, this.charEncoding,
-									this.connection
-											.getServerCharacterEncoding(),
-									this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
 				}
 			}
 		}
@@ -2338,8 +2451,10 @@ public class CallableStatement extends PreparedStatement implements
 	/**
 	 * @see java.sql.CallableStatement#wasNull()
 	 */
-	public synchronized boolean wasNull() throws SQLException {
-		return this.outputParamWasNull;
+	public boolean wasNull() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.outputParamWasNull;
+		}
 	}
 
 	public int[] executeBatch() throws SQLException {
@@ -2435,12 +2550,12 @@ public class CallableStatement extends PreparedStatement implements
 	 * @return true if procedure does not alter data
 	 * @throws SQLException
 	 */
-	private synchronized boolean checkReadOnlyProcedure() throws SQLException {
-		if (this.connection.getNoAccessToProcedureBodies()) {
-			return false;
-		}
+	private boolean checkReadOnlyProcedure() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.connection.getNoAccessToProcedureBodies()) {
+				return false;
+			}
 
-		synchronized (this.paramInfo) {
 			if (this.paramInfo.isReadOnlySafeChecked) {
 				return this.paramInfo.isReadOnlySafeProcedure;
 			}
@@ -2508,19 +2623,18 @@ public class CallableStatement extends PreparedStatement implements
 		return (super.checkReadOnlySafeStatement() || this.checkReadOnlyProcedure());
 	}
 	
-	private synchronized boolean hasParametersView() throws SQLException {
-		try {
-			if (this.connection.versionMeetsMinimum(5, 5, 0)) {
-				java.sql.DatabaseMetaData dbmd1 = new DatabaseMetaDataUsingInfoSchema(this.connection, this.connection.getCatalog());
-				return ((DatabaseMetaDataUsingInfoSchema)dbmd1).gethasParametersView();
+	private boolean hasParametersView() throws SQLException {
+		synchronized (checkClosed()) {
+			try {
+				if (this.connection.versionMeetsMinimum(5, 5, 0)) {
+					java.sql.DatabaseMetaData dbmd1 = new DatabaseMetaDataUsingInfoSchema(this.connection, this.connection.getCatalog());
+					return ((DatabaseMetaDataUsingInfoSchema)dbmd1).gethasParametersView();
+				}
+					
+				return false;
+			} catch (SQLException e) {
+				return false;
 			}
-				
-			return false;
-		} catch (SQLException e) {
-			return false;
 		}
 	}
-
-
-   
 }

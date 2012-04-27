@@ -205,8 +205,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	protected boolean[] columnUsed = null;
 
 	/** The Connection instance that created us */
-	protected MySQLConnection connection; // The connection that
-				   					     // created us
+	protected volatile MySQLConnection connection; // The connection that
+				   					               // created us
 
 	protected long connectionId = 0;
 	
@@ -504,44 +504,46 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		setRowPositionValidity();
 	}
 
-	public synchronized void initializeWithMetadata() throws SQLException {
-		this.rowData.setMetadata(this.fields);
-		
-		this.columnToIndexCache = new HashMap<String, Integer>();
-		
-		if (this.profileSql || this.connection.getUseUsageAdvisor()) {
-			this.columnUsed = new boolean[this.fields.length];
-			this.pointOfOrigin = new Throwable();
-			this.resultId = resultCounter++;
-			this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
-			this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
-		}
-
-		if (this.connection.getGatherPerformanceMetrics()) {
-			this.connection.incrementNumberOfResultSetsCreated();
-
-			Set<String> tableNamesSet = new HashSet<String>();
-
-			for (int i = 0; i < this.fields.length; i++) {
-				Field f = this.fields[i];
-
-				String tableName = f.getOriginalTableName();
-
-				if (tableName == null) {
-					tableName = f.getTableName();
-				}
-
-				if (tableName != null) {
-					if (this.connection.lowerCaseTableNames()) {
-						tableName = tableName.toLowerCase(); // on windows, table
-						// names are not case-sens.
-					}
-
-					tableNamesSet.add(tableName);
-				}
+	public void initializeWithMetadata() throws SQLException {
+		synchronized (checkClosed()) {
+			this.rowData.setMetadata(this.fields);
+			
+			this.columnToIndexCache = new HashMap<String, Integer>();
+			
+			if (this.profileSql || this.connection.getUseUsageAdvisor()) {
+				this.columnUsed = new boolean[this.fields.length];
+				this.pointOfOrigin = new Throwable();
+				this.resultId = resultCounter++;
+				this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
+				this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);
 			}
-
-			this.connection.reportNumberOfTablesAccessed(tableNamesSet.size());
+	
+			if (this.connection.getGatherPerformanceMetrics()) {
+				this.connection.incrementNumberOfResultSetsCreated();
+	
+				Set<String> tableNamesSet = new HashSet<String>();
+	
+				for (int i = 0; i < this.fields.length; i++) {
+					Field f = this.fields[i];
+	
+					String tableName = f.getOriginalTableName();
+	
+					if (tableName == null) {
+						tableName = f.getTableName();
+					}
+	
+					if (tableName != null) {
+						if (this.connection.lowerCaseTableNames()) {
+							tableName = tableName.toLowerCase(); // on windows, table
+							// names are not case-sens.
+						}
+	
+						tableNamesSet.add(tableName);
+					}
+				}
+	
+				this.connection.reportNumberOfTablesAccessed(tableNamesSet.size());
+			}
 		}
 	}
 
@@ -590,63 +592,64 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or row is 0, or result
 	 *                set type is TYPE_FORWARD_ONLY.
 	 */
-	public synchronized boolean absolute(int row) throws SQLException {
-		checkClosed();
-
-		boolean b;
-
-		if (this.rowData.size() == 0) {
-			b = false;
-		} else {
-			if (row == 0) {
-				throw SQLError.createSQLException(
-						Messages
-								.getString("ResultSet.Cannot_absolute_position_to_row_0_110"), //$NON-NLS-1$
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-			}
-
-			if (this.onInsertRow) {
-				this.onInsertRow = false;
-			}
-
-			if (this.doingUpdates) {
-				this.doingUpdates = false;
-			}
-
-			if (this.thisRow != null) {
-				this.thisRow.closeOpenStreams();
-			}
-			
-			if (row == 1) {
-				b = first();
-			} else if (row == -1) {
-				b = last();
-			} else if (row > this.rowData.size()) {
-				afterLast();
+	public boolean absolute(int row) throws SQLException {
+		synchronized (checkClosed()) {
+	
+			boolean b;
+	
+			if (this.rowData.size() == 0) {
 				b = false;
 			} else {
-				if (row < 0) {
-					// adjust to reflect after end of result set
-					int newRowPosition = this.rowData.size() + row + 1;
-
-					if (newRowPosition <= 0) {
-						beforeFirst();
-						b = false;
-					} else {
-						b = absolute(newRowPosition);
-					}
+				if (row == 0) {
+					throw SQLError.createSQLException(
+							Messages
+									.getString("ResultSet.Cannot_absolute_position_to_row_0_110"), //$NON-NLS-1$
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+				}
+	
+				if (this.onInsertRow) {
+					this.onInsertRow = false;
+				}
+	
+				if (this.doingUpdates) {
+					this.doingUpdates = false;
+				}
+	
+				if (this.thisRow != null) {
+					this.thisRow.closeOpenStreams();
+				}
+				
+				if (row == 1) {
+					b = first();
+				} else if (row == -1) {
+					b = last();
+				} else if (row > this.rowData.size()) {
+					afterLast();
+					b = false;
 				} else {
-					row--; // adjust for index difference
-					this.rowData.setCurrentRow(row);
-					this.thisRow = this.rowData.getAt(row);
-					b = true;
+					if (row < 0) {
+						// adjust to reflect after end of result set
+						int newRowPosition = this.rowData.size() + row + 1;
+	
+						if (newRowPosition <= 0) {
+							beforeFirst();
+							b = false;
+						} else {
+							b = absolute(newRowPosition);
+						}
+					} else {
+						row--; // adjust for index difference
+						this.rowData.setCurrentRow(row);
+						this.thisRow = this.rowData.getAt(row);
+						b = true;
+					}
 				}
 			}
+	
+			setRowPositionValidity();
+			
+			return b;
 		}
-
-		setRowPositionValidity();
-		
-		return b;
 	}
 
 	/**
@@ -661,27 +664,28 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY.
 	 */
-	public synchronized void afterLast() throws SQLException {
-		checkClosed();
+	public void afterLast() throws SQLException {
+		synchronized (checkClosed()) {
 
-		if (this.onInsertRow) {
-			this.onInsertRow = false;
+			if (this.onInsertRow) {
+				this.onInsertRow = false;
+			}
+	
+			if (this.doingUpdates) {
+				this.doingUpdates = false;
+			}
+	
+			if (this.thisRow != null) {
+				this.thisRow.closeOpenStreams();
+			}
+			
+			if (this.rowData.size() != 0) {
+				this.rowData.afterLast();
+				this.thisRow = null;
+			}
+			
+			setRowPositionValidity();
 		}
-
-		if (this.doingUpdates) {
-			this.doingUpdates = false;
-		}
-
-		if (this.thisRow != null) {
-			this.thisRow.closeOpenStreams();
-		}
-		
-		if (this.rowData.size() != 0) {
-			this.rowData.afterLast();
-			this.thisRow = null;
-		}
-		
-		setRowPositionValidity();
 	}
 
 	/**
@@ -696,29 +700,30 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY
 	 */
-	public synchronized void beforeFirst() throws SQLException {
-		checkClosed();
+	public void beforeFirst() throws SQLException {
+		synchronized (checkClosed()) {
 
-		if (this.onInsertRow) {
-			this.onInsertRow = false;
+			if (this.onInsertRow) {
+				this.onInsertRow = false;
+			}
+	
+			if (this.doingUpdates) {
+				this.doingUpdates = false;
+			}
+	
+			if (this.rowData.size() == 0) {
+				return;
+			}
+	
+			if (this.thisRow != null) {
+				this.thisRow.closeOpenStreams();
+			}
+			
+			this.rowData.beforeFirst();
+			this.thisRow = null;
+			
+			setRowPositionValidity();
 		}
-
-		if (this.doingUpdates) {
-			this.doingUpdates = false;
-		}
-
-		if (this.rowData.size() == 0) {
-			return;
-		}
-
-		if (this.thisRow != null) {
-			this.thisRow.closeOpenStreams();
-		}
-		
-		this.rowData.beforeFirst();
-		this.thisRow = null;
-		
-		setRowPositionValidity();
 	}
 
 	// ---------------------------------------------------------------------
@@ -791,13 +796,17 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @throws SQLException
 	 *             if the result set is closed
 	 */
-	protected final void checkClosed() throws SQLException {
-		if (this.isClosed) {
+	protected final MySQLConnection checkClosed() throws SQLException {
+		MySQLConnection c = this.connection;
+		
+		if (c == null) {
 			throw SQLError.createSQLException(
 					Messages
 							.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"), //$NON-NLS-1$
 					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
+		
+		return c;
 	}
 
 	/**
@@ -809,23 +818,25 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @throws SQLException
 	 *             if the index is out of bounds
 	 */
-	protected synchronized final void checkColumnBounds(int columnIndex) throws SQLException {
-		if ((columnIndex < 1)) {
-			throw SQLError.createSQLException(Messages.getString(
-					"ResultSet.Column_Index_out_of_range_low", new Object[] {
-							Integer.valueOf(columnIndex),
-							Integer.valueOf(this.fields.length) }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
-		} else if ((columnIndex > this.fields.length)) {
-			throw SQLError.createSQLException(Messages.getString(
-					"ResultSet.Column_Index_out_of_range_high", new Object[] {
-							Integer.valueOf(columnIndex),
-							Integer.valueOf(this.fields.length) }),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
-		}
-
-		if (this.profileSql || this.useUsageAdvisor) {
-			this.columnUsed[columnIndex - 1] = true;
+	protected final void checkColumnBounds(int columnIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			if ((columnIndex < 1)) {
+				throw SQLError.createSQLException(Messages.getString(
+						"ResultSet.Column_Index_out_of_range_low", new Object[] {
+								Integer.valueOf(columnIndex),
+								Integer.valueOf(this.fields.length) }),
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+			} else if ((columnIndex > this.fields.length)) {
+				throw SQLError.createSQLException(Messages.getString(
+						"ResultSet.Column_Index_out_of_range_high", new Object[] {
+								Integer.valueOf(columnIndex),
+								Integer.valueOf(this.fields.length) }),
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+			}
+	
+			if (this.profileSql || this.useUsageAdvisor) {
+				this.columnUsed[columnIndex - 1] = true;
+			}
 		}
 	}
 
@@ -884,8 +895,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized void clearWarnings() throws SQLException {
-		this.warningChain = null;
+	public void clearWarnings() throws SQLException {
+		synchronized (checkClosed()) {
+			this.warningChain = null;
+		}
 	}
 
 	/**
@@ -935,11 +948,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	//
 	// Note, row data is linked between these two result sets
 	//
-	public synchronized ResultSetInternalMethods copy() throws SQLException {
-		ResultSetInternalMethods rs = ResultSetImpl.getInstance(this.catalog, this.fields, this.rowData,
-				this.connection, this.owningStatement, false); // note, doesn't work for updatable result sets
-
-		return rs;
+	public ResultSetInternalMethods copy() throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = ResultSetImpl.getInstance(this.catalog, this.fields, this.rowData,
+					this.connection, this.owningStatement, false); // note, doesn't work for updatable result sets
+	
+			return rs;
+		}
 	}
 
 	public void redefineFieldsForDBMD(Field[] f) {
@@ -1008,57 +1023,63 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return this.thisRow.getString(columnIndex - 1, encoding, this.connection);
 	}
 
-	protected synchronized Date fastDateCreate(Calendar cal, int year, int month,
-			int day) {
-		if (this.useLegacyDatetimeCode) {
-			return TimeUtil.fastDateCreate(year, month, day, cal);
+	protected  Date fastDateCreate(Calendar cal, int year, int month,
+			int day) throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.useLegacyDatetimeCode) {
+				return TimeUtil.fastDateCreate(year, month, day, cal);
+			}
+			
+			if (cal == null) {
+				createCalendarIfNeeded();
+				cal = this.fastDateCal;
+			}
+	
+			boolean useGmtMillis = this.connection.getUseGmtMillisForDatetimes();
+			
+			return TimeUtil.fastDateCreate(useGmtMillis,
+					useGmtMillis ? getGmtCalendar() : cal,
+					cal, year, month, day);
 		}
-		
-		if (cal == null) {
-			createCalendarIfNeeded();
-			cal = this.fastDateCal;
-		}
-
-		boolean useGmtMillis = this.connection.getUseGmtMillisForDatetimes();
-		
-		return TimeUtil.fastDateCreate(useGmtMillis,
-				useGmtMillis ? getGmtCalendar() : cal,
-				cal, year, month, day);
 	}
 
-	protected synchronized Time fastTimeCreate(Calendar cal, int hour,
+	protected Time fastTimeCreate(Calendar cal, int hour,
 			int minute, int second) throws SQLException {
-		if (!this.useLegacyDatetimeCode) {
-			return TimeUtil.fastTimeCreate(hour, minute, second, cal, getExceptionInterceptor());
+		synchronized (checkClosed()) {
+			if (!this.useLegacyDatetimeCode) {
+				return TimeUtil.fastTimeCreate(hour, minute, second, cal, getExceptionInterceptor());
+			}
+			
+			if (cal == null) {
+				createCalendarIfNeeded();
+				cal = this.fastDateCal;
+			}
+	
+			return TimeUtil.fastTimeCreate(cal, hour, minute, second, getExceptionInterceptor());
 		}
-		
-		if (cal == null) {
-			createCalendarIfNeeded();
-			cal = this.fastDateCal;
-		}
-
-		return TimeUtil.fastTimeCreate(cal, hour, minute, second, getExceptionInterceptor());
 	}
 
-	protected synchronized Timestamp fastTimestampCreate(Calendar cal, int year,
+	protected Timestamp fastTimestampCreate(Calendar cal, int year,
 			int month, int day, int hour, int minute, int seconds,
-			int secondsPart) {
-		if (!this.useLegacyDatetimeCode) {
-			return TimeUtil.fastTimestampCreate(cal.getTimeZone(), year, month, day, hour,
+			int secondsPart) throws SQLException {
+		synchronized (checkClosed()) {
+			if (!this.useLegacyDatetimeCode) {
+				return TimeUtil.fastTimestampCreate(cal.getTimeZone(), year, month, day, hour,
+						minute, seconds, secondsPart);
+			}
+			
+			if (cal == null) {
+				createCalendarIfNeeded();
+				cal = this.fastDateCal;
+			}
+	
+			boolean useGmtMillis = this.connection.getUseGmtMillisForDatetimes();
+			
+			return TimeUtil.fastTimestampCreate(useGmtMillis,
+					useGmtMillis ? getGmtCalendar() : null,
+					cal, year, month, day, hour,
 					minute, seconds, secondsPart);
 		}
-		
-		if (cal == null) {
-			createCalendarIfNeeded();
-			cal = this.fastDateCal;
-		}
-
-		boolean useGmtMillis = this.connection.getUseGmtMillisForDatetimes();
-		
-		return TimeUtil.fastTimestampCreate(useGmtMillis,
-				useGmtMillis ? getGmtCalendar() : null,
-				cal, year, month, day, hour,
-				minute, seconds, secondsPart);
 	}
 
 	/*
@@ -1101,52 +1122,52 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *            
 	 * @return the column index of the given column name
 	 */
-	public synchronized int findColumn(String columnName) throws SQLException {
-		Integer index;
-
-		checkClosed();
-		
-		if (!this.hasBuiltIndexMapping) {
-			buildIndexMapping();
-		}
-
-		index = this.columnToIndexCache.get(columnName);
-
-		if (index != null) {
-			return index.intValue() + 1;
-		}
-
-		index = this.columnLabelToIndex.get(columnName);
-
-		if (index == null && this.useColumnNamesInFindColumn) {
-			index = this.columnNameToIndex.get(columnName);
-		}
-		
-		if (index == null) {
-			index = this.fullColumnNameToIndex.get(columnName);
-		}
-		
-		if (index != null) {
-			this.columnToIndexCache.put(columnName, index);
-			
-			return index.intValue() + 1;
-		}
-
-		// Try this inefficient way, now
-
-		for (int i = 0; i < this.fields.length; i++) {
-			if (this.fields[i].getName().equalsIgnoreCase(columnName)) {
-				return i + 1;
-			} else if (this.fields[i].getFullName()
-					.equalsIgnoreCase(columnName)) {
-				return i + 1;
+	public int findColumn(String columnName) throws SQLException {
+		synchronized (checkClosed()) {
+			Integer index;
+	
+			if (!this.hasBuiltIndexMapping) {
+				buildIndexMapping();
 			}
+	
+			index = this.columnToIndexCache.get(columnName);
+	
+			if (index != null) {
+				return index.intValue() + 1;
+			}
+	
+			index = this.columnLabelToIndex.get(columnName);
+	
+			if (index == null && this.useColumnNamesInFindColumn) {
+				index = this.columnNameToIndex.get(columnName);
+			}
+			
+			if (index == null) {
+				index = this.fullColumnNameToIndex.get(columnName);
+			}
+			
+			if (index != null) {
+				this.columnToIndexCache.put(columnName, index);
+				
+				return index.intValue() + 1;
+			}
+	
+			// Try this inefficient way, now
+	
+			for (int i = 0; i < this.fields.length; i++) {
+				if (this.fields[i].getName().equalsIgnoreCase(columnName)) {
+					return i + 1;
+				} else if (this.fields[i].getFullName()
+						.equalsIgnoreCase(columnName)) {
+					return i + 1;
+				}
+			}
+	
+			throw SQLError.createSQLException(Messages.getString("ResultSet.Column____112")
+					+ columnName
+					+ Messages.getString("ResultSet.___not_found._113"), //$NON-NLS-1$ //$NON-NLS-2$
+					SQLError.SQL_STATE_COLUMN_NOT_FOUND, getExceptionInterceptor());
 		}
-
-		throw SQLError.createSQLException(Messages.getString("ResultSet.Column____112")
-				+ columnName
-				+ Messages.getString("ResultSet.___not_found._113"), //$NON-NLS-1$ //$NON-NLS-2$
-				SQLError.SQL_STATE_COLUMN_NOT_FOUND, getExceptionInterceptor());
 	}
 
 	/**
@@ -1162,30 +1183,31 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY.
 	 */
-	public synchronized boolean first() throws SQLException {
-		checkClosed();
-
-		boolean b = true;
+	public boolean first() throws SQLException {
+		synchronized (checkClosed()) {
+	
+			boolean b = true;
+			
+			if (this.rowData.isEmpty()) {
+				b = false;
+			} else {
 		
-		if (this.rowData.isEmpty()) {
-			b = false;
-		} else {
-	
-			if (this.onInsertRow) {
-				this.onInsertRow = false;
+				if (this.onInsertRow) {
+					this.onInsertRow = false;
+				}
+		
+				if (this.doingUpdates) {
+					this.doingUpdates = false;
+				}
+		
+				this.rowData.beforeFirst();
+				this.thisRow = this.rowData.next();
 			}
 	
-			if (this.doingUpdates) {
-				this.doingUpdates = false;
-			}
-	
-			this.rowData.beforeFirst();
-			this.thisRow = this.rowData.next();
+			setRowPositionValidity();
+			
+			return b;
 		}
-
-		setRowPositionValidity();
-		
-		return b;
 	}
 
 	/**
@@ -1971,13 +1993,15 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * Optimization to only use one calendar per-session, or calculate it for
 	 * each call, depending on user configuration
 	 */
-	protected Calendar getCalendarInstanceForSessionOrNew() {
-		if (this.connection != null) {
-			return this.connection.getCalendarInstanceForSessionOrNew();
+	protected Calendar getCalendarInstanceForSessionOrNew() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.connection != null) {
+				return this.connection.getCalendarInstanceForSessionOrNew();
+			}
+			
+			// punt, no connection around
+			return new GregorianCalendar();
 		}
-		
-		// punt, no connection around
-		return new GregorianCalendar();
 	}
 
 	/**
@@ -2537,8 +2561,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
-	public synchronized int getFetchDirection() throws SQLException {
-		return this.fetchDirection;
+	public int getFetchDirection() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.fetchDirection;
+		}
 	}
 
 	/**
@@ -2549,8 +2575,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
-	public synchronized int getFetchSize() throws SQLException {
-		return this.fetchSize;
+	public int getFetchSize() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.fetchSize;
+		}
 	}
 
 	/**
@@ -2559,8 +2587,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * 
 	 * @return the first character of the query...uppercased
 	 */
-	public synchronized char getFirstCharOfQuery() {
-		return this.firstCharOfQuery;
+	public char getFirstCharOfQuery() {
+		try {
+			synchronized (checkClosed()) {
+				return this.firstCharOfQuery;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // FIXME: Need to evolve interface
+		}
 	}
 
 	/**
@@ -3592,300 +3626,301 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return getClobFromString(stringVal);
 	}
 
-	private synchronized String getNativeConvertToString(int columnIndex, 
+	private String getNativeConvertToString(int columnIndex, 
 			Field field)
 			throws SQLException {
-
-		
-		int sqlType = field.getSQLType();
-		int mysqlType = field.getMysqlType();
-
-		switch (sqlType) {
-		case Types.BIT:
-			return String.valueOf(getNumericRepresentationOfSQLBitType(columnIndex));
-		case Types.BOOLEAN:
-			boolean booleanVal = getBoolean(columnIndex);
-
-			if (this.wasNullFlag) {
-				return null;
-			}
-
-			return String.valueOf(booleanVal);
-
-		case Types.TINYINT:
-			byte tinyintVal = getNativeByte(columnIndex, false);
-
-			if (this.wasNullFlag) {
-				return null;
-			}
-
-			if (!field.isUnsigned() || tinyintVal >= 0) {
-				return String.valueOf(tinyintVal);
-			}
-
-			short unsignedTinyVal = (short) (tinyintVal & 0xff);
-
-			return String.valueOf(unsignedTinyVal);
-
-		case Types.SMALLINT:
-
-			int intVal = getNativeInt(columnIndex, false);
-
-			if (this.wasNullFlag) {
-				return null;
-			}
-
-			if (!field.isUnsigned() || intVal >= 0) {
-				return String.valueOf(intVal);
-			}
-
-			intVal = intVal & 0xffff;
-
-			return String.valueOf(intVal);
-
-		case Types.INTEGER:
-			intVal = getNativeInt(columnIndex, false);
-
-			if (this.wasNullFlag) {
-				return null;
-			}
-
-			if (!field.isUnsigned() || intVal >= 0
-					|| field.getMysqlType() == MysqlDefs.FIELD_TYPE_INT24) {
-
-				return String.valueOf(intVal);
-			}
-
-			long longVal = intVal & 0xffffffffL;
-
-			return String.valueOf(longVal);
-
-		case Types.BIGINT:
-
-			if (!field.isUnsigned()) {
-				longVal = getNativeLong(columnIndex, false, true);
-
+		synchronized (checkClosed()) {
+			
+			int sqlType = field.getSQLType();
+			int mysqlType = field.getMysqlType();
+	
+			switch (sqlType) {
+			case Types.BIT:
+				return String.valueOf(getNumericRepresentationOfSQLBitType(columnIndex));
+			case Types.BOOLEAN:
+				boolean booleanVal = getBoolean(columnIndex);
+	
 				if (this.wasNullFlag) {
 					return null;
 				}
-
+	
+				return String.valueOf(booleanVal);
+	
+			case Types.TINYINT:
+				byte tinyintVal = getNativeByte(columnIndex, false);
+	
+				if (this.wasNullFlag) {
+					return null;
+				}
+	
+				if (!field.isUnsigned() || tinyintVal >= 0) {
+					return String.valueOf(tinyintVal);
+				}
+	
+				short unsignedTinyVal = (short) (tinyintVal & 0xff);
+	
+				return String.valueOf(unsignedTinyVal);
+	
+			case Types.SMALLINT:
+	
+				int intVal = getNativeInt(columnIndex, false);
+	
+				if (this.wasNullFlag) {
+					return null;
+				}
+	
+				if (!field.isUnsigned() || intVal >= 0) {
+					return String.valueOf(intVal);
+				}
+	
+				intVal = intVal & 0xffff;
+	
+				return String.valueOf(intVal);
+	
+			case Types.INTEGER:
+				intVal = getNativeInt(columnIndex, false);
+	
+				if (this.wasNullFlag) {
+					return null;
+				}
+	
+				if (!field.isUnsigned() || intVal >= 0
+						|| field.getMysqlType() == MysqlDefs.FIELD_TYPE_INT24) {
+	
+					return String.valueOf(intVal);
+				}
+	
+				long longVal = intVal & 0xffffffffL;
+	
 				return String.valueOf(longVal);
-			}
-
-			longVal = getNativeLong(columnIndex, false, false);
-
-			if (this.wasNullFlag) {
-				return null;
-			}
-
-			return String.valueOf(convertLongToUlong(longVal));
-		case Types.REAL:
-			float floatVal = getNativeFloat(columnIndex);
-
-			if (this.wasNullFlag) {
-				return null;
-			}
-
-			return String.valueOf(floatVal);
-
-		case Types.FLOAT:
-		case Types.DOUBLE:
-			double doubleVal = getNativeDouble(columnIndex);
-
-			if (this.wasNullFlag) {
-				return null;
-			}
-
-			return String.valueOf(doubleVal);
-
-		case Types.DECIMAL:
-		case Types.NUMERIC:
-			String stringVal = StringUtils
-					.toAsciiString(this.thisRow.getColumnValue(columnIndex - 1));
-
-			BigDecimal val;
-
-			if (stringVal != null) {
-				this.wasNullFlag = false;
-				
-				if (stringVal.length() == 0) {
-					val = new BigDecimal(0);
-
-					return val.toString();
-				}
-
-				try {
-					val = new BigDecimal(stringVal);
-				} catch (NumberFormatException ex) {
-					throw SQLError.createSQLException(
-							Messages
-									.getString("ResultSet.Bad_format_for_BigDecimal", 
-											new Object[] {stringVal, Integer.valueOf(columnIndex)}),
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-				}
-
-				return val.toString();
-			}
-
-			this.wasNullFlag = true;
-			
-			return null;
-
-		case Types.CHAR:
-		case Types.VARCHAR:
-		case Types.LONGVARCHAR:
-
-			return extractStringFromNativeColumn(columnIndex, mysqlType);
-		case Types.BINARY:
-		case Types.VARBINARY:
-		case Types.LONGVARBINARY:
-
-			if (!field.isBlob()) {
-				return extractStringFromNativeColumn(columnIndex, mysqlType);
-			} else if (!field.isBinary()) {
-				return extractStringFromNativeColumn(columnIndex, mysqlType);
-			} else {
-				byte[] data = getBytes(columnIndex);
-				Object obj = data;
-
-				if ((data != null) && (data.length >= 2)) {
-					if ((data[0] == -84) && (data[1] == -19)) {
-						// Serialized object?
-						try {
-							ByteArrayInputStream bytesIn = new ByteArrayInputStream(
-									data);
-							ObjectInputStream objIn = new ObjectInputStream(
-									bytesIn);
-							obj = objIn.readObject();
-							objIn.close();
-							bytesIn.close();
-						} catch (ClassNotFoundException cnfe) {
-							throw SQLError.createSQLException(
-									Messages
-											.getString("ResultSet.Class_not_found___91") //$NON-NLS-1$
-											+ cnfe.toString()
-											+ Messages
-													.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor()); //$NON-NLS-1$
-						} catch (IOException ex) {
-							obj = data; // not serialized?
-						}
-					}
-
-					return obj.toString();
-				}
-
-				return extractStringFromNativeColumn(columnIndex, mysqlType);
-			}
-
-		case Types.DATE:
-
-			// The YEAR datatype needs to be handled differently here.
-			if (mysqlType == MysqlDefs.FIELD_TYPE_YEAR) {
-				short shortVal = getNativeShort(columnIndex);
-
-				if (!this.connection.getYearIsDateType()) {
-
+	
+			case Types.BIGINT:
+	
+				if (!field.isUnsigned()) {
+					longVal = getNativeLong(columnIndex, false, true);
+	
 					if (this.wasNullFlag) {
 						return null;
 					}
-
-					return String.valueOf(shortVal);
+	
+					return String.valueOf(longVal);
 				}
-
-				if (field.getLength() == 2) {
-
-					if (shortVal <= 69) {
-						shortVal = (short) (shortVal + 100);
+	
+				longVal = getNativeLong(columnIndex, false, false);
+	
+				if (this.wasNullFlag) {
+					return null;
+				}
+	
+				return String.valueOf(convertLongToUlong(longVal));
+			case Types.REAL:
+				float floatVal = getNativeFloat(columnIndex);
+	
+				if (this.wasNullFlag) {
+					return null;
+				}
+	
+				return String.valueOf(floatVal);
+	
+			case Types.FLOAT:
+			case Types.DOUBLE:
+				double doubleVal = getNativeDouble(columnIndex);
+	
+				if (this.wasNullFlag) {
+					return null;
+				}
+	
+				return String.valueOf(doubleVal);
+	
+			case Types.DECIMAL:
+			case Types.NUMERIC:
+				String stringVal = StringUtils
+						.toAsciiString(this.thisRow.getColumnValue(columnIndex - 1));
+	
+				BigDecimal val;
+	
+				if (stringVal != null) {
+					this.wasNullFlag = false;
+					
+					if (stringVal.length() == 0) {
+						val = new BigDecimal(0);
+	
+						return val.toString();
 					}
-
-					shortVal += 1900;
+	
+					try {
+						val = new BigDecimal(stringVal);
+					} catch (NumberFormatException ex) {
+						throw SQLError.createSQLException(
+								Messages
+										.getString("ResultSet.Bad_format_for_BigDecimal", 
+												new Object[] {stringVal, Integer.valueOf(columnIndex)}),
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+					}
+	
+					return val.toString();
 				}
-
-				return fastDateCreate(null, shortVal, 1, 1).toString();
-
-			}
-
-			if (this.connection.getNoDatetimeStringSync()) {
-				byte[] asBytes = getNativeBytes(columnIndex, true);
+	
+				this.wasNullFlag = true;
 				
-				if (asBytes == null) {
+				return null;
+	
+			case Types.CHAR:
+			case Types.VARCHAR:
+			case Types.LONGVARCHAR:
+	
+				return extractStringFromNativeColumn(columnIndex, mysqlType);
+			case Types.BINARY:
+			case Types.VARBINARY:
+			case Types.LONGVARBINARY:
+	
+				if (!field.isBlob()) {
+					return extractStringFromNativeColumn(columnIndex, mysqlType);
+				} else if (!field.isBinary()) {
+					return extractStringFromNativeColumn(columnIndex, mysqlType);
+				} else {
+					byte[] data = getBytes(columnIndex);
+					Object obj = data;
+	
+					if ((data != null) && (data.length >= 2)) {
+						if ((data[0] == -84) && (data[1] == -19)) {
+							// Serialized object?
+							try {
+								ByteArrayInputStream bytesIn = new ByteArrayInputStream(
+										data);
+								ObjectInputStream objIn = new ObjectInputStream(
+										bytesIn);
+								obj = objIn.readObject();
+								objIn.close();
+								bytesIn.close();
+							} catch (ClassNotFoundException cnfe) {
+								throw SQLError.createSQLException(
+										Messages
+												.getString("ResultSet.Class_not_found___91") //$NON-NLS-1$
+												+ cnfe.toString()
+												+ Messages
+														.getString("ResultSet._while_reading_serialized_object_92"), getExceptionInterceptor()); //$NON-NLS-1$
+							} catch (IOException ex) {
+								obj = data; // not serialized?
+							}
+						}
+	
+						return obj.toString();
+					}
+	
+					return extractStringFromNativeColumn(columnIndex, mysqlType);
+				}
+	
+			case Types.DATE:
+	
+				// The YEAR datatype needs to be handled differently here.
+				if (mysqlType == MysqlDefs.FIELD_TYPE_YEAR) {
+					short shortVal = getNativeShort(columnIndex);
+	
+					if (!this.connection.getYearIsDateType()) {
+	
+						if (this.wasNullFlag) {
+							return null;
+						}
+	
+						return String.valueOf(shortVal);
+					}
+	
+					if (field.getLength() == 2) {
+	
+						if (shortVal <= 69) {
+							shortVal = (short) (shortVal + 100);
+						}
+	
+						shortVal += 1900;
+					}
+	
+					return fastDateCreate(null, shortVal, 1, 1).toString();
+	
+				}
+	
+				if (this.connection.getNoDatetimeStringSync()) {
+					byte[] asBytes = getNativeBytes(columnIndex, true);
+					
+					if (asBytes == null) {
+						return null;
+					}
+					
+					if (asBytes.length == 0 /* newer versions of the server 
+						seem to do this when they see all-zero datetime data */) {
+						return "0000-00-00";
+					}
+					
+					int year = (asBytes[0] & 0xff)
+					| ((asBytes[1] & 0xff) << 8);
+					int month = asBytes[2];
+					int day = asBytes[3];
+					
+					if (year == 0 && month == 0 && day == 0) {
+						return "0000-00-00";
+					}
+				}
+				
+				Date dt = getNativeDate(columnIndex);
+	
+				if (dt == null) {
 					return null;
 				}
-				
-				if (asBytes.length == 0 /* newer versions of the server 
-					seem to do this when they see all-zero datetime data */) {
-					return "0000-00-00";
-				}
-				
-				int year = (asBytes[0] & 0xff)
-				| ((asBytes[1] & 0xff) << 8);
-				int month = asBytes[2];
-				int day = asBytes[3];
-				
-				if (year == 0 && month == 0 && day == 0) {
-					return "0000-00-00";
-				}
-			}
-			
-			Date dt = getNativeDate(columnIndex);
-
-			if (dt == null) {
-				return null;
-			}
-
-			return String.valueOf(dt);
-
-		case Types.TIME:
-			Time tm = getNativeTime(columnIndex, null, this.defaultTimeZone, false);
-
-			if (tm == null) {
-				return null;
-			}
-
-			return String.valueOf(tm);
-
-		case Types.TIMESTAMP:
-			if (this.connection.getNoDatetimeStringSync()) {
-				byte[] asBytes = getNativeBytes(columnIndex, true);
-				
-				if (asBytes == null) {
+	
+				return String.valueOf(dt);
+	
+			case Types.TIME:
+				Time tm = getNativeTime(columnIndex, null, this.defaultTimeZone, false);
+	
+				if (tm == null) {
 					return null;
 				}
-				
-				if (asBytes.length == 0 /* newer versions of the server 
-					seem to do this when they see all-zero datetime data */) {
-					return "0000-00-00 00:00:00";
+	
+				return String.valueOf(tm);
+	
+			case Types.TIMESTAMP:
+				if (this.connection.getNoDatetimeStringSync()) {
+					byte[] asBytes = getNativeBytes(columnIndex, true);
+					
+					if (asBytes == null) {
+						return null;
+					}
+					
+					if (asBytes.length == 0 /* newer versions of the server 
+						seem to do this when they see all-zero datetime data */) {
+						return "0000-00-00 00:00:00";
+					}
+					
+					int year = (asBytes[0] & 0xff)
+					| ((asBytes[1] & 0xff) << 8);
+					int month = asBytes[2];
+					int day = asBytes[3];
+					
+					if (year == 0 && month == 0 && day == 0) {
+						return "0000-00-00 00:00:00";
+					}
 				}
 				
-				int year = (asBytes[0] & 0xff)
-				| ((asBytes[1] & 0xff) << 8);
-				int month = asBytes[2];
-				int day = asBytes[3];
-				
-				if (year == 0 && month == 0 && day == 0) {
-					return "0000-00-00 00:00:00";
+				Timestamp tstamp = getNativeTimestamp(columnIndex,
+						null, this.defaultTimeZone, false);
+	
+				if (tstamp == null) {
+					return null;
 				}
+	
+				String result = String.valueOf(tstamp);
+	
+				if (!this.connection.getNoDatetimeStringSync()) {
+					return result;
+				}
+	
+				if (result.endsWith(".0")) {
+					return result.substring(0, result.length() - 2);
+				}
+	
+			default:
+				return extractStringFromNativeColumn(columnIndex, mysqlType);
 			}
-			
-			Timestamp tstamp = getNativeTimestamp(columnIndex,
-					null, this.defaultTimeZone, false);
-
-			if (tstamp == null) {
-				return null;
-			}
-
-			String result = String.valueOf(tstamp);
-
-			if (!this.connection.getNoDatetimeStringSync()) {
-				return result;
-			}
-
-			if (result.endsWith(".0")) {
-				return result.substring(0, result.length() - 2);
-			}
-
-		default:
-			return extractStringFromNativeColumn(columnIndex, mysqlType);
 		}
 	}
 
@@ -5306,8 +5341,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * 
 	 * @return server info created for this ResultSet
 	 */
-	public synchronized String getServerInfo() {
-		return this.serverInfo;
+	public String getServerInfo() {
+		try {
+			synchronized (checkClosed()) {
+				return this.serverInfo;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // FIXME: Need to evolve public interface
+		}
 	}
 
 	private long getNumericRepresentationOfSQLBitType(int columnIndex) throws SQLException {
@@ -5537,21 +5578,32 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database-access error occurs
 	 */
-	public synchronized java.sql.Statement getStatement() throws SQLException {
-		if (this.isClosed && !this.retainOwningStatement) {
-			throw SQLError.createSQLException(
+	public java.sql.Statement getStatement() throws SQLException {
+		try {
+			synchronized (checkClosed()) {
+				if (this.wrapperStatement != null) {
+					return this.wrapperStatement;
+				}
+
+				return this.owningStatement;
+			}
+
+		} catch (SQLException sqlEx) {
+			if (!this.retainOwningStatement) {
+				throw SQLError.createSQLException(
 					"Operation not allowed on closed ResultSet. Statements "
 							+ "can be retained over result set closure by setting the connection property "
 							+ "\"retainStatementAfterResultSetClose\" to \"true\".",
 					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+			}
+				
+			if (this.wrapperStatement != null) {
+				return this.wrapperStatement;
+			}
 
-		}
-		
-		if (this.wrapperStatement != null) {
-			return this.wrapperStatement;
+			return this.owningStatement;
 		}
 
-		return this.owningStatement;
 	}
 
 	/**
@@ -5838,169 +5890,171 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return getTime(findColumn(columnName), cal);
 	}
 
-	private synchronized Time getTimeFromString(String timeAsString, Calendar targetCalendar,
+	private Time getTimeFromString(String timeAsString, Calendar targetCalendar,
 			int columnIndex,
 			TimeZone tz, 
 			boolean rollForward) throws SQLException {
-		int hr = 0;
-		int min = 0;
-		int sec = 0;
-
-		try {
-			
-			if (timeAsString == null) {
-				this.wasNullFlag = true;
-
-				return null;
-			} 
-			
-			//
-			// JDK-6 doesn't like trailing whitespace
-			//
-			// Note this isn't a performance issue, other
-			// than the iteration over the string, as String.trim()
-			// will return a new string only if whitespace is present
-			//
-			
-			timeAsString = timeAsString.trim();
-			
-			if (timeAsString.equals("0")
-					|| timeAsString.equals("0000-00-00")
-					|| timeAsString.equals("0000-00-00 00:00:00")
-					|| timeAsString.equals("00000000000000")) {
-				if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
-						.equals(this.connection.getZeroDateTimeBehavior())) {
+		synchronized (checkClosed()) {
+			int hr = 0;
+			int min = 0;
+			int sec = 0;
+	
+			try {
+				
+				if (timeAsString == null) {
 					this.wasNullFlag = true;
-
+	
 					return null;
-				} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
-						.equals(this.connection.getZeroDateTimeBehavior())) {
-					throw SQLError.createSQLException("Value '" + timeAsString
-							+ "' can not be represented as java.sql.Time",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+				} 
+				
+				//
+				// JDK-6 doesn't like trailing whitespace
+				//
+				// Note this isn't a performance issue, other
+				// than the iteration over the string, as String.trim()
+				// will return a new string only if whitespace is present
+				//
+				
+				timeAsString = timeAsString.trim();
+				
+				if (timeAsString.equals("0")
+						|| timeAsString.equals("0000-00-00")
+						|| timeAsString.equals("0000-00-00 00:00:00")
+						|| timeAsString.equals("00000000000000")) {
+					if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_CONVERT_TO_NULL
+							.equals(this.connection.getZeroDateTimeBehavior())) {
+						this.wasNullFlag = true;
+	
+						return null;
+					} else if (ConnectionPropertiesImpl.ZERO_DATETIME_BEHAVIOR_EXCEPTION
+							.equals(this.connection.getZeroDateTimeBehavior())) {
+						throw SQLError.createSQLException("Value '" + timeAsString
+								+ "' can not be represented as java.sql.Time",
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+					}
+	
+					// We're left with the case of 'round' to a time Java _can_
+					// represent, which is '00:00:00'
+					return fastTimeCreate(targetCalendar, 0, 0, 0);
 				}
-
-				// We're left with the case of 'round' to a time Java _can_
-				// represent, which is '00:00:00'
-				return fastTimeCreate(targetCalendar, 0, 0, 0);
-			}
-
-			this.wasNullFlag = false;
-
-			Field timeColField = this.fields[columnIndex - 1];
-
-			if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
-				// It's a timestamp
-				int length = timeAsString.length();
-
-				switch (length) {
-				case 19: { // YYYY-MM-DD hh:mm:ss
-				 
-						hr = Integer.parseInt(timeAsString.substring(length - 8,
-								length - 6));
-						min = Integer.parseInt(timeAsString.substring(length - 5,
-								length - 3));
+	
+				this.wasNullFlag = false;
+	
+				Field timeColField = this.fields[columnIndex - 1];
+	
+				if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
+					// It's a timestamp
+					int length = timeAsString.length();
+	
+					switch (length) {
+					case 19: { // YYYY-MM-DD hh:mm:ss
+					 
+							hr = Integer.parseInt(timeAsString.substring(length - 8,
+									length - 6));
+							min = Integer.parseInt(timeAsString.substring(length - 5,
+									length - 3));
+							sec = Integer.parseInt(timeAsString.substring(length - 2,
+									length));
+					}
+	
+							break;
+					case 14:
+					case 12: {
+						hr = Integer.parseInt(timeAsString.substring(length - 6,
+								length - 4));
+						min = Integer.parseInt(timeAsString.substring(length - 4,
+								length - 2));
 						sec = Integer.parseInt(timeAsString.substring(length - 2,
 								length));
-				}
-
+					}
+	
 						break;
-				case 14:
-				case 12: {
-					hr = Integer.parseInt(timeAsString.substring(length - 6,
-							length - 4));
-					min = Integer.parseInt(timeAsString.substring(length - 4,
-							length - 2));
-					sec = Integer.parseInt(timeAsString.substring(length - 2,
-							length));
-				}
-
-					break;
-
-				case 10: {
-					hr = Integer.parseInt(timeAsString.substring(6, 8));
-					min = Integer.parseInt(timeAsString.substring(8, 10));
-					sec = 0;
-				}
-
-					break;
-
-				default:
-					throw SQLError.createSQLException(
+	
+					case 10: {
+						hr = Integer.parseInt(timeAsString.substring(6, 8));
+						min = Integer.parseInt(timeAsString.substring(8, 10));
+						sec = 0;
+					}
+	
+						break;
+	
+					default:
+						throw SQLError.createSQLException(
+								Messages
+										.getString("ResultSet.Timestamp_too_small_to_convert_to_Time_value_in_column__257") //$NON-NLS-1$
+										+ columnIndex
+										+ "("
+										+ this.fields[columnIndex - 1] + ").",
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+					} /* endswitch */
+	
+					SQLWarning precisionLost = new SQLWarning(
 							Messages
-									.getString("ResultSet.Timestamp_too_small_to_convert_to_Time_value_in_column__257") //$NON-NLS-1$
+									.getString("ResultSet.Precision_lost_converting_TIMESTAMP_to_Time_with_getTime()_on_column__261") //$NON-NLS-1$
 									+ columnIndex
 									+ "("
-									+ this.fields[columnIndex - 1] + ").",
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-				} /* endswitch */
-
-				SQLWarning precisionLost = new SQLWarning(
-						Messages
-								.getString("ResultSet.Precision_lost_converting_TIMESTAMP_to_Time_with_getTime()_on_column__261") //$NON-NLS-1$
-								+ columnIndex
-								+ "("
-								+ this.fields[columnIndex - 1] + ").");
-
-				if (this.warningChain == null) {
-					this.warningChain = precisionLost;
+									+ this.fields[columnIndex - 1] + ").");
+	
+					if (this.warningChain == null) {
+						this.warningChain = precisionLost;
+					} else {
+						this.warningChain.setNextWarning(precisionLost);
+					}
+				} else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATETIME) {
+					hr = Integer.parseInt(timeAsString.substring(11, 13));
+					min = Integer.parseInt(timeAsString.substring(14, 16));
+					sec = Integer.parseInt(timeAsString.substring(17, 19));
+	
+					SQLWarning precisionLost = new SQLWarning(
+							Messages
+									.getString("ResultSet.Precision_lost_converting_DATETIME_to_Time_with_getTime()_on_column__264") //$NON-NLS-1$
+									+ columnIndex
+									+ "("
+									+ this.fields[columnIndex - 1] + ").");
+	
+					if (this.warningChain == null) {
+						this.warningChain = precisionLost;
+					} else {
+						this.warningChain.setNextWarning(precisionLost);
+					}
+				} else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATE) {
+					return fastTimeCreate(targetCalendar, 0, 0, 0); // midnight on the given
+															// date
 				} else {
-					this.warningChain.setNextWarning(precisionLost);
+					// convert a String to a Time
+					if ((timeAsString.length() != 5)
+							&& (timeAsString.length() != 8)) {
+						throw SQLError.createSQLException(Messages
+								.getString("ResultSet.Bad_format_for_Time____267") //$NON-NLS-1$
+								+ timeAsString
+								+ Messages.getString("ResultSet.___in_column__268")
+								+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+					}
+	
+					hr = Integer.parseInt(timeAsString.substring(0, 2));
+					min = Integer.parseInt(timeAsString.substring(3, 5));
+					sec = (timeAsString.length() == 5) ? 0 : Integer
+							.parseInt(timeAsString.substring(6));
 				}
-			} else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATETIME) {
-				hr = Integer.parseInt(timeAsString.substring(11, 13));
-				min = Integer.parseInt(timeAsString.substring(14, 16));
-				sec = Integer.parseInt(timeAsString.substring(17, 19));
-
-				SQLWarning precisionLost = new SQLWarning(
-						Messages
-								.getString("ResultSet.Precision_lost_converting_DATETIME_to_Time_with_getTime()_on_column__264") //$NON-NLS-1$
-								+ columnIndex
-								+ "("
-								+ this.fields[columnIndex - 1] + ").");
-
-				if (this.warningChain == null) {
-					this.warningChain = precisionLost;
-				} else {
-					this.warningChain.setNextWarning(precisionLost);
+	
+				Calendar sessionCalendar = this.getCalendarInstanceForSessionOrNew();
+				
+				synchronized (sessionCalendar) {
+					return TimeUtil.changeTimezone(this.connection, 
+							sessionCalendar,
+							targetCalendar, 
+							fastTimeCreate(
+							sessionCalendar, hr, min, sec), 
+							this.connection.getServerTimezoneTZ(),
+							tz, rollForward);
 				}
-			} else if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_DATE) {
-				return fastTimeCreate(targetCalendar, 0, 0, 0); // midnight on the given
-														// date
-			} else {
-				// convert a String to a Time
-				if ((timeAsString.length() != 5)
-						&& (timeAsString.length() != 8)) {
-					throw SQLError.createSQLException(Messages
-							.getString("ResultSet.Bad_format_for_Time____267") //$NON-NLS-1$
-							+ timeAsString
-							+ Messages.getString("ResultSet.___in_column__268")
-							+ columnIndex, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-				}
-
-				hr = Integer.parseInt(timeAsString.substring(0, 2));
-				min = Integer.parseInt(timeAsString.substring(3, 5));
-				sec = (timeAsString.length() == 5) ? 0 : Integer
-						.parseInt(timeAsString.substring(6));
+			} catch (RuntimeException ex) {
+				SQLException sqlEx = SQLError.createSQLException(ex.toString(),
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+				sqlEx.initCause(ex);
+				
+				throw sqlEx;
 			}
-
-			Calendar sessionCalendar = this.getCalendarInstanceForSessionOrNew();
-			
-			synchronized (sessionCalendar) {
-				return TimeUtil.changeTimezone(this.connection, 
-						sessionCalendar,
-						targetCalendar, 
-						fastTimeCreate(
-						sessionCalendar, hr, min, sec), 
-						this.connection.getServerTimezoneTZ(),
-						tz, rollForward);
-			}
-		} catch (RuntimeException ex) {
-			SQLException sqlEx = SQLError.createSQLException(ex.toString(),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-			sqlEx.initCause(ex);
-			
-			throw sqlEx;
 		}
 	}
 	
@@ -6601,8 +6655,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database access error occurs.
 	 */
-	public synchronized java.sql.SQLWarning getWarnings() throws SQLException {
-		return this.warningChain;
+	public java.sql.SQLWarning getWarnings() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.warningChain;
+		}
 	}
 
 	/**
@@ -6634,11 +6690,11 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs.
 	 */
 	public boolean isAfterLast() throws SQLException {
-		checkClosed();
-
-		boolean b = this.rowData.isAfterLast();
-
-		return b;
+		synchronized (checkClosed()) {
+			boolean b = this.rowData.isAfterLast();
+	
+			return b;
+		}
 	}
 
 	/**
@@ -6654,10 +6710,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
-	public synchronized boolean isBeforeFirst() throws SQLException {
-		checkClosed();
-
-		return this.rowData.isBeforeFirst();
+	public boolean isBeforeFirst() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.rowData.isBeforeFirst();
+		}
 	}
 
 	/**
@@ -6672,10 +6728,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
-	public synchronized boolean isFirst() throws SQLException {
-		checkClosed();
-
-		return this.rowData.isFirst();
+	public boolean isFirst() throws SQLException {
+		synchronized (checkClosed()) {
+			return this.rowData.isFirst();
+		}
 	}
 
 	/**
@@ -6694,9 +6750,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs.
 	 */
 	public boolean isLast() throws SQLException {
-		checkClosed();
-
-		return this.rowData.isLast();
+		synchronized (checkClosed()) {
+			return this.rowData.isLast();
+		}
 	}
 
 	/**
@@ -6704,52 +6760,52 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @param mysqlType
 	 * @param s
 	 */
-	private synchronized void issueConversionViaParsingWarning(String methodName,
+	private void issueConversionViaParsingWarning(String methodName,
 			int columnIndex, Object value, Field fieldInfo,
 			int[] typesWithNoParseConversion) throws SQLException {
-		
-		StringBuffer originalQueryBuf = new StringBuffer();
-		
-		if (this.owningStatement != null
-				&& this.owningStatement instanceof com.mysql.jdbc.PreparedStatement) {
-			originalQueryBuf.append(Messages.getString("ResultSet.CostlyConversionCreatedFromQuery"));
-			originalQueryBuf
-					.append(((com.mysql.jdbc.PreparedStatement) this.owningStatement).originalSql);
-			originalQueryBuf.append("\n\n");
-		} else {
-			originalQueryBuf.append(".");
+		synchronized (checkClosed()) {
+			StringBuffer originalQueryBuf = new StringBuffer();
+			
+			if (this.owningStatement != null
+					&& this.owningStatement instanceof com.mysql.jdbc.PreparedStatement) {
+				originalQueryBuf.append(Messages.getString("ResultSet.CostlyConversionCreatedFromQuery"));
+				originalQueryBuf
+						.append(((com.mysql.jdbc.PreparedStatement) this.owningStatement).originalSql);
+				originalQueryBuf.append("\n\n");
+			} else {
+				originalQueryBuf.append(".");
+			}
+			
+			StringBuffer convertibleTypesBuf = new StringBuffer();
+			
+			for (int i = 0; i < typesWithNoParseConversion.length; i++) {
+				convertibleTypesBuf.append(MysqlDefs.typeToName(typesWithNoParseConversion[i]));
+				convertibleTypesBuf.append("\n");
+			}
+			
+			String message = Messages.getString("ResultSet.CostlyConversion", new Object[] {
+					methodName,
+					Integer.valueOf(columnIndex + 1),
+					fieldInfo.getOriginalName(),
+					fieldInfo.getOriginalTableName(),
+					originalQueryBuf.toString(),
+					value != null ? value.getClass().getName() : ResultSetMetaData.getClassNameForJavaType(
+							fieldInfo.getSQLType(), 
+							fieldInfo.isUnsigned(), 
+							fieldInfo.getMysqlType(), 
+							fieldInfo.isBinary() || fieldInfo.isBlob(),
+							fieldInfo.isOpaqueBinary()),
+					MysqlDefs.typeToName(fieldInfo.getMysqlType()),
+					convertibleTypesBuf.toString()});
+					
+			this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN,
+					"", (this.owningStatement == null) ? "N/A"
+							: this.owningStatement.currentCatalog,
+					this.connectionId, (this.owningStatement == null) ? (-1)
+							: this.owningStatement.getId(), this.resultId, System
+							.currentTimeMillis(), 0, Constants.MILLIS_I18N, null,
+					this.pointOfOrigin, message));
 		}
-		
-		StringBuffer convertibleTypesBuf = new StringBuffer();
-		
-		for (int i = 0; i < typesWithNoParseConversion.length; i++) {
-			convertibleTypesBuf.append(MysqlDefs.typeToName(typesWithNoParseConversion[i]));
-			convertibleTypesBuf.append("\n");
-		}
-		
-		String message = Messages.getString("ResultSet.CostlyConversion", new Object[] {
-				methodName,
-				Integer.valueOf(columnIndex + 1),
-				fieldInfo.getOriginalName(),
-				fieldInfo.getOriginalTableName(),
-				originalQueryBuf.toString(),
-				value != null ? value.getClass().getName() : ResultSetMetaData.getClassNameForJavaType(
-						fieldInfo.getSQLType(), 
-						fieldInfo.isUnsigned(), 
-						fieldInfo.getMysqlType(), 
-						fieldInfo.isBinary() || fieldInfo.isBlob(),
-						fieldInfo.isOpaqueBinary()),
-				MysqlDefs.typeToName(fieldInfo.getMysqlType()),
-				convertibleTypesBuf.toString()});
-				
-		this.eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_WARN,
-				"", (this.owningStatement == null) ? "N/A"
-						: this.owningStatement.currentCatalog,
-				this.connectionId, (this.owningStatement == null) ? (-1)
-						: this.owningStatement.getId(), this.resultId, System
-						.currentTimeMillis(), 0, Constants.MILLIS_I18N, null,
-				this.pointOfOrigin, message));
-
 	}
 	
 	/**
@@ -6765,34 +6821,35 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWARD_ONLY.
 	 */
-	public synchronized boolean last() throws SQLException {
-		checkClosed();
-
-		boolean b = true;
-		
-		if (this.rowData.size() == 0) {
-			b = false;
-		} else {
-
-			if (this.onInsertRow) {
-				this.onInsertRow = false;
-			}
+	public boolean last() throws SQLException {
+		synchronized (checkClosed()) {
 	
-			if (this.doingUpdates) {
-				this.doingUpdates = false;
-			}
-	
-			if (this.thisRow != null) {
-				this.thisRow.closeOpenStreams();
-			}
+			boolean b = true;
 			
-			this.rowData.beforeLast();
-			this.thisRow = this.rowData.next();
-		}
-
-		setRowPositionValidity();
+			if (this.rowData.size() == 0) {
+				b = false;
+			} else {
+	
+				if (this.onInsertRow) {
+					this.onInsertRow = false;
+				}
 		
-		return b;
+				if (this.doingUpdates) {
+					this.doingUpdates = false;
+				}
+		
+				if (this.thisRow != null) {
+					this.thisRow.closeOpenStreams();
+				}
+				
+				this.rowData.beforeLast();
+				this.thisRow = this.rowData.next();
+			}
+	
+			setRowPositionValidity();
+			
+			return b;
+		}
 	}
 
 	// /////////////////////////////////////////
@@ -6853,48 +6910,49 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized boolean next() throws SQLException {
-		checkClosed();
+	public boolean next() throws SQLException {
+		synchronized (checkClosed()) {
 
-		if (this.onInsertRow) {
-			this.onInsertRow = false;
-		}
-
-		if (this.doingUpdates) {
-			this.doingUpdates = false;
-		}
-
-		boolean b;
-
-		if (!reallyResult()) {
-			throw SQLError.createSQLException(
-					Messages
-							.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
-					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor()); //$NON-NLS-1$
-		}
-
-		if (this.thisRow != null) {
-			this.thisRow.closeOpenStreams();
-		}
-		
-		if (this.rowData.size() == 0) {
-			b = false;
-		} else {
-			this.thisRow = this.rowData.next();
+			if (this.onInsertRow) {
+				this.onInsertRow = false;
+			}
+	
+			if (this.doingUpdates) {
+				this.doingUpdates = false;
+			}
+	
+			boolean b;
+	
+			if (!reallyResult()) {
+				throw SQLError.createSQLException(
+						Messages
+								.getString("ResultSet.ResultSet_is_from_UPDATE._No_Data_115"),
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor()); //$NON-NLS-1$
+			}
+	
+			if (this.thisRow != null) {
+				this.thisRow.closeOpenStreams();
+			}
 			
-			if (this.thisRow == null) {
+			if (this.rowData.size() == 0) {
 				b = false;
 			} else {
-				clearWarnings();
+				this.thisRow = this.rowData.next();
 				
-				b = true;
-				
+				if (this.thisRow == null) {
+					b = false;
+				} else {
+					clearWarnings();
+					
+					b = true;
+					
+				}
 			}
+	
+			setRowPositionValidity();
+			
+			return b;
 		}
-
-		setRowPositionValidity();
-		
-		return b;
 	}
 
 	private int parseIntAsDouble(int columnIndex, String val)
@@ -7121,35 +7179,36 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database access error occurs
 	 */
 	public boolean prev() throws java.sql.SQLException {
-		checkClosed();
+		synchronized (checkClosed()) {
 
-		int rowIndex = this.rowData.getCurrentRowNumber();
-
-		if (this.thisRow != null) {
-			this.thisRow.closeOpenStreams();
+			int rowIndex = this.rowData.getCurrentRowNumber();
+	
+			if (this.thisRow != null) {
+				this.thisRow.closeOpenStreams();
+			}
+			
+			boolean b = true;
+			
+			if ((rowIndex - 1) >= 0) {
+				rowIndex--;
+				this.rowData.setCurrentRow(rowIndex);
+				this.thisRow = this.rowData.getAt(rowIndex);
+	
+				b = true;
+			} else if ((rowIndex - 1) == -1) {
+				rowIndex--;
+				this.rowData.setCurrentRow(rowIndex);
+				this.thisRow = null;
+	
+				b = false;
+			} else {
+				b = false;
+			}
+			
+			setRowPositionValidity();
+			
+			return b;
 		}
-		
-		boolean b = true;
-		
-		if ((rowIndex - 1) >= 0) {
-			rowIndex--;
-			this.rowData.setCurrentRow(rowIndex);
-			this.thisRow = this.rowData.getAt(rowIndex);
-
-			b = true;
-		} else if ((rowIndex - 1) == -1) {
-			rowIndex--;
-			this.rowData.setCurrentRow(rowIndex);
-			this.thisRow = null;
-
-			b = false;
-		} else {
-			b = false;
-		}
-		
-		setRowPositionValidity();
-		
-		return b;
 	}
 
 	/**
@@ -7170,16 +7229,18 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs, or result set type is
 	 *                TYPE_FORWAR_DONLY.
 	 */
-	public synchronized boolean previous() throws SQLException {
-		if (this.onInsertRow) {
-			this.onInsertRow = false;
+	public boolean previous() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.onInsertRow) {
+				this.onInsertRow = false;
+			}
+	
+			if (this.doingUpdates) {
+				this.doingUpdates = false;
+			}
+	
+			return prev();
 		}
-
-		if (this.doingUpdates) {
-			this.doingUpdates = false;
-		}
-
-		return prev();
 	}
 
 	/**
@@ -7191,188 +7252,195 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	public synchronized void realClose(boolean calledExplicitly) throws SQLException {
-		if (this.isClosed) {
-			return;
-		}
-
+	public void realClose(boolean calledExplicitly) throws SQLException {
+		MySQLConnection locallyScopedConn;
+		
 		try {
-			if (this.useUsageAdvisor) {
-				
-				// Report on result set closed by driver instead of application
-				
-				if (!calledExplicitly) {		
-					this.eventSink
-							.consumeEvent(new ProfilerEvent(
-									ProfilerEvent.TYPE_WARN,
-									"",
+			locallyScopedConn = checkClosed();
+		} catch (SQLException sqlEx) {
+			return; // already closed
+		}
+		
+		synchronized (locallyScopedConn) {
+
+			try {
+				if (this.useUsageAdvisor) {
+					
+					// Report on result set closed by driver instead of application
+					
+					if (!calledExplicitly) {		
+						this.eventSink
+								.consumeEvent(new ProfilerEvent(
+										ProfilerEvent.TYPE_WARN,
+										"",
+										(this.owningStatement == null) ? "N/A"
+												: this.owningStatement.currentCatalog,
+										this.connectionId,
+										(this.owningStatement == null) ? (-1)
+												: this.owningStatement.getId(),
+										this.resultId,
+										System.currentTimeMillis(),
+										0,
+										Constants.MILLIS_I18N,
+										null,
+										this.pointOfOrigin,
+										Messages
+												.getString("ResultSet.ResultSet_implicitly_closed_by_driver"))); //$NON-NLS-1$
+					}
+	
+					if (this.rowData instanceof RowDataStatic) {
+						
+						// Report on possibly too-large result sets
+						
+						if (this.rowData.size() > this.connection
+								.getResultSetSizeThreshold()) {
+							this.eventSink
+									.consumeEvent(new ProfilerEvent(
+											ProfilerEvent.TYPE_WARN,
+											"",
+											(this.owningStatement == null) ? Messages
+													.getString("ResultSet.N/A_159")
+													: this.owningStatement.currentCatalog, //$NON-NLS-1$
+											this.connectionId,
+											(this.owningStatement == null) ? (-1)
+													: this.owningStatement.getId(),
+											this.resultId,
+											System.currentTimeMillis(),
+											0,
+											Constants.MILLIS_I18N,
+											null,
+											this.pointOfOrigin,
+											Messages
+													.getString(
+															"ResultSet.Too_Large_Result_Set",
+															new Object[] {
+																	Integer.valueOf(
+																			this.rowData
+																					.size()),
+																	Integer.valueOf(
+																			this.connection
+																					.getResultSetSizeThreshold()) })));
+						}
+						
+						if (!isLast() && !isAfterLast() && (this.rowData.size() != 0)) {
+	
+							this.eventSink
+									.consumeEvent(new ProfilerEvent(
+											ProfilerEvent.TYPE_WARN,
+											"",
+											(this.owningStatement == null) ? Messages
+													.getString("ResultSet.N/A_159")
+													: this.owningStatement.currentCatalog, //$NON-NLS-1$
+											this.connectionId,
+											(this.owningStatement == null) ? (-1)
+													: this.owningStatement.getId(),
+											this.resultId,
+											System.currentTimeMillis(),
+											0,
+											Constants.MILLIS_I18N,
+											null,
+											this.pointOfOrigin,
+											Messages
+													.getString(
+															"ResultSet.Possible_incomplete_traversal_of_result_set", //$NON-NLS-1$
+															new Object[] {
+																	Integer.valueOf(
+																			getRow()),
+																	Integer.valueOf(
+																			this.rowData
+																					.size()) })));
+						}
+					}
+	
+					//
+					// Report on any columns that were selected but
+					// not referenced
+					//
+					
+					if (this.columnUsed.length > 0 && !this.rowData.wasEmpty()) {
+						StringBuffer buf = new StringBuffer(
+								Messages
+										.getString("ResultSet.The_following_columns_were_never_referenced")); //$NON-NLS-1$
+	
+						boolean issueWarn = false;
+	
+						for (int i = 0; i < this.columnUsed.length; i++) {
+							if (!this.columnUsed[i]) {
+								if (!issueWarn) {
+									issueWarn = true;
+								} else {
+									buf.append(", ");
+								}
+	
+								buf.append(this.fields[i].getFullName());
+							}
+						}
+	
+						if (issueWarn) {
+							this.eventSink.consumeEvent(new ProfilerEvent(
+									ProfilerEvent.TYPE_WARN, "",
 									(this.owningStatement == null) ? "N/A"
 											: this.owningStatement.currentCatalog,
 									this.connectionId,
 									(this.owningStatement == null) ? (-1)
-											: this.owningStatement.getId(),
-									this.resultId,
-									System.currentTimeMillis(),
-									0,
-									Constants.MILLIS_I18N,
-									null,
-									this.pointOfOrigin,
-									Messages
-											.getString("ResultSet.ResultSet_implicitly_closed_by_driver"))); //$NON-NLS-1$
-				}
-
-				if (this.rowData instanceof RowDataStatic) {
-					
-					// Report on possibly too-large result sets
-					
-					if (this.rowData.size() > this.connection
-							.getResultSetSizeThreshold()) {
-						this.eventSink
-								.consumeEvent(new ProfilerEvent(
-										ProfilerEvent.TYPE_WARN,
-										"",
-										(this.owningStatement == null) ? Messages
-												.getString("ResultSet.N/A_159")
-												: this.owningStatement.currentCatalog, //$NON-NLS-1$
-										this.connectionId,
-										(this.owningStatement == null) ? (-1)
-												: this.owningStatement.getId(),
-										this.resultId,
-										System.currentTimeMillis(),
-										0,
-										Constants.MILLIS_I18N,
-										null,
-										this.pointOfOrigin,
-										Messages
-												.getString(
-														"ResultSet.Too_Large_Result_Set",
-														new Object[] {
-																Integer.valueOf(
-																		this.rowData
-																				.size()),
-																Integer.valueOf(
-																		this.connection
-																				.getResultSetSizeThreshold()) })));
-					}
-					
-					if (!isLast() && !isAfterLast() && (this.rowData.size() != 0)) {
-
-						this.eventSink
-								.consumeEvent(new ProfilerEvent(
-										ProfilerEvent.TYPE_WARN,
-										"",
-										(this.owningStatement == null) ? Messages
-												.getString("ResultSet.N/A_159")
-												: this.owningStatement.currentCatalog, //$NON-NLS-1$
-										this.connectionId,
-										(this.owningStatement == null) ? (-1)
-												: this.owningStatement.getId(),
-										this.resultId,
-										System.currentTimeMillis(),
-										0,
-										Constants.MILLIS_I18N,
-										null,
-										this.pointOfOrigin,
-										Messages
-												.getString(
-														"ResultSet.Possible_incomplete_traversal_of_result_set", //$NON-NLS-1$
-														new Object[] {
-																Integer.valueOf(
-																		getRow()),
-																Integer.valueOf(
-																		this.rowData
-																				.size()) })));
-					}
-				}
-
-				//
-				// Report on any columns that were selected but
-				// not referenced
-				//
-				
-				if (this.columnUsed.length > 0 && !this.rowData.wasEmpty()) {
-					StringBuffer buf = new StringBuffer(
-							Messages
-									.getString("ResultSet.The_following_columns_were_never_referenced")); //$NON-NLS-1$
-
-					boolean issueWarn = false;
-
-					for (int i = 0; i < this.columnUsed.length; i++) {
-						if (!this.columnUsed[i]) {
-							if (!issueWarn) {
-								issueWarn = true;
-							} else {
-								buf.append(", ");
-							}
-
-							buf.append(this.fields[i].getFullName());
+											: this.owningStatement.getId(), 0,
+									System.currentTimeMillis(), 0,
+									Constants.MILLIS_I18N, null,
+									this.pointOfOrigin, buf.toString()));
 						}
 					}
-
-					if (issueWarn) {
-						this.eventSink.consumeEvent(new ProfilerEvent(
-								ProfilerEvent.TYPE_WARN, "",
-								(this.owningStatement == null) ? "N/A"
-										: this.owningStatement.currentCatalog,
-								this.connectionId,
-								(this.owningStatement == null) ? (-1)
-										: this.owningStatement.getId(), 0,
-								System.currentTimeMillis(), 0,
-								Constants.MILLIS_I18N, null,
-								this.pointOfOrigin, buf.toString()));
-					}
 				}
-			}
-		} finally {
-			if (this.owningStatement != null && calledExplicitly) {
-				this.owningStatement.removeOpenResultSet(this);
-			}
-			
-			SQLException exceptionDuringClose = null;
-
-			if (this.rowData != null) {
-				try {
-					this.rowData.close();
-				} catch (SQLException sqlEx) {
-					exceptionDuringClose = sqlEx;
+			} finally {
+				if (this.owningStatement != null && calledExplicitly) {
+					this.owningStatement.removeOpenResultSet(this);
 				}
-			}
-
-			if (this.statementUsedForFetchingRows != null) {
-				try {
-					this.statementUsedForFetchingRows.realClose(true, false);
-				} catch (SQLException sqlEx) {
-					if (exceptionDuringClose != null) {
-						exceptionDuringClose.setNextException(sqlEx);
-					} else {
+				
+				SQLException exceptionDuringClose = null;
+	
+				if (this.rowData != null) {
+					try {
+						this.rowData.close();
+					} catch (SQLException sqlEx) {
 						exceptionDuringClose = sqlEx;
 					}
 				}
-			}
-			
-			this.rowData = null;
-			this.defaultTimeZone = null;
-			this.fields = null;
-			this.columnLabelToIndex = null;
-			this.fullColumnNameToIndex = null;
-			this.columnToIndexCache = null;
-			this.eventSink = null;
-			this.warningChain = null;
-			
-			if (!this.retainOwningStatement) {
-				this.owningStatement = null;
-			}
-			
-			this.catalog = null;
-			this.serverInfo = null;
-			this.thisRow = null;
-			this.fastDateCal = null;
-			this.connection = null;
-
-			this.isClosed = true;
-
-			if (exceptionDuringClose != null) {
-				throw exceptionDuringClose;
+	
+				if (this.statementUsedForFetchingRows != null) {
+					try {
+						this.statementUsedForFetchingRows.realClose(true, false);
+					} catch (SQLException sqlEx) {
+						if (exceptionDuringClose != null) {
+							exceptionDuringClose.setNextException(sqlEx);
+						} else {
+							exceptionDuringClose = sqlEx;
+						}
+					}
+				}
+				
+				this.rowData = null;
+				this.defaultTimeZone = null;
+				this.fields = null;
+				this.columnLabelToIndex = null;
+				this.fullColumnNameToIndex = null;
+				this.columnToIndexCache = null;
+				this.eventSink = null;
+				this.warningChain = null;
+				
+				if (!this.retainOwningStatement) {
+					this.owningStatement = null;
+				}
+				
+				this.catalog = null;
+				this.serverInfo = null;
+				this.thisRow = null;
+				this.fastDateCal = null;
+				this.connection = null;
+	
+				this.isClosed = true;
+	
+				if (exceptionDuringClose != null) {
+					throw exceptionDuringClose;
+				}
 			}
 		}
 	}
@@ -7436,24 +7504,25 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *             row, or result set type is TYPE_FORWARD_ONLY.
 	 */
 	public boolean relative(int rows) throws SQLException {
-		checkClosed();
+		synchronized (checkClosed()) {
 
-		if (this.rowData.size() == 0) {
+			if (this.rowData.size() == 0) {
+				setRowPositionValidity();
+				
+				return false;
+			}
+	
+			if (this.thisRow != null) {
+				this.thisRow.closeOpenStreams();
+			}
+			
+			this.rowData.moveRowRelative(rows);
+			this.thisRow = this.rowData.getAt(this.rowData.getCurrentRowNumber());
+	
 			setRowPositionValidity();
 			
-			return false;
+			return (!this.rowData.isAfterLast() && !this.rowData.isBeforeFirst());
 		}
-
-		if (this.thisRow != null) {
-			this.thisRow.closeOpenStreams();
-		}
-		
-		this.rowData.moveRowRelative(rows);
-		this.thisRow = this.rowData.getAt(this.rowData.getCurrentRowNumber());
-
-		setRowPositionValidity();
-		
-		return (!this.rowData.isAfterLast() && !this.rowData.isBeforeFirst());
 	}
 
 	/**
@@ -7519,8 +7588,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		this.isBinaryEncoded = true;
 	}
 
-	private synchronized void setDefaultTimeZone(TimeZone defaultTimeZone) {
-		this.defaultTimeZone = defaultTimeZone;
+	private void setDefaultTimeZone(TimeZone defaultTimeZone) throws SQLException {
+		synchronized (checkClosed()) {
+			this.defaultTimeZone = defaultTimeZone;
+		}
 	}
 
 	/**
@@ -7538,16 +7609,18 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                MM.MySQL actually ignores this, because it has the whole
 	 *                result set anyway, so the direction is immaterial.
 	 */
-	public synchronized void setFetchDirection(int direction) throws SQLException {
-		if ((direction != FETCH_FORWARD) && (direction != FETCH_REVERSE)
-				&& (direction != FETCH_UNKNOWN)) {
-			throw SQLError.createSQLException(
-					Messages
-							.getString("ResultSet.Illegal_value_for_fetch_direction_64"),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+	public void setFetchDirection(int direction) throws SQLException {
+		synchronized (checkClosed()) {
+			if ((direction != FETCH_FORWARD) && (direction != FETCH_REVERSE)
+					&& (direction != FETCH_UNKNOWN)) {
+				throw SQLError.createSQLException(
+						Messages
+								.getString("ResultSet.Illegal_value_for_fetch_direction_64"),
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+			}
+	
+			this.fetchDirection = direction;
 		}
-
-		this.fetchDirection = direction;
 	}
 
 	/**
@@ -7566,15 +7639,17 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                rows lteq this.getMaxRows() is not satisfied. Currently
 	 *                ignored by this driver.
 	 */
-	public synchronized void setFetchSize(int rows) throws SQLException {
-		if (rows < 0) { /* || rows > getMaxRows() */
-			throw SQLError.createSQLException(
-					Messages
-							.getString("ResultSet.Value_must_be_between_0_and_getMaxRows()_66"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+	public void setFetchSize(int rows) throws SQLException {
+		synchronized (checkClosed()) {
+			if (rows < 0) { /* || rows > getMaxRows() */
+				throw SQLError.createSQLException(
+						Messages
+								.getString("ResultSet.Value_must_be_between_0_and_getMaxRows()_66"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+	
+			this.fetchSize = rows;
 		}
-
-		this.fetchSize = rows;
 	}
 
 	/**
@@ -7584,8 +7659,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @param c
 	 *            the first character of the query...uppercased
 	 */
-	public synchronized void setFirstCharOfQuery(char c) {
-		this.firstCharOfQuery = c;
+	public void setFirstCharOfQuery(char c) {
+		try {
+			synchronized (checkClosed()) {
+				this.firstCharOfQuery = c;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // FIXME: Need to evolve public interface
+		}
 	}
 
 	/**
@@ -7599,8 +7680,14 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		this.nextResultSet = nextResultSet;
 	}
 
-	public synchronized void setOwningStatement(com.mysql.jdbc.StatementImpl owningStatement) {
-		this.owningStatement = owningStatement;
+	public void setOwningStatement(com.mysql.jdbc.StatementImpl owningStatement) {
+		try {
+			synchronized (checkClosed()) {
+				this.owningStatement = owningStatement;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // FIXME: Need to evolve public interface
+		}
 	}
 
 	/**
@@ -7610,7 +7697,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *            CONCUR_UPDATABLE or CONCUR_READONLY
 	 */
 	protected synchronized void setResultSetConcurrency(int concurrencyFlag) {
-		this.resultSetConcurrency = concurrencyFlag;
+		try {
+			synchronized (checkClosed()) {
+				this.resultSetConcurrency = concurrencyFlag;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // FIXME: Need to evolve public interface
+		}
 	}
 
 	/**
@@ -7621,7 +7714,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *            SCROLL_INSENSITIVE)
 	 */
 	protected synchronized void setResultSetType(int typeFlag) {
-		this.resultSetType = typeFlag;
+		try {
+			synchronized (checkClosed()) {
+				this.resultSetType = typeFlag;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // FIXME: Need to evolve public interface
+		}
 	}
 
 	/**
@@ -7631,11 +7730,23 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *            the server info message
 	 */
 	protected synchronized void setServerInfo(String info) {
-		this.serverInfo = info;
+		try {
+			synchronized (checkClosed()) {
+				this.serverInfo = info;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // FIXME: Need to evolve public interface
+		}
 	}
 
 	public synchronized void setStatementUsedForFetchingRows(PreparedStatement stmt) {
-		this.statementUsedForFetchingRows = stmt;
+		try {
+			synchronized (checkClosed()) {
+				this.statementUsedForFetchingRows = stmt;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // FIXME: Need to evolve public interface
+		}
 	}
 
 	/**
@@ -7643,7 +7754,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *            The wrapperStatement to set.
 	 */
 	public synchronized void setWrapperStatement(java.sql.Statement wrapperStatement) {
-		this.wrapperStatement = wrapperStatement;
+		try {
+			synchronized (checkClosed()) {
+				this.wrapperStatement = wrapperStatement;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // FIXME: Need to evolve public interface
+		}
 	}
 
 	private void throwRangeException(String valueAsString, int columnIndex,

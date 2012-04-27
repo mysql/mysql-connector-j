@@ -1022,124 +1022,129 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * 
 	 * @see StatementImpl#addBatch
 	 */
-	public synchronized void addBatch() throws SQLException {
-		if (this.batchedArgs == null) {
-			this.batchedArgs = new ArrayList();
+	public void addBatch() throws SQLException {
+		synchronized (checkClosed()) {
+			if (this.batchedArgs == null) {
+				this.batchedArgs = new ArrayList();
+			}
+	
+			for (int i = 0; i < this.parameterValues.length; i++) {
+				checkAllParametersSet(this.parameterValues[i],
+						this.parameterStreams[i], i);
+			}
+			
+			this.batchedArgs.add(new BatchParams(this.parameterValues,
+					this.parameterStreams, this.isStream, this.streamLengths,
+					this.isNull));
 		}
-
-		for (int i = 0; i < this.parameterValues.length; i++) {
-			checkAllParametersSet(this.parameterValues[i],
-					this.parameterStreams[i], i);
-		}
-		
-		this.batchedArgs.add(new BatchParams(this.parameterValues,
-				this.parameterStreams, this.isStream, this.streamLengths,
-				this.isNull));
 	}
 
-	public synchronized void addBatch(String sql) throws SQLException {
-		this.batchHasPlainStatements = true;
-
-		super.addBatch(sql);
+	public void addBatch(String sql) throws SQLException {
+		synchronized (checkClosed()) {
+			this.batchHasPlainStatements = true;
+	
+			super.addBatch(sql);
+		}
 	}
 
 	protected String asSql() throws SQLException {
 		return asSql(false);
 	}
 
-	protected synchronized String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
-		if (this.isClosed) {
-			return "statement has been closed, no further internal information available";
-		}
-		
-		StringBuffer buf = new StringBuffer();
-
-		try {
-			int realParameterCount = this.parameterCount + getParameterIndexOffset();
-			Object batchArg = null;
-			if (batchCommandIndex != -1)
-				batchArg = batchedArgs.get(batchCommandIndex);
+	protected String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
+		synchronized (checkClosed()) {
 			
-			for (int i = 0; i < realParameterCount; ++i) {
-				if (this.charEncoding != null) {
-					buf.append(StringUtils.toString(this.staticSqlStrings[i],
-							this.charEncoding));
-				} else {
-					buf.append(StringUtils.toString(this.staticSqlStrings[i]));
-				}
-
-				byte val[] = null;
-				if (batchArg != null && batchArg instanceof String) {
-					buf.append((String)batchArg);
-					continue;
-				}
-				if (batchCommandIndex == -1)
-					val = parameterValues[i];
-				else
-					val = ((BatchParams)batchArg).parameterStrings[i]; 
+			StringBuffer buf = new StringBuffer();
+	
+			try {
+				int realParameterCount = this.parameterCount + getParameterIndexOffset();
+				Object batchArg = null;
+				if (batchCommandIndex != -1)
+					batchArg = batchedArgs.get(batchCommandIndex);
 				
-				boolean isStreamParam = false;
-				if (batchCommandIndex == -1)
-					isStreamParam = isStream[i];
-				else
-					isStreamParam = ((BatchParams)batchArg).isStream[i];
-
-				if ((val == null) && !isStreamParam) {
-					if (quoteStreamsAndUnknowns) {
-						buf.append("'");
-					}
-
-					buf.append("** NOT SPECIFIED **"); //$NON-NLS-1$
-
-					if (quoteStreamsAndUnknowns) {
-						buf.append("'");
-					}
-				} else if (isStreamParam) {
-					if (quoteStreamsAndUnknowns) {
-						buf.append("'");
-					}
-
-					buf.append("** STREAM DATA **"); //$NON-NLS-1$
-
-					if (quoteStreamsAndUnknowns) {
-						buf.append("'");
-					}
-				} else {
-					if (this.charConverter != null) {
-						buf.append(this.charConverter.toString(val));
+				for (int i = 0; i < realParameterCount; ++i) {
+					if (this.charEncoding != null) {
+						buf.append(StringUtils.toString(this.staticSqlStrings[i],
+								this.charEncoding));
 					} else {
-						if (this.charEncoding != null) {
-							buf.append(new String(val, this.charEncoding));
+						buf.append(StringUtils.toString(this.staticSqlStrings[i]));
+					}
+	
+					byte val[] = null;
+					if (batchArg != null && batchArg instanceof String) {
+						buf.append((String)batchArg);
+						continue;
+					}
+					if (batchCommandIndex == -1)
+						val = parameterValues[i];
+					else
+						val = ((BatchParams)batchArg).parameterStrings[i]; 
+					
+					boolean isStreamParam = false;
+					if (batchCommandIndex == -1)
+						isStreamParam = isStream[i];
+					else
+						isStreamParam = ((BatchParams)batchArg).isStream[i];
+	
+					if ((val == null) && !isStreamParam) {
+						if (quoteStreamsAndUnknowns) {
+							buf.append("'");
+						}
+	
+						buf.append("** NOT SPECIFIED **"); //$NON-NLS-1$
+	
+						if (quoteStreamsAndUnknowns) {
+							buf.append("'");
+						}
+					} else if (isStreamParam) {
+						if (quoteStreamsAndUnknowns) {
+							buf.append("'");
+						}
+	
+						buf.append("** STREAM DATA **"); //$NON-NLS-1$
+	
+						if (quoteStreamsAndUnknowns) {
+							buf.append("'");
+						}
+					} else {
+						if (this.charConverter != null) {
+							buf.append(this.charConverter.toString(val));
 						} else {
-							buf.append(StringUtils.toAsciiString(val));
+							if (this.charEncoding != null) {
+								buf.append(new String(val, this.charEncoding));
+							} else {
+								buf.append(StringUtils.toAsciiString(val));
+							}
 						}
 					}
 				}
+	
+				if (this.charEncoding != null) {
+					buf.append(StringUtils.toString(
+							this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()],
+							this.charEncoding));
+				} else {
+					buf
+							.append(StringUtils
+									.toAsciiString(this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()]));
+				}
+			} catch (UnsupportedEncodingException uue) {
+				throw new RuntimeException(Messages
+						.getString("PreparedStatement.32") //$NON-NLS-1$
+						+ this.charEncoding
+						+ Messages.getString("PreparedStatement.33")); //$NON-NLS-1$
 			}
-
-			if (this.charEncoding != null) {
-				buf.append(StringUtils.toString(
-						this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()],
-						this.charEncoding));
-			} else {
-				buf
-						.append(StringUtils
-								.toAsciiString(this.staticSqlStrings[this.parameterCount + getParameterIndexOffset()]));
-			}
-		} catch (UnsupportedEncodingException uue) {
-			throw new RuntimeException(Messages
-					.getString("PreparedStatement.32") //$NON-NLS-1$
-					+ this.charEncoding
-					+ Messages.getString("PreparedStatement.33")); //$NON-NLS-1$
+	
+			return buf.toString();
 		}
-
-		return buf.toString();
 	}
 
-	public synchronized void clearBatch() throws SQLException {
-		this.batchHasPlainStatements = false;
-
-		super.clearBatch();
+	public void clearBatch() throws SQLException {
+		synchronized (checkClosed()) {
+			this.batchHasPlainStatements = false;
+	
+			super.clearBatch();
+		}
 	}
 
 	/**
@@ -1152,26 +1157,17 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized void clearParameters() throws SQLException {
-		checkClosed();
+	public void clearParameters() throws SQLException {
+		synchronized (checkClosed()) {
 		
-		for (int i = 0; i < this.parameterValues.length; i++) {
-			this.parameterValues[i] = null;
-			this.parameterStreams[i] = null;
-			this.isStream[i] = false;
-			this.isNull[i] = false;
-			this.parameterTypes[i] = Types.NULL;
+			for (int i = 0; i < this.parameterValues.length; i++) {
+				this.parameterValues[i] = null;
+				this.parameterStreams[i] = null;
+				this.isStream[i] = false;
+				this.isNull[i] = false;
+				this.parameterTypes[i] = Types.NULL;
+			}
 		}
-	}
-
-	/**
-	 * Closes this prepared statement and releases all resources.
-	 * 
-	 * @throws SQLException
-	 *             if database error occurs.
-	 */
-	public synchronized void close() throws SQLException {
-		realClose(true, true);
 	}
 
 	private final void escapeblockFast(byte[] buf, Buffer packet, int size)
@@ -1257,8 +1253,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @return true if safe for read-only.
 	 * @throws SQLException
 	 */
-	protected synchronized boolean checkReadOnlySafeStatement() throws SQLException {
-		return ((!this.connection.isReadOnly()) || (this.firstCharOfStmt == 'S'));
+	protected boolean checkReadOnlySafeStatement() throws SQLException {
+		synchronized (checkClosed()) {
+			return ((!this.connection.isReadOnly()) || (this.firstCharOfStmt == 'S'));
+		}
 	}
 
 	/**
@@ -1272,29 +1270,31 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized boolean execute() throws SQLException {
-		checkClosed();
+	public boolean execute() throws SQLException {
+		synchronized (checkClosed()) {
 		
-		MySQLConnection locallyScopedConn = this.connection;
-		
-		if(!checkReadOnlySafeStatement()) {
-			 throw SQLError.createSQLException(Messages.getString("PreparedStatement.20") //$NON-NLS-1$
-							+ Messages.getString("PreparedStatement.21"), //$NON-NLS-1$
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-		
-		ResultSetInternalMethods rs = null;
-
-		CachedResultSetMetaData cachedMetadata = null;
-
-		synchronized (locallyScopedConn) {
+			MySQLConnection locallyScopedConn = this.connection;
+			
+			if(!checkReadOnlySafeStatement()) {
+				 throw SQLError.createSQLException(Messages.getString("PreparedStatement.20") //$NON-NLS-1$
+								+ Messages.getString("PreparedStatement.21"), //$NON-NLS-1$
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+			
+			ResultSetInternalMethods rs = null;
+	
+			CachedResultSetMetaData cachedMetadata = null;
+	
 			lastQueryIsOnDupKeyUpdate = false;
-			if (retrieveGeneratedKeys)
+			
+			if (retrieveGeneratedKeys) {
 				lastQueryIsOnDupKeyUpdate = containsOnDuplicateKeyUpdateInSQL();
+			}
+			
 			boolean doStreaming = createStreamingResultSet();
 			
 			clearWarnings();
-
+	
 			// Adjust net_write_timeout to a higher value if we're
 			// streaming result sets. More often than not, someone runs into
 			// an issue where they blow net_write_timeout when using this
@@ -1312,23 +1312,23 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			}
 			
 			this.batchedGeneratedKeys = null;
-
+	
 			Buffer sendPacket = fillSendPacket();
-
+	
 			String oldCatalog = null;
-
+	
 			if (!locallyScopedConn.getCatalog().equals(this.currentCatalog)) {
 				oldCatalog = locallyScopedConn.getCatalog();
 				locallyScopedConn.setCatalog(this.currentCatalog);
 			}
-
+	
 			//
 			// Check if we have cached metadata for this query...
 			//
 			if (locallyScopedConn.getCacheResultSetMetadata()) {
 				cachedMetadata = locallyScopedConn.getCachedMetaData(this.originalSql);
 			}
-
+	
 			Field[] metadataFromCache = null;
 			
 			if (cachedMetadata != null) {
@@ -1336,12 +1336,12 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			}
 			
 			boolean oldInfoMsgState = false;
-
+	
 			if (this.retrieveGeneratedKeys) {
 				oldInfoMsgState = locallyScopedConn.isReadInfoMsgEnabled();
 				locallyScopedConn.setReadInfoMsgEnabled(true);
 			}
-
+	
 			// If there isn't a limit clause in the SQL
 			// then limit the number of rows to return in
 			// an efficient manner. Only do this if
@@ -1353,7 +1353,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			//
 			if (locallyScopedConn.useMaxRows()) {
 				int rowLimit = -1;
-
+	
 				if (this.firstCharOfStmt == 'S') {
 					if (this.hasLimitClause) {
 						rowLimit = this.maxRows;
@@ -1370,7 +1370,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					executeSimpleNonQuery(locallyScopedConn,
 							"SET SQL_SELECT_LIMIT=DEFAULT");
 				}
-
+	
 				// Finally, execute the query
 				rs = executeInternal(rowLimit, sendPacket,
 						doStreaming,
@@ -1380,7 +1380,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						doStreaming,
 						(this.firstCharOfStmt == 'S'), metadataFromCache, false);
 			}
-
+	
 			if (cachedMetadata != null) {
 				locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql,
 						cachedMetadata, this.results);
@@ -1395,19 +1395,19 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				locallyScopedConn.setReadInfoMsgEnabled(oldInfoMsgState);
 				rs.setFirstCharOfQuery(this.firstCharOfStmt);
 			}
-
+	
 			if (oldCatalog != null) {
 				locallyScopedConn.setCatalog(oldCatalog);
 			}
-
+	
 			if (rs != null) {
 				this.lastInsertId = rs.getUpdateID();
 				
 				this.results = rs;
 			}
+			
+			return ((rs != null) && rs.reallyResult());
 		}
-
-		return ((rs != null) && rs.reallyResult());
 	}
 
 	/**
@@ -1424,16 +1424,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws java.sql.BatchUpdateException
 	 *             DOCUMENT ME!
 	 */
-	public synchronized int[] executeBatch() throws SQLException {
-		checkClosed();
+	public int[] executeBatch() throws SQLException {
+		synchronized (checkClosed()) {
 		
-		if (this.connection.isReadOnly()) {
-			throw new SQLException(Messages.getString("PreparedStatement.25") //$NON-NLS-1$
-					+ Messages.getString("PreparedStatement.26"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
-		}
+			if (this.connection.isReadOnly()) {
+				throw new SQLException(Messages.getString("PreparedStatement.25") //$NON-NLS-1$
+						+ Messages.getString("PreparedStatement.26"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT);
+			}
 
-		synchronized (this.connection) {
 			if (this.batchedArgs == null || this.batchedArgs.size() == 0) {
                 return new int[0];
             }
@@ -1478,7 +1477,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		return this.parseInfo.canRewriteAsMultiValueInsert;
 	}
 	
-	protected int getLocationOfOnDuplicateKeyUpdate() {
+	protected int getLocationOfOnDuplicateKeyUpdate() throws SQLException {
 		return this.parseInfo.locationOfOnDuplicateKeyUpdate;
 	}
 
@@ -1492,8 +1491,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 */
 	
-	protected synchronized int[] executePreparedBatchAsMultiStatement(int batchTimeout) throws SQLException {
-		synchronized (this.connection) {
+	protected int[] executePreparedBatchAsMultiStatement(int batchTimeout) throws SQLException {
+		synchronized (checkClosed()) {
 			// This is kind of an abuse, but it gets the job done
 			if (this.batchedValuesClause == null) {
 				this.batchedValuesClause = this.originalSql + ";";
@@ -1681,18 +1680,20 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 	
-	private synchronized String generateMultiStatementForBatch(int numBatches) {
-		StringBuffer newStatementSql = new StringBuffer((this.originalSql
-				.length() + 1) * numBatches);
-				
-		newStatementSql.append(this.originalSql);
-
-		for (int i = 0; i < numBatches - 1; i++) {
-			newStatementSql.append(';');
+	private String generateMultiStatementForBatch(int numBatches) throws SQLException {
+		synchronized (checkClosed()) {
+			StringBuffer newStatementSql = new StringBuffer((this.originalSql
+					.length() + 1) * numBatches);
+					
 			newStatementSql.append(this.originalSql);
+	
+			for (int i = 0; i < numBatches - 1; i++) {
+				newStatementSql.append(';');
+				newStatementSql.append(this.originalSql);
+			}
+	
+			return newStatementSql.toString();
 		}
-
-		return newStatementSql.toString();
 	}
 	
 	/**
@@ -1704,121 +1705,88 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * 
 	 * @throws SQLException
 	 */
-	protected synchronized int[] executeBatchedInserts(int batchTimeout) throws SQLException {
-		String valuesClause = getValuesClause(); 
-
-		MySQLConnection locallyScopedConn = this.connection;
-
-		if (valuesClause == null) {
-			return executeBatchSerially(batchTimeout);
-		}
-
-		int numBatchedArgs = this.batchedArgs.size();
-
-		if (this.retrieveGeneratedKeys) {
-			this.batchedGeneratedKeys = new ArrayList(numBatchedArgs);
-		}
-
-		int numValuesPerBatch = computeBatchSize(numBatchedArgs);
-
-		if (numBatchedArgs < numValuesPerBatch) {
-			numValuesPerBatch = numBatchedArgs;
-		}
-
-		java.sql.PreparedStatement batchedStatement = null;
-
-		int batchedParamIndex = 1;
-		int updateCountRunningTotal = 0;
-		int numberToExecuteAsMultiValue = 0;
-		int batchCounter = 0;
-		CancelTask timeoutTask = null;
-		SQLException sqlEx = null;
-		
-		int[] updateCounts = new int[numBatchedArgs];
-
-		for (int i = 0; i < this.batchedArgs.size(); i++) {
-			updateCounts[i] = 1;
-		}
-		
-		try {
-			try {
-					batchedStatement = /* FIXME -if we ever care about folks proxying our MySQLConnection */
-							prepareBatchedInsertSQL((MySQLConnection) locallyScopedConn, numValuesPerBatch);
-
-				if (locallyScopedConn.getEnableQueryTimeouts()
-						&& batchTimeout != 0
-						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
-					timeoutTask = new CancelTask(
-							(StatementImpl) batchedStatement);
-					locallyScopedConn.getCancelTimer().schedule(timeoutTask,
-							batchTimeout);
-				}
-
-				if (numBatchedArgs < numValuesPerBatch) {
-					numberToExecuteAsMultiValue = numBatchedArgs;
-				} else {
-					numberToExecuteAsMultiValue = numBatchedArgs
-							/ numValuesPerBatch;
-				}
-
-				int numberArgsToExecute = numberToExecuteAsMultiValue
-						* numValuesPerBatch;
-
-				for (int i = 0; i < numberArgsToExecute; i++) {
-					if (i != 0 && i % numValuesPerBatch == 0) {
-						try {
-							updateCountRunningTotal += batchedStatement
-								.executeUpdate();
-						} catch (SQLException ex) {
-							sqlEx = handleExceptionForBatch(batchCounter - 1,
-									numValuesPerBatch, updateCounts, ex);
-						}
-
-						getBatchedGeneratedKeys(batchedStatement);
-						batchedStatement.clearParameters();
-						batchedParamIndex = 1;
-
-					}
-
-					batchedParamIndex = setOneBatchedParameterSet(
-							batchedStatement, batchedParamIndex,
-							this.batchedArgs.get(batchCounter++));
-				}
-
-				try {
-					updateCountRunningTotal += batchedStatement.executeUpdate();
-				} catch (SQLException ex) {
-					sqlEx = handleExceptionForBatch(batchCounter - 1,
-							numValuesPerBatch, updateCounts, ex);
-				}
-				
-				getBatchedGeneratedKeys(batchedStatement);
-
-				numValuesPerBatch = numBatchedArgs - batchCounter;
-			} finally {
-				if (batchedStatement != null) {
-					batchedStatement.close();
-				}
+	protected int[] executeBatchedInserts(int batchTimeout) throws SQLException {
+		synchronized (checkClosed()) {
+			String valuesClause = getValuesClause(); 
+	
+			MySQLConnection locallyScopedConn = this.connection;
+	
+			if (valuesClause == null) {
+				return executeBatchSerially(batchTimeout);
 			}
-
+	
+			int numBatchedArgs = this.batchedArgs.size();
+	
+			if (this.retrieveGeneratedKeys) {
+				this.batchedGeneratedKeys = new ArrayList(numBatchedArgs);
+			}
+	
+			int numValuesPerBatch = computeBatchSize(numBatchedArgs);
+	
+			if (numBatchedArgs < numValuesPerBatch) {
+				numValuesPerBatch = numBatchedArgs;
+			}
+	
+			java.sql.PreparedStatement batchedStatement = null;
+	
+			int batchedParamIndex = 1;
+			int updateCountRunningTotal = 0;
+			int numberToExecuteAsMultiValue = 0;
+			int batchCounter = 0;
+			CancelTask timeoutTask = null;
+			SQLException sqlEx = null;
+			
+			int[] updateCounts = new int[numBatchedArgs];
+	
+			for (int i = 0; i < this.batchedArgs.size(); i++) {
+				updateCounts[i] = 1;
+			}
+			
 			try {
-				if (numValuesPerBatch > 0) {
-						batchedStatement = 
-								prepareBatchedInsertSQL((MySQLConnection) locallyScopedConn,
-										numValuesPerBatch);
-					
-					if (timeoutTask != null) {
-						timeoutTask.toCancel = (StatementImpl) batchedStatement;
+				try {
+						batchedStatement = /* FIXME -if we ever care about folks proxying our MySQLConnection */
+								prepareBatchedInsertSQL((MySQLConnection) locallyScopedConn, numValuesPerBatch);
+	
+					if (locallyScopedConn.getEnableQueryTimeouts()
+							&& batchTimeout != 0
+							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+						timeoutTask = new CancelTask(
+								(StatementImpl) batchedStatement);
+						locallyScopedConn.getCancelTimer().schedule(timeoutTask,
+								batchTimeout);
 					}
-
-					batchedParamIndex = 1;
-
-					while (batchCounter < numBatchedArgs) {
+	
+					if (numBatchedArgs < numValuesPerBatch) {
+						numberToExecuteAsMultiValue = numBatchedArgs;
+					} else {
+						numberToExecuteAsMultiValue = numBatchedArgs
+								/ numValuesPerBatch;
+					}
+	
+					int numberArgsToExecute = numberToExecuteAsMultiValue
+							* numValuesPerBatch;
+	
+					for (int i = 0; i < numberArgsToExecute; i++) {
+						if (i != 0 && i % numValuesPerBatch == 0) {
+							try {
+								updateCountRunningTotal += batchedStatement
+									.executeUpdate();
+							} catch (SQLException ex) {
+								sqlEx = handleExceptionForBatch(batchCounter - 1,
+										numValuesPerBatch, updateCounts, ex);
+							}
+	
+							getBatchedGeneratedKeys(batchedStatement);
+							batchedStatement.clearParameters();
+							batchedParamIndex = 1;
+	
+						}
+	
 						batchedParamIndex = setOneBatchedParameterSet(
 								batchedStatement, batchedParamIndex,
 								this.batchedArgs.get(batchCounter++));
 					}
-
+	
 					try {
 						updateCountRunningTotal += batchedStatement.executeUpdate();
 					} catch (SQLException ex) {
@@ -1827,29 +1795,64 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					}
 					
 					getBatchedGeneratedKeys(batchedStatement);
+	
+					numValuesPerBatch = numBatchedArgs - batchCounter;
+				} finally {
+					if (batchedStatement != null) {
+						batchedStatement.close();
+					}
 				}
-
-				if (sqlEx != null) {
-					SQLException batchUpdateException = new java.sql.BatchUpdateException(sqlEx
-							.getMessage(), sqlEx.getSQLState(), sqlEx
-							.getErrorCode(), updateCounts);
-					batchUpdateException.initCause(sqlEx);
-					throw batchUpdateException;
+	
+				try {
+					if (numValuesPerBatch > 0) {
+							batchedStatement = 
+									prepareBatchedInsertSQL((MySQLConnection) locallyScopedConn,
+											numValuesPerBatch);
+						
+						if (timeoutTask != null) {
+							timeoutTask.toCancel = (StatementImpl) batchedStatement;
+						}
+	
+						batchedParamIndex = 1;
+	
+						while (batchCounter < numBatchedArgs) {
+							batchedParamIndex = setOneBatchedParameterSet(
+									batchedStatement, batchedParamIndex,
+									this.batchedArgs.get(batchCounter++));
+						}
+	
+						try {
+							updateCountRunningTotal += batchedStatement.executeUpdate();
+						} catch (SQLException ex) {
+							sqlEx = handleExceptionForBatch(batchCounter - 1,
+									numValuesPerBatch, updateCounts, ex);
+						}
+						
+						getBatchedGeneratedKeys(batchedStatement);
+					}
+	
+					if (sqlEx != null) {
+						SQLException batchUpdateException = new java.sql.BatchUpdateException(sqlEx
+								.getMessage(), sqlEx.getSQLState(), sqlEx
+								.getErrorCode(), updateCounts);
+						batchUpdateException.initCause(sqlEx);
+						throw batchUpdateException;
+					}
+					
+					return updateCounts;
+				} finally {
+					if (batchedStatement != null) {
+						batchedStatement.close();
+					}
 				}
-				
-				return updateCounts;
 			} finally {
-				if (batchedStatement != null) {
-					batchedStatement.close();
+				if (timeoutTask != null) {
+					timeoutTask.cancel();
+					locallyScopedConn.getCancelTimer().purge();
 				}
+	
+				resetCancelledState();
 			}
-		} finally {
-			if (timeoutTask != null) {
-				timeoutTask.cancel();
-				locallyScopedConn.getCancelTimer().purge();
-			}
-
-			resetCancelledState();
 		}
 	}
 
@@ -1865,19 +1868,21 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @return
 	 * @throws SQLException 
 	 */
-	protected synchronized int computeBatchSize(int numBatchedArgs) throws SQLException {
-		long[] combinedValues = computeMaxParameterSetSizeAndBatchSize(numBatchedArgs);
-		
-		long maxSizeOfParameterSet = combinedValues[0];
-		long sizeOfEntireBatch = combinedValues[1];
-		
-		int maxAllowedPacket = this.connection.getMaxAllowedPacket();
-		
-		if (sizeOfEntireBatch < maxAllowedPacket - this.originalSql.length()) {
-			return numBatchedArgs;
+	protected int computeBatchSize(int numBatchedArgs) throws SQLException {
+		synchronized (checkClosed()) {
+			long[] combinedValues = computeMaxParameterSetSizeAndBatchSize(numBatchedArgs);
+			
+			long maxSizeOfParameterSet = combinedValues[0];
+			long sizeOfEntireBatch = combinedValues[1];
+			
+			int maxAllowedPacket = this.connection.getMaxAllowedPacket();
+			
+			if (sizeOfEntireBatch < maxAllowedPacket - this.originalSql.length()) {
+				return numBatchedArgs;
+			}
+			
+			return (int)Math.max(1, (maxAllowedPacket - this.originalSql.length()) / maxSizeOfParameterSet);
 		}
-		
-		return (int)Math.max(1, (maxAllowedPacket - this.originalSql.length()) / maxSizeOfParameterSet);
 	}
 	
 	/** 
@@ -1885,61 +1890,63 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *  the number of arguments in the batch.
 	 * @throws SQLException 
 	 */
-	protected synchronized long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) throws SQLException {
-		long sizeOfEntireBatch = 0;
-		long maxSizeOfParameterSet = 0;
-		
-		for (int i = 0; i < numBatchedArgs; i++) {
-			BatchParams paramArg = (BatchParams) this.batchedArgs
-			.get(i);
-
-			boolean[] isNullBatch = paramArg.isNull;
-			boolean[] isStreamBatch = paramArg.isStream;
-
-			long sizeOfParameterSet = 0;
+	protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) throws SQLException {
+		synchronized (checkClosed()) {
+			long sizeOfEntireBatch = 0;
+			long maxSizeOfParameterSet = 0;
 			
-			for (int j = 0; j < isNullBatch.length; j++) {
-				if (!isNullBatch[j]) {
-
-					if (isStreamBatch[j]) {
-						int streamLength = paramArg.streamLengths[j];
-						
-						if (streamLength != -1) {
-							sizeOfParameterSet += streamLength * 2; // for safety in escaping
+			for (int i = 0; i < numBatchedArgs; i++) {
+				BatchParams paramArg = (BatchParams) this.batchedArgs
+				.get(i);
+	
+				boolean[] isNullBatch = paramArg.isNull;
+				boolean[] isStreamBatch = paramArg.isStream;
+	
+				long sizeOfParameterSet = 0;
+				
+				for (int j = 0; j < isNullBatch.length; j++) {
+					if (!isNullBatch[j]) {
+	
+						if (isStreamBatch[j]) {
+							int streamLength = paramArg.streamLengths[j];
+							
+							if (streamLength != -1) {
+								sizeOfParameterSet += streamLength * 2; // for safety in escaping
+							} else {
+								int paramLength = paramArg.parameterStrings[j].length;
+								sizeOfParameterSet += paramLength;
+							}
 						} else {
-							int paramLength = paramArg.parameterStrings[j].length;
-							sizeOfParameterSet += paramLength;
+							sizeOfParameterSet += paramArg.parameterStrings[j].length;
 						}
 					} else {
-						sizeOfParameterSet += paramArg.parameterStrings[j].length;
+						sizeOfParameterSet += 4; // for NULL literal in SQL 
 					}
-				} else {
-					sizeOfParameterSet += 4; // for NULL literal in SQL 
 				}
-			}
+				
+				//
+				// Account for static part of values clause
+				// This is a little naiive, because the ?s will be replaced
+				// but it gives us some padding, and is less housekeeping
+				// to ignore them. We're looking for a "fuzzy" value here
+				// anyway
+				//
+				
+				if (getValuesClause() != null) {
+					sizeOfParameterSet += getValuesClause().length() + 1;
+				} else {
+					sizeOfParameterSet += this.originalSql.length() + 1;
+				}
+				
+				sizeOfEntireBatch += sizeOfParameterSet;
+				
+				if (sizeOfParameterSet > maxSizeOfParameterSet) {
+					maxSizeOfParameterSet = sizeOfParameterSet;
+				}
+			}	
 			
-			//
-			// Account for static part of values clause
-			// This is a little naiive, because the ?s will be replaced
-			// but it gives us some padding, and is less housekeeping
-			// to ignore them. We're looking for a "fuzzy" value here
-			// anyway
-			//
-			
-			if (getValuesClause() != null) {
-				sizeOfParameterSet += getValuesClause().length() + 1;
-			} else {
-				sizeOfParameterSet += this.originalSql.length() + 1;
-			}
-			
-			sizeOfEntireBatch += sizeOfParameterSet;
-			
-			if (sizeOfParameterSet > maxSizeOfParameterSet) {
-				maxSizeOfParameterSet = sizeOfParameterSet;
-			}
-		}	
-		
-		return new long[] {maxSizeOfParameterSet, sizeOfEntireBatch};
+			return new long[] {maxSizeOfParameterSet, sizeOfEntireBatch};
+		}
 	}
 
 
@@ -1950,133 +1957,135 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	protected synchronized int[] executeBatchSerially(int batchTimeout) throws SQLException {
+	protected int[] executeBatchSerially(int batchTimeout) throws SQLException {
 		
-		MySQLConnection locallyScopedConn = this.connection;
-		
-		if (locallyScopedConn == null) {
-			checkClosed();
-		}
-
-		int[] updateCounts = null;
-
-		if (this.batchedArgs != null) {
-			int nbrCommands = this.batchedArgs.size();
-			updateCounts = new int[nbrCommands];
-
-			for (int i = 0; i < nbrCommands; i++) {
-				updateCounts[i] = -3;
-			}
-
-			SQLException sqlEx = null;
-
-			CancelTask timeoutTask = null;
+		synchronized (checkClosed()) {
+			MySQLConnection locallyScopedConn = this.connection;
 			
-			try {
-				if (locallyScopedConn.getEnableQueryTimeouts() &&
-						batchTimeout != 0
-						&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
-					timeoutTask = new CancelTask(this);
-					locallyScopedConn.getCancelTimer().schedule(timeoutTask,
-							batchTimeout);
+			if (locallyScopedConn == null) {
+				checkClosed();
+			}
+	
+			int[] updateCounts = null;
+	
+			if (this.batchedArgs != null) {
+				int nbrCommands = this.batchedArgs.size();
+				updateCounts = new int[nbrCommands];
+	
+				for (int i = 0; i < nbrCommands; i++) {
+					updateCounts[i] = -3;
 				}
+	
+				SQLException sqlEx = null;
+	
+				CancelTask timeoutTask = null;
 				
-				if (this.retrieveGeneratedKeys) {
-					this.batchedGeneratedKeys = new ArrayList(nbrCommands);
-				}
-	
-				for (batchCommandIndex = 0; batchCommandIndex < nbrCommands; batchCommandIndex++) {
-					Object arg = this.batchedArgs.get(batchCommandIndex);
-	
-					if (arg instanceof String) {
-						updateCounts[batchCommandIndex] = executeUpdate((String) arg);
-					} else {
-						BatchParams paramArg = (BatchParams) arg;
-	
-						try {
-							updateCounts[batchCommandIndex] = executeUpdate(
-									paramArg.parameterStrings,
-									paramArg.parameterStreams, paramArg.isStream,
-									paramArg.streamLengths, paramArg.isNull, true);
-	
-							if (this.retrieveGeneratedKeys) {
-								java.sql.ResultSet rs = null;
-	
-								try {
-									if (containsOnDuplicateKeyUpdateInSQL())
-										rs = getGeneratedKeysInternal(1);
-									else
-										rs = getGeneratedKeysInternal();
-	
-									while (rs.next()) {
-										this.batchedGeneratedKeys
-												.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }, getExceptionInterceptor()));
-									}
-								} finally {
-									if (rs != null) {
-										rs.close();
+				try {
+					if (locallyScopedConn.getEnableQueryTimeouts() &&
+							batchTimeout != 0
+							&& locallyScopedConn.versionMeetsMinimum(5, 0, 0)) {
+						timeoutTask = new CancelTask(this);
+						locallyScopedConn.getCancelTimer().schedule(timeoutTask,
+								batchTimeout);
+					}
+					
+					if (this.retrieveGeneratedKeys) {
+						this.batchedGeneratedKeys = new ArrayList(nbrCommands);
+					}
+		
+					for (batchCommandIndex = 0; batchCommandIndex < nbrCommands; batchCommandIndex++) {
+						Object arg = this.batchedArgs.get(batchCommandIndex);
+		
+						if (arg instanceof String) {
+							updateCounts[batchCommandIndex] = executeUpdate((String) arg);
+						} else {
+							BatchParams paramArg = (BatchParams) arg;
+		
+							try {
+								updateCounts[batchCommandIndex] = executeUpdate(
+										paramArg.parameterStrings,
+										paramArg.parameterStreams, paramArg.isStream,
+										paramArg.streamLengths, paramArg.isNull, true);
+		
+								if (this.retrieveGeneratedKeys) {
+									java.sql.ResultSet rs = null;
+		
+									try {
+										if (containsOnDuplicateKeyUpdateInSQL())
+											rs = getGeneratedKeysInternal(1);
+										else
+											rs = getGeneratedKeysInternal();
+		
+										while (rs.next()) {
+											this.batchedGeneratedKeys
+													.add(new ByteArrayRow(new byte[][] { rs.getBytes(1) }, getExceptionInterceptor()));
+										}
+									} finally {
+										if (rs != null) {
+											rs.close();
+										}
 									}
 								}
-							}
-						} catch (SQLException ex) {
-							updateCounts[batchCommandIndex] = EXECUTE_FAILED;
-	
-							if (this.continueBatchOnError && 
-									!(ex instanceof MySQLTimeoutException) && 
-									!(ex instanceof MySQLStatementCancelledException) &&
-									!hasDeadlockOrTimeoutRolledBackTx(ex)) {
-								sqlEx = ex;
-							} else {
-								int[] newUpdateCounts = new int[batchCommandIndex];
-								System.arraycopy(updateCounts, 0,
-										newUpdateCounts, 0, batchCommandIndex);
-	
-								SQLException batchUpdateException = new java.sql.BatchUpdateException(ex
-										.getMessage(), ex.getSQLState(), ex
-										.getErrorCode(), newUpdateCounts);
-								batchUpdateException.initCause(ex);
-								throw batchUpdateException;
+							} catch (SQLException ex) {
+								updateCounts[batchCommandIndex] = EXECUTE_FAILED;
+		
+								if (this.continueBatchOnError && 
+										!(ex instanceof MySQLTimeoutException) && 
+										!(ex instanceof MySQLStatementCancelledException) &&
+										!hasDeadlockOrTimeoutRolledBackTx(ex)) {
+									sqlEx = ex;
+								} else {
+									int[] newUpdateCounts = new int[batchCommandIndex];
+									System.arraycopy(updateCounts, 0,
+											newUpdateCounts, 0, batchCommandIndex);
+		
+									SQLException batchUpdateException = new java.sql.BatchUpdateException(ex
+											.getMessage(), ex.getSQLState(), ex
+											.getErrorCode(), newUpdateCounts);
+									batchUpdateException.initCause(ex);
+									throw batchUpdateException;
+								}
 							}
 						}
 					}
-				}
+		
+					if (sqlEx != null) {
+						SQLException batchUpdateException = new java.sql.BatchUpdateException(sqlEx.getMessage(),
+								sqlEx.getSQLState(), sqlEx.getErrorCode(), updateCounts);
+						batchUpdateException.initCause(sqlEx);
+						throw batchUpdateException;
+					}
+				} catch (NullPointerException npe) {
+					try {
+						checkClosed();
+					} catch (SQLException connectionClosedEx) {
+						updateCounts[batchCommandIndex] = EXECUTE_FAILED;
+						
+						int[] newUpdateCounts = new int[batchCommandIndex];
+						
+						System.arraycopy(updateCounts, 0,
+								newUpdateCounts, 0, batchCommandIndex);
 	
-				if (sqlEx != null) {
-					SQLException batchUpdateException = new java.sql.BatchUpdateException(sqlEx.getMessage(),
-							sqlEx.getSQLState(), sqlEx.getErrorCode(), updateCounts);
-					batchUpdateException.initCause(sqlEx);
-					throw batchUpdateException;
-				}
-			} catch (NullPointerException npe) {
-				try {
-					checkClosed();
-				} catch (SQLException connectionClosedEx) {
-					updateCounts[batchCommandIndex] = EXECUTE_FAILED;
+						throw new java.sql.BatchUpdateException(connectionClosedEx
+								.getMessage(), connectionClosedEx.getSQLState(), connectionClosedEx
+								.getErrorCode(), newUpdateCounts);
+					}
 					
-					int[] newUpdateCounts = new int[batchCommandIndex];
+					throw npe; // we don't know why this happened, punt
+				} finally {
+					batchCommandIndex = -1;
 					
-					System.arraycopy(updateCounts, 0,
-							newUpdateCounts, 0, batchCommandIndex);
-
-					throw new java.sql.BatchUpdateException(connectionClosedEx
-							.getMessage(), connectionClosedEx.getSQLState(), connectionClosedEx
-							.getErrorCode(), newUpdateCounts);
+					if (timeoutTask != null) {
+						timeoutTask.cancel();
+						locallyScopedConn.getCancelTimer().purge();
+					}
+					
+					resetCancelledState();
 				}
-				
-				throw npe; // we don't know why this happened, punt
-			} finally {
-				batchCommandIndex = -1;
-				
-				if (timeoutTask != null) {
-					timeoutTask.cancel();
-					locallyScopedConn.getCancelTimer().purge();
-				}
-				
-				resetCancelledState();
 			}
+		
+			return (updateCounts != null) ? updateCounts : new int[0];
 		}
-	
-		return (updateCounts != null) ? updateCounts : new int[0];
 		
 	}
 
@@ -2105,92 +2114,94 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	protected synchronized ResultSetInternalMethods executeInternal(int maxRowsToRetrieve,
+	protected ResultSetInternalMethods executeInternal(int maxRowsToRetrieve,
 			Buffer sendPacket, boolean createStreamingResultSet,
 			boolean queryIsSelectOnly, Field[] metadataFromCache,
 			boolean isBatch)
 			throws SQLException {
-		try {
-			
-			resetCancelledState();
-			
-			MySQLConnection locallyScopedConnection = this.connection;
-			
-			this.numberOfExecutions++;
-	
-			if (this.doPingInstead) {
-				doPingInstead();
-				
-				return this.results;
-			}
-			
-			ResultSetInternalMethods rs;
-			
-			CancelTask timeoutTask = null;
-	
+		synchronized (checkClosed()) {
 			try {
-				if (locallyScopedConnection.getEnableQueryTimeouts() &&
-						this.timeoutInMillis != 0
-						&& locallyScopedConnection.versionMeetsMinimum(5, 0, 0)) {
-					timeoutTask = new CancelTask(this);
-					locallyScopedConnection.getCancelTimer().schedule(timeoutTask, 
-							this.timeoutInMillis);
-				}
-
-				if (!isBatch) {
-					statementBegins();
+				
+				resetCancelledState();
+				
+				MySQLConnection locallyScopedConnection = this.connection;
+				
+				this.numberOfExecutions++;
+		
+				if (this.doPingInstead) {
+					doPingInstead();
+					
+					return this.results;
 				}
 				
-				rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket,
-					this.resultSetType, this.resultSetConcurrency,
-					createStreamingResultSet, this.currentCatalog,
-					metadataFromCache, isBatch);
+				ResultSetInternalMethods rs;
 				
-				if (timeoutTask != null) {
-					timeoutTask.cancel();
-					
-					locallyScopedConnection.getCancelTimer().purge();
-					
-					if (timeoutTask.caughtWhileCancelling != null) {
-						throw timeoutTask.caughtWhileCancelling;
+				CancelTask timeoutTask = null;
+		
+				try {
+					if (locallyScopedConnection.getEnableQueryTimeouts() &&
+							this.timeoutInMillis != 0
+							&& locallyScopedConnection.versionMeetsMinimum(5, 0, 0)) {
+						timeoutTask = new CancelTask(this);
+						locallyScopedConnection.getCancelTimer().schedule(timeoutTask, 
+								this.timeoutInMillis);
+					}
+	
+					if (!isBatch) {
+						statementBegins();
 					}
 					
-					timeoutTask = null;
-				}
-			
-				synchronized (this.cancelTimeoutMutex) {
-					if (this.wasCancelled) {
-						SQLException cause = null;
+					rs = locallyScopedConnection.execSQL(this, null, maxRowsToRetrieve, sendPacket,
+						this.resultSetType, this.resultSetConcurrency,
+						createStreamingResultSet, this.currentCatalog,
+						metadataFromCache, isBatch);
+					
+					if (timeoutTask != null) {
+						timeoutTask.cancel();
 						
-						if (this.wasCancelledByTimeout) {
-							cause = new MySQLTimeoutException();
-						} else {
-							cause = new MySQLStatementCancelledException();
+						locallyScopedConnection.getCancelTimer().purge();
+						
+						if (timeoutTask.caughtWhileCancelling != null) {
+							throw timeoutTask.caughtWhileCancelling;
 						}
 						
-						resetCancelledState();
-						
-						throw cause;
+						timeoutTask = null;
+					}
+				
+					synchronized (this.cancelTimeoutMutex) {
+						if (this.wasCancelled) {
+							SQLException cause = null;
+							
+							if (this.wasCancelledByTimeout) {
+								cause = new MySQLTimeoutException();
+							} else {
+								cause = new MySQLStatementCancelledException();
+							}
+							
+							resetCancelledState();
+							
+							throw cause;
+						}
+					}
+				} finally {
+					if (!isBatch) {
+						this.statementExecuting.set(false);
+					}
+					
+					if (timeoutTask != null) {
+						timeoutTask.cancel();
+						locallyScopedConnection.getCancelTimer().purge();
 					}
 				}
-			} finally {
-				if (!isBatch) {
-					this.statementExecuting.set(false);
-				}
 				
-				if (timeoutTask != null) {
-					timeoutTask.cancel();
-					locallyScopedConnection.getCancelTimer().purge();
-				}
+				return rs;
+			} catch (NullPointerException npe) {
+				checkClosed(); // we can't synchronize ourselves against async connection-close
+				               // due to deadlock issues, so this is the next best thing for
+				 			   // this particular corner case.
+				
+				throw npe;
 			}
-			
-			return rs;
-		} catch (NullPointerException npe) {
-			checkClosed(); // we can't synchronize ourselves against async connection-close
-			               // due to deadlock issues, so this is the next best thing for
-			 			   // this particular corner case.
-			
-			throw npe;
 		}
 	}
 
@@ -2203,20 +2214,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized java.sql.ResultSet executeQuery() throws SQLException {
-		checkClosed();
+	public java.sql.ResultSet executeQuery() throws SQLException {
+		synchronized (checkClosed()) {
 		
-		MySQLConnection locallyScopedConn = this.connection;
-		
-		checkForDml(this.originalSql, this.firstCharOfStmt);
+			MySQLConnection locallyScopedConn = this.connection;
+			
+			checkForDml(this.originalSql, this.firstCharOfStmt);
+	
+			CachedResultSetMetaData cachedMetadata = null;
+	
 
-		CachedResultSetMetaData cachedMetadata = null;
-
-		// We need to execute this all together
-		// So synchronize on the Connection's mutex (because
-		// even queries going through there synchronize
-		// on the same mutex.
-		synchronized (locallyScopedConn) {
 			clearWarnings();
 
 			boolean doStreaming = createStreamingResultSet();
@@ -2325,11 +2332,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 							null /* will be created */, this.results);
 				}
 			}
+
+			this.lastInsertId = this.results.getUpdateID();
+	
+			return this.results;
 		}
-
-		this.lastInsertId = this.results.getUpdateID();
-
-		return this.results;
 	}
 	
 	/**
@@ -2352,15 +2359,17 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * batched updates, which will end up clobbering the warnings and generated
 	 * keys we need to gather for the batch.
 	 */
-	protected synchronized int executeUpdate(
+	protected int executeUpdate(
 			boolean clearBatchedGeneratedKeysAndWarnings, boolean isBatch) throws SQLException {
-		if (clearBatchedGeneratedKeysAndWarnings) {
-			clearWarnings();
-			this.batchedGeneratedKeys = null;
+		synchronized (checkClosed()) {
+			if (clearBatchedGeneratedKeysAndWarnings) {
+				clearWarnings();
+				this.batchedGeneratedKeys = null;
+			}
+	
+			return executeUpdate(this.parameterValues, this.parameterStreams,
+					this.isStream, this.streamLengths, this.isNull, isBatch);
 		}
-
-		return executeUpdate(this.parameterValues, this.parameterStreams,
-				this.isStream, this.streamLengths, this.isNull, isBatch);
 	}
 
 	/**
@@ -2382,39 +2391,35 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	protected synchronized int executeUpdate(byte[][] batchedParameterStrings,
+	protected int executeUpdate(byte[][] batchedParameterStrings,
 			InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
 			int[] batchedStreamLengths, boolean[] batchedIsNull, boolean isReallyBatch)
 			throws SQLException {
 
-		checkClosed();
+		synchronized (checkClosed()) {
 
-		MySQLConnection locallyScopedConn = this.connection;
-		
-		if (locallyScopedConn.isReadOnly()) {
-			throw SQLError.createSQLException(Messages.getString("PreparedStatement.34") //$NON-NLS-1$
-					+ Messages.getString("PreparedStatement.35"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-
-		if ((this.firstCharOfStmt == 'S')
-				&& isSelectQuery()) { //$NON-NLS-1$
-			throw SQLError.createSQLException(Messages.getString("PreparedStatement.37"), //$NON-NLS-1$
-					"01S03", getExceptionInterceptor()); //$NON-NLS-1$
-		}
-
-		if (this.results != null) {
-			if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
-				this.results.realClose(false);
+			MySQLConnection locallyScopedConn = this.connection;
+			
+			if (locallyScopedConn.isReadOnly()) {
+				throw SQLError.createSQLException(Messages.getString("PreparedStatement.34") //$NON-NLS-1$
+						+ Messages.getString("PreparedStatement.35"), //$NON-NLS-1$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
-		}
+	
+			if ((this.firstCharOfStmt == 'S')
+					&& isSelectQuery()) { //$NON-NLS-1$
+				throw SQLError.createSQLException(Messages.getString("PreparedStatement.37"), //$NON-NLS-1$
+						"01S03", getExceptionInterceptor()); //$NON-NLS-1$
+			}
+	
+			if (this.results != null) {
+				if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+					this.results.realClose(false);
+				}
+			}
+	
+			ResultSetInternalMethods rs = null;
 
-		ResultSetInternalMethods rs = null;
-
-		// The checking and changing of catalogs
-		// must happen in sequence, so synchronize
-		// on the same mutex that _conn is using
-		synchronized (locallyScopedConn) {
 			Buffer sendPacket = fillSendPacket(batchedParameterStrings,
 					batchedParameterStreams, batchedIsStream,
 					batchedStreamLengths);
@@ -2452,37 +2457,35 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			if (oldCatalog != null) {
 				locallyScopedConn.setCatalog(oldCatalog);
 			}
-		}
 
-		this.results = rs;
-
-		this.updateCount = rs.getUpdateCount();
-		
-		if (containsOnDuplicateKeyUpdateInSQL() && 
-				this.compensateForOnDuplicateKeyUpdate) {
-			if (this.updateCount == 2 || this.updateCount == 0) {
-				this.updateCount = 1;
+			this.results = rs;
+	
+			this.updateCount = rs.getUpdateCount();
+			
+			if (containsOnDuplicateKeyUpdateInSQL() && 
+					this.compensateForOnDuplicateKeyUpdate) {
+				if (this.updateCount == 2 || this.updateCount == 0) {
+					this.updateCount = 1;
+				}
 			}
+	
+			int truncatedUpdateCount = 0;
+	
+			if (this.updateCount > Integer.MAX_VALUE) {
+				truncatedUpdateCount = Integer.MAX_VALUE;
+			} else {
+				truncatedUpdateCount = (int) this.updateCount;
+			}
+	
+			this.lastInsertId = rs.getUpdateID();
+	
+			return truncatedUpdateCount;
 		}
-
-		int truncatedUpdateCount = 0;
-
-		if (this.updateCount > Integer.MAX_VALUE) {
-			truncatedUpdateCount = Integer.MAX_VALUE;
-		} else {
-			truncatedUpdateCount = (int) this.updateCount;
-		}
-
-		this.lastInsertId = rs.getUpdateID();
-
-		return truncatedUpdateCount;
 	}
 
 	protected boolean containsOnDuplicateKeyUpdateInSQL() {
 		return this.parseInfo.isOnDuplicateKeyUpdate;
 	}
-
-
 
 	/**
 	 * Creates the packet that contains the query to be sent to the server.
@@ -2493,9 +2496,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	protected synchronized Buffer fillSendPacket() throws SQLException {
-		return fillSendPacket(this.parameterValues, this.parameterStreams,
-				this.isStream, this.streamLengths);
+	protected Buffer fillSendPacket() throws SQLException {
+		synchronized (checkClosed()) {
+			return fillSendPacket(this.parameterValues, this.parameterStreams,
+					this.isStream, this.streamLengths);
+		}
 	}
 
 	/**
@@ -2515,76 +2520,78 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */
-	protected synchronized Buffer fillSendPacket(byte[][] batchedParameterStrings,
+	protected Buffer fillSendPacket(byte[][] batchedParameterStrings,
 			InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
 			int[] batchedStreamLengths) throws SQLException {
-		Buffer sendPacket = this.connection.getIO().getSharedSendPacket();
-
-		sendPacket.clear();
-
-		sendPacket.writeByte((byte) MysqlDefs.QUERY);
-
-		boolean useStreamLengths = this.connection
-				.getUseStreamLengthsInPrepStmts();
-
-		//
-		// Try and get this allocation as close as possible
-		// for BLOBs
-		//
-		int ensurePacketSize = 0;
-
-		String statementComment = this.connection.getStatementComment();
+		synchronized (checkClosed()) {
+			Buffer sendPacket = this.connection.getIO().getSharedSendPacket();
+	
+			sendPacket.clear();
+	
+			sendPacket.writeByte((byte) MysqlDefs.QUERY);
+	
+			boolean useStreamLengths = this.connection
+					.getUseStreamLengthsInPrepStmts();
+	
+			//
+			// Try and get this allocation as close as possible
+			// for BLOBs
+			//
+			int ensurePacketSize = 0;
+	
+			String statementComment = this.connection.getStatementComment();
+			
+			byte[] commentAsBytes = null;
+			
+			if (statementComment != null) {
+				if (this.charConverter != null) {
+					commentAsBytes = this.charConverter.toBytes(statementComment);
+				} else {
+					commentAsBytes = StringUtils.getBytes(statementComment, this.charConverter,
+							this.charEncoding, this.connection
+									.getServerCharacterEncoding(), this.connection
+									.parserKnowsUnicode(), getExceptionInterceptor());
+				}
+				
+				ensurePacketSize += commentAsBytes.length;
+				ensurePacketSize += 6; // for /*[space] [space]*/
+			}
 		
-		byte[] commentAsBytes = null;
-		
-		if (statementComment != null) {
-			if (this.charConverter != null) {
-				commentAsBytes = this.charConverter.toBytes(statementComment);
-			} else {
-				commentAsBytes = StringUtils.getBytes(statementComment, this.charConverter,
-						this.charEncoding, this.connection
-								.getServerCharacterEncoding(), this.connection
-								.parserKnowsUnicode(), getExceptionInterceptor());
+			for (int i = 0; i < batchedParameterStrings.length; i++) {
+				if (batchedIsStream[i] && useStreamLengths) {
+					ensurePacketSize += batchedStreamLengths[i];
+				}
+			}
+	
+			if (ensurePacketSize != 0) {
+				sendPacket.ensureCapacity(ensurePacketSize);
+			}
+	
+			if (commentAsBytes != null) {
+				sendPacket.writeBytesNoNull(Constants.SLASH_STAR_SPACE_AS_BYTES);
+				sendPacket.writeBytesNoNull(commentAsBytes);
+				sendPacket.writeBytesNoNull(Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
 			}
 			
-			ensurePacketSize += commentAsBytes.length;
-			ensurePacketSize += 6; // for /*[space] [space]*/
-		}
+			for (int i = 0; i < batchedParameterStrings.length; i++) {
+				checkAllParametersSet(batchedParameterStrings[i],
+						batchedParameterStreams[i], i);
 	
-		for (int i = 0; i < batchedParameterStrings.length; i++) {
-			if (batchedIsStream[i] && useStreamLengths) {
-				ensurePacketSize += batchedStreamLengths[i];
+				sendPacket.writeBytesNoNull(this.staticSqlStrings[i]);
+	
+				if (batchedIsStream[i]) {
+					streamToBytes(sendPacket, batchedParameterStreams[i], true,
+							batchedStreamLengths[i], useStreamLengths);
+				} else {
+					sendPacket.writeBytesNoNull(batchedParameterStrings[i]);
+				}
 			}
+	
+			sendPacket
+					.writeBytesNoNull(this.staticSqlStrings[batchedParameterStrings.length]);
+	
+			return sendPacket;
 		}
-
-		if (ensurePacketSize != 0) {
-			sendPacket.ensureCapacity(ensurePacketSize);
-		}
-
-		if (commentAsBytes != null) {
-			sendPacket.writeBytesNoNull(Constants.SLASH_STAR_SPACE_AS_BYTES);
-			sendPacket.writeBytesNoNull(commentAsBytes);
-			sendPacket.writeBytesNoNull(Constants.SPACE_STAR_SLASH_SPACE_AS_BYTES);
-		}
-		
-		for (int i = 0; i < batchedParameterStrings.length; i++) {
-			checkAllParametersSet(batchedParameterStrings[i],
-					batchedParameterStreams[i], i);
-
-			sendPacket.writeBytesNoNull(this.staticSqlStrings[i]);
-
-			if (batchedIsStream[i]) {
-				streamToBytes(sendPacket, batchedParameterStreams[i], true,
-						batchedStreamLengths[i], useStreamLengths);
-			} else {
-				sendPacket.writeBytesNoNull(batchedParameterStrings[i]);
-			}
-		}
-
-		sendPacket
-				.writeBytesNoNull(this.staticSqlStrings[batchedParameterStrings.length]);
-
-		return sendPacket;
 	}
 
 	private void checkAllParametersSet(byte[] parameterString,
@@ -2601,12 +2608,20 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	/**
 	 * Returns a prepared statement for the number of batched parameters, used when re-writing batch INSERTs.
 	 */
-	protected synchronized PreparedStatement prepareBatchedInsertSQL(MySQLConnection localConn, int numBatches) throws SQLException {
-		PreparedStatement pstmt = new PreparedStatement(localConn, "Rewritten batch of: " + this.originalSql, this.currentCatalog, this.parseInfo.getParseInfoForBatch(numBatches));
-		pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
-		pstmt.rewrittenBatchSize = numBatches;
-		
-		return pstmt;
+	protected PreparedStatement prepareBatchedInsertSQL(MySQLConnection localConn, int numBatches) throws SQLException {
+		synchronized (checkClosed()) {
+			PreparedStatement pstmt = new PreparedStatement(localConn, "Rewritten batch of: " + this.originalSql, this.currentCatalog, this.parseInfo.getParseInfoForBatch(numBatches));
+			pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
+			pstmt.rewrittenBatchSize = numBatches;
+			
+			return pstmt;
+		}
+	}
+
+	protected void setRetrieveGeneratedKeys(boolean flag) throws SQLException {
+		synchronized (checkClosed()) {
+			this.retrieveGeneratedKeys = flag;
+		}
 	}
 
 	protected int rewrittenBatchSize = 0;
@@ -2615,14 +2630,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		return this.rewrittenBatchSize;
 	}
 	
-	public synchronized String getNonRewrittenSql() {
-		int indexOfBatch = this.originalSql.indexOf(" of: ");
-		
-		if (indexOfBatch != -1) {
-			return this.originalSql.substring(indexOfBatch + 5);
+	public String getNonRewrittenSql() throws SQLException {
+		synchronized (checkClosed()) {
+			int indexOfBatch = this.originalSql.indexOf(" of: ");
+			
+			if (indexOfBatch != -1) {
+				return this.originalSql.substring(indexOfBatch + 5);
+			}
+			
+			return this.originalSql;
 		}
-		
-		return this.originalSql;
 	}
 	
 	
@@ -2637,30 +2654,32 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	public synchronized byte[] getBytesRepresentation(int parameterIndex)
+	public byte[] getBytesRepresentation(int parameterIndex)
 			throws SQLException {
-		if (this.isStream[parameterIndex]) {
-			return streamToBytes(this.parameterStreams[parameterIndex], false,
-					this.streamLengths[parameterIndex], this.connection
-							.getUseStreamLengthsInPrepStmts());
+		synchronized (checkClosed()) {
+			if (this.isStream[parameterIndex]) {
+				return streamToBytes(this.parameterStreams[parameterIndex], false,
+						this.streamLengths[parameterIndex], this.connection
+								.getUseStreamLengthsInPrepStmts());
+			}
+	
+			byte[] parameterVal = this.parameterValues[parameterIndex];
+	
+			if (parameterVal == null) {
+				return null;
+			}
+	
+			if ((parameterVal[0] == '\'')
+					&& (parameterVal[parameterVal.length - 1] == '\'')) {
+				byte[] valNoQuotes = new byte[parameterVal.length - 2];
+				System.arraycopy(parameterVal, 1, valNoQuotes, 0,
+						parameterVal.length - 2);
+	
+				return valNoQuotes;
+			}
+	
+			return parameterVal;
 		}
-
-		byte[] parameterVal = this.parameterValues[parameterIndex];
-
-		if (parameterVal == null) {
-			return null;
-		}
-
-		if ((parameterVal[0] == '\'')
-				&& (parameterVal[parameterVal.length - 1] == '\'')) {
-			byte[] valNoQuotes = new byte[parameterVal.length - 2];
-			System.arraycopy(parameterVal, 1, valNoQuotes, 0,
-					parameterVal.length - 2);
-
-			return valNoQuotes;
-		}
-
-		return parameterVal;
 	}
 	
 	/**
@@ -2670,40 +2689,42 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @return
 	 * @throws SQLException
 	 */
-	protected synchronized byte[] getBytesRepresentationForBatch(int parameterIndex, int commandIndex)
+	protected byte[] getBytesRepresentationForBatch(int parameterIndex, int commandIndex)
 				throws SQLException {
-		Object batchedArg = batchedArgs.get(commandIndex);
-		if (batchedArg instanceof String) {
-			try {
-				return (StringUtils.getBytes((String)batchedArg, charEncoding));
-				
-			} catch (UnsupportedEncodingException uue) {
-				throw new RuntimeException(Messages
-						.getString("PreparedStatement.32") //$NON-NLS-1$
-						+ this.charEncoding
-						+ Messages.getString("PreparedStatement.33")); //$NON-NLS-1$
+		synchronized (checkClosed()) {
+			Object batchedArg = batchedArgs.get(commandIndex);
+			if (batchedArg instanceof String) {
+				try {
+					return (StringUtils.getBytes((String)batchedArg, charEncoding));
+					
+				} catch (UnsupportedEncodingException uue) {
+					throw new RuntimeException(Messages
+							.getString("PreparedStatement.32") //$NON-NLS-1$
+							+ this.charEncoding
+							+ Messages.getString("PreparedStatement.33")); //$NON-NLS-1$
+				}
 			}
+			
+			BatchParams params = (BatchParams)batchedArg;
+			if (params.isStream[parameterIndex])
+				return streamToBytes(params.parameterStreams[parameterIndex], false,
+						params.streamLengths[parameterIndex],
+						connection.getUseStreamLengthsInPrepStmts());
+			byte parameterVal[] = params.parameterStrings[parameterIndex];
+			if (parameterVal == null)
+				return null;
+			
+			if ((parameterVal[0] == '\'')
+					&& (parameterVal[parameterVal.length - 1] == '\'')) {
+				byte[] valNoQuotes = new byte[parameterVal.length - 2];
+				System.arraycopy(parameterVal, 1, valNoQuotes, 0,
+						parameterVal.length - 2);
+	
+				return valNoQuotes;
+			}
+	
+			return parameterVal;
 		}
-		
-		BatchParams params = (BatchParams)batchedArg;
-		if (params.isStream[parameterIndex])
-			return streamToBytes(params.parameterStreams[parameterIndex], false,
-					params.streamLengths[parameterIndex],
-					connection.getUseStreamLengthsInPrepStmts());
-		byte parameterVal[] = params.parameterStrings[parameterIndex];
-		if (parameterVal == null)
-			return null;
-		
-		if ((parameterVal[0] == '\'')
-				&& (parameterVal[parameterVal.length - 1] == '\'')) {
-			byte[] valNoQuotes = new byte[parameterVal.length - 2];
-			System.arraycopy(parameterVal, 1, valNoQuotes, 0,
-					parameterVal.length - 2);
-
-			return valNoQuotes;
-		}
-
-		return parameterVal;
 	}
 
 	// --------------------------JDBC 2.0-----------------------------
@@ -2882,105 +2903,111 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
-	public synchronized java.sql.ResultSetMetaData getMetaData()
+	public java.sql.ResultSetMetaData getMetaData()
 			throws SQLException {
 
-		//
-		// We could just tack on a LIMIT 0 here no matter what the 
-		// statement, and check if a result set was returned or not,
-		// but I'm not comfortable with that, myself, so we take
-		// the "safer" road, and only allow metadata for _actual_
-		// SELECTS (but not SHOWs).
-		// 
-		// CALL's are trapped further up and you end up with a 
-		// CallableStatement anyway.
-		//
-		
-		if (!isSelectQuery()) {
-			return null;
-		}
-
-		PreparedStatement mdStmt = null;
-		java.sql.ResultSet mdRs = null;
-
-		if (this.pstmtResultMetaData == null) {
-			try {
-				mdStmt = new PreparedStatement(this.connection,
-						this.originalSql, this.currentCatalog, this.parseInfo);
-
-				mdStmt.setMaxRows(1);
-
-				int paramCount = this.parameterValues.length;
-
-				for (int i = 1; i <= paramCount; i++) {
-					mdStmt.setString(i, ""); //$NON-NLS-1$
-				}
-
-				boolean hadResults = mdStmt.execute();
-
-				if (hadResults) {
-					mdRs = mdStmt.getResultSet();
-
-					this.pstmtResultMetaData = mdRs.getMetaData();
-				} else {
-					this.pstmtResultMetaData = new ResultSetMetaData(
-							new Field[0], 
-							this.connection.getUseOldAliasMetadataBehavior(), getExceptionInterceptor());
-				}
-			} finally {
-				SQLException sqlExRethrow = null;
-
-				if (mdRs != null) {
-					try {
-						mdRs.close();
-					} catch (SQLException sqlEx) {
-						sqlExRethrow = sqlEx;
+		synchronized (checkClosed()) {
+			//
+			// We could just tack on a LIMIT 0 here no matter what the 
+			// statement, and check if a result set was returned or not,
+			// but I'm not comfortable with that, myself, so we take
+			// the "safer" road, and only allow metadata for _actual_
+			// SELECTS (but not SHOWs).
+			// 
+			// CALL's are trapped further up and you end up with a 
+			// CallableStatement anyway.
+			//
+			
+			if (!isSelectQuery()) {
+				return null;
+			}
+	
+			PreparedStatement mdStmt = null;
+			java.sql.ResultSet mdRs = null;
+	
+			if (this.pstmtResultMetaData == null) {
+				try {
+					mdStmt = new PreparedStatement(this.connection,
+							this.originalSql, this.currentCatalog, this.parseInfo);
+	
+					mdStmt.setMaxRows(1);
+	
+					int paramCount = this.parameterValues.length;
+	
+					for (int i = 1; i <= paramCount; i++) {
+						mdStmt.setString(i, ""); //$NON-NLS-1$
 					}
-
-					mdRs = null;
-				}
-
-				if (mdStmt != null) {
-					try {
-						mdStmt.close();
-					} catch (SQLException sqlEx) {
-						sqlExRethrow = sqlEx;
+	
+					boolean hadResults = mdStmt.execute();
+	
+					if (hadResults) {
+						mdRs = mdStmt.getResultSet();
+	
+						this.pstmtResultMetaData = mdRs.getMetaData();
+					} else {
+						this.pstmtResultMetaData = new ResultSetMetaData(
+								new Field[0], 
+								this.connection.getUseOldAliasMetadataBehavior(), getExceptionInterceptor());
 					}
-
-					mdStmt = null;
-				}
-
-				if (sqlExRethrow != null) {
-					throw sqlExRethrow;
+				} finally {
+					SQLException sqlExRethrow = null;
+	
+					if (mdRs != null) {
+						try {
+							mdRs.close();
+						} catch (SQLException sqlEx) {
+							sqlExRethrow = sqlEx;
+						}
+	
+						mdRs = null;
+					}
+	
+					if (mdStmt != null) {
+						try {
+							mdStmt.close();
+						} catch (SQLException sqlEx) {
+							sqlExRethrow = sqlEx;
+						}
+	
+						mdStmt = null;
+					}
+	
+					if (sqlExRethrow != null) {
+						throw sqlExRethrow;
+					}
 				}
 			}
+	
+			return this.pstmtResultMetaData;
 		}
-
-		return this.pstmtResultMetaData;
 	}
 
-	protected synchronized boolean isSelectQuery() {
-		return StringUtils.startsWithIgnoreCaseAndWs(
-				StringUtils.stripComments(this.originalSql,
-						"'\"", "'\"", true, false, true, true), 
-						"SELECT");
+	protected boolean isSelectQuery() throws SQLException {
+		synchronized (checkClosed()) {
+			return StringUtils.startsWithIgnoreCaseAndWs(
+					StringUtils.stripComments(this.originalSql,
+							"'\"", "'\"", true, false, true, true), 
+							"SELECT");
+		}
 	}
 
 	/**
 	 * @see PreparedStatement#getParameterMetaData()
 	 */
-	public synchronized ParameterMetaData getParameterMetaData() 
+	public ParameterMetaData getParameterMetaData() 
 		throws SQLException {
-	if (this.parameterMetaData == null) {
-		if (this.connection.getGenerateSimpleParameterMetadata()) {
-			this.parameterMetaData = new MysqlParameterMetadata(this.parameterCount);
-		} else {
-			this.parameterMetaData = new MysqlParameterMetadata(
-				null, this.parameterCount, getExceptionInterceptor());
+		synchronized (checkClosed()) {
+			if (this.parameterMetaData == null) {
+				if (this.connection.getGenerateSimpleParameterMetadata()) {
+					this.parameterMetaData = new MysqlParameterMetadata(this.parameterCount);
+				} else {
+					this.parameterMetaData = new MysqlParameterMetadata(
+						null, this.parameterCount, getExceptionInterceptor());
+				}
+			}
+			
+			return this.parameterMetaData;
 		}
-	}
-	
-	return this.parameterMetaData;
 }
 
 	ParseInfo getParseInfo() {
@@ -3024,30 +3051,34 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 
-	private synchronized void initializeFromParseInfo() throws SQLException {
-		this.staticSqlStrings = this.parseInfo.staticSql;
-		this.hasLimitClause = this.parseInfo.foundLimitClause;
-		this.isLoadDataQuery = this.parseInfo.foundLoadData;
-		this.firstCharOfStmt = this.parseInfo.firstStmtChar;
-
-		this.parameterCount = this.staticSqlStrings.length - 1;
-
-		this.parameterValues = new byte[this.parameterCount][];
-		this.parameterStreams = new InputStream[this.parameterCount];
-		this.isStream = new boolean[this.parameterCount];
-		this.streamLengths = new int[this.parameterCount];
-		this.isNull = new boolean[this.parameterCount];
-		this.parameterTypes = new int[this.parameterCount];
+	private void initializeFromParseInfo() throws SQLException {
+		synchronized (checkClosed()) {
+			this.staticSqlStrings = this.parseInfo.staticSql;
+			this.hasLimitClause = this.parseInfo.foundLimitClause;
+			this.isLoadDataQuery = this.parseInfo.foundLoadData;
+			this.firstCharOfStmt = this.parseInfo.firstStmtChar;
 	
-		clearParameters();
-
-		for (int j = 0; j < this.parameterCount; j++) {
-			this.isStream[j] = false;
+			this.parameterCount = this.staticSqlStrings.length - 1;
+	
+			this.parameterValues = new byte[this.parameterCount][];
+			this.parameterStreams = new InputStream[this.parameterCount];
+			this.isStream = new boolean[this.parameterCount];
+			this.streamLengths = new int[this.parameterCount];
+			this.isNull = new boolean[this.parameterCount];
+			this.parameterTypes = new int[this.parameterCount];
+		
+			clearParameters();
+	
+			for (int j = 0; j < this.parameterCount; j++) {
+				this.isStream[j] = false;
+			}
 		}
 	}
 
-	synchronized boolean isNull(int paramIndex) {
-		return this.isNull[paramIndex];
+	boolean isNull(int paramIndex) throws SQLException {
+		synchronized (checkClosed()) {
+			return this.isNull[paramIndex];
+		}
 	}
 
 	private final int readblock(InputStream i, byte[] b) throws SQLException {
@@ -3090,33 +3121,44 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if an error occurs
 	 */
-	protected synchronized void realClose(boolean calledExplicitly, 
+	protected void realClose(boolean calledExplicitly, 
 			boolean closeOpenResults) throws SQLException {
-		if (this.useUsageAdvisor) {
-			if (this.numberOfExecutions <= 1) {
-				String message = Messages.getString("PreparedStatement.43"); //$NON-NLS-1$
-
-				this.eventSink.consumeEvent(new ProfilerEvent(
-						ProfilerEvent.TYPE_WARN, "", this.currentCatalog, //$NON-NLS-1$
-						this.connectionId, this.getId(), -1, System
-								.currentTimeMillis(), 0, Constants.MILLIS_I18N,
-								null,
-						this.pointOfOrigin, message));
-			}
+		MySQLConnection locallyScopedConn;
+		
+		try {
+			locallyScopedConn = checkClosed();
+		} catch (SQLException sqlEx) {
+			return; // already closed
 		}
 		
-		super.realClose(calledExplicitly, closeOpenResults);
-
-		this.dbmd = null;
-		this.originalSql = null;
-		this.staticSqlStrings = null;
-		this.parameterValues = null;
-		this.parameterStreams = null;
-		this.isStream = null;
-		this.streamLengths = null;
-		this.isNull = null;
-		this.streamConvertBuf = null;
-		this.parameterTypes = null;
+		synchronized (locallyScopedConn) {
+		
+			if (this.useUsageAdvisor) {
+				if (this.numberOfExecutions <= 1) {
+					String message = Messages.getString("PreparedStatement.43"); //$NON-NLS-1$
+	
+					this.eventSink.consumeEvent(new ProfilerEvent(
+							ProfilerEvent.TYPE_WARN, "", this.currentCatalog, //$NON-NLS-1$
+							this.connectionId, this.getId(), -1, System
+									.currentTimeMillis(), 0, Constants.MILLIS_I18N,
+									null,
+							this.pointOfOrigin, message));
+				}
+			}
+			
+			super.realClose(calledExplicitly, closeOpenResults);
+	
+			this.dbmd = null;
+			this.originalSql = null;
+			this.staticSqlStrings = null;
+			this.parameterValues = null;
+			this.parameterStreams = null;
+			this.isStream = null;
+			this.streamLengths = null;
+			this.isNull = null;
+			this.streamConvertBuf = null;
+			this.parameterTypes = null;
+		}
 	}
 
 	/**
@@ -3211,31 +3253,33 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if a database access error occurs
 	 */
-	public synchronized void setBinaryStream(int parameterIndex, InputStream x, int length)
+	public void setBinaryStream(int parameterIndex, InputStream x, int length)
 			throws SQLException {
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.BINARY);
-		} else {
-			int parameterIndexOffset = getParameterIndexOffset();
-			
-			if ((parameterIndex < 1)
-					|| (parameterIndex > this.staticSqlStrings.length)) {
-				throw SQLError.createSQLException(
-						Messages.getString("PreparedStatement.2") //$NON-NLS-1$
-								+ parameterIndex
-								+ Messages.getString("PreparedStatement.3") + this.staticSqlStrings.length + Messages.getString("PreparedStatement.4"), //$NON-NLS-1$ //$NON-NLS-2$
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-			} else if (parameterIndexOffset == -1 && parameterIndex == 1) {
-				throw SQLError.createSQLException("Can't set IN parameter for return value of stored function call.", 
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+		synchronized (checkClosed()) {
+			if (x == null) {
+				setNull(parameterIndex, java.sql.Types.BINARY);
+			} else {
+				int parameterIndexOffset = getParameterIndexOffset();
+				
+				if ((parameterIndex < 1)
+						|| (parameterIndex > this.staticSqlStrings.length)) {
+					throw SQLError.createSQLException(
+							Messages.getString("PreparedStatement.2") //$NON-NLS-1$
+									+ parameterIndex
+									+ Messages.getString("PreparedStatement.3") + this.staticSqlStrings.length + Messages.getString("PreparedStatement.4"), //$NON-NLS-1$ //$NON-NLS-2$
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+				} else if (parameterIndexOffset == -1 && parameterIndex == 1) {
+					throw SQLError.createSQLException("Can't set IN parameter for return value of stored function call.", 
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+				}
+	
+	
+				this.parameterStreams[parameterIndex - 1 + parameterIndexOffset] = x;
+				this.isStream[parameterIndex - 1 + parameterIndexOffset] = true;
+				this.streamLengths[parameterIndex - 1 + parameterIndexOffset] = length;
+				this.isNull[parameterIndex - 1 + parameterIndexOffset] = false;
+				this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BLOB;
 			}
-
-
-			this.parameterStreams[parameterIndex - 1 + parameterIndexOffset] = x;
-			this.isStream[parameterIndex - 1 + parameterIndexOffset] = true;
-			this.streamLengths[parameterIndex - 1 + parameterIndexOffset] = length;
-			this.isNull[parameterIndex - 1 + parameterIndexOffset] = false;
-			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.BLOB;
 		}
 	}
 
@@ -3333,130 +3377,132 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 
-	protected synchronized void setBytes(int parameterIndex, byte[] x,
+	protected void setBytes(int parameterIndex, byte[] x,
 			boolean checkForIntroducer, boolean escapeForMBChars)
 			throws SQLException {
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.BINARY);
-		} else {
-			String connectionEncoding = this.connection.getEncoding();
-
-			try {
-				if (this.connection.isNoBackslashEscapesSet()
-						|| (escapeForMBChars 
-								&& this.connection.getUseUnicode()
-								&& connectionEncoding != null
-								&& CharsetMapping.isMultibyteCharset(connectionEncoding))) {
+		synchronized (checkClosed()) {
+			if (x == null) {
+				setNull(parameterIndex, java.sql.Types.BINARY);
+			} else {
+				String connectionEncoding = this.connection.getEncoding();
 	
-					// Send as hex
-	
-					ByteArrayOutputStream bOut = new ByteArrayOutputStream(
-							(x.length * 2) + 3);
-					bOut.write('x');
-					bOut.write('\'');
-	
-					for (int i = 0; i < x.length; i++) {
-						int lowBits = (x[i] & 0xff) / 16;
-						int highBits = (x[i] & 0xff) % 16;
-	
-						bOut.write(HEX_DIGITS[lowBits]);
-						bOut.write(HEX_DIGITS[highBits]);
+				try {
+					if (this.connection.isNoBackslashEscapesSet()
+							|| (escapeForMBChars 
+									&& this.connection.getUseUnicode()
+									&& connectionEncoding != null
+									&& CharsetMapping.isMultibyteCharset(connectionEncoding))) {
+		
+						// Send as hex
+		
+						ByteArrayOutputStream bOut = new ByteArrayOutputStream(
+								(x.length * 2) + 3);
+						bOut.write('x');
+						bOut.write('\'');
+		
+						for (int i = 0; i < x.length; i++) {
+							int lowBits = (x[i] & 0xff) / 16;
+							int highBits = (x[i] & 0xff) % 16;
+		
+							bOut.write(HEX_DIGITS[lowBits]);
+							bOut.write(HEX_DIGITS[highBits]);
+						}
+		
+						bOut.write('\'');
+		
+						setInternal(parameterIndex, bOut.toByteArray());
+		
+						return;
 					}
-	
-					bOut.write('\'');
-	
-					setInternal(parameterIndex, bOut.toByteArray());
-	
-					return;
+				} catch (SQLException ex) {
+					throw ex;
+				} catch (RuntimeException ex) {
+					SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+					sqlEx.initCause(ex);
+					throw sqlEx;
 				}
-			} catch (SQLException ex) {
-				throw ex;
-			} catch (RuntimeException ex) {
-				SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-				sqlEx.initCause(ex);
-				throw sqlEx;
-			}
-
-			// escape them
-			int numBytes = x.length;
-
-			int pad = 2;
-
-			boolean needsIntroducer = checkForIntroducer
-					&& this.connection.versionMeetsMinimum(4, 1, 0);
-
-			if (needsIntroducer) {
-				pad += 7;
-			}
-
-			ByteArrayOutputStream bOut = new ByteArrayOutputStream(numBytes
-					+ pad);
-
-			if (needsIntroducer) {
-				bOut.write('_');
-				bOut.write('b');
-				bOut.write('i');
-				bOut.write('n');
-				bOut.write('a');
-				bOut.write('r');
-				bOut.write('y');
-			}
-			bOut.write('\'');
-
-			for (int i = 0; i < numBytes; ++i) {
-				byte b = x[i];
-
-				switch (b) {
-				case 0: /* Must be escaped for 'mysql' */
-					bOut.write('\\');
-					bOut.write('0');
-
-					break;
-
-				case '\n': /* Must be escaped for logs */
-					bOut.write('\\');
+	
+				// escape them
+				int numBytes = x.length;
+	
+				int pad = 2;
+	
+				boolean needsIntroducer = checkForIntroducer
+						&& this.connection.versionMeetsMinimum(4, 1, 0);
+	
+				if (needsIntroducer) {
+					pad += 7;
+				}
+	
+				ByteArrayOutputStream bOut = new ByteArrayOutputStream(numBytes
+						+ pad);
+	
+				if (needsIntroducer) {
+					bOut.write('_');
+					bOut.write('b');
+					bOut.write('i');
 					bOut.write('n');
-
-					break;
-
-				case '\r':
-					bOut.write('\\');
+					bOut.write('a');
 					bOut.write('r');
-
-					break;
-
-				case '\\':
-					bOut.write('\\');
-					bOut.write('\\');
-
-					break;
-
-				case '\'':
-					bOut.write('\\');
-					bOut.write('\'');
-
-					break;
-
-				case '"': /* Better safe than sorry */
-					bOut.write('\\');
-					bOut.write('"');
-
-					break;
-
-				case '\032': /* This gives problems on Win32 */
-					bOut.write('\\');
-					bOut.write('Z');
-
-					break;
-
-				default:
-					bOut.write(b);
+					bOut.write('y');
 				}
+				bOut.write('\'');
+	
+				for (int i = 0; i < numBytes; ++i) {
+					byte b = x[i];
+	
+					switch (b) {
+					case 0: /* Must be escaped for 'mysql' */
+						bOut.write('\\');
+						bOut.write('0');
+	
+						break;
+	
+					case '\n': /* Must be escaped for logs */
+						bOut.write('\\');
+						bOut.write('n');
+	
+						break;
+	
+					case '\r':
+						bOut.write('\\');
+						bOut.write('r');
+	
+						break;
+	
+					case '\\':
+						bOut.write('\\');
+						bOut.write('\\');
+	
+						break;
+	
+					case '\'':
+						bOut.write('\\');
+						bOut.write('\'');
+	
+						break;
+	
+					case '"': /* Better safe than sorry */
+						bOut.write('\\');
+						bOut.write('"');
+	
+						break;
+	
+					case '\032': /* This gives problems on Win32 */
+						bOut.write('\\');
+						bOut.write('Z');
+	
+						break;
+	
+					default:
+						bOut.write(b);
+					}
+				}
+	
+				bOut.write('\'');
+	
+				setInternal(parameterIndex, bOut.toByteArray());
 			}
-
-			bOut.write('\'');
-
-			setInternal(parameterIndex, bOut.toByteArray());
 		}
 	}
 
@@ -3510,67 +3556,69 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
-	public synchronized void setCharacterStream(int parameterIndex, java.io.Reader reader,
+	public void setCharacterStream(int parameterIndex, java.io.Reader reader,
 			int length) throws SQLException {
-		try {
-			if (reader == null) {
-				setNull(parameterIndex, Types.LONGVARCHAR);
-			} else {
-				char[] c = null;
-				int len = 0;
-
-				boolean useLength = this.connection
-						.getUseStreamLengthsInPrepStmts();
-
-				String forcedEncoding = this.connection.getClobCharacterEncoding();
-				
-				if (useLength && (length != -1)) {
-					c = new char[length];
-
-					int numCharsRead = readFully(reader, c, length); // blocks
-					// until
-					// all
-					// read
-
-					if (forcedEncoding == null) {
-						setString(parameterIndex, new String(c, 0, numCharsRead));
-					} else {
-						try {
-							setBytes(parameterIndex, StringUtils.getBytes(new String(c, 
-									0, 
-									numCharsRead), forcedEncoding));
-						} catch (UnsupportedEncodingException uee) {
-							throw SQLError.createSQLException("Unsupported character encoding " + 
-									forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-						}
-					}
+		synchronized (checkClosed()) {
+			try {
+				if (reader == null) {
+					setNull(parameterIndex, Types.LONGVARCHAR);
 				} else {
-					c = new char[4096];
-
-					StringBuffer buf = new StringBuffer();
-
-					while ((len = reader.read(c)) != -1) {
-						buf.append(c, 0, len);
-					}
-
-					if (forcedEncoding == null) {
-						setString(parameterIndex, buf.toString());
+					char[] c = null;
+					int len = 0;
+	
+					boolean useLength = this.connection
+							.getUseStreamLengthsInPrepStmts();
+	
+					String forcedEncoding = this.connection.getClobCharacterEncoding();
+					
+					if (useLength && (length != -1)) {
+						c = new char[length];
+	
+						int numCharsRead = readFully(reader, c, length); // blocks
+						// until
+						// all
+						// read
+	
+						if (forcedEncoding == null) {
+							setString(parameterIndex, new String(c, 0, numCharsRead));
+						} else {
+							try {
+								setBytes(parameterIndex, StringUtils.getBytes(new String(c, 
+										0, 
+										numCharsRead), forcedEncoding));
+							} catch (UnsupportedEncodingException uee) {
+								throw SQLError.createSQLException("Unsupported character encoding " + 
+										forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+							}
+						}
 					} else {
-						try {
-							setBytes(parameterIndex, 
-									StringUtils.getBytes(buf.toString(), forcedEncoding));
-						} catch (UnsupportedEncodingException uee) {
-							throw SQLError.createSQLException("Unsupported character encoding " + 
-									forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+						c = new char[4096];
+	
+						StringBuffer buf = new StringBuffer();
+	
+						while ((len = reader.read(c)) != -1) {
+							buf.append(c, 0, len);
+						}
+	
+						if (forcedEncoding == null) {
+							setString(parameterIndex, buf.toString());
+						} else {
+							try {
+								setBytes(parameterIndex, 
+										StringUtils.getBytes(buf.toString(), forcedEncoding));
+							} catch (UnsupportedEncodingException uee) {
+								throw SQLError.createSQLException("Unsupported character encoding " + 
+										forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+							}
 						}
 					}
+					
+					this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.CLOB;
 				}
-				
-				this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.CLOB;
+			} catch (java.io.IOException ioEx) {
+				throw SQLError.createSQLException(ioEx.toString(),
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 			}
-		} catch (java.io.IOException ioEx) {
-			throw SQLError.createSQLException(ioEx.toString(),
-					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 	}
 
@@ -3585,26 +3633,28 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public synchronized void setClob(int i, Clob x) throws SQLException {
-		if (x == null) {
-			setNull(i, Types.CLOB);
-		} else {
-
-			String forcedEncoding = this.connection.getClobCharacterEncoding();
-			
-			if (forcedEncoding == null) {
-				setString(i, x.getSubString(1L, (int) x.length()));
+	public void setClob(int i, Clob x) throws SQLException {
+		synchronized (checkClosed()) {
+			if (x == null) {
+				setNull(i, Types.CLOB);
 			} else {
-				try {
-					setBytes(i, StringUtils.getBytes(x.getSubString(1L, 
-							(int)x.length()), forcedEncoding));
-				} catch (UnsupportedEncodingException uee) {
-					throw SQLError.createSQLException("Unsupported character encoding " + 
-							forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+	
+				String forcedEncoding = this.connection.getClobCharacterEncoding();
+				
+				if (forcedEncoding == null) {
+					setString(i, x.getSubString(1L, (int) x.length()));
+				} else {
+					try {
+						setBytes(i, StringUtils.getBytes(x.getSubString(1L, 
+								(int)x.length()), forcedEncoding));
+					} catch (UnsupportedEncodingException uee) {
+						throw SQLError.createSQLException("Unsupported character encoding " + 
+								forcedEncoding, SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+					}
 				}
+			
+				this.parameterTypes[i - 1 + getParameterIndexOffset()] = Types.CLOB;
 			}
-		
-			this.parameterTypes[i - 1 + getParameterIndexOffset()] = Types.CLOB;
 		}
 	}
 
@@ -3672,21 +3722,22 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized void setDouble(int parameterIndex, double x) throws SQLException {
-
-		if (!this.connection.getAllowNanAndInf()
-				&& (x == Double.POSITIVE_INFINITY
-						|| x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
-			throw SQLError.createSQLException("'" + x
-					+ "' is not a valid numeric or approximate numeric value",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-
+	public void setDouble(int parameterIndex, double x) throws SQLException {
+		synchronized (checkClosed()) {
+			if (!this.connection.getAllowNanAndInf()
+					&& (x == Double.POSITIVE_INFINITY
+							|| x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
+				throw SQLError.createSQLException("'" + x
+						+ "' is not a valid numeric or approximate numeric value",
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+	
+			}
+	
+			setInternal(parameterIndex, StringUtils.fixDecimalExponent(String
+					.valueOf(x)));
+			
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DOUBLE;
 		}
-
-		setInternal(parameterIndex, StringUtils.fixDecimalExponent(String
-				.valueOf(x)));
-		
-		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.DOUBLE;
 	}
 
 	/**
@@ -3726,58 +3777,59 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.INTEGER;
 	}
 
-	protected synchronized final void setInternal(int paramIndex, byte[] val)
+	protected final void setInternal(int paramIndex, byte[] val)
 			throws SQLException {
-		if (this.isClosed) {
-			throw SQLError.createSQLException(Messages.getString("PreparedStatement.48"), //$NON-NLS-1$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-
-		int parameterIndexOffset = getParameterIndexOffset();
-		
-		checkBounds(paramIndex, parameterIndexOffset);
-
-		this.isStream[paramIndex - 1 + parameterIndexOffset] = false;
-		this.isNull[paramIndex - 1 + parameterIndexOffset] = false;
-		this.parameterStreams[paramIndex - 1 + parameterIndexOffset] = null;
-		this.parameterValues[paramIndex - 1 + parameterIndexOffset] = val;
-	}
-
-	private synchronized void checkBounds(int paramIndex, int parameterIndexOffset)
-			throws SQLException {
-		if ((paramIndex < 1)) {
-			throw SQLError.createSQLException(
-					Messages.getString("PreparedStatement.49") //$NON-NLS-1$
-							+ paramIndex
-							+ Messages.getString("PreparedStatement.50"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
-		} else if (paramIndex > this.parameterCount) {
-			throw SQLError.createSQLException(
-					Messages.getString("PreparedStatement.51") //$NON-NLS-1$
-							+ paramIndex
-							+ Messages.getString("PreparedStatement.52") + (this.parameterValues.length) + Messages.getString("PreparedStatement.53"), //$NON-NLS-1$ //$NON-NLS-2$
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		} else if (parameterIndexOffset == -1 && paramIndex == 1) {
-			throw SQLError.createSQLException("Can't set IN parameter for return value of stored function call.", 
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+		synchronized (checkClosed()) {
+	
+			int parameterIndexOffset = getParameterIndexOffset();
+			
+			checkBounds(paramIndex, parameterIndexOffset);
+	
+			this.isStream[paramIndex - 1 + parameterIndexOffset] = false;
+			this.isNull[paramIndex - 1 + parameterIndexOffset] = false;
+			this.parameterStreams[paramIndex - 1 + parameterIndexOffset] = null;
+			this.parameterValues[paramIndex - 1 + parameterIndexOffset] = val;
 		}
 	}
 
-	protected synchronized final void setInternal(int paramIndex, String val)
+	private void checkBounds(int paramIndex, int parameterIndexOffset)
 			throws SQLException {
-		checkClosed();
-		
-		byte[] parameterAsBytes = null;
-
-		if (this.charConverter != null) {
-			parameterAsBytes = this.charConverter.toBytes(val);
-		} else {
-			parameterAsBytes = StringUtils.getBytes(val, this.charConverter,
-					this.charEncoding, this.connection
-							.getServerCharacterEncoding(), this.connection
-							.parserKnowsUnicode(), getExceptionInterceptor());
+		synchronized (checkClosed()) {
+			if ((paramIndex < 1)) {
+				throw SQLError.createSQLException(
+						Messages.getString("PreparedStatement.49") //$NON-NLS-1$
+								+ paramIndex
+								+ Messages.getString("PreparedStatement.50"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
+			} else if (paramIndex > this.parameterCount) {
+				throw SQLError.createSQLException(
+						Messages.getString("PreparedStatement.51") //$NON-NLS-1$
+								+ paramIndex
+								+ Messages.getString("PreparedStatement.52") + (this.parameterValues.length) + Messages.getString("PreparedStatement.53"), //$NON-NLS-1$ //$NON-NLS-2$
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			} else if (parameterIndexOffset == -1 && paramIndex == 1) {
+				throw SQLError.createSQLException("Can't set IN parameter for return value of stored function call.", 
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
 		}
+	}
 
-		setInternal(paramIndex, parameterAsBytes);
+	protected final void setInternal(int paramIndex, String val)
+			throws SQLException {
+		synchronized (checkClosed()) {
+		
+			byte[] parameterAsBytes = null;
+	
+			if (this.charConverter != null) {
+				parameterAsBytes = this.charConverter.toBytes(val);
+			} else {
+				parameterAsBytes = StringUtils.getBytes(val, this.charConverter,
+						this.charEncoding, this.connection
+								.getServerCharacterEncoding(), this.connection
+								.parserKnowsUnicode(), getExceptionInterceptor());
+			}
+	
+			setInternal(paramIndex, parameterAsBytes);
+		}
 	}
 
 	/**
@@ -3814,11 +3866,13 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized void setNull(int parameterIndex, int sqlType) throws SQLException {
-		setInternal(parameterIndex, "null"); //$NON-NLS-1$
-		this.isNull[parameterIndex - 1 + getParameterIndexOffset()] = true;
-		
-		this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.NULL;
+	public void setNull(int parameterIndex, int sqlType) throws SQLException {
+		synchronized (checkClosed()) {
+			setInternal(parameterIndex, "null"); //$NON-NLS-1$
+			this.isNull[parameterIndex - 1 + getParameterIndexOffset()] = true;
+			
+			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.NULL;
+		}
 	}
 
 	/**
@@ -3971,52 +4025,54 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 
-	public synchronized void setObject(int parameterIndex, Object parameterObj)
+	public void setObject(int parameterIndex, Object parameterObj)
 			throws SQLException {
-		if (parameterObj == null) {
-			setNull(parameterIndex, java.sql.Types.OTHER);
-		} else {
-			if (parameterObj instanceof Byte) {
-				setInt(parameterIndex, ((Byte) parameterObj).intValue());
-			} else if (parameterObj instanceof String) {
-				setString(parameterIndex, (String) parameterObj);
-			} else if (parameterObj instanceof BigDecimal) {
-				setBigDecimal(parameterIndex, (BigDecimal) parameterObj);
-			} else if (parameterObj instanceof Short) {
-				setShort(parameterIndex, ((Short) parameterObj).shortValue());
-			} else if (parameterObj instanceof Integer) {
-				setInt(parameterIndex, ((Integer) parameterObj).intValue());
-			} else if (parameterObj instanceof Long) {
-				setLong(parameterIndex, ((Long) parameterObj).longValue());
-			} else if (parameterObj instanceof Float) {
-				setFloat(parameterIndex, ((Float) parameterObj).floatValue());
-			} else if (parameterObj instanceof Double) {
-				setDouble(parameterIndex, ((Double) parameterObj).doubleValue());
-			} else if (parameterObj instanceof byte[]) {
-				setBytes(parameterIndex, (byte[]) parameterObj);
-			} else if (parameterObj instanceof java.sql.Date) {
-				setDate(parameterIndex, (java.sql.Date) parameterObj);
-			} else if (parameterObj instanceof Time) {
-				setTime(parameterIndex, (Time) parameterObj);
-			} else if (parameterObj instanceof Timestamp) {
-				setTimestamp(parameterIndex, (Timestamp) parameterObj);
-			} else if (parameterObj instanceof Boolean) {
-				setBoolean(parameterIndex, ((Boolean) parameterObj)
-						.booleanValue());
-			} else if (parameterObj instanceof InputStream) {
-				setBinaryStream(parameterIndex, (InputStream) parameterObj, -1);
-			} else if (parameterObj instanceof java.sql.Blob) {
-				setBlob(parameterIndex, (java.sql.Blob) parameterObj);
-			} else if (parameterObj instanceof java.sql.Clob) {
-				setClob(parameterIndex, (java.sql.Clob) parameterObj);
-			} else if (this.connection.getTreatUtilDateAsTimestamp() && 
-				parameterObj instanceof java.util.Date) {
-				setTimestamp(parameterIndex, new Timestamp(
-				((java.util.Date) parameterObj).getTime()));
-			} else if (parameterObj instanceof BigInteger) {
-				setString(parameterIndex, parameterObj.toString());
+		synchronized (checkClosed()) {
+			if (parameterObj == null) {
+				setNull(parameterIndex, java.sql.Types.OTHER);
 			} else {
-				setSerializableObject(parameterIndex, parameterObj);
+				if (parameterObj instanceof Byte) {
+					setInt(parameterIndex, ((Byte) parameterObj).intValue());
+				} else if (parameterObj instanceof String) {
+					setString(parameterIndex, (String) parameterObj);
+				} else if (parameterObj instanceof BigDecimal) {
+					setBigDecimal(parameterIndex, (BigDecimal) parameterObj);
+				} else if (parameterObj instanceof Short) {
+					setShort(parameterIndex, ((Short) parameterObj).shortValue());
+				} else if (parameterObj instanceof Integer) {
+					setInt(parameterIndex, ((Integer) parameterObj).intValue());
+				} else if (parameterObj instanceof Long) {
+					setLong(parameterIndex, ((Long) parameterObj).longValue());
+				} else if (parameterObj instanceof Float) {
+					setFloat(parameterIndex, ((Float) parameterObj).floatValue());
+				} else if (parameterObj instanceof Double) {
+					setDouble(parameterIndex, ((Double) parameterObj).doubleValue());
+				} else if (parameterObj instanceof byte[]) {
+					setBytes(parameterIndex, (byte[]) parameterObj);
+				} else if (parameterObj instanceof java.sql.Date) {
+					setDate(parameterIndex, (java.sql.Date) parameterObj);
+				} else if (parameterObj instanceof Time) {
+					setTime(parameterIndex, (Time) parameterObj);
+				} else if (parameterObj instanceof Timestamp) {
+					setTimestamp(parameterIndex, (Timestamp) parameterObj);
+				} else if (parameterObj instanceof Boolean) {
+					setBoolean(parameterIndex, ((Boolean) parameterObj)
+							.booleanValue());
+				} else if (parameterObj instanceof InputStream) {
+					setBinaryStream(parameterIndex, (InputStream) parameterObj, -1);
+				} else if (parameterObj instanceof java.sql.Blob) {
+					setBlob(parameterIndex, (java.sql.Blob) parameterObj);
+				} else if (parameterObj instanceof java.sql.Clob) {
+					setClob(parameterIndex, (java.sql.Clob) parameterObj);
+				} else if (this.connection.getTreatUtilDateAsTimestamp() && 
+					parameterObj instanceof java.util.Date) {
+					setTimestamp(parameterIndex, new Timestamp(
+					((java.util.Date) parameterObj).getTime()));
+				} else if (parameterObj instanceof BigInteger) {
+					setString(parameterIndex, parameterObj.toString());
+				} else {
+					setSerializableObject(parameterIndex, parameterObj);
+				}
 			}
 		}
 	}
@@ -4074,197 +4130,199 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if a database access error occurs
 	 */
-	public synchronized void setObject(int parameterIndex, Object parameterObj,
+	public void setObject(int parameterIndex, Object parameterObj,
 			int targetSqlType, int scale) throws SQLException {
-		if (parameterObj == null) {
-			setNull(parameterIndex, java.sql.Types.OTHER);
-		} else {
-			try {
-				switch (targetSqlType) {
-				case Types.BOOLEAN:
-					/*
-					 From Table-B5 in the JDBC-3.0 Spec
-				
-					        T S I B R F D D N B B C V L
-					        I M N I E L O E U I O H A O
-					        N A T G A O U C M T O A R N
-					        Y L E I L A B I E   L R C G
-					        I L G N   T L M R   E   H V
-					        N I E T     E A I   A   A A
-					        T N R         L C   N   R R
-					          T                       C
-                                                      H
-				                                      A
-					                                  R
-					-----------------------------------
-					Boolean x x x x x x x x x x x x x x
-					*/
-					
-					if (parameterObj instanceof Boolean) {
-						setBoolean(parameterIndex, ((Boolean)parameterObj).booleanValue());
-						
-						break;
-					} else if (parameterObj instanceof String) {
-						setBoolean(parameterIndex, "true".equalsIgnoreCase((String)parameterObj) ||
-								!"0".equalsIgnoreCase((String)parameterObj));
-						
-						break;
-					} else if (parameterObj instanceof Number) {
-						int intValue = ((Number)parameterObj).intValue();
-						
-						setBoolean(parameterIndex, intValue != 0);
-						
-						break;
-					} else {
-						throw SQLError.createSQLException("No conversion from " + parameterObj.getClass().getName() + 
-								" to Types.BOOLEAN possible.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-					}
-					
-					
-				case Types.BIT:
-				case Types.TINYINT:
-				case Types.SMALLINT:
-				case Types.INTEGER:
-				case Types.BIGINT:
-				case Types.REAL:
-				case Types.FLOAT:
-				case Types.DOUBLE:
-				case Types.DECIMAL:
-				case Types.NUMERIC:
-
-					setNumericObject(parameterIndex, parameterObj, targetSqlType, scale);
-
-					break;
-
-				case Types.CHAR:
-				case Types.VARCHAR:
-				case Types.LONGVARCHAR:
-					if (parameterObj instanceof BigDecimal) {
-						setString(
-								parameterIndex,
-								(StringUtils
-										.fixDecimalExponent(StringUtils
-												.consistentToString((BigDecimal) parameterObj))));
-					} else {
-						setString(parameterIndex, parameterObj.toString());
-					}
-
-					break;
-
-				case Types.CLOB:
-
-					if (parameterObj instanceof java.sql.Clob) {
-						setClob(parameterIndex, (java.sql.Clob) parameterObj);
-					} else {
-						setString(parameterIndex, parameterObj.toString());
-					}
-
-					break;
-
-				case Types.BINARY:
-				case Types.VARBINARY:
-				case Types.LONGVARBINARY:
-				case Types.BLOB:
-
-					if (parameterObj instanceof byte[]) {
-						setBytes(parameterIndex, (byte[]) parameterObj);
-					} else if (parameterObj instanceof java.sql.Blob) {
-						setBlob(parameterIndex, (java.sql.Blob) parameterObj);
-					} else {
-						setBytes(parameterIndex, StringUtils.getBytes(
-								parameterObj.toString(), this.charConverter,
-								this.charEncoding, this.connection
-										.getServerCharacterEncoding(),
-								this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
-					}
-
-					break;
-
-				case Types.DATE:
-				case Types.TIMESTAMP:
-
-					java.util.Date parameterAsDate;
-
-					if (parameterObj instanceof String) {
-						ParsePosition pp = new ParsePosition(0);
-						java.text.DateFormat sdf = new java.text.SimpleDateFormat(
-								getDateTimePattern((String) parameterObj, false), Locale.US);
-						parameterAsDate = sdf.parse((String) parameterObj, pp);
-					} else {
-						parameterAsDate = (java.util.Date) parameterObj;
-					}
-
+		synchronized (checkClosed()) {
+			if (parameterObj == null) {
+				setNull(parameterIndex, java.sql.Types.OTHER);
+			} else {
+				try {
 					switch (targetSqlType) {
+					case Types.BOOLEAN:
+						/*
+						 From Table-B5 in the JDBC-3.0 Spec
+					
+						        T S I B R F D D N B B C V L
+						        I M N I E L O E U I O H A O
+						        N A T G A O U C M T O A R N
+						        Y L E I L A B I E   L R C G
+						        I L G N   T L M R   E   H V
+						        N I E T     E A I   A   A A
+						        T N R         L C   N   R R
+						          T                       C
+	                                                      H
+					                                      A
+						                                  R
+						-----------------------------------
+						Boolean x x x x x x x x x x x x x x
+						*/
+						
+						if (parameterObj instanceof Boolean) {
+							setBoolean(parameterIndex, ((Boolean)parameterObj).booleanValue());
+							
+							break;
+						} else if (parameterObj instanceof String) {
+							setBoolean(parameterIndex, "true".equalsIgnoreCase((String)parameterObj) ||
+									!"0".equalsIgnoreCase((String)parameterObj));
+							
+							break;
+						} else if (parameterObj instanceof Number) {
+							int intValue = ((Number)parameterObj).intValue();
+							
+							setBoolean(parameterIndex, intValue != 0);
+							
+							break;
+						} else {
+							throw SQLError.createSQLException("No conversion from " + parameterObj.getClass().getName() + 
+									" to Types.BOOLEAN possible.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+						}
+						
+						
+					case Types.BIT:
+					case Types.TINYINT:
+					case Types.SMALLINT:
+					case Types.INTEGER:
+					case Types.BIGINT:
+					case Types.REAL:
+					case Types.FLOAT:
+					case Types.DOUBLE:
+					case Types.DECIMAL:
+					case Types.NUMERIC:
+	
+						setNumericObject(parameterIndex, parameterObj, targetSqlType, scale);
+	
+						break;
+	
+					case Types.CHAR:
+					case Types.VARCHAR:
+					case Types.LONGVARCHAR:
+						if (parameterObj instanceof BigDecimal) {
+							setString(
+									parameterIndex,
+									(StringUtils
+											.fixDecimalExponent(StringUtils
+													.consistentToString((BigDecimal) parameterObj))));
+						} else {
+							setString(parameterIndex, parameterObj.toString());
+						}
+	
+						break;
+	
+					case Types.CLOB:
+	
+						if (parameterObj instanceof java.sql.Clob) {
+							setClob(parameterIndex, (java.sql.Clob) parameterObj);
+						} else {
+							setString(parameterIndex, parameterObj.toString());
+						}
+	
+						break;
+	
+					case Types.BINARY:
+					case Types.VARBINARY:
+					case Types.LONGVARBINARY:
+					case Types.BLOB:
+	
+						if (parameterObj instanceof byte[]) {
+							setBytes(parameterIndex, (byte[]) parameterObj);
+						} else if (parameterObj instanceof java.sql.Blob) {
+							setBlob(parameterIndex, (java.sql.Blob) parameterObj);
+						} else {
+							setBytes(parameterIndex, StringUtils.getBytes(
+									parameterObj.toString(), this.charConverter,
+									this.charEncoding, this.connection
+											.getServerCharacterEncoding(),
+									this.connection.parserKnowsUnicode(), getExceptionInterceptor()));
+						}
+	
+						break;
+	
 					case Types.DATE:
-
-						if (parameterAsDate instanceof java.sql.Date) {
-							setDate(parameterIndex,
-									(java.sql.Date) parameterAsDate);
-						} else {
-							setDate(parameterIndex, new java.sql.Date(
-									parameterAsDate.getTime()));
-						}
-
-						break;
-
 					case Types.TIMESTAMP:
-
-						if (parameterAsDate instanceof java.sql.Timestamp) {
-							setTimestamp(parameterIndex,
-									(java.sql.Timestamp) parameterAsDate);
+	
+						java.util.Date parameterAsDate;
+	
+						if (parameterObj instanceof String) {
+							ParsePosition pp = new ParsePosition(0);
+							java.text.DateFormat sdf = new java.text.SimpleDateFormat(
+									getDateTimePattern((String) parameterObj, false), Locale.US);
+							parameterAsDate = sdf.parse((String) parameterObj, pp);
 						} else {
-							setTimestamp(parameterIndex,
-									new java.sql.Timestamp(parameterAsDate
-											.getTime()));
+							parameterAsDate = (java.util.Date) parameterObj;
 						}
-
+	
+						switch (targetSqlType) {
+						case Types.DATE:
+	
+							if (parameterAsDate instanceof java.sql.Date) {
+								setDate(parameterIndex,
+										(java.sql.Date) parameterAsDate);
+							} else {
+								setDate(parameterIndex, new java.sql.Date(
+										parameterAsDate.getTime()));
+							}
+	
+							break;
+	
+						case Types.TIMESTAMP:
+	
+							if (parameterAsDate instanceof java.sql.Timestamp) {
+								setTimestamp(parameterIndex,
+										(java.sql.Timestamp) parameterAsDate);
+							} else {
+								setTimestamp(parameterIndex,
+										new java.sql.Timestamp(parameterAsDate
+												.getTime()));
+							}
+	
+							break;
+						}
+	
 						break;
+	
+					case Types.TIME:
+	
+						if (parameterObj instanceof String) {
+							java.text.DateFormat sdf = new java.text.SimpleDateFormat(
+									getDateTimePattern((String) parameterObj, true), Locale.US);
+							setTime(parameterIndex, new java.sql.Time(sdf.parse(
+									(String) parameterObj).getTime()));
+						} else if (parameterObj instanceof Timestamp) {
+							Timestamp xT = (Timestamp) parameterObj;
+							setTime(parameterIndex, new java.sql.Time(xT.getTime()));
+						} else {
+							setTime(parameterIndex, (java.sql.Time) parameterObj);
+						}
+	
+						break;
+	
+					case Types.OTHER:
+						setSerializableObject(parameterIndex, parameterObj);
+	
+						break;
+	
+					default:
+						throw SQLError.createSQLException(Messages
+								.getString("PreparedStatement.16"), //$NON-NLS-1$
+								SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 					}
-
-					break;
-
-				case Types.TIME:
-
-					if (parameterObj instanceof String) {
-						java.text.DateFormat sdf = new java.text.SimpleDateFormat(
-								getDateTimePattern((String) parameterObj, true), Locale.US);
-						setTime(parameterIndex, new java.sql.Time(sdf.parse(
-								(String) parameterObj).getTime()));
-					} else if (parameterObj instanceof Timestamp) {
-						Timestamp xT = (Timestamp) parameterObj;
-						setTime(parameterIndex, new java.sql.Time(xT.getTime()));
-					} else {
-						setTime(parameterIndex, (java.sql.Time) parameterObj);
+				} catch (Exception ex) {
+					if (ex instanceof SQLException) {
+						throw (SQLException) ex;
 					}
-
-					break;
-
-				case Types.OTHER:
-					setSerializableObject(parameterIndex, parameterObj);
-
-					break;
-
-				default:
-					throw SQLError.createSQLException(Messages
-							.getString("PreparedStatement.16"), //$NON-NLS-1$
+	
+					SQLException sqlEx = SQLError.createSQLException(
+							Messages.getString("PreparedStatement.17") //$NON-NLS-1$
+									+ parameterObj.getClass().toString()
+									+ Messages.getString("PreparedStatement.18") //$NON-NLS-1$
+									+ ex.getClass().getName()
+									+ Messages.getString("PreparedStatement.19") + ex.getMessage(), //$NON-NLS-1$
 							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+					
+					sqlEx.initCause(ex);
+					
+					throw sqlEx;
 				}
-			} catch (Exception ex) {
-				if (ex instanceof SQLException) {
-					throw (SQLException) ex;
-				}
-
-				SQLException sqlEx = SQLError.createSQLException(
-						Messages.getString("PreparedStatement.17") //$NON-NLS-1$
-								+ parameterObj.getClass().toString()
-								+ Messages.getString("PreparedStatement.18") //$NON-NLS-1$
-								+ ex.getClass().getName()
-								+ Messages.getString("PreparedStatement.19") + ex.getMessage(), //$NON-NLS-1$
-						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-				
-				sqlEx.initCause(ex);
-				
-				throw sqlEx;
 			}
 		}
 	}
@@ -4312,36 +4370,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public void setRef(int i, Ref x) throws SQLException {
 		throw SQLError.notImplemented();
 	}
-
-	/**
-	 * Sets the concurrency for result sets generated by this statement
-	 * 
-	 * @param concurrencyFlag
-	 *            DOCUMENT ME!
-	 */
-	synchronized void setResultSetConcurrency(int concurrencyFlag) {
-		this.resultSetConcurrency = concurrencyFlag;
-	}
-
-	/**
-	 * Sets the result set type for result sets generated by this statement
-	 * 
-	 * @param typeFlag
-	 *            DOCUMENT ME!
-	 */
-	synchronized void setResultSetType(int typeFlag) {
-		this.resultSetType = typeFlag;
-	}
-
-	/**
-	 * DOCUMENT ME!
-	 * 
-	 * @param retrieveGeneratedKeys
-	 */
-	protected synchronized void setRetrieveGeneratedKeys(boolean retrieveGeneratedKeys) {
-		this.retrieveGeneratedKeys = retrieveGeneratedKeys;
-	}
-
 
 
 	/**
@@ -4412,172 +4440,174 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized void setString(int parameterIndex, String x) throws SQLException {
-		// if the passed string is null, then set this column to null
-		if (x == null) {
-			setNull(parameterIndex, Types.CHAR);
-		} else {
-			checkClosed();
-			
-			int stringLength = x.length();
-
-			if (this.connection.isNoBackslashEscapesSet()) {
-				// Scan for any nasty chars
-
-				boolean needsHexEscape = isEscapeNeededForString(x,
-						stringLength);
-
-				if (!needsHexEscape) {
-					byte[] parameterAsBytes = null;
-
-					StringBuffer quotedString = new StringBuffer(x.length() + 2);
-					quotedString.append('\'');
-					quotedString.append(x);
-					quotedString.append('\'');
-					
-					if (!this.isLoadDataQuery) {
-						parameterAsBytes = StringUtils.getBytes(quotedString.toString(),
-								this.charConverter, this.charEncoding,
-								this.connection.getServerCharacterEncoding(),
-								this.connection.parserKnowsUnicode(), getExceptionInterceptor());
-					} else {
-						// Send with platform character encoding
-						parameterAsBytes = StringUtils.getBytes(quotedString.toString());
-					}
-					
-					setInternal(parameterIndex, parameterAsBytes);
-				} else {
-					byte[] parameterAsBytes = null;
-
-					if (!this.isLoadDataQuery) {
-						parameterAsBytes = StringUtils.getBytes(x,
-								this.charConverter, this.charEncoding,
-								this.connection.getServerCharacterEncoding(),
-								this.connection.parserKnowsUnicode(), getExceptionInterceptor());
-					} else {
-						// Send with platform character encoding
-						parameterAsBytes = StringUtils.getBytes(x);
-					}
-					
-					setBytes(parameterIndex, parameterAsBytes);
-				}
-
-				return;
-			}
-
-			String parameterAsString = x;
-			boolean needsQuoted = true;
-			
-			if (this.isLoadDataQuery || isEscapeNeededForString(x, stringLength)) {
-				needsQuoted = false; // saves an allocation later
+	public void setString(int parameterIndex, String x) throws SQLException {
+		synchronized (checkClosed()) {
+			// if the passed string is null, then set this column to null
+			if (x == null) {
+				setNull(parameterIndex, Types.CHAR);
+			} else {
+				checkClosed();
 				
-				StringBuffer buf = new StringBuffer((int) (x.length() * 1.1));
-				
-				buf.append('\'');
+				int stringLength = x.length();
 	
-				//
-				// Note: buf.append(char) is _faster_ than
-				// appending in blocks, because the block
-				// append requires a System.arraycopy()....
-				// go figure...
-				//
+				if (this.connection.isNoBackslashEscapesSet()) {
+					// Scan for any nasty chars
 	
-				for (int i = 0; i < stringLength; ++i) {
-					char c = x.charAt(i);
+					boolean needsHexEscape = isEscapeNeededForString(x,
+							stringLength);
 	
-					switch (c) {
-					case 0: /* Must be escaped for 'mysql' */
-						buf.append('\\');
-						buf.append('0');
+					if (!needsHexEscape) {
+						byte[] parameterAsBytes = null;
 	
-						break;
-	
-					case '\n': /* Must be escaped for logs */
-						buf.append('\\');
-						buf.append('n');
-	
-						break;
-	
-					case '\r':
-						buf.append('\\');
-						buf.append('r');
-	
-						break;
-	
-					case '\\':
-						buf.append('\\');
-						buf.append('\\');
-	
-						break;
-	
-					case '\'':
-						buf.append('\\');
-						buf.append('\'');
-	
-						break;
-	
-					case '"': /* Better safe than sorry */
-						if (this.usingAnsiMode) {
-							buf.append('\\');
+						StringBuffer quotedString = new StringBuffer(x.length() + 2);
+						quotedString.append('\'');
+						quotedString.append(x);
+						quotedString.append('\'');
+						
+						if (!this.isLoadDataQuery) {
+							parameterAsBytes = StringUtils.getBytes(quotedString.toString(),
+									this.charConverter, this.charEncoding,
+									this.connection.getServerCharacterEncoding(),
+									this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+						} else {
+							// Send with platform character encoding
+							parameterAsBytes = StringUtils.getBytes(quotedString.toString());
 						}
+						
+						setInternal(parameterIndex, parameterAsBytes);
+					} else {
+						byte[] parameterAsBytes = null;
 	
-						buf.append('"');
+						if (!this.isLoadDataQuery) {
+							parameterAsBytes = StringUtils.getBytes(x,
+									this.charConverter, this.charEncoding,
+									this.connection.getServerCharacterEncoding(),
+									this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+						} else {
+							// Send with platform character encoding
+							parameterAsBytes = StringUtils.getBytes(x);
+						}
+						
+						setBytes(parameterIndex, parameterAsBytes);
+					}
 	
-						break;
+					return;
+				}
 	
-					case '\032': /* This gives problems on Win32 */
-						buf.append('\\');
-						buf.append('Z');
-	
-						break;
-
-					case '\u00a5':
-					case '\u20a9':
-						// escape characters interpreted as backslash by mysql
-						if(charsetEncoder != null) {
-							CharBuffer cbuf = CharBuffer.allocate(1);
-							ByteBuffer bbuf = ByteBuffer.allocate(1); 
-							cbuf.put(c);
-							cbuf.position(0);
-							charsetEncoder.encode(cbuf, bbuf, true);
-							if(bbuf.get(0) == '\\') {
+				String parameterAsString = x;
+				boolean needsQuoted = true;
+				
+				if (this.isLoadDataQuery || isEscapeNeededForString(x, stringLength)) {
+					needsQuoted = false; // saves an allocation later
+					
+					StringBuffer buf = new StringBuffer((int) (x.length() * 1.1));
+					
+					buf.append('\'');
+		
+					//
+					// Note: buf.append(char) is _faster_ than
+					// appending in blocks, because the block
+					// append requires a System.arraycopy()....
+					// go figure...
+					//
+		
+					for (int i = 0; i < stringLength; ++i) {
+						char c = x.charAt(i);
+		
+						switch (c) {
+						case 0: /* Must be escaped for 'mysql' */
+							buf.append('\\');
+							buf.append('0');
+		
+							break;
+		
+						case '\n': /* Must be escaped for logs */
+							buf.append('\\');
+							buf.append('n');
+		
+							break;
+		
+						case '\r':
+							buf.append('\\');
+							buf.append('r');
+		
+							break;
+		
+						case '\\':
+							buf.append('\\');
+							buf.append('\\');
+		
+							break;
+		
+						case '\'':
+							buf.append('\\');
+							buf.append('\'');
+		
+							break;
+		
+						case '"': /* Better safe than sorry */
+							if (this.usingAnsiMode) {
 								buf.append('\\');
 							}
+		
+							buf.append('"');
+		
+							break;
+		
+						case '\032': /* This gives problems on Win32 */
+							buf.append('\\');
+							buf.append('Z');
+		
+							break;
+	
+						case '\u00a5':
+						case '\u20a9':
+							// escape characters interpreted as backslash by mysql
+							if(charsetEncoder != null) {
+								CharBuffer cbuf = CharBuffer.allocate(1);
+								ByteBuffer bbuf = ByteBuffer.allocate(1); 
+								cbuf.put(c);
+								cbuf.position(0);
+								charsetEncoder.encode(cbuf, bbuf, true);
+								if(bbuf.get(0) == '\\') {
+									buf.append('\\');
+								}
+							}
+							// fall through
+	
+						default:
+							buf.append(c);
 						}
-						// fall through
-
-					default:
-						buf.append(c);
 					}
+		
+					buf.append('\'');
+		
+					parameterAsString = buf.toString();
 				}
 	
-				buf.append('\'');
+				byte[] parameterAsBytes = null;
 	
-				parameterAsString = buf.toString();
-			}
-
-			byte[] parameterAsBytes = null;
-
-			if (!this.isLoadDataQuery) {
-				if (needsQuoted) {
-					parameterAsBytes = StringUtils.getBytesWrapped(parameterAsString,
-						'\'', '\'', this.charConverter, this.charEncoding, this.connection
-								.getServerCharacterEncoding(), this.connection
-								.parserKnowsUnicode(), getExceptionInterceptor());
-				} else {
-					parameterAsBytes = StringUtils.getBytes(parameterAsString,
-							this.charConverter, this.charEncoding, this.connection
+				if (!this.isLoadDataQuery) {
+					if (needsQuoted) {
+						parameterAsBytes = StringUtils.getBytesWrapped(parameterAsString,
+							'\'', '\'', this.charConverter, this.charEncoding, this.connection
 									.getServerCharacterEncoding(), this.connection
 									.parserKnowsUnicode(), getExceptionInterceptor());
+					} else {
+						parameterAsBytes = StringUtils.getBytes(parameterAsString,
+								this.charConverter, this.charEncoding, this.connection
+										.getServerCharacterEncoding(), this.connection
+										.parserKnowsUnicode(), getExceptionInterceptor());
+					}
+				} else {
+					// Send with platform character encoding
+					parameterAsBytes = StringUtils.getBytes(parameterAsString);
 				}
-			} else {
-				// Send with platform character encoding
-				parameterAsBytes = StringUtils.getBytes(parameterAsString);
+	
+				setInternal(parameterIndex, parameterAsBytes);
+				
+				this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.VARCHAR;
 			}
-
-			setInternal(parameterIndex, parameterAsBytes);
-			
-			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.VARCHAR;
 		}
 	}
 
@@ -4680,31 +4710,33 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws java.sql.SQLException
 	 *             if a database access error occurs
 	 */
-	private synchronized void setTimeInternal(int parameterIndex, Time x, Calendar targetCalendar,
+	private void setTimeInternal(int parameterIndex, Time x, Calendar targetCalendar,
 			TimeZone tz,
 			boolean rollForward) throws java.sql.SQLException {
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.TIME);
-		} else {
-			checkClosed();
-			
-			if (!this.useLegacyDatetimeCode) {
-				newSetTimeInternal(parameterIndex, x, targetCalendar);
+		synchronized (checkClosed()) {
+			if (x == null) {
+				setNull(parameterIndex, java.sql.Types.TIME);
 			} else {
-				Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
+				checkClosed();
 				
-				synchronized (sessionCalendar) {
-					x = TimeUtil.changeTimezone(this.connection, 
-							sessionCalendar,
-							targetCalendar,
-							 x, tz, this.connection
-							.getServerTimezoneTZ(), rollForward);
+				if (!this.useLegacyDatetimeCode) {
+					newSetTimeInternal(parameterIndex, x, targetCalendar);
+				} else {
+					Calendar sessionCalendar = getCalendarInstanceForSessionOrNew();
+					
+					synchronized (sessionCalendar) {
+						x = TimeUtil.changeTimezone(this.connection, 
+								sessionCalendar,
+								targetCalendar,
+								 x, tz, this.connection
+								.getServerTimezoneTZ(), rollForward);
+					}
+					
+					setInternal(parameterIndex, "'" + x.toString() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 				
-				setInternal(parameterIndex, "'" + x.toString() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+				this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIME;
 			}
-			
-			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIME;
 		}
 	}
 
@@ -4758,89 +4790,93 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 *             if a database-access error occurs.
 	 */
-	private synchronized void setTimestampInternal(int parameterIndex,
+	private void setTimestampInternal(int parameterIndex,
 			Timestamp x, Calendar targetCalendar,
 			TimeZone tz, boolean rollForward) throws SQLException {
-		if (x == null) {
-			setNull(parameterIndex, java.sql.Types.TIMESTAMP);
-		} else {
-			checkClosed();
-			
-			if (!this.useLegacyDatetimeCode) {
-				newSetTimestampInternal(parameterIndex, x, targetCalendar);
+		synchronized (checkClosed()) {
+			if (x == null) {
+				setNull(parameterIndex, java.sql.Types.TIMESTAMP);
 			} else {
-				String timestampString = null;
-
-				Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
-						this.connection.getUtcCalendar() : 
-							getCalendarInstanceForSessionOrNew();
-					
-				synchronized (sessionCalendar) {
-					x = TimeUtil.changeTimezone(this.connection, 
-							sessionCalendar,
-							targetCalendar,
-							x, tz, this.connection
-						.getServerTimezoneTZ(), rollForward);
-				}
-	
-				if (this.connection.getUseSSPSCompatibleTimezoneShift()) {
-					doSSPSCompatibleTimezoneShift(parameterIndex, x, sessionCalendar);
+				checkClosed();
+				
+				if (!this.useLegacyDatetimeCode) {
+					newSetTimestampInternal(parameterIndex, x, targetCalendar);
 				} else {
-					synchronized (this) {
-						if (this.tsdf == null) {
-							this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US); //$NON-NLS-1$
-						}
+					String timestampString = null;
+	
+					Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
+							this.connection.getUtcCalendar() : 
+								getCalendarInstanceForSessionOrNew();
 						
-						timestampString = this.tsdf.format(x);
-						
-						if (false) { // not so long as Bug#50774 is around
-							StringBuffer buf = new StringBuffer();
-							buf.append(timestampString);
-							int nanos = x.getNanos();
-							
-							if (nanos != 0) {
-								buf.append('.');
-								buf.append(formatNanos(nanos));
+					synchronized (sessionCalendar) {
+						x = TimeUtil.changeTimezone(this.connection, 
+								sessionCalendar,
+								targetCalendar,
+								x, tz, this.connection
+							.getServerTimezoneTZ(), rollForward);
+					}
+		
+					if (this.connection.getUseSSPSCompatibleTimezoneShift()) {
+						doSSPSCompatibleTimezoneShift(parameterIndex, x, sessionCalendar);
+					} else {
+						synchronized (this) {
+							if (this.tsdf == null) {
+								this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US); //$NON-NLS-1$
 							}
 							
-							buf.append('\'');
+							timestampString = this.tsdf.format(x);
+							
+							if (false) { // not so long as Bug#50774 is around
+								StringBuffer buf = new StringBuffer();
+								buf.append(timestampString);
+								int nanos = x.getNanos();
+								
+								if (nanos != 0) {
+									buf.append('.');
+									buf.append(formatNanos(nanos));
+								}
+								
+								buf.append('\'');
+							}
+							
+							setInternal(parameterIndex, timestampString); // SimpleDateFormat is not
+																		  // thread-safe
 						}
-						
-						setInternal(parameterIndex, timestampString); // SimpleDateFormat is not
-																	  // thread-safe
 					}
 				}
+				
+				this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIMESTAMP;
 			}
-			
-			this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = Types.TIMESTAMP;
 		}
 	}
 	
-	private synchronized void newSetTimestampInternal(int parameterIndex,
+	private void newSetTimestampInternal(int parameterIndex,
 			Timestamp x, Calendar targetCalendar) throws SQLException {
-		if (this.tsdf == null) {
-			this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US); //$NON-NLS-1$
-		}
-		
-		String timestampString = null;
-		
-		if (targetCalendar != null) {
-			targetCalendar.setTime(x);
-			this.tsdf.setTimeZone(targetCalendar.getTimeZone());
+		synchronized (checkClosed()) {
+			if (this.tsdf == null) {
+				this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US); //$NON-NLS-1$
+			}
 			
-			timestampString = this.tsdf.format(x);
-		} else {
-			this.tsdf.setTimeZone(this.connection.getServerTimezoneTZ());
-			timestampString = this.tsdf.format(x);
+			String timestampString = null;
+			
+			if (targetCalendar != null) {
+				targetCalendar.setTime(x);
+				this.tsdf.setTimeZone(targetCalendar.getTimeZone());
+				
+				timestampString = this.tsdf.format(x);
+			} else {
+				this.tsdf.setTimeZone(this.connection.getServerTimezoneTZ());
+				timestampString = this.tsdf.format(x);
+			}
+	
+			StringBuffer buf = new StringBuffer();
+			buf.append(timestampString);
+			buf.append('.');
+			buf.append(formatNanos(x.getNanos()));
+			buf.append('\'');
+			
+			setInternal(parameterIndex, buf.toString()); 
 		}
-
-		StringBuffer buf = new StringBuffer();
-		buf.append(timestampString);
-		buf.append('.');
-		buf.append(formatNanos(x.getNanos()));
-		buf.append('\'');
-		
-		setInternal(parameterIndex, buf.toString()); 
 	}
 	
 	private String formatNanos(int nanos) {
@@ -4873,123 +4909,128 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	    return nanosString;
 	}
 	
-	private synchronized void newSetTimeInternal(int parameterIndex,
+	private void newSetTimeInternal(int parameterIndex,
 			Time x, Calendar targetCalendar) throws SQLException {
-		if (this.tdf == null) {
-			this.tdf = new SimpleDateFormat("''HH:mm:ss''", Locale.US); //$NON-NLS-1$
+		synchronized (checkClosed()) {
+			if (this.tdf == null) {
+				this.tdf = new SimpleDateFormat("''HH:mm:ss''", Locale.US); //$NON-NLS-1$
+				
+			}
+	
+			String timeString = null;
 			
+			if (targetCalendar != null) {
+				targetCalendar.setTime(x);
+				this.tdf.setTimeZone(targetCalendar.getTimeZone());
+				
+				timeString = this.tdf.format(x);
+			} else {
+				this.tdf.setTimeZone(this.connection.getServerTimezoneTZ());
+				timeString = this.tdf.format(x);
+			}
+	
+			setInternal(parameterIndex, timeString);
 		}
-
-		String timeString = null;
-		
-		if (targetCalendar != null) {
-			targetCalendar.setTime(x);
-			this.tdf.setTimeZone(targetCalendar.getTimeZone());
-			
-			timeString = this.tdf.format(x);
-		} else {
-			this.tdf.setTimeZone(this.connection.getServerTimezoneTZ());
-			timeString = this.tdf.format(x);
-		}
-
-		setInternal(parameterIndex, timeString); 
 	}
 	
-	private synchronized void newSetDateInternal(int parameterIndex,
+	private void newSetDateInternal(int parameterIndex,
 			Date x, Calendar targetCalendar) throws SQLException {
-		if (this.ddf == null) {
-			this.ddf = new SimpleDateFormat("''yyyy-MM-dd''", Locale.US); //$NON-NLS-1$
+		synchronized (checkClosed()) {
+			if (this.ddf == null) {
+				this.ddf = new SimpleDateFormat("''yyyy-MM-dd''", Locale.US); //$NON-NLS-1$
+			}
+	
+			String timeString = null;
 			
+			if (targetCalendar != null) {
+				targetCalendar.setTime(x);
+				this.ddf.setTimeZone(targetCalendar.getTimeZone());
+				
+				timeString = this.ddf.format(x);
+			} else {
+				this.ddf.setTimeZone(this.connection.getServerTimezoneTZ());
+				timeString = this.ddf.format(x);
+			}
+	
+			setInternal(parameterIndex, timeString);
 		}
-
-		String timeString = null;
-		
-		if (targetCalendar != null) {
-			targetCalendar.setTime(x);
-			this.ddf.setTimeZone(targetCalendar.getTimeZone());
-			
-			timeString = this.ddf.format(x);
-		} else {
-			this.ddf.setTimeZone(this.connection.getServerTimezoneTZ());
-			timeString = this.ddf.format(x);
-		}
-
-		setInternal(parameterIndex, timeString); 
 	}
 
-	private synchronized void doSSPSCompatibleTimezoneShift(int parameterIndex, Timestamp x, Calendar sessionCalendar) throws SQLException {
-		Calendar sessionCalendar2 = (this.connection
-				.getUseJDBCCompliantTimezoneShift()) ? this.connection
-				.getUtcCalendar()
-				: getCalendarInstanceForSessionOrNew();
-
-		synchronized (sessionCalendar2) {
-			java.util.Date oldTime = sessionCalendar2.getTime();
-
-			try {
-				sessionCalendar2.setTime(x);
-
-				int year = sessionCalendar2.get(Calendar.YEAR);
-				int month = sessionCalendar2.get(Calendar.MONTH) + 1;
-				int date = sessionCalendar2.get(Calendar.DAY_OF_MONTH);
-
-				int hour = sessionCalendar2.get(Calendar.HOUR_OF_DAY);
-				int minute = sessionCalendar2.get(Calendar.MINUTE);
-				int seconds = sessionCalendar2.get(Calendar.SECOND);
-
-				StringBuffer tsBuf = new StringBuffer();
-
-				tsBuf.append('\'');
-				tsBuf.append(year);
-
-				tsBuf.append("-");
-
-				if (month < 10) {
-					tsBuf.append('0');
+	private void doSSPSCompatibleTimezoneShift(int parameterIndex, Timestamp x, Calendar sessionCalendar) throws SQLException {
+		synchronized (checkClosed()) {
+			Calendar sessionCalendar2 = (this.connection
+					.getUseJDBCCompliantTimezoneShift()) ? this.connection
+					.getUtcCalendar()
+					: getCalendarInstanceForSessionOrNew();
+	
+			synchronized (sessionCalendar2) {
+				java.util.Date oldTime = sessionCalendar2.getTime();
+	
+				try {
+					sessionCalendar2.setTime(x);
+	
+					int year = sessionCalendar2.get(Calendar.YEAR);
+					int month = sessionCalendar2.get(Calendar.MONTH) + 1;
+					int date = sessionCalendar2.get(Calendar.DAY_OF_MONTH);
+	
+					int hour = sessionCalendar2.get(Calendar.HOUR_OF_DAY);
+					int minute = sessionCalendar2.get(Calendar.MINUTE);
+					int seconds = sessionCalendar2.get(Calendar.SECOND);
+	
+					StringBuffer tsBuf = new StringBuffer();
+	
+					tsBuf.append('\'');
+					tsBuf.append(year);
+	
+					tsBuf.append("-");
+	
+					if (month < 10) {
+						tsBuf.append('0');
+					}
+	
+					tsBuf.append(month);
+	
+					tsBuf.append('-');
+	
+					if (date < 10) {
+						tsBuf.append('0');
+					}
+	
+					tsBuf.append(date);
+	
+					tsBuf.append(' ');
+	
+					if (hour < 10) {
+						tsBuf.append('0');
+					}
+	
+					tsBuf.append(hour);
+	
+					tsBuf.append(':');
+	
+					if (minute < 10) {
+						tsBuf.append('0');
+					}
+	
+					tsBuf.append(minute);
+	
+					tsBuf.append(':');
+	
+					if (seconds < 10) {
+						tsBuf.append('0');
+					}
+	
+					tsBuf.append(seconds);
+	
+					tsBuf.append('.');
+					tsBuf.append(formatNanos(x.getNanos()));
+					tsBuf.append('\'');
+	
+					setInternal(parameterIndex, tsBuf.toString());
+	
+				} finally {
+					sessionCalendar.setTime(oldTime);
 				}
-
-				tsBuf.append(month);
-
-				tsBuf.append('-');
-
-				if (date < 10) {
-					tsBuf.append('0');
-				}
-
-				tsBuf.append(date);
-
-				tsBuf.append(' ');
-
-				if (hour < 10) {
-					tsBuf.append('0');
-				}
-
-				tsBuf.append(hour);
-
-				tsBuf.append(':');
-
-				if (minute < 10) {
-					tsBuf.append('0');
-				}
-
-				tsBuf.append(minute);
-
-				tsBuf.append(':');
-
-				if (seconds < 10) {
-					tsBuf.append('0');
-				}
-
-				tsBuf.append(seconds);
-
-				tsBuf.append('.');
-				tsBuf.append(formatNanos(x.getNanos()));
-				tsBuf.append('\'');
-
-				setInternal(parameterIndex, tsBuf.toString());
-
-			} finally {
-				sessionCalendar.setTime(oldTime);
 			}
 		}
 	}
@@ -5042,160 +5083,164 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 
-	private synchronized final void streamToBytes(Buffer packet, InputStream in,
+	private final void streamToBytes(Buffer packet, InputStream in,
 			boolean escape, int streamLength, boolean useLength)
 			throws SQLException {
-		try {
-			if (streamConvertBuf == null) {
-				streamConvertBuf = new byte[4096];
-			}
-			
-			String connectionEncoding = this.connection.getEncoding();
-
-			boolean hexEscape = false;
-
+		synchronized (checkClosed()) {
 			try {
-				if (this.connection.isNoBackslashEscapesSet()
-						|| (this.connection.getUseUnicode() 
-								&& connectionEncoding != null
-								&& CharsetMapping.isMultibyteCharset(connectionEncoding)
-								&& !this.connection.parserKnowsUnicode())) {
-					hexEscape = true;
+				if (streamConvertBuf == null) {
+					streamConvertBuf = new byte[4096];
 				}
-			} catch (RuntimeException ex) {
-				SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
-				sqlEx.initCause(ex);
-				throw sqlEx;
-			}
-
-			if (streamLength == -1) {
-				useLength = false;
-			}
-
-			int bc = -1;
-
-			if (useLength) {
-				bc = readblock(in, streamConvertBuf, streamLength);
-			} else {
-				bc = readblock(in, streamConvertBuf);
-			}
-
-			int lengthLeftToRead = streamLength - bc;
-
-			if (hexEscape) {
-				packet.writeStringNoNull("x");
-			} else if (this.connection.getIO().versionMeetsMinimum(4, 1, 0)) {
-				packet.writeStringNoNull("_binary");
-			}
-
-			if (escape) {
-				packet.writeByte((byte) '\'');
-			}
-
-			while (bc > 0) {
-				if (hexEscape) {
-					hexEscapeBlock(streamConvertBuf, packet, bc);
-				} else if (escape) {
-					escapeblockFast(streamConvertBuf, packet, bc);
-				} else {
-					packet.writeBytesNoNull(streamConvertBuf, 0, bc);
-				}
-
-				if (useLength) {
-					bc = readblock(in, streamConvertBuf, lengthLeftToRead);
-
-					if (bc > 0) {
-						lengthLeftToRead -= bc;
+				
+				String connectionEncoding = this.connection.getEncoding();
+	
+				boolean hexEscape = false;
+	
+				try {
+					if (this.connection.isNoBackslashEscapesSet()
+							|| (this.connection.getUseUnicode() 
+									&& connectionEncoding != null
+									&& CharsetMapping.isMultibyteCharset(connectionEncoding)
+									&& !this.connection.parserKnowsUnicode())) {
+						hexEscape = true;
 					}
+				} catch (RuntimeException ex) {
+					SQLException sqlEx = SQLError.createSQLException(ex.toString(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+					sqlEx.initCause(ex);
+					throw sqlEx;
+				}
+	
+				if (streamLength == -1) {
+					useLength = false;
+				}
+	
+				int bc = -1;
+	
+				if (useLength) {
+					bc = readblock(in, streamConvertBuf, streamLength);
 				} else {
 					bc = readblock(in, streamConvertBuf);
 				}
-			}
-
-			if (escape) {
-				packet.writeByte((byte) '\'');
-			}
-		} finally {
-			if (this.connection.getAutoClosePStmtStreams()) {
-				try {
-					in.close();
-				} catch (IOException ioEx) {
-					;
+	
+				int lengthLeftToRead = streamLength - bc;
+	
+				if (hexEscape) {
+					packet.writeStringNoNull("x");
+				} else if (this.connection.getIO().versionMeetsMinimum(4, 1, 0)) {
+					packet.writeStringNoNull("_binary");
 				}
-
-				in = null;
+	
+				if (escape) {
+					packet.writeByte((byte) '\'');
+				}
+	
+				while (bc > 0) {
+					if (hexEscape) {
+						hexEscapeBlock(streamConvertBuf, packet, bc);
+					} else if (escape) {
+						escapeblockFast(streamConvertBuf, packet, bc);
+					} else {
+						packet.writeBytesNoNull(streamConvertBuf, 0, bc);
+					}
+	
+					if (useLength) {
+						bc = readblock(in, streamConvertBuf, lengthLeftToRead);
+	
+						if (bc > 0) {
+							lengthLeftToRead -= bc;
+						}
+					} else {
+						bc = readblock(in, streamConvertBuf);
+					}
+				}
+	
+				if (escape) {
+					packet.writeByte((byte) '\'');
+				}
+			} finally {
+				if (this.connection.getAutoClosePStmtStreams()) {
+					try {
+						in.close();
+					} catch (IOException ioEx) {
+						;
+					}
+	
+					in = null;
+				}
 			}
 		}
 	}
 
-	private synchronized final byte[] streamToBytes(InputStream in, boolean escape,
+	private final byte[] streamToBytes(InputStream in, boolean escape,
 			int streamLength, boolean useLength) throws SQLException {
-		try {
-			if (streamConvertBuf == null) {
-				streamConvertBuf = new byte[4096];
-			}
-			if (streamLength == -1) {
-				useLength = false;
-			}
-
-			ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-
-			int bc = -1;
-
-			if (useLength) {
-				bc = readblock(in, this.streamConvertBuf, streamLength);
-			} else {
-				bc = readblock(in, this.streamConvertBuf);
-			}
-
-			int lengthLeftToRead = streamLength - bc;
-
-			if (escape) {
-				if (this.connection.versionMeetsMinimum(4, 1, 0)) {
-					bytesOut.write('_');
-					bytesOut.write('b');
-					bytesOut.write('i');
-					bytesOut.write('n');
-					bytesOut.write('a');
-					bytesOut.write('r');
-					bytesOut.write('y');
+		synchronized (checkClosed()) {
+			try {
+				if (streamConvertBuf == null) {
+					streamConvertBuf = new byte[4096];
 				}
-				
-				bytesOut.write('\'');
-			}
-
-			while (bc > 0) {
-				if (escape) {
-					escapeblockFast(this.streamConvertBuf, bytesOut, bc);
-				} else {
-					bytesOut.write(this.streamConvertBuf, 0, bc);
+				if (streamLength == -1) {
+					useLength = false;
 				}
-
+	
+				ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+	
+				int bc = -1;
+	
 				if (useLength) {
-					bc = readblock(in, this.streamConvertBuf, lengthLeftToRead);
-
-					if (bc > 0) {
-						lengthLeftToRead -= bc;
-					}
+					bc = readblock(in, this.streamConvertBuf, streamLength);
 				} else {
 					bc = readblock(in, this.streamConvertBuf);
 				}
-			}
-
-			if (escape) {
-				bytesOut.write('\'');
-			}
-
-			return bytesOut.toByteArray();
-		} finally {
-			if (this.connection.getAutoClosePStmtStreams()) {
-				try {
-					in.close();
-				} catch (IOException ioEx) {
-					;
+	
+				int lengthLeftToRead = streamLength - bc;
+	
+				if (escape) {
+					if (this.connection.versionMeetsMinimum(4, 1, 0)) {
+						bytesOut.write('_');
+						bytesOut.write('b');
+						bytesOut.write('i');
+						bytesOut.write('n');
+						bytesOut.write('a');
+						bytesOut.write('r');
+						bytesOut.write('y');
+					}
+					
+					bytesOut.write('\'');
 				}
-
-				in = null;
+	
+				while (bc > 0) {
+					if (escape) {
+						escapeblockFast(this.streamConvertBuf, bytesOut, bc);
+					} else {
+						bytesOut.write(this.streamConvertBuf, 0, bc);
+					}
+	
+					if (useLength) {
+						bc = readblock(in, this.streamConvertBuf, lengthLeftToRead);
+	
+						if (bc > 0) {
+							lengthLeftToRead -= bc;
+						}
+					} else {
+						bc = readblock(in, this.streamConvertBuf);
+					}
+				}
+	
+				if (escape) {
+					bytesOut.write('\'');
+				}
+	
+				return bytesOut.toByteArray();
+			} finally {
+				if (this.connection.getAutoClosePStmtStreams()) {
+					try {
+						in.close();
+					} catch (IOException ioEx) {
+						;
+					}
+	
+					in = null;
+				}
 			}
 		}
 	}
@@ -5220,11 +5265,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 
 
-
-	public synchronized boolean isClosed() throws SQLException {
-		return this.isClosed;
-	}
-	
 	/** 
 	 * For calling stored functions, this will be -1 as we don't really count
 	 * the first '?' parameter marker, it's only syntax, but JDBC counts it
@@ -5294,106 +5334,108 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	public synchronized void setNString(int parameterIndex, String x) throws SQLException {
-	    if (this.charEncoding.equalsIgnoreCase("UTF-8")
-	            || this.charEncoding.equalsIgnoreCase("utf8")) {
-	        setString(parameterIndex, x);
-	        return;
-	    }
-	
-	    // if the passed string is null, then set this column to null
-	    if (x == null) {
-	        setNull(parameterIndex, java.sql.Types.CHAR); 
-	    } else {
-	        int stringLength = x.length();
-	        // Ignore sql_mode=NO_BACKSLASH_ESCAPES in current implementation.
-	
-	        // Add introducer _utf8 for NATIONAL CHARACTER
-	        StringBuffer buf = new StringBuffer((int) (x.length() * 1.1 + 4));
-	        buf.append("_utf8");
-	        buf.append('\'');
-	
-	        //
-	        // Note: buf.append(char) is _faster_ than
-	        // appending in blocks, because the block
-	        // append requires a System.arraycopy()....
-	        // go figure...
-	        //
-	
-	        for (int i = 0; i < stringLength; ++i) {
-	            char c = x.charAt(i);
-	
-	            switch (c) {
-	            case 0: /* Must be escaped for 'mysql' */
-	                buf.append('\\');
-	                buf.append('0');
-	
-	                break;
-	
-	            case '\n': /* Must be escaped for logs */
-	                buf.append('\\');
-	                buf.append('n');
-	
-	                break;
-	
-	            case '\r':
-	                buf.append('\\');
-	                buf.append('r');
-	
-	                break;
-	
-	            case '\\':
-	                buf.append('\\');
-	                buf.append('\\');
-	
-	                break;
-	
-	            case '\'':
-	                buf.append('\\');
-	                buf.append('\'');
-	
-	                break;
-	
-	            case '"': /* Better safe than sorry */
-	                if (this.usingAnsiMode) {
-	                    buf.append('\\');
-	                }
-	
-	                buf.append('"');
-	
-	                break;
-	
-	            case '\032': /* This gives problems on Win32 */
-	                buf.append('\\');
-	                buf.append('Z');
-	
-	                break;
-	
-	            default:
-	                buf.append(c);
-	            }
-	        }
-	
-	        buf.append('\'');
-	
-	        String parameterAsString = buf.toString();
-	
-	        byte[] parameterAsBytes = null;
-	
-	        if (!this.isLoadDataQuery) {
-	            parameterAsBytes = StringUtils.getBytes(parameterAsString,
-	                    this.connection.getCharsetConverter("UTF-8"), "UTF-8", 
-	                            this.connection.getServerCharacterEncoding(),
-	                            this.connection.parserKnowsUnicode(), getExceptionInterceptor());
-	        } else {
-	            // Send with platform character encoding
-	            parameterAsBytes = StringUtils.getBytes(parameterAsString);
-	        }
-	
-	        setInternal(parameterIndex, parameterAsBytes);
-	        
-	        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = -9; /* Types.NVARCHAR */
-	    }
+	public void setNString(int parameterIndex, String x) throws SQLException {
+		synchronized (checkClosed()) {
+		    if (this.charEncoding.equalsIgnoreCase("UTF-8")
+		            || this.charEncoding.equalsIgnoreCase("utf8")) {
+		        setString(parameterIndex, x);
+		        return;
+		    }
+		
+		    // if the passed string is null, then set this column to null
+		    if (x == null) {
+		        setNull(parameterIndex, java.sql.Types.CHAR); 
+		    } else {
+		        int stringLength = x.length();
+		        // Ignore sql_mode=NO_BACKSLASH_ESCAPES in current implementation.
+		
+		        // Add introducer _utf8 for NATIONAL CHARACTER
+		        StringBuffer buf = new StringBuffer((int) (x.length() * 1.1 + 4));
+		        buf.append("_utf8");
+		        buf.append('\'');
+		
+		        //
+		        // Note: buf.append(char) is _faster_ than
+		        // appending in blocks, because the block
+		        // append requires a System.arraycopy()....
+		        // go figure...
+		        //
+		
+		        for (int i = 0; i < stringLength; ++i) {
+		            char c = x.charAt(i);
+		
+		            switch (c) {
+		            case 0: /* Must be escaped for 'mysql' */
+		                buf.append('\\');
+		                buf.append('0');
+		
+		                break;
+		
+		            case '\n': /* Must be escaped for logs */
+		                buf.append('\\');
+		                buf.append('n');
+		
+		                break;
+		
+		            case '\r':
+		                buf.append('\\');
+		                buf.append('r');
+		
+		                break;
+		
+		            case '\\':
+		                buf.append('\\');
+		                buf.append('\\');
+		
+		                break;
+		
+		            case '\'':
+		                buf.append('\\');
+		                buf.append('\'');
+		
+		                break;
+		
+		            case '"': /* Better safe than sorry */
+		                if (this.usingAnsiMode) {
+		                    buf.append('\\');
+		                }
+		
+		                buf.append('"');
+		
+		                break;
+		
+		            case '\032': /* This gives problems on Win32 */
+		                buf.append('\\');
+		                buf.append('Z');
+		
+		                break;
+		
+		            default:
+		                buf.append(c);
+		            }
+		        }
+		
+		        buf.append('\'');
+		
+		        String parameterAsString = buf.toString();
+		
+		        byte[] parameterAsBytes = null;
+		
+		        if (!this.isLoadDataQuery) {
+		            parameterAsBytes = StringUtils.getBytes(parameterAsString,
+		                    this.connection.getCharsetConverter("UTF-8"), "UTF-8", 
+		                            this.connection.getServerCharacterEncoding(),
+		                            this.connection.parserKnowsUnicode(), getExceptionInterceptor());
+		        } else {
+		            // Send with platform character encoding
+		            parameterAsBytes = StringUtils.getBytes(parameterAsString);
+		        }
+		
+		        setInternal(parameterIndex, parameterAsBytes);
+		        
+		        this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = -9; /* Types.NVARCHAR */
+		    }
+		}
 	}
 	
 	/**
@@ -5418,48 +5460,50 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @exception SQLException
 	 *                if a database-access error occurs.
 	 */
-	public synchronized void setNCharacterStream(int parameterIndex, Reader reader,
+	public void setNCharacterStream(int parameterIndex, Reader reader,
 			long length) throws SQLException {
-	    try {
-	        if (reader == null) {
-	            setNull(parameterIndex, java.sql.Types.LONGVARCHAR);
-	            
-	        } else {
-	            char[] c = null;
-	            int len = 0;
-	
-	            boolean useLength = this.connection
-	                    .getUseStreamLengthsInPrepStmts();
-	            
-	            // Ignore "clobCharacterEncoding" because utf8 should be used this time.
-	
-	            if (useLength && (length != -1)) {
-	                c = new char[(int) length];  // can't take more than Integer.MAX_VALUE
-	
-	                int numCharsRead = readFully(reader, c, (int) length); // blocks
-	                // until
-	                // all
-	                // read
-	                setNString(parameterIndex, new String(c, 0, numCharsRead));
-	
-	            } else {
-	                c = new char[4096];
-	
-	                StringBuffer buf = new StringBuffer();
-	
-	                while ((len = reader.read(c)) != -1) {
-	                    buf.append(c, 0, len);
-	                }
-	
-	                setNString(parameterIndex, buf.toString());
-	            }
-	            
-	            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = 2011; /* Types.NCLOB */
-	        }
-	    } catch (java.io.IOException ioEx) {
-	        throw SQLError.createSQLException(ioEx.toString(),
-	                SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-	    }
+		synchronized (checkClosed()) {
+		    try {
+		        if (reader == null) {
+		            setNull(parameterIndex, java.sql.Types.LONGVARCHAR);
+		            
+		        } else {
+		            char[] c = null;
+		            int len = 0;
+		
+		            boolean useLength = this.connection
+		                    .getUseStreamLengthsInPrepStmts();
+		            
+		            // Ignore "clobCharacterEncoding" because utf8 should be used this time.
+		
+		            if (useLength && (length != -1)) {
+		                c = new char[(int) length];  // can't take more than Integer.MAX_VALUE
+		
+		                int numCharsRead = readFully(reader, c, (int) length); // blocks
+		                // until
+		                // all
+		                // read
+		                setNString(parameterIndex, new String(c, 0, numCharsRead));
+		
+		            } else {
+		                c = new char[4096];
+		
+		                StringBuffer buf = new StringBuffer();
+		
+		                while ((len = reader.read(c)) != -1) {
+		                    buf.append(c, 0, len);
+		                }
+		
+		                setNString(parameterIndex, buf.toString());
+		            }
+		            
+		            this.parameterTypes[parameterIndex - 1 + getParameterIndexOffset()] = 2011; /* Types.NCLOB */
+		        }
+		    } catch (java.io.IOException ioEx) {
+		        throw SQLError.createSQLException(ioEx.toString(),
+		                SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+		    }
+		}
 	}
 	
 	public void setNClob(int parameterIndex, Reader reader) throws SQLException {
@@ -5488,8 +5532,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	    }
 	}
 	
-	public synchronized ParameterBindings getParameterBindings() throws SQLException {
-		return new EmulatedPreparedStatementBindings();
+	public ParameterBindings getParameterBindings() throws SQLException {
+		synchronized (checkClosed()) {
+			return new EmulatedPreparedStatementBindings();
+		}
 	}
 	
 	class EmulatedPreparedStatementBindings implements ParameterBindings {
@@ -5679,15 +5725,21 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}	
 	}
 	
-	public synchronized String getPreparedSql() {
-		if (this.rewrittenBatchSize == 0) {
-			return this.originalSql;
-		}
-		
+	public String getPreparedSql() {
 		try {
-			return this.parseInfo.getSqlForBatch(this.parseInfo);
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
+			synchronized (checkClosed()) {
+				if (this.rewrittenBatchSize == 0) {
+					return this.originalSql;
+				}
+				
+				try {
+					return this.parseInfo.getSqlForBatch(this.parseInfo);
+				} catch (UnsupportedEncodingException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e); // FIXME: evolve public interface
 		}
 	}
 
