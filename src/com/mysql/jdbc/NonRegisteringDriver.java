@@ -359,7 +359,6 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		
 		ConnectionPhantomReference phantomRef = new ConnectionPhantomReference((ConnectionImpl) newConn, refQueue);
 		connectionPhantomRefs.put(phantomRef, phantomRef);
-		System.out.println("Refs is " + connectionPhantomRefs.size() + " ref queue is " + refQueue);
 	}
 
 	private java.sql.Connection connectLoadBalanced(String url, Properties info)
