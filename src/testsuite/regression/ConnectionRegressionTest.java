@@ -3720,18 +3720,25 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 		if (versionMeetsMinimum(5, 5, 7) && !secure_auth) {
 
+			String dbname = null;
+			this.rs = this.stmt.executeQuery("select database() as dbname");
+			if(this.rs.first()) {
+				dbname = this.rs.getString("dbname");
+			}
+			if (dbname == null) assertTrue("No database selected", false);
+			
 			Connection adminConn = null;
 			Statement adminStmt = null;
 
 			try {
-				testOldPasswordPlugin_createUsers(this.stmt);
+				testOldPasswordPlugin_createUsers(this.stmt, dbname);
 			} catch (Exception e) {
 				adminConn = getAdminConnection();
 				if (adminConn == null) {
 					assertTrue("Lack of grant permissions. Change default user or set com.mysql.jdbc.testsuite.admin-url property.", false);
 				} else {
 					adminStmt = adminConn.createStatement();
-					testOldPasswordPlugin_createUsers(adminStmt);
+					testOldPasswordPlugin_createUsers(adminStmt, dbname);
 				}
 				
 			}
@@ -3783,12 +3790,19 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 
-	public void testOldPasswordPlugin_createUsers(Statement adminStmt) throws Exception {
+	public void testOldPasswordPlugin_createUsers(Statement adminStmt, String dbname) throws Exception {
+		
 		adminStmt.executeUpdate("grant usage on *.* to 'bug64983user1'@'%'");
 		adminStmt.executeUpdate("set password for 'bug64983user1'@'%' = OLD_PASSWORD('pwd')");
+		adminStmt.executeUpdate("delete from mysql.db where user='bug64983user1'");
+		adminStmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"+dbname+"', 'bug64983user1', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+		adminStmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'bug64983user1', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 
 		adminStmt.executeUpdate("grant usage on *.* to 'bug64983user2'@'%'");
 		adminStmt.executeUpdate("set password for 'bug64983user2'@'%' = OLD_PASSWORD('')");
+		adminStmt.executeUpdate("delete from mysql.db where user='bug64983user2'");
+		adminStmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"+dbname+"', 'bug64983user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+		adminStmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'bug64983user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 
 		adminStmt.executeUpdate("flush privileges");
 	}
