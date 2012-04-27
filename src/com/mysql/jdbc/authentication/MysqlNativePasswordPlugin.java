@@ -79,7 +79,9 @@ public class MysqlNativePasswordPlugin implements AuthenticationPlugin {
 			Buffer bresp = null;
 			
 			String pwd = this.password;
-			if (pwd == null) pwd = this.properties.getProperty("password");
+			if (pwd == null) {
+				pwd = this.properties.getProperty("password");
+			}
 			
 			if (fromServer == null || pwd == null || pwd.length() == 0) {
 				bresp = new Buffer(new byte[0]);

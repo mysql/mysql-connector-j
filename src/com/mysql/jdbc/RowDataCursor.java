@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -41,7 +41,7 @@ public class RowDataCursor implements RowData {
 	/**
 	 * The cache of rows we have retrieved from the server.
 	 */
-	private List fetchedRows;
+	private List<ResultSetRow> fetchedRows;
 
 	/**
 	 * Where we are positionaly in the entire result set, used mostly to
@@ -372,7 +372,7 @@ public class RowDataCursor implements RowData {
 			this.currentPositionInFetchedRows = 0;
 		}
 
-		ResultSetRow row = (ResultSetRow) this.fetchedRows
+		ResultSetRow row = this.fetchedRows
 				.get(this.currentPositionInFetchedRows);
 
 		row.setMetadata(this.metadata);
@@ -385,7 +385,7 @@ public class RowDataCursor implements RowData {
 	 */
 	private void fetchMoreRows() throws SQLException {
 		if (this.lastRowFetched) {
-			this.fetchedRows = new ArrayList(0);
+			this.fetchedRows = new ArrayList<ResultSetRow>(0);
 			return;
 		}
 

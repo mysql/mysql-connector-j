@@ -2,6 +2,8 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.20
+  - Fix for Bug#64983, 5.1.19 not working with JBoss AS 4.2.3.GA.
+
   - Fix for Bug#13960556, java.lang.StringIndexOutOfBoundsException in com.mysql.jdbc.PreparedStatement.formatNanos(int nanos).
 
   - Fix for pluggable authentication tests to run on Windows.

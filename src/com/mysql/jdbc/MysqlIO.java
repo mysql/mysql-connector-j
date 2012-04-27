@@ -169,7 +169,7 @@ public class MysqlIO {
     protected MySQLConnection connection;
     private Deflater deflater = null;
     protected InputStream mysqlInput = null;
-    private LinkedList packetDebugRingBuffer = null;
+    private LinkedList<StringBuffer> packetDebugRingBuffer = null;
     private RowData streamingData = null;
 
     /** The connection to the server */
@@ -182,14 +182,14 @@ public class MysqlIO {
     // We use a SoftReference, so that we don't penalize intermittent
     // use of this feature
     //
-    private SoftReference loadFileBufRef;
+    private SoftReference<Buffer> loadFileBufRef;
 
     //
     // Used to send large packets to the server versions 4+
     // We use a SoftReference, so that we don't penalize intermittent
     // use of this feature
     //
-    private SoftReference splitBufRef;
+    private SoftReference<Buffer> splitBufRef;
     protected String host = null;
     protected String seed;
     private String serverVersion = null;
@@ -248,7 +248,7 @@ public class MysqlIO {
 	private boolean useDirectRowUnpack = true;
 	private int useBufferRowSizeThreshold;
 	private int commandCount = 0;
-	private List statementInterceptors;
+	private List<StatementInterceptorV2> statementInterceptors;
 	private ExceptionInterceptor exceptionInterceptor;
     private int authPluginDataLength = 0;
 	
@@ -272,7 +272,7 @@ public class MysqlIO {
         this.connection = conn;
         
         if (this.connection.getEnablePacketDebug()) {
-            this.packetDebugRingBuffer = new LinkedList();
+            this.packetDebugRingBuffer = new LinkedList<StringBuffer>();
         }
         this.traceProtocol = this.connection.getTraceProtocol();
         
@@ -999,9 +999,9 @@ public class MysqlIO {
                 " packets received from server, from oldest->newest:\n");
             dumpBuffer.append("\n");
 
-            for (Iterator ringBufIter = this.packetDebugRingBuffer.iterator();
+            for (Iterator<StringBuffer> ringBufIter = this.packetDebugRingBuffer.iterator();
                     ringBufIter.hasNext();) {
-                dumpBuffer.append((StringBuffer) ringBufIter.next());
+                dumpBuffer.append(ringBufIter.next());
                 dumpBuffer.append("\n");
             }
 
@@ -1771,8 +1771,8 @@ public class MysqlIO {
 					// User/Password data
 					last_sent.writeString(user, "utf-8", this.connection);
 
-					last_sent.writeByte((byte) toServer.get(0).getByteBuffer().length);
-					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer());
+					last_sent.writeByte((byte) toServer.get(0).getBufLength());
+					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
 
 					if (this.useConnectWithDb) {
 						last_sent.writeString(database, "utf-8", this.connection);
@@ -1794,7 +1794,7 @@ public class MysqlIO {
 					this.packetSequence = ++savePacketSequence;
 
 					last_sent = new Buffer(toServer.get(0).getBufLength()+HEADER_LENGTH);
-					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer());
+					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
 					send(last_sent, last_sent.getPosition());
 
 				} else if (challenge.isRawPacket() || old_raw_challenge) {
@@ -1805,7 +1805,7 @@ public class MysqlIO {
 						this.packetSequence = ++savePacketSequence;
 
 						last_sent = new Buffer(buffer.getBufLength()+HEADER_LENGTH);
-						last_sent.writeBytesNoNull(buffer.getByteBuffer());
+						last_sent.writeBytesNoNull(buffer.getByteBuffer(), 0, toServer.get(0).getBufLength());
 						send(last_sent, last_sent.getPosition());
 					}
 
@@ -1826,8 +1826,8 @@ public class MysqlIO {
 					// User/Password data
 					last_sent.writeString(user, "utf-8", this.connection);
 
-					last_sent.writeByte((byte) toServer.get(0).getByteBuffer().length);
-					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer());
+					last_sent.writeByte((byte) toServer.get(0).getBufLength());
+					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
 
 					if (this.useConnectWithDb) {
 						last_sent.writeString(database, "utf-8", this.connection);
@@ -2860,11 +2860,10 @@ public class MysqlIO {
 			Statement interceptedStatement, boolean forceExecute) throws SQLException {
 		ResultSetInternalMethods previousResultSet = null;
 
-		Iterator interceptors = this.statementInterceptors.iterator();
+		Iterator<StatementInterceptorV2> interceptors = this.statementInterceptors.iterator();
 
 		while (interceptors.hasNext()) {
-			StatementInterceptorV2 interceptor = ((StatementInterceptorV2) interceptors
-					.next());
+			StatementInterceptorV2 interceptor = interceptors.next();
 
 			boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
 			boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute))
@@ -2894,11 +2893,10 @@ public class MysqlIO {
 	ResultSetInternalMethods invokeStatementInterceptorsPost(
 			String sql, Statement interceptedStatement,
 			ResultSetInternalMethods originalResultSet, boolean forceExecute, SQLException statementException) throws SQLException {
-		Iterator interceptors = this.statementInterceptors.iterator();
+		Iterator<StatementInterceptorV2> interceptors = this.statementInterceptors.iterator();
 
 		while (interceptors.hasNext()) {
-			StatementInterceptorV2 interceptor = ((StatementInterceptorV2) interceptors
-					.next());
+			StatementInterceptorV2 interceptor = interceptors.next();
 
 			boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
 			boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute))
@@ -3869,7 +3867,7 @@ public class MysqlIO {
         String fileName) throws SQLException {
 
         Buffer filePacket = (this.loadFileBufRef == null) ? null
-                                                          : (Buffer) (this.loadFileBufRef.get());
+                                                          : this.loadFileBufRef.get();
 
         int bigPacketLength = Math.min(this.connection.getMaxAllowedPacket() -
                 (HEADER_LENGTH * 3),
@@ -3886,7 +3884,7 @@ public class MysqlIO {
         if (filePacket == null) {
         	try {
         		filePacket = new Buffer((packetLength + HEADER_LENGTH));
-        		this.loadFileBufRef = new SoftReference(filePacket);
+        		this.loadFileBufRef = new SoftReference<Buffer>(filePacket);
         	} catch (OutOfMemoryError oom) {
         		throw SQLError.createSQLException("Could not allocate packet of " + packetLength
         				+ " bytes required for LOAD DATA LOCAL INFILE operation."
@@ -4009,7 +4007,7 @@ public class MysqlIO {
      * @throws CommunicationsException DOCUMENT ME!
      */
     private Buffer checkErrorPacket(int command) throws SQLException {
-        int statusCode = 0;
+        //int statusCode = 0;
         Buffer resultPacket = null;
         this.serverStatus = 0;
 
@@ -4243,7 +4241,7 @@ public class MysqlIO {
             // will need to be synchronized in some other way
             //
             Buffer headerPacket = (this.splitBufRef == null) ? null
-                                                             : (Buffer) (this.splitBufRef.get());
+                                                             : this.splitBufRef.get();
 
             //
             // Store this packet in a soft reference...It can be re-used if not GC'd (so clients
@@ -4253,7 +4251,7 @@ public class MysqlIO {
             if (headerPacket == null) {
                 headerPacket = new Buffer((this.maxThreeBytes +
                         HEADER_LENGTH));
-                this.splitBufRef = new SoftReference(headerPacket);
+                this.splitBufRef = new SoftReference<Buffer>(headerPacket);
             }
 
             int len = packet.getPosition();
@@ -5154,11 +5152,11 @@ public class MysqlIO {
 		return this.serverStatus;
 	}
 
-	protected List fetchRowsViaCursor(List fetchedRows, long statementId,
+	protected List<ResultSetRow> fetchRowsViaCursor(List<ResultSetRow> fetchedRows, long statementId,
 			Field[] columnTypes, int fetchSize, boolean useBufferRowExplicit) throws SQLException {
 
 		if (fetchedRows == null) {
-			fetchedRows = new ArrayList(fetchSize);
+			fetchedRows = new ArrayList<ResultSetRow>(fetchSize);
 		} else {
 			fetchedRows.clear();
 		}
@@ -5213,7 +5211,7 @@ public class MysqlIO {
 		}
 	}
 
-	protected void setStatementInterceptors(List statementInterceptors) {
+	protected void setStatementInterceptors(List<StatementInterceptorV2> statementInterceptors) {
 		this.statementInterceptors = statementInterceptors;
 	}
 	

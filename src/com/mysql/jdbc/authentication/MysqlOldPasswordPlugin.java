@@ -30,7 +30,6 @@ import java.util.Properties;
 import com.mysql.jdbc.AuthenticationPlugin;
 import com.mysql.jdbc.Buffer;
 import com.mysql.jdbc.Connection;
-import com.mysql.jdbc.Security;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
 
@@ -67,19 +66,26 @@ public class MysqlOldPasswordPlugin implements AuthenticationPlugin {
 		this.password = password;
 	}
 
-	public boolean nextAuthenticationStep(Buffer fromServer, List<Buffer> toServer) {
+	public boolean nextAuthenticationStep(Buffer fromServer, List<Buffer> toServer) throws SQLException {
 		toServer.clear();
 		
 		Buffer bresp = null;
 
 		String pwd = this.password;
-		if (pwd == null) pwd = this.properties.getProperty("password");
-		
-		if (fromServer == null || pwd == null || pwd.length() == 0) {
-			bresp = new Buffer(new byte[0]);
-		} else {
-			bresp = new Buffer(StringUtils.getBytes(Util.oldCrypt(pwd, fromServer.readString())));
+		if (pwd == null) {
+			pwd = this.properties.getProperty("password");
 		}
+		
+		bresp = new Buffer(StringUtils.getBytes( fromServer == null || pwd == null || pwd.length() == 0 ? "" :  Util.newCrypt(pwd, fromServer.readString().substring(0, 8)) ));
+
+		bresp.setPosition(bresp.getBufLength());
+		int oldBufLength = bresp.getBufLength();
+		
+		bresp.writeByte((byte)0);
+		
+		bresp.setBufLength(oldBufLength + 1);
+		bresp.setPosition(0);
+		
 		toServer.add(bresp);
 		
 		return true;

@@ -3709,4 +3709,88 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 
 	}
+
+	public void testOldPasswordPlugin() throws Exception {
+
+		boolean secure_auth = false;
+		this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'secure_auth'");
+		while (this.rs.next()) {
+			secure_auth = "ON".equalsIgnoreCase(this.rs.getString(2));
+		}
+
+		if (versionMeetsMinimum(5, 5, 7) && !secure_auth) {
+
+			Connection adminConn = null;
+			Statement adminStmt = null;
+
+			try {
+				testOldPasswordPlugin_createUsers(this.stmt);
+			} catch (Exception e) {
+				adminConn = getAdminConnection();
+				if (adminConn == null) {
+					assertTrue("Lack of grant permissions. Change default user or set com.mysql.jdbc.testsuite.admin-url property.", false);
+				} else {
+					adminStmt = adminConn.createStatement();
+					testOldPasswordPlugin_createUsers(adminStmt);
+				}
+				
+			}
+			
+			Properties props = new Properties();
+			props.setProperty("user", "bug64983user1");
+			props.setProperty("password", "pwd");
+			props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlOldPasswordPlugin");
+
+			Connection testConn = null;
+			Statement testSt = null;
+			ResultSet testRs = null;
+
+			try {
+				testConn = getConnectionWithProps(props);
+				testSt = testConn.createStatement();
+				testRs = testSt.executeQuery("select USER()");
+				testRs.next();
+				assertEquals("bug64983user1", testRs.getString(1).split("@")[0]);
+				
+				((MySQLConnection)testConn).changeUser("bug64983user2", "");
+				testRs = testSt.executeQuery("select USER()");
+				testRs.next();
+				assertEquals("bug64983user2", testRs.getString(1).split("@")[0]);
+				
+			} finally {
+				if (testRs != null) {
+					testRs.close();
+				}
+				if (testSt != null) {
+					testSt.close();
+				}
+				if (testConn != null) {
+					testConn.close();
+				}
+				if (adminStmt != null) {
+					adminStmt.executeUpdate("drop user 'bug64983user1'@'%'");
+					adminStmt.executeUpdate("drop user 'bug64983user2'@'%'");
+					adminStmt.close();
+				} else {
+					this.stmt.executeUpdate("drop user 'bug64983user1'@'%'");
+					this.stmt.executeUpdate("drop user 'bug64983user2'@'%'");
+				}
+				if (adminConn != null) {
+					adminConn.close();
+				}
+			}
+
+		}
+	}
+
+	public void testOldPasswordPlugin_createUsers(Statement adminStmt) throws Exception {
+		adminStmt.executeUpdate("grant usage on *.* to 'bug64983user1'@'%'");
+		adminStmt.executeUpdate("set password for 'bug64983user1'@'%' = OLD_PASSWORD('pwd')");
+
+		adminStmt.executeUpdate("grant usage on *.* to 'bug64983user2'@'%'");
+		adminStmt.executeUpdate("set password for 'bug64983user2'@'%' = OLD_PASSWORD('')");
+
+		adminStmt.executeUpdate("flush privileges");
+	}
+
 }

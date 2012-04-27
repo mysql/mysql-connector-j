@@ -483,7 +483,7 @@ public class Buffer {
 		}
 	}
 
-	void setBufLength(int bufLengthToSet) {
+	public void setBufLength(int bufLengthToSet) {
 		this.bufLength = bufLengthToSet;
 	}
 
