@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!--
-  Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -30,7 +30,7 @@
 
 	<property name="major_version" value="5"/>
 	<property name="minor_version" value="1"/>
-	<property name="subminor_version" value="20"/>
+	<property name="subminor_version" value="21"/>
 	<property name="version_status" value=""/>
 
 	<property name="version" value="${major_version}.${minor_version}.${subminor_version}${version_status}"/>
