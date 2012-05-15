@@ -1258,6 +1258,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.prepStmtCacheSqlLimit"), //$NON-NLS-1$
 			"3.0.10", PERFORMANCE_CATEGORY, 11); //$NON-NLS-1$
 
+	private StringConnectionProperty parseInfoCacheFactory = new StringConnectionProperty("parseInfoCacheFactory", //$NON-NLS-1$
+			PerConnectionLRUFactory.class.getName(), Messages.getString("ConnectionProperties.parseInfoCacheFactory"), "5.1.1", PERFORMANCE_CATEGORY, 12); //$NON-NLS-1$ //$NON-NLS-2$
+	
 	private BooleanConnectionProperty processEscapeCodesForPrepStmts = 
 		new BooleanConnectionProperty("processEscapeCodesForPrepStmts", //$NON-NLS-1$
 				true,
@@ -4684,4 +4687,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return this.defaultAuthenticationPlugin.getValueAsString();
 	}
 
+	public void setParseInfoCacheFactory(String factoryClassname) {
+		this.parseInfoCacheFactory.setValue(factoryClassname);
+		
+	}
+
+	public String getParseInfoCacheFactory() {
+		return this.parseInfoCacheFactory.getValueAsString();
+	}
 }

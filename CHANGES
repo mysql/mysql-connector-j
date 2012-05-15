@@ -39,6 +39,10 @@ nn-nn-12 - Version 5.1.21
     track connections in a phantom reference queue, and have a single thread per-vm
     clean these up when the VM notices the connection is no longer referenced by
     anything else.
+    
+  - Added the ability to add new client-side prepared statement parse info caches by
+    implementing com.mysql.jdbc.CacheAdapterFactory and telling the driver to use it
+    when "cachePrepStmts=true" via the "parseInfoCacheFactory" configuration property. 
 
 04-02-12 - Version 5.1.19
   - Fix for Bug#64621, setMaxRows was not correctly processed during CS PS metadata

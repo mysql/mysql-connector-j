@@ -2562,4 +2562,12 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 	public String getDefaultAuthenticationPlugin() {
 		return getActiveMySQLConnection().getDefaultAuthenticationPlugin();
 	}
+	
+	public void setParseInfoCacheFactory(String factoryClassname) {
+		getActiveMySQLConnection().setParseInfoCacheFactory(factoryClassname);
+	}
+
+	public String getParseInfoCacheFactory() {
+		return getActiveMySQLConnection().getParseInfoCacheFactory();
+	}
 }

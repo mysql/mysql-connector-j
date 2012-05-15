@@ -54,6 +54,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TreeMap;
 
+import com.mysql.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.LogFactory;
 import com.mysql.jdbc.log.NullLogger;
@@ -421,8 +422,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	/** Are we in autoCommit mode? */
 	private boolean autoCommit = true;
 
-	/** A map of SQL to parsed prepared statement parameters. */
-	private Map<Object, Object> cachedPreparedStatementParams;
+	/** A cache of SQL to parsed prepared statement parameters. */
+	private CacheAdapter<String, ParseInfo> cachedPreparedStatementParams;
 
 	/**
 	 * For servers > 4.1.0, what character set is the metadata returned in?
@@ -1496,48 +1497,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		PreparedStatement pStmt = null;
 
 		if (getCachePreparedStatements()) {
-			synchronized (this.cachedPreparedStatementParams) {
-				PreparedStatement.ParseInfo pStmtInfo = (PreparedStatement.ParseInfo) this.cachedPreparedStatementParams
-						.get(nativeSql);
-	
-				if (pStmtInfo == null) {
-					pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql,
-							this.database);
-	
-					PreparedStatement.ParseInfo parseInfo = pStmt.getParseInfo();
-	
-					if (parseInfo.statementLength < getPreparedStatementCacheSqlLimit()) {
-						if (this.cachedPreparedStatementParams.size() >= getPreparedStatementCacheSize()) {
-							Iterator<Object> oldestIter = this.cachedPreparedStatementParams
-									.keySet().iterator();
-							long lruTime = Long.MAX_VALUE;
-							String oldestSql = null;
-	
-							while (oldestIter.hasNext()) {
-								String sqlKey = (String) oldestIter.next();
-								PreparedStatement.ParseInfo lruInfo = (PreparedStatement.ParseInfo) this.cachedPreparedStatementParams
-										.get(sqlKey);
-	
-								if (lruInfo.lastUsed < lruTime) {
-									lruTime = lruInfo.lastUsed;
-									oldestSql = sqlKey;
-								}
-							}
-	
-							if (oldestSql != null) {
-								this.cachedPreparedStatementParams
-										.remove(oldestSql);
-							}
-						}
-	
-						this.cachedPreparedStatementParams.put(nativeSql, pStmt
-								.getParseInfo());
-					}
-				} else {
-					pStmtInfo.lastUsed = System.currentTimeMillis();
-					pStmt = new com.mysql.jdbc.PreparedStatement(getLoadBalanceSafeProxy(), nativeSql,
-							this.database, pStmtInfo);
-				}
+			PreparedStatement.ParseInfo pStmtInfo = this.cachedPreparedStatementParams.get(nativeSql);
+ 
+			if (pStmtInfo == null) {
+				pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql,
+						this.database);
+
+				this.cachedPreparedStatementParams.put(nativeSql, pStmt
+							.getParseInfo());
+			} else {
+				pStmt = new com.mysql.jdbc.PreparedStatement(getLoadBalanceSafeProxy(), nativeSql,
+						this.database, pStmtInfo);
 			}
 		} else {
 			pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql,
@@ -2493,11 +2463,42 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 	}
 
-	private synchronized void createPreparedStatementCaches() {
+	private synchronized void createPreparedStatementCaches() throws SQLException {
 		int cacheSize = getPreparedStatementCacheSize();
 		
-		this.cachedPreparedStatementParams = new HashMap<Object, Object>(cacheSize);
-		
+		try {
+			Class<?> factoryClass;
+			
+			factoryClass = Class.forName(getParseInfoCacheFactory());
+			
+			@SuppressWarnings("unchecked")
+			CacheAdapterFactory<String, ParseInfo> cacheFactory = ((CacheAdapterFactory<String, ParseInfo>)factoryClass.newInstance());
+			
+			this.cachedPreparedStatementParams = cacheFactory.getInstance(this, myURL, getPreparedStatementCacheSize(), getPreparedStatementCacheSqlLimit(), props);
+			
+		} catch (ClassNotFoundException e) {
+			SQLException sqlEx = SQLError.createSQLException(
+					Messages.getString("Connection.CantFindCacheFactory", new Object[] {getParseInfoCacheFactory(), "parseInfoCacheFactory"}),
+					getExceptionInterceptor());
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
+		} catch (InstantiationException e) {
+			SQLException sqlEx = SQLError.createSQLException(
+					Messages.getString("Connection.CantLoadCacheFactory", new Object[] {getParseInfoCacheFactory(), "parseInfoCacheFactory"}),
+					getExceptionInterceptor());
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
+		} catch (IllegalAccessException e) {
+			SQLException sqlEx = SQLError.createSQLException(
+					Messages.getString("Connection.CantLoadCacheFactory", new Object[] {getParseInfoCacheFactory(), "parseInfoCacheFactory"}),
+					getExceptionInterceptor());
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
+		}
+
 		if (getUseServerPreparedStmts()) {
 			this.serverSideStatementCheckCache = new LRUCache(cacheSize);
 			

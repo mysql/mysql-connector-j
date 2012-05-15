@@ -2584,4 +2584,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public String getDefaultAuthenticationPlugin() {
 		return this.currentConnection.getDefaultAuthenticationPlugin();
 	}
+
+	public void setParseInfoCacheFactory(String factoryClassname) {
+		this.currentConnection.setParseInfoCacheFactory(factoryClassname);
+	}
+
+	public String getParseInfoCacheFactory() {
+		return this.currentConnection.getParseInfoCacheFactory();
+	}
 }

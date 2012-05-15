@@ -1693,4 +1693,8 @@ public interface ConnectionProperties {
 	public abstract void setDefaultAuthenticationPlugin(String defaultAuthenticationPlugin);
 
 	public abstract String getDefaultAuthenticationPlugin(); 
+	
+	public abstract void setParseInfoCacheFactory(String factoryClassname);
+	
+	public abstract String getParseInfoCacheFactory();
 }

@@ -2783,4 +2783,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public String getDefaultAuthenticationPlugin() {
 		return this.mc.getDefaultAuthenticationPlugin();
 	}
+
+	public void setParseInfoCacheFactory(String factoryClassname) {
+		this.mc.setParseInfoCacheFactory(factoryClassname);
+	}
+
+	public String getParseInfoCacheFactory() {
+		return this.mc.getParseInfoCacheFactory();
+	}
 }
