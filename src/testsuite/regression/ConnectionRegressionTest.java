@@ -70,6 +70,7 @@ import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.StringUtils;
+import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.exceptions.MySQLNonTransientException;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
@@ -3805,6 +3806,25 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		adminStmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'bug64983user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 
 		adminStmt.executeUpdate("flush privileges");
+	}
+
+	public void testBug36662() throws Exception {
+
+		try {
+			String tz1 = TimeUtil.getCanoncialTimezone("MEST", null);
+			assertNotNull(tz1);
+		} catch (Exception e1) {
+			String mes1 = e1.getMessage();
+			mes1 = mes1.substring(mes1.lastIndexOf("The timezones that 'MEST' maps to are:")+39);
+			try {
+				String tz2 = TimeUtil.getCanoncialTimezone("CEST", null);
+				assertEquals(mes1, tz2);
+			} catch (Exception e2) {
+				String mes2 = e2.getMessage();
+				mes2 = mes2.substring(mes2.lastIndexOf("The timezones that 'CEST' maps to are:")+39);
+				assertEquals(mes1, mes2);
+			}
+		}
 	}
 
 }

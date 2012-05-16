@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -43,230 +43,230 @@ import java.util.TimeZone;
  * @author Mark Matthews
  */
 public class TimeUtil {
-	static final Map ABBREVIATED_TIMEZONES;
+	static final Map<String, String[]> ABBREVIATED_TIMEZONES;
 
 	static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
 
-	static final Map TIMEZONE_MAPPINGS;
+	static final Map<String, String> TIMEZONE_MAPPINGS;
 
 	static {
-		HashMap tempMap = new HashMap();
+		HashMap<String, String> tempTzMap = new HashMap<String, String>();
 
 		//
 		// Windows Mappings
 		//
-		tempMap.put("Romance", "Europe/Paris");
-		tempMap.put("Romance Standard Time", "Europe/Paris");
-		tempMap.put("Warsaw", "Europe/Warsaw");
-		tempMap.put("Central Europe", "Europe/Prague");
-		tempMap.put("Central Europe Standard Time", "Europe/Prague");
-		tempMap.put("Prague Bratislava", "Europe/Prague");
-		tempMap.put("W. Central Africa Standard Time", "Africa/Luanda");
-		tempMap.put("FLE", "Europe/Helsinki");
-		tempMap.put("FLE Standard Time", "Europe/Helsinki");
-		tempMap.put("GFT", "Europe/Athens");
-		tempMap.put("GFT Standard Time", "Europe/Athens");
-		tempMap.put("GTB", "Europe/Athens");
-		tempMap.put("GTB Standard Time", "Europe/Athens");
-		tempMap.put("Israel", "Asia/Jerusalem");
-		tempMap.put("Israel Standard Time", "Asia/Jerusalem");
-		tempMap.put("Arab", "Asia/Riyadh");
-		tempMap.put("Arab Standard Time", "Asia/Riyadh");
-		tempMap.put("Arabic Standard Time", "Asia/Baghdad");
-		tempMap.put("E. Africa", "Africa/Nairobi");
-		tempMap.put("E. Africa Standard Time", "Africa/Nairobi");
-		tempMap.put("Saudi Arabia", "Asia/Riyadh");
-		tempMap.put("Saudi Arabia Standard Time", "Asia/Riyadh");
-		tempMap.put("Iran", "Asia/Tehran");
-		tempMap.put("Iran Standard Time", "Asia/Tehran");
-		tempMap.put("Afghanistan", "Asia/Kabul");
-		tempMap.put("Afghanistan Standard Time", "Asia/Kabul");
-		tempMap.put("India", "Asia/Calcutta");
-		tempMap.put("India Standard Time", "Asia/Calcutta");
-		tempMap.put("Myanmar Standard Time", "Asia/Rangoon");
-		tempMap.put("Nepal Standard Time", "Asia/Katmandu");
-		tempMap.put("Sri Lanka", "Asia/Colombo");
-		tempMap.put("Sri Lanka Standard Time", "Asia/Colombo");
-		tempMap.put("Beijing", "Asia/Shanghai");
-		tempMap.put("China", "Asia/Shanghai");
-		tempMap.put("China Standard Time", "Asia/Shanghai");
-		tempMap.put("AUS Central", "Australia/Darwin");
-		tempMap.put("AUS Central Standard Time", "Australia/Darwin");
-		tempMap.put("Cen. Australia", "Australia/Adelaide");
-		tempMap.put("Cen. Australia Standard Time", "Australia/Adelaide");
-		tempMap.put("Vladivostok", "Asia/Vladivostok");
-		tempMap.put("Vladivostok Standard Time", "Asia/Vladivostok");
-		tempMap.put("West Pacific", "Pacific/Guam");
-		tempMap.put("West Pacific Standard Time", "Pacific/Guam");
-		tempMap.put("E. South America", "America/Sao_Paulo");
-		tempMap.put("E. South America Standard Time", "America/Sao_Paulo");
-		tempMap.put("Greenland Standard Time", "America/Godthab");
-		tempMap.put("Newfoundland", "America/St_Johns");
-		tempMap.put("Newfoundland Standard Time", "America/St_Johns");
-		tempMap.put("Pacific SA", "America/Caracas");
-		tempMap.put("Pacific SA Standard Time", "America/Caracas");
-		tempMap.put("SA Western", "America/Caracas");
-		tempMap.put("SA Western Standard Time", "America/Caracas");
-		tempMap.put("SA Pacific", "America/Bogota");
-		tempMap.put("SA Pacific Standard Time", "America/Bogota");
-		tempMap.put("US Eastern", "America/Indianapolis");
-		tempMap.put("US Eastern Standard Time", "America/Indianapolis");
-		tempMap.put("Central America Standard Time", "America/Regina");
-		tempMap.put("Mexico", "America/Mexico_City");
-		tempMap.put("Mexico Standard Time", "America/Mexico_City");
-		tempMap.put("Canada Central", "America/Regina");
-		tempMap.put("Canada Central Standard Time", "America/Regina");
-		tempMap.put("US Mountain", "America/Phoenix");
-		tempMap.put("US Mountain Standard Time", "America/Phoenix");
-		tempMap.put("GMT", "GMT");
-		tempMap.put("Ekaterinburg", "Asia/Yekaterinburg");
-		tempMap.put("Ekaterinburg Standard Time", "Asia/Yekaterinburg");
-		tempMap.put("West Asia", "Asia/Karachi");
-		tempMap.put("West Asia Standard Time", "Asia/Karachi");
-		tempMap.put("Central Asia", "Asia/Dhaka");
-		tempMap.put("Central Asia Standard Time", "Asia/Dhaka");
-		tempMap.put("N. Central Asia Standard Time", "Asia/Novosibirsk");
-		tempMap.put("Bangkok", "Asia/Bangkok");
-		tempMap.put("Bangkok Standard Time", "Asia/Bangkok");
-		tempMap.put("North Asia Standard Time", "Asia/Krasnoyarsk");
-		tempMap.put("SE Asia", "Asia/Bangkok");
-		tempMap.put("SE Asia Standard Time", "Asia/Bangkok");
-		tempMap.put("North Asia East Standard Time", "Asia/Ulaanbaatar");
-		tempMap.put("Singapore", "Asia/Singapore");
-		tempMap.put("Singapore Standard Time", "Asia/Singapore");
-		tempMap.put("Taipei", "Asia/Taipei");
-		tempMap.put("Taipei Standard Time", "Asia/Taipei");
-		tempMap.put("W. Australia", "Australia/Perth");
-		tempMap.put("W. Australia Standard Time", "Australia/Perth");
-		tempMap.put("Korea", "Asia/Seoul");
-		tempMap.put("Korea Standard Time", "Asia/Seoul");
-		tempMap.put("Tokyo", "Asia/Tokyo");
-		tempMap.put("Tokyo Standard Time", "Asia/Tokyo");
-		tempMap.put("Yakutsk", "Asia/Yakutsk");
-		tempMap.put("Yakutsk Standard Time", "Asia/Yakutsk");
-		tempMap.put("Central European", "Europe/Belgrade");
-		tempMap.put("Central European Standard Time", "Europe/Belgrade");
-		tempMap.put("W. Europe", "Europe/Berlin");
-		tempMap.put("W. Europe Standard Time", "Europe/Berlin");
-		tempMap.put("Tasmania", "Australia/Hobart");
-		tempMap.put("Tasmania Standard Time", "Australia/Hobart");
-		tempMap.put("AUS Eastern", "Australia/Sydney");
-		tempMap.put("AUS Eastern Standard Time", "Australia/Sydney");
-		tempMap.put("E. Australia", "Australia/Brisbane");
-		tempMap.put("E. Australia Standard Time", "Australia/Brisbane");
-		tempMap.put("Sydney Standard Time", "Australia/Sydney");
-		tempMap.put("Central Pacific", "Pacific/Guadalcanal");
-		tempMap.put("Central Pacific Standard Time", "Pacific/Guadalcanal");
-		tempMap.put("Dateline", "Pacific/Majuro");
-		tempMap.put("Dateline Standard Time", "Pacific/Majuro");
-		tempMap.put("Fiji", "Pacific/Fiji");
-		tempMap.put("Fiji Standard Time", "Pacific/Fiji");
-		tempMap.put("Samoa", "Pacific/Apia");
-		tempMap.put("Samoa Standard Time", "Pacific/Apia");
-		tempMap.put("Hawaiian", "Pacific/Honolulu");
-		tempMap.put("Hawaiian Standard Time", "Pacific/Honolulu");
-		tempMap.put("Alaskan", "America/Anchorage");
-		tempMap.put("Alaskan Standard Time", "America/Anchorage");
-		tempMap.put("Pacific", "America/Los_Angeles");
-		tempMap.put("Pacific Standard Time", "America/Los_Angeles");
-		tempMap.put("Mexico Standard Time 2", "America/Chihuahua");
-		tempMap.put("Mountain", "America/Denver");
-		tempMap.put("Mountain Standard Time", "America/Denver");
-		tempMap.put("Central", "America/Chicago");
-		tempMap.put("Central Standard Time", "America/Chicago");
-		tempMap.put("Eastern", "America/New_York");
-		tempMap.put("Eastern Standard Time", "America/New_York");
-		tempMap.put("E. Europe", "Europe/Bucharest");
-		tempMap.put("E. Europe Standard Time", "Europe/Bucharest");
-		tempMap.put("Egypt", "Africa/Cairo");
-		tempMap.put("Egypt Standard Time", "Africa/Cairo");
-		tempMap.put("South Africa", "Africa/Harare");
-		tempMap.put("South Africa Standard Time", "Africa/Harare");
-		tempMap.put("Atlantic", "America/Halifax");
-		tempMap.put("Atlantic Standard Time", "America/Halifax");
-		tempMap.put("SA Eastern", "America/Buenos_Aires");
-		tempMap.put("SA Eastern Standard Time", "America/Buenos_Aires");
-		tempMap.put("Mid-Atlantic", "Atlantic/South_Georgia");
-		tempMap.put("Mid-Atlantic Standard Time", "Atlantic/South_Georgia");
-		tempMap.put("Azores", "Atlantic/Azores");
-		tempMap.put("Azores Standard Time", "Atlantic/Azores");
-		tempMap.put("Cape Verde Standard Time", "Atlantic/Cape_Verde");
-		tempMap.put("Russian", "Europe/Moscow");
-		tempMap.put("Russian Standard Time", "Europe/Moscow");
-		tempMap.put("New Zealand", "Pacific/Auckland");
-		tempMap.put("New Zealand Standard Time", "Pacific/Auckland");
-		tempMap.put("Tonga Standard Time", "Pacific/Tongatapu");
-		tempMap.put("Arabian", "Asia/Muscat");
-		tempMap.put("Arabian Standard Time", "Asia/Muscat");
-		tempMap.put("Caucasus", "Asia/Tbilisi");
-		tempMap.put("Caucasus Standard Time", "Asia/Tbilisi");
-		tempMap.put("GMT Standard Time", "GMT");
-		tempMap.put("Greenwich", "GMT");
-		tempMap.put("Greenwich Standard Time", "GMT");
-		tempMap.put("UTC", "GMT");
+		tempTzMap.put("Romance", "Europe/Paris");
+		tempTzMap.put("Romance Standard Time", "Europe/Paris");
+		tempTzMap.put("Warsaw", "Europe/Warsaw");
+		tempTzMap.put("Central Europe", "Europe/Prague");
+		tempTzMap.put("Central Europe Standard Time", "Europe/Prague");
+		tempTzMap.put("Prague Bratislava", "Europe/Prague");
+		tempTzMap.put("W. Central Africa Standard Time", "Africa/Luanda");
+		tempTzMap.put("FLE", "Europe/Helsinki");
+		tempTzMap.put("FLE Standard Time", "Europe/Helsinki");
+		tempTzMap.put("GFT", "Europe/Athens");
+		tempTzMap.put("GFT Standard Time", "Europe/Athens");
+		tempTzMap.put("GTB", "Europe/Athens");
+		tempTzMap.put("GTB Standard Time", "Europe/Athens");
+		tempTzMap.put("Israel", "Asia/Jerusalem");
+		tempTzMap.put("Israel Standard Time", "Asia/Jerusalem");
+		tempTzMap.put("Arab", "Asia/Riyadh");
+		tempTzMap.put("Arab Standard Time", "Asia/Riyadh");
+		tempTzMap.put("Arabic Standard Time", "Asia/Baghdad");
+		tempTzMap.put("E. Africa", "Africa/Nairobi");
+		tempTzMap.put("E. Africa Standard Time", "Africa/Nairobi");
+		tempTzMap.put("Saudi Arabia", "Asia/Riyadh");
+		tempTzMap.put("Saudi Arabia Standard Time", "Asia/Riyadh");
+		tempTzMap.put("Iran", "Asia/Tehran");
+		tempTzMap.put("Iran Standard Time", "Asia/Tehran");
+		tempTzMap.put("Afghanistan", "Asia/Kabul");
+		tempTzMap.put("Afghanistan Standard Time", "Asia/Kabul");
+		tempTzMap.put("India", "Asia/Calcutta");
+		tempTzMap.put("India Standard Time", "Asia/Calcutta");
+		tempTzMap.put("Myanmar Standard Time", "Asia/Rangoon");
+		tempTzMap.put("Nepal Standard Time", "Asia/Katmandu");
+		tempTzMap.put("Sri Lanka", "Asia/Colombo");
+		tempTzMap.put("Sri Lanka Standard Time", "Asia/Colombo");
+		tempTzMap.put("Beijing", "Asia/Shanghai");
+		tempTzMap.put("China", "Asia/Shanghai");
+		tempTzMap.put("China Standard Time", "Asia/Shanghai");
+		tempTzMap.put("AUS Central", "Australia/Darwin");
+		tempTzMap.put("AUS Central Standard Time", "Australia/Darwin");
+		tempTzMap.put("Cen. Australia", "Australia/Adelaide");
+		tempTzMap.put("Cen. Australia Standard Time", "Australia/Adelaide");
+		tempTzMap.put("Vladivostok", "Asia/Vladivostok");
+		tempTzMap.put("Vladivostok Standard Time", "Asia/Vladivostok");
+		tempTzMap.put("West Pacific", "Pacific/Guam");
+		tempTzMap.put("West Pacific Standard Time", "Pacific/Guam");
+		tempTzMap.put("E. South America", "America/Sao_Paulo");
+		tempTzMap.put("E. South America Standard Time", "America/Sao_Paulo");
+		tempTzMap.put("Greenland Standard Time", "America/Godthab");
+		tempTzMap.put("Newfoundland", "America/St_Johns");
+		tempTzMap.put("Newfoundland Standard Time", "America/St_Johns");
+		tempTzMap.put("Pacific SA", "America/Caracas");
+		tempTzMap.put("Pacific SA Standard Time", "America/Caracas");
+		tempTzMap.put("SA Western", "America/Caracas");
+		tempTzMap.put("SA Western Standard Time", "America/Caracas");
+		tempTzMap.put("SA Pacific", "America/Bogota");
+		tempTzMap.put("SA Pacific Standard Time", "America/Bogota");
+		tempTzMap.put("US Eastern", "America/Indianapolis");
+		tempTzMap.put("US Eastern Standard Time", "America/Indianapolis");
+		tempTzMap.put("Central America Standard Time", "America/Regina");
+		tempTzMap.put("Mexico", "America/Mexico_City");
+		tempTzMap.put("Mexico Standard Time", "America/Mexico_City");
+		tempTzMap.put("Canada Central", "America/Regina");
+		tempTzMap.put("Canada Central Standard Time", "America/Regina");
+		tempTzMap.put("US Mountain", "America/Phoenix");
+		tempTzMap.put("US Mountain Standard Time", "America/Phoenix");
+		tempTzMap.put("GMT", "GMT");
+		tempTzMap.put("Ekaterinburg", "Asia/Yekaterinburg");
+		tempTzMap.put("Ekaterinburg Standard Time", "Asia/Yekaterinburg");
+		tempTzMap.put("West Asia", "Asia/Karachi");
+		tempTzMap.put("West Asia Standard Time", "Asia/Karachi");
+		tempTzMap.put("Central Asia", "Asia/Dhaka");
+		tempTzMap.put("Central Asia Standard Time", "Asia/Dhaka");
+		tempTzMap.put("N. Central Asia Standard Time", "Asia/Novosibirsk");
+		tempTzMap.put("Bangkok", "Asia/Bangkok");
+		tempTzMap.put("Bangkok Standard Time", "Asia/Bangkok");
+		tempTzMap.put("North Asia Standard Time", "Asia/Krasnoyarsk");
+		tempTzMap.put("SE Asia", "Asia/Bangkok");
+		tempTzMap.put("SE Asia Standard Time", "Asia/Bangkok");
+		tempTzMap.put("North Asia East Standard Time", "Asia/Ulaanbaatar");
+		tempTzMap.put("Singapore", "Asia/Singapore");
+		tempTzMap.put("Singapore Standard Time", "Asia/Singapore");
+		tempTzMap.put("Taipei", "Asia/Taipei");
+		tempTzMap.put("Taipei Standard Time", "Asia/Taipei");
+		tempTzMap.put("W. Australia", "Australia/Perth");
+		tempTzMap.put("W. Australia Standard Time", "Australia/Perth");
+		tempTzMap.put("Korea", "Asia/Seoul");
+		tempTzMap.put("Korea Standard Time", "Asia/Seoul");
+		tempTzMap.put("Tokyo", "Asia/Tokyo");
+		tempTzMap.put("Tokyo Standard Time", "Asia/Tokyo");
+		tempTzMap.put("Yakutsk", "Asia/Yakutsk");
+		tempTzMap.put("Yakutsk Standard Time", "Asia/Yakutsk");
+		tempTzMap.put("Central European", "Europe/Belgrade");
+		tempTzMap.put("Central European Standard Time", "Europe/Belgrade");
+		tempTzMap.put("W. Europe", "Europe/Berlin");
+		tempTzMap.put("W. Europe Standard Time", "Europe/Berlin");
+		tempTzMap.put("Tasmania", "Australia/Hobart");
+		tempTzMap.put("Tasmania Standard Time", "Australia/Hobart");
+		tempTzMap.put("AUS Eastern", "Australia/Sydney");
+		tempTzMap.put("AUS Eastern Standard Time", "Australia/Sydney");
+		tempTzMap.put("E. Australia", "Australia/Brisbane");
+		tempTzMap.put("E. Australia Standard Time", "Australia/Brisbane");
+		tempTzMap.put("Sydney Standard Time", "Australia/Sydney");
+		tempTzMap.put("Central Pacific", "Pacific/Guadalcanal");
+		tempTzMap.put("Central Pacific Standard Time", "Pacific/Guadalcanal");
+		tempTzMap.put("Dateline", "Pacific/Majuro");
+		tempTzMap.put("Dateline Standard Time", "Pacific/Majuro");
+		tempTzMap.put("Fiji", "Pacific/Fiji");
+		tempTzMap.put("Fiji Standard Time", "Pacific/Fiji");
+		tempTzMap.put("Samoa", "Pacific/Apia");
+		tempTzMap.put("Samoa Standard Time", "Pacific/Apia");
+		tempTzMap.put("Hawaiian", "Pacific/Honolulu");
+		tempTzMap.put("Hawaiian Standard Time", "Pacific/Honolulu");
+		tempTzMap.put("Alaskan", "America/Anchorage");
+		tempTzMap.put("Alaskan Standard Time", "America/Anchorage");
+		tempTzMap.put("Pacific", "America/Los_Angeles");
+		tempTzMap.put("Pacific Standard Time", "America/Los_Angeles");
+		tempTzMap.put("Mexico Standard Time 2", "America/Chihuahua");
+		tempTzMap.put("Mountain", "America/Denver");
+		tempTzMap.put("Mountain Standard Time", "America/Denver");
+		tempTzMap.put("Central", "America/Chicago");
+		tempTzMap.put("Central Standard Time", "America/Chicago");
+		tempTzMap.put("Eastern", "America/New_York");
+		tempTzMap.put("Eastern Standard Time", "America/New_York");
+		tempTzMap.put("E. Europe", "Europe/Bucharest");
+		tempTzMap.put("E. Europe Standard Time", "Europe/Bucharest");
+		tempTzMap.put("Egypt", "Africa/Cairo");
+		tempTzMap.put("Egypt Standard Time", "Africa/Cairo");
+		tempTzMap.put("South Africa", "Africa/Harare");
+		tempTzMap.put("South Africa Standard Time", "Africa/Harare");
+		tempTzMap.put("Atlantic", "America/Halifax");
+		tempTzMap.put("Atlantic Standard Time", "America/Halifax");
+		tempTzMap.put("SA Eastern", "America/Buenos_Aires");
+		tempTzMap.put("SA Eastern Standard Time", "America/Buenos_Aires");
+		tempTzMap.put("Mid-Atlantic", "Atlantic/South_Georgia");
+		tempTzMap.put("Mid-Atlantic Standard Time", "Atlantic/South_Georgia");
+		tempTzMap.put("Azores", "Atlantic/Azores");
+		tempTzMap.put("Azores Standard Time", "Atlantic/Azores");
+		tempTzMap.put("Cape Verde Standard Time", "Atlantic/Cape_Verde");
+		tempTzMap.put("Russian", "Europe/Moscow");
+		tempTzMap.put("Russian Standard Time", "Europe/Moscow");
+		tempTzMap.put("New Zealand", "Pacific/Auckland");
+		tempTzMap.put("New Zealand Standard Time", "Pacific/Auckland");
+		tempTzMap.put("Tonga Standard Time", "Pacific/Tongatapu");
+		tempTzMap.put("Arabian", "Asia/Muscat");
+		tempTzMap.put("Arabian Standard Time", "Asia/Muscat");
+		tempTzMap.put("Caucasus", "Asia/Tbilisi");
+		tempTzMap.put("Caucasus Standard Time", "Asia/Tbilisi");
+		tempTzMap.put("GMT Standard Time", "GMT");
+		tempTzMap.put("Greenwich", "GMT");
+		tempTzMap.put("Greenwich Standard Time", "GMT");
+		tempTzMap.put("UTC", "GMT");
 
 		// MySQL understands the Continent/City/region as well
-		Iterator entries = tempMap.entrySet().iterator();
-		Map entryMap = new HashMap(tempMap.size()); // to avoid ConcurrentModificationException
+		Iterator<Map.Entry<String, String>> entries = tempTzMap.entrySet().iterator();
+		Map<String, String> entryMap = new HashMap<String, String>(tempTzMap.size()); // to avoid ConcurrentModificationException
 		
 		while (entries.hasNext()) {
-			String name = ((Map.Entry)entries.next()).getValue().toString();
+			String name = entries.next().getValue();
 			entryMap.put(name, name);
 		}
 		
-		tempMap.putAll(entryMap);
+		tempTzMap.putAll(entryMap);
 		
-		TIMEZONE_MAPPINGS = Collections.unmodifiableMap(tempMap);
+		TIMEZONE_MAPPINGS = Collections.unmodifiableMap(tempTzMap);
 
 		//
 		// Handle abbreviated mappings
 		//
-		tempMap = new HashMap();
+		HashMap<String, String[]> tempAbbrMap = new HashMap<String, String[]>();
 
-		tempMap.put("ACST", new String[] { "America/Porto_Acre" });
-		tempMap.put("ACT", new String[] { "America/Porto_Acre" });
-		tempMap.put("ADDT", new String[] { "America/Pangnirtung" });
-		tempMap.put("ADMT", new String[] { "Africa/Asmera",
+		tempAbbrMap.put("ACST", new String[] { "America/Porto_Acre" });
+		tempAbbrMap.put("ACT", new String[] { "America/Porto_Acre" });
+		tempAbbrMap.put("ADDT", new String[] { "America/Pangnirtung" });
+		tempAbbrMap.put("ADMT", new String[] { "Africa/Asmera",
 				"Africa/Addis_Ababa" });
-		tempMap.put("ADT", new String[] { "Atlantic/Bermuda", "Asia/Baghdad",
+		tempAbbrMap.put("ADT", new String[] { "Atlantic/Bermuda", "Asia/Baghdad",
 				"America/Thule", "America/Goose_Bay", "America/Halifax",
 				"America/Glace_Bay", "America/Pangnirtung", "America/Barbados",
 				"America/Martinique" });
-		tempMap.put("AFT", new String[] { "Asia/Kabul" });
-		tempMap.put("AHDT", new String[] { "America/Anchorage" });
-		tempMap.put("AHST", new String[] { "America/Anchorage" });
-		tempMap.put("AHWT", new String[] { "America/Anchorage" });
-		tempMap.put("AKDT", new String[] { "America/Juneau", "America/Yakutat",
+		tempAbbrMap.put("AFT", new String[] { "Asia/Kabul" });
+		tempAbbrMap.put("AHDT", new String[] { "America/Anchorage" });
+		tempAbbrMap.put("AHST", new String[] { "America/Anchorage" });
+		tempAbbrMap.put("AHWT", new String[] { "America/Anchorage" });
+		tempAbbrMap.put("AKDT", new String[] { "America/Juneau", "America/Yakutat",
 				"America/Anchorage", "America/Nome" });
-		tempMap.put("AKST", new String[] { "Asia/Aqtobe", "America/Juneau",
+		tempAbbrMap.put("AKST", new String[] { "Asia/Aqtobe", "America/Juneau",
 				"America/Yakutat", "America/Anchorage", "America/Nome" });
-		tempMap.put("AKT", new String[] { "Asia/Aqtobe" });
-		tempMap.put("AKTST", new String[] { "Asia/Aqtobe" });
-		tempMap.put("AKWT", new String[] { "America/Juneau", "America/Yakutat",
+		tempAbbrMap.put("AKT", new String[] { "Asia/Aqtobe" });
+		tempAbbrMap.put("AKTST", new String[] { "Asia/Aqtobe" });
+		tempAbbrMap.put("AKWT", new String[] { "America/Juneau", "America/Yakutat",
 				"America/Anchorage", "America/Nome" });
-		tempMap.put("ALMST", new String[] { "Asia/Almaty" });
-		tempMap.put("ALMT", new String[] { "Asia/Almaty" });
-		tempMap.put("AMST", new String[] { "Asia/Yerevan", "America/Cuiaba",
+		tempAbbrMap.put("ALMST", new String[] { "Asia/Almaty" });
+		tempAbbrMap.put("ALMT", new String[] { "Asia/Almaty" });
+		tempAbbrMap.put("AMST", new String[] { "Asia/Yerevan", "America/Cuiaba",
 				"America/Porto_Velho", "America/Boa_Vista", "America/Manaus" });
-		tempMap.put("AMT", new String[] { "Europe/Athens", "Europe/Amsterdam",
+		tempAbbrMap.put("AMT", new String[] { "Europe/Athens", "Europe/Amsterdam",
 				"Asia/Yerevan", "Africa/Asmera", "America/Cuiaba",
 				"America/Porto_Velho", "America/Boa_Vista", "America/Manaus",
 				"America/Asuncion" });
-		tempMap.put("ANAMT", new String[] { "Asia/Anadyr" });
-		tempMap.put("ANAST", new String[] { "Asia/Anadyr" });
-		tempMap.put("ANAT", new String[] { "Asia/Anadyr" });
-		tempMap.put("ANT", new String[] { "America/Aruba", "America/Curacao" });
-		tempMap.put("AQTST", new String[] { "Asia/Aqtobe", "Asia/Aqtau" });
-		tempMap.put("AQTT", new String[] { "Asia/Aqtobe", "Asia/Aqtau" });
-		tempMap.put("ARST", new String[] { "Antarctica/Palmer",
+		tempAbbrMap.put("ANAMT", new String[] { "Asia/Anadyr" });
+		tempAbbrMap.put("ANAST", new String[] { "Asia/Anadyr" });
+		tempAbbrMap.put("ANAT", new String[] { "Asia/Anadyr" });
+		tempAbbrMap.put("ANT", new String[] { "America/Aruba", "America/Curacao" });
+		tempAbbrMap.put("AQTST", new String[] { "Asia/Aqtobe", "Asia/Aqtau" });
+		tempAbbrMap.put("AQTT", new String[] { "Asia/Aqtobe", "Asia/Aqtau" });
+		tempAbbrMap.put("ARST", new String[] { "Antarctica/Palmer",
 				"America/Buenos_Aires", "America/Rosario", "America/Cordoba",
 				"America/Jujuy", "America/Catamarca", "America/Mendoza" });
-		tempMap.put("ART", new String[] { "Antarctica/Palmer",
+		tempAbbrMap.put("ART", new String[] { "Antarctica/Palmer",
 				"America/Buenos_Aires", "America/Rosario", "America/Cordoba",
 				"America/Jujuy", "America/Catamarca", "America/Mendoza" });
-		tempMap.put("ASHST", new String[] { "Asia/Ashkhabad" });
-		tempMap.put("ASHT", new String[] { "Asia/Ashkhabad" });
-		tempMap.put("AST", new String[] { "Atlantic/Bermuda", "Asia/Bahrain",
+		tempAbbrMap.put("ASHST", new String[] { "Asia/Ashkhabad" });
+		tempAbbrMap.put("ASHT", new String[] { "Asia/Ashkhabad" });
+		tempAbbrMap.put("AST", new String[] { "Atlantic/Bermuda", "Asia/Bahrain",
 				"Asia/Baghdad", "Asia/Kuwait", "Asia/Qatar", "Asia/Riyadh",
 				"Asia/Aden", "America/Thule", "America/Goose_Bay",
 				"America/Halifax", "America/Glace_Bay", "America/Pangnirtung",
@@ -277,51 +277,51 @@ public class TimeUtil {
 				"America/St_Kitts", "America/St_Lucia", "America/Miquelon",
 				"America/St_Vincent", "America/Tortola", "America/St_Thomas",
 				"America/Aruba", "America/Curacao", "America/Port_of_Spain" });
-		tempMap.put("AWT", new String[] { "America/Puerto_Rico" });
-		tempMap.put("AZOST", new String[] { "Atlantic/Azores" });
-		tempMap.put("AZOT", new String[] { "Atlantic/Azores" });
-		tempMap.put("AZST", new String[] { "Asia/Baku" });
-		tempMap.put("AZT", new String[] { "Asia/Baku" });
-		tempMap.put("BAKST", new String[] { "Asia/Baku" });
-		tempMap.put("BAKT", new String[] { "Asia/Baku" });
-		tempMap.put("BDT", new String[] { "Asia/Dacca", "America/Nome",
+		tempAbbrMap.put("AWT", new String[] { "America/Puerto_Rico" });
+		tempAbbrMap.put("AZOST", new String[] { "Atlantic/Azores" });
+		tempAbbrMap.put("AZOT", new String[] { "Atlantic/Azores" });
+		tempAbbrMap.put("AZST", new String[] { "Asia/Baku" });
+		tempAbbrMap.put("AZT", new String[] { "Asia/Baku" });
+		tempAbbrMap.put("BAKST", new String[] { "Asia/Baku" });
+		tempAbbrMap.put("BAKT", new String[] { "Asia/Baku" });
+		tempAbbrMap.put("BDT", new String[] { "Asia/Dacca", "America/Nome",
 				"America/Adak" });
-		tempMap.put("BEAT", new String[] { "Africa/Nairobi",
+		tempAbbrMap.put("BEAT", new String[] { "Africa/Nairobi",
 				"Africa/Mogadishu", "Africa/Kampala" });
-		tempMap.put("BEAUT", new String[] { "Africa/Nairobi",
+		tempAbbrMap.put("BEAUT", new String[] { "Africa/Nairobi",
 				"Africa/Dar_es_Salaam", "Africa/Kampala" });
-		tempMap.put("BMT", new String[] { "Europe/Brussels", "Europe/Chisinau",
+		tempAbbrMap.put("BMT", new String[] { "Europe/Brussels", "Europe/Chisinau",
 				"Europe/Tiraspol", "Europe/Bucharest", "Europe/Zurich",
 				"Asia/Baghdad", "Asia/Bangkok", "Africa/Banjul",
 				"America/Barbados", "America/Bogota" });
-		tempMap.put("BNT", new String[] { "Asia/Brunei" });
-		tempMap.put("BORT",
+		tempAbbrMap.put("BNT", new String[] { "Asia/Brunei" });
+		tempAbbrMap.put("BORT",
 				new String[] { "Asia/Ujung_Pandang", "Asia/Kuching" });
-		tempMap.put("BOST", new String[] { "America/La_Paz" });
-		tempMap.put("BOT", new String[] { "America/La_Paz" });
-		tempMap.put("BRST", new String[] { "America/Belem",
+		tempAbbrMap.put("BOST", new String[] { "America/La_Paz" });
+		tempAbbrMap.put("BOT", new String[] { "America/La_Paz" });
+		tempAbbrMap.put("BRST", new String[] { "America/Belem",
 				"America/Fortaleza", "America/Araguaina", "America/Maceio",
 				"America/Sao_Paulo" });
-		tempMap.put("BRT", new String[] { "America/Belem", "America/Fortaleza",
+		tempAbbrMap.put("BRT", new String[] { "America/Belem", "America/Fortaleza",
 				"America/Araguaina", "America/Maceio", "America/Sao_Paulo" });
-		tempMap.put("BST", new String[] { "Europe/London", "Europe/Belfast",
+		tempAbbrMap.put("BST", new String[] { "Europe/London", "Europe/Belfast",
 				"Europe/Dublin", "Europe/Gibraltar", "Pacific/Pago_Pago",
 				"Pacific/Midway", "America/Nome", "America/Adak" });
-		tempMap.put("BTT", new String[] { "Asia/Thimbu" });
-		tempMap.put("BURT", new String[] { "Asia/Dacca", "Asia/Rangoon",
+		tempAbbrMap.put("BTT", new String[] { "Asia/Thimbu" });
+		tempAbbrMap.put("BURT", new String[] { "Asia/Dacca", "Asia/Rangoon",
 				"Asia/Calcutta" });
-		tempMap.put("BWT", new String[] { "America/Nome", "America/Adak" });
-		tempMap.put("CANT", new String[] { "Atlantic/Canary" });
-		tempMap.put("CAST",
+		tempAbbrMap.put("BWT", new String[] { "America/Nome", "America/Adak" });
+		tempAbbrMap.put("CANT", new String[] { "Atlantic/Canary" });
+		tempAbbrMap.put("CAST",
 				new String[] { "Africa/Gaborone", "Africa/Khartoum" });
-		tempMap.put("CAT", new String[] { "Africa/Gaborone",
+		tempAbbrMap.put("CAT", new String[] { "Africa/Gaborone",
 				"Africa/Bujumbura", "Africa/Lubumbashi", "Africa/Blantyre",
 				"Africa/Maputo", "Africa/Windhoek", "Africa/Kigali",
 				"Africa/Khartoum", "Africa/Lusaka", "Africa/Harare",
 				"America/Anchorage" });
-		tempMap.put("CCT", new String[] { "Indian/Cocos" });
-		tempMap.put("CDDT", new String[] { "America/Rankin_Inlet" });
-		tempMap.put("CDT", new String[] { "Asia/Harbin", "Asia/Shanghai",
+		tempAbbrMap.put("CCT", new String[] { "Indian/Cocos" });
+		tempAbbrMap.put("CDDT", new String[] { "America/Rankin_Inlet" });
+		tempAbbrMap.put("CDT", new String[] { "Asia/Harbin", "Asia/Shanghai",
 				"Asia/Chungking", "Asia/Urumqi", "Asia/Kashgar", "Asia/Taipei",
 				"Asia/Macao", "America/Chicago", "America/Indianapolis",
 				"America/Indiana/Marengo", "America/Indiana/Knox",
@@ -333,7 +333,7 @@ public class TimeUtil {
 				"America/Belize", "America/Costa_Rica", "America/Havana",
 				"America/El_Salvador", "America/Guatemala",
 				"America/Tegucigalpa", "America/Managua" });
-		tempMap.put("CEST", new String[] { "Europe/Tirane", "Europe/Andorra",
+		tempAbbrMap.put("CEST", new String[] { "Europe/Tirane", "Europe/Andorra",
 				"Europe/Vienna", "Europe/Minsk", "Europe/Brussels",
 				"Europe/Sofia", "Europe/Prague", "Europe/Copenhagen",
 				"Europe/Tallinn", "Europe/Berlin", "Europe/Gibraltar",
@@ -347,7 +347,7 @@ public class TimeUtil {
 				"Europe/Zaporozhye", "Europe/Simferopol", "Europe/Belgrade",
 				"Africa/Algiers", "Africa/Tripoli", "Africa/Tunis",
 				"Africa/Ceuta" });
-		tempMap.put("CET", new String[] { "Europe/Tirane", "Europe/Andorra",
+		tempAbbrMap.put("CET", new String[] { "Europe/Tirane", "Europe/Andorra",
 				"Europe/Vienna", "Europe/Minsk", "Europe/Brussels",
 				"Europe/Sofia", "Europe/Prague", "Europe/Copenhagen",
 				"Europe/Tallinn", "Europe/Berlin", "Europe/Gibraltar",
@@ -361,25 +361,25 @@ public class TimeUtil {
 				"Europe/Zaporozhye", "Europe/Simferopol", "Europe/Belgrade",
 				"Africa/Algiers", "Africa/Tripoli", "Africa/Casablanca",
 				"Africa/Tunis", "Africa/Ceuta" });
-		tempMap.put("CGST", new String[] { "America/Scoresbysund" });
-		tempMap.put("CGT", new String[] { "America/Scoresbysund" });
-		tempMap.put("CHDT", new String[] { "America/Belize" });
-		tempMap.put("CHUT", new String[] { "Asia/Chungking" });
-		tempMap.put("CJT", new String[] { "Asia/Tokyo" });
-		tempMap.put("CKHST", new String[] { "Pacific/Rarotonga" });
-		tempMap.put("CKT", new String[] { "Pacific/Rarotonga" });
-		tempMap.put("CLST", new String[] { "Antarctica/Palmer",
+		tempAbbrMap.put("CGST", new String[] { "America/Scoresbysund" });
+		tempAbbrMap.put("CGT", new String[] { "America/Scoresbysund" });
+		tempAbbrMap.put("CHDT", new String[] { "America/Belize" });
+		tempAbbrMap.put("CHUT", new String[] { "Asia/Chungking" });
+		tempAbbrMap.put("CJT", new String[] { "Asia/Tokyo" });
+		tempAbbrMap.put("CKHST", new String[] { "Pacific/Rarotonga" });
+		tempAbbrMap.put("CKT", new String[] { "Pacific/Rarotonga" });
+		tempAbbrMap.put("CLST", new String[] { "Antarctica/Palmer",
 				"America/Santiago" });
-		tempMap.put("CLT", new String[] { "Antarctica/Palmer",
+		tempAbbrMap.put("CLT", new String[] { "Antarctica/Palmer",
 				"America/Santiago" });
-		tempMap.put("CMT", new String[] { "Europe/Copenhagen",
+		tempAbbrMap.put("CMT", new String[] { "Europe/Copenhagen",
 				"Europe/Chisinau", "Europe/Tiraspol", "America/St_Lucia",
 				"America/Buenos_Aires", "America/Rosario", "America/Cordoba",
 				"America/Jujuy", "America/Catamarca", "America/Mendoza",
 				"America/Caracas" });
-		tempMap.put("COST", new String[] { "America/Bogota" });
-		tempMap.put("COT", new String[] { "America/Bogota" });
-		tempMap
+		tempAbbrMap.put("COST", new String[] { "America/Bogota" });
+		tempAbbrMap.put("COT", new String[] { "America/Bogota" });
+		tempAbbrMap
 				.put("CST", new String[] { "Asia/Harbin", "Asia/Shanghai",
 						"Asia/Chungking", "Asia/Urumqi", "Asia/Kashgar",
 						"Asia/Taipei", "Asia/Macao", "Asia/Jayapura",
@@ -399,33 +399,33 @@ public class TimeUtil {
 						"America/Havana", "America/El_Salvador",
 						"America/Guatemala", "America/Tegucigalpa",
 						"America/Managua" });
-		tempMap.put("CUT", new String[] { "Europe/Zaporozhye" });
-		tempMap.put("CVST", new String[] { "Atlantic/Cape_Verde" });
-		tempMap.put("CVT", new String[] { "Atlantic/Cape_Verde" });
-		tempMap.put("CWT", new String[] { "America/Chicago",
+		tempAbbrMap.put("CUT", new String[] { "Europe/Zaporozhye" });
+		tempAbbrMap.put("CVST", new String[] { "Atlantic/Cape_Verde" });
+		tempAbbrMap.put("CVT", new String[] { "Atlantic/Cape_Verde" });
+		tempAbbrMap.put("CWT", new String[] { "America/Chicago",
 				"America/Indianapolis", "America/Indiana/Marengo",
 				"America/Indiana/Knox", "America/Indiana/Vevay",
 				"America/Louisville", "America/Menominee" });
-		tempMap.put("CXT", new String[] { "Indian/Christmas" });
-		tempMap.put("DACT", new String[] { "Asia/Dacca" });
-		tempMap.put("DAVT", new String[] { "Antarctica/Davis" });
-		tempMap.put("DDUT", new String[] { "Antarctica/DumontDUrville" });
-		tempMap.put("DFT", new String[] { "Europe/Oslo", "Europe/Paris" });
-		tempMap.put("DMT", new String[] { "Europe/Belfast", "Europe/Dublin" });
-		tempMap.put("DUSST", new String[] { "Asia/Dushanbe" });
-		tempMap.put("DUST", new String[] { "Asia/Dushanbe" });
-		tempMap.put("EASST", new String[] { "Pacific/Easter" });
-		tempMap.put("EAST", new String[] { "Indian/Antananarivo",
+		tempAbbrMap.put("CXT", new String[] { "Indian/Christmas" });
+		tempAbbrMap.put("DACT", new String[] { "Asia/Dacca" });
+		tempAbbrMap.put("DAVT", new String[] { "Antarctica/Davis" });
+		tempAbbrMap.put("DDUT", new String[] { "Antarctica/DumontDUrville" });
+		tempAbbrMap.put("DFT", new String[] { "Europe/Oslo", "Europe/Paris" });
+		tempAbbrMap.put("DMT", new String[] { "Europe/Belfast", "Europe/Dublin" });
+		tempAbbrMap.put("DUSST", new String[] { "Asia/Dushanbe" });
+		tempAbbrMap.put("DUST", new String[] { "Asia/Dushanbe" });
+		tempAbbrMap.put("EASST", new String[] { "Pacific/Easter" });
+		tempAbbrMap.put("EAST", new String[] { "Indian/Antananarivo",
 				"Pacific/Easter" });
-		tempMap.put("EAT", new String[] { "Indian/Comoro",
+		tempAbbrMap.put("EAT", new String[] { "Indian/Comoro",
 				"Indian/Antananarivo", "Indian/Mayotte", "Africa/Djibouti",
 				"Africa/Asmera", "Africa/Addis_Ababa", "Africa/Nairobi",
 				"Africa/Mogadishu", "Africa/Khartoum", "Africa/Dar_es_Salaam",
 				"Africa/Kampala" });
-		tempMap.put("ECT", new String[] { "Pacific/Galapagos",
+		tempAbbrMap.put("ECT", new String[] { "Pacific/Galapagos",
 				"America/Guayaquil" });
-		tempMap.put("EDDT", new String[] { "America/Iqaluit" });
-		tempMap.put("EDT", new String[] { "America/New_York",
+		tempAbbrMap.put("EDDT", new String[] { "America/Iqaluit" });
+		tempAbbrMap.put("EDT", new String[] { "America/New_York",
 				"America/Indianapolis", "America/Indiana/Marengo",
 				"America/Indiana/Vevay", "America/Louisville",
 				"America/Detroit", "America/Montreal", "America/Thunder_Bay",
@@ -433,9 +433,9 @@ public class TimeUtil {
 				"America/Cancun", "America/Nassau", "America/Santo_Domingo",
 				"America/Port-au-Prince", "America/Jamaica",
 				"America/Grand_Turk" });
-		tempMap.put("EEMT", new String[] { "Europe/Minsk", "Europe/Chisinau",
+		tempAbbrMap.put("EEMT", new String[] { "Europe/Minsk", "Europe/Chisinau",
 				"Europe/Tiraspol", "Europe/Kaliningrad", "Europe/Moscow" });
-		tempMap.put("EEST", new String[] { "Europe/Minsk", "Europe/Sofia",
+		tempAbbrMap.put("EEST", new String[] { "Europe/Minsk", "Europe/Sofia",
 				"Europe/Tallinn", "Europe/Helsinki", "Europe/Athens",
 				"Europe/Riga", "Europe/Vilnius", "Europe/Chisinau",
 				"Europe/Tiraspol", "Europe/Warsaw", "Europe/Bucharest",
@@ -443,7 +443,7 @@ public class TimeUtil {
 				"Europe/Kiev", "Europe/Uzhgorod", "Europe/Zaporozhye",
 				"Asia/Nicosia", "Asia/Amman", "Asia/Beirut", "Asia/Gaza",
 				"Asia/Damascus", "Africa/Cairo" });
-		tempMap.put("EET", new String[] { "Europe/Minsk", "Europe/Sofia",
+		tempAbbrMap.put("EET", new String[] { "Europe/Minsk", "Europe/Sofia",
 				"Europe/Tallinn", "Europe/Helsinki", "Europe/Athens",
 				"Europe/Riga", "Europe/Vilnius", "Europe/Chisinau",
 				"Europe/Tiraspol", "Europe/Warsaw", "Europe/Bucharest",
@@ -452,11 +452,11 @@ public class TimeUtil {
 				"Europe/Simferopol", "Asia/Nicosia", "Asia/Amman",
 				"Asia/Beirut", "Asia/Gaza", "Asia/Damascus", "Africa/Cairo",
 				"Africa/Tripoli" });
-		tempMap.put("EGST", new String[] { "America/Scoresbysund" });
-		tempMap.put("EGT", new String[] { "Atlantic/Jan_Mayen",
+		tempAbbrMap.put("EGST", new String[] { "America/Scoresbysund" });
+		tempAbbrMap.put("EGT", new String[] { "Atlantic/Jan_Mayen",
 				"America/Scoresbysund" });
-		tempMap.put("EHDT", new String[] { "America/Santo_Domingo" });
-		tempMap.put("EST", new String[] { "Australia/Brisbane",
+		tempAbbrMap.put("EHDT", new String[] { "America/Santo_Domingo" });
+		tempAbbrMap.put("EST", new String[] { "Australia/Brisbane",
 				"Australia/Lindeman", "Australia/Hobart",
 				"Australia/Melbourne", "Australia/Sydney",
 				"Australia/Broken_Hill", "Australia/Lord_Howe",
@@ -470,30 +470,30 @@ public class TimeUtil {
 				"America/Santo_Domingo", "America/Port-au-Prince",
 				"America/Jamaica", "America/Managua", "America/Panama",
 				"America/Grand_Turk" });
-		tempMap.put("EWT", new String[] { "America/New_York",
+		tempAbbrMap.put("EWT", new String[] { "America/New_York",
 				"America/Indianapolis", "America/Indiana/Marengo",
 				"America/Indiana/Vevay", "America/Louisville",
 				"America/Detroit", "America/Jamaica" });
-		tempMap.put("FFMT", new String[] { "America/Martinique" });
-		tempMap.put("FJST", new String[] { "Pacific/Fiji" });
-		tempMap.put("FJT", new String[] { "Pacific/Fiji" });
-		tempMap.put("FKST", new String[] { "Atlantic/Stanley" });
-		tempMap.put("FKT", new String[] { "Atlantic/Stanley" });
-		tempMap.put("FMT",
+		tempAbbrMap.put("FFMT", new String[] { "America/Martinique" });
+		tempAbbrMap.put("FJST", new String[] { "Pacific/Fiji" });
+		tempAbbrMap.put("FJT", new String[] { "Pacific/Fiji" });
+		tempAbbrMap.put("FKST", new String[] { "Atlantic/Stanley" });
+		tempAbbrMap.put("FKT", new String[] { "Atlantic/Stanley" });
+		tempAbbrMap.put("FMT",
 				new String[] { "Atlantic/Madeira", "Africa/Freetown" });
-		tempMap.put("FNST", new String[] { "America/Noronha" });
-		tempMap.put("FNT", new String[] { "America/Noronha" });
-		tempMap.put("FRUST", new String[] { "Asia/Bishkek" });
-		tempMap.put("FRUT", new String[] { "Asia/Bishkek" });
-		tempMap.put("GALT", new String[] { "Pacific/Galapagos" });
-		tempMap.put("GAMT", new String[] { "Pacific/Gambier" });
-		tempMap.put("GBGT", new String[] { "America/Guyana" });
-		tempMap.put("GEST", new String[] { "Asia/Tbilisi" });
-		tempMap.put("GET", new String[] { "Asia/Tbilisi" });
-		tempMap.put("GFT", new String[] { "America/Cayenne" });
-		tempMap.put("GHST", new String[] { "Africa/Accra" });
-		tempMap.put("GILT", new String[] { "Pacific/Tarawa" });
-		tempMap.put("GMT", new String[] { "Atlantic/St_Helena",
+		tempAbbrMap.put("FNST", new String[] { "America/Noronha" });
+		tempAbbrMap.put("FNT", new String[] { "America/Noronha" });
+		tempAbbrMap.put("FRUST", new String[] { "Asia/Bishkek" });
+		tempAbbrMap.put("FRUT", new String[] { "Asia/Bishkek" });
+		tempAbbrMap.put("GALT", new String[] { "Pacific/Galapagos" });
+		tempAbbrMap.put("GAMT", new String[] { "Pacific/Gambier" });
+		tempAbbrMap.put("GBGT", new String[] { "America/Guyana" });
+		tempAbbrMap.put("GEST", new String[] { "Asia/Tbilisi" });
+		tempAbbrMap.put("GET", new String[] { "Asia/Tbilisi" });
+		tempAbbrMap.put("GFT", new String[] { "America/Cayenne" });
+		tempAbbrMap.put("GHST", new String[] { "Africa/Accra" });
+		tempAbbrMap.put("GILT", new String[] { "Pacific/Tarawa" });
+		tempAbbrMap.put("GMT", new String[] { "Atlantic/St_Helena",
 				"Atlantic/Reykjavik", "Europe/London", "Europe/Belfast",
 				"Europe/Dublin", "Europe/Gibraltar", "Africa/Porto-Novo",
 				"Africa/Ouagadougou", "Africa/Abidjan", "Africa/Malabo",
@@ -502,90 +502,104 @@ public class TimeUtil {
 				"Africa/Timbuktu", "Africa/Nouakchott", "Africa/Niamey",
 				"Africa/Sao_Tome", "Africa/Dakar", "Africa/Freetown",
 				"Africa/Lome" });
-		tempMap.put("GST", new String[] { "Atlantic/South_Georgia",
+		tempAbbrMap.put("GST", new String[] { "Atlantic/South_Georgia",
 				"Asia/Bahrain", "Asia/Muscat", "Asia/Qatar", "Asia/Dubai",
 				"Pacific/Guam" });
-		tempMap.put("GYT", new String[] { "America/Guyana" });
-		tempMap.put("HADT", new String[] { "America/Adak" });
-		tempMap.put("HART", new String[] { "Asia/Harbin" });
-		tempMap.put("HAST", new String[] { "America/Adak" });
-		tempMap.put("HAWT", new String[] { "America/Adak" });
-		tempMap.put("HDT", new String[] { "Pacific/Honolulu" });
-		tempMap.put("HKST", new String[] { "Asia/Hong_Kong" });
-		tempMap.put("HKT", new String[] { "Asia/Hong_Kong" });
-		tempMap.put("HMT", new String[] { "Atlantic/Azores", "Europe/Helsinki",
+		tempAbbrMap.put("GYT", new String[] { "America/Guyana" });
+		tempAbbrMap.put("HADT", new String[] { "America/Adak" });
+		tempAbbrMap.put("HART", new String[] { "Asia/Harbin" });
+		tempAbbrMap.put("HAST", new String[] { "America/Adak" });
+		tempAbbrMap.put("HAWT", new String[] { "America/Adak" });
+		tempAbbrMap.put("HDT", new String[] { "Pacific/Honolulu" });
+		tempAbbrMap.put("HKST", new String[] { "Asia/Hong_Kong" });
+		tempAbbrMap.put("HKT", new String[] { "Asia/Hong_Kong" });
+		tempAbbrMap.put("HMT", new String[] { "Atlantic/Azores", "Europe/Helsinki",
 				"Asia/Dacca", "Asia/Calcutta", "America/Havana" });
-		tempMap.put("HOVST", new String[] { "Asia/Hovd" });
-		tempMap.put("HOVT", new String[] { "Asia/Hovd" });
-		tempMap.put("HST", new String[] { "Pacific/Johnston",
+		tempAbbrMap.put("HOVST", new String[] { "Asia/Hovd" });
+		tempAbbrMap.put("HOVT", new String[] { "Asia/Hovd" });
+		tempAbbrMap.put("HST", new String[] { "Pacific/Johnston",
 				"Pacific/Honolulu" });
-		tempMap.put("HWT", new String[] { "Pacific/Honolulu" });
-		tempMap.put("ICT", new String[] { "Asia/Phnom_Penh", "Asia/Vientiane",
+		tempAbbrMap.put("HWT", new String[] { "Pacific/Honolulu" });
+		tempAbbrMap.put("ICT", new String[] { "Asia/Phnom_Penh", "Asia/Vientiane",
 				"Asia/Bangkok", "Asia/Saigon" });
-		tempMap.put("IDDT", new String[] { "Asia/Jerusalem", "Asia/Gaza" });
-		tempMap.put("IDT", new String[] { "Asia/Jerusalem", "Asia/Gaza" });
-		tempMap.put("IHST", new String[] { "Asia/Colombo" });
-		tempMap.put("IMT", new String[] { "Europe/Sofia", "Europe/Istanbul",
+		tempAbbrMap.put("IDDT", new String[] { "Asia/Jerusalem", "Asia/Gaza" });
+		tempAbbrMap.put("IDT", new String[] { "Asia/Jerusalem", "Asia/Gaza" });
+		tempAbbrMap.put("IHST", new String[] { "Asia/Colombo" });
+		tempAbbrMap.put("IMT", new String[] { "Europe/Sofia", "Europe/Istanbul",
 				"Asia/Irkutsk" });
-		tempMap.put("IOT", new String[] { "Indian/Chagos" });
-		tempMap.put("IRKMT", new String[] { "Asia/Irkutsk" });
-		tempMap.put("IRKST", new String[] { "Asia/Irkutsk" });
-		tempMap.put("IRKT", new String[] { "Asia/Irkutsk" });
-		tempMap.put("IRST", new String[] { "Asia/Tehran" });
-		tempMap.put("IRT", new String[] { "Asia/Tehran" });
-		tempMap.put("ISST", new String[] { "Atlantic/Reykjavik" });
-		tempMap.put("IST", new String[] { "Atlantic/Reykjavik",
+		tempAbbrMap.put("IOT", new String[] { "Indian/Chagos" });
+		tempAbbrMap.put("IRKMT", new String[] { "Asia/Irkutsk" });
+		tempAbbrMap.put("IRKST", new String[] { "Asia/Irkutsk" });
+		tempAbbrMap.put("IRKT", new String[] { "Asia/Irkutsk" });
+		tempAbbrMap.put("IRST", new String[] { "Asia/Tehran" });
+		tempAbbrMap.put("IRT", new String[] { "Asia/Tehran" });
+		tempAbbrMap.put("ISST", new String[] { "Atlantic/Reykjavik" });
+		tempAbbrMap.put("IST", new String[] { "Atlantic/Reykjavik",
 				"Europe/Belfast", "Europe/Dublin", "Asia/Dacca", "Asia/Thimbu",
 				"Asia/Calcutta", "Asia/Jerusalem", "Asia/Katmandu",
 				"Asia/Karachi", "Asia/Gaza", "Asia/Colombo" });
-		tempMap.put("JAYT", new String[] { "Asia/Jayapura" });
-		tempMap.put("JMT", new String[] { "Atlantic/St_Helena",
+		tempAbbrMap.put("JAYT", new String[] { "Asia/Jayapura" });
+		tempAbbrMap.put("JMT", new String[] { "Atlantic/St_Helena",
 				"Asia/Jerusalem" });
-		tempMap.put("JST", new String[] { "Asia/Rangoon", "Asia/Dili",
+		tempAbbrMap.put("JST", new String[] { "Asia/Rangoon", "Asia/Dili",
 				"Asia/Ujung_Pandang", "Asia/Tokyo", "Asia/Kuala_Lumpur",
 				"Asia/Kuching", "Asia/Manila", "Asia/Singapore",
 				"Pacific/Nauru" });
-		tempMap.put("KART", new String[] { "Asia/Karachi" });
-		tempMap.put("KAST", new String[] { "Asia/Kashgar" });
-		tempMap.put("KDT", new String[] { "Asia/Seoul" });
-		tempMap.put("KGST", new String[] { "Asia/Bishkek" });
-		tempMap.put("KGT", new String[] { "Asia/Bishkek" });
-		tempMap.put("KMT", new String[] { "Europe/Vilnius", "Europe/Kiev",
+		tempAbbrMap.put("KART", new String[] { "Asia/Karachi" });
+		tempAbbrMap.put("KAST", new String[] { "Asia/Kashgar" });
+		tempAbbrMap.put("KDT", new String[] { "Asia/Seoul" });
+		tempAbbrMap.put("KGST", new String[] { "Asia/Bishkek" });
+		tempAbbrMap.put("KGT", new String[] { "Asia/Bishkek" });
+		tempAbbrMap.put("KMT", new String[] { "Europe/Vilnius", "Europe/Kiev",
 				"America/Cayman", "America/Jamaica", "America/St_Vincent",
 				"America/Grand_Turk" });
-		tempMap.put("KOST", new String[] { "Pacific/Kosrae" });
-		tempMap.put("KRAMT", new String[] { "Asia/Krasnoyarsk" });
-		tempMap.put("KRAST", new String[] { "Asia/Krasnoyarsk" });
-		tempMap.put("KRAT", new String[] { "Asia/Krasnoyarsk" });
-		tempMap.put("KST", new String[] { "Asia/Seoul", "Asia/Pyongyang" });
-		tempMap.put("KUYMT", new String[] { "Europe/Samara" });
-		tempMap.put("KUYST", new String[] { "Europe/Samara" });
-		tempMap.put("KUYT", new String[] { "Europe/Samara" });
-		tempMap.put("KWAT", new String[] { "Pacific/Kwajalein" });
-		tempMap.put("LHST", new String[] { "Australia/Lord_Howe" });
-		tempMap.put("LINT", new String[] { "Pacific/Kiritimati" });
-		tempMap.put("LKT", new String[] { "Asia/Colombo" });
-		tempMap.put("LPMT", new String[] { "America/La_Paz" });
-		tempMap.put("LRT", new String[] { "Africa/Monrovia" });
-		tempMap.put("LST", new String[] { "Europe/Riga" });
-		tempMap.put("M", new String[] { "Europe/Moscow" });
-		tempMap.put("MADST", new String[] { "Atlantic/Madeira" });
-		tempMap.put("MAGMT", new String[] { "Asia/Magadan" });
-		tempMap.put("MAGST", new String[] { "Asia/Magadan" });
-		tempMap.put("MAGT", new String[] { "Asia/Magadan" });
-		tempMap.put("MALT", new String[] { "Asia/Kuala_Lumpur",
+		tempAbbrMap.put("KOST", new String[] { "Pacific/Kosrae" });
+		tempAbbrMap.put("KRAMT", new String[] { "Asia/Krasnoyarsk" });
+		tempAbbrMap.put("KRAST", new String[] { "Asia/Krasnoyarsk" });
+		tempAbbrMap.put("KRAT", new String[] { "Asia/Krasnoyarsk" });
+		tempAbbrMap.put("KST", new String[] { "Asia/Seoul", "Asia/Pyongyang" });
+		tempAbbrMap.put("KUYMT", new String[] { "Europe/Samara" });
+		tempAbbrMap.put("KUYST", new String[] { "Europe/Samara" });
+		tempAbbrMap.put("KUYT", new String[] { "Europe/Samara" });
+		tempAbbrMap.put("KWAT", new String[] { "Pacific/Kwajalein" });
+		tempAbbrMap.put("LHST", new String[] { "Australia/Lord_Howe" });
+		tempAbbrMap.put("LINT", new String[] { "Pacific/Kiritimati" });
+		tempAbbrMap.put("LKT", new String[] { "Asia/Colombo" });
+		tempAbbrMap.put("LPMT", new String[] { "America/La_Paz" });
+		tempAbbrMap.put("LRT", new String[] { "Africa/Monrovia" });
+		tempAbbrMap.put("LST", new String[] { "Europe/Riga" });
+		tempAbbrMap.put("M", new String[] { "Europe/Moscow" });
+		tempAbbrMap.put("MADST", new String[] { "Atlantic/Madeira" });
+		tempAbbrMap.put("MAGMT", new String[] { "Asia/Magadan" });
+		tempAbbrMap.put("MAGST", new String[] { "Asia/Magadan" });
+		tempAbbrMap.put("MAGT", new String[] { "Asia/Magadan" });
+		tempAbbrMap.put("MALT", new String[] { "Asia/Kuala_Lumpur",
 				"Asia/Singapore" });
-		tempMap.put("MART", new String[] { "Pacific/Marquesas" });
-		tempMap.put("MAWT", new String[] { "Antarctica/Mawson" });
-		tempMap.put("MDDT", new String[] { "America/Cambridge_Bay",
+		tempAbbrMap.put("MART", new String[] { "Pacific/Marquesas" });
+		tempAbbrMap.put("MAWT", new String[] { "Antarctica/Mawson" });
+		tempAbbrMap.put("MDDT", new String[] { "America/Cambridge_Bay",
 				"America/Yellowknife", "America/Inuvik" });
-		tempMap.put("MDST", new String[] { "Europe/Moscow" });
-		tempMap.put("MDT", new String[] { "America/Denver", "America/Phoenix",
+		tempAbbrMap.put("MDST", new String[] { "Europe/Moscow" });
+		tempAbbrMap.put("MDT", new String[] { "America/Denver", "America/Phoenix",
 				"America/Boise", "America/Regina", "America/Swift_Current",
 				"America/Edmonton", "America/Cambridge_Bay",
 				"America/Yellowknife", "America/Inuvik", "America/Chihuahua",
 				"America/Hermosillo", "America/Mazatlan" });
-		tempMap.put("MET", new String[] { "Europe/Tirane", "Europe/Andorra",
+		tempAbbrMap.put("MEST", new String[] { "Europe/Tirane", "Europe/Andorra",
+				"Europe/Vienna", "Europe/Minsk", "Europe/Brussels",
+				"Europe/Sofia", "Europe/Prague", "Europe/Copenhagen",
+				"Europe/Tallinn", "Europe/Berlin", "Europe/Gibraltar",
+				"Europe/Athens", "Europe/Budapest", "Europe/Rome",
+				"Europe/Riga", "Europe/Vaduz", "Europe/Vilnius",
+				"Europe/Luxembourg", "Europe/Malta", "Europe/Chisinau",
+				"Europe/Tiraspol", "Europe/Monaco", "Europe/Amsterdam",
+				"Europe/Oslo", "Europe/Warsaw", "Europe/Lisbon",
+				"Europe/Kaliningrad", "Europe/Madrid", "Europe/Stockholm",
+				"Europe/Zurich", "Europe/Kiev", "Europe/Uzhgorod",
+				"Europe/Zaporozhye", "Europe/Simferopol", "Europe/Belgrade",
+				"Africa/Algiers", "Africa/Tripoli", "Africa/Tunis",
+				"Africa/Ceuta" });
+		tempAbbrMap.put("MET", new String[] { "Europe/Tirane", "Europe/Andorra",
 				"Europe/Vienna", "Europe/Minsk", "Europe/Brussels",
 				"Europe/Sofia", "Europe/Prague", "Europe/Copenhagen",
 				"Europe/Tallinn", "Europe/Berlin", "Europe/Gibraltar",
@@ -599,210 +613,210 @@ public class TimeUtil {
 				"Europe/Zaporozhye", "Europe/Simferopol", "Europe/Belgrade",
 				"Africa/Algiers", "Africa/Tripoli", "Africa/Casablanca",
 				"Africa/Tunis", "Africa/Ceuta" });
-		tempMap.put("MHT",
+		tempAbbrMap.put("MHT",
 				new String[] { "Pacific/Majuro", "Pacific/Kwajalein" });
-		tempMap.put("MMT", new String[] { "Indian/Maldives", "Europe/Minsk",
+		tempAbbrMap.put("MMT", new String[] { "Indian/Maldives", "Europe/Minsk",
 				"Europe/Moscow", "Asia/Rangoon", "Asia/Ujung_Pandang",
 				"Asia/Colombo", "Pacific/Easter", "Africa/Monrovia",
 				"America/Managua", "America/Montevideo" });
-		tempMap.put("MOST", new String[] { "Asia/Macao" });
-		tempMap.put("MOT", new String[] { "Asia/Macao" });
-		tempMap.put("MPT", new String[] { "Pacific/Saipan" });
-		tempMap.put("MSK", new String[] { "Europe/Minsk", "Europe/Tallinn",
+		tempAbbrMap.put("MOST", new String[] { "Asia/Macao" });
+		tempAbbrMap.put("MOT", new String[] { "Asia/Macao" });
+		tempAbbrMap.put("MPT", new String[] { "Pacific/Saipan" });
+		tempAbbrMap.put("MSK", new String[] { "Europe/Minsk", "Europe/Tallinn",
 				"Europe/Riga", "Europe/Vilnius", "Europe/Chisinau",
 				"Europe/Kiev", "Europe/Uzhgorod", "Europe/Zaporozhye",
 				"Europe/Simferopol" });
-		tempMap.put("MST", new String[] { "Europe/Moscow", "America/Denver",
+		tempAbbrMap.put("MST", new String[] { "Europe/Moscow", "America/Denver",
 				"America/Phoenix", "America/Boise", "America/Regina",
 				"America/Swift_Current", "America/Edmonton",
 				"America/Dawson_Creek", "America/Cambridge_Bay",
 				"America/Yellowknife", "America/Inuvik", "America/Mexico_City",
 				"America/Chihuahua", "America/Hermosillo", "America/Mazatlan",
 				"America/Tijuana" });
-		tempMap.put("MUT", new String[] { "Indian/Mauritius" });
-		tempMap.put("MVT", new String[] { "Indian/Maldives" });
-		tempMap.put("MWT", new String[] { "America/Denver", "America/Phoenix",
+		tempAbbrMap.put("MUT", new String[] { "Indian/Mauritius" });
+		tempAbbrMap.put("MVT", new String[] { "Indian/Maldives" });
+		tempAbbrMap.put("MWT", new String[] { "America/Denver", "America/Phoenix",
 				"America/Boise" });
-		tempMap
+		tempAbbrMap
 				.put("MYT",
 						new String[] { "Asia/Kuala_Lumpur", "Asia/Kuching" });
-		tempMap.put("NCST", new String[] { "Pacific/Noumea" });
-		tempMap.put("NCT", new String[] { "Pacific/Noumea" });
-		tempMap.put("NDT", new String[] { "America/Nome", "America/Adak",
+		tempAbbrMap.put("NCST", new String[] { "Pacific/Noumea" });
+		tempAbbrMap.put("NCT", new String[] { "Pacific/Noumea" });
+		tempAbbrMap.put("NDT", new String[] { "America/Nome", "America/Adak",
 				"America/St_Johns", "America/Goose_Bay" });
-		tempMap.put("NEGT", new String[] { "America/Paramaribo" });
-		tempMap.put("NFT", new String[] { "Europe/Paris", "Europe/Oslo",
+		tempAbbrMap.put("NEGT", new String[] { "America/Paramaribo" });
+		tempAbbrMap.put("NFT", new String[] { "Europe/Paris", "Europe/Oslo",
 				"Pacific/Norfolk" });
-		tempMap.put("NMT", new String[] { "Pacific/Norfolk" });
-		tempMap.put("NOVMT", new String[] { "Asia/Novosibirsk" });
-		tempMap.put("NOVST", new String[] { "Asia/Novosibirsk" });
-		tempMap.put("NOVT", new String[] { "Asia/Novosibirsk" });
-		tempMap.put("NPT", new String[] { "Asia/Katmandu" });
-		tempMap.put("NRT", new String[] { "Pacific/Nauru" });
-		tempMap.put("NST", new String[] { "Europe/Amsterdam",
+		tempAbbrMap.put("NMT", new String[] { "Pacific/Norfolk" });
+		tempAbbrMap.put("NOVMT", new String[] { "Asia/Novosibirsk" });
+		tempAbbrMap.put("NOVST", new String[] { "Asia/Novosibirsk" });
+		tempAbbrMap.put("NOVT", new String[] { "Asia/Novosibirsk" });
+		tempAbbrMap.put("NPT", new String[] { "Asia/Katmandu" });
+		tempAbbrMap.put("NRT", new String[] { "Pacific/Nauru" });
+		tempAbbrMap.put("NST", new String[] { "Europe/Amsterdam",
 				"Pacific/Pago_Pago", "Pacific/Midway", "America/Nome",
 				"America/Adak", "America/St_Johns", "America/Goose_Bay" });
-		tempMap.put("NUT", new String[] { "Pacific/Niue" });
-		tempMap.put("NWT", new String[] { "America/Nome", "America/Adak" });
-		tempMap.put("NZDT", new String[] { "Antarctica/McMurdo" });
-		tempMap.put("NZHDT", new String[] { "Pacific/Auckland" });
-		tempMap.put("NZST", new String[] { "Antarctica/McMurdo",
+		tempAbbrMap.put("NUT", new String[] { "Pacific/Niue" });
+		tempAbbrMap.put("NWT", new String[] { "America/Nome", "America/Adak" });
+		tempAbbrMap.put("NZDT", new String[] { "Antarctica/McMurdo" });
+		tempAbbrMap.put("NZHDT", new String[] { "Pacific/Auckland" });
+		tempAbbrMap.put("NZST", new String[] { "Antarctica/McMurdo",
 				"Pacific/Auckland" });
-		tempMap.put("OMSMT", new String[] { "Asia/Omsk" });
-		tempMap.put("OMSST", new String[] { "Asia/Omsk" });
-		tempMap.put("OMST", new String[] { "Asia/Omsk" });
-		tempMap.put("PDDT", new String[] { "America/Inuvik",
+		tempAbbrMap.put("OMSMT", new String[] { "Asia/Omsk" });
+		tempAbbrMap.put("OMSST", new String[] { "Asia/Omsk" });
+		tempAbbrMap.put("OMST", new String[] { "Asia/Omsk" });
+		tempAbbrMap.put("PDDT", new String[] { "America/Inuvik",
 				"America/Whitehorse", "America/Dawson" });
-		tempMap.put("PDT", new String[] { "America/Los_Angeles",
+		tempAbbrMap.put("PDT", new String[] { "America/Los_Angeles",
 				"America/Juneau", "America/Boise", "America/Vancouver",
 				"America/Dawson_Creek", "America/Inuvik", "America/Whitehorse",
 				"America/Dawson", "America/Tijuana" });
-		tempMap.put("PEST", new String[] { "America/Lima" });
-		tempMap.put("PET", new String[] { "America/Lima" });
-		tempMap.put("PETMT", new String[] { "Asia/Kamchatka" });
-		tempMap.put("PETST", new String[] { "Asia/Kamchatka" });
-		tempMap.put("PETT", new String[] { "Asia/Kamchatka" });
-		tempMap.put("PGT", new String[] { "Pacific/Port_Moresby" });
-		tempMap.put("PHOT", new String[] { "Pacific/Enderbury" });
-		tempMap.put("PHST", new String[] { "Asia/Manila" });
-		tempMap.put("PHT", new String[] { "Asia/Manila" });
-		tempMap.put("PKT", new String[] { "Asia/Karachi" });
-		tempMap.put("PMDT", new String[] { "America/Miquelon" });
-		tempMap.put("PMMT", new String[] { "Pacific/Port_Moresby" });
-		tempMap.put("PMST", new String[] { "America/Miquelon" });
-		tempMap.put("PMT", new String[] { "Antarctica/DumontDUrville",
+		tempAbbrMap.put("PEST", new String[] { "America/Lima" });
+		tempAbbrMap.put("PET", new String[] { "America/Lima" });
+		tempAbbrMap.put("PETMT", new String[] { "Asia/Kamchatka" });
+		tempAbbrMap.put("PETST", new String[] { "Asia/Kamchatka" });
+		tempAbbrMap.put("PETT", new String[] { "Asia/Kamchatka" });
+		tempAbbrMap.put("PGT", new String[] { "Pacific/Port_Moresby" });
+		tempAbbrMap.put("PHOT", new String[] { "Pacific/Enderbury" });
+		tempAbbrMap.put("PHST", new String[] { "Asia/Manila" });
+		tempAbbrMap.put("PHT", new String[] { "Asia/Manila" });
+		tempAbbrMap.put("PKT", new String[] { "Asia/Karachi" });
+		tempAbbrMap.put("PMDT", new String[] { "America/Miquelon" });
+		tempAbbrMap.put("PMMT", new String[] { "Pacific/Port_Moresby" });
+		tempAbbrMap.put("PMST", new String[] { "America/Miquelon" });
+		tempAbbrMap.put("PMT", new String[] { "Antarctica/DumontDUrville",
 				"Europe/Prague", "Europe/Paris", "Europe/Monaco",
 				"Africa/Algiers", "Africa/Tunis", "America/Panama",
 				"America/Paramaribo" });
-		tempMap.put("PNT", new String[] { "Pacific/Pitcairn" });
-		tempMap.put("PONT", new String[] { "Pacific/Ponape" });
-		tempMap.put("PPMT", new String[] { "America/Port-au-Prince" });
-		tempMap.put("PST", new String[] { "Pacific/Pitcairn",
+		tempAbbrMap.put("PNT", new String[] { "Pacific/Pitcairn" });
+		tempAbbrMap.put("PONT", new String[] { "Pacific/Ponape" });
+		tempAbbrMap.put("PPMT", new String[] { "America/Port-au-Prince" });
+		tempAbbrMap.put("PST", new String[] { "Pacific/Pitcairn",
 				"America/Los_Angeles", "America/Juneau", "America/Boise",
 				"America/Vancouver", "America/Dawson_Creek", "America/Inuvik",
 				"America/Whitehorse", "America/Dawson", "America/Hermosillo",
 				"America/Mazatlan", "America/Tijuana" });
-		tempMap.put("PWT", new String[] { "Pacific/Palau",
+		tempAbbrMap.put("PWT", new String[] { "Pacific/Palau",
 				"America/Los_Angeles", "America/Juneau", "America/Boise",
 				"America/Tijuana" });
-		tempMap.put("PYST", new String[] { "America/Asuncion" });
-		tempMap.put("PYT", new String[] { "America/Asuncion" });
-		tempMap.put("QMT", new String[] { "America/Guayaquil" });
-		tempMap.put("RET", new String[] { "Indian/Reunion" });
-		tempMap.put("RMT", new String[] { "Atlantic/Reykjavik", "Europe/Rome",
+		tempAbbrMap.put("PYST", new String[] { "America/Asuncion" });
+		tempAbbrMap.put("PYT", new String[] { "America/Asuncion" });
+		tempAbbrMap.put("QMT", new String[] { "America/Guayaquil" });
+		tempAbbrMap.put("RET", new String[] { "Indian/Reunion" });
+		tempAbbrMap.put("RMT", new String[] { "Atlantic/Reykjavik", "Europe/Rome",
 				"Europe/Riga", "Asia/Rangoon" });
-		tempMap.put("S", new String[] { "Europe/Moscow" });
-		tempMap.put("SAMMT", new String[] { "Europe/Samara" });
-		tempMap
+		tempAbbrMap.put("S", new String[] { "Europe/Moscow" });
+		tempAbbrMap.put("SAMMT", new String[] { "Europe/Samara" });
+		tempAbbrMap
 				.put("SAMST",
 						new String[] { "Europe/Samara", "Asia/Samarkand" });
-		tempMap.put("SAMT", new String[] { "Europe/Samara", "Asia/Samarkand",
+		tempAbbrMap.put("SAMT", new String[] { "Europe/Samara", "Asia/Samarkand",
 				"Pacific/Pago_Pago", "Pacific/Apia" });
-		tempMap.put("SAST", new String[] { "Africa/Maseru", "Africa/Windhoek",
+		tempAbbrMap.put("SAST", new String[] { "Africa/Maseru", "Africa/Windhoek",
 				"Africa/Johannesburg", "Africa/Mbabane" });
-		tempMap.put("SBT", new String[] { "Pacific/Guadalcanal" });
-		tempMap.put("SCT", new String[] { "Indian/Mahe" });
-		tempMap.put("SDMT", new String[] { "America/Santo_Domingo" });
-		tempMap.put("SGT", new String[] { "Asia/Singapore" });
-		tempMap.put("SHEST", new String[] { "Asia/Aqtau" });
-		tempMap.put("SHET", new String[] { "Asia/Aqtau" });
-		tempMap.put("SJMT", new String[] { "America/Costa_Rica" });
-		tempMap.put("SLST", new String[] { "Africa/Freetown" });
-		tempMap.put("SMT", new String[] { "Atlantic/Stanley",
+		tempAbbrMap.put("SBT", new String[] { "Pacific/Guadalcanal" });
+		tempAbbrMap.put("SCT", new String[] { "Indian/Mahe" });
+		tempAbbrMap.put("SDMT", new String[] { "America/Santo_Domingo" });
+		tempAbbrMap.put("SGT", new String[] { "Asia/Singapore" });
+		tempAbbrMap.put("SHEST", new String[] { "Asia/Aqtau" });
+		tempAbbrMap.put("SHET", new String[] { "Asia/Aqtau" });
+		tempAbbrMap.put("SJMT", new String[] { "America/Costa_Rica" });
+		tempAbbrMap.put("SLST", new String[] { "Africa/Freetown" });
+		tempAbbrMap.put("SMT", new String[] { "Atlantic/Stanley",
 				"Europe/Stockholm", "Europe/Simferopol", "Asia/Phnom_Penh",
 				"Asia/Vientiane", "Asia/Kuala_Lumpur", "Asia/Singapore",
 				"Asia/Saigon", "America/Santiago" });
-		tempMap.put("SRT", new String[] { "America/Paramaribo" });
-		tempMap.put("SST",
+		tempAbbrMap.put("SRT", new String[] { "America/Paramaribo" });
+		tempAbbrMap.put("SST",
 				new String[] { "Pacific/Pago_Pago", "Pacific/Midway" });
-		tempMap.put("SVEMT", new String[] { "Asia/Yekaterinburg" });
-		tempMap.put("SVEST", new String[] { "Asia/Yekaterinburg" });
-		tempMap.put("SVET", new String[] { "Asia/Yekaterinburg" });
-		tempMap.put("SWAT", new String[] { "Africa/Windhoek" });
-		tempMap.put("SYOT", new String[] { "Antarctica/Syowa" });
-		tempMap.put("TAHT", new String[] { "Pacific/Tahiti" });
-		tempMap
+		tempAbbrMap.put("SVEMT", new String[] { "Asia/Yekaterinburg" });
+		tempAbbrMap.put("SVEST", new String[] { "Asia/Yekaterinburg" });
+		tempAbbrMap.put("SVET", new String[] { "Asia/Yekaterinburg" });
+		tempAbbrMap.put("SWAT", new String[] { "Africa/Windhoek" });
+		tempAbbrMap.put("SYOT", new String[] { "Antarctica/Syowa" });
+		tempAbbrMap.put("TAHT", new String[] { "Pacific/Tahiti" });
+		tempAbbrMap
 				.put("TASST",
 						new String[] { "Asia/Samarkand", "Asia/Tashkent" });
-		tempMap.put("TAST", new String[] { "Asia/Samarkand", "Asia/Tashkent" });
-		tempMap.put("TBIST", new String[] { "Asia/Tbilisi" });
-		tempMap.put("TBIT", new String[] { "Asia/Tbilisi" });
-		tempMap.put("TBMT", new String[] { "Asia/Tbilisi" });
-		tempMap.put("TFT", new String[] { "Indian/Kerguelen" });
-		tempMap.put("TJT", new String[] { "Asia/Dushanbe" });
-		tempMap.put("TKT", new String[] { "Pacific/Fakaofo" });
-		tempMap.put("TMST", new String[] { "Asia/Ashkhabad" });
-		tempMap.put("TMT", new String[] { "Europe/Tallinn", "Asia/Tehran",
+		tempAbbrMap.put("TAST", new String[] { "Asia/Samarkand", "Asia/Tashkent" });
+		tempAbbrMap.put("TBIST", new String[] { "Asia/Tbilisi" });
+		tempAbbrMap.put("TBIT", new String[] { "Asia/Tbilisi" });
+		tempAbbrMap.put("TBMT", new String[] { "Asia/Tbilisi" });
+		tempAbbrMap.put("TFT", new String[] { "Indian/Kerguelen" });
+		tempAbbrMap.put("TJT", new String[] { "Asia/Dushanbe" });
+		tempAbbrMap.put("TKT", new String[] { "Pacific/Fakaofo" });
+		tempAbbrMap.put("TMST", new String[] { "Asia/Ashkhabad" });
+		tempAbbrMap.put("TMT", new String[] { "Europe/Tallinn", "Asia/Tehran",
 				"Asia/Ashkhabad" });
-		tempMap.put("TOST", new String[] { "Pacific/Tongatapu" });
-		tempMap.put("TOT", new String[] { "Pacific/Tongatapu" });
-		tempMap.put("TPT", new String[] { "Asia/Dili" });
-		tempMap.put("TRST", new String[] { "Europe/Istanbul" });
-		tempMap.put("TRT", new String[] { "Europe/Istanbul" });
-		tempMap.put("TRUT", new String[] { "Pacific/Truk" });
-		tempMap.put("TVT", new String[] { "Pacific/Funafuti" });
-		tempMap.put("ULAST", new String[] { "Asia/Ulaanbaatar" });
-		tempMap.put("ULAT", new String[] { "Asia/Ulaanbaatar" });
-		tempMap.put("URUT", new String[] { "Asia/Urumqi" });
-		tempMap.put("UYHST", new String[] { "America/Montevideo" });
-		tempMap.put("UYT", new String[] { "America/Montevideo" });
-		tempMap.put("UZST", new String[] { "Asia/Samarkand", "Asia/Tashkent" });
-		tempMap.put("UZT", new String[] { "Asia/Samarkand", "Asia/Tashkent" });
-		tempMap.put("VET", new String[] { "America/Caracas" });
-		tempMap.put("VLAMT", new String[] { "Asia/Vladivostok" });
-		tempMap.put("VLAST", new String[] { "Asia/Vladivostok" });
-		tempMap.put("VLAT", new String[] { "Asia/Vladivostok" });
-		tempMap.put("VUST", new String[] { "Pacific/Efate" });
-		tempMap.put("VUT", new String[] { "Pacific/Efate" });
-		tempMap.put("WAKT", new String[] { "Pacific/Wake" });
-		tempMap.put("WARST",
+		tempAbbrMap.put("TOST", new String[] { "Pacific/Tongatapu" });
+		tempAbbrMap.put("TOT", new String[] { "Pacific/Tongatapu" });
+		tempAbbrMap.put("TPT", new String[] { "Asia/Dili" });
+		tempAbbrMap.put("TRST", new String[] { "Europe/Istanbul" });
+		tempAbbrMap.put("TRT", new String[] { "Europe/Istanbul" });
+		tempAbbrMap.put("TRUT", new String[] { "Pacific/Truk" });
+		tempAbbrMap.put("TVT", new String[] { "Pacific/Funafuti" });
+		tempAbbrMap.put("ULAST", new String[] { "Asia/Ulaanbaatar" });
+		tempAbbrMap.put("ULAT", new String[] { "Asia/Ulaanbaatar" });
+		tempAbbrMap.put("URUT", new String[] { "Asia/Urumqi" });
+		tempAbbrMap.put("UYHST", new String[] { "America/Montevideo" });
+		tempAbbrMap.put("UYT", new String[] { "America/Montevideo" });
+		tempAbbrMap.put("UZST", new String[] { "Asia/Samarkand", "Asia/Tashkent" });
+		tempAbbrMap.put("UZT", new String[] { "Asia/Samarkand", "Asia/Tashkent" });
+		tempAbbrMap.put("VET", new String[] { "America/Caracas" });
+		tempAbbrMap.put("VLAMT", new String[] { "Asia/Vladivostok" });
+		tempAbbrMap.put("VLAST", new String[] { "Asia/Vladivostok" });
+		tempAbbrMap.put("VLAT", new String[] { "Asia/Vladivostok" });
+		tempAbbrMap.put("VUST", new String[] { "Pacific/Efate" });
+		tempAbbrMap.put("VUT", new String[] { "Pacific/Efate" });
+		tempAbbrMap.put("WAKT", new String[] { "Pacific/Wake" });
+		tempAbbrMap.put("WARST",
 				new String[] { "America/Jujuy", "America/Mendoza" });
-		tempMap
+		tempAbbrMap
 				.put("WART",
 						new String[] { "America/Jujuy", "America/Mendoza" });
-		tempMap.put("WAST",
+		tempAbbrMap.put("WAST",
 				new String[] { "Africa/Ndjamena", "Africa/Windhoek" });
-		tempMap.put("WAT", new String[] { "Africa/Luanda", "Africa/Porto-Novo",
+		tempAbbrMap.put("WAT", new String[] { "Africa/Luanda", "Africa/Porto-Novo",
 				"Africa/Douala", "Africa/Bangui", "Africa/Ndjamena",
 				"Africa/Kinshasa", "Africa/Brazzaville", "Africa/Malabo",
 				"Africa/Libreville", "Africa/Banjul", "Africa/Conakry",
 				"Africa/Bissau", "Africa/Bamako", "Africa/Nouakchott",
 				"Africa/El_Aaiun", "Africa/Windhoek", "Africa/Niamey",
 				"Africa/Lagos", "Africa/Dakar", "Africa/Freetown" });
-		tempMap.put("WEST", new String[] { "Atlantic/Faeroe",
+		tempAbbrMap.put("WEST", new String[] { "Atlantic/Faeroe",
 				"Atlantic/Azores", "Atlantic/Madeira", "Atlantic/Canary",
 				"Europe/Brussels", "Europe/Luxembourg", "Europe/Monaco",
 				"Europe/Lisbon", "Europe/Madrid", "Africa/Algiers",
 				"Africa/Casablanca", "Africa/Ceuta" });
-		tempMap.put("WET", new String[] { "Atlantic/Faeroe", "Atlantic/Azores",
+		tempAbbrMap.put("WET", new String[] { "Atlantic/Faeroe", "Atlantic/Azores",
 				"Atlantic/Madeira", "Atlantic/Canary", "Europe/Andorra",
 				"Europe/Brussels", "Europe/Luxembourg", "Europe/Monaco",
 				"Europe/Lisbon", "Europe/Madrid", "Africa/Algiers",
 				"Africa/Casablanca", "Africa/El_Aaiun", "Africa/Ceuta" });
-		tempMap.put("WFT", new String[] { "Pacific/Wallis" });
-		tempMap.put("WGST", new String[] { "America/Godthab" });
-		tempMap.put("WGT", new String[] { "America/Godthab" });
-		tempMap.put("WMT", new String[] { "Europe/Vilnius", "Europe/Warsaw" });
-		tempMap.put("WST", new String[] { "Antarctica/Casey", "Pacific/Apia",
+		tempAbbrMap.put("WFT", new String[] { "Pacific/Wallis" });
+		tempAbbrMap.put("WGST", new String[] { "America/Godthab" });
+		tempAbbrMap.put("WGT", new String[] { "America/Godthab" });
+		tempAbbrMap.put("WMT", new String[] { "Europe/Vilnius", "Europe/Warsaw" });
+		tempAbbrMap.put("WST", new String[] { "Antarctica/Casey", "Pacific/Apia",
 				"Australia/Perth" });
-		tempMap.put("YAKMT", new String[] { "Asia/Yakutsk" });
-		tempMap.put("YAKST", new String[] { "Asia/Yakutsk" });
-		tempMap.put("YAKT", new String[] { "Asia/Yakutsk" });
-		tempMap.put("YAPT", new String[] { "Pacific/Yap" });
-		tempMap.put("YDDT", new String[] { "America/Whitehorse",
+		tempAbbrMap.put("YAKMT", new String[] { "Asia/Yakutsk" });
+		tempAbbrMap.put("YAKST", new String[] { "Asia/Yakutsk" });
+		tempAbbrMap.put("YAKT", new String[] { "Asia/Yakutsk" });
+		tempAbbrMap.put("YAPT", new String[] { "Pacific/Yap" });
+		tempAbbrMap.put("YDDT", new String[] { "America/Whitehorse",
 				"America/Dawson" });
-		tempMap.put("YDT", new String[] { "America/Yakutat",
+		tempAbbrMap.put("YDT", new String[] { "America/Yakutat",
 				"America/Whitehorse", "America/Dawson" });
-		tempMap.put("YEKMT", new String[] { "Asia/Yekaterinburg" });
-		tempMap.put("YEKST", new String[] { "Asia/Yekaterinburg" });
-		tempMap.put("YEKT", new String[] { "Asia/Yekaterinburg" });
-		tempMap.put("YERST", new String[] { "Asia/Yerevan" });
-		tempMap.put("YERT", new String[] { "Asia/Yerevan" });
-		tempMap.put("YST", new String[] { "America/Yakutat",
+		tempAbbrMap.put("YEKMT", new String[] { "Asia/Yekaterinburg" });
+		tempAbbrMap.put("YEKST", new String[] { "Asia/Yekaterinburg" });
+		tempAbbrMap.put("YEKT", new String[] { "Asia/Yekaterinburg" });
+		tempAbbrMap.put("YERST", new String[] { "Asia/Yerevan" });
+		tempAbbrMap.put("YERT", new String[] { "Asia/Yerevan" });
+		tempAbbrMap.put("YST", new String[] { "America/Yakutat",
 				"America/Whitehorse", "America/Dawson" });
-		tempMap.put("YWT", new String[] { "America/Yakutat" });
+		tempAbbrMap.put("YWT", new String[] { "America/Yakutat" });
 
-		ABBREVIATED_TIMEZONES = Collections.unmodifiableMap(tempMap);
+		ABBREVIATED_TIMEZONES = Collections.unmodifiableMap(tempAbbrMap);
 	}
 
 	/**
@@ -1223,11 +1237,11 @@ public class TimeUtil {
 			timezoneStr = timezoneBuf.toString();
 		}
 
-		String canonicalTz = (String) TIMEZONE_MAPPINGS.get(timezoneStr);
+		String canonicalTz = TIMEZONE_MAPPINGS.get(timezoneStr);
 
 		// if we didn't find it, try abbreviated timezones
 		if (canonicalTz == null) {
-			String[] abbreviatedTimezone = (String[]) ABBREVIATED_TIMEZONES
+			String[] abbreviatedTimezone = ABBREVIATED_TIMEZONES
 					.get(timezoneStr);
 
 			if (abbreviatedTimezone != null) {

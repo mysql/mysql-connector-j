@@ -2,6 +2,7 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.21
+  - Fix for Bug#36662, TimeUtil.java: MEST mapping n/a.
 
 
 05-02-12 - Version 5.1.20
