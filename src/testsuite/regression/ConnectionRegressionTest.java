@@ -3827,4 +3827,45 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 
+	public void testBug37931() throws Exception {
+
+		Connection _conn = null;
+		Properties props = new Properties();
+		props.setProperty("characterSetResults", "ISO8859-1");
+
+		try {
+			_conn = getConnectionWithProps(props);
+			assertTrue("This point should not be reached.", false);
+		} catch (Exception e) {
+			assertEquals(
+					"Can't map ISO8859-1 given for characterSetResults to a supported MySQL encoding.",
+					e.getMessage());
+		} finally {
+			if (_conn != null) {
+				_conn.close();
+			}
+		}
+
+		props.setProperty("characterSetResults", "null");
+
+		try {
+			_conn = getConnectionWithProps(props);
+
+			Statement _stmt = _conn.createStatement();
+			ResultSet _rs = _stmt.executeQuery("show variables where variable_name='character_set_results'");
+			if (_rs.next()) {
+				String res = _rs.getString(2);
+				if (res == null || "NULL".equalsIgnoreCase(res) || res.length() == 0) {
+					assertTrue(true);
+				} else {
+					assertTrue(false);
+				}
+			}
+		} finally {
+			if (_conn != null) {
+				_conn.close();
+			}
+		}
+	}
+
 }

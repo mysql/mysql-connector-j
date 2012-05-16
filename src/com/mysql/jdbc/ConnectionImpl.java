@@ -2001,6 +2001,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					if ("UTF-8".equalsIgnoreCase(charsetResults)
 							|| "UTF8".equalsIgnoreCase(charsetResults)) {
 						mysqlEncodingName = "utf8";
+					} else if ("null".equalsIgnoreCase(charsetResults)) {
+						mysqlEncodingName = "NULL";
 					} else {
 						mysqlEncodingName = CharsetMapping
 								.getMysqlEncodingForJavaEncoding(charsetResults
@@ -2011,6 +2013,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					// Only change the value if needed
 					//
 					
+					if (mysqlEncodingName == null) {
+						throw SQLError.createSQLException(
+								"Can't map "+charsetResults+" given for characterSetResults to a supported MySQL encoding.",
+								SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+					}
+
 					if (!mysqlEncodingName.equalsIgnoreCase(
 							this.serverVariables.get("character_set_results"))) {
 						StringBuffer setBuf = new StringBuffer(
