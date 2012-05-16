@@ -2036,6 +2036,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, 
 								mysqlEncodingName);
 						}
+
+						// We have to set errorMessageEncoding according to new value
+						// of charsetResults for server version 5.5 and higher
+						if (versionMeetsMinimum(5, 5, 0)) {
+							this.errorMessageEncoding = charsetResults;
+						}
+
 					} else {
 						if (!this.usingCachedConfig) {
 							this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, onServer);

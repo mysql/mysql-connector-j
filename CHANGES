@@ -2,7 +2,10 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.21
+  - Fix for Bug#64205, Connected through Connector/J 5.1 to MySQL 5.5, the error message is garbled.
+
   - Fix for Bug#37931, Null Pointer Exception Thrown When specifying invalid character_set_results enc.
+
   - Fix for Bug#36662, TimeUtil.java: MEST mapping n/a.
 
 
