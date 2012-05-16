@@ -2,6 +2,13 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.21
+  - Added new built-in authentication plugin com.mysql.jdbc.authentication.MysqlClearPasswordPlugin
+    ("mysql_clear_password"). It allows C/J based clients to connect to MySQL accounts which use
+    PAM authentication for example. SSL connection required for this authentication method.
+    If SSL is not enabled then authentication which requires "mysql_clear_password" will lead to an error.
+
+  - Fix for Bug#13980303, Auth plugin's confidentiality requirements are not checked after Auth Switch Request.
+
   - Fix for Bug#64205, Connected through Connector/J 5.1 to MySQL 5.5, the error message is garbled.
 
   - Fix for Bug#37931, Null Pointer Exception Thrown When specifying invalid character_set_results enc.

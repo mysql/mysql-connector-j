@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.zip.Deflater;
 
+import com.mysql.jdbc.authentication.MysqlClearPasswordPlugin;
 import com.mysql.jdbc.authentication.MysqlNativePasswordPlugin;
 import com.mysql.jdbc.authentication.MysqlOldPasswordPlugin;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
@@ -1465,13 +1466,14 @@ public class MysqlIO {
 	
 	/**
 	 * Fill the {@link MysqlIO#authenticationPlugins} map.
-	 * First this method fill the map with instances of {@link MysqlOldPasswordPlugin} and {@link MysqlNativePasswordPlugin}.
+	 * First this method fill the map with instances of {@link MysqlOldPasswordPlugin}, {@link MysqlNativePasswordPlugin}
+	 * and {@link MysqlClearPasswordPlugin}.
 	 * Then it gets instances of plugins listed in "authenticationPlugins" connection property by
 	 * {@link Util#loadExtensions(Connection, Properties, String, String, ExceptionInterceptor)} call and adds them to the map too.
 	 * 
 	 * The key for the map entry is getted by {@link AuthenticationPlugin#getProtocolPluginName()}.
 	 * Thus it is possible to replace built-in plugin with custom one, to do it custom plugin should return value
-	 * "mysql_native_password" or "mysql_old_password" from it's own getProtocolPluginName() method.
+	 * "mysql_native_password", "mysql_old_password" or "mysql_clear_password" from it's own getProtocolPluginName() method.
 	 * 
 	 * All plugin instances in the map are initialized by {@link Extension#init(Connection, Properties)} call
 	 * with this.connection and this.connection.getProperties() values.
@@ -1508,6 +1510,10 @@ public class MysqlIO {
 		boolean defaultIsFound = addAuthenticationPlugin(plugin);
 
 		plugin = new MysqlNativePasswordPlugin();
+		plugin.init(this.connection, this.connection.getProperties());
+		if (addAuthenticationPlugin(plugin)) defaultIsFound = true;
+
+		plugin = new MysqlClearPasswordPlugin();
 		plugin.init(this.connection, this.connection.getProperties());
 		if (addAuthenticationPlugin(plugin)) defaultIsFound = true;
 
@@ -1739,6 +1745,7 @@ public class MysqlIO {
 						}
 					}
 
+					checkConfidentiality(plugin);
 					fromServer = new Buffer(StringUtils.getBytes(challenge.readString("ASCII", getExceptionInterceptor())));
 					
 				} else {

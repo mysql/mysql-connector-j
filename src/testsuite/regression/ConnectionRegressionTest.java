@@ -3809,6 +3809,85 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		adminStmt.executeUpdate("flush privileges");
 	}
 
+	public void testAuthCleartextPlugin() throws Exception {
+		if (versionMeetsMinimum(5, 5, 7)) {
+
+			boolean install_plugin_in_runtime = false;
+			try {
+
+				// install plugin if required
+				this.rs = this.stmt.executeQuery(
+						"select (PLUGIN_LIBRARY LIKE 'auth_test_plugin%') as `TRUE`" +
+						" FROM INFORMATION_SCHEMA.PLUGINS WHERE PLUGIN_NAME='cleartext_plugin_server'");
+				if (rs.next()) {
+					if (!rs.getBoolean(1)) install_plugin_in_runtime = true;
+				} else {
+					install_plugin_in_runtime = true;
+				}
+
+				if (install_plugin_in_runtime) {
+					String ext = System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1 ? ".dll" : ".so";
+					this.stmt.executeUpdate("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin"+ext+"'");
+				}
+
+				String dbname = null;
+				this.rs = this.stmt.executeQuery("select database() as dbname");
+				if(this.rs.first()) {
+					dbname = this.rs.getString("dbname");
+				}
+				if (dbname == null) assertTrue("No database selected", false);
+				
+				// create proxy users
+				this.stmt.executeUpdate("grant usage on *.* to 'wl5735user'@'%' identified WITH cleartext_plugin_server AS ''");
+				this.stmt.executeUpdate("delete from mysql.db where user='wl5735user'");
+				this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"+dbname+"', 'wl5735user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+				this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5735user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+				this.stmt.executeUpdate("flush privileges");
+				
+				Properties props = new Properties();
+				props.setProperty("user", "wl5735user");
+				props.setProperty("password", "");
+
+				Connection testConn = null;
+				Statement testSt = null;
+				ResultSet testRs = null;
+				try {
+					try {
+						testConn = getConnectionWithProps(props);
+						assertFalse("SQLException expected due to SSL connection is required", true);
+					} catch (SQLException e) {
+						String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+						System.setProperty("javax.net.ssl.keyStore", trustStorePath);
+						System.setProperty("javax.net.ssl.keyStorePassword", "password");
+						System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+						System.setProperty("javax.net.ssl.trustStorePassword", "password");
+						props.setProperty("useSSL", "true");
+						props.setProperty("requireSSL", "true");
+						testConn = getConnectionWithProps(props);
+					}
+					
+					testSt = testConn.createStatement();
+					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+					testRs.next();
+					
+					assertEquals("wl5735user", testRs.getString(1).split("@")[0]);
+					assertEquals("wl5735user", testRs.getString(2).split("@")[0]);
+					
+				} finally {
+					if (testRs != null) testRs.close();
+					if (testSt != null) testSt.close();
+					if (testConn != null) testConn.close();
+				}
+
+			} finally {
+				this.stmt.executeUpdate("drop user 'wl5735user'@'%'");
+				if (install_plugin_in_runtime) {
+					this.stmt.executeUpdate("UNINSTALL PLUGIN cleartext_plugin_server");
+				}
+			}
+		}
+	}
+
 	public void testBug36662() throws Exception {
 
 		try {
