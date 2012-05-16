@@ -3870,43 +3870,43 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	}
 
 	public void testBug64205() throws Exception {
-		
-		String dbname = null;
-		this.rs = this.stmt.executeQuery("select database() as dbname");
-		if(this.rs.first()) {
-			dbname = this.rs.getString("dbname");
-		}
-		if (dbname == null) assertTrue("No database selected", false);
+		if (versionMeetsMinimum(5, 5, 0)) {
+			String dbname = null;
+			this.rs = this.stmt.executeQuery("select database() as dbname");
+			if(this.rs.first()) {
+				dbname = this.rs.getString("dbname");
+			}
+			if (dbname == null) assertTrue("No database selected", false);
 
-		Properties props = new Properties();
-		props.setProperty("characterEncoding", "EUC_JP");
+			Properties props = new Properties();
+			props.setProperty("characterEncoding", "EUC_JP");
 
-		Connection testConn = null;
-		Statement testSt = null;
-		ResultSet testRs = null;
-		try {
-			testConn = getConnectionWithProps(props);
-			testSt = testConn.createStatement();
-			testRs = testSt.executeQuery("SELECT * FROM `"+dbname+"`.`ほげほげ`");
-		} catch (MySQLSyntaxErrorException e1) {
-			assertEquals("Table '"+dbname+".ほげほげ' doesn't exist", e1.getMessage());
-
+			Connection testConn = null;
+			Statement testSt = null;
+			ResultSet testRs = null;
 			try {
-				props.setProperty("characterSetResults", "SJIS");
 				testConn = getConnectionWithProps(props);
 				testSt = testConn.createStatement();
-				testSt.execute("SET lc_messages = 'ru_RU'");
 				testRs = testSt.executeQuery("SELECT * FROM `"+dbname+"`.`ほげほげ`");
-			} catch (MySQLSyntaxErrorException e2) {
-				assertEquals("Таблица '"+dbname+".ほげほげ' не существует", e2.getMessage());
-			}			
+			} catch (MySQLSyntaxErrorException e1) {
+				assertEquals("Table '"+dbname+".ほげほげ' doesn't exist", e1.getMessage());
 
-		} finally {
-			if (testRs != null) testRs.close();
-			if (testSt != null) testSt.close();
-			if (testConn != null) testConn.close();
+				try {
+					props.setProperty("characterSetResults", "SJIS");
+					testConn = getConnectionWithProps(props);
+					testSt = testConn.createStatement();
+					testSt.execute("SET lc_messages = 'ru_RU'");
+					testRs = testSt.executeQuery("SELECT * FROM `"+dbname+"`.`ほげほげ`");
+				} catch (MySQLSyntaxErrorException e2) {
+					assertEquals("Таблица '"+dbname+".ほげほげ' не существует", e2.getMessage());
+				}			
+
+			} finally {
+				if (testRs != null) testRs.close();
+				if (testSt != null) testSt.close();
+				if (testConn != null) testConn.close();
+			}
 		}
-
 	}
 
 }
