@@ -3013,4 +3013,18 @@ public class StatementImpl implements Statement {
 		return StringUtils.indexOfIgnoreCaseRespectMarker(0, 
 				sql, "ON DUPLICATE KEY UPDATE ", "\"'`", "\"'`", !this.connection.isNoBackslashEscapesSet());
 	}
+	
+	private boolean closeOnCompletion;
+	
+	public void closeOnCompletion() throws SQLException {
+		synchronized (checkClosed()) {
+			closeOnCompletion = true;
+		}
+	}
+	
+	public boolean isCloseOnCompletion() throws SQLException {
+		synchronized (checkClosed()) {
+			return closeOnCompletion;
+		}
+	}
 }

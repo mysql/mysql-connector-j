@@ -27,6 +27,7 @@ package com.mysql.jdbc;
 import java.sql.SQLException;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.Executor;
 
 import com.mysql.jdbc.log.Log;
 
@@ -405,4 +406,18 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
     * @return
     */
    public boolean isServerLocal() throws SQLException;
+   
+	// JDBC-4.1
+	// until we flip catalog/schema, this is a no-op
+	void setSchema(String schema) throws SQLException;
+	
+	String getSchema() throws SQLException;
+	
+	// JDBC-4.1
+	void abort(Executor executor) throws SQLException;
+	
+	// JDBC-4.1
+	void setNetworkTimeout(Executor executor, final int milliseconds) throws SQLException;
+	
+	int getNetworkTimeout() throws SQLException;
 }

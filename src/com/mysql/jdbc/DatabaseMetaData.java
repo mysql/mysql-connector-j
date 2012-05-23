@@ -8324,4 +8324,30 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		return pStmt;
 	}
+	
+	// JDBC-4.1
+	public java.sql.ResultSet getPseudoColumns(String catalog,
+			String schemaPattern, String tableNamePattern,
+			String columnNamePattern) throws SQLException {
+		Field[] fields = { new Field("", "TABLE_CAT", Types.VARCHAR, 512),
+				new Field("", "TABLE_SCHEM", Types.VARCHAR, 512),
+				new Field("", "TABLE_NAME", Types.VARCHAR, 512),
+				new Field("", "COLUMN_NAME", Types.VARCHAR, 512),
+				new Field("", "DATA_TYPE", Types.INTEGER, 12),
+				new Field("", "COLUMN_SIZE", Types.INTEGER, 12),
+				new Field("", "DECIMAL_DIGITS", Types.INTEGER, 12),
+				new Field("", "NUM_PREC_RADIX", Types.INTEGER, 12),
+				new Field("", "COLUMN_USAGE", Types.VARCHAR, 512),
+				new Field("", "REMARKS", Types.VARCHAR, 512),
+				new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, 12),
+				new Field("", "IS_NULLABLE", Types.VARCHAR, 512) };
+
+		return buildResultSet(fields, new ArrayList());
+	}
+	
+	// JDBC-4.1
+	public boolean generatedKeyAlwaysReturned()
+            throws SQLException {
+		return true;
+	}
 }

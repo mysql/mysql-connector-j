@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 import java.util.Timer;
+import java.util.concurrent.Executor;
 
 import com.mysql.jdbc.log.Log;
 
@@ -2569,5 +2570,26 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 
 	public String getParseInfoCacheFactory() {
 		return getActiveMySQLConnection().getParseInfoCacheFactory();
+	}
+
+	public void setSchema(String schema) throws SQLException {
+		getActiveMySQLConnection().setSchema(schema);
+	}
+
+	public String getSchema() throws SQLException {
+		return getActiveMySQLConnection().getSchema();
+	}
+
+	public void abort(Executor executor) throws SQLException {
+		getActiveMySQLConnection().abort(executor);
+	}
+
+	public void setNetworkTimeout(Executor executor, int milliseconds)
+			throws SQLException {
+		getActiveMySQLConnection().setNetworkTimeout(executor, milliseconds);
+	}
+
+	public int getNetworkTimeout() throws SQLException {
+		return getActiveMySQLConnection().getNetworkTimeout();
 	}
 }

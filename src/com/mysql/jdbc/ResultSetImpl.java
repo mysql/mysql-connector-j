@@ -41,6 +41,7 @@ import java.sql.Date;
 import java.sql.Ref;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -5059,6 +5060,77 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		default:
 			return getString(columnIndex);
 		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+		if (type == null) {
+			throw SQLError.createSQLException("Type parameter can not be null", 
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+		}
+		
+		if (type.equals(String.class)) {
+			return (T) getString(columnIndex);
+		} else if (type.equals(BigDecimal.class)) {
+			return (T) getBigDecimal(columnIndex);
+		} else if (type.equals(Boolean.class) || type.equals(Boolean.TYPE)) {
+			return (T) Boolean.valueOf(getBoolean(columnIndex));
+		} else if (type.equals(Integer.class) || type.equals(Integer.TYPE)) {
+			return (T) Integer.valueOf(getInt(columnIndex));
+		} else if (type.equals(Long.class) || type.equals(Long.TYPE)) {
+			return (T) Long.valueOf(getLong(columnIndex));
+		} else if (type.equals(Float.class) || type.equals(Float.TYPE)) {
+			return (T) Float.valueOf(getFloat(columnIndex));
+		} else if (type.equals(Double.class) || type.equals(Double.TYPE)) {
+			return (T) Double.valueOf(getDouble(columnIndex));
+		} else if (type.equals(byte[].class)) {
+			return (T) getBytes(columnIndex);
+		} else if (type.equals(java.sql.Date.class)) {
+			return (T) getDate(columnIndex);
+		} else if (type.equals(Time.class)) {
+			return (T) getTime(columnIndex);
+		} else if (type.equals(Timestamp.class)) {
+			return (T) getTimestamp(columnIndex);
+		} else if (type.equals(Clob.class)) {
+			return (T) getClob(columnIndex);
+		} else if (type.equals(Blob.class)) {
+			return (T) getBlob(columnIndex);
+		} else if (type.equals(Array.class)) {
+			return (T) getArray(columnIndex);
+		} else if (type.equals(Ref.class)) {
+			return (T) getRef(columnIndex);
+		} else if (type.equals(URL.class)) {
+			return (T) getURL(columnIndex);
+//		} else if (type.equals(Struct.class)) {
+//				
+//			} 
+//		} else if (type.equals(RowId.class)) {
+//			
+//		} else if (type.equals(NClob.class)) {
+//			
+//		} else if (type.equals(SQLXML.class)) {
+			
+		} else {
+			if (this.connection.getAutoDeserialize()) {
+				try {
+					return (T) getObject(columnIndex);
+				} catch (ClassCastException cce) {
+					SQLException sqlEx = SQLError.createSQLException("Conversion not supported for type " + type.getName(), 
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+					sqlEx.initCause(cce);
+					
+					throw sqlEx;
+				}
+			}
+			
+			throw SQLError.createSQLException("Conversion not supported for type " + type.getName(), 
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+		}
+	}
+	
+	// JDBC-4.1
+	public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+		return getObject(findColumn(columnLabel), type);
 	}
 
 	/**

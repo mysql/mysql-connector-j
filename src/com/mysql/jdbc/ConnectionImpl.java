@@ -53,6 +53,7 @@ import java.util.Stack;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TreeMap;
+import java.util.concurrent.Executor;
 
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.jdbc.log.Log;
@@ -5656,5 +5657,63 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		} 
 		getLog().logWarn(Messages.getString("Connection.NoMetadataOnSocketFactory"));
 		return false;
+	}
+	
+	// JDBC-4.1
+	// until we flip catalog/schema, this is a no-op
+	public synchronized void setSchema(@SuppressWarnings("unused") String schema) throws SQLException {
+		checkClosed();
+	}
+	
+	// JDBC-4.1
+	public synchronized String getSchema() throws SQLException {
+		checkClosed();
+		
+		return null;
+	}
+	
+	// JDBC-4.1
+	public void abort(Executor executor) throws SQLException {
+		if (executor == null) {
+			throw SQLError.createSQLException("Executor can not be null", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+		}
+		
+		executor.execute(new Runnable() {
+
+			public void run() {
+				try {
+					realClose(true, false, true, null);
+				} catch (SQLException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		});
+	}
+	
+	// JDBC-4.1
+	public synchronized void setNetworkTimeout(Executor executor, final int milliseconds) throws SQLException {
+		if (executor == null) {
+			throw SQLError.createSQLException("Executor can not be null", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+		}
+		
+		checkClosed();
+		final MysqlIO mysqlIo = this.io;
+		
+		executor.execute(new Runnable() {
+
+			public void run() {
+				setSocketTimeout(milliseconds); // for re-connects
+				try {
+					mysqlIo.setSocketTimeout(milliseconds);
+				} catch (SQLException e) {
+					throw new RuntimeException(e);
+				}
+			}});
+	}
+	
+	// JDBC-4.1
+	public synchronized int getNetworkTimeout() throws SQLException {
+		checkClosed();
+		return getSocketTimeout();
 	}
 }

@@ -32,6 +32,7 @@ import java.sql.Statement;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.Executor;
 
 import com.mysql.jdbc.AuthenticationPlugin;
 import com.mysql.jdbc.Connection;
@@ -2790,5 +2791,26 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
 	public String getParseInfoCacheFactory() {
 		return this.mc.getParseInfoCacheFactory();
+	}
+
+	public void setSchema(String schema) throws SQLException {
+		this.mc.setSchema(schema);
+	}
+
+	public String getSchema() throws SQLException {
+		return this.mc.getSchema();
+	}
+
+	public void abort(Executor executor) throws SQLException {
+		this.mc.abort(executor);
+	}
+
+	public void setNetworkTimeout(Executor executor, int milliseconds)
+			throws SQLException {
+		this.mc.setNetworkTimeout(executor, milliseconds);
+	}
+
+	public int getNetworkTimeout() throws SQLException {
+		return this.mc.getNetworkTimeout();
 	}
 }

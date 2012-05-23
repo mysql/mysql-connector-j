@@ -31,6 +31,7 @@ import java.sql.Statement;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.Executor;
 
 import com.mysql.jdbc.log.Log;
 
@@ -2591,5 +2592,26 @@ public class ReplicationConnection implements Connection, PingTarget {
 
 	public String getParseInfoCacheFactory() {
 		return this.currentConnection.getParseInfoCacheFactory();
+	}
+
+	public void setSchema(String schema) throws SQLException {
+		this.currentConnection.setSchema(schema);
+	}
+
+	public String getSchema() throws SQLException {
+		return this.currentConnection.getSchema();
+	}
+
+	public void abort(Executor executor) throws SQLException {
+		this.currentConnection.abort(executor);
+	}
+
+	public void setNetworkTimeout(Executor executor, int milliseconds)
+			throws SQLException {
+		this.currentConnection.setNetworkTimeout(executor, milliseconds);
+	}
+
+	public int getNetworkTimeout() throws SQLException {
+		return this.currentConnection.getNetworkTimeout();
 	}
 }

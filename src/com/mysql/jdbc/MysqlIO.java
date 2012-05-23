@@ -5191,4 +5191,15 @@ public class MysqlIO {
 	protected ExceptionInterceptor getExceptionInterceptor() {
 		return this.exceptionInterceptor;
 	}
+	
+	protected void setSocketTimeout(int milliseconds) throws SQLException {
+		try {
+			mysqlConnection.setSoTimeout(milliseconds);
+		} catch (SocketException e) {
+			SQLException sqlEx = SQLError.createSQLException("Invalid socket timeout value or state", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
+		}
+	}
 }

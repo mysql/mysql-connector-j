@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -31,6 +31,8 @@ import java.sql.NClob;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLXML;
+import java.sql.Struct;
+import java.sql.SQLFeatureNotSupportedException;
 
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.Field;
@@ -523,5 +525,25 @@ public class JDBC4ResultSet extends ResultSetImpl {
             throw SQLError.createSQLException("Unable to unwrap to " + iface.toString(), 
             		SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
         }
+    }
+    
+    @SuppressWarnings("unchecked")
+    public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+    	if (type == null) {
+    		throw SQLError.createSQLException("Type parameter can not be null", 
+    				SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+    	}
+
+    	if (type.equals(Struct.class)) {
+    		throw new SQLFeatureNotSupportedException();
+    	} else if (type.equals(RowId.class)) {
+    		return (T) getRowId(columnIndex);
+    	} else if (type.equals(NClob.class)) {
+    		return (T) getNClob(columnIndex);
+    	} else if (type.equals(SQLXML.class)) {
+    		return (T) getSQLXML(columnIndex);
+    	}
+    	
+    	return super.getObject(columnIndex, type);
     }
 }

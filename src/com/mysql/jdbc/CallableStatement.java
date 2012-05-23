@@ -1637,6 +1637,34 @@ public class CallableStatement extends PreparedStatement implements
 			return retValue;
 		}
 	}
+	
+	// JDBC-4.1
+	public <T> T getObject(int parameterIndex, Class<T> type) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
+	
+			// remove cast once 1.5, 1.6 EOL'd
+			T retVal = ((ResultSetImpl)rs).getObject(
+					mapOutputParameterIndexToRsIndex(parameterIndex), type);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retVal;
+		}
+	}
+	
+	public <T> T getObject(String parameterName, Class<T> type) throws SQLException {
+		synchronized (checkClosed()) {
+			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
+			// from ?=
+	
+			T retValue = ((ResultSetImpl)rs).getObject(fixParameterName(parameterName), type);
+	
+			this.outputParamWasNull = rs.wasNull();
+	
+			return retValue;
+		}
+	}
 
 	/**
 	 * Returns the ResultSet that holds the output parameters, or throws an

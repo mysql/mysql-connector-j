@@ -15,6 +15,32 @@ nn-nn-12 - Version 5.1.21
 
   - Fix for Bug#36662, TimeUtil.java: MEST mapping n/a.
 
+  - Fix a scalability/memory footprint issue where Object.finalize() was being used on 
+    ConnectionImpl to clean up the low-level network connection to MySQL should a 
+    connection be abandoned by the application before being cleanly close()d. We now
+    track connections in a phantom reference queue, and have a single thread per-vm
+    clean these up when the VM notices the connection is no longer referenced by
+    anything else.
+    
+  - Added the ability to add new client-side prepared statement parse info caches by
+    implementing com.mysql.jdbc.CacheAdapterFactory and telling the driver to use it
+    when "cachePrepStmts=true" via the "parseInfoCacheFactory" configuration property. 
+    
+  - Implemented JDBC-4.1 methods from Java-7:
+  
+       - Connection.setSchema(String) - no-op, until we support database==schema in the driver
+       - Connection.getSchema() - see above
+       - Connection.abort(Executor executor)
+       - Connection.setNetworkTimeout(Executor, int)
+       - Connection.getNetworkTimeout() throws SQLException;
+       - CallableStatement.getObject(int, Class<T>)
+       - CallableStatement.getObject(String, Class<T>)
+       - DBMD.getPseudoColumns() - returns an empty result set
+       - DBMD.generatedKeyAlwaysReturned() - always true for MySQL
+       - ResultSet.getObject(int, Class<T>)
+       - ResultSet.getObject(String, Class<T>)
+       - Statement.closeOnCompletion()
+       - Statement.isCloseOnCompletion()
 
 05-02-12 - Version 5.1.20
   - Fix for Bug#64983, 5.1.19 not working with JBoss AS 4.2.3.GA.
@@ -32,17 +58,6 @@ nn-nn-12 - Version 5.1.21
   - Fix for Bug#13958793, ClassCastException in ConnectionImpl.buildCollationMapping() with 4.1 server.
 
   - Fix for Bug#36478, Client prepared statement bugged if word 'limit' included in the query.
-
-  - Fix a scalability/memory footprint issue where Object.finalize() was being used on 
-    ConnectionImpl to clean up the low-level network connection to MySQL should a 
-    connection be abandoned by the application before being cleanly close()d. We now
-    track connections in a phantom reference queue, and have a single thread per-vm
-    clean these up when the VM notices the connection is no longer referenced by
-    anything else.
-    
-  - Added the ability to add new client-side prepared statement parse info caches by
-    implementing com.mysql.jdbc.CacheAdapterFactory and telling the driver to use it
-    when "cachePrepStmts=true" via the "parseInfoCacheFactory" configuration property. 
 
 04-02-12 - Version 5.1.19
   - Fix for Bug#64621, setMaxRows was not correctly processed during CS PS metadata
