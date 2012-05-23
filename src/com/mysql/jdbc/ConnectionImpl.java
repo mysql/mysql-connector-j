@@ -35,6 +35,7 @@ import java.sql.Blob;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLPermission;
 import java.sql.SQLWarning;
 import java.sql.Savepoint;
 import java.util.ArrayList;
@@ -79,6 +80,10 @@ import com.mysql.jdbc.util.LRUCache;
  */
 public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		MySQLConnection {
+	private static final SQLPermission SET_NETWORK_TIMEOUT_PERM = new SQLPermission("setNetworkTimeout");
+	
+	private static final SQLPermission ABORT_PERM = new SQLPermission("abort");
+
 	private static final String JDBC_LOCAL_CHARACTER_SET_RESULTS = "jdbc.local.character_set_results";
 
    public String getHost() {
@@ -5674,6 +5679,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	// JDBC-4.1
 	public void abort(Executor executor) throws SQLException {
+SecurityManager sec = System.getSecurityManager();
+		
+		if (sec != null) {
+		    sec.checkPermission(ABORT_PERM);
+		}
+		
 		if (executor == null) {
 			throw SQLError.createSQLException("Executor can not be null", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
@@ -5682,7 +5693,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 			public void run() {
 				try {
-					realClose(true, false, true, null);
+					abortInternal();
 				} catch (SQLException e) {
 					throw new RuntimeException(e);
 				}
@@ -5692,6 +5703,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	// JDBC-4.1
 	public synchronized void setNetworkTimeout(Executor executor, final int milliseconds) throws SQLException {
+		SecurityManager sec = System.getSecurityManager();
+		
+		if (sec != null) {
+		    sec.checkPermission(SET_NETWORK_TIMEOUT_PERM);
+		}
+		
 		if (executor == null) {
 			throw SQLError.createSQLException("Executor can not be null", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
