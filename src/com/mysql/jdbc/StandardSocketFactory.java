@@ -436,7 +436,7 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
                          boolean isLocal;
 
                     	 isLocal = InetAddress.getByName(processHost).equals(
-                    			 rawSocket.getLocalAddress());
+                    			 rawSocket.getRemoteSocketAddress());
 
                          return isLocal;
                      } catch (UnknownHostException e) {
