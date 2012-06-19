@@ -884,4 +884,17 @@ public class StringRegressionTest extends BaseTestCase {
 						"insert into Test (TestID) VALUES (?)", "values", '`',
 						false));
 	}
+
+	/**
+	 * Tests fix for BUG#64731 - StringUtils.getBytesWrapped throws StringIndexOutOfBoundsException.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug64731() throws Exception {
+		byte[] data = StringUtils.getBytesWrapped("0f0f0702", '\'', '\'',null,
+			"gbk", "latin1", false, null);
+		assertTrue(StringUtils.toString(data), true);
+	}
+
 }

@@ -2,6 +2,8 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.21
+  - Fix for Bug#64731, StringUtils.getBytesWrapped throws StringIndexOutOfBoundsException.
+
   - Added new built-in authentication plugin com.mysql.jdbc.authentication.MysqlClearPasswordPlugin
     ("mysql_clear_password"). It allows C/J based clients to connect to MySQL accounts which use
     PAM authentication for example. SSL connection required for this authentication method.

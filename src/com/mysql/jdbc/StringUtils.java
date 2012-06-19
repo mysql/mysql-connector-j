@@ -599,7 +599,8 @@ public class StringUtils {
 				buf.append(s);
 				buf.append(endWrap);
 				
-				b = buf.toString().getBytes(encoding);
+				s = buf.toString();
+				b = s.getBytes(encoding);
 
 				if (!parserKnowsUnicode && (encoding.equalsIgnoreCase("SJIS") //$NON-NLS-1$
 						|| encoding.equalsIgnoreCase("BIG5") //$NON-NLS-1$
