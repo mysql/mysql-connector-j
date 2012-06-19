@@ -571,9 +571,9 @@ public class MysqlIO {
 		} catch (OutOfMemoryError oom) {
 			try {
 				this.connection.realClose(false, false, true, oom);
-			} finally {
-				throw oom;
-			}
+        	} catch (Exception ex) {
+    		}
+			throw oom;
 		}
 	}
 
@@ -669,9 +669,9 @@ public class MysqlIO {
         } catch (OutOfMemoryError oom) {
         	try {
     			this.connection.realClose(false, false, true, oom);
-    		} finally {
-    			throw oom;
+        	} catch (Exception ex) {
     		}
+			throw oom;
         }
     }
 
@@ -3565,13 +3565,13 @@ public class MysqlIO {
     		try {
     			// _Try_ this
     			clearInputStream();
-    		} finally {
-    			try {
-    				this.connection.realClose(false, false, true, oom);
-    			} finally {
-    				throw oom;
-    			}
-    		}
+        	} catch (Exception ex) {
+        	}
+   			try {
+   				this.connection.realClose(false, false, true, oom);
+        	} catch (Exception ex) {
+   			}
+			throw oom;
     	}
 
     }
@@ -4065,9 +4065,9 @@ public class MysqlIO {
 
                 if (xOpen != null && xOpen.startsWith("22")) {
                 	throw new MysqlDataTruncation(errorBuf.toString(), 0, true, false, 0, 0, errno);
-                } else {
-                	throw SQLError.createSQLException(errorBuf.toString(), xOpen, errno, false, getExceptionInterceptor(), this.connection);
                 }
+                throw SQLError.createSQLException(errorBuf.toString(), xOpen, errno, false, getExceptionInterceptor(), this.connection);
+
             }
 
             serverErrorMessage = resultPacket.readString(

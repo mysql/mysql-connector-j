@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -264,8 +264,8 @@ public class Jdk14Logger implements Log {
 			String messageAsString = null;
 			String callerMethodName = "N/A";
 			String callerClassName = "N/A";
-			int lineNumber = 0;
-			String fileName = "N/A";
+			//int lineNumber = 0;
+			//String fileName = "N/A";
 
 			if (msg instanceof ProfilerEvent) {
 				messageAsString = LogUtils.expandProfilerEventIfNecessary(msg)
@@ -280,8 +280,8 @@ public class Jdk14Logger implements Log {
 				if (frameIdx != 0) {
 					callerClassName = locations[frameIdx].getClassName();
 					callerMethodName = locations[frameIdx].getMethodName();
-					lineNumber = locations[frameIdx].getLineNumber();
-					fileName = locations[frameIdx].getFileName();
+					//lineNumber = locations[frameIdx].getLineNumber();
+					//fileName = locations[frameIdx].getFileName();
 				}
 
 				messageAsString = String.valueOf(msg);

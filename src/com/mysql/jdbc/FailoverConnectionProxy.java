@@ -164,7 +164,7 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 
 	protected synchronized void pickNewConnection() throws SQLException {
 		if (this.primaryHostPortSpec == null) {
-			this.primaryHostPortSpec = (String)this.hostList.remove(0); // first connect
+			this.primaryHostPortSpec = this.hostList.remove(0); // first connect
 		}
 
 		if (this.currentConn == null || (this.failedOver && shouldFallBack())) {

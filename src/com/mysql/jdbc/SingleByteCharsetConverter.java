@@ -43,7 +43,7 @@ public class SingleByteCharsetConverter {
 
 	private static final int BYTE_RANGE = (1 + Byte.MAX_VALUE) - Byte.MIN_VALUE;
 	private static byte[] allBytes = new byte[BYTE_RANGE];
-	private static final Map CONVERTER_MAP = new HashMap();
+	private static final Map<String, SingleByteCharsetConverter> CONVERTER_MAP = new HashMap<String, SingleByteCharsetConverter>();
 
 	private final static byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
@@ -71,6 +71,7 @@ public class SingleByteCharsetConverter {
 	 * 
 	 * @param encodingName
 	 *            the Java character encoding name
+	 * @param conn 
 	 * 
 	 * @return a converter for the given encoding name
 	 * @throws UnsupportedEncodingException
@@ -79,7 +80,7 @@ public class SingleByteCharsetConverter {
 	public static synchronized SingleByteCharsetConverter getInstance(
 			String encodingName, Connection conn)
 			throws UnsupportedEncodingException, SQLException {
-		SingleByteCharsetConverter instance = (SingleByteCharsetConverter) CONVERTER_MAP
+		SingleByteCharsetConverter instance = CONVERTER_MAP
 				.get(encodingName);
 
 		if (instance == null) {

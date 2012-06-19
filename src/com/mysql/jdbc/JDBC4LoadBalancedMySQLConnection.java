@@ -129,4 +129,6 @@ public class JDBC4LoadBalancedMySQLConnection extends
 		return this.getJDBC4Connection().getClientInfoProviderImpl();
 	
 	}
+	
+	
 }

@@ -28,7 +28,6 @@ import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -120,6 +119,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	}
 
 	abstract class ConnectionProperty implements Serializable {
+
+		static final long serialVersionUID = -6644853639584478367L;
+
 		String[] allowableValues;
 
 		String categoryName;
@@ -629,7 +631,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		HA_CATEGORY, SECURITY_CATEGORY,
 		PERFORMANCE_CATEGORY, DEBUGING_PROFILING_CATEGORY, MISC_CATEGORY };
 	
-	private static final ArrayList PROPERTY_LIST = new ArrayList();
+	private static final ArrayList<java.lang.reflect.Field> PROPERTY_LIST = new ArrayList<java.lang.reflect.Field>();
 
 	//
 	// Yes, this looks goofy, but we're trying to avoid intern()ing here
@@ -682,6 +684,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	protected static DriverPropertyInfo[] exposeAsDriverPropertyInfo(
 			Properties info, int slotsToReserve) throws SQLException {
 		return (new ConnectionPropertiesImpl() {
+			private static final long serialVersionUID = 4257801713007640581L;
 		}).exposeAsDriverPropertyInfoInternal(info, slotsToReserve);
 	}
 
@@ -1810,7 +1813,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		DriverPropertyInfo[] driverProperties = new DriverPropertyInfo[listSize];
 
 		for (int i = slotsToReserve; i < listSize; i++) {
-			java.lang.reflect.Field propertyField = (java.lang.reflect.Field) PROPERTY_LIST
+			java.lang.reflect.Field propertyField = PROPERTY_LIST
 					.get(i - slotsToReserve);
 
 			try {
@@ -1841,7 +1844,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		int numPropertiesToSet = PROPERTY_LIST.size();
 
 		for (int i = 0; i < numPropertiesToSet; i++) {
-			java.lang.reflect.Field propertyField = (java.lang.reflect.Field) PROPERTY_LIST
+			java.lang.reflect.Field propertyField = PROPERTY_LIST
 					.get(i);
 
 			try {
@@ -1863,6 +1866,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return info;
 	}
 
+	class XmlMap {
+		protected Map<Integer, Map<String, ConnectionProperty>> ordered = new TreeMap<Integer, Map<String, ConnectionProperty>>();
+		protected Map<String, ConnectionProperty> alpha = new TreeMap<String, ConnectionProperty>();
+	}
+	
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#exposeAsXml()
 	 */
@@ -1874,11 +1882,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 		int numCategories = PROPERTY_CATEGORIES.length;
 
-		Map propertyListByCategory = new HashMap();
+		Map<String, XmlMap> propertyListByCategory = new HashMap<String, XmlMap>();
 
 		for (int i = 0; i < numCategories; i++) {
-			propertyListByCategory.put(PROPERTY_CATEGORIES[i], new Map[] {
-					new TreeMap(), new TreeMap() });
+			propertyListByCategory.put(PROPERTY_CATEGORIES[i], new XmlMap());
 		}
 
 		//
@@ -1896,39 +1903,36 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				Messages.getString("ConnectionProperties.Password"), Messages.getString("ConnectionProperties.allVersions"), //$NON-NLS-1$ //$NON-NLS-2$
 				CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE + 2);
 
-		Map[] connectionSortMaps = (Map[]) propertyListByCategory
-				.get(CONNECTION_AND_AUTH_CATEGORY);
-		TreeMap userMap = new TreeMap();
+		XmlMap connectionSortMaps = propertyListByCategory.get(CONNECTION_AND_AUTH_CATEGORY);
+		TreeMap<String, ConnectionProperty> userMap = new TreeMap<String, ConnectionProperty>();
 		userMap.put(userProp.getPropertyName(), userProp);
 		
-		connectionSortMaps[0].put(Integer.valueOf(userProp.getOrder()), userMap);
+		connectionSortMaps.ordered.put(Integer.valueOf(userProp.getOrder()), userMap);
 		
-		TreeMap passwordMap = new TreeMap();
+		TreeMap<String, ConnectionProperty> passwordMap = new TreeMap<String, ConnectionProperty>();
 		passwordMap.put(passwordProp.getPropertyName(), passwordProp);
 		
-		connectionSortMaps[0]
-				.put(new Integer(passwordProp.getOrder()), passwordMap);
+		connectionSortMaps.ordered.put(new Integer(passwordProp.getOrder()), passwordMap);
 
 		try {
 			for (int i = 0; i < numPropertiesToSet; i++) {
-				java.lang.reflect.Field propertyField = (java.lang.reflect.Field) PROPERTY_LIST
+				java.lang.reflect.Field propertyField = PROPERTY_LIST
 						.get(i);
 				ConnectionProperty propToGet = (ConnectionProperty) propertyField
 						.get(this);
-				Map[] sortMaps = (Map[]) propertyListByCategory.get(propToGet
+				XmlMap sortMaps = propertyListByCategory.get(propToGet
 						.getCategoryName());
 				int orderInCategory = propToGet.getOrder();
 
 				if (orderInCategory == Integer.MIN_VALUE) {
-					sortMaps[1].put(propToGet.getPropertyName(), propToGet);
+					sortMaps.alpha.put(propToGet.getPropertyName(), propToGet);
 				} else {
 					Integer order = Integer.valueOf(orderInCategory);
-					
-					Map orderMap = (Map)sortMaps[0].get(order);
+					Map<String, ConnectionProperty> orderMap = sortMaps.ordered.get(order);
 					
 					if (orderMap == null) {
-						orderMap = new TreeMap();
-						sortMaps[0].put(order, orderMap);
+						orderMap = new TreeMap<String, ConnectionProperty>();
+						sortMaps.ordered.put(order, orderMap);
 					}
 					
 					orderMap.put(propToGet.getPropertyName(), propToGet);
@@ -1936,22 +1940,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			}
 
 			for (int j = 0; j < numCategories; j++) {
-				Map[] sortMaps = (Map[]) propertyListByCategory
-						.get(PROPERTY_CATEGORIES[j]);
-				Iterator orderedIter = sortMaps[0].values().iterator();
-				Iterator alphaIter = sortMaps[1].values().iterator();
+				XmlMap sortMaps = propertyListByCategory.get(PROPERTY_CATEGORIES[j]);
 
 				xmlBuf.append("\n <PropertyCategory name=\""); //$NON-NLS-1$
 				xmlBuf.append(PROPERTY_CATEGORIES[j]);
 				xmlBuf.append("\">"); //$NON-NLS-1$
 
-				while (orderedIter.hasNext()) {
-					Iterator orderedAlphaIter = ((Map)orderedIter.next()).values().iterator();
-					
-					while (orderedAlphaIter.hasNext()) {
-						ConnectionProperty propToGet = (ConnectionProperty) orderedAlphaIter
-								.next();
-						
+				for (Map<String, ConnectionProperty> orderedEl : sortMaps.ordered.values()) {
+					for (ConnectionProperty propToGet : orderedEl.values()) {
 						xmlBuf.append("\n  <Property name=\""); //$NON-NLS-1$
 						xmlBuf.append(propToGet.getPropertyName());
 						xmlBuf.append("\" required=\""); //$NON-NLS-1$
@@ -1974,10 +1970,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					}
 				}
 
-				while (alphaIter.hasNext()) {
-					ConnectionProperty propToGet = (ConnectionProperty) alphaIter
-							.next();
-					
+				for (ConnectionProperty propToGet : sortMaps.alpha.values()) {
 					xmlBuf.append("\n  <Property name=\""); //$NON-NLS-1$
 					xmlBuf.append(propToGet.getPropertyName());
 					xmlBuf.append("\" required=\""); //$NON-NLS-1$
@@ -2734,7 +2727,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		int numPropertiesToSet = PROPERTY_LIST.size();
 
 		for (int i = 0; i < numPropertiesToSet; i++) {
-			java.lang.reflect.Field propertyField = (java.lang.reflect.Field) PROPERTY_LIST
+			java.lang.reflect.Field propertyField = PROPERTY_LIST
 					.get(i);
 
 			try {
@@ -2783,7 +2776,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			int numPropertiesToSet = PROPERTY_LIST.size();
 
 			for (int i = 0; i < numPropertiesToSet; i++) {
-				java.lang.reflect.Field propertyField = (java.lang.reflect.Field) PROPERTY_LIST
+				java.lang.reflect.Field propertyField = PROPERTY_LIST
 						.get(i);
 
 				try {
@@ -3640,7 +3633,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		int numPropertiesToSet = PROPERTY_LIST.size();
 
 		for (int i = 0; i < numPropertiesToSet; i++) {
-			java.lang.reflect.Field propertyField = (java.lang.reflect.Field) PROPERTY_LIST
+			java.lang.reflect.Field propertyField = PROPERTY_LIST
 					.get(i);
 
 			try {

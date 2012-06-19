@@ -1974,7 +1974,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().getTransactionIsolation();
 	}
 
-	public synchronized Map getTypeMap() throws SQLException {
+	public synchronized Map<String, Class<?>> getTypeMap() throws SQLException {
 
 		return getActiveMySQLConnection().getTypeMap();
 	}
@@ -2481,6 +2481,11 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		
 	}
 	
+	/**
+	 * 
+	 * @param SQL
+	 * @return
+	 */
 	public boolean shouldExecutionTriggerServerSwapAfter(String SQL){
 		return false;
 	}

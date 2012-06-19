@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -195,7 +194,7 @@ public class StatementImpl implements Statement {
 	protected boolean wasCancelledByTimeout = false;
 
 	/** Holds batched commands */
-	protected List batchedArgs;
+	protected List<Object> batchedArgs;
 
 	/** The character converter to use (if available) */
 	protected SingleByteCharsetConverter charConverter = null;
@@ -239,7 +238,7 @@ public class StatementImpl implements Statement {
 	protected boolean maxRowsChanged = false;
 
 	/** Set of currently-open ResultSets */
-	protected Set openResults = new HashSet();
+	protected Set<ResultSetInternalMethods> openResults = new HashSet<ResultSetInternalMethods>();
 
 	/** Are we in pedantic mode? */
 	protected boolean pedantic = false;
@@ -286,7 +285,7 @@ public class StatementImpl implements Statement {
 	 */
 	protected boolean holdResultsOpenOverClose = false;
 
-	protected ArrayList batchedGeneratedKeys = null;
+	protected ArrayList<ResultSetRow> batchedGeneratedKeys = null;
 
 	protected boolean retrieveGeneratedKeys = false;
 
@@ -395,7 +394,7 @@ public class StatementImpl implements Statement {
 	public void addBatch(String sql) throws SQLException {
 		synchronized (checkClosed()) {
 			if (this.batchedArgs == null) {
-				this.batchedArgs = new ArrayList();
+				this.batchedArgs = new ArrayList<Object>();
 			}
 	
 			if (sql != null) {
@@ -410,7 +409,7 @@ public class StatementImpl implements Statement {
 	 * batched.
 	 * @return an unmodifiable List of batched args
 	 */
-	public List getBatchedArgs() {
+	public List<Object> getBatchedArgs() {
 		return batchedArgs==null?null:Collections.unmodifiableList(batchedArgs);
 	}
 
@@ -590,9 +589,7 @@ public class StatementImpl implements Statement {
 	protected void closeAllOpenResults() throws SQLException {
 		synchronized (checkClosed()) {
 			if (this.openResults != null) {
-				for (Iterator iter = this.openResults.iterator(); iter.hasNext();) {
-					ResultSetInternalMethods element = (ResultSetInternalMethods) iter.next();
-	
+				for (ResultSetInternalMethods element : this.openResults) {
 					try {
 						element.realClose(false);
 					} catch (SQLException sqlEx) {
@@ -1121,7 +1118,7 @@ public class StatementImpl implements Statement {
 					if (this.batchedArgs != null) {
 						int nbrCommands = this.batchedArgs.size();
 	
-						this.batchedGeneratedKeys = new ArrayList(this.batchedArgs.size());
+						this.batchedGeneratedKeys = new ArrayList<ResultSetRow>(this.batchedArgs.size());
 	
 						boolean multiQueriesEnabled = locallyScopedConn.getAllowMultiQueries();
 	
@@ -1678,7 +1675,7 @@ public class StatementImpl implements Statement {
 	protected ResultSetInternalMethods generatePingResultSet() throws SQLException {
 		synchronized (checkClosed()) {
 			Field[] fields = { new Field(null, "1", Types.BIGINT, 1) };
-			ArrayList rows = new ArrayList();
+			ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 			byte[] colVal = new byte[] { (byte) '1' };
 	
 			rows.add(new ByteArrayRow(new byte[][] { colVal }, getExceptionInterceptor()));
@@ -1955,10 +1952,9 @@ public class StatementImpl implements Statement {
 		synchronized (checkClosed()) {
 			if (this.connection != null) {
 				return this.connection.getCalendarInstanceForSessionOrNew();
-			} else {
-				// punt, no connection around
-				return new GregorianCalendar();
 			}
+			// punt, no connection around
+			return new GregorianCalendar();
 		}
 	}
 
@@ -2020,9 +2016,8 @@ public class StatementImpl implements Statement {
 			if (this.batchedGeneratedKeys == null) {
 				if (lastQueryIsOnDupKeyUpdate) {
 					return getGeneratedKeysInternal(1);
-				} else {
-					return getGeneratedKeysInternal();
 				}
+				return getGeneratedKeysInternal();
 			}
 	
 			Field[] fields = new Field[1];
@@ -2054,7 +2049,7 @@ public class StatementImpl implements Statement {
 			fields[0].setConnection(this.connection);
 			fields[0].setUseOldNameMetadata(true);
 	
-			ArrayList rowSet = new ArrayList();
+			ArrayList<ResultSetRow> rowSet = new ArrayList<ResultSetRow>();
 	
 			long beginAt = getLastInsertID();
 			
@@ -2925,7 +2920,7 @@ public class StatementImpl implements Statement {
      * for an object with the given interface.
      * @since 1.6
      */
-	public boolean isWrapperFor(Class iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 		checkClosed();
 
 		// This works for classes that aren't actually wrapping
@@ -2947,7 +2942,7 @@ public class StatementImpl implements Statement {
      * @throws java.sql.SQLException If no object found that implements the interface
      * @since 1.6
      */
-	public Object unwrap(Class iface) throws java.sql.SQLException {
+	public Object unwrap(Class<?> iface) throws java.sql.SQLException {
     	try {
     		// This works for classes that aren't actually wrapping
     		// anything

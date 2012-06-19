@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -37,6 +37,8 @@ import java.sql.DataTruncation;
  *          mmatthews Exp $
  */
 public class MysqlDataTruncation extends DataTruncation {
+
+	static final long serialVersionUID = 3263928195256986226L;
 
 	private String message;
 

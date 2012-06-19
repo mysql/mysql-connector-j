@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -54,7 +54,7 @@ import com.mysql.jdbc.Util;
 public class CallableStatementWrapper extends PreparedStatementWrapper
 		implements CallableStatement {
 
-private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
+	private static final Constructor<?> JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 	
 	static {
 		if (Util.isJdbc4()) {
@@ -153,11 +153,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 		try {
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt).wasNull();
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -175,11 +175,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getString(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -196,11 +196,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getBoolean(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -218,11 +218,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getByte(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -240,11 +240,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getShort(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -262,11 +262,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getInt(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -284,11 +284,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getLong(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -306,11 +306,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getFloat(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -328,11 +328,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getDouble(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -351,11 +351,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt).getBigDecimal(
 						parameterIndex, scale);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -373,11 +373,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getBytes(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -395,11 +395,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getDate(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -417,11 +417,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getTime(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -439,11 +439,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getTimestamp(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -461,11 +461,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getObject(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -483,11 +483,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getBigDecimal(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -500,17 +500,17 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 	 * 
 	 * @see java.sql.CallableStatement#getObject(int, java.util.Map)
 	 */
-	public Object getObject(int parameterIndex, Map typeMap)
+	public Object getObject(int parameterIndex, Map<String, Class<?>> typeMap)
 			throws SQLException {
 		try {
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt).getObject(
 						parameterIndex, typeMap);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -527,11 +527,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getRef(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -549,11 +549,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getBlob(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -571,11 +571,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getClob(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -592,11 +592,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getArray(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -613,11 +613,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt).getDate(
 						parameterIndex, cal);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -634,11 +634,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt).getTime(
 						parameterIndex, cal);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -656,11 +656,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt).getTimestamp(
 						parameterIndex, cal);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -765,11 +765,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getURL(parameterIndex);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1311,11 +1311,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getString(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1332,11 +1332,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getBoolean(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1354,11 +1354,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getByte(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1376,11 +1376,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getShort(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1398,11 +1398,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getInt(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1420,11 +1420,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getLong(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1442,11 +1442,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getFloat(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1464,11 +1464,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getDouble(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1486,11 +1486,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getBytes(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1508,11 +1508,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getDate(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1530,11 +1530,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getTime(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1552,11 +1552,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getTimestamp(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1574,11 +1574,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getObject(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1596,11 +1596,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getBigDecimal(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1613,17 +1613,17 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 	 * 
 	 * @see java.sql.CallableStatement#getObject(int, java.util.Map)
 	 */
-	public Object getObject(String parameterName, Map typeMap)
+	public Object getObject(String parameterName, Map<String, Class<?>> typeMap)
 			throws SQLException {
 		try {
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt).getObject(
 						parameterName, typeMap);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1640,11 +1640,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getRef(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1662,11 +1662,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getBlob(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1684,11 +1684,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getClob(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1705,11 +1705,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getArray(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1726,11 +1726,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt).getDate(
 						parameterName, cal);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1747,11 +1747,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt).getTime(
 						parameterName, cal);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1769,11 +1769,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt).getTimestamp(
 						parameterName, cal);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}
@@ -1790,11 +1790,11 @@ private static final Constructor JDBC_4_CALLABLE_STATEMENT_WRAPPER_CTOR;
 			if (this.wrappedStmt != null) {
 				return ((CallableStatement) this.wrappedStmt)
 						.getURL(parameterName);
-			} else {
-				throw SQLError.createSQLException(
-						"No operations allowed after statement closed",
-						SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
 			}
+			throw SQLError.createSQLException(
+				"No operations allowed after statement closed",
+				SQLError.SQL_STATE_GENERAL_ERROR, this.exceptionInterceptor);
+
 		} catch (SQLException sqlEx) {
 			checkAndFireConnectionError(sqlEx);
 		}

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -63,7 +63,7 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
 	 * Functions like ResultSet.getObject(), but using the given SQL type
 	 * (as registered during CallableStatement.registerOutParameter()).
 	 */
-	public abstract  Object getObjectStoredProc(int i, java.util.Map map,
+	public abstract  Object getObjectStoredProc(int i, java.util.Map<Object, Object> map,
 			int desiredSqlType) throws SQLException;
 
 	/**
@@ -77,7 +77,7 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
 	 * Functions like ResultSet.getObject(), but using the given SQL type
 	 * (as registered during CallableStatement.registerOutParameter()).
 	 */
-	public abstract  Object getObjectStoredProc(String colName, java.util.Map map,
+	public abstract  Object getObjectStoredProc(String colName, java.util.Map<Object, Object> map,
 			int desiredSqlType) throws SQLException;
 
 	/**

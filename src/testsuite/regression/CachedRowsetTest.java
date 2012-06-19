@@ -65,7 +65,7 @@ public class CachedRowsetTest extends BaseTestCase {
 	 */
 	public void testBug5188() throws Exception {
 		String implClass = "com.sun.rowset.CachedRowSetImpl";
-		Class c;
+		Class<?> c;
 		Method populate;
 		try {
 			c = Class.forName(implClass);

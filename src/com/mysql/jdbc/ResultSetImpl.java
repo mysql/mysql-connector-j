@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
  This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,6 @@ import java.sql.Date;
 import java.sql.Ref;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
-import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -5148,7 +5147,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @throws SQLException
 	 *             because this is not implemented
 	 */
-	public Object getObject(int i, java.util.Map map) throws SQLException {
+	public Object getObject(int i, java.util.Map<String,Class<?>> map) throws SQLException {
 		return getObject(i);
 	}
 
@@ -5194,7 +5193,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @throws SQLException
 	 *             as this is not implemented
 	 */
-	public Object getObject(String colName, java.util.Map map)
+	public Object getObject(String colName, java.util.Map<String,Class<?>> map)
 			throws SQLException {
 		return getObject(findColumn(colName), map);
 	}
@@ -5283,13 +5282,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 			if (!this.connection.getRunningCTS13()) {
 				return new Double(getFloat(columnIndex));
-			} else {
-				return new Float(getFloat(columnIndex)); // NB - bug in JDBC
-															// compliance test,
-															// according
-				// to JDBC spec, FLOAT type should return DOUBLE
-				// but causes ClassCastException in CTS :(
 			}
+			return new Float(getFloat(columnIndex));	// NB - bug in JDBC
+														// compliance test,
+														// according
+			// to JDBC spec, FLOAT type should return DOUBLE
+			// but causes ClassCastException in CTS :(
+
 		case Types.DOUBLE:
 			return new Double(getDouble(columnIndex));
 
@@ -5322,7 +5321,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 	}
 
-	public Object getObjectStoredProc(int i, java.util.Map map,
+	public Object getObjectStoredProc(int i, java.util.Map<Object, Object> map,
 			int desiredSqlType) throws SQLException {
 		return getObjectStoredProc(i, desiredSqlType);
 	}
@@ -5332,7 +5331,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		return getObjectStoredProc(findColumn(columnName), desiredSqlType);
 	}
 
-	public Object getObjectStoredProc(String colName, java.util.Map map,
+	public Object getObjectStoredProc(String colName, java.util.Map<Object, Object> map,
 			int desiredSqlType) throws SQLException {
 		return getObjectStoredProc(findColumn(colName), map, desiredSqlType);
 	}

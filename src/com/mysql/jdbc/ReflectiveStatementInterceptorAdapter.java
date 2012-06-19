@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved., Inc. All rights reserved.
+ Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved., Inc. All rights reserved.
  U.S. Government Rights - Commercial software. Government users are subject
  to the Sun Microsystems, Inc. standard license agreement and applicable
  provisions of the FAR and its supplements. Use is subject to license terms.
@@ -84,7 +84,7 @@ public class ReflectiveStatementInterceptorAdapter implements
 		return toProxy.preProcess(sql, interceptedStatement, connection);
 	}
 
-	public static final Method getV2PostProcessMethod(Class toProxyClass) {
+	public static final Method getV2PostProcessMethod(Class<?> toProxyClass) {
 		try {
 			Method postProcessMethod = toProxyClass.getMethod("postProcess", new Class[] {
 					String.class, Statement.class, ResultSetInternalMethods.class, Connection.class, Integer.TYPE, 

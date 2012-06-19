@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -144,11 +144,10 @@ public class ServerController {
 	public Process start() throws IOException {
 		if (this.serverProcess != null) {
 			throw new IllegalArgumentException("Server already started");
-		} else {
-			this.serverProcess = Runtime.getRuntime().exec(getCommandLine());
-
-			return this.serverProcess;
 		}
+		this.serverProcess = Runtime.getRuntime().exec(getCommandLine());
+
+		return this.serverProcess;
 	}
 
 	/**
@@ -171,8 +170,7 @@ public class ServerController {
 				pathBuf.append(File.separator);
 			}
 
-			String defaultsFilePath = getServerProps().getProperty(
-					DEFAULTS_FILE_KEY);
+			//String defaultsFilePath = getServerProps().getProperty(DEFAULTS_FILE_KEY);
 
 			pathBuf.append("bin");
 			pathBuf.append(File.separator);
@@ -291,7 +289,7 @@ public class ServerController {
 
 		if (this.serverProps != null) {
 
-			for (Iterator iter = this.serverProps.keySet().iterator(); iter
+			for (Iterator<Object> iter = this.serverProps.keySet().iterator(); iter
 					.hasNext();) {
 				String key = (String) iter.next();
 				String value = this.serverProps.getProperty(key);

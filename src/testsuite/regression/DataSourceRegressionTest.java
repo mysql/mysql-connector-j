@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -356,7 +356,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
 		this.tempDir.deleteOnExit();
 
 		MysqlConnectionPoolDataSource ds;
-		Hashtable env = new Hashtable();
+		Hashtable<String, String> env = new Hashtable<String, String>();
 		env.put(Context.INITIAL_CONTEXT_FACTORY,
 				"com.sun.jndi.fscontext.RefFSContextFactory");
 		this.ctx = new InitialContext(env);
@@ -385,7 +385,7 @@ public class DataSourceRegressionTest extends BaseTestCase {
 			ObjectFactory factory = (ObjectFactory) Class.forName(
 					objAsRef.getFactoryClassName()).newInstance();
 			boundDs = (DataSource) factory.getObjectInstance(objAsRef,
-					datasourceName, this.ctx, new Hashtable());
+					datasourceName, this.ctx, new Hashtable<Object, Object>());
 		}
 
 		return boundDs;
@@ -457,7 +457,8 @@ public class DataSourceRegressionTest extends BaseTestCase {
 		removeFromRef(asRef, "serverName");
 		removeFromRef(asRef, "databaseName");
 		
-		MysqlDataSource newDs = (MysqlDataSource)new MysqlDataSourceFactory().getObjectInstance(asRef, null, null, null);
+		//MysqlDataSource newDs = (MysqlDataSource)
+		new MysqlDataSourceFactory().getObjectInstance(asRef, null, null, null);
 	}
 
 	private void removeFromRef(Reference ref, String key) {

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -69,7 +69,7 @@ public abstract class BasePerfTest extends BaseTestCase {
 	/**
 	 * List of values for each iteration
 	 */
-	private List testValuesList = new ArrayList();
+	private List<Double> testValuesList = new ArrayList<Double>();
 
 	private double confidenceLevel = 95; // 95% by default
 
@@ -188,13 +188,13 @@ public abstract class BasePerfTest extends BaseTestCase {
 	 * Calls doIteration() the <code>numIterations</code> times, displaying
 	 * the mean, std, margin of error and confidence level.
 	 * 
-	 * @param numIterations
+	 * @param num_iterations
 	 *            the number of iterations to perform ( < 30)
 	 * @throws Exception
 	 *             if an error occurs.
 	 */
-	protected void doIterations(int numIterations) throws Exception {
-		for (int i = 0; i < numIterations; i++) {
+	protected void doIterations(int num_iterations) throws Exception {
+		for (int i = 0; i < num_iterations; i++) {
 			doOneIteration();
 		}
 	}

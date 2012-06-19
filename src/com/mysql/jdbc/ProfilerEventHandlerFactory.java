@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -36,11 +36,11 @@ import com.mysql.jdbc.profiler.ProfilerEventHandler;
  */
 public class ProfilerEventHandlerFactory {
 
-	private static final Map CONNECTIONS_TO_SINKS = new HashMap();
+	private static final Map<MySQLConnection, ProfilerEventHandler> CONNECTIONS_TO_SINKS = new HashMap<MySQLConnection, ProfilerEventHandler>();
 
 	private Connection ownerConnection = null;
 
-	private Log log = null;
+	protected Log log = null;
 
 	/**
 	 * Returns the ProfilerEventHandlerFactory that handles profiler events for the given
@@ -51,7 +51,7 @@ public class ProfilerEventHandlerFactory {
 	 * @return the ProfilerEventHandlerFactory that handles profiler events
 	 */
 	public static synchronized ProfilerEventHandler getInstance(MySQLConnection conn) throws SQLException {
-		ProfilerEventHandler handler = (ProfilerEventHandler) CONNECTIONS_TO_SINKS
+		ProfilerEventHandler handler = CONNECTIONS_TO_SINKS
 				.get(conn);
 
 		if (handler == null) {
@@ -69,7 +69,7 @@ public class ProfilerEventHandlerFactory {
 	}
 
 	public static synchronized void removeInstance(Connection conn) {
-		ProfilerEventHandler handler = (ProfilerEventHandler) CONNECTIONS_TO_SINKS.remove(conn);
+		ProfilerEventHandler handler = CONNECTIONS_TO_SINKS.remove(conn);
 		
 		if (handler != null) {
 			handler.destroy();

@@ -243,7 +243,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#getTypeMap()
 	 */
-	public synchronized Map getTypeMap() throws SQLException {
+	public synchronized Map<String, Class<?>> getTypeMap() throws SQLException {
 		return this.currentConnection.getTypeMap();
 	}
 

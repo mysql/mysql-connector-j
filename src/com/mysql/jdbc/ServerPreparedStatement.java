@@ -61,7 +61,7 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
  *          mmatthews Exp $
  */
 public class ServerPreparedStatement extends PreparedStatement {
-	private static final Constructor JDBC_4_SPS_CTOR;
+	private static final Constructor<?> JDBC_4_SPS_CTOR;
 	
 	static {
 		if (Util.isJdbc4()) {
@@ -173,20 +173,17 @@ public class ServerPreparedStatement extends PreparedStatement {
 			case MysqlDefs.FIELD_TYPE_VARCHAR:
 				if (quoteIfNeeded) {
 					return "'" + String.valueOf(value) + "'";
-				} else {
-					return String.valueOf(value);
 				}
+				return String.valueOf(value);
+
 			default:
 				if (value instanceof byte[]) {
 					return "byte data";
-
-				} else {
-					if (quoteIfNeeded) {
-						return "'" + String.valueOf(value) + "'";
-					} else {
-						return String.valueOf(value);
-					}
 				}
+				if (quoteIfNeeded) {
+					return "'" + String.valueOf(value) + "'";
+				}
+				return String.valueOf(value);
 			}
 		}
 		
@@ -227,9 +224,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 			case MysqlDefs.FIELD_TYPE_NEW_DECIMAL:
 				if (value instanceof byte[]) {
 					return ((byte[]) value).length;
-				} else {
-					return ((String) value).length();
 				}
+				return ((String) value).length();
+
 			default: 
 				return 0;
 			}
@@ -237,19 +234,19 @@ public class ServerPreparedStatement extends PreparedStatement {
 	}
 
 	/* 1 (length) + 2 (year) + 1 (month) + 1 (day) */
-	private static final byte MAX_DATE_REP_LENGTH = (byte) 5;
+	//private static final byte MAX_DATE_REP_LENGTH = (byte) 5;
 
 	/*
 	 * 1 (length) + 2 (year) + 1 (month) + 1 (day) + 1 (hour) + 1 (minute) + 1
 	 * (second) + 4 (microseconds)
 	 */
-	private static final byte MAX_DATETIME_REP_LENGTH = 12;
+	//private static final byte MAX_DATETIME_REP_LENGTH = 12;
 
 	/*
 	 * 1 (length) + 1 (is negative) + 4 (day count) + 1 (hour) + 1 (minute) + 1
 	 * (seconds) + 4 (microseconds)
 	 */
-	private static final byte MAX_TIME_REP_LENGTH = 13;
+	//private static final byte MAX_TIME_REP_LENGTH = 13;
 	
 	private boolean hasOnDuplicateKeyUpdate = false;
 
@@ -459,7 +456,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		synchronized (checkClosed()) {
 
 			if (this.batchedArgs == null) {
-				this.batchedArgs = new ArrayList();
+				this.batchedArgs = new ArrayList<Object>();
 			}
 	
 			this.batchedArgs.add(new BatchedBindValues(this.parameterBindings));
@@ -716,7 +713,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 					updateCounts = new int[nbrCommands];
 
 					if (this.retrieveGeneratedKeys) {
-						this.batchedGeneratedKeys = new ArrayList(nbrCommands);
+						this.batchedGeneratedKeys = new ArrayList<ResultSetRow>(nbrCommands);
 					}
 
 					for (int i = 0; i < nbrCommands; i++) {
@@ -1240,10 +1237,9 @@ public class ServerPreparedStatement extends PreparedStatement {
 									.getString("ServerPreparedStatement.11") //$NON-NLS-1$
 									+ Messages.getString("ServerPreparedStatement.12"), //$NON-NLS-1$
 									SQLError.SQL_STATE_DRIVER_NOT_CAPABLE, getExceptionInterceptor());
-						} else {
-							firstFound = true;
-							boundTimeToCheck = this.parameterBindings[i].boundBeforeExecutionNum;
 						}
+						firstFound = true;
+						boundTimeToCheck = this.parameterBindings[i].boundBeforeExecutionNum;
 					}
 				}
 				
@@ -1287,7 +1283,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 			packet.writeByte((byte) MysqlDefs.COM_EXECUTE);
 			packet.writeLong(this.serverStatementId);
 
-			boolean usingCursor = false;
+//			boolean usingCursor = false;
 
 			if (this.connection.versionMeetsMinimum(4, 1, 2)) {
 				// we only create cursor-backed result sets if
@@ -1302,7 +1298,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 						&& getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY
 						&& getFetchSize() > 0) {
 					packet.writeByte(MysqlDefs.OPEN_CURSOR_FLAG);
-					usingCursor = true;
+//					usingCursor = true;
 				} else {
 					packet.writeByte((byte) 0); // placeholder for flags
 				}
@@ -2517,6 +2513,14 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 	}
 
+	/**
+	 * 
+	 * @param intoBuf
+	 * @param dt
+	 * @param mysql
+	 * @param bufferType
+	 * @throws SQLException
+	 */
 	private void storeDateTime(Buffer intoBuf, java.util.Date dt, MysqlIO mysql, int bufferType)
 			throws SQLException {
 		synchronized (checkClosed()) {

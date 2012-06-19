@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -50,7 +50,7 @@ import com.mysql.jdbc.Util;
  */
 public class MysqlPooledConnection implements PooledConnection {
 
-	private static final Constructor JDBC_4_POOLED_CONNECTION_WRAPPER_CTOR;
+	private static final Constructor<?> JDBC_4_POOLED_CONNECTION_WRAPPER_CTOR;
 
 	static {
 		if (Util.isJdbc4()) {
@@ -93,7 +93,7 @@ public class MysqlPooledConnection implements PooledConnection {
 
 	// ~ Instance/static variables .............................................
 
-	private Map connectionEventListeners;
+	private Map<ConnectionEventListener, ConnectionEventListener> connectionEventListeners;
 
 	private Connection logicalHandle;
 
@@ -112,7 +112,7 @@ public class MysqlPooledConnection implements PooledConnection {
 	public MysqlPooledConnection(com.mysql.jdbc.Connection connection) {
 		this.logicalHandle = null;
 		this.physicalConn = connection;
-		this.connectionEventListeners = new HashMap();
+		this.connectionEventListeners = new HashMap<ConnectionEventListener, ConnectionEventListener>();
 		this.exceptionInterceptor = this.physicalConn.getExceptionInterceptor();
 	}
 
@@ -233,15 +233,14 @@ public class MysqlPooledConnection implements PooledConnection {
 			return;
 		}
 
-		Iterator iterator = this.connectionEventListeners.entrySet().iterator();
+		Iterator<Map.Entry<ConnectionEventListener, ConnectionEventListener>> iterator = this.connectionEventListeners.entrySet().iterator();
 		
 		ConnectionEvent connectionevent = new ConnectionEvent(this,
 				sqlException);
 
 		while (iterator.hasNext()) {
 
-			ConnectionEventListener connectioneventlistener = (ConnectionEventListener) ((Map.Entry)iterator
-					.next()).getValue();
+			ConnectionEventListener connectioneventlistener = iterator.next().getValue();
 
 			if (eventType == CONNECTION_CLOSED_EVENT) {
 				connectioneventlistener.connectionClosed(connectionevent);

@@ -44,12 +44,12 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 
 class EscapeProcessor {
-	private static Map JDBC_CONVERT_TO_MYSQL_TYPE_MAP;
+	private static Map<String, String> JDBC_CONVERT_TO_MYSQL_TYPE_MAP;
 
-	private static Map JDBC_NO_CONVERT_TO_MYSQL_EXPRESSION_MAP;
+	private static Map<String, String> JDBC_NO_CONVERT_TO_MYSQL_EXPRESSION_MAP;
 
 	static {
-		Map tempMap = new HashMap();
+		Map<String, String> tempMap = new HashMap<String, String>();
 
 		tempMap.put("BIGINT", "0 + ?");
 		tempMap.put("BINARY", "BINARY");
@@ -72,7 +72,7 @@ class EscapeProcessor {
 
 		JDBC_CONVERT_TO_MYSQL_TYPE_MAP = Collections.unmodifiableMap(tempMap);
 
-		tempMap = new HashMap(JDBC_CONVERT_TO_MYSQL_TYPE_MAP);
+		tempMap = new HashMap<String, String>(JDBC_CONVERT_TO_MYSQL_TYPE_MAP);
 
 		tempMap.put("BINARY", "CONCAT(?)");
 		tempMap.put("CHAR", "CONCAT(?)");
@@ -363,8 +363,7 @@ class EscapeProcessor {
 				String minute = st.nextToken();
 				String second = st.nextToken();
 
-				if (!conn.getUseTimezone()
-						|| !conn.getUseLegacyDatetimeCode()) {
+				if (conn != null && (!conn.getUseTimezone() || !conn.getUseLegacyDatetimeCode())) {
 					String timeString = "'" + hour + ":"
 							+ minute + ":" + second + "'";
 					newSql.append(timeString);
@@ -441,7 +440,7 @@ class EscapeProcessor {
 			String argument = token.substring(startPos, endPos);
 
 			try {
-				if (!conn.getUseLegacyDatetimeCode()) {
+				if (conn != null && !conn.getUseLegacyDatetimeCode()) {
 					Timestamp ts = Timestamp.valueOf(argument);
 					SimpleDateFormat tsdf = new SimpleDateFormat(
 							"''yyyy-MM-dd HH:mm:ss''", Locale.US); //$NON-NLS-1$
@@ -493,9 +492,9 @@ class EscapeProcessor {
 						 * out this bug
 						 */
 
-						if (!conn.getUseTimezone()
-								&& !conn
-										.getUseJDBCCompliantTimezoneShift()) {
+						if (conn != null &&
+								!conn.getUseTimezone()
+								&& !conn.getUseJDBCCompliantTimezoneShift()) {
 							newSql.append("'").append(year4)
 									.append("-").append(month2)
 									.append("-").append(day2)
@@ -661,8 +660,6 @@ class EscapeProcessor {
 							SQLError.SQL_STATE_SYNTAX_ERROR, conn.getExceptionInterceptor());
 		}
 
-		int tokenLength = functionToken.length();
-
 		int indexOfComma = functionToken.lastIndexOf(",");
 
 		if (indexOfComma == -1) {
@@ -698,10 +695,10 @@ class EscapeProcessor {
 		}
 
 		if (serverSupportsConvertFn) {
-			newType = (String) JDBC_CONVERT_TO_MYSQL_TYPE_MAP.get(trimmedType
+			newType = JDBC_CONVERT_TO_MYSQL_TYPE_MAP.get(trimmedType
 					.toUpperCase(Locale.ENGLISH));
 		} else {
-			newType = (String) JDBC_NO_CONVERT_TO_MYSQL_EXPRESSION_MAP
+			newType = JDBC_NO_CONVERT_TO_MYSQL_EXPRESSION_MAP
 					.get(trimmedType.toUpperCase(Locale.ENGLISH));
 
 			// We need a 'special' check here to give a better error message. If
@@ -737,16 +734,16 @@ class EscapeProcessor {
 					.length()));
 
 			return convertRewrite.toString();
-		} else {
-
-			StringBuffer castRewrite = new StringBuffer("CAST(");
-			castRewrite.append(expression);
-			castRewrite.append(" AS ");
-			castRewrite.append(newType);
-			castRewrite.append(")");
-
-			return castRewrite.toString();
 		}
+
+		StringBuffer castRewrite = new StringBuffer("CAST(");
+		castRewrite.append(expression);
+		castRewrite.append(" AS ");
+		castRewrite.append(newType);
+		castRewrite.append(")");
+
+		return castRewrite.toString();
+
 	}
 
 	/**

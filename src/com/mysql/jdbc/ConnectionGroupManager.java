@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -26,7 +26,6 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,7 +33,7 @@ import com.mysql.jdbc.jmx.LoadBalanceConnectionGroupManager;
 
 public class ConnectionGroupManager {
 
-	private static HashMap GROUP_MAP = new HashMap();
+	private static HashMap<String, ConnectionGroup> GROUP_MAP = new HashMap<String, ConnectionGroup>();
 
 	private static LoadBalanceConnectionGroupManager mbean = new LoadBalanceConnectionGroupManager();
 	
@@ -43,7 +42,7 @@ public class ConnectionGroupManager {
 	
 	public static synchronized ConnectionGroup getConnectionGroupInstance(String groupName){
 		if(GROUP_MAP.containsKey(groupName)){
-			return (ConnectionGroup) GROUP_MAP.get(groupName);
+			return GROUP_MAP.get(groupName);
 		}
 		ConnectionGroup group = new ConnectionGroup(groupName);
 		GROUP_MAP.put(groupName, group);
@@ -60,18 +59,18 @@ public class ConnectionGroupManager {
 	}
 	
 	public static ConnectionGroup getConnectionGroup(String groupName){
-		return (ConnectionGroup) GROUP_MAP.get(groupName);
+		return GROUP_MAP.get(groupName);
 	}
 	
-	private static Collection getGroupsMatching(String group){
+	private static Collection<ConnectionGroup> getGroupsMatching(String group){
 		if(group == null || group.equals("")){
-			Set s = new HashSet();
+			Set<ConnectionGroup> s = new HashSet<ConnectionGroup>();
 			
 			s.addAll(GROUP_MAP.values());
 			return s;
 		}
-		Set s = new HashSet();
-		Object o = GROUP_MAP.get(group);
+		Set<ConnectionGroup> s = new HashSet<ConnectionGroup>();
+		ConnectionGroup o = GROUP_MAP.get(group);
 		if(o != null){
 			s.add(o);
 		}
@@ -80,18 +79,18 @@ public class ConnectionGroupManager {
 	}
 
 	public static void addHost(String group, String host, boolean forExisting) {
-		Collection s = getGroupsMatching(group);
-		for(Iterator i = s.iterator(); i.hasNext();){
-			((ConnectionGroup) i.next()).addHost(host, forExisting);
+		Collection<ConnectionGroup> s = getGroupsMatching(group);
+		for (ConnectionGroup cg : s) {
+			cg.addHost(host, forExisting);
 		}
 	}
 
 	public static int getActiveHostCount(String group) {
 		
-		Set active = new HashSet();
-		Collection s = getGroupsMatching(group);
-		for(Iterator i = s.iterator(); i.hasNext();){
-			active.addAll(((ConnectionGroup) i.next()).getInitialHosts());
+		Set<String> active = new HashSet<String>();
+		Collection<ConnectionGroup> s = getGroupsMatching(group);
+		for (ConnectionGroup cg : s) {
+			active.addAll(cg.getInitialHosts());
 		}
 		return active.size();
 	}
@@ -100,28 +99,27 @@ public class ConnectionGroupManager {
 
 	public static long getActiveLogicalConnectionCount(String group) {
 		int count = 0;
-		Collection s = getGroupsMatching(group);
-		for(Iterator i = s.iterator(); i.hasNext();){
-			count += ((ConnectionGroup) i.next()).getActiveLogicalConnectionCount();
+		Collection<ConnectionGroup> s = getGroupsMatching(group);
+		for (ConnectionGroup cg : s) {
+			count += cg.getActiveLogicalConnectionCount();
 		}
 		return count;
 	}
 
 	public static long getActivePhysicalConnectionCount(String group) {
 		int count = 0;
-		Collection s = getGroupsMatching(group);
-		for(Iterator i = s.iterator(); i.hasNext();){
-			count += ((ConnectionGroup) i.next()).getActivePhysicalConnectionCount();
+		Collection<ConnectionGroup> s = getGroupsMatching(group);
+		for (ConnectionGroup cg : s) {
+			count += cg.getActivePhysicalConnectionCount();
 		}
 		return count;
 	}
 
 
 	public static int getTotalHostCount(String group) {
-		Collection s = getGroupsMatching(group);
-		Set hosts = new HashSet();
-		for(Iterator i = s.iterator(); i.hasNext();){
-			ConnectionGroup cg = (ConnectionGroup) i.next();
+		Collection<ConnectionGroup> s = getGroupsMatching(group);
+		Set<String> hosts = new HashSet<String>();
+		for (ConnectionGroup cg : s) {
 			hosts.addAll(cg.getInitialHosts());
 			hosts.addAll(cg.getClosedHosts());
 		}
@@ -130,27 +128,27 @@ public class ConnectionGroupManager {
 
 	public static long getTotalLogicalConnectionCount(String group) {
 		long count = 0;
-		Collection s = getGroupsMatching(group);
-		for(Iterator i = s.iterator(); i.hasNext();){
-			count += ((ConnectionGroup) i.next()).getTotalLogicalConnectionCount();
+		Collection<ConnectionGroup> s = getGroupsMatching(group);
+		for (ConnectionGroup cg : s) {
+			count += cg.getTotalLogicalConnectionCount();
 		}
 		return count;
 	}
 
 	public static long getTotalPhysicalConnectionCount(String group) {
 		long count = 0;
-		Collection s = getGroupsMatching(group);
-		for(Iterator i = s.iterator(); i.hasNext();){
-			count += ((ConnectionGroup) i.next()).getTotalPhysicalConnectionCount();
+		Collection<ConnectionGroup> s = getGroupsMatching(group);
+		for (ConnectionGroup cg : s) {
+			count += cg.getTotalPhysicalConnectionCount();
 		}
 		return count;
 	}
 
 	public static long getTotalTransactionCount(String group) {
 		long count = 0;
-		Collection s = getGroupsMatching(group);
-		for(Iterator i = s.iterator(); i.hasNext();){
-			count += ((ConnectionGroup) i.next()).getTotalTransactionCount();
+		Collection<ConnectionGroup> s = getGroupsMatching(group);
+		for (ConnectionGroup cg : s) {
+			count += cg.getTotalTransactionCount();
 		}
 		return count;
 	}
@@ -160,25 +158,24 @@ public class ConnectionGroupManager {
 	}
 	
 	public static void removeHost(String group, String host, boolean removeExisting) throws SQLException {
-		Collection s = getGroupsMatching(group);
-		for(Iterator i = s.iterator(); i.hasNext();){
-			((ConnectionGroup) i.next()).removeHost(host, removeExisting);
+		Collection<ConnectionGroup> s = getGroupsMatching(group);
+		for (ConnectionGroup cg : s) {
+			cg.removeHost(host, removeExisting);
 		}
 	}
 	
 	public static String getActiveHostLists(String group) {
-		Collection s = getGroupsMatching(group);
-		Map hosts = new HashMap();
-		for(Iterator i = s.iterator(); i.hasNext();){
+		Collection<ConnectionGroup> s = getGroupsMatching(group);
+		Map<String, Integer> hosts = new HashMap<String, Integer>();
+		for (ConnectionGroup cg : s) {
 			
-			Collection l = ((ConnectionGroup) i.next()).getInitialHosts();
-			for(Iterator j = l.iterator(); j.hasNext();  ){
-				String host = j.next().toString();
-				Object o = hosts.get(host);
+			Collection<String> l = cg.getInitialHosts();
+			for (String host : l) {
+				Integer o = hosts.get(host);
 				if(o == null){
 					o = Integer.valueOf(1);
 				} else {
-					o = Integer.valueOf(((Integer) o).intValue() + 1);
+					o = Integer.valueOf(o.intValue() + 1);
 				}
 				hosts.put(host, o);
 				
@@ -187,9 +184,7 @@ public class ConnectionGroupManager {
 		
 		StringBuffer sb = new StringBuffer();
 		String sep = "";
-		for(Iterator i = hosts.keySet().iterator(); i.hasNext();){
-			String host = i.next().toString();
-			
+		for(String host : hosts.keySet()) {
 			sb.append(sep);
 			sb.append(host);
 			sb.append('(');
@@ -201,11 +196,11 @@ public class ConnectionGroupManager {
 	}
 
 	public static String getRegisteredConnectionGroups() {
-		Collection s = getGroupsMatching(null);
+		Collection<ConnectionGroup> s = getGroupsMatching(null);
 		StringBuffer sb = new StringBuffer();
 		String sep = "";
-		for(Iterator i = s.iterator(); i.hasNext();){
-			String group = ((ConnectionGroup)i.next()).getGroupName();
+		for (ConnectionGroup cg : s) {
+			String group = cg.getGroupName();
 			sb.append(sep);
 			sb.append(group);
 			sep = ",";

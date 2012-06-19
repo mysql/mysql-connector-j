@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -34,7 +34,7 @@ class MysqlXAException extends XAException {
 	private static final long serialVersionUID = -9075817535836563004L;
 	
 	private String message;
-	private String xidAsString;
+	protected String xidAsString;
 	
 	public MysqlXAException(int errorCode, String message, String xidAsString) {
 		super(errorCode);

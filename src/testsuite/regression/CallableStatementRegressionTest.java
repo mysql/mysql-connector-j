@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -1346,7 +1346,7 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 
 			for (int i = 0; i < setters.length; i++) {
 				if (setters[i].getName().startsWith("set")) {
-					Class[] args = setters[i].getParameterTypes();
+					Class<?>[] args = setters[i].getParameterTypes();
 
 					if (args.length == 2 && args[0].equals(Integer.TYPE)) {
 						if (!args[1].isPrimitive()) {
@@ -1587,9 +1587,9 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 		Boolean oRetVal;
 
 		String Min_Val_Query = "SELECT MIN_VAL from Bit_Tab";
-		String sMaxBooleanVal = "1";
+		//String sMaxBooleanVal = "1";
 		// sMaxBooleanVal = "true";
-		Boolean bool = Boolean.valueOf("true");
+		//Boolean bool = Boolean.valueOf("true");
 		String Min_Insert = "insert into Bit_Tab values(1,0,null)";
 		// System.out.println("Value to insert=" + extractVal(Min_Insert,1));
 		CallableStatement cstmt;

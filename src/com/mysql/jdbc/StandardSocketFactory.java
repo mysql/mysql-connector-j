@@ -181,7 +181,7 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
 			Method connectWithTimeoutMethod = null;
 			Method socketBindMethod = null;
-			Class socketAddressClass = null;
+			Class<?> socketAddressClass = null;
 
 			String localSocketHostname = props
 					.getProperty("localSocketAddress");
@@ -280,9 +280,9 @@ public class StandardSocketFactory implements SocketFactory, SocketMetadata {
 
 						Object localSockAddr = null;
 
-						Class inetSocketAddressClass = null;
+						Class<?> inetSocketAddressClass = null;
 
-						Constructor addrConstructor = null;
+						Constructor<?> addrConstructor = null;
 
 						try {
 							inetSocketAddressClass = Class

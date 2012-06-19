@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -67,14 +67,14 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 
 	private com.mysql.jdbc.ConnectionImpl underlyingConnection;
 
-	private final static Map MYSQL_ERROR_CODES_TO_XA_ERROR_CODES;
+	private final static Map<Integer, Integer> MYSQL_ERROR_CODES_TO_XA_ERROR_CODES;
 
 	private Log log;
 
 	protected boolean logXaCommands;
 	
 	static {
-		HashMap temp = new HashMap();
+		HashMap<Integer, Integer> temp = new HashMap<Integer, Integer>();
 
 		temp.put(Integer.valueOf(1397), Integer.valueOf(XAException.XAER_NOTA));
 		temp.put(Integer.valueOf(1398), Integer.valueOf(XAException.XAER_INVAL));
@@ -86,7 +86,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 		MYSQL_ERROR_CODES_TO_XA_ERROR_CODES = Collections.unmodifiableMap(temp);
 	}
 	
-	private static final Constructor JDBC_4_XA_CONNECTION_WRAPPER_CTOR;
+	private static final Constructor<?> JDBC_4_XA_CONNECTION_WRAPPER_CTOR;
 
 	static {
 		if (Util.isJdbc4()) {
@@ -296,7 +296,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 		ResultSet rs = null;
 		Statement stmt = null;
 
-		List recoveredXidList = new ArrayList();
+		List<MysqlXid> recoveredXidList = new ArrayList<MysqlXid>();
 
 		try {
 			// TODO: Cache this for lifetime of XAConnection
@@ -593,7 +593,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 
 	protected static XAException mapXAExceptionFromSQLException(SQLException sqlEx) {
 
-		Integer xaCode = (Integer) MYSQL_ERROR_CODES_TO_XA_ERROR_CODES
+		Integer xaCode = MYSQL_ERROR_CODES_TO_XA_ERROR_CODES
 				.get(Integer.valueOf(sqlEx.getErrorCode()));
 
 		if (xaCode != null) {

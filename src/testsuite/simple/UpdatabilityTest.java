@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -25,7 +25,6 @@
  */
 package testsuite.simple;
 
-import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -80,7 +79,7 @@ public class UpdatabilityTest extends BaseTestCase {
 	 *             if an error occurs
 	 */
 	public void testAliasedTables() throws Exception {
-		DatabaseMetaData dbmd = this.conn.getMetaData();
+		//DatabaseMetaData dbmd = this.conn.getMetaData();
 
 		if (versionMeetsMinimum(4, 1)) {
 			Statement scrollableStmt = null;

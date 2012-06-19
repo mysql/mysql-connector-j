@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -331,6 +331,18 @@ public abstract class ResultSetRow {
 	 */
 	public abstract long getLong(int columnIndex) throws SQLException;
 
+	/**
+	 * 
+	 * @param columnIndex
+	 * @param bits
+	 * @param offset
+	 * @param length
+	 * @param conn
+	 * @param rs
+	 * @param cal
+	 * @return
+	 * @throws SQLException
+	 */
 	protected java.sql.Date getNativeDate(int columnIndex, byte[] bits,
 			int offset, int length, MySQLConnection conn, ResultSetImpl rs, Calendar cal)
 			throws SQLException {
@@ -619,6 +631,20 @@ public abstract class ResultSetRow {
 
 	public abstract short getNativeShort(int columnIndex) throws SQLException;
 
+	/**
+	 * 
+	 * @param columnIndex
+	 * @param bits
+	 * @param offset
+	 * @param length
+	 * @param targetCalendar
+	 * @param tz
+	 * @param rollForward
+	 * @param conn
+	 * @param rs
+	 * @return
+	 * @throws SQLException
+	 */
 	protected Time getNativeTime(int columnIndex, byte[] bits, int offset,
 			int length, Calendar targetCalendar, TimeZone tz,
 			boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
@@ -915,6 +941,7 @@ public abstract class ResultSetRow {
 									SQLError.SQL_STATE_ILLEGAL_ARGUMENT, this.exceptionInterceptor);
 				} /* endswitch */
 
+				@SuppressWarnings("unused")
 				SQLWarning precisionLost = new SQLWarning(
 						Messages
 								.getString("ResultSet.Precision_lost_converting_TIMESTAMP_to_Time_with_getTime()_on_column__261") //$NON-NLS-1$
@@ -929,6 +956,7 @@ public abstract class ResultSetRow {
 				min = StringUtils.getInt(timeAsBytes, offset + 14, offset + 16);
 				sec = StringUtils.getInt(timeAsBytes, offset + 17, offset + 19);
 
+				@SuppressWarnings("unused")
 				SQLWarning precisionLost = new SQLWarning(
 						Messages
 								.getString("ResultSet.Precision_lost_converting_DATETIME_to_Time_with_getTime()_on_column__264") //$NON-NLS-1$

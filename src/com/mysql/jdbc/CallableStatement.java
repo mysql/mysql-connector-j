@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -779,7 +779,7 @@ public class CallableStatement extends PreparedStatement implements
 				procNameAsBytes = StringUtils.s2b(procName, this.connection);
 			}
 	
-			ArrayList<ByteArrayRow> resultRows = new ArrayList<ByteArrayRow>();
+			ArrayList<ResultSetRow> resultRows = new ArrayList<ResultSetRow>();
 	
 			for (int i = 0; i < this.parameterCount; i++) {
 				byte[][] row = new byte[13][];

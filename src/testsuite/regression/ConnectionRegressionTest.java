@@ -39,7 +39,6 @@ import java.sql.Statement;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -242,22 +241,19 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	 */
 	public void testCollation41() throws Exception {
 		if (versionMeetsMinimum(4, 1) && isAdminConnectionConfigured()) {
-			Map charsetsAndCollations = getCharacterSetsAndCollations();
+			Map<String, String> charsetsAndCollations = getCharacterSetsAndCollations();
 			charsetsAndCollations.remove("latin7"); // Maps to multiple Java
 			// charsets
 			charsetsAndCollations.remove("ucs2"); // can't be used as a
 			// connection charset
 
-			Iterator charsets = charsetsAndCollations.keySet().iterator();
-
-			while (charsets.hasNext()) {
+			for (String charsetName : charsetsAndCollations.keySet()) {
 				Connection charsetConn = null;
 				Statement charsetStmt = null;
 
 				try {
-					String charsetName = charsets.next().toString();
-					String collationName = charsetsAndCollations.get(
-							charsetName).toString();
+					//String collationName = charsetsAndCollations.get(charsetName);
+					
 					Properties props = new Properties();
 					props.put("characterEncoding", charsetName);
 
@@ -378,8 +374,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		assertTrue(reconnectableConn.isReadOnly() == isReadOnly);
 	}
 
-	private Map getCharacterSetsAndCollations() throws Exception {
-		Map charsetsToLoad = new HashMap();
+	private Map<String, String> getCharacterSetsAndCollations() throws Exception {
+		Map<String, String> charsetsToLoad = new HashMap<String, String>();
 
 		try {
 			this.rs = this.stmt.executeQuery("SHOW character set");
@@ -549,7 +545,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 				Connection failoverConn = DriverManager.getConnection(
 						newUrlToTestFailover.toString(), autoReconnectProps);
-				Statement failoverStmt = portNumConn.createStatement();
+				Statement failoverStmt = failoverConn.createStatement();
 				this.rs = failoverStmt.executeQuery("SELECT connection_id()");
 				this.rs.next();
 
@@ -588,7 +584,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		props.setProperty("autoReconnect", "true");
 		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
 
-		Properties urlProps = new NonRegisteringDriver().parseURL(this.dbUrl,
+		Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl,
 				null);
 
 		String host = urlProps.getProperty(Driver.HOST_PROPERTY_KEY);
@@ -1404,7 +1400,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				ByteArrayOutputStream bOut = new ByteArrayOutputStream();
 				System.setErr(new PrintStream(bOut));
 
-				HashMap methodsToSkipMap = new HashMap();
+				HashMap<String, String> methodsToSkipMap = new HashMap<String, String>();
 
 				// Needs an actual URL
 				methodsToSkipMap.put("getURL", null);
@@ -1422,7 +1418,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 						if (methodName.startsWith("get")
 								&& !methodsToSkipMap.containsKey(methodName)) {
-							Class[] parameterTypes = getMethods[i]
+							Class<?>[] parameterTypes = getMethods[i]
 									.getParameterTypes();
 
 							if (parameterTypes.length == 1
@@ -1810,14 +1806,14 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	 * @throws Exception
 	 */
 	public void testBug23626() throws Exception {
-		Class clazz = this.conn.getClass();
+		Class<?> clazz = this.conn.getClass();
 
 		DriverPropertyInfo[] dpi = new NonRegisteringDriver().getPropertyInfo(
 				dbUrl, null);
 		StringBuffer missingSettersBuf = new StringBuffer();
 		StringBuffer missingGettersBuf = new StringBuffer();
 
-		Class[][] argTypes = { new Class[] { String.class },
+		Class<?>[][] argTypes = { new Class[] { String.class },
 				new Class[] { Integer.TYPE }, new Class[] { Long.TYPE },
 				new Class[] { Boolean.TYPE } };
 
@@ -2102,7 +2098,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 	public void testBug29106() throws Exception {
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		Class checkerClass = cl
+		Class<?> checkerClass = cl
 				.loadClass("com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker");
 		((MysqlValidConnectionChecker) checkerClass.newInstance())
 				.isValidConnection(this.conn);
@@ -2250,7 +2246,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		Properties props = getMasterSlaveProps();
 		String key = null;
 
-		Enumeration keyEnum = props.keys();
+		Enumeration<Object> keyEnum = props.keys();
 
 		while (keyEnum.hasMoreElements()) {
 			key = (String) keyEnum.nextElement();
@@ -2414,7 +2410,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	}
 
 	public void testBug45171() throws Exception {
-		List statementsToTest = new LinkedList();
+		List<Statement> statementsToTest = new LinkedList<Statement>();
 		statementsToTest.add(this.conn.createStatement());
 		statementsToTest.add(((com.mysql.jdbc.Connection) this.conn)
 				.clientPrepareStatement("SELECT 1"));
@@ -2435,10 +2431,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		statementsToTest.add(((com.mysql.jdbc.Connection) this.conn)
 				.serverPrepareStatement("SELECT 1", new String[0]));
 
-		Iterator iter = statementsToTest.iterator();
-
-		while (iter.hasNext()) {
-			Statement toTest = (Statement) iter.next();
+		for (Statement toTest : statementsToTest) {
 			assertEquals(toTest.getResultSetType(), ResultSet.TYPE_FORWARD_ONLY);
 			assertEquals(toTest.getResultSetConcurrency(),
 					ResultSet.CONCUR_READ_ONLY);
@@ -2495,6 +2488,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 		try {
 			Connection noConn = getConnectionWithProps("socketFactory=testsuite.UnreliableSocketFactory");
+			noConn.close();
 		} catch (SQLException sqlEx) {
 			assertTrue(sqlEx.getMessage().indexOf("has not received") != -1);
 		} finally {
@@ -2703,7 +2697,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 															// in reported bug,
 															// it's removed by
 															// the driver
-		Set downedHosts = new HashSet();
+		Set<String> downedHosts = new HashSet<String>();
 		downedHosts.add("first");
 
 		// this loop will hang on the first unreliable host if the bug isn't
@@ -2831,8 +2825,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 
 		public com.mysql.jdbc.ConnectionImpl pickConnection(
-				LoadBalancingConnectionProxy proxy, List configuredHosts,
-				Map liveConnections, long[] responseTimes, int numRetries)
+				LoadBalancingConnectionProxy proxy, List<String> configuredHosts,
+				Map<String, ConnectionImpl> liveConnections, long[] responseTimes, int numRetries)
 				throws SQLException {
 			if (forcedFutureServer == null || forceFutureServerTimes == 0) {
 				return super.pickConnection(proxy, configuredHosts,
@@ -2841,7 +2835,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			if (forceFutureServerTimes > 0) {
 				forceFutureServerTimes--;
 			}
-			ConnectionImpl conn = (ConnectionImpl) liveConnections
+			ConnectionImpl conn = liveConnections
 					.get(forcedFutureServer);
 
 			if (conn == null) {
@@ -2943,8 +2937,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 
 		public com.mysql.jdbc.ConnectionImpl pickConnection(
-				LoadBalancingConnectionProxy proxy, List configuredHosts,
-				Map liveConnections, long[] responseTimes, int numRetries)
+				LoadBalancingConnectionProxy proxy, List<String> configuredHosts,
+				Map<String, ConnectionImpl> liveConnections, long[] responseTimes, int numRetries)
 				throws SQLException {
 			rebalancedTimes++;
 			return super.pickConnection(proxy, configuredHosts,
@@ -3062,10 +3056,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		props.setProperty("useOldUTF8Behavior", "true");
 
 		Connection c = getConnectionWithProps(props);
-		ResultSet rs = c.createStatement().executeQuery(
+		ResultSet r = c.createStatement().executeQuery(
 				"SHOW SESSION VARIABLES LIKE 'character_set_connection'");
-		rs.next();
-		assertEquals("latin1", rs.getString(2));
+		r.next();
+		assertEquals("latin1", r.getString(2));
 	}
 	
 	public void testBug58706() throws Exception {
@@ -3073,7 +3067,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		props.setProperty("autoReconnect", "true");
 		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
 
-		Properties urlProps = new NonRegisteringDriver().parseURL(this.dbUrl,
+		Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl,
 				null);
 
 		String host = urlProps.getProperty(Driver.HOST_PROPERTY_KEY);

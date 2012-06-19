@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2012 Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -32,8 +32,8 @@ import java.util.Properties;
 public class StandardLoadBalanceExceptionChecker implements
 		LoadBalanceExceptionChecker {
 	
-	private List sqlStateList;
-	private List sqlExClassList;
+	private List<String> sqlStateList;
+	private List<Class<?>> sqlExClassList;
 	
 	public boolean shouldExceptionTriggerFailover(SQLException ex) {
 		String sqlState = ex.getSQLState();
@@ -45,7 +45,7 @@ public class StandardLoadBalanceExceptionChecker implements
 			}
 			if(this.sqlStateList != null){
 				// check against SQLState list
-				for(Iterator i = sqlStateList.iterator(); i.hasNext(); ){
+				for(Iterator<String> i = sqlStateList.iterator(); i.hasNext(); ){
 					if(sqlState.startsWith(i.next().toString())){
 						return true;
 					}
@@ -59,8 +59,8 @@ public class StandardLoadBalanceExceptionChecker implements
 		}
 		if(this.sqlExClassList != null){
 			// check against configured class lists
-			for(Iterator i = sqlExClassList.iterator(); i.hasNext(); ){
-				if(((Class)i.next()).isInstance(ex)){
+			for(Iterator<Class<?>> i = sqlExClassList.iterator(); i.hasNext(); ){
+				if(i.next().isInstance(ex)){
 					return true;
 				}
 			}
@@ -85,12 +85,10 @@ public class StandardLoadBalanceExceptionChecker implements
 		if(sqlStates == null || "".equals(sqlStates)){
 			return;
 		}
-		List states = StringUtils.split(sqlStates, ",", true);
-		List newStates = new ArrayList();
-		Iterator i = states.iterator();
+		List<String> states = StringUtils.split(sqlStates, ",", true);
+		List<String> newStates = new ArrayList<String>();
 		
-		while(i.hasNext()){
-			String state = i.next().toString();
+		for (String state : states){
 			if(state.length() > 0){
 				newStates.add(state);
 			}
@@ -104,14 +102,12 @@ public class StandardLoadBalanceExceptionChecker implements
 		if(sqlExClasses == null || "".equals(sqlExClasses)){
 			return;
 		}
-		List classes = StringUtils.split(sqlExClasses, ",", true);
-		List newClasses = new ArrayList();
-		Iterator i = classes.iterator();
+		List<String> classes = StringUtils.split(sqlExClasses, ",", true);
+		List<Class<?>> newClasses = new ArrayList<Class<?>>();
 		
-		while(i.hasNext()){
-			String exClass = i.next().toString();
+		for (String exClass : classes) {
 			try{
-				Class c = Class.forName(exClass);
+				Class<?> c = Class.forName(exClass);
 				newClasses.add(c);
 			} catch (Exception e){ 
 				// ignore and don't check, class doesn't exist

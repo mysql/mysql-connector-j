@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -47,6 +47,9 @@ import com.mysql.jdbc.NonRegisteringDriver;
  */
 public class MysqlDataSource extends ConnectionPropertiesImpl implements
 		DataSource, Referenceable, Serializable  {
+
+	static final long serialVersionUID = -5515846944416881264L;
+
 	/** The driver to create connections with */
 	protected final static NonRegisteringDriver mysqlDriver;
 
@@ -429,7 +432,7 @@ public class MysqlDataSource extends ConnectionPropertiesImpl implements
 		urlProps.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
 		urlProps.remove(NonRegisteringDriver.PORT_PROPERTY_KEY);
 		
-		Iterator keys = urlProps.keySet().iterator();
+		Iterator<Object> keys = urlProps.keySet().iterator();
 		
 		while (keys.hasNext()) {
 			String key = (String)keys.next();

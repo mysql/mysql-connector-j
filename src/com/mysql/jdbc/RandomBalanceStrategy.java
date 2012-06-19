@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -104,9 +104,9 @@ public class RandomBalanceStrategy implements BalanceStrategy {
 						}
 
 						continue;
-					} else {
-						throw sqlEx;
 					}
+
+					throw sqlEx;
 				}
 			}
 			

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -41,7 +41,8 @@ import java.sql.SQLException;
  */
 public class CommunicationsException extends SQLException implements StreamingNotifiable {
 
-	
+	static final long serialVersionUID = 3193864990663398317L;
+
 	private String exceptionMessage = null;
 
 	private boolean streamingResultSetInPlay = false;

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -44,6 +44,9 @@ import javax.sql.PooledConnection;
  */
 public class MysqlConnectionPoolDataSource extends MysqlDataSource implements
 		ConnectionPoolDataSource {
+
+	static final long serialVersionUID = -7767325445592304961L;
+
 	// ~ Methods
 	// ----------------------------------------------------------------
 

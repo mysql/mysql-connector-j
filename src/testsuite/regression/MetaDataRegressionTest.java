@@ -2101,7 +2101,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		ResultSetMetaData rsmd = this.stmt.executeQuery(
 				"SELECT * FROM testBug27916").getMetaData();
 
-		HashMap typeNameToPrecision = new HashMap();
+		HashMap<String, Object> typeNameToPrecision = new HashMap<String, Object>();
 		this.rs = this.conn.getMetaData().getTypeInfo();
 
 		while (this.rs.next()) {
@@ -2208,6 +2208,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			}
 		}
 
+		@SuppressWarnings("unused")
 		byte[] asBytes = fields[0].getBytes("utf-8");
 
 		DatabaseMetaData md = this.conn.getMetaData();
@@ -2920,8 +2921,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 		String host = driver.host(oldProps);
 		int port = driver.port(oldProps);
-		String database = oldProps
-				.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 		String user = oldProps
 				.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
 		String password = oldProps
@@ -3047,7 +3046,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		public ResultSetInternalMethods preProcess(String sql,
 				com.mysql.jdbc.Statement interceptedStatement,
 				com.mysql.jdbc.Connection conn) throws SQLException {
-			java.sql.Statement test = conn.createStatement();
 			if (interceptedStatement instanceof com.mysql.jdbc.PreparedStatement) {
 				sql = ((com.mysql.jdbc.PreparedStatement) interceptedStatement).getPreparedSql();
 				assertTrue("Assereet failed on: " + sql, StringUtils.indexOfIgnoreCase(0,sql, 

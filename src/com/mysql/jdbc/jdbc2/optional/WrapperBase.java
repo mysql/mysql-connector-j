@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -112,11 +112,11 @@ abstract class WrapperBase {
 		 * @param clazz
 		 * @return
 		 */
-		private Object proxyIfInterfaceIsJdbc(Object toProxy, Class clazz) {
-			Class[] interfaces = clazz.getInterfaces();
+		private Object proxyIfInterfaceIsJdbc(Object toProxy, Class<?> clazz) {
+			Class<?>[] interfaces = clazz.getInterfaces();
 			
-			for (int i = 0; i < interfaces.length; i++) {
-				String packageName = interfaces[i].getPackage().getName();
+			for (Class<?> iclass : interfaces) {
+				String packageName = iclass.getPackage().getName();
 				
 				if ("java.sql".equals(packageName) || 
 						"javax.sql".equals(packageName)) {
@@ -125,7 +125,7 @@ abstract class WrapperBase {
 							new ConnectionErrorFiringInvocationHandler(toProxy));
 				}
 				
-				return proxyIfInterfaceIsJdbc(toProxy, interfaces[i]);
+				return proxyIfInterfaceIsJdbc(toProxy, iclass);
 			}
 			
 			return toProxy;

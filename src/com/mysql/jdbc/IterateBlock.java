@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -29,17 +29,17 @@ import java.util.Iterator;
 
 import com.mysql.jdbc.DatabaseMetaData.IteratorWithCleanup;
 
-public abstract class IterateBlock {
-	IteratorWithCleanup iteratorWithCleanup;
-	Iterator javaIterator;
+public abstract class IterateBlock<T> {
+	IteratorWithCleanup<T> iteratorWithCleanup;
+	Iterator<T> javaIterator;
 	boolean stopIterating = false;
 	
-	IterateBlock(IteratorWithCleanup i) {
+	IterateBlock(IteratorWithCleanup<T> i) {
 		this.iteratorWithCleanup = i;
 		this.javaIterator = null;
 	}
 	
-	IterateBlock(Iterator i) {
+	IterateBlock(Iterator<T> i) {
 		this.javaIterator = i;
 		this.iteratorWithCleanup = null;
 	}
@@ -68,7 +68,7 @@ public abstract class IterateBlock {
 		}
 	}
 
-	abstract void forEach(Object each) throws SQLException;
+	abstract void forEach(T each) throws SQLException;
 	
 	public final boolean fullIteration() {
 		return !this.stopIterating;

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -39,6 +39,9 @@ import com.mysql.jdbc.profiler.ProfilerEventHandler;
 public class RowDataDynamic implements RowData {
 
 	class OperationNotSupportedException extends SQLException {
+
+		static final long serialVersionUID = 5582227030787355276L;
+
 		OperationNotSupportedException() {
 			super(
 					Messages.getString("RowDataDynamic.10"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT); //$NON-NLS-1$

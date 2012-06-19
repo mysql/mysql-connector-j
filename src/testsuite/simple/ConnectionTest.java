@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -48,7 +48,6 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -137,6 +136,7 @@ public class ConnectionTest extends BaseTestCase {
 							.executeUpdate("UPDATE testClusterConn SET field1=4");
 
 					// Kill the connection
+					@SuppressWarnings("unused")
 					String connectionId = getSingleValueWithQuery(
 							"SELECT CONNECTION_ID()").toString();
 
@@ -162,10 +162,10 @@ public class ConnectionTest extends BaseTestCase {
 					clusterStmt
 							.executeUpdate("UPDATE testClusterConn SET field1=5");
 
-					ResultSet rs = clusterStmt
+					ResultSet rset = clusterStmt
 							.executeQuery("SELECT * FROM testClusterConn WHERE field1=5");
 
-					assertTrue("One row should be returned", rs.next());
+					assertTrue("One row should be returned", rset.next());
 				} finally {
 					if (clusterStmt != null) {
 						clusterStmt
@@ -857,7 +857,7 @@ public class ConnectionTest extends BaseTestCase {
 
 		File infile = File.createTempFile("foo", "txt");
 		infile.deleteOnExit();
-		String url = infile.toURL().toExternalForm();
+		//String url = infile.toURL().toExternalForm();
 		FileWriter output = new FileWriter(infile);
 		output.write("Test");
 		output.flush();
@@ -895,12 +895,12 @@ public class ConnectionTest extends BaseTestCase {
 		props.setProperty("profileSQL", "true");
 		props.setProperty("logFactory", "com.mysql.jdbc.log.StandardLogger");
 
-		Connection conn1 = getConnectionWithProps(props);
+		//Connection conn1 = getConnectionWithProps(props);
 
 		// eliminate side-effects when not run in isolation
 		StandardLogger.bufferedLog = new StringBuffer();
 
-		Connection conn2 = getConnectionWithProps(props);
+		//Connection conn2 = getConnectionWithProps(props);
 
 		StandardLogger.saveLogsToBuffer();
 
@@ -964,7 +964,7 @@ public class ConnectionTest extends BaseTestCase {
 			props.setProperty("failOverReadOnly", "false");
 
 			Properties urlProps = new NonRegisteringDriver().parseURL(
-					this.dbUrl, null);
+					dbUrl, null);
 
 			String host = urlProps.getProperty(Driver.HOST_PROPERTY_KEY);
 			String port = urlProps.getProperty(Driver.PORT_PROPERTY_KEY);
@@ -1251,9 +1251,6 @@ public class ConnectionTest extends BaseTestCase {
 		// setting GLOBAL variable during test is not ok
 		// The protocol limit for max_allowed_packet is 1GB.
 		if (testBlobFile == null || testBlobFile.length() != requiredSize) {
-			if (testBlobFile != null && testBlobFile.length() != requiredSize) {
-				testBlobFile.delete();
-			}
 
 			testBlobFile = File.createTempFile("cmj-testblob", ".dat");
 			testBlobFile.deleteOnExit();
@@ -1308,17 +1305,16 @@ public class ConnectionTest extends BaseTestCase {
 			return;
 		}
 
-		Enumeration allInterfaces = NetworkInterface.getNetworkInterfaces();
+		Enumeration<NetworkInterface> allInterfaces = NetworkInterface.getNetworkInterfaces();
 
 		SpawnedWorkerCounter counter = new SpawnedWorkerCounter();
 
-		List allChecks = new ArrayList();
+		List<LocalSocketAddressCheckThread> allChecks = new ArrayList<LocalSocketAddressCheckThread>();
 
 		while (allInterfaces.hasMoreElements()) {
-			NetworkInterface intf = (NetworkInterface) allInterfaces
-					.nextElement();
+			NetworkInterface intf = allInterfaces.nextElement();
 
-			Enumeration allAddresses = intf.getInetAddresses();
+			Enumeration<InetAddress> allAddresses = intf.getInetAddresses();
 
 			allChecks.add(new LocalSocketAddressCheckThread(allAddresses,
 					counter));
@@ -1326,12 +1322,10 @@ public class ConnectionTest extends BaseTestCase {
 
 		counter.setWorkerCount(allChecks.size());
 
-		for (Iterator it = allChecks.iterator(); it.hasNext();) {
-			LocalSocketAddressCheckThread t = (LocalSocketAddressCheckThread) it
-					.next();
+		for (LocalSocketAddressCheckThread t : allChecks) {
 			t.start();
 		}
-
+		
 		// Wait for tests to complete....
 		synchronized (counter) {
 
@@ -1349,18 +1343,14 @@ public class ConnectionTest extends BaseTestCase {
 		boolean didOneWork = false;
 		boolean didOneFail = false;
 
-		for (Iterator it = allChecks.iterator(); it.hasNext();) {
-			LocalSocketAddressCheckThread t = (LocalSocketAddressCheckThread) it
-					.next();
-
+		for (LocalSocketAddressCheckThread t : allChecks) {
 			if (t.atLeastOneWorked) {
 				didOneWork = true;
 
 				break;
-			} else {
-				if (!didOneFail) {
-					didOneFail = true;
-				}
+			}
+			if (!didOneFail) {
+				didOneFail = true;
 			}
 		}
 
@@ -1402,7 +1392,7 @@ public class ConnectionTest extends BaseTestCase {
 	}
 
 	class SpawnedWorkerCounter {
-		private int workerCount = 0;
+		protected int workerCount = 0;
 
 		synchronized void setWorkerCount(int i) {
 			workerCount = i;
@@ -1416,10 +1406,10 @@ public class ConnectionTest extends BaseTestCase {
 
 	class LocalSocketAddressCheckThread extends Thread {
 		boolean atLeastOneWorked = false;
-		Enumeration allAddresses = null;
+		Enumeration<InetAddress> allAddresses = null;
 		SpawnedWorkerCounter counter = null;
 
-		LocalSocketAddressCheckThread(Enumeration e, SpawnedWorkerCounter c) {
+		LocalSocketAddressCheckThread(Enumeration<InetAddress> e, SpawnedWorkerCounter c) {
 			allAddresses = e;
 			counter = c;
 		}
@@ -1427,7 +1417,7 @@ public class ConnectionTest extends BaseTestCase {
 		public void run() {
 
 			while (allAddresses.hasMoreElements()) {
-				InetAddress addr = (InetAddress) allAddresses.nextElement();
+				InetAddress addr = allAddresses.nextElement();
 
 				try {
 					Properties props = new Properties();
@@ -1652,14 +1642,14 @@ public class ConnectionTest extends BaseTestCase {
 	}
 
 	private void checkInterfaceImplemented(Method[] interfaceMethods,
-			Class implementingClass, Object invokeOn)
+			Class<?> implementingClass, Object invokeOn)
 			throws NoSuchMethodException {
 		for (int i = 0; i < interfaceMethods.length; i++) {
 			Method toFind = interfaceMethods[i];
 			Method toMatch = implementingClass.getMethod(toFind.getName(),
 					toFind.getParameterTypes());
 			assertNotNull(toFind.toString(), toMatch);
-			Class paramTypes[] = toFind.getParameterTypes();
+			Class<?> paramTypes[] = toFind.getParameterTypes();
 
 			Object[] args = new Object[paramTypes.length];
 			fillPrimitiveDefaults(paramTypes, args, paramTypes.length);
@@ -1711,8 +1701,6 @@ public class ConnectionTest extends BaseTestCase {
 		failed = false;
 
 		selfDestructingConn = getConnectionWithProps("selfDestructOnPingSecondsLifetime=1");
-
-		long begin = System.currentTimeMillis();
 
 		for (int i = 0; i < 20; i++) {
 			selfDestructingConn.createStatement().executeQuery(

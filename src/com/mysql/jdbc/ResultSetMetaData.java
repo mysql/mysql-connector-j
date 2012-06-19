@@ -829,7 +829,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      * for an object with the given interface.
      * @since 1.6
      */
-	public boolean isWrapperFor(Class iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 		// This works for classes that aren't actually wrapping
 		// anything
 		return iface.isInstance(this);
@@ -849,7 +849,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
      * @throws java.sql.SQLException If no object found that implements the interface 
      * @since 1.6
      */
-	public Object unwrap(Class iface) throws java.sql.SQLException {
+	public Object unwrap(Class<?> iface) throws java.sql.SQLException {
     	try {
     		// This works for classes that aren't actually wrapping
     		// anything

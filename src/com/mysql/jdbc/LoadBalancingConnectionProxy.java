@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -145,13 +145,13 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 	private LoadBalanceExceptionChecker exceptionChecker;
 
-	private Map<Class, Boolean> jdbcInterfacesForProxyCache = new HashMap<Class, Boolean>();
+	private Map<Class<?>, Boolean> jdbcInterfacesForProxyCache = new HashMap<Class<?>, Boolean>();
 	
 	private MySQLConnection thisAsConnection = null;
 
 	private int autoCommitSwapThreshold = 0;
 	
-	private static Constructor JDBC_4_LB_CONNECTION_CTOR;
+	private static Constructor<?> JDBC_4_LB_CONNECTION_CTOR;
 	
 	static {
 		if(Util.isJdbc4()){
@@ -483,6 +483,13 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	 * Proxies method invocation on the java.sql.Connection interface, trapping
 	 * "close", "isClosed" and "commit/rollback" (to switch connections for load
 	 * balancing).
+	 * 
+	 * @param proxy
+	 * @param method
+	 * @param args
+	 * @param swapAtTransactionBoundary
+	 * @return
+	 * @throws Throwable
 	 */
 	public synchronized Object invoke(Object proxy, Method method, Object[] args, boolean swapAtTransactionBoundary)
 			throws Throwable {
@@ -648,11 +655,11 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	 * @param clazz
 	 * @return
 	 */
-	Object proxyIfInterfaceIsJdbc(Object toProxy, Class clazz) {
+	Object proxyIfInterfaceIsJdbc(Object toProxy, Class<?> clazz) {
 		
 		if(isInterfaceJdbc(clazz)){
 			
-		Class[] interfacesToProxy = getAllInterfacesToProxy(clazz);
+		Class<?>[] interfacesToProxy = getAllInterfacesToProxy(clazz);
 		
 		return Proxy.newProxyInstance(toProxy.getClass()
 				.getClassLoader(), interfacesToProxy,
@@ -662,21 +669,21 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		return toProxy;
 	}
 
-	private Map<Class, Class[]> allInterfacesToProxy = new HashMap<Class, Class[]>();
+	private Map<Class<?>, Class<?>[]> allInterfacesToProxy = new HashMap<Class<?>, Class<?>[]>();
 	
-	private Class[] getAllInterfacesToProxy(Class clazz) {
-		Class[] interfacesToProxy = (Class[]) this.allInterfacesToProxy.get(clazz);
+	private Class<?>[] getAllInterfacesToProxy(Class<?> clazz) {
+		Class<?>[] interfacesToProxy = this.allInterfacesToProxy.get(clazz);
 		
 		if (interfacesToProxy != null) {
 			return interfacesToProxy;
 		}
 		
-		List<Class> interfaces = new LinkedList<Class>();
+		List<Class<?>> interfaces = new LinkedList<Class<?>>();
 		
-		Class superClass = clazz;
+		Class<?> superClass = clazz;
 		
 		while (!(superClass.equals(Object.class))) {
-			Class[] declared = superClass.getInterfaces();
+			Class<?>[] declared = superClass.getInterfaces();
 			
 			for (int i = 0; i < declared.length; i++) {
 				interfaces.add(declared[i]);
@@ -694,12 +701,12 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	}
 	
 	
-	private boolean isInterfaceJdbc(Class clazz){
+	private boolean isInterfaceJdbc(Class<?> clazz){
 		if(this.jdbcInterfacesForProxyCache.containsKey(clazz)){
 			return (this.jdbcInterfacesForProxyCache.get(clazz)).booleanValue();
 		}
 		
-		Class[] interfaces = clazz.getInterfaces();
+		Class<?>[] interfaces = clazz.getInterfaces();
 
 		for (int i = 0; i < interfaces.length; i++) {
 			String packageName = interfaces[i].getPackage().getName();

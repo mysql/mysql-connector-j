@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -133,7 +133,7 @@ public class DataSourceTest extends BaseTestCase {
 			ObjectFactory factory = (ObjectFactory) Class.forName(
 					objAsRef.getFactoryClassName()).newInstance();
 			boundDs = (DataSource) factory.getObjectInstance(objAsRef,
-					datasourceName, this.ctx, new Hashtable());
+					datasourceName, this.ctx, new Hashtable<Object, Object>());
 		}
 
 		assertTrue("Datasource not bound", boundDs != null);
@@ -240,7 +240,7 @@ public class DataSourceTest extends BaseTestCase {
 		this.tempDir.deleteOnExit();
 
 		com.mysql.jdbc.jdbc2.optional.MysqlDataSource ds;
-		Hashtable env = new Hashtable();
+		Hashtable<String, String> env = new Hashtable<String, String>();
 		env.put(Context.INITIAL_CONTEXT_FACTORY,
 				"com.sun.jndi.fscontext.RefFSContextFactory");
 		env.put(Context.PROVIDER_URL, this.tempDir.toURI().toString());

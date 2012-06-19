@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -181,7 +181,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
      * for an object with the given interface.
      * @since 1.6
      */
-	public boolean isWrapperFor(Class iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 
 		// This works for classes that aren't actually wrapping
 		// anything
@@ -202,7 +202,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
      * @throws java.sql.SQLException If no object found that implements the interface 
      * @since 1.6
      */
-	public Object unwrap(Class iface) throws java.sql.SQLException {
+	public Object unwrap(Class<?> iface) throws java.sql.SQLException {
     	try {
     		// This works for classes that aren't actually wrapping
     		// anything

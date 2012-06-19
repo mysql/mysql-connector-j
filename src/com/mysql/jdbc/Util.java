@@ -379,7 +379,7 @@ public class Util {
 		return traceBuf.toString();
 	}
 
-	public static Object getInstance(String className, Class[] argTypes,
+	public static Object getInstance(String className, Class<?>[] argTypes,
 			Object[] args, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 
 		try {
@@ -404,7 +404,7 @@ public class Util {
 	 * Handles constructing new instance with the given constructor and wrapping
 	 * (or not, as required) the exceptions that could possibly be generated
 	 */
-	public static final Object handleNewInstance(Constructor ctor, Object[] args, ExceptionInterceptor exceptionInterceptor)
+	public static final Object handleNewInstance(Constructor<?> ctor, Object[] args, ExceptionInterceptor exceptionInterceptor)
 			throws SQLException {
 		try {
 
@@ -447,7 +447,7 @@ public class Util {
 	 */
 	public static boolean interfaceExists(String hostname) {
 		try {
-			Class networkInterfaceClass = Class
+			Class<?> networkInterfaceClass = Class
 					.forName("java.net.NetworkInterface");
 			return networkInterfaceClass.getMethod("getByName", (Class[])null).invoke(
 					networkInterfaceClass, new Object[] { hostname }) != null;
@@ -493,6 +493,7 @@ public class Util {
 		return System.currentTimeMillis();
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs)
 			throws SQLException {
 		while (rs.next()) {
@@ -500,6 +501,7 @@ public class Util {
 		}
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, int key, int value)
 			throws SQLException {
 		while (rs.next()) {
@@ -507,6 +509,7 @@ public class Util {
 		}
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static void resultSetToMap(Map mappedValues, java.sql.ResultSet rs, String key, String value)
 			throws SQLException {
 		while (rs.next()) {
@@ -514,13 +517,10 @@ public class Util {
 		}
 	}
 	
-	public static Map calculateDifferences(Map map1, Map map2) {
-		Map diffMap = new HashMap();
+	public static Map<Object, Object> calculateDifferences(Map<?,?> map1, Map<?,?> map2) {
+		Map<Object, Object> diffMap = new HashMap<Object, Object>();
 
-		Iterator map1Entries = map1.entrySet().iterator();
-
-		while (map1Entries.hasNext()) {
-			Map.Entry entry = (Map.Entry) map1Entries.next();
+		for (Map.Entry<?,?> entry : map1.entrySet()) {
 			Object key = entry.getKey();
 
 			Number value1 = null;

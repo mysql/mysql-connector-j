@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -610,7 +610,7 @@ public class MetadataTest extends BaseTestCase {
             createTable("`t1-1`", "(c1 char(1))");
             createTable("`t1-2`", "(c1 char(1))");
             createTable("`t2`", "(c1 char(1))");
-            Set tableNames = new HashSet();
+            Set<String> tableNames = new HashSet<String>();
             tableNames.add("t1-1");
             tableNames.add("t1-2");
             Properties props = new Properties();
@@ -657,7 +657,7 @@ public class MetadataTest extends BaseTestCase {
 	                this.rs = stmt1.executeQuery("SELECT USER()");
 	                this.rs.next();
 	                String user = this.rs.getString(1);
-	                List userHost = StringUtils.split(user, "@", false);
+	                List<String> userHost = StringUtils.split(user, "@", false);
 	                if (userHost.size() < 2) {
 	                	fail("This test requires a JDBC URL with a user, and won't work with the anonymous user. " +
 	                			"You can skip this test by setting the system property " + dontRunPropertyName);

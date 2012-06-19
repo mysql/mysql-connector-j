@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -37,9 +37,9 @@ import com.mysql.jdbc.Util;
 
 public class ServerStatusDiffInterceptor implements StatementInterceptor {
 
-	private Map preExecuteValues = new HashMap();
+	private Map<String, String> preExecuteValues = new HashMap<String, String>();
 
-	private Map postExecuteValues = new HashMap();
+	private Map<String, String> postExecuteValues = new HashMap<String, String>();
 
 	public void init(Connection conn, Properties props) throws SQLException {
 
@@ -64,7 +64,7 @@ public class ServerStatusDiffInterceptor implements StatementInterceptor {
 	}
 
 	private void populateMapWithSessionStatusValues(Connection connection,
-			Map toPopulate) throws SQLException {
+			Map<String, String> toPopulate) throws SQLException {
 		java.sql.Statement stmt = null;
 		java.sql.ResultSet rs = null;
 

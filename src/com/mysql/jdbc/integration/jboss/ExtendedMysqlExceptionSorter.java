@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -35,6 +35,8 @@ import org.jboss.resource.adapter.jdbc.vendor.MySQLExceptionSorter;
  *          mmatthews Exp $
  */
 public final class ExtendedMysqlExceptionSorter extends MySQLExceptionSorter {
+
+	static final long serialVersionUID = -2454582336945931069L;
 
 	/*
 	 * (non-Javadoc)

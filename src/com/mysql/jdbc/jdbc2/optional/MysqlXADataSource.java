@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -39,6 +39,8 @@ import javax.sql.XAConnection;
  */
 public class MysqlXADataSource extends MysqlDataSource implements
 		javax.sql.XADataSource {
+
+	static final long serialVersionUID = 7911390333152247455L;
 
 	/**
 	 * @see javax.sql.XADataSource#getXAConnection()

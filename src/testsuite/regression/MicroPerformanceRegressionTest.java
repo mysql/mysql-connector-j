@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -51,7 +51,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 
 	private final static double LEEWAY = 10.0; // account for VMs
 
-	private final static Map BASELINE_TIMES = new HashMap();
+	private final static Map<String, Double> BASELINE_TIMES = new HashMap<String, Double>();
 
 	static {
 		BASELINE_TIMES.put("ResultSet.getInt()", new Double(0.00661));
@@ -264,8 +264,8 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 			pStmt.close();
 		}
 
-		double getPrepareStmtAvgMs = (double) (currentTimeMillis() - start)
-				/ numPrepares;
+		@SuppressWarnings("unused")
+		double getPrepareStmtAvgMs = (double) (currentTimeMillis() - start) / numPrepares;
 
 		// checkTime("Connection.prepareStatement()", getPrepareStmtAvgMs);
 
@@ -407,7 +407,7 @@ public class MicroPerformanceRegressionTest extends BaseTestCase {
 			adjustForVendor = 4.0D;
 		}
 
-		Double baselineExecTimeMs = (Double) BASELINE_TIMES.get(testType);
+		Double baselineExecTimeMs = BASELINE_TIMES.get(testType);
 
 		if (baselineExecTimeMs == null) {
 			throw new Exception("No baseline time recorded for test '"

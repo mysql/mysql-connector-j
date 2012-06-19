@@ -445,7 +445,7 @@ public class RowDataCursor implements RowData {
 		return RESULT_SET_SIZE_UNKNOWN;
 	}
 
-	private void nextRecord() throws SQLException {
+	protected void nextRecord() throws SQLException {
 
 	}
 

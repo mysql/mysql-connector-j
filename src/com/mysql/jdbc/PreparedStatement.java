@@ -88,9 +88,9 @@ import com.mysql.jdbc.profiler.ProfilerEvent;
  */
 public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		java.sql.PreparedStatement {
-	private static final Constructor JDBC_4_PSTMT_2_ARG_CTOR;
-	private static final Constructor JDBC_4_PSTMT_3_ARG_CTOR;
-	private static final Constructor JDBC_4_PSTMT_4_ARG_CTOR;
+	private static final Constructor<?> JDBC_4_PSTMT_2_ARG_CTOR;
+	private static final Constructor<?> JDBC_4_PSTMT_3_ARG_CTOR;
+	private static final Constructor<?> JDBC_4_PSTMT_4_ARG_CTOR;
 	
 	static {
 		if (Util.isJdbc4()) {
@@ -683,7 +683,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 	
 	class AppendingBatchVisitor implements BatchVisitor {
-		LinkedList statementComponents = new LinkedList();
+		LinkedList<byte[]> statementComponents = new LinkedList<byte[]>();
 		
 		public BatchVisitor append(byte[] values) {
 			statementComponents.addLast(values);
@@ -720,9 +720,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		
 		public String toString() {
 			StringBuffer buf = new StringBuffer();
-			Iterator iter = this.statementComponents.iterator();
+			Iterator<byte[]> iter = this.statementComponents.iterator();
 			while (iter.hasNext()) {
-				buf.append(StringUtils.toString((byte[]) iter.next()));
+				buf.append(StringUtils.toString(iter.next()));
 			}
 			
 			return buf.toString();
@@ -790,7 +790,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	/** Is this query a LOAD DATA query? */
 	protected boolean isLoadDataQuery = false;
 
-	private boolean[] isNull = null;
+	protected boolean[] isNull = null;
 
 	private boolean[] isStream = null;
 
@@ -845,7 +845,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	private CharsetEncoder charsetEncoder;
 	
 	/** Command index of currently executing batch command. */
-	private int batchCommandIndex = -1;
+	protected int batchCommandIndex = -1;
 	
 	protected boolean serverSupportsFracSecs;
 	
@@ -1025,7 +1025,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public void addBatch() throws SQLException {
 		synchronized (checkClosed()) {
 			if (this.batchedArgs == null) {
-				this.batchedArgs = new ArrayList();
+				this.batchedArgs = new ArrayList<Object>();
 			}
 	
 			for (int i = 0; i < this.parameterValues.length; i++) {
@@ -1509,7 +1509,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				int numBatchedArgs = this.batchedArgs.size();
 				
 				if (this.retrieveGeneratedKeys) {
-					this.batchedGeneratedKeys = new ArrayList(numBatchedArgs);
+					this.batchedGeneratedKeys = new ArrayList<ResultSetRow>(numBatchedArgs);
 				}
 
 				int numValuesPerBatch = computeBatchSize(numBatchedArgs);
@@ -1718,7 +1718,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			int numBatchedArgs = this.batchedArgs.size();
 	
 			if (this.retrieveGeneratedKeys) {
-				this.batchedGeneratedKeys = new ArrayList(numBatchedArgs);
+				this.batchedGeneratedKeys = new ArrayList<ResultSetRow>(numBatchedArgs);
 			}
 	
 			int numValuesPerBatch = computeBatchSize(numBatchedArgs);
@@ -1745,7 +1745,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			try {
 				try {
 						batchedStatement = /* FIXME -if we ever care about folks proxying our MySQLConnection */
-								prepareBatchedInsertSQL((MySQLConnection) locallyScopedConn, numValuesPerBatch);
+								prepareBatchedInsertSQL(locallyScopedConn, numValuesPerBatch);
 	
 					if (locallyScopedConn.getEnableQueryTimeouts()
 							&& batchTimeout != 0
@@ -1788,7 +1788,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					}
 	
 					try {
-						updateCountRunningTotal += batchedStatement.executeUpdate();
+						//updateCountRunningTotal += 
+								batchedStatement.executeUpdate();
 					} catch (SQLException ex) {
 						sqlEx = handleExceptionForBatch(batchCounter - 1,
 								numValuesPerBatch, updateCounts, ex);
@@ -1806,7 +1807,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				try {
 					if (numValuesPerBatch > 0) {
 							batchedStatement = 
-									prepareBatchedInsertSQL((MySQLConnection) locallyScopedConn,
+									prepareBatchedInsertSQL(locallyScopedConn,
 											numValuesPerBatch);
 						
 						if (timeoutTask != null) {
@@ -1990,7 +1991,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					}
 					
 					if (this.retrieveGeneratedKeys) {
-						this.batchedGeneratedKeys = new ArrayList(nbrCommands);
+						this.batchedGeneratedKeys = new ArrayList<ResultSetRow>(nbrCommands);
 					}
 		
 					for (batchCommandIndex = 0; batchCommandIndex < nbrCommands; batchCommandIndex++) {
@@ -2785,8 +2786,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		char c;
 		char separator;
 		StringReader reader = new StringReader(dt + " "); //$NON-NLS-1$
-		ArrayList vec = new ArrayList();
-		ArrayList vecRemovelist = new ArrayList();
+		ArrayList<Object[]> vec = new ArrayList<Object[]>();
+		ArrayList<Object[]> vecRemovelist = new ArrayList<Object[]>();
 		Object[] nv = new Object[3];
 		Object[] v;
 		nv[0] = Character.valueOf('y');
@@ -2807,7 +2808,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			maxvecs = vec.size();
 
 			for (count = 0; count < maxvecs; count++) {
-				v = (Object[]) vec.get(count);
+				v = vec.get(count);
 				n = ((Integer) v[2]).intValue();
 				c = getSuccessor(((Character) v[0]).charValue(), n);
 
@@ -2854,7 +2855,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			int size = vecRemovelist.size();
 
 			for (int i = 0; i < size; i++) {
-				v = (Object[]) vecRemovelist.get(i);
+				v = vecRemovelist.get(i);
 				vec.remove(v);
 			}
 
@@ -2864,7 +2865,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		int size = vec.size();
 
 		for (int i = 0; i < size; i++) {
-			v = (Object[]) vec.get(i);
+			v = vec.get(i);
 			c = ((Character) v[0]).charValue();
 			n = ((Integer) v[2]).intValue();
 
@@ -2886,7 +2887,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 
 		vecRemovelist.clear();
-		v = (Object[]) vec.get(0); // might throw exception
+		v = vec.get(0); // might throw exception
 
 		StringBuffer format = (StringBuffer) v[1];
 		format.setLength(format.length() - 1);
@@ -3792,7 +3793,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 
-	private void checkBounds(int paramIndex, int parameterIndexOffset)
+	protected void checkBounds(int paramIndex, int parameterIndexOffset)
 			throws SQLException {
 		synchronized (checkClosed()) {
 			if ((paramIndex < 1)) {
@@ -3909,8 +3910,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		} else if (parameterObj instanceof String) {
 			switch (targetSqlType) {
 			case Types.BIT:
-				if ("1".equals((String) parameterObj)
-						|| "0".equals((String) parameterObj)) {
+				if ("1".equals(parameterObj)
+						|| "0".equals(parameterObj)) {
 					parameterAsNum = Integer.valueOf((String) parameterObj);
 				} else {
 					boolean parameterAsBoolean = "true"
@@ -5544,7 +5545,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		private boolean[] parameterIsNull;
 		
 		EmulatedPreparedStatementBindings() throws SQLException {
-			List rows = new ArrayList();
+			List<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 			parameterIsNull = new boolean[parameterCount];
 			System
 					.arraycopy(isNull, 0, this.parameterIsNull, 0,

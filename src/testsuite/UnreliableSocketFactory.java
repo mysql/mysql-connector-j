@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -56,15 +56,15 @@ import com.mysql.jdbc.StandardSocketFactory;
 public class UnreliableSocketFactory extends StandardSocketFactory {
 	public static final long DEFAULT_TIMEOUT_MILLIS = 10 * 60 * 1000; // ugh
 
-	private static final Map MAPPED_HOSTS = new HashMap();
+	private static final Map<String, String> MAPPED_HOSTS = new HashMap<String, String>();
 	
-	static final Set HUNG_READ_HOSTS = new HashSet();
+	static final Set<String> HUNG_READ_HOSTS = new HashSet<String>();
 	
-	static final Set HUNG_WRITE_HOSTS = new HashSet();
+	static final Set<String> HUNG_WRITE_HOSTS = new HashSet<String>();
 	
-	static final Set HUNG_CONNECT_HOSTS = new HashSet();
+	static final Set<String> HUNG_CONNECT_HOSTS = new HashSet<String>();
 	
-	static final Set IMMEDIATELY_DOWNED_HOSTS = new HashSet();
+	static final Set<String> IMMEDIATELY_DOWNED_HOSTS = new HashSet<String>();
 	
 	private String hostname;
 	private int portNumber;
@@ -115,11 +115,11 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 		IMMEDIATELY_DOWNED_HOSTS.remove(hostname);
 	}
 	
-	public Socket connect(String hostname, int portNumber, Properties props)
+	public Socket connect(String host_name, int port_number, Properties prop)
 			throws SocketException, IOException {
-		this.hostname = hostname;
-		this.portNumber = portNumber;
-		this.props = props;
+		this.hostname = host_name;
+		this.portNumber = port_number;
+		this.props = prop;
 		return getNewSocket();
 	}
 	
@@ -131,7 +131,7 @@ public class UnreliableSocketFactory extends StandardSocketFactory {
 			throw new SocketTimeoutException();
 		}
 		
-		String hostnameToConnectTo = (String) MAPPED_HOSTS.get(hostname);
+		String hostnameToConnectTo = MAPPED_HOSTS.get(hostname);
 		
 		if (hostnameToConnectTo == null) {
 			hostnameToConnectTo = hostname;

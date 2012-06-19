@@ -80,6 +80,9 @@ import com.mysql.jdbc.util.LRUCache;
  */
 public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		MySQLConnection {
+
+	private static final long serialVersionUID = 2877471301981509474L;
+
 	private static final SQLPermission SET_NETWORK_TIMEOUT_PERM = new SQLPermission("setNetworkTimeout");
 	
 	private static final SQLPermission ABORT_PERM = new SQLPermission("abort");
@@ -239,7 +242,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	/** Null logger shared by all connections at startup */
 	private static final Log NULL_LOGGER = new NullLogger(LOGGER_INSTANCE_NAME);
 
-	private static Map<?, ?> roundRobinStatsMap;
+	protected static Map<?, ?> roundRobinStatsMap;
 
 	private static final Map<String, Map<Long, String>> serverCollationByUrl = new HashMap<String, Map<Long,String>>();
 
@@ -401,7 +404,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 	private static final Random random = new Random();
 	
-	private static synchronized int getNextRoundRobinHostIndex(String url,
+	/**
+	 * 
+	 * @param url
+	 * @param hostList
+	 * @return
+	 */
+	protected static synchronized int getNextRoundRobinHostIndex(String url,
 			List<?> hostList) {
 		// we really do "random" here, because you don't get even
 		// distribution when this is coupled with connection pools
@@ -614,7 +623,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * The type map for UDTs (not implemented, but used by some third-party
 	 * vendors, most notably IBM WebSphere)
 	 */
-	private Map<?, ?> typeMap;
+	private Map<String,Class<?>> typeMap;
 
 	/** Has ANSI_QUOTES been enabled on the server? */
 	private boolean useAnsiQuotes = false;
@@ -1575,8 +1584,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public synchronized void close() throws SQLException {
 		if (this.connectionLifecycleInterceptors != null) {
-			new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
-				void forEach(Object each) throws SQLException {
+			new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
+				void forEach(Extension each) throws SQLException {
 					((ConnectionLifecycleInterceptor)each).close();
 				}
 			}.doForAll();
@@ -1653,9 +1662,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		try {
 			if (this.connectionLifecycleInterceptors != null) {
-				IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+				IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
 
-					void forEach(Object each) throws SQLException {
+					void forEach(Extension each) throws SQLException {
 						if (!((ConnectionLifecycleInterceptor)each).commit()) {
 							this.stopIterating = true;
 						}
@@ -2509,6 +2518,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			this.serverSideStatementCheckCache = new LRUCache(cacheSize);
 			
 			this.serverSideStatementCache = new LRUCache(cacheSize) {
+
+				private static final long serialVersionUID = 7692318650375988114L;
+
 				protected boolean removeEldestEntry(java.util.Map.Entry<Object, Object> eldest) {
 					if (this.maxElements <= 1) {
 						return false;
@@ -3287,9 +3299,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             if a database error occurs
 	 */
-	public synchronized java.util.Map getTypeMap() throws SQLException {
+	public synchronized java.util.Map<String,Class<?>> getTypeMap() throws SQLException {
 		if (this.typeMap == null) {
-			this.typeMap = new HashMap();
+			this.typeMap = new HashMap<String,Class<?>>();
 		}
 
 		return this.typeMap;
@@ -4691,7 +4703,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * Reports currently collected metrics if this feature is enabled and the
 	 * timeout has passed.
 	 */
-	private void reportMetricsIfNeeded() {
+	protected void reportMetricsIfNeeded() {
 		if (getGatherPerformanceMetrics()) {
 			if ((System.currentTimeMillis() - this.metricsLastReportedMs) > getReportMetricsIntervalMillis()) {
 				reportMetrics();
@@ -4742,9 +4754,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		try {
 			if (this.connectionLifecycleInterceptors != null) {
-				IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+				IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
 
-					void forEach(Object each) throws SQLException {
+					void forEach(Extension each) throws SQLException {
 						if (!((ConnectionLifecycleInterceptor)each).rollback()) {
 							this.stopIterating = true;
 						}
@@ -4799,9 +4811,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 			try {
 				if (this.connectionLifecycleInterceptors != null) {
-					IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+					IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
 
-						void forEach(Object each) throws SQLException {
+						void forEach(Extension each) throws SQLException {
 							if (!((ConnectionLifecycleInterceptor)each).rollback(savepoint)) {
 								this.stopIterating = true;
 							}
@@ -5002,9 +5014,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		checkClosed();
 		
 		if (this.connectionLifecycleInterceptors != null) {
-			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+			IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
 
-				void forEach(Object each) throws SQLException {
+				void forEach(Extension each) throws SQLException {
 					if (!((ConnectionLifecycleInterceptor)each).setAutoCommit(autoCommitFlag)) {
 						this.stopIterating = true;
 					}
@@ -5092,9 +5104,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		}
 		
 		if (this.connectionLifecycleInterceptors != null) {
-			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+			IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
 
-				void forEach(Object each) throws SQLException {
+				void forEach(Extension each) throws SQLException {
 					if (!((ConnectionLifecycleInterceptor)each).setCatalog(catalog)) {
 						this.stopIterating = true;
 					}
@@ -5353,7 +5365,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @throws SQLException
 	 *             if a database error occurs.
 	 */
-	public synchronized void setTypeMap(java.util.Map map) throws SQLException {
+	public synchronized void setTypeMap(java.util.Map<String,Class<?>> map) throws SQLException {
 		this.typeMap = map;
 	}
 	
@@ -5616,9 +5628,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	public synchronized void transactionBegun() throws SQLException {
 		if (this.connectionLifecycleInterceptors != null) {
-			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+			IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
 
-				void forEach(Object each) throws SQLException {
+				void forEach(Extension each) throws SQLException {
 					((ConnectionLifecycleInterceptor)each).transactionBegun();
 				}
 			};
@@ -5629,9 +5641,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	public synchronized void transactionCompleted() throws SQLException {
 		if (this.connectionLifecycleInterceptors != null) {
-			IterateBlock iter = new IterateBlock(this.connectionLifecycleInterceptors.iterator()) {
+			IterateBlock<Extension> iter = new IterateBlock<Extension>(this.connectionLifecycleInterceptors.iterator()) {
 
-				void forEach(Object each) throws SQLException {
+				void forEach(Extension each) throws SQLException {
 					((ConnectionLifecycleInterceptor)each).transactionCompleted();
 				}
 			};
@@ -5666,7 +5678,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	
 	// JDBC-4.1
 	// until we flip catalog/schema, this is a no-op
-	public synchronized void setSchema(@SuppressWarnings("unused") String schema) throws SQLException {
+	public synchronized void setSchema(String schema) throws SQLException {
 		checkClosed();
 	}
 	

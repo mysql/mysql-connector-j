@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -38,7 +38,7 @@ import com.mysql.jdbc.StatementInterceptor;
 public class SessionAssociationInterceptor implements StatementInterceptor {
 
 	protected String currentSessionKey;
-	protected final static ThreadLocal sessionLocal = new ThreadLocal();
+	protected final static ThreadLocal<String> sessionLocal = new ThreadLocal<String>();
 	
 	public static final void setSessionKey(String key) {
 		sessionLocal.set(key);
@@ -49,7 +49,7 @@ public class SessionAssociationInterceptor implements StatementInterceptor {
 	}
 	
 	public static final String getSessionKey() {
-		return (String)sessionLocal.get();
+		return sessionLocal.get();
 	}
 	
 	public boolean executeTopLevelOnly() {

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -65,6 +65,11 @@ public class StandardLogger implements Log {
 		this(name, false);
 	}
 
+	/**
+	 * 
+	 * @param name
+	 * @param logLocationInfo
+	 */
 	public StandardLogger(String name, boolean logLocationInfo) {
 		this.logLocationInfo = logLocationInfo;
 	}

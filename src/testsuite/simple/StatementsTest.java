@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
  This program is free software; you can redistribute it and/or modify
@@ -68,7 +68,7 @@ public class StatementsTest extends BaseTestCase {
 
 	private static final int MAX_COLUMNS_TO_TEST = 40;
 
-	private static final int MIN_COLUMN_LENGTH = 10;
+	//private static final int MIN_COLUMN_LENGTH = 10;
 
 	private static final int STEP = 8;
 
@@ -1956,8 +1956,8 @@ public class StatementsTest extends BaseTestCase {
 				continue;
 			}
 			
-			Class boundObjectClass= boundObject.getClass();
-			Class testObjectClass = valuesToTest[i].getClass();
+			Class<?> boundObjectClass= boundObject.getClass();
+			Class<?> testObjectClass = valuesToTest[i].getClass();
 			
 			if (boundObject instanceof Number) {
 				assertEquals("For binding #" + (i + 1) + " of class " + boundObjectClass + " compared to " + testObjectClass, boundObject.toString(), valuesToTest[i].toString());

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -34,6 +34,8 @@ import com.mysql.jdbc.ConnectionPropertiesImpl;
  * class.
  */
 public class PropertiesDocGenerator extends ConnectionPropertiesImpl {
+
+	static final long serialVersionUID = -4869689139143855383L;
 
 	public static void main(String[] args) throws SQLException {
 		System.out.println(new PropertiesDocGenerator().exposeAsXml());

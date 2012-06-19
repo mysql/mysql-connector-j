@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -41,7 +41,7 @@ public class RowDataStatic implements RowData {
 
 	ResultSetImpl owner;
 
-	private List rows;
+	private List<ResultSetRow> rows;
 
 	/**
 	 * Creates a new RowDataStatic object.
@@ -49,7 +49,7 @@ public class RowDataStatic implements RowData {
 	 * @param rows
 	 *            DOCUMENT ME!
 	 */
-	public RowDataStatic(List rows) {
+	public RowDataStatic(List<ResultSetRow> rows) {
 		this.index = -1;
 		this.rows = rows;
 	}
@@ -104,7 +104,7 @@ public class RowDataStatic implements RowData {
 			return null;
 		}
 
-		return ((ResultSetRow) this.rows.get(atIndex)).setMetadata(this.metadata);
+		return (this.rows.get(atIndex)).setMetadata(this.metadata);
 	}
 
 	/**
@@ -215,7 +215,7 @@ public class RowDataStatic implements RowData {
 		this.index++;
 
 		if (this.index < this.rows.size()) {
-			ResultSetRow row = (ResultSetRow) this.rows.get(this.index);
+			ResultSetRow row = this.rows.get(this.index);
 			
 			return row.setMetadata(this.metadata);
 		}

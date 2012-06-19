@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -49,7 +49,7 @@ class LicenseConfiguration {
 	 * @throws SQLException
 	 *             if commercial license is required, but not found
 	 */
-	static void checkLicenseType(Map serverVariables) throws SQLException {
+	static void checkLicenseType(Map<String, String> serverVariables) throws SQLException {
 		// This is a GPL build, so we don't check anything...
 	}
 

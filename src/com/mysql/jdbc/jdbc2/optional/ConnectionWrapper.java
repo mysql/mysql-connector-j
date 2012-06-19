@@ -34,7 +34,6 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
-import com.mysql.jdbc.AuthenticationPlugin;
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.Extension;
@@ -75,7 +74,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
 	private boolean isForXa;
 
-	private static final Constructor JDBC_4_CONNECTION_WRAPPER_CTOR;
+	private static final Constructor<?> JDBC_4_CONNECTION_WRAPPER_CTOR;
 
 	static {
 		if (Util.isJdbc4()) {
@@ -406,7 +405,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	 * 
 	 * @see java.sql.Connection#getTypeMap()
 	 */
-	public java.util.Map getTypeMap() throws SQLException {
+	public java.util.Map<String, Class<?>> getTypeMap() throws SQLException {
 		checkClosed();
 
 		try {
@@ -819,14 +818,11 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		}
 	}
 
-	public boolean isSameResource(Connection c) {
+	public boolean isSameResource(com.mysql.jdbc.Connection c) {
 		if (c instanceof ConnectionWrapper) {
 			return this.mc.isSameResource(((ConnectionWrapper) c).mc);
-		} else if (c instanceof com.mysql.jdbc.Connection) {
-			return this.mc.isSameResource((com.mysql.jdbc.Connection) c);
 		}
-
-		return false;
+		return this.mc.isSameResource(c);
 	}
 
 	protected void close(boolean fireClosedEvent) throws SQLException {

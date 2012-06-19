@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
  This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,6 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -72,7 +71,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 	private String notUpdatableReason = null;
 
 	/** List of primary keys */
-	private List primaryKeyIndicies = null;
+	private List<Integer> primaryKeyIndicies = null;
 
 	private String qualifiedAndQuotedTableName;
 
@@ -94,7 +93,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 	private boolean populateInserterWithDefaultValues = false;
 
-	private Map databasesUsedToTablesUsed = null;
+	private Map<String, Map<String, Map<String, Integer>>> databasesUsedToTablesUsed = null;
 	
 
 	/**
@@ -344,7 +343,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 				java.sql.DatabaseMetaData dbmd = this.connection.getMetaData();
 	
 				java.sql.ResultSet rs = null;
-				HashMap primaryKeyNames = new HashMap();
+				HashMap<String, String> primaryKeyNames = new HashMap<String, String>();
 	
 				try {
 					rs = dbmd.getPrimaryKeys(catalogName, null, singleTableName);
@@ -476,13 +475,13 @@ public class UpdatableResultSet extends ResultSetImpl {
 		int numKeys = this.primaryKeyIndicies.size();
 
 		if (numKeys == 1) {
-			int index = ((Integer) this.primaryKeyIndicies.get(0))
+			int index = this.primaryKeyIndicies.get(0)
 					.intValue();
 			this.setParamValue(this.deleter, 1, this.thisRow, 
 					index, this.fields[index].getSQLType());
 		} else {
 			for (int i = 0; i < numKeys; i++) {
-				int index = ((Integer) this.primaryKeyIndicies.get(i))
+				int index = this.primaryKeyIndicies.get(i)
 						.intValue();
 				this.setParamValue(this.deleter, i + 1, this.thisRow, 
 						index, this.fields[index].getSQLType());
@@ -556,18 +555,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 		this.defaultColumnValue = new byte[this.fields.length][];
 		
 		java.sql.ResultSet columnsResultSet = null;
-		Iterator referencedDbs = this.databasesUsedToTablesUsed.entrySet().iterator();
-
-		while (referencedDbs.hasNext()) {
-		    Map.Entry dbEntry = (Map.Entry)referencedDbs.next();
-		    String databaseName = dbEntry.getKey().toString();
-
-		    Iterator referencedTables = ((Map)dbEntry.getValue()).entrySet().iterator();
-
-		    while (referencedTables.hasNext()) {
-		        Map.Entry tableEntry = (Map.Entry)referencedTables.next();
-		        String tableName = tableEntry.getKey().toString();
-		        Map columnNamesToIndices = (Map)tableEntry.getValue();
+		
+		for (Map.Entry<String,Map<String,Map<String,Integer>>> dbEntry : this.databasesUsedToTablesUsed.entrySet()) {
+		    //String databaseName = dbEntry.getKey().toString();
+			for (Map.Entry<String,Map<String,Integer>> tableEntry : dbEntry.getValue().entrySet()) {
+		        String tableName = tableEntry.getKey();
+		        Map<String, Integer> columnNamesToIndices = tableEntry.getValue();
 
         		try {
         			columnsResultSet = dbmd.getColumns(this.catalog, null,
@@ -578,7 +571,7 @@ public class UpdatableResultSet extends ResultSetImpl {
         				byte[] defaultValue = columnsResultSet.getBytes("COLUMN_DEF"); //$NON-NLS-1$
 
         				if (columnNamesToIndices.containsKey(columnName)) {
-        				    int localColumnIndex = ((Integer)columnNamesToIndices.get(columnName)).intValue();
+        				    int localColumnIndex = columnNamesToIndices.get(columnName).intValue();
 
         				    this.defaultColumnValue[localColumnIndex] = defaultValue;
         				} // else assert?
@@ -630,24 +623,24 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 		String quotedId = getQuotedIdChar();
 
-		Map tableNamesSoFar = null;
+		Map<String, String> tableNamesSoFar = null;
 
 		if (this.connection.lowerCaseTableNames()) {
-		    tableNamesSoFar = new TreeMap(String.CASE_INSENSITIVE_ORDER);
-		    this.databasesUsedToTablesUsed = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+		    tableNamesSoFar = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+		    this.databasesUsedToTablesUsed = new TreeMap<String, Map<String, Map<String, Integer>>>(String.CASE_INSENSITIVE_ORDER);
 		} else {
-		    tableNamesSoFar = new TreeMap();
-		    this.databasesUsedToTablesUsed = new TreeMap();
+		    tableNamesSoFar = new TreeMap<String, String>();
+		    this.databasesUsedToTablesUsed = new TreeMap<String, Map<String, Map<String, Integer>>>();
 		}
 
-		this.primaryKeyIndicies = new ArrayList();
+		this.primaryKeyIndicies = new ArrayList<Integer>();
 
 		StringBuffer fieldValues = new StringBuffer();
 		StringBuffer keyValues = new StringBuffer();
 		StringBuffer columnNames = new StringBuffer();
 		StringBuffer insertPlaceHolders = new StringBuffer();
 		StringBuffer allTablesBuf = new StringBuffer();
-		Map columnIndicesToTable = new HashMap();
+		Map<Integer, String> columnIndicesToTable = new HashMap<Integer, String>();
 
 		boolean firstTime = true;
 		boolean keysFirstTime = true;
@@ -657,7 +650,7 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 		for (int i = 0; i < this.fields.length; i++) {
 		    StringBuffer tableNameBuffer = new StringBuffer();
-		    Map updColumnNameToIndex = null;
+		    Map<String, Integer> updColumnNameToIndex = null;
 
 		    // FIXME: What about no table?
 		    if (this.fields[i].getOriginalTableName() != null) {
@@ -809,24 +802,24 @@ public class UpdatableResultSet extends ResultSetImpl {
 				+ keyValues.toString();
 	}
 
-    private Map getColumnsToIndexMapForTableAndDB(String databaseName, String tableName) {
-        Map nameToIndex;
-        Map tablesUsedToColumnsMap = (Map)this.databasesUsedToTablesUsed.get(databaseName);
+    private Map<String, Integer> getColumnsToIndexMapForTableAndDB(String databaseName, String tableName) {
+        Map<String, Integer> nameToIndex;
+        Map<String, Map<String, Integer>> tablesUsedToColumnsMap = this.databasesUsedToTablesUsed.get(databaseName);
 
         if (tablesUsedToColumnsMap == null) {
             if (this.connection.lowerCaseTableNames()) {
-                tablesUsedToColumnsMap = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+                tablesUsedToColumnsMap = new TreeMap<String, Map<String, Integer>>(String.CASE_INSENSITIVE_ORDER);
             } else {
-                tablesUsedToColumnsMap = new TreeMap();
+                tablesUsedToColumnsMap = new TreeMap<String, Map<String, Integer>>();
             }
 
             this.databasesUsedToTablesUsed.put(databaseName, tablesUsedToColumnsMap);
         }
 
-        nameToIndex = (Map)tablesUsedToColumnsMap.get(tableName);
+        nameToIndex = tablesUsedToColumnsMap.get(tableName);
 
         if (nameToIndex == null) {
-            nameToIndex = new HashMap();
+            nameToIndex = new HashMap<String, Integer>();
             tablesUsedToColumnsMap.put(tableName, nameToIndex);
         }
 
@@ -1330,16 +1323,16 @@ public class UpdatableResultSet extends ResultSetImpl {
 
 		if (numKeys == 1) {
 			byte[] dataFrom = null;
-			int index = ((Integer) this.primaryKeyIndicies.get(0)).intValue();
+			int index = this.primaryKeyIndicies.get(0).intValue();
 
 			if (!this.doingUpdates && !this.onInsertRow) {
-				dataFrom = (byte[]) rowToRefresh.getColumnValue(index);
+				dataFrom = rowToRefresh.getColumnValue(index);
 			} else {
 				dataFrom = updateInsertStmt.getBytesRepresentation(index);
 
 				// Primary keys not set?
 				if (updateInsertStmt.isNull(index) || (dataFrom.length == 0)) {
-					dataFrom = (byte[]) rowToRefresh.getColumnValue(index);
+					dataFrom = rowToRefresh.getColumnValue(index);
 				} else {
 					dataFrom = stripBinaryPrefix(dataFrom);
 				}
@@ -1354,17 +1347,17 @@ public class UpdatableResultSet extends ResultSetImpl {
 		} else {
 			for (int i = 0; i < numKeys; i++) {
 				byte[] dataFrom = null;
-				int index = ((Integer) this.primaryKeyIndicies.get(i))
+				int index = this.primaryKeyIndicies.get(i)
 						.intValue();
 
 				if (!this.doingUpdates && !this.onInsertRow) {
-					dataFrom = (byte[]) rowToRefresh.getColumnValue(index);
+					dataFrom = rowToRefresh.getColumnValue(index);
 				} else {
 					dataFrom = updateInsertStmt.getBytesRepresentation(index);
 
 					// Primary keys not set?
 					if (updateInsertStmt.isNull(index) || (dataFrom.length == 0)) {
-						dataFrom = (byte[]) rowToRefresh.getColumnValue(index);
+						dataFrom = rowToRefresh.getColumnValue(index);
 					} else {
 						dataFrom = stripBinaryPrefix(dataFrom);
 					}
@@ -1548,10 +1541,10 @@ public class UpdatableResultSet extends ResultSetImpl {
 			if (this.thisRow.getColumnValue(i) != null) {
 
 				if (this.fields[i].getvalueNeedsQuoting()) {
-					this.updater.setBytes(i + 1, (byte[]) this.thisRow.getColumnValue(i),
+					this.updater.setBytes(i + 1, this.thisRow.getColumnValue(i),
 							this.fields[i].isBinary(), false);
 				} else {
-					this.updater.setBytesNoEscapeNoQuotes(i + 1, (byte[]) this.thisRow.getColumnValue(i));
+					this.updater.setBytesNoEscapeNoQuotes(i + 1, this.thisRow.getColumnValue(i));
 				}
 			} else {
 				this.updater.setNull(i + 1, 0);
@@ -1561,12 +1554,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 		int numKeys = this.primaryKeyIndicies.size();
 
 		if (numKeys == 1) {
-			int index = ((Integer) this.primaryKeyIndicies.get(0)).intValue();
+			int index = this.primaryKeyIndicies.get(0).intValue();
 			this.setParamValue(this.updater, numFields + 1, this.thisRow, index , 
 					this.fields[index].getSQLType());
 		} else {
 			for (int i = 0; i < numKeys; i++) {
-				int idx = ((Integer)this.primaryKeyIndicies.get(i)).intValue();
+				int idx = this.primaryKeyIndicies.get(i).intValue();
 				this.setParamValue(this.updater, numFields + i + 1, this.thisRow, 
 						idx , this.fields[idx].getSQLType());
 			}

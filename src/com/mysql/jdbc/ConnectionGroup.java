@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -109,7 +109,7 @@ public class ConnectionGroup {
 	 * @see com.mysql.jdbc.ConnectionGroupMBean#getActivePhysicalConnectionCount()
 	 */
 	public long getActivePhysicalConnectionCount(){
-		long connections = 0;
+		long result = 0;
 		Map<Long, LoadBalancingConnectionProxy> proxyMap = new HashMap<Long, LoadBalancingConnectionProxy>();
 		synchronized(this.connectionProxies){
 			proxyMap.putAll(this.connectionProxies);
@@ -117,10 +117,10 @@ public class ConnectionGroup {
 		Iterator<Map.Entry<Long, LoadBalancingConnectionProxy>> i = proxyMap.entrySet().iterator();
 		while(i.hasNext()){
 			LoadBalancingConnectionProxy proxy = i.next().getValue();
-			connections += proxy.getActivePhysicalConnectionCount();
+			result += proxy.getActivePhysicalConnectionCount();
 			
 		}
-		return connections;
+		return result;
 	}
 	
 	/* (non-Javadoc)

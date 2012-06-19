@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -118,10 +118,10 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 	private ConnectionPoolDataSource cpds;
 
 	// Count nb of closeEvent.
-	private int closeEventCount;
+	protected int closeEventCount;
 
 	// Count nb of connectionErrorEvent
-	private int connectionErrorEventCount;
+	protected int connectionErrorEventCount;
 
 	/**
 	 * Creates a new instance of ProgressPooledConnectionTest
@@ -195,9 +195,9 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 
 			pc.addConnectionEventListener(conListener);
 
-			Connection conn = pc.getConnection();
+			Connection _conn = pc.getConnection();
 
-			Connection connFromStatement = conn.createStatement()
+			Connection connFromStatement = _conn.createStatement()
 					.getConnection();
 
 			// This should generate a close event.
@@ -209,9 +209,9 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 
 			this.closeEventCount = 0;
 
-			conn = pc.getConnection();
+			_conn = pc.getConnection();
 
-			Connection connFromPreparedStatement = conn.prepareStatement(
+			Connection connFromPreparedStatement = _conn.prepareStatement(
 					"SELECT 1").getConnection();
 
 			// This should generate a close event.
@@ -249,21 +249,21 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 			pc.addConnectionEventListener(conListener);
 
 			for (int i = 0; i < NB_TESTS; i++) {
-				Connection conn = pc.getConnection();
+				Connection _conn = pc.getConnection();
 
 				try {
 					// Try to reclaim connection.
 					System.out.println("Before connection reclaim.");
 
-					conn = pc.getConnection();
+					_conn = pc.getConnection();
 
 					System.out.println("After connection reclaim.");
 				} finally {
-					if (conn != null) {
+					if (_conn != null) {
 						System.out.println("Before connection.close().");
 
 						// This should generate a close event.
-						conn.close();
+						_conn.close();
 
 						System.out.println("After connection.close().");
 					}
@@ -389,7 +389,7 @@ public final class PooledConnectionRegressionTest extends BaseTestCase {
 	/**
 	 * Listener for PooledConnection events.
 	 */
-	private final class ConnectionListener implements ConnectionEventListener {
+	protected final class ConnectionListener implements ConnectionEventListener {
 		/** */
 		public void connectionClosed(ConnectionEvent event) {
 			PooledConnectionRegressionTest.this.closeEventCount++;

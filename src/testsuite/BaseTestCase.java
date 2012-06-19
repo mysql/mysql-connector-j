@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -40,7 +40,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
@@ -78,7 +77,7 @@ public abstract class BaseTestCase extends TestCase {
 	protected Connection conn = null;
 
 	/** list of schema objects to be dropped in tearDown */
-	private List createdObjects;
+	private List<String[]> createdObjects;
 
 	/** The driver to use */
 	protected String dbClass = "com.mysql.jdbc.Driver";
@@ -229,9 +228,8 @@ public abstract class BaseTestCase extends TestCase {
 
 		if (adminUrl != null) {
 			return DriverManager.getConnection(adminUrl, props);
-		} else {
-			return null;
 		}
+		return null;
 	}
 
 	protected Connection getConnectionWithProps(String propsList) throws SQLException {
@@ -242,13 +240,10 @@ public abstract class BaseTestCase extends TestCase {
 		Properties props = new Properties();
 		
 		if (propsList != null) {
-			List keyValuePairs = StringUtils.split(propsList, ",", false);
+			List<String> keyValuePairs = StringUtils.split(propsList, ",", false);
 			
-			Iterator iter = keyValuePairs.iterator();
-			
-			while (iter.hasNext()) {
-				String kvp = (String)iter.next();
-				List splitUp = StringUtils.split(kvp, "=", false);
+			for (String kvp : keyValuePairs) {
+				List<String> splitUp = StringUtils.split(kvp, "=", false);
 				StringBuffer value = new StringBuffer();
 				
 				for (int i = 1; i < splitUp.size(); i++) {
@@ -279,7 +274,7 @@ public abstract class BaseTestCase extends TestCase {
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
-	protected Connection getConnectionWithProps(Properties props)
+	public Connection getConnectionWithProps(Properties props)
 			throws SQLException {
 		return DriverManager.getConnection(dbUrl, props);
 	}
@@ -497,7 +492,7 @@ public abstract class BaseTestCase extends TestCase {
 		System.out.println("Loading JDBC driver '" + this.dbClass + "'");
 		Class.forName(this.dbClass).newInstance();
 		System.out.println("Done.\n");
-		this.createdObjects = new ArrayList();
+		this.createdObjects = new ArrayList<String[]>();
 
 
 		if (this.dbClass.equals("gwe.sql.gweMysqlDriver")) {
@@ -560,7 +555,7 @@ public abstract class BaseTestCase extends TestCase {
 		if (System.getProperty("com.mysql.jdbc.testsuite.retainArtifacts") == null) {
 			for (int i = 0; i < this.createdObjects.size(); i++) {
 				try {
-					String[] objectInfo = (String[])this.createdObjects.get(i);
+					String[] objectInfo = this.createdObjects.get(i);
 					
 					dropSchemaObject(objectInfo[0], objectInfo[1]);
 				} catch (SQLException SQLE) {
@@ -685,15 +680,15 @@ public abstract class BaseTestCase extends TestCase {
 		}
 	}
 	
-	protected void assertResultSetLength(ResultSet rs, int len) throws Exception {
-		assertTrue("Result set is scrollable", rs.getType() != ResultSet.TYPE_FORWARD_ONLY);
-		int oldRowPos = rs.getRow();
-		rs.last();
-		assertEquals("Result set length", len, rs.getRow());
+	protected void assertResultSetLength(ResultSet rset, int len) throws Exception {
+		assertTrue("Result set is scrollable", rset.getType() != ResultSet.TYPE_FORWARD_ONLY);
+		int oldRowPos = rset.getRow();
+		rset.last();
+		assertEquals("Result set length", len, rset.getRow());
 		if (oldRowPos > 0)
-			rs.absolute(oldRowPos);
+			rset.absolute(oldRowPos);
 		else
-			rs.beforeFirst();
+			rset.beforeFirst();
 	}
 
 	protected void assertResultSetsEqual(ResultSet control, ResultSet test)
@@ -753,7 +748,7 @@ public abstract class BaseTestCase extends TestCase {
 	 * Set default values for primitives.
 	 * (prevents NPE in Java 1.4 when calling via reflection)
 	 */
-	protected void fillPrimitiveDefaults(Class types[], Object vals[], int count) {
+	protected void fillPrimitiveDefaults(Class<?> types[], Object vals[], int count) {
 		for (int i = 0; i < count; ++i) {
 			if (vals[i] != null)
 				continue;
@@ -953,10 +948,10 @@ public abstract class BaseTestCase extends TestCase {
 	protected Connection getUnreliableLoadBalancedConnection(String[] hostNames,
 			Properties props) throws Exception {
 		return getUnreliableLoadBalancedConnection(hostNames,
-				props, new HashSet());
+				props, new HashSet<String>());
 	}
 	protected Connection getUnreliableLoadBalancedConnection(String[] hostNames,
-			Properties props, Set downedHosts) throws Exception {
+			Properties props, Set<String> downedHosts) throws Exception {
 				if(props == null){
 					props = new Properties();
 				}
@@ -989,10 +984,10 @@ public abstract class BaseTestCase extends TestCase {
 	protected Connection getUnreliableReplicationConnection(String[] hostNames,
 			Properties props) throws Exception {
 		return getUnreliableReplicationConnection(hostNames,
-				props, new HashSet());
+				props, new HashSet<String>());
 	}
 	protected Connection getUnreliableReplicationConnection(String[] hostNames,
-			Properties props, Set downedHosts) throws Exception {
+			Properties props, Set<String> downedHosts) throws Exception {
 				if(props == null){
 					props = new Properties();
 				}
@@ -1024,9 +1019,9 @@ public abstract class BaseTestCase extends TestCase {
 			}
 	
 	protected boolean assertEqualsFSAware(String matchStr, String inStr) throws Exception {
-		if (this.isOnCSFS)
+		if (this.isOnCSFS) {
 			return matchStr.equals(inStr);
-		else
-			return matchStr.equalsIgnoreCase(inStr);
+		}
+		return matchStr.equalsIgnoreCase(inStr);
 	}
 }

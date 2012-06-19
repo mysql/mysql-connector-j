@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -33,7 +33,6 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -55,9 +54,9 @@ import com.mysql.jdbc.exceptions.MySQLTransientConnectionException;
 public class SQLError {
 	static final int ER_WARNING_NOT_COMPLETE_ROLLBACK = 1196;
 
-	private static Map mysqlToSql99State;
+	private static Map<Integer, String> mysqlToSql99State;
 
-	private static Map mysqlToSqlState;
+	private static Map<Integer, String> mysqlToSqlState;
 
 	public static final String SQL_STATE_BASE_TABLE_NOT_FOUND = "S0002"; //$NON-NLS-1$
 
@@ -135,7 +134,7 @@ public class SQLError {
 
 	public static final String SQL_STATE_INVALID_TRANSACTION_TERMINATION = "2D000"; // $NON_NLS-1$
 
-	private static Map sqlStateMessages;
+	private static Map<String, String> sqlStateMessages;
 
 	private static final long DEFAULT_WAIT_TIMEOUT_SECONDS = 28800;
 
@@ -145,7 +144,7 @@ public class SQLError {
 
 	private static final int DUE_TO_TIMEOUT_TRUE = 1;
 	
-	private static final Constructor JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR;
+	private static final Constructor<?> JDBC_4_COMMUNICATIONS_EXCEPTION_CTOR;
 	
 	private static Method THROWABLE_INIT_CAUSE_METHOD;
 	
@@ -174,7 +173,7 @@ public class SQLError {
 			THROWABLE_INIT_CAUSE_METHOD = null;
 		}
 		
-		sqlStateMessages = new HashMap();
+		sqlStateMessages = new HashMap<String, String>();
 		sqlStateMessages.put(SQL_STATE_DISCONNECT_ERROR, Messages
 				.getString("SQLError.35")); //$NON-NLS-1$
 		sqlStateMessages.put(SQL_STATE_DATE_TRUNCATED, Messages
@@ -246,7 +245,7 @@ public class SQLError {
 		sqlStateMessages.put(SQL_STATE_TIMEOUT_EXPIRED, Messages
 				.getString("SQLError.69")); //$NON-NLS-1$
 
-		mysqlToSqlState = new Hashtable();
+		mysqlToSqlState = new Hashtable<Integer, String>();
 
 		//
 		// Communications Errors
@@ -412,7 +411,7 @@ public class SQLError {
 		mysqlToSqlState.put(Integer.valueOf(1205), SQL_STATE_DEADLOCK);
 		mysqlToSqlState.put(Integer.valueOf(1213), SQL_STATE_DEADLOCK);
 
-		mysqlToSql99State = new HashMap();
+		mysqlToSql99State = new HashMap<Integer, String>();
 
 		mysqlToSql99State.put(Integer.valueOf(1205), SQL_STATE_DEADLOCK);
 		mysqlToSql99State.put(Integer.valueOf(1213), SQL_STATE_DEADLOCK);
@@ -765,7 +764,7 @@ public class SQLError {
 						}
 					}
 				} else {
-					String level = warnRs.getString("Level"); //$NON-NLS-1$
+					//String level = warnRs.getString("Level"); //$NON-NLS-1$
 					String message = warnRs.getString("Message"); //$NON-NLS-1$
 
 					SQLWarning newWarning = new SQLWarning(message, SQLError
@@ -814,24 +813,20 @@ public class SQLError {
 	}
 
 	public static void dumpSqlStatesMappingsAsXml() throws Exception {
-		TreeMap allErrorNumbers = new TreeMap();
-		Map mysqlErrorNumbersToNames = new HashMap();
+		TreeMap<Integer, Integer> allErrorNumbers = new TreeMap<Integer, Integer>();
+		Map<Object, String> mysqlErrorNumbersToNames = new HashMap<Object, String>();
 
-		Integer errorNumber = null;
+//		Integer errorNumber = null;
 
 		// 
 		// First create a list of all 'known' error numbers that
 		// are mapped.
 		//
-		for (Iterator mysqlErrorNumbers = mysqlToSql99State.keySet().iterator(); mysqlErrorNumbers
-				.hasNext();) {
-			errorNumber = (Integer) mysqlErrorNumbers.next();
+		for (Integer errorNumber : mysqlToSql99State.keySet()) {
 			allErrorNumbers.put(errorNumber, errorNumber);
 		}
 
-		for (Iterator mysqlErrorNumbers = mysqlToSqlState.keySet().iterator(); mysqlErrorNumbers
-				.hasNext();) {
-			errorNumber = (Integer) mysqlErrorNumbers.next();
+		for (Integer errorNumber : mysqlToSqlState.keySet()) {
 			allErrorNumbers.put(errorNumber, errorNumber);
 		}
 
@@ -852,10 +847,7 @@ public class SQLError {
 
 		System.out.println("<ErrorMappings>");
 
-		for (Iterator allErrorNumbersIter = allErrorNumbers.keySet().iterator(); allErrorNumbersIter
-				.hasNext();) {
-			errorNumber = (Integer) allErrorNumbersIter.next();
-
+		for (Integer errorNumber : allErrorNumbers.keySet()) {
 			String sql92State = mysqlToSql99(errorNumber.intValue());
 			String oldSqlState = mysqlToXOpen(errorNumber.intValue());
 
@@ -872,14 +864,14 @@ public class SQLError {
 	}
 
 	static String get(String stateCode) {
-		return (String) sqlStateMessages.get(stateCode);
+		return sqlStateMessages.get(stateCode);
 	}
 
 	private static String mysqlToSql99(int errno) {
 		Integer err = Integer.valueOf(errno);
 
 		if (mysqlToSql99State.containsKey(err)) {
-			return (String) mysqlToSql99State.get(err);
+			return mysqlToSql99State.get(err);
 		}
 
 		return "HY000";
@@ -905,7 +897,7 @@ public class SQLError {
 		Integer err = Integer.valueOf(errno);
 
 		if (mysqlToSqlState.containsKey(err)) {
-			return (String) mysqlToSqlState.get(err);
+			return mysqlToSqlState.get(err);
 		}
 
 		return SQL_STATE_GENERAL_ERROR;
@@ -982,6 +974,15 @@ public class SQLError {
 		return createSQLException(message, sqlState, vendorErrorCode, false, interceptor);
 	}
 	
+	/**
+	 * 
+	 * @param message
+	 * @param sqlState
+	 * @param vendorErrorCode
+	 * @param isTransient
+	 * @param interceptor
+	 * @return
+	 */
 	public static SQLException createSQLException(String message,
 			String sqlState, int vendorErrorCode, boolean isTransient, ExceptionInterceptor interceptor) {
 		return createSQLException(message, sqlState, vendorErrorCode, false, interceptor, null);

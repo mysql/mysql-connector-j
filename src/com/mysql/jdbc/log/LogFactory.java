@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -68,7 +68,7 @@ public class LogFactory {
 		}
 
 		try {
-			Class loggerClass = null;
+			Class<?> loggerClass = null;
 
 			try {
 				loggerClass = Class.forName(className);
@@ -77,7 +77,7 @@ public class LogFactory {
 						+ "." + className);
 			}
 
-			Constructor constructor = loggerClass
+			Constructor<?> constructor = loggerClass
 					.getConstructor(new Class[] { String.class });
 
 			return (Log) constructor.newInstance(new Object[] { instanceName });

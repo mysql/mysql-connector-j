@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -44,7 +44,7 @@ import testsuite.BaseTestCase;
  */
 public class BlobTest extends BaseTestCase {
 
-	private static File testBlobFile;
+	protected static File testBlobFile;
 
 	static {
 		Runtime.getRuntime().addShutdownHook(new Thread() {

@@ -63,10 +63,10 @@ public class Field {
 	// database name info
 	private int databaseNameStart = -1;
 
-	private int defaultValueLength = -1;
+	protected int defaultValueLength = -1;
 
 	// default value info - from COM_LIST_FIELDS execution
-	private int defaultValueStart = -1;
+	protected int defaultValueStart = -1;
 
 	private String fullName = null;
 

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -81,12 +81,10 @@ public class MysqlXid implements Xid {
 				}
 
 				return true;
-			} else {
-				return false;
 			}
-		} else {
-			return false;
 		}
+
+		return false;
 	}
 
 	public byte[] getBranchQualifier() {

@@ -63,26 +63,26 @@ import java.util.TreeMap;
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
-	protected abstract class IteratorWithCleanup {
+	protected abstract class IteratorWithCleanup<T> {
 		abstract void close() throws SQLException;
 
 		abstract boolean hasNext() throws SQLException;
 
-		abstract Object next() throws SQLException;
+		abstract T next() throws SQLException;
 	}
 
 	class LocalAndReferencedColumns {
 		String constraintName;
 
-		List localColumnsList;
+		List<String> localColumnsList;
 
 		String referencedCatalog;
 
-		List referencedColumnsList;
+		List<String> referencedColumnsList;
 
 		String referencedTable;
 
-		LocalAndReferencedColumns(List localColumns, List refColumns,
+		LocalAndReferencedColumns(List<String> localColumns, List<String> refColumns,
 				String constName, String refCatalog, String refTable) {
 			this.localColumnsList = localColumns;
 			this.referencedColumnsList = refColumns;
@@ -92,7 +92,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 	}
 
-	protected class ResultSetIterator extends IteratorWithCleanup {
+	protected class ResultSetIterator extends IteratorWithCleanup<String> {
 		int colIndex;
 
 		ResultSet resultSet;
@@ -110,12 +110,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			return resultSet.next();
 		}
 
-		Object next() throws SQLException {
-			return resultSet.getObject(colIndex);
+		String next() throws SQLException {
+			return resultSet.getObject(colIndex).toString();
 		}
 	}
 
-	protected class SingleStringIterator extends IteratorWithCleanup {
+	protected class SingleStringIterator extends IteratorWithCleanup<String> {
 		boolean onFirst = true;
 
 		String value;
@@ -133,7 +133,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			return onFirst;
 		}
 
-		Object next() throws SQLException {
+		String next() throws SQLException {
 			onFirst = false;
 			return value;
 		}
@@ -458,17 +458,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	/** The table type for generic tables that support foreign keys. */
 	private static final String SUPPORTS_FK = "SUPPORTS_FK";
 
-	private static final byte[] TABLE_AS_BYTES = "TABLE".getBytes();
+	protected static final byte[] TABLE_AS_BYTES = "TABLE".getBytes();
 
-	private static final byte[] SYSTEM_TABLE_AS_BYTES = "SYSTEM TABLE".getBytes();
+	protected static final byte[] SYSTEM_TABLE_AS_BYTES = "SYSTEM TABLE".getBytes();
 	
 	private static final int UPDATE_RULE = 9;
 
-	private static final byte[] VIEW_AS_BYTES = "VIEW".getBytes();
+	protected static final byte[] VIEW_AS_BYTES = "VIEW".getBytes();
 	
-	private static final Constructor JDBC_4_DBMD_SHOW_CTOR;
+	private static final Constructor<?> JDBC_4_DBMD_SHOW_CTOR;
 	
-	private static final Constructor JDBC_4_DBMD_IS_CTOR;
+	private static final Constructor<?> JDBC_4_DBMD_IS_CTOR;
 	
 	static {
 		if (Util.isJdbc4()) {
@@ -585,19 +585,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				"END", "OR", "WORK", "END-EXEC", "ORDER", "WRITE", "ESCAPE",
 				"OUTER", "YEAR", "EXCEPT", "OUTPUT", "ZONE", "EXCEPTION" };
 		
-		TreeMap mySQLKeywordMap = new TreeMap();
+		TreeMap<String, String> mySQLKeywordMap = new TreeMap<String, String>();
 		
 		for (int i = 0; i < allMySQLKeywords.length; i++) {
 			mySQLKeywordMap.put(allMySQLKeywords[i], null);
 		}
 		
-		HashMap sql92KeywordMap = new HashMap(sql92Keywords.length);
+		HashMap<String, String> sql92KeywordMap = new HashMap<String, String>(sql92Keywords.length);
 		
 		for (int i = 0; i < sql92Keywords.length; i++) {
 			sql92KeywordMap.put(sql92Keywords[i], null);
 		}
 		
-		Iterator it = sql92KeywordMap.keySet().iterator();
+		Iterator<String> it = sql92KeywordMap.keySet().iterator();
 		
 		while (it.hasNext()) {
 			mySQLKeywordMap.remove(it.next());
@@ -706,12 +706,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 
 	private java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields,
-			java.util.ArrayList rows) throws SQLException {
+			java.util.ArrayList<ResultSetRow> rows) throws SQLException {
 		return buildResultSet(fields, rows, this.conn);
 	}
 	
 	static java.sql.ResultSet buildResultSet(com.mysql.jdbc.Field[] fields,
-			java.util.ArrayList rows, MySQLConnection c) throws SQLException {
+			java.util.ArrayList<ResultSetRow> rows, MySQLConnection c) throws SQLException {
 		int fieldsLength = fields.length;
 
 		for (int i = 0; i < fieldsLength; i++) {
@@ -735,9 +735,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				new RowDataStatic(rows), c, null, false);
 	}
 
-	private void convertToJdbcFunctionList(String catalog,
+	protected void convertToJdbcFunctionList(String catalog,
 			ResultSet proceduresRs, boolean needsClientFiltering, String db,
-			Map procedureRowsOrderedByName, int nameIndex,
+			Map<String, ResultSetRow> procedureRowsOrderedByName, int nameIndex,
 			Field[] fields) throws SQLException {
 		while (proceduresRs.next()) {
 			boolean shouldAdd = true;
@@ -792,9 +792,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		return 0;
 	}
 	
-	private void convertToJdbcProcedureList(boolean fromSelect, String catalog,
+	protected void convertToJdbcProcedureList(boolean fromSelect, String catalog,
 			ResultSet proceduresRs, boolean needsClientFiltering, String db,
-			Map procedureRowsOrderedByName, int nameIndex) throws SQLException {
+			Map<String, ResultSetRow> procedureRowsOrderedByName, int nameIndex) throws SQLException {
 		while (proceduresRs.next()) {
 			boolean shouldAdd = true;
 
@@ -980,7 +980,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * @throws SQLException
 	 *             if a database access error occurs
 	 */
-	public List extractForeignKeyForTable(ArrayList rows,
+	public List<ResultSetRow> extractForeignKeyForTable(ArrayList<ResultSetRow> rows,
 			java.sql.ResultSet rs, String catalog) throws SQLException {
 		byte[][] row = new byte[3][];
 		row[0] = rs.getBytes(1);
@@ -1141,7 +1141,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 */
 	public ResultSet extractForeignKeyFromCreateTable(String catalog,
 			String tableName) throws SQLException {
-		ArrayList tableList = new ArrayList();
+		ArrayList<String> tableList = new ArrayList<String>();
 		java.sql.ResultSet rs = null;
 		java.sql.Statement stmt = null;
 
@@ -1163,7 +1163,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 		}
 
-		ArrayList rows = new ArrayList();
+		ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 		Field[] fields = new Field[3];
 		fields[0] = new Field("", "Name", Types.CHAR, Integer.MAX_VALUE);
 		fields[1] = new Field("", "Type", Types.CHAR, 255);
@@ -1180,7 +1180,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		try {
 			for (int i = 0; i < numTables; i++) {
-				String tableToExtract = (String) tableList.get(i);
+				String tableToExtract = tableList.get(i);
 				if (tableToExtract.indexOf(quoteChar) > 0) {
 					tableToExtract = StringUtils.escapeQuote(tableToExtract, quoteChar);
 				}
@@ -1253,7 +1253,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[19] = new Field("", "SCOPE_TABLE", Types.CHAR, 32);
 		fields[20] = new Field("", "SOURCE_DATA_TYPE", Types.SMALLINT, 32);
 
-		return buildResultSet(fields, new ArrayList());
+		return buildResultSet(fields, new ArrayList<ResultSetRow>());
 	}
 
 	/**
@@ -1319,13 +1319,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[6] = new Field("", "DECIMAL_DIGITS", Types.SMALLINT, 10);
 		fields[7] = new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5);
 
-		final ArrayList rows = new ArrayList();
+		final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 		final Statement stmt = this.conn.getMetadataSafeStatement();
 
 		try {
 
-			new IterateBlock(getCatalogIterator(catalog)) {
-				void forEach(Object catalogStr) throws SQLException {
+			new IterateBlock<String>(getCatalogIterator(catalog)) {
+				void forEach(String catalogStr) throws SQLException {
 					ResultSet results = null;
 
 					try {
@@ -1336,7 +1336,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						queryBuf.append(quotedId);
 						queryBuf.append(" FROM ");
 						queryBuf.append(quotedId);
-						queryBuf.append(catalogStr.toString());
+						queryBuf.append(catalogStr);
 						queryBuf.append(quotedId);
 
 						results = stmt.executeQuery(queryBuf.toString());
@@ -1478,14 +1478,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * 
 	 * @see #getSearchStringEscape
 	 */
-	private void getCallStmtParameterTypes(String catalog, String procName,
-			String parameterNamePattern, List resultRows) throws SQLException {
+	protected void getCallStmtParameterTypes(String catalog, String procName,
+			String parameterNamePattern, List<ResultSetRow> resultRows) throws SQLException {
 		getCallStmtParameterTypes(catalog, procName, 
 				parameterNamePattern, resultRows, false);
 	}
 	
 	private void getCallStmtParameterTypes(String catalog, String procName,
-			String parameterNamePattern, List resultRows, 
+			String parameterNamePattern, List<ResultSetRow> resultRows, 
 			boolean forGetFunctionColumns) throws SQLException {
 		java.sql.Statement paramRetrievalStmt = null;
 		java.sql.ResultSet paramRetrievalRs = null;
@@ -1749,13 +1749,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		if (parameterDef != null) {
 			int ordinal = 1;
 			
-			List parseList = StringUtils.split(parameterDef, ",",
+			List<String> parseList = StringUtils.split(parameterDef, ",",
 					storageDefnDelims, storageDefnClosures, true);
 
 			int parseListLen = parseList.size();
 
 			for (int i = 0; i < parseListLen; i++) {
-				String declaration = (String) parseList.get(i);
+				String declaration = parseList.get(i);
 
 				if (declaration.trim().length() == 0) {
 					break; // no parameters actually declared, but whitespace spans lines
@@ -2041,9 +2041,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		return java.sql.DatabaseMetaData.importedKeyNoAction;
 	}
 
-	protected IteratorWithCleanup getCatalogIterator(String catalogSpec)
+	protected IteratorWithCleanup<String> getCatalogIterator(String catalogSpec)
 			throws SQLException {
-		IteratorWithCleanup allCatalogsIter;
+		IteratorWithCleanup<String> allCatalogsIter;
 		if (catalogSpec != null) {
 			if (!catalogSpec.equals("")) {
 				allCatalogsIter = new SingleStringIterator(unQuoteQuotedIdentifier(catalogSpec));
@@ -2114,7 +2114,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			fields[0] = new Field("", "TABLE_CAT", Types.VARCHAR, resultsMD
 					.getColumnDisplaySize(1));
 
-			ArrayList tuples = new ArrayList();
+			ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
 			while (results.next()) {
 				byte[][] rowVal = new byte[1][];
@@ -2244,7 +2244,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		Statement stmt = null;
 		ResultSet results = null;
-		ArrayList grantRows = new ArrayList();
+		ArrayList<ResultSetRow> grantRows = new ArrayList<ResultSetRow>();
 
 		try {
 			stmt = this.conn.createStatement();
@@ -2397,22 +2397,22 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		Field[] fields = createColumnsFields();
 
-		final ArrayList rows = new ArrayList();
+		final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 		final Statement stmt = this.conn.getMetadataSafeStatement();
 
 		try {
 
-			new IterateBlock(getCatalogIterator(catalog)) {
-				void forEach(Object catalogStr) throws SQLException {
+			new IterateBlock<String>(getCatalogIterator(catalog)) {
+				void forEach(String catalogStr) throws SQLException {
 
-					ArrayList tableNameList = new ArrayList();
+					ArrayList<String> tableNameList = new ArrayList<String>();
 
 					if (tableNamePattern == null) {
 						// Select from all tables
 						java.sql.ResultSet tables = null;
 
 						try {
-							tables = getTables((String)catalogStr, schemaPattern, "%",
+							tables = getTables(catalogStr, schemaPattern, "%",
 									new String[0]);
 
 							while (tables.next()) {
@@ -2436,7 +2436,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						java.sql.ResultSet tables = null;
 
 						try {
-							tables = getTables((String)catalogStr, schemaPattern,
+							tables = getTables(catalogStr, schemaPattern,
 									tableNamePattern, new String[0]);
 
 							while (tables.next()) {
@@ -2458,11 +2458,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						}
 					}
 
-					java.util.Iterator tableNames = tableNameList.iterator();
-
-					while (tableNames.hasNext()) {
-						String tableName = (String) tableNames.next();
-
+					for (String tableName : tableNameList) {
+						
 						ResultSet results = null;
 
 						try {
@@ -2478,7 +2475,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							queryBuf.append(quotedId);
 							queryBuf.append(" FROM ");
 							queryBuf.append(quotedId);
-							queryBuf.append((String)catalogStr);
+							queryBuf.append(catalogStr);
 							queryBuf.append(quotedId);
 							queryBuf.append(" LIKE '");
 							queryBuf.append(colPattern);
@@ -2490,7 +2487,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							// this, so we do it the 'hard' way...Once _SYSTEM
 							// tables are in, this should be much easier
 							boolean fixUpOrdinalsRequired = false;
-							Map ordinalFixUpMap = null;
+							Map<String, Integer> ordinalFixUpMap = null;
 
 							if (!colPattern.equals("%")) {
 								fixUpOrdinalsRequired = true;
@@ -2509,13 +2506,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								fullColumnQueryBuf.append(" FROM ");
 								fullColumnQueryBuf.append(quotedId);
 								fullColumnQueryBuf
-										.append((String)catalogStr);
+										.append(catalogStr);
 								fullColumnQueryBuf.append(quotedId);
 
 								results = stmt.executeQuery(fullColumnQueryBuf
 										.toString());
 
-								ordinalFixUpMap = new HashMap();
+								ordinalFixUpMap = new HashMap<String, Integer>();
 
 								int fullOrdinalPos = 1;
 
@@ -2534,7 +2531,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 							while (results.next()) {
 								byte[][] rowVal = new byte[23][];
-								rowVal[0] = s2b((String)catalogStr); // TABLE_CAT
+								rowVal[0] = s2b(catalogStr); // TABLE_CAT
 								rowVal[1] = null; // TABLE_SCHEM (No schemas
 								// in MySQL)
 
@@ -2599,7 +2596,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								} else {
 									String origColName = results
 											.getString("Field");
-									Integer realOrdinal = (Integer) ordinalFixUpMap
+									Integer realOrdinal = ordinalFixUpMap
 											.get(origColName);
 
 									if (realOrdinal != null) {
@@ -2777,7 +2774,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		Field[] fields = createFkMetadataFields();
 
-		final ArrayList tuples = new ArrayList();
+		final ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
 		if (this.conn.versionMeetsMinimum(3, 23, 0)) {
 
@@ -2785,8 +2782,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 			try {
 
-				new IterateBlock(getCatalogIterator(foreignCatalog)) {
-					void forEach(Object catalogStr) throws SQLException {
+				new IterateBlock<String>(getCatalogIterator(foreignCatalog)) {
+					void forEach(String catalogStr) throws SQLException {
 
 						ResultSet fkresults = null;
 
@@ -2797,12 +2794,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							 */
 							if (conn.versionMeetsMinimum(3, 23, 50)) {
 								fkresults = extractForeignKeyFromCreateTable(
-										catalogStr.toString(), null);
+										catalogStr, null);
 							} else {
 								StringBuffer queryBuf = new StringBuffer(
 										"SHOW TABLE STATUS FROM ");
 								queryBuf.append(quotedId);
-								queryBuf.append(catalogStr.toString());
+								queryBuf.append(catalogStr);
 								queryBuf.append(quotedId);
 
 								fkresults = stmt.executeQuery(queryBuf
@@ -2845,14 +2842,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 											int keySeq = 0;
 
-											Iterator referencingColumns = parsedInfo.localColumnsList
+											Iterator<String> referencingColumns = parsedInfo.localColumnsList
 													.iterator();
-											Iterator referencedColumns = parsedInfo.referencedColumnsList
+											Iterator<String> referencedColumns = parsedInfo.referencedColumnsList
 													.iterator();
 
 											while (referencingColumns.hasNext()) {
 												String referencingColumn = removeQuotedId(referencingColumns
-														.next().toString());
+														.next());
 
 												// one tuple for each table
 												// between
@@ -2888,7 +2885,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 												tuple[2] = s2b(parsedInfo.referencedTable); // PKTABLE_NAME
 												tuple[3] = s2b(removeQuotedId(referencedColumns
-														.next().toString())); // PKCOLUMN_NAME
+														.next())); // PKCOLUMN_NAME
 												tuple[8] = Integer.toString(
 														keySeq).getBytes(); // KEY_SEQ
 
@@ -3118,7 +3115,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		Field[] fields = createFkMetadataFields();
 
-		final ArrayList rows = new ArrayList();
+		final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 
 		if (this.conn.versionMeetsMinimum(3, 23, 0)) {
 
@@ -3126,8 +3123,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 			try {
 
-				new IterateBlock(getCatalogIterator(catalog)) {
-					void forEach(Object catalogStr) throws SQLException {
+				new IterateBlock<String>(getCatalogIterator(catalog)) {
+					void forEach(String catalogStr) throws SQLException {
 						ResultSet fkresults = null;
 
 						try {
@@ -3139,12 +3136,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								// we can use 'SHOW CREATE TABLE'
 
 								fkresults = extractForeignKeyFromCreateTable(
-										catalogStr.toString(), null);
+										catalogStr, null);
 							} else {
 								StringBuffer queryBuf = new StringBuffer(
 										"SHOW TABLE STATUS FROM ");
 								queryBuf.append(quotedId);
-								queryBuf.append(catalogStr.toString());
+								queryBuf.append(catalogStr);
 								queryBuf.append(quotedId);
 
 								fkresults = stmt.executeQuery(queryBuf
@@ -3182,7 +3179,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 												String keys = commentTokens
 														.nextToken();
 												getExportKeyResults(
-														catalogStr.toString(),
+														catalogStr,
 														tableNameWithCase,
 														keys,
 														rows,
@@ -3238,8 +3235,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * @throws SQLException
 	 *             if a database access error occurs
 	 */
-	private void getExportKeyResults(String catalog, String exportingTable,
-			String keysComment, List tuples, String fkTableName)
+	protected void getExportKeyResults(String catalog, String exportingTable,
+			String keysComment, List<ResultSetRow> tuples, String fkTableName)
 			throws SQLException {
 		getResultsImpl(catalog, exportingTable, keysComment, tuples,
 				fkTableName, true);
@@ -3266,7 +3263,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *            the comment from 'SHOW TABLE STATUS'
 	 * @return int[] [0] = delete action, [1] = update action
 	 */
-	private int[] getForeignKeyActions(String commentString) {
+	protected int[] getForeignKeyActions(String commentString) {
 		int[] actions = new int[] {
 				java.sql.DatabaseMetaData.importedKeyNoAction,
 				java.sql.DatabaseMetaData.importedKeyNoAction };
@@ -3373,7 +3370,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		Field[] fields = createFkMetadataFields();
 		
-		final ArrayList rows = new ArrayList();
+		final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 
 		if (this.conn.versionMeetsMinimum(3, 23, 0)) {
 
@@ -3381,8 +3378,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 			try {
 
-				new IterateBlock(getCatalogIterator(catalog)) {
-					void forEach(Object catalogStr) throws SQLException {
+				new IterateBlock<String>(getCatalogIterator(catalog)) {
+					void forEach(String catalogStr) throws SQLException {
 						ResultSet fkresults = null;
 
 						try {
@@ -3394,13 +3391,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								// we can use 'SHOW CREATE TABLE'
 
 								fkresults = extractForeignKeyFromCreateTable(
-										catalogStr.toString(), table);
+										catalogStr, table);
 							} else {
 								StringBuffer queryBuf = new StringBuffer(
 										"SHOW TABLE STATUS ");
 								queryBuf.append(" FROM ");
 								queryBuf.append(quotedId);
-								queryBuf.append(catalogStr.toString());
+								queryBuf.append(catalogStr);
 								queryBuf.append(quotedId);
 								queryBuf.append(" LIKE '");
 								queryBuf.append(table);
@@ -3437,8 +3434,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 													.hasMoreTokens()) {
 												String keys = commentTokens
 														.nextToken();
-												getImportKeyResults(catalogStr
-														.toString(), table,
+												getImportKeyResults(catalogStr,
+														table,
 														keys, rows);
 											}
 										}
@@ -3488,8 +3485,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * @throws SQLException
 	 *             if a database access error occurs
 	 */
-	private void getImportKeyResults(String catalog, String importingTable,
-			String keysComment, List tuples) throws SQLException {
+	protected void getImportKeyResults(String catalog, String importingTable,
+			String keysComment, List<ResultSetRow> tuples) throws SQLException {
 		getResultsImpl(catalog, importingTable, keysComment, tuples, null,
 				false);
 	}
@@ -3563,13 +3560,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		Field[] fields = createIndexInfoFields();
 
-		final ArrayList rows = new ArrayList();
+		final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 		final Statement stmt = this.conn.getMetadataSafeStatement();
 
 		try {
 
-			new IterateBlock(getCatalogIterator(catalog)) {
-				void forEach(Object catalogStr) throws SQLException {
+			new IterateBlock<String>(getCatalogIterator(catalog)) {
+				void forEach(String catalogStr) throws SQLException {
 
 					ResultSet results = null;
 
@@ -3581,7 +3578,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						queryBuf.append(quotedId);
 						queryBuf.append(" FROM ");
 						queryBuf.append(quotedId);
-						queryBuf.append(catalogStr.toString());
+						queryBuf.append(catalogStr);
 						queryBuf.append(quotedId);
 
 						try {
@@ -3602,8 +3599,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 						while (results != null && results.next()) {
 							byte[][] row = new byte[14][];
-							row[0] = ((catalogStr.toString() == null) ? new byte[0]
-									: s2b(catalogStr.toString()));
+							row[0] = ((catalogStr == null) ? new byte[0]
+									: s2b(catalogStr));
 							;
 							row[1] = null;
 							row[2] = results.getBytes("Table");
@@ -3972,13 +3969,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 		}
 
-		final ArrayList rows = new ArrayList();
+		final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 		final Statement stmt = this.conn.getMetadataSafeStatement();
 
 		try {
 
-			new IterateBlock(getCatalogIterator(catalog)) {
-				void forEach(Object catalogStr) throws SQLException {
+			new IterateBlock<String>(getCatalogIterator(catalog)) {
+				void forEach(String catalogStr) throws SQLException {
 					ResultSet rs = null;
 
 					try {
@@ -3990,12 +3987,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						queryBuf.append(quotedId);
 						queryBuf.append(" FROM ");
 						queryBuf.append(quotedId);
-						queryBuf.append(catalogStr.toString());
+						queryBuf.append(catalogStr);
 						queryBuf.append(quotedId);
 
 						rs = stmt.executeQuery(queryBuf.toString());
 
-						TreeMap sortMap = new TreeMap();
+						TreeMap<String, byte[][]> sortMap = new TreeMap<String, byte[][]>();
 
 						while (rs.next()) {
 							String keyType = rs.getString("Key_name");
@@ -4004,8 +4001,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								if (keyType.equalsIgnoreCase("PRIMARY")
 										|| keyType.equalsIgnoreCase("PRI")) {
 									byte[][] tuple = new byte[6][];
-									tuple[0] = ((catalogStr.toString() == null) ? new byte[0]
-											: s2b(catalogStr.toString()));
+									tuple[0] = ((catalogStr == null) ? new byte[0]
+											: s2b(catalogStr));
 									tuple[1] = null;
 									tuple[2] = s2b(table);
 
@@ -4020,10 +4017,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						}
 
 						// Now pull out in column name sorted order
-						Iterator sortedIterator = sortMap.values().iterator();
+						Iterator<byte[][]> sortedIterator = sortMap.values().iterator();
 
 						while (sortedIterator.hasNext()) {
-							rows.add(new ByteArrayRow((byte[][])sortedIterator.next(), getExceptionInterceptor()));
+							rows.add(new ByteArrayRow(sortedIterator.next(), getExceptionInterceptor()));
 						}
 
 					} finally {
@@ -4152,7 +4149,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			String columnNamePattern, boolean returnProcedures,
 			boolean returnFunctions) throws SQLException {
 
-		List proceduresToExtractList = new ArrayList();
+		List<String> proceduresToExtractList = new ArrayList<String>();
 		//Main container to be passed to getProceduresAndOrFunctions
 		ResultSet procedureNameRs = null;
 		
@@ -4162,7 +4159,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				//in form of DB_NAME.SP_NAME thus we need to remove it
 				String tmpProcedureOrFunctionNamePattern = null;
 				//Check if NOT a pattern first, then "sanitize"
-				if ((procedureOrFunctionNamePattern != null) && (procedureOrFunctionNamePattern != "%")) {
+				if ((procedureOrFunctionNamePattern != null) && (!procedureOrFunctionNamePattern.equals("%"))) {
 					tmpProcedureOrFunctionNamePattern = StringUtils.sanitizeProcOrFuncName(procedureOrFunctionNamePattern);
 				}
 
@@ -4174,13 +4171,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					//Keep the Catalog parsed, maybe we'll need it at some point
 					//in the future...
 					String tmpCatalog = catalog;
-					List parseList = StringUtils.splitDBdotName(tmpProcedureOrFunctionNamePattern, tmpCatalog, 
+					List<String> parseList = StringUtils.splitDBdotName(tmpProcedureOrFunctionNamePattern, tmpCatalog, 
 							this.quotedId, this.conn.isNoBackslashEscapesSet());
 					
 					//There *should* be 2 rows, if any.
 					if (parseList.size() == 2) {
-						tmpCatalog = (String) parseList.get(0);
-						tmpProcedureOrFunctionNamePattern = (String) parseList.get(1);			
+						tmpCatalog = parseList.get(0);
+						tmpProcedureOrFunctionNamePattern = parseList.get(1);			
 					} else {
 						//keep values as they are
 					}
@@ -4254,12 +4251,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 		}
 
-		ArrayList resultRows = new ArrayList();
+		ArrayList<ResultSetRow> resultRows = new ArrayList<ResultSetRow>();
 		int idx = 0;
 		String procNameToCall = "";
 		
-		for (Iterator iter = proceduresToExtractList.iterator(); iter.hasNext();) {
-			String procName = (String) iter.next();
+		for (Iterator<String> iter = proceduresToExtractList.iterator(); iter.hasNext();) {
+			String procName = iter.next();
 
 			//Continuing from above (database_name.sp_name)
 			if (!" ".equals(this.quotedId)) {
@@ -4352,6 +4349,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		return fields;
 	}
 	
+	/**
+	 * 
+	 * @param fields
+	 * @param catalog
+	 * @param schemaPattern
+	 * @param procedureNamePattern
+	 * @param returnProcedures
+	 * @param returnFunctions
+	 * @return
+	 * @throws SQLException
+	 */
 	protected java.sql.ResultSet getProceduresAndOrFunctions(
 			final Field[] fields,
 			String catalog,
@@ -4370,16 +4378,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 		}
 
-		final ArrayList procedureRows = new ArrayList();
+		final ArrayList<ResultSetRow> procedureRows = new ArrayList<ResultSetRow>();
 
 		if (supportsStoredProcedures()) {
 			final String procNamePattern = procedureNamePattern;
 
-			final Map procedureRowsOrderedByName = new TreeMap();
+			final Map<String, ResultSetRow> procedureRowsOrderedByName = new TreeMap<String, ResultSetRow>();
 
-			new IterateBlock(getCatalogIterator(catalog)) {
-				void forEach(Object catalogStr) throws SQLException {
-					String db = catalogStr.toString();
+			new IterateBlock<String>(getCatalogIterator(catalog)) {
+				void forEach(String catalogStr) throws SQLException {
+					String db = catalogStr;
 
 					boolean fromSelect = false;
 					ResultSet proceduresRs = null;
@@ -4480,7 +4488,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 						// Now, sort them
 
-						Iterator proceduresIter = procedureRowsOrderedByName
+						Iterator<ResultSetRow> proceduresIter = procedureRowsOrderedByName
 								.values().iterator();
 
 						while (proceduresIter.hasNext()) {
@@ -4536,7 +4544,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 
 	private void getResultsImpl(String catalog, String table,
-			String keysComment, List tuples, String fkTableName,
+			String keysComment, List<ResultSetRow> tuples, String fkTableName,
 			boolean isExport) throws SQLException {
 
 		LocalAndReferencedColumns parsedInfo = parseTableStatusIntoLocalAndReferencedColumns(keysComment);
@@ -4553,17 +4561,15 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
-		Iterator localColumnNames = parsedInfo.localColumnsList.iterator();
-		Iterator referColumnNames = parsedInfo.referencedColumnsList.iterator();
+		Iterator<String> localColumnNames = parsedInfo.localColumnsList.iterator();
+		Iterator<String> referColumnNames = parsedInfo.referencedColumnsList.iterator();
 
 		int keySeqIndex = 1;
 
 		while (localColumnNames.hasNext()) {
 			byte[][] tuple = new byte[14][];
-			String lColumnName = removeQuotedId(localColumnNames.next()
-					.toString());
-			String rColumnName = removeQuotedId(referColumnNames.next()
-					.toString());
+			String lColumnName = removeQuotedId(localColumnNames.next());
+			String rColumnName = removeQuotedId(referColumnNames.next());
 			tuple[FKTABLE_CAT] = ((catalog == null) ? new byte[0]
 					: s2b(catalog));
 			tuple[FKTABLE_SCHEM] = null;
@@ -4608,7 +4614,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	    fields[0] = new Field("", "TABLE_SCHEM", java.sql.Types.CHAR, 0);
 	    fields[1] = new Field("", "TABLE_CATALOG", java.sql.Types.CHAR, 0);
 
-		ArrayList tuples = new ArrayList();
+		ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 		java.sql.ResultSet results = buildResultSet(fields, tuples);
 
 		return results;
@@ -4698,7 +4704,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 32);
 		fields[3] = new Field("", "SUPERTABLE_NAME", Types.CHAR, 32);
 
-		return buildResultSet(fields, new ArrayList());
+		return buildResultSet(fields, new ArrayList<ResultSetRow>());
 	}
 
 	/**
@@ -4714,7 +4720,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[4] = new Field("", "SUPERTYPE_SCHEM", Types.CHAR, 32);
 		fields[5] = new Field("", "SUPERTYPE_NAME", Types.CHAR, 32);
 
-		return buildResultSet(fields, new ArrayList());
+		return buildResultSet(fields, new ArrayList<ResultSetRow>());
 	}
 
 	/**
@@ -4728,7 +4734,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		return "DATABASE,USER,SYSTEM_USER,SESSION_USER,PASSWORD,ENCRYPT,LAST_INSERT_ID,VERSION";
 	}
 
-	private String getTableNameWithCase(String table) {
+	protected String getTableNameWithCase(String table) {
 		String tableNameWithCase = (this.conn.lowerCaseTableNames() ? table
 				.toLowerCase() : table);
 
@@ -4806,7 +4812,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		grantQuery.append("'");
 
 		ResultSet results = null;
-		ArrayList grantRows = new ArrayList();
+		ArrayList<ResultSetRow> grantRows = new ArrayList<ResultSetRow>();
 		Statement stmt = null;
 
 		try {
@@ -4960,7 +4966,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[3] = new Field("", "TABLE_TYPE", java.sql.Types.VARCHAR, 5);
 		fields[4] = new Field("", "REMARKS", java.sql.Types.VARCHAR, 0);
 
-		final ArrayList tuples = new ArrayList();
+		final ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
 		final Statement stmt = this.conn.getMetadataSafeStatement();
 
@@ -4975,11 +4981,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			tmpCat = catalog;
 		}
 		
-		List parseList = StringUtils.splitDBdotName(tableNamePattern, tmpCat,  
+		List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, tmpCat,  
 				quotedId , conn.isNoBackslashEscapesSet());
 		//There *should* be 2 rows, if any.
 		if (parseList.size() == 2) {
-			tableNamePat = (String) parseList.get(1);
+			tableNamePat = parseList.get(1);
 		} else {
 			tableNamePat = tableNamePattern;
 		}
@@ -4988,8 +4994,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		
 		try {
 
-			new IterateBlock(getCatalogIterator(catalog)) {
-				void forEach(Object catalogStr) throws SQLException {
+			new IterateBlock<String>(getCatalogIterator(catalog)) {
+				void forEach(String catalogStr) throws SQLException {
 					ResultSet results = null;
 
 					try {
@@ -4998,7 +5004,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							try {
 								results = stmt
 									.executeQuery("SHOW TABLES FROM "
-											+ quotedId + catalogStr.toString()
+											+ quotedId + catalogStr
 											+ quotedId + " LIKE '" 
 											+ tableNamePat + "'");
 							} catch (SQLException sqlEx) {
@@ -5012,7 +5018,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							try {
 								results = stmt
 									.executeQuery("SHOW FULL TABLES FROM "
-											+ quotedId + catalogStr.toString()
+											+ quotedId + catalogStr
 											+ quotedId + " LIKE '"
 											+ tableNamePat + "'");
 							} catch (SQLException sqlEx) {
@@ -5079,13 +5085,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							}
 						}
 
-						TreeMap tablesOrderedByName = null;
-						TreeMap viewsOrderedByName = null;
+						TreeMap<String, byte[][]> tablesOrderedByName = null;
+						TreeMap<String, byte[][]> viewsOrderedByName = null;
 
 						while (results.next()) {
 							byte[][] row = new byte[5][];
-							row[0] = (catalogStr.toString() == null) ? null
-									: s2b(catalogStr.toString());
+							row[0] = (catalogStr == null) ? null
+									: s2b(catalogStr);
 							row[1] = null;
 							row[2] = results.getBytes(1);
 							row[4] = new byte[0];
@@ -5109,7 +5115,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									
 									if (reportTable) {
 										if (tablesOrderedByName == null) {
-											tablesOrderedByName = new TreeMap();
+											tablesOrderedByName = new TreeMap<String, byte[][]>();
 										}
 	
 										tablesOrderedByName.put(results
@@ -5119,7 +5125,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									row[3] = SYSTEM_TABLE_AS_BYTES;
 
 									if (tablesOrderedByName == null) {
-										tablesOrderedByName = new TreeMap();
+										tablesOrderedByName = new TreeMap<String, byte[][]>();
 									}
 
 									tablesOrderedByName.put(results
@@ -5129,7 +5135,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									row[3] = VIEW_AS_BYTES;
 
 									if (viewsOrderedByName == null) {
-										viewsOrderedByName = new TreeMap();
+										viewsOrderedByName = new TreeMap<String, byte[][]>();
 									}
 
 									viewsOrderedByName.put(
@@ -5139,7 +5145,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									row[3] = TABLE_AS_BYTES;
 
 									if (tablesOrderedByName == null) {
-										tablesOrderedByName = new TreeMap();
+										tablesOrderedByName = new TreeMap<String, byte[][]>();
 									}
 
 									tablesOrderedByName.put(results
@@ -5151,7 +5157,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									row[3] = TABLE_AS_BYTES;
 
 									if (tablesOrderedByName == null) {
-										tablesOrderedByName = new TreeMap();
+										tablesOrderedByName = new TreeMap<String, byte[][]>();
 									}
 
 									tablesOrderedByName.put(results
@@ -5164,20 +5170,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						// * TABLE_SCHEM and TABLE_NAME.
 
 						if (tablesOrderedByName != null) {
-							Iterator tablesIter = tablesOrderedByName.values()
+							Iterator<byte[][]> tablesIter = tablesOrderedByName.values()
 									.iterator();
 
 							while (tablesIter.hasNext()) {
-								tuples.add(new ByteArrayRow((byte[][])tablesIter.next(), getExceptionInterceptor()));
+								tuples.add(new ByteArrayRow(tablesIter.next(), getExceptionInterceptor()));
 							}
 						}
 
 						if (viewsOrderedByName != null) {
-							Iterator viewsIter = viewsOrderedByName.values()
+							Iterator<byte[][]> viewsIter = viewsOrderedByName.values()
 									.iterator();
 
 							while (viewsIter.hasNext()) {
-								tuples.add(new ByteArrayRow((byte[][])viewsIter.next(), getExceptionInterceptor()));
+								tuples.add(new ByteArrayRow(viewsIter.next(), getExceptionInterceptor()));
 							}
 						}
 
@@ -5224,7 +5230,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public java.sql.ResultSet getTableTypes() throws SQLException {
-		ArrayList tuples = new ArrayList();
+		ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 		Field[] fields = new Field[1];
 		fields[0] = new Field("", "TABLE_TYPE", Types.VARCHAR, 5);
 
@@ -5383,7 +5389,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[17] = new Field("", "NUM_PREC_RADIX", Types.INTEGER, 10);
 
 		byte[][] rowVal = null;
-		ArrayList tuples = new ArrayList();
+		ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
 		/*
 		 * The following are ordered by java.sql.Types, and then by how closely
@@ -6725,7 +6731,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[4] = new Field("", "DATA_TYPE", Types.VARCHAR, 32);
 		fields[5] = new Field("", "REMARKS", Types.VARCHAR, 32);
 
-		ArrayList tuples = new ArrayList();
+		ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
 		return buildResultSet(fields, tuples);
 	}
@@ -6833,7 +6839,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[6] = new Field("", "DECIMAL_DIGITS", Types.SMALLINT, 16);
 		fields[7] = new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5);
 
-		return buildResultSet(fields, new ArrayList());
+		return buildResultSet(fields, new ArrayList<ResultSetRow>());
 
 		// do TIMESTAMP columns count?
 	}
@@ -7017,7 +7023,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		return false;
 	}
 
-	private LocalAndReferencedColumns parseTableStatusIntoLocalAndReferencedColumns(
+	protected LocalAndReferencedColumns parseTableStatusIntoLocalAndReferencedColumns(
 			String keysComment) throws SQLException {
 		// keys will equal something like this:
 		// (parent_service_id child_service_id) REFER
@@ -7119,16 +7125,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		String referColumnNamesString = keysCommentTrimmed.substring(
 				indexOfOpenParenReferCol + 1, indexOfCloseParenRefer);
 
-		List referColumnsList = StringUtils.split(referColumnNamesString,
+		List<String> referColumnsList = StringUtils.split(referColumnNamesString,
 				columnsDelimitter, this.quotedId, this.quotedId, false);
-		List localColumnsList = StringUtils.split(localColumnNamesString,
+		List<String> localColumnsList = StringUtils.split(localColumnNamesString,
 				columnsDelimitter, this.quotedId, this.quotedId, false);
 
 		return new LocalAndReferencedColumns(localColumnsList,
 				referColumnsList, constraintName, referCatalog, referTable);
 	}
 
-	private String removeQuotedId(String s) {
+	protected String removeQuotedId(String s) {
 		if (s == null) {
 			return null;
 		}
@@ -7945,20 +7951,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			if ((concurrency == ResultSet.CONCUR_READ_ONLY)
 					|| (concurrency == ResultSet.CONCUR_UPDATABLE)) {
 				return true;
-			} else {
-				throw SQLError.createSQLException(
-						"Illegal arguments to supportsResultSetConcurrency()",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
+			throw SQLError.createSQLException(
+				"Illegal arguments to supportsResultSetConcurrency()",
+				SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+
 		case ResultSet.TYPE_FORWARD_ONLY:
 			if ((concurrency == ResultSet.CONCUR_READ_ONLY)
 					|| (concurrency == ResultSet.CONCUR_UPDATABLE)) {
 				return true;
-			} else {
-				throw SQLError.createSQLException(
-						"Illegal arguments to supportsResultSetConcurrency()",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
+			throw SQLError.createSQLException(
+				"Illegal arguments to supportsResultSetConcurrency()",
+				SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+
 		case ResultSet.TYPE_SCROLL_SENSITIVE:
 			return false;
 		default:
@@ -8290,6 +8296,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		return false;
 	}
 	
+	/**
+	 * 
+	 * @param catalog
+	 * @param schemaPattern
+	 * @return
+	 * @throws SQLException
+	 */
 	public ResultSet getSchemas(String catalog, 
 			String schemaPattern) throws SQLException {
 		Field[] fields = {
@@ -8297,7 +8310,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				new Field("", "TABLE_CATALOG", Types.VARCHAR, 255)
 		};
 		
-		return buildResultSet(fields, new ArrayList());
+		return buildResultSet(fields, new ArrayList<ResultSetRow>());
 	}
 
 	public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
@@ -8325,7 +8338,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		return pStmt;
 	}
 	
-	// JDBC-4.1
+	/**
+	 * JDBC-4.1
+	 * 
+	 * @param catalog
+	 * @param schemaPattern
+	 * @param tableNamePattern
+	 * @param columnNamePattern
+	 * @return
+	 * @throws SQLException
+	 */
 	public java.sql.ResultSet getPseudoColumns(String catalog,
 			String schemaPattern, String tableNamePattern,
 			String columnNamePattern) throws SQLException {
@@ -8342,7 +8364,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, 12),
 				new Field("", "IS_NULLABLE", Types.VARCHAR, 512) };
 
-		return buildResultSet(fields, new ArrayList());
+		return buildResultSet(fields, new ArrayList<ResultSetRow>());
 	}
 	
 	// JDBC-4.1

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -58,7 +58,7 @@ import com.mysql.jdbc.Util;
  */
 public class PreparedStatementWrapper extends StatementWrapper implements
 		PreparedStatement {
-	private static final Constructor JDBC_4_PREPARED_STATEMENT_WRAPPER_CTOR;
+	private static final Constructor<?> JDBC_4_PREPARED_STATEMENT_WRAPPER_CTOR;
 	
 	static {
 		if (Util.isJdbc4()) {

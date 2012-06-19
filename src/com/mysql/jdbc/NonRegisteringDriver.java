@@ -35,13 +35,10 @@ import java.net.URLDecoder;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 /**
@@ -84,9 +81,9 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
 	private static final String LOADBALANCE_URL_PREFIX = "jdbc:mysql:loadbalance://";
 
-	private static final ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference> connectionPhantomRefs = new ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference>();
+	protected static final ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference> connectionPhantomRefs = new ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference>();
 	
-	private static final ReferenceQueue<ConnectionImpl> refQueue = new ReferenceQueue<ConnectionImpl>();
+	protected static final ReferenceQueue<ConnectionImpl> refQueue = new ReferenceQueue<ConnectionImpl>();
 	
 	static {
 		Thread referenceThread = new Thread("Abandoned connection cleanup thread") {
@@ -365,13 +362,13 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			throws SQLException {
 		Properties parsedProps = parseURL(url, info);
 
-		// People tend to drop this in, it doesn't make sense
-		parsedProps.remove("roundRobinLoadBalance");
-		
 		if (parsedProps == null) {
 			return null;
 		}
 
+		// People tend to drop this in, it doesn't make sense
+		parsedProps.remove("roundRobinLoadBalance");
+		
 		int numHosts = Integer.parseInt(parsedProps.getProperty(NUM_HOSTS_PROPERTY_KEY));
 
 		List<String> hostList = new ArrayList<String>();
@@ -395,14 +392,14 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			throws SQLException {
 		Properties parsedProps = parseURL(url, info);
 
-		// People tend to drop this in, it doesn't make sense
-		parsedProps.remove("roundRobinLoadBalance");
-		parsedProps.setProperty("autoReconnect", "false");
-		
 		if (parsedProps == null) {
 			return null;
 		}
 
+		// People tend to drop this in, it doesn't make sense
+		parsedProps.remove("roundRobinLoadBalance");
+		parsedProps.setProperty("autoReconnect", "false");
+		
 		int numHosts = Integer.parseInt(parsedProps
 				.getProperty(NUM_HOSTS_PROPERTY_KEY));
 
@@ -794,14 +791,14 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		}
 
 		if (configNames != null) {
-			List splitNames = StringUtils.split(configNames, ",", true);
+			List<String> splitNames = StringUtils.split(configNames, ",", true);
 
 			Properties configProps = new Properties();
 
-			Iterator namesIter = splitNames.iterator();
+			Iterator<String> namesIter = splitNames.iterator();
 
 			while (namesIter.hasNext()) {
-				String configName = (String) namesIter.next();
+				String configName = namesIter.next();
 
 				try {
 					InputStream configAsStream = getClass()
@@ -829,7 +826,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 				}
 			}
 
-			Iterator propsIter = urlProps.keySet().iterator();
+			Iterator<Object> propsIter = urlProps.keySet().iterator();
 
 			while (propsIter.hasNext()) {
 				String key = propsIter.next().toString();
@@ -843,7 +840,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 		// Properties passed in should override ones in URL
 
 		if (defaults != null) {
-			Iterator propsIter = defaults.keySet().iterator();
+			Iterator<Object> propsIter = defaults.keySet().iterator();
 
 			while (propsIter.hasNext()) {
 				String key = propsIter.next().toString();

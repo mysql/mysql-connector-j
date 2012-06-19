@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+    Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of version 2 of the GNU General Public License as 
@@ -29,7 +29,6 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -205,19 +204,19 @@ public class CharsetTests extends BaseTestCase {
 			}
 			
 			if (versionMeetsMinimum(4, 1, 12)) {
-				Map testDataMap = new HashMap();
+				Map<String, char[]> testDataMap = new HashMap<String, char[]>();
 	
-				List charsetList = new ArrayList();
+				List<String> charsetList = new ArrayList<String>();
 	
-				Map connectionMap = new HashMap();
+				Map<String, Connection> connectionMap = new HashMap<String, Connection>();
 	
-				Map connectionWithResultMap = new HashMap();
+				Map<String, Connection> connectionWithResultMap = new HashMap<String, Connection>();
 	
-				Map statementMap = new HashMap();
+				Map<String, Statement> statementMap = new HashMap<String, Statement>();
 	
-				Map statementWithResultMap = new HashMap();
+				Map<String, Statement> statementWithResultMap = new HashMap<String, Statement>();
 	
-				Map javaToMysqlCharsetMap = new HashMap();
+				Map<String, String> javaToMysqlCharsetMap = new HashMap<String, String>();
 	
 				charsetList.add("SJIS");
 				testDataMap.put("SJIS", SJIS_CHARS);
@@ -256,10 +255,7 @@ public class CharsetTests extends BaseTestCase {
 					javaToMysqlCharsetMap.put("EUC_JP", "ujis");
 				}
 	
-				Iterator charsetIterator = charsetList.iterator();
-	
-				while (charsetIterator.hasNext()) {
-					String charset = (String) charsetIterator.next();
+				for (String charset : charsetList) {
 					Properties props = new Properties();
 					
 					props.put("useUnicode", "true");
@@ -276,20 +272,15 @@ public class CharsetTests extends BaseTestCase {
 							.createStatement());
 				}
 	
-				charsetIterator = charsetList.iterator();
-				while (charsetIterator.hasNext()) {
-					String charset = (String) charsetIterator.next();
-	
-					String mysqlCharset = (String) javaToMysqlCharsetMap
-							.get(charset);
-					Statement stmt2 = (Statement) statementMap.get(charset
-							.toLowerCase(Locale.ENGLISH));
+				for (String charset : charsetList) {
+					String mysqlCharset = javaToMysqlCharsetMap.get(charset);
+					Statement stmt2 = statementMap.get(charset.toLowerCase(Locale.ENGLISH));
 					String query1 = "DROP TABLE IF EXISTS t1";
 					String query2 = "CREATE TABLE t1 (c1 int, c2 char(1)) "
 							+ "DEFAULT CHARACTER SET = " + mysqlCharset;
 					stmt2.executeUpdate(query1);
 					stmt2.executeUpdate(query2);
-					char[] testData = (char[]) testDataMap.get(charset);
+					char[] testData = testDataMap.get(charset);
 					for (int i = 0; i < testData.length; i++) {
 						String query3 = "INSERT INTO t1 values(" + i + ", '"
 								+ testData[i] + "')";

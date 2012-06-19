@@ -61,15 +61,15 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
 				replConn = getMasterSlaveReplicationConnection();
 				replConn.setReadOnly(true);
 				
-				CallableStatement stmt = replConn.prepareCall("CALL testProc1()");
-				stmt.execute();
-				stmt.execute();
+				CallableStatement cstmt = replConn.prepareCall("CALL testProc1()");
+				cstmt.execute();
+				cstmt.execute();
 				
-				stmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc1()");
-				stmt.execute();
+				cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc1()");
+				cstmt.execute();
 				
-				stmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.1`()");
-				stmt.execute();
+				cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.1`()");
+				cstmt.execute();
 				
 			} finally {
 			
@@ -104,28 +104,28 @@ public class ReadOnlyCallableStatementTest extends BaseTestCase {
 				replConn = getMasterSlaveReplicationConnection();
 				replConn.setReadOnly(true);
 				
-				CallableStatement stmt = replConn.prepareCall("CALL testProc2()");
+				CallableStatement cstmt = replConn.prepareCall("CALL testProc2()");
 
 				try{
-					stmt.execute();
+					cstmt.execute();
 					fail("Should not execute because procedure modifies data.");
 				} catch (SQLException e) {
 					assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
 				}
 
-				stmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc2()");
+				cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.testProc2()");
 
 				try{
-					stmt.execute();
+					cstmt.execute();
 					fail("Should not execute because procedure modifies data.");
 				} catch (SQLException e) {
 					assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");
 				}
 
-				stmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.2`()");
+				cstmt = replConn.prepareCall("CALL `" + replConn.getCatalog() + "`.`testProc.2`()");
 
 				try{
-					stmt.execute();
+					cstmt.execute();
 					fail("Should not execute because procedure modifies data.");
 				} catch (SQLException e) {
 					assertEquals("Should error for read-only connection.", e.getSQLState(), "S1009");

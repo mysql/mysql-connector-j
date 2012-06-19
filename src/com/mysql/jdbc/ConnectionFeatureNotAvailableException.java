@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -37,6 +37,8 @@ package com.mysql.jdbc;
  */
 public class ConnectionFeatureNotAvailableException extends
 		CommunicationsException {
+
+	static final long serialVersionUID = -5065030488729238287L;
 
 	/**
 	 * @param conn

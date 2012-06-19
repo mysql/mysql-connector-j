@@ -876,6 +876,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		this.rs.close();
 
 		try {
+			@SuppressWarnings("unused")
 			ResultSetMetaData md = this.rs.getMetaData();
 		} catch (NullPointerException npEx) {
 			fail("Should not catch NullPointerException here");
@@ -2390,7 +2391,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			int numCols = 1;
 			StringBuffer createStatement = new StringBuffer(
 					"CREATE TABLE testAllTypes (");
-			List wasDatetimeTypeList = new ArrayList();
+			List<Boolean> wasDatetimeTypeList = new ArrayList<Boolean>();
 
 			while (this.rs.next()) {
 				String dataType = this.rs.getString("TYPE_NAME").toUpperCase();
@@ -2461,7 +2462,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			insertStatement = new StringBuffer(
 					"INSERT INTO testAllTypes VALUES (");
 
-			boolean needsNow = ((Boolean) wasDatetimeTypeList.get(0))
+			boolean needsNow = wasDatetimeTypeList.get(0)
 					.booleanValue();
 
 			if (needsNow) {
@@ -2471,7 +2472,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			}
 
 			for (int i = 1; i < numCols - 1; i++) {
-				needsNow = ((Boolean) wasDatetimeTypeList.get(i))
+				needsNow = wasDatetimeTypeList.get(i)
 						.booleanValue();
 				insertStatement.append(",");
 				if (needsNow) {
@@ -2558,13 +2559,13 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	}
 
 	private void testAllFieldsForNotNull(ResultSet rsToTest,
-			List wasDatetimeTypeList) throws Exception {
+			List<Boolean> wasDatetimeTypeList) throws Exception {
 		ResultSetMetaData rsmd = this.rs.getMetaData();
 		int numCols = rsmd.getColumnCount();
 
 		while (rsToTest.next()) {
 			for (int i = 0; i < numCols - 1; i++) {
-				boolean wasDatetimeType = ((Boolean) wasDatetimeTypeList.get(i))
+				boolean wasDatetimeType = wasDatetimeTypeList.get(i)
 						.booleanValue();
 				String typeName = rsmd.getColumnTypeName(i + 1);
 				int sqlType = rsmd.getColumnType(i + 1);
@@ -3538,7 +3539,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			// int[] maxRows = new int[] {1, 4, 5, 11, 12, 13, 16, 50, 51, 52,
 			// 100};
 			int[] fetchSizes = new int[] { 1, 4, 10, 25, 100 };
-			List maxRows = new ArrayList();
+			List<Integer> maxRows = new ArrayList<Integer>();
 			maxRows.add(new Integer(1));
 
 			for (int i = 0; i < fetchSizes.length; i++) {
@@ -3558,7 +3559,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 				for (int maxRowIndex = 0; maxRowIndex < maxRows.size(); maxRowIndex++) {
 
-					int maxRowsToExpect = ((Integer) maxRows.get(maxRowIndex))
+					int maxRowsToExpect = maxRows.get(maxRowIndex)
 							.intValue();
 					fetchStmt.setMaxRows(maxRowsToExpect);
 
@@ -3583,7 +3584,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 
 				for (int maxRowIndex = 0; maxRowIndex < maxRows.size(); maxRowIndex++) {
 
-					int maxRowsToExpect = ((Integer) maxRows.get(maxRowIndex))
+					int maxRowsToExpect = maxRows.get(maxRowIndex)
 							.intValue();
 					this.pstmt.setMaxRows(maxRowsToExpect);
 
@@ -3881,7 +3882,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		Integer twoIndex = new Integer(2);
 
 		for (int i = 0; i < getterMethods.length; i++) {
-			Class[] parameterTypes = getterMethods[i].getParameterTypes();
+			Class<?>[] parameterTypes = getterMethods[i].getParameterTypes();
 
 			if (getterMethods[i].getName().startsWith("get")
 					&& parameterTypes.length == 1
@@ -4439,7 +4440,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 				.prepareStatement("INSERT INTO testRanges VALUES (?,?,?, ?)");
 		this.pstmt.setInt(1, Integer.MIN_VALUE);
 		this.pstmt.setLong(2, Long.MIN_VALUE);
-		this.pstmt.setDouble(3, (double) Long.MAX_VALUE + 1D);
+		this.pstmt.setDouble(3, Long.MAX_VALUE + 1D);
 		this.pstmt.setString(4, "1E4");
 
 		this.pstmt.executeUpdate();

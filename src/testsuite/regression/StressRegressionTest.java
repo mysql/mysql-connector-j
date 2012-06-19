@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -118,7 +118,7 @@ public class StressRegressionTest extends BaseTestCase {
 
 			double avgElapsedTimeMillis = 0;
 
-			List elapsedTimes = new ArrayList();
+			List<Long> elapsedTimes = new ArrayList<Long>();
 
 			for (int i = 0; i < numThreadsToStart; i++) {
 				elapsedTimes.add(new Long(threads[i].elapsedTimeMillis));
@@ -159,6 +159,12 @@ public class StressRegressionTest extends BaseTestCase {
 		new CreateThread(new BusyThread()).start();
 	}
 
+	/**
+	 * 
+	 * @param threadConn
+	 * @param threadStmt
+	 * @param threadNumber
+	 */
 	void contentiousWork(Connection threadConn, Statement threadStmt,
 			int threadNumber) {
 		Date now = new Date();
@@ -193,7 +199,8 @@ public class StressRegressionTest extends BaseTestCase {
 	}
 
 	synchronized void reportDone() {
-		this.numThreadsStarted--;
+		// TODO: This test should just be refactored to use an executor and futures.
+		//this.numThreadsStarted--;
 		notify();
 	}
 

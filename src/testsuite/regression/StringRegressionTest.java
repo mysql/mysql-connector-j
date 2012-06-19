@@ -31,7 +31,6 @@ import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Properties;
 
@@ -565,27 +564,27 @@ public class StringRegressionTest extends BaseTestCase {
 			pStmt.setString(2, field2);
 			pStmt.executeUpdate();
 
-			ResultSet rs = utfStmt.executeQuery("SELECT * FROM testUtf8");
-			assertTrue(rs.next());
+			this.rs = utfStmt.executeQuery("SELECT * FROM testUtf8");
+			assertTrue(this.rs.next());
 
 			// Compare results stored using direct statement
 			// Compare to original string
-			assertTrue(field1.equals(rs.getString(1)));
-			assertTrue(field2.equals(rs.getString(2)));
+			assertTrue(field1.equals(this.rs.getString(1)));
+			assertTrue(field2.equals(this.rs.getString(2)));
 
 			// Compare byte-for-byte, ignoring encoding
-			assertTrue(bytesAreSame(field1AsBytes, rs.getBytes(1)));
-			assertTrue(bytesAreSame(field2AsBytes, rs.getBytes(2)));
+			assertTrue(bytesAreSame(field1AsBytes, this.rs.getBytes(1)));
+			assertTrue(bytesAreSame(field2AsBytes, this.rs.getBytes(2)));
 
-			assertTrue(rs.next());
+			assertTrue(this.rs.next());
 
 			// Compare to original string
-			assertTrue(field1.equals(rs.getString(1)));
-			assertTrue(field2.equals(rs.getString(2)));
+			assertTrue(field1.equals(this.rs.getString(1)));
+			assertTrue(field2.equals(this.rs.getString(2)));
 
 			// Compare byte-for-byte, ignoring encoding
-			assertTrue(bytesAreSame(field1AsBytes, rs.getBytes(1)));
-			assertTrue(bytesAreSame(field2AsBytes, rs.getBytes(2)));
+			assertTrue(bytesAreSame(field1AsBytes, this.rs.getBytes(1)));
+			assertTrue(bytesAreSame(field2AsBytes, this.rs.getBytes(2)));
 		} finally {
 			utfStmt.executeUpdate("DROP TABLE IF EXISTS testUtf8");
 		}
@@ -637,11 +636,6 @@ public class StringRegressionTest extends BaseTestCase {
 		System.out.println(testValue);
 		assertTrue(testValue.equals(charsToTest));
 
-	}
-
-	private void testConversionForString(String charsetName, String charsToTest)
-			throws Exception {
-		testConversionForString(charsetName, this.conn, charsToTest);
 	}
 
 	/**

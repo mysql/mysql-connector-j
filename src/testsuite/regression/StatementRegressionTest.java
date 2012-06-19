@@ -140,7 +140,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		junit.textui.TestRunner.run(StatementRegressionTest.class);
 	}
 
-	private int testServerPrepStmtDeadlockCounter = 0;
+	protected int testServerPrepStmtDeadlockCounter = 0;
 
 	/**
 	 * Constructor for StatementRegressionTest.
@@ -1542,6 +1542,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			batchStmt.setString(1, "ghi");
 			batchStmt.addBatch();
 
+			@SuppressWarnings("unused")
 			int[] updateCounts = batchStmt.executeBatch();
 
 			this.rs = batchStmt.getGeneratedKeys();
@@ -1666,10 +1667,10 @@ public class StatementRegressionTest extends BaseTestCase {
 
 			p.executeUpdate();
 
-			ResultSet rs = p.getGeneratedKeys();
-			rs.next();
-			System.out.println("Id: " + rs.getInt(1));
-			rs.close();
+			ResultSet genKeysRs = p.getGeneratedKeys();
+			genKeysRs.next();
+			System.out.println("Id: " + genKeysRs.getInt(1));
+			genKeysRs.close();
 		} finally {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug4510");
 		}
@@ -2477,7 +2478,7 @@ public class StatementRegressionTest extends BaseTestCase {
 	 */
 	public void testLoadData() throws Exception {
 		try {
-			int maxAllowedPacket = 1048576;
+			//int maxAllowedPacket = 1048576;
 
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");
 			this.stmt
@@ -2560,14 +2561,14 @@ public class StatementRegressionTest extends BaseTestCase {
 			this.stmt
 					.executeUpdate("CREATE TABLE testParameterBoundsCheck(f1 int, f2 int, f3 int, f4 int, f5 int)");
 
-			PreparedStatement pstmt = this.conn
+			PreparedStatement _pstmt = this.conn
 					.prepareStatement("UPDATE testParameterBoundsCheck SET f1=?, f2=?,f3=?,f4=? WHERE f5=?");
 
-			pstmt.setString(1, "");
-			pstmt.setString(2, "");
+			_pstmt.setString(1, "");
+			_pstmt.setString(2, "");
 
 			try {
-				pstmt.setString(25, "");
+				_pstmt.setString(25, "");
 			} catch (SQLException sqlEx) {
 				assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx
 						.getSQLState()));
@@ -3262,7 +3263,7 @@ public class StatementRegressionTest extends BaseTestCase {
 						try {
 							sleep(timeout);
 							toBeKilledConn.close();
-						} catch (Throwable t) {
+						} catch (Throwable thr) {
 
 						}
 					}
@@ -4346,14 +4347,14 @@ public class StatementRegressionTest extends BaseTestCase {
 
 			this.rs.next();
 
-			java.util.Date date1 = new Date(this.rs.getTimestamp(2).getTime());
+			//java.util.Date date1 = new Date(this.rs.getTimestamp(2).getTime());
 			Timestamp ts1 = this.rs.getTimestamp(3);
 			long datetimeSeconds1 = rs.getLong(4) * 1000;
 			long timestampSeconds1 = rs.getLong(5) * 1000;
 
 			this.rs.next();
 
-			java.util.Date date2 = new Date(this.rs.getTimestamp(2).getTime());
+			//java.util.Date date2 = new Date(this.rs.getTimestamp(2).getTime());
 			Timestamp ts2 = this.rs.getTimestamp(3);
 			long datetimeSeconds2 = rs.getLong(4) * 1000;
 			long timestampSeconds2 = rs.getLong(5) * 1000;
@@ -4441,18 +4442,14 @@ public class StatementRegressionTest extends BaseTestCase {
 
 		Boolean minBooleanVal;
 		Boolean oRetVal;
-		ResultSet rs;
 		String Min_Val_Query = "SELECT MIN_VAL from Bit_Tab";
-		String sMaxBooleanVal = "1";
-		// sMaxBooleanVal = "true";
-		Boolean bool = Boolean.valueOf("true");
 		String Min_Insert = "insert into Bit_Tab values(1,0,null)";
 		// System.out.println("Value to insert=" + extractVal(Min_Insert,1));
 		CallableStatement cstmt;
 
-		stmt.executeUpdate("delete from Bit_Tab");
-		stmt.executeUpdate(Min_Insert);
-		cstmt = conn.prepareCall("{call Bit_Proc(?,?,?)}");
+		this.stmt.executeUpdate("delete from Bit_Tab");
+		this.stmt.executeUpdate(Min_Insert);
+		cstmt = this.conn.prepareCall("{call Bit_Proc(?,?,?)}");
 
 		cstmt.registerOutParameter(1, java.sql.Types.BIT);
 		cstmt.registerOutParameter(2, java.sql.Types.BIT);
@@ -4463,7 +4460,7 @@ public class StatementRegressionTest extends BaseTestCase {
 		boolean bRetVal = cstmt.getBoolean(2);
 		oRetVal = new Boolean(bRetVal);
 		minBooleanVal = new Boolean("false");
-		rs = stmt.executeQuery(Min_Val_Query);
+		this.rs = this.stmt.executeQuery(Min_Val_Query);
 		assertEquals(minBooleanVal, oRetVal);
 	}
 
@@ -4499,7 +4496,7 @@ public class StatementRegressionTest extends BaseTestCase {
 				return null;
 			}
 
-			public Object getObjectStoredProc(int i, Map map, int desiredSqlType)
+			public Object getObjectStoredProc(int i, Map<Object, Object> map, int desiredSqlType)
 					throws SQLException {
 
 				return null;
@@ -4511,7 +4508,7 @@ public class StatementRegressionTest extends BaseTestCase {
 				return null;
 			}
 
-			public Object getObjectStoredProc(String colName, Map map,
+			public Object getObjectStoredProc(String colName, Map<Object, Object> map,
 					int desiredSqlType) throws SQLException {
 
 				return null;
@@ -4833,12 +4830,12 @@ public class StatementRegressionTest extends BaseTestCase {
 				return null;
 			}
 
-			public Object getObject(int arg0, Map arg1) throws SQLException {
+			public Object getObject(int arg0, Map<String,Class<?>> arg1) throws SQLException {
 
 				return null;
 			}
 
-			public Object getObject(String arg0, Map arg1) throws SQLException {
+			public Object getObject(String arg0, Map<String,Class<?>> arg1) throws SQLException {
 
 				return null;
 			}
@@ -6055,8 +6052,9 @@ public class StatementRegressionTest extends BaseTestCase {
 
 			if (this.rs.next()) {
 
-				Long id = (Long) this.rs.getObject(1);// use long
+				Object id = this.rs.getObject(1);// use long
 
+				assertEquals(Long.class, id.getClass());
 			}
 
 			this.rs.close();
@@ -6064,8 +6062,9 @@ public class StatementRegressionTest extends BaseTestCase {
 			this.rs = this.stmt.executeQuery("select id from bug43196");
 
 			if (this.rs.next()) {
-				BigInteger id = (BigInteger) this.rs.getObject(1);// use
-																	// BigInteger
+				Object id = this.rs.getObject(1);// use BigInteger
+
+				assertEquals(BigInteger.class, id.getClass());
 			}
 
 			this.rs.close();
@@ -6141,7 +6140,7 @@ public class StatementRegressionTest extends BaseTestCase {
 	}
 
 	public static class Bug39426Interceptor implements StatementInterceptor {
-		public static List vals = new ArrayList();
+		public static List<Integer> vals = new ArrayList<Integer>();
 		String prevSql;
 
 		public void destroy() {
@@ -6202,7 +6201,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			ps.setInt(1, 3);
 			ps.addBatch();
 			ps.executeBatch();
-			List vals = Bug39426Interceptor.vals;
+			List<Integer> vals = Bug39426Interceptor.vals;
 			assertEquals(new Integer(1), vals.get(0));
 			assertEquals(new Integer(2), vals.get(1));
 			assertEquals(new Integer(3), vals.get(2));
@@ -6356,15 +6355,15 @@ public class StatementRegressionTest extends BaseTestCase {
 		createTable("testStatementInterceptorCount", "(field1 int)");
 		this.stmt
 				.executeUpdate("INSERT INTO testStatementInterceptorCount VALUES (0)");
-		ResultSet rs = testConn.createStatement().executeQuery(
+		ResultSet testRs = testConn.createStatement().executeQuery(
 				"SHOW SESSION STATUS LIKE 'Com_select'");
-		rs.next();
-		int s = rs.getInt(2);
+		testRs.next();
+		int s = testRs.getInt(2);
 		testConn.createStatement().executeQuery("SELECT 1");
-		rs = testConn.createStatement().executeQuery(
+		testRs = testConn.createStatement().executeQuery(
 				"SHOW SESSION STATUS LIKE 'Com_select'");
-		rs.next();
-		assertEquals(s + 1, rs.getInt(2));
+		testRs.next();
+		assertEquals(s + 1, testRs.getInt(2));
 
 	}
 

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -27,6 +27,8 @@ package com.mysql.jdbc.exceptions;
 import java.sql.SQLException;
 
 public class MySQLNonTransientException extends SQLException {
+
+	static final long serialVersionUID = -8714521137552613517L;
 
 	public MySQLNonTransientException() {
 		super();

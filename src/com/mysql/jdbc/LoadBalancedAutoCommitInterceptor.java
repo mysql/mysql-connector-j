@@ -1,6 +1,5 @@
-package com.mysql.jdbc;
 /*
-  Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2012 Oracle and/or its affiliates. All rights reserved.
   The MySQL Connector/J is licensed under the terms of the GPL,
   like most MySQL Connectors. There are special exceptions to the
   terms and conditions of the GPL as it is applied to this software,
@@ -22,6 +21,8 @@ package com.mysql.jdbc;
   02110-1301 USA
  
  */
+
+package com.mysql.jdbc;
 
 import java.sql.SQLException;
 import java.util.Properties;
@@ -54,8 +55,8 @@ public class LoadBalancedAutoCommitInterceptor implements
 		return false;
 	}
 
-	public void init(Connection conn, Properties props) throws SQLException {
-		this.conn = (ConnectionImpl) conn;
+	public void init(Connection connection, Properties props) throws SQLException {
+		this.conn = (ConnectionImpl) connection;
 		
 		String autoCommitSwapThresholdAsString = props.getProperty("loadBalanceAutoCommitStatementThreshold",
 		"0");

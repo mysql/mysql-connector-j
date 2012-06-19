@@ -1747,10 +1747,10 @@ public class StringUtils {
 	 *            Is our connection in BackSlashEscape mode
 	 * @return the input string with all comment-delimited data removed
 	 */
-	public static List splitDBdotName(String src, String cat, String quotId,
+	public static List<String> splitDBdotName(String src, String cat, String quotId,
 			boolean isNoBslashEscSet) {
 		if ((src == null) || (src.equals("%"))) {
-			return new ArrayList();
+			return new ArrayList<String>();
 		}
 		
 		boolean isQuoted = StringUtils.indexOfIgnoreCase(0,src, quotId) > -1;
@@ -1776,7 +1776,7 @@ public class StringUtils {
 			trueDotIndex = retval.indexOf(".");
 		}
 
-		List retTokens = new ArrayList(2);
+		List<String> retTokens = new ArrayList<String>(2);
 
 		if (trueDotIndex != -1) {
 			//There is a catalog attached

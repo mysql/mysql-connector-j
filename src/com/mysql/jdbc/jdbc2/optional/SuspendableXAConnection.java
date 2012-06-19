@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -43,7 +43,7 @@ import com.mysql.jdbc.Util;
 public class SuspendableXAConnection extends MysqlPooledConnection implements
 XAConnection, XAResource {
 
-	private static final Constructor JDBC_4_XA_CONNECTION_WRAPPER_CTOR;
+	private static final Constructor<?> JDBC_4_XA_CONNECTION_WRAPPER_CTOR;
 
 	static {
 		if (Util.isJdbc4()) {
@@ -79,8 +79,8 @@ XAConnection, XAResource {
 		this.underlyingConnection = connection;
 	}
 
-	private static final Map XIDS_TO_PHYSICAL_CONNECTIONS = 
-		new HashMap();
+	private static final Map<Xid, XAConnection> XIDS_TO_PHYSICAL_CONNECTIONS = 
+		new HashMap<Xid, XAConnection>();
 	
 	private Xid currentXid;
 	
@@ -96,7 +96,7 @@ XAConnection, XAResource {
 		// Note, we don't need to check for XIDs here, because MySQL itself will complain
 		// with a XAER_NOTA if need be.
 		
-		XAConnection conn = (XAConnection)XIDS_TO_PHYSICAL_CONNECTIONS.get(xid);
+		XAConnection conn = XIDS_TO_PHYSICAL_CONNECTIONS.get(xid);
 
 		if (conn == null) {
 			conn = new MysqlXAConnection(connectionToWrap,

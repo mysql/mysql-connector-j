@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -348,7 +348,7 @@ public class ProfilerEvent {
 
 		byte[] messageAsBytes = null;
 
-		if (messageAsBytes != null) {
+		if (this.message != null) {
 			messageAsBytes = StringUtils.getBytes(this.message, "ISO8859_1");
 			len += (4 + messageAsBytes.length);
 		} else {
@@ -357,7 +357,7 @@ public class ProfilerEvent {
 		
 		byte[] durationUnitsAsBytes = null;
 		
-		if (durationUnits != null) {
+		if (this.durationUnits != null) {
 			durationUnitsAsBytes = StringUtils.getBytes(this.durationUnits, "ISO8859_1");
 			len += (4 + durationUnitsAsBytes.length);
 		} else {
@@ -431,7 +431,7 @@ public class ProfilerEvent {
 	}
 
 	private static long readLong(byte[] buf, int pos) {
-		return (long) (buf[pos++] & 0xff) | ((long) (buf[pos++] & 0xff) << 8)
+		return (buf[pos++] & 0xff) | ((long) (buf[pos++] & 0xff) << 8)
 				| ((long) (buf[pos++] & 0xff) << 16)
 				| ((long) (buf[pos++] & 0xff) << 24)
 				| ((long) (buf[pos++] & 0xff) << 32)

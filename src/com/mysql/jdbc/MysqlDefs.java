@@ -485,7 +485,7 @@ public final class MysqlDefs {
 		}
 	}
 
-	private static Map mysqlToJdbcTypesMap = new HashMap();
+	private static Map<String, Integer> mysqlToJdbcTypesMap = new HashMap<String, Integer>();
 
 	static {
 		mysqlToJdbcTypesMap.put("BIT", Integer.valueOf(
@@ -555,15 +555,15 @@ public final class MysqlDefs {
 	static final void appendJdbcTypeMappingQuery(StringBuffer buf, String mysqlTypeColumnName) {
 
 		buf.append("CASE ");
-		Map typesMap = new HashMap();
+		Map<String, Integer> typesMap = new HashMap<String, Integer>();
 		typesMap.putAll(mysqlToJdbcTypesMap);
 		typesMap.put("BINARY", Integer.valueOf(Types.BINARY));
 		typesMap.put("VARBINARY", Integer.valueOf(Types.VARBINARY));
 		
-		Iterator mysqlTypes = typesMap.keySet().iterator();
+		Iterator<String> mysqlTypes = typesMap.keySet().iterator();
 		
 		while (mysqlTypes.hasNext()) {
-			String mysqlTypeName = (String)mysqlTypes.next();
+			String mysqlTypeName = mysqlTypes.next();
 			buf.append(" WHEN ");
 			buf.append(mysqlTypeColumnName);
 			buf.append("='");
