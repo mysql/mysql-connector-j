@@ -59,6 +59,7 @@ import java.util.zip.Deflater;
 import com.mysql.jdbc.authentication.MysqlClearPasswordPlugin;
 import com.mysql.jdbc.authentication.MysqlNativePasswordPlugin;
 import com.mysql.jdbc.authentication.MysqlOldPasswordPlugin;
+import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
@@ -1432,14 +1433,14 @@ public class MysqlIO {
 	
 	/**
 	 * Fill the {@link MysqlIO#authenticationPlugins} map.
-	 * First this method fill the map with instances of {@link MysqlOldPasswordPlugin}, {@link MysqlNativePasswordPlugin}
-	 * and {@link MysqlClearPasswordPlugin}.
+	 * First this method fill the map with instances of {@link MysqlOldPasswordPlugin}, {@link MysqlNativePasswordPlugin},
+	 * {@link MysqlClearPasswordPlugin} and {@link Sha256PasswordPlugin}.
 	 * Then it gets instances of plugins listed in "authenticationPlugins" connection property by
 	 * {@link Util#loadExtensions(Connection, Properties, String, String, ExceptionInterceptor)} call and adds them to the map too.
 	 * 
 	 * The key for the map entry is getted by {@link AuthenticationPlugin#getProtocolPluginName()}.
 	 * Thus it is possible to replace built-in plugin with custom one, to do it custom plugin should return value
-	 * "mysql_native_password", "mysql_old_password" or "mysql_clear_password" from it's own getProtocolPluginName() method.
+	 * "mysql_native_password", "mysql_old_password", "mysql_clear_password" or "sha256_password" from it's own getProtocolPluginName() method.
 	 * 
 	 * All plugin instances in the map are initialized by {@link Extension#init(Connection, Properties)} call
 	 * with this.connection and this.connection.getProperties() values.
@@ -1480,6 +1481,10 @@ public class MysqlIO {
 		if (addAuthenticationPlugin(plugin)) defaultIsFound = true;
 
 		plugin = new MysqlClearPasswordPlugin();
+		plugin.init(this.connection, this.connection.getProperties());
+		if (addAuthenticationPlugin(plugin)) defaultIsFound = true;
+
+		plugin = new Sha256PasswordPlugin();
 		plugin.init(this.connection, this.connection.getProperties());
 		if (addAuthenticationPlugin(plugin)) defaultIsFound = true;
 

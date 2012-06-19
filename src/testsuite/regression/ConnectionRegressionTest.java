@@ -3882,6 +3882,78 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 
+	public void testSha256PasswordPlugin() throws Exception {
+		if (versionMeetsMinimum(5, 6, 5)) {
+
+			// check that sha256_password plugin is available
+			boolean plugin_is_active = false;
+			this.rs = this.stmt.executeQuery("select (PLUGIN_STATUS='ACTIVE') as `TRUE` from INFORMATION_SCHEMA.PLUGINS where PLUGIN_NAME='sha256_password'");
+			if (rs.next()) {
+				plugin_is_active = rs.getBoolean(1);
+			}
+
+			if (plugin_is_active) {
+				try {
+					String dbname = null;
+					this.rs = this.stmt.executeQuery("select database() as dbname");
+					if(this.rs.first()) {
+						dbname = this.rs.getString("dbname");
+					}
+					if (dbname == null) assertTrue("No database selected", false);
+					
+					// create proxy users
+					this.stmt.executeUpdate("grant usage on *.* to 'wl5602user'@'%' identified WITH sha256_password");
+					this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
+					this.stmt.executeUpdate("SET SESSION old_passwords= 2");
+					this.stmt.executeUpdate("set password for 'wl5602user'@'%' = PASSWORD('pwd')");
+					this.stmt.executeUpdate("delete from mysql.db where user='wl5602user'");
+					this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', '"+dbname+"', 'wl5602user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+					this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5602user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
+					this.stmt.executeUpdate("flush privileges");
+					
+					Properties props = new Properties();
+					props.setProperty("user", "wl5602user");
+					props.setProperty("password", "pwd");
+
+					Connection testConn = null;
+					Statement testSt = null;
+					ResultSet testRs = null;
+					try {
+						try {
+							testConn = getConnectionWithProps(props);
+							assertFalse("SQLException expected due to SSL connection is required", true);
+						} catch (SQLException e) {
+							String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+							System.setProperty("javax.net.ssl.keyStore", trustStorePath);
+							System.setProperty("javax.net.ssl.keyStorePassword", "password");
+							System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+							System.setProperty("javax.net.ssl.trustStorePassword", "password");
+							props.setProperty("useSSL", "true");
+							props.setProperty("requireSSL", "true");
+							testConn = getConnectionWithProps(props);
+						}
+						
+						testSt = testConn.createStatement();
+						testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+						testRs.next();
+						
+						assertEquals("wl5602user", testRs.getString(1).split("@")[0]);
+						assertEquals("wl5602user", testRs.getString(2).split("@")[0]);
+						
+					} finally {
+						if (testRs != null) testRs.close();
+						if (testSt != null) testSt.close();
+						if (testConn != null) testConn.close();
+					}
+
+				} finally {
+					this.stmt.executeUpdate("drop user 'wl5602user'@'%'");
+					this.stmt.executeUpdate("flush privileges");
+				}
+			}
+		}
+	}
+
 	public void testBug36662() throws Exception {
 
 		try {
