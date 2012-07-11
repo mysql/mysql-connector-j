@@ -73,7 +73,9 @@ import testsuite.BaseTestCase;
 import testsuite.UnreliableSocketFactory;
 
 import com.mysql.jdbc.CachedResultSetMetaData;
+import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.Field;
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -2524,7 +2526,8 @@ public class StatementRegressionTest extends BaseTestCase {
 			int updateCount = this.stmt
 					.executeUpdate("LOAD DATA LOCAL INFILE '"
 							+ fileNameBuf.toString()
-							+ "' INTO TABLE loadDataRegress");
+							+ "' INTO TABLE loadDataRegress" +
+							" CHARACTER SET " + CharsetMapping.getMysqlEncodingForJavaEncoding(((MySQLConnection)this.conn).getEncoding(), (com.mysql.jdbc.Connection) this.conn));
 			assertTrue(updateCount == rowCount);
 		} finally {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS loadDataRegress");

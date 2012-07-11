@@ -1817,7 +1817,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 							"ISO8859_1".equalsIgnoreCase(serverEncodingToSet)) {
 						serverEncodingToSet = "Cp1252";
 					}
-					
+					if ("UnicodeBig".equalsIgnoreCase(serverEncodingToSet) ||
+							"UTF-16".equalsIgnoreCase(serverEncodingToSet) ||
+							"UTF-32".equalsIgnoreCase(serverEncodingToSet)
+							) {
+						serverEncodingToSet = "UTF-8";
+					}
+
 					setEncoding(serverEncodingToSet);
 				
 				} catch (ArrayIndexOutOfBoundsException outOfBoundsEx) {
@@ -1918,15 +1924,24 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						// Tell the server we'll use the server default charset
 						// to send our
 						// queries from now on....
-						String mysqlEncodingName = CharsetMapping
-								.getMysqlEncodingForJavaEncoding(getEncoding()
-										.toUpperCase(Locale.ENGLISH), this);
+						String mysqlEncodingName = getServerCharacterEncoding();
 						
 						if(getUseOldUTF8Behavior()){
 							mysqlEncodingName = "latin1";
 						}
 
-						if (dontCheckServerMatch || !characterSetNamesMatches(mysqlEncodingName)) {
+						boolean ucs2 = false;
+						if (	"ucs2".equalsIgnoreCase(mysqlEncodingName) ||
+								"utf16".equalsIgnoreCase(mysqlEncodingName) ||
+								"utf32".equalsIgnoreCase(mysqlEncodingName)) {
+							mysqlEncodingName = "utf8";
+							ucs2 = true;
+							if (getCharacterSetResults() == null) {
+								setCharacterSetResults("UTF-8");
+							}
+						}
+
+						if (dontCheckServerMatch || !characterSetNamesMatches(mysqlEncodingName) || ucs2) {
 							execSQL(null, "SET NAMES " + mysqlEncodingName, -1,
 								null, DEFAULT_RESULT_SET_TYPE,
 								DEFAULT_RESULT_SET_CONCURRENCY, false,

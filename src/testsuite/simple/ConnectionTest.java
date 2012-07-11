@@ -53,7 +53,9 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.Driver;
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StringUtils;
@@ -806,9 +808,11 @@ public class ConnectionTest extends BaseTestCase {
 		Connection loadConn = getConnectionWithProps(props);
 		Statement loadStmt = loadConn.createStatement();
 
+		String charset = " CHARACTER SET " + CharsetMapping.getMysqlEncodingForJavaEncoding(((MySQLConnection)loadConn).getEncoding(), (com.mysql.jdbc.Connection) loadConn);
+
 		try {
 			loadStmt.executeQuery("LOAD DATA LOCAL INFILE '" + url
-					+ "' INTO TABLE testLocalInfileWithUrl");
+					+ "' INTO TABLE testLocalInfileWithUrl" + charset);
 		} catch (SQLException sqlEx) {
 			sqlEx.printStackTrace();
 
@@ -838,14 +842,14 @@ public class ConnectionTest extends BaseTestCase {
 
 		loadStmt.executeQuery("LOAD DATA LOCAL INFILE '"
 				+ escapedPath.toString()
-				+ "' INTO TABLE testLocalInfileWithUrl");
+				+ "' INTO TABLE testLocalInfileWithUrl" + charset);
 		this.rs = this.stmt
 				.executeQuery("SELECT * FROM testLocalInfileWithUrl");
 		assertTrue(this.rs.next());
 		assertTrue("Test".equals(this.rs.getString(1)));
 
 		try {
-			loadStmt.executeQuery("LOAD DATA LOCAL INFILE 'foo:///' INTO TABLE testLocalInfileWithUrl");
+			loadStmt.executeQuery("LOAD DATA LOCAL INFILE 'foo:///' INTO TABLE testLocalInfileWithUrl" + charset);
 		} catch (SQLException sqlEx) {
 			assertTrue(sqlEx.getMessage() != null);
 			assertTrue(sqlEx.getMessage().indexOf("FileNotFoundException") != -1);

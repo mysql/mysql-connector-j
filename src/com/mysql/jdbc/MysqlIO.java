@@ -1743,24 +1743,46 @@ public class MysqlIO {
 			if (toServer.size() > 0) {
 				if (challenge == null) {
 					// write COM_CHANGE_USER Packet
+
+					String enc = this.connection.getEncoding();
+					int charsetIndex = 0;
+					if (enc != null) {
+						charsetIndex = CharsetMapping.getCharsetIndexForMysqlEncodingName(CharsetMapping.getMysqlEncodingForJavaEncoding(enc, this.connection));
+					} else {
+						enc = "utf-8";
+					}
+					if (charsetIndex == 0) {
+						charsetIndex = UTF8_CHARSET_INDEX;
+					}
+					
+					
 					last_sent = new Buffer(packLength + 1);
 					last_sent.writeByte((byte) MysqlDefs.COM_CHANGE_USER);
 					
 					// User/Password data
-					last_sent.writeString(user, "utf-8", this.connection);
+					last_sent.writeString(user, enc, this.connection);
 
 					last_sent.writeByte((byte) toServer.get(0).getBufLength());
 					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
 
 					if (this.useConnectWithDb) {
-						last_sent.writeString(database, "utf-8", this.connection);
+						last_sent.writeString(database, enc, this.connection);
 					} else {
 						/* For empty database*/
 						last_sent.writeByte((byte) 0);
 					}
 
+					// charset (2 bytes low-endian)
+					last_sent.writeByte((byte) (charsetIndex % 256));
+					if (charsetIndex > 255) {
+						last_sent.writeByte((byte) (charsetIndex / 256));
+					} else {
+						last_sent.writeByte((byte) 0);
+					}
+
+					// plugin name
 					if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
-						last_sent.writeString(plugin.getProtocolPluginName(), "utf-8", this.connection);
+						last_sent.writeString(plugin.getProtocolPluginName(), enc, this.connection);
 					}
 
 					send(last_sent, last_sent.getPosition());
@@ -4570,6 +4592,18 @@ public class MysqlIO {
             /* For empty database*/
             packet.writeByte((byte) 0);
         }
+                    
+        if ((this.serverCapabilities & CLIENT_PROTOCOL_41) != 0) {
+			// charset (2 bytes low-endian)
+			String mysqlEncodingName = this.connection.getServerCharacterEncoding();
+			if ("ucs2".equalsIgnoreCase(mysqlEncodingName) ||
+					"utf16".equalsIgnoreCase(mysqlEncodingName) ||
+					"uft32".equalsIgnoreCase(mysqlEncodingName)) {
+				packet.writeByte((byte) UTF8_CHARSET_INDEX);
+				packet.writeByte((byte) 0);
+			}
+        }
+
 
         send(packet, packet.getPosition());
 
@@ -5117,6 +5151,13 @@ public class MysqlIO {
 
         if (this.use41Extensions) {
             packet.writeLong(this.clientParam);
+            packet.writeLong(this.maxThreeBytes);
+			int charsetIndex = 0;
+			if (this.connection.getEncoding() != null) {
+				charsetIndex = CharsetMapping.getCharsetIndexForMysqlEncodingName(CharsetMapping.getMysqlEncodingForJavaEncoding(this.connection.getEncoding(), this.connection));
+			}
+            packet.writeByte(charsetIndex == 0 ? (byte) UTF8_CHARSET_INDEX : (byte) charsetIndex);
+            packet.writeBytesNoNull(new byte[23]);	// Set of bytes reserved for future use.
         } else {
             packet.writeInt((int) this.clientParam);
         }

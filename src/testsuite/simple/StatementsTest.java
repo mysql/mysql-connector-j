@@ -49,6 +49,8 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.CharsetMapping;
+import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.NotImplemented;
 import com.mysql.jdbc.ParameterBindings;
 import com.mysql.jdbc.SQLError;
@@ -1975,7 +1977,8 @@ public class StatementsTest extends BaseTestCase {
 	    InputStream stream = new ByteArrayInputStream(streamData.getBytes());
 	    try {
 	        ((com.mysql.jdbc.Statement) this.stmt).setLocalInfileInputStream(stream);
-	        this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked");
+	        this.stmt.execute("LOAD DATA LOCAL INFILE 'bogusFileName' INTO TABLE localInfileHooked"+
+	        		" CHARACTER SET " + CharsetMapping.getMysqlEncodingForJavaEncoding(((MySQLConnection)this.conn).getEncoding(), (com.mysql.jdbc.Connection) this.conn));
 	        assertEquals(-1, stream.read());
 	        this.rs = this.stmt.executeQuery("SELECT field2 FROM localInfileHooked ORDER BY field1 ASC");
 	        this.rs.next();

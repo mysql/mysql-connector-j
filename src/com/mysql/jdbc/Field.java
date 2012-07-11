@@ -200,6 +200,12 @@ public class Field {
 			this.charsetName = this.connection
 				.getCharsetNameForIndex(this.charsetIndex);
 
+			// ucs2, utf16, and utf32 cannot be used as a client character set,
+			// but if it was received from server under some circumstances
+			// we can parse them as utf16
+			if ("UnicodeBig".equals(this.charsetName)) {
+				this.charsetName = "UTF-16";
+			}
 
 			// Handle VARBINARY/BINARY (server doesn't have a different type
 			// for this

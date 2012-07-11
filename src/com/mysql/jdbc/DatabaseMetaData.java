@@ -2548,7 +2548,27 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								// DATA_TYPE (jdbc)
 								rowVal[5] = s2b(typeDesc.typeName); // TYPE_NAME
 								// (native)
-								rowVal[6] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString());
+								if (typeDesc.columnSize == null) {
+									rowVal[6] = null;
+								} else {
+									String collation = results.getString("Collation");
+									int mbminlen = 1;
+									if (collation != null && (
+											"TEXT".equals(typeDesc.typeName) ||
+											"TINYTEXT".equals(typeDesc.typeName) ||
+											"MEDIUMTEXT".equals(typeDesc.typeName)
+											)) {
+										if (	collation.indexOf("ucs2") > -1 ||
+												collation.indexOf("utf16") > -1) {
+											mbminlen = 2;
+										} else if (collation.indexOf("utf32") > -1) {
+											mbminlen = 4;
+										}
+									}
+									rowVal[6] = mbminlen == 1 ?
+										s2b(typeDesc.columnSize.toString()) :
+										s2b(((Integer)(typeDesc.columnSize / mbminlen)).toString());
+								}
 								rowVal[7] = s2b(Integer.toString(typeDesc.bufferLength));
 								rowVal[8] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString());
 								rowVal[9] = s2b(Integer
