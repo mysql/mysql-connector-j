@@ -1,6 +1,10 @@
 # Changelog
 # $Id$
 
+nn-nn-12 - Version 5.1.22
+  - Fix for Bug#65508, getCharsetNameForIndex() should be faster.
+
+
 07-05-12 - Version 5.1.21
   - Added new built-in authentication plugin com.mysql.jdbc.authentication.Sha256PasswordPlugin
     ("sha256_password").

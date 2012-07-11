@@ -2965,10 +2965,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				// checking against static maps if no custom charset found
 				if (charsetName==null) charsetName = CharsetMapping.INDEX_TO_CHARSET[charsetIndex];
 
-				if ("sjis".equalsIgnoreCase(charsetName) || 
-						"MS932".equalsIgnoreCase(charsetName) /* for JDK6 */) {
-					// Use our encoding so that code pages like Cp932 work
-					if (CharsetMapping.isAliasForSjis(getEncoding())) {
+				if (this.characterEncodingIsAliasForSjis) {
+					if ("sjis".equalsIgnoreCase(charsetName) || 
+							"MS932".equalsIgnoreCase(charsetName) /* for JDK6 */) {
+						// Use our encoding so that code pages like Cp932 work
 						charsetName = getEncoding();
 					}
 				}

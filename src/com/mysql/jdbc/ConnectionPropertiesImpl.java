@@ -824,6 +824,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			"1.1g", MISC_CATEGORY, 5); //$NON-NLS-1$
 
 	private String characterEncodingAsString = null;
+	
+	protected boolean characterEncodingIsAliasForSjis = false;
 
 	private StringConnectionProperty characterSetResults = new StringConnectionProperty(
 			"characterSetResults", null, //$NON-NLS-1$
@@ -2849,6 +2851,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		this.useUnicodeAsBoolean = this.useUnicode.getValueAsBoolean();
 		this.characterEncodingAsString = ((String) this.characterEncoding
 				.getValueAsObject());
+		this.characterEncodingIsAliasForSjis = CharsetMapping.isAliasForSjis(this.characterEncodingAsString);
 		this.highAvailabilityAsBoolean = this.autoReconnect.getValueAsBoolean();
 		this.autoReconnectForPoolsAsBoolean = this.autoReconnectForPools
 				.getValueAsBoolean();
@@ -3137,6 +3140,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		this.characterEncoding.setValue(property);
 		this.characterEncodingAsString = this.characterEncoding
 				.getValueAsString();
+		this.characterEncodingIsAliasForSjis = CharsetMapping.isAliasForSjis(this.characterEncodingAsString);
 	}
 
 	/* (non-Javadoc)
