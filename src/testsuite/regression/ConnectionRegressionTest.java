@@ -4053,5 +4053,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	public void testIsLocal() throws Exception {
+		boolean normalState = ((ConnectionImpl) conn).isServerLocal();
+		
+		if (normalState) {
+			boolean isNotLocal = ((ConnectionImpl) getConnectionWithProps(StandardSocketFactory.IS_LOCAL_HOSTNAME_REPLACEMENT_PROPERTY_NAME + "=www.oracle.com:3306")).isServerLocal();
+			
+			assertFalse(isNotLocal == normalState);
+		}
+	}
 
 }
