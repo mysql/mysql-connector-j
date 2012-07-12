@@ -886,6 +886,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	private IntegerConnectionProperty defaultFetchSize = new IntegerConnectionProperty("defaultFetchSize", 0, Messages.getString("ConnectionProperties.defaultFetchSize"), "3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
+        // Think really long and hard about changing the default for this
+        // many, many applications have come to be acustomed to the
+        // latency profile of preparing stuff client-side, rather than
+        // prepare (round-trip), execute (round-trip), close (round-trip).
 	private BooleanConnectionProperty detectServerPreparedStmts = new BooleanConnectionProperty(
 			"useServerPrepStmts", //$NON-NLS-1$
 			false,
