@@ -1611,4 +1611,70 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	}
 
 
+	@Override
+	public ResultSet getVersionColumns(String catalog, String schema,
+			String table) throws SQLException {
+
+		if (catalog == null) {
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				catalog = this.database;
+			}
+		}
+
+		if (table == null) {
+			throw SQLError.createSQLException("Table not specified.",
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+		}
+
+		StringBuffer sqlBuf = new StringBuffer("SELECT NULL AS SCOPE, COLUMN_NAME, ");
+
+		MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+		sqlBuf.append(" AS DATA_TYPE, ");
+
+		sqlBuf.append("COLUMN_TYPE AS TYPE_NAME, ");
+		sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 "
+				+ "WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 "
+				+ "WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > " 
+				+ Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, ");
+		sqlBuf.append(
+				MysqlIO.getMaxBuf() + " AS BUFFER_LENGTH,"
+				+ "NUMERIC_SCALE AS DECIMAL_DIGITS, "
+				+ Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo) + " AS PSEUDO_COLUMN "
+				+ "FROM INFORMATION_SCHEMA.COLUMNS "
+				+ "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?"
+				+ " AND EXTRA LIKE '%on update CURRENT_TIMESTAMP%'");
+
+		java.sql.PreparedStatement pStmt = null;
+
+		try {
+			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+
+			if (catalog != null) {
+				pStmt.setString(1, catalog);
+			} else {
+				pStmt.setString(1, "%");
+			}
+
+			pStmt.setString(2, table);
+
+			ResultSet rs = executeMetadataQuery(pStmt);
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
+					new Field("", "SCOPE", Types.SMALLINT, 5),
+					new Field("", "COLUMN_NAME", Types.CHAR, 32),
+					new Field("", "DATA_TYPE", Types.INTEGER, 5),
+					new Field("", "TYPE_NAME", Types.CHAR, 16),
+					new Field("", "COLUMN_SIZE", Types.INTEGER, 16),
+					new Field("", "BUFFER_LENGTH", Types.INTEGER, 16),
+					new Field("", "DECIMAL_DIGITS", Types.SMALLINT, 16),
+					new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5)
+			});
+
+			return rs;
+		} finally {
+			if (pStmt != null) {
+				pStmt.close();
+			}
+		}
+	}
+
 }

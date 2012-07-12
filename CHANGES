@@ -2,6 +2,9 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.22
+  - Fix for Bug#63800, getVersionColumns() does not return timestamp fields; always empty.
+    Added support of ON UPDATE CURRENT_TIMESTAMP for TIMESTAMP and DATETIME fields.
+
   - Fix for Bug#41752, Can't connect mysqld which character_set_server=ucs2.
 
   - Fix for Bug#65508, getCharsetNameForIndex() should be faster.

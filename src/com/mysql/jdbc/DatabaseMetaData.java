@@ -6848,7 +6848,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public java.sql.ResultSet getVersionColumns(String catalog, String schema,
-			String table) throws SQLException {
+			final String table) throws SQLException {
+
+		if (table == null) {
+			throw SQLError.createSQLException("Table not specified.",
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+		}
+
 		Field[] fields = new Field[8];
 		fields[0] = new Field("", "SCOPE", Types.SMALLINT, 5);
 		fields[1] = new Field("", "COLUMN_NAME", Types.CHAR, 32);
@@ -6859,9 +6865,146 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[6] = new Field("", "DECIMAL_DIGITS", Types.SMALLINT, 16);
 		fields[7] = new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5);
 
-		return buildResultSet(fields, new ArrayList<ResultSetRow>());
+		final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 
-		// do TIMESTAMP columns count?
+		final Statement stmt = this.conn.getMetadataSafeStatement();
+
+		try {
+
+			new IterateBlock<String>(getCatalogIterator(catalog)) {
+				void forEach(String catalogStr) throws SQLException {
+
+					ResultSet results = null;
+					boolean with_where = conn.versionMeetsMinimum(5, 0, 0);
+
+					try {
+						StringBuffer whereBuf = new StringBuffer(" Extra LIKE '%on update CURRENT_TIMESTAMP%'");
+						List<String> rsFields = new ArrayList<String>();
+						
+						// for versions prior to 5.1.23 we can get "on update CURRENT_TIMESTAMP"
+						// only from SHOW CREATE TABLE
+						if (!conn.versionMeetsMinimum(5, 1, 23)) {
+							
+							whereBuf = new StringBuffer();
+							boolean firstTime = true;
+
+							String query = new StringBuffer("SHOW CREATE TABLE ").
+									append(quotedId).append(catalogStr).append(quotedId).
+									append(".").append(quotedId).append(table).append(quotedId).
+									toString();
+
+							results = stmt.executeQuery(query);
+							while (results.next()) {
+								String createTableString = results.getString(2);
+								StringTokenizer lineTokenizer = new StringTokenizer(createTableString, "\n");
+
+								while (lineTokenizer.hasMoreTokens()) {
+									String line = lineTokenizer.nextToken().trim();
+									if (StringUtils.indexOfIgnoreCase(line, "on update CURRENT_TIMESTAMP") > -1) {
+										boolean usingBackTicks = true;
+										int beginPos = line.indexOf(quotedId);
+
+										if (beginPos == -1) {
+											beginPos = line.indexOf("\"");
+											usingBackTicks = false;
+										}
+
+										if (beginPos != -1) {
+											int endPos = -1;
+							
+											if (usingBackTicks) {
+												endPos = line.indexOf(quotedId, beginPos + 1);
+											} else {
+												endPos = line.indexOf("\"", beginPos + 1);
+											}
+							
+											if (endPos != -1) {
+												if (with_where) {
+													if (!firstTime) {
+														whereBuf.append(" or");
+													} else {
+														firstTime = false;
+													}
+													whereBuf.append(" Field='");
+													whereBuf.append(line.substring(beginPos + 1, endPos));
+													whereBuf.append("'");
+												} else {
+													rsFields.add(line.substring(beginPos + 1, endPos));
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+						
+						if (whereBuf.length() > 0 || rsFields.size() > 0) {
+							StringBuffer queryBuf = new StringBuffer("SHOW ");
+							queryBuf.append("COLUMNS FROM ");
+							queryBuf.append(quotedId);
+							queryBuf.append(table);
+							queryBuf.append(quotedId);
+							queryBuf.append(" FROM ");
+							queryBuf.append(quotedId);
+							queryBuf.append(catalogStr);
+							queryBuf.append(quotedId);
+							if (with_where) {
+								queryBuf.append(" WHERE");
+								queryBuf.append(whereBuf.toString());
+							}
+
+							results = stmt.executeQuery(queryBuf.toString());
+
+							while (results.next()) {
+								if (with_where || rsFields.contains(results.getString("Field"))) {
+									TypeDescriptor typeDesc = new TypeDescriptor(results.getString("Type"), results.getString("Null"));
+									byte[][] rowVal = new byte[8][];
+									// SCOPE is not used
+									rowVal[0] = null;
+									// COLUMN_NAME
+									rowVal[1] = results.getBytes("Field");
+									// DATA_TYPE
+									rowVal[2] = Short.toString(typeDesc.dataType).getBytes();
+									// TYPE_NAME
+									rowVal[3] = s2b(typeDesc.typeName);
+									// COLUMN_SIZE
+									rowVal[4] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString());
+									// BUFFER_LENGTH
+									rowVal[5] = s2b(Integer.toString(typeDesc.bufferLength));
+									// DECIMAL_DIGITS
+									rowVal[6] = typeDesc.decimalDigits == null ? null : s2b(typeDesc.decimalDigits.toString());
+									// PSEUDO_COLUMN
+									rowVal[7] = Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo).getBytes();
+
+									rows.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
+								}
+							}
+						}
+					} catch (SQLException sqlEx) {
+						if (!SQLError.SQL_STATE_BASE_TABLE_OR_VIEW_NOT_FOUND.equals(sqlEx.getSQLState())) {
+							throw sqlEx;
+						}
+					} finally {
+						if (results != null) {
+							try {
+								results.close();
+							} catch (Exception ex) {
+								;
+							}
+
+							results = null;
+						}
+					}
+
+				}
+			}.doForAll();
+		} finally {
+			if (stmt != null) {
+				stmt.close();
+			}
+		}
+
+		return buildResultSet(fields, rows);
 	}
 
 	/**

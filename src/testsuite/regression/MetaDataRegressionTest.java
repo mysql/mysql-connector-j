@@ -3199,4 +3199,183 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		assertEquals(precision_utf8, precision_utf8bin);
 
 	}
+
+	/**
+	 * Tests fix for BUG#63800 - getVersionColumns() does not return timestamp fields; always empty. 
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug63800() throws Exception {
+		try {
+			testTimestamp(this.conn, this.stmt);
+			if (versionMeetsMinimum(5, 6, 5)) {
+				testDatetime(this.conn, this.stmt);
+			}
+			
+			Properties props = new Properties();
+			props.setProperty("useInformationSchema", "true");
+			Connection conn2 = getConnectionWithProps(props);
+			Statement stmt2 = null;
+
+			try {
+				stmt2 = conn2.createStatement();
+				testTimestamp(conn2, stmt2);
+				if (versionMeetsMinimum(5, 6, 5)) {
+					testDatetime(conn2, stmt2);
+				}
+			} finally {
+				if (stmt2 != null) {
+					stmt2.close();
+				}
+				if (conn2 != null) {
+					conn2.close();
+				}
+			}
+		} finally {
+			this.stmt.execute("DROP  TABLE IF EXISTS testBug63800");
+		}
+	}
+
+	private void testTimestamp(Connection con, Statement st) throws SQLException {
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+		DatabaseMetaData dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertTrue("1 column must be found", rs.next());
+		assertEquals("Wrong column or single column not found", rs.getString(2), "f1");
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertTrue("1 column must be found", rs.next());
+		assertEquals("Wrong column or single column not found", rs.getString(2), "f1");
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertFalse("0 column must be found", rs.next());
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP DEFAULT 0)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertFalse("0 column must be found", rs.next());
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertTrue("1 column must be found", rs.next());
+		assertEquals("Wrong column or single column not found", rs.getString(2), "f1");
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertTrue("1 column must be found", rs.next());
+		assertEquals("Wrong column or single column not found", rs.getString(2), "f1");
+		
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP NULL, f2 TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertTrue("1 column must be found", rs.next());
+		assertEquals("Wrong column or single column not found", rs.getString(2), "f2");
+
+		// ALTER test
+		st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', ADD COLUMN `f3` TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP  AFTER `f2`");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertTrue("1 column must be found", rs.next());
+		assertEquals("Wrong column or single column not found", rs.getString(2), "f3");
+	}
+
+	private void testDatetime(Connection con, Statement st) throws SQLException {
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+		DatabaseMetaData dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertTrue("1 column must be found", rs.next());
+		assertEquals("Wrong column or single column not found", rs.getString(2), "f1");
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 DATETIME)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertFalse("0 column must be found", rs.next());
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 DATETIME DEFAULT CURRENT_TIMESTAMP)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertFalse("0 column must be found", rs.next());
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 DATETIME DEFAULT 0)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertFalse("0 column must be found", rs.next());
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 DATETIME DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertTrue("1 column must be found", rs.next());
+		assertEquals("Wrong column or single column not found", rs.getString(2), "f1");
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 DATETIME ON UPDATE CURRENT_TIMESTAMP)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		assertTrue("1 column must be found", rs.next());
+		assertEquals("Wrong column or single column not found", rs.getString(2), "f1");
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 DATETIME NULL, f2 DATETIME ON UPDATE CURRENT_TIMESTAMP)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		int cnt = 0;
+		while (this.rs.next()) {
+			cnt++;
+			assertEquals("1 column must be found", cnt, 1);
+			assertEquals("Wrong column or single column not found", rs.getString(2), "f2");
+		}
+
+		// ALTER 1 test
+		st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', ADD COLUMN `f3` DATETIME NULL ON UPDATE CURRENT_TIMESTAMP  AFTER `f2`");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		cnt = 0;
+		while (this.rs.next()) {
+			cnt++;
+			assertEquals("1 column must be found", cnt, 1);
+			assertEquals("Wrong column or single column not found", rs.getString(2), "f3");
+		}
+
+		// ALTER 2 test
+		st.execute("ALTER TABLE testBug63800 CHANGE COLUMN `f2` `f2` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		cnt = 0;
+		while (this.rs.next()) {
+			cnt++;
+		}
+		assertEquals("2 column must be found", cnt, 2);
+
+		st.execute("DROP  TABLE IF EXISTS testBug63800");
+		st.execute("CREATE TABLE testBug63800(f1 TIMESTAMP, f2 DATETIME ON UPDATE CURRENT_TIMESTAMP, f3 TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+		dmd = con.getMetaData();
+		this.rs  = dmd.getVersionColumns("test", "test", "testBug63800");
+		cnt = 0;
+		while (this.rs.next()) {
+			cnt++;
+		}
+		assertEquals("3 column must be found", cnt, 3);
+
+		
+	}
+
 }
