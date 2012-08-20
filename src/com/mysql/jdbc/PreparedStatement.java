@@ -2258,11 +2258,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			
 			Buffer sendPacket = fillSendPacket();
 
-			if (this.results != null) {
-				if (!this.connection.getHoldResultsOpenOverStatementClose()) {
-					if (!this.holdResultsOpenOverClose) {
+			if (!this.connection.getHoldResultsOpenOverStatementClose()) {
+				if (!this.holdResultsOpenOverClose) {
+					if (this.results != null) {
 						this.results.realClose(false);
 					}
+					if (this.generatedKeysResults != null) {
+						this.generatedKeysResults.realClose(false);
+					}
+					closeAllOpenResults();
 				}
 			}
 
@@ -2413,12 +2417,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						"01S03", getExceptionInterceptor()); //$NON-NLS-1$
 			}
 	
-			if (this.results != null) {
-				if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
-					this.results.realClose(false);
-				}
+			if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+					if (this.results != null) {
+						this.results.realClose(false);
+					}
+					if (this.generatedKeysResults != null) {
+						this.generatedKeysResults.realClose(false);
+					}
+					closeAllOpenResults();
 			}
-	
+
 			ResultSetInternalMethods rs = null;
 
 			Buffer sendPacket = fillSendPacket(batchedParameterStrings,

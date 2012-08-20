@@ -4748,4 +4748,40 @@ public class ResultSetRegressionTest extends BaseTestCase {
        	ssPStmt.close();
        	sspsCon.close();
 	}
+
+    /**
+     * Tests fix for BUG#65503 - ResultSets created by PreparedStatement.getGeneratedKeys() are not close()d.
+     * 
+     * To get results quicker add option -Xmx10M, with this option I got an out of memory failure after about 6500 passes.
+     * Since it's a very long test it is disabled by default.
+     * 
+     * @throws Exception
+     *             if the test fails.
+     */
+    public void testBug65503() throws Exception {
+		if (false) {
+	        createTable("testBug65503","(id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY, value INTEGER)");
+			
+			PreparedStatement pStmt = this.conn.prepareStatement("INSERT INTO testBug65503 (value) VALUES (?)", Statement.RETURN_GENERATED_KEYS),
+					stmt2 = this.conn.prepareStatement("SELECT * FROM testBug65503 LIMIT 6");
+			for (int i = 0; i < 100000000; ++i) {
+				pStmt.setString(1, "48");
+				pStmt.executeUpdate();
+			    
+			    ResultSet result = pStmt.getGeneratedKeys();
+			    result.next();
+			    result.getInt(1);
+			    result.next();
+			    
+			    result = stmt2.executeQuery();
+			    while (result.next());
+			    
+			    
+			    if (i % 500 == 0) {
+			    	System.out.printf("free-mem: %d, id: %d\n", Runtime.getRuntime().freeMemory()/1024/1024, i);
+			    	this.conn.createStatement().execute("TRUNCATE TABLE testBug65503");
+			    }
+			}
+		}
+    }
 }

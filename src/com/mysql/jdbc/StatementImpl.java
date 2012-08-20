@@ -255,6 +255,8 @@ public class StatementImpl implements Statement {
 	/** The current results */
 	protected ResultSetInternalMethods results = null;
 
+	protected ResultSetInternalMethods generatedKeysResults = null;
+
 	/** The concurrency for this result set (updatable or not) */
 	protected int resultSetConcurrency = 0;
 
@@ -788,12 +790,16 @@ public class StatementImpl implements Statement {
 					}
 				}
 	
-				if (this.results != null) {
-					if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+				if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+					if (this.results != null) {
 						this.results.realClose(false);
 					}
+					if (this.generatedKeysResults != null) {
+						this.generatedKeysResults.realClose(false);
+					}
+					closeAllOpenResults();
 				}
-	
+
 				if (sql.charAt(0) == '/') {
 					if (sql.startsWith(PING_MARKER)) {
 						doPingInstead();
@@ -1087,13 +1093,16 @@ public class StatementImpl implements Statement {
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$
 			}
 	
-			if (this.results != null) {
-				if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+			if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+				if (this.results != null) {
 					this.results.realClose(false);
 				}
+				if (this.generatedKeysResults != null) {
+					this.generatedKeysResults.realClose(false);
+				}
+				closeAllOpenResults();
 			}
 
-		
 			if (this.batchedArgs == null || this.batchedArgs.size() == 0) {
                 return new int[0];
             }
@@ -1508,10 +1517,14 @@ public class StatementImpl implements Statement {
 			
 			checkForDml(sql, firstStatementChar);
 
-			if (this.results != null) {
-				if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+			if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+				if (this.results != null) {
 					this.results.realClose(false);
 				}
+				if (this.generatedKeysResults != null) {
+					this.generatedKeysResults.realClose(false);
+				}
+				closeAllOpenResults();
 			}
 
 			CachedResultSetMetaData cachedMetaData = null;
@@ -1753,10 +1766,14 @@ public class StatementImpl implements Statement {
 				"01S03", getExceptionInterceptor()); //$NON-NLS-1$
 			}
 
-			if (this.results != null) {
-				if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+			if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
+				if (this.results != null) {
 					this.results.realClose(false);
 				}
+				if (this.generatedKeysResults != null) {
+					this.generatedKeysResults.realClose(false);
+				}
+				closeAllOpenResults();
 			}
 
 			// The checking and changing of catalogs
@@ -2023,10 +2040,12 @@ public class StatementImpl implements Statement {
 			Field[] fields = new Field[1];
 			fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17); //$NON-NLS-1$ //$NON-NLS-2$
 			fields[0].setConnection(this.connection);
-	
-			return com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields,
+
+			this.generatedKeysResults = com.mysql.jdbc.ResultSetImpl.getInstance(this.currentCatalog, fields,
 					new RowDataStatic(this.batchedGeneratedKeys), this.connection,
 					this, false);
+			
+			return this.generatedKeysResults;
 		}
 	}
 
@@ -2568,6 +2587,15 @@ public class StatementImpl implements Statement {
 						;
 					}
 				}
+
+				if (this.generatedKeysResults != null) {
+					
+					try {
+						this.generatedKeysResults.close();
+					} catch (Exception ex) {
+						;
+					}
+				}
 				
 				closeAllOpenResults();
 			}
@@ -2585,6 +2613,7 @@ public class StatementImpl implements Statement {
 			this.isClosed = true;
 	
 			this.results = null;
+			this.generatedKeysResults = null;
 			this.connection = null;
 			this.warningChain = null;
 			this.openResults = null;

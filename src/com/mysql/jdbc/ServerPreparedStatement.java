@@ -1162,7 +1162,21 @@ public class ServerPreparedStatement extends PreparedStatement {
 						;
 					}
 				}
-	
+
+				if (this.generatedKeysResults != null) {
+					try {
+						this.generatedKeysResults.close();
+					} catch (Exception ex) {
+						;
+					}
+				}
+
+				try {
+					closeAllOpenResults();
+				} catch (Exception e) {
+					;
+				}
+				
 				if (this.connection != null) {
 					if (this.maxRowsChanged) {
 						this.connection.unsetMaxRows(this);
