@@ -5380,7 +5380,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			stmt1.execute(sql, Statement.RETURN_GENERATED_KEYS);
 			int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
 
-			assertEquals(expectedUpdateCount, stmt.getUpdateCount());
+			assertEquals(expectedUpdateCount, stmt1.getUpdateCount());
 			ResultSet stmtKeys = stmt1.getGeneratedKeys();
 			assertResultSetLength(stmtKeys, 1);
 
