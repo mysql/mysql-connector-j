@@ -2,6 +2,8 @@
 # $Id$
 
 nn-nn-12 - Version 5.1.22
+  - Fix for Bug#57662, Incorrect Query Duration When useNanosForElapsedTime Enabled.
+
   - Fix for Bug#65503, ResultSets created by PreparedStatement.getGeneratedKeys() are not close()d.
 
   - Fix for Bug#63800, getVersionColumns() does not return timestamp fields; always empty.

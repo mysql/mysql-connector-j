@@ -2659,7 +2659,7 @@ public class MysqlIO {
 	    	boolean queryWasSlow = false;
 
 	    	if (this.profileSql || this.logSlowQueries) {
-	    		queryEndTime = System.currentTimeMillis();
+	    		queryEndTime = getCurrentTimeNanosOrMillis();
 
 	    		boolean shouldExtractQuery = false;
 

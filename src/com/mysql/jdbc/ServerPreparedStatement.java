@@ -1490,8 +1490,8 @@ public class ServerPreparedStatement extends PreparedStatement {
 							ProfilerEvent.TYPE_EXECUTE,
 							"", this.currentCatalog, //$NON-NLS-1$
 							this.connectionId, this.statementId, -1, System
-									.currentTimeMillis(), (int) (mysql
-									.getCurrentTimeNanosOrMillis() - begin),
+									.currentTimeMillis(), mysql
+									.getCurrentTimeNanosOrMillis() - begin,
 							mysql.getQueryTimingUnits(), null, new Throwable(),
 							truncateQueryToLog(asSql(true))));
 				}

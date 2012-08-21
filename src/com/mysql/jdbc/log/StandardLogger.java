@@ -254,7 +254,7 @@ public class StandardLogger implements Log {
 		logInternal(WARN, message, exception);
 	}
 
-	private void logInternal(int level, Object msg, Throwable exception) {
+	protected void logInternal(int level, Object msg, Throwable exception) {
 		StringBuffer msgBuf = new StringBuffer();
 		msgBuf.append(new Date().toString());
 		msgBuf.append(" ");

@@ -4064,4 +4064,33 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Tests fix for BUG#57662, Incorrect Query Duration When useNanosForElapsedTime Enabled
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug57662() throws Exception {
+
+		createTable("testBug57662", "(x VARCHAR(10) NOT NULL DEFAULT '')");
+		Connection conn_is = null;
+		try {
+			Properties props = new Properties();
+			props.setProperty("profileSQL", "true");
+			props.setProperty("useNanosForElapsedTime", "true");
+			props.setProperty("logger", "testsuite.simple.TestBug57662Logger");
+			conn_is = getConnectionWithProps(props);
+			this.rs = conn_is.getMetaData().getColumns(null, null,
+					"testBug57662", "%");
+			
+			assertFalse(((testsuite.simple.TestBug57662Logger)((ConnectionImpl) conn_is).getLog()).hasNegativeDurations);
+
+		} finally {
+			if (conn_is != null) {
+				conn_is.close();
+			}
+		}
+
+	}
+
 }
