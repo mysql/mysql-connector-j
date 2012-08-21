@@ -5376,11 +5376,12 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 			stmt.executeUpdate(tablePrimeSql);
 
-			stmt.execute(sql, Statement.RETURN_GENERATED_KEYS);
+			Statement stmt1 = conn.createStatement();
+			stmt1.execute(sql, Statement.RETURN_GENERATED_KEYS);
 			int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
 
 			assertEquals(expectedUpdateCount, stmt.getUpdateCount());
-			ResultSet stmtKeys = stmt.getGeneratedKeys();
+			ResultSet stmtKeys = stmt1.getGeneratedKeys();
 			assertResultSetLength(stmtKeys, 1);
 
 			try {
