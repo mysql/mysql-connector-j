@@ -419,23 +419,34 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	 * @throws SQLException
 	 */
 	synchronized void invalidateCurrentConnection() throws SQLException {
+		invalidateConnection(this.currentConn);
+	}
+	
+	
+	/**
+	 * Closes specified connection and removes it from required mappings.
+	 * @param conn
+	 * @throws SQLException
+	 */
+	synchronized void invalidateConnection(MySQLConnection conn) throws SQLException {
 		try {
-			if (!this.currentConn.isClosed()) {
-				this.currentConn.close();
+			if (!conn.isClosed()) {
+				conn.close();
 			}
-
+		} catch (SQLException e) { 
+			// we don't really want to throw this Exception
 		} finally {
 			// add host to the global blacklist, if enabled
 			if (this.isGlobalBlacklistEnabled()) {
 				this.addToGlobalBlacklist(this.connectionsToHostsMap
-						.get(this.currentConn));
+						.get(conn));
 
 			}
 			// remove from liveConnections
 			this.liveConnections.remove(this.connectionsToHostsMap
-					.get(this.currentConn));
+					.get(conn));
 			Object mappedHost = this.connectionsToHostsMap
-					.remove(this.currentConn);
+					.remove(conn);
 			if (mappedHost != null
 					&& this.hostsToListIndexMap.containsKey(mappedHost)) {
 				int hostIndex = (this.hostsToListIndexMap
@@ -445,8 +456,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 					this.responseTimes[hostIndex] = 0;
 				}
 			}
-		}
+		}		
 	}
+	
 
 	private void closeAllConnections() {
 		synchronized (this) {
@@ -609,8 +621,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		boolean pingBeforeReturn = this.currentConn.getLoadBalanceValidateConnectionOnSwapServer();
 		
 		for(int hostsTried = 0, hostsToTry = this.hostList.size(); hostsTried <= hostsToTry; hostsTried++){
+			ConnectionImpl newConn = null;
 			try{
-				ConnectionImpl newConn = this.balancer.pickConnection(
+				newConn = this.balancer.pickConnection(
 
 					this, Collections.unmodifiableList(this.hostList), Collections
 							.unmodifiableMap(this.liveConnections),
@@ -632,10 +645,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 				return;
 			} catch (SQLException e){
 				
-				if (shouldExceptionTriggerFailover(e)) {
+				if (shouldExceptionTriggerFailover(e) && newConn != null) {
 					// connection error, close up shop on current
 					// connection
-					invalidateCurrentConnection();
+					invalidateConnection(newConn);
 				}
 			}
 

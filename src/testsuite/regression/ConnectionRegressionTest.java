@@ -4092,5 +4092,51 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 
 	}
+	
+	public void testBug14563127() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("loadBalanceStrategy",
+				ForcedLoadBalanceStrategy.class.getName());
+		props.setProperty("loadBalanceBlacklistTimeout", "5000");
+		props.setProperty("loadBalancePingTimeout", "100");
+		props.setProperty("loadBalanceValidateConnectionOnSwapServer", "true");
+
+		String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null)
+				.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+
+		if (portNumber == null) {
+			portNumber = "3306";
+		}
+
+		ForcedLoadBalanceStrategy.forceFutureServer("first:" + portNumber, -1);
+		Connection conn2 = this.getUnreliableLoadBalancedConnection(
+				new String[] { "first", "second" }, props);
+		conn2.setAutoCommit(false);
+		conn2.createStatement().execute("SELECT 1");
+		
+		// make sure second is added to active connections cache:
+		ForcedLoadBalanceStrategy.forceFutureServer("second:" + portNumber, -1);
+		conn2.commit();
+		
+		// switch back to first:
+		ForcedLoadBalanceStrategy.forceFutureServer("first:" + portNumber, -1);
+		conn2.commit();
+		
+		// kill second while still in cache:
+		UnreliableSocketFactory.downHost("second");
+		
+		// force second host to be selected next time:
+		ForcedLoadBalanceStrategy.forceFutureServer("second:" + portNumber, 1);
+		
+		try {
+			conn2.commit(); // will be on second after this
+			assertTrue("Connection should not be closed", !conn2.isClosed());
+		} catch (SQLException e) {
+			fail("Should not error because failure to select another server.");
+		}
+		conn2.close();
+
+		
+	}
 
 }
