@@ -1,5 +1,6 @@
 # Changelog
 # $Id$
+nn-nn-12 - Version 5.1.23
 
 09-06-12 - Version 5.1.22
   - Fix for Bug#57662, Incorrect Query Duration When useNanosForElapsedTime Enabled.
