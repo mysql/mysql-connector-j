@@ -1,6 +1,9 @@
 # Changelog
 # $Id$
 nn-nn-12 - Version 5.1.23
+  - Fix for Bug#14665141, Diff results returned from ResultSet and CachedRowSet with new password hashing.
+    Test suite modified to don't perform comparison of PASSWORD() results if old_passwords=2
+    because with SHA-256 password hashing enabled they are nondeterministic.
 
 09-06-12 - Version 5.1.22
   - Fix for Bug#57662, Incorrect Query Duration When useNanosForElapsedTime Enabled.

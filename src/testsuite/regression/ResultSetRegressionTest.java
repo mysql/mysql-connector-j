@@ -4703,6 +4703,16 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		CachedRowSet crs;
 
 		Connection noBlobsConn = getConnectionWithProps("functionsNeverReturnBlobs=true");
+		
+		if (versionMeetsMinimum(5, 6, 6)) {
+			this.rs = noBlobsConn.createStatement().executeQuery("SHOW VARIABLES LIKE 'old_passwords'");
+			if (this.rs.next()) {
+				if (this.rs.getInt(2) == 2) {
+					System.out.println("Skip testBug48820 due to SHA-256 password hashing.");
+					return;
+				}
+			}
+		}
 
 		this.rs = noBlobsConn.createStatement().executeQuery(
 				"SELECT PASSWORD ('SOMETHING')");
