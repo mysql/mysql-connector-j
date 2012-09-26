@@ -2889,12 +2889,15 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		this.rs = yearShortConn.createStatement().executeQuery(
 				"SELECT field1 FROM " + tableName);
 		assertTrue(this.rs.next());
-		assertEquals("05", this.rs.getString(1));
+
+		String expectedShort = versionMeetsMinimum(5, 6, 6) ? "2005" : "05";
+		
+		assertEquals(expectedShort, this.rs.getString(1));
 
 		this.rs = yearShortConn.prepareStatement(
 				"SELECT field1 FROM " + tableName).executeQuery();
 		assertTrue(this.rs.next());
-		assertEquals("05", this.rs.getString(1));
+		assertEquals(expectedShort, this.rs.getString(1));
 
 		if (versionMeetsMinimum(5, 0)) {
 
@@ -2909,7 +2912,7 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.rs = yearShortConn.prepareCall("{CALL testBug10485()}")
 					.executeQuery();
 			assertTrue(this.rs.next());
-			assertEquals("05", this.rs.getString(1));
+			assertEquals(expectedShort, this.rs.getString(1));
 
 		}
 	}
