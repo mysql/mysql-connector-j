@@ -4811,8 +4811,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				if (!this.useLegacyDatetimeCode) {
 					newSetTimestampInternal(parameterIndex, x, targetCalendar);
 				} else {
-					String timestampString = null;
-	
 					Calendar sessionCalendar = this.connection.getUseJDBCCompliantTimezoneShift() ?
 							this.connection.getUtcCalendar() : 
 								getCalendarInstanceForSessionOrNew();
@@ -4830,25 +4828,24 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					} else {
 						synchronized (this) {
 							if (this.tsdf == null) {
-								this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss''", Locale.US); //$NON-NLS-1$
+								this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US); //$NON-NLS-1$
 							}
 							
-							timestampString = this.tsdf.format(x);
-							
-							if (false) { // not so long as Bug#50774 is around
-								StringBuffer buf = new StringBuffer();
-								buf.append(timestampString);
+							StringBuffer buf = new StringBuffer();
+							buf.append(this.tsdf.format(x));
+
+							if (this.serverSupportsFracSecs) {
 								int nanos = x.getNanos();
 								
 								if (nanos != 0) {
 									buf.append('.');
 									buf.append(formatNanos(nanos));
 								}
-								
-								buf.append('\'');
 							}
-							
-							setInternal(parameterIndex, timestampString); // SimpleDateFormat is not
+
+							buf.append('\'');
+
+							setInternal(parameterIndex, buf.toString()); // SimpleDateFormat is not
 																		  // thread-safe
 						}
 					}

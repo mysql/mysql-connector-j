@@ -1,6 +1,9 @@
 # Changelog
 # $Id$
 nn-nn-12 - Version 5.1.23
+  - Fix for Bug#40279, Timestamp values get truncated when passed as prepared statement parameters.
+    This was partly fixed in 5.1.19 but that fix did not cover useLegacyDatetimeCode=true case.
+
   - Fix for Bug#14665141, Diff results returned from ResultSet and CachedRowSet with new password hashing.
     Test suite modified to don't perform comparison of PASSWORD() results if old_passwords=2
     because with SHA-256 password hashing enabled they are nondeterministic.

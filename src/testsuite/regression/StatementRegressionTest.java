@@ -6753,4 +6753,95 @@ public class StatementRegressionTest extends BaseTestCase {
 		}
 		
 	}
+
+	/**
+	 * Tests fix for BUG#40279 - Timestamp values get truncated when passed as prepared statement parameters
+	 * (and duplicate BUG#60584 - prepared statements truncate milliseconds)
+	 * 
+	 *  [13 Sep 2012 21:06] Mark Matthews
+	 *  This was fixed with http://bazaar.launchpad.net/~mysql/connectorj/5.1/revision/1107 in 2011,
+	 *  it supports MySQL-5.6.4 or later.
+	 *  
+	 *  But that fix did not cover useLegacyDatetimeCode=true case.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug40279() throws Exception {
+		if (!versionMeetsMinimum(5, 6, 4)) {
+			return;
+		}
+		
+		createTable("testBug40279", "(f1 int, f2 timestamp(6))");
+
+		Timestamp ts = new Timestamp(1300791248001L);
+
+		Connection ps_conn_legacy = null;
+		Connection ps_conn_nolegacy = null;
+
+		Connection ssps_conn_legacy = null;
+		Connection ssps_conn_nolegacy = null;
+
+		try {
+			Properties props = new Properties();
+			props.setProperty("serverTimezone", "UTC");
+			props.setProperty("useLegacyDatetimeCode", "true");
+			props.setProperty("useServerPrepStmts", "false");
+			ps_conn_legacy = getConnectionWithProps(props);
+			
+			props.setProperty("useLegacyDatetimeCode", "false");
+			ps_conn_nolegacy = getConnectionWithProps(props);
+			
+			props.setProperty("useLegacyDatetimeCode", "true");
+			props.setProperty("useServerPrepStmts", "true");
+			ssps_conn_legacy = getConnectionWithProps(props);
+
+			props.setProperty("useLegacyDatetimeCode", "false");
+			ssps_conn_nolegacy = getConnectionWithProps(props);
+
+			this.pstmt = ps_conn_legacy.prepareStatement("INSERT INTO testBug40279(f1, f2) VALUES (?, ?)");
+			this.pstmt.setInt(1, 1);
+			this.pstmt.setTimestamp(2, ts);
+			this.pstmt.execute();
+			this.pstmt.close();
+
+			this.pstmt = ps_conn_nolegacy.prepareStatement("INSERT INTO testBug40279(f1, f2) VALUES (?, ?)");
+			this.pstmt.setInt(1, 2);
+			this.pstmt.setTimestamp(2, ts);
+			this.pstmt.execute();
+			this.pstmt.close();
+
+			this.pstmt = ssps_conn_legacy.prepareStatement("INSERT INTO testBug40279(f1, f2) VALUES (?, ?)");
+			this.pstmt.setInt(1, 3);
+			this.pstmt.setTimestamp(2, ts);
+			this.pstmt.execute();
+			this.pstmt.close();
+
+			this.pstmt = ssps_conn_nolegacy.prepareStatement("INSERT INTO testBug40279(f1, f2) VALUES (?, ?)");
+			this.pstmt.setInt(1, 4);
+			this.pstmt.setTimestamp(2, ts);
+			this.pstmt.execute();
+			this.pstmt.close();
+
+			this.rs = this.stmt.executeQuery("SELECT f2 FROM testBug40279");
+			while (this.rs.next()) {
+				assertEquals(ts.getNanos(), this.rs.getTimestamp("f2").getNanos());
+			}
+			
+		} finally {
+			if (ps_conn_legacy != null) {
+				ps_conn_legacy.close();
+			}
+			if (ps_conn_nolegacy != null) {
+				ps_conn_nolegacy.close();
+			}
+			if (ssps_conn_legacy != null) {
+				ssps_conn_legacy.close();
+			}
+			if (ssps_conn_nolegacy != null) {
+				ssps_conn_nolegacy.close();
+			}
+		}
+	
+	}
+
 }
