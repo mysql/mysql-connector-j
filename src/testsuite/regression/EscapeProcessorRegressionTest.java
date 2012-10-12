@@ -23,6 +23,10 @@
  */
 package testsuite.regression;
 
+import java.sql.Connection;
+import java.util.Properties;
+import java.util.TimeZone;
+
 import testsuite.BaseTestCase;
 
 /**
@@ -95,4 +99,60 @@ public class EscapeProcessorRegressionTest extends BaseTestCase {
 	public void testBug63526() throws Exception {
 		createTable("bug63526", "(`{123}` INT UNSIGNED NOT NULL)","INNODB");
 		}
+
+	/**
+	 * Tests fix for BUG#60598 - nativeSQL() truncates fractional seconds
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug60598() throws Exception {
+
+		String expected = versionMeetsMinimum(5, 6, 4) ?
+				"SELECT '2001-02-03 04:05:06' , '2001-02-03 04:05:06.007' , '11:22:33.444'" :
+				"SELECT '2001-02-03 04:05:06' , '2001-02-03 04:05:06' , '11:22:33'";
+
+		Connection conn_nolegacy = null;
+		Connection conn_legacy = null;
+		Connection conn_legacy_tz = null;
+
+		try {
+			Properties props = new Properties();
+			
+			props.setProperty("serverTimezone", TimeZone.getDefault().getID()+"");
+			props.setProperty("useLegacyDatetimeCode", "false");
+			conn_nolegacy = getConnectionWithProps(props);
+
+			props.setProperty("useLegacyDatetimeCode", "true");
+			conn_legacy = getConnectionWithProps(props);
+			
+			props.setProperty("useLegacyDatetimeCode", "true");
+			props.setProperty("useTimezone", "true");
+			props.setProperty("useJDBCCompliantTimezoneShift", "true");
+			conn_legacy_tz = getConnectionWithProps(props);
+
+			String input = "SELECT {ts '2001-02-03 04:05:06' } , {ts '2001-02-03 04:05:06.007' } , {t '11:22:33.444' }";
+
+			String output = conn_nolegacy.nativeSQL(input);
+			assertEquals(expected, output);
+
+			output = conn_legacy.nativeSQL(input);
+			assertEquals(expected, output);
+
+			output = conn_legacy_tz.nativeSQL(input);
+			assertEquals(expected, output);
+
+		} finally {
+			if (conn_nolegacy != null) {
+				conn_nolegacy.close();
+			}
+			if (conn_legacy != null) {
+				conn_legacy.close();
+			}
+			if (conn_legacy_tz != null) {
+				conn_legacy_tz.close();
+			}
+		}
+
+	}
+
 }

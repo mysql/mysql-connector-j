@@ -1296,4 +1296,35 @@ public class TimeUtil {
 		
 		return buf.toString();
 	}
+
+	public static String formatNanos(int nanos, boolean serverSupportsFracSecs) {
+		if (!serverSupportsFracSecs || nanos == 0) {
+		    return "0";
+		}
+		
+		boolean usingMicros = true;
+		
+		if (usingMicros) {
+			nanos /= 1000;
+		}
+		
+		final int digitCount = usingMicros ? 6 : 9;
+		
+	    String nanosString = Integer.toString(nanos);
+	    final String zeroPadding = usingMicros ? "000000" : "000000000";
+	    
+	    nanosString = zeroPadding.substring(0, (digitCount-nanosString.length())) +
+		nanosString; 
+	    
+	    int pos = digitCount-1; // the end, we're padded to the end by the code above
+	    
+	    while (nanosString.charAt(pos) == '0') {
+	    	pos--;
+	    }
+	
+	    nanosString = nanosString.substring(0, pos + 1);
+	    
+	    return nanosString;
+	}
+
 }

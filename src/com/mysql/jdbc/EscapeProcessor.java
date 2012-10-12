@@ -358,15 +358,30 @@ class EscapeProcessor {
 
 			try {
 				StringTokenizer st = new StringTokenizer(
-						argument, " :");
+						argument, " :.");
 				String hour = st.nextToken();
 				String minute = st.nextToken();
 				String second = st.nextToken();
 
+				boolean serverSupportsFractionalSecond = false;
+				String fractionalSecond = "";
+
+				if (st.hasMoreTokens()) {
+					if (conn.versionMeetsMinimum(5, 6, 4)) {
+						serverSupportsFractionalSecond = true;
+						fractionalSecond = "."+st.nextToken();
+					}
+				}
+
 				if (conn != null && (!conn.getUseTimezone() || !conn.getUseLegacyDatetimeCode())) {
-					String timeString = "'" + hour + ":"
-							+ minute + ":" + second + "'";
-					newSql.append(timeString);
+					newSql.append("'");
+					newSql.append(hour);
+					newSql.append(":");
+					newSql.append(minute);
+					newSql.append(":");
+					newSql.append(second);
+					newSql.append(fractionalSecond);
+					newSql.append("'");
 				} else {
 					Calendar sessionCalendar = null;
 
@@ -406,6 +421,11 @@ class EscapeProcessor {
 							newSql.append("'");
 							newSql.append(inServerTimezone
 									.toString());
+							
+							if (serverSupportsFractionalSecond) {
+								newSql.append(fractionalSecond);
+							}
+							
 							newSql.append("'");
 						}
 
@@ -443,13 +463,21 @@ class EscapeProcessor {
 				if (conn != null && !conn.getUseLegacyDatetimeCode()) {
 					Timestamp ts = Timestamp.valueOf(argument);
 					SimpleDateFormat tsdf = new SimpleDateFormat(
-							"''yyyy-MM-dd HH:mm:ss''", Locale.US); //$NON-NLS-1$
+							"''yyyy-MM-dd HH:mm:ss", Locale.US); //$NON-NLS-1$
 
 					tsdf
 							.setTimeZone(conn
 									.getServerTimezoneTZ());
 
 					newSql.append(tsdf.format(ts));
+
+					if (ts.getNanos() > 0 && conn.versionMeetsMinimum(5, 6, 4)) {
+						newSql.append('.');
+						newSql.append(TimeUtil.formatNanos(ts.getNanos(), true));
+					}
+
+					newSql.append('\'');
+					
 				} else {
 					StringTokenizer st = new StringTokenizer(
 							argument, " .-:");
@@ -461,17 +489,14 @@ class EscapeProcessor {
 						String minute = st.nextToken();
 						String second = st.nextToken();
 
-						/*
-						 * For now, we get the fractional
-						 * seconds part, but we don't use it, as
-						 * MySQL doesn't support it in it's
-						 * TIMESTAMP data type
-						 * 
-						 * String fractionalSecond = "";
-						 * 
-						 * if (st.hasMoreTokens()) {
-						 * fractionalSecond = st.nextToken(); }
-						 */
+						boolean serverSupportsFractionalSecond = false;
+						String fractionalSecond = "";
+						if (st.hasMoreTokens()) {
+							if (conn.versionMeetsMinimum(5, 6, 4)) {
+								serverSupportsFractionalSecond = true;
+								fractionalSecond = "."+st.nextToken();
+							}
+						}
 
 						/*
 						 * Use the full format because number
@@ -501,6 +526,7 @@ class EscapeProcessor {
 									.append(" ").append(hour)
 									.append(":").append(minute)
 									.append(":").append(second)
+									.append(fractionalSecond)
 									.append("'");
 						} else {
 							Calendar sessionCalendar;
@@ -579,6 +605,9 @@ class EscapeProcessor {
 											.append(timezoneLiteral);
 								}
 
+								if (serverSupportsFractionalSecond) {
+									newSql.append(fractionalSecond);
+								}
 								newSql.append("'");
 
 							} catch (NumberFormatException nfe) {
