@@ -1,6 +1,8 @@
 # Changelog
 # $Id$
 nn-nn-12 - Version 5.1.23
+  - Fix for Bug#14260352, difference in Timestamp value returned with rewriteBatchedStatements=true.
+
   - Fix for Bug#60598, nativeSQL() truncates fractional seconds.
 
   - Fix for Bug#40279, Timestamp values get truncated when passed as prepared statement parameters.

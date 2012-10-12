@@ -1195,8 +1195,12 @@ public class StatementRegressionTest extends BaseTestCase {
 	public void testBug3103() throws Exception {
 		try {
 			this.stmt.executeUpdate("DROP TABLE IF EXISTS testBug3103");
-			this.stmt
-					.executeUpdate("CREATE TABLE testBug3103 (field1 DATETIME)");
+
+			if (versionMeetsMinimum(5, 6, 4)) {
+				this.stmt.executeUpdate("CREATE TABLE testBug3103 (field1 DATETIME(3))");
+			} else {
+				this.stmt.executeUpdate("CREATE TABLE testBug3103 (field1 DATETIME)");
+			}
 
 			PreparedStatement pStmt = this.conn
 					.prepareStatement("INSERT INTO testBug3103 VALUES (?)");

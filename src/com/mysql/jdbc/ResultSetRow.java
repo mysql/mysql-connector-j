@@ -836,13 +836,16 @@ public abstract class ResultSetRow {
 	}
 
 	protected Time getTimeFast(int columnIndex, byte[] timeAsBytes, int offset,
-			int length, Calendar targetCalendar, TimeZone tz,
+			int fullLength, Calendar targetCalendar, TimeZone tz,
 			boolean rollForward, MySQLConnection conn, ResultSetImpl rs)
 			throws SQLException {
 
 		int hr = 0;
 		int min = 0;
 		int sec = 0;
+		int nanos = 0;
+
+		int decimalIndex = -1;
 
 		try {
 
@@ -853,14 +856,21 @@ public abstract class ResultSetRow {
 			boolean allZeroTime = true;
 			boolean onlyTimePresent = false;
 
-			for (int i = 0; i < length; i++) {
+			for (int i = 0; i < fullLength; i++) {
 				if (timeAsBytes[offset + i] == ':') {
 					onlyTimePresent = true;
 					break;
 				}
 			}
 
-			for (int i = 0; i < length; i++) {
+			for (int i = 0; i < fullLength; i++) {
+				if (timeAsBytes[offset + i] == '.') {
+					decimalIndex = i;
+					break;
+				}
+			}
+
+			for (int i = 0; i < fullLength; i++) {
 				byte b = timeAsBytes[offset + i];
 
 				if (b == ' ' || b == '-' || b == '/') {
@@ -893,6 +903,31 @@ public abstract class ResultSetRow {
 			}
 
 			Field timeColField = this.metadata[columnIndex];
+
+			int length = fullLength;
+			
+			if (decimalIndex != -1) {
+			
+				length = decimalIndex;
+			
+				if ((decimalIndex + 2) <= fullLength) {
+					nanos = StringUtils.getInt(timeAsBytes, offset + decimalIndex + 1, offset + fullLength);
+					
+					int numDigits = (fullLength) - (decimalIndex + 1);
+					
+					if (numDigits < 9) {
+						int factor = (int)(Math.pow(10, 9 - numDigits));
+						nanos = nanos * factor;
+					}
+				} else {
+					throw new IllegalArgumentException(); // re-thrown
+					// further
+					// down
+					// with
+					// a
+					// much better error message
+				}
+			}
 
 			if (timeColField.getMysqlType() == MysqlDefs.FIELD_TYPE_TIMESTAMP) {
 
@@ -991,6 +1026,9 @@ public abstract class ResultSetRow {
 			Calendar sessionCalendar = rs.getCalendarInstanceForSessionOrNew();
 
 			if (!rs.useLegacyDatetimeCode) {
+				// TODO: return rs.fastTimeCreate(targetCalendar, hr, min, sec, nanos);
+				// java.sql.Time doesn't contain fractional part, so PreparedStatement.setTime/getTime can't deal with TIME(n) fractional part.
+				// There may be better mappings to high-precision time coming in JDBC-5 with the adoption of JSR-310.
 				return rs.fastTimeCreate(targetCalendar, hr, min, sec);
 			}
 			
@@ -999,6 +1037,9 @@ public abstract class ResultSetRow {
 						targetCalendar, rs.fastTimeCreate(sessionCalendar, hr,
 								min, sec), conn.getServerTimezoneTZ(), tz,
 						rollForward);
+				// TODO: min, sec, nanos), conn.getServerTimezoneTZ(), tz,
+				// java.sql.Time doesn't contain fractional part, so PreparedStatement.setTime/getTime can't deal with TIME(n) fractional part.
+				// There may be better mappings to high-precision time coming in JDBC-5 with the adoption of JSR-310.
 			}
 		} catch (RuntimeException ex) {
 			SQLException sqlEx = SQLError.createSQLException(ex.toString(),
