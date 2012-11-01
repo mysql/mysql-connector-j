@@ -1819,6 +1819,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					}
 					if ("UnicodeBig".equalsIgnoreCase(serverEncodingToSet) ||
 							"UTF-16".equalsIgnoreCase(serverEncodingToSet) ||
+							"UTF-16LE".equalsIgnoreCase(serverEncodingToSet) ||
 							"UTF-32".equalsIgnoreCase(serverEncodingToSet)
 							) {
 						serverEncodingToSet = "UTF-8";
@@ -1933,6 +1934,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						boolean ucs2 = false;
 						if (	"ucs2".equalsIgnoreCase(mysqlEncodingName) ||
 								"utf16".equalsIgnoreCase(mysqlEncodingName) ||
+								"utf16le".equalsIgnoreCase(mysqlEncodingName) ||
 								"utf32".equalsIgnoreCase(mysqlEncodingName)) {
 							mysqlEncodingName = "utf8";
 							ucs2 = true;

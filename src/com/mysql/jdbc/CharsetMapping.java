@@ -89,123 +89,125 @@ public class CharsetMapping {
 	
 	private static final Map<String, Integer> MYSQL_ENCODING_NAME_TO_CHARSET_INDEX_MAP;
 
-	private static final String MYSQL_CHARSET_NAME_big5 =		"big5";
-	private static final String MYSQL_CHARSET_NAME_dec8 =		"dec8";
-	private static final String MYSQL_CHARSET_NAME_cp850 =		"cp850";
-	private static final String MYSQL_CHARSET_NAME_hp8 =		"hp8";
-	private static final String MYSQL_CHARSET_NAME_koi8r =		"koi8r";
-	private static final String MYSQL_CHARSET_NAME_latin1 =		"latin1";
-	private static final String MYSQL_CHARSET_NAME_latin2 =		"latin2";
-	private static final String MYSQL_CHARSET_NAME_swe7 =		"swe7";
-	private static final String MYSQL_CHARSET_NAME_ascii =		"ascii";
-	private static final String MYSQL_CHARSET_NAME_ujis =		"ujis";
-	private static final String MYSQL_CHARSET_NAME_sjis =		"sjis";
-	private static final String MYSQL_CHARSET_NAME_hebrew =		"hebrew";
-	private static final String MYSQL_CHARSET_NAME_tis620 =		"tis620";
-	private static final String MYSQL_CHARSET_NAME_euckr =		"euckr";
-	private static final String MYSQL_CHARSET_NAME_koi8u =		"koi8u";
-	private static final String MYSQL_CHARSET_NAME_gb2312 =		"gb2312";
-	private static final String MYSQL_CHARSET_NAME_greek =		"greek";
-	private static final String MYSQL_CHARSET_NAME_cp1250 =		"cp1250";
-	private static final String MYSQL_CHARSET_NAME_gbk =		"gbk";
-	private static final String MYSQL_CHARSET_NAME_latin5 =		"latin5";
 	private static final String MYSQL_CHARSET_NAME_armscii8 =	"armscii8";
-	private static final String MYSQL_CHARSET_NAME_utf8 =		"utf8";
-	private static final String MYSQL_CHARSET_NAME_ucs2 =		"ucs2";
-	private static final String MYSQL_CHARSET_NAME_cp866 =		"cp866";
-	private static final String MYSQL_CHARSET_NAME_keybcs2 =	"keybcs2";
-	private static final String MYSQL_CHARSET_NAME_macce =		"macce";
-	private static final String MYSQL_CHARSET_NAME_macroman =	"macroman";
-	private static final String MYSQL_CHARSET_NAME_cp852 =		"cp852";
-	private static final String MYSQL_CHARSET_NAME_latin7 =		"latin7";
-	private static final String MYSQL_CHARSET_NAME_utf8mb4 =	"utf8mb4";
+	private static final String MYSQL_CHARSET_NAME_ascii =		"ascii";
+	private static final String MYSQL_CHARSET_NAME_big5 =		"big5";
+	private static final String MYSQL_CHARSET_NAME_binary =		"binary";
+	private static final String MYSQL_CHARSET_NAME_cp1250 =		"cp1250";
 	private static final String MYSQL_CHARSET_NAME_cp1251 =		"cp1251";
-	private static final String MYSQL_CHARSET_NAME_utf16 =		"utf16";
 	private static final String MYSQL_CHARSET_NAME_cp1256 =		"cp1256";
 	private static final String MYSQL_CHARSET_NAME_cp1257 =		"cp1257";
-	private static final String MYSQL_CHARSET_NAME_utf32 =		"utf32";
-	private static final String MYSQL_CHARSET_NAME_binary =		"binary";
-	private static final String MYSQL_CHARSET_NAME_geostd8 =	"geostd8";
+	private static final String MYSQL_CHARSET_NAME_cp850 =		"cp850";
+	private static final String MYSQL_CHARSET_NAME_cp852 =		"cp852";
+	private static final String MYSQL_CHARSET_NAME_cp866 =		"cp866";
 	private static final String MYSQL_CHARSET_NAME_cp932 =		"cp932";
+	private static final String MYSQL_CHARSET_NAME_dec8 =		"dec8";
 	private static final String MYSQL_CHARSET_NAME_eucjpms =	"eucjpms";
+	private static final String MYSQL_CHARSET_NAME_euckr =		"euckr";
+	private static final String MYSQL_CHARSET_NAME_gb2312 =		"gb2312";
+	private static final String MYSQL_CHARSET_NAME_gbk =		"gbk";
+	private static final String MYSQL_CHARSET_NAME_geostd8 =	"geostd8";
+	private static final String MYSQL_CHARSET_NAME_greek =		"greek";
+	private static final String MYSQL_CHARSET_NAME_hebrew =		"hebrew";
+	private static final String MYSQL_CHARSET_NAME_hp8 =		"hp8";
+	private static final String MYSQL_CHARSET_NAME_keybcs2 =	"keybcs2";
+	private static final String MYSQL_CHARSET_NAME_koi8r =		"koi8r";
+	private static final String MYSQL_CHARSET_NAME_koi8u =		"koi8u";
+	private static final String MYSQL_CHARSET_NAME_latin1 =		"latin1";
+	private static final String MYSQL_CHARSET_NAME_latin2 =		"latin2";
+	private static final String MYSQL_CHARSET_NAME_latin5 =		"latin5";
+	private static final String MYSQL_CHARSET_NAME_latin7 =		"latin7";
+	private static final String MYSQL_CHARSET_NAME_macce =		"macce";
+	private static final String MYSQL_CHARSET_NAME_macroman =	"macroman";
+	private static final String MYSQL_CHARSET_NAME_sjis =		"sjis";
+	private static final String MYSQL_CHARSET_NAME_swe7 =		"swe7";
+	private static final String MYSQL_CHARSET_NAME_tis620 =		"tis620";
+	private static final String MYSQL_CHARSET_NAME_ucs2 =		"ucs2";
+	private static final String MYSQL_CHARSET_NAME_ujis =		"ujis";
+	private static final String MYSQL_CHARSET_NAME_utf16 =		"utf16";
+	private static final String MYSQL_CHARSET_NAME_utf16le =	"utf16le";
+	private static final String MYSQL_CHARSET_NAME_utf32 =		"utf32";
+	private static final String MYSQL_CHARSET_NAME_utf8 =		"utf8";
+	private static final String MYSQL_CHARSET_NAME_utf8mb4 =	"utf8mb4";
 
-	private static final String MYSQL_4_0_CHARSET_NAME_czech =		"czech";		// 4.1 =>	2	latin2		latin2_czech_ci
-	private static final String MYSQL_4_0_CHARSET_NAME_dos =		"dos";			// 4.1 =>	4	cp850		cp850_general_ci
-	private static final String MYSQL_4_0_CHARSET_NAME_german1 =	"german1";		// 4.1 =>	5	latin1		latin1_german1_ci
-	private static final String MYSQL_4_0_CHARSET_NAME_koi8_ru =	"koi8_ru";		// 4.1 =>	7	koi8r		koi8r_general_ci
-	private static final String MYSQL_4_0_CHARSET_NAME_usa7 =		"usa7";			// 4.1 =>	11	ascii		ascii_general_ci
-	private static final String MYSQL_4_0_CHARSET_NAME_danish =		"danish";		// 4.1 =>	15	latin1		latin1_danish_ci
-	private static final String MYSQL_4_0_CHARSET_NAME_win1251 =	"win1251";		// 4.1 =>	17	(removed)
-	private static final String MYSQL_4_0_CHARSET_NAME_euc_kr =		"euc_kr";		// 4.1 =>	19	euckr		euckr_korean_ci
-	private static final String MYSQL_4_0_CHARSET_NAME_estonia =	"estonia";		// 4.1 =>	20	latin7		latin7_estonian_ci
-	private static final String MYSQL_4_0_CHARSET_NAME_hungarian =	"hungarian";	// 4.1 =>	21	latin2		latin2_hungarian_ci
-	private static final String MYSQL_4_0_CHARSET_NAME_koi8_ukr =	"koi8_ukr";		// 4.1 =>	22	koi8u		koi8u_ukrainian_ci
-	private static final String MYSQL_4_0_CHARSET_NAME_win1251ukr =	"win1251ukr";	// 4.1 =>	23	cp1251		cp1251_ukrainian_ci
-	private static final String MYSQL_4_0_CHARSET_NAME_win1250 =	"win1250";		// 4.1 =>	26	cp1250		cp1250_general_ci
 	private static final String MYSQL_4_0_CHARSET_NAME_croat =		"croat";		// 4.1 =>	27	latin2		latin2_croatian_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_czech =		"czech";		// 4.1 =>	2	latin2		latin2_czech_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_danish =		"danish";		// 4.1 =>	15	latin1		latin1_danish_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_dos =		"dos";			// 4.1 =>	4	cp850		cp850_general_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_estonia =	"estonia";		// 4.1 =>	20	latin7		latin7_estonian_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_euc_kr =		"euc_kr";		// 4.1 =>	19	euckr		euckr_korean_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_german1 =	"german1";		// 4.1 =>	5	latin1		latin1_german1_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_hungarian =	"hungarian";	// 4.1 =>	21	latin2		latin2_hungarian_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_koi8_ru =	"koi8_ru";		// 4.1 =>	7	koi8r		koi8r_general_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_koi8_ukr =	"koi8_ukr";		// 4.1 =>	22	koi8u		koi8u_ukrainian_ci
 	private static final String MYSQL_4_0_CHARSET_NAME_latin1_de =	"latin1_de";	// 4.1 =>	31	latin1		latin1_german2_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_usa7 =		"usa7";			// 4.1 =>	11	ascii		ascii_general_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_win1250 =	"win1250";		// 4.1 =>	26	cp1250		cp1250_general_ci
+	private static final String MYSQL_4_0_CHARSET_NAME_win1251 =	"win1251";		// 4.1 =>	17	(removed)
+	private static final String MYSQL_4_0_CHARSET_NAME_win1251ukr =	"win1251ukr";	// 4.1 =>	23	cp1251		cp1251_ukrainian_ci
 
 	private static final String NOT_USED = "ISO8859_1"; // punting for not-used character sets
 
 	static {	
 		HashMap<String, Integer> tempNumBytesMap = new HashMap<String, Integer>();
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_big5,			2);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_dec8,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp850,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_hp8,				1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_koi8r,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_latin1,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_latin2,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_swe7,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_ascii,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_ujis,			3);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_sjis,			2);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_hebrew,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_tis620,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_euckr,			2);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_koi8u,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_gb2312,			2);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_greek,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp1250,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_gbk,				2);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_latin5,			1);
 		tempNumBytesMap.put(MYSQL_CHARSET_NAME_armscii8,		1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_utf8,			3);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_ucs2,			2);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp866,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_keybcs2,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_macce,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_macroman,		1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp852,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_latin7,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_utf8mb4,			4);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_ascii,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_big5,			2);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_binary,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp1250,			1);
 		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp1251,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_utf16,			4);
 		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp1256,			1);
 		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp1257,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_utf32,			4);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_binary,			1);
-		tempNumBytesMap.put(MYSQL_CHARSET_NAME_geostd8,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp850,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp852,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp866,			1);
 		tempNumBytesMap.put(MYSQL_CHARSET_NAME_cp932,			2);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_dec8,			1);
 		tempNumBytesMap.put(MYSQL_CHARSET_NAME_eucjpms,			3);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_euckr,			2);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_gb2312,			2);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_gbk,				2);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_geostd8,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_greek,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_hebrew,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_hp8,				1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_keybcs2,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_koi8r,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_koi8u,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_latin1,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_latin2,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_latin5,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_latin7,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_macce,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_macroman,		1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_sjis,			2);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_swe7,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_tis620,			1);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_ucs2,			2);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_ujis,			3);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_utf16,			4);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_utf16le,			4);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_utf32,			4);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_utf8,			3);
+		tempNumBytesMap.put(MYSQL_CHARSET_NAME_utf8mb4,			4);
 		STATIC_CHARSET_TO_NUM_BYTES_MAP = Collections.unmodifiableMap(tempNumBytesMap);
 
 		tempNumBytesMap = new HashMap<String, Integer>();
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_czech,		1);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_dos,			1);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_german1,		1);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_koi8_ru,		1);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_usa7,		1);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_danish,		1);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_win1251,		1);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_euc_kr,		2);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_estonia,		1);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_hungarian,	1);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_koi8_ukr,	1);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_win1251ukr,	1);
-		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_win1250,		1);
 		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_croat,		1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_czech,		1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_danish,		1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_dos,			1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_estonia,		1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_euc_kr,		2);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_german1,		1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_hungarian,	1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_koi8_ru,		1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_koi8_ukr,	1);
 		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_latin1_de,	1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_usa7,		1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_win1250,		1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_win1251,		1);
+		tempNumBytesMap.put(MYSQL_4_0_CHARSET_NAME_win1251ukr,	1);
 		STATIC_4_0_CHARSET_TO_NUM_BYTES_MAP = Collections.unmodifiableMap(tempNumBytesMap);
 
 		CHARSET_CONFIG.setProperty("javaToMysqlMappings",
@@ -284,6 +286,7 @@ public class CharsetMapping {
 	        + "GB2312 =		gb2312,"
 	        + "LATIN2 =		latin2,"
 	        + "UTF-16 = 	>5.2.0 utf16,"
+	        + "UTF-16LE = 	>5.6.0 utf16le,"
 	        + "UTF-32 = 	>5.2.0 utf32");
 
 		HashMap<String, List<VersionedStringProperty>> javaToMysqlMap = new HashMap<String, List<VersionedStringProperty>>();
@@ -366,6 +369,7 @@ public class CharsetMapping {
 	 		+ "utf8 =          utf8,"
 	 		+ "UnicodeBig = 	ucs2,"
 			+ "UTF-16 = 	>5.2.0 utf16,"
+			+ "UTF-16LE = 	>5.6.0 utf16le,"
 			+ "UTF-32 = 	>5.2.0 utf32");
 		
 		populateMapWithKeyValuePairsUnversioned("multibyteCharsets", tempMapMulti, true);
@@ -428,13 +432,13 @@ public class CharsetMapping {
 		collation[53] = new Collation(53,	"macroman_bin",			MYSQL_CHARSET_NAME_macroman);
 		collation[54] = new Collation(54,	"utf16_general_ci",		MYSQL_CHARSET_NAME_utf16);
 		collation[55] = new Collation(55,	"utf16_bin",			MYSQL_CHARSET_NAME_utf16);
-		collation[56] = new Collation(56,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
+		collation[56] = new Collation(56,	"utf16le_general_ci",	MYSQL_CHARSET_NAME_utf16le);
 		collation[57] = new Collation(57,	"cp1256_general_ci",	MYSQL_CHARSET_NAME_cp1256);
 		collation[58] = new Collation(58,	"cp1257_bin",			MYSQL_CHARSET_NAME_cp1257);
 		collation[59] = new Collation(59,	"cp1257_general_ci",	MYSQL_CHARSET_NAME_cp1257);
 		collation[60] = new Collation(60,	"utf32_general_ci",		MYSQL_CHARSET_NAME_utf32);
 		collation[61] = new Collation(61,	"utf32_bin",			MYSQL_CHARSET_NAME_utf32);
-		collation[62] = new Collation(62,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
+		collation[62] = new Collation(62,	"utf16le_bin",			MYSQL_CHARSET_NAME_utf16le);
 		collation[63] = new Collation(63,	"binary",				MYSQL_CHARSET_NAME_binary);
 		collation[64] = new Collation(64,	"armscii8_bin",			MYSQL_CHARSET_NAME_armscii8,"ISO8859_2");	// punting "armscii"
 		collation[65] = new Collation(65,	"ascii_bin",			MYSQL_CHARSET_NAME_ascii);
@@ -493,10 +497,10 @@ public class CharsetMapping {
 		collation[118] = new Collation(118,	"utf16_esperanto_ci",	MYSQL_CHARSET_NAME_utf16);
 		collation[119] = new Collation(119,	"utf16_hungarian_ci",	MYSQL_CHARSET_NAME_utf16);
 		collation[120] = new Collation(120,	"utf16_sinhala_ci",		MYSQL_CHARSET_NAME_utf16);
-		collation[121] = new Collation(121,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[122] = new Collation(122,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[123] = new Collation(123,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[124] = new Collation(124,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
+		collation[121] = new Collation(121,	"utf16_german2_ci",		MYSQL_CHARSET_NAME_utf16);
+		collation[122] = new Collation(122,	"utf16_croatian_ci",	MYSQL_CHARSET_NAME_utf16);
+		collation[123] = new Collation(123,	"utf16_unicode_520_ci",	MYSQL_CHARSET_NAME_utf16);
+		collation[124] = new Collation(124,	"utf16_vietnamese_ci",	MYSQL_CHARSET_NAME_utf16);
 		collation[125] = new Collation(125,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[126] = new Collation(126,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[127] = new Collation(127,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
@@ -520,10 +524,10 @@ public class CharsetMapping {
 		collation[145] = new Collation(145,	"ucs2_esperanto_ci",	MYSQL_CHARSET_NAME_ucs2);
 		collation[146] = new Collation(146,	"ucs2_hungarian_ci",	MYSQL_CHARSET_NAME_ucs2);
 		collation[147] = new Collation(147,	"ucs2_sinhala_ci",		MYSQL_CHARSET_NAME_ucs2);
-		collation[148] = new Collation(148,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[149] = new Collation(149,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[150] = new Collation(150,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[151] = new Collation(151,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
+		collation[148] = new Collation(148,	"ucs2_german2_ci",		MYSQL_CHARSET_NAME_ucs2);
+		collation[149] = new Collation(149,	"ucs2_croatian_ci",		MYSQL_CHARSET_NAME_ucs2);
+		collation[150] = new Collation(150,	"ucs2_unicode_520_ci",	MYSQL_CHARSET_NAME_ucs2);
+		collation[151] = new Collation(151,	"ucs2_vietnamese_ci",	MYSQL_CHARSET_NAME_ucs2);
 		collation[152] = new Collation(152,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[153] = new Collation(153,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[154] = new Collation(154,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
@@ -531,7 +535,7 @@ public class CharsetMapping {
 		collation[156] = new Collation(156,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[157] = new Collation(157,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[158] = new Collation(158,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[159] = new Collation(159,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
+		collation[159] = new Collation(159,	"ucs2_general_mysql500_ci",	MYSQL_CHARSET_NAME_ucs2);
 		collation[160] = new Collation(160,	"utf32_unicode_ci",		MYSQL_CHARSET_NAME_utf32);
 		collation[161] = new Collation(161,	"utf32_icelandic_ci",	MYSQL_CHARSET_NAME_utf32);
 		collation[162] = new Collation(162,	"utf32_latvian_ci",		MYSQL_CHARSET_NAME_utf32);
@@ -552,10 +556,10 @@ public class CharsetMapping {
 		collation[177] = new Collation(177,	"utf32_esperanto_ci",	MYSQL_CHARSET_NAME_utf32);
 		collation[178] = new Collation(178,	"utf32_hungarian_ci",	MYSQL_CHARSET_NAME_utf32);
 		collation[179] = new Collation(179,	"utf32_sinhala_ci",		MYSQL_CHARSET_NAME_utf32);
-		collation[180] = new Collation(180,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[181] = new Collation(181,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[182] = new Collation(182,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[183] = new Collation(183,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
+		collation[180] = new Collation(180,	"utf32_german2_ci",		MYSQL_CHARSET_NAME_utf32);
+		collation[181] = new Collation(181,	"utf32_croatian_ci",	MYSQL_CHARSET_NAME_utf32);
+		collation[182] = new Collation(182,	"utf32_unicode_520_ci",	MYSQL_CHARSET_NAME_utf32);
+		collation[183] = new Collation(183,	"utf32_vietnamese_ci",	MYSQL_CHARSET_NAME_utf32);
 		collation[184] = new Collation(184,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[185] = new Collation(185,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[186] = new Collation(186,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
@@ -584,10 +588,10 @@ public class CharsetMapping {
 		collation[209] = new Collation(209,	"utf8_esperanto_ci",	MYSQL_CHARSET_NAME_utf8);
 		collation[210] = new Collation(210,	"utf8_hungarian_ci",	MYSQL_CHARSET_NAME_utf8);
 		collation[211] = new Collation(211,	"utf8_sinhala_ci",		MYSQL_CHARSET_NAME_utf8);
-		collation[212] = new Collation(212,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[213] = new Collation(213,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[214] = new Collation(214,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[215] = new Collation(215,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
+		collation[212] = new Collation(212,	"utf8_german2_ci",		MYSQL_CHARSET_NAME_utf8);
+		collation[213] = new Collation(213,	"utf8_croatian_ci",		MYSQL_CHARSET_NAME_utf8);
+		collation[214] = new Collation(214,	"utf8_unicode_520_ci",	MYSQL_CHARSET_NAME_utf8);
+		collation[215] = new Collation(215,	"utf8_vietnamese_ci",	MYSQL_CHARSET_NAME_utf8);
 		collation[216] = new Collation(216,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[217] = new Collation(217,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[218] = new Collation(218,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
@@ -595,7 +599,7 @@ public class CharsetMapping {
 		collation[220] = new Collation(220,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[221] = new Collation(221,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[222] = new Collation(222,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[223] = new Collation(223,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
+		collation[223] = new Collation(223,	"utf8_general_mysql500_ci",	MYSQL_CHARSET_NAME_utf8);
 		collation[224] = new Collation(224,	"utf8mb4_unicode_ci",	MYSQL_CHARSET_NAME_utf8mb4);
 		collation[225] = new Collation(225,	"utf8mb4_icelandic_ci",	MYSQL_CHARSET_NAME_utf8mb4);
 		collation[226] = new Collation(226,	"utf8mb4_latvian_ci",	MYSQL_CHARSET_NAME_utf8mb4);
@@ -617,9 +621,9 @@ public class CharsetMapping {
 		collation[242] = new Collation(242,	"utf8mb4_hungarian_ci",	MYSQL_CHARSET_NAME_utf8mb4);
 		collation[243] = new Collation(243,	"utf8mb4_sinhala_ci",	MYSQL_CHARSET_NAME_utf8mb4);
 		collation[244] = new Collation(244,	"utf8mb4_german2_ci",	MYSQL_CHARSET_NAME_utf8mb4);
-		collation[245] = new Collation(245,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[246] = new Collation(246,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
-		collation[247] = new Collation(247,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
+		collation[245] = new Collation(245,	"utf8mb4_croatian_ci",	MYSQL_CHARSET_NAME_utf8mb4);
+		collation[246] = new Collation(246,	"utf8mb4_unicode_520_ci",	MYSQL_CHARSET_NAME_utf8mb4);
+		collation[247] = new Collation(247,	"utf8mb4_vietnamese_ci",	MYSQL_CHARSET_NAME_utf8mb4);
 		collation[248] = new Collation(248,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[249] = new Collation(249,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);
 		collation[250] = new Collation(250,	"latin1_german1_ci",	MYSQL_CHARSET_NAME_latin1,	NOT_USED);

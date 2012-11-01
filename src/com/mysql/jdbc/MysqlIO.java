@@ -4598,6 +4598,7 @@ public class MysqlIO {
 			String mysqlEncodingName = this.connection.getServerCharacterEncoding();
 			if ("ucs2".equalsIgnoreCase(mysqlEncodingName) ||
 					"utf16".equalsIgnoreCase(mysqlEncodingName) ||
+					"utf16le".equalsIgnoreCase(mysqlEncodingName) ||
 					"uft32".equalsIgnoreCase(mysqlEncodingName)) {
 				packet.writeByte((byte) UTF8_CHARSET_INDEX);
 				packet.writeByte((byte) 0);
