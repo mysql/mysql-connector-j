@@ -22,7 +22,10 @@
  */
 package testsuite.regression;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
@@ -57,6 +60,7 @@ import testsuite.UnreliableSocketFactory;
 
 import com.mysql.jdbc.AuthenticationPlugin;
 import com.mysql.jdbc.Buffer;
+import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
@@ -4137,6 +4141,81 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		conn2.close();
 
 		
+	}
+
+	/**
+	 * Tests fix for BUG#11237 useCompression=true and LOAD DATA LOCAL INFILE SQL Command
+	 * 
+	 * @throws Exception
+	 *             if any errors occur
+	 */
+	public void testBug11237() throws Exception {
+		this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
+		this.rs.next();
+		if (this.rs.getInt(2) < 4+1024*1024*16-1) {
+			fail("You need to increase max_allowed_packet to at least "+(4+1024*1024*16-1)+" before running this test!");
+		}
+
+		int requiredSize = 1024*1024*300;
+		int fieldLength = 1023;
+		int loops = requiredSize / 2 / (fieldLength + 1);
+		
+		File testFile = File.createTempFile("cj-testloaddata", ".dat");
+		testFile.deleteOnExit();
+		cleanupTempFiles(testFile, "cj-testloaddata");
+
+		BufferedOutputStream bOut = new BufferedOutputStream(new FileOutputStream(testFile));
+
+		for (int i = 0; i < loops; i++) {
+			for (int j = 0; j < fieldLength; j++) {
+				bOut.write("a".getBytes()[0]);
+			}
+			bOut.write("\t".getBytes()[0]);
+			for (int j = 0; j < fieldLength; j++) {
+				bOut.write("b".getBytes()[0]);
+			}
+			bOut.write("\n".getBytes()[0]);
+		}
+
+		bOut.flush();
+		bOut.close();
+
+		createTable("testBug11237", "(field1 VARCHAR(1024), field2 VARCHAR(1024))");
+
+		StringBuffer fileNameBuf = null;
+
+		if (File.separatorChar == '\\') {
+			fileNameBuf = new StringBuffer();
+
+			String fileName = testFile.getAbsolutePath();
+			int fileNameLength = fileName.length();
+
+			for (int i = 0; i < fileNameLength; i++) {
+				char c = fileName.charAt(i);
+
+				if (c == '\\') {
+					fileNameBuf.append("/");
+				} else {
+					fileNameBuf.append(c);
+				}
+			}
+		} else {
+			fileNameBuf = new StringBuffer(testFile.getAbsolutePath());
+		}
+
+		Properties props = new Properties();
+		props.put("useCompression", "true");
+		Connection conn1 = getConnectionWithProps(props);
+		Statement stmt1 = conn1.createStatement();
+
+		int updateCount = stmt1
+				.executeUpdate("LOAD DATA LOCAL INFILE '"
+						+ fileNameBuf.toString()
+						+ "' INTO TABLE testBug11237" +
+						" CHARACTER SET " + CharsetMapping.getMysqlEncodingForJavaEncoding(((MySQLConnection)this.conn).getEncoding(), (com.mysql.jdbc.Connection) conn1));
+
+		assertTrue(updateCount == loops);
+
 	}
 
 }

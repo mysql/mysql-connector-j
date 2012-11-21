@@ -1,6 +1,8 @@
 # Changelog
 # $Id$
 nn-nn-12 - Version 5.1.23
+  - Fix for Bug#11237, useCompression=true and LOAD DATA LOCAL INFILE SQL Command.
+
   - Static charset/collation maps were updated.
 
   - Fix for Bug#14260352, difference in Timestamp value returned with rewriteBatchedStatements=true.

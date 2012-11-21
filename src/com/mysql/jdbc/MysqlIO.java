@@ -192,6 +192,7 @@ public class MysqlIO {
     // use of this feature
     //
     private SoftReference<Buffer> splitBufRef;
+    private SoftReference<Buffer> compressBufRef;
     protected String host = null;
     protected String seed;
     private String serverVersion = null;
@@ -222,6 +223,7 @@ public class MysqlIO {
     private boolean useNewLargePackets = false;
     private boolean useNewUpdateCounts = false; // should we use the new larger update counts?
     private byte packetSequence = 0;
+    private byte compressedPacketSequence = 0;
     private byte readPacketSequence = -1;
     private boolean checkPacketSequence = false;
     private byte protocolVersion = 0;
@@ -852,6 +854,7 @@ public class MysqlIO {
     protected void changeUser(String userName, String password, String database)
         throws SQLException {
         this.packetSequence = -1;
+        this.compressedPacketSequence = -1;
 
         int passwordLength = 16;
         int userLength = (userName != null) ? userName.length() : 0;
@@ -2192,6 +2195,7 @@ public class MysqlIO {
     		
 	        Buffer packet = new Buffer(6);
 	        this.packetSequence = -1;
+	        this.compressedPacketSequence = -1;
 	        packet.writeByte((byte) MysqlDefs.QUIT);
 	        send(packet, packet.getPosition());
     	} finally {
@@ -2441,6 +2445,7 @@ public class MysqlIO {
                     }
 
                     this.packetSequence = -1;
+                    this.compressedPacketSequence = -1;
                     this.readPacketSequence = 0;
                     this.checkPacketSequence = true;
                     this.sendPacket.clear();
@@ -2468,6 +2473,7 @@ public class MysqlIO {
                     send(this.sendPacket, this.sendPacket.getPosition());
                 } else {
                     this.packetSequence = -1;
+                    this.compressedPacketSequence = -1;
                     send(queryPacket, queryPacket.getPosition()); // packet passed by PreparedStatement
                 }
             } catch (SQLException sqlEx) {
@@ -3246,51 +3252,52 @@ public class MysqlIO {
         }
     }
 
-    private Buffer compressPacket(Buffer packet, int offset, int packetLen,
-        int headerLength) throws SQLException {
-        packet.writeLongInt(packetLen - headerLength);
-        packet.writeByte((byte) 0); // wrapped packet has 0 packet seq.
+    /**
+     * 
+     * @param packet original uncompressed MySQL packet
+     * @param offset begin of MySQL packet header
+     * @param packetLen real length of packet
+     * @return compressed packet with header
+     * @throws SQLException
+     */
+	private Buffer compressPacket(Buffer packet, int offset, int packetLen) throws SQLException {
 
-        int lengthToWrite = 0;
-        int compressedLength = 0;
-        byte[] bytesToCompress = packet.getByteBuffer();
-        byte[] compressedBytes = null;
-        int offsetWrite = 0;
+		// uncompressed payload by default
+		int compressedLength = packetLen;
+		int uncompressedLength = 0;
+		byte[] compressedBytes = null;
+		int offsetWrite = offset;
 
-        if (packetLen < MIN_COMPRESS_LEN) {
-            lengthToWrite = packetLen;
-            compressedBytes = packet.getByteBuffer();
-            compressedLength = 0;
-            offsetWrite = offset;
-        } else {
-            compressedBytes = new byte[bytesToCompress.length * 2];
+		if (packetLen < MIN_COMPRESS_LEN) {
+			compressedBytes = packet.getByteBuffer();
+
+		} else {
+			byte[] bytesToCompress = packet.getByteBuffer();
+			compressedBytes = new byte[bytesToCompress.length * 2];
 
             this.deflater.reset();
             this.deflater.setInput(bytesToCompress, offset, packetLen);
             this.deflater.finish();
 
-            int compLen = this.deflater.deflate(compressedBytes);
+            compressedLength = this.deflater.deflate(compressedBytes);
 
-            if (compLen > packetLen) {
-                lengthToWrite = packetLen;
+            if (compressedLength > packetLen) {
+            	// if compressed data is greater then uncompressed then send uncompressed
                 compressedBytes = packet.getByteBuffer();
-                compressedLength = 0;
-                offsetWrite = offset;
+            	compressedLength = packetLen;
             } else {
-                lengthToWrite = compLen;
-                headerLength += COMP_HEADER_LENGTH;
-                compressedLength = packetLen;
+        		uncompressedLength = packetLen;
+        		offsetWrite = 0;
             }
         }
 
-        Buffer compressedPacket = new Buffer(packetLen + headerLength);
+        Buffer compressedPacket = new Buffer(HEADER_LENGTH + COMP_HEADER_LENGTH + compressedLength);
 
         compressedPacket.setPosition(0);
-        compressedPacket.writeLongInt(lengthToWrite);
-        compressedPacket.writeByte(this.packetSequence);
         compressedPacket.writeLongInt(compressedLength);
-        compressedPacket.writeBytesNoNull(compressedBytes, offsetWrite,
-            lengthToWrite);
+        compressedPacket.writeByte(this.compressedPacketSequence);
+        compressedPacket.writeLongInt(uncompressedLength);
+        compressedPacket.writeBytesNoNull(compressedBytes, offsetWrite, compressedLength);
 
         return compressedPacket;
     }
@@ -3771,6 +3778,12 @@ public class MysqlIO {
     	sendCommand(MysqlDefs.COM_SET_OPTION, null, buf, false, null, 0);
     }
 
+    /**
+     * 
+     * @param packet
+     * @param packetLen length of header + payload
+     * @throws SQLException
+     */
     private final void send(Buffer packet, int packetLen)
         throws SQLException {
         try {
@@ -3779,20 +3792,24 @@ public class MysqlIO {
             }
 
             if ((this.serverMajorVersion >= 4) &&
-                    (packetLen >= this.maxThreeBytes)) {
-                sendSplitPackets(packet);
+            		(packetLen - HEADER_LENGTH >= this.maxThreeBytes ||
+            		(this.useCompression && packetLen - HEADER_LENGTH >= this.maxThreeBytes - COMP_HEADER_LENGTH)
+            		)) {
+                sendSplitPackets(packet, packetLen);
+
             } else {
                 this.packetSequence++;
 
                 Buffer packetToSend = packet;
-
                 packetToSend.setPosition(0);
+                packetToSend.writeLongInt(packetLen - HEADER_LENGTH);
+                packetToSend.writeByte(this.packetSequence);
 
                 if (this.useCompression) {
+                	this.compressedPacketSequence++;
                     int originalPacketLen = packetLen;
 
-                    packetToSend = compressPacket(packet, 0, packetLen,
-                            HEADER_LENGTH);
+                    packetToSend = compressPacket(packetToSend, 0, packetLen);
                     packetLen = packetToSend.getPosition();
 
                     if (this.traceProtocol) {
@@ -3808,8 +3825,6 @@ public class MysqlIO {
                         this.connection.getLog().logTrace(traceMessageBuf.toString());
                     }
                 } else {
-                    packetToSend.writeLongInt(packetLen - HEADER_LENGTH);
-                    packetToSend.writeByte(this.packetSequence);
 
                     if (this.traceProtocol) {
                         StringBuffer traceMessageBuf = new StringBuffer();
@@ -3826,9 +3841,7 @@ public class MysqlIO {
                     }
                 }
 
-
-                this.mysqlOutput.write(packetToSend.getByteBuffer(), 0,
-                		packetLen);
+                this.mysqlOutput.write(packetToSend.getByteBuffer(), 0, packetLen);
                 this.mysqlOutput.flush();
             }
 
@@ -3865,6 +3878,10 @@ public class MysqlIO {
      */
     private final ResultSetImpl sendFileToServer(StatementImpl callingStatement,
         String fileName) throws SQLException {
+
+        if (this.useCompression) {
+        	this.compressedPacketSequence++;
+        }
 
         Buffer filePacket = (this.loadFileBufRef == null) ? null
                                                           : this.loadFileBufRef.get();
@@ -4228,109 +4245,87 @@ public class MysqlIO {
      * @throws SQLException DOCUMENT ME!
      * @throws CommunicationsException DOCUMENT ME!
      */
-    private final void sendSplitPackets(Buffer packet)
+    private final void sendSplitPackets(Buffer packet, int packetLen)
         throws SQLException {
         try {
-            //
-            // Big packets are handled by splitting them in packets of MAX_THREE_BYTES
-            // length. The last packet is always a packet that is < MAX_THREE_BYTES.
-            // (The last packet may even have a length of 0)
-            //
-            //
-            // NB: Guarded by execSQL. If the driver changes architecture, this
-            // will need to be synchronized in some other way
-            //
-            Buffer headerPacket = (this.splitBufRef == null) ? null
-                                                             : this.splitBufRef.get();
+            Buffer packetToSend = (this.splitBufRef == null) ? null : this.splitBufRef.get();
+            Buffer toCompress = (!this.useCompression || this.compressBufRef == null) ? null : this.compressBufRef.get();
 
             //
             // Store this packet in a soft reference...It can be re-used if not GC'd (so clients
             // that use it frequently won't have to re-alloc the 16M buffer), but we don't
             // penalize infrequent users of large packets by keeping 16M allocated all of the time
             //
-            if (headerPacket == null) {
-                headerPacket = new Buffer((this.maxThreeBytes +
-                        HEADER_LENGTH));
-                this.splitBufRef = new SoftReference<Buffer>(headerPacket);
+            if (packetToSend == null) {
+                packetToSend = new Buffer((this.maxThreeBytes + HEADER_LENGTH));
+                this.splitBufRef = new SoftReference<Buffer>(packetToSend);
+            }
+            if (this.useCompression) {
+            	int cbuflen = packetLen + ((packetLen / this.maxThreeBytes) + 1) * HEADER_LENGTH;
+            	if (toCompress == null) {
+                	toCompress = new Buffer(cbuflen);
+            	} else if (toCompress.getBufLength() < cbuflen) {
+            		toCompress.setPosition(toCompress.getBufLength());
+            		toCompress.ensureCapacity(cbuflen - toCompress.getBufLength());
+            	}
             }
 
-            int len = packet.getPosition();
+            int len = packetLen - HEADER_LENGTH; // payload length left
             int splitSize = this.maxThreeBytes;
             int originalPacketPos = HEADER_LENGTH;
             byte[] origPacketBytes = packet.getByteBuffer();
-            byte[] headerPacketBytes = headerPacket.getByteBuffer();
 
-            while (len >= this.maxThreeBytes) {
+            int toCompressPosition = 0;
+            
+            // split to MySQL packets
+            while (len >= 0) {
                 this.packetSequence++;
 
-                headerPacket.setPosition(0);
-                headerPacket.writeLongInt(splitSize);
-
-                headerPacket.writeByte(this.packetSequence);
-                System.arraycopy(origPacketBytes, originalPacketPos,
-                    headerPacketBytes, 4, splitSize);
-
-                int packetLen = splitSize + HEADER_LENGTH;
-
-                //
-                // Swap a compressed packet in, if we're using
-                // compression...
-                //
-                if (!this.useCompression) {
-                    this.mysqlOutput.write(headerPacketBytes, 0,
-                        splitSize + HEADER_LENGTH);
-                    this.mysqlOutput.flush();
+                if (len < splitSize) {
+                	splitSize = len;
+                }
+                
+                packetToSend.setPosition(0);
+                packetToSend.writeLongInt(splitSize);
+                packetToSend.writeByte(this.packetSequence);
+                if (len > 0) {
+                    System.arraycopy(origPacketBytes, originalPacketPos, packetToSend.getByteBuffer(), HEADER_LENGTH, splitSize);
+                }
+                
+                if (this.useCompression) {
+                	System.arraycopy(packetToSend.getByteBuffer(), 0, toCompress.getByteBuffer(), toCompressPosition, HEADER_LENGTH + splitSize);
+                	toCompressPosition += HEADER_LENGTH + splitSize;
                 } else {
-                    Buffer packetToSend;
-
-                    headerPacket.setPosition(0);
-                    packetToSend = compressPacket(headerPacket, HEADER_LENGTH,
-                            splitSize, HEADER_LENGTH);
-                    packetLen = packetToSend.getPosition();
-
-                    this.mysqlOutput.write(packetToSend.getByteBuffer(), 0,
-                        packetLen);
+                    this.mysqlOutput.write(packetToSend.getByteBuffer(), 0, HEADER_LENGTH + splitSize);
                     this.mysqlOutput.flush();
                 }
 
                 originalPacketPos += splitSize;
-                len -= splitSize;
+                len -= this.maxThreeBytes;
+                
             }
 
-            //
-            // Write last packet
-            //
-            headerPacket.clear();
-            headerPacket.setPosition(0);
-            headerPacket.writeLongInt(len - HEADER_LENGTH);
-            this.packetSequence++;
-            headerPacket.writeByte(this.packetSequence);
+            // split to compressed packets
+			if (this.useCompression) {
+				len = toCompressPosition;
+				toCompressPosition = 0;
+				splitSize = this.maxThreeBytes- COMP_HEADER_LENGTH;
+                while (len >= 0) {
+                	this.compressedPacketSequence++;
 
-            if (len != 0) {
-                System.arraycopy(origPacketBytes, originalPacketPos,
-                    headerPacketBytes, 4, len - HEADER_LENGTH);
-            }
+                	if (len < splitSize) {
+                    	splitSize = len;
+                    }
 
-            int packetLen = len - HEADER_LENGTH;
+                    Buffer compressedPacketToSend = compressPacket(toCompress, toCompressPosition, splitSize);
+                    packetLen = compressedPacketToSend.getPosition();
+                    this.mysqlOutput.write(compressedPacketToSend.getByteBuffer(), 0, packetLen);
+                    this.mysqlOutput.flush();
 
-            //
-            // Swap a compressed packet in, if we're using
-            // compression...
-            //
-            if (!this.useCompression) {
-                this.mysqlOutput.write(headerPacket.getByteBuffer(), 0, len);
-                this.mysqlOutput.flush();
-            } else {
-                Buffer packetToSend;
 
-                headerPacket.setPosition(0);
-                packetToSend = compressPacket(headerPacket, HEADER_LENGTH,
-                        packetLen, HEADER_LENGTH);
-                packetLen = packetToSend.getPosition();
-
-                this.mysqlOutput.write(packetToSend.getByteBuffer(), 0,
-                    packetLen);
-                this.mysqlOutput.flush();
+                    toCompressPosition += splitSize;
+                    len -= (this.maxThreeBytes-COMP_HEADER_LENGTH);
+                }
             }
         } catch (IOException ioEx) {
             throw SQLError.createCommunicationsException(this.connection,

@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -1220,74 +1221,87 @@ public class ConnectionTest extends BaseTestCase {
 	 * @throws Exception
 	 *             if the test fails
 	 */
-	public void x_testUseCompress() throws Exception {
+	public void testUseCompress() throws Exception {
 
-		// Original test
-		// Properties props = new Properties();
-		// props.put("useCompression", "true");
-		// props.put("traceProtocol", "true");
-		// Connection conn1 = getConnectionWithProps(props);
-		// Statement stmt1 = conn1.createStatement();
-		// ResultSet rs1 = stmt1.executeQuery("SELECT VERSION()");
-		// rs1.next();
-		// rs1.getString(1);
-		// stmt1.close();
-		// conn1.close();
-
-		File testBlobFile = null;
-		int requiredSize = 0;
-
-		Properties props = new Properties();
-		props.put("useCompression", "true");
-		Connection conn1 = getConnectionWithProps(props);
-
-		Statement stmt1 = conn1.createStatement();
 		// Get real value
-		this.rs = stmt1
-				.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
+		this.rs = this.stmt.executeQuery("SHOW VARIABLES LIKE 'max_allowed_packet'");
 		this.rs.next();
-		// Create smaller than maximum allowed BLOB for testing
-		requiredSize = this.rs.getInt(2) / 8;
-		System.out.println("Required size: " + requiredSize);
-		this.rs.close();
-
-		// http://dev.mysql.com/doc/refman/5.1/en/server-system-variables.html#sysvar_max_allowed_packet
-		// setting GLOBAL variable during test is not ok
-		// The protocol limit for max_allowed_packet is 1GB.
-		if (testBlobFile == null || testBlobFile.length() != requiredSize) {
-
-			testBlobFile = File.createTempFile("cmj-testblob", ".dat");
-			testBlobFile.deleteOnExit();
-
-			cleanupTempFiles(testBlobFile, "cmj-testblob");
-
-			BufferedOutputStream bOut = new BufferedOutputStream(
-					new FileOutputStream(testBlobFile));
-
-			int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
-
-			for (int i = 0; i < requiredSize; i++) {
-				bOut.write((byte) ((Math.random() * dataRange) + Byte.MIN_VALUE));
-			}
-
-			bOut.flush();
-			bOut.close();
+		if (this.rs.getInt(2) < 4+1024*1024*16-1) {
+			fail("You need to increase max_allowed_packet to at least "+(4+1024*1024*16-1)+" before running this test!");
 		}
 
-		createTable("BLOBTEST",
-				"(pos int PRIMARY KEY auto_increment, blobdata LONGBLOB)");
-		BufferedInputStream bIn = new BufferedInputStream(new FileInputStream(
-				testBlobFile));
+		testCompressionWith("false", 1024*1024*16-2); // no split
+		testCompressionWith("false", 1024*1024*16-1); // split with additional empty packet
+		testCompressionWith("false", 1024*1024*32);   // big payload
 
-		this.pstmt = conn1
-				.prepareStatement("INSERT INTO BLOBTEST(blobdata) VALUES (?)");
+		testCompressionWith("true", 1024*1024*16-2-3); // no split, one compressed packet
+		testCompressionWith("true", 1024*1024*16-2-2); // no split, two compressed packets
+		testCompressionWith("true", 1024*1024*16-1);   // split with additional empty packet, two compressed packets
+		testCompressionWith("true", 1024*1024*32);     // big payload
+
+	}
+
+	/**
+	 * 
+	 * @param useCompression
+	 * @param maxUncompressedPacketSize mysql header + payload
+	 * @throws Exception
+	 */
+	private void testCompressionWith(String useCompression, int maxPayloadSize) throws Exception {
+
+		String sqlToSend = "INSERT INTO BLOBTEST(blobdata) VALUES (?)";
+		int requiredSize = maxPayloadSize - sqlToSend.length() - "_binary''".length();
+		
+		File testBlobFile = File.createTempFile("cmj-testblob", ".dat");
+		testBlobFile.deleteOnExit();
+		cleanupTempFiles(testBlobFile, "cmj-testblob");
+
+		BufferedOutputStream bOut = new BufferedOutputStream(
+				new FileOutputStream(testBlobFile));
+
+		int dataRange = Byte.MAX_VALUE - Byte.MIN_VALUE;
+
+		for (int i = 0; i < requiredSize; i++) {
+			bOut.write((byte) ((Math.random() * dataRange) + Byte.MIN_VALUE));
+		}
+
+		bOut.flush();
+		bOut.close();
+
+		Properties props = new Properties();
+		props.put("useCompression", useCompression);
+		Connection conn1 = getConnectionWithProps(props);
+		Statement stmt1 = conn1.createStatement();
+
+		createTable("BLOBTEST", "(pos int PRIMARY KEY auto_increment, blobdata LONGBLOB)");
+		BufferedInputStream bIn = new BufferedInputStream(new FileInputStream(testBlobFile));
+
+		this.pstmt = conn1.prepareStatement(sqlToSend);
+		
 		this.pstmt.setBinaryStream(1, bIn, (int) testBlobFile.length());
 		this.pstmt.execute();
 		this.pstmt.clearParameters();
 
 		this.rs = stmt1.executeQuery("SELECT blobdata from BLOBTEST LIMIT 1");
 		this.rs.next();
+		InputStream is = this.rs.getBinaryStream(1);
+		
+		bIn.close();
+		bIn = new BufferedInputStream(new FileInputStream(testBlobFile));
+		int blobbyte = 0;
+		int count = 0;
+		while ((blobbyte = is.read()) > -1) {
+			int filebyte = bIn.read();
+			if (filebyte < 0 || filebyte != blobbyte) {
+				fail("Blob is not identical to initial data.");
+			}
+			count++;
+		}
+		assertEquals(requiredSize, count);
 
+		if (is != null) {
+			is.close();
+		}
 		if (bIn != null) {
 			bIn.close();
 		}
