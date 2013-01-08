@@ -797,6 +797,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	private boolean cacheResultSetMetaDataAsBoolean;
 
+	private StringConnectionProperty serverConfigCacheFactory = new StringConnectionProperty("serverConfigCacheFactory", //$NON-NLS-1$
+			PerVmServerConfigCacheFactory.class.getName(), Messages.getString("ConnectionProperties.serverConfigCacheFactory"), "5.1.1", PERFORMANCE_CATEGORY, 12); //$NON-NLS-1$ //$NON-NLS-2$
+	
 	private BooleanConnectionProperty cacheServerConfiguration = new BooleanConnectionProperty(
 			"cacheServerConfiguration", //$NON-NLS-1$
 			false,
@@ -4687,11 +4690,18 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	}
 
 	public void setParseInfoCacheFactory(String factoryClassname) {
-		this.parseInfoCacheFactory.setValue(factoryClassname);
-		
+		this.parseInfoCacheFactory.setValue(factoryClassname);	
 	}
 
 	public String getParseInfoCacheFactory() {
 		return this.parseInfoCacheFactory.getValueAsString();
+	}
+	
+	public void setSrverConfigCacheFactory(String factoryClassname) {
+		this.serverConfigCacheFactory.setValue(factoryClassname);	
+	}
+
+	public String getServerConfigCacheFactory() {
+		return this.serverConfigCacheFactory.getValueAsString();
 	}
 }

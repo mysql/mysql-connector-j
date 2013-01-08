@@ -21,6 +21,15 @@ nn-nn-12 - Version 5.1.23
   - Fix for Bug#14665141, Diff results returned from ResultSet and CachedRowSet with new password hashing.
     Test suite modified to don't perform comparison of PASSWORD() results if old_passwords=2
     because with SHA-256 password hashing enabled they are nondeterministic.
+    
+  - The driver now allows the mechanism for caching MySQL server configuration values replaceable at runtime,
+    via the "serverConfigCacheFactory" property. The default is an implementation that is a per-VM concurrent
+    map, keyed by URL. The driver will invalidate cache entries when SQLExceptions that indicate communications
+    errors are thrown (on the assumption that the server has been or is restarting), or if the server version
+    that is being connected to, differs from the one that was present when the cached values were populated.
+    
+    To replace the default implementation, implement CacheAdapterFactory<String, Map<String, String>>, and
+    use the fully-qualified class name of this implementation for "serverConfigCacheFactory".
 
 09-06-12 - Version 5.1.22
   - Fix for Bug#57662, Incorrect Query Duration When useNanosForElapsedTime Enabled.

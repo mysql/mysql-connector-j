@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -25,6 +25,7 @@ package com.mysql.jdbc;
 
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.Set;
 
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.jdbc.util.LRUCache;
@@ -68,6 +69,27 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Pars
 
 			synchronized (conn) {
 				cache.put(key, value);
+			}
+		}
+
+		public void invalidate(String key) {
+			synchronized (conn) {
+				cache.remove(key);
+			}
+		}
+
+		public void invalidateAll(Set<String> keys) {
+			synchronized (conn) {
+				for (String key : keys) {
+					cache.remove(key);
+				}
+			}
+			
+		}
+
+		public void invalidateAll() {
+			synchronized (conn) {
+				cache.clear();
 			}
 		}
 	}

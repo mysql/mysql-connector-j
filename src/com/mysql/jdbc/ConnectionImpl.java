@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -121,6 +121,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		ExceptionInterceptorChain(String interceptorClasses) throws SQLException {
 			interceptors = Util.loadExtensions(ConnectionImpl.this, props, interceptorClasses, "Connection.BadExceptionInterceptor",  this);
+		}
+		
+		void addRingZero(ExceptionInterceptor interceptor) throws SQLException {	
+			interceptors.add(0, interceptor);
 		}
 		
 		public SQLException interceptException(SQLException sqlEx, Connection conn) {
@@ -263,7 +267,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	private static final Map<String, Map<String, Integer>> serverCustomMblenByUrl = new HashMap<String, Map<String, Integer>>();
 	
-	private static final Map<String, Map<String, String>> serverConfigByUrl = new HashMap<String, Map<String,String>>();
+	private CacheAdapter<String, Map<String, String>> serverConfigCache;
 
 	private long queryTimeCount;
 	private double queryTimeSum;
@@ -962,7 +966,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			HashMap<String, Integer> customMblen = null;
 
 			if (getCacheServerConfiguration()) {
-				synchronized (serverConfigByUrl) {
+				synchronized (serverCollationByUrl) {
 					sortedCollationMap = (TreeMap<Long, String>) serverCollationByUrl.get(getURL());
 					javaCharset = (HashMap<Integer, String>) serverJavaCharsetByUrl.get(getURL());
 					customCharset = (HashMap<Integer, String>) serverCustomCharsetByUrl.get(getURL());
@@ -1026,7 +1030,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					}
 
 					if (getCacheServerConfiguration()) {
-						synchronized (serverConfigByUrl) {
+						synchronized (serverCollationByUrl) {
 							serverCollationByUrl.put(getURL(), sortedCollationMap);
 							serverJavaCharsetByUrl.put(getURL(), javaCharset);
 							serverCustomCharsetByUrl.put(getURL(), customCharset);
@@ -3868,8 +3872,73 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return this.isServerTzUTC;
 	}
 
+	
 	private boolean usingCachedConfig = false;
 
+	private synchronized void createConfigCacheIfNeeded() throws SQLException {
+		if (this.serverConfigCache != null) {
+			return;
+		}
+		
+		try {
+			Class<?> factoryClass;
+			
+			factoryClass = Class.forName(getServerConfigCacheFactory());
+			
+			@SuppressWarnings("unchecked")
+			CacheAdapterFactory<String, Map<String, String>> cacheFactory = ((CacheAdapterFactory<String, Map<String, String>>)factoryClass.newInstance());
+			
+			this.serverConfigCache = cacheFactory.getInstance(this, myURL, Integer.MAX_VALUE, Integer.MAX_VALUE, props);
+			
+			ExceptionInterceptor evictOnCommsError = new ExceptionInterceptor() {
+
+				public void init(Connection conn, Properties config)
+						throws SQLException {
+				}
+
+				public void destroy() {
+				}
+
+				@SuppressWarnings("synthetic-access")
+				public SQLException interceptException(SQLException sqlEx,
+						Connection conn) {
+					if (sqlEx.getSQLState() != null && sqlEx.getSQLState().startsWith("08")) {
+						serverConfigCache.invalidate(getURL());
+					}
+					return null;
+				}};
+			
+			if (this.exceptionInterceptor == null) {
+				this.exceptionInterceptor = evictOnCommsError;
+			} else {
+				((ExceptionInterceptorChain)this.exceptionInterceptor).addRingZero(evictOnCommsError);
+			}
+		} catch (ClassNotFoundException e) {
+			SQLException sqlEx = SQLError.createSQLException(
+					Messages.getString("Connection.CantFindCacheFactory", new Object[] {getParseInfoCacheFactory(), "parseInfoCacheFactory"}),
+					getExceptionInterceptor());
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
+		} catch (InstantiationException e) {
+			SQLException sqlEx = SQLError.createSQLException(
+					Messages.getString("Connection.CantLoadCacheFactory", new Object[] {getParseInfoCacheFactory(), "parseInfoCacheFactory"}),
+					getExceptionInterceptor());
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
+		} catch (IllegalAccessException e) {
+			SQLException sqlEx = SQLError.createSQLException(
+					Messages.getString("Connection.CantLoadCacheFactory", new Object[] {getParseInfoCacheFactory(), "parseInfoCacheFactory"}),
+					getExceptionInterceptor());
+			sqlEx.initCause(e);
+			
+			throw sqlEx;
+		}
+	}
+	
+	private final static String SERVER_VERSION_STRING_VAR_NAME = "server_version_string";
+	
 	/**
 	 * Loads the result of 'SHOW VARIABLES' into the serverVariables field so
 	 * that the driver can configure itself.
@@ -3880,15 +3949,22 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private void loadServerVariables() throws SQLException {
 
 		if (getCacheServerConfiguration()) {
-			synchronized (serverConfigByUrl) {
-				Map<String, String> cachedVariableMap = serverConfigByUrl.get(getURL());
+			createConfigCacheIfNeeded();
+			
+			Map<String, String> cachedVariableMap = serverConfigCache.get(getURL());
 
-				if (cachedVariableMap != null) {
+			if (cachedVariableMap != null) {
+				String cachedServerVersion = cachedVariableMap.get(SERVER_VERSION_STRING_VAR_NAME);
+				
+				if (cachedServerVersion != null && this.io.getServerVersion() != null 
+						&& cachedServerVersion.equals(this.io.getServerVersion())) {
 					this.serverVariables = cachedVariableMap;
 					this.usingCachedConfig = true;
-
+	
 					return;
 				}
+				
+				serverConfigCache.invalidate(getURL());
 			}
 		}
 
@@ -3966,11 +4042,11 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 			
 			if (getCacheServerConfiguration()) {
-				synchronized (serverConfigByUrl) {
-					serverConfigByUrl.put(getURL(), this.serverVariables);
-					
-					this.usingCachedConfig = true;
-				}
+				this.serverVariables.put(SERVER_VERSION_STRING_VAR_NAME, this.io.getServerVersion());
+				
+				serverConfigCache.put(getURL(), this.serverVariables);
+				
+				this.usingCachedConfig = true;
 			}
 		} catch (SQLException e) {
 			throw e;

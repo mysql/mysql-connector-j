@@ -900,12 +900,12 @@ public class ConnectionTest extends BaseTestCase {
 		props.setProperty("profileSQL", "true");
 		props.setProperty("logFactory", "com.mysql.jdbc.log.StandardLogger");
 
-		//Connection conn1 = getConnectionWithProps(props);
+		Connection conn1 = getConnectionWithProps(props);
 
 		// eliminate side-effects when not run in isolation
 		StandardLogger.bufferedLog = new StringBuffer();
 
-		//Connection conn2 = getConnectionWithProps(props);
+		Connection conn2 = getConnectionWithProps(props);
 
 		StandardLogger.saveLogsToBuffer();
 
