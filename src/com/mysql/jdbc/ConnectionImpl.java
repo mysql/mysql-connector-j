@@ -59,6 +59,7 @@ import java.util.concurrent.Executor;
 import com.mysql.jdbc.PreparedStatement.ParseInfo;
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.log.LogFactory;
+import com.mysql.jdbc.log.LogUtils;
 import com.mysql.jdbc.log.NullLogger;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
@@ -586,7 +587,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	private int[] perfMetricsHistCounts;
 
 	/** Point of origin where this Connection was created */
-	private Throwable pointOfOrigin;
+	private String pointOfOrigin;
 
 	/** The port number we're connected to (defaults to 3306) */
 	private int port = 3306;
@@ -707,9 +708,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			throws SQLException {
 	
 		this.connectionCreationTimeMillis = System.currentTimeMillis();
-		this.pointOfOrigin = new Throwable();
-
-      if (databaseToConnectTo == null) {
+		
+		if (databaseToConnectTo == null) {
 			databaseToConnectTo = "";
 		}
 
@@ -805,7 +805,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		
 		initializeDriverProperties(info);
-		
+
+		if (getUseUsageAdvisor()) {
+			this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
+		} else {
+			this.pointOfOrigin = "";
+		}
 		
 		try {
 			this.dbmd = getMetaData(false, false);
@@ -5706,9 +5711,44 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		return null;
 	}
 	
-	// JDBC-4.1
+	/**
+     * Terminates an open connection.  Calling <code>abort</code> results in:
+     * <ul>
+     * <li>The connection marked as closed
+     * <li>Closes any physical connection to the database
+     * <li>Releases resources used by the connection
+     * <li>Insures that any thread that is currently accessing the connection
+     * will either progress to completion or throw an <code>SQLException</code>.
+     * </ul>
+     * <p>
+     * Calling <code>abort</code> marks the connection closed and releases any
+     * resources. Calling <code>abort</code> on a closed connection is a
+     * no-op.
+     * <p>
+     * It is possible that the aborting and releasing of the resources that are
+     * held by the connection can take an extended period of time.  When the
+     * <code>abort</code> method returns, the connection will have been marked as
+     * closed and the <code>Executor</code> that was passed as a parameter to abort
+     * may still be executing tasks to release resources.
+     * <p>
+     * This method checks to see that there is an <code>SQLPermission</code>
+     * object before allowing the method to proceed.  If a
+     * <code>SecurityManager</code> exists and its
+     * <code>checkPermission</code> method denies calling <code>abort</code>,
+     * this method throws a
+     * <code>java.lang.SecurityException</code>.
+     * @param executor  The <code>Executor</code>  implementation which will
+     * be used by <code>abort</code>.
+     * @throws java.sql.SQLException if a database access error occurs or
+     * the {@code executor} is {@code null},
+     * @throws java.lang.SecurityException if a security manager exists and its
+     *    <code>checkPermission</code> method denies calling <code>abort</code>
+     * @see SecurityManager#checkPermission
+     * @see Executor
+     * @since 1.7
+     */
 	public void abort(Executor executor) throws SQLException {
-SecurityManager sec = System.getSecurityManager();
+		SecurityManager sec = System.getSecurityManager();
 		
 		if (sec != null) {
 		    sec.checkPermission(ABORT_PERM);

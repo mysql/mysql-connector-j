@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.jdbc.log.LogUtils;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
 
@@ -247,7 +248,7 @@ public class StatementImpl implements Statement {
 	 * Where this statement was created, only used if profileSql or
 	 * useUsageAdvisor set to true.
 	 */
-	protected Throwable pointOfOrigin;
+	protected String pointOfOrigin;
 
 	/** Should we profile? */
 	protected boolean profileSQL = false;
@@ -366,7 +367,7 @@ public class StatementImpl implements Statement {
 			}
 
 			if (profiling) {
-				this.pointOfOrigin = new Throwable();
+				this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
 				this.profileSQL = this.connection.getProfileSql();
 				this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
 				this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);

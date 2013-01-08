@@ -55,6 +55,7 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
+import com.mysql.jdbc.log.LogUtils;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
 
@@ -265,7 +266,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	/**
 	 * StackTrace generated where ResultSet was created... used when profiling
 	 */
-	protected Throwable pointOfOrigin;
+	protected String pointOfOrigin;
 
 	/** Are we tracking items for profileSql? */
 	protected boolean profileSql = false;
@@ -512,7 +513,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			
 			if (this.profileSql || this.connection.getUseUsageAdvisor()) {
 				this.columnUsed = new boolean[this.fields.length];
-				this.pointOfOrigin = new Throwable();
+				this.pointOfOrigin = LogUtils.findCallingClassAndMethod(new Throwable());
 				this.resultId = resultCounter++;
 				this.useUsageAdvisor = this.connection.getUseUsageAdvisor();
 				this.eventSink = ProfilerEventHandlerFactory.getInstance(this.connection);

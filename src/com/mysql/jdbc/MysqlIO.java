@@ -62,6 +62,7 @@ import com.mysql.jdbc.authentication.MysqlOldPasswordPlugin;
 import com.mysql.jdbc.authentication.Sha256PasswordPlugin;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.jdbc.log.LogUtils;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
 import com.mysql.jdbc.util.ReadAheadInputStream;
@@ -2734,7 +2735,7 @@ public class MysqlIO {
 	    				(callingStatement != null) ? callingStatement.getId() : 999,
 	    						((ResultSetImpl)rs).resultId, System.currentTimeMillis(),
 	    						(int) (queryEndTime - queryStartTime), queryTimingUnits, null,
-	    						new Throwable(), mesgBuf.toString()));
+	    						LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
 
 	    		if (this.connection.getExplainSlowQueries()) {
 	    			if (oldPacketPosition < MAX_QUERY_SIZE_TO_EXPLAIN) {
@@ -2762,7 +2763,7 @@ public class MysqlIO {
 	    							System.currentTimeMillis(),
 	    							(queryEndTime - queryStartTime), this.queryTimingUnits,
 	    							null,
-	    							new Throwable(),
+	    							LogUtils.findCallingClassAndMethod(new Throwable()),
 	    							Messages.getString("MysqlIO.33") //$NON-NLS-1$
 	    							+profileQueryToLog));
 	    		}
@@ -2776,7 +2777,7 @@ public class MysqlIO {
 	    							System.currentTimeMillis(),
 	    							(queryEndTime - queryStartTime), this.queryTimingUnits,
 	    							null,
-	    							new Throwable(),
+	    							LogUtils.findCallingClassAndMethod(new Throwable()),
 	    							Messages.getString("MysqlIO.35") //$NON-NLS-1$
 	    							+profileQueryToLog));
 	    		}
@@ -2790,7 +2791,7 @@ public class MysqlIO {
 	    							System.currentTimeMillis(),
 	    							(queryEndTime - queryStartTime), this.queryTimingUnits,
 	    							null,
-	    							new Throwable(),
+	    							LogUtils.findCallingClassAndMethod(new Throwable()),
 	    							Messages.getString("MysqlIO.ServerSlowQuery") //$NON-NLS-1$
 	    							+profileQueryToLog));
 	    		}
@@ -2807,7 +2808,7 @@ public class MysqlIO {
 	    						((ResultSetImpl)rs).resultId, System.currentTimeMillis(),
 	    						(queryEndTime - queryStartTime), this.queryTimingUnits,
 	    						null,
-	    						new Throwable(), profileQueryToLog));
+	    						LogUtils.findCallingClassAndMethod(new Throwable()), profileQueryToLog));
 
 	    		eventSink.consumeEvent(new ProfilerEvent(ProfilerEvent.TYPE_FETCH,
 	    				"", catalog, this.connection.getId(), //$NON-NLS-1$
@@ -2815,7 +2816,7 @@ public class MysqlIO {
 	    						((ResultSetImpl)rs).resultId, System.currentTimeMillis(),
 	    						(fetchEndTime - fetchBeginTime), this.queryTimingUnits,
 	    						null,
-	    						new Throwable(), null));
+	    						LogUtils.findCallingClassAndMethod(new Throwable()), null));
 	    	}
 
 	    	if (this.hadWarnings) {

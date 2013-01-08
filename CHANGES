@@ -1,6 +1,12 @@
 # Changelog
 # $Id$
 nn-nn-12 - Version 5.1.23
+
+  - Fix for Bug#67954, stack trace used for point-of-origin in log and exception messages
+    causes permgen leak with webapp classloader on application redeploy. We no longer store the entire
+    stack trace, only the calling class and method, and even then, that only when using the usage advisor
+    or when profiling.
+    
   - Fix for Bug#11237, useCompression=true and LOAD DATA LOCAL INFILE SQL Command.
 
   - Static charset/collation maps were updated.

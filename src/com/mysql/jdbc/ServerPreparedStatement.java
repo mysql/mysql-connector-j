@@ -51,6 +51,7 @@ import java.util.TimeZone;
 
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
+import com.mysql.jdbc.log.LogUtils;
 import com.mysql.jdbc.profiler.ProfilerEvent;
 
 /**
@@ -1472,7 +1473,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 										getId(), 0, System.currentTimeMillis(),
 										elapsedTime, mysql
 												.getQueryTimingUnits(), null,
-										new Throwable(), mesgBuf.toString()));
+												LogUtils.findCallingClassAndMethod(new Throwable()), mesgBuf.toString()));
 					}
 
 					if (gatherPerformanceMetrics) {
@@ -1492,7 +1493,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 							this.connectionId, this.statementId, -1, System
 									.currentTimeMillis(), mysql
 									.getCurrentTimeNanosOrMillis() - begin,
-							mysql.getQueryTimingUnits(), null, new Throwable(),
+							mysql.getQueryTimingUnits(), null, LogUtils.findCallingClassAndMethod(new Throwable()),
 							truncateQueryToLog(asSql(true))));
 				}
 	
@@ -1520,7 +1521,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 							getId(), 0 /* FIXME rs.resultId */, System.currentTimeMillis(),
 							(fetchEndTime - queryEndTime), mysql
 									.getQueryTimingUnits(), null,
-							new Throwable(), null));
+									LogUtils.findCallingClassAndMethod(new Throwable()), null));
 				}
 	
 				if (queryWasSlow && this.connection.getExplainSlowQueries()) {
@@ -1687,7 +1688,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 							System.currentTimeMillis(), 
 							mysql.getCurrentTimeNanosOrMillis() - begin, 
 							mysql.getQueryTimingUnits(), null,
-							new Throwable(), truncateQueryToLog(sql)));
+							LogUtils.findCallingClassAndMethod(new Throwable()), truncateQueryToLog(sql)));
 				}
 
 				if (this.parameterCount > 0) {

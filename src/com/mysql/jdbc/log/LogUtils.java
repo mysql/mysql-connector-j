@@ -43,16 +43,14 @@ public class LogUtils {
 
 			ProfilerEvent evt = (ProfilerEvent) possibleProfilerEvent;
 
-			Throwable locationException = evt.getEventCreationPoint();
+			String locationInformation = evt.getEventCreationPointAsString();
 
-			if (locationException == null) {
-				locationException = new Throwable();
+			if (locationInformation == null) {
+				locationInformation = Util.stackTraceToString(new Throwable());
 			}
 
 			msgBuf.append("Profiler Event: [");
 
-			boolean appendLocationInfo = false;
-			
 			switch (evt.getEventType()) {
 			case ProfilerEvent.TYPE_EXECUTE:
 				msgBuf.append("EXECUTE");
@@ -81,14 +79,12 @@ public class LogUtils {
 
 			case ProfilerEvent.TYPE_WARN:
 				msgBuf.append("WARN");
-				appendLocationInfo = true;
-				
+
 				break;
 				
 			case ProfilerEvent.TYPE_SLOW_QUERY:
 				msgBuf.append("SLOW QUERY");
-				appendLocationInfo = false;
-				
+
 				break;
 				
 			default:
@@ -96,7 +92,7 @@ public class LogUtils {
 			}
 
 			msgBuf.append("] ");
-			msgBuf.append(findCallingClassAndMethod(locationException));
+			msgBuf.append(locationInformation);
 			msgBuf.append(" duration: ");
 			msgBuf.append(evt.getEventDuration());
 			msgBuf.append(" ");
@@ -115,13 +111,6 @@ public class LogUtils {
 				msgBuf.append(evtMessage);
 			}
 
-			if (appendLocationInfo) {
-				msgBuf
-					.append("\n\nFull stack trace of location where event occurred:\n\n");
-				msgBuf.append(Util.stackTraceToString(locationException));
-				msgBuf.append("\n");
-			}
-			
 			return msgBuf;
 		}
 		

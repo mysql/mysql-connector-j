@@ -133,11 +133,6 @@ public class ProfilerEvent {
 	protected int eventCreationPointIndex;
 
 	/**
-	 * Where was the event created (as a Throwable)?
-	 */
-	protected Throwable eventCreationPoint;
-
-	/**
 	 * Where was the event created (as a string description of the
 	 * eventCreationPoint)?
 	 */
@@ -177,7 +172,7 @@ public class ProfilerEvent {
 	public ProfilerEvent(byte eventType, String hostName, String catalog,
 			long connectionId, int statementId, int resultSetId,
 			long eventCreationTime, long eventDuration, String durationUnits,
-			String eventCreationPointDesc, Throwable eventCreationPoint,
+			String eventCreationPointDesc, String eventCreationPoint,
 			String message) {
 		this.eventType = eventType;
 		this.connectionId = connectionId;
@@ -186,7 +181,6 @@ public class ProfilerEvent {
 		this.eventCreationTime = eventCreationTime;
 		this.eventDuration = eventDuration;
 		this.durationUnits = durationUnits;
-		this.eventCreationPoint = eventCreationPoint;
 		this.eventCreationPointDesc = eventCreationPointDesc;
 		this.message = message;
 	}
@@ -197,11 +191,6 @@ public class ProfilerEvent {
 	 * @return a description of when this event was created.
 	 */
 	public String getEventCreationPointAsString() {
-		if (this.eventCreationPointDesc == null) {
-			this.eventCreationPointDesc = Util
-					.stackTraceToString(this.eventCreationPoint);
-		}
-
 		return this.eventCreationPointDesc;
 	}
 
@@ -467,16 +456,6 @@ public class ProfilerEvent {
 	 */
 	public long getConnectionId() {
 		return this.connectionId;
-	}
-
-	/**
-	 * Returns the point (as a Throwable stacktrace) where this event was
-	 * created.
-	 * 
-	 * @return the point where this event was created
-	 */
-	public Throwable getEventCreationPoint() {
-		return this.eventCreationPoint;
 	}
 
 	/**
