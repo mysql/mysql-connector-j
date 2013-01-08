@@ -4697,7 +4697,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return this.parseInfoCacheFactory.getValueAsString();
 	}
 	
-	public void setSrverConfigCacheFactory(String factoryClassname) {
+	public void setServerConfigCacheFactory(String factoryClassname) {
 		this.serverConfigCacheFactory.setValue(factoryClassname);	
 	}
 

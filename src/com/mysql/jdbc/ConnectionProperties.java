@@ -1697,4 +1697,8 @@ public interface ConnectionProperties {
 	public abstract void setParseInfoCacheFactory(String factoryClassname);
 	
 	public abstract String getParseInfoCacheFactory();
+	
+	public abstract void setServerConfigCacheFactory(String factoryClassname);
+
+	public abstract String getServerConfigCacheFactory();
 }

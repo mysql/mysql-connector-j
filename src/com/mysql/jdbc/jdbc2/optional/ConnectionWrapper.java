@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -2808,5 +2808,13 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 
 	public int getNetworkTimeout() throws SQLException {
 		return this.mc.getNetworkTimeout();
+	}
+
+	public void setServerConfigCacheFactory(String factoryClassname) {
+		this.mc.setServerConfigCacheFactory(factoryClassname);
+	}
+
+	public String getServerConfigCacheFactory() {
+		return this.mc.getServerConfigCacheFactory();
 	}
 }

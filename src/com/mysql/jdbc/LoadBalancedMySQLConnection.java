@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -2596,5 +2596,13 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 
 	public int getNetworkTimeout() throws SQLException {
 		return getActiveMySQLConnection().getNetworkTimeout();
+	}
+
+	public void setServerConfigCacheFactory(String factoryClassname) {
+		getActiveMySQLConnection().setServerConfigCacheFactory(factoryClassname);
+	}
+
+	public String getServerConfigCacheFactory() {
+		return getActiveMySQLConnection().getServerConfigCacheFactory();
 	}
 }
