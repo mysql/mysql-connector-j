@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-12 - Version 5.1.23
 
+  - Added tests for ALTER TABLE syntax changed in 5.6GA: ALGORITHM and LOCK keywords.
+
   - Fix for Bug#67954, stack trace used for point-of-origin in log and exception messages
     causes permgen leak with webapp classloader on application redeploy. We no longer store the entire
     stack trace, only the calling class and method, and even then, that only when using the usage advisor

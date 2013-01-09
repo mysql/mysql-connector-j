@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -539,8 +539,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				"WRITE", "X509", "XOR", "YEAR_MONTH", "ZEROFILL",
 		// adding for 5.5.8:
 				"GENERAL", "IGNORE_SERVER_IDS", "MASTER_HEARTBEAT_PERIOD",
-				"MAXVALUE", "RESIGNAL", "SIGNAL", "SLOW"
-		
+				"MAXVALUE", "RESIGNAL", "SIGNAL", "SLOW",
+		// adding for 5.6:
+				"ALGORITHM", "INPLACE", "COPY", "NONE", "SHARED", "EXCLUSIVE"
 		};
 
 		String[] sql92Keywords = new String[] { "ABSOLUTE", "EXEC", "OVERLAPS",
