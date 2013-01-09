@@ -25,6 +25,7 @@
  */
 package testsuite.regression;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -115,5 +116,62 @@ public class SyntaxRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+
+	/**
+	 * CREATE TABLE syntax changed in 5.6GA
+	 * 
+	 * InnoDB: Allow the location of file-per-table tablespaces to be chosen
+	 *   CREATE TABLE ... DATA DIRECTORY = 'absolute/path/to/directory/'
+	 *
+	 * @throws SQLException
+	 */
+	public void testCreateTableDataDirectory() throws SQLException {
+
+		if (versionMeetsMinimum(5, 6, 6)) {
+			try {
+				String tmpdir = null;
+				this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='tmpdir' or Variable_name='innodb_file_per_table'");
+				while (this.rs.next()) {
+					if ("tmpdir".equals(this.rs.getString(1))) {
+						tmpdir = this.rs.getString(2);
+						if (tmpdir.endsWith(File.separator)) {
+							tmpdir = tmpdir.substring(0, tmpdir.length()-1);
+						}
+					} else if ("innodb_file_per_table".equals(this.rs.getString(1))) {
+						if (!this.rs.getString(2).equals("ON")) {
+							fail("You need to set innodb_file_per_table to ON before running this test!");
+						}
+					}
+				}
+
+				createTable("testCreateTableDataDirectorya", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
+				createTable("testCreateTableDataDirectoryb", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + File.separator + "'");
+				this.stmt.executeUpdate("CREATE TEMPORARY TABLE testCreateTableDataDirectoryc (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
+				createTable("testCreateTableDataDirectoryd", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + File.separator + "' INDEX DIRECTORY = '" + tmpdir + "'");
+				this.stmt.executeUpdate("ALTER TABLE testCreateTableDataDirectorya DISCARD TABLESPACE");
+
+				this.pstmt = this.conn.prepareStatement("CREATE TABLE testCreateTableDataDirectorya (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+
+				this.pstmt = this.conn.prepareStatement("CREATE TABLE testCreateTableDataDirectorya (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + File.separator + "'");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+
+				this.pstmt = this.conn.prepareStatement("CREATE TEMPORARY TABLE testCreateTableDataDirectorya (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+
+				this.pstmt = this.conn.prepareStatement("CREATE TABLE testCreateTableDataDirectorya (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "' INDEX DIRECTORY = '" + tmpdir + "'");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+
+				this.pstmt = this.conn.prepareStatement("ALTER TABLE testCreateTableDataDirectorya DISCARD TABLESPACE");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+
+			} finally {
+				this.stmt.executeUpdate("DROP TABLE IF EXISTS testCreateTableDataDirectoryc");
+			}
+
+
+		}
+	}
+
 
 }

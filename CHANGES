@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-12 - Version 5.1.23
 
+  - Added tests for CREATE TABLE syntax changed in 5.6GA: CREATE TABLE ... DATA DIRECTORY = 'absolute/path/to/directory/'
+
   - Added tests for ALTER TABLE syntax changed in 5.6GA: ALGORITHM and LOCK keywords.
 
   - Fix for Bug#67954, stack trace used for point-of-origin in log and exception messages
