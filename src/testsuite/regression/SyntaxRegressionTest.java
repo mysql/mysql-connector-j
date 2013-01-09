@@ -26,6 +26,9 @@
 package testsuite.regression;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -173,5 +176,100 @@ public class SyntaxRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Test case for transportable tablespaces syntax support:
+	 * 
+	 *    FLUSH TABLES ... FOR EXPORT
+	 *    ALTER TABLE ... DISCARD TABLESPACE
+	 *    ALTER TABLE ... IMPORT TABLESPACE
+	 * 
+	 * @throws SQLException
+	 */
+	public void testTransportableTablespaces() throws Exception {
+
+		if (versionMeetsMinimum(5, 6, 8)) {
+			String tmpdir = null;
+			this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='tmpdir' or Variable_name='innodb_file_per_table'");
+			while (this.rs.next()) {
+				if ("tmpdir".equals(this.rs.getString(1))) {
+					tmpdir = this.rs.getString(2);
+					if (tmpdir.endsWith(File.separator)) {
+						tmpdir = tmpdir.substring(0, tmpdir.length()-1);
+					}
+				} else if ("innodb_file_per_table".equals(this.rs.getString(1))) {
+					if (!this.rs.getString(2).equals("ON")) {
+						fail("You need to set innodb_file_per_table to ON before running this test!");
+					}
+				}
+			}
+			String dbname = null;
+			this.rs = this.stmt.executeQuery("select database() as dbname");
+			if(this.rs.first()) {
+				dbname = this.rs.getString("dbname");
+			}
+			if (dbname == null) assertTrue("No database selected", false);
+
+			createTable("testTransportableTablespaces1", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
+			createTable("testTransportableTablespaces2", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
+			this.stmt.executeUpdate("FLUSH TABLES testTransportableTablespaces1, testTransportableTablespaces2 FOR EXPORT");
+			this.stmt.executeUpdate("UNLOCK TABLES");
+
+			File tempFile = File.createTempFile("testTransportableTablespaces1", "tmp");
+			tempFile.deleteOnExit();
+
+			String tableSpacePath = tmpdir + File.separator + dbname + File.separator + "testTransportableTablespaces1.ibd";
+			File tableSpaceFile = new File(tableSpacePath);
+			
+			copyFile(tableSpaceFile, tempFile);
+			this.stmt.executeUpdate("ALTER TABLE testTransportableTablespaces1 DISCARD TABLESPACE");
+
+			tableSpaceFile = new File(tableSpacePath);
+			copyFile(tempFile, tableSpaceFile);
+			
+			this.stmt.executeUpdate("ALTER TABLE testTransportableTablespaces1 IMPORT TABLESPACE");
+
+			this.pstmt = this.conn.prepareStatement("FLUSH TABLES testTransportableTablespaces1, testTransportableTablespaces2 FOR EXPORT");
+			assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+
+			this.pstmt = this.conn.prepareStatement("ALTER TABLE testTransportableTablespaces1 DISCARD TABLESPACE");
+			assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+
+			this.pstmt = this.conn.prepareStatement("ALTER TABLE testTransportableTablespaces1 IMPORT TABLESPACE");
+			assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+
+		}
+	}
+
+	private void copyFile(File source, File dest) throws IOException {
+        FileInputStream is = null;
+        FileOutputStream os = null;
+        try {
+            is = new FileInputStream(source);
+            os = new FileOutputStream(dest);
+            int nLength;
+            byte[] buf = new byte[8000];
+            while (true) {
+                nLength = is.read(buf);
+                if (nLength < 0) {
+                    break;
+                }
+                os.write(buf, 0, nLength);
+            }
+
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (Exception ex) {
+                }
+            }
+            if (os != null) {
+                try {
+                    os.close();
+                } catch (Exception ex) {
+                }
+            }
+        }
+    }
 
 }

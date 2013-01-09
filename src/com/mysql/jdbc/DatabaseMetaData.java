@@ -542,7 +542,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				"MAXVALUE", "RESIGNAL", "SIGNAL", "SLOW",
 		// adding for 5.6:
 				"ALGORITHM", "INPLACE", "COPY", "NONE", "SHARED", "EXCLUSIVE",
-				"DATA", "DIRECTORY", "DISCARD", "TABLESPACE"
+				"DATA", "DIRECTORY", "DISCARD", "TABLESPACE",
+				"FLUSH", "TABLES", "EXPORT", "IMPORT"
 		};
 
 		String[] sql92Keywords = new String[] { "ABSOLUTE", "EXEC", "OVERLAPS",

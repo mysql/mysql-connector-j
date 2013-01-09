@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-12 - Version 5.1.23
 
+  - Added tests for transportable tablespaces syntax introduced in 5.6GA.
+
   - Added tests for CREATE TABLE syntax changed in 5.6GA: CREATE TABLE ... DATA DIRECTORY = 'absolute/path/to/directory/'
 
   - Added tests for ALTER TABLE syntax changed in 5.6GA: ALGORITHM and LOCK keywords.
