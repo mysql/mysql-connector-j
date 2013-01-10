@@ -2622,4 +2622,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public String getServerConfigCacheFactory() {
 		return this.currentConnection.getServerConfigCacheFactory();
 	}
+
+	public void setDisconnectOnExpiredPasswords(boolean disconnectOnExpiredPasswords) {
+		this.currentConnection.setDisconnectOnExpiredPasswords(disconnectOnExpiredPasswords);
+	}
+
+	public boolean getDisconnectOnExpiredPasswords() {
+		return this.currentConnection.getDisconnectOnExpiredPasswords();
+	}
 }

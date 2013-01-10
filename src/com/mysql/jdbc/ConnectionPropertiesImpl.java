@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1810,6 +1810,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			"com.mysql.jdbc.authentication.MysqlNativePasswordPlugin",
 			Messages.getString("ConnectionProperties.defaultAuthenticationPlugin"),
 			"5.1.19", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
+	
+	private BooleanConnectionProperty disconnectOnExpiredPasswords = new BooleanConnectionProperty("disconnectOnExpiredPasswords",
+			true,
+			Messages.getString("ConnectionProperties.disconnectOnExpiredPasswords"),
+			"5.1.23", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
+	
+	
 	
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
 			Properties info, int slotsToReserve) throws SQLException {
@@ -4703,5 +4710,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public String getServerConfigCacheFactory() {
 		return this.serverConfigCacheFactory.getValueAsString();
+	}
+
+	public void setDisconnectOnExpiredPasswords(boolean disconnectOnExpiredPasswords) {
+		this.disconnectOnExpiredPasswords.setValue(disconnectOnExpiredPasswords);
+	}
+
+	public boolean getDisconnectOnExpiredPasswords() {
+		return this.disconnectOnExpiredPasswords.getValueAsBoolean();
 	}
 }

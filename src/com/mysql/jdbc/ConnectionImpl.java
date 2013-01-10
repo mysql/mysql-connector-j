@@ -986,12 +986,18 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 					stmt = getMetadataSafeStatement();
 
-					results = stmt.executeQuery("SHOW COLLATION");
-					if (versionMeetsMinimum(5, 0, 0)) {
-						Util.resultSetToMap(sortedCollationMap, results, 3, 2);
-					} else {
-						while (results.next()) {
-							sortedCollationMap.put(results.getLong(3), results.getString(2));
+					try {
+						results = stmt.executeQuery("SHOW COLLATION");
+						if (versionMeetsMinimum(5, 0, 0)) {
+							Util.resultSetToMap(sortedCollationMap, results, 3, 2);
+						} else {
+							while (results.next()) {
+								sortedCollationMap.put(results.getLong(3), results.getString(2));
+							}
+						}
+					} catch (SQLException ex) {
+						if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+							throw ex;
 						}
 					}
 
@@ -1020,11 +1026,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					
 					// if there is a number of custom charsets we should execute SHOW CHARACTER SET to know theirs mblen
 					if (customMblen.size() > 0) {
-						results = stmt.executeQuery("SHOW CHARACTER SET");
-						while (results.next()) {
-							String charsetName = results.getString("Charset");
-							if (customMblen.containsKey(charsetName)) {
-								customMblen.put(charsetName, results.getInt("Maxlen"));
+						try {
+							results = stmt.executeQuery("SHOW CHARACTER SET");
+							while (results.next()) {
+								String charsetName = results.getString("Charset");
+								if (customMblen.containsKey(charsetName)) {
+									customMblen.put(charsetName, results.getInt("Maxlen"));
+								}
+							}
+						} catch (SQLException ex) {
+							if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+								throw ex;
 							}
 						}
 					}
@@ -1953,10 +1965,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						}
 
 						if (dontCheckServerMatch || !characterSetNamesMatches(mysqlEncodingName) || ucs2) {
-							execSQL(null, "SET NAMES " + mysqlEncodingName, -1,
-								null, DEFAULT_RESULT_SET_TYPE,
-								DEFAULT_RESULT_SET_CONCURRENCY, false,
-								this.database, null, false);
+							try {
+								execSQL(null, "SET NAMES " + mysqlEncodingName, -1,
+										null, DEFAULT_RESULT_SET_TYPE,
+										DEFAULT_RESULT_SET_CONCURRENCY, false,
+										this.database, null, false);
+							} catch (SQLException ex) {
+								if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+									throw ex;
+								}
+							}
 						}
 
 						realJavaEncoding = getEncoding();
@@ -1987,11 +2005,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					// before we cached them.
 					//
 					if (!isNullOnServer) {
-						execSQL(null, "SET character_set_results = NULL", -1, null,
-								DEFAULT_RESULT_SET_TYPE,
-								DEFAULT_RESULT_SET_CONCURRENCY, false,
-								this.database, null, 
-								false);
+						try {
+							execSQL(null, "SET character_set_results = NULL", -1, null,
+									DEFAULT_RESULT_SET_TYPE,
+									DEFAULT_RESULT_SET_CONCURRENCY, false,
+									this.database, null, 
+									false);
+						} catch (SQLException ex) {
+							if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+								throw ex;
+							}
+						}
 						if (!this.usingCachedConfig) {
 							this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, null);
 						}
@@ -2003,10 +2027,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				} else {
 
 					if(getUseOldUTF8Behavior()){
-						execSQL(null, "SET NAMES " + "latin1", -1,
-							null, DEFAULT_RESULT_SET_TYPE,
-							DEFAULT_RESULT_SET_CONCURRENCY, false,
-							this.database, null, false);
+						try {
+							execSQL(null, "SET NAMES " + "latin1", -1,
+								null, DEFAULT_RESULT_SET_TYPE,
+								DEFAULT_RESULT_SET_CONCURRENCY, false,
+								this.database, null, false);
+						} catch (SQLException ex) {
+							if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+								throw ex;
+							}
+						}
 					}
 					String charsetResults = getCharacterSetResults();
 					String mysqlEncodingName = null;
@@ -2040,10 +2070,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 						setBuf.append("SET character_set_results = ").append(
 								mysqlEncodingName);
 	
-						execSQL(null, setBuf.toString(), -1, null,
-								DEFAULT_RESULT_SET_TYPE,
-								DEFAULT_RESULT_SET_CONCURRENCY, false,
-								this.database, null, false);
+						try {
+							execSQL(null, setBuf.toString(), -1, null,
+									DEFAULT_RESULT_SET_TYPE,
+									DEFAULT_RESULT_SET_CONCURRENCY, false,
+									this.database, null, false);
+						} catch (SQLException ex) {
+							if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+								throw ex;
+							}
+						}
 						
 						if (!this.usingCachedConfig) {
 							this.serverVariables.put(JDBC_LOCAL_CHARACTER_SET_RESULTS, 
@@ -2070,10 +2106,16 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					setBuf.append("SET collation_connection = ").append(
 							getConnectionCollation());
 
-					execSQL(null, setBuf.toString(), -1, null,
-							DEFAULT_RESULT_SET_TYPE,
-							DEFAULT_RESULT_SET_CONCURRENCY, false,
-							this.database, null, false);
+					try {
+						execSQL(null, setBuf.toString(), -1, null,
+								DEFAULT_RESULT_SET_TYPE,
+								DEFAULT_RESULT_SET_CONCURRENCY, false,
+								this.database, null, false);
+					} catch (SQLException ex) {
+						if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+							throw ex;
+						}
+					}
 				}
 			} else {
 				// Use what the server has specified
@@ -2485,6 +2527,13 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			return;
 			
 		} catch (Exception EEE) {
+
+			if (EEE instanceof SQLException
+					&& ((SQLException)EEE).getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD
+					&& !getDisconnectOnExpiredPasswords()) {
+				return;
+			}
+
 			if (this.io != null) {
 				this.io.forceClose();
 			}
@@ -3600,9 +3649,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			this.transactionsSupported = true;
 			
 			if (!overrideDefaultAutocommit) {
-				setAutoCommit(true); // to override anything
-				// the server is set to...reqd
-				// by JDBC spec.
+				try {
+					setAutoCommit(true); // to override anything
+					// the server is set to...reqd
+					// by JDBC spec.
+				} catch (SQLException ex) {
+					if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+						throw ex;
+					}
+				}
 			}
 		} else {
 			this.transactionsSupported = false;
@@ -4023,21 +4078,33 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			
 			this.serverVariables = new HashMap<String, String>();
 
-			results = stmt.executeQuery(query);
-			
-			while (results.next()) {
-				this.serverVariables.put(results.getString(1), results
-						.getString(2));
+			try {
+				results = stmt.executeQuery(query);
+				
+				while (results.next()) {
+					this.serverVariables.put(results.getString(1), results
+							.getString(2));
+				}
+	
+				results.close();
+				results = null;
+			} catch (SQLException ex) {
+				if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+					throw ex;
+				}
 			}
-
-			results.close();
-			results = null;
 			
 			if (versionMeetsMinimum(5, 0, 2)) {
-				results = stmt.executeQuery(versionComment + "SELECT @@session.auto_increment_increment");
-				
-				if (results.next()) {
-					this.serverVariables.put("auto_increment_increment", results.getString(1));
+				try {
+					results = stmt.executeQuery(versionComment + "SELECT @@session.auto_increment_increment");
+					
+					if (results.next()) {
+						this.serverVariables.put("auto_increment_increment", results.getString(1));
+					}
+				} catch (SQLException ex) {
+					if (ex.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+						throw ex;
+					}
 				}
 			}
 			

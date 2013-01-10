@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -67,6 +67,7 @@ import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MySQLConnection;
 import com.mysql.jdbc.MysqlDataTruncation;
+import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.RandomBalanceStrategy;
 import com.mysql.jdbc.ReplicationConnection;
@@ -3906,6 +3907,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					if (dbname == null) assertTrue("No database selected", false);
 					
 					// create proxy users
+					this.stmt.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+					
 					this.stmt.executeUpdate("grant usage on *.* to 'wl5602user'@'%' identified WITH sha256_password");
 					this.stmt.executeUpdate("SET GLOBAL old_passwords= 2");
 					this.stmt.executeUpdate("SET SESSION old_passwords= 2");
@@ -3953,6 +3956,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				} finally {
 					this.stmt.executeUpdate("drop user 'wl5602user'@'%'");
 					this.stmt.executeUpdate("flush privileges");
+					this.stmt.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
 				}
 			}
 		}
@@ -4215,6 +4219,122 @@ public class ConnectionRegressionTest extends BaseTestCase {
 						" CHARACTER SET " + CharsetMapping.getMysqlEncodingForJavaEncoding(((MySQLConnection)this.conn).getEncoding(), (com.mysql.jdbc.Connection) conn1));
 
 		assertTrue(updateCount == loops);
+
+	}
+
+	public void testExpiredPassword() throws Exception {
+		if (versionMeetsMinimum(5, 6, 10)) {
+			Connection testConn = null;
+			Statement testSt = null;
+			ResultSet testRs = null;
+
+			try {
+
+				this.stmt.executeUpdate("CREATE USER 'must_change1'@'%' IDENTIFIED BY 'aha'");
+				this.stmt.executeUpdate("CREATE USER 'must_change2'@'%' IDENTIFIED BY 'aha'");
+				this.stmt.executeUpdate("ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+
+				Properties props = new Properties();
+
+				// ALTER USER can be prepared as of 5.6.8 (BUG#14646014)
+				if (versionMeetsMinimum(5, 6, 8)) {
+					props.setProperty("useServerPrepStmts", "true");
+					testConn = getConnectionWithProps(props);
+
+					this.pstmt = testConn.prepareStatement("ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+					this.pstmt.executeUpdate();
+					this.pstmt.close();
+
+					this.pstmt = testConn.prepareStatement("ALTER USER ? PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
+					this.pstmt.setString(1, "must_change1");
+					this.pstmt.executeUpdate();
+					this.pstmt.close();
+
+					testConn.close();
+				}
+
+				props.setProperty("user", "must_change1");
+				props.setProperty("password", "aha");
+
+				try {
+					testConn = getConnectionWithProps(props);
+					fail("SQLException expected due to password expired");
+				} catch (SQLException e1) {
+					
+					if (e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD) {
+
+						props.setProperty("disconnectOnExpiredPasswords", "false");
+						try {
+							testConn = getConnectionWithProps(props);
+							testSt = testConn.createStatement();
+							testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
+							fail("SQLException expected due to password expired");
+
+						} catch (SQLException e3) {
+							testSt.executeUpdate("SET PASSWORD = PASSWORD('newpwd')");
+							testConn.close();
+							
+							props.setProperty("user", "must_change1");
+							props.setProperty("password", "newpwd");
+							props.setProperty("disconnectOnExpiredPasswords", "true");
+							testConn = getConnectionWithProps(props);
+							testSt = testConn.createStatement();
+							testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
+							assertTrue(testRs.next());
+							
+							// change user
+							try {
+								((MySQLConnection) testConn).changeUser("must_change2", "aha");
+								fail("SQLException expected due to password expired");
+
+							} catch (SQLException e4) {
+								if (e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD) {
+									props.setProperty("disconnectOnExpiredPasswords", "false");
+									testConn = getConnectionWithProps(props);
+									
+									try {
+										((MySQLConnection) testConn).changeUser("must_change2", "aha");
+										testSt = testConn.createStatement();
+										testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
+										fail("SQLException expected due to password expired");
+
+									} catch (SQLException e5) {
+										testSt.executeUpdate("SET PASSWORD = PASSWORD('newpwd')");
+										testConn.close();
+
+										props.setProperty("user", "must_change2");
+										props.setProperty("password", "newpwd");
+										props.setProperty("disconnectOnExpiredPasswords", "true");
+										testConn = getConnectionWithProps(props);
+										testSt = testConn.createStatement();
+										testRs = testSt.executeQuery("SHOW VARIABLES LIKE 'disconnect_on_expired_password'");
+										assertTrue(testRs.next());
+										
+									}									
+
+								} else {
+									throw e4;
+								}
+							}
+							
+						}
+					
+					
+					} else {
+						throw e1;
+					}
+					
+				}
+
+			} finally {
+				if (testRs != null) testRs.close();
+				if (testSt != null) testSt.close();
+				if (testConn != null) testConn.close();
+				this.stmt.executeUpdate("drop user 'must_change1'@'%'");
+				this.stmt.executeUpdate("drop user 'must_change2'@'%'");
+			}
+			
+		}
 
 	}
 

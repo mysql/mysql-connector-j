@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -753,6 +753,190 @@ public final class MysqlErrorNumbers {
 	public final static int ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE_MIN 	= 1703; //SQLSTATE: HY000 Message: The requested value for the heartbeat period is less than 1 millisecond. The value is reset to 0, meaning that heartbeating will effectively be disabled.
 	public final static int ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE_MAX 	= 1704; //SQLSTATE: HY000 Message: The requested value for the heartbeat period exceeds the value of `slave_net_timeout' seconds. A sensible value for the period should be less than the timeout.
 	public final static int ER_STMT_CACHE_FULL 							= 1705; //SQLSTATE: HY000 Message: Multi-row statements required more than 'max_binlog_stmt_cache_size' bytes of storage; increase this mysqld variable and try again
+
+	public final static int ER_MULTI_UPDATE_KEY_CONFLICT				= 1706; //SQLSTATE: HY000 Message: Primary key/partition key update is not allowed since the table is updated both as '%s' and '%s'.
+	public final static int ER_TABLE_NEEDS_REBUILD						= 1707; //SQLSTATE: HY000 Message: Table rebuild required. Please do "ALTER TABLE `%s` FORCE" or dump/reload to fix it!
+	public final static int WARN_OPTION_BELOW_LIMIT						= 1708; //SQLSTATE: HY000 Message: The value of '%s' should be no less than the value of '%s'
+	public final static int ER_INDEX_COLUMN_TOO_LONG					= 1709; //SQLSTATE: HY000 Message: Index column size too large. The maximum column size is %lu bytes.
+	public final static int ER_ERROR_IN_TRIGGER_BODY					= 1710; //SQLSTATE: HY000 Message: Trigger '%s' has an error in its body: '%s'
+	public final static int ER_ERROR_IN_UNKNOWN_TRIGGER_BODY			= 1711; //SQLSTATE: HY000 Message: Unknown trigger has an error in its body: '%s'
+	public final static int ER_INDEX_CORRUPT 							= 1712; //SQLSTATE: HY000 Message: Index %s is corrupted
+	public final static int ER_UNDO_RECORD_TOO_BIG						= 1713; //SQLSTATE: HY000 Message: Undo log record is too big.
+	public final static int ER_BINLOG_UNSAFE_INSERT_IGNORE_SELECT		= 1714; //SQLSTATE: HY000 Message: INSERT IGNORE... SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are ignored. This order cannot be predicted and may differ on master and the slave.
+	public final static int ER_BINLOG_UNSAFE_INSERT_SELECT_UPDATE		= 1715; //SQLSTATE: HY000 Message: INSERT... SELECT... ON DUPLICATE KEY UPDATE is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are updated. This order cannot be predicted and may differ on master and the slave.
+	public final static int ER_BINLOG_UNSAFE_REPLACE_SELECT				= 1716; //SQLSTATE: HY000 Message: REPLACE... SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are replaced. This order cannot be predicted and may differ on master and the slave.
+	public final static int ER_BINLOG_UNSAFE_CREATE_IGNORE_SELECT		= 1717; //SQLSTATE: HY000 Message: CREATE... IGNORE SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are ignored. This order cannot be predicted and may differ on master and the slave.
+	public final static int ER_BINLOG_UNSAFE_CREATE_REPLACE_SELECT		= 1718; //SQLSTATE: HY000 Message: CREATE... REPLACE SELECT is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are replaced. This order cannot be predicted and may differ on master and the slave.
+	public final static int ER_BINLOG_UNSAFE_UPDATE_IGNORE				= 1719; //SQLSTATE: HY000 Message: UPDATE IGNORE is unsafe because the order in which rows are updated determines which (if any) rows are ignored. This order cannot be predicted and may differ on master and the slave.
+	public final static int ER_PLUGIN_NO_UNINSTALL						= 1720; //SQLSTATE: HY000 Message: Plugin '%s' is marked as not dynamically uninstallable. You have to stop the server to uninstall it.
+	public final static int ER_PLUGIN_NO_INSTALL						= 1721; //SQLSTATE: HY000 Message: Plugin '%s' is marked as not dynamically installable. You have to stop the server to install it.
+	public final static int ER_BINLOG_UNSAFE_WRITE_AUTOINC_SELECT		= 1722; //SQLSTATE: HY000 Message: Statements writing to a table with an auto-increment column after selecting from another table are unsafe because the order in which rows are retrieved determines what (if any) rows will be written. This order cannot be predicted and may differ on master and the slave.
+	public final static int ER_BINLOG_UNSAFE_CREATE_SELECT_AUTOINC		= 1723; //SQLSTATE: HY000 Message: CREATE TABLE... SELECT... on a table with an auto-increment column is unsafe because the order in which rows are retrieved by the SELECT determines which (if any) rows are inserted. This order cannot be predicted and may differ on master and the slave.
+	public final static int ER_BINLOG_UNSAFE_INSERT_TWO_KEYS			= 1724; //SQLSTATE: HY000 Message: INSERT... ON DUPLICATE KEY UPDATE on a table with more than one UNIQUE KEY is unsafe
+	public final static int ER_TABLE_IN_FK_CHECK						= 1725; //SQLSTATE: HY000 Message: Table is being used in foreign key check.
+	public final static int ER_UNSUPPORTED_ENGINE						= 1726; //SQLSTATE: HY000 Message: Storage engine '%s' does not support system tables. [%s.%s]
+	public final static int ER_BINLOG_UNSAFE_AUTOINC_NOT_FIRST			= 1727; //SQLSTATE: HY000 Message: INSERT into autoincrement field which is not the first part in the composed primary key is unsafe.
+	public final static int ER_CANNOT_LOAD_FROM_TABLE_V2				= 1728; //SQLSTATE: HY000 Message: Cannot load from %s.%s. The table is probably corrupted
+	public final static int ER_MASTER_DELAY_VALUE_OUT_OF_RANGE			= 1729; //SQLSTATE: HY000 Message: The requested value %u for the master delay exceeds the maximum %u
+	public final static int ER_ONLY_FD_AND_RBR_EVENTS_ALLOWED_IN_BINLOG_STATEMENT
+																		= 1730; //SQLSTATE: HY000 Message: Only Format_description_log_event and row events are allowed in BINLOG statements (but %s was provided)
+	public final static int ER_PARTITION_EXCHANGE_DIFFERENT_OPTION		= 1731; //SQLSTATE: HY000 Message: Non matching attribute '%s' between partition and table
+	public final static int ER_PARTITION_EXCHANGE_PART_TABLE			= 1732; //SQLSTATE: HY000 Message: Table to exchange with partition is partitioned: '%s'
+	public final static int ER_PARTITION_EXCHANGE_TEMP_TABLE			= 1733; //SQLSTATE: HY000 Message: Table to exchange with partition is temporary: '%s'
+	public final static int ER_PARTITION_INSTEAD_OF_SUBPARTITION		= 1734; //SQLSTATE: HY000 Message: Subpartitioned table, use subpartition instead of partition
+	public final static int ER_UNKNOWN_PARTITION						= 1735; //SQLSTATE: HY000 Message: Unknown partition '%s' in table '%s'
+	public final static int ER_TABLES_DIFFERENT_METADATA				= 1736; //SQLSTATE: HY000 Message: Tables have different definitions
+	public final static int ER_ROW_DOES_NOT_MATCH_PARTITION				= 1737; //SQLSTATE: HY000 Message: Found a row that does not match the partition
+	public final static int ER_BINLOG_CACHE_SIZE_GREATER_THAN_MAX		= 1738; //SQLSTATE: HY000 Message: Option binlog_cache_size (%lu) is greater than max_binlog_cache_size (%lu); setting binlog_cache_size equal to max_binlog_cache_size.
+	public final static int ER_WARN_INDEX_NOT_APPLICABLE				= 1739; //SQLSTATE: HY000 Message: Cannot use %s access on index '%s' due to type or collation conversion on field '%s'
+	public final static int ER_PARTITION_EXCHANGE_FOREIGN_KEY			= 1740; //SQLSTATE: HY000 Message: Table to exchange with partition has foreign key references: '%s'
+	public final static int ER_NO_SUCH_KEY_VALUE						= 1741; //SQLSTATE: HY000 Message: Key value '%s' was not found in table '%s.%s'
+	public final static int ER_RPL_INFO_DATA_TOO_LONG					= 1742; //SQLSTATE: HY000 Message: Data for column '%s' too long
+	public final static int ER_NETWORK_READ_EVENT_CHECKSUM_FAILURE		= 1743; //SQLSTATE: HY000 Message: Replication event checksum verification failed while reading from network.
+	public final static int ER_BINLOG_READ_EVENT_CHECKSUM_FAILURE		= 1744; //SQLSTATE: HY000 Message: Replication event checksum verification failed while reading from a log file.
+	public final static int ER_BINLOG_STMT_CACHE_SIZE_GREATER_THAN_MAX	= 1745; //SQLSTATE: HY000 Message: Option binlog_stmt_cache_size (%lu) is greater than max_binlog_stmt_cache_size (%lu); setting binlog_stmt_cache_size equal to max_binlog_stmt_cache_size.
+	public final static int ER_CANT_UPDATE_TABLE_IN_CREATE_TABLE_SELECT	= 1746; //SQLSTATE: HY000 Message: Can't update table '%s' while '%s' is being created.
+	public final static int ER_PARTITION_CLAUSE_ON_NONPARTITIONED		= 1747; //SQLSTATE: HY000 Message: PARTITION () clause on non partitioned table
+	public final static int ER_ROW_DOES_NOT_MATCH_GIVEN_PARTITION_SET	= 1748; //SQLSTATE: HY000 Message: Found a row not matching the given partition set
+	public final static int ER_NO_SUCH_PARTITION__UNUSED				= 1749; //SQLSTATE: HY000 Message: partition '%s' doesn't exist
+	public final static int ER_CHANGE_RPL_INFO_REPOSITORY_FAILURE		= 1750; //SQLSTATE: HY000 Message: Failure while changing the type of replication repository: %s.
+	public final static int ER_WARNING_NOT_COMPLETE_ROLLBACK_WITH_CREATED_TEMP_TABLE
+																		= 1751; //SQLSTATE: HY000 Message: The creation of some temporary tables could not be rolled back.
+	public final static int ER_WARNING_NOT_COMPLETE_ROLLBACK_WITH_DROPPED_TEMP_TABLE
+																		= 1752; //SQLSTATE: HY000 Message: Some temporary tables were dropped, but these operations could not be rolled back.
+	public final static int ER_MTS_FEATURE_IS_NOT_SUPPORTED				= 1753; //SQLSTATE: HY000 Message: %s is not supported in multi-threaded slave mode. %s
+	public final static int ER_MTS_UPDATED_DBS_GREATER_MAX				= 1754; //SQLSTATE: HY000 Message: The number of modified databases exceeds the maximum %d; the database names will not be included in the replication event metadata.
+	public final static int ER_MTS_CANT_PARALLEL						= 1755; //SQLSTATE: HY000 Message: Cannot execute the current event group in the parallel mode. Encountered event %s, relay-log name %s, position %s which prevents execution of this event group in parallel mode. Reason: %s.
+	public final static int ER_MTS_INCONSISTENT_DATA					= 1756; //SQLSTATE: HY000 Message: %s
+	public final static int ER_FULLTEXT_NOT_SUPPORTED_WITH_PARTITIONING	= 1757; //SQLSTATE: HY000 Message: FULLTEXT index is not supported for partitioned tables.
+	public final static int ER_DA_INVALID_CONDITION_NUMBER				= 1758; //SQLSTATE: 35000 Message: Invalid condition number
+	public final static int ER_INSECURE_PLAIN_TEXT						= 1759; //SQLSTATE: HY000 Message: Sending passwords in plain text without SSL/TLS is extremely insecure.
+	public final static int ER_INSECURE_CHANGE_MASTER					= 1760; //SQLSTATE: HY000 Message: Storing MySQL user name or password information in the master.info repository is not secure and is therefore not recommended. Please see the MySQL Manual for more about this issue and possible alternatives.
+	public final static int ER_FOREIGN_DUPLICATE_KEY_WITH_CHILD_INFO	= 1761; //SQLSTATE: 23000 Message: Foreign key constraint for table '%s', record '%s' would lead to a duplicate entry in table '%s', key '%s'
+	public final static int ER_FOREIGN_DUPLICATE_KEY_WITHOUT_CHILD_INFO	= 1762; //SQLSTATE: 23000 Message: Foreign key constraint for table '%s', record '%s' would lead to a duplicate entry in a child table
+	public final static int ER_SQLTHREAD_WITH_SECURE_SLAVE				= 1763; //SQLSTATE: HY000 Message: Setting authentication options is not possible when only the Slave SQL Thread is being started.
+	public final static int ER_TABLE_HAS_NO_FT							= 1764; //SQLSTATE: HY000 Message: The table does not have FULLTEXT index to support this query
+	public final static int ER_VARIABLE_NOT_SETTABLE_IN_SF_OR_TRIGGER	= 1765; //SQLSTATE: HY000 Message: The system variable %s cannot be set in stored functions or triggers.
+	public final static int ER_VARIABLE_NOT_SETTABLE_IN_TRANSACTION		= 1766; //SQLSTATE: HY000 Message: The system variable %s cannot be set when there is an ongoing transaction.
+	public final static int ER_GTID_NEXT_IS_NOT_IN_GTID_NEXT_LIST		= 1767; //SQLSTATE: HY000 Message: The system variable @@SESSION.GTID_NEXT has the value %s, which is not listed in @@SESSION.GTID_NEXT_LIST.
+	public final static int ER_CANT_CHANGE_GTID_NEXT_IN_TRANSACTION_WHEN_GTID_NEXT_LIST_IS_NULL
+																		= 1768; //SQLSTATE: HY000 Message: When @@SESSION.GTID_NEXT_LIST == NULL, the system variable @@SESSION.GTID_NEXT cannot change inside a transaction.
+	public final static int ER_SET_STATEMENT_CANNOT_INVOKE_FUNCTION		= 1769; //SQLSTATE: HY000 Message: The statement 'SET %s' cannot invoke a stored function.
+	public final static int ER_GTID_NEXT_CANT_BE_AUTOMATIC_IF_GTID_NEXT_LIST_IS_NON_NULL
+																		= 1770; //SQLSTATE: HY000 Message: The system variable @@SESSION.GTID_NEXT cannot be 'AUTOMATIC' when @@SESSION.GTID_NEXT_LIST is non-NULL.
+	public final static int ER_SKIPPING_LOGGED_TRANSACTION				= 1771; //SQLSTATE: HY000 Message: Skipping transaction %s because it has already been executed and logged.
+	public final static int ER_MALFORMED_GTID_SET_SPECIFICATION			= 1772; //SQLSTATE: HY000 Message: Malformed GTID set specification '%s'.
+	public final static int ER_MALFORMED_GTID_SET_ENCODING				= 1773; //SQLSTATE: HY000 Message: Malformed GTID set encoding.
+	public final static int ER_MALFORMED_GTID_SPECIFICATION				= 1774; //SQLSTATE: HY000 Message: Malformed GTID specification '%s'.
+	public final static int ER_GNO_EXHAUSTED							= 1775; //SQLSTATE: HY000 Message: Impossible to generate Global Transaction Identifier: the integer component reached the maximal value. Restart the server with a new server_uuid.
+	public final static int ER_BAD_SLAVE_AUTO_POSITION					= 1776; //SQLSTATE: HY000 Message: Parameters MASTER_LOG_FILE, MASTER_LOG_POS, RELAY_LOG_FILE and RELAY_LOG_POS cannot be set when MASTER_AUTO_POSITION is active.
+	public final static int ER_AUTO_POSITION_REQUIRES_GTID_MODE_ON		= 1777; //SQLSTATE: HY000 Message: CHANGE MASTER TO MASTER_AUTO_POSITION = 1 can only be executed when GTID_MODE = ON.
+	public final static int ER_CANT_DO_IMPLICIT_COMMIT_IN_TRX_WHEN_GTID_NEXT_IS_SET
+																		= 1778; //SQLSTATE: HY000 Message: Cannot execute statements with implicit commit inside a transaction when GTID_NEXT != AUTOMATIC or GTID_NEXT_LIST != NULL.
+	public final static int ER_GTID_MODE_2_OR_3_REQUIRES_ENFORCE_GTID_CONSISTENCY_ON
+																		= 1779; //SQLSTATE: HY000 Message: GTID_MODE = ON or GTID_MODE = UPGRADE_STEP_2 requires ENFORCE_GTID_CONSISTENCY = 1.
+	public final static int ER_GTID_MODE_REQUIRES_BINLOG				= 1780; //SQLSTATE: HY000 Message: GTID_MODE = ON or UPGRADE_STEP_1 or UPGRADE_STEP_2 requires --log-bin and --log-slave-updates.
+	public final static int ER_CANT_SET_GTID_NEXT_TO_GTID_WHEN_GTID_MODE_IS_OFF
+																		= 1781; //SQLSTATE: HY000 Message: GTID_NEXT cannot be set to UUID:NUMBER when GTID_MODE = OFF.
+	public final static int ER_CANT_SET_GTID_NEXT_TO_ANONYMOUS_WHEN_GTID_MODE_IS_ON
+																		= 1782; //SQLSTATE: HY000 Message: GTID_NEXT cannot be set to ANONYMOUS when GTID_MODE = ON.
+	public final static int ER_CANT_SET_GTID_NEXT_LIST_TO_NON_NULL_WHEN_GTID_MODE_IS_OFF
+																		= 1783; //SQLSTATE: HY000 Message: GTID_NEXT_LIST cannot be set to a non-NULL value when GTID_MODE = OFF.
+	public final static int ER_FOUND_GTID_EVENT_WHEN_GTID_MODE_IS_OFF	= 1784; //SQLSTATE: HY000 Message: Found a Gtid_log_event or Previous_gtids_log_event when GTID_MODE = OFF.
+	public final static int ER_GTID_UNSAFE_NON_TRANSACTIONAL_TABLE		= 1785; //SQLSTATE: HY000 Message: When ENFORCE_GTID_CONSISTENCY = 1, updates to non-transactional tables can only be done in either autocommitted statements or single-statement transactions, and never in the same statement as updates to transactional tables.
+	public final static int ER_GTID_UNSAFE_CREATE_SELECT				= 1786; //SQLSTATE: HY000 Message: CREATE TABLE ... SELECT is forbidden when ENFORCE_GTID_CONSISTENCY = 1.
+	public final static int ER_GTID_UNSAFE_CREATE_DROP_TEMPORARY_TABLE_IN_TRANSACTION
+																		= 1787; //SQLSTATE: HY000 Message: When ENFORCE_GTID_CONSISTENCY = 1, the statements CREATE TEMPORARY TABLE and DROP TEMPORARY TABLE can be executed in a non-transactional context only, and require that AUTOCOMMIT = 1.
+	public final static int ER_GTID_MODE_CAN_ONLY_CHANGE_ONE_STEP_AT_A_TIME
+																		= 1788; //SQLSTATE: HY000 Message: The value of GTID_MODE can only change one step at a time: OFF <-> UPGRADE_STEP_1 <-> UPGRADE_STEP_2 <-> ON. Also note that this value must be stepped up or down simultaneously on all servers; see the Manual for instructions.
+	public final static int ER_MASTER_HAS_PURGED_REQUIRED_GTIDS			= 1789; //SQLSTATE: HY000 Message: The slave is connecting using CHANGE MASTER TO MASTER_AUTO_POSITION = 1, but the master has purged binary logs containing GTIDs that the slave requires.
+	public final static int ER_CANT_SET_GTID_NEXT_WHEN_OWNING_GTID		= 1790; //SQLSTATE: HY000 Message: GTID_NEXT cannot be changed by a client that owns a GTID. The client owns %s. Ownership is released on COMMIT or ROLLBACK.
+	public final static int ER_UNKNOWN_EXPLAIN_FORMAT					= 1791; //SQLSTATE: HY000 Message: Unknown EXPLAIN format name: '%s'
+	public final static int ER_CANT_EXECUTE_IN_READ_ONLY_TRANSACTION	= 1792; //SQLSTATE: 25006 Message: Cannot execute statement in a READ ONLY transaction.
+	public final static int ER_TOO_LONG_TABLE_PARTITION_COMMENT			= 1793; //SQLSTATE: HY000 Message: Comment for table partition '%s' is too long (max = %lu)
+	public final static int ER_SLAVE_CONFIGURATION						= 1794; //SQLSTATE: HY000 Message: Slave is not configured or failed to initialize properly. You must at least set --server-id to enable either a master or a slave. Additional error messages can be found in the MySQL error log.
+	public final static int ER_INNODB_FT_LIMIT							= 1795; //SQLSTATE: HY000 Message: InnoDB presently supports one FULLTEXT index creation at a time
+	public final static int ER_INNODB_NO_FT_TEMP_TABLE					= 1796; //SQLSTATE: HY000 Message: Cannot create FULLTEXT index on temporary InnoDB table
+	public final static int ER_INNODB_FT_WRONG_DOCID_COLUMN				= 1797; //SQLSTATE: HY000 Message: Column '%s' is of wrong type for an InnoDB FULLTEXT index
+	public final static int ER_INNODB_FT_WRONG_DOCID_INDEX				= 1798; //SQLSTATE: HY000 Message: Index '%s' is of wrong type for an InnoDB FULLTEXT index
+	public final static int ER_INNODB_ONLINE_LOG_TOO_BIG				= 1799; //SQLSTATE: HY000 Message: Creating index '%s' required more than 'innodb_online_alter_log_max_size' bytes of modification log. Please try again.
+	public final static int ER_UNKNOWN_ALTER_ALGORITHM					= 1800; //SQLSTATE: HY000 Message: Unknown ALGORITHM '%s'
+	public final static int ER_UNKNOWN_ALTER_LOCK						= 1801; //SQLSTATE: HY000 Message: Unknown LOCK type '%s'
+	public final static int ER_MTS_CHANGE_MASTER_CANT_RUN_WITH_GAPS		= 1802; //SQLSTATE: HY000 Message: CHANGE MASTER cannot be executed when the slave was stopped with an error or killed in MTS mode. Consider using RESET SLAVE or START SLAVE UNTIL.
+	public final static int ER_MTS_RECOVERY_FAILURE						= 1803; //SQLSTATE: HY000 Message: Cannot recover after SLAVE errored out in parallel execution mode. Additional error messages can be found in the MySQL error log.
+	public final static int ER_MTS_RESET_WORKERS						= 1804; //SQLSTATE: HY000 Message: Cannot clean up worker info tables. Additional error messages can be found in the MySQL error log.
+	public final static int ER_COL_COUNT_DOESNT_MATCH_CORRUPTED_V2		= 1805; //SQLSTATE: HY000 Message: Column count of %s.%s is wrong. Expected %d, found %d. The table is probably corrupted
+	public final static int ER_SLAVE_SILENT_RETRY_TRANSACTION			= 1806; //SQLSTATE: HY000 Message: Slave must silently retry current transaction
+	public final static int ER_DISCARD_FK_CHECKS_RUNNING				= 1807; //SQLSTATE: HY000 Message: There is a foreign key check running on table '%s'. Cannot discard the table.
+	public final static int ER_TABLE_SCHEMA_MISMATCH					= 1808; //SQLSTATE: HY000 Message: Schema mismatch (%s)
+	public final static int ER_TABLE_IN_SYSTEM_TABLESPACE				= 1809; //SQLSTATE: HY000 Message: Table '%s' in system tablespace
+	public final static int ER_IO_READ_ERROR							= 1810; //SQLSTATE: HY000 Message: IO Read error: (%lu, %s) %s
+	public final static int ER_IO_WRITE_ERROR							= 1811; //SQLSTATE: HY000 Message: IO Write error: (%lu, %s) %s
+	public final static int ER_TABLESPACE_MISSING						= 1812; //SQLSTATE: HY000 Message: Tablespace is missing for table '%s'
+	public final static int ER_TABLESPACE_EXISTS						= 1813; //SQLSTATE: HY000 Message: Tablespace for table '%s' exists. Please DISCARD the tablespace before IMPORT.
+	public final static int ER_TABLESPACE_DISCARDED						= 1814; //SQLSTATE: HY000 Message: Tablespace has been discarded for table '%s'
+	public final static int ER_INTERNAL_ERROR							= 1815; //SQLSTATE: HY000 Message: Internal error: %s
+	public final static int ER_INNODB_IMPORT_ERROR						= 1816; //SQLSTATE: HY000 Message: ALTER TABLE '%s' IMPORT TABLESPACE failed with error %lu : '%s'
+	public final static int ER_INNODB_INDEX_CORRUPT						= 1817; //SQLSTATE: HY000 Message: Index corrupt: %s
+	public final static int ER_INVALID_YEAR_COLUMN_LENGTH				= 1818; //SQLSTATE: HY000 Message: YEAR(%lu) column type is deprecated. Creating YEAR(4) column instead.
+	public final static int ER_NOT_VALID_PASSWORD						= 1819; //SQLSTATE: HY000 Message: Your password does not satisfy the current policy requirements
+	public final static int ER_MUST_CHANGE_PASSWORD						= 1820; //SQLSTATE: HY000 Message: You must SET PASSWORD before executing this statement
+	public final static int ER_FK_NO_INDEX_CHILD						= 1821; //SQLSTATE: HY000 Message: Failed to add the foreign key constaint. Missing index for constraint '%s' in the foreign table '%s'
+	public final static int ER_FK_NO_INDEX_PARENT						= 1822; //SQLSTATE: HY000 Message: Failed to add the foreign key constaint. Missing index for constraint '%s' in the referenced table '%s'
+	public final static int ER_FK_FAIL_ADD_SYSTEM						= 1823; //SQLSTATE: HY000 Message: Failed to add the foreign key constraint '%s' to system tables
+	public final static int ER_FK_CANNOT_OPEN_PARENT					= 1824; //SQLSTATE: HY000 Message: Failed to open the referenced table '%s'
+	public final static int ER_FK_INCORRECT_OPTION						= 1825; //SQLSTATE: HY000 Message: Failed to add the foreign key constraint on table '%s'. Incorrect options in FOREIGN KEY constraint '%s'
+	public final static int ER_FK_DUP_NAME								= 1826; //SQLSTATE: HY000 Message: Duplicate foreign key constraint name '%s'
+	public final static int ER_PASSWORD_FORMAT							= 1827; //SQLSTATE: HY000 Message: The password hash doesn't have the expected format. Check if the correct password algorithm is being used with the PASSWORD() function.
+	public final static int ER_FK_COLUMN_CANNOT_DROP					= 1828; //SQLSTATE: HY000 Message: Cannot drop column '%s': needed in a foreign key constraint '%s'
+	public final static int ER_FK_COLUMN_CANNOT_DROP_CHILD				= 1829; //SQLSTATE: HY000 Message: Cannot drop column '%s': needed in a foreign key constraint '%s' of table '%s'
+	public final static int ER_FK_COLUMN_NOT_NULL						= 1830; //SQLSTATE: HY000 Message: Column '%s' cannot be NOT NULL: needed in a foreign key constraint '%s' SET NULL
+	public final static int ER_DUP_INDEX								= 1831; //SQLSTATE: HY000 Message: Duplicate index '%s' defined on the table '%s.%s'. This is deprecated and will be disallowed in a future release.
+	public final static int ER_FK_COLUMN_CANNOT_CHANGE					= 1832; //SQLSTATE: HY000 Message: Cannot change column '%s': used in a foreign key constraint '%s'
+	public final static int ER_FK_COLUMN_CANNOT_CHANGE_CHILD			= 1833; //SQLSTATE: HY000 Message: Cannot change column '%s': used in a foreign key constraint '%s' of table '%s'
+	public final static int ER_FK_CANNOT_DELETE_PARENT					= 1834; //SQLSTATE: HY000 Message: Cannot delete rows from table which is parent in a foreign key constraint '%s' of table '%s'
+	public final static int ER_MALFORMED_PACKET							= 1835; //SQLSTATE: HY000 Message: Malformed communication packet.
+	public final static int ER_READ_ONLY_MODE							= 1836; //SQLSTATE: HY000 Message: Running in read-only mode
+	public final static int ER_GTID_NEXT_TYPE_UNDEFINED_GROUP			= 1837; //SQLSTATE: HY000 Message: When GTID_NEXT is set to a GTID, you must explicitly set it again after a COMMIT or ROLLBACK. If you see this error message in the slave SQL thread, it means that a table in the current transaction is transactional on the master and non-transactional on the slave. In a client connection, it means that you executed SET GTID_NEXT before a transaction and forgot to set GTID_NEXT to a different identifier or to 'AUTOMATIC' after COMMIT or ROLLBACK. Current GTID_NEXT is '%s'.
+	public final static int ER_VARIABLE_NOT_SETTABLE_IN_SP				= 1838; //SQLSTATE: HY000 Message: The system variable %s cannot be set in stored procedures.
+	public final static int ER_CANT_SET_GTID_PURGED_WHEN_GTID_MODE_IS_OFF
+																		= 1839; //SQLSTATE: HY000 Message: GTID_PURGED can only be set when GTID_MODE = ON.
+	public final static int ER_CANT_SET_GTID_PURGED_WHEN_GTID_EXECUTED_IS_NOT_EMPTY
+																		= 1840; //SQLSTATE: HY000 Message: GTID_PURGED can only be set when GTID_EXECUTED is empty.
+	public final static int ER_CANT_SET_GTID_PURGED_WHEN_OWNED_GTIDS_IS_NOT_EMPTY
+																		= 1841; //SQLSTATE: HY000 Message: GTID_PURGED can only be set when there are no ongoing transactions (not even in other clients).
+	public final static int ER_GTID_PURGED_WAS_CHANGED					= 1842; //SQLSTATE: HY000 Message: GTID_PURGED was changed from '%s' to '%s'.
+	public final static int ER_GTID_EXECUTED_WAS_CHANGED				= 1843; //SQLSTATE: HY000 Message: GTID_EXECUTED was changed from '%s' to '%s'.
+	public final static int ER_BINLOG_STMT_MODE_AND_NO_REPL_TABLES		= 1844; //SQLSTATE: HY000 Message: Cannot execute statement: impossible to write to binary log since BINLOG_FORMAT = STATEMENT, and both replicated and non replicated tables are written to.
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED			= 1845; //SQLSTATE: 0A000 Message: %s is not supported for this operation. Try %s.
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON		= 1846; //SQLSTATE: 0A000 Message: %s is not supported. Reason: %s. Try %s.
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_COPY
+																		= 1847; //SQLSTATE: HY000 Message: COPY algorithm requires a lock
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_PARTITION
+																		= 1848; //SQLSTATE: HY000 Message: Partition specific operations do not yet support LOCK/ALGORITHM
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_FK_RENAME
+																		= 1849; //SQLSTATE: HY000 Message: Columns participating in a foreign key are renamed
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_COLUMN_TYPE
+																		= 1850; //SQLSTATE: HY000 Message: Cannot change column type INPLACE
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_FK_CHECK
+																		= 1851; //SQLSTATE: HY000 Message: Adding foreign keys needs foreign_key_checks=OFF
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_IGNORE
+																		= 1852; //SQLSTATE: HY000 Message: Creating unique indexes with IGNORE requires COPY algorithm to remove duplicate rows
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_NOPK
+																		= 1853; //SQLSTATE: HY000 Message: Dropping a primary key is not allowed without also adding a new primary key
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_AUTOINC
+																		= 1854; //SQLSTATE: HY000 Message: Adding an auto-increment column requires a lock
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_HIDDEN_FTS
+																		= 1855; //SQLSTATE: HY000 Message: Cannot replace hidden FTS_DOC_ID with a user-visible one
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_CHANGE_FTS
+																		= 1856; //SQLSTATE: HY000 Message: Cannot drop or rename FTS_DOC_ID
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_FTS	= 1857; //SQLSTATE: HY000 Message: Fulltext index creation requires a lock
+	public final static int ER_SQL_SLAVE_SKIP_COUNTER_NOT_SETTABLE_IN_GTID_MODE
+																		= 1858; //SQLSTATE: HY000 Message: sql_slave_skip_counter can not be set when the server is running with GTID_MODE = ON. Instead, for each transaction that you want to skip, generate an empty transaction with the same GTID as the transaction
+	public final static int ER_DUP_UNKNOWN_IN_INDEX						= 1859; //SQLSTATE: 23000 Message: Duplicate entry for key '%s'
+	public final static int ER_IDENT_CAUSES_TOO_LONG_PATH				= 1860; //SQLSTATE: HY000 Message: Long database name and identifier for object resulted in path length exceeding %d characters. Path: '%s'.
+	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_NOT_NULL
+																		= 1861; //SQLSTATE: HY000 Message: cannot silently convert NULL values, as required in this SQL_MODE
 
 	private MysqlErrorNumbers() {
 		// prevent instantiation

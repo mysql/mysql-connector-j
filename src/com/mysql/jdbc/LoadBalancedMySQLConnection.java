@@ -2605,4 +2605,12 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 	public String getServerConfigCacheFactory() {
 		return getActiveMySQLConnection().getServerConfigCacheFactory();
 	}
+
+	public void setDisconnectOnExpiredPasswords(boolean disconnectOnExpiredPasswords) {
+		getActiveMySQLConnection().setDisconnectOnExpiredPasswords(disconnectOnExpiredPasswords);
+	}
+
+	public boolean getDisconnectOnExpiredPasswords() {
+		return getActiveMySQLConnection().getDisconnectOnExpiredPasswords();
+	}
 }

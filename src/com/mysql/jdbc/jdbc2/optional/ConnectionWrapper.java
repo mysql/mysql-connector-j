@@ -2817,4 +2817,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public String getServerConfigCacheFactory() {
 		return this.mc.getServerConfigCacheFactory();
 	}
+
+	public void setDisconnectOnExpiredPasswords(boolean disconnectOnExpiredPasswords) {
+		this.mc.setDisconnectOnExpiredPasswords(disconnectOnExpiredPasswords);
+	}
+
+	public boolean getDisconnectOnExpiredPasswords() {
+		return this.mc.getDisconnectOnExpiredPasswords();
+	}
 }

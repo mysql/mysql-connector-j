@@ -1,6 +1,11 @@
 # Changelog
 # $Id$
-nn-nn-12 - Version 5.1.23
+nn-nn-13 - Version 5.1.23
+
+  - Added support of password expiration protocol. This introduces new boolean connection property disconnectOnExpiredPasswords.
+    If disconnectOnExpiredPasswords = true and password expired then connection will be rejected by server with ErrorCode == 1820 (ER_MUST_CHANGE_PASSWORD).
+    If disconnectOnExpiredPasswords = false then connection will enter to "sandbox" mode,
+    all commands except SET PASSWORD = ... and SET PASSWORD FOR CURRRENT_USER() = ... will cause an error to be thrown.
 
   - Added tests for EXCHANGE PARTITION syntax introduced in 5.6GA.
 

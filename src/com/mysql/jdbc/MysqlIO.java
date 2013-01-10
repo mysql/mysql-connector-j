@@ -1,5 +1,5 @@
 /*
-      Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+      Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
       
 
       This program is free software; you can redistribute it and/or modify
@@ -107,7 +107,9 @@ public class MysqlIO {
     private static final int CLIENT_MULTI_QUERIES = 65536; // Enable/disable multiquery support
     private static final int CLIENT_MULTI_RESULTS = 131072; // Enable/disable multi-results
     private static final int CLIENT_PLUGIN_AUTH = 524288;
-    private static final int SERVER_STATUS_IN_TRANS = 1;
+    private static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 4194304;
+
+	private static final int SERVER_STATUS_IN_TRANS = 1;
     private static final int SERVER_STATUS_AUTOCOMMIT = 2; // Server in auto_commit mode
     static final int SERVER_MORE_RESULTS_EXISTS = 8; // Multi query - next query exists
     private static final int SERVER_QUERY_NO_GOOD_INDEX_USED = 16;
@@ -1661,6 +1663,10 @@ public class MysqlIO {
 					// (by default, this is disabled).
 					if (this.connection.getAllowMultiQueries()) {
 						this.clientParam |= CLIENT_MULTI_QUERIES;
+					}
+
+					if (((this.serverCapabilities & CLIENT_CAN_HANDLE_EXPIRED_PASSWORD) != 0) && !this.connection.getDisconnectOnExpiredPasswords()) {
+						this.clientParam |= CLIENT_CAN_HANDLE_EXPIRED_PASSWORD;
 					}
 
 					this.has41NewNewProt = true;
