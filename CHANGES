@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.23
 
+  - Added tests for explicit partition selection syntax introduced in 5.6GA.
+
   - Added support of password expiration protocol. This introduces new boolean connection property disconnectOnExpiredPasswords.
     If disconnectOnExpiredPasswords = true and password expired then connection will be rejected by server with ErrorCode == 1820 (ER_MUST_CHANGE_PASSWORD).
     If disconnectOnExpiredPasswords = false then connection will enter to "sandbox" mode,

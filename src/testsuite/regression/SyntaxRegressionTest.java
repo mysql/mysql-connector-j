@@ -298,4 +298,242 @@ public class SyntaxRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Test for explicit partition selection syntax
+	 * 
+	 * @throws SQLException
+	 */
+	public void testExplicitPartitions() throws Exception {
+
+		if (versionMeetsMinimum(5, 6, 5)) {
+			Connection c = null;
+			String datadir = null;
+			String dbname = null;
+			
+			Properties props = new Properties();
+			props.setProperty("useServerPrepStmts", "true");
+			try {
+
+				this.stmt.executeUpdate("SET @old_default_storage_engine = @@default_storage_engine");
+				this.stmt.executeUpdate("SET @@default_storage_engine = 'InnoDB'");
+				
+				c = getConnectionWithProps(props);
+				
+				createTable("testExplicitPartitions",
+						"(a INT NOT NULL," +
+						" b varchar (64)," +
+						" INDEX (b,a)," +
+						" PRIMARY KEY (a))" +
+						" ENGINE = InnoDB" +
+						" PARTITION BY RANGE (a)" +
+						" SUBPARTITION BY HASH (a) SUBPARTITIONS 2" +
+						" (PARTITION pNeg VALUES LESS THAN (0) (SUBPARTITION subp0, SUBPARTITION subp1)," +
+						" PARTITION `p0-9` VALUES LESS THAN (10) (SUBPARTITION subp2, SUBPARTITION subp3)," +
+						" PARTITION `p10-99` VALUES LESS THAN (100) (SUBPARTITION subp4, SUBPARTITION subp5)," +
+						" PARTITION `p100-99999` VALUES LESS THAN (100000) (SUBPARTITION subp6, SUBPARTITION subp7))");
+
+				this.stmt.executeUpdate("INSERT INTO testExplicitPartitions PARTITION (pNeg, pNeg) VALUES (-1, \"pNeg(-subp1)\")");
+
+				this.pstmt = this.conn.prepareStatement("INSERT INTO testExplicitPartitions PARTITION (pNeg, subp0) VALUES (-3, \"pNeg(-subp1)\")");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt.execute();
+
+				this.pstmt = c.prepareStatement("INSERT INTO testExplicitPartitions PARTITION (pNeg, subp0) VALUES (-2, \"(pNeg-)subp0\")");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.pstmt.execute();
+
+				this.pstmt = c.prepareStatement("INSERT INTO testExplicitPartitions PARTITION (`p100-99999`) VALUES (100, \"`p100-99999`(-subp6)\"), (101, \"`p100-99999`(-subp7)\"), (1000, \"`p100-99999`(-subp6)\")");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.pstmt.execute();
+
+				this.stmt.executeUpdate("INSERT INTO testExplicitPartitions PARTITION(`p10-99`,subp3) VALUES (1, \"subp3\"), (10, \"p10-99\")");
+				this.stmt.executeUpdate("INSERT INTO testExplicitPartitions PARTITION(subp3) VALUES (3, \"subp3\")");
+				this.stmt.executeUpdate("INSERT INTO testExplicitPartitions PARTITION(`p0-9`) VALUES (5, \"p0-9:subp3\")");
+				
+				this.stmt.executeUpdate("FLUSH STATUS");
+				this.stmt.executeQuery("SELECT * FROM testExplicitPartitions PARTITION (subp2)");
+
+				this.pstmt = this.conn.prepareStatement("SELECT * FROM testExplicitPartitions PARTITION (subp2,pNeg) AS TableAlias");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt = c.prepareStatement("SELECT * FROM testExplicitPartitions PARTITION (subp2,pNeg) AS TableAlias");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+
+				this.pstmt = this.conn.prepareStatement("LOCK TABLE testExplicitPartitions READ, testExplicitPartitions as TableAlias READ");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt = c.prepareStatement("LOCK TABLE testExplicitPartitions READ, testExplicitPartitions as TableAlias READ");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+
+				this.pstmt = this.conn.prepareStatement("SELECT * FROM testExplicitPartitions PARTITION (subp3) AS TableAlias");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt.execute();
+				this.pstmt = c.prepareStatement("SELECT COUNT(*) FROM testExplicitPartitions PARTITION (`p10-99`)");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.pstmt.execute();
+
+				this.pstmt = this.conn.prepareStatement("SELECT * FROM testExplicitPartitions PARTITION (pNeg) WHERE a = 100");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt.execute();
+				this.pstmt = c.prepareStatement("SELECT * FROM testExplicitPartitions PARTITION (pNeg) WHERE a = 100");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.pstmt.execute();
+
+				this.stmt.executeUpdate("UNLOCK TABLES");
+
+
+				// Test LOAD
+				this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='datadir'");
+				this.rs.next();
+				datadir = this.rs.getString(2);
+
+				this.rs = this.stmt.executeQuery("select database() as dbname");
+				if(this.rs.first()) {
+					dbname = this.rs.getString("dbname");
+				}
+				if (dbname == null) {
+					fail("No database selected");
+				} else {
+					File f = new File(datadir + dbname + File.separator + "loadtestExplicitPartitions.txt");
+					if (f.exists()) {
+						f.delete();
+					}
+				}
+
+				this.pstmt = this.conn.prepareStatement("SELECT * FROM testExplicitPartitions PARTITION (pNeg, `p10-99`) INTO OUTFILE 'loadtestExplicitPartitions.txt'");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt = c.prepareStatement("SELECT * FROM testExplicitPartitions PARTITION (pNeg, `p10-99`) INTO OUTFILE 'loadtestExplicitPartitions.txt'");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.stmt.executeQuery("SELECT * FROM testExplicitPartitions PARTITION (pNeg, `p10-99`) INTO OUTFILE 'loadtestExplicitPartitions.txt'");
+
+				this.pstmt = this.conn.prepareStatement("ALTER TABLE testExplicitPartitions TRUNCATE PARTITION pNeg, `p10-99`");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt = c.prepareStatement("ALTER TABLE testExplicitPartitions TRUNCATE PARTITION pNeg, `p10-99`");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.stmt.executeUpdate("ALTER TABLE testExplicitPartitions TRUNCATE PARTITION pNeg, `p10-99`");
+				this.stmt.executeUpdate("FLUSH STATUS");
+
+				this.pstmt = this.conn.prepareStatement("LOAD DATA INFILE 'loadtestExplicitPartitions.txt' INTO TABLE testExplicitPartitions PARTITION (pNeg, subp4, subp5)");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt = c.prepareStatement("LOAD DATA INFILE 'loadtestExplicitPartitions.txt' INTO TABLE testExplicitPartitions PARTITION (pNeg, subp4, subp5)");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.stmt.executeUpdate("LOAD DATA INFILE 'loadtestExplicitPartitions.txt' INTO TABLE testExplicitPartitions PARTITION (pNeg, subp4, subp5)");
+
+				this.stmt.executeUpdate("ALTER TABLE testExplicitPartitions TRUNCATE PARTITION pNeg, `p10-99`");
+				this.stmt.executeUpdate("FLUSH STATUS");
+				this.pstmt = this.conn.prepareStatement("LOAD DATA INFILE 'loadtestExplicitPartitions.txt' INTO TABLE testExplicitPartitions PARTITION (pNeg, `p10-99`)");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt = c.prepareStatement("LOAD DATA INFILE 'loadtestExplicitPartitions.txt' INTO TABLE testExplicitPartitions PARTITION (pNeg, `p10-99`)");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.stmt.executeUpdate("LOCK TABLE testExplicitPartitions WRITE");
+				this.stmt.executeUpdate("LOAD DATA INFILE 'loadtestExplicitPartitions.txt' INTO TABLE testExplicitPartitions PARTITION (pNeg, `p10-99`)");
+				this.stmt.executeUpdate("UNLOCK TABLES");
+				
+				// Test UPDATE
+				this.stmt.executeUpdate("UPDATE testExplicitPartitions PARTITION(subp0) SET b = concat(b, ', Updated')");
+
+				this.pstmt = this.conn.prepareStatement("UPDATE testExplicitPartitions PARTITION(subp0) SET b = concat(b, ', Updated2') WHERE a = -2");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt.execute();
+
+				this.pstmt = c.prepareStatement("UPDATE testExplicitPartitions PARTITION(subp0) SET a = -4, b = concat(b, ', Updated from a = -2') WHERE a = -2");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.pstmt.execute();
+
+				this.stmt.executeUpdate("UPDATE testExplicitPartitions PARTITION(subp0) SET b = concat(b, ', Updated2') WHERE a = 100");
+				this.stmt.executeUpdate("UPDATE testExplicitPartitions PARTITION(subp0) SET a = -2, b = concat(b, ', Updated from a = 100') WHERE a = 100");
+
+				this.pstmt = this.conn.prepareStatement("UPDATE testExplicitPartitions PARTITION(`p100-99999`, pNeg) SET a = -222, b = concat(b, ', Updated from a = 100') WHERE a = 100");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt.execute();
+
+				this.pstmt = c.prepareStatement("UPDATE testExplicitPartitions SET b = concat(b, ', Updated2') WHERE a = 1000000");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.pstmt.execute();
+
+				// Test DELETE
+				this.stmt.executeUpdate("DELETE FROM testExplicitPartitions PARTITION (pNeg) WHERE a = -1");
+				this.pstmt = this.conn.prepareStatement("DELETE FROM testExplicitPartitions PARTITION (pNeg) WHERE a = -1");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt.execute();
+				this.pstmt = c.prepareStatement("DELETE FROM testExplicitPartitions PARTITION (pNeg) WHERE a = -1");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.pstmt.execute();
+
+				this.stmt.executeUpdate("DELETE FROM testExplicitPartitions PARTITION (subp1) WHERE b like '%subp1%'");
+				this.pstmt = this.conn.prepareStatement("DELETE FROM testExplicitPartitions PARTITION (subp1) WHERE b like '%subp1%'");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt.execute();
+				this.pstmt = c.prepareStatement("DELETE FROM testExplicitPartitions PARTITION (subp1) WHERE b like '%subp1%'");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.pstmt.execute();
+
+				this.stmt.executeUpdate("FLUSH STATUS");
+				this.stmt.executeUpdate("LOCK TABLE testExplicitPartitions WRITE");
+				this.stmt.executeUpdate("DELETE FROM testExplicitPartitions PARTITION (subp1) WHERE b = 'p0-9:subp3'");
+				this.pstmt = this.conn.prepareStatement("DELETE FROM testExplicitPartitions PARTITION (subp1) WHERE b = 'p0-9:subp3'");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.stmt.executeUpdate("DELETE FROM testExplicitPartitions PARTITION (`p0-9`) WHERE b = 'p0-9:subp3'");
+				this.pstmt = this.conn.prepareStatement("DELETE FROM testExplicitPartitions PARTITION (`p0-9`) WHERE b = 'p0-9:subp3'");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.stmt.executeUpdate("UNLOCK TABLES");
+
+				
+				// Test multi-table DELETE
+				this.stmt.executeUpdate("CREATE TABLE testExplicitPartitions2 LIKE testExplicitPartitions");
+
+				this.pstmt = this.conn.prepareStatement("INSERT INTO testExplicitPartitions2 PARTITION (`p10-99`, subp3, `p100-99999`) SELECT * FROM testExplicitPartitions PARTITION (subp3, `p10-99`, `p100-99999`)");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt = c.prepareStatement("INSERT INTO testExplicitPartitions2 PARTITION (`p10-99`, subp3, `p100-99999`) SELECT * FROM testExplicitPartitions PARTITION (subp3, `p10-99`, `p100-99999`)");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.stmt.executeUpdate("INSERT INTO testExplicitPartitions2 PARTITION (`p10-99`, subp3, `p100-99999`) SELECT * FROM testExplicitPartitions PARTITION (subp3, `p10-99`, `p100-99999`)");
+
+				this.stmt.executeUpdate("ALTER TABLE testExplicitPartitions2 TRUNCATE PARTITION `p10-99`, `p0-9`, `p100-99999`");
+
+				this.pstmt = this.conn.prepareStatement("INSERT IGNORE INTO testExplicitPartitions2 PARTITION (subp3) SELECT * FROM testExplicitPartitions PARTITION (subp3, `p10-99`, `p100-99999`)");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt = c.prepareStatement("INSERT IGNORE INTO testExplicitPartitions2 PARTITION (subp3) SELECT * FROM testExplicitPartitions PARTITION (subp3, `p10-99`, `p100-99999`)");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.stmt.executeUpdate("INSERT IGNORE INTO testExplicitPartitions2 PARTITION (subp3) SELECT * FROM testExplicitPartitions PARTITION (subp3, `p10-99`, `p100-99999`)");
+
+				this.stmt.executeUpdate("TRUNCATE TABLE testExplicitPartitions2");
+				this.stmt.executeUpdate("INSERT INTO testExplicitPartitions2 SELECT * FROM testExplicitPartitions PARTITION (subp3, `p10-99`, `p100-99999`)");
+
+				this.pstmt = this.conn.prepareStatement("CREATE TABLE testExplicitPartitions3 SELECT * FROM testExplicitPartitions PARTITION (pNeg,subp3,`p100-99999`)");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt = c.prepareStatement("CREATE TABLE testExplicitPartitions3 SELECT * FROM testExplicitPartitions PARTITION (pNeg,subp3,`p100-99999`)");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.stmt.executeUpdate("CREATE TABLE testExplicitPartitions3 SELECT * FROM testExplicitPartitions PARTITION (pNeg,subp3,`p100-99999`)");
+
+				this.pstmt = this.conn.prepareStatement("DELETE testExplicitPartitions, testExplicitPartitions2 FROM testExplicitPartitions PARTITION (pNeg), testExplicitPartitions3, testExplicitPartitions2 PARTITION (subp3) WHERE testExplicitPartitions.a = testExplicitPartitions3.a AND testExplicitPartitions3.b = 'subp3' AND testExplicitPartitions3.a = testExplicitPartitions2.a");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt = c.prepareStatement("DELETE testExplicitPartitions, testExplicitPartitions2 FROM testExplicitPartitions PARTITION (pNeg), testExplicitPartitions3, testExplicitPartitions2 PARTITION (subp3) WHERE testExplicitPartitions.a = testExplicitPartitions3.a AND testExplicitPartitions3.b = 'subp3' AND testExplicitPartitions3.a = testExplicitPartitions2.a");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.stmt.executeUpdate("DELETE testExplicitPartitions, testExplicitPartitions2 FROM testExplicitPartitions PARTITION (pNeg), testExplicitPartitions3, testExplicitPartitions2 PARTITION (subp3) WHERE testExplicitPartitions.a = testExplicitPartitions3.a AND testExplicitPartitions3.b = 'subp3' AND testExplicitPartitions3.a = testExplicitPartitions2.a");
+
+				this.pstmt = this.conn.prepareStatement("DELETE FROM testExplicitPartitions2, testExplicitPartitions3 USING testExplicitPartitions2 PARTITION (`p0-9`), testExplicitPartitions3, testExplicitPartitions PARTITION (subp3) WHERE testExplicitPartitions.a = testExplicitPartitions3.a AND testExplicitPartitions3.b = 'subp3' AND testExplicitPartitions2.a = testExplicitPartitions.a");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
+				this.pstmt = c.prepareStatement("DELETE FROM testExplicitPartitions2, testExplicitPartitions3 USING testExplicitPartitions2 PARTITION (`p0-9`), testExplicitPartitions3, testExplicitPartitions PARTITION (subp3) WHERE testExplicitPartitions.a = testExplicitPartitions3.a AND testExplicitPartitions3.b = 'subp3' AND testExplicitPartitions2.a = testExplicitPartitions.a");
+				assertTrue(this.pstmt instanceof com.mysql.jdbc.ServerPreparedStatement);
+				this.stmt.executeUpdate("DELETE FROM testExplicitPartitions2, testExplicitPartitions3 USING testExplicitPartitions2 PARTITION (`p0-9`), testExplicitPartitions3, testExplicitPartitions PARTITION (subp3) WHERE testExplicitPartitions.a = testExplicitPartitions3.a AND testExplicitPartitions3.b = 'subp3' AND testExplicitPartitions2.a = testExplicitPartitions.a");
+
+				this.stmt.executeUpdate("SET @@default_storage_engine = @old_default_storage_engine");
+
+			} finally {
+				this.stmt.executeUpdate("DROP TABLE IF EXISTS testExplicitPartitions, testExplicitPartitions2, testExplicitPartitions3");
+				
+				if (c != null) {
+					c.close();
+				}
+				if (datadir != null) {
+					File f = new File(datadir + dbname + File.separator + "loadtestExplicitPartitions.txt");
+					if (f.exists()) {
+						f.deleteOnExit();
+					} else {
+						fail("File " + datadir + dbname + File.separator + "loadtestExplicitPartitions.txt cannot be deleted." +
+								"You should run server and tests on the same filesystem.");
+					}
+				}
+			}
+		}
+	}
+
 }
