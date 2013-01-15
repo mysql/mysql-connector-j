@@ -4221,6 +4221,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		assertTrue(updateCount == loops);
 
 	}
+	
+	public void testStackOverflowOnMissingInterceptor() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("statementInterceptors", "fooBarBaz");
+		
+		getConnectionWithProps(props).close();
+	}
 
 	public void testExpiredPassword() throws Exception {
 		if (versionMeetsMinimum(5, 6, 10)) {

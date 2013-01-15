@@ -902,22 +902,26 @@ public class ConnectionTest extends BaseTestCase {
 
 		Connection conn1 = getConnectionWithProps(props);
 
-		// eliminate side-effects when not run in isolation
-		StandardLogger.bufferedLog = new StringBuffer();
-
-		Connection conn2 = getConnectionWithProps(props);
-
-		StandardLogger.saveLogsToBuffer();
-
-		assertTrue("Configuration wasn't cached", StandardLogger.bufferedLog
-				.toString().indexOf("SHOW VARIABLES") == -1);
-
-		if (versionMeetsMinimum(4, 1)) {
-			assertTrue(
-					"Configuration wasn't cached",
-					StandardLogger.bufferedLog.toString().indexOf(
-							"SHOW COLLATION") == -1);
-
+		try {
+			// eliminate side-effects when not run in isolation
+			StandardLogger.bufferedLog = new StringBuffer();
+	
+			Connection conn2 = getConnectionWithProps(props);
+	
+			StandardLogger.saveLogsToBuffer();
+	
+			assertTrue("Configuration wasn't cached", StandardLogger.bufferedLog
+					.toString().indexOf("SHOW VARIABLES") == -1);
+	
+			if (versionMeetsMinimum(4, 1)) {
+				assertTrue(
+						"Configuration wasn't cached",
+						StandardLogger.bufferedLog.toString().indexOf(
+								"SHOW COLLATION") == -1);
+	
+			}
+		} finally {
+			StandardLogger.bufferedLog = null;
 		}
 	}
 
@@ -1827,5 +1831,50 @@ public class ConnectionTest extends BaseTestCase {
 			assertTrue(((com.mysql.jdbc.ConnectionImpl) this.conn).isServerLocal());
 		}
 		
+	}
+	
+	public void testReadOnly56() throws Exception {
+		if (versionMeetsMinimum(5, 6, 5)) {
+			try {
+				Connection notLocalState = getConnectionWithProps("profileSql=true");
+				
+				for (int i = 0; i < 2; i++) {
+					StandardLogger.bufferedLog = new StringBuffer();
+					StandardLogger.saveLogsToBuffer();
+					notLocalState.setReadOnly(true);
+					assertTrue(StandardLogger.bufferedLog.toString().indexOf("set session transaction read only") != -1);
+					notLocalState.createStatement().execute("set session transaction read write");
+					assertFalse(notLocalState.isReadOnly());
+				}
+				
+				for (int i = 0; i < 2; i++) {
+					StandardLogger.bufferedLog = new StringBuffer();
+					StandardLogger.saveLogsToBuffer();
+					notLocalState.setReadOnly(false);
+					assertTrue(StandardLogger.bufferedLog.toString().indexOf("set session transaction read write") != -1);
+					notLocalState.createStatement().execute("set session transaction read only");
+					assertTrue(notLocalState.isReadOnly());
+				}
+				
+				Connection localState = getConnectionWithProps("profileSql=true,useLocalSessionState=true");
+				
+				for (int i = 0; i < 2; i++) {
+					StandardLogger.bufferedLog = new StringBuffer();
+					StandardLogger.saveLogsToBuffer();
+					localState.setReadOnly(true);
+					if (i == 0) {
+						assertTrue(StandardLogger.bufferedLog.toString().indexOf("set session transaction read only") != -1);
+					} else {
+						assertTrue(StandardLogger.bufferedLog.toString().indexOf("set session transaction read only") == -1);
+					}
+					StandardLogger.bufferedLog = new StringBuffer();
+					StandardLogger.saveLogsToBuffer();
+					localState.isReadOnly();
+					assertTrue(StandardLogger.bufferedLog.toString().indexOf("select @@session.tx_read_only") == -1);
+				}
+			} finally {
+				StandardLogger.bufferedLog = null;
+			}
+		}
 	}
 }

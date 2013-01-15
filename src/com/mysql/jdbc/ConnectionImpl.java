@@ -3860,15 +3860,54 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	}
 
 	/**
-	 * Tests to see if the connection is in Read Only Mode. Note that we cannot
-	 * really put the database in read only mode, but we pretend we can by
+	 * Tests to see if the connection is in Read Only Mode. Note that prior to 5.6,
+	 * we cannot really put the database in read only mode, but we pretend we can by
 	 * returning the value of the readOnly flag
 	 * 
 	 * @return true if the connection is read only
-	 * @exception SQLException
-	 *                if a database access error occurs
+	 * @exception SQLException if a database access error occurs
 	 */
 	public boolean isReadOnly() throws SQLException {
+		if (versionMeetsMinimum(5, 6, 5) && !getUseLocalSessionState()) {
+			java.sql.Statement stmt = null;
+			java.sql.ResultSet rs = null;
+
+			try {
+				stmt = getMetadataSafeStatement();
+
+				rs = stmt.executeQuery("select @@session.tx_read_only");
+
+				if (rs.next()) {
+					return rs.getInt(1) != 0; // mysql has a habit of tri+ state booleans
+				}
+
+				throw SQLError.createSQLException(
+						"Could not retrieve transation read-only status server",
+						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
+
+			} finally {
+				if (rs != null) {
+					try {
+						rs.close();
+					} catch (Exception ex) {
+						// ignore
+					}
+
+					rs = null;
+				}
+
+				if (stmt != null) {
+					try {
+						stmt.close();
+					} catch (Exception ex) {
+						// ignore
+					}
+
+					stmt = null;
+				}
+			}
+		}
+		
 		return this.readOnly;
 	}
 
@@ -5365,6 +5404,17 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	}
 	
 	public void setReadOnlyInternal(boolean readOnlyFlag) throws SQLException {
+		// note this this is safe even inside a transaction
+		if (versionMeetsMinimum(5, 6, 5)) {
+			if (!getUseLocalSessionState() || (readOnlyFlag != this.readOnly)) {
+				execSQL(null, "set session transaction " + (readOnlyFlag ? "read only" : "read write"), -1, null,
+						DEFAULT_RESULT_SET_TYPE,
+						DEFAULT_RESULT_SET_CONCURRENCY, false,
+						this.database, null,
+						false);
+			}
+		}
+		
 		this.readOnly = readOnlyFlag;
 	}
 	

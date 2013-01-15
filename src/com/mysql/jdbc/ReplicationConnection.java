@@ -513,6 +513,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 
 	private synchronized void switchToSlavesConnection() throws SQLException {
 		swapConnections(this.slavesConnection, this.masterConnection);
+		this.slavesConnection.setReadOnly(true);
 	}
 	
 	/**

@@ -45,6 +45,10 @@ nn-nn-13 - Version 5.1.23
     
     To replace the default implementation, implement CacheAdapterFactory<String, Map<String, String>>, and
     use the fully-qualified class name of this implementation for "serverConfigCacheFactory".
+    
+  - Connection.setReadOnly() will take advantage of server-side support for read-only transactions
+    present in MySQL-5.6 and newer. Calling .isReadOnly() will incur a round-trip if useLocalSessionState
+    is not enabled.
 
 09-06-12 - Version 5.1.22
   - Fix for Bug#57662, Incorrect Query Duration When useNanosForElapsedTime Enabled.
