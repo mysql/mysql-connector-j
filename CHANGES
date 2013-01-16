@@ -2,6 +2,28 @@
 # $Id$
 nn-nn-13 - Version 5.1.23
 
+  - Fix for Bug#65909, referenceThread causes memory leak in Tomcat.
+    Abandoned connection cleanup thread was refactored to have static shutdown method.
+    If you encountered this leak problem, your application should implement context listener with
+    AbandonedConnectionCleanupThread.shutdown() call in contextDestroyed method.
+
+    For example:
+       @WebListener
+       public class YourThreadsListener implements ServletContextListener {
+          public void contextDestroyed(ServletContextEvent arg0) {
+             try {
+                 AbandonedConnectionCleanupThread.shutdown();
+             } catch (InterruptedException e) {
+             }
+          }
+          ...
+       }
+
+    Note that if container does not support annotations you should add description to web.xml:
+       <listener>
+          <listener-class>user.package.YourThreadsListener</listener-class>
+       </listener>
+
   - Added tests for explicit partition selection syntax introduced in 5.6GA.
 
   - Added support of password expiration protocol. This introduces new boolean connection property disconnectOnExpiredPasswords.

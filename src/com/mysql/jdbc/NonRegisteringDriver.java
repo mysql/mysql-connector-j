@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
  This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.PhantomReference;
-import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.net.URLDecoder;
 import java.sql.DriverPropertyInfo;
@@ -86,25 +85,9 @@ public class NonRegisteringDriver implements java.sql.Driver {
 	protected static final ReferenceQueue<ConnectionImpl> refQueue = new ReferenceQueue<ConnectionImpl>();
 	
 	static {
-		Thread referenceThread = new Thread("Abandoned connection cleanup thread") {
-	          public void run() {
-	              while (true) {
-	                  try {
-	                      Reference<? extends ConnectionImpl> ref = refQueue.remove();
-	                      try {
-	                    	  ((ConnectionPhantomReference) ref).cleanup();
-	                      } finally {
-	                    	  connectionPhantomRefs.remove(ref);
-	                      }
-	                  } catch (Exception ex) {
-	                    // no where to really log this if we're static
-	                  }
-	              }
-	          }
-	      };
-	      
-	      referenceThread.setDaemon(true);
-	      referenceThread.start();
+		AbandonedConnectionCleanupThread referenceThread = new AbandonedConnectionCleanupThread();
+		referenceThread.setDaemon(true);
+		referenceThread.start();
 	}
 	/**
 	 * Key used to retreive the database value from the properties instance
