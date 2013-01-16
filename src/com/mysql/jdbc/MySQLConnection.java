@@ -153,6 +153,8 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	public boolean isReadOnly() throws SQLException;
 
+	public boolean isReadOnly(boolean useSessionStatus) throws SQLException;
+
 	boolean isRunningOnJDK13();
 
 	boolean isServerTzUTC();

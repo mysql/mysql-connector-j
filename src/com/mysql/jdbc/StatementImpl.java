@@ -1754,7 +1754,7 @@ public class StatementImpl implements Statement {
 				}
 			}
 
-			if (locallyScopedConn.isReadOnly()) {
+			if (locallyScopedConn.isReadOnly(false)) {
 				throw SQLError.createSQLException(Messages
 						.getString("Statement.42") //$NON-NLS-1$
 						+ Messages.getString("Statement.43"), //$NON-NLS-1$

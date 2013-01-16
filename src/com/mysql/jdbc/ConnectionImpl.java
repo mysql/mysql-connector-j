@@ -2318,7 +2318,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					// save state from old connection
 					oldAutoCommit = getAutoCommit();
 					oldIsolationLevel = this.isolationLevel;
-					oldReadOnly = isReadOnly();
+					oldReadOnly = isReadOnly(false);
 					oldCatalog = getCatalog();
 	
 					this.io.setStatementInterceptors(this.statementInterceptors);
@@ -2502,7 +2502,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			// save state from old connection
 			boolean oldAutoCommit = getAutoCommit();
 			int oldIsolationLevel = this.isolationLevel;
-			boolean oldReadOnly = isReadOnly();
+			boolean oldReadOnly = isReadOnly(false);
 			String oldCatalog = getCatalog();
 
 			this.io.setStatementInterceptors(this.statementInterceptors);
@@ -3868,22 +3868,40 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @exception SQLException if a database access error occurs
 	 */
 	public boolean isReadOnly() throws SQLException {
-		if (versionMeetsMinimum(5, 6, 5) && !getUseLocalSessionState()) {
+		return isReadOnly(true);
+	}
+
+	/**
+	 * Tests to see if the connection is in Read Only Mode. Note that prior to 5.6,
+	 * we cannot really put the database in read only mode, but we pretend we can by
+	 * returning the value of the readOnly flag
+	 * 
+	 * @param useSessionStatus in some cases, for example when restoring connection with autoReconnect=true,
+	 * we can rely only on saved readOnly state, so use useSessionStatus=false in that case 
+	 * 
+	 * @return true if the connection is read only
+	 * @exception SQLException if a database access error occurs
+	 */
+	public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
+		if (useSessionStatus && !this.isClosed && versionMeetsMinimum(5, 6, 5) && !getUseLocalSessionState()) {
 			java.sql.Statement stmt = null;
 			java.sql.ResultSet rs = null;
 
 			try {
-				stmt = getMetadataSafeStatement();
+				try {
+					stmt = getMetadataSafeStatement();
 
-				rs = stmt.executeQuery("select @@session.tx_read_only");
-
-				if (rs.next()) {
-					return rs.getInt(1) != 0; // mysql has a habit of tri+ state booleans
+					rs = stmt.executeQuery("select @@session.tx_read_only");
+					if (rs.next()) {
+						return rs.getInt(1) != 0; // mysql has a habit of tri+ state booleans
+					}
+				} catch (SQLException ex1) {
+					if (ex1.getErrorCode() != MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD || getDisconnectOnExpiredPasswords()) {
+						throw SQLError.createSQLException(
+								"Could not retrieve transation read-only status server",
+								SQLError.SQL_STATE_GENERAL_ERROR, ex1, getExceptionInterceptor());
+					}
 				}
-
-				throw SQLError.createSQLException(
-						"Could not retrieve transation read-only status server",
-						SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 
 			} finally {
 				if (rs != null) {
@@ -3907,7 +3925,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			}
 		}
-		
+
 		return this.readOnly;
 	}
 

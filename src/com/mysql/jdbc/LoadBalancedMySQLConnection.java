@@ -2082,6 +2082,11 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().isReadOnly();
 	}
 
+	public boolean isReadOnly(boolean useSessionStatus) throws SQLException {
+
+		return getActiveMySQLConnection().isReadOnly(useSessionStatus);
+	}
+
 	public boolean isRunningOnJDK13() {
 
 		return getActiveMySQLConnection().isRunningOnJDK13();

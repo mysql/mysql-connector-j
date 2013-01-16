@@ -4223,10 +4223,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	}
 	
 	public void testStackOverflowOnMissingInterceptor() throws Exception {
-		Properties props = new Properties();
-		props.setProperty("statementInterceptors", "fooBarBaz");
-		
-		getConnectionWithProps(props).close();
+		try {
+			Properties props = new Properties();
+			props.setProperty("statementInterceptors", "fooBarBaz");
+			
+			getConnectionWithProps(props).close();
+		} catch (Exception e) {
+		}
 	}
 
 	public void testExpiredPassword() throws Exception {
