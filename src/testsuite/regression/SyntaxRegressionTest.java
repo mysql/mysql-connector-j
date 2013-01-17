@@ -33,6 +33,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import com.mysql.jdbc.StringUtils;
+
 import testsuite.BaseTestCase;
 
 /**
@@ -133,12 +135,16 @@ public class SyntaxRegressionTest extends BaseTestCase {
 		if (versionMeetsMinimum(5, 6, 6)) {
 			try {
 				String tmpdir = null;
+				String separator = File.separatorChar == '\\' ? File.separator+File.separator : File.separator;
 				this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='tmpdir' or Variable_name='innodb_file_per_table'");
 				while (this.rs.next()) {
 					if ("tmpdir".equals(this.rs.getString(1))) {
 						tmpdir = this.rs.getString(2);
 						if (tmpdir.endsWith(File.separator)) {
 							tmpdir = tmpdir.substring(0, tmpdir.length()-1);
+						}
+						if (File.separatorChar == '\\') {
+							tmpdir = StringUtils.escapeQuote(tmpdir, File.separator);
 						}
 					} else if ("innodb_file_per_table".equals(this.rs.getString(1))) {
 						if (!this.rs.getString(2).equals("ON")) {
@@ -148,15 +154,15 @@ public class SyntaxRegressionTest extends BaseTestCase {
 				}
 
 				createTable("testCreateTableDataDirectorya", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
-				createTable("testCreateTableDataDirectoryb", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + File.separator + "'");
+				createTable("testCreateTableDataDirectoryb", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + separator + "'");
 				this.stmt.executeUpdate("CREATE TEMPORARY TABLE testCreateTableDataDirectoryc (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
-				createTable("testCreateTableDataDirectoryd", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + File.separator + "' INDEX DIRECTORY = '" + tmpdir + "'");
+				createTable("testCreateTableDataDirectoryd", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + separator + "' INDEX DIRECTORY = '" + tmpdir + "'");
 				this.stmt.executeUpdate("ALTER TABLE testCreateTableDataDirectorya DISCARD TABLESPACE");
 
 				this.pstmt = this.conn.prepareStatement("CREATE TABLE testCreateTableDataDirectorya (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
 				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
 
-				this.pstmt = this.conn.prepareStatement("CREATE TABLE testCreateTableDataDirectorya (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + File.separator + "'");
+				this.pstmt = this.conn.prepareStatement("CREATE TABLE testCreateTableDataDirectorya (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + separator + "'");
 				assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
 
 				this.pstmt = this.conn.prepareStatement("CREATE TEMPORARY TABLE testCreateTableDataDirectorya (x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
@@ -195,6 +201,9 @@ public class SyntaxRegressionTest extends BaseTestCase {
 					tmpdir = this.rs.getString(2);
 					if (tmpdir.endsWith(File.separator)) {
 						tmpdir = tmpdir.substring(0, tmpdir.length()-1);
+					}
+					if (File.separatorChar == '\\') {
+						tmpdir = StringUtils.escapeQuote(tmpdir, File.separator);
 					}
 				} else if ("innodb_file_per_table".equals(this.rs.getString(1))) {
 					if (!this.rs.getString(2).equals("ON")) {
