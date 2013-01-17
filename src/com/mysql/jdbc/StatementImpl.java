@@ -487,7 +487,8 @@ public class StatementImpl implements Statement {
 			throws SQLException {
 		if ((firstStatementChar == 'I') || (firstStatementChar == 'U')
 				|| (firstStatementChar == 'D') || (firstStatementChar == 'A')
-				|| (firstStatementChar == 'C')) {
+				|| (firstStatementChar == 'C') || (firstStatementChar == 'T')
+				|| (firstStatementChar == 'R')) {
 			String noCommentSql = StringUtils.stripComments(sql,
 					"'\"", "'\"", true, false, true, true);
 
@@ -496,7 +497,10 @@ public class StatementImpl implements Statement {
 					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "DELETE") //$NON-NLS-1$
 					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "DROP") //$NON-NLS-1$
 					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "CREATE") //$NON-NLS-1$
-					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "ALTER")) { //$NON-NLS-1$
+					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "ALTER")
+					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "TRUNCATE")
+					|| StringUtils.startsWithIgnoreCaseAndWs(noCommentSql, "RENAME")
+					) { //$NON-NLS-1$
 				throw SQLError.createSQLException(Messages
 						.getString("Statement.57"), //$NON-NLS-1$
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor()); //$NON-NLS-1$

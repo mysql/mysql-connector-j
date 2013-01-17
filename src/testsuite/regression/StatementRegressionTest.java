@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
  
 
@@ -6846,6 +6846,31 @@ public class StatementRegressionTest extends BaseTestCase {
 			}
 		}
 	
+	}
+
+	/**
+	 * Tests fix for BUG#35653 - executeQuery() in Statement.java let "TRUNCATE" queries being executed.
+	 * "RENAME" is also filtered now.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug35653() throws Exception {
+		createTable("testBug35653", "(f1 int)");
+		try {
+			this.stmt.executeQuery("TRUNCATE testBug35653");
+			fail("executeQuery() shouldn't allow TRUNCATE");
+		} catch (SQLException e) {
+			assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT == e.getSQLState());
+		}
+
+		try {
+			this.stmt.executeQuery("RENAME TABLE testBug35653 TO testBug35653_new");
+			fail("executeQuery() shouldn't allow RENAME");
+		} catch (SQLException e) {
+			assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT == e.getSQLState());
+		} finally {
+			dropTable("testBug35653_new");
+		}
 	}
 
 }

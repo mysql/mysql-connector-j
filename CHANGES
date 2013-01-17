@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.23
 
+  - Fix for Bug#35653, executeQuery() in Statement.java let "TRUNCATE" queries being executed. "TRUNCATE" and "RENAME" are now filtered for executeQuery().
+
   - Fix for Bug#65909, referenceThread causes memory leak in Tomcat.
     Abandoned connection cleanup thread was refactored to have static shutdown method.
     If you encountered this leak problem, your application should implement context listener with
