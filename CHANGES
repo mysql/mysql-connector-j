@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-nn-nn-13 - Version 5.1.23
+02-04-13 - Version 5.1.23
 
   - Fix for Bug#35653, executeQuery() in Statement.java let "TRUNCATE" queries being executed. "TRUNCATE" and "RENAME" are now filtered for executeQuery().
 
