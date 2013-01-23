@@ -1981,7 +1981,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 						xmlBuf.append(propToGet.sinceVersion);
 						xmlBuf.append("\">\n"); //$NON-NLS-1$
 						xmlBuf.append("    "); //$NON-NLS-1$
-						xmlBuf.append(propToGet.description);
+						String escapedDescription = propToGet.description;
+						escapedDescription = escapedDescription.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+						
+						xmlBuf.append(escapedDescription);
 						xmlBuf.append("\n  </Property>"); //$NON-NLS-1$
 					}
 				}
