@@ -2,6 +2,10 @@
 # $Id$
 nn-nn-13 - Version 5.1.24
 
+  - Fixed typos in descriptions of properties.
+
+  - Fix for Bug#68011, Invalid error message noDatetimeSync property instead of noDatetimeStringSync.
+
 02-04-13 - Version 5.1.23
 
   - Fix for Bug#35653, executeQuery() in Statement.java let "TRUNCATE" queries being executed. "TRUNCATE" and "RENAME" are now filtered for executeQuery().

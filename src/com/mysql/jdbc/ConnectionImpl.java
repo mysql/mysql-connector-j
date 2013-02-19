@@ -3476,7 +3476,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 
 		if (getNoDatetimeStringSync() && getUseTimezone()) {
 			throw SQLError.createSQLException(
-					"Can't enable noDatetimeSync and useTimezone configuration "
+					"Can't enable noDatetimeStringSync and useTimezone configuration "
 							+ "properties at the same time",
 					SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
 		}

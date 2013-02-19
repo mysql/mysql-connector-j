@@ -4348,4 +4348,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 	}
 
+	public void testBug68011() throws Exception {
+
+		Connection c = null;
+		try {
+			Properties props = new Properties();
+			props.setProperty("noDatetimeStringSync", "true");
+			props.setProperty("useTimezone", "true");
+			c = getConnectionWithProps(props);
+		} catch (SQLException e) {
+			assertTrue(e.getMessage().contains("noDatetimeStringSync"));
+		} finally {
+			if (c != null) {
+				c.close();
+			}
+		}
+	}
+
 }
