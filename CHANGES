@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.24
 
+  - Fix for Bug#64805, StatementImpl$CancelTask occasionally throws NullPointerExceptions.
+
   - Fixed typos in descriptions of properties.
 
   - Fix for Bug#68011, Invalid error message noDatetimeSync property instead of noDatetimeStringSync.

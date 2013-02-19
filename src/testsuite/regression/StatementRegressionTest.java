@@ -6873,4 +6873,21 @@ public class StatementRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Tests fix for BUG#64805 - StatementImpl$CancelTask occasionally throws NullPointerExceptions.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug64805() throws Exception {
+
+		try {
+			this.stmt.setQueryTimeout(5);
+			this.stmt.executeQuery("select sleep(5)");
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+			fail();
+		}
+
+	}
+
 }
