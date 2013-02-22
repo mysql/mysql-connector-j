@@ -35,8 +35,6 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 	
 	public boolean isProxySet();
 
-	void abortInternal() throws SQLException;
-
 	void checkClosed() throws SQLException;
 
 	void createNewIO(boolean isForReconnect) throws SQLException;

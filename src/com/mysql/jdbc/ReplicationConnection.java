@@ -2631,4 +2631,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public boolean getDisconnectOnExpiredPasswords() {
 		return this.currentConnection.getDisconnectOnExpiredPasswords();
 	}
+
+	public void abortInternal() throws SQLException {
+		this.currentConnection.abortInternal();
+	}
 }

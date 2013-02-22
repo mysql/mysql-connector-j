@@ -2,6 +2,11 @@
 # $Id$
 nn-nn-13 - Version 5.1.24
 
+  - Fix for Bug#16224249, Deadlock on concurrently used LoadBalancedMySQLConnection:
+    1) abortInternal() method was moved from com.mysql.jdbc.MySQLConnection to com.mysql.jdbc.Connection interface;
+    2) load-balanced/failover proxy now broadcasts abortInternal() to all underlying physical connections;
+    3) load-balanced/failover proxy now prevents picking of new physical connection after close() or abortInternal() were called explicitly on proxy.
+
   - Fix for Bug#64805, StatementImpl$CancelTask occasionally throws NullPointerExceptions.
 
   - Fixed typos in descriptions of properties.

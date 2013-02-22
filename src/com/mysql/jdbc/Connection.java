@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -420,4 +420,7 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	void setNetworkTimeout(Executor executor, final int milliseconds) throws SQLException;
 	
 	int getNetworkTimeout() throws SQLException;
+
+	void abortInternal() throws SQLException;
+
 }

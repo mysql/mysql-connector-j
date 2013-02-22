@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -486,7 +486,31 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 	}
 	
-		
+	private void abortAllConnectionsInternal() {
+		synchronized (this) {
+			// abort all underlying connections
+			Iterator<ConnectionImpl> allConnections = this.liveConnections.values().iterator();
+
+			while (allConnections.hasNext()) {
+				try {
+					this.activePhysicalConnections--;
+					allConnections.next().abortInternal();
+				} catch (SQLException e) {
+				}
+			}
+
+			if (!this.isClosed) {
+				this.balancer.destroy();
+				if(this.connectionGroup != null){
+					this.connectionGroup.closeConnectionProxy(this);
+				}
+			}
+
+			this.liveConnections.clear();
+			this.connectionsToHostsMap.clear();
+		}
+	}
+
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		return this.invoke(proxy, method, args, true);
 	}
@@ -525,6 +549,15 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		if ("close".equals(methodName)) {
 			closeAllConnections();
+
+			this.isClosed = true;
+			this.closedReason = "Connection explicitly closed.";
+
+			return null;
+		}
+
+		if ("abortInternal".equals(methodName)) {
+			abortAllConnectionsInternal();
 
 			this.isClosed = true;
 			this.closedReason = "Connection explicitly closed.";
@@ -605,6 +638,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	 * @throws SQLException
 	 */
 	protected synchronized void pickNewConnection() throws SQLException {
+		if (this.isClosed && "Connection explicitly closed.".equals(this.closedReason)) {
+			return;
+		}
+
 		if (this.currentConn == null) { // startup
 			this.currentConn = this.balancer.pickConnection(this, Collections
 					.unmodifiableList(this.hostList), Collections

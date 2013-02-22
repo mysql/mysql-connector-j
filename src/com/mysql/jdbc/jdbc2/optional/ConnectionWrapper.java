@@ -2825,4 +2825,8 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public boolean getDisconnectOnExpiredPasswords() {
 		return this.mc.getDisconnectOnExpiredPasswords();
 	}
+
+	public void abortInternal() throws SQLException {
+		this.mc.abortInternal();
+	}
 }
