@@ -6886,6 +6886,12 @@ public class StatementRegressionTest extends BaseTestCase {
 		} catch (NullPointerException e) {
 			e.printStackTrace();
 			fail();
+		} catch (Exception e) {
+			if (e instanceof MySQLTimeoutException) {
+				// expected behavior in slow environment
+			} else {
+				throw e;
+			}
 		}
 
 	}
