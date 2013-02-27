@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 /**
  * An implementation of java.sql.Connection that load balances requests across a
@@ -70,7 +71,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	private long lastUsed = 0;
 	private long transactionCount = 0;
 	private ConnectionGroup connectionGroup = null;
-	private String closedReason = null;
+	protected String closedReason = null;
 
 	public static final String BLACKLIST_TIMEOUT_PROPERTY_KEY = "loadBalanceBlacklistTimeout";
 
@@ -131,7 +132,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 	private Properties localProps;
 
-	private boolean isClosed = false;
+	protected boolean isClosed = false;
 
 	private BalanceStrategy balancer;
 
@@ -387,6 +388,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		this.totalPhysicalConnections++;
 
 		conn.setProxy(this.thisAsConnection);
+		conn.setRealProxy(this);
 
 		return conn;
 	}
@@ -511,6 +513,32 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		}
 	}
 
+	private void abortAllConnections(Executor executor) {
+		synchronized (this) {
+			// close all underlying connections
+			Iterator<ConnectionImpl> allConnections = this.liveConnections.values().iterator();
+
+			while (allConnections.hasNext()) {
+				try {
+					this.activePhysicalConnections--;
+					allConnections.next().abort(executor);
+				} catch (SQLException e) {
+				}
+			}
+
+			if (!this.isClosed) {
+				this.balancer.destroy();
+				if(this.connectionGroup != null){
+					this.connectionGroup.closeConnectionProxy(this);
+				}
+			}
+
+			this.liveConnections.clear();
+			this.connectionsToHostsMap.clear();
+		}
+
+	}
+
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		return this.invoke(proxy, method, args, true);
 	}
@@ -558,10 +586,15 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		if ("abortInternal".equals(methodName)) {
 			abortAllConnectionsInternal();
-
 			this.isClosed = true;
 			this.closedReason = "Connection explicitly closed.";
+			return null;
+		}
 
+		if ("abort".equals(methodName) && args.length == 1) {
+			abortAllConnections((Executor)args[0]);
+			this.isClosed = true;
+			this.closedReason = "Connection explicitly closed.";
 			return null;
 		}
 

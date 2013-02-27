@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -389,7 +389,7 @@ public class RowDataCursor implements RowData {
 			return;
 		}
 
-		synchronized (this.owner.connection) {
+		synchronized (this.owner.connection.getConnectionMutex()) {
 			boolean oldFirstFetchCompleted = this.firstFetchCompleted;
 			
 			if (!this.firstFetchCompleted) {

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -89,29 +89,31 @@ public class JDBC4Connection extends ConnectionImpl {
          * is less then 0
          * @since 1.6
 	 */
-	public synchronized boolean isValid(int timeout) throws SQLException {
-		if (isClosed()) {
-			return false;
-		}
-		
-		try {
-			try {
-				pingInternal(false, timeout * 1000);
-			} catch (Throwable t) {
-				try {
-					abortInternal();
-				} catch (Throwable ignoreThrown) {
-					// we're dead now anyway
-				}
-				
+	public boolean isValid(int timeout) throws SQLException {
+		synchronized (getConnectionMutex()) {
+			if (isClosed()) {
 				return false;
 			}
-
-		} catch (Throwable t) {
-			return false;
+			
+			try {
+				try {
+					pingInternal(false, timeout * 1000);
+				} catch (Throwable t) {
+					try {
+						abortInternal();
+					} catch (Throwable ignoreThrown) {
+						// we're dead now anyway
+					}
+					
+					return false;
+				}
+	
+			} catch (Throwable t) {
+				return false;
+			}
+			
+			return true;
 		}
-		
-		return true;
 	}
 
 	public void setClientInfo(Properties properties) throws SQLClientInfoException {
@@ -209,29 +211,31 @@ public class JDBC4Connection extends ConnectionImpl {
 	    return new com.mysql.jdbc.JDBC4NClob(getExceptionInterceptor());
 	}
 	
-	protected synchronized JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
-		if (this.infoProvider == null) {
-			try {
+	protected JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+		synchronized (getConnectionMutex()) {
+			if (this.infoProvider == null) {
 				try {
-					this.infoProvider = (JDBC4ClientInfoProvider)Util.getInstance(getClientInfoProvider(), 
-							new Class[0], new Object[0], getExceptionInterceptor());
-				} catch (SQLException sqlEx) {
-					if (sqlEx.getCause() instanceof ClassCastException) {
-						// try with package name prepended
-						this.infoProvider = (JDBC4ClientInfoProvider)Util.getInstance(
-								"com.mysql.jdbc." + getClientInfoProvider(), 
+					try {
+						this.infoProvider = (JDBC4ClientInfoProvider)Util.getInstance(getClientInfoProvider(), 
 								new Class[0], new Object[0], getExceptionInterceptor());
+					} catch (SQLException sqlEx) {
+						if (sqlEx.getCause() instanceof ClassCastException) {
+							// try with package name prepended
+							this.infoProvider = (JDBC4ClientInfoProvider)Util.getInstance(
+									"com.mysql.jdbc." + getClientInfoProvider(), 
+									new Class[0], new Object[0], getExceptionInterceptor());
+						}
 					}
+				} catch (ClassCastException cce) {
+					throw SQLError.createSQLException(Messages
+							.getString("JDBC4Connection.ClientInfoNotImplemented", new Object[] {getClientInfoProvider()}), 
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 				}
-			} catch (ClassCastException cce) {
-				throw SQLError.createSQLException(Messages
-						.getString("JDBC4Connection.ClientInfoNotImplemented", new Object[] {getClientInfoProvider()}), 
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+				
+				this.infoProvider.initialize(this, this.props);
 			}
 			
-			this.infoProvider.initialize(this, this.props);
+			return this.infoProvider;
 		}
-		
-		return this.infoProvider;
 	}
 }

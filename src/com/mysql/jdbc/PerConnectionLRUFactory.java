@@ -57,7 +57,7 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Pars
 				return null;
 			}
 
-			synchronized (conn) {
+			synchronized (conn.getConnectionMutex()) {
 				return (ParseInfo) cache.get(key);
 			}
 		}
@@ -67,19 +67,19 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Pars
 				return;
 			}
 
-			synchronized (conn) {
+			synchronized (conn.getConnectionMutex()) {
 				cache.put(key, value);
 			}
 		}
 
 		public void invalidate(String key) {
-			synchronized (conn) {
+			synchronized (conn.getConnectionMutex()) {
 				cache.remove(key);
 			}
 		}
 
 		public void invalidateAll(Set<String> keys) {
-			synchronized (conn) {
+			synchronized (conn.getConnectionMutex()) {
 				for (String key : keys) {
 					cache.remove(key);
 				}
@@ -88,7 +88,7 @@ public class PerConnectionLRUFactory implements CacheAdapterFactory<String, Pars
 		}
 
 		public void invalidateAll() {
-			synchronized (conn) {
+			synchronized (conn.getConnectionMutex()) {
 				cache.clear();
 			}
 		}

@@ -850,7 +850,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		}
 	}
 
-	protected void checkClosed() throws SQLException {
+	public void checkClosed() throws SQLException {
 		if (this.closed) {
 			throw SQLError.createSQLException(this.invalidHandleStr, this.exceptionInterceptor);
 		}
@@ -2829,4 +2829,9 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void abortInternal() throws SQLException {
 		this.mc.abortInternal();
 	}
+
+	public Object getConnectionMutex() {
+		return this.mc.getConnectionMutex();
+	}
+
 }

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
  This program is free software; you can redistribute it and/or modify
@@ -506,7 +506,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	}
 
 	public void initializeWithMetadata() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.rowData.setMetadata(this.fields);
 			
 			this.columnToIndexCache = new HashMap<String, Integer>();
@@ -594,7 +594,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                set type is TYPE_FORWARD_ONLY.
 	 */
 	public boolean absolute(int row) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 	
 			boolean b;
 	
@@ -666,7 +666,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                TYPE_FORWARD_ONLY.
 	 */
 	public void afterLast() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 
 			if (this.onInsertRow) {
 				this.onInsertRow = false;
@@ -702,7 +702,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                TYPE_FORWARD_ONLY
 	 */
 	public void beforeFirst() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 
 			if (this.onInsertRow) {
 				this.onInsertRow = false;
@@ -820,7 +820,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *             if the index is out of bounds
 	 */
 	protected final void checkColumnBounds(int columnIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if ((columnIndex < 1)) {
 				throw SQLError.createSQLException(Messages.getString(
 						"ResultSet.Column_Index_out_of_range_low", new Object[] {
@@ -897,7 +897,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database access error occurs
 	 */
 	public void clearWarnings() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.warningChain = null;
 		}
 	}
@@ -950,7 +950,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	// Note, row data is linked between these two result sets
 	//
 	public ResultSetInternalMethods copy() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = ResultSetImpl.getInstance(this.catalog, this.fields, this.rowData,
 					this.connection, this.owningStatement, false); // note, doesn't work for updatable result sets
 	
@@ -1026,7 +1026,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 	protected  Date fastDateCreate(Calendar cal, int year, int month,
 			int day) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.useLegacyDatetimeCode) {
 				return TimeUtil.fastDateCreate(year, month, day, cal);
 			}
@@ -1046,7 +1046,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 	protected Time fastTimeCreate(Calendar cal, int hour,
 			int minute, int second) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (!this.useLegacyDatetimeCode) {
 				return TimeUtil.fastTimeCreate(hour, minute, second, cal, getExceptionInterceptor());
 			}
@@ -1063,7 +1063,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	protected Timestamp fastTimestampCreate(Calendar cal, int year,
 			int month, int day, int hour, int minute, int seconds,
 			int secondsPart) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (!this.useLegacyDatetimeCode) {
 				return TimeUtil.fastTimestampCreate(cal.getTimeZone(), year, month, day, hour,
 						minute, seconds, secondsPart);
@@ -1124,7 +1124,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * @return the column index of the given column name
 	 */
 	public int findColumn(String columnName) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			Integer index;
 	
 			if (!this.hasBuiltIndexMapping) {
@@ -1185,7 +1185,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                TYPE_FORWARD_ONLY.
 	 */
 	public boolean first() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 	
 			boolean b = true;
 			
@@ -1995,7 +1995,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * each call, depending on user configuration
 	 */
 	protected Calendar getCalendarInstanceForSessionOrNew() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.connection != null) {
 				return this.connection.getCalendarInstanceForSessionOrNew();
 			}
@@ -2563,7 +2563,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs
 	 */
 	public int getFetchDirection() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.fetchDirection;
 		}
 	}
@@ -2577,7 +2577,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs
 	 */
 	public int getFetchSize() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.fetchSize;
 		}
 	}
@@ -2590,7 +2590,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	public char getFirstCharOfQuery() {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				return this.firstCharOfQuery;
 			}
 		} catch (SQLException e) {
@@ -3630,7 +3630,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	private String getNativeConvertToString(int columnIndex, 
 			Field field)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			
 			int sqlType = field.getSQLType();
 			int mysqlType = field.getMysqlType();
@@ -5415,7 +5415,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	public String getServerInfo() {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				return this.serverInfo;
 			}
 		} catch (SQLException e) {
@@ -5652,7 +5652,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	public java.sql.Statement getStatement() throws SQLException {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				if (this.wrapperStatement != null) {
 					return this.wrapperStatement;
 				}
@@ -5966,7 +5966,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			int columnIndex,
 			TimeZone tz, 
 			boolean rollForward) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			int hr = 0;
 			int min = 0;
 			int sec = 0;
@@ -6728,7 +6728,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database access error occurs.
 	 */
 	public java.sql.SQLWarning getWarnings() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.warningChain;
 		}
 	}
@@ -6762,7 +6762,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs.
 	 */
 	public boolean isAfterLast() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			boolean b = this.rowData.isAfterLast();
 	
 			return b;
@@ -6783,7 +6783,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs.
 	 */
 	public boolean isBeforeFirst() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.rowData.isBeforeFirst();
 		}
 	}
@@ -6801,7 +6801,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs.
 	 */
 	public boolean isFirst() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.rowData.isFirst();
 		}
 	}
@@ -6822,7 +6822,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database-access error occurs.
 	 */
 	public boolean isLast() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.rowData.isLast();
 		}
 	}
@@ -6835,7 +6835,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	private void issueConversionViaParsingWarning(String methodName,
 			int columnIndex, Object value, Field fieldInfo,
 			int[] typesWithNoParseConversion) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			StringBuffer originalQueryBuf = new StringBuffer();
 			
 			if (this.owningStatement != null
@@ -6894,7 +6894,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                TYPE_FORWARD_ONLY.
 	 */
 	public boolean last() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 	
 			boolean b = true;
 			
@@ -6983,7 +6983,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database access error occurs
 	 */
 	public boolean next() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 
 			if (this.onInsertRow) {
 				this.onInsertRow = false;
@@ -7251,7 +7251,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                if a database access error occurs
 	 */
 	public boolean prev() throws java.sql.SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 
 			int rowIndex = this.rowData.getCurrentRowNumber();
 	
@@ -7302,7 +7302,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                TYPE_FORWAR_DONLY.
 	 */
 	public boolean previous() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.onInsertRow) {
 				this.onInsertRow = false;
 			}
@@ -7333,7 +7333,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			return; // already closed
 		}
 		
-		synchronized (locallyScopedConn) {
+		synchronized (locallyScopedConn.getConnectionMutex()) {
 
 			try {
 				if (this.useUsageAdvisor) {
@@ -7576,7 +7576,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *             row, or result set type is TYPE_FORWARD_ONLY.
 	 */
 	public boolean relative(int rows) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 
 			if (this.rowData.size() == 0) {
 				setRowPositionValidity();
@@ -7661,7 +7661,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	}
 
 	private void setDefaultTimeZone(TimeZone defaultTimeZone) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.defaultTimeZone = defaultTimeZone;
 		}
 	}
@@ -7682,7 +7682,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                result set anyway, so the direction is immaterial.
 	 */
 	public void setFetchDirection(int direction) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if ((direction != FETCH_FORWARD) && (direction != FETCH_REVERSE)
 					&& (direction != FETCH_UNKNOWN)) {
 				throw SQLError.createSQLException(
@@ -7712,7 +7712,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *                ignored by this driver.
 	 */
 	public void setFetchSize(int rows) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (rows < 0) { /* || rows > getMaxRows() */
 				throw SQLError.createSQLException(
 						Messages
@@ -7733,7 +7733,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	public void setFirstCharOfQuery(char c) {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				this.firstCharOfQuery = c;
 			}
 		} catch (SQLException e) {
@@ -7754,7 +7754,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 	public void setOwningStatement(com.mysql.jdbc.StatementImpl owningStatement) {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				this.owningStatement = owningStatement;
 			}
 		} catch (SQLException e) {
@@ -7770,7 +7770,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	protected synchronized void setResultSetConcurrency(int concurrencyFlag) {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				this.resultSetConcurrency = concurrencyFlag;
 			}
 		} catch (SQLException e) {
@@ -7787,7 +7787,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	protected synchronized void setResultSetType(int typeFlag) {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				this.resultSetType = typeFlag;
 			}
 		} catch (SQLException e) {
@@ -7803,7 +7803,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	protected synchronized void setServerInfo(String info) {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				this.serverInfo = info;
 			}
 		} catch (SQLException e) {
@@ -7813,7 +7813,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 
 	public synchronized void setStatementUsedForFetchingRows(PreparedStatement stmt) {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				this.statementUsedForFetchingRows = stmt;
 			}
 		} catch (SQLException e) {
@@ -7827,7 +7827,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 */
 	public synchronized void setWrapperStatement(java.sql.Statement wrapperStatement) {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				this.wrapperStatement = wrapperStatement;
 			}
 		} catch (SQLException e) {

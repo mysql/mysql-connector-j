@@ -5,7 +5,8 @@ nn-nn-13 - Version 5.1.24
   - Fix for Bug#16224249, Deadlock on concurrently used LoadBalancedMySQLConnection:
     1) abortInternal() method was moved from com.mysql.jdbc.MySQLConnection to com.mysql.jdbc.Connection interface;
     2) load-balanced/failover proxy now broadcasts abortInternal() to all underlying physical connections;
-    3) load-balanced/failover proxy now prevents picking of new physical connection after close() or abortInternal() were called explicitly on proxy.
+    3) load-balanced/failover proxy now prevents picking of new physical connection after close() or abortInternal() were called explicitly on proxy;
+    4) connection synchronization mutex was refactored, now mutex is proxy instance for proxied connection or connection instance itself if there is no proxy.
 
   - Fix for Bug#64805, StatementImpl$CancelTask occasionally throws NullPointerExceptions.
 

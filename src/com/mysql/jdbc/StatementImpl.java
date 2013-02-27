@@ -390,7 +390,7 @@ public class StatementImpl implements Statement {
 	 *             DOCUMENT ME!
 	 */
 	public void addBatch(String sql) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.batchedArgs == null) {
 				this.batchedArgs = new ArrayList<Object>();
 			}
@@ -535,7 +535,7 @@ public class StatementImpl implements Statement {
 	 *                support batch statements
 	 */
 	public void clearBatch() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.batchedArgs != null) {
 				this.batchedArgs.clear();
 			}
@@ -550,7 +550,7 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs (why?)
 	 */
 	public void clearWarnings() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.clearWarningsCalled = true;
 			this.warningChain = null;
 		}
@@ -573,7 +573,7 @@ public class StatementImpl implements Statement {
 	 */
 	public void close() throws SQLException {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				realClose(true, true);
 			}
 		} catch (SQLException sqlEx) {
@@ -589,7 +589,7 @@ public class StatementImpl implements Statement {
 	 * Close any open result sets that have been 'held open'
 	 */
 	protected void closeAllOpenResults() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.openResults != null) {
 				for (ResultSetInternalMethods element : this.openResults) {
 					try {
@@ -606,7 +606,7 @@ public class StatementImpl implements Statement {
 
 	public void removeOpenResultSet(ResultSet rs) {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				if (this.openResults != null) {
 					this.openResults.remove(rs);
 				}
@@ -618,7 +618,7 @@ public class StatementImpl implements Statement {
 	
 	public int getOpenResultSetCount() {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				if (this.openResults != null) {
 					return this.openResults.size();
 				}
@@ -638,7 +638,7 @@ public class StatementImpl implements Statement {
 	 */
 	private ResultSetInternalMethods createResultSetUsingServerFetch(String sql)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			java.sql.PreparedStatement pStmt = this.connection.prepareStatement(
 					sql, this.resultSetType, this.resultSetConcurrency);
 	
@@ -677,7 +677,7 @@ public class StatementImpl implements Statement {
 	 */
 	protected boolean createStreamingResultSet() {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				return ((this.resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY)
 						&& (this.resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY) && (this.fetchSize == Integer.MIN_VALUE));
 			}
@@ -695,7 +695,7 @@ public class StatementImpl implements Statement {
 	 * @see com.mysql.jdbc.IStatement#enableStreamingResults()
 	 */
 	public void enableStreamingResults() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.originalResultSetType = this.resultSetType;
 			this.originalFetchSize = this.fetchSize;
 	
@@ -705,7 +705,7 @@ public class StatementImpl implements Statement {
 	}
 
 	public void disableStreamingResults() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.fetchSize == Integer.MIN_VALUE &&
 					this.resultSetType == ResultSet.TYPE_FORWARD_ONLY) {
 				setFetchSize(this.originalFetchSize);
@@ -735,7 +735,7 @@ public class StatementImpl implements Statement {
 	private boolean execute(String sql, boolean returnGeneratedKeys) throws SQLException {
 		MySQLConnection locallyScopedConn = checkClosed();
 
-		synchronized (locallyScopedConn) {
+		synchronized (locallyScopedConn.getConnectionMutex()) {
 			this.retrieveGeneratedKeys = returnGeneratedKeys;
 			lastQueryIsOnDupKeyUpdate = false;
 			if (returnGeneratedKeys)
@@ -966,7 +966,7 @@ public class StatementImpl implements Statement {
 	}
 
 	protected void resetCancelledState() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.cancelTimeoutMutex == null) {
 				return;
 			}
@@ -990,7 +990,7 @@ public class StatementImpl implements Statement {
 
 			MySQLConnection locallyScopedConn = this.connection;
 
-			synchronized (locallyScopedConn) {
+			synchronized (locallyScopedConn.getConnectionMutex()) {
 				// If this is a 'REPLACE' query, we need to be able to parse
 				// the 'info' message returned from the server to determine
 				// the actual number of keys generated.
@@ -1016,7 +1016,7 @@ public class StatementImpl implements Statement {
 			throws SQLException {
 		MySQLConnection locallyScopedConn = checkClosed();
 
-		synchronized (locallyScopedConn) {
+		synchronized (locallyScopedConn.getConnectionMutex()) {
 			if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
 
 				this.retrieveGeneratedKeys = true;
@@ -1046,7 +1046,7 @@ public class StatementImpl implements Statement {
 			throws SQLException {
 		MySQLConnection locallyScopedConn = checkClosed();
 
-		synchronized (locallyScopedConn) {
+		synchronized (locallyScopedConn.getConnectionMutex()) {
 			if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
 
 				this.retrieveGeneratedKeys = true;
@@ -1085,7 +1085,7 @@ public class StatementImpl implements Statement {
 	public int[] executeBatch() throws SQLException {
 		MySQLConnection locallyScopedConn = checkClosed();
 
-		synchronized (locallyScopedConn) {
+		synchronized (locallyScopedConn.getConnectionMutex()) {
 			if (locallyScopedConn.isReadOnly()) {
 				throw SQLError.createSQLException(Messages
 						.getString("Statement.34") //$NON-NLS-1$
@@ -1255,7 +1255,7 @@ public class StatementImpl implements Statement {
 		
 		MySQLConnection locallyScopedConn = checkClosed();
 
-		synchronized (locallyScopedConn) {
+		synchronized (locallyScopedConn.getConnectionMutex()) {
 			if (!multiQueriesEnabled) {
 				locallyScopedConn.getIO().enableMultiQueries();
 			}
@@ -1394,7 +1394,7 @@ public class StatementImpl implements Statement {
 	protected int processMultiCountsAndKeys(
 			StatementImpl batchedStatement,
 			int updateCountCounter, int[] updateCounts) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			updateCounts[updateCountCounter++] = batchedStatement.getUpdateCount();
 			
 			boolean doGenKeys = this.batchedGeneratedKeys != null;
@@ -1468,7 +1468,7 @@ public class StatementImpl implements Statement {
 	 */
 	public java.sql.ResultSet executeQuery(String sql)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			MySQLConnection locallyScopedConn = this.connection;
 			
 			this.retrieveGeneratedKeys = false;
@@ -1673,7 +1673,7 @@ public class StatementImpl implements Statement {
 	}
 
 	protected void doPingInstead() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.pingTarget != null) {
 				this.pingTarget.doPing();
 			} else {
@@ -1686,7 +1686,7 @@ public class StatementImpl implements Statement {
 	}
 
 	protected ResultSetInternalMethods generatePingResultSet() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			Field[] fields = { new Field(null, "1", Types.BIGINT, 1) };
 			ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 			byte[] colVal = new byte[] { (byte) '1' };
@@ -1728,7 +1728,7 @@ public class StatementImpl implements Statement {
 	protected int executeUpdate(String sql, boolean isBatch, boolean returnGeneratedKeys)
 		throws SQLException {
 		
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			MySQLConnection locallyScopedConn = this.connection;
 	
 			char firstStatementChar = StringUtils.firstAlphaCharUc(sql,
@@ -1884,7 +1884,7 @@ public class StatementImpl implements Statement {
 	 */
 	public int executeUpdate(String sql, int returnGeneratedKeys)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (returnGeneratedKeys == java.sql.Statement.RETURN_GENERATED_KEYS) {
 				MySQLConnection locallyScopedConn = this.connection;
 			
@@ -1911,7 +1911,7 @@ public class StatementImpl implements Statement {
 	 */
 	public int executeUpdate(String sql, int[] generatedKeyIndices)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if ((generatedKeyIndices != null) && (generatedKeyIndices.length > 0)) {
 				checkClosed();
 	
@@ -1940,7 +1940,7 @@ public class StatementImpl implements Statement {
 	 */
 	public int executeUpdate(String sql, String[] generatedKeyNames)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if ((generatedKeyNames != null) && (generatedKeyNames.length > 0)) {
 				MySQLConnection locallyScopedConn = this.connection;
 				// If this is a 'REPLACE' query, we need to be able to parse
@@ -1966,7 +1966,7 @@ public class StatementImpl implements Statement {
 	 * each call, depending on user configuration
 	 */
 	protected Calendar getCalendarInstanceForSessionOrNew() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.connection != null) {
 				return this.connection.getCalendarInstanceForSessionOrNew();
 			}
@@ -1984,7 +1984,7 @@ public class StatementImpl implements Statement {
 	 *             if an error occurs
 	 */
 	public java.sql.Connection getConnection() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.connection;
 		}
 	}
@@ -2010,7 +2010,7 @@ public class StatementImpl implements Statement {
 	 *             if an error occurs
 	 */
 	public int getFetchSize() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.fetchSize;
 		}
 	}
@@ -2025,7 +2025,7 @@ public class StatementImpl implements Statement {
 	 */
 	public java.sql.ResultSet getGeneratedKeys()
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (!this.retrieveGeneratedKeys) {
 				throw SQLError.createSQLException(Messages.getString("Statement.GeneratedKeysNotRequested"), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
@@ -2062,7 +2062,7 @@ public class StatementImpl implements Statement {
 
 	protected java.sql.ResultSet getGeneratedKeysInternal(int numKeys)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			Field[] fields = new Field[1];
 			fields[0] = new Field("", "GENERATED_KEY", Types.BIGINT, 17); //$NON-NLS-1$ //$NON-NLS-2$
 			fields[0].setConnection(this.connection);
@@ -2147,7 +2147,7 @@ public class StatementImpl implements Statement {
 	 */
 	public long getLastInsertID() {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				return this.lastInsertId;
 			}
 		} catch (SQLException e) {
@@ -2169,7 +2169,7 @@ public class StatementImpl implements Statement {
 	 */
 	public long getLongUpdateCount() {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				if (this.results == null) {
 					return -1;
 				}
@@ -2197,7 +2197,7 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs
 	 */
 	public int getMaxFieldSize() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.maxFieldSize;
 		}
 	}
@@ -2213,7 +2213,7 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs
 	 */
 	public int getMaxRows() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.maxRows <= 0) {
 				return 0;
 			}
@@ -2239,7 +2239,7 @@ public class StatementImpl implements Statement {
 	 * @see StatementImpl#getMoreResults(int)
 	 */
 	public boolean getMoreResults(int current) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.results == null) {
 				return false;
 			}
@@ -2326,7 +2326,7 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs
 	 */
 	public int getQueryTimeout() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.timeoutInMillis / 1000;
 		}
 	}
@@ -2410,7 +2410,7 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs (why?)
 	 */
 	public java.sql.ResultSet getResultSet() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return ((this.results != null) && this.results.reallyResult()) ? (java.sql.ResultSet) this.results
 					: null;
 		}
@@ -2425,7 +2425,7 @@ public class StatementImpl implements Statement {
 	 *             if an error occurs
 	 */
 	public int getResultSetConcurrency() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.resultSetConcurrency;
 		}
 	}
@@ -2439,7 +2439,7 @@ public class StatementImpl implements Statement {
 
 	protected ResultSetInternalMethods getResultSetInternal() {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				return this.results;
 			}
 		} catch (SQLException e) {
@@ -2456,7 +2456,7 @@ public class StatementImpl implements Statement {
 	 *             if an error occurs.
 	 */
 	public int getResultSetType() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.resultSetType;
 		}
 	}
@@ -2472,7 +2472,7 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs
 	 */
 	public int getUpdateCount() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.results == null) {
 				return -1;
 			}
@@ -2515,7 +2515,7 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs
 	 */
 	public java.sql.SQLWarning getWarnings() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 
 			if (this.clearWarningsCalled) {
 				return null;
@@ -2557,7 +2557,7 @@ public class StatementImpl implements Statement {
 			return; // already closed
 		}
 		
-		synchronized (locallyScopedConn) {
+		synchronized (locallyScopedConn.getConnectionMutex()) {
 	
 			if (this.useUsageAdvisor) {
 				if (!calledExplicitly) {
@@ -2656,7 +2656,7 @@ public class StatementImpl implements Statement {
 	 */
 	public void setEscapeProcessing(boolean enable)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.doEscapeProcessing = enable;
 		}
 	}
@@ -2703,7 +2703,7 @@ public class StatementImpl implements Statement {
 	 *                &lt;= rows &lt;= this.getMaxRows() is not satisfied.
 	 */
 	public void setFetchSize(int rows) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (((rows < 0) && (rows != Integer.MIN_VALUE))
 					|| ((this.maxRows != 0) && (this.maxRows != -1) && (rows > this
 							.getMaxRows()))) {
@@ -2718,7 +2718,7 @@ public class StatementImpl implements Statement {
 
 	public void setHoldResultsOpenOverClose(boolean holdResultsOpenOverClose) {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				this.holdResultsOpenOverClose = holdResultsOpenOverClose;
 			}
 		} catch (SQLException e) {
@@ -2736,7 +2736,7 @@ public class StatementImpl implements Statement {
 	 *                if size exceeds buffer size
 	 */
 	public void setMaxFieldSize(int max) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (max < 0) {
 				throw SQLError.createSQLException(Messages
 						.getString("Statement.11"), //$NON-NLS-1$
@@ -2769,7 +2769,7 @@ public class StatementImpl implements Statement {
 	 * @see getMaxRows
 	 */
 	public void setMaxRows(int max) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if ((max > MysqlDefs.MAX_ROWS) || (max < 0)) {
 				throw SQLError
 						.createSQLException(
@@ -2809,7 +2809,7 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs
 	 */
 	public void setQueryTimeout(int seconds) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (seconds < 0) {
 				throw SQLError.createSQLException(Messages
 						.getString("Statement.21"), //$NON-NLS-1$
@@ -2828,7 +2828,7 @@ public class StatementImpl implements Statement {
 	 */
 	void setResultSetConcurrency(int concurrencyFlag) {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				this.resultSetConcurrency = concurrencyFlag;
 			}
 		} catch (SQLException e) {
@@ -2845,7 +2845,7 @@ public class StatementImpl implements Statement {
 	 */
 	void setResultSetType(int typeFlag) {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				this.resultSetType = typeFlag;
 			}
 		} catch (SQLException e) {
@@ -2855,7 +2855,7 @@ public class StatementImpl implements Statement {
 	}
 
 	protected void getBatchedGeneratedKeys(java.sql.Statement batchedStatement) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.retrieveGeneratedKeys) {
 				java.sql.ResultSet rs = null;
 	
@@ -2876,7 +2876,7 @@ public class StatementImpl implements Statement {
 	}
 	
 	protected void getBatchedGeneratedKeys(int maxKeys) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.retrieveGeneratedKeys) {
 				java.sql.ResultSet rs = null;
 	
@@ -2903,7 +2903,7 @@ public class StatementImpl implements Statement {
 	 * @return
 	 */
 	private boolean useServerFetch() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.connection.isCursorFetchEnabled() && this.fetchSize > 0
 					&& this.resultSetConcurrency == ResultSet.CONCUR_READ_ONLY
 					&& this.resultSetType == ResultSet.TYPE_FORWARD_ONLY;
@@ -2912,7 +2912,7 @@ public class StatementImpl implements Statement {
 
 	public boolean isClosed() throws SQLException {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				return this.isClosed;
 			}
 		} catch (SQLException sqlEx) {
@@ -3041,13 +3041,13 @@ public class StatementImpl implements Statement {
 	private boolean closeOnCompletion;
 	
 	public void closeOnCompletion() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			closeOnCompletion = true;
 		}
 	}
 	
 	public boolean isCloseOnCompletion() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return closeOnCompletion;
 		}
 	}

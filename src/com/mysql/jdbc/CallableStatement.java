@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -546,7 +546,7 @@ public class CallableStatement extends PreparedStatement implements
 	private int[] placeholderToParameterIndexMap;
 	
 	private void generateParameterMap() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.paramInfo == null) {
 				return;
 			}
@@ -654,7 +654,7 @@ public class CallableStatement extends PreparedStatement implements
 	private CallableStatementParam checkIsOutputParam(int paramIndex)
 			throws SQLException {
 
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.callingStoredFunction) {
 				if (paramIndex == 1) {
 	
@@ -711,7 +711,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @throws SQLException
 	 */
 	private void checkParameterIndexBounds(int paramIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.paramInfo.checkBounds(paramIndex);
 		}
 	}
@@ -732,7 +732,7 @@ public class CallableStatement extends PreparedStatement implements
 	}
 
 	public void clearParameters() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			super.clearParameters();
 	
 			try {
@@ -752,7 +752,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @throws SQLException if we can't build the metadata.
 	 */
 	private void fakeParameterTypes(boolean isReallyProcedure) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			Field[] fields = new Field[13];
 	
 			fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 0);
@@ -817,7 +817,7 @@ public class CallableStatement extends PreparedStatement implements
 	}
 	
 	private void determineParameterTypes() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			java.sql.ResultSet paramTypesRs = null;
 	
 			try {
@@ -893,7 +893,7 @@ public class CallableStatement extends PreparedStatement implements
 	}
 
 	private void convertGetProcedureColumnsToInternalDescriptors(java.sql.ResultSet paramTypesRs) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (!this.connection.isRunningOnJDK13()) {
 				this.paramInfo = new CallableStatementParamInfoJDBC3(
 						paramTypesRs);
@@ -909,7 +909,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.PreparedStatement#execute()
 	 */
 	public boolean execute() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			boolean returnVal = false;
 
 			checkStreamability();
@@ -943,7 +943,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.PreparedStatement#executeQuery()
 	 */
 	public java.sql.ResultSet executeQuery() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 
 			checkStreamability();
 	
@@ -966,7 +966,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.PreparedStatement#executeUpdate()
 	 */
 	public int executeUpdate() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			int returnVal = -1;
 	
 			
@@ -1041,7 +1041,7 @@ public class CallableStatement extends PreparedStatement implements
 	 *             if the parameter name is null or empty.
 	 */
 	protected String fixParameterName(String paramNameIn) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			//Fixed for 5.5+
 			if (((paramNameIn == null) || (paramNameIn.length() == 0)) && (!hasParametersView())) {
 				throw SQLError.createSQLException(
@@ -1067,7 +1067,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getArray(int)
 	 */
 	public Array getArray(int i) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(i);
 	
 			Array retValue = rs.getArray(mapOutputParameterIndexToRsIndex(i));
@@ -1083,7 +1083,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Array getArray(String parameterName)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1100,7 +1100,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public BigDecimal getBigDecimal(int parameterIndex)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			BigDecimal retValue = rs
@@ -1130,7 +1130,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public BigDecimal getBigDecimal(int parameterIndex, int scale)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			BigDecimal retValue = rs.getBigDecimal(
@@ -1147,7 +1147,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public BigDecimal getBigDecimal(String parameterName)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1163,7 +1163,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getBlob(int)
 	 */
 	public Blob getBlob(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			Blob retValue = rs
@@ -1179,7 +1179,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getBlob(java.lang.String)
 	 */
 	public Blob getBlob(String parameterName) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1196,7 +1196,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public boolean getBoolean(int parameterIndex)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			boolean retValue = rs
@@ -1213,7 +1213,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public boolean getBoolean(String parameterName)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1229,7 +1229,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getByte(int)
 	 */
 	public byte getByte(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			byte retValue = rs
@@ -1245,7 +1245,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getByte(java.lang.String)
 	 */
 	public byte getByte(String parameterName) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1261,7 +1261,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getBytes(int)
 	 */
 	public byte[] getBytes(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			byte[] retValue = rs
@@ -1278,7 +1278,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public byte[] getBytes(String parameterName)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1294,7 +1294,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getClob(int)
 	 */
 	public Clob getClob(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			Clob retValue = rs
@@ -1310,7 +1310,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getClob(java.lang.String)
 	 */
 	public Clob getClob(String parameterName) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1326,7 +1326,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getDate(int)
 	 */
 	public Date getDate(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			Date retValue = rs
@@ -1343,7 +1343,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Date getDate(int parameterIndex, Calendar cal)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			Date retValue = rs.getDate(
@@ -1359,7 +1359,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getDate(java.lang.String)
 	 */
 	public Date getDate(String parameterName) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1377,7 +1377,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Date getDate(String parameterName, Calendar cal)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1394,7 +1394,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public double getDouble(int parameterIndex)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			double retValue = rs
@@ -1411,7 +1411,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public double getDouble(String parameterName)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1427,7 +1427,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getFloat(int)
 	 */
 	public float getFloat(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			float retValue = rs
@@ -1444,7 +1444,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public float getFloat(String parameterName)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1460,7 +1460,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getInt(int)
 	 */
 	public int getInt(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			int retValue = rs
@@ -1476,7 +1476,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getInt(java.lang.String)
 	 */
 	public int getInt(String parameterName) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1492,7 +1492,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getLong(int)
 	 */
 	public long getLong(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			long retValue = rs
@@ -1508,7 +1508,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getLong(java.lang.String)
 	 */
 	public long getLong(String parameterName) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1522,7 +1522,7 @@ public class CallableStatement extends PreparedStatement implements
 
 	protected int getNamedParamIndex(String paramName, boolean forOut)
 	throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.connection.getNoAccessToProcedureBodies()) {
 				throw SQLError.createSQLException("No access to parameters by name when connection has been configured not to access procedure bodies",
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
@@ -1571,7 +1571,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Object getObject(int parameterIndex)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			CallableStatementParam paramDescriptor = checkIsOutputParam(parameterIndex);
 	
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
@@ -1591,7 +1591,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Object getObject(int parameterIndex, Map<String, Class<?>> map)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			Object retVal = rs.getObject(
@@ -1608,7 +1608,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Object getObject(String parameterName)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1626,7 +1626,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Object getObject(String parameterName, Map<String, Class<?>> map)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1640,7 +1640,7 @@ public class CallableStatement extends PreparedStatement implements
 	
 	// JDBC-4.1
 	public <T> T getObject(int parameterIndex, Class<T> type) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			// remove cast once 1.5, 1.6 EOL'd
@@ -1654,7 +1654,7 @@ public class CallableStatement extends PreparedStatement implements
 	}
 	
 	public <T> T getObject(String parameterName, Class<T> type) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1677,7 +1677,7 @@ public class CallableStatement extends PreparedStatement implements
 	 *             parameters were returned.
 	 */
 	protected ResultSetInternalMethods getOutputParameters(int paramIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.outputParamWasNull = false;
 	
 			if (paramIndex == 1 && this.callingStoredFunction
@@ -1701,7 +1701,7 @@ public class CallableStatement extends PreparedStatement implements
 
 	public ParameterMetaData getParameterMetaData()
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.placeholderToParameterIndexMap == null) {
 				return (CallableStatementParamInfoJDBC3) this.paramInfo;
 			}
@@ -1714,7 +1714,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getRef(int)
 	 */
 	public Ref getRef(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			Ref retValue = rs
@@ -1730,7 +1730,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getRef(java.lang.String)
 	 */
 	public Ref getRef(String parameterName) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1746,7 +1746,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getShort(int)
 	 */
 	public short getShort(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			short retValue = rs
@@ -1763,7 +1763,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public short getShort(String parameterName)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1780,7 +1780,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public String getString(int parameterIndex)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			String retValue = rs
@@ -1797,7 +1797,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public String getString(String parameterName)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1813,7 +1813,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getTime(int)
 	 */
 	public Time getTime(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			Time retValue = rs
@@ -1830,7 +1830,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Time getTime(int parameterIndex, Calendar cal)
 			throws SQLException {
-			synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			Time retValue = rs.getTime(
@@ -1846,7 +1846,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getTime(java.lang.String)
 	 */
 	public Time getTime(String parameterName) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1864,7 +1864,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Time getTime(String parameterName, Calendar cal)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1881,7 +1881,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Timestamp getTimestamp(int parameterIndex)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			Timestamp retValue = rs
@@ -1898,7 +1898,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Timestamp getTimestamp(int parameterIndex, Calendar cal)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			Timestamp retValue = rs.getTimestamp(
@@ -1915,7 +1915,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Timestamp getTimestamp(String parameterName)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1933,7 +1933,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public Timestamp getTimestamp(String parameterName,
 			Calendar cal) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1950,7 +1950,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getURL(int)
 	 */
 	public URL getURL(int parameterIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(parameterIndex);
 	
 			URL retValue = rs
@@ -1966,7 +1966,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#getURL(java.lang.String)
 	 */
 	public URL getURL(String parameterName) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			ResultSetInternalMethods rs = getOutputParameters(0); // definitely not going to be
 			// from ?=
 	
@@ -1981,7 +1981,7 @@ public class CallableStatement extends PreparedStatement implements
 	protected int mapOutputParameterIndexToRsIndex(int paramIndex)
 			throws SQLException {
 
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.returnValueParam != null && paramIndex == 1) {
 				return 1;
 			}
@@ -2039,7 +2039,7 @@ public class CallableStatement extends PreparedStatement implements
 	 */
 	public void registerOutParameter(String parameterName,
 			int sqlType) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			registerOutParameter(getNamedParamIndex(parameterName, true), sqlType);
 		}
 	}
@@ -2070,7 +2070,7 @@ public class CallableStatement extends PreparedStatement implements
 	 *             if an error occurs.
 	 */
 	private void retrieveOutParams() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			int numParameters = this.paramInfo.numberOfParameters();
 	
 			this.parameterIndexToRsIndex = new int[numParameters];
@@ -2240,7 +2240,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * 
 	 */
 	private void setInOutParamsOnServer() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.paramInfo.numParameters > 0) {
 				for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter
 						.hasNext();) {
@@ -2372,7 +2372,7 @@ public class CallableStatement extends PreparedStatement implements
 	}
 
 	private void setOutParams() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.paramInfo.numParameters > 0) {
 				for (Iterator<CallableStatementParam> paramIter = this.paramInfo.iterator(); paramIter
 						.hasNext();) {
@@ -2480,7 +2480,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @see java.sql.CallableStatement#wasNull()
 	 */
 	public boolean wasNull() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.outputParamWasNull;
 		}
 	}
@@ -2579,7 +2579,7 @@ public class CallableStatement extends PreparedStatement implements
 	 * @throws SQLException
 	 */
 	private boolean checkReadOnlyProcedure() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.connection.getNoAccessToProcedureBodies()) {
 				return false;
 			}
@@ -2652,7 +2652,7 @@ public class CallableStatement extends PreparedStatement implements
 	}
 	
 	private boolean hasParametersView() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			try {
 				if (this.connection.versionMeetsMinimum(5, 5, 0)) {
 					java.sql.DatabaseMetaData dbmd1 = new DatabaseMetaDataUsingInfoSchema(this.connection, this.connection.getCatalog());

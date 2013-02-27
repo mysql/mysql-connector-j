@@ -47,8 +47,10 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return this.proxy;
 	}
 
-	protected synchronized MySQLConnection getActiveMySQLConnection() {
-		return this.proxy.currentConn;
+	protected MySQLConnection getActiveMySQLConnection() {
+		synchronized (this.proxy) {
+			return this.proxy.currentConn;
+		}
 	}
 
 	public LoadBalancedMySQLConnection(LoadBalancingConnectionProxy proxy) {
@@ -112,7 +114,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().clientPrepareStatement(sql);
 	}
 
-	public synchronized void close() throws SQLException {
+	public void close() throws SQLException {
 		getActiveMySQLConnection().close();
 	}
 
@@ -1808,7 +1810,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().getCalendarInstanceForSessionOrNew();
 	}
 
-	public synchronized Timer getCancelTimer() {
+	public Timer getCancelTimer() {
 
 		return getActiveMySQLConnection().getCancelTimer();
 	}
@@ -1969,12 +1971,12 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().getStatementInterceptorsInstances();
 	}
 
-	public synchronized int getTransactionIsolation() throws SQLException {
+	public int getTransactionIsolation() throws SQLException {
 
 		return getActiveMySQLConnection().getTransactionIsolation();
 	}
 
-	public synchronized Map<String, Class<?>> getTypeMap() throws SQLException {
+	public Map<String, Class<?>> getTypeMap() throws SQLException {
 
 		return getActiveMySQLConnection().getTypeMap();
 	}
@@ -2042,7 +2044,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		getActiveMySQLConnection().initializeSafeStatementInterceptors();
 	}
 
-	public synchronized boolean isAbonormallyLongQuery(long millisOrNanos) {
+	public boolean isAbonormallyLongQuery(long millisOrNanos) {
 
 		return getActiveMySQLConnection().isAbonormallyLongQuery(millisOrNanos);
 	}
@@ -2062,7 +2064,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().isInGlobalTx();
 	}
 
-	public synchronized boolean isMasterConnection() {
+	public boolean isMasterConnection() {
 
 		return getActiveMySQLConnection().isMasterConnection();
 	}
@@ -2092,7 +2094,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().isRunningOnJDK13();
 	}
 
-	public synchronized boolean isSameResource(Connection otherConnection) {
+	public boolean isSameResource(Connection otherConnection) {
 
 		return getActiveMySQLConnection().isSameResource(otherConnection);
 	}
@@ -2229,7 +2231,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 				numTablesAccessed);
 	}
 
-	public synchronized void reportQueryTime(long millisOrNanos) {
+	public void reportQueryTime(long millisOrNanos) {
 
 		getActiveMySQLConnection().reportQueryTime(millisOrNanos);
 	}
@@ -2306,7 +2308,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		getActiveMySQLConnection().setCatalog(catalog);
 	}
 
-	public synchronized void setFailedOver(boolean flag) {
+	public void setFailedOver(boolean flag) {
 
 		getActiveMySQLConnection().setFailedOver(flag);
 	}
@@ -2349,7 +2351,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().setSavepoint();
 	}
 
-	public synchronized Savepoint setSavepoint(String name) throws SQLException {
+	public Savepoint setSavepoint(String name) throws SQLException {
 		return getActiveMySQLConnection().setSavepoint(name);
 	}
 
@@ -2357,7 +2359,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		getActiveMySQLConnection().setStatementComment(comment);
 	}
 
-	public synchronized void setTransactionIsolation(int level)
+	public void setTransactionIsolation(int level)
 			throws SQLException {
 		getActiveMySQLConnection().setTransactionIsolation(level);
 	}
@@ -2544,7 +2546,7 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		getActiveMySQLConnection().setIncludeThreadNamesAsStatementComment(flag);
 	}
 
-	public synchronized boolean isServerLocal() throws SQLException {
+	public boolean isServerLocal() throws SQLException {
 		return getActiveMySQLConnection().isServerLocal();
 	}
 
@@ -2617,5 +2619,9 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 
 	public boolean getDisconnectOnExpiredPasswords() {
 		return getActiveMySQLConnection().getDisconnectOnExpiredPasswords();
+	}
+
+	public Object getConnectionMutex() {
+		return getActiveMySQLConnection().getConnectionMutex();
 	}
 }

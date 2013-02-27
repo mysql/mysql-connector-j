@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -102,7 +102,7 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 		throw e;
 	}
 
-	public Object invoke(Object proxy, Method method, Object[] args)
+	public synchronized Object invoke(Object proxy, Method method, Object[] args)
 			throws Throwable {
 		String methodName = method.getName();
 		
@@ -163,6 +163,10 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 	}
 
 	protected synchronized void pickNewConnection() throws SQLException {
+		if (this.isClosed && "Connection explicitly closed.".equals(this.closedReason)) {
+			return;
+		}
+
 		if (this.primaryHostPortSpec == null) {
 			this.primaryHostPortSpec = this.hostList.remove(0); // first connect
 		}

@@ -115,8 +115,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#clearWarnings()
 	 */
-	public synchronized void clearWarnings() throws SQLException {
-		this.currentConnection.clearWarnings();
+	public void clearWarnings() throws SQLException {
+		getCurrentConnection().clearWarnings();
 	}
 
 	/*
@@ -134,8 +134,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#commit()
 	 */
-	public synchronized void commit() throws SQLException {
-		this.currentConnection.commit();
+	public void commit() throws SQLException {
+		getCurrentConnection().commit();
 	}
 
 	/*
@@ -144,7 +144,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * @see java.sql.Connection#createStatement()
 	 */
 	public Statement createStatement() throws SQLException {
-		Statement stmt = this.currentConnection.createStatement();
+		Statement stmt = getCurrentConnection().createStatement();
 		((com.mysql.jdbc.Statement) stmt).setPingTarget(this);
 		
 		return stmt;
@@ -155,9 +155,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#createStatement(int, int)
 	 */
-	public synchronized Statement createStatement(int resultSetType,
+	public Statement createStatement(int resultSetType,
 			int resultSetConcurrency) throws SQLException {
-		Statement stmt = this.currentConnection.createStatement(resultSetType,
+		Statement stmt = getCurrentConnection().createStatement(resultSetType,
 				resultSetConcurrency);
 		
 		((com.mysql.jdbc.Statement) stmt).setPingTarget(this);
@@ -170,10 +170,10 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#createStatement(int, int, int)
 	 */
-	public synchronized Statement createStatement(int resultSetType,
+	public Statement createStatement(int resultSetType,
 			int resultSetConcurrency, int resultSetHoldability)
 			throws SQLException {
-		Statement stmt = this.currentConnection.createStatement(resultSetType,
+		Statement stmt = getCurrentConnection().createStatement(resultSetType,
 				resultSetConcurrency, resultSetHoldability);
 		
 		((com.mysql.jdbc.Statement) stmt).setPingTarget(this);
@@ -186,8 +186,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#getAutoCommit()
 	 */
-	public synchronized boolean getAutoCommit() throws SQLException {
-		return this.currentConnection.getAutoCommit();
+	public boolean getAutoCommit() throws SQLException {
+		return getCurrentConnection().getAutoCommit();
 	}
 
 	/*
@@ -195,8 +195,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#getCatalog()
 	 */
-	public synchronized String getCatalog() throws SQLException {
-		return this.currentConnection.getCatalog();
+	public String getCatalog() throws SQLException {
+		return getCurrentConnection().getCatalog();
 	}
 
 	public synchronized Connection getCurrentConnection() {
@@ -208,8 +208,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#getHoldability()
 	 */
-	public synchronized int getHoldability() throws SQLException {
-		return this.currentConnection.getHoldability();
+	public int getHoldability() throws SQLException {
+		return getCurrentConnection().getHoldability();
 	}
 
 	public synchronized Connection getMasterConnection() {
@@ -221,8 +221,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#getMetaData()
 	 */
-	public synchronized DatabaseMetaData getMetaData() throws SQLException {
-		return this.currentConnection.getMetaData();
+	public DatabaseMetaData getMetaData() throws SQLException {
+		return getCurrentConnection().getMetaData();
 	}
 
 	public synchronized Connection getSlavesConnection() {
@@ -234,8 +234,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#getTransactionIsolation()
 	 */
-	public synchronized int getTransactionIsolation() throws SQLException {
-		return this.currentConnection.getTransactionIsolation();
+	public int getTransactionIsolation() throws SQLException {
+		return getCurrentConnection().getTransactionIsolation();
 	}
 
 	/*
@@ -243,8 +243,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#getTypeMap()
 	 */
-	public synchronized Map<String, Class<?>> getTypeMap() throws SQLException {
-		return this.currentConnection.getTypeMap();
+	public Map<String, Class<?>> getTypeMap() throws SQLException {
+		return getCurrentConnection().getTypeMap();
 	}
 
 	/*
@@ -252,8 +252,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#getWarnings()
 	 */
-	public synchronized SQLWarning getWarnings() throws SQLException {
-		return this.currentConnection.getWarnings();
+	public SQLWarning getWarnings() throws SQLException {
+		return getCurrentConnection().getWarnings();
 	}
 
 	/*
@@ -261,8 +261,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#isClosed()
 	 */
-	public synchronized boolean isClosed() throws SQLException {
-		return this.currentConnection.isClosed();
+	public boolean isClosed() throws SQLException {
+		return getCurrentConnection().isClosed();
 	}
 
 	/*
@@ -279,8 +279,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#nativeSQL(java.lang.String)
 	 */
-	public synchronized String nativeSQL(String sql) throws SQLException {
-		return this.currentConnection.nativeSQL(sql);
+	public String nativeSQL(String sql) throws SQLException {
+		return getCurrentConnection().nativeSQL(sql);
 	}
 
 	/*
@@ -289,7 +289,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * @see java.sql.Connection#prepareCall(java.lang.String)
 	 */
 	public CallableStatement prepareCall(String sql) throws SQLException {
-		return this.currentConnection.prepareCall(sql);
+		return getCurrentConnection().prepareCall(sql);
 	}
 
 	/*
@@ -297,9 +297,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#prepareCall(java.lang.String, int, int)
 	 */
-	public synchronized CallableStatement prepareCall(String sql,
+	public CallableStatement prepareCall(String sql,
 			int resultSetType, int resultSetConcurrency) throws SQLException {
-		return this.currentConnection.prepareCall(sql, resultSetType,
+		return getCurrentConnection().prepareCall(sql, resultSetType,
 				resultSetConcurrency);
 	}
 
@@ -308,10 +308,10 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#prepareCall(java.lang.String, int, int, int)
 	 */
-	public synchronized CallableStatement prepareCall(String sql,
+	public CallableStatement prepareCall(String sql,
 			int resultSetType, int resultSetConcurrency,
 			int resultSetHoldability) throws SQLException {
-		return this.currentConnection.prepareCall(sql, resultSetType,
+		return getCurrentConnection().prepareCall(sql, resultSetType,
 				resultSetConcurrency, resultSetHoldability);
 	}
 
@@ -321,7 +321,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * @see java.sql.Connection#prepareStatement(java.lang.String)
 	 */
 	public PreparedStatement prepareStatement(String sql) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.prepareStatement(sql);
+		PreparedStatement pstmt = getCurrentConnection().prepareStatement(sql);
 		
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
@@ -333,9 +333,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#prepareStatement(java.lang.String, int)
 	 */
-	public synchronized PreparedStatement prepareStatement(String sql,
+	public PreparedStatement prepareStatement(String sql,
 			int autoGeneratedKeys) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.prepareStatement(sql, autoGeneratedKeys);
+		PreparedStatement pstmt = getCurrentConnection().prepareStatement(sql, autoGeneratedKeys);
 
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
@@ -347,9 +347,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#prepareStatement(java.lang.String, int, int)
 	 */
-	public synchronized PreparedStatement prepareStatement(String sql,
+	public PreparedStatement prepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.prepareStatement(sql, resultSetType,
+		PreparedStatement pstmt = getCurrentConnection().prepareStatement(sql, resultSetType,
 				resultSetConcurrency);
 		
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
@@ -363,10 +363,10 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * @see java.sql.Connection#prepareStatement(java.lang.String, int, int,
 	 *      int)
 	 */
-	public synchronized PreparedStatement prepareStatement(String sql,
+	public PreparedStatement prepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency,
 			int resultSetHoldability) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.prepareStatement(sql, resultSetType,
+		PreparedStatement pstmt = getCurrentConnection().prepareStatement(sql, resultSetType,
 				resultSetConcurrency, resultSetHoldability);
 
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
@@ -379,9 +379,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#prepareStatement(java.lang.String, int[])
 	 */
-	public synchronized PreparedStatement prepareStatement(String sql,
+	public PreparedStatement prepareStatement(String sql,
 			int[] columnIndexes) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.prepareStatement(sql, columnIndexes);
+		PreparedStatement pstmt = getCurrentConnection().prepareStatement(sql, columnIndexes);
 		
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
@@ -394,9 +394,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * @see java.sql.Connection#prepareStatement(java.lang.String,
 	 *      java.lang.String[])
 	 */
-	public synchronized PreparedStatement prepareStatement(String sql,
+	public PreparedStatement prepareStatement(String sql,
 			String[] columnNames) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.prepareStatement(sql, columnNames);
+		PreparedStatement pstmt = getCurrentConnection().prepareStatement(sql, columnNames);
 
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
@@ -408,9 +408,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#releaseSavepoint(java.sql.Savepoint)
 	 */
-	public synchronized void releaseSavepoint(Savepoint savepoint)
+	public void releaseSavepoint(Savepoint savepoint)
 			throws SQLException {
-		this.currentConnection.releaseSavepoint(savepoint);
+		getCurrentConnection().releaseSavepoint(savepoint);
 	}
 
 	/*
@@ -418,8 +418,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#rollback()
 	 */
-	public synchronized void rollback() throws SQLException {
-		this.currentConnection.rollback();
+	public void rollback() throws SQLException {
+		getCurrentConnection().rollback();
 	}
 
 	/*
@@ -427,8 +427,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#rollback(java.sql.Savepoint)
 	 */
-	public synchronized void rollback(Savepoint savepoint) throws SQLException {
-		this.currentConnection.rollback(savepoint);
+	public void rollback(Savepoint savepoint) throws SQLException {
+		getCurrentConnection().rollback(savepoint);
 	}
 
 	/*
@@ -436,9 +436,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#setAutoCommit(boolean)
 	 */
-	public synchronized void setAutoCommit(boolean autoCommit)
+	public void setAutoCommit(boolean autoCommit)
 			throws SQLException {
-		this.currentConnection.setAutoCommit(autoCommit);
+		getCurrentConnection().setAutoCommit(autoCommit);
 	}
 
 	/*
@@ -446,8 +446,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#setCatalog(java.lang.String)
 	 */
-	public synchronized void setCatalog(String catalog) throws SQLException {
-		this.currentConnection.setCatalog(catalog);
+	public void setCatalog(String catalog) throws SQLException {
+		getCurrentConnection().setCatalog(catalog);
 	}
 
 	/*
@@ -455,9 +455,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#setHoldability(int)
 	 */
-	public synchronized void setHoldability(int holdability)
+	public void setHoldability(int holdability)
 			throws SQLException {
-		this.currentConnection.setHoldability(holdability);
+		getCurrentConnection().setHoldability(holdability);
 	}
 
 	/*
@@ -482,8 +482,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#setSavepoint()
 	 */
-	public synchronized Savepoint setSavepoint() throws SQLException {
-		return this.currentConnection.setSavepoint();
+	public Savepoint setSavepoint() throws SQLException {
+		return getCurrentConnection().setSavepoint();
 	}
 
 	/*
@@ -491,8 +491,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#setSavepoint(java.lang.String)
 	 */
-	public synchronized Savepoint setSavepoint(String name) throws SQLException {
-		return this.currentConnection.setSavepoint(name);
+	public Savepoint setSavepoint(String name) throws SQLException {
+		return getCurrentConnection().setSavepoint(name);
 	}
 
 	/*
@@ -500,9 +500,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * 
 	 * @see java.sql.Connection#setTransactionIsolation(int)
 	 */
-	public synchronized void setTransactionIsolation(int level)
+	public void setTransactionIsolation(int level)
 			throws SQLException {
-		this.currentConnection.setTransactionIsolation(level);
+		getCurrentConnection().setTransactionIsolation(level);
 	}
 
 	// For testing
@@ -579,109 +579,109 @@ public class ReplicationConnection implements Connection, PingTarget {
 		
 	}
 
-	public synchronized PreparedStatement clientPrepareStatement(String sql)
+	public PreparedStatement clientPrepareStatement(String sql)
 			throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql);
+		PreparedStatement pstmt = getCurrentConnection().clientPrepareStatement(sql);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized PreparedStatement clientPrepareStatement(String sql,
+	public PreparedStatement clientPrepareStatement(String sql,
 			int autoGenKeyIndex) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql, autoGenKeyIndex);
+		PreparedStatement pstmt = getCurrentConnection().clientPrepareStatement(sql, autoGenKeyIndex);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized PreparedStatement clientPrepareStatement(String sql,
+	public PreparedStatement clientPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql, resultSetType, resultSetConcurrency);
+		PreparedStatement pstmt = getCurrentConnection().clientPrepareStatement(sql, resultSetType, resultSetConcurrency);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized PreparedStatement clientPrepareStatement(String sql,
+	public PreparedStatement clientPrepareStatement(String sql,
 			int[] autoGenKeyIndexes) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql, autoGenKeyIndexes);
+		PreparedStatement pstmt = getCurrentConnection().clientPrepareStatement(sql, autoGenKeyIndexes);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized PreparedStatement clientPrepareStatement(String sql,
+	public PreparedStatement clientPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency,
 			int resultSetHoldability) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+		PreparedStatement pstmt = getCurrentConnection().clientPrepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized PreparedStatement clientPrepareStatement(String sql,
+	public PreparedStatement clientPrepareStatement(String sql,
 			String[] autoGenKeyColNames) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.clientPrepareStatement(sql, autoGenKeyColNames);
+		PreparedStatement pstmt = getCurrentConnection().clientPrepareStatement(sql, autoGenKeyColNames);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized int getActiveStatementCount() {
-		return this.currentConnection.getActiveStatementCount();
+	public int getActiveStatementCount() {
+		return getCurrentConnection().getActiveStatementCount();
 	}
 
-	public synchronized long getIdleFor() {
-		return this.currentConnection.getIdleFor();
+	public long getIdleFor() {
+		return getCurrentConnection().getIdleFor();
 	}
 
-	public synchronized Log getLog() throws SQLException {
-		return this.currentConnection.getLog();
+	public Log getLog() throws SQLException {
+		return getCurrentConnection().getLog();
 	}
 
-	public synchronized String getServerCharacterEncoding() {
-		return this.currentConnection.getServerCharacterEncoding();
+	public String getServerCharacterEncoding() {
+		return getCurrentConnection().getServerCharacterEncoding();
 	}
 
-	public synchronized TimeZone getServerTimezoneTZ() {
-		return this.currentConnection.getServerTimezoneTZ();
+	public TimeZone getServerTimezoneTZ() {
+		return getCurrentConnection().getServerTimezoneTZ();
 	}
 
-	public synchronized String getStatementComment() {
-		return this.currentConnection.getStatementComment();
+	public String getStatementComment() {
+		return getCurrentConnection().getStatementComment();
 	}
 
-	public synchronized boolean hasTriedMaster() {
-		return this.currentConnection.hasTriedMaster();
+	public boolean hasTriedMaster() {
+		return getCurrentConnection().hasTriedMaster();
 	}
 
-	public synchronized void initializeExtension(Extension ex) throws SQLException {
-		this.currentConnection.initializeExtension(ex);
+	public void initializeExtension(Extension ex) throws SQLException {
+		getCurrentConnection().initializeExtension(ex);
 	}
 
-	public synchronized boolean isAbonormallyLongQuery(long millisOrNanos) {
-		return this.currentConnection.isAbonormallyLongQuery(millisOrNanos);
+	public boolean isAbonormallyLongQuery(long millisOrNanos) {
+		return getCurrentConnection().isAbonormallyLongQuery(millisOrNanos);
 	}
 
-	public synchronized boolean isInGlobalTx() {
-		return this.currentConnection.isInGlobalTx();
+	public boolean isInGlobalTx() {
+		return getCurrentConnection().isInGlobalTx();
 	}
 
-	public synchronized boolean isMasterConnection() {
-		return this.currentConnection.isMasterConnection();
+	public boolean isMasterConnection() {
+		return getCurrentConnection().isMasterConnection();
 	}
 
-	public synchronized boolean isNoBackslashEscapesSet() {
-		return this.currentConnection.isNoBackslashEscapesSet();
+	public boolean isNoBackslashEscapesSet() {
+		return getCurrentConnection().isNoBackslashEscapesSet();
 	}
 
-	public synchronized boolean lowerCaseTableNames() {
-		return this.currentConnection.lowerCaseTableNames();
+	public boolean lowerCaseTableNames() {
+		return getCurrentConnection().lowerCaseTableNames();
 	}
 
-	public synchronized boolean parserKnowsUnicode() {
-		return this.currentConnection.parserKnowsUnicode();
+	public boolean parserKnowsUnicode() {
+		return getCurrentConnection().parserKnowsUnicode();
 	}
 
 	public synchronized void ping() throws SQLException {
@@ -689,69 +689,69 @@ public class ReplicationConnection implements Connection, PingTarget {
 		this.slavesConnection.ping();
 	}
 
-	public synchronized void reportQueryTime(long millisOrNanos) {
-		this.currentConnection.reportQueryTime(millisOrNanos);
+	public void reportQueryTime(long millisOrNanos) {
+		getCurrentConnection().reportQueryTime(millisOrNanos);
 	}
 
-	public synchronized void resetServerState() throws SQLException {
-		this.currentConnection.resetServerState();
+	public void resetServerState() throws SQLException {
+		getCurrentConnection().resetServerState();
 	}
 
-	public synchronized PreparedStatement serverPrepareStatement(String sql)
+	public PreparedStatement serverPrepareStatement(String sql)
 			throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql);
+		PreparedStatement pstmt = getCurrentConnection().serverPrepareStatement(sql);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized PreparedStatement serverPrepareStatement(String sql,
+	public PreparedStatement serverPrepareStatement(String sql,
 			int autoGenKeyIndex) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql, autoGenKeyIndex);
+		PreparedStatement pstmt = getCurrentConnection().serverPrepareStatement(sql, autoGenKeyIndex);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized PreparedStatement serverPrepareStatement(String sql,
+	public PreparedStatement serverPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql, resultSetType, resultSetConcurrency);
+		PreparedStatement pstmt = getCurrentConnection().serverPrepareStatement(sql, resultSetType, resultSetConcurrency);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized PreparedStatement serverPrepareStatement(String sql,
+	public PreparedStatement serverPrepareStatement(String sql,
 			int resultSetType, int resultSetConcurrency,
 			int resultSetHoldability) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+		PreparedStatement pstmt = getCurrentConnection().serverPrepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized PreparedStatement serverPrepareStatement(String sql,
+	public PreparedStatement serverPrepareStatement(String sql,
 			int[] autoGenKeyIndexes) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql, autoGenKeyIndexes);
+		PreparedStatement pstmt = getCurrentConnection().serverPrepareStatement(sql, autoGenKeyIndexes);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized PreparedStatement serverPrepareStatement(String sql,
+	public PreparedStatement serverPrepareStatement(String sql,
 			String[] autoGenKeyColNames) throws SQLException {
-		PreparedStatement pstmt = this.currentConnection.serverPrepareStatement(sql, autoGenKeyColNames);
+		PreparedStatement pstmt = getCurrentConnection().serverPrepareStatement(sql, autoGenKeyColNames);
 		((com.mysql.jdbc.Statement) pstmt).setPingTarget(this);
 		
 		return pstmt;
 	}
 
-	public synchronized void setFailedOver(boolean flag) {
-		this.currentConnection.setFailedOver(flag);
+	public void setFailedOver(boolean flag) {
+		getCurrentConnection().setFailedOver(flag);
 	}
 
-	public synchronized void setPreferSlaveDuringFailover(boolean flag) {
-		this.currentConnection.setPreferSlaveDuringFailover(flag);
+	public void setPreferSlaveDuringFailover(boolean flag) {
+		getCurrentConnection().setPreferSlaveDuringFailover(flag);
 	}
 
 	public synchronized void setStatementComment(String comment) {
@@ -759,1579 +759,1579 @@ public class ReplicationConnection implements Connection, PingTarget {
 		this.slavesConnection.setStatementComment(comment);
 	}
 
-	public synchronized void shutdownServer() throws SQLException {
-		this.currentConnection.shutdownServer();
+	public void shutdownServer() throws SQLException {
+		getCurrentConnection().shutdownServer();
 	}
 
-	public synchronized boolean supportsIsolationLevel() {
-		return this.currentConnection.supportsIsolationLevel();
+	public boolean supportsIsolationLevel() {
+		return getCurrentConnection().supportsIsolationLevel();
 	}
 
-	public synchronized boolean supportsQuotedIdentifiers() {
-		return this.currentConnection.supportsQuotedIdentifiers();
+	public boolean supportsQuotedIdentifiers() {
+		return getCurrentConnection().supportsQuotedIdentifiers();
 	}
 
-	public synchronized boolean supportsTransactions() {
-		return this.currentConnection.supportsTransactions();
+	public boolean supportsTransactions() {
+		return getCurrentConnection().supportsTransactions();
 	}
 
-	public synchronized boolean versionMeetsMinimum(int major, int minor, int subminor)
+	public boolean versionMeetsMinimum(int major, int minor, int subminor)
 			throws SQLException {
-		return this.currentConnection.versionMeetsMinimum(major, minor, subminor);
+		return getCurrentConnection().versionMeetsMinimum(major, minor, subminor);
 	}
 
-	public synchronized String exposeAsXml() throws SQLException {
-		return this.currentConnection.exposeAsXml();
+	public String exposeAsXml() throws SQLException {
+		return getCurrentConnection().exposeAsXml();
 	}
 
-	public synchronized boolean getAllowLoadLocalInfile() {
-		return this.currentConnection.getAllowLoadLocalInfile();
+	public boolean getAllowLoadLocalInfile() {
+		return getCurrentConnection().getAllowLoadLocalInfile();
 	}
 
-	public synchronized boolean getAllowMultiQueries() {
-		return this.currentConnection.getAllowMultiQueries();
+	public boolean getAllowMultiQueries() {
+		return getCurrentConnection().getAllowMultiQueries();
 	}
 
-	public synchronized boolean getAllowNanAndInf() {
-		return this.currentConnection.getAllowNanAndInf();
+	public boolean getAllowNanAndInf() {
+		return getCurrentConnection().getAllowNanAndInf();
 	}
 
-	public synchronized boolean getAllowUrlInLocalInfile() {
-		return this.currentConnection.getAllowUrlInLocalInfile();
+	public boolean getAllowUrlInLocalInfile() {
+		return getCurrentConnection().getAllowUrlInLocalInfile();
 	}
 
-	public synchronized boolean getAlwaysSendSetIsolation() {
-		return this.currentConnection.getAlwaysSendSetIsolation();
+	public boolean getAlwaysSendSetIsolation() {
+		return getCurrentConnection().getAlwaysSendSetIsolation();
 	}
 
-	public synchronized boolean getAutoClosePStmtStreams() {
-		return this.currentConnection.getAutoClosePStmtStreams();
+	public boolean getAutoClosePStmtStreams() {
+		return getCurrentConnection().getAutoClosePStmtStreams();
 	}
 
-	public synchronized boolean getAutoDeserialize() {
-		return this.currentConnection.getAutoDeserialize();
+	public boolean getAutoDeserialize() {
+		return getCurrentConnection().getAutoDeserialize();
 	}
 
-	public synchronized boolean getAutoGenerateTestcaseScript() {
-		return this.currentConnection.getAutoGenerateTestcaseScript();
+	public boolean getAutoGenerateTestcaseScript() {
+		return getCurrentConnection().getAutoGenerateTestcaseScript();
 	}
 
-	public synchronized boolean getAutoReconnectForPools() {
-		return this.currentConnection.getAutoReconnectForPools();
+	public boolean getAutoReconnectForPools() {
+		return getCurrentConnection().getAutoReconnectForPools();
 	}
 
-	public synchronized boolean getAutoSlowLog() {
-		return this.currentConnection.getAutoSlowLog();
+	public boolean getAutoSlowLog() {
+		return getCurrentConnection().getAutoSlowLog();
 	}
 
-	public synchronized int getBlobSendChunkSize() {
-		return this.currentConnection.getBlobSendChunkSize();
+	public int getBlobSendChunkSize() {
+		return getCurrentConnection().getBlobSendChunkSize();
 	}
 
-	public synchronized boolean getBlobsAreStrings() {
-		return this.currentConnection.getBlobsAreStrings();
+	public boolean getBlobsAreStrings() {
+		return getCurrentConnection().getBlobsAreStrings();
 	}
 
-	public synchronized boolean getCacheCallableStatements() {
-		return this.currentConnection.getCacheCallableStatements();
+	public boolean getCacheCallableStatements() {
+		return getCurrentConnection().getCacheCallableStatements();
 	}
 
-	public synchronized boolean getCacheCallableStmts() {
-		return this.currentConnection.getCacheCallableStmts();
+	public boolean getCacheCallableStmts() {
+		return getCurrentConnection().getCacheCallableStmts();
 	}
 
-	public synchronized boolean getCachePrepStmts() {
-		return this.currentConnection.getCachePrepStmts();
+	public boolean getCachePrepStmts() {
+		return getCurrentConnection().getCachePrepStmts();
 	}
 
-	public synchronized boolean getCachePreparedStatements() {
-		return this.currentConnection.getCachePreparedStatements();
+	public boolean getCachePreparedStatements() {
+		return getCurrentConnection().getCachePreparedStatements();
 	}
 
-	public synchronized boolean getCacheResultSetMetadata() {
-		return this.currentConnection.getCacheResultSetMetadata();
+	public boolean getCacheResultSetMetadata() {
+		return getCurrentConnection().getCacheResultSetMetadata();
 	}
 
-	public synchronized boolean getCacheServerConfiguration() {
-		return this.currentConnection.getCacheServerConfiguration();
+	public boolean getCacheServerConfiguration() {
+		return getCurrentConnection().getCacheServerConfiguration();
 	}
 
-	public synchronized int getCallableStatementCacheSize() {
-		return this.currentConnection.getCallableStatementCacheSize();
+	public int getCallableStatementCacheSize() {
+		return getCurrentConnection().getCallableStatementCacheSize();
 	}
 
-	public synchronized int getCallableStmtCacheSize() {
-		return this.currentConnection.getCallableStmtCacheSize();
+	public int getCallableStmtCacheSize() {
+		return getCurrentConnection().getCallableStmtCacheSize();
 	}
 
-	public synchronized boolean getCapitalizeTypeNames() {
-		return this.currentConnection.getCapitalizeTypeNames();
+	public boolean getCapitalizeTypeNames() {
+		return getCurrentConnection().getCapitalizeTypeNames();
 	}
 
-	public synchronized String getCharacterSetResults() {
-		return this.currentConnection.getCharacterSetResults();
+	public String getCharacterSetResults() {
+		return getCurrentConnection().getCharacterSetResults();
 	}
 
-	public synchronized String getClientCertificateKeyStorePassword() {
-		return this.currentConnection.getClientCertificateKeyStorePassword();
+	public String getClientCertificateKeyStorePassword() {
+		return getCurrentConnection().getClientCertificateKeyStorePassword();
 	}
 
-	public synchronized String getClientCertificateKeyStoreType() {
-		return this.currentConnection.getClientCertificateKeyStoreType();
+	public String getClientCertificateKeyStoreType() {
+		return getCurrentConnection().getClientCertificateKeyStoreType();
 	}
 
-	public synchronized String getClientCertificateKeyStoreUrl() {
-		return this.currentConnection.getClientCertificateKeyStoreUrl();
+	public String getClientCertificateKeyStoreUrl() {
+		return getCurrentConnection().getClientCertificateKeyStoreUrl();
 	}
 
-	public synchronized String getClientInfoProvider() {
-		return this.currentConnection.getClientInfoProvider();
+	public String getClientInfoProvider() {
+		return getCurrentConnection().getClientInfoProvider();
 	}
 
-	public synchronized String getClobCharacterEncoding() {
-		return this.currentConnection.getClobCharacterEncoding();
+	public String getClobCharacterEncoding() {
+		return getCurrentConnection().getClobCharacterEncoding();
 	}
 
-	public synchronized boolean getClobberStreamingResults() {
-		return this.currentConnection.getClobberStreamingResults();
+	public boolean getClobberStreamingResults() {
+		return getCurrentConnection().getClobberStreamingResults();
 	}
 
-	public synchronized int getConnectTimeout() {
-		return this.currentConnection.getConnectTimeout();
+	public int getConnectTimeout() {
+		return getCurrentConnection().getConnectTimeout();
 	}
 
-	public synchronized String getConnectionCollation() {
-		return this.currentConnection.getConnectionCollation();
+	public String getConnectionCollation() {
+		return getCurrentConnection().getConnectionCollation();
 	}
 
-	public synchronized String getConnectionLifecycleInterceptors() {
-		return this.currentConnection.getConnectionLifecycleInterceptors();
+	public String getConnectionLifecycleInterceptors() {
+		return getCurrentConnection().getConnectionLifecycleInterceptors();
 	}
 
-	public synchronized boolean getContinueBatchOnError() {
-		return this.currentConnection.getContinueBatchOnError();
+	public boolean getContinueBatchOnError() {
+		return getCurrentConnection().getContinueBatchOnError();
 	}
 
-	public synchronized boolean getCreateDatabaseIfNotExist() {
-		return this.currentConnection.getCreateDatabaseIfNotExist();
+	public boolean getCreateDatabaseIfNotExist() {
+		return getCurrentConnection().getCreateDatabaseIfNotExist();
 	}
 
-	public synchronized int getDefaultFetchSize() {
-		return this.currentConnection.getDefaultFetchSize();
+	public int getDefaultFetchSize() {
+		return getCurrentConnection().getDefaultFetchSize();
 	}
 
-	public synchronized boolean getDontTrackOpenResources() {
-		return this.currentConnection.getDontTrackOpenResources();
+	public boolean getDontTrackOpenResources() {
+		return getCurrentConnection().getDontTrackOpenResources();
 	}
 
-	public synchronized boolean getDumpMetadataOnColumnNotFound() {
-		return this.currentConnection.getDumpMetadataOnColumnNotFound();
+	public boolean getDumpMetadataOnColumnNotFound() {
+		return getCurrentConnection().getDumpMetadataOnColumnNotFound();
 	}
 
-	public synchronized boolean getDumpQueriesOnException() {
-		return this.currentConnection.getDumpQueriesOnException();
+	public boolean getDumpQueriesOnException() {
+		return getCurrentConnection().getDumpQueriesOnException();
 	}
 
-	public synchronized boolean getDynamicCalendars() {
-		return this.currentConnection.getDynamicCalendars();
+	public boolean getDynamicCalendars() {
+		return getCurrentConnection().getDynamicCalendars();
 	}
 
-	public synchronized boolean getElideSetAutoCommits() {
-		return this.currentConnection.getElideSetAutoCommits();
+	public boolean getElideSetAutoCommits() {
+		return getCurrentConnection().getElideSetAutoCommits();
 	}
 
-	public synchronized boolean getEmptyStringsConvertToZero() {
-		return this.currentConnection.getEmptyStringsConvertToZero();
+	public boolean getEmptyStringsConvertToZero() {
+		return getCurrentConnection().getEmptyStringsConvertToZero();
 	}
 
-	public synchronized boolean getEmulateLocators() {
-		return this.currentConnection.getEmulateLocators();
+	public boolean getEmulateLocators() {
+		return getCurrentConnection().getEmulateLocators();
 	}
 
-	public synchronized boolean getEmulateUnsupportedPstmts() {
-		return this.currentConnection.getEmulateUnsupportedPstmts();
+	public boolean getEmulateUnsupportedPstmts() {
+		return getCurrentConnection().getEmulateUnsupportedPstmts();
 	}
 
-	public synchronized boolean getEnablePacketDebug() {
-		return this.currentConnection.getEnablePacketDebug();
+	public boolean getEnablePacketDebug() {
+		return getCurrentConnection().getEnablePacketDebug();
 	}
 
-	public synchronized boolean getEnableQueryTimeouts() {
-		return this.currentConnection.getEnableQueryTimeouts();
+	public boolean getEnableQueryTimeouts() {
+		return getCurrentConnection().getEnableQueryTimeouts();
 	}
 
-	public synchronized String getEncoding() {
-		return this.currentConnection.getEncoding();
+	public String getEncoding() {
+		return getCurrentConnection().getEncoding();
 	}
 
-	public synchronized boolean getExplainSlowQueries() {
-		return this.currentConnection.getExplainSlowQueries();
+	public boolean getExplainSlowQueries() {
+		return getCurrentConnection().getExplainSlowQueries();
 	}
 
-	public synchronized boolean getFailOverReadOnly() {
-		return this.currentConnection.getFailOverReadOnly();
+	public boolean getFailOverReadOnly() {
+		return getCurrentConnection().getFailOverReadOnly();
 	}
 
-	public synchronized boolean getFunctionsNeverReturnBlobs() {
-		return this.currentConnection.getFunctionsNeverReturnBlobs();
+	public boolean getFunctionsNeverReturnBlobs() {
+		return getCurrentConnection().getFunctionsNeverReturnBlobs();
 	}
 
-	public synchronized boolean getGatherPerfMetrics() {
-		return this.currentConnection.getGatherPerfMetrics();
+	public boolean getGatherPerfMetrics() {
+		return getCurrentConnection().getGatherPerfMetrics();
 	}
 
-	public synchronized boolean getGatherPerformanceMetrics() {
-		return this.currentConnection.getGatherPerformanceMetrics();
+	public boolean getGatherPerformanceMetrics() {
+		return getCurrentConnection().getGatherPerformanceMetrics();
 	}
 
-	public synchronized boolean getGenerateSimpleParameterMetadata() {
-		return this.currentConnection.getGenerateSimpleParameterMetadata();
+	public boolean getGenerateSimpleParameterMetadata() {
+		return getCurrentConnection().getGenerateSimpleParameterMetadata();
 	}
 
-	public synchronized boolean getHoldResultsOpenOverStatementClose() {
-		return this.currentConnection.getHoldResultsOpenOverStatementClose();
+	public boolean getHoldResultsOpenOverStatementClose() {
+		return getCurrentConnection().getHoldResultsOpenOverStatementClose();
 	}
 
-	public synchronized boolean getIgnoreNonTxTables() {
-		return this.currentConnection.getIgnoreNonTxTables();
+	public boolean getIgnoreNonTxTables() {
+		return getCurrentConnection().getIgnoreNonTxTables();
 	}
 
-	public synchronized boolean getIncludeInnodbStatusInDeadlockExceptions() {
-		return this.currentConnection.getIncludeInnodbStatusInDeadlockExceptions();
+	public boolean getIncludeInnodbStatusInDeadlockExceptions() {
+		return getCurrentConnection().getIncludeInnodbStatusInDeadlockExceptions();
 	}
 
-	public synchronized int getInitialTimeout() {
-		return this.currentConnection.getInitialTimeout();
+	public int getInitialTimeout() {
+		return getCurrentConnection().getInitialTimeout();
 	}
 
-	public synchronized boolean getInteractiveClient() {
-		return this.currentConnection.getInteractiveClient();
+	public boolean getInteractiveClient() {
+		return getCurrentConnection().getInteractiveClient();
 	}
 
-	public synchronized boolean getIsInteractiveClient() {
-		return this.currentConnection.getIsInteractiveClient();
+	public boolean getIsInteractiveClient() {
+		return getCurrentConnection().getIsInteractiveClient();
 	}
 
-	public synchronized boolean getJdbcCompliantTruncation() {
-		return this.currentConnection.getJdbcCompliantTruncation();
+	public boolean getJdbcCompliantTruncation() {
+		return getCurrentConnection().getJdbcCompliantTruncation();
 	}
 
-	public synchronized boolean getJdbcCompliantTruncationForReads() {
-		return this.currentConnection.getJdbcCompliantTruncationForReads();
+	public boolean getJdbcCompliantTruncationForReads() {
+		return getCurrentConnection().getJdbcCompliantTruncationForReads();
 	}
 
-	public synchronized String getLargeRowSizeThreshold() {
-		return this.currentConnection.getLargeRowSizeThreshold();
+	public String getLargeRowSizeThreshold() {
+		return getCurrentConnection().getLargeRowSizeThreshold();
 	}
 
-	public synchronized String getLoadBalanceStrategy() {
-		return this.currentConnection.getLoadBalanceStrategy();
+	public String getLoadBalanceStrategy() {
+		return getCurrentConnection().getLoadBalanceStrategy();
 	}
 
-	public synchronized String getLocalSocketAddress() {
-		return this.currentConnection.getLocalSocketAddress();
+	public String getLocalSocketAddress() {
+		return getCurrentConnection().getLocalSocketAddress();
 	}
 
-	public synchronized int getLocatorFetchBufferSize() {
-		return this.currentConnection.getLocatorFetchBufferSize();
+	public int getLocatorFetchBufferSize() {
+		return getCurrentConnection().getLocatorFetchBufferSize();
 	}
 
-	public synchronized boolean getLogSlowQueries() {
-		return this.currentConnection.getLogSlowQueries();
+	public boolean getLogSlowQueries() {
+		return getCurrentConnection().getLogSlowQueries();
 	}
 
-	public synchronized boolean getLogXaCommands() {
-		return this.currentConnection.getLogXaCommands();
+	public boolean getLogXaCommands() {
+		return getCurrentConnection().getLogXaCommands();
 	}
 
-	public synchronized String getLogger() {
-		return this.currentConnection.getLogger();
+	public String getLogger() {
+		return getCurrentConnection().getLogger();
 	}
 
-	public synchronized String getLoggerClassName() {
-		return this.currentConnection.getLoggerClassName();
+	public String getLoggerClassName() {
+		return getCurrentConnection().getLoggerClassName();
 	}
 
-	public synchronized boolean getMaintainTimeStats() {
-		return this.currentConnection.getMaintainTimeStats();
+	public boolean getMaintainTimeStats() {
+		return getCurrentConnection().getMaintainTimeStats();
 	}
 
-	public synchronized int getMaxQuerySizeToLog() {
-		return this.currentConnection.getMaxQuerySizeToLog();
+	public int getMaxQuerySizeToLog() {
+		return getCurrentConnection().getMaxQuerySizeToLog();
 	}
 
-	public synchronized int getMaxReconnects() {
-		return this.currentConnection.getMaxReconnects();
+	public int getMaxReconnects() {
+		return getCurrentConnection().getMaxReconnects();
 	}
 
-	public synchronized int getMaxRows() {
-		return this.currentConnection.getMaxRows();
+	public int getMaxRows() {
+		return getCurrentConnection().getMaxRows();
 	}
 
-	public synchronized int getMetadataCacheSize() {
-		return this.currentConnection.getMetadataCacheSize();
+	public int getMetadataCacheSize() {
+		return getCurrentConnection().getMetadataCacheSize();
 	}
 
-	public synchronized int getNetTimeoutForStreamingResults() {
-		return this.currentConnection.getNetTimeoutForStreamingResults();
+	public int getNetTimeoutForStreamingResults() {
+		return getCurrentConnection().getNetTimeoutForStreamingResults();
 	}
 
-	public synchronized boolean getNoAccessToProcedureBodies() {
-		return this.currentConnection.getNoAccessToProcedureBodies();
+	public boolean getNoAccessToProcedureBodies() {
+		return getCurrentConnection().getNoAccessToProcedureBodies();
 	}
 
-	public synchronized boolean getNoDatetimeStringSync() {
-		return this.currentConnection.getNoDatetimeStringSync();
+	public boolean getNoDatetimeStringSync() {
+		return getCurrentConnection().getNoDatetimeStringSync();
 	}
 
-	public synchronized boolean getNoTimezoneConversionForTimeType() {
-		return this.currentConnection.getNoTimezoneConversionForTimeType();
+	public boolean getNoTimezoneConversionForTimeType() {
+		return getCurrentConnection().getNoTimezoneConversionForTimeType();
 	}
 
-	public synchronized boolean getNullCatalogMeansCurrent() {
-		return this.currentConnection.getNullCatalogMeansCurrent();
+	public boolean getNullCatalogMeansCurrent() {
+		return getCurrentConnection().getNullCatalogMeansCurrent();
 	}
 
-	public synchronized boolean getNullNamePatternMatchesAll() {
-		return this.currentConnection.getNullNamePatternMatchesAll();
+	public boolean getNullNamePatternMatchesAll() {
+		return getCurrentConnection().getNullNamePatternMatchesAll();
 	}
 
-	public synchronized boolean getOverrideSupportsIntegrityEnhancementFacility() {
-		return this.currentConnection.getOverrideSupportsIntegrityEnhancementFacility();
+	public boolean getOverrideSupportsIntegrityEnhancementFacility() {
+		return getCurrentConnection().getOverrideSupportsIntegrityEnhancementFacility();
 	}
 
-	public synchronized int getPacketDebugBufferSize() {
-		return this.currentConnection.getPacketDebugBufferSize();
+	public int getPacketDebugBufferSize() {
+		return getCurrentConnection().getPacketDebugBufferSize();
 	}
 
-	public synchronized boolean getPadCharsWithSpace() {
-		return this.currentConnection.getPadCharsWithSpace();
+	public boolean getPadCharsWithSpace() {
+		return getCurrentConnection().getPadCharsWithSpace();
 	}
 
-	public synchronized boolean getParanoid() {
-		return this.currentConnection.getParanoid();
+	public boolean getParanoid() {
+		return getCurrentConnection().getParanoid();
 	}
 
-	public synchronized boolean getPedantic() {
-		return this.currentConnection.getPedantic();
+	public boolean getPedantic() {
+		return getCurrentConnection().getPedantic();
 	}
 
-	public synchronized boolean getPinGlobalTxToPhysicalConnection() {
-		return this.currentConnection.getPinGlobalTxToPhysicalConnection();
+	public boolean getPinGlobalTxToPhysicalConnection() {
+		return getCurrentConnection().getPinGlobalTxToPhysicalConnection();
 	}
 
-	public synchronized boolean getPopulateInsertRowWithDefaultValues() {
-		return this.currentConnection.getPopulateInsertRowWithDefaultValues();
+	public boolean getPopulateInsertRowWithDefaultValues() {
+		return getCurrentConnection().getPopulateInsertRowWithDefaultValues();
 	}
 
-	public synchronized int getPrepStmtCacheSize() {
-		return this.currentConnection.getPrepStmtCacheSize();
+	public int getPrepStmtCacheSize() {
+		return getCurrentConnection().getPrepStmtCacheSize();
 	}
 
-	public synchronized int getPrepStmtCacheSqlLimit() {
-		return this.currentConnection.getPrepStmtCacheSqlLimit();
+	public int getPrepStmtCacheSqlLimit() {
+		return getCurrentConnection().getPrepStmtCacheSqlLimit();
 	}
 
-	public synchronized int getPreparedStatementCacheSize() {
-		return this.currentConnection.getPreparedStatementCacheSize();
+	public int getPreparedStatementCacheSize() {
+		return getCurrentConnection().getPreparedStatementCacheSize();
 	}
 
-	public synchronized int getPreparedStatementCacheSqlLimit() {
-		return this.currentConnection.getPreparedStatementCacheSqlLimit();
+	public int getPreparedStatementCacheSqlLimit() {
+		return getCurrentConnection().getPreparedStatementCacheSqlLimit();
 	}
 
-	public synchronized boolean getProcessEscapeCodesForPrepStmts() {
-		return this.currentConnection.getProcessEscapeCodesForPrepStmts();
+	public boolean getProcessEscapeCodesForPrepStmts() {
+		return getCurrentConnection().getProcessEscapeCodesForPrepStmts();
 	}
 
-	public synchronized boolean getProfileSQL() {
-		return this.currentConnection.getProfileSQL();
+	public boolean getProfileSQL() {
+		return getCurrentConnection().getProfileSQL();
 	}
 
-	public synchronized boolean getProfileSql() {
-		return this.currentConnection.getProfileSql();
+	public boolean getProfileSql() {
+		return getCurrentConnection().getProfileSql();
 	}
 
-	public synchronized String getProfilerEventHandler() {
-		return this.currentConnection.getProfilerEventHandler();
+	public String getProfilerEventHandler() {
+		return getCurrentConnection().getProfilerEventHandler();
 	}
 
-	public synchronized String getPropertiesTransform() {
-		return this.currentConnection.getPropertiesTransform();
+	public String getPropertiesTransform() {
+		return getCurrentConnection().getPropertiesTransform();
 	}
 
-	public synchronized int getQueriesBeforeRetryMaster() {
-		return this.currentConnection.getQueriesBeforeRetryMaster();
+	public int getQueriesBeforeRetryMaster() {
+		return getCurrentConnection().getQueriesBeforeRetryMaster();
 	}
 
-	public synchronized boolean getReconnectAtTxEnd() {
-		return this.currentConnection.getReconnectAtTxEnd();
+	public boolean getReconnectAtTxEnd() {
+		return getCurrentConnection().getReconnectAtTxEnd();
 	}
 
-	public synchronized boolean getRelaxAutoCommit() {
-		return this.currentConnection.getRelaxAutoCommit();
+	public boolean getRelaxAutoCommit() {
+		return getCurrentConnection().getRelaxAutoCommit();
 	}
 
-	public synchronized int getReportMetricsIntervalMillis() {
-		return this.currentConnection.getReportMetricsIntervalMillis();
+	public int getReportMetricsIntervalMillis() {
+		return getCurrentConnection().getReportMetricsIntervalMillis();
 	}
 
-	public synchronized boolean getRequireSSL() {
-		return this.currentConnection.getRequireSSL();
+	public boolean getRequireSSL() {
+		return getCurrentConnection().getRequireSSL();
 	}
 
-	public synchronized String getResourceId() {
-		return this.currentConnection.getResourceId();
+	public String getResourceId() {
+		return getCurrentConnection().getResourceId();
 	}
 
-	public synchronized int getResultSetSizeThreshold() {
-		return this.currentConnection.getResultSetSizeThreshold();
+	public int getResultSetSizeThreshold() {
+		return getCurrentConnection().getResultSetSizeThreshold();
 	}
 
-	public synchronized boolean getRewriteBatchedStatements() {
-		return this.currentConnection.getRewriteBatchedStatements();
+	public boolean getRewriteBatchedStatements() {
+		return getCurrentConnection().getRewriteBatchedStatements();
 	}
 
-	public synchronized boolean getRollbackOnPooledClose() {
-		return this.currentConnection.getRollbackOnPooledClose();
+	public boolean getRollbackOnPooledClose() {
+		return getCurrentConnection().getRollbackOnPooledClose();
 	}
 
-	public synchronized boolean getRoundRobinLoadBalance() {
-		return this.currentConnection.getRoundRobinLoadBalance();
+	public boolean getRoundRobinLoadBalance() {
+		return getCurrentConnection().getRoundRobinLoadBalance();
 	}
 
-	public synchronized boolean getRunningCTS13() {
-		return this.currentConnection.getRunningCTS13();
+	public boolean getRunningCTS13() {
+		return getCurrentConnection().getRunningCTS13();
 	}
 
-	public synchronized int getSecondsBeforeRetryMaster() {
-		return this.currentConnection.getSecondsBeforeRetryMaster();
+	public int getSecondsBeforeRetryMaster() {
+		return getCurrentConnection().getSecondsBeforeRetryMaster();
 	}
 
-	public synchronized int getSelfDestructOnPingMaxOperations() {
-		return this.currentConnection.getSelfDestructOnPingMaxOperations();
+	public int getSelfDestructOnPingMaxOperations() {
+		return getCurrentConnection().getSelfDestructOnPingMaxOperations();
 	}
 
-	public synchronized int getSelfDestructOnPingSecondsLifetime() {
-		return this.currentConnection.getSelfDestructOnPingSecondsLifetime();
+	public int getSelfDestructOnPingSecondsLifetime() {
+		return getCurrentConnection().getSelfDestructOnPingSecondsLifetime();
 	}
 
-	public synchronized String getServerTimezone() {
-		return this.currentConnection.getServerTimezone();
+	public String getServerTimezone() {
+		return getCurrentConnection().getServerTimezone();
 	}
 
-	public synchronized String getSessionVariables() {
-		return this.currentConnection.getSessionVariables();
+	public String getSessionVariables() {
+		return getCurrentConnection().getSessionVariables();
 	}
 
-	public synchronized int getSlowQueryThresholdMillis() {
-		return this.currentConnection.getSlowQueryThresholdMillis();
+	public int getSlowQueryThresholdMillis() {
+		return getCurrentConnection().getSlowQueryThresholdMillis();
 	}
 
-	public synchronized long getSlowQueryThresholdNanos() {
-		return this.currentConnection.getSlowQueryThresholdNanos();
+	public long getSlowQueryThresholdNanos() {
+		return getCurrentConnection().getSlowQueryThresholdNanos();
 	}
 
-	public synchronized String getSocketFactory() {
-		return this.currentConnection.getSocketFactory();
+	public String getSocketFactory() {
+		return getCurrentConnection().getSocketFactory();
 	}
 
-	public synchronized String getSocketFactoryClassName() {
-		return this.currentConnection.getSocketFactoryClassName();
+	public String getSocketFactoryClassName() {
+		return getCurrentConnection().getSocketFactoryClassName();
 	}
 
-	public synchronized int getSocketTimeout() {
-		return this.currentConnection.getSocketTimeout();
+	public int getSocketTimeout() {
+		return getCurrentConnection().getSocketTimeout();
 	}
 
-	public synchronized String getStatementInterceptors() {
-		return this.currentConnection.getStatementInterceptors();
+	public String getStatementInterceptors() {
+		return getCurrentConnection().getStatementInterceptors();
 	}
 
-	public synchronized boolean getStrictFloatingPoint() {
-		return this.currentConnection.getStrictFloatingPoint();
+	public boolean getStrictFloatingPoint() {
+		return getCurrentConnection().getStrictFloatingPoint();
 	}
 
-	public synchronized boolean getStrictUpdates() {
-		return this.currentConnection.getStrictUpdates();
+	public boolean getStrictUpdates() {
+		return getCurrentConnection().getStrictUpdates();
 	}
 
-	public synchronized boolean getTcpKeepAlive() {
-		return this.currentConnection.getTcpKeepAlive();
+	public boolean getTcpKeepAlive() {
+		return getCurrentConnection().getTcpKeepAlive();
 	}
 
-	public synchronized boolean getTcpNoDelay() {
-		return this.currentConnection.getTcpNoDelay();
+	public boolean getTcpNoDelay() {
+		return getCurrentConnection().getTcpNoDelay();
 	}
 
-	public synchronized int getTcpRcvBuf() {
-		return this.currentConnection.getTcpRcvBuf();
+	public int getTcpRcvBuf() {
+		return getCurrentConnection().getTcpRcvBuf();
 	}
 
-	public synchronized int getTcpSndBuf() {
-		return this.currentConnection.getTcpSndBuf();
+	public int getTcpSndBuf() {
+		return getCurrentConnection().getTcpSndBuf();
 	}
 
-	public synchronized int getTcpTrafficClass() {
-		return this.currentConnection.getTcpTrafficClass();
+	public int getTcpTrafficClass() {
+		return getCurrentConnection().getTcpTrafficClass();
 	}
 
-	public synchronized boolean getTinyInt1isBit() {
-		return this.currentConnection.getTinyInt1isBit();
+	public boolean getTinyInt1isBit() {
+		return getCurrentConnection().getTinyInt1isBit();
 	}
 
-	public synchronized boolean getTraceProtocol() {
-		return this.currentConnection.getTraceProtocol();
+	public boolean getTraceProtocol() {
+		return getCurrentConnection().getTraceProtocol();
 	}
 
-	public synchronized boolean getTransformedBitIsBoolean() {
-		return this.currentConnection.getTransformedBitIsBoolean();
+	public boolean getTransformedBitIsBoolean() {
+		return getCurrentConnection().getTransformedBitIsBoolean();
 	}
 
-	public synchronized boolean getTreatUtilDateAsTimestamp() {
-		return this.currentConnection.getTreatUtilDateAsTimestamp();
+	public boolean getTreatUtilDateAsTimestamp() {
+		return getCurrentConnection().getTreatUtilDateAsTimestamp();
 	}
 
-	public synchronized String getTrustCertificateKeyStorePassword() {
-		return this.currentConnection.getTrustCertificateKeyStorePassword();
+	public String getTrustCertificateKeyStorePassword() {
+		return getCurrentConnection().getTrustCertificateKeyStorePassword();
 	}
 
-	public synchronized String getTrustCertificateKeyStoreType() {
-		return this.currentConnection.getTrustCertificateKeyStoreType();
+	public String getTrustCertificateKeyStoreType() {
+		return getCurrentConnection().getTrustCertificateKeyStoreType();
 	}
 
-	public synchronized String getTrustCertificateKeyStoreUrl() {
-		return this.currentConnection.getTrustCertificateKeyStoreUrl();
+	public String getTrustCertificateKeyStoreUrl() {
+		return getCurrentConnection().getTrustCertificateKeyStoreUrl();
 	}
 
-	public synchronized boolean getUltraDevHack() {
-		return this.currentConnection.getUltraDevHack();
+	public boolean getUltraDevHack() {
+		return getCurrentConnection().getUltraDevHack();
 	}
 
-	public synchronized boolean getUseBlobToStoreUTF8OutsideBMP() {
-		return this.currentConnection.getUseBlobToStoreUTF8OutsideBMP();
+	public boolean getUseBlobToStoreUTF8OutsideBMP() {
+		return getCurrentConnection().getUseBlobToStoreUTF8OutsideBMP();
 	}
 
-	public synchronized boolean getUseCompression() {
-		return this.currentConnection.getUseCompression();
+	public boolean getUseCompression() {
+		return getCurrentConnection().getUseCompression();
 	}
 
-	public synchronized String getUseConfigs() {
-		return this.currentConnection.getUseConfigs();
+	public String getUseConfigs() {
+		return getCurrentConnection().getUseConfigs();
 	}
 
-	public synchronized boolean getUseCursorFetch() {
-		return this.currentConnection.getUseCursorFetch();
+	public boolean getUseCursorFetch() {
+		return getCurrentConnection().getUseCursorFetch();
 	}
 
-	public synchronized boolean getUseDirectRowUnpack() {
-		return this.currentConnection.getUseDirectRowUnpack();
+	public boolean getUseDirectRowUnpack() {
+		return getCurrentConnection().getUseDirectRowUnpack();
 	}
 
-	public synchronized boolean getUseDynamicCharsetInfo() {
-		return this.currentConnection.getUseDynamicCharsetInfo();
+	public boolean getUseDynamicCharsetInfo() {
+		return getCurrentConnection().getUseDynamicCharsetInfo();
 	}
 
-	public synchronized boolean getUseFastDateParsing() {
-		return this.currentConnection.getUseFastDateParsing();
+	public boolean getUseFastDateParsing() {
+		return getCurrentConnection().getUseFastDateParsing();
 	}
 
-	public synchronized boolean getUseFastIntParsing() {
-		return this.currentConnection.getUseFastIntParsing();
+	public boolean getUseFastIntParsing() {
+		return getCurrentConnection().getUseFastIntParsing();
 	}
 
-	public synchronized boolean getUseGmtMillisForDatetimes() {
-		return this.currentConnection.getUseGmtMillisForDatetimes();
+	public boolean getUseGmtMillisForDatetimes() {
+		return getCurrentConnection().getUseGmtMillisForDatetimes();
 	}
 
-	public synchronized boolean getUseHostsInPrivileges() {
-		return this.currentConnection.getUseHostsInPrivileges();
+	public boolean getUseHostsInPrivileges() {
+		return getCurrentConnection().getUseHostsInPrivileges();
 	}
 
-	public synchronized boolean getUseInformationSchema() {
-		return this.currentConnection.getUseInformationSchema();
+	public boolean getUseInformationSchema() {
+		return getCurrentConnection().getUseInformationSchema();
 	}
 
-	public synchronized boolean getUseJDBCCompliantTimezoneShift() {
-		return this.currentConnection.getUseJDBCCompliantTimezoneShift();
+	public boolean getUseJDBCCompliantTimezoneShift() {
+		return getCurrentConnection().getUseJDBCCompliantTimezoneShift();
 	}
 
-	public synchronized boolean getUseJvmCharsetConverters() {
-		return this.currentConnection.getUseJvmCharsetConverters();
+	public boolean getUseJvmCharsetConverters() {
+		return getCurrentConnection().getUseJvmCharsetConverters();
 	}
 
-	public synchronized boolean getUseLegacyDatetimeCode() {
-		return this.currentConnection.getUseLegacyDatetimeCode();
+	public boolean getUseLegacyDatetimeCode() {
+		return getCurrentConnection().getUseLegacyDatetimeCode();
 	}
 
-	public synchronized boolean getUseLocalSessionState() {
-		return this.currentConnection.getUseLocalSessionState();
+	public boolean getUseLocalSessionState() {
+		return getCurrentConnection().getUseLocalSessionState();
 	}
 
-	public synchronized boolean getUseNanosForElapsedTime() {
-		return this.currentConnection.getUseNanosForElapsedTime();
+	public boolean getUseNanosForElapsedTime() {
+		return getCurrentConnection().getUseNanosForElapsedTime();
 	}
 
-	public synchronized boolean getUseOldAliasMetadataBehavior() {
-		return this.currentConnection.getUseOldAliasMetadataBehavior();
+	public boolean getUseOldAliasMetadataBehavior() {
+		return getCurrentConnection().getUseOldAliasMetadataBehavior();
 	}
 
-	public synchronized boolean getUseOldUTF8Behavior() {
-		return this.currentConnection.getUseOldUTF8Behavior();
+	public boolean getUseOldUTF8Behavior() {
+		return getCurrentConnection().getUseOldUTF8Behavior();
 	}
 
-	public synchronized boolean getUseOnlyServerErrorMessages() {
-		return this.currentConnection.getUseOnlyServerErrorMessages();
+	public boolean getUseOnlyServerErrorMessages() {
+		return getCurrentConnection().getUseOnlyServerErrorMessages();
 	}
 
-	public synchronized boolean getUseReadAheadInput() {
-		return this.currentConnection.getUseReadAheadInput();
+	public boolean getUseReadAheadInput() {
+		return getCurrentConnection().getUseReadAheadInput();
 	}
 
-	public synchronized boolean getUseSSL() {
-		return this.currentConnection.getUseSSL();
+	public boolean getUseSSL() {
+		return getCurrentConnection().getUseSSL();
 	}
 
-	public synchronized boolean getUseSSPSCompatibleTimezoneShift() {
-		return this.currentConnection.getUseSSPSCompatibleTimezoneShift();
+	public boolean getUseSSPSCompatibleTimezoneShift() {
+		return getCurrentConnection().getUseSSPSCompatibleTimezoneShift();
 	}
 
-	public synchronized boolean getUseServerPrepStmts() {
-		return this.currentConnection.getUseServerPrepStmts();
+	public boolean getUseServerPrepStmts() {
+		return getCurrentConnection().getUseServerPrepStmts();
 	}
 
-	public synchronized boolean getUseServerPreparedStmts() {
-		return this.currentConnection.getUseServerPreparedStmts();
+	public boolean getUseServerPreparedStmts() {
+		return getCurrentConnection().getUseServerPreparedStmts();
 	}
 
-	public synchronized boolean getUseSqlStateCodes() {
-		return this.currentConnection.getUseSqlStateCodes();
+	public boolean getUseSqlStateCodes() {
+		return getCurrentConnection().getUseSqlStateCodes();
 	}
 
-	public synchronized boolean getUseStreamLengthsInPrepStmts() {
-		return this.currentConnection.getUseStreamLengthsInPrepStmts();
+	public boolean getUseStreamLengthsInPrepStmts() {
+		return getCurrentConnection().getUseStreamLengthsInPrepStmts();
 	}
 
-	public synchronized boolean getUseTimezone() {
-		return this.currentConnection.getUseTimezone();
+	public boolean getUseTimezone() {
+		return getCurrentConnection().getUseTimezone();
 	}
 
-	public synchronized boolean getUseUltraDevWorkAround() {
-		return this.currentConnection.getUseUltraDevWorkAround();
+	public boolean getUseUltraDevWorkAround() {
+		return getCurrentConnection().getUseUltraDevWorkAround();
 	}
 
-	public synchronized boolean getUseUnbufferedInput() {
-		return this.currentConnection.getUseUnbufferedInput();
+	public boolean getUseUnbufferedInput() {
+		return getCurrentConnection().getUseUnbufferedInput();
 	}
 
-	public synchronized boolean getUseUnicode() {
-		return this.currentConnection.getUseUnicode();
+	public boolean getUseUnicode() {
+		return getCurrentConnection().getUseUnicode();
 	}
 
-	public synchronized boolean getUseUsageAdvisor() {
-		return this.currentConnection.getUseUsageAdvisor();
+	public boolean getUseUsageAdvisor() {
+		return getCurrentConnection().getUseUsageAdvisor();
 	}
 
-	public synchronized String getUtf8OutsideBmpExcludedColumnNamePattern() {
-		return this.currentConnection.getUtf8OutsideBmpExcludedColumnNamePattern();
+	public String getUtf8OutsideBmpExcludedColumnNamePattern() {
+		return getCurrentConnection().getUtf8OutsideBmpExcludedColumnNamePattern();
 	}
 
-	public synchronized String getUtf8OutsideBmpIncludedColumnNamePattern() {
-		return this.currentConnection.getUtf8OutsideBmpIncludedColumnNamePattern();
+	public String getUtf8OutsideBmpIncludedColumnNamePattern() {
+		return getCurrentConnection().getUtf8OutsideBmpIncludedColumnNamePattern();
 	}
 
-	public synchronized boolean getVerifyServerCertificate() {
-		return this.currentConnection.getVerifyServerCertificate();
+	public boolean getVerifyServerCertificate() {
+		return getCurrentConnection().getVerifyServerCertificate();
 	}
 
-	public synchronized boolean getYearIsDateType() {
-		return this.currentConnection.getYearIsDateType();
+	public boolean getYearIsDateType() {
+		return getCurrentConnection().getYearIsDateType();
 	}
 
-	public synchronized String getZeroDateTimeBehavior() {
-		return this.currentConnection.getZeroDateTimeBehavior();
+	public String getZeroDateTimeBehavior() {
+		return getCurrentConnection().getZeroDateTimeBehavior();
 	}
 
-	public synchronized void setAllowLoadLocalInfile(boolean property) {
+	public void setAllowLoadLocalInfile(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setAllowMultiQueries(boolean property) {
+	public void setAllowMultiQueries(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setAllowNanAndInf(boolean flag) {
+	public void setAllowNanAndInf(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setAllowUrlInLocalInfile(boolean flag) {
+	public void setAllowUrlInLocalInfile(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setAlwaysSendSetIsolation(boolean flag) {
+	public void setAlwaysSendSetIsolation(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setAutoClosePStmtStreams(boolean flag) {
+	public void setAutoClosePStmtStreams(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setAutoDeserialize(boolean flag) {
+	public void setAutoDeserialize(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setAutoGenerateTestcaseScript(boolean flag) {
+	public void setAutoGenerateTestcaseScript(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setAutoReconnect(boolean flag) {
+	public void setAutoReconnect(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setAutoReconnectForConnectionPools(boolean property) {
+	public void setAutoReconnectForConnectionPools(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setAutoReconnectForPools(boolean flag) {
+	public void setAutoReconnectForPools(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setAutoSlowLog(boolean flag) {
+	public void setAutoSlowLog(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setBlobSendChunkSize(String value) throws SQLException {
+	public void setBlobSendChunkSize(String value) throws SQLException {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setBlobsAreStrings(boolean flag) {
+	public void setBlobsAreStrings(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCacheCallableStatements(boolean flag) {
+	public void setCacheCallableStatements(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCacheCallableStmts(boolean flag) {
+	public void setCacheCallableStmts(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCachePrepStmts(boolean flag) {
+	public void setCachePrepStmts(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCachePreparedStatements(boolean flag) {
+	public void setCachePreparedStatements(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCacheResultSetMetadata(boolean property) {
+	public void setCacheResultSetMetadata(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCacheServerConfiguration(boolean flag) {
+	public void setCacheServerConfiguration(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCallableStatementCacheSize(int size) {
+	public void setCallableStatementCacheSize(int size) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCallableStmtCacheSize(int cacheSize) {
+	public void setCallableStmtCacheSize(int cacheSize) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCapitalizeDBMDTypes(boolean property) {
+	public void setCapitalizeDBMDTypes(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCapitalizeTypeNames(boolean flag) {
+	public void setCapitalizeTypeNames(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCharacterEncoding(String encoding) {
+	public void setCharacterEncoding(String encoding) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCharacterSetResults(String characterSet) {
+	public void setCharacterSetResults(String characterSet) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setClientCertificateKeyStorePassword(String value) {
+	public void setClientCertificateKeyStorePassword(String value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setClientCertificateKeyStoreType(String value) {
+	public void setClientCertificateKeyStoreType(String value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setClientCertificateKeyStoreUrl(String value) {
+	public void setClientCertificateKeyStoreUrl(String value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setClientInfoProvider(String classname) {
+	public void setClientInfoProvider(String classname) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setClobCharacterEncoding(String encoding) {
+	public void setClobCharacterEncoding(String encoding) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setClobberStreamingResults(boolean flag) {
+	public void setClobberStreamingResults(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setConnectTimeout(int timeoutMs) {
+	public void setConnectTimeout(int timeoutMs) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setConnectionCollation(String collation) {
+	public void setConnectionCollation(String collation) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setConnectionLifecycleInterceptors(String interceptors) {
+	public void setConnectionLifecycleInterceptors(String interceptors) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setContinueBatchOnError(boolean property) {
+	public void setContinueBatchOnError(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setCreateDatabaseIfNotExist(boolean flag) {
+	public void setCreateDatabaseIfNotExist(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setDefaultFetchSize(int n) {
+	public void setDefaultFetchSize(int n) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setDetectServerPreparedStmts(boolean property) {
+	public void setDetectServerPreparedStmts(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setDontTrackOpenResources(boolean flag) {
+	public void setDontTrackOpenResources(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setDumpMetadataOnColumnNotFound(boolean flag) {
+	public void setDumpMetadataOnColumnNotFound(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setDumpQueriesOnException(boolean flag) {
+	public void setDumpQueriesOnException(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setDynamicCalendars(boolean flag) {
+	public void setDynamicCalendars(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setElideSetAutoCommits(boolean flag) {
+	public void setElideSetAutoCommits(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setEmptyStringsConvertToZero(boolean flag) {
+	public void setEmptyStringsConvertToZero(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setEmulateLocators(boolean property) {
+	public void setEmulateLocators(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setEmulateUnsupportedPstmts(boolean flag) {
+	public void setEmulateUnsupportedPstmts(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setEnablePacketDebug(boolean flag) {
+	public void setEnablePacketDebug(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setEnableQueryTimeouts(boolean flag) {
+	public void setEnableQueryTimeouts(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setEncoding(String property) {
+	public void setEncoding(String property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setExplainSlowQueries(boolean flag) {
+	public void setExplainSlowQueries(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setFailOverReadOnly(boolean flag) {
+	public void setFailOverReadOnly(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setFunctionsNeverReturnBlobs(boolean flag) {
+	public void setFunctionsNeverReturnBlobs(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setGatherPerfMetrics(boolean flag) {
+	public void setGatherPerfMetrics(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setGatherPerformanceMetrics(boolean flag) {
+	public void setGatherPerformanceMetrics(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setGenerateSimpleParameterMetadata(boolean flag) {
+	public void setGenerateSimpleParameterMetadata(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setHoldResultsOpenOverStatementClose(boolean flag) {
+	public void setHoldResultsOpenOverStatementClose(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setIgnoreNonTxTables(boolean property) {
+	public void setIgnoreNonTxTables(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setIncludeInnodbStatusInDeadlockExceptions(boolean flag) {
+	public void setIncludeInnodbStatusInDeadlockExceptions(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setInitialTimeout(int property) {
+	public void setInitialTimeout(int property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setInteractiveClient(boolean property) {
+	public void setInteractiveClient(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setIsInteractiveClient(boolean property) {
+	public void setIsInteractiveClient(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setJdbcCompliantTruncation(boolean flag) {
+	public void setJdbcCompliantTruncation(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setJdbcCompliantTruncationForReads(
+	public void setJdbcCompliantTruncationForReads(
 			boolean jdbcCompliantTruncationForReads) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setLargeRowSizeThreshold(String value) {
+	public void setLargeRowSizeThreshold(String value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setLoadBalanceStrategy(String strategy) {
+	public void setLoadBalanceStrategy(String strategy) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setLocalSocketAddress(String address) {
+	public void setLocalSocketAddress(String address) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setLocatorFetchBufferSize(String value) throws SQLException {
+	public void setLocatorFetchBufferSize(String value) throws SQLException {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setLogSlowQueries(boolean flag) {
+	public void setLogSlowQueries(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setLogXaCommands(boolean flag) {
+	public void setLogXaCommands(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setLogger(String property) {
+	public void setLogger(String property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setLoggerClassName(String className) {
+	public void setLoggerClassName(String className) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setMaintainTimeStats(boolean flag) {
+	public void setMaintainTimeStats(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setMaxQuerySizeToLog(int sizeInBytes) {
+	public void setMaxQuerySizeToLog(int sizeInBytes) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setMaxReconnects(int property) {
+	public void setMaxReconnects(int property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setMaxRows(int property) {
+	public void setMaxRows(int property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setMetadataCacheSize(int value) {
+	public void setMetadataCacheSize(int value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setNetTimeoutForStreamingResults(int value) {
+	public void setNetTimeoutForStreamingResults(int value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setNoAccessToProcedureBodies(boolean flag) {
+	public void setNoAccessToProcedureBodies(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setNoDatetimeStringSync(boolean flag) {
+	public void setNoDatetimeStringSync(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setNoTimezoneConversionForTimeType(boolean flag) {
+	public void setNoTimezoneConversionForTimeType(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setNullCatalogMeansCurrent(boolean value) {
+	public void setNullCatalogMeansCurrent(boolean value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setNullNamePatternMatchesAll(boolean value) {
+	public void setNullNamePatternMatchesAll(boolean value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setOverrideSupportsIntegrityEnhancementFacility(boolean flag) {
+	public void setOverrideSupportsIntegrityEnhancementFacility(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setPacketDebugBufferSize(int size) {
+	public void setPacketDebugBufferSize(int size) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setPadCharsWithSpace(boolean flag) {
+	public void setPadCharsWithSpace(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setParanoid(boolean property) {
+	public void setParanoid(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setPedantic(boolean property) {
+	public void setPedantic(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setPinGlobalTxToPhysicalConnection(boolean flag) {
+	public void setPinGlobalTxToPhysicalConnection(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setPopulateInsertRowWithDefaultValues(boolean flag) {
+	public void setPopulateInsertRowWithDefaultValues(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setPrepStmtCacheSize(int cacheSize) {
+	public void setPrepStmtCacheSize(int cacheSize) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setPrepStmtCacheSqlLimit(int sqlLimit) {
+	public void setPrepStmtCacheSqlLimit(int sqlLimit) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setPreparedStatementCacheSize(int cacheSize) {
+	public void setPreparedStatementCacheSize(int cacheSize) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) {
+	public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setProcessEscapeCodesForPrepStmts(boolean flag) {
+	public void setProcessEscapeCodesForPrepStmts(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setProfileSQL(boolean flag) {
+	public void setProfileSQL(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setProfileSql(boolean property) {
+	public void setProfileSql(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setProfilerEventHandler(String handler) {
+	public void setProfilerEventHandler(String handler) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setPropertiesTransform(String value) {
+	public void setPropertiesTransform(String value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setQueriesBeforeRetryMaster(int property) {
+	public void setQueriesBeforeRetryMaster(int property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setReconnectAtTxEnd(boolean property) {
+	public void setReconnectAtTxEnd(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setRelaxAutoCommit(boolean property) {
+	public void setRelaxAutoCommit(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setReportMetricsIntervalMillis(int millis) {
+	public void setReportMetricsIntervalMillis(int millis) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setRequireSSL(boolean property) {
+	public void setRequireSSL(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setResourceId(String resourceId) {
+	public void setResourceId(String resourceId) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setResultSetSizeThreshold(int threshold) {
+	public void setResultSetSizeThreshold(int threshold) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setRetainStatementAfterResultSetClose(boolean flag) {
+	public void setRetainStatementAfterResultSetClose(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setRewriteBatchedStatements(boolean flag) {
+	public void setRewriteBatchedStatements(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setRollbackOnPooledClose(boolean flag) {
+	public void setRollbackOnPooledClose(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setRoundRobinLoadBalance(boolean flag) {
+	public void setRoundRobinLoadBalance(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setRunningCTS13(boolean flag) {
+	public void setRunningCTS13(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setSecondsBeforeRetryMaster(int property) {
+	public void setSecondsBeforeRetryMaster(int property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setSelfDestructOnPingMaxOperations(int maxOperations) {
+	public void setSelfDestructOnPingMaxOperations(int maxOperations) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setSelfDestructOnPingSecondsLifetime(int seconds) {
+	public void setSelfDestructOnPingSecondsLifetime(int seconds) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setServerTimezone(String property) {
+	public void setServerTimezone(String property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setSessionVariables(String variables) {
+	public void setSessionVariables(String variables) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setSlowQueryThresholdMillis(int millis) {
+	public void setSlowQueryThresholdMillis(int millis) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setSlowQueryThresholdNanos(long nanos) {
+	public void setSlowQueryThresholdNanos(long nanos) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setSocketFactory(String name) {
+	public void setSocketFactory(String name) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setSocketFactoryClassName(String property) {
+	public void setSocketFactoryClassName(String property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setSocketTimeout(int property) {
+	public void setSocketTimeout(int property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setStatementInterceptors(String value) {
+	public void setStatementInterceptors(String value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setStrictFloatingPoint(boolean property) {
+	public void setStrictFloatingPoint(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setStrictUpdates(boolean property) {
+	public void setStrictUpdates(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTcpKeepAlive(boolean flag) {
+	public void setTcpKeepAlive(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTcpNoDelay(boolean flag) {
+	public void setTcpNoDelay(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTcpRcvBuf(int bufSize) {
+	public void setTcpRcvBuf(int bufSize) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTcpSndBuf(int bufSize) {
+	public void setTcpSndBuf(int bufSize) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTcpTrafficClass(int classFlags) {
+	public void setTcpTrafficClass(int classFlags) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTinyInt1isBit(boolean flag) {
+	public void setTinyInt1isBit(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTraceProtocol(boolean flag) {
+	public void setTraceProtocol(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTransformedBitIsBoolean(boolean flag) {
+	public void setTransformedBitIsBoolean(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTreatUtilDateAsTimestamp(boolean flag) {
+	public void setTreatUtilDateAsTimestamp(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTrustCertificateKeyStorePassword(String value) {
+	public void setTrustCertificateKeyStorePassword(String value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTrustCertificateKeyStoreType(String value) {
+	public void setTrustCertificateKeyStoreType(String value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setTrustCertificateKeyStoreUrl(String value) {
+	public void setTrustCertificateKeyStoreUrl(String value) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUltraDevHack(boolean flag) {
+	public void setUltraDevHack(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseBlobToStoreUTF8OutsideBMP(boolean flag) {
+	public void setUseBlobToStoreUTF8OutsideBMP(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseCompression(boolean property) {
+	public void setUseCompression(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseConfigs(String configs) {
+	public void setUseConfigs(String configs) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseCursorFetch(boolean flag) {
+	public void setUseCursorFetch(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseDirectRowUnpack(boolean flag) {
+	public void setUseDirectRowUnpack(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseDynamicCharsetInfo(boolean flag) {
+	public void setUseDynamicCharsetInfo(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseFastDateParsing(boolean flag) {
+	public void setUseFastDateParsing(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseFastIntParsing(boolean flag) {
+	public void setUseFastIntParsing(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseGmtMillisForDatetimes(boolean flag) {
+	public void setUseGmtMillisForDatetimes(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseHostsInPrivileges(boolean property) {
+	public void setUseHostsInPrivileges(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseInformationSchema(boolean flag) {
+	public void setUseInformationSchema(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseJDBCCompliantTimezoneShift(boolean flag) {
+	public void setUseJDBCCompliantTimezoneShift(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseJvmCharsetConverters(boolean flag) {
+	public void setUseJvmCharsetConverters(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseLegacyDatetimeCode(boolean flag) {
+	public void setUseLegacyDatetimeCode(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseLocalSessionState(boolean flag) {
+	public void setUseLocalSessionState(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseNanosForElapsedTime(boolean flag) {
+	public void setUseNanosForElapsedTime(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseOldAliasMetadataBehavior(boolean flag) {
+	public void setUseOldAliasMetadataBehavior(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseOldUTF8Behavior(boolean flag) {
+	public void setUseOldUTF8Behavior(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseOnlyServerErrorMessages(boolean flag) {
+	public void setUseOnlyServerErrorMessages(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseReadAheadInput(boolean flag) {
+	public void setUseReadAheadInput(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseSSL(boolean property) {
+	public void setUseSSL(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseSSPSCompatibleTimezoneShift(boolean flag) {
+	public void setUseSSPSCompatibleTimezoneShift(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseServerPrepStmts(boolean flag) {
+	public void setUseServerPrepStmts(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseServerPreparedStmts(boolean flag) {
+	public void setUseServerPreparedStmts(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseSqlStateCodes(boolean flag) {
+	public void setUseSqlStateCodes(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseStreamLengthsInPrepStmts(boolean property) {
+	public void setUseStreamLengthsInPrepStmts(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseTimezone(boolean property) {
+	public void setUseTimezone(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseUltraDevWorkAround(boolean property) {
+	public void setUseUltraDevWorkAround(boolean property) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseUnbufferedInput(boolean flag) {
+	public void setUseUnbufferedInput(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseUnicode(boolean flag) {
+	public void setUseUnicode(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUseUsageAdvisor(boolean useUsageAdvisorFlag) {
+	public void setUseUsageAdvisor(boolean useUsageAdvisorFlag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUtf8OutsideBmpExcludedColumnNamePattern(String regexPattern) {
+	public void setUtf8OutsideBmpExcludedColumnNamePattern(String regexPattern) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setUtf8OutsideBmpIncludedColumnNamePattern(String regexPattern) {
+	public void setUtf8OutsideBmpIncludedColumnNamePattern(String regexPattern) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setVerifyServerCertificate(boolean flag) {
+	public void setVerifyServerCertificate(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setYearIsDateType(boolean flag) {
+	public void setYearIsDateType(boolean flag) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized void setZeroDateTimeBehavior(String behavior) {
+	public void setZeroDateTimeBehavior(String behavior) {
 		// not runtime configurable
 		
 	}
 
-	public synchronized boolean useUnbufferedInput() {
-		return this.currentConnection.useUnbufferedInput();
+	public boolean useUnbufferedInput() {
+		return getCurrentConnection().useUnbufferedInput();
 	}
 
-	public synchronized boolean isSameResource(Connection c) {
-		return this.currentConnection.isSameResource(c);
+	public boolean isSameResource(Connection c) {
+		return getCurrentConnection().isSameResource(c);
 	}
 
 	public void setInGlobalTx(boolean flag) {
-		this.currentConnection.setInGlobalTx(flag);
+		getCurrentConnection().setInGlobalTx(flag);
 	}
 
 	public boolean getUseColumnNamesInFindColumn() {
-		return this.currentConnection.getUseColumnNamesInFindColumn();
+		return getCurrentConnection().getUseColumnNamesInFindColumn();
 	}
 
 	public void setUseColumnNamesInFindColumn(boolean flag) {
@@ -2339,7 +2339,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public boolean getUseLocalTransactionState() {
-		return this.currentConnection.getUseLocalTransactionState();
+		return getCurrentConnection().getUseLocalTransactionState();
 	}
 
 	public void setUseLocalTransactionState(boolean flag) {
@@ -2348,7 +2348,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public boolean getCompensateOnDuplicateKeyUpdateCounts() {
-		return this.currentConnection.getCompensateOnDuplicateKeyUpdateCounts();
+		return getCurrentConnection().getCompensateOnDuplicateKeyUpdateCounts();
 	}
 
 	public void setCompensateOnDuplicateKeyUpdateCounts(boolean flag) {
@@ -2357,7 +2357,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public boolean getUseAffectedRows() {
-		return this.currentConnection.getUseAffectedRows();
+		return getCurrentConnection().getUseAffectedRows();
 	}
 
 	public void setUseAffectedRows(boolean flag) {
@@ -2366,68 +2366,68 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public String getPasswordCharacterEncoding() {
-		return this.currentConnection.getPasswordCharacterEncoding();
+		return getCurrentConnection().getPasswordCharacterEncoding();
 	}
 
 	public void setPasswordCharacterEncoding(String characterSet) {
-		this.currentConnection.setPasswordCharacterEncoding(characterSet);
+		getCurrentConnection().setPasswordCharacterEncoding(characterSet);
 	}
 
 	public int getAutoIncrementIncrement() {
-		return this.currentConnection.getAutoIncrementIncrement();
+		return getCurrentConnection().getAutoIncrementIncrement();
 	}
 
 	public int getLoadBalanceBlacklistTimeout() {
-		return this.currentConnection.getLoadBalanceBlacklistTimeout();
+		return getCurrentConnection().getLoadBalanceBlacklistTimeout();
 	}
 
 	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
-		this.currentConnection.setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
+		getCurrentConnection().setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
 	}
 	
 	public int getLoadBalancePingTimeout() {
-		return this.currentConnection.getLoadBalancePingTimeout();
+		return getCurrentConnection().getLoadBalancePingTimeout();
 	}
 
 	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) {
-		this.currentConnection.setLoadBalancePingTimeout(loadBalancePingTimeout);
+		getCurrentConnection().setLoadBalancePingTimeout(loadBalancePingTimeout);
 	}
 	
 	public boolean getLoadBalanceValidateConnectionOnSwapServer() {
-		return this.currentConnection.getLoadBalanceValidateConnectionOnSwapServer();
+		return getCurrentConnection().getLoadBalanceValidateConnectionOnSwapServer();
 	}
 
 	public void setLoadBalanceValidateConnectionOnSwapServer(boolean loadBalanceValidateConnectionOnSwapServer) {
-		this.currentConnection.setLoadBalanceValidateConnectionOnSwapServer(loadBalanceValidateConnectionOnSwapServer);
+		getCurrentConnection().setLoadBalanceValidateConnectionOnSwapServer(loadBalanceValidateConnectionOnSwapServer);
 	}
 
 	public int getRetriesAllDown() {
-		return this.currentConnection.getRetriesAllDown();
+		return getCurrentConnection().getRetriesAllDown();
 	}
 
 	public void setRetriesAllDown(int retriesAllDown) {
-		this.currentConnection.setRetriesAllDown(retriesAllDown);
+		getCurrentConnection().setRetriesAllDown(retriesAllDown);
 	}
 
 	public ExceptionInterceptor getExceptionInterceptor() {
-		return this.currentConnection.getExceptionInterceptor();
+		return getCurrentConnection().getExceptionInterceptor();
 	}
 
 	public String getExceptionInterceptors() {
-		return this.currentConnection.getExceptionInterceptors();
+		return getCurrentConnection().getExceptionInterceptors();
 	}
 
 	public void setExceptionInterceptors(String exceptionInterceptors) {
-		this.currentConnection.setExceptionInterceptors(exceptionInterceptors);
+		getCurrentConnection().setExceptionInterceptors(exceptionInterceptors);
 	}
 
 	public boolean getQueryTimeoutKillsConnection() {
-		return this.currentConnection.getQueryTimeoutKillsConnection();
+		return getCurrentConnection().getQueryTimeoutKillsConnection();
 	}
 
 	public void setQueryTimeoutKillsConnection(
 			boolean queryTimeoutKillsConnection) {
-		this.currentConnection.setQueryTimeoutKillsConnection(queryTimeoutKillsConnection);
+		getCurrentConnection().setQueryTimeoutKillsConnection(queryTimeoutKillsConnection);
 	}
 
 	public boolean hasSameProperties(Connection c) {
@@ -2444,27 +2444,27 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
    public String getHost() {
-      return currentConnection.getHost();
+      return getCurrentConnection().getHost();
    }
 
    public void setProxy(MySQLConnection proxy) {
-      currentConnection.setProxy(proxy);
+      getCurrentConnection().setProxy(proxy);
    }
 
- 	public synchronized boolean getRetainStatementAfterResultSetClose() {
-		return currentConnection.getRetainStatementAfterResultSetClose();
+ 	public boolean getRetainStatementAfterResultSetClose() {
+		return getCurrentConnection().getRetainStatementAfterResultSetClose();
 	}
 
  	public int getMaxAllowedPacket() {
-		return currentConnection.getMaxAllowedPacket();
+		return getCurrentConnection().getMaxAllowedPacket();
 	}
  	
 	public String getLoadBalanceConnectionGroup() {
-		return currentConnection.getLoadBalanceConnectionGroup();
+		return getCurrentConnection().getLoadBalanceConnectionGroup();
 	}
 
 	public boolean getLoadBalanceEnableJMX() {
-		return currentConnection.getLoadBalanceEnableJMX();
+		return getCurrentConnection().getLoadBalanceEnableJMX();
 	}
 
 	public String getLoadBalanceExceptionChecker() {
@@ -2516,22 +2516,22 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public String getLoadBalanceAutoCommitStatementRegex() {
-		return currentConnection.getLoadBalanceAutoCommitStatementRegex();
+		return getCurrentConnection().getLoadBalanceAutoCommitStatementRegex();
 	}
 
 	public int getLoadBalanceAutoCommitStatementThreshold() {
-		return currentConnection.getLoadBalanceAutoCommitStatementThreshold();
+		return getCurrentConnection().getLoadBalanceAutoCommitStatementThreshold();
 	}
 
 	public void setLoadBalanceAutoCommitStatementRegex(
 			String loadBalanceAutoCommitStatementRegex) {
-		currentConnection.setLoadBalanceAutoCommitStatementRegex(loadBalanceAutoCommitStatementRegex);
+		getCurrentConnection().setLoadBalanceAutoCommitStatementRegex(loadBalanceAutoCommitStatementRegex);
 		
 	}
 
 	public void setLoadBalanceAutoCommitStatementThreshold(
 			int loadBalanceAutoCommitStatementThreshold) {
-		currentConnection.setLoadBalanceAutoCommitStatementThreshold(loadBalanceAutoCommitStatementThreshold);
+		getCurrentConnection().setLoadBalanceAutoCommitStatementThreshold(loadBalanceAutoCommitStatementThreshold);
 		
 	}
 
@@ -2541,98 +2541,106 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public boolean getIncludeThreadDumpInDeadlockExceptions() {
-		return currentConnection.getIncludeThreadDumpInDeadlockExceptions();
+		return getCurrentConnection().getIncludeThreadDumpInDeadlockExceptions();
 	}
 
 	public void setIncludeThreadDumpInDeadlockExceptions(boolean flag) {
-		currentConnection.setIncludeThreadDumpInDeadlockExceptions(flag);
+		getCurrentConnection().setIncludeThreadDumpInDeadlockExceptions(flag);
 		
 	}
 
 	public boolean getIncludeThreadNamesAsStatementComment() {
-		return currentConnection.getIncludeThreadNamesAsStatementComment();
+		return getCurrentConnection().getIncludeThreadNamesAsStatementComment();
 	}
 
 	public void setIncludeThreadNamesAsStatementComment(boolean flag) {
-		currentConnection.setIncludeThreadNamesAsStatementComment(flag);
+		getCurrentConnection().setIncludeThreadNamesAsStatementComment(flag);
 	}
 
-	public synchronized boolean isServerLocal() throws SQLException {
-		return this.currentConnection.isServerLocal();
+	public boolean isServerLocal() throws SQLException {
+		return getCurrentConnection().isServerLocal();
 	}
 
 	public void setAuthenticationPlugins(String authenticationPlugins) {
-		this.currentConnection.setAuthenticationPlugins(authenticationPlugins);
+		getCurrentConnection().setAuthenticationPlugins(authenticationPlugins);
 	}
 
 	public String getAuthenticationPlugins() {
-		return this.currentConnection.getAuthenticationPlugins();
+		return getCurrentConnection().getAuthenticationPlugins();
 	}
 
 	public void setDisabledAuthenticationPlugins(
 			String disabledAuthenticationPlugins) {
-		this.currentConnection.setDisabledAuthenticationPlugins(disabledAuthenticationPlugins);
+		getCurrentConnection().setDisabledAuthenticationPlugins(disabledAuthenticationPlugins);
 	}
 
 	public String getDisabledAuthenticationPlugins() {
-		return this.currentConnection.getDisabledAuthenticationPlugins();
+		return getCurrentConnection().getDisabledAuthenticationPlugins();
 	}
 
 	public void setDefaultAuthenticationPlugin(
 			String defaultAuthenticationPlugin) {
-		this.currentConnection.setDefaultAuthenticationPlugin(defaultAuthenticationPlugin);
+		getCurrentConnection().setDefaultAuthenticationPlugin(defaultAuthenticationPlugin);
 	}
 
 	public String getDefaultAuthenticationPlugin() {
-		return this.currentConnection.getDefaultAuthenticationPlugin();
+		return getCurrentConnection().getDefaultAuthenticationPlugin();
 	}
 
 	public void setParseInfoCacheFactory(String factoryClassname) {
-		this.currentConnection.setParseInfoCacheFactory(factoryClassname);
+		getCurrentConnection().setParseInfoCacheFactory(factoryClassname);
 	}
 
 	public String getParseInfoCacheFactory() {
-		return this.currentConnection.getParseInfoCacheFactory();
+		return getCurrentConnection().getParseInfoCacheFactory();
 	}
 
 	public void setSchema(String schema) throws SQLException {
-		this.currentConnection.setSchema(schema);
+		getCurrentConnection().setSchema(schema);
 	}
 
 	public String getSchema() throws SQLException {
-		return this.currentConnection.getSchema();
+		return getCurrentConnection().getSchema();
 	}
 
 	public void abort(Executor executor) throws SQLException {
-		this.currentConnection.abort(executor);
+		getCurrentConnection().abort(executor);
 	}
 
 	public void setNetworkTimeout(Executor executor, int milliseconds)
 			throws SQLException {
-		this.currentConnection.setNetworkTimeout(executor, milliseconds);
+		getCurrentConnection().setNetworkTimeout(executor, milliseconds);
 	}
 
 	public int getNetworkTimeout() throws SQLException {
-		return this.currentConnection.getNetworkTimeout();
+		return getCurrentConnection().getNetworkTimeout();
 	}
 
 	public void setServerConfigCacheFactory(String factoryClassname) {
-		this.currentConnection.setServerConfigCacheFactory(factoryClassname);
+		getCurrentConnection().setServerConfigCacheFactory(factoryClassname);
 	}
 
 	public String getServerConfigCacheFactory() {
-		return this.currentConnection.getServerConfigCacheFactory();
+		return getCurrentConnection().getServerConfigCacheFactory();
 	}
 
 	public void setDisconnectOnExpiredPasswords(boolean disconnectOnExpiredPasswords) {
-		this.currentConnection.setDisconnectOnExpiredPasswords(disconnectOnExpiredPasswords);
+		getCurrentConnection().setDisconnectOnExpiredPasswords(disconnectOnExpiredPasswords);
 	}
 
 	public boolean getDisconnectOnExpiredPasswords() {
-		return this.currentConnection.getDisconnectOnExpiredPasswords();
+		return getCurrentConnection().getDisconnectOnExpiredPasswords();
 	}
 
 	public void abortInternal() throws SQLException {
-		this.currentConnection.abortInternal();
+		getCurrentConnection().abortInternal();
+	}
+
+	public void checkClosed() throws SQLException {
+		getCurrentConnection().checkClosed();
+	}
+
+	public Object getConnectionMutex() {
+		return getCurrentConnection().getConnectionMutex();
 	}
 }

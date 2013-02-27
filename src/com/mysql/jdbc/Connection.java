@@ -421,6 +421,14 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	
 	int getNetworkTimeout() throws SQLException;
 
+	// **************************
+	// moved from MySQLConnection
+	// **************************
+
 	void abortInternal() throws SQLException;
+
+	void checkClosed() throws SQLException;
+
+	Object getConnectionMutex();
 
 }

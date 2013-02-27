@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -1023,7 +1023,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @see StatementImpl#addBatch
 	 */
 	public void addBatch() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.batchedArgs == null) {
 				this.batchedArgs = new ArrayList<Object>();
 			}
@@ -1040,7 +1040,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 
 	public void addBatch(String sql) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.batchHasPlainStatements = true;
 	
 			super.addBatch(sql);
@@ -1052,7 +1052,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 
 	protected String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			
 			StringBuffer buf = new StringBuffer();
 	
@@ -1140,7 +1140,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 
 	public void clearBatch() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.batchHasPlainStatements = false;
 	
 			super.clearBatch();
@@ -1158,7 +1158,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *                if a database access error occurs
 	 */
 	public void clearParameters() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 		
 			for (int i = 0; i < this.parameterValues.length; i++) {
 				this.parameterValues[i] = null;
@@ -1254,7 +1254,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 */
 	protected boolean checkReadOnlySafeStatement() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return ((!this.connection.isReadOnly()) || (this.firstCharOfStmt == 'S'));
 		}
 	}
@@ -1271,7 +1271,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *                if a database access error occurs
 	 */
 	public boolean execute() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 		
 			MySQLConnection locallyScopedConn = this.connection;
 			
@@ -1425,7 +1425,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *             DOCUMENT ME!
 	 */
 	public int[] executeBatch() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 		
 			if (this.connection.isReadOnly()) {
 				throw new SQLException(Messages.getString("PreparedStatement.25") //$NON-NLS-1$
@@ -1492,7 +1492,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	
 	protected int[] executePreparedBatchAsMultiStatement(int batchTimeout) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			// This is kind of an abuse, but it gets the job done
 			if (this.batchedValuesClause == null) {
 				this.batchedValuesClause = this.originalSql + ";";
@@ -1681,7 +1681,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 	
 	private String generateMultiStatementForBatch(int numBatches) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			StringBuffer newStatementSql = new StringBuffer((this.originalSql
 					.length() + 1) * numBatches);
 					
@@ -1706,7 +1706,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException
 	 */
 	protected int[] executeBatchedInserts(int batchTimeout) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			String valuesClause = getValuesClause(); 
 	
 			MySQLConnection locallyScopedConn = this.connection;
@@ -1870,7 +1870,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException 
 	 */
 	protected int computeBatchSize(int numBatchedArgs) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			long[] combinedValues = computeMaxParameterSetSizeAndBatchSize(numBatchedArgs);
 			
 			long maxSizeOfParameterSet = combinedValues[0];
@@ -1892,7 +1892,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * @throws SQLException 
 	 */
 	protected long[] computeMaxParameterSetSizeAndBatchSize(int numBatchedArgs) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			long sizeOfEntireBatch = 0;
 			long maxSizeOfParameterSet = 0;
 			
@@ -1960,7 +1960,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected int[] executeBatchSerially(int batchTimeout) throws SQLException {
 		
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			MySQLConnection locallyScopedConn = this.connection;
 			
 			if (locallyScopedConn == null) {
@@ -2120,7 +2120,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			boolean queryIsSelectOnly, Field[] metadataFromCache,
 			boolean isBatch)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			try {
 				
 				resetCancelledState();
@@ -2216,7 +2216,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *                if a database access error occurs
 	 */
 	public java.sql.ResultSet executeQuery() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 		
 			MySQLConnection locallyScopedConn = this.connection;
 			
@@ -2366,7 +2366,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected int executeUpdate(
 			boolean clearBatchedGeneratedKeysAndWarnings, boolean isBatch) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (clearBatchedGeneratedKeysAndWarnings) {
 				clearWarnings();
 				this.batchedGeneratedKeys = null;
@@ -2401,7 +2401,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			int[] batchedStreamLengths, boolean[] batchedIsNull, boolean isReallyBatch)
 			throws SQLException {
 
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 
 			MySQLConnection locallyScopedConn = this.connection;
 			
@@ -2506,7 +2506,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *             if an error occurs.
 	 */
 	protected Buffer fillSendPacket() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return fillSendPacket(this.parameterValues, this.parameterStreams,
 					this.isStream, this.streamLengths);
 		}
@@ -2532,7 +2532,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	protected Buffer fillSendPacket(byte[][] batchedParameterStrings,
 			InputStream[] batchedParameterStreams, boolean[] batchedIsStream,
 			int[] batchedStreamLengths) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			Buffer sendPacket = this.connection.getIO().getSharedSendPacket();
 	
 			sendPacket.clear();
@@ -2618,7 +2618,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 * Returns a prepared statement for the number of batched parameters, used when re-writing batch INSERTs.
 	 */
 	protected PreparedStatement prepareBatchedInsertSQL(MySQLConnection localConn, int numBatches) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			PreparedStatement pstmt = new PreparedStatement(localConn, "Rewritten batch of: " + this.originalSql, this.currentCatalog, this.parseInfo.getParseInfoForBatch(numBatches));
 			pstmt.setRetrieveGeneratedKeys(this.retrieveGeneratedKeys);
 			pstmt.rewrittenBatchSize = numBatches;
@@ -2628,7 +2628,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 
 	protected void setRetrieveGeneratedKeys(boolean flag) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.retrieveGeneratedKeys = flag;
 		}
 	}
@@ -2640,7 +2640,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 	
 	public String getNonRewrittenSql() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			int indexOfBatch = this.originalSql.indexOf(" of: ");
 			
 			if (indexOfBatch != -1) {
@@ -2665,7 +2665,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public byte[] getBytesRepresentation(int parameterIndex)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.isStream[parameterIndex]) {
 				return streamToBytes(this.parameterStreams[parameterIndex], false,
 						this.streamLengths[parameterIndex], this.connection
@@ -2700,7 +2700,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected byte[] getBytesRepresentationForBatch(int parameterIndex, int commandIndex)
 				throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			Object batchedArg = batchedArgs.get(commandIndex);
 			if (batchedArg instanceof String) {
 				try {
@@ -2915,7 +2915,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	public java.sql.ResultSetMetaData getMetaData()
 			throws SQLException {
 
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			//
 			// We could just tack on a LIMIT 0 here no matter what the 
 			// statement, and check if a result set was returned or not,
@@ -2992,7 +2992,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 
 	protected boolean isSelectQuery() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return StringUtils.startsWithIgnoreCaseAndWs(
 					StringUtils.stripComments(this.originalSql,
 							"'\"", "'\"", true, false, true, true), 
@@ -3005,7 +3005,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public ParameterMetaData getParameterMetaData() 
 		throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.parameterMetaData == null) {
 				if (this.connection.getGenerateSimpleParameterMetadata()) {
 					this.parameterMetaData = new MysqlParameterMetadata(this.parameterCount);
@@ -3061,7 +3061,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 
 	private void initializeFromParseInfo() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			this.staticSqlStrings = this.parseInfo.staticSql;
 			this.hasLimitClause = this.parseInfo.foundLimitClause;
 			this.isLoadDataQuery = this.parseInfo.foundLoadData;
@@ -3085,7 +3085,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 
 	boolean isNull(int paramIndex) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return this.isNull[paramIndex];
 		}
 	}
@@ -3140,7 +3140,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			return; // already closed
 		}
 		
-		synchronized (locallyScopedConn) {
+		synchronized (locallyScopedConn.getConnectionMutex()) {
 		
 			if (this.useUsageAdvisor) {
 				if (this.numberOfExecutions <= 1) {
@@ -3264,7 +3264,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setBinaryStream(int parameterIndex, InputStream x, int length)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (x == null) {
 				setNull(parameterIndex, java.sql.Types.BINARY);
 			} else {
@@ -3389,7 +3389,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	protected void setBytes(int parameterIndex, byte[] x,
 			boolean checkForIntroducer, boolean escapeForMBChars)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (x == null) {
 				setNull(parameterIndex, java.sql.Types.BINARY);
 			} else {
@@ -3567,7 +3567,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setCharacterStream(int parameterIndex, java.io.Reader reader,
 			int length) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			try {
 				if (reader == null) {
 					setNull(parameterIndex, Types.LONGVARCHAR);
@@ -3643,7 +3643,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *             if a database error occurs
 	 */
 	public void setClob(int i, Clob x) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (x == null) {
 				setNull(i, Types.CLOB);
 			} else {
@@ -3732,7 +3732,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *                if a database access error occurs
 	 */
 	public void setDouble(int parameterIndex, double x) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (!this.connection.getAllowNanAndInf()
 					&& (x == Double.POSITIVE_INFINITY
 							|| x == Double.NEGATIVE_INFINITY || Double.isNaN(x))) {
@@ -3788,7 +3788,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 	protected final void setInternal(int paramIndex, byte[] val)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 	
 			int parameterIndexOffset = getParameterIndexOffset();
 			
@@ -3803,7 +3803,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 	protected void checkBounds(int paramIndex, int parameterIndexOffset)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if ((paramIndex < 1)) {
 				throw SQLError.createSQLException(
 						Messages.getString("PreparedStatement.49") //$NON-NLS-1$
@@ -3824,7 +3824,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 	protected final void setInternal(int paramIndex, String val)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 		
 			byte[] parameterAsBytes = null;
 	
@@ -3876,7 +3876,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *                if a database access error occurs
 	 */
 	public void setNull(int parameterIndex, int sqlType) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			setInternal(parameterIndex, "null"); //$NON-NLS-1$
 			this.isNull[parameterIndex - 1 + getParameterIndexOffset()] = true;
 			
@@ -4036,7 +4036,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 	public void setObject(int parameterIndex, Object parameterObj)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (parameterObj == null) {
 				setNull(parameterIndex, java.sql.Types.OTHER);
 			} else {
@@ -4141,7 +4141,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setObject(int parameterIndex, Object parameterObj,
 			int targetSqlType, int scale) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (parameterObj == null) {
 				setNull(parameterIndex, java.sql.Types.OTHER);
 			} else {
@@ -4450,7 +4450,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *                if a database access error occurs
 	 */
 	public void setString(int parameterIndex, String x) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			// if the passed string is null, then set this column to null
 			if (x == null) {
 				setNull(parameterIndex, Types.CHAR);
@@ -4722,7 +4722,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	private void setTimeInternal(int parameterIndex, Time x, Calendar targetCalendar,
 			TimeZone tz,
 			boolean rollForward) throws java.sql.SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (x == null) {
 				setNull(parameterIndex, java.sql.Types.TIME);
 			} else {
@@ -4802,7 +4802,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	private void setTimestampInternal(int parameterIndex,
 			Timestamp x, Calendar targetCalendar,
 			TimeZone tz, boolean rollForward) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (x == null) {
 				setNull(parameterIndex, java.sql.Types.TIMESTAMP);
 			} else {
@@ -4858,7 +4858,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 	private void newSetTimestampInternal(int parameterIndex,
 			Timestamp x, Calendar targetCalendar) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.tsdf == null) {
 				this.tsdf = new SimpleDateFormat("''yyyy-MM-dd HH:mm:ss", Locale.US); //$NON-NLS-1$
 			}
@@ -4887,7 +4887,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 	private void newSetTimeInternal(int parameterIndex,
 			Time x, Calendar targetCalendar) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.tdf == null) {
 				this.tdf = new SimpleDateFormat("''HH:mm:ss''", Locale.US); //$NON-NLS-1$
 				
@@ -4911,7 +4911,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 	private void newSetDateInternal(int parameterIndex,
 			Date x, Calendar targetCalendar) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			if (this.ddf == null) {
 				this.ddf = new SimpleDateFormat("''yyyy-MM-dd''", Locale.US); //$NON-NLS-1$
 			}
@@ -4933,7 +4933,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 
 	private void doSSPSCompatibleTimezoneShift(int parameterIndex, Timestamp x, Calendar sessionCalendar) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			Calendar sessionCalendar2 = (this.connection
 					.getUseJDBCCompliantTimezoneShift()) ? this.connection
 					.getUtcCalendar()
@@ -5062,7 +5062,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	private final void streamToBytes(Buffer packet, InputStream in,
 			boolean escape, int streamLength, boolean useLength)
 			throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			try {
 				if (streamConvertBuf == null) {
 					streamConvertBuf = new byte[4096];
@@ -5149,7 +5149,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 	private final byte[] streamToBytes(InputStream in, boolean escape,
 			int streamLength, boolean useLength) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			try {
 				if (streamConvertBuf == null) {
 					streamConvertBuf = new byte[4096];
@@ -5311,7 +5311,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 *                if a database access error occurs
 	 */
 	public void setNString(int parameterIndex, String x) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 		    if (this.charEncoding.equalsIgnoreCase("UTF-8")
 		            || this.charEncoding.equalsIgnoreCase("utf8")) {
 		        setString(parameterIndex, x);
@@ -5438,7 +5438,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	public void setNCharacterStream(int parameterIndex, Reader reader,
 			long length) throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 		    try {
 		        if (reader == null) {
 		            setNull(parameterIndex, java.sql.Types.LONGVARCHAR);
@@ -5509,7 +5509,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	}
 	
 	public ParameterBindings getParameterBindings() throws SQLException {
-		synchronized (checkClosed()) {
+		synchronized (checkClosed().getConnectionMutex()) {
 			return new EmulatedPreparedStatementBindings();
 		}
 	}
@@ -5703,7 +5703,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 	public String getPreparedSql() {
 		try {
-			synchronized (checkClosed()) {
+			synchronized (checkClosed().getConnectionMutex()) {
 				if (this.rewrittenBatchSize == 0) {
 					return this.originalSql;
 				}

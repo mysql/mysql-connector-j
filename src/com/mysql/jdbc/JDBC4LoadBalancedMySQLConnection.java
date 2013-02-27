@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -71,8 +71,10 @@ public class JDBC4LoadBalancedMySQLConnection extends
 		return this.getJDBC4Connection().getClientInfo(name);
 	}
 
-	public synchronized boolean isValid(int timeout) throws SQLException {
-		return this.getJDBC4Connection().isValid(timeout);
+	public boolean isValid(int timeout) throws SQLException {
+		synchronized (proxy) {
+			return this.getJDBC4Connection().isValid(timeout);
+		}
 	}
 
 
@@ -125,8 +127,10 @@ public class JDBC4LoadBalancedMySQLConnection extends
 	    return this.getJDBC4Connection().createNClob();
 	}
 	
-	protected synchronized JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
-		return this.getJDBC4Connection().getClientInfoProviderImpl();
+	protected JDBC4ClientInfoProvider getClientInfoProviderImpl() throws SQLException {
+		synchronized (proxy) {
+			return this.getJDBC4Connection().getClientInfoProviderImpl();
+		}
 	
 	}
 	

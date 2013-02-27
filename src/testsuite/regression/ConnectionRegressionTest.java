@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.Socket;
 import java.net.SocketException;
 import java.sql.Connection;
@@ -39,6 +40,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -48,6 +50,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -4362,6 +4369,217 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			if (c != null) {
 				c.close();
 			}
+		}
+	}
+
+	/**
+	 * Tests fix for BUG#16224249 - Deadlock on concurrently used LoadBalancedMySQLConnection
+	 *
+	 * @throws Exception
+	 */
+	public void testBug16224249() throws Exception {
+
+		Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+		String host = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
+		String port = props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+		String hostSpec = host;
+		if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+			hostSpec = host + ":" + port;
+		}
+
+		String database = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		removeHostRelatedProps(props);
+		props.remove(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+
+		StringBuilder configs = new StringBuilder();
+		for (@SuppressWarnings("rawtypes")
+		Map.Entry entry : props.entrySet()) {
+			configs.append(entry.getKey());
+			configs.append("=");
+			configs.append(entry.getValue());
+			configs.append("&");
+		}
+
+		String loadbalanceUrl = String.format("jdbc:mysql:loadbalance://%s,%s/%s?%s", hostSpec, hostSpec, database, configs.toString());
+		String failoverUrl = String.format("jdbc:mysql://%s,%s/%s?%s", hostSpec, "127.0.0.1:"+port, database, configs.toString());
+
+		Connection[] loadbalancedconnection = new Connection[] {
+				new NonRegisteringDriver().connect(loadbalanceUrl, null),
+				new NonRegisteringDriver().connect(loadbalanceUrl, null),
+				new NonRegisteringDriver().connect(loadbalanceUrl, null)
+				};
+
+		Connection[] failoverconnection = new Connection[] {
+				new NonRegisteringDriver().connect(failoverUrl, null),
+				new NonRegisteringDriver().connect(failoverUrl, null),
+				new NonRegisteringDriver().connect(failoverUrl, null)
+				};
+
+		// WebLogic-style test
+		Class<?> mysqlCls = null;
+		Class<?> jcls = failoverconnection[0].getClass(); // the driver-level connection, a Proxy in this case...
+		ClassLoader jcl = jcls.getClassLoader();
+		if (jcl != null) {
+			mysqlCls = jcl.loadClass("com.mysql.jdbc.Connection");
+		} else {
+			mysqlCls = Class.forName("com.mysql.jdbc.Connection", true, null);
+		}
+
+		if ( (mysqlCls != null) && (mysqlCls.isAssignableFrom(jcls))) {
+			Method abort = mysqlCls.getMethod("abortInternal", new Class[]{});
+			boolean hasAbortMethod = abort != null;
+			assertTrue("abortInternal() method should be found for connection class " + jcls , hasAbortMethod);
+		} else {
+			fail("com.mysql.jdbc.Connection interface IS NOT ASSIGNABE from connection class " + jcls );
+		}
+		//-------------
+
+		// Concurrent test
+		System.out.println("Warming up");
+		for (int i = 0; i < failoverconnection.length; i++) {
+			this.stmt = failoverconnection[i].createStatement();
+			this.pstmt = failoverconnection[i].prepareStatement("SELECT 1 FROM DUAL");
+			for (int j = 0; j < 10000; j++) {
+				this.pstmt.executeQuery();
+				this.stmt.executeQuery("SELECT 1 FROM DUAL");
+			}
+		}
+
+		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(12);
+
+		ScheduledFuture<?> f1 = scheduler.schedule(new PollTask(failoverconnection[0], 1), 500, TimeUnit.MILLISECONDS);
+		ScheduledFuture<?> f2 = scheduler.schedule(new PollTask(failoverconnection[1], 2), 500, TimeUnit.MILLISECONDS);
+		ScheduledFuture<?> f3 = scheduler.schedule(new PollTask(failoverconnection[2], 3), 500, TimeUnit.MILLISECONDS);
+		ScheduledFuture<?> f4 = scheduler.schedule(new PollTask(loadbalancedconnection[0], 4), 500, TimeUnit.MILLISECONDS);
+		ScheduledFuture<?> f5 = scheduler.schedule(new PollTask(loadbalancedconnection[1], 5), 500, TimeUnit.MILLISECONDS);
+		ScheduledFuture<?> f6 = scheduler.schedule(new PollTask(loadbalancedconnection[2], 6), 500, TimeUnit.MILLISECONDS);
+
+		ScheduledFuture<?> f7 = scheduler.schedule(new CancelTask(failoverconnection[0], 7), 600, TimeUnit.MILLISECONDS);
+		ScheduledFuture<?> f8 = scheduler.schedule(new CancelTask(failoverconnection[1], 8), 600, TimeUnit.MILLISECONDS);
+		ScheduledFuture<?> f9 = scheduler.schedule(new CancelTask(failoverconnection[2], 9), 600, TimeUnit.MILLISECONDS);
+		ScheduledFuture<?> f10 = scheduler.schedule(new CancelTask(loadbalancedconnection[0], 10), 600, TimeUnit.MILLISECONDS);
+		ScheduledFuture<?> f11 = scheduler.schedule(new CancelTask(loadbalancedconnection[1], 11), 600, TimeUnit.MILLISECONDS);
+		ScheduledFuture<?> f12 = scheduler.schedule(new CancelTask(loadbalancedconnection[2], 12), 600, TimeUnit.MILLISECONDS);
+
+		try {
+			while (f1.get(5, TimeUnit.SECONDS) != null || f2.get(5, TimeUnit.SECONDS) != null || 
+					f3.get(5, TimeUnit.SECONDS) != null || f4.get(5, TimeUnit.SECONDS) != null || 
+					f5.get(5, TimeUnit.SECONDS) != null || f6.get(5, TimeUnit.SECONDS) != null ||
+					f7.get(5, TimeUnit.SECONDS) != null || f8.get(5, TimeUnit.SECONDS) != null ||
+					f9.get(5, TimeUnit.SECONDS) != null || f10.get(5, TimeUnit.SECONDS) != null ||
+					f11.get(5, TimeUnit.SECONDS) != null || f12.get(5, TimeUnit.SECONDS) != null
+					) {
+				System.out.println("waiting");
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+
+		if (this.testServerPrepStmtDeadlockCounter < 12) {
+			Map<Thread, StackTraceElement[]> tr = Thread.getAllStackTraces();
+			for (StackTraceElement[] el : tr.values()) {
+				System.out.println();
+				for (StackTraceElement stackTraceElement : el) {
+					System.out.println(stackTraceElement);
+				}
+			}
+		}
+
+		for (int i = 0; i < failoverconnection.length; i++) {
+			try {
+				rs = failoverconnection[i].createStatement().executeQuery("SELECT 1");
+			} catch (Exception e1) {
+				try {
+					rs = failoverconnection[i].createStatement().executeQuery("SELECT 1");
+					fail("Connection should be explicitly closed.");
+				} catch (Exception e2) {
+					assertTrue(true);
+				}
+			}
+		}
+		
+		scheduler.shutdown();
+
+	}
+
+	protected int testServerPrepStmtDeadlockCounter = 0;
+
+	class PollTask implements Runnable {
+
+		private Connection c;
+		private int num = 0;
+		
+		private Statement st1 = null;
+		private PreparedStatement pst1 = null;
+
+		PollTask(Connection cn, int n) throws SQLException {
+			this.c = cn;
+			this.num = n;
+			
+			this.st1 = c.createStatement();
+			this.pst1 = c.prepareStatement("SELECT 1 FROM DUAL");
+		}
+
+		public void run() {
+			System.out.println(this.num + ". Start polling at "+new Date().getTime());
+			boolean connectionClosed = false;
+
+			for (int i = 0; i < 20000; i++) {
+				try {
+					this.st1.executeQuery("SELECT 1 FROM DUAL").close();
+					this.pst1.executeQuery().close();
+				} catch (Exception ex1) {
+					if (!connectionClosed) {
+						System.out.println(this.num + "." + i + " "+ex1.getMessage());
+						connectionClosed = true;
+					} else {
+						break;
+					}
+				}
+			}
+
+			ConnectionRegressionTest.this.testServerPrepStmtDeadlockCounter++;
+			System.out.println(this.num + ". Done!");
+		}
+		
+	}
+
+	class CancelTask implements Runnable {
+
+		private Connection c;
+		private int num = 0;
+		
+		CancelTask(Connection cn, int n) throws SQLException {
+			this.c = cn;
+			this.num = n;
+		}
+
+		public void run() {
+			System.out.println(this.num + ". Start cancelling at "+new Date().getTime());
+
+			if (Proxy.isProxyClass(c.getClass())) {
+				try {
+					if (this.num == 7 || this.num == 10) {
+						Proxy.getInvocationHandler(c).invoke(c, Connection.class.getMethod("close", new Class[]{}), null);
+					} else if (this.num == 8 || this.num == 11) {
+						Proxy.getInvocationHandler(c).invoke(c, MySQLConnection.class.getMethod("abortInternal", new Class[]{}), null);
+					} else if (this.num == 9 || this.num == 12) {
+						Proxy.getInvocationHandler(c).invoke(c, com.mysql.jdbc.Connection.class.getMethod("abort", new Class[]{Executor.class}), new Object[]{ new ThreadPerTaskExecutor()});
+					}
+					
+					ConnectionRegressionTest.this.testServerPrepStmtDeadlockCounter++;
+					System.out.println(this.num + ". Done!");
+				} catch (Throwable e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+	}
+	
+	class ThreadPerTaskExecutor implements Executor {
+		public void execute(Runnable r) {
+			new Thread(r).start();
 		}
 	}
 
