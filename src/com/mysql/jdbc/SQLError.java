@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -39,6 +39,7 @@ import java.util.TreeMap;
 import com.mysql.jdbc.exceptions.MySQLDataException;
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException;
 import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
+import com.mysql.jdbc.exceptions.MySQLQueryInterruptedException;
 import com.mysql.jdbc.exceptions.MySQLSyntaxErrorException;
 import com.mysql.jdbc.exceptions.MySQLTransactionRollbackException;
 import com.mysql.jdbc.exceptions.MySQLTransientConnectionException;
@@ -1070,6 +1071,9 @@ public class SQLError {
 											message, sqlState,
 											Integer.valueOf(vendorErrorCode) }, interceptor);
 					}
+				} else if (sqlState.startsWith("70100")) {
+					sqlEx = new MySQLQueryInterruptedException(message, sqlState, vendorErrorCode);
+
 				} else {
 					sqlEx = new SQLException(message, sqlState, vendorErrorCode);
 				}

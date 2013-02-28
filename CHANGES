@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.24
 
+  - Fix for Bug#64204, ResultSet.close hangs if streaming query is killed.
+
   - Fix for Bug#16224249, Deadlock on concurrently used LoadBalancedMySQLConnection:
     1) abortInternal() method was moved from com.mysql.jdbc.MySQLConnection to com.mysql.jdbc.Connection interface;
     2) load-balanced/failover proxy now broadcasts abortInternal() to all underlying physical connections;

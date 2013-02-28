@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -46,6 +46,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.sql.rowset.CachedRowSet;
 
@@ -4797,4 +4801,91 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			}
 		}
     }
+
+	/**
+	 * Tests fix for BUG#64204 - ResultSet.close hangs if streaming query is killed
+	 * @throws Exception
+	 */
+	public void testBug64204() throws Exception {
+		final Properties props = new Properties();
+		props.setProperty("socketTimeout", "30000");
+
+		this.conn = getConnectionWithProps(props);
+		this.conn.setCatalog("information_schema");
+		this.conn.setAutoCommit(true);
+
+		this.stmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+		this.stmt.setFetchSize(Integer.MIN_VALUE); // turn on streaming mode
+
+		this.rs = this.stmt.executeQuery("SELECT CONNECTION_ID()");
+		this.rs.next();
+		final String connectionId = this.rs.getString(1);
+		this.rs.close();
+
+		System.out.println("testBug64204.main: PID is " + connectionId);
+		
+		ScheduledExecutorService es = Executors.newSingleThreadScheduledExecutor();
+		es.schedule(new Callable<Boolean>() {
+
+			public Boolean call() throws Exception {
+				boolean res = false;
+				Connection con2 = getConnectionWithProps(props);
+				con2.setCatalog("information_schema");
+				con2.setAutoCommit(true);
+
+				Statement st2 = con2.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+				st2.setFetchSize(Integer.MIN_VALUE); // turn on streaming mode
+				try {
+					System.out.println("testBug64204.slave: Running KILL QUERY " + connectionId);
+					st2.execute("KILL QUERY " + connectionId + ";");
+
+					Thread.sleep(5000);
+					System.out.println("testBug64204.slave: parent thread should be hung now!!!");
+					res = true;
+				} finally {
+					if (st2 != null) {
+						st2.close();
+					}
+					if (con2 != null) {
+						con2.close();
+					}
+				}
+				
+				System.out.println("testBug64204.slave: Done.");
+				return res;
+			}
+		}, 10, TimeUnit.SECONDS);
+		
+		
+		try {
+			this.rs = this.stmt.executeQuery("SELECT sleep(5) FROM character_sets LIMIT 10");
+
+			int rows = 0;
+			int columnCount = this.rs.getMetaData().getColumnCount();
+			System.out.println("testBug64204.main" + ": " + "fetched result set, " + columnCount + " columns");
+			
+			long totalDataCount = 0;
+			while(this.rs.next()) {
+				rows++;
+				//get row size
+				long rowSize = 0;
+				for(int i = 0; i < columnCount; i++) {
+					String s = this.rs.getString(i + 1);
+					if (s != null) {
+						rowSize += s.length();
+					}
+				}
+				totalDataCount += rowSize;
+			}
+
+			System.out.println("testBug64204.main" + ": " + "character_sets total rows " + rows + ", data " + totalDataCount);
+
+		} catch(SQLException se) {
+			assertEquals("ER_QUERY_INTERRUPTED expected.", "70100", se.getSQLState());
+			if (!"70100".equals(se.getSQLState())) {
+				throw se;
+			}
+		}
+	}
+
 }
