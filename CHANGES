@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-nn-nn-13 - Version 5.1.24
+03-05-13 - Version 5.1.24
 
   - Fix for Bug#64204, ResultSet.close hangs if streaming query is killed.
 
