@@ -19,6 +19,13 @@
 		</xsl:element>
 		<xsl:element name="para">
 			<xsl:element name="informaltable">
+				<xsl:element name="textobject">
+					<xsl:element name="phrase">
+						<xsl:text>This table lists Connector/J </xsl:text>
+						<xsl:value-of select="@name" />
+						<xsl:text> connection properties.</xsl:text>
+					</xsl:element>
+				</xsl:element>
 				<xsl:element name="tgroup">
 					<xsl:attribute name="cols">4</xsl:attribute>
 					<xsl:element name="colspec">
