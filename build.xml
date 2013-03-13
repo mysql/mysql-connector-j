@@ -450,7 +450,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		</manifest>
 
 		<jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar" 
-			basedir="${buildDir}/${fullProdName}" 
+			basedir="${compiler.output}" 
 			includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**" 
 			excludes="testsuite/**" 
 			index="true" 

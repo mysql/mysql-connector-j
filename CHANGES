@@ -2,6 +2,9 @@
 # $Id$
 nn-nn-13 - Version 5.1.25
 
+  - Fix for Bug#68664 (16486957), Enable packaging of .JAR file from Eclipse.
+
+
 03-05-13 - Version 5.1.24
 
   - Fix for Bug#64204, ResultSet.close hangs if streaming query is killed.
