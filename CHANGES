@@ -2,8 +2,9 @@
 # $Id$
 nn-nn-13 - Version 5.1.25
 
-  - Fix for Bug#68664 (16486957), Enable packaging of .JAR file from Eclipse.
+  - Fix for Bug#16436511, getDriverName() returns a string with company name "MySQL-AB". Driver name changed to "MySQL Connector Java".
 
+  - Fix for Bug#68664 (16486957), Enable packaging of .JAR file from Eclipse.
 
 03-05-13 - Version 5.1.24
 

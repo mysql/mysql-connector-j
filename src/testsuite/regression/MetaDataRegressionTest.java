@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -3383,6 +3383,17 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		assertEquals("3 column must be found", cnt, 3);
 
 		
+	}
+
+	/**
+	 * Tests fix for BUG#16436511 - getDriverName() returns a string with company name "MySQL-AB" 
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug16436511() throws Exception {
+		DatabaseMetaData dbmd = this.conn.getMetaData();
+		assertEquals("MySQL Connector Java", dbmd.getDriverName());
 	}
 
 }
