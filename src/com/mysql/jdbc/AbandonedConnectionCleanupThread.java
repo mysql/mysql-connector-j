@@ -35,7 +35,6 @@ public class AbandonedConnectionCleanupThread extends Thread {
 
 	public void run() {
 		threadRef = this;
-		threadRef.setContextClassLoader(null);
 		while (running) {
 			try {
 				Reference<? extends ConnectionImpl> ref = NonRegisteringDriver.refQueue.remove(100);
