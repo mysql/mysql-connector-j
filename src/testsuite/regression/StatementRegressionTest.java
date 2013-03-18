@@ -5341,6 +5341,12 @@ public class StatementRegressionTest extends BaseTestCase {
 				createTable("testBug30493", ddl);
 				this.stmt.executeUpdate(tablePrimeSql);
 				int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
+
+				// TODO: check server bug#13904273, bug#14598395 to find last affected version
+				if (versionMeetsMinimum(5, 5, 16)) {
+					expectedUpdateCount = 1;
+				}
+
 				int rwUpdateCounts[] = testStmts[1].executeBatch();
 				ResultSet rewrittenRsKeys = testStmts[1].getGeneratedKeys();
 				for (int i = 0; i < 4; ++i) {
@@ -5383,6 +5389,11 @@ public class StatementRegressionTest extends BaseTestCase {
 			Statement stmt1 = conn.createStatement();
 			stmt1.execute(sql, Statement.RETURN_GENERATED_KEYS);
 			int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
+
+			// TODO: check server bug#13904273, bug#14598395 to find last affected version
+			if (versionMeetsMinimum(5, 5, 16)) {
+				expectedUpdateCount = 1;
+			}
 
 			assertEquals(expectedUpdateCount, stmt1.getUpdateCount());
 			ResultSet stmtKeys = stmt1.getGeneratedKeys();
