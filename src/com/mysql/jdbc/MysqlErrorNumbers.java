@@ -937,6 +937,9 @@ public final class MysqlErrorNumbers {
 	public final static int ER_IDENT_CAUSES_TOO_LONG_PATH				= 1860; //SQLSTATE: HY000 Message: Long database name and identifier for object resulted in path length exceeding %d characters. Path: '%s'.
 	public final static int ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_NOT_NULL
 																		= 1861; //SQLSTATE: HY000 Message: cannot silently convert NULL values, as required in this SQL_MODE
+	public final static int ER_MUST_CHANGE_PASSWORD_LOGIN				= 1862; //SQLSTATE: HY000 Message: Your password has expired. To log in you must change it using a client that supports expired passwords.
+	public final static int ER_ROW_IN_WRONG_PARTITION					= 1863; //SQLSTATE: HY000 Message: Found a row in wrong partition %s
+	public final static int ER_MTS_EVENT_BIGGER_PENDING_JOBS_SIZE_MAX	= 1860; //SQLSTATE: HY000 Message: Cannot schedule event %s, relay-log name %s, position %s to Worker thread because its size %lu exceeds %lu of slave_pending_jobs_size_max.
 
 	private MysqlErrorNumbers() {
 		// prevent instantiation

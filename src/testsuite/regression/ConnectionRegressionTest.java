@@ -4278,7 +4278,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					fail("SQLException expected due to password expired");
 				} catch (SQLException e1) {
 					
-					if (e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD) {
+					if (e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD ||
+						e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
 
 						props.setProperty("disconnectOnExpiredPasswords", "false");
 						try {
@@ -4288,6 +4289,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 							fail("SQLException expected due to password expired");
 
 						} catch (SQLException e3) {
+							if (e1.getErrorCode() == MysqlErrorNumbers.ER_MUST_CHANGE_PASSWORD_LOGIN) {
+								testConn = getConnectionWithProps(props);
+								testSt = testConn.createStatement();
+							}
 							testSt.executeUpdate("SET PASSWORD = PASSWORD('newpwd')");
 							testConn.close();
 							
