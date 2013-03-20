@@ -4048,8 +4048,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				testConn = getConnectionWithProps(props);
 				testSt = testConn.createStatement();
 				testRs = testSt.executeQuery("SELECT * FROM `"+dbname+"`.`ほげほげ`");
-			} catch (MySQLSyntaxErrorException e1) {
-				assertEquals("Table '"+dbname+".ほげほげ' doesn't exist", e1.getMessage());
+			} catch (SQLException e1) {
+				if (e1 instanceof MySQLSyntaxErrorException) {
+					assertEquals("Table '"+dbname+".ほげほげ' doesn't exist", e1.getMessage());
+				} else if (e1.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
+					// this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
+					assertTrue(e1.getMessage().contains("Can't find file"));
+				} else {
+					throw e1;
+				}
 
 				try {
 					props.setProperty("characterSetResults", "SJIS");
@@ -4057,8 +4064,15 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					testSt = testConn.createStatement();
 					testSt.execute("SET lc_messages = 'ru_RU'");
 					testRs = testSt.executeQuery("SELECT * FROM `"+dbname+"`.`ほげほげ`");
-				} catch (MySQLSyntaxErrorException e2) {
-					assertEquals("Таблица '"+dbname+".ほげほげ' не существует", e2.getMessage());
+				} catch (SQLException e2) {
+					if (e2 instanceof MySQLSyntaxErrorException) {
+						assertEquals("Таблица '"+dbname+".ほげほげ' не существует", e2.getMessage());
+					} else if (e2.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
+						// this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
+						assertTrue(e2.getMessage().toLowerCase().contains("файл"));
+					} else {
+						throw e2;
+					}
 				}			
 
 			} finally {
