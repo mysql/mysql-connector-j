@@ -2,6 +2,10 @@
 # $Id$
 nn-nn-13 - Version 5.1.25
 
+  - Fix for Bug#68763 (16545334), ReplicationConnection.isMasterConnection() returns false always.
+
+  - Fix for Bug#68733 (16526938), ReplicationConnection doesn't ping all slaves.
+
   - Fix for Bug#68556, Tomcat can't stop a cleanup thread by clearReferencesStopThreads.
 
   - Fix for Bug#16436511, getDriverName() returns a string with company name "MySQL-AB". Driver name changed to "MySQL Connector Java".

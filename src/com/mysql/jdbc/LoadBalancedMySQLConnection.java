@@ -2125,8 +2125,15 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 	}
 
 	public void ping() throws SQLException {
-
-		getActiveMySQLConnection().ping();
+		ping(true);
+	}
+	
+	public void ping(boolean allConnections) throws SQLException {
+		if(allConnections){
+			this.proxy.doPing();
+		} else {
+			getActiveMySQLConnection().ping();
+		}
 	}
 
 	public void pingInternal(boolean checkForClosedConnection, int timeoutMillis)

@@ -49,16 +49,30 @@ public class ReplicationConnection implements Connection, PingTarget {
 	protected Connection masterConnection;
 
 	protected Connection slavesConnection;
+	
+	private Properties slaveProperties;
+	
+	private Properties masterProperties;
+	
+	private NonRegisteringDriver driver;
 
 	protected ReplicationConnection() {}
 	
 	public ReplicationConnection(Properties masterProperties,
 			Properties slaveProperties) throws SQLException {
-		NonRegisteringDriver driver = new NonRegisteringDriver();
+		this.driver = new NonRegisteringDriver();
+		this.slaveProperties = slaveProperties;
+		this.masterProperties = masterProperties;
 
+        this.initializeMasterConnection();
+        this.initializeSlaveConnection();
+        
+		this.currentConnection = this.masterConnection;
+	}
+	
+	private void initializeMasterConnection() throws SQLException {
 		StringBuffer masterUrl = new StringBuffer("jdbc:mysql://");
-        StringBuffer slaveUrl = new StringBuffer("jdbc:mysql:loadbalance://");
-
+		 
         String masterHost = masterProperties
         	.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
         
@@ -66,6 +80,25 @@ public class ReplicationConnection implements Connection, PingTarget {
         	masterUrl.append(masterHost);
         }
  
+
+        String masterDb = masterProperties
+        	.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+
+        masterUrl.append("/");
+        
+        if (masterDb != null) {
+        	masterUrl.append(masterDb);
+        }
+        
+        
+        this.masterConnection = (com.mysql.jdbc.Connection) driver.connect(
+                masterUrl.toString(), masterProperties);
+	}
+	
+	
+	private void initializeSlaveConnection() throws SQLException {
+	    StringBuffer slaveUrl = new StringBuffer("jdbc:mysql:loadbalance://");
+		
         int numHosts = Integer.parseInt(slaveProperties.getProperty(
         		NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY));
         
@@ -81,15 +114,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	        }
         }
 
-        String masterDb = masterProperties
-        	.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-
-        masterUrl.append("/");
-        
-        if (masterDb != null) {
-        	masterUrl.append(masterDb);
-        }
-        
+     
         String slaveDb = slaveProperties
         	.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
         
@@ -100,14 +125,11 @@ public class ReplicationConnection implements Connection, PingTarget {
         }
         
         slaveProperties.setProperty("roundRobinLoadBalance", "true");
-        
-        this.masterConnection = (com.mysql.jdbc.Connection) driver.connect(
-                masterUrl.toString(), masterProperties);
+
         this.slavesConnection = (com.mysql.jdbc.Connection) driver.connect(
                 slaveUrl.toString(), slaveProperties);
         this.slavesConnection.setReadOnly(true);
-        
-		this.currentConnection = this.masterConnection;
+		
 	}
 
 	/*
@@ -558,12 +580,30 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public synchronized void doPing() throws SQLException {
+		boolean isMasterConn = this.isMasterConnection();
 		if (this.masterConnection != null) {
-			this.masterConnection.ping();
+			try {
+				this.masterConnection.ping();
+			} catch (SQLException e) {
+				if (isMasterConn) {
+					throw e;
+				}
+			}
 		}
 		
 		if (this.slavesConnection != null) {
-			this.slavesConnection.ping();
+			try { 
+				this.slavesConnection.ping();
+			} catch (SQLException e) {
+				try {
+					this.initializeSlaveConnection();
+				} catch (SQLException initE) {
+					// do nothing here, we tried to reconnect.
+				}
+				if (!isMasterConn) {
+					throw e;
+				}
+			}
 		}
 	}
 
@@ -669,7 +709,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public boolean isMasterConnection() {
-		return getCurrentConnection().isMasterConnection();
+		return this.currentConnection == this.masterConnection;
 	}
 
 	public boolean isNoBackslashEscapesSet() {
@@ -685,8 +725,20 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public synchronized void ping() throws SQLException {
-		this.masterConnection.ping();
-		this.slavesConnection.ping();
+		try {
+			this.masterConnection.ping();
+		} catch (SQLException e) {
+			if (this.isMasterConnection()) {
+				throw e;
+			}
+		}
+		try {
+			this.slavesConnection.ping();
+		} catch (SQLException e) {
+			if (!this.isMasterConnection()) {
+				throw e;
+			}
+		}
 	}
 
 	public void reportQueryTime(long millisOrNanos) {

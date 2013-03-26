@@ -4525,7 +4525,189 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		scheduler.shutdown();
 
 	}
+	/**
+	 * Tests fix for BUG#68763, ReplicationConnection.isMasterConnection() returns false always
+	 *  
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug68763() throws Exception {
+		
+			ReplicationConnection replConn = null;
 
+			replConn = (ReplicationConnection) getMasterSlaveReplicationConnection();
+			replConn.setReadOnly(true);
+			assertFalse("isMasterConnection() should be false for slave connection", replConn.isMasterConnection());
+			replConn.setReadOnly(false);
+			assertTrue("isMasterConnection() should be true for master connection", replConn.isMasterConnection());
+
+	}
+	
+
+	/**
+	 * Tests fix for BUG#68733, ReplicationConnection does not ping all underlying
+	 * active physical connections to slaves.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug68733() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("loadBalanceStrategy",
+				ForcedLoadBalanceStrategy.class.getName());
+		props.setProperty("loadBalancePingTimeout", "100");
+		props.setProperty("autoReconnect", "true");
+		
+
+		String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null)
+				.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+
+		if (portNumber == null) {
+			portNumber = "3306";
+		}
+
+		ForcedLoadBalanceStrategy.forceFutureServer("slave1:" + portNumber, -1);
+		// throw Exception if slave2 gets ping
+		UnreliableSocketFactory.downHost("slave2");
+		
+		Connection conn2 = this.getUnreliableReplicationConnection(
+				new String[] { "master", "slave1", "slave2" }, props);
+		((ReplicationConnection) conn2).isMasterConnection();
+		assertTrue("Is not actually on master!", ((ReplicationConnection) conn2).isMasterConnection());
+
+		
+		conn2.setAutoCommit(false);
+
+		conn2.commit();
+		// go to slaves:
+		conn2.setReadOnly(true);
+		
+		// should succeed, as slave2 has not yet been activated:
+		conn2.createStatement().execute("/* ping */ SELECT 1");
+		// allow connections to slave2:
+		UnreliableSocketFactory.dontDownHost("slave2");
+		// force next re-balance to slave2:
+		ForcedLoadBalanceStrategy.forceFutureServer("slave2:" + portNumber, -1);
+		// re-balance:
+		conn2.commit();
+		// down slave1 (active but not selected slave connection):
+		UnreliableSocketFactory.downHost("slave1");
+		// should succeed, as slave2 is currently selected:
+		conn2.createStatement().execute("/* ping */ SELECT 1");
+		
+		
+	
+		// make all hosts available
+		UnreliableSocketFactory.flushAllHostLists();
+		
+		// peg connection to slave2:
+		ForcedLoadBalanceStrategy.forceFutureServer("slave2:" + portNumber, -1);
+		conn2.commit();
+
+		rs = conn2.createStatement().executeQuery("SELECT CONNECTION_ID()");
+		rs.next();
+		int slave2id = rs.getInt(1);
+
+		// peg connection to slave1 now:
+		ForcedLoadBalanceStrategy.forceFutureServer("slave1:" + portNumber, -1);
+		conn2.commit();
+		
+		
+		// this is a really hacky way to confirm ping was processed
+		// by an inactive load-balanced connection, but we lack COM_PING
+		// counters on the server side, and need to create infrastructure
+		// to capture what's being sent by the driver separately.
+		
+		Thread.sleep(2000);
+		conn2.createStatement().execute("/* ping */ SELECT 1");
+		rs = conn2.createStatement().executeQuery("SELECT time FROM information_schema.processlist WHERE id = " + slave2id);
+		rs.next();
+		assertTrue("Processlist should be less than 2 seconds due to ping", rs.getInt(1) < 2);
+		
+		// peg connection to slave2:
+		ForcedLoadBalanceStrategy.forceFutureServer("slave2:" + portNumber, -1);
+		conn2.commit();
+		// leaving connection tied to slave2, bring slave2 down and slave1 up:
+		UnreliableSocketFactory.downHost("slave2");
+		
+		try {
+			conn2.createStatement().execute("/* ping */ SELECT 1");
+			fail("Expected failure because current slave connection is down.");
+		} catch (SQLException e) { }
+		
+		conn2.close();
+		
+		ForcedLoadBalanceStrategy.forceFutureServer("slave1:" + portNumber, -1);
+		UnreliableSocketFactory.flushAllHostLists();
+		conn2 = this.getUnreliableReplicationConnection(
+				new String[] { "master", "slave1", "slave2" }, props);
+		conn2.setAutoCommit(false);
+		// go to slaves:
+		conn2.setReadOnly(true);
+
+		// on slave1 now:
+		conn2.commit();
+		
+		ForcedLoadBalanceStrategy.forceFutureServer("slave2:" + portNumber, -1);
+		// on slave2 now:
+		conn2.commit();
+		
+		// disable master:
+		UnreliableSocketFactory.downHost("master");
+		
+		// ping should succeed, because we're still attached to slaves:
+		conn2.createStatement().execute("/* ping */ SELECT 1");
+		
+		// bring master back up:
+		UnreliableSocketFactory.dontDownHost("master");
+
+		// get back to master, confirm it's recovered:
+		conn2.commit();
+		conn2.createStatement().execute("/* ping */ SELECT 1");
+		try{
+			conn2.setReadOnly(false);
+		} catch (SQLException e) {}
+		
+		conn2.commit();
+		
+		// take down both slaves:
+		UnreliableSocketFactory.downHost("slave1");
+		UnreliableSocketFactory.downHost("slave2");
+		
+		
+		// should succeed, as we're still on master:
+		conn2.createStatement().execute("/* ping */ SELECT 1");		
+		
+		UnreliableSocketFactory.dontDownHost("slave1");
+		UnreliableSocketFactory.dontDownHost("slave2");
+		UnreliableSocketFactory.downHost("master");
+		
+		try {
+			conn2.createStatement().execute("/* ping */ SELECT 1");	
+			fail("should have failed because master is offline");
+		} catch (SQLException e) {
+			
+		}
+		
+		UnreliableSocketFactory.dontDownHost("master");
+		conn2.createStatement().execute("/* ping */ SELECT 1");	
+		// continue on slave2:
+		conn2.setReadOnly(true);
+		
+		// should succeed, as slave2 is up:
+		conn2.createStatement().execute("/* ping */ SELECT 1");	
+		
+		UnreliableSocketFactory.downHost("slave2");
+		
+		try {
+			conn2.createStatement().execute("/* ping */ SELECT 1");	
+			fail("should have failed because slave2 is offline and the active chosen connection.");
+		} catch (SQLException e) {}
+			
+		
+		conn2.close();
+	}
+	
 	protected int testServerPrepStmtDeadlockCounter = 0;
 
 	class PollTask implements Runnable {
