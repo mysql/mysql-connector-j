@@ -4395,6 +4395,87 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			}
 		}
 	}
+	
+	/**
+	 * Tests connection attributes
+	 *
+	 * @throws Exception
+	 */
+	public void testConnectionAttributes() throws Exception {
+		if(!versionMeetsMinimum(5, 6)){
+			return;
+		}
+		Properties props = new Properties();
+		props.setProperty("connectionAttributes", "first:one,again:two");
+		props.setProperty("user", "root");
+		Connection attConn = super.getConnectionWithProps(props);
+		ResultSet rslt = attConn.createStatement().executeQuery(
+				"SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()"
+				);
+		Map<String, Integer> matchedCounts = new HashMap<String, Integer>();
+		
+//		disabling until standard values are defined and implemented
+//		matchedCounts.put("_os", 0);
+//		matchedCounts.put("_platform", 0);
+		matchedCounts.put("_runtime_version", 0);
+		matchedCounts.put("_runtime_vendor", 0);
+		matchedCounts.put("_client_version", 0);
+		matchedCounts.put("_client_license", 0);
+		matchedCounts.put("_client_name", 0);
+		matchedCounts.put("first", 0);
+		matchedCounts.put("again", 0);
+				
+		
+		
+		while (rslt.next()){
+			String key = rslt.getString(2);
+			String val = rslt.getString(3);
+			if(!matchedCounts.containsKey(key)) {
+				fail("Unexpected connection attribute key:  " + key);
+			}
+			matchedCounts.put(key, matchedCounts.get(key) + 1);
+			if (key.equals("_runtime_version")) {
+				assertEquals(System.getProperty("java.version"), val);
+			} else if (key.equals("_os")) {
+				assertEquals(NonRegisteringDriver.OS, val);
+			} else if (key.equals("_platform")) {
+				assertEquals(NonRegisteringDriver.PLATFORM, val);
+			} else if (key.equals("_runtime_vendor")) {
+				assertEquals(System.getProperty("java.vendor"), val);
+			} else if (key.equals("_client_version")) {
+				assertEquals(NonRegisteringDriver.VERSION, val);
+			} else if (key.equals("_client_license")) {
+				assertEquals(NonRegisteringDriver.LICENSE, val);
+			} else if (key.equals("_client_name")) {
+				assertEquals("MySQL Connector Java", val);
+			} else if (key.equals("first")) {
+				assertEquals("one", val);
+			} else if (key.equals("again")) {
+				assertEquals("two", val);
+			}
+		}
+		
+		rslt.close();
+		attConn.close();
+		
+		for (String key : matchedCounts.keySet()) {
+			if(matchedCounts.get(key) != 1) {
+				fail("Incorrect number of entries for key \"" + key + "\": " + matchedCounts.get(key));
+			}
+		}
+		
+		props.setProperty("connectionAttributes", "none");
+		attConn = super.getConnectionWithProps(props);
+		rslt = attConn.createStatement().executeQuery(
+				"SELECT * FROM performance_schema.session_connect_attrs WHERE processlist_id = CONNECTION_ID()"
+				);
+		if(rslt.next()){
+			fail("Expected no connection attributes.");
+		}
+		
+		
+	}	
+	
 
 	/**
 	 * Tests fix for BUG#16224249 - Deadlock on concurrently used LoadBalancedMySQLConnection

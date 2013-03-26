@@ -108,7 +108,7 @@ public class MysqlIO {
     private static final int CLIENT_MULTI_RESULTS = 131072; // Enable/disable multi-results
     private static final int CLIENT_PLUGIN_AUTH = 524288;
     private static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 4194304;
-
+    private static final int CLIENT_CONNECT_ATTRS = 1048576;
 	private static final int SERVER_STATUS_IN_TRANS = 1;
     private static final int SERVER_STATUS_AUTOCOMMIT = 2; // Server in auto_commit mode
     static final int SERVER_MORE_RESULTS_EXISTS = 8; // Multi query - next query exists
@@ -1204,7 +1204,7 @@ public class MysqlIO {
             this.clientParam |= CLIENT_COMPRESS;
         }
 
-		this.useConnectWithDb = (database != null) &&
+        	this.useConnectWithDb = (database != null) &&
 			(database.length() > 0) &&
 			!this.connection.getCreateDatabaseIfNotExist();
 
@@ -1668,6 +1668,9 @@ public class MysqlIO {
 					if (((this.serverCapabilities & CLIENT_CAN_HANDLE_EXPIRED_PASSWORD) != 0) && !this.connection.getDisconnectOnExpiredPasswords()) {
 						this.clientParam |= CLIENT_CAN_HANDLE_EXPIRED_PASSWORD;
 					}
+					if (((this.serverCapabilities & CLIENT_CONNECT_ATTRS) != 0 )) {
+						this.clientParam |= CLIENT_CONNECT_ATTRS;
+					}
 
 					this.has41NewNewProt = true;
 					this.use41Extensions = true;
@@ -1748,7 +1751,7 @@ public class MysqlIO {
 			} catch (SQLException e) {
 				throw SQLError.createSQLException(e.getMessage(), e.getSQLState(), e, getExceptionInterceptor());
 			}
-
+			
 			// send response
 			if (toServer.size() > 0) {
 				if (challenge == null) {
@@ -1793,6 +1796,12 @@ public class MysqlIO {
 					// plugin name
 					if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
 						last_sent.writeString(plugin.getProtocolPluginName(), enc, this.connection);
+					}
+					
+					// connection attributes
+					if ((this.clientParam & CLIENT_CONNECT_ATTRS) != 0) {
+						sendConnectionAttributes(last_sent, enc, this.connection);
+						last_sent.writeByte((byte) 0);
 					}
 
 					send(last_sent, last_sent.getPosition());
@@ -1849,7 +1858,12 @@ public class MysqlIO {
 					if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
 						last_sent.writeString(plugin.getProtocolPluginName(), "utf-8", this.connection);
 					}
-
+					
+					// connection attributes
+					if (((this.clientParam & CLIENT_CONNECT_ATTRS) != 0) ) {
+						sendConnectionAttributes(last_sent, "utf-8", this.connection);
+					}
+					
 					send(last_sent, last_sent.getPosition());
 				}
 				
@@ -1884,6 +1898,62 @@ public class MysqlIO {
 		}
 	}
 
+	private Properties getConnectionAttributesAsProperties(String atts) throws SQLException {
+
+		Properties props = new Properties();
+		
+		
+		if(atts != null) {
+			String[] pairs = atts.split(",");
+			for(String pair : pairs){
+				int keyEnd = pair.indexOf(":");
+				if (keyEnd > 0 && (keyEnd + 1) < pair.length()) {
+					props.setProperty(pair.substring(0,keyEnd), pair.substring(keyEnd + 1));
+				}
+			}
+		}
+		
+//		Leaving disabled until standard values are defined
+//		props.setProperty("_os", NonRegisteringDriver.OS);
+//		props.setProperty("_platform", NonRegisteringDriver.PLATFORM);
+		props.setProperty("_client_name", NonRegisteringDriver.NAME);
+		props.setProperty("_client_version", NonRegisteringDriver.VERSION);
+		props.setProperty("_runtime_vendor", NonRegisteringDriver.RUNTIME_VENDOR);
+		props.setProperty("_runtime_version", NonRegisteringDriver.RUNTIME_VERSION);
+		props.setProperty("_client_license", NonRegisteringDriver.LICENSE);
+		
+		
+		return props;
+	}
+	
+	private void sendConnectionAttributes(Buffer buf, String enc, MySQLConnection conn) throws SQLException {
+		String atts = conn.getConnectionAttributes();
+		
+		// bypass if requested:
+		if ("none".equals(atts)) {
+			return;
+		}
+
+		Buffer lb = new Buffer(100);
+		try{
+			
+			Properties props = getConnectionAttributesAsProperties(atts);
+			
+			for(Object key : props.keySet()) {
+				lb.writeLenString((String) key, enc, conn.getServerCharacterEncoding(), null, conn.parserKnowsUnicode(), conn);
+				lb.writeLenString(props.getProperty((String) key), enc, conn.getServerCharacterEncoding(), null, conn.parserKnowsUnicode(), conn);				
+			}
+
+		} catch (UnsupportedEncodingException e){
+			
+		}
+
+		buf.writeByte((byte) (lb.getPosition() - 4));
+		buf.writeBytesNoNull(lb.getByteBuffer(), 4 , lb.getBufLength() - 4);
+	
+	}
+	
+	
 	private void changeDatabaseTo(String database) throws SQLException {
 		if (database == null || database.length() == 0) {
 			return;
@@ -4606,7 +4676,11 @@ public class MysqlIO {
 				packet.writeByte((byte) 0);
 			}
         }
-
+        
+		// connection attributes
+		if ((this.serverCapabilities & CLIENT_CONNECT_ATTRS) != 0) {
+			sendConnectionAttributes(packet, "utf-8", this.connection);
+		}
 
         send(packet, packet.getPosition());
 

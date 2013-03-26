@@ -2631,4 +2631,8 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 	public Object getConnectionMutex() {
 		return getActiveMySQLConnection().getConnectionMutex();
 	}
+
+	public String getConnectionAttributes() throws SQLException {
+		return getActiveMySQLConnection().getConnectionAttributes();
+	}
 }

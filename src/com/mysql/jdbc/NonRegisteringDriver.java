@@ -84,6 +84,35 @@ public class NonRegisteringDriver implements java.sql.Driver {
 	
 	protected static final ReferenceQueue<ConnectionImpl> refQueue = new ReferenceQueue<ConnectionImpl>();
 	
+	public static final String OS = getOSName();
+	public static final String PLATFORM = getPlatform();
+	public static final String LICENSE = "@MYSQL_CJ_LICENSE_TYPE@";
+	public static final String RUNTIME_VENDOR = System.getProperty("java.vendor");
+	public static final String RUNTIME_VERSION = System.getProperty("java.version");
+	public static final String VERSION = "@MYSQL_CJ_VERSION@";
+	public static final String NAME = "@MYSQL_CJ_DISPLAY_PROD_NAME@";
+	
+	/*
+	 * Standardizes OS name information to align with other drivers/clients
+	 * for MySQL connection attributes
+	 *     
+	 * @return the transformed, standardized OS name
+	 */
+	public static String getOSName() {
+		return System.getProperty("os.name");
+	}
+	
+	/*
+	 * Standardizes platform information to align with other drivers/clients
+	 * for MySQL connection attributes
+	 *    
+	 * @return the transformed, standardized platform details
+	 */
+	public static String getPlatform() {
+		return System.getProperty("os.arch");
+	}
+	
+	
 	static {
 		AbandonedConnectionCleanupThread referenceThread = new AbandonedConnectionCleanupThread();
 		referenceThread.setDaemon(true);

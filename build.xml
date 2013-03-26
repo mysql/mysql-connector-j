@@ -35,6 +35,7 @@
 
 	<property name="version" value="${major_version}.${minor_version}.${subminor_version}${version_status}"/>
 	<property name="prodName" value="mysql-connector-java"/>
+	<property name="prodDisplayName" value="MySQL Connector Java"/>
 	<property name="snapshot.version" value="-SNAPSHOT" />
 	<property name="extra.version" value=""/>
 	<property name="full.version" value="${version}${extra.version}${snapshot.version}"/>
@@ -186,7 +187,23 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<filter token="MYSQL_CJ_VERSION" value="${version}"/>
 			<filter token="MYSQL_CJ_REVISION" value="${bzr.revision-id}" />
 			<filter token="MYSQL_CJ_FULL_PROD_NAME" value="${fullProdName}"/>
+			<filter token="MYSQL_CJ_DISPLAY_PROD_NAME" value="${prodDisplayName}"/>
 		</filterset>
+		<if>
+			<isset property="com.mysql.jdbc.commercialBuild"/>
+			<then>
+				<filterset id="licenseFilterset">
+					<filter token="MYSQL_CJ_LICENSE_TYPE" value="commercial"/>
+				</filterset>
+			</then>
+			<else>
+				<filterset id="licenseFilterset">
+					<filter token="MYSQL_CJ_LICENSE_TYPE" value="GPL"/>
+				</filterset>
+			</else>
+		</if>
+		
+		
 		
 		<copy todir="${buildDir}/${fullProdName}" filtering="true">
 			<fileset dir="${sourceDir}/" excludes="**/CVS">
@@ -197,6 +214,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			</fileset>
 
 			<filterset refid="versionFilterset" />
+			<filterset refid="licenseFilterset" />
 		</copy>
 
 		<copy todir="${buildDir}/${fullProdName}" filtering="false">
@@ -350,6 +368,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<then>
 				<copy file="${sourceDir}/lib-nodist/README-commercial" tofile="${packageDest}/README.txt" filtering="true">
 					<filterset refid="versionFilterset" />
+					<filterset refid="licenseFilterset" />
 				</copy>
 				<copy file="${packageDest}/README.txt" tofile="${packageDest}/README" overwrite="true" />
 			</then>
@@ -431,7 +450,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				<attribute name="Specification-Title" value="JDBC" />
 				<attribute name="Specification-Version" value="4.0" />
 				<attribute name="Specification-Vendor" value="Sun Microsystems Inc." />
-				<attribute name="Implementation-Title" value="MySQL Connector/J" />
+				<attribute name="Implementation-Title" value="${prodDisplayName}" />
 				<attribute name="Implementation-Version" value="${full.version}" />
 				<attribute name="Implementation-Vendor-Id" value="com.mysql" />
 				<attribute name="Implementation-Vendor" value="Oracle" />

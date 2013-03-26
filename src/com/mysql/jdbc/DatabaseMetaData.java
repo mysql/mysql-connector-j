@@ -3058,7 +3058,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 *             DOCUMENT ME!
 	 */
 	public String getDriverName() throws SQLException {
-		return "MySQL Connector Java";
+		return NonRegisteringDriver.NAME;
 	}
 
 	/**

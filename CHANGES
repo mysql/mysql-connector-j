@@ -2,6 +2,17 @@
 # $Id$
 nn-nn-13 - Version 5.1.25
 
+  - Added support for Connection Attributes when used with MySQL Server versions (5.6+) which support this feature.  
+    By default, the following standard attributes are sent to the server, where they can be seen in the 
+    performance_schema.session_connect_attrs table:
+     * _client_version : the version of MySQL Connector Java in use
+     * _client_name : "MySQL Connector Java"
+     * _runtime_version : the version of the Java runtime environment in which the driver is running
+     * _runtime_vendor : the name of company which produced the Java runtime environment
+    Additionally, users may supply their own key/value attributes to be exposed by providing them in 
+    "key1:value1,key2:value2" format in the connectionAttributes connection property.
+    To avoid sending any connection attributes to the server, set connectionAttributes property to "none".
+    
   - Fix for Bug#68763 (16545334), ReplicationConnection.isMasterConnection() returns false always.
 
   - Fix for Bug#68733 (16526938), ReplicationConnection doesn't ping all slaves.

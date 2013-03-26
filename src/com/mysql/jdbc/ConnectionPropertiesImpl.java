@@ -834,6 +834,12 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			"characterSetResults", null, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.characterSetResults"), "3.0.13", //$NON-NLS-1$ //$NON-NLS-2$
 			MISC_CATEGORY, 6);
+
+	private StringConnectionProperty connectionAttributes = new StringConnectionProperty(
+			"connectionAttributes", null, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.connectionAttributes"), "5.1.25", //$NON-NLS-1$ //$NON-NLS-2$
+			MISC_CATEGORY, 7);
+
 	
 	private StringConnectionProperty clientInfoProvider = new StringConnectionProperty(
 			"clientInfoProvider", "com.mysql.jdbc.JDBC4CommentClientInfoProvider", //$NON-NLS-1$ //$NON-NLS-2$
@@ -2132,6 +2138,14 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	 */
 	public String getCharacterSetResults() {
 		return this.characterSetResults.getValueAsString();
+	}
+	
+	public String getConnectionAttributes() {
+		return this.connectionAttributes.getValueAsString();
+	}
+	
+	public void setConnectionAttributes(String val) {
+		this.connectionAttributes.setValue(val);
 	}
 
 	/* (non-Javadoc)

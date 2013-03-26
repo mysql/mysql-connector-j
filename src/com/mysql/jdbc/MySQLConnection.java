@@ -202,6 +202,8 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 
 	boolean useMaxRows();
 	
+	String getConnectionAttributes() throws SQLException;
+		
 	MySQLConnection getLoadBalanceSafeProxy();
 	
 }
