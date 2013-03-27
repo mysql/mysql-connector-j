@@ -4447,7 +4447,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			} else if (key.equals("_client_license")) {
 				assertEquals(NonRegisteringDriver.LICENSE, val);
 			} else if (key.equals("_client_name")) {
-				assertEquals("MySQL Connector Java", val);
+				assertEquals(NonRegisteringDriver.NAME, val);
 			} else if (key.equals("first")) {
 				assertEquals("one", val);
 			} else if (key.equals("again")) {
