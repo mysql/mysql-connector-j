@@ -93,6 +93,8 @@ public class MysqlIO {
     private static final int CLIENT_LOCAL_FILES = 128; /* Can use LOAD DATA
     LOCAL */
 
+    private static final String NONE = "none";
+    
     /* Found instead of
        affected rows */
     private static final int CLIENT_LONG_FLAG = 4; /* Get all column flags */
@@ -1621,7 +1623,6 @@ public class MysqlIO {
 	 * @throws SQLException
 	 */	
 	private void proceedHandshakeWithPluggableAuthentication(String user, String password, String database, Buffer challenge) throws SQLException {
-
 		if (this.authenticationPlugins == null) {
 			loadAuthenticationPlugins();
 		}
@@ -1668,7 +1669,8 @@ public class MysqlIO {
 					if (((this.serverCapabilities & CLIENT_CAN_HANDLE_EXPIRED_PASSWORD) != 0) && !this.connection.getDisconnectOnExpiredPasswords()) {
 						this.clientParam |= CLIENT_CAN_HANDLE_EXPIRED_PASSWORD;
 					}
-					if (((this.serverCapabilities & CLIENT_CONNECT_ATTRS) != 0 )) {
+					if (((this.serverCapabilities & CLIENT_CONNECT_ATTRS) != 0 ) && 
+							!NONE.equals(this.connection.getConnectionAttributes())) {
 						this.clientParam |= CLIENT_CONNECT_ATTRS;
 					}
 
@@ -1928,11 +1930,6 @@ public class MysqlIO {
 	
 	private void sendConnectionAttributes(Buffer buf, String enc, MySQLConnection conn) throws SQLException {
 		String atts = conn.getConnectionAttributes();
-		
-		// bypass if requested:
-		if ("none".equals(atts)) {
-			return;
-		}
 
 		Buffer lb = new Buffer(100);
 		try{
