@@ -2267,41 +2267,46 @@ public class CallableStatement extends PreparedStatement implements
 							setPstmt = (PreparedStatement) this.connection
 									.clientPrepareStatement(queryBuf.toString());
 	
-							byte[] parameterAsBytes = getBytesRepresentation(
-									inParamInfo.index);
-	
-							if (parameterAsBytes != null) {
-								if (parameterAsBytes.length > 8
-										&& parameterAsBytes[0] == '_'
-										&& parameterAsBytes[1] == 'b'
-										&& parameterAsBytes[2] == 'i'
-										&& parameterAsBytes[3] == 'n'
-										&& parameterAsBytes[4] == 'a'
-										&& parameterAsBytes[5] == 'r'
-										&& parameterAsBytes[6] == 'y'
-										&& parameterAsBytes[7] == '\'') {
-									setPstmt.setBytesNoEscapeNoQuotes(1,
-											parameterAsBytes);
-								} else {
-									int sqlType = inParamInfo.desiredJdbcType;
-									
-									switch (sqlType) {
-									case Types.BIT:
-									case Types.BINARY: 
-									case Types.BLOB: 
-									case Types.JAVA_OBJECT:
-									case Types.LONGVARBINARY: 
-									case Types.VARBINARY:
-										setPstmt.setBytes(1, parameterAsBytes);
-										break;
-									default:
-										// the inherited PreparedStatement methods
-										// have already escaped and quoted these parameters
-										setPstmt.setBytesNoEscape(1, parameterAsBytes);
-									}
-								}
+							if (this.isNull[inParamInfo.index]) {
+								setPstmt.setBytesNoEscapeNoQuotes(1, "NULL".getBytes());
+								
 							} else {
-								setPstmt.setNull(1, Types.NULL);
+								byte[] parameterAsBytes = getBytesRepresentation(
+										inParamInfo.index);
+		
+								if (parameterAsBytes != null) {
+									if (parameterAsBytes.length > 8
+											&& parameterAsBytes[0] == '_'
+											&& parameterAsBytes[1] == 'b'
+											&& parameterAsBytes[2] == 'i'
+											&& parameterAsBytes[3] == 'n'
+											&& parameterAsBytes[4] == 'a'
+											&& parameterAsBytes[5] == 'r'
+											&& parameterAsBytes[6] == 'y'
+											&& parameterAsBytes[7] == '\'') {
+										setPstmt.setBytesNoEscapeNoQuotes(1,
+												parameterAsBytes);
+									} else {
+										int sqlType = inParamInfo.desiredJdbcType;
+										
+										switch (sqlType) {
+										case Types.BIT:
+										case Types.BINARY: 
+										case Types.BLOB: 
+										case Types.JAVA_OBJECT:
+										case Types.LONGVARBINARY: 
+										case Types.VARBINARY:
+											setPstmt.setBytes(1, parameterAsBytes);
+											break;
+										default:
+											// the inherited PreparedStatement methods
+											// have already escaped and quoted these parameters
+											setPstmt.setBytesNoEscape(1, parameterAsBytes);
+										}
+									}
+								} else {
+									setPstmt.setNull(1, Types.NULL);
+								}
 							}
 	
 							setPstmt.executeUpdate();

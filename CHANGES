@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.25
 
+  - Fix for Bug#60816, Cannot pass NULL to an INOUT procedure parameter.
+
   - Added support for Connection Attributes when used with MySQL Server versions (5.6+) which support this feature.  
     By default, the following standard attributes are sent to the server, where they can be seen in the 
     performance_schema.session_connect_attrs table:
