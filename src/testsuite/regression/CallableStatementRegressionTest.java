@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -1876,6 +1876,68 @@ public class CallableStatementRegressionTest extends BaseTestCase {
 			this.conn.setCatalog(originalCatalog);
 		}
 
+	}
+
+	/**
+	 * Tests fix for BUG#60816 - Cannot pass NULL to an INOUT procedure parameter
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug60816() throws Exception {
+		try {
+			this.stmt.execute("drop procedure if exists test60816_1");
+			this.stmt.execute("drop procedure if exists test60816_2");
+			this.stmt.execute("drop procedure if exists test60816_3");
+			this.stmt.execute("CREATE PROCEDURE test60816_1 (INOUT x INTEGER)\n" +
+					"BEGIN\n" +
+					"SET x = x + 1;\n" +
+					"END");
+			this.stmt.execute("CREATE PROCEDURE test60816_2 (x INTEGER, OUT y INTEGER)\n" +
+					"BEGIN\n" +
+					"SET y = x + 1;\n" +
+					"END");
+			this.stmt.execute("CREATE PROCEDURE test60816_3 (INOUT x INTEGER)\n" +
+					"BEGIN\n" +
+					"SET x = 10;\n" +
+					"END");
+			
+			CallableStatement call = this.conn.prepareCall("{ call test60816_1(?) }");
+			call.setInt(1, 1);
+			call.registerOutParameter(1, Types.INTEGER);
+			call.execute();
+			assertEquals(2, call.getInt(1));
+
+			call = this.conn.prepareCall("{ call test60816_2(?, ?) }");
+			call.setInt(1, 1);
+			call.registerOutParameter(2, Types.INTEGER);
+			call.execute();
+			assertEquals(2, call.getInt(2));
+
+			call = this.conn.prepareCall("{ call test60816_2(?, ?) }");
+			call.setNull(1, Types.INTEGER);
+			call.registerOutParameter(2, Types.INTEGER);
+			call.execute();
+			assertEquals(0, call.getInt(2));
+			assertTrue(call.wasNull());
+
+			call = this.conn.prepareCall("{ call test60816_1(?) }");
+			call.setNull(1, Types.INTEGER);
+			call.registerOutParameter(1, Types.INTEGER);
+			call.execute();
+			assertEquals(0, call.getInt(1));
+			assertTrue(call.wasNull());
+
+			call = this.conn.prepareCall("{ call test60816_3(?) }");
+			call.setNull(1, Types.INTEGER);
+			call.registerOutParameter(1, Types.INTEGER);
+			call.execute();
+			assertEquals(10, call.getInt(1));
+
+		} finally {
+			this.stmt.execute("drop procedure if exists test60816_1");
+			this.stmt.execute("drop procedure if exists test60816_2");
+			this.stmt.execute("drop procedure if exists test60816_3");
+		}
 	}
 
 }
