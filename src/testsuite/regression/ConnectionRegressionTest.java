@@ -4259,10 +4259,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			Statement testSt = null;
 			ResultSet testRs = null;
 
+			Properties urlProps = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String dbname = urlProps.getProperty(Driver.DBNAME_PROPERTY_KEY);
+
 			try {
 
-				this.stmt.executeUpdate("CREATE USER 'must_change1'@'%' IDENTIFIED BY 'aha'");
-				this.stmt.executeUpdate("CREATE USER 'must_change2'@'%' IDENTIFIED BY 'aha'");
+				this.stmt.executeUpdate("grant all on `"+dbname+"`.* to 'must_change1'@'%' IDENTIFIED BY 'aha'");
+				this.stmt.executeUpdate("grant all on `"+dbname+"`.* to 'must_change2'@'%' IDENTIFIED BY 'aha'");
 				this.stmt.executeUpdate("ALTER USER 'must_change1'@'%' PASSWORD EXPIRE, 'must_change2'@'%' PASSWORD EXPIRE");
 
 				Properties props = new Properties();
