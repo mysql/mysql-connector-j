@@ -4066,10 +4066,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					testRs = testSt.executeQuery("SELECT * FROM `"+dbname+"`.`ほげほげ`");
 				} catch (SQLException e2) {
 					if (e2 instanceof MySQLSyntaxErrorException) {
-						assertEquals("Таблица '"+dbname+".ほげほげ' не существует", e2.getMessage());
+						assertEquals("Таблица '"+dbname+".ほげほげ' не существует", e2.getLocalizedMessage());
 					} else if (e2.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
 						// this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
-						assertTrue(e2.getMessage().toLowerCase().contains("файл"));
+						assertTrue("File not found error message should be russian but is this one: "+e2.getMessage()+" (localized message: "+e2.getLocalizedMessage()+").", e2.getLocalizedMessage().toLowerCase().contains("файл"));
 					} else {
 						throw e2;
 					}
