@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -69,6 +69,16 @@ public class UpdatabilityTest extends BaseTestCase {
 	public void setUp() throws Exception {
 		super.setUp();
 		createTestTable();
+	}
+	
+	@Override
+	public void tearDown() throws Exception {
+		try {
+			this.stmt.executeUpdate("DROP TABLE UPDATABLE");
+		} catch (SQLException SQLE) {
+			;
+		}
+		super.tearDown();
 	}
 
 	/**

@@ -2498,6 +2498,8 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			this.rs = conn2.prepareStatement("SELECT * FROM testAllTypes")
 					.executeQuery();
 			testAllFieldsForNotNull(this.rs, wasDatetimeTypeList);
+
+			stmt2.executeUpdate("DROP TABLE IF EXISTS testAllTypes");
 		}
 	}
 

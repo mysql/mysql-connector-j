@@ -860,10 +860,6 @@ public class StatementRegressionTest extends BaseTestCase {
 			} catch (DataTruncation truncEx) {
 				// we expect this
 			} finally {
-				if (this.stmt != null) {
-					this.stmt.close();
-				}
-
 				if (truncConn != null) {
 					truncConn.close();
 				}
@@ -2990,6 +2986,9 @@ public class StatementRegressionTest extends BaseTestCase {
 			assertTrue("Retrieved date of " + rTs.getDate()
 					+ " does not match " + ts.getDate(),
 					rTs.getDate() == ts.getDate());
+
+			this.stmt.executeUpdate("DROP TABLE IF EXISTS testTimestampNPE");
+
 		} finally {
 		}
 	}

@@ -2954,6 +2954,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			}
 		}
         
+		Statement savedSt = this.stmt;
         Connection conn1 = DriverManager.getConnection(newUrlToTestNoDB.toString());
 		
         this.stmt = conn1.createStatement();
@@ -2994,6 +2995,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		assertEquals(6, cStmt.getInt(2));
 		cStmt.clearParameters();
         cStmt.close();
+		
+		this.stmt = savedSt;
 	}
 	
 	/**

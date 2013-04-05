@@ -195,7 +195,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
 		if (versionMeetsMinimum(5, 6, 8)) {
 			String tmpdir = null;
-			this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='tmpdir' or Variable_name='innodb_file_per_table'");
+			String uuid = null;
+			this.rs = this.stmt.executeQuery("SHOW VARIABLES WHERE Variable_name='tmpdir' or Variable_name='innodb_file_per_table' or Variable_name='server_uuid'");
 			while (this.rs.next()) {
 				if ("tmpdir".equals(this.rs.getString(1))) {
 					tmpdir = this.rs.getString(2);
@@ -209,14 +210,31 @@ public class SyntaxRegressionTest extends BaseTestCase {
 					if (!this.rs.getString(2).equals("ON")) {
 						fail("You need to set innodb_file_per_table to ON before running this test!");
 					}
+				} else if ("server_uuid".equals(this.rs.getString(1))) {
+					uuid = this.rs.getString(2);
 				}
 			}
+			
+			if (uuid != null) {
+				tmpdir = tmpdir + File.separator + uuid;
+			}
+			
 			String dbname = null;
 			this.rs = this.stmt.executeQuery("select database() as dbname");
 			if(this.rs.first()) {
 				dbname = this.rs.getString("dbname");
 			}
 			if (dbname == null) assertTrue("No database selected", false);
+
+			File checkTableSpaceFile1 = new File(tmpdir + File.separator + dbname + File.separator + "testTransportableTablespaces1.ibd");
+			if (checkTableSpaceFile1.exists()) {
+				checkTableSpaceFile1.delete();
+			}
+
+			File checkTableSpaceFile2 = new File(tmpdir + File.separator + dbname + File.separator + "testTransportableTablespaces2.ibd");
+			if (checkTableSpaceFile2.exists()) {
+				checkTableSpaceFile2.delete();
+			}
 
 			createTable("testTransportableTablespaces1", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
 			createTable("testTransportableTablespaces2", "(x VARCHAR(10) NOT NULL DEFAULT '') DATA DIRECTORY = '" + tmpdir + "'");
@@ -228,7 +246,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
 
 			String tableSpacePath = tmpdir + File.separator + dbname + File.separator + "testTransportableTablespaces1.ibd";
 			File tableSpaceFile = new File(tableSpacePath);
-			
+
 			copyFile(tableSpaceFile, tempFile);
 			this.stmt.executeUpdate("ALTER TABLE testTransportableTablespaces1 DISCARD TABLESPACE");
 
