@@ -201,10 +201,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
 				if ("tmpdir".equals(this.rs.getString(1))) {
 					tmpdir = this.rs.getString(2);
 					if (tmpdir.endsWith(File.separator)) {
-						tmpdir = tmpdir.substring(0, tmpdir.length()-1);
-					}
-					if (File.separatorChar == '\\') {
-						tmpdir = StringUtils.escapeQuote(tmpdir, File.separator);
+						tmpdir = tmpdir.substring(0, tmpdir.length()-File.separator.length());
 					}
 				} else if ("innodb_file_per_table".equals(this.rs.getString(1))) {
 					if (!this.rs.getString(2).equals("ON")) {
@@ -217,6 +214,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
 			
 			if (uuid != null) {
 				tmpdir = tmpdir + File.separator + uuid;
+			}
+
+			if (File.separatorChar == '\\') {
+				tmpdir = StringUtils.escapeQuote(tmpdir, File.separator);
 			}
 			
 			String dbname = null;
