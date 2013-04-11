@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!--
-  Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -314,8 +314,12 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 				<mkdir dir="${mavenUploadDir}" />
 
-				<copy file="${buildDir}/${fullProdName}/${fullProdName}-bin.jar"
-				  	toFile="${mavenUploadDir}/${fullProdName}.jar" />
+				<jar jarfile="${mavenUploadDir}/${fullProdName}.jar" 
+					basedir="${compiler.output}" 
+					includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**" 
+					excludes="testsuite/**" 
+					index="true" 
+					manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF"/>
 
 				<copy file="${buildDir}/${fullProdName}/doc/sources/pom.xml"
 					toDir="${mavenUploadDir}" filtering="true">
