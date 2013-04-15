@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-nn-nn-13 - Version 5.1.25
+05-06-13 - Version 5.1.25
 
   - Fix for Bug#68801, java webstart mysql-connector-java lib calls -bin library.
 
