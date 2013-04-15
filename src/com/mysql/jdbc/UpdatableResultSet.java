@@ -2404,6 +2404,8 @@ public class UpdatableResultSet extends ResultSetImpl {
 			this.updater.executeUpdate();
 			refreshRow();
 			this.doingUpdates = false;
+		} else if (this.onInsertRow) {
+			throw SQLError.createSQLException(Messages.getString("UpdatableResultSet.44"), getExceptionInterceptor()); //$NON-NLS-1$
 		}
 
 		//

@@ -4890,4 +4890,19 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Bug #45757 - ResultSet.updateRow should throw SQLException when cursor is on insert row
+	 */
+	public void testBug45757() throws SQLException {
+		createTable("bug45757", "(id INTEGER NOT NULL PRIMARY KEY)");
+		this.stmt = this.conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+		this.rs = this.stmt.executeQuery("select id from bug45757");
+		this.rs.moveToInsertRow();
+		try {
+			this.rs.updateRow();
+			fail("updateRow() should throw an exception, not allowed to be called on insert row");
+		} catch(SQLException sqlEx) {
+			assertTrue(sqlEx.getMessage().startsWith("Can not call updateRow() when on insert row."));
+		}
+	}
 }
