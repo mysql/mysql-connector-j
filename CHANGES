@@ -1,5 +1,8 @@
 # Changelog
 # $Id$
+nn-nn-13 - Version 5.1.26
+  - Fix for Bug#45757 (11754192), Don't allow updateRow() to be called when updatable cursor is positioned on insert row
+
 05-06-13 - Version 5.1.25
 
   - Fix for Bug#68801, java webstart mysql-connector-java lib calls -bin library.
