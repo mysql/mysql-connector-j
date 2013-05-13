@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
@@ -421,6 +422,39 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 	}
        
+	/**
+	 * Helper class to provide means of comparing indexes by NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
+	 */
+	protected class IndexInfoKeyComparable implements Comparable<IndexInfoKeyComparable> {
+		Boolean columnNonUnique;
+		Short columnType;
+		String columnIndexName;
+		Short columnOrdinalPosition;
+
+		IndexInfoKeyComparable(boolean columnNonUnique, short columnType, String columnIndexName,
+				short columnOrdinalPosition) {
+			this.columnNonUnique = columnNonUnique;
+			this.columnType = columnType;
+			this.columnIndexName = columnIndexName;
+			this.columnOrdinalPosition = columnOrdinalPosition;
+		}
+
+		public int compareTo(IndexInfoKeyComparable indexInfoKey) {
+			int compareResult;
+
+			if ((compareResult = columnNonUnique.compareTo(indexInfoKey.columnNonUnique)) != 0) {
+				return compareResult;
+			}
+			if ((compareResult = columnType.compareTo(indexInfoKey.columnType)) != 0) {
+				return compareResult;
+			}
+			if ((compareResult = columnIndexName.compareTo(indexInfoKey.columnIndexName)) != 0) {
+				return compareResult;
+			}
+			return columnOrdinalPosition.compareTo(indexInfoKey.columnOrdinalPosition);
+		}
+	}
+	
 	private static String mysqlKeywordsThatArentSQL92;
 	
 	protected static final int MAX_IDENTIFIER_LENGTH = 64;
@@ -3585,6 +3619,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		Field[] fields = createIndexInfoFields();
 
+		final SortedMap<IndexInfoKeyComparable, ResultSetRow> sortedRows = new TreeMap<IndexInfoKeyComparable, ResultSetRow>();
 		final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 		final Statement stmt = this.conn.getMetadataSafeStatement();
 
@@ -3626,7 +3661,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							byte[][] row = new byte[14][];
 							row[0] = ((catalogStr == null) ? new byte[0]
 									: s2b(catalogStr));
-							;
 							row[1] = null;
 							row[2] = results.getBytes("Table");
 
@@ -3637,8 +3671,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 									: s2b("false"));
 							row[4] = new byte[0];
 							row[5] = results.getBytes("Key_name");
-							row[6] = Integer.toString(
-									java.sql.DatabaseMetaData.tableIndexOther)
+							short indexType = java.sql.DatabaseMetaData.tableIndexOther;
+							row[6] = Integer.toString(indexType)
 									.getBytes();
 							row[7] = results.getBytes("Seq_in_index");
 							row[8] = results.getBytes("Column_name");
@@ -3656,13 +3690,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							row[11] = s2b("0");
 							row[12] = null;
 
+							IndexInfoKeyComparable indexInfoKey = new IndexInfoKeyComparable(!indexIsUnique, indexType,
+									results.getString("Key_name").toLowerCase(), results.getShort("Seq_in_index"));
+							
 							if (unique) {
 								if (indexIsUnique) {
-									rows.add(new ByteArrayRow(row, getExceptionInterceptor()));
+									sortedRows.put(indexInfoKey, new ByteArrayRow(row, getExceptionInterceptor()));
 								}
 							} else {
 								// All rows match
-								rows.add(new ByteArrayRow(row, getExceptionInterceptor()));
+								sortedRows.put(indexInfoKey, new ByteArrayRow(row, getExceptionInterceptor()));
 							}
 						}
 					} finally {
@@ -3678,6 +3715,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					}
 				}
 			}.doForAll();
+			
+			Iterator<ResultSetRow> sortedRowsIterator = sortedRows.values().iterator();
+			while (sortedRowsIterator.hasNext()) {
+				rows.add(sortedRowsIterator.next());
+			}
 
 			java.sql.ResultSet indexInfo = buildResultSet(fields, rows);
 
