@@ -885,23 +885,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		row[1] = null; // PROCEDURE_SCHEM
 		row[2] = procNameAsBytes; // PROCEDURE/NAME
 		row[3] = s2b(paramName); // COLUMN_NAME
-		// COLUMN_TYPE
-		
-		// NOTE: For JDBC-4.0, we luck out here for functions
-		// because the values are the same for functionColumn....
-		// and they're not using Enumerations....
-		
-		if (isInParam && isOutParam) {
-			row[4] = s2b(String.valueOf(procedureColumnInOut));
-		} else if (isInParam) {
-			row[4] = s2b(String.valueOf(procedureColumnIn));
-		} else if (isOutParam) {
-			row[4] = s2b(String.valueOf(procedureColumnOut));
-		} else if (isReturnParam) {
-			row[4] = s2b(String.valueOf(procedureColumnReturn));
-		} else {
-			row[4] = s2b(String.valueOf(procedureColumnUnknown));
-		}
+		row[4] = s2b(String.valueOf(getColumnType(isOutParam, isInParam, isReturnParam, forGetFunctionColumns))); // COLUMN_TYPE
 		row[5] = s2b(Short.toString(typeDesc.dataType)); // DATA_TYPE
 		row[6] = s2b(typeDesc.typeName); // TYPE_NAME
 		row[7] = typeDesc.columnSize == null ? null : s2b(typeDesc.columnSize.toString()); // PRECISION
@@ -947,6 +931,36 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 		
 		return new ByteArrayRow(row, getExceptionInterceptor());
+	}
+	
+	/**
+	 * Determines the COLUMN_TYPE information based on parameter type (IN, OUT or INOUT) or function return parameter.
+	 * 
+	 * @param isOutParam
+	 *            Indicates whether it's an output parameter.
+	 * @param isInParam
+	 *            Indicates whether it's an input parameter.
+	 * @param isReturnParam
+	 *            Indicates whether it's a function return parameter.
+	 * @param forGetFunctionColumns
+	 *            Indicates whether the column belong to a function. This argument is required for JDBC4, in which case
+	 *            this method must be overridden to provide the correct functionality.
+	 * 
+	 * @return The corresponding COLUMN_TYPE as in java.sql.getProcedureColumns API.
+	 */
+	protected int getColumnType(boolean isOutParam, boolean isInParam, boolean isReturnParam,
+			boolean forGetFunctionColumns) {
+		if (isInParam && isOutParam) {
+			return procedureColumnInOut;
+		} else if (isInParam) {
+			return procedureColumnIn;
+		} else if (isOutParam) {
+			return procedureColumnOut;
+		} else if (isReturnParam) {
+			return procedureColumnReturn;
+		} else {
+			return procedureColumnUnknown;
+		}
 	}
 
 	private ExceptionInterceptor exceptionInterceptor;

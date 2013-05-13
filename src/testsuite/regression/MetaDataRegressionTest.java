@@ -3399,7 +3399,6 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		assertEquals("MySQL Connector Java", dbmd.getDriverName());
 	}
 
-	
 	/**
 	 * Test fix for BUG#68098 - DatabaseMetaData.getIndexInfo sorts results incorrectly.
 	 * 
@@ -3434,5 +3433,47 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 
 		connUseIS.close();
+	}
+
+	/**
+	 * Tests fix for BUG#68307 - getFunctionColumns() returns incorrect "COLUMN_TYPE" information. This JDBC4
+	 * feature required some changes in method getProcedureColumns().
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug68307() throws Exception {
+		String[] testStepDescription = new String[] { "MySQL MetaData", "I__S MetaData" };
+		Connection connUseIS = getConnectionWithProps("useInformationSchema=true");
+		Connection[] testConnections = new Connection[] { conn, connUseIS };
+
+		createFunction("bug68307_func", "(func_param_in INT) RETURNS INT DETERMINISTIC RETURN 1");
+
+		createProcedure("bug68307_proc",
+				"(IN proc_param_in INT, OUT proc_param_out INT, INOUT proc_param_inout INT) SELECT 1");
+
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+			rs = testDbMetaData.getProcedureColumns(null, null, "bug68307_%", "%");
+
+			while (rs.next()) {
+				String message = testStepDescription[i] + ", procedure/function <" + rs.getString("PROCEDURE_NAME")
+						+ "." + rs.getString("COLUMN_NAME") + ">";
+				if (rs.getString("COLUMN_NAME") == null || rs.getString("COLUMN_NAME").length() == 0) {
+					assertEquals(message, DatabaseMetaData.procedureColumnReturn, rs.getShort("COLUMN_TYPE"));
+				} else if (rs.getString("COLUMN_NAME").endsWith("_in")) {
+					assertEquals(message, DatabaseMetaData.procedureColumnIn, rs.getShort("COLUMN_TYPE"));
+				} else if (rs.getString("COLUMN_NAME").endsWith("_inout")) {
+					assertEquals(message, DatabaseMetaData.procedureColumnInOut, rs.getShort("COLUMN_TYPE"));
+				} else if (rs.getString("COLUMN_NAME").endsWith("_out")) {
+					assertEquals(message, DatabaseMetaData.procedureColumnOut, rs.getShort("COLUMN_TYPE"));
+				} else {
+					fail(testStepDescription[i] + ", column '" + rs.getString("FUNCTION_NAME") + "."
+							+ rs.getString("COLUMN_NAME") + "' not expected within test case.");
+				}
+			}
+
+			rs.close();
+		}
 	}
 }
