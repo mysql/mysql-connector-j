@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -511,5 +511,18 @@ public class DataSourceRegressionTest extends BaseTestCase {
 		
 		assertEquals("Connect timeout spec'd by URL didn't take", nonDefaultConnectTimeout, configuredConnectTimeout);
 		assertFalse("Connect timeout spec'd by URL didn't take", defaultConnectTimeout == configuredConnectTimeout);
+	}
+
+	public void testBug42267() throws Exception {
+		MysqlDataSource ds = new MysqlDataSource();
+		ds.setUrl(dbUrl);
+		Connection conn = ds.getConnection();
+		String query = "select 1,2,345";
+		PreparedStatement ps = conn.prepareStatement(query);
+		String psString = ps.toString();
+		assertTrue("String representation of wrapped ps should contain query string", psString.endsWith(": " + query));
+		ps.close();
+		ps.toString();
+		conn.close();
 	}
 }

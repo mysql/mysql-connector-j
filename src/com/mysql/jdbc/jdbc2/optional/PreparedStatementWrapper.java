@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -885,6 +885,22 @@ public class PreparedStatementWrapper extends StatementWrapper implements
 		return -1; // we actually never get here, but the compiler can't figure
 
 		// that out
+	}
+
+	public String toString() {
+		StringBuffer buf = new StringBuffer();
+		buf.append(super.toString());
+
+		if (this.wrappedStmt != null) {
+			buf.append(": "); //$NON-NLS-1$
+			try {
+				buf.append(((com.mysql.jdbc.PreparedStatement) this.wrappedStmt).asSql());
+			} catch(SQLException sqlEx) {
+				buf.append("EXCEPTION: " + sqlEx.toString());
+			}
+		}
+
+		return buf.toString();
 	}
 //
 //	public void setAsciiStream(int parameterIndex, InputStream x)

@@ -1047,11 +1047,11 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 	}
 
-	protected String asSql() throws SQLException {
+	public String asSql() throws SQLException {
 		return asSql(false);
 	}
 
-	protected String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
+	public String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
 		synchronized (checkClosed().getConnectionMutex()) {
 			
 			StringBuffer buf = new StringBuffer();
