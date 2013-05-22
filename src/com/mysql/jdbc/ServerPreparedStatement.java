@@ -464,7 +464,7 @@ public class ServerPreparedStatement extends PreparedStatement {
 		}
 	}
 
-	protected String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
+	public String asSql(boolean quoteStreamsAndUnknowns) throws SQLException {
 
 		synchronized (checkClosed().getConnectionMutex()) {
 			

@@ -3,6 +3,8 @@
 nn-nn-13 - Version 5.1.26
   - Fix for Bug#45757 (11754192), Don't allow updateRow() to be called when updatable cursor is positioned on insert row
 
+  - Fix for Bug#42267, PreparedStatementWrapper doesn't have a toString() implementation
+
 05-06-13 - Version 5.1.25
 
   - Fix for Bug#68801, java webstart mysql-connector-java lib calls -bin library.
