@@ -1,7 +1,11 @@
 # Changelog
 # $Id$
 nn-nn-13 - Version 5.1.26
-  - Fix for Bug#45757 (11754192), Don't allow updateRow() to be called when updatable cursor is positioned on insert row
+  - Fix for Bug#45757 (11754192), Don't allow updateRow() to be called when updatable cursor is positioned on insert row.
+
+  - Fix for Bug#68098 (16224299), Return indexes sorted by NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION in DatabaseMetaData.getIndexInfo.
+  
+  - Fix for Bug#68307 (16707803), Return correct COLUMN_TYPE from both getProcedureColumns() and getFunctionColumns().
 
   - Fix for Bug#42267, PreparedStatementWrapper doesn't have a toString() implementation
 

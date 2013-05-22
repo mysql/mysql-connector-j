@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -19,7 +19,6 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
-
  */
 
 package com.mysql.jdbc;
@@ -201,5 +200,46 @@ public class JDBC4DatabaseMetaData extends DatabaseMetaData {
     
 	protected int getJDBC4FunctionNoTableConstant() {
 		return functionNoTable;
+	}
+	
+	/**
+	 * This method overrides DatabaseMetaData#getColumnType(boolean, boolean, boolean, boolean).
+	 * 
+	 * @see JDBC4DatabaseMetaData#getProcedureOrFunctionColumnType(boolean, boolean, boolean, boolean)
+	 */
+	protected int getColumnType(boolean isOutParam, boolean isInParam, boolean isReturnParam,
+			boolean forGetFunctionColumns) {
+		return JDBC4DatabaseMetaData.getProcedureOrFunctionColumnType(isOutParam, isInParam, isReturnParam,
+				forGetFunctionColumns);
+	}
+
+	/**
+	 * Determines the COLUMN_TYPE information based on parameter type (IN, OUT or INOUT) or function return parameter.
+	 * 
+	 * @param isOutParam
+	 *            Indicates whether it's an output parameter.
+	 * @param isInParam
+	 *            Indicates whether it's an input parameter.
+	 * @param isReturnParam
+	 *            Indicates whether it's a function return parameter.
+	 * @param forGetFunctionColumns
+	 *            Indicates whether the column belong to a function.
+	 * 
+	 * @return The corresponding COLUMN_TYPE as in java.sql.getProcedureColumns API.
+	 */
+	protected static int getProcedureOrFunctionColumnType(boolean isOutParam, boolean isInParam, boolean isReturnParam,
+			boolean forGetFunctionColumns) {
+
+		if (isInParam && isOutParam) {
+			return forGetFunctionColumns ? functionColumnInOut : procedureColumnInOut;
+		} else if (isInParam) {
+			return forGetFunctionColumns ? functionColumnIn : procedureColumnIn;
+		} else if (isOutParam) {
+			return forGetFunctionColumns ? functionColumnOut : procedureColumnOut;
+		} else if (isReturnParam) {
+			return forGetFunctionColumns ? functionReturn : procedureColumnReturn;
+		} else {
+			return forGetFunctionColumns ? functionColumnUnknown : procedureColumnUnknown;
+		}
 	}
 }

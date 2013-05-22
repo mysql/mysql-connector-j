@@ -3399,4 +3399,81 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		assertEquals("MySQL Connector Java", dbmd.getDriverName());
 	}
 
+	/**
+	 * Test fix for BUG#68098 - DatabaseMetaData.getIndexInfo sorts results incorrectly.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug68098() throws Exception {
+		String[] testStepDescription = new String[] { "MySQL MetaData", "I__S MetaData" };
+		Connection connUseIS = getConnectionWithProps("useInformationSchema=true");
+		Connection[] testConnections = new Connection[] { conn, connUseIS };
+		String[] expectedIndexesOrder = new String[] { "index_1", "index_1", "index_3", "PRIMARY", "index_2",
+				"index_2", "index_4" };
+
+		stmt.execute("DROP TABLE IF EXISTS bug68098");
+
+		createTable("bug68098", "(column_1 INT NOT NULL, column_2 INT NOT NULL, column_3 INT NOT NULL,"
+				+ " PRIMARY KEY (column_1))");
+
+		stmt.execute("CREATE INDEX index_4 ON bug68098 (column_2)");
+		stmt.execute("CREATE UNIQUE INDEX index_3 ON bug68098 (column_3)");
+		stmt.execute("CREATE INDEX index_2 ON bug68098 (column_2, column_1)");
+		stmt.execute("CREATE UNIQUE INDEX index_1 ON bug68098 (column_3, column_2)");
+
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+			rs = testDbMetaData.getIndexInfo(null, null, "bug68098", false, false);
+			int ind = 0;
+			while (rs.next()) {
+				assertEquals(testStepDescription[i] + ", sort order is wrong", expectedIndexesOrder[ind++], rs.getString("INDEX_NAME"));
+			}
+			rs.close();
+		}
+
+		connUseIS.close();
+	}
+
+	/**
+	 * Tests fix for BUG#68307 - getFunctionColumns() returns incorrect "COLUMN_TYPE" information. This JDBC4
+	 * feature required some changes in method getProcedureColumns().
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug68307() throws Exception {
+		String[] testStepDescription = new String[] { "MySQL MetaData", "I__S MetaData" };
+		Connection connUseIS = getConnectionWithProps("useInformationSchema=true");
+		Connection[] testConnections = new Connection[] { conn, connUseIS };
+
+		createFunction("bug68307_func", "(func_param_in INT) RETURNS INT DETERMINISTIC RETURN 1");
+
+		createProcedure("bug68307_proc",
+				"(IN proc_param_in INT, OUT proc_param_out INT, INOUT proc_param_inout INT) SELECT 1");
+
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+			rs = testDbMetaData.getProcedureColumns(null, null, "bug68307_%", "%");
+
+			while (rs.next()) {
+				String message = testStepDescription[i] + ", procedure/function <" + rs.getString("PROCEDURE_NAME")
+						+ "." + rs.getString("COLUMN_NAME") + ">";
+				if (rs.getString("COLUMN_NAME") == null || rs.getString("COLUMN_NAME").length() == 0) {
+					assertEquals(message, DatabaseMetaData.procedureColumnReturn, rs.getShort("COLUMN_TYPE"));
+				} else if (rs.getString("COLUMN_NAME").endsWith("_in")) {
+					assertEquals(message, DatabaseMetaData.procedureColumnIn, rs.getShort("COLUMN_TYPE"));
+				} else if (rs.getString("COLUMN_NAME").endsWith("_inout")) {
+					assertEquals(message, DatabaseMetaData.procedureColumnInOut, rs.getShort("COLUMN_TYPE"));
+				} else if (rs.getString("COLUMN_NAME").endsWith("_out")) {
+					assertEquals(message, DatabaseMetaData.procedureColumnOut, rs.getShort("COLUMN_TYPE"));
+				} else {
+					fail(testStepDescription[i] + ", column '" + rs.getString("FUNCTION_NAME") + "."
+							+ rs.getString("COLUMN_NAME") + "' not expected within test case.");
+				}
+			}
+
+			rs.close();
+		}
+	}
 }
