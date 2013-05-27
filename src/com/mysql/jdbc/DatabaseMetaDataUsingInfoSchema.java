@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -18,7 +18,6 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
-
  */
 package com.mysql.jdbc;
 
@@ -59,7 +58,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		}
 	}
 
-	private ResultSet executeMetadataQuery(java.sql.PreparedStatement pStmt)
+	protected ResultSet executeMetadataQuery(java.sql.PreparedStatement pStmt)
 			throws SQLException {
 		ResultSet rs = pStmt.executeQuery();
 		((com.mysql.jdbc.ResultSetInternalMethods) rs).setOwningStatement(null);
@@ -1057,6 +1056,423 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	}
 
     /**
+     * Retrieves a description of the given catalog's stored procedure parameter
+     * and result columns.
+     *
+     * <P>Only descriptions matching the schema, procedure and
+     * parameter name criteria are returned.  They are ordered by
+     * PROCEDURE_SCHEM and PROCEDURE_NAME. Within this, the return value,
+     * if any, is first. Next are the parameter descriptions in call
+     * order. The column descriptions follow in column number order.
+     *
+     * <P>Each row in the <code>ResultSet</code> is a parameter description or
+     * column description with the following fields:
+     *  <OL>
+     *	<LI><B>PROCEDURE_CAT</B> String => procedure catalog (may be <code>null</code>)
+     *	<LI><B>PROCEDURE_SCHEM</B> String => procedure schema (may be <code>null</code>)
+     *	<LI><B>PROCEDURE_NAME</B> String => procedure name
+     *	<LI><B>COLUMN_NAME</B> String => column/parameter name 
+     *	<LI><B>COLUMN_TYPE</B> Short => kind of column/parameter:
+     *      <UL>
+     *      <LI> procedureColumnUnknown - nobody knows
+     *      <LI> procedureColumnIn - IN parameter
+     *      <LI> procedureColumnInOut - INOUT parameter
+     *      <LI> procedureColumnOut - OUT parameter
+     *      <LI> procedureColumnReturn - procedure return value
+     *      <LI> procedureColumnResult - result column in <code>ResultSet</code>
+     *      </UL>
+     *  <LI><B>DATA_TYPE</B> int => SQL type from java.sql.Types
+     *	<LI><B>TYPE_NAME</B> String => SQL type name, for a UDT type the
+     *  type name is fully qualified
+     *	<LI><B>PRECISION</B> int => precision
+     *	<LI><B>LENGTH</B> int => length in bytes of data
+     *	<LI><B>SCALE</B> short => scale
+     *	<LI><B>RADIX</B> short => radix
+     *	<LI><B>NULLABLE</B> short => can it contain NULL.
+     *      <UL>
+     *      <LI> procedureNoNulls - does not allow NULL values
+     *      <LI> procedureNullable - allows NULL values
+     *      <LI> procedureNullableUnknown - nullability unknown
+     *      </UL>
+     *	<LI><B>REMARKS</B> String => comment describing parameter/column
+     *  </OL>
+     *
+     * <P><B>Note:</B> Some databases may not return the column
+     * descriptions for a procedure. Additional columns beyond
+     * REMARKS can be defined by the database.
+     *
+     * @param catalog a catalog name; must match the catalog name as it
+     *        is stored in the database; "" retrieves those without a catalog;
+     *        <code>null</code> means that the catalog name should not be used to narrow
+     *        the search
+     * @param schemaPattern a schema name pattern; must match the schema name
+     *        as it is stored in the database; "" retrieves those without a schema;
+     *        <code>null</code> means that the schema name should not be used to narrow
+     *        the search
+     * @param procedureNamePattern a procedure name pattern; must match the
+     *        procedure name as it is stored in the database 
+     * @param columnNamePattern a column name pattern; must match the column name
+     *        as it is stored in the database 
+     * @return <code>ResultSet</code> - each row describes a stored procedure parameter or 
+     *      column
+     * @exception SQLException if a database access error occurs
+     * @see #getSearchStringEscape 
+     */
+	public ResultSet getProcedureColumns(String catalog, String schemaPattern,
+			String procedureNamePattern, String columnNamePattern)
+			throws SQLException {
+		if (!this.conn.versionMeetsMinimum(5, 4, 0)) {
+			return super.getProcedureColumns(catalog, schemaPattern, procedureNamePattern,
+					columnNamePattern);
+		}
+		
+		if (!this.hasParametersView) {
+			return super.getProcedureColumns(catalog, schemaPattern, procedureNamePattern, columnNamePattern);
+		}
+		
+		if ((procedureNamePattern == null)
+				|| (procedureNamePattern.length() == 0)) {
+			if (this.conn.getNullNamePatternMatchesAll()) {
+				procedureNamePattern = "%";
+			} else {
+				throw SQLError.createSQLException(
+						"Procedure name pattern can not be NULL or empty.",
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+		}
+
+		String db = null;
+
+		if (catalog == null) {
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				db = this.database;
+			}
+		}  else {
+			db = catalog;
+		}		
+
+		// Here's what we get from MySQL ...
+		// SPECIFIC_CATALOG                             NULL 
+		// SPECIFIC_SCHEMA                              db17 
+		// SPECIFIC_NAME                                p 
+		// ORDINAL_POSITION                             1 
+		// PARAMETER_MODE                               OUT 
+		// PARAMETER_NAME                               a 
+		// DATA_TYPE                                    int 
+		// CHARACTER_MAXIMUM_LENGTH                     NULL 
+		// CHARACTER_OCTET_LENGTH                       NULL 
+		// CHARACTER_SET_NAME                           NULL 
+		// COLLATION_NAME                               NULL 
+		// NUMERIC_PRECISION                            10 
+		// NUMERIC_SCALE                                0 
+		// DTD_IDENTIFIER                               int(11)
+
+		StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, "
+				+ "NULL AS `PROCEDURE_SCHEM`, "
+				+ "SPECIFIC_NAME AS `PROCEDURE_NAME`, "
+				+ "PARAMETER_NAME AS `COLUMN_NAME`, "
+				+ "CASE WHEN PARAMETER_MODE = 'IN' THEN "
+					+ procedureColumnIn + " WHEN PARAMETER_MODE='OUT' THEN " + procedureColumnOut 
+					+ " WHEN PARAMETER_MODE='INOUT' THEN " + procedureColumnInOut
+					+ " WHEN ORDINAL_POSITION=0 THEN " + procedureColumnReturn 
+					+ " ELSE " + procedureColumnUnknown
+				+ " END AS `COLUMN_TYPE`, ");
+		
+		//DATA_TYPE
+		MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+
+		sqlBuf.append(" AS `DATA_TYPE`, ");
+
+		// TYPE_NAME
+		if (conn.getCapitalizeTypeNames()) {
+			sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END) AS `TYPE_NAME`,");
+		} else {
+			sqlBuf.append("CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END AS `TYPE_NAME`,");
+		}
+
+		// PRECISION</B> int => precision
+		sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
+		// LENGTH</B> int => length in bytes of data
+		sqlBuf
+				.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > " 
+						+ Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ");
+		
+		// SCALE</B> short => scale
+		sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ");
+		// RADIX</B> short => radix
+		sqlBuf.append("10 AS RADIX,");
+		sqlBuf.append(procedureNullableUnknown
+				+ " AS `NULLABLE`, "
+				+ "NULL AS `REMARKS`, "
+				+ "NULL AS `COLUMN_DEF`, "
+				+ "NULL AS `SQL_DATA_TYPE`, "
+				+ "NULL AS `SQL_DATETIME_SUB`, "
+				+ "CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, "
+				+ "ORDINAL_POSITION, "
+				+ "'' AS `IS_NULLABLE`, "
+				+ "SPECIFIC_NAME "
+				+ "FROM INFORMATION_SCHEMA.PARAMETERS WHERE "
+				+ "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
+				+ "ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
+
+		java.sql.PreparedStatement pStmt = null;
+
+		try {
+			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+			
+			if (db != null) {
+				pStmt.setString(1, db);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
+			pStmt.setString(2, procedureNamePattern);
+			pStmt.setString(3, columnNamePattern);
+
+			ResultSet rs = executeMetadataQuery(pStmt);
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createProcedureColumnsFields());
+
+			return rs;
+		} finally {
+			if (pStmt != null) {
+				pStmt.close();
+			}
+		}
+	}
+
+	/**
+	 * Get a description of tables available in a catalog.
+	 * <P>
+	 * Only table descriptions matching the catalog, schema, table name and type
+	 * criteria are returned. They are ordered by TABLE_TYPE, TABLE_SCHEM and
+	 * TABLE_NAME.
+	 * </p>
+	 * <P>
+	 * Each table description has the following columns:
+	 * <OL>
+	 * <li> <B>TABLE_CAT</B> String => table catalog (may be null) </li>
+	 * <li> <B>TABLE_SCHEM</B> String => table schema (may be null) </li>
+	 * <li> <B>TABLE_NAME</B> String => table name </li>
+	 * <li> <B>TABLE_TYPE</B> String => table type. Typical types are "TABLE",
+	 * "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS",
+	 * "SYNONYM". </li>
+	 * <li> <B>REMARKS</B> String => explanatory comment on the table </li>
+	 * </ol>
+	 * </p>
+	 * <P>
+	 * <B>Note:</B> Some databases may not return information for all tables.
+	 * </p>
+	 * 
+	 * @param catalog
+	 *            a catalog name; "" retrieves those without a catalog
+	 * @param schemaPattern
+	 *            a schema name pattern; "" retrieves those without a schema
+	 * @param tableNamePattern
+	 *            a table name pattern
+	 * @param types
+	 *            a list of table types to include; null returns all types
+	 * @return ResultSet each row is a table description
+	 * @throws SQLException
+	 *             DOCUMENT ME!
+	 * @see #getSearchStringEscape
+	 */
+	public ResultSet getTables(String catalog, String schemaPattern,
+			String tableNamePattern, String[] types) throws SQLException {
+		if (catalog == null) {
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				catalog = this.database;
+			}
+		}
+
+		if (tableNamePattern == null) {
+			if (this.conn.getNullNamePatternMatchesAll()) {
+				tableNamePattern = "%";
+			} else {
+				throw SQLError.createSQLException(
+						"Table name pattern can not be NULL or empty.",
+						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+			}
+		}
+
+		final String tableNamePat;
+		String tmpCat = "";
+		
+		if ((catalog == null) || (catalog.length() == 0)) {
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				tmpCat = this.database;
+			}
+		} else {
+			tmpCat = catalog;
+		}
+		
+		List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, tmpCat, 
+				quotedId , conn.isNoBackslashEscapesSet());
+		//There *should* be 2 rows, if any.
+		if (parseList.size() == 2) {
+			tableNamePat = parseList.get(1);
+		} else {
+			tableNamePat = tableNamePattern;
+		}
+
+		java.sql.PreparedStatement pStmt = null;
+
+		String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, "
+				+ "NULL AS TABLE_SCHEM, TABLE_NAME, "
+				+ "CASE WHEN TABLE_TYPE='BASE TABLE' THEN 'TABLE' WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, "
+				+ "TABLE_COMMENT AS REMARKS, NULL AS TYPE_CAT, NULL AS TYPE_SCHEM, NULL AS TYPE_NAME, NULL AS SELF_REFERENCING_COL_NAME, NULL AS REF_GENERATION "
+				+ "FROM INFORMATION_SCHEMA.TABLES WHERE ";
+		
+		final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
+		if (catalog != null) {
+			if ((operatingOnInformationSchema) || ((StringUtils.indexOfIgnoreCase(0, catalog, "%") == -1) 
+					&& (StringUtils.indexOfIgnoreCase(0, catalog, "_") == -1))) {
+				sql = sql + "TABLE_SCHEMA = ? AND ";
+			} else {
+				sql = sql + "TABLE_SCHEMA LIKE ? AND ";
+			}
+			
+		} else {
+			sql = sql + "TABLE_SCHEMA LIKE ? AND ";
+		}
+
+		if (tableNamePat != null) {
+			if ((StringUtils.indexOfIgnoreCase(0, tableNamePat, "%") == -1) 
+					&& (StringUtils.indexOfIgnoreCase(0, tableNamePat, "_") == -1)) {
+				sql = sql + "TABLE_NAME = ? AND ";
+			} else {
+				sql = sql + "TABLE_NAME LIKE ? AND ";
+			}
+			
+		} else {
+			sql = sql + "TABLE_NAME LIKE ? AND ";
+		}
+		sql = sql + "TABLE_TYPE IN (?,?,?) ";
+		sql = sql + "ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME";
+		try {
+			pStmt = prepareMetaDataSafeStatement(sql);
+			
+			if (catalog != null) {
+				pStmt.setString(1, catalog);
+			} else {
+				pStmt.setString(1, "%");
+			}
+			
+			pStmt.setString(2, tableNamePat);
+
+			// This overloading of IN (...) allows us to cache this
+			// prepared statement
+			if (types == null || types.length == 0) {
+				pStmt.setString(3, "BASE TABLE");
+				pStmt.setString(4, "VIEW");
+				pStmt.setString(5, "TEMPORARY");
+			} else {
+				pStmt.setNull(3, Types.VARCHAR);
+				pStmt.setNull(4, Types.VARCHAR);
+				pStmt.setNull(5, Types.VARCHAR);
+
+				for (int i = 0; i < types.length; i++) {
+					if ("TABLE".equalsIgnoreCase(types[i])) {
+						pStmt.setString(3, "BASE TABLE");
+					}
+
+					if ("VIEW".equalsIgnoreCase(types[i])) {
+						pStmt.setString(4, "VIEW");
+					}
+
+					if ("LOCAL TEMPORARY".equalsIgnoreCase(types[i])) {
+						pStmt.setString(5, "TEMPORARY");
+					}
+				}
+			}
+
+			ResultSet rs = executeMetadataQuery(pStmt);
+
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createTablesFields());
+
+			return rs;
+		} finally {
+			if (pStmt != null) {
+				pStmt.close();
+			}
+		}
+	}
+	
+	public boolean gethasParametersView() {
+		return this.hasParametersView;
+	}
+
+
+	@Override
+	public ResultSet getVersionColumns(String catalog, String schema,
+			String table) throws SQLException {
+
+		if (catalog == null) {
+			if (this.conn.getNullCatalogMeansCurrent()) {
+				catalog = this.database;
+			}
+		}
+
+		if (table == null) {
+			throw SQLError.createSQLException("Table not specified.",
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+		}
+
+		StringBuffer sqlBuf = new StringBuffer("SELECT NULL AS SCOPE, COLUMN_NAME, ");
+
+		MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
+		sqlBuf.append(" AS DATA_TYPE, ");
+
+		sqlBuf.append("COLUMN_TYPE AS TYPE_NAME, ");
+		sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 "
+				+ "WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 "
+				+ "WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > " 
+				+ Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, ");
+		sqlBuf.append(
+				MysqlIO.getMaxBuf() + " AS BUFFER_LENGTH,"
+				+ "NUMERIC_SCALE AS DECIMAL_DIGITS, "
+				+ Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo) + " AS PSEUDO_COLUMN "
+				+ "FROM INFORMATION_SCHEMA.COLUMNS "
+				+ "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?"
+				+ " AND EXTRA LIKE '%on update CURRENT_TIMESTAMP%'");
+
+		java.sql.PreparedStatement pStmt = null;
+
+		try {
+			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+
+			if (catalog != null) {
+				pStmt.setString(1, catalog);
+			} else {
+				pStmt.setString(1, "%");
+			}
+
+			pStmt.setString(2, table);
+
+			ResultSet rs = executeMetadataQuery(pStmt);
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
+					new Field("", "SCOPE", Types.SMALLINT, 5),
+					new Field("", "COLUMN_NAME", Types.CHAR, 32),
+					new Field("", "DATA_TYPE", Types.INTEGER, 5),
+					new Field("", "TYPE_NAME", Types.CHAR, 16),
+					new Field("", "COLUMN_SIZE", Types.INTEGER, 16),
+					new Field("", "BUFFER_LENGTH", Types.INTEGER, 16),
+					new Field("", "DECIMAL_DIGITS", Types.SMALLINT, 16),
+					new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5)
+			});
+
+			return rs;
+		} finally {
+			if (pStmt != null) {
+				pStmt.close();
+			}
+		}
+	}
+
+	//
+	// JDBC-4.0 functions that aren't reliant on Java6
+	//
+
+    /**
      * Retrieves a description of the given catalog's system or user 
      * function parameters and return type.
      *
@@ -1232,11 +1648,11 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		// IS_NULLABLE *
 		// SPECIFIC_NAME *
 		sqlBuf.append(2 /* functionNullableUnknown */ + " AS `NULLABLE`, "
-			     + " NULL AS `REMARKS`, "
-			    + "CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, "
-			    + " ORDINAL_POSITION, "
-			    + "'' AS `IS_NULLABLE`, "
-			    + "SPECIFIC_NAME "
+				+ " NULL AS `REMARKS`, "
+				+ "CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, "
+				+ " ORDINAL_POSITION, "
+				+ "'' AS `IS_NULLABLE`, "
+				+ "SPECIFIC_NAME "
 				+ "FROM INFORMATION_SCHEMA.PARAMETERS WHERE "
 				+ "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
 				+ "AND ROUTINE_TYPE='FUNCTION' ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
@@ -1267,50 +1683,37 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	}
 
     /**
-     * Retrieves a description of the given catalog's stored procedure parameter
-     * and result columns.
+     * Retrieves a description of the  system and user functions available 
+     * in the given catalog.
+     * <P>
+     * Only system and user function descriptions matching the schema and
+     * function name criteria are returned.  They are ordered by
+     * <code>FUNCTION_CAT</code>, <code>FUNCTION_SCHEM</code>,
+     * <code>FUNCTION_NAME</code> and 
+     * <code>SPECIFIC_ NAME</code>.
      *
-     * <P>Only descriptions matching the schema, procedure and
-     * parameter name criteria are returned.  They are ordered by
-     * PROCEDURE_SCHEM and PROCEDURE_NAME. Within this, the return value,
-     * if any, is first. Next are the parameter descriptions in call
-     * order. The column descriptions follow in column number order.
-     *
-     * <P>Each row in the <code>ResultSet</code> is a parameter description or
-     * column description with the following fields:
+     * <P>Each function description has the the following columns:
      *  <OL>
-     *	<LI><B>PROCEDURE_CAT</B> String => procedure catalog (may be <code>null</code>)
-     *	<LI><B>PROCEDURE_SCHEM</B> String => procedure schema (may be <code>null</code>)
-     *	<LI><B>PROCEDURE_NAME</B> String => procedure name
-     *	<LI><B>COLUMN_NAME</B> String => column/parameter name 
-     *	<LI><B>COLUMN_TYPE</B> Short => kind of column/parameter:
+     *	<LI><B>FUNCTION_CAT</B> String => function catalog (may be <code>null</code>)
+     *	<LI><B>FUNCTION_SCHEM</B> String => function schema (may be <code>null</code>)
+     *	<LI><B>FUNCTION_NAME</B> String => function name.  This is the name 
+     * used to invoke the function
+     *	<LI><B>REMARKS</B> String => explanatory comment on the function
+     * <LI><B>FUNCTION_TYPE</B> short => kind of function:
      *      <UL>
-     *      <LI> procedureColumnUnknown - nobody knows
-     *      <LI> procedureColumnIn - IN parameter
-     *      <LI> procedureColumnInOut - INOUT parameter
-     *      <LI> procedureColumnOut - OUT parameter
-     *      <LI> procedureColumnReturn - procedure return value
-     *      <LI> procedureColumnResult - result column in <code>ResultSet</code>
+     *      <LI>functionResultUnknown - Cannot determine if a return value
+     *       or table will be returned
+     *      <LI> functionNoTable- Does not return a table
+     *      <LI> functionReturnsTable - Returns a table
      *      </UL>
-     *  <LI><B>DATA_TYPE</B> int => SQL type from java.sql.Types
-     *	<LI><B>TYPE_NAME</B> String => SQL type name, for a UDT type the
-     *  type name is fully qualified
-     *	<LI><B>PRECISION</B> int => precision
-     *	<LI><B>LENGTH</B> int => length in bytes of data
-     *	<LI><B>SCALE</B> short => scale
-     *	<LI><B>RADIX</B> short => radix
-     *	<LI><B>NULLABLE</B> short => can it contain NULL.
-     *      <UL>
-     *      <LI> procedureNoNulls - does not allow NULL values
-     *      <LI> procedureNullable - allows NULL values
-     *      <LI> procedureNullableUnknown - nullability unknown
-     *      </UL>
-     *	<LI><B>REMARKS</B> String => comment describing parameter/column
+     *	<LI><B>SPECIFIC_NAME</B> String  => the name which uniquely identifies 
+     *  this function within its schema.  This is a user specified, or DBMS
+     * generated, name that may be different then the <code>FUNCTION_NAME</code> 
+     * for example with overload functions
      *  </OL>
-     *
-     * <P><B>Note:</B> Some databases may not return the column
-     * descriptions for a procedure. Additional columns beyond
-     * REMARKS can be defined by the database.
+     * <p>
+     * A user may not have permission to execute any of the functions that are
+     * returned by <code>getFunctions</code>
      *
      * @param catalog a catalog name; must match the catalog name as it
      *        is stored in the database; "" retrieves those without a catalog;
@@ -1320,34 +1723,23 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
      *        as it is stored in the database; "" retrieves those without a schema;
      *        <code>null</code> means that the schema name should not be used to narrow
      *        the search
-     * @param procedureNamePattern a procedure name pattern; must match the
-     *        procedure name as it is stored in the database 
-     * @param columnNamePattern a column name pattern; must match the column name
-     *        as it is stored in the database 
-     * @return <code>ResultSet</code> - each row describes a stored procedure parameter or 
-     *      column
+     * @param functionNamePattern a function name pattern; must match the
+     *        function name as it is stored in the database 
+     * @return <code>ResultSet</code> - each row is a function description 
      * @exception SQLException if a database access error occurs
      * @see #getSearchStringEscape 
+     * @since 1.6
      */
-	public ResultSet getProcedureColumns(String catalog, String schemaPattern,
-			String procedureNamePattern, String columnNamePattern)
-			throws SQLException {
-		if (!this.conn.versionMeetsMinimum(5, 4, 0)) {
-			return super.getProcedureColumns(catalog, schemaPattern, procedureNamePattern,
-					columnNamePattern);
-		}
-		
-		if (!this.hasParametersView) {
-			return super.getProcedureColumns(catalog, schemaPattern, procedureNamePattern, columnNamePattern);
-		}
-		
-		if ((procedureNamePattern == null)
-				|| (procedureNamePattern.length() == 0)) {
+	public java.sql.ResultSet getFunctions(String catalog, String schemaPattern,
+		    String functionNamePattern) throws SQLException {
+
+		if ((functionNamePattern == null)
+				|| (functionNamePattern.length() == 0)) {
 			if (this.conn.getNullNamePatternMatchesAll()) {
-				procedureNamePattern = "%";
+				functionNamePattern = "%";
 			} else {
 				throw SQLError.createSQLException(
-						"Procedure name pattern can not be NULL or empty.",
+						"Function name pattern can not be NULL or empty.",
 						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
 			}
 		}
@@ -1360,80 +1752,31 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			}
 		}  else {
 			db = catalog;
-		}		
-
-		// Here's what we get from MySQL ...
-		// SPECIFIC_CATALOG                             NULL 
-		// SPECIFIC_SCHEMA                              db17 
-		// SPECIFIC_NAME                                p 
-		// ORDINAL_POSITION                             1 
-		// PARAMETER_MODE                               OUT 
-		// PARAMETER_NAME                               a 
-		// DATA_TYPE                                    int 
-		// CHARACTER_MAXIMUM_LENGTH                     NULL 
-		// CHARACTER_OCTET_LENGTH                       NULL 
-		// CHARACTER_SET_NAME                           NULL 
-		// COLLATION_NAME                               NULL 
-		// NUMERIC_PRECISION                            10 
-		// NUMERIC_SCALE                                0 
-		// DTD_IDENTIFIER                               int(11)
-
-		StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, "
-				+ "NULL AS `PROCEDURE_SCHEM`, "
-				+ "SPECIFIC_NAME AS `PROCEDURE_NAME`, "
-				+ "PARAMETER_NAME AS `COLUMN_NAME`, "
-				+ "CASE WHEN PARAMETER_MODE = 'IN' THEN "
-					+ procedureColumnIn + " WHEN PARAMETER_MODE='OUT' THEN " + procedureColumnOut 
-					+ " WHEN PARAMETER_MODE='INOUT' THEN " + procedureColumnInOut
-					+ " WHEN ORDINAL_POSITION=0 THEN " + procedureColumnReturn 
-					+ " ELSE " + procedureColumnUnknown
-				+ " END AS `COLUMN_TYPE`, ");
-		
-		//DATA_TYPE
-		MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
-
-		sqlBuf.append(" AS `DATA_TYPE`, ");
-
-		// TYPE_NAME
-		if (conn.getCapitalizeTypeNames()) {
-			sqlBuf.append("UPPER(CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END) AS `TYPE_NAME`,");
-		} else {
-			sqlBuf.append("CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END AS `TYPE_NAME`,");
 		}
 
-		// PRECISION</B> int => precision
-		sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
-		// LENGTH</B> int => length in bytes of data
-		sqlBuf
-				.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > " 
-						+ Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ");
-		
-		// SCALE</B> short => scale
-		sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ");
-		// RADIX</B> short => radix
-		sqlBuf.append("10 AS RADIX,");
-		sqlBuf.append(procedureNullableUnknown + " AS `NULLABLE`, "
-			     + " NULL AS `REMARKS` "
-				+ "FROM INFORMATION_SCHEMA.PARAMETERS WHERE "
-				+ "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
-				+ "ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
+		String sql = "SELECT ROUTINE_SCHEMA AS FUNCTION_CAT, NULL AS FUNCTION_SCHEM, "
+				+ "ROUTINE_NAME AS FUNCTION_NAME, ROUTINE_COMMENT AS REMARKS, " + getJDBC4FunctionNoTableConstant()
+				+ " AS FUNCTION_TYPE, ROUTINE_NAME AS SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES "
+				+ "WHERE ROUTINE_TYPE LIKE 'FUNCTION' AND ROUTINE_SCHEMA LIKE ? AND "
+				+ "ROUTINE_NAME LIKE ? ORDER BY FUNCTION_CAT, FUNCTION_SCHEM, FUNCTION_NAME, SPECIFIC_NAME";
 
 		java.sql.PreparedStatement pStmt = null;
 
 		try {
-			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
+			pStmt = prepareMetaDataSafeStatement(sql);
 			
-			if (db != null) {
-				pStmt.setString(1, db);
-			} else {
-				pStmt.setString(1, "%");
-			}
-			
-			pStmt.setString(2, procedureNamePattern);
-			pStmt.setString(3, columnNamePattern);
+			pStmt.setString(1, db != null ? db : "%");
+			pStmt.setString(2, functionNamePattern);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
-			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createProcedureColumnsFields());
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
+					new Field("", "FUNCTION_CAT", Types.CHAR, 255),
+					new Field("", "FUNCTION_SCHEM", Types.CHAR, 255),
+					new Field("", "FUNCTION_NAME", Types.CHAR, 255),
+					new Field("", "REMARKS", Types.CHAR, 255),
+					new Field("", "FUNCTION_TYPE", Types.SMALLINT, 6),
+					new Field("", "SPECIFIC_NAME", Types.CHAR, 255)
+					});
 
 			return rs;
 		} finally {
@@ -1444,237 +1787,11 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	}
 
 	/**
-	 * Get a description of tables available in a catalog.
-	 * <P>
-	 * Only table descriptions matching the catalog, schema, table name and type
-	 * criteria are returned. They are ordered by TABLE_TYPE, TABLE_SCHEM and
-	 * TABLE_NAME.
-	 * </p>
-	 * <P>
-	 * Each table description has the following columns:
-	 * <OL>
-	 * <li> <B>TABLE_CAT</B> String => table catalog (may be null) </li>
-	 * <li> <B>TABLE_SCHEM</B> String => table schema (may be null) </li>
-	 * <li> <B>TABLE_NAME</B> String => table name </li>
-	 * <li> <B>TABLE_TYPE</B> String => table type. Typical types are "TABLE",
-	 * "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS",
-	 * "SYNONYM". </li>
-	 * <li> <B>REMARKS</B> String => explanatory comment on the table </li>
-	 * </ol>
-	 * </p>
-	 * <P>
-	 * <B>Note:</B> Some databases may not return information for all tables.
-	 * </p>
+	 * Method to be overridden by subclasses. This should never be called.
 	 * 
-	 * @param catalog
-	 *            a catalog name; "" retrieves those without a catalog
-	 * @param schemaPattern
-	 *            a schema name pattern; "" retrieves those without a schema
-	 * @param tableNamePattern
-	 *            a table name pattern
-	 * @param types
-	 *            a list of table types to include; null returns all types
-	 * @return ResultSet each row is a table description
-	 * @throws SQLException
-	 *             DOCUMENT ME!
-	 * @see #getSearchStringEscape
+	 * @return 0
 	 */
-	public ResultSet getTables(String catalog, String schemaPattern,
-			String tableNamePattern, String[] types) throws SQLException {
-		if (catalog == null) {
-			if (this.conn.getNullCatalogMeansCurrent()) {
-				catalog = this.database;
-			}
-		}
-
-		if (tableNamePattern == null) {
-			if (this.conn.getNullNamePatternMatchesAll()) {
-				tableNamePattern = "%";
-			} else {
-				throw SQLError.createSQLException(
-						"Table name pattern can not be NULL or empty.",
-						SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-			}
-		}
-
-		final String tableNamePat;
-		String tmpCat = "";
-		
-		if ((catalog == null) || (catalog.length() == 0)) {
-			if (this.conn.getNullCatalogMeansCurrent()) {
-				tmpCat = this.database;
-			}
-		} else {
-			tmpCat = catalog;
-		}
-		
-		List<String> parseList = StringUtils.splitDBdotName(tableNamePattern, tmpCat, 
-				quotedId , conn.isNoBackslashEscapesSet());
-		//There *should* be 2 rows, if any.
-		if (parseList.size() == 2) {
-			tableNamePat = parseList.get(1);
-		} else {
-			tableNamePat = tableNamePattern;
-		}
-
-		java.sql.PreparedStatement pStmt = null;
-
-		String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, "
-				+ "NULL AS TABLE_SCHEM, TABLE_NAME, "
-				+ "CASE WHEN TABLE_TYPE='BASE TABLE' THEN 'TABLE' WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, "
-				+ "TABLE_COMMENT AS REMARKS "
-				+ "FROM INFORMATION_SCHEMA.TABLES WHERE ";
-		
-		final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
-		if (catalog != null) {
-			if ((operatingOnInformationSchema) || ((StringUtils.indexOfIgnoreCase(0, catalog, "%") == -1) 
-					&& (StringUtils.indexOfIgnoreCase(0, catalog, "_") == -1))) {
-				sql = sql + "TABLE_SCHEMA = ? AND ";
-			} else {
-				sql = sql + "TABLE_SCHEMA LIKE ? AND ";
-			}
-			
-		} else {
-			sql = sql + "TABLE_SCHEMA LIKE ? AND ";
-		}
-
-		if (tableNamePat != null) {
-			if ((StringUtils.indexOfIgnoreCase(0, tableNamePat, "%") == -1) 
-					&& (StringUtils.indexOfIgnoreCase(0, tableNamePat, "_") == -1)) {
-				sql = sql + "TABLE_NAME = ? AND ";
-			} else {
-				sql = sql + "TABLE_NAME LIKE ? AND ";
-			}
-			
-		} else {
-			sql = sql + "TABLE_NAME LIKE ? AND ";
-		}
-		sql = sql + "TABLE_TYPE IN (?,?,?) ";
-		sql = sql + "ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME";
-		try {
-			pStmt = prepareMetaDataSafeStatement(sql);
-			
-			if (catalog != null) {
-				pStmt.setString(1, catalog);
-			} else {
-				pStmt.setString(1, "%");
-			}
-			
-			pStmt.setString(2, tableNamePat);
-
-			// This overloading of IN (...) allows us to cache this
-			// prepared statement
-			if (types == null || types.length == 0) {
-				pStmt.setString(3, "BASE TABLE");
-				pStmt.setString(4, "VIEW");
-				pStmt.setString(5, "TEMPORARY");
-			} else {
-				pStmt.setNull(3, Types.VARCHAR);
-				pStmt.setNull(4, Types.VARCHAR);
-				pStmt.setNull(5, Types.VARCHAR);
-
-				for (int i = 0; i < types.length; i++) {
-					if ("TABLE".equalsIgnoreCase(types[i])) {
-						pStmt.setString(3, "BASE TABLE");
-					}
-
-					if ("VIEW".equalsIgnoreCase(types[i])) {
-						pStmt.setString(4, "VIEW");
-					}
-
-					if ("LOCAL TEMPORARY".equalsIgnoreCase(types[i])) {
-						pStmt.setString(5, "TEMPORARY");
-					}
-				}
-			}
-
-			ResultSet rs = executeMetadataQuery(pStmt);
-
-			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
-					new Field("", "TABLE_CAT", java.sql.Types.VARCHAR,
-							(catalog == null) ? 0 : catalog.length()),
-					new Field("", "TABLE_SCHEM", java.sql.Types.VARCHAR, 0),
-					new Field("", "TABLE_NAME", java.sql.Types.VARCHAR, 255),
-					new Field("", "TABLE_TYPE", java.sql.Types.VARCHAR, 5),
-					new Field("", "REMARKS", java.sql.Types.VARCHAR, 0) });
-
-			return rs;
-		} finally {
-			if (pStmt != null) {
-				pStmt.close();
-			}
-		}
+	protected int getJDBC4FunctionNoTableConstant() {
+		return 0;
 	}
-	
-	public boolean gethasParametersView() {
-		return this.hasParametersView;
-	}
-
-
-	@Override
-	public ResultSet getVersionColumns(String catalog, String schema,
-			String table) throws SQLException {
-
-		if (catalog == null) {
-			if (this.conn.getNullCatalogMeansCurrent()) {
-				catalog = this.database;
-			}
-		}
-
-		if (table == null) {
-			throw SQLError.createSQLException("Table not specified.",
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-		}
-
-		StringBuffer sqlBuf = new StringBuffer("SELECT NULL AS SCOPE, COLUMN_NAME, ");
-
-		MysqlDefs.appendJdbcTypeMappingQuery(sqlBuf, "DATA_TYPE");
-		sqlBuf.append(" AS DATA_TYPE, ");
-
-		sqlBuf.append("COLUMN_TYPE AS TYPE_NAME, ");
-		sqlBuf.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 "
-				+ "WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 "
-				+ "WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > " 
-				+ Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS COLUMN_SIZE, ");
-		sqlBuf.append(
-				MysqlIO.getMaxBuf() + " AS BUFFER_LENGTH,"
-				+ "NUMERIC_SCALE AS DECIMAL_DIGITS, "
-				+ Integer.toString(java.sql.DatabaseMetaData.versionColumnNotPseudo) + " AS PSEUDO_COLUMN "
-				+ "FROM INFORMATION_SCHEMA.COLUMNS "
-				+ "WHERE TABLE_SCHEMA LIKE ? AND TABLE_NAME LIKE ?"
-				+ " AND EXTRA LIKE '%on update CURRENT_TIMESTAMP%'");
-
-		java.sql.PreparedStatement pStmt = null;
-
-		try {
-			pStmt = prepareMetaDataSafeStatement(sqlBuf.toString());
-
-			if (catalog != null) {
-				pStmt.setString(1, catalog);
-			} else {
-				pStmt.setString(1, "%");
-			}
-
-			pStmt.setString(2, table);
-
-			ResultSet rs = executeMetadataQuery(pStmt);
-			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
-					new Field("", "SCOPE", Types.SMALLINT, 5),
-					new Field("", "COLUMN_NAME", Types.CHAR, 32),
-					new Field("", "DATA_TYPE", Types.INTEGER, 5),
-					new Field("", "TYPE_NAME", Types.CHAR, 16),
-					new Field("", "COLUMN_SIZE", Types.INTEGER, 16),
-					new Field("", "BUFFER_LENGTH", Types.INTEGER, 16),
-					new Field("", "DECIMAL_DIGITS", Types.SMALLINT, 16),
-					new Field("", "PSEUDO_COLUMN", Types.SMALLINT, 5)
-			});
-
-			return rs;
-		} finally {
-			if (pStmt != null) {
-				pStmt.close();
-			}
-		}
-	}
-
 }

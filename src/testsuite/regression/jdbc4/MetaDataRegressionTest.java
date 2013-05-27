@@ -1,6 +1,5 @@
 /*
- Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
- 
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -24,6 +23,10 @@ package testsuite.regression.jdbc4;
 
 import java.sql.DatabaseMetaData;
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.util.Arrays;
+import java.util.List;
 
 import testsuite.BaseTestCase;
 
@@ -55,26 +58,26 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	 *             if the test fails.
 	 */
 	public void testBug68307() throws Exception {
-		createFunction("bug68307_func", "(func_param_in INT) RETURNS INT DETERMINISTIC RETURN 1");
+		createFunction("testBug68307_func", "(func_param_in INT) RETURNS INT DETERMINISTIC RETURN 1");
 
-		createProcedure("bug68307_proc",
+		createProcedure("testBug68307_proc",
 				"(IN proc_param_in INT, OUT proc_param_out INT, INOUT proc_param_inout INT) SELECT 1");
 
 		// test metadata from MySQL
 		DatabaseMetaData testDbMetaData = conn.getMetaData();
-		checkBug68307FunctionColumntype("MySQL", testDbMetaData);
-		checkBug68307ProcedureColumntype("MySQL", testDbMetaData);
+		checkFunctionColumnTypeForBug68307("MySQL", testDbMetaData);
+		checkProcedureColumnTypeForBug68307("MySQL", testDbMetaData);
 
 		// test metadata from I__S
 		Connection connUseIS = getConnectionWithProps("useInformationSchema=true");
 		testDbMetaData = connUseIS.getMetaData();
-		checkBug68307FunctionColumntype("I__S", testDbMetaData);
-		checkBug68307ProcedureColumntype("I__S", testDbMetaData);
+		checkFunctionColumnTypeForBug68307("I__S", testDbMetaData);
+		checkProcedureColumnTypeForBug68307("I__S", testDbMetaData);
 		connUseIS.close();
 	}
 
-	private void checkBug68307FunctionColumntype(String testAgainst, DatabaseMetaData testDbMetaData) throws Exception {
-		rs = testDbMetaData.getFunctionColumns(null, null, "bug68307_%", "%");
+	private void checkFunctionColumnTypeForBug68307(String testAgainst, DatabaseMetaData testDbMetaData) throws Exception {
+		rs = testDbMetaData.getFunctionColumns(null, null, "testBug68307_%", "%");
 
 		while (rs.next()) {
 			String message = testAgainst + ", function <" + rs.getString("FUNCTION_NAME") + "."
@@ -94,8 +97,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 	}
 
-	private void checkBug68307ProcedureColumntype(String testAgainst, DatabaseMetaData testDbMetaData) throws Exception {
-		rs = testDbMetaData.getProcedureColumns(null, null, "bug68307_%", "%");
+	private void checkProcedureColumnTypeForBug68307(String testAgainst, DatabaseMetaData testDbMetaData) throws Exception {
+		rs = testDbMetaData.getProcedureColumns(null, null, "testBug68307_%", "%");
 
 		while (rs.next()) {
 			String message = testAgainst + ", procedure <" + rs.getString("PROCEDURE_NAME") + "."
@@ -113,5 +116,54 @@ public class MetaDataRegressionTest extends BaseTestCase {
 						+ "' not expected within test case.");
 			}
 		}
+	}
+
+	/**
+	 * Tests fix for BUG#44451 - getTables does not return resultset with expected columns.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug44451() throws Exception {
+		String methodName;
+		List<String> expectedFields;
+		String[] testStepDescription = new String[] { "MySQL MetaData", "I__S MetaData" };
+		Connection connUseIS = getConnectionWithProps("useInformationSchema=true");
+		Connection[] testConnections = new Connection[] { conn, connUseIS };
+
+		methodName = "getClientInfoProperties()";
+		expectedFields = Arrays.asList("NAME", "MAX_LEN", "DEFAULT_VALUE", "DESCRIPTION");
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+			rs = testDbMetaData.getClientInfoProperties();
+			checkReturnedColumnsForBug44451(testStepDescription[i], methodName, expectedFields, rs);
+			rs.close();
+		}
+
+		methodName = "getFunctions()";
+		expectedFields = Arrays.asList("FUNCTION_CAT", "FUNCTION_SCHEM", "FUNCTION_NAME", "REMARKS", "FUNCTION_TYPE", "SPECIFIC_NAME");
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+			rs = testDbMetaData.getFunctions(null, null, "%");
+			checkReturnedColumnsForBug44451(testStepDescription[i], methodName, expectedFields, rs);
+			rs.close();
+		}
+		
+		connUseIS.close();
+	}
+	
+	private void checkReturnedColumnsForBug44451(String stepDescription, String methodName, List<String> expectedFields,
+			ResultSet resultSetToCheck) throws Exception {
+		ResultSetMetaData rsMetaData = resultSetToCheck.getMetaData();
+		int numberOfColumns = rsMetaData.getColumnCount();
+
+		assertEquals(stepDescription + ", wrong column count in method '" + methodName + "'.", expectedFields.size(),
+				numberOfColumns);
+		for (int i = 0; i < numberOfColumns; i++) {
+			int position = i + 1;
+			assertEquals(stepDescription + ", wrong column at position '" + position + "' in method '" + methodName
+					+ "'.", expectedFields.get(i), rsMetaData.getColumnName(position));
+		}
+		rs.close();
 	}
 }

@@ -1,6 +1,5 @@
 /*
- Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
- 
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -19,9 +18,6 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
-
-
-
  */
 package testsuite.regression;
 
@@ -39,8 +35,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -2480,7 +2478,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 							// is the scope of a reference attribute (null if
 							// the DATA_TYPE isn't REF)
 				Types.CHAR, // 21. SCOPE_TABLE String => table name that this
-							// the scope of a reference attribure (null if the
+							// the scope of a reference attribute (null if the
 							// DATA_TYPE isn't REF)
 				Types.SMALLINT, // 22. SOURCE_DATA_TYPE short => source type of
 								// a distinct type or user-generated Ref type,
@@ -2489,6 +2487,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 								// REF)
 				Types.CHAR, // 23. IS_AUTOINCREMENT String => Indicates whether
 							// this column is auto incremented
+				Types.CHAR // 24. IS_GENERATEDCOLUMN String => Indicates whether
+				           // this is a generated column 
 		};
 
 		checkTypes(this.rs, types);
@@ -3412,19 +3412,19 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		String[] expectedIndexesOrder = new String[] { "index_1", "index_1", "index_3", "PRIMARY", "index_2",
 				"index_2", "index_4" };
 
-		stmt.execute("DROP TABLE IF EXISTS bug68098");
+		stmt.execute("DROP TABLE IF EXISTS testBug68098");
 
-		createTable("bug68098", "(column_1 INT NOT NULL, column_2 INT NOT NULL, column_3 INT NOT NULL,"
+		createTable("testBug68098", "(column_1 INT NOT NULL, column_2 INT NOT NULL, column_3 INT NOT NULL,"
 				+ " PRIMARY KEY (column_1))");
 
-		stmt.execute("CREATE INDEX index_4 ON bug68098 (column_2)");
-		stmt.execute("CREATE UNIQUE INDEX index_3 ON bug68098 (column_3)");
-		stmt.execute("CREATE INDEX index_2 ON bug68098 (column_2, column_1)");
-		stmt.execute("CREATE UNIQUE INDEX index_1 ON bug68098 (column_3, column_2)");
+		stmt.execute("CREATE INDEX index_4 ON testBug68098 (column_2)");
+		stmt.execute("CREATE UNIQUE INDEX index_3 ON testBug68098 (column_3)");
+		stmt.execute("CREATE INDEX index_2 ON testBug68098 (column_2, column_1)");
+		stmt.execute("CREATE UNIQUE INDEX index_1 ON testBug68098 (column_3, column_2)");
 
 		for (int i = 0; i < testStepDescription.length; i++) {
 			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
-			rs = testDbMetaData.getIndexInfo(null, null, "bug68098", false, false);
+			rs = testDbMetaData.getIndexInfo(null, null, "testBug68098", false, false);
 			int ind = 0;
 			while (rs.next()) {
 				assertEquals(testStepDescription[i] + ", sort order is wrong", expectedIndexesOrder[ind++], rs.getString("INDEX_NAME"));
@@ -3475,5 +3475,80 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 			rs.close();
 		}
+	}
+
+	/**
+	 * Tests fix for BUG#44451 - getTables does not return resultset with expected columns.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug44451() throws Exception {
+		String methodName;
+		List<String> expectedFields;
+		String[] testStepDescription = new String[] { "MySQL MetaData", "I__S MetaData" };
+		Connection connUseIS = getConnectionWithProps("useInformationSchema=true");
+		Connection[] testConnections = new Connection[] { conn, connUseIS };
+
+		methodName = "getColumns()";
+		expectedFields = Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "COLUMN_NAME", "DATA_TYPE",
+				"TYPE_NAME", "COLUMN_SIZE", "BUFFER_LENGTH", "DECIMAL_DIGITS", "NUM_PREC_RADIX", "NULLABLE", "REMARKS",
+				"COLUMN_DEF", "SQL_DATA_TYPE", "SQL_DATETIME_SUB", "CHAR_OCTET_LENGTH", "ORDINAL_POSITION",
+				"IS_NULLABLE", "SCOPE_CATALOG", "SCOPE_SCHEMA", "SCOPE_TABLE", "SOURCE_DATA_TYPE", "IS_AUTOINCREMENT",
+				"IS_GENERATEDCOLUMN");
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+			rs = testDbMetaData.getColumns(null, null, "%", "%");
+			checkReturnedColumnsForBug44451(testStepDescription[i], methodName, expectedFields, rs);
+			rs.close();
+		}
+
+		methodName = "getProcedureColumns()";
+		expectedFields = Arrays.asList("PROCEDURE_CAT", "PROCEDURE_SCHEM", "PROCEDURE_NAME", "COLUMN_NAME",
+				"COLUMN_TYPE", "DATA_TYPE", "TYPE_NAME", "PRECISION", "LENGTH", "SCALE", "RADIX", "NULLABLE",
+				"REMARKS", "COLUMN_DEF", "SQL_DATA_TYPE", "SQL_DATETIME_SUB", "CHAR_OCTET_LENGTH", "ORDINAL_POSITION",
+				"IS_NULLABLE", "SPECIFIC_NAME");
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+			rs = testDbMetaData.getProcedureColumns(null, null, "%", "%");
+			checkReturnedColumnsForBug44451(testStepDescription[i], methodName, expectedFields, rs);
+			rs.close();
+		}
+
+		methodName = "getTables()";
+		expectedFields = Arrays.asList("TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "TABLE_TYPE", "REMARKS", "TYPE_CAT",
+				"TYPE_SCHEM", "TYPE_NAME", "SELF_REFERENCING_COL_NAME", "REF_GENERATION");
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+			rs = testDbMetaData.getTables(null, null, "%", null);
+			checkReturnedColumnsForBug44451(testStepDescription[i], methodName, expectedFields, rs);
+			rs.close();
+		}
+		
+		methodName = "getUDTs()";
+		expectedFields = Arrays.asList("TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME", "CLASS_NAME", "DATA_TYPE", "REMARKS", "BASE_TYPE");
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+			rs = testDbMetaData.getUDTs(null, null, "%", null);
+			checkReturnedColumnsForBug44451(testStepDescription[i], methodName, expectedFields, rs);
+			rs.close();
+		}
+		
+		connUseIS.close();
+	}
+
+	private void checkReturnedColumnsForBug44451(String stepDescription, String methodName, List<String> expectedFields,
+			ResultSet resultSetToCheck) throws Exception {
+		ResultSetMetaData rsMetaData = resultSetToCheck.getMetaData();
+		int numberOfColumns = rsMetaData.getColumnCount();
+
+		assertEquals(stepDescription + ", wrong column count in method '" + methodName + "'.", expectedFields.size(),
+				numberOfColumns);
+		for (int i = 0; i < numberOfColumns; i++) {
+			int position = i + 1;
+			assertEquals(stepDescription + ", wrong column at position '" + position + "' in method '" + methodName
+					+ "'.", expectedFields.get(i), rsMetaData.getColumnName(position));
+		}
+		rs.close();
 	}
 }

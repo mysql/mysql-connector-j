@@ -18,9 +18,6 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
-
-
-
  */
 package com.mysql.jdbc;
 
@@ -880,7 +877,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			boolean forGetFunctionColumns,
 			int ordinal)
 			throws SQLException {
-		byte[][] row = forGetFunctionColumns ? new byte[17][] : new byte[14][];
+		byte[][] row = forGetFunctionColumns ? new byte[17][] : new byte[20][];
 		row[0] = procCatAsBytes; // PROCEDURE_CAT
 		row[1] = null; // PROCEDURE_SCHEM
 		row[2] = procNameAsBytes; // PROCEDURE/NAME
@@ -928,6 +925,27 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			row[15] = Constants.EMPTY_BYTE_ARRAY;
 			
 			row[16] = s2b(paramName);
+		} else {
+			// COLUMN_DEF
+			row[13] = null;
+			
+			// SQL_DATA_TYPE (future use)
+			row[14] = null;
+			
+			// SQL_DATETIME_SUB (future use)
+			row[15] = null;
+			
+			// CHAR_OCTET_LENGTH
+			row[16] = null;
+			
+			// ORDINAL_POSITION
+			row[17] = s2b(String.valueOf(ordinal));
+			
+			// IS_NULLABLE
+			row[18] = Constants.EMPTY_BYTE_ARRAY;
+			
+			// SPECIFIC_NAME
+			row[19] = s2b(paramName);
 		}
 		
 		return new ByteArrayRow(row, getExceptionInterceptor());
@@ -2583,7 +2601,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							int ordPos = 1;
 
 							while (results.next()) {
-								byte[][] rowVal = new byte[23][];
+								byte[][] rowVal = new byte[24][];
 								rowVal[0] = s2b(catalogStr); // TABLE_CAT
 								rowVal[1] = null; // TABLE_SCHEM (No schemas
 								// in MySQL)
@@ -2700,6 +2718,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 													"auto_increment") != -1 ? "YES"
 											: "NO");
 								}
+								rowVal[23] = s2b("");
 								
 								rows.add(new ByteArrayRow(rowVal, getExceptionInterceptor()));
 							}
@@ -2729,7 +2748,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 
 	protected Field[] createColumnsFields() {
-		Field[] fields = new Field[23];
+		Field[] fields = new Field[24];
 		fields[0] = new Field("", "TABLE_CAT", Types.CHAR, 255);
 		fields[1] = new Field("", "TABLE_SCHEM", Types.CHAR, 0);
 		fields[2] = new Field("", "TABLE_NAME", Types.CHAR, 255);
@@ -2754,7 +2773,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[19] = new Field("", "SCOPE_SCHEMA", Types.CHAR, 255);
 		fields[20] = new Field("", "SCOPE_TABLE", Types.CHAR, 255);
 		fields[21] = new Field("", "SOURCE_DATA_TYPE", Types.SMALLINT, 10);
-		fields[22] = new Field("", "IS_AUTOINCREMENT", Types.CHAR, 3);
+		fields[22] = new Field("", "IS_AUTOINCREMENT", Types.CHAR, 3); // JDBC 4
+		fields[23] = new Field("", "IS_GENERATEDCOLUMN", Types.CHAR, 3); // JDBC 4.1
 		return fields;
 	}
 
@@ -4139,7 +4159,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * in column number order.
 	 * </p>
 	 * <P>
-	 * Each row in the ResultSet is a parameter desription or column description
+	 * Each row in the ResultSet is a parameter description or column description
 	 * with the following fields:
 	 * <OL>
 	 * <li> <B>PROCEDURE_CAT</B> String => procedure catalog (may be null)
@@ -4172,12 +4192,23 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * </ul>
 	 * </li>
 	 * <li> <B>REMARKS</B> String => comment describing parameter/column </li>
+	 * <li> <b>COLUMN_DEF</b> String => default value for the column (may be null) </li>
+	 * <li> <b>SQL_DATA_TYPE</b> int => reserved for future use </li>
+	 * <li> <b>SQL_DATETIME_SUB</b> int => reserved for future use </li>
+	 * <li> <b>CHAR_OCTET_LENGTH</b> int => the maximum length of binary and character based columns. For any other datatype the returned value is a NULL </li>
+	 * <li> <b>ORDINAL_POSITION</b> int => the ordinal position, starting from 1. A value of 0 is returned if this row describes the procedure's return value. </li>
+	 * <li> <b>IS_NULLABLE</b> String => ISO rules are used to determine the nullability for a column.
+	 * <ul>
+	 * <li> YES --- if the parameter can include NULLs </li>
+	 * <li> NO --- if the parameter cannot include NULLs </li>
+	 * <li> empty string --- if the nullability for the parameter is unknown </li>
+	 * </ul>
+	 * </li>
+	 * <li> SPECIFIC_NAME String => the name which uniquely identifies this procedure within its schema. </li>
 	 * </ol>
 	 * </p>
 	 * <P>
-	 * <B>Note:</B> Some databases may not return the column descriptions for a
-	 * procedure. Additional columns beyond REMARKS can be defined by the
-	 * database.
+	 * <B>Note:</B> Some databases may not return the column descriptions for a procedure.
 	 * </p>
 	 * 
 	 * @param catalog
@@ -4206,7 +4237,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 
 	protected Field[] createProcedureColumnsFields() {
-		Field[] fields = new Field[13];
+		Field[] fields = new Field[20];
 
 		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 512);
 		fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 512);
@@ -4221,6 +4252,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		fields[10] = new Field("", "RADIX", Types.SMALLINT, 6);
 		fields[11] = new Field("", "NULLABLE", Types.SMALLINT, 6);
 		fields[12] = new Field("", "REMARKS", Types.CHAR, 512);
+		fields[13] = new Field("", "COLUMN_DEF", Types.CHAR, 512);
+		fields[14] = new Field("", "SQL_DATA_TYPE", Types.INTEGER, 12);
+		fields[15] = new Field("", "SQL_DATETIME_SUB", Types.INTEGER, 12);
+		fields[16] = new Field("", "CHAR_OCTET_LENGTH", Types.INTEGER, 12);
+		fields[17] = new Field("", "ORDINAL_POSITION", Types.INTEGER, 12);
+		fields[18] = new Field("", "IS_NULLABLE", Types.CHAR, 512);
+		fields[19] = new Field("", "SPECIFIC_NAME", Types.CHAR, 512);
 		return fields;
 	}
 	
@@ -5040,13 +5078,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 		}
 
-		Field[] fields = new Field[5];
-		fields[0] = new Field("", "TABLE_CAT", java.sql.Types.VARCHAR, 255);
-		fields[1] = new Field("", "TABLE_SCHEM", java.sql.Types.VARCHAR, 0);
-		fields[2] = new Field("", "TABLE_NAME", java.sql.Types.VARCHAR, 255);
-		fields[3] = new Field("", "TABLE_TYPE", java.sql.Types.VARCHAR, 5);
-		fields[4] = new Field("", "REMARKS", java.sql.Types.VARCHAR, 0);
-
 		final ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
 		final Statement stmt = this.conn.getMetadataSafeStatement();
@@ -5170,13 +5201,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						TreeMap<String, byte[][]> viewsOrderedByName = null;
 
 						while (results.next()) {
-							byte[][] row = new byte[5][];
+							byte[][] row = new byte[10][];
 							row[0] = (catalogStr == null) ? null
 									: s2b(catalogStr);
 							row[1] = null;
 							row[2] = results.getBytes(1);
 							row[4] = new byte[0];
-
+							row[5] = null;
+							row[6] = null;
+							row[7] = null;
+							row[8] = null;
+							row[9] = null;
+							
 							if (hasTableTypes) {
 								String tableType = results
 										.getString(typeColumnIndex);
@@ -5288,9 +5324,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 		}
 
-		java.sql.ResultSet tables = buildResultSet(fields, tuples);
+		java.sql.ResultSet tables = buildResultSet(createTablesFields(), tuples);
 
 		return tables;
+	}
+	
+	protected Field[] createTablesFields() {
+		Field[] fields = new Field[10];
+		fields[0] = new Field("", "TABLE_CAT", java.sql.Types.VARCHAR, 255);
+		fields[1] = new Field("", "TABLE_SCHEM", java.sql.Types.VARCHAR, 0);
+		fields[2] = new Field("", "TABLE_NAME", java.sql.Types.VARCHAR, 255);
+		fields[3] = new Field("", "TABLE_TYPE", java.sql.Types.VARCHAR, 5);
+		fields[4] = new Field("", "REMARKS", java.sql.Types.VARCHAR, 0);
+		fields[5] = new Field("", "TYPE_CAT", java.sql.Types.VARCHAR, 0);
+		fields[6] = new Field("", "TYPE_SCHEM", java.sql.Types.VARCHAR, 0);
+		fields[7] = new Field("", "TYPE_NAME", java.sql.Types.VARCHAR, 0);
+		fields[8] = new Field("", "SELF_REFERENCING_COL_NAME", java.sql.Types.VARCHAR, 0);
+		fields[9] = new Field("", "REF_GENERATION", java.sql.Types.VARCHAR, 0);
+		return fields;
 	}
 
 	/**
@@ -6804,13 +6855,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 */
 	public java.sql.ResultSet getUDTs(String catalog, String schemaPattern,
 			String typeNamePattern, int[] types) throws SQLException {
-		Field[] fields = new Field[6];
+		Field[] fields = new Field[7];
 		fields[0] = new Field("", "TYPE_CAT", Types.VARCHAR, 32);
 		fields[1] = new Field("", "TYPE_SCHEM", Types.VARCHAR, 32);
 		fields[2] = new Field("", "TYPE_NAME", Types.VARCHAR, 32);
 		fields[3] = new Field("", "CLASS_NAME", Types.VARCHAR, 32);
-		fields[4] = new Field("", "DATA_TYPE", Types.VARCHAR, 32);
+		fields[4] = new Field("", "DATA_TYPE", Types.INTEGER, 10);
 		fields[5] = new Field("", "REMARKS", Types.VARCHAR, 32);
+		fields[6] = new Field("", "BASE_TYPE", Types.SMALLINT, 10);
 
 		ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
@@ -8475,7 +8527,44 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	
 	//
 	// JDBC-4.0 functions that aren't reliant on Java6
-    /**
+	//
+	
+	/**
+	 * Retrieves a list of the client info properties that the driver supports. The result set contains the following
+	 * columns
+	 * <p>
+	 * <ol>
+	 * <li><b>NAME</b> String=> The name of the client info property<br>
+	 * <li><b>MAX_LEN</b> int=> The maximum length of the value for the property<br>
+	 * <li><b>DEFAULT_VALUE</b> String=> The default value of the property<br>
+	 * <li><b>DESCRIPTION</b> String=> A description of the property. This will typically contain information as to
+	 * where this property is stored in the database.
+	 * </ol>
+	 * <p>
+	 * The <code>ResultSet</code> is sorted by the NAME column
+	 * <p>
+	 * 
+	 * @return A <code>ResultSet</code> object; each row is a supported client info property
+	 *         <p>
+	 * @exception SQLException
+	 *                if a database access error occurs
+	 *                <p>
+	 * @since 1.6
+	 */
+	public ResultSet getClientInfoProperties() throws SQLException {
+		// We don't have any built-ins, we actually support whatever
+		// the client wants to provide, however we don't have a way
+		// to express this with the interface given
+		Field[] fields = new Field[4];
+		fields[0] = new Field("", "NAME", Types.VARCHAR, 255);
+		fields[1] = new Field("", "MAX_LEN", Types.INTEGER, 10);
+		fields[2] = new Field("", "DEFAULT_VALUE", Types.VARCHAR, 255);
+		fields[3] = new Field("", "DESCRIPTION", Types.VARCHAR, 255);
+		
+		return buildResultSet(fields, new ArrayList<ResultSetRow>(), this.conn);
+	}
+
+	/**
      * Retrieves a description of the given catalog's system or user 
      * function parameters and return type.
      *
@@ -8515,6 +8604,74 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     			new Field("", "SPECIFIC_NAME", Types.VARCHAR, 64)};
 		return fields;
 	}
+
+    /**
+     * Retrieves a description of the  system and user functions available 
+     * in the given catalog.
+     * <P>
+     * Only system and user function descriptions matching the schema and
+     * function name criteria are returned.  They are ordered by
+     * <code>FUNCTION_CAT</code>, <code>FUNCTION_SCHEM</code>,
+     * <code>FUNCTION_NAME</code> and 
+     * <code>SPECIFIC_ NAME</code>.
+     *
+     * <P>Each function description has the the following columns:
+     *  <OL>
+     *	<LI><B>FUNCTION_CAT</B> String => function catalog (may be <code>null</code>)
+     *	<LI><B>FUNCTION_SCHEM</B> String => function schema (may be <code>null</code>)
+     *	<LI><B>FUNCTION_NAME</B> String => function name.  This is the name 
+     * used to invoke the function
+     *	<LI><B>REMARKS</B> String => explanatory comment on the function
+     * <LI><B>FUNCTION_TYPE</B> short => kind of function:
+     *      <UL>
+     *      <LI>functionResultUnknown - Cannot determine if a return value
+     *       or table will be returned
+     *      <LI> functionNoTable- Does not return a table
+     *      <LI> functionReturnsTable - Returns a table
+     *      </UL>
+     *	<LI><B>SPECIFIC_NAME</B> String  => the name which uniquely identifies 
+     *  this function within its schema.  This is a user specified, or DBMS
+     * generated, name that may be different then the <code>FUNCTION_NAME</code> 
+     * for example with overload functions
+     *  </OL>
+     * <p>
+     * A user may not have permission to execute any of the functions that are
+     * returned by <code>getFunctions</code>
+     *
+     * @param catalog a catalog name; must match the catalog name as it
+     *        is stored in the database; "" retrieves those without a catalog;
+     *        <code>null</code> means that the catalog name should not be used to narrow
+     *        the search
+     * @param schemaPattern a schema name pattern; must match the schema name
+     *        as it is stored in the database; "" retrieves those without a schema;
+     *        <code>null</code> means that the schema name should not be used to narrow
+     *        the search
+     * @param functionNamePattern a function name pattern; must match the
+     *        function name as it is stored in the database 
+     * @return <code>ResultSet</code> - each row is a function description 
+     * @exception SQLException if a database access error occurs
+     * @see #getSearchStringEscape 
+     * @since 1.6
+     */
+    public java.sql.ResultSet getFunctions(String catalog, String schemaPattern,
+			    String functionNamePattern) throws SQLException {
+    	Field[] fields = new Field[6];
+    	
+    	fields[0] = new Field("", "FUNCTION_CAT", Types.CHAR, 255);
+		fields[1] = new Field("", "FUNCTION_SCHEM", Types.CHAR, 255);
+		fields[2] = new Field("", "FUNCTION_NAME", Types.CHAR, 255);
+		fields[3] = new Field("", "REMARKS", Types.CHAR, 255);
+		fields[4] = new Field("", "FUNCTION_TYPE", Types.SMALLINT, 6);
+		fields[5] = new Field("", "SPECIFIC_NAME", Types.CHAR, 255);
+		
+		return getProceduresAndOrFunctions(
+				fields,
+				catalog,
+				schemaPattern,
+				functionNamePattern,
+				false,
+				true);
+    }
 
 	public boolean providesQueryObjectGenerator() throws SQLException {
 		return false;

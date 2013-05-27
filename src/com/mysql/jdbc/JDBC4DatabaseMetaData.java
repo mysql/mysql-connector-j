@@ -1,6 +1,5 @@
 /*
- Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
- 
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -88,116 +87,10 @@ public class JDBC4DatabaseMetaData extends DatabaseMetaData {
         }
     }
 
-    /**
-	 * Retrieves a list of the client info properties 
-	 * that the driver supports.  The result set contains the following columns
-	 * <p>
-         * <ol>
-	 * <li><b>NAME</b> String=> The name of the client info property<br>
-	 * <li><b>MAX_LEN</b> int=> The maximum length of the value for the property<br>
-	 * <li><b>DEFAULT_VALUE</b> String=> The default value of the property<br>
-	 * <li><b>DESCRIPTION</b> String=> A description of the property.  This will typically 
-	 * 						contain information as to where this property is 
-	 * 						stored in the database.
-	 * </ol>
-         * <p>
-	 * The <code>ResultSet</code> is sorted by the NAME column
-	 * <p>
-	 * @return	A <code>ResultSet</code> object; each row is a supported client info
-         * property
-	 * <p>
-	 *  @exception SQLException if a database access error occurs
-	 * <p>
-	 * @since 1.6
-	 */
-	public ResultSet getClientInfoProperties()
-		throws SQLException {
-		// We don't have any built-ins, we actually support whatever
-		// the client wants to provide, however we don't have a way
-		// to express this with the interface given
-		Field[] fields = new Field[4];
-		fields[0] = new Field("", "NAME", Types.VARCHAR, 255);
-		fields[1] = new Field("", "MAX_LEN", Types.INTEGER, 10);
-		fields[2] = new Field("", "DEFAULT_VALUE", Types.VARCHAR, 255);
-		fields[3] = new Field("", "DESCRIPTION", Types.VARCHAR, 255);
-		
-		ArrayList tuples = new ArrayList();
-		
-		return buildResultSet(fields, tuples, this.conn);
-	}
-	
     public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
     	return false;
     }
-    
-    /**
-     * Retrieves a description of the  system and user functions available 
-     * in the given catalog.
-     * <P>
-     * Only system and user function descriptions matching the schema and
-     * function name criteria are returned.  They are ordered by
-     * <code>FUNCTION_CAT</code>, <code>FUNCTION_SCHEM</code>,
-     * <code>FUNCTION_NAME</code> and 
-     * <code>SPECIFIC_ NAME</code>.
-     *
-     * <P>Each function description has the the following columns:
-     *  <OL>
-     *	<LI><B>FUNCTION_CAT</B> String => function catalog (may be <code>null</code>)
-     *	<LI><B>FUNCTION_SCHEM</B> String => function schema (may be <code>null</code>)
-     *	<LI><B>FUNCTION_NAME</B> String => function name.  This is the name 
-     * used to invoke the function
-     *	<LI><B>REMARKS</B> String => explanatory comment on the function
-     * <LI><B>FUNCTION_TYPE</B> short => kind of function:
-     *      <UL>
-     *      <LI>functionResultUnknown - Cannot determine if a return value
-     *       or table will be returned
-     *      <LI> functionNoTable- Does not return a table
-     *      <LI> functionReturnsTable - Returns a table
-     *      </UL>
-     *	<LI><B>SPECIFIC_NAME</B> String  => the name which uniquely identifies 
-     *  this function within its schema.  This is a user specified, or DBMS
-     * generated, name that may be different then the <code>FUNCTION_NAME</code> 
-     * for example with overload functions
-     *  </OL>
-     * <p>
-     * A user may not have permission to execute any of the functions that are
-     * returned by <code>getFunctions</code>
-     *
-     * @param catalog a catalog name; must match the catalog name as it
-     *        is stored in the database; "" retrieves those without a catalog;
-     *        <code>null</code> means that the catalog name should not be used to narrow
-     *        the search
-     * @param schemaPattern a schema name pattern; must match the schema name
-     *        as it is stored in the database; "" retrieves those without a schema;
-     *        <code>null</code> means that the schema name should not be used to narrow
-     *        the search
-     * @param functionNamePattern a function name pattern; must match the
-     *        function name as it is stored in the database 
-     * @return <code>ResultSet</code> - each row is a function description 
-     * @exception SQLException if a database access error occurs
-     * @see #getSearchStringEscape 
-     * @since 1.6
-     */
-    public java.sql.ResultSet getFunctions(String catalog, String schemaPattern,
-			    String functionNamePattern) throws SQLException {
-    	Field[] fields = new Field[6];
-    	
-    	fields[0] = new Field("", "FUNCTION_CAT", Types.CHAR, 255);
-		fields[1] = new Field("", "FUNCTION_SCHEM", Types.CHAR, 255);
-		fields[2] = new Field("", "FUNCTION_NAME", Types.CHAR, 255);
-		fields[3] = new Field("", "REMARKS", Types.CHAR, 255);
-		fields[4] = new Field("", "FUNCTION_TYPE", Types.SMALLINT, 6);
-		fields[5] = new Field("", "SPECIFIC_NAME", Types.CHAR, 255);
-		
-		return getProceduresAndOrFunctions(
-				fields,
-				catalog,
-				schemaPattern,
-				functionNamePattern,
-				false,
-				true);
-    }
-    
+
 	protected int getJDBC4FunctionNoTableConstant() {
 		return functionNoTable;
 	}

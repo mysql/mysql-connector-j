@@ -9,6 +9,9 @@ nn-nn-13 - Version 5.1.26
 
   - Fix for Bug#42267, PreparedStatementWrapper doesn't have a toString() implementation
 
+  - Fix for Bug#44451 (11753081), Added missing fields in methods getColumns(), getProcedureColumns(), getTables() and getUDTs().
+    Methods getClientInfoProperties() and getFunctions() were made available in all *DatabaseMetaDataUsingInfoSchema implementations.
+
 05-06-13 - Version 5.1.25
 
   - Fix for Bug#68801, java webstart mysql-connector-java lib calls -bin library.
