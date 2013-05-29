@@ -45,6 +45,7 @@ import java.util.Properties;
 import junit.framework.ComparisonFailure;
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.ConnectionProperties;
 import com.mysql.jdbc.Driver;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.ResultSetInternalMethods;
@@ -3551,4 +3552,304 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 		rs.close();
 	}
+
+	/**
+	 * Tests fix for BUG#65871 - DatabaseMetaData.getColumns() thows an MySQLSyntaxErrorException.
+	 * Delimited names of databases and tables are handled correctly now. The edge case is ANSI quoted
+	 * identifiers with leading and trailing "`" symbols, for example CREATE DATABASE "`dbname`". Methods
+	 * like DatabaseMetaData.getColumns() allow parameters passed both in unquoted and quoted form,
+	 * quoted form is not JDBC-compliant but used by third party tools. So when you pass the indentifier
+	 * "`dbname`" in unquoted form (`dbname`) driver handles it as quoted by "`" symbol. To handle such
+	 * identifiers correctly a new behavior was added to pedantic mode (connection property pedantic=true),
+	 * now if it set to true methods like DatabaseMetaData.getColumns() treat all parameters as unquoted.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug65871() throws Exception {
+		createTable("testBug65871_foreign", "("
+				+ "cpd_foreign_1_id int(8) not null,"
+				+ "cpd_foreign_2_id int(8) not null,"
+				+ "primary key (cpd_foreign_1_id, cpd_foreign_2_id)"
+				+ ") ", "InnoDB");
+
+		Connection pedanticConn = null;
+		Connection pedanticConn_IS = null;
+		Connection nonPedanticConn = null;
+		Connection nonPedanticConn_IS = null;
+
+		try {
+			Properties props = new Properties();
+			props.setProperty("sessionVariables", "sql_mode=ansi");
+			nonPedanticConn = getConnectionWithProps(props);
+
+			props.setProperty("useInformationSchema", "true");
+			nonPedanticConn_IS = getConnectionWithProps(props);
+
+			props.setProperty("pedantic", "true");
+			pedanticConn_IS = getConnectionWithProps(props);
+
+			props.setProperty("useInformationSchema", "false");
+			pedanticConn = getConnectionWithProps(props);
+
+			System.out.println("1. Non-pedantic, without I_S.");
+			testBug65871_testCatalogs(nonPedanticConn);
+
+			System.out.println("2. Pedantic, without I_S.");
+			testBug65871_testCatalogs(pedanticConn);
+
+			System.out.println("3. Non-pedantic, with I_S.");
+			testBug65871_testCatalogs(nonPedanticConn_IS);
+
+			System.out.println("4. Pedantic, with I_S.");
+			testBug65871_testCatalogs(pedanticConn_IS);
+
+		} finally {
+			if (pedanticConn != null) {
+				pedanticConn.close();
+			}
+			if (nonPedanticConn != null) {
+				nonPedanticConn.close();
+			}
+		}
+	}
+
+	private void testBug65871_testCatalogs(Connection conn1) throws Exception {
+		testBug65871_testCatalog(
+				"db1`testBug65871",
+				StringUtils.quoteIdentifier("db1`testBug65871", ((ConnectionProperties)conn1).getPedantic()),
+				conn1);
+
+		testBug65871_testCatalog(
+				"db2`testBug65871",
+				StringUtils.quoteIdentifier("db2`testBug65871", "\"", ((ConnectionProperties)conn1).getPedantic()),
+				conn1);
+
+		try {
+			testBug65871_testCatalog(
+					"`db3`testBug65871`",
+					StringUtils.quoteIdentifier("`db3`testBug65871`", "\"", ((ConnectionProperties)conn1).getPedantic()),
+					conn1);
+			assertTrue("Driver should mistake about `db3`testBug65871` in non-pedantic mode",((ConnectionProperties)conn1).getPedantic());
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			assertFalse("Driver should not mistake about `db3`testBug65871` in pedantic mode",((ConnectionProperties)conn1).getPedantic());
+		}
+	}
+	
+	private void testBug65871_testCatalog(
+			String unquotedDbName,
+			String quotedDbName,
+			Connection conn1) throws Exception {
+
+		Statement st1 = null;
+
+		try {
+			st1 = conn1.createStatement();
+
+			// 1. catalog
+			st1.executeUpdate("DROP DATABASE IF EXISTS "+quotedDbName);
+			st1.executeUpdate("CREATE DATABASE "+quotedDbName);
+			this.rs = st1.executeQuery("show databases like '"+unquotedDbName+"'");
+			if (this.rs.next()) {
+				assertEquals(unquotedDbName, this.rs.getString(1));
+			} else {
+				fail("Database "+unquotedDbName+ " (quoted "+quotedDbName+") not found.");
+			}
+
+			testBug65871_testTable(
+					unquotedDbName, quotedDbName,
+					"table1`testBug65871",
+					StringUtils.quoteIdentifier("table1`testBug65871", ((ConnectionProperties)conn1).getPedantic()),
+					conn1, st1);
+
+			testBug65871_testTable(
+					unquotedDbName, quotedDbName,
+					"table2`testBug65871",
+					StringUtils.quoteIdentifier("table2`testBug65871", "\"", ((ConnectionProperties)conn1).getPedantic()),
+					conn1, st1);
+
+			testBug65871_testTable(
+					unquotedDbName, quotedDbName,
+					"table3\"testBug65871",
+					StringUtils.quoteIdentifier("table3\"testBug65871", "\"", ((ConnectionProperties)conn1).getPedantic()),
+					conn1, st1);
+
+			try {
+				testBug65871_testTable(
+						unquotedDbName, quotedDbName,
+						"`table4`testBug65871`",
+						StringUtils.quoteIdentifier("`table4`testBug65871`", "\"", ((ConnectionProperties)conn1).getPedantic()),
+						conn1, st1);
+				assertTrue("Driver should mistake about `table4`testBug65871` in non-pedantic mode",((ConnectionProperties)conn1).getPedantic());
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+				assertFalse("Driver should not mistake about `table4`testBug65871` in pedantic mode",((ConnectionProperties)conn1).getPedantic());
+			}
+
+		} finally {
+			if (st1 != null) {
+				st1.executeUpdate("DROP DATABASE IF EXISTS "+quotedDbName);
+				st1.close();
+			}
+		}
+
+	}
+
+	private void testBug65871_testTable(
+			String unquotedDbName,
+			String quotedDbName,
+			String unquotedTableName,
+			String quotedTableName,
+			Connection conn1, Statement st1) throws Exception {
+		
+		StringBuffer failedTests = new StringBuffer();
+		try {
+			
+			String sql = "CREATE  TABLE "+quotedDbName+"."+quotedTableName+
+					"(\"`B`EST`\" INT NOT NULL PRIMARY KEY," +
+					" `C\"1` int(11) DEFAULT NULL," +
+					" TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP," +
+					" \"cpd_f\"\"oreign_1_id\" int(8) not null," +
+					" \"`cpd_f\"\"oreign_2_id`\" int(8) not null," +
+					" KEY `NEWINX` (`C\"1`)," +
+					" KEY `NEWINX2` (`C\"1`)," +
+					" foreign key (\"cpd_f\"\"oreign_1_id\", \"`cpd_f\"\"oreign_2_id`\") " +
+					" references "+this.conn.getCatalog()+".testBug65871_foreign(cpd_foreign_1_id, cpd_foreign_2_id), " +
+					" CONSTRAINT `APPFK` FOREIGN KEY (`C\"1`) REFERENCES "+quotedDbName+"."+quotedTableName+" (`C\"1`)" +
+					") ENGINE=InnoDB";
+			st1.executeUpdate(sql);
+
+			// 1. Create table
+			try {
+				this.rs = st1.executeQuery("SHOW TABLES FROM "+quotedDbName+" LIKE '"+unquotedTableName+"'");
+				if (!this.rs.next() || !unquotedTableName.equals(this.rs.getString(1))) {
+					failedTests.append(sql+"\n");
+				}
+			} catch (Exception e) {
+				failedTests.append(sql+"\n");
+			}
+
+			// 2. extractForeignKeyFromCreateTable(...)
+			if (!(versionMeetsMinimum(5, 1) && !versionMeetsMinimum(5, 2))) {
+				try {
+					this.rs = ((com.mysql.jdbc.DatabaseMetaData) conn1.getMetaData()).extractForeignKeyFromCreateTable(unquotedDbName, unquotedTableName);
+					if (!this.rs.next()) {
+						failedTests.append("conn.getMetaData.extractForeignKeyFromCreateTable(unquotedDbName, unquotedTableName);\n");
+					}
+				} catch (Exception e) {
+					failedTests.append("conn.getMetaData.extractForeignKeyFromCreateTable(unquotedDbName, unquotedTableName);\n");
+				}
+			}
+
+			// 3. getColumns(...)
+			try {
+				boolean found = false;
+				this.rs = conn1.getMetaData().getColumns(unquotedDbName, null, unquotedTableName, "`B`EST`");
+				while (this.rs.next()) {
+					if ("`B`EST`".equals(this.rs.getString("COLUMN_NAME"))) {
+						found = true;
+					}
+				}
+				if (!found) {
+					failedTests.append("conn.getMetaData.getColumns(unquotedDbName, null, unquotedTableName, null);\n");
+				}
+			} catch (Exception e) {
+				failedTests.append("conn.getMetaData.getColumns(unquotedDbName, null, unquotedTableName, null);\n");
+			}
+
+			// 4. getBestRowIdentifier(...)
+			try {
+				this.rs = conn1.getMetaData().getBestRowIdentifier(unquotedDbName, null, unquotedTableName, DatabaseMetaData.bestRowNotPseudo, true);
+				if (!this.rs.next() || !"`B`EST`".equals(this.rs.getString("COLUMN_NAME"))) {
+					failedTests.append("conn.getMetaData.getBestRowIdentifier(unquotedDbName, null, unquotedTableName, DatabaseMetaData.bestRowNotPseudo, true);\n");
+				}
+			} catch (Exception e) {
+				failedTests.append("conn.getMetaData.getBestRowIdentifier(unquotedDbName, null, unquotedTableName, DatabaseMetaData.bestRowNotPseudo, true);\n");
+			}
+
+			// 5. getCrossReference(...)
+			try {
+				this.rs = conn1.getMetaData().getCrossReference(this.conn.getCatalog(), null, "testBug65871_foreign", unquotedDbName, null, unquotedTableName);
+				if (!this.rs.next()) {
+					failedTests.append("conn.getMetaData.getCrossReference(this.conn.getCatalog(), null, \"testBug65871_foreign\", unquotedDbName, null, unquotedTableName);\n");
+				}
+			} catch (Exception e) {
+				failedTests.append("conn.getMetaData.getCrossReference(this.conn.getCatalog(), null, \"testBug65871_foreign\", unquotedDbName, null, unquotedTableName);\n");
+			}
+
+			// 6.getExportedKeys(...)
+			try {
+				this.rs = conn1.getMetaData().getExportedKeys(unquotedDbName, null, unquotedTableName);
+				if (!this.rs.next()) {
+					failedTests.append("conn.getMetaData.getExportedKeys(unquotedDbName, null, unquotedTableName);\n");
+				}
+			} catch (Exception e) {
+				failedTests.append("conn.getMetaData.getExportedKeys(unquotedDbName, null, unquotedTableName);\n");
+			}
+
+			// 7. getImportedKeys(...)
+			try {
+				this.rs = conn1.getMetaData().getImportedKeys(unquotedDbName, null, unquotedTableName);
+				if (!this.rs.next()) {
+					failedTests.append("conn.getMetaData.getImportedKeys(unquotedDbName, null, unquotedTableName);\n");
+				}
+			} catch (Exception e) {
+				failedTests.append("conn.getMetaData.getImportedKeys(unquotedDbName, null, unquotedTableName);\n");
+			}
+
+			// 8. getIndexInfo(...)
+			try {
+				this.rs = conn1.getMetaData().getIndexInfo(unquotedDbName, null, unquotedTableName, true, false);
+				if (!this.rs.next()) {
+					failedTests.append("conn.getMetaData.getIndexInfo(unquotedDbName, null, unquotedTableName, true, false);\n");
+				}
+			} catch (Exception e) {
+				failedTests.append("conn.getMetaData.getIndexInfo(unquotedDbName, null, unquotedTableName, true, false);\n");
+			}
+
+			// 9. getPrimaryKeys(...)
+			try {
+				this.rs = conn1.getMetaData().getPrimaryKeys(unquotedDbName, null, unquotedTableName);
+				if (!this.rs.next()) {
+					failedTests.append("conn.getMetaData.getPrimaryKeys(unquotedDbName, null, unquotedTableName);\n");
+				}
+			} catch (Exception e) {
+				failedTests.append("conn.getMetaData.getPrimaryKeys(unquotedDbName, null, unquotedTableName);\n");
+			}
+
+			// 10. getTables(...)
+			try {
+				this.rs = conn1.getMetaData().getTables(unquotedDbName, null, unquotedTableName, new String[] {"TABLE"});
+				if (!this.rs.next()) {
+					failedTests.append("conn.getMetaData.getTables(unquotedDbName, null, unquotedTableName, new String[] {\"TABLE\"});\n");
+				}
+			} catch (Exception e) {
+				failedTests.append("conn.getMetaData.getTables(unquotedDbName, null, unquotedTableName, new String[] {\"TABLE\"});\n");
+			}
+
+			// 11. getVersionColumns(...)
+			try {
+				this.rs  = conn1.getMetaData().getVersionColumns(unquotedDbName, null, unquotedTableName);
+				if (!this.rs.next() || !"TS".equals(this.rs.getString(2))) {
+					failedTests.append("conn.getMetaData.getVersionColumns(unquotedDbName, null, unquotedTableName);\n");
+				}
+			} catch (Exception e) {
+				failedTests.append("conn.getMetaData.getVersionColumns(unquotedDbName, null, unquotedTableName);\n");
+			}
+
+		} finally {
+			try {
+				st1.executeUpdate("DROP TABLE IF EXISTS "+quotedDbName+"."+quotedTableName);
+			} catch (Exception e) {
+				failedTests.append("DROP TABLE IF EXISTS "+quotedDbName+"."+quotedTableName+"\n");
+			}
+		}
+
+		if (failedTests.length()>0) {
+			throw new Exception("Failed tests for catalog "+quotedDbName+" and table "+quotedTableName+
+					" ("+(((ConnectionProperties)conn1).getPedantic() ? "pedantic mode":"non-pedantic mode")+"):\n"+failedTests.toString());
+		}
+	}
+
 }

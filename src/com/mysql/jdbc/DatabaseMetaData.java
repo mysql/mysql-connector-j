@@ -1076,7 +1076,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	
 			if (StringUtils.startsWithIgnoreCase(line, "CONSTRAINT")) {
 				boolean usingBackTicks = true;
-				int beginPos = line.indexOf(quoteChar);
+				int beginPos = StringUtils.indexOfQuoteDoubleAware(line, quoteChar, 0);
 	
 				if (beginPos == -1) {
 					beginPos = line.indexOf("\"");
@@ -1087,9 +1087,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					int endPos = -1;
 	
 					if (usingBackTicks) {
-						endPos = line.indexOf(quoteChar, beginPos + 1);
+						endPos = StringUtils.indexOfQuoteDoubleAware(line, quoteChar, beginPos + 1);
 					} else {
-						endPos = line.indexOf("\"", beginPos + 1);
+						endPos = StringUtils.indexOfQuoteDoubleAware(line, "\"", beginPos + 1);
 					}
 	
 					if (endPos != -1) {
@@ -1110,7 +1110,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				int indexOfFK = line.indexOf("FOREIGN KEY");
 				
 				String localColumnName = null;
-				String referencedCatalogName = this.quotedId + catalog + this.quotedId;
+				String referencedCatalogName = StringUtils.quoteIdentifier(catalog, this.conn.getPedantic()); 
 				String referencedTableName = null;
 				String referencedColumnName = null;
 				
@@ -1252,14 +1252,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		try {
 			for (int i = 0; i < numTables; i++) {
 				String tableToExtract = tableList.get(i);
-				if (tableToExtract.indexOf(quoteChar) > 0) {
-					tableToExtract = StringUtils.escapeQuote(tableToExtract, quoteChar);
-				}
 				
-				String query = new StringBuffer("SHOW CREATE TABLE ").append(
-						quoteChar).append(catalog).append(quoteChar)
-						.append(".").append(quoteChar).append(tableToExtract)
-						.append(quoteChar).toString();
+				String query = new StringBuffer("SHOW CREATE TABLE ")
+					.append(StringUtils.quoteIdentifier(catalog, this.conn.getPedantic())).append(".")
+					.append(StringUtils.quoteIdentifier(tableToExtract, this.conn.getPedantic())).toString();
 				
 				try {
 					rs = stmt.executeQuery(query);
@@ -1402,13 +1398,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					try {
 						StringBuffer queryBuf = new StringBuffer(
 								"SHOW COLUMNS FROM ");
-						queryBuf.append(quotedId);
-						queryBuf.append(table);
-						queryBuf.append(quotedId);
+						queryBuf.append(StringUtils.quoteIdentifier(table, conn.getPedantic()));
 						queryBuf.append(" FROM ");
-						queryBuf.append(quotedId);
-						queryBuf.append(catalogStr);
-						queryBuf.append(quotedId);
+						queryBuf.append(StringUtils.quoteIdentifier(catalogStr, conn.getPedantic()));
 
 						results = stmt.executeQuery(queryBuf.toString());
 
@@ -1596,6 +1588,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				ResultSet rs = null;
 				
 				try {
+					// TODO it isn't right to eliminate all quote chars if catalog name contains them in the middle 
 					this.conn.setCatalog(catalog.replaceAll(quoteChar, ""));
 					rs = paramRetrievalStmt.executeQuery("SELECT DATABASE()");
 					rs.next();
@@ -2117,7 +2110,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		IteratorWithCleanup<String> allCatalogsIter;
 		if (catalogSpec != null) {
 			if (!catalogSpec.equals("")) {
-				allCatalogsIter = new SingleStringIterator(unQuoteQuotedIdentifier(catalogSpec));
+				if (conn.getPedantic()) {
+					allCatalogsIter = new SingleStringIterator(catalogSpec);
+				} else {
+					allCatalogsIter = new SingleStringIterator(StringUtils.unQuoteIdentifier(catalogSpec, this.conn.useAnsiQuotedIdentifiers()));
+				}
 			} else {
 				// legacy mode of operation
 				allCatalogsIter = new SingleStringIterator(this.database);
@@ -2132,30 +2129,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		return allCatalogsIter;
 	}
 	
-	protected String unQuoteQuotedIdentifier(String identifier) {
-		boolean trimQuotes = false;
-		
-		if (identifier != null) {
-			
-			// Backquotes are always valid identifier quotes
-			if (identifier.startsWith("`") && identifier.endsWith("`")) {
-				trimQuotes = true;
-			}
-			
-			if (this.conn.useAnsiQuotedIdentifiers()) {
-				if (identifier.startsWith("\"") && identifier.endsWith("\"")) {
-					trimQuotes = true;
-				}
-			}
-		}
-		
-		if (trimQuotes) {
-			return identifier.substring(1, (identifier.length() - 1));
-		}
-		
-		return identifier;
-	}
-
 	/**
 	 * Get the catalog names available in this database. The results are ordered
 	 * by catalog name.
@@ -2541,13 +2514,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							}
 
 							queryBuf.append("COLUMNS FROM ");
-							queryBuf.append(quotedId);
-							queryBuf.append(tableName);
-							queryBuf.append(quotedId);
+							queryBuf.append(StringUtils.quoteIdentifier(tableName, conn.getPedantic()));
 							queryBuf.append(" FROM ");
-							queryBuf.append(quotedId);
-							queryBuf.append(catalogStr);
-							queryBuf.append(quotedId);
+							queryBuf.append(StringUtils.quoteIdentifier(catalogStr, conn.getPedantic()));
 							queryBuf.append(" LIKE '");
 							queryBuf.append(colPattern);
 							queryBuf.append("'");
@@ -2571,14 +2540,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								}
 
 								fullColumnQueryBuf.append("COLUMNS FROM ");
-								fullColumnQueryBuf.append(quotedId);
-								fullColumnQueryBuf.append(tableName);
-								fullColumnQueryBuf.append(quotedId);
+								fullColumnQueryBuf.append(StringUtils.quoteIdentifier(tableName, conn.getPedantic()));
 								fullColumnQueryBuf.append(" FROM ");
-								fullColumnQueryBuf.append(quotedId);
-								fullColumnQueryBuf
-										.append(catalogStr);
-								fullColumnQueryBuf.append(quotedId);
+								fullColumnQueryBuf.append(StringUtils.quoteIdentifier(catalogStr, conn.getPedantic()));
 
 								results = stmt.executeQuery(fullColumnQueryBuf
 										.toString());
@@ -2891,9 +2855,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							} else {
 								StringBuffer queryBuf = new StringBuffer(
 										"SHOW TABLE STATUS FROM ");
-								queryBuf.append(quotedId);
-								queryBuf.append(catalogStr);
-								queryBuf.append(quotedId);
+								queryBuf.append(StringUtils.quoteIdentifier(catalogStr, conn.getPedantic()));
 
 								fkresults = stmt.executeQuery(queryBuf
 										.toString());
@@ -2941,8 +2903,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 													.iterator();
 
 											while (referencingColumns.hasNext()) {
-												String referencingColumn = removeQuotedId(referencingColumns
-														.next());
+												String referencingColumn = StringUtils.unQuoteIdentifier(
+														referencingColumns.next(),
+														conn.useAnsiQuotedIdentifiers());
 
 												// one tuple for each table
 												// between
@@ -2977,8 +2940,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 												}
 
 												tuple[2] = s2b(parsedInfo.referencedTable); // PKTABLE_NAME
-												tuple[3] = s2b(removeQuotedId(referencedColumns
-														.next())); // PKCOLUMN_NAME
+												tuple[3] = s2b(StringUtils.unQuoteIdentifier(
+														referencedColumns.next(),
+														conn.useAnsiQuotedIdentifiers())); // PKCOLUMN_NAME
 												tuple[8] = Integer.toString(
 														keySeq).getBytes(); // KEY_SEQ
 
@@ -3233,9 +3197,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							} else {
 								StringBuffer queryBuf = new StringBuffer(
 										"SHOW TABLE STATUS FROM ");
-								queryBuf.append(quotedId);
-								queryBuf.append(catalogStr);
-								queryBuf.append(quotedId);
+								queryBuf.append(StringUtils.quoteIdentifier(catalogStr, conn.getPedantic()));
 
 								fkresults = stmt.executeQuery(queryBuf
 										.toString());
@@ -3489,9 +3451,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								StringBuffer queryBuf = new StringBuffer(
 										"SHOW TABLE STATUS ");
 								queryBuf.append(" FROM ");
-								queryBuf.append(quotedId);
-								queryBuf.append(catalogStr);
-								queryBuf.append(quotedId);
+								queryBuf.append(StringUtils.quoteIdentifier(catalogStr, conn.getPedantic()));
 								queryBuf.append(" LIKE '");
 								queryBuf.append(table);
 								queryBuf.append("'");
@@ -3667,13 +3627,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					try {
 						StringBuffer queryBuf = new StringBuffer(
 								"SHOW INDEX FROM ");
-						queryBuf.append(quotedId);
-						queryBuf.append(table);
-						queryBuf.append(quotedId);
+						queryBuf.append(StringUtils.quoteIdentifier(table, conn.getPedantic()));
 						queryBuf.append(" FROM ");
-						queryBuf.append(quotedId);
-						queryBuf.append(catalogStr);
-						queryBuf.append(quotedId);
+						queryBuf.append(StringUtils.quoteIdentifier(catalogStr, conn.getPedantic()));
 
 						try {
 							results = stmt.executeQuery(queryBuf.toString());
@@ -4083,13 +4039,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 						StringBuffer queryBuf = new StringBuffer(
 								"SHOW KEYS FROM ");
-						queryBuf.append(quotedId);
-						queryBuf.append(table);
-						queryBuf.append(quotedId);
+						queryBuf.append(StringUtils.quoteIdentifier(table, conn.getPedantic()));
 						queryBuf.append(" FROM ");
-						queryBuf.append(quotedId);
-						queryBuf.append(catalogStr);
-						queryBuf.append(quotedId);
+						queryBuf.append(StringUtils.quoteIdentifier(catalogStr, conn.getPedantic()));
 
 						rs = stmt.executeQuery(queryBuf.toString());
 
@@ -4687,8 +4639,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		while (localColumnNames.hasNext()) {
 			byte[][] tuple = new byte[14][];
-			String lColumnName = removeQuotedId(localColumnNames.next());
-			String rColumnName = removeQuotedId(referColumnNames.next());
+			String lColumnName = StringUtils.unQuoteIdentifier(localColumnNames.next(), this.conn.useAnsiQuotedIdentifiers());
+			String rColumnName = StringUtils.unQuoteIdentifier(referColumnNames.next(), this.conn.useAnsiQuotedIdentifiers());
 			tuple[FKTABLE_CAT] = ((catalog == null) ? new byte[0]
 					: s2b(catalog));
 			tuple[FKTABLE_SCHEM] = null;
@@ -5116,9 +5068,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							try {
 								results = stmt
 									.executeQuery("SHOW TABLES FROM "
-											+ quotedId + catalogStr
-											+ quotedId + " LIKE '" 
-											+ tableNamePat + "'");
+											+ StringUtils.quoteIdentifier(catalogStr, conn.getPedantic())
+											+ " LIKE '" + tableNamePat + "'");
 							} catch (SQLException sqlEx) {
 								if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
 									throw sqlEx;
@@ -5130,9 +5081,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							try {
 								results = stmt
 									.executeQuery("SHOW FULL TABLES FROM "
-											+ quotedId + catalogStr
-											+ quotedId + " LIKE '"
-											+ tableNamePat + "'");
+											+ StringUtils.quoteIdentifier(catalogStr, conn.getPedantic())
+											+ " LIKE '" + tableNamePat + "'");
 							} catch (SQLException sqlEx) {
 								if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
 									throw sqlEx;
@@ -7001,10 +6951,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							whereBuf = new StringBuffer();
 							boolean firstTime = true;
 
-							String query = new StringBuffer("SHOW CREATE TABLE ").
-									append(quotedId).append(catalogStr).append(quotedId).
-									append(".").append(quotedId).append(table).append(quotedId).
-									toString();
+							String query = new StringBuffer("SHOW CREATE TABLE ")
+									.append(StringUtils.quoteIdentifier(catalogStr, conn.getPedantic())).append(".")
+									.append(StringUtils.quoteIdentifier(table, conn.getPedantic())).toString();
 
 							results = stmt.executeQuery(query);
 							while (results.next()) {
@@ -7054,13 +7003,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						if (whereBuf.length() > 0 || rsFields.size() > 0) {
 							StringBuffer queryBuf = new StringBuffer("SHOW ");
 							queryBuf.append("COLUMNS FROM ");
-							queryBuf.append(quotedId);
-							queryBuf.append(table);
-							queryBuf.append(quotedId);
+							queryBuf.append(StringUtils.quoteIdentifier(table, conn.getPedantic()));
 							queryBuf.append(" FROM ");
-							queryBuf.append(quotedId);
-							queryBuf.append(catalogStr);
-							queryBuf.append(quotedId);
+							queryBuf.append(StringUtils.quoteIdentifier(catalogStr, conn.getPedantic()));
 							if (with_where) {
 								queryBuf.append(" WHERE");
 								queryBuf.append(whereBuf.toString());
@@ -7332,8 +7277,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
-		String constraintName = removeQuotedId(keysComment.substring(0,
-				indexOfOpenParenLocalColumns).trim());
+		String constraintName = StringUtils.unQuoteIdentifier(
+				keysComment.substring(0, indexOfOpenParenLocalColumns).trim(),
+				this.conn.useAnsiQuotedIdentifiers());
 		keysComment = keysComment.substring(indexOfOpenParenLocalColumns,
 				keysComment.length());
 
@@ -7383,10 +7329,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
 		}
 
-		String referCatalog = removeQuotedId(referCatalogTableString.substring(
-				0, indexOfSlash));
-		String referTable = removeQuotedId(referCatalogTableString.substring(
-				indexOfSlash + 1).trim());
+		String referCatalog = StringUtils.unQuoteIdentifier(
+				referCatalogTableString.substring(0, indexOfSlash),
+				this.conn.useAnsiQuotedIdentifiers());
+		String referTable = StringUtils.unQuoteIdentifier(
+				referCatalogTableString.substring(indexOfSlash + 1).trim(),
+				this.conn.useAnsiQuotedIdentifiers());
 
 		int indexOfCloseParenRefer = StringUtils
 				.indexOfIgnoreCaseRespectQuotes(indexOfOpenParenReferCol,
@@ -7408,32 +7356,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		return new LocalAndReferencedColumns(localColumnsList,
 				referColumnsList, constraintName, referCatalog, referTable);
-	}
-
-	protected String removeQuotedId(String s) {
-		if (s == null) {
-			return null;
-		}
-
-		if (this.quotedId.equals("")) {
-			return s;
-		}
-
-		s = s.trim();
-
-		int frontOffset = 0;
-		int backOffset = s.length();
-		int quoteLength = this.quotedId.length();
-
-		if (s.startsWith(this.quotedId)) {
-			frontOffset = quoteLength;
-		}
-
-		if (s.endsWith(this.quotedId)) {
-			backOffset -= quoteLength;
-		}
-
-		return s.substring(frontOffset, backOffset);
 	}
 
 	/**

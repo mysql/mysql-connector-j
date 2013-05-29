@@ -1,6 +1,16 @@
 # Changelog
 # $Id$
 nn-nn-13 - Version 5.1.26
+
+  - Fix for Bug#65871, DatabaseMetaData.getColumns() throws an MySQLSyntaxErrorException.
+    Delimited names of databases and tables are handled correctly now. The edge case is ANSI quoted
+    identifiers with leading and trailing "`" symbols, for example CREATE DATABASE "`dbname`". Methods
+    like DatabaseMetaData.getColumns() allow parameters passed both in unquoted and quoted form,
+    quoted form is not JDBC-compliant but used by third party tools. So when you pass the indentifier
+    "`dbname`" in unquoted form (`dbname`) driver handles it as quoted by "`" symbol. To handle such
+    identifiers correctly a new behavior was added to pedantic mode (connection property pedantic=true),
+    now if it set to true methods like DatabaseMetaData.getColumns() treat all parameters as unquoted.
+
   - Fix for Bug#45757 (11754192), Don't allow updateRow() to be called when updatable cursor is positioned on insert row.
 
   - Fix for Bug#68098 (16224299), Return indexes sorted by NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION in DatabaseMetaData.getIndexInfo.

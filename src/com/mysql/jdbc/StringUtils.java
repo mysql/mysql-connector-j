@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -1822,39 +1822,126 @@ public class StringUtils {
 		
 		return true;
 	}
-	
-	public static String escapeQuote(String src, String quotChar) {
-		if (src == null) {
+
+	/**
+	 * Surrounds identifier with quoteChar and duplicates these symbols inside the identifier.
+     * 
+	 * @param quoteChar ` or "
+	 * @param identifier in pedantic mode (connection property pedantic=true) identifier is treated as unquoted
+	 *        (as it is stored in the database) even if it starts and ends with quoteChar;
+	 *        in non-pedantic mode if identifier starts and ends with quoteChar method treats it as already quoted and doesn't modify.
+	 * @param isPedantic are we in pedantic mode
+	 * 
+	 * @return
+	 * With quoteChar="`":<br>
+	 * <li>null -> null</li>
+	 * <li>abc -> `abc`</li>
+	 * <li>ab`c -> `ab``c`</li>
+	 * <li>ab"c -> `ab"c`</li>
+	 * <li>`ab``c` -> `ab``c` in non-pedantic mode or ```ab````c``` in pedantic mode</li>
+	 * With quoteChar="\"":<br>
+	 * <li>null -> null</li>
+	 * <li>abc -> "abc"</li>
+	 * <li>ab`c -> "ab`c"</li>
+	 * <li>ab"c -> "ab""c"</li>
+	 * <li>"ab""c" -> "ab""c" in non-pedantic mode or """ab""""c""" in pedantic mode</li>
+	 */
+	public static String quoteIdentifier(String identifier, String quoteChar, boolean isPedantic) {
+		if (identifier == null) {
 			return null;
 		}
 
-		src = StringUtils.toString(stripEnclosure(src.getBytes(), quotChar, quotChar));
+		if (!isPedantic && identifier.startsWith(quoteChar) && identifier.endsWith(quoteChar)) {
+			return identifier;
+		}
 
-		int lastNdx = src.indexOf(quotChar);
-		String tmpSrc;
-		String tmpRest;
+		return quoteChar + identifier.replaceAll(quoteChar, quoteChar+quoteChar) + quoteChar;
+	}
 
-		tmpSrc = src.substring(0, lastNdx);
-		tmpSrc = tmpSrc + quotChar + quotChar;
-		
-		tmpRest = src.substring(lastNdx+1, src.length());
-		
-		lastNdx = tmpRest.indexOf(quotChar);
-		while (lastNdx > -1) {
-			
-			tmpSrc = tmpSrc + tmpRest.substring(0, lastNdx);
-			tmpSrc = tmpSrc + quotChar + quotChar;
-			tmpRest = tmpRest.substring(lastNdx+1, tmpRest.length());
-			
-			lastNdx = tmpRest.indexOf(quotChar);
+	/**
+	 * Surrounds identifier with "`" and duplicates these symbols inside the identifier.
+     * 
+	 * @param identifier in pedantic mode (connection property pedantic=true) identifier is treated as unquoted
+	 *        (as it is stored in the database) even if it starts and ends with "`";
+	 *        in non-pedantic mode if identifier starts and ends with "`" method treats it as already quoted and doesn't modify.
+	 * @param isPedantic are we in pedantic mode
+	 * 
+	 * @return
+	 * <li>null -> null</li>
+	 * <li>abc -> `abc`</li>
+	 * <li>ab`c -> `ab``c`</li>
+	 * <li>ab"c -> `ab"c`</li>
+	 * <li>`ab``c` -> `ab``c` in non-pedantic mode or ```ab````c``` in pedantic mode</li>
+	 */
+	public static String quoteIdentifier(String identifier, boolean isPedantic) {
+		return quoteIdentifier(identifier, "`", isPedantic);
+	}
+
+	/**
+	 * Trims identifier, removes quote chars from first and last positions
+	 * and replaces double occurrences of quote char from entire identifier,
+	 * i.e converts quoted identifier into form as it is stored in database.
+	 * 
+	 * @param identifier
+	 * @param useAnsiQuotedIdentifiers should we check for " quotes too.
+	 * @return
+	 * <li>null -> null</li>
+	 * <li>abc -> abc</li>
+	 * <li>`abc` -> abc</li>
+	 * <li>`ab``c` -> ab`c</li>
+	 * <li>`"ab`c"` -> "ab`c"</li>
+	 * <li>`ab"c` -> ab"c</li>
+	 * <li>"abc" -> abc</li>
+	 * <li>"`ab""c`" -> `ab"c`</li>
+	 * <li>"ab`c" -> ab`c</li>
+	 */
+	public static String unQuoteIdentifier(String identifier, boolean useAnsiQuotedIdentifiers) {
+		if (identifier == null) {
+			return null;
 		}
 		
-		tmpSrc = tmpSrc + tmpRest;
-		src = tmpSrc;
-
-		return src;
+		identifier = identifier.trim();
+		
+		String quoteChar = null;
+		
+		// Backquotes are always valid identifier quotes
+		if (identifier.startsWith("`") && identifier.endsWith("`")) {
+			quoteChar = "`";
+		}
+		
+		if (quoteChar== null && useAnsiQuotedIdentifiers) {
+			if (identifier.startsWith("\"") && identifier.endsWith("\"")) {
+				quoteChar = "\"";
+			}
+		}
+		
+		if (quoteChar !=  null) {
+			identifier = identifier.substring(1, (identifier.length() - 1));
+			return identifier.replaceAll(quoteChar+quoteChar, quoteChar);
+		}
+		
+		return identifier;
 	}
-	
+
+	public static int indexOfQuoteDoubleAware(String line, String quoteChar, int startFrom) {
+		int lastIndex = line.length() -1;
+		
+		int beginPos = startFrom;
+		int pos = -1;
+
+		boolean next = true;
+		while (next) {
+			pos = line.indexOf(quoteChar, beginPos);
+			if (pos == -1 || pos == lastIndex || !line.substring(pos+1).startsWith(quoteChar)) {
+				next = false;
+			} else {
+				beginPos = pos + 2;
+			}
+		}
+		
+		return pos;
+	}
+
 	// The following methods all exist because of the Java bug
 	//
 	// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6790402
