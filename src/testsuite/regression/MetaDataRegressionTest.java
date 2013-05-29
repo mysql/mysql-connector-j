@@ -3567,7 +3567,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	 *             if the test fails.
 	 */
 	public void testBug65871() throws Exception {
-		createTable("testBug65871_foreign", "("
+		createTable("testbug65871_foreign", "("
 				+ "cpd_foreign_1_id int(8) not null,"
 				+ "cpd_foreign_2_id int(8) not null,"
 				+ "primary key (cpd_foreign_1_id, cpd_foreign_2_id)"
@@ -3616,24 +3616,24 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 	private void testBug65871_testCatalogs(Connection conn1) throws Exception {
 		testBug65871_testCatalog(
-				"db1`testBug65871",
-				StringUtils.quoteIdentifier("db1`testBug65871", ((ConnectionProperties)conn1).getPedantic()),
+				"db1`testbug65871",
+				StringUtils.quoteIdentifier("db1`testbug65871", ((ConnectionProperties)conn1).getPedantic()),
 				conn1);
 
 		testBug65871_testCatalog(
-				"db2`testBug65871",
-				StringUtils.quoteIdentifier("db2`testBug65871", "\"", ((ConnectionProperties)conn1).getPedantic()),
+				"db2`testbug65871",
+				StringUtils.quoteIdentifier("db2`testbug65871", "\"", ((ConnectionProperties)conn1).getPedantic()),
 				conn1);
 
 		try {
 			testBug65871_testCatalog(
-					"`db3`testBug65871`",
-					StringUtils.quoteIdentifier("`db3`testBug65871`", "\"", ((ConnectionProperties)conn1).getPedantic()),
+					"`db3`testbug65871`",
+					StringUtils.quoteIdentifier("`db3`testbug65871`", "\"", ((ConnectionProperties)conn1).getPedantic()),
 					conn1);
-			assertTrue("Driver should mistake about `db3`testBug65871` in non-pedantic mode",((ConnectionProperties)conn1).getPedantic());
+			assertTrue("Driver should mistake about `db3`testbug65871` in non-pedantic mode",((ConnectionProperties)conn1).getPedantic());
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
-			assertFalse("Driver should not mistake about `db3`testBug65871` in pedantic mode",((ConnectionProperties)conn1).getPedantic());
+			assertFalse("Driver should not mistake about `db3`testbug65871` in pedantic mode",((ConnectionProperties)conn1).getPedantic());
 		}
 	}
 	
@@ -3659,32 +3659,32 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 			testBug65871_testTable(
 					unquotedDbName, quotedDbName,
-					"table1`testBug65871",
-					StringUtils.quoteIdentifier("table1`testBug65871", ((ConnectionProperties)conn1).getPedantic()),
+					"table1`testbug65871",
+					StringUtils.quoteIdentifier("table1`testbug65871", ((ConnectionProperties)conn1).getPedantic()),
 					conn1, st1);
 
 			testBug65871_testTable(
 					unquotedDbName, quotedDbName,
-					"table2`testBug65871",
-					StringUtils.quoteIdentifier("table2`testBug65871", "\"", ((ConnectionProperties)conn1).getPedantic()),
+					"table2`testbug65871",
+					StringUtils.quoteIdentifier("table2`testbug65871", "\"", ((ConnectionProperties)conn1).getPedantic()),
 					conn1, st1);
 
 			testBug65871_testTable(
 					unquotedDbName, quotedDbName,
-					"table3\"testBug65871",
-					StringUtils.quoteIdentifier("table3\"testBug65871", "\"", ((ConnectionProperties)conn1).getPedantic()),
+					"table3\"testbug65871",
+					StringUtils.quoteIdentifier("table3\"testbug65871", "\"", ((ConnectionProperties)conn1).getPedantic()),
 					conn1, st1);
 
 			try {
 				testBug65871_testTable(
 						unquotedDbName, quotedDbName,
-						"`table4`testBug65871`",
-						StringUtils.quoteIdentifier("`table4`testBug65871`", "\"", ((ConnectionProperties)conn1).getPedantic()),
+						"`table4`testbug65871`",
+						StringUtils.quoteIdentifier("`table4`testbug65871`", "\"", ((ConnectionProperties)conn1).getPedantic()),
 						conn1, st1);
-				assertTrue("Driver should mistake about `table4`testBug65871` in non-pedantic mode",((ConnectionProperties)conn1).getPedantic());
+				assertTrue("Driver should mistake about `table4`testbug65871` in non-pedantic mode",((ConnectionProperties)conn1).getPedantic());
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
-				assertFalse("Driver should not mistake about `table4`testBug65871` in pedantic mode",((ConnectionProperties)conn1).getPedantic());
+				assertFalse("Driver should not mistake about `table4`testbug65871` in pedantic mode",((ConnectionProperties)conn1).getPedantic());
 			}
 
 		} finally {
@@ -3715,7 +3715,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 					" KEY `NEWINX` (`C\"1`)," +
 					" KEY `NEWINX2` (`C\"1`)," +
 					" foreign key (\"cpd_f\"\"oreign_1_id\", \"`cpd_f\"\"oreign_2_id`\") " +
-					" references "+this.conn.getCatalog()+".testBug65871_foreign(cpd_foreign_1_id, cpd_foreign_2_id), " +
+					" references "+this.conn.getCatalog()+".testbug65871_foreign(cpd_foreign_1_id, cpd_foreign_2_id), " +
 					" CONSTRAINT `APPFK` FOREIGN KEY (`C\"1`) REFERENCES "+quotedDbName+"."+quotedTableName+" (`C\"1`)" +
 					") ENGINE=InnoDB";
 			st1.executeUpdate(sql);
@@ -3770,12 +3770,12 @@ public class MetaDataRegressionTest extends BaseTestCase {
 
 			// 5. getCrossReference(...)
 			try {
-				this.rs = conn1.getMetaData().getCrossReference(this.conn.getCatalog(), null, "testBug65871_foreign", unquotedDbName, null, unquotedTableName);
+				this.rs = conn1.getMetaData().getCrossReference(this.conn.getCatalog(), null, "testbug65871_foreign", unquotedDbName, null, unquotedTableName);
 				if (!this.rs.next()) {
-					failedTests.append("conn.getMetaData.getCrossReference(this.conn.getCatalog(), null, \"testBug65871_foreign\", unquotedDbName, null, unquotedTableName);\n");
+					failedTests.append("conn.getMetaData.getCrossReference(this.conn.getCatalog(), null, \"testbug65871_foreign\", unquotedDbName, null, unquotedTableName);\n");
 				}
 			} catch (Exception e) {
-				failedTests.append("conn.getMetaData.getCrossReference(this.conn.getCatalog(), null, \"testBug65871_foreign\", unquotedDbName, null, unquotedTableName);\n");
+				failedTests.append("conn.getMetaData.getCrossReference(this.conn.getCatalog(), null, \"testbug65871_foreign\", unquotedDbName, null, unquotedTableName);\n");
 			}
 
 			// 6.getExportedKeys(...)
