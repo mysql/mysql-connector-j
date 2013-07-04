@@ -2695,4 +2695,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public Object getConnectionMutex() {
 		return getCurrentConnection().getConnectionMutex();
 	}
+
+	public String getConnectionAttributes() throws SQLException {
+		return getCurrentConnection().getConnectionAttributes();
+	}
 }

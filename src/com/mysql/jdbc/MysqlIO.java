@@ -3349,6 +3349,9 @@ public class MysqlIO {
 			byte[] bytesToCompress = packet.getByteBuffer();
 			compressedBytes = new byte[bytesToCompress.length * 2];
 
+			if (this.deflater == null) {
+				this.deflater = new Deflater();
+			}
             this.deflater.reset();
             this.deflater.setInput(bytesToCompress, offset, packetLen);
             this.deflater.finish();
@@ -5320,6 +5323,13 @@ public class MysqlIO {
 			sqlEx.initCause(e);
 			
 			throw sqlEx;
+		}
+	}
+
+	protected void releaseResources() {
+		if (this.deflater != null) {
+			this.deflater.end();
+			this.deflater = null;
 		}
 	}
 }

@@ -2,6 +2,10 @@
 # $Id$
 nn-nn-13 - Version 5.1.26
 
+  - Fix for Bug#68400, useCompression=true and connect to server, zip native method cause out of memory.
+    CompressedInputStream now does not keep reference to connection.
+    Thanks Dominic Tootell for his investigation, proposed solution and all the help he provided.
+
   - Fix for Bug#65871, DatabaseMetaData.getColumns() throws an MySQLSyntaxErrorException.
     Delimited names of databases and tables are handled correctly now. The edge case is ANSI quoted
     identifiers with leading and trailing "`" symbols, for example CREATE DATABASE "`dbname`". Methods

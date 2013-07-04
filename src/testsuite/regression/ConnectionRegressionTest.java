@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -82,6 +83,7 @@ import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.TimeUtil;
+import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
 import com.mysql.jdbc.exceptions.MySQLNonTransientException;
 import com.mysql.jdbc.exceptions.MySQLSyntaxErrorException;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
@@ -4871,6 +4873,167 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		public void execute(Runnable r) {
 			new Thread(r).start();
 		}
+	}
+
+	/**
+	 * Tests fix for BUG#68400 useCompression=true and connect to server, zip native method cause out of memory
+	 * 
+	 * @throws Exception
+	 *             if any errors occur
+	 */
+	public void testBug68400() throws Exception {
+
+		Field f = com.mysql.jdbc.NonRegisteringDriver.class.getDeclaredField("connectionPhantomRefs");
+		f.setAccessible(true);
+		Map<?,?> connectionTrackingMap = (Map<?,?>) f.get(com.mysql.jdbc.NonRegisteringDriver.class);
+
+		Field referentField = java.lang.ref.Reference.class.getDeclaredField("referent");
+		referentField.setAccessible(true);
+
+		createTable("testBug68400", "(x VARCHAR(255) NOT NULL DEFAULT '')");
+		String s1 = "a very very very very very very very very very very very very very very very very very very very very very very very very large string to ensure compression enabled";
+		this.stmt.executeUpdate("insert into testBug68400 values ('"+s1+"')");
+
+		Properties props = new Properties();
+		props.setProperty("useCompression", "true");
+		props.setProperty("connectionAttributes", "testBug68400:true");
+
+		testMemLeakBatch(props, connectionTrackingMap, referentField, 0, 0, s1, "testBug68400:true");
+		testMemLeakBatch(props, connectionTrackingMap, referentField, 0, 1, s1, "testBug68400:true");
+		testMemLeakBatch(props, connectionTrackingMap, referentField, 0, 2, s1, "testBug68400:true");
+
+		System.out.println("Done.");
+
+	}
+
+	/**
+	 * 
+	 * @param props
+	 * @param connectionType 0-ConnectionImpl, 1-LoadBalancedConnection, 2-FailoverConnection, 3-ReplicationConnection
+	 * @param finType 0 - none, 1 - close(), 2 - abortInternal()
+	 * @throws Exception
+	 */
+	private void testMemLeakBatch(Properties props, Map<?,?> connectionTrackingMap, Field referentField, int connectionType, int finType, String s1, String attributeValue) throws Exception {
+
+		Connection connection=null;
+		Statement statement = null;
+		ResultSet resultSet=null;
+		int connectionNumber = 0;
+		
+		String[] typeNames = new String[] {"ConnectionImpl", "LoadBalancedConnection", "FailoverConnection", "ReplicationConnection"};
+
+		System.out.println("\n"+ typeNames[connectionType] +", " + (finType==0 ? "nullification" : (finType==1 ? "close()" : "abortInternal()")));
+		
+		// 1. Create 100 connections with "testBug68400:true" attribute
+		for(int j = 0; j<20;j++) {
+			switch (connectionType) {
+			case 1:
+				//load-balanced connection
+				connection = getLoadBalancedConnection(props);
+				break;
+			case 2:
+				//failover connection
+				Properties baseprops = new Driver().parseURL(BaseTestCase.dbUrl, null);
+				baseprops.setProperty("autoReconnect", "true");
+				baseprops.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+
+				Properties urlProps = new NonRegisteringDriver().parseURL(BaseTestCase.dbUrl, null);
+				String host = urlProps.getProperty(Driver.HOST_PROPERTY_KEY);
+				String port = urlProps.getProperty(Driver.PORT_PROPERTY_KEY);
+
+				baseprops.remove(Driver.HOST_PROPERTY_KEY);
+				baseprops.remove(Driver.NUM_HOSTS_PROPERTY_KEY);
+				baseprops.remove(Driver.HOST_PROPERTY_KEY + ".1");
+				baseprops.remove(Driver.PORT_PROPERTY_KEY + ".1");
+
+				baseprops.setProperty("queriesBeforeRetryMaster", "50");
+				baseprops.setProperty("maxReconnects", "1");
+
+				UnreliableSocketFactory.mapHost("master", host);
+				UnreliableSocketFactory.mapHost("slave", host);
+
+				baseprops.putAll(props);
+				
+				connection = getConnectionWithProps("jdbc:mysql://master:"
+			                + port + ",slave:" + port + "/", baseprops);
+				break;
+			case 3:
+				//ReplicationConnection;
+				Properties replProps = new Properties();
+				replProps.putAll(props);
+				replProps.setProperty("loadBalanceStrategy", ForcedLoadBalanceStrategy.class.getName());
+				replProps.setProperty("loadBalancePingTimeout", "100");
+				replProps.setProperty("autoReconnect", "true");
+
+				connection = this.getUnreliableReplicationConnection(
+						new String[] { "master", "slave1", "slave2" }, replProps);
+
+				break;
+			default:
+				connection = getConnectionWithProps(props);
+				break;
+			}
+
+			statement = connection.createStatement();
+			resultSet = statement.executeQuery("select /* a very very very very very very very very very very very very very very very very very very very very very very very very large string to ensure compression enabled */ x from testBug68400");
+			if (resultSet.next()) {
+				String s2 = resultSet.getString(1);
+				assertEquals(s1, s2);
+			}
+			if (resultSet != null) {
+				resultSet.close();
+			}
+			if (statement != null) {
+				statement.close();
+			}
+			if (connection != null) {
+				if (finType == 1) {
+					connection.close();
+				} else if (finType == 2) {
+					((com.mysql.jdbc.Connection)connection).abortInternal();
+				}
+				connection = null;
+			}
+		}
+
+		// 2. Count connections before GC
+        System.out.println("MAP: " + connectionTrackingMap.size());
+		
+		connectionNumber = countTestConnections(connectionTrackingMap, referentField, false, attributeValue);
+		System.out.println("Test related connections in MAP before GC: " + connectionNumber);
+
+		// 3. Run GC
+		Runtime.getRuntime().gc();
+
+		// 4. Sleep to ensure abandoned connection clean up occurred
+		Thread.sleep(2000);
+
+		// 5. Count connections before GC
+		connectionNumber = countTestConnections(connectionTrackingMap, referentField, true, attributeValue);
+		System.out.println("Test related connections in MAP after GC: " + connectionNumber);
+        System.out.println("MAP: " + connectionTrackingMap.size());
+        
+        assertEquals("No connection with \""+attributeValue+"\" connection attribute should exist in NonRegisteringDriver.connectionPhantomRefs map after GC", 0, connectionNumber);
+	}
+	
+	private int countTestConnections(Map<?,?> connectionTrackingMap, Field referentField, boolean show, String attributValue) throws Exception {
+		int connectionNumber = 0;
+		for (Object o1 : connectionTrackingMap.keySet()) {
+			com.mysql.jdbc.Connection ctmp = (com.mysql.jdbc.Connection) referentField.get(o1);
+			try {
+				if (ctmp != null && ctmp.getConnectionAttributes() != null && ctmp.getConnectionAttributes().equals(attributValue)) {
+					connectionNumber++;
+					if (show) {
+						System.out.println(ctmp.toString());
+					}
+				}
+			} catch (NullPointerException e) {
+				System.out.println("NullPointerException: \n"+ctmp+"\n"+ctmp.getConnectionAttributes());
+			} catch (MySQLNonTransientConnectionException e) {
+				System.out.println("MySQLNonTransientConnectionException (expected for explicitly closed load-balanced connection)");
+			}
+		}
+		return connectionNumber;
 	}
 
 }

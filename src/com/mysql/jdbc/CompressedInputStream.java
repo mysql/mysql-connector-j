@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -31,6 +31,8 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
+import com.mysql.jdbc.log.Log;
+import com.mysql.jdbc.log.NullLogger;
 
 /**
  * Used to de-compress packets from the MySQL server when protocol-level
@@ -45,15 +47,18 @@ class CompressedInputStream extends InputStream {
 	/** The packet data after it has been un-compressed */
 	private byte[] buffer;
 
-	/** The connection that is using us (used to read config values) */
-	private Connection connection;
-
 	/** The stream we are reading from the server */
 	private InputStream in;
 
 	/** The ZIP inflater used to un-compress packets */
 	private Inflater inflater;
 
+	/** Connection property reference */
+	private ConnectionPropertiesImpl.BooleanConnectionProperty traceProtocol;
+
+	/** Connection logger */
+	private Log log;	
+	
 	/**
 	 * The buffer to read packet headers into
 	 */
@@ -71,7 +76,13 @@ class CompressedInputStream extends InputStream {
 	 * @param streamFromServer
 	 */
 	public CompressedInputStream(Connection conn, InputStream streamFromServer) {
-		this.connection = conn;
+		this.traceProtocol = ((ConnectionPropertiesImpl)conn).traceProtocol;
+		try {
+			this.log = conn.getLog();
+		} catch (SQLException e) {
+			this.log = new NullLogger(null);
+		}
+		
 		this.in = streamFromServer;
 		this.inflater = new Inflater();
 	}
@@ -93,7 +104,10 @@ class CompressedInputStream extends InputStream {
 	public void close() throws IOException {
 		this.in.close();
 		this.buffer = null;
+		this.inflater.end();
 		this.inflater = null;
+		this.traceProtocol = null;
+		this.log = null;
 	}
 
 	/**
@@ -120,16 +134,13 @@ class CompressedInputStream extends InputStream {
 				+ (((this.packetHeaderBuffer[5] & 0xff)) << 8)
 				+ (((this.packetHeaderBuffer[6] & 0xff)) << 16);
 
-		if (this.connection.getTraceProtocol()) {
-			try {
-				this.connection.getLog().logTrace(
-						"Reading compressed packet of length "
-								+ compressedPacketLength + " uncompressed to "
-								+ uncompressedLength);
-			} catch (SQLException sqlEx) {
-				throw new IOException(sqlEx.toString()); // should never
-															// happen
-			}
+		boolean doTrace = this.traceProtocol.getValueAsBoolean();
+		
+		if (doTrace) {
+			this.log.logTrace(
+					"Reading compressed packet of length "
+							+ compressedPacketLength + " uncompressed to "
+							+ uncompressedLength);
 		}
 
 		if (uncompressedLength > 0) {
@@ -156,16 +167,9 @@ class CompressedInputStream extends InputStream {
 
 			this.inflater.end();
 		} else {
-			if (this.connection.getTraceProtocol()) {
-				try {
-					this.connection
-							.getLog()
-							.logTrace(
-									"Packet didn't meet compression threshold, not uncompressing...");
-				} catch (SQLException sqlEx) {
-					throw new IOException(sqlEx.toString()); // should never
-																// happen
-				}
+			if (doTrace) {
+				this.log.logTrace(
+						"Packet didn't meet compression threshold, not uncompressing...");
 			}
 
 			//	
@@ -176,27 +180,17 @@ class CompressedInputStream extends InputStream {
 			readFully(uncompressedData, 0, compressedPacketLength);
 		}
 
-		if (this.connection.getTraceProtocol()) {
-			try {
-				this.connection.getLog().logTrace(
+		if (doTrace) {
+			this.log.logTrace(
 						"Uncompressed packet: \n"
 								+ StringUtils.dumpAsHex(uncompressedData,
 										compressedPacketLength));
-			} catch (SQLException sqlEx) {
-				throw new IOException(sqlEx.toString()); // should never
-															// happen
-			}
 		}
 
 		if ((this.buffer != null) && (this.pos < this.buffer.length)) {
-			if (this.connection.getTraceProtocol()) {
-				try {
-					this.connection.getLog().logTrace(
-							"Combining remaining packet with new: ");
-				} catch (SQLException sqlEx) {
-					throw new IOException(sqlEx.toString()); // should never
-																// happen
-				}
+			if (doTrace) {
+				this.log.logTrace(
+						"Combining remaining packet with new: ");
 			}
 
 			int remaining = this.buffer.length - this.pos;

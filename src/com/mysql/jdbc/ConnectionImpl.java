@@ -1444,6 +1444,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			} catch (Throwable t) {
 				// can't do anything about it, and we're forcibly aborting
 			}
+			this.io.releaseResources();
 			this.io = null;
 		}
 		
@@ -1460,10 +1461,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	private void cleanup(Throwable whyCleanedUp) {
 		try {
-			if ((this.io != null) && !isClosed()) {
-				realClose(false, false, false, whyCleanedUp);
-			} else if (this.io != null) {
-				this.io.forceClose();
+			if (this.io != null) {
+				if (isClosed()) {
+					this.io.forceClose();
+				} else {
+					realClose(false, false, false, whyCleanedUp);
+				}
 			}
 		} catch (SQLException sqlEx) {
 			// ignore, we're going away.
@@ -4715,7 +4718,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	    	}
 		} finally {
 			this.openStatements = null;
-			this.io = null;
+			if (this.io != null) {
+				this.io.releaseResources();
+				this.io = null;
+			}
 			this.statementInterceptors = null;
 			this.exceptionInterceptor = null;
 			ProfilerEventHandlerFactory.removeInstance(this);

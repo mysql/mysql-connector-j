@@ -51,7 +51,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	
 	private static final long serialVersionUID = 4257801713007640580L;
 
-	class BooleanConnectionProperty extends ConnectionProperty implements Serializable {
+	static class BooleanConnectionProperty extends ConnectionProperty implements Serializable {
 	
 		private static final long serialVersionUID = 2540132501709159404L;
 
@@ -94,9 +94,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		/**
 		 * @see com.mysql.jdbc.ConnectionPropertiesImpl.ConnectionProperty#initializeFrom(java.util.Properties)
 		 */
-		void initializeFrom(String extractedValue) throws SQLException {
+		void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 			if (extractedValue != null) {
-				validateStringValues(extractedValue);
+				validateStringValues(extractedValue, exceptionInterceptor);
 
 				this.valueAsObject = Boolean.valueOf(extractedValue
 						.equalsIgnoreCase("TRUE") //$NON-NLS-1$
@@ -118,7 +118,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 	}
 
-	abstract class ConnectionProperty implements Serializable {
+	static abstract class ConnectionProperty implements Serializable {
 
 		static final long serialVersionUID = -6644853639584478367L;
 
@@ -204,23 +204,23 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 		abstract boolean hasValueConstraints();
 
-		void initializeFrom(Properties extractFrom) throws SQLException {
+		void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 			String extractedValue = extractFrom.getProperty(getPropertyName());
 			extractFrom.remove(getPropertyName());
-			initializeFrom(extractedValue);
+			initializeFrom(extractedValue, exceptionInterceptor);
 		}
 
-		void initializeFrom(Reference ref) throws SQLException {
+		void initializeFrom(Reference ref, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 			RefAddr refAddr = ref.get(getPropertyName());
 
 			if (refAddr != null) {
 				String refContentAsString = (String) refAddr.getContent();
 
-				initializeFrom(refContentAsString);
+				initializeFrom(refContentAsString, exceptionInterceptor);
 			}
 		}
 
-		abstract void initializeFrom(String extractedValue) throws SQLException;
+		abstract void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException;
 
 		abstract boolean isRangeBased();
 
@@ -262,7 +262,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 		
 
-		void validateStringValues(String valueToValidate) throws SQLException {
+		void validateStringValues(String valueToValidate, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 			String[] validateAgainst = getAllowableValues();
 
 			if (valueToValidate == null) {
@@ -309,11 +309,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			errorMessageBuf.append("' is not in this set."); //$NON-NLS-1$
 
 			throw SQLError.createSQLException(errorMessageBuf.toString(),
-					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 		}
 	}
 
-	class IntegerConnectionProperty extends ConnectionProperty implements Serializable {
+	static class IntegerConnectionProperty extends ConnectionProperty implements Serializable {
 
 		private static final long serialVersionUID = -3004305481796850832L;
 
@@ -390,7 +390,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		/**
 		 * @see com.mysql.jdbc.ConnectionProperties.ConnectionProperty#initializeFrom(java.lang.String)
 		 */
-		void initializeFrom(String extractedValue) throws SQLException {
+		void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 			if (extractedValue != null) {
 				try {
 					// Parse decimals, too
@@ -412,7 +412,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 							+ "' only accepts integer values. The value '" //$NON-NLS-1$
 							+ extractedValue
 							+ "' can not be converted to an integer.", //$NON-NLS-1$
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 				}
 			} else {
 				this.valueAsObject = this.defaultValue;
@@ -431,7 +431,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 	}
 	
-	public class LongConnectionProperty extends IntegerConnectionProperty {
+	static public class LongConnectionProperty extends IntegerConnectionProperty {
 
 		private static final long serialVersionUID = 6068572984340480895L;
 
@@ -462,7 +462,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			return ((Long) this.valueAsObject).longValue();
 		}
 		
-		void initializeFrom(String extractedValue) throws SQLException {
+		void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 			if (extractedValue != null) {
 				try {
 					// Parse decimals, too
@@ -475,7 +475,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 							+ "' only accepts long integer values. The value '" //$NON-NLS-1$
 							+ extractedValue
 							+ "' can not be converted to a long integer.", //$NON-NLS-1$
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
+							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 				}
 			} else {
 				this.valueAsObject = this.defaultValue;
@@ -483,7 +483,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 	}
 	
-	class MemorySizeConnectionProperty extends IntegerConnectionProperty implements Serializable {
+	static class MemorySizeConnectionProperty extends IntegerConnectionProperty implements Serializable {
 
 		private static final long serialVersionUID = 7351065128998572656L;
 
@@ -498,7 +498,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					category, orderInCategory);
 		}
 
-		void initializeFrom(String extractedValue) throws SQLException {
+		void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 			valueAsString = extractedValue;
 			
 			if (extractedValue != null) {
@@ -533,11 +533,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				}
 			}
 
-			super.initializeFrom(extractedValue);
+			super.initializeFrom(extractedValue, exceptionInterceptor);
 		}
 
-		void setValue(String value) throws SQLException {
-			initializeFrom(value);
+		void setValue(String value, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+			initializeFrom(value, exceptionInterceptor);
 		}
 		
 		String getValueAsString() {
@@ -545,7 +545,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		}
 	}
 
-	class StringConnectionProperty extends ConnectionProperty implements Serializable {
+	static class StringConnectionProperty extends ConnectionProperty implements Serializable {
 	
 		private static final long serialVersionUID = 5432127962785948272L;
 
@@ -590,9 +590,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		/**
 		 * @see com.mysql.jdbc.ConnectionPropertiesImpl.ConnectionProperty#initializeFrom(java.util.Properties)
 		 */
-		void initializeFrom(String extractedValue) throws SQLException {
+		void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 			if (extractedValue != null) {
-				validateStringValues(extractedValue);
+				validateStringValues(extractedValue, exceptionInterceptor);
 
 				this.valueAsObject = extractedValue;
 			} else {
@@ -1514,7 +1514,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.tinyInt1isBit"), //$NON-NLS-1$
 			"3.0.16", MISC_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 
-	private BooleanConnectionProperty traceProtocol = new BooleanConnectionProperty(
+	protected BooleanConnectionProperty traceProtocol = new BooleanConnectionProperty(
 			"traceProtocol", false, //$NON-NLS-1$
 			Messages.getString("ConnectionProperties.traceProtocol"), "3.1.2", //$NON-NLS-1$ //$NON-NLS-2$
 			DEBUGING_PROFILING_CATEGORY, Integer.MIN_VALUE);
@@ -1843,7 +1843,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 						.get(this);
 
 				if (info != null) {
-					propToExpose.initializeFrom(info);
+					propToExpose.initializeFrom(info, getExceptionInterceptor());
 				}
 
 				
@@ -2766,7 +2766,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 						.get(this);
 
 				if (ref != null) {
-					propToSet.initializeFrom(ref);
+					propToSet.initializeFrom(ref, getExceptionInterceptor());
 				}
 			} catch (IllegalAccessException iae) {
 				throw SQLError.createSQLException("Internal properties failure", //$NON-NLS-1$
@@ -2814,7 +2814,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					ConnectionProperty propToSet = (ConnectionProperty) propertyField
 							.get(this);
 
-					propToSet.initializeFrom(infoCopy);
+					propToSet.initializeFrom(infoCopy, getExceptionInterceptor());
 				} catch (IllegalAccessException iae) {
 					throw SQLError.createSQLException(
 							Messages.getString("ConnectionProperties.unableToInitDriverProperties") //$NON-NLS-1$
@@ -2832,7 +2832,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		// Support 'old' profileSql capitalization
 		if (this.profileSql.getValueAsObject() != null) {
 			this.profileSQL.initializeFrom(this.profileSql.getValueAsObject()
-					.toString());
+					.toString(), getExceptionInterceptor());
 		}
 
 		this.reconnectTxAtEndAsBoolean = ((Boolean) this.reconnectAtTxEnd
@@ -2982,7 +2982,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	 * @see com.mysql.jdbc.IConnectionProperties#setBlobSendChunkSize(java.lang.String)
 	 */
 	public void setBlobSendChunkSize(String value) throws SQLException {
-		this.blobSendChunkSize.setValue(value);
+		this.blobSendChunkSize.setValue(value, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3242,7 +3242,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	 * @see com.mysql.jdbc.IConnectionProperties#setLocatorFetchBufferSize(java.lang.String)
 	 */
 	public void setLocatorFetchBufferSize(String value) throws SQLException {
-		this.locatorFetchBufferSize.setValue(value);
+		this.locatorFetchBufferSize.setValue(value, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -4405,7 +4405,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public void setLargeRowSizeThreshold(String value) {
 		try {
-			this.largeRowSizeThreshold.setValue(value);
+			this.largeRowSizeThreshold.setValue(value, getExceptionInterceptor());
 		} catch (SQLException sqlEx) {
 			RuntimeException ex = new RuntimeException(sqlEx.getMessage());
 			ex.initCause(sqlEx);

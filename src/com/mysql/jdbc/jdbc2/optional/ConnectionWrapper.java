@@ -2834,4 +2834,8 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		return this.mc.getConnectionMutex();
 	}
 
+	public String getConnectionAttributes() throws SQLException {
+		return this.mc.getConnectionAttributes();
+	}
+
 }
