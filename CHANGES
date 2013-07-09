@@ -2,6 +2,9 @@
 # $Id$
 nn-nn-13 - Version 5.1.26
 
+  - Fix for Bug#69308 (16879267), Avoid calling batchedStatement.close() twice, and thus raising and ignoring an undercover SQLException, in methods
+    PreparedStatement.executeBatchedInserts and PreparedStatement.executePreparedBatchAsMultiStatement.
+
   - Fix for Bug#68400, useCompression=true and connect to server, zip native method cause out of memory.
     CompressedInputStream now does not keep reference to connection.
     Thanks Dominic Tootell for his investigation, proposed solution and all the help he provided.

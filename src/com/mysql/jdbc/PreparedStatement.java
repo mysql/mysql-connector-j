@@ -1596,6 +1596,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				} finally {
 					if (batchedStatement != null) {
 						batchedStatement.close();
+						batchedStatement = null;
 					}
 				}
 				
@@ -1801,6 +1802,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				} finally {
 					if (batchedStatement != null) {
 						batchedStatement.close();
+						batchedStatement = null;
 					}
 				}
 	
