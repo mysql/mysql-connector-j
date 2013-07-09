@@ -2,6 +2,11 @@
 # $Id$
 nn-nn-13 - Version 5.1.26
 
+  - Fix for Bug#69298 (16845965), Methods DatabaseMetaData.getProcedures() and DatabaseMetaData.getProcedureColumns(), in JDBC4,
+    return stored procedure only or both stored procedures and functions metadata information, depending on the value set in the
+    connection property "getProceduresReturnsFunctions", having default value 'true'. Several fixes in Functions and
+    Procedures metadata so that consulting I__S and MySQL/DDL returns the same info.
+
   - Fix for Bug#69308 (16879267), Avoid calling batchedStatement.close() twice, and thus raising and ignoring an undercover SQLException, in methods
     PreparedStatement.executeBatchedInserts and PreparedStatement.executePreparedBatchAsMultiStatement.
 

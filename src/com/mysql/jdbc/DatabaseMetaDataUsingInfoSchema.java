@@ -35,10 +35,18 @@ import java.util.List;
  */
 public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
+	protected enum JDBC4FunctionConstant {
+		// COLUMN_TYPE values
+		FUNCTION_COLUMN_UNKNOWN, FUNCTION_COLUMN_IN, FUNCTION_COLUMN_INOUT, FUNCTION_COLUMN_OUT,
+		FUNCTION_COLUMN_RETURN, FUNCTION_COLUMN_RESULT,
+		// NULLABLE values
+		FUNCTION_NO_NULLS, FUNCTION_NULLABLE, FUNCTION_NULLABLE_UNKNOWN;
+	}
+	
 	private boolean hasReferentialConstraintsView;
 	private final boolean hasParametersView;
 	
-   protected DatabaseMetaDataUsingInfoSchema(MySQLConnection connToSet,
+	protected DatabaseMetaDataUsingInfoSchema(MySQLConnection connToSet,
 			String databaseToSet) throws SQLException {
 		super(connToSet, databaseToSet);
 		
@@ -1018,8 +1026,10 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "CASE WHEN ROUTINE_TYPE = 'PROCEDURE' THEN "
 				+ procedureNoResult + " WHEN ROUTINE_TYPE='FUNCTION' THEN "
 				+ procedureReturnsResult + " ELSE " + procedureResultUnknown
-				+ " END AS PROCEDURE_TYPE "
+				+ " END AS PROCEDURE_TYPE, "
+				+ "ROUTINE_NAME AS SPECIFIC_NAME "
 				+ "FROM INFORMATION_SCHEMA.ROUTINES WHERE "
+				+ getRoutineTypeConditionForGetProcedures()
 				+ "ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ? "
 				+ "ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME";
 
@@ -1037,15 +1047,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			pStmt.setString(2, procedureNamePattern);
 
 			ResultSet rs = executeMetadataQuery(pStmt);
-			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(new Field[] {
-					new Field("", "PROCEDURE_CAT", Types.CHAR, 0),
-					new Field("", "PROCEDURE_SCHEM", Types.CHAR, 0),
-					new Field("", "PROCEDURE_NAME", Types.CHAR, 0),
-					new Field("", "reserved1", Types.CHAR, 0),
-					new Field("", "reserved2", Types.CHAR, 0),
-					new Field("", "reserved3", Types.CHAR, 0),
-					new Field("", "REMARKS", Types.CHAR, 0),
-					new Field("", "PROCEDURE_TYPE", Types.SMALLINT, 0) });
+			((com.mysql.jdbc.ResultSetInternalMethods) rs).redefineFieldsForDBMD(createFieldMetadataForGetProcedures());
 
 			return rs;
 		} finally {
@@ -1055,6 +1057,16 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		}
 	}
 
+	/**
+	 * Returns a condition to be injected in the query that returns metadata for procedures only. Overridden by
+	 * subclasses when needed. When not empty must end with "AND ".
+	 * 
+	 * @return String with the condition to be injected.
+	 */
+	protected String getRoutineTypeConditionForGetProcedures() {
+		return "";
+	}
+	
     /**
      * Retrieves a description of the given catalog's stored procedure parameter
      * and result columns.
@@ -1121,13 +1133,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	public ResultSet getProcedureColumns(String catalog, String schemaPattern,
 			String procedureNamePattern, String columnNamePattern)
 			throws SQLException {
-		if (!this.conn.versionMeetsMinimum(5, 4, 0)) {
-			return super.getProcedureColumns(catalog, schemaPattern, procedureNamePattern,
-					columnNamePattern);
-		}
-		
 		if (!this.hasParametersView) {
-			return super.getProcedureColumns(catalog, schemaPattern, procedureNamePattern, columnNamePattern);
+			return getProcedureColumnsNoISParametersView(catalog, schemaPattern, procedureNamePattern, columnNamePattern);
 		}
 		
 		if ((procedureNamePattern == null)
@@ -1170,11 +1177,11 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS PROCEDURE_CAT, "
 				+ "NULL AS `PROCEDURE_SCHEM`, "
 				+ "SPECIFIC_NAME AS `PROCEDURE_NAME`, "
-				+ "PARAMETER_NAME AS `COLUMN_NAME`, "
-				+ "CASE WHEN PARAMETER_MODE = 'IN' THEN "
-					+ procedureColumnIn + " WHEN PARAMETER_MODE='OUT' THEN " + procedureColumnOut 
-					+ " WHEN PARAMETER_MODE='INOUT' THEN " + procedureColumnInOut
-					+ " WHEN ORDINAL_POSITION=0 THEN " + procedureColumnReturn 
+				+ "IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, "
+				+ "CASE WHEN PARAMETER_MODE = 'IN' THEN " + procedureColumnIn
+					+ " WHEN PARAMETER_MODE = 'OUT' THEN " + procedureColumnOut 
+					+ " WHEN PARAMETER_MODE = 'INOUT' THEN " + procedureColumnInOut
+					+ " WHEN ORDINAL_POSITION = 0 THEN " + procedureColumnReturn 
 					+ " ELSE " + procedureColumnUnknown
 				+ " END AS `COLUMN_TYPE`, ");
 		
@@ -1201,17 +1208,17 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ");
 		// RADIX</B> short => radix
 		sqlBuf.append("10 AS RADIX,");
-		sqlBuf.append(procedureNullableUnknown
-				+ " AS `NULLABLE`, "
+		sqlBuf.append(procedureNullable + " AS `NULLABLE`, "
 				+ "NULL AS `REMARKS`, "
 				+ "NULL AS `COLUMN_DEF`, "
 				+ "NULL AS `SQL_DATA_TYPE`, "
 				+ "NULL AS `SQL_DATETIME_SUB`, "
 				+ "CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, "
 				+ "ORDINAL_POSITION, "
-				+ "'' AS `IS_NULLABLE`, "
+				+ "'YES' AS `IS_NULLABLE`, "
 				+ "SPECIFIC_NAME "
 				+ "FROM INFORMATION_SCHEMA.PARAMETERS WHERE "
+				+ getRoutineTypeConditionForGetProcedureColumns()
 				+ "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
 				+ "ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
 
@@ -1238,6 +1245,26 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				pStmt.close();
 			}
 		}
+	}
+
+	/**
+	 * Redirects to another implementation of #getProcedureColumns. Subclasses may need to override this method.
+	 * 
+	 * @see getProcedureColumns
+	 */
+	protected ResultSet getProcedureColumnsNoISParametersView(String catalog, String schemaPattern,
+			String procedureNamePattern, String columnNamePattern) throws SQLException {
+		return super.getProcedureColumns(catalog, schemaPattern, procedureNamePattern, columnNamePattern);
+	}
+	
+	/**
+	 * Returns a condition to be injected in the query that returns metadata for procedure columns only. Overridden by
+	 * subclasses when needed. When not empty must end with "AND ".
+	 * 
+	 * @return String with the condition to be injected.
+	 */
+	protected String getRoutineTypeConditionForGetProcedureColumns() {
+		return "";
 	}
 
 	/**
@@ -1570,11 +1597,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				  String schemaPattern,
 				  String functionNamePattern, 
 				  String columnNamePattern) throws SQLException {
-    	if (!this.conn.versionMeetsMinimum(5, 4, 0)) {
-			return super.getFunctionColumns(catalog, schemaPattern, functionNamePattern,
-					columnNamePattern);
-		}
-		
 		if (!this.hasParametersView) {
 			return super.getFunctionColumns(catalog, schemaPattern, functionNamePattern, columnNamePattern);
 		}
@@ -1600,8 +1622,6 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			db = catalog;
         }
 
-    	
-		// FIXME: Use DBMD constants when we leave Java5
 		// FUNCTION_CAT
 		// FUNCTION_SCHEM
 		// FUNCTION_NAME
@@ -1610,12 +1630,12 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		StringBuffer sqlBuf = new StringBuffer("SELECT SPECIFIC_SCHEMA AS FUNCTION_CAT, "
 				+ "NULL AS `FUNCTION_SCHEM`, "
 				+ "SPECIFIC_NAME AS `FUNCTION_NAME`, "
-				+ "PARAMETER_NAME AS `COLUMN_NAME`, "
-				+ "CASE WHEN PARAMETER_MODE = 'IN' THEN "
-					+ 1 /* functionColumnIn */ + " WHEN PARAMETER_MODE='OUT' THEN " + 3 /* functionColumnOut */ 
-					+ " WHEN PARAMETER_MODE='INOUT' THEN " + 2 /* functionColumnInOut */
-					+ " WHEN ORDINAL_POSITION=0 THEN " + 4 /* functionReturn */ 
-					+ " ELSE " + 0 /* functionColumnUnknown */
+				+ "IFNULL(PARAMETER_NAME, '') AS `COLUMN_NAME`, "
+				+ "CASE WHEN PARAMETER_MODE = 'IN' THEN " + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_IN)
+					+ " WHEN PARAMETER_MODE = 'OUT' THEN " + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_OUT) 
+					+ " WHEN PARAMETER_MODE = 'INOUT' THEN " + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_INOUT)
+					+ " WHEN ORDINAL_POSITION = 0 THEN " + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_RETURN) 
+					+ " ELSE " + getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_COLUMN_UNKNOWN)
 				+ " END AS `COLUMN_TYPE`, ");
 		
 		//DATA_TYPE
@@ -1630,16 +1650,16 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			sqlBuf.append("CASE WHEN LOCATE('unsigned', DATA_TYPE) != 0 AND LOCATE('unsigned', DATA_TYPE) = 0 THEN CONCAT(DATA_TYPE, ' unsigned') ELSE DATA_TYPE END AS `TYPE_NAME`,");
 		}
 
-		// PRECISION</B> int => precision
+		// PRECISION int => precision
 		sqlBuf.append("NUMERIC_PRECISION AS `PRECISION`, ");
-		// LENGTH</B> int => length in bytes of data
+		// LENGTH int => length in bytes of data
 		sqlBuf
 				.append("CASE WHEN LCASE(DATA_TYPE)='date' THEN 10 WHEN LCASE(DATA_TYPE)='time' THEN 8 WHEN LCASE(DATA_TYPE)='datetime' THEN 19 WHEN LCASE(DATA_TYPE)='timestamp' THEN 19 WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NUMERIC_PRECISION WHEN CHARACTER_MAXIMUM_LENGTH > " 
 						+ Integer.MAX_VALUE + " THEN " + Integer.MAX_VALUE + " ELSE CHARACTER_MAXIMUM_LENGTH END AS LENGTH, ");
 		
-		// SCALE</B> short => scale
+		// SCALE short => scale
 		sqlBuf.append("NUMERIC_SCALE AS `SCALE`, ");
-		// RADIX</B> short => radix
+		// RADIX short => radix
 		sqlBuf.append("10 AS RADIX,");
 		// NULLABLE
 		// REMARKS
@@ -1647,11 +1667,11 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		// ORDINAL_POSITION *
 		// IS_NULLABLE *
 		// SPECIFIC_NAME *
-		sqlBuf.append(2 /* functionNullableUnknown */ + " AS `NULLABLE`, "
+		sqlBuf.append(getJDBC4FunctionConstant(JDBC4FunctionConstant.FUNCTION_NULLABLE) + " AS `NULLABLE`, "
 				+ " NULL AS `REMARKS`, "
 				+ "CHARACTER_OCTET_LENGTH AS `CHAR_OCTET_LENGTH`, "
 				+ " ORDINAL_POSITION, "
-				+ "'' AS `IS_NULLABLE`, "
+				+ "'YES' AS `IS_NULLABLE`, "
 				+ "SPECIFIC_NAME "
 				+ "FROM INFORMATION_SCHEMA.PARAMETERS WHERE "
 				+ "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
@@ -1680,6 +1700,19 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				pStmt.close();
 			}
 		}
+	}
+
+	/**
+	 * Getter to JDBC4 DatabaseMetaData.function* constants.
+	 * This method must be overridden by JDBC4 subclasses. this implementation should never be called.
+	 * 
+	 * @param constant
+	 *            the constant id from DatabaseMetaData fields to return.
+	 * 
+	 * @return 0
+	 */
+	protected int getJDBC4FunctionConstant(JDBC4FunctionConstant constant) {
+		return 0;
 	}
 
     /**
@@ -1787,8 +1820,9 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 	}
 
 	/**
-	 * Method to be overridden by subclasses. This should never be called.
-	 * 
+	 * Getter to JDBC4 DatabaseMetaData.functionNoTable constant.
+	 * This method must be overridden by JDBC4 subclasses. this implementation should never be called.
+	 *
 	 * @return 0
 	 */
 	protected int getJDBC4FunctionNoTableConstant() {

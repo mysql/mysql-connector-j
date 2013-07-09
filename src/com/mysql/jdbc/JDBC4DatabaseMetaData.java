@@ -90,7 +90,42 @@ public class JDBC4DatabaseMetaData extends DatabaseMetaData {
     public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
     	return false;
     }
+	
+	/**
+	 * Changes in behavior introduced in JDBC4 when #getFunctionColumns became available. Overrides
+	 * DatabaseMetaData#getProcedureColumns
+	 * 
+	 * @see DatabaseMetaData#getProcedureColumns
+	 * @since 1.6
+	 */
+	public java.sql.ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern,
+			String columnNamePattern) throws SQLException {
+		Field[] fields = createProcedureColumnsFields();
 
+		return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern,
+				true, conn.getGetProceduresReturnsFunctions());
+	}
+
+	/**
+	 * Changes in behavior introduced in JDBC4 when #getFunctions became available. Overrides
+	 * DatabaseMetaData#getProcedures.
+	 * 
+	 * @see DatabaseMetaData#getProcedures
+	 * @since 1.6
+	 */
+	public java.sql.ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern)
+			throws SQLException {
+		Field[] fields = createFieldMetadataForGetProcedures();
+
+		return getProceduresAndOrFunctions(fields, catalog, schemaPattern, procedureNamePattern, true,
+				conn.getGetProceduresReturnsFunctions());
+	}
+	
+	/**
+	 * Overrides DatabaseMetaData#getJDBC4FunctionNoTableConstant.
+	 * 
+	 * @return java.sql.DatabaseMetaData#functionNoTable
+	 */
 	protected int getJDBC4FunctionNoTableConstant() {
 		return functionNoTable;
 	}

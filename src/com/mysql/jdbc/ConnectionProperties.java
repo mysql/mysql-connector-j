@@ -1705,6 +1705,10 @@ public interface ConnectionProperties {
 	public abstract void setDisconnectOnExpiredPasswords(boolean disconnectOnExpiredPasswords);
 
 	public abstract boolean getDisconnectOnExpiredPasswords();
+	
+	public abstract void setGetProceduresReturnsFunctions(boolean getProcedureReturnsFunctions);
+	
+	public abstract boolean getGetProceduresReturnsFunctions();
 
 	String getConnectionAttributes() throws SQLException;
 }

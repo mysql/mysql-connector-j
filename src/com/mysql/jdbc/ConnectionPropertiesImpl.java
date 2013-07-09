@@ -1822,6 +1822,11 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.disconnectOnExpiredPasswords"),
 			"5.1.23", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
 	
+	private BooleanConnectionProperty getProceduresReturnsFunctions = new BooleanConnectionProperty(
+			"getProceduresReturnsFunctions", true,
+			Messages.getString("ConnectionProperties.getProceduresReturnsFunctions"),
+			"5.1.26", MISC_CATEGORY, Integer.MIN_VALUE);
+	
 	
 	
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
@@ -4735,5 +4740,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public boolean getDisconnectOnExpiredPasswords() {
 		return this.disconnectOnExpiredPasswords.getValueAsBoolean();
+	}
+
+	public void setGetProceduresReturnsFunctions(boolean getProcedureReturnsFunctions) {
+		this.getProceduresReturnsFunctions.setValue(getProcedureReturnsFunctions);
+	}
+
+	public boolean getGetProceduresReturnsFunctions() {
+		return this.getProceduresReturnsFunctions.getValueAsBoolean();
 	}
 }

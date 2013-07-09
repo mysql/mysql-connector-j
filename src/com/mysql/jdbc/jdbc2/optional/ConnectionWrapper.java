@@ -2826,6 +2826,14 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		return this.mc.getDisconnectOnExpiredPasswords();
 	}
 
+	public void setGetProceduresReturnsFunctions(boolean getProcedureReturnsFunctions) {
+		this.mc.setGetProceduresReturnsFunctions(getProcedureReturnsFunctions);
+	}
+
+	public boolean getGetProceduresReturnsFunctions() {
+		return this.mc.getGetProceduresReturnsFunctions();
+	}
+	
 	public void abortInternal() throws SQLException {
 		this.mc.abortInternal();
 	}
@@ -2837,5 +2845,4 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public String getConnectionAttributes() throws SQLException {
 		return this.mc.getConnectionAttributes();
 	}
-
 }

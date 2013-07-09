@@ -407,6 +407,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					this.nullability = java.sql.DatabaseMetaData.columnNullable;
 					this.isNullable = "YES";
 
+				} else if (nullabilityInfo.equals("UNKNOWN")) {
+					this.nullability = java.sql.DatabaseMetaData.columnNullableUnknown;
+					this.isNullable = "";
+					
 					// IS_NULLABLE
 				} else {
 					this.nullability = java.sql.DatabaseMetaData.columnNoNulls;
@@ -824,6 +828,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 	}
 	
+	/**
+	 * Getter to JDBC4 DatabaseMetaData.functionNoTable constant.
+	 * This method must be overridden by JDBC4 subclasses. This implementation should never be called.
+	 *
+	 * @return 0
+	 */
 	protected int getJDBC4FunctionNoTableConstant() {
 		return 0;
 	}
@@ -855,14 +865,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				rowData[3] = null;
 				rowData[4] = null;
 				rowData[5] = null;
-				rowData[6] = null;
+				rowData[6] = s2b(proceduresRs.getString("comment"));
 
 				boolean isFunction = fromSelect ? "FUNCTION"
 						.equalsIgnoreCase(proceduresRs.getString("type"))
 						: false;
 				rowData[7] = s2b(isFunction ? Integer
 						.toString(procedureReturnsResult) : Integer
-						.toString(procedureResultUnknown));
+						.toString(procedureNoResult));
 
 				rowData[8] = s2b(procedureName);
 				
@@ -893,17 +903,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		switch (typeDesc.nullability) {
 		case columnNoNulls:
 			row[11] = s2b(String.valueOf(procedureNoNulls)); // NULLABLE
-
 			break;
 
 		case columnNullable:
 			row[11] = s2b(String.valueOf(procedureNullable)); // NULLABLE
-
 			break;
 
 		case columnNullableUnknown:
-			row[11] = s2b(String.valueOf(procedureNullableUnknown)); // nullable
-
+			row[11] = s2b(String.valueOf(procedureNullableUnknown)); // NULLABLE
 			break;
 
 		default:
@@ -922,9 +929,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			row[14] = s2b(String.valueOf(ordinal));
 			
 			// IS_NULLABLE
-			row[15] = Constants.EMPTY_BYTE_ARRAY;
+			row[15] = s2b(typeDesc.isNullable);
 			
-			row[16] = s2b(paramName);
+			// SPECIFIC_NAME
+			row[16] = procNameAsBytes;
 		} else {
 			// COLUMN_DEF
 			row[13] = null;
@@ -942,10 +950,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			row[17] = s2b(String.valueOf(ordinal));
 			
 			// IS_NULLABLE
-			row[18] = Constants.EMPTY_BYTE_ARRAY;
+			row[18] = s2b(typeDesc.isNullable);
 			
 			// SPECIFIC_NAME
-			row[19] = s2b(paramName);
+			row[19] = procNameAsBytes;
 		}
 		
 		return new ByteArrayRow(row, getExceptionInterceptor());
@@ -1761,7 +1769,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 						String returnsDefn = procedureDef.substring(declarationStart, endReturnsDef).trim();
 						TypeDescriptor returnDescriptor = new TypeDescriptor(
-								returnsDefn, "YES"); //null);
+								returnsDefn, "YES");
 
 						resultRows.add(convertTypeDescriptorToProcedureRow(
 								procNameAsBytes, procCatAsBytes, "", false, false, true,
@@ -1890,7 +1898,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 						String typeInfo = typeInfoBuf.toString();
 
-						typeDesc = new TypeDescriptor(typeInfo, "YES"); //null);
+						typeDesc = new TypeDescriptor(typeInfo, "YES");
 					} else {
 						throw SQLError.createSQLException(
 								"Internal error when parsing callable statement metadata (missing parameter type)",
@@ -4405,7 +4413,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				procedureNamePattern, true, true);
 	}
 
-	private Field[] createFieldMetadataForGetProcedures() {
+	protected Field[] createFieldMetadataForGetProcedures() {
 		Field[] fields = new Field[9];
 		fields[0] = new Field("", "PROCEDURE_CAT", Types.CHAR, 255);
 		fields[1] = new Field("", "PROCEDURE_SCHEM", Types.CHAR, 255);
@@ -4463,8 +4471,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					boolean fromSelect = false;
 					ResultSet proceduresRs = null;
 					boolean needsClientFiltering = true;
-					java.sql.PreparedStatement proceduresStmt = conn
-							.clientPrepareStatement("SELECT name, type, comment FROM mysql.proc WHERE name like ? and db <=> ? ORDER BY name");
+
+					StringBuffer selectFromMySQLProcSQL = new StringBuffer();
+
+					selectFromMySQLProcSQL.append("SELECT name, type, comment FROM mysql.proc WHERE ");
+					if (returnProcedures && !returnFunctions) {
+						selectFromMySQLProcSQL.append("type = 'PROCEDURE' and ");
+					} else if (!returnProcedures && returnFunctions) {
+						selectFromMySQLProcSQL.append("type = 'FUNCTION' and ");
+					}
+					selectFromMySQLProcSQL.append("name like ? and db <=> ? ORDER BY name");
+
+					java.sql.PreparedStatement proceduresStmt = conn.clientPrepareStatement(selectFromMySQLProcSQL
+							.toString());
 
 					try {
 						//
@@ -5162,7 +5181,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							row[7] = null;
 							row[8] = null;
 							row[9] = null;
-							
+
 							if (hasTableTypes) {
 								String tableType = results
 										.getString(typeColumnIndex);

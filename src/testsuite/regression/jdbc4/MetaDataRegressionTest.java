@@ -25,8 +25,12 @@ import java.sql.DatabaseMetaData;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.Types;
 import java.util.Arrays;
 import java.util.List;
+
+import com.mysql.jdbc.ConnectionProperties;
+import com.mysql.jdbc.Util;
 
 import testsuite.BaseTestCase;
 
@@ -165,5 +169,251 @@ public class MetaDataRegressionTest extends BaseTestCase {
 					+ "'.", expectedFields.get(i), rsMetaData.getColumnName(position));
 		}
 		rs.close();
+	}
+	
+	/**
+	 * Tests fix for BUG#69298 - Different outcome from DatabaseMetaData.getFunctions() when using I__S.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug69298() throws Exception {
+		Connection testConn;
+
+		createFunction("testBug69298_func",
+				"(param_func INT) RETURNS INT COMMENT 'testBug69298_func comment' DETERMINISTIC RETURN 1");
+		createProcedure("testBug69298_proc", "(IN param_proc INT) COMMENT 'testBug69298_proc comment' SELECT 1");
+
+		// test with standard connection
+		assertFalse("Property useInformationSchema should be false",
+				((ConnectionProperties) conn).getUseInformationSchema());
+		assertTrue("Property getProceduresReturnsFunctions should be true",
+				((ConnectionProperties) conn).getGetProceduresReturnsFunctions());
+		checkGetFunctionsForBug69298("Std. Connection MetaData", conn);
+		checkGetFunctionColumnsForBug69298("Std. Connection MetaData", conn);
+		checkGetProceduresForBug69298("Std. Connection MetaData", conn);
+		checkGetProcedureColumnsForBug69298("Std. Connection MetaData", conn);
+
+		// test with property useInformationSchema=true
+		testConn = getConnectionWithProps("useInformationSchema=true");
+		assertTrue("Property useInformationSchema should be true",
+				((ConnectionProperties) testConn).getUseInformationSchema());
+		assertTrue("Property getProceduresReturnsFunctions should be true",
+				((ConnectionProperties) testConn).getGetProceduresReturnsFunctions());
+		checkGetFunctionsForBug69298("Prop. useInfoSchema(1) MetaData", testConn);
+		checkGetFunctionColumnsForBug69298("Prop. useInfoSchema(1) MetaData", testConn);
+		checkGetProceduresForBug69298("Prop. useInfoSchema(1) MetaData", testConn);
+		checkGetProcedureColumnsForBug69298("Prop. useInfoSchema(1) MetaData", testConn);
+		testConn.close();
+
+		// test with property getProceduresReturnsFunctions=false
+		testConn = getConnectionWithProps("getProceduresReturnsFunctions=false");
+		assertFalse("Property useInformationSchema should be false",
+				((ConnectionProperties) testConn).getUseInformationSchema());
+		assertFalse("Property getProceduresReturnsFunctions should be false",
+				((ConnectionProperties) testConn).getGetProceduresReturnsFunctions());
+		checkGetFunctionsForBug69298("Prop. getProcRetFunc(0) MetaData", testConn);
+		checkGetFunctionColumnsForBug69298("Prop. getProcRetFunc(0) MetaData", testConn);
+		checkGetProceduresForBug69298("Prop. getProcRetFunc(0) MetaData", testConn);
+		checkGetProcedureColumnsForBug69298("Prop. getProcRetFunc(0) MetaData", testConn);
+		testConn.close();
+
+		// test with property useInformationSchema=true & getProceduresReturnsFunctions=false
+		testConn = getConnectionWithProps("useInformationSchema=true,getProceduresReturnsFunctions=false");
+		assertTrue("Property useInformationSchema should be true",
+				((ConnectionProperties) testConn).getUseInformationSchema());
+		assertFalse("Property getProceduresReturnsFunctions should be false",
+				((ConnectionProperties) testConn).getGetProceduresReturnsFunctions());
+		checkGetFunctionsForBug69298("Prop. useInfoSchema(1) + getProcRetFunc(0) MetaData", testConn);
+		checkGetFunctionColumnsForBug69298("Prop. useInfoSchema(1) + getProcRetFunc(0) MetaData", testConn);
+		checkGetProceduresForBug69298("Prop. useInfoSchema(1) + getProcRetFunc(0) MetaData", testConn);
+		checkGetProcedureColumnsForBug69298("Prop. useInfoSchema(1) + getProcRetFunc(0) MetaData", testConn);
+		testConn.close();
+	}
+
+	private void checkGetFunctionsForBug69298(String stepDescription, Connection testConn) throws Exception {
+		DatabaseMetaData testDbMetaData = testConn.getMetaData();
+		ResultSet proceduresMD = testDbMetaData.getFunctions(null, null, "testBug69298_%");
+		String sd = stepDescription + " gerFunctions() ";
+
+		assertTrue(sd + "one row expected.", proceduresMD.next());
+
+		// function: testBug69298_func
+		assertEquals(sd + "-> FUNCTION_CAT", testConn.getCatalog(), proceduresMD.getString("FUNCTION_CAT"));
+		assertEquals(sd + "-> FUNCTION_SCHEM", null, proceduresMD.getString("FUNCTION_SCHEM"));
+		assertEquals(sd + "-> FUNCTION_NAME", "testBug69298_func", proceduresMD.getString("FUNCTION_NAME"));
+		assertEquals(sd + "-> REMARKS", "testBug69298_func comment", proceduresMD.getString("REMARKS"));
+		assertEquals(sd + "-> FUNCTION_TYPE", DatabaseMetaData.functionNoTable, proceduresMD.getShort("FUNCTION_TYPE"));
+		assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", proceduresMD.getString("SPECIFIC_NAME"));
+
+		assertFalse(stepDescription + "no more rows expected.", proceduresMD.next());
+	}
+
+	private void checkGetFunctionColumnsForBug69298(String stepDescription, Connection testConn) throws Exception {
+		DatabaseMetaData testDbMetaData = testConn.getMetaData();
+		ResultSet proceduresMD = testDbMetaData.getFunctionColumns(null, null, "testBug69298_%", "%");
+		String sd = stepDescription + " getFunctionColumns() ";
+
+		assertTrue(sd + "one row expected.", proceduresMD.next());
+
+		// function column: testBug69298_func return
+		assertEquals(sd + "-> FUNCTION_CAT", testConn.getCatalog(), proceduresMD.getString("FUNCTION_CAT"));
+		assertEquals(sd + "-> FUNCTION_SCHEM", null, proceduresMD.getString("FUNCTION_SCHEM"));
+		assertEquals(sd + "-> FUNCTION_NAME", "testBug69298_func", proceduresMD.getString("FUNCTION_NAME"));
+		assertEquals(sd + "-> COLUMN_NAME", "", proceduresMD.getString("COLUMN_NAME"));
+		assertEquals(sd + "-> COLUMN_TYPE", DatabaseMetaData.functionReturn, proceduresMD.getShort("COLUMN_TYPE"));
+		assertEquals(sd + "-> DATA_TYPE", Types.INTEGER, proceduresMD.getInt("DATA_TYPE"));
+		assertEquals(sd + "-> TYPE_NAME", "INT", proceduresMD.getString("TYPE_NAME"));
+		assertEquals(sd + "-> PRECISION", 10, proceduresMD.getInt("PRECISION"));
+		assertEquals(sd + "-> LENGTH", 10, proceduresMD.getInt("LENGTH"));
+		assertEquals(sd + "-> SCALE", 0, proceduresMD.getShort("SCALE"));
+		assertEquals(sd + "-> RADIX", 10, proceduresMD.getShort("RADIX"));
+		assertEquals(sd + "-> NULLABLE", DatabaseMetaData.functionNullable, proceduresMD.getShort("NULLABLE"));
+		assertEquals(sd + "-> REMARKS", null, proceduresMD.getString("REMARKS"));
+		assertEquals(sd + "-> CHAR_OCTET_LENGTH", 0, proceduresMD.getInt("CHAR_OCTET_LENGTH"));
+		assertEquals(sd + "-> ORDINAL_POSITION", 0, proceduresMD.getInt("ORDINAL_POSITION"));
+		assertEquals(sd + "-> IS_NULLABLE", "YES", proceduresMD.getString("IS_NULLABLE"));
+		assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", proceduresMD.getString("SPECIFIC_NAME"));
+
+		assertTrue(sd + "two rows expected.", proceduresMD.next());
+
+		// function column: testBug69298_func.param_func
+		assertEquals(sd + "-> FUNCTION_CAT", testConn.getCatalog(), proceduresMD.getString("FUNCTION_CAT"));
+		assertEquals(sd + "-> FUNCTION_SCHEM", null, proceduresMD.getString("FUNCTION_SCHEM"));
+		assertEquals(sd + "-> FUNCTION_NAME", "testBug69298_func", proceduresMD.getString("FUNCTION_NAME"));
+		assertEquals(sd + "-> COLUMN_NAME", "param_func", proceduresMD.getString("COLUMN_NAME"));
+		assertEquals(sd + "-> COLUMN_TYPE", DatabaseMetaData.functionColumnIn, proceduresMD.getShort("COLUMN_TYPE"));
+		assertEquals(sd + "-> DATA_TYPE", Types.INTEGER, proceduresMD.getInt("DATA_TYPE"));
+		assertEquals(sd + "-> TYPE_NAME", "INT", proceduresMD.getString("TYPE_NAME"));
+		assertEquals(sd + "-> PRECISION", 10, proceduresMD.getInt("PRECISION"));
+		assertEquals(sd + "-> LENGTH", 10, proceduresMD.getInt("LENGTH"));
+		assertEquals(sd + "-> SCALE", 0, proceduresMD.getShort("SCALE"));
+		assertEquals(sd + "-> RADIX", 10, proceduresMD.getShort("RADIX"));
+		assertEquals(sd + "-> NULLABLE", DatabaseMetaData.functionNullable, proceduresMD.getShort("NULLABLE"));
+		assertEquals(sd + "-> REMARKS", null, proceduresMD.getString("REMARKS"));
+		assertEquals(sd + "-> CHAR_OCTET_LENGTH", 0, proceduresMD.getInt("CHAR_OCTET_LENGTH"));
+		assertEquals(sd + "-> ORDINAL_POSITION", 1, proceduresMD.getInt("ORDINAL_POSITION"));
+		assertEquals(sd + "-> IS_NULLABLE", "YES", proceduresMD.getString("IS_NULLABLE"));
+		assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", proceduresMD.getString("SPECIFIC_NAME"));
+
+		assertFalse(sd + "no more rows expected.", proceduresMD.next());
+	}
+
+	private void checkGetProceduresForBug69298(String stepDescription, Connection testConn) throws Exception {
+		DatabaseMetaData testDbMetaData = testConn.getMetaData();
+		ResultSet proceduresMD = testDbMetaData.getProcedures(null, null, "testBug69298_%");
+		String sd = stepDescription + " getProcedures() ";
+		boolean isGetProceduresReturnsFunctions = ((ConnectionProperties) testConn).getGetProceduresReturnsFunctions();
+
+		assertTrue(sd + "one row expected.", proceduresMD.next());
+
+		if (isGetProceduresReturnsFunctions) {
+			// function: testBug69298_func
+			assertEquals(sd + "-> PROCEDURE_CAT", testConn.getCatalog(), proceduresMD.getString("PROCEDURE_CAT"));
+			assertEquals(sd + "-> PROCEDURE_SCHEM", null, proceduresMD.getString("PROCEDURE_SCHEM"));
+			assertEquals(sd + "-> PROCEDURE_NAME", "testBug69298_func", proceduresMD.getString("PROCEDURE_NAME"));
+			assertEquals(sd + "-> REMARKS", "testBug69298_func comment", proceduresMD.getString("REMARKS"));
+			assertEquals(sd + "-> PROCEDURE_TYPE", DatabaseMetaData.procedureReturnsResult,
+					proceduresMD.getShort("PROCEDURE_TYPE"));
+			assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", proceduresMD.getString("SPECIFIC_NAME"));
+
+			assertTrue(sd + "two rows expected.", proceduresMD.next());
+		}
+
+		// procedure: testBug69298_proc
+		assertEquals(sd + "-> PROCEDURE_CAT", testConn.getCatalog(), proceduresMD.getString("PROCEDURE_CAT"));
+		assertEquals(sd + "-> PROCEDURE_SCHEM", null, proceduresMD.getString("PROCEDURE_SCHEM"));
+		assertEquals(sd + "-> PROCEDURE_NAME", "testBug69298_proc", proceduresMD.getString("PROCEDURE_NAME"));
+		assertEquals(sd + "-> REMARKS", "testBug69298_proc comment", proceduresMD.getString("REMARKS"));
+		assertEquals(sd + "-> PROCEDURE_TYPE", DatabaseMetaData.procedureNoResult,
+				proceduresMD.getShort("PROCEDURE_TYPE"));
+		assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_proc", proceduresMD.getString("SPECIFIC_NAME"));
+
+		assertFalse(stepDescription + "no more rows expected.", proceduresMD.next());
+	}
+
+	private void checkGetProcedureColumnsForBug69298(String stepDescription, Connection testConn) throws Exception {
+		DatabaseMetaData testDbMetaData = testConn.getMetaData();
+		ResultSet proceduresMD = testDbMetaData.getProcedureColumns(null, null, "testBug69298_%", "%");
+		String sd = stepDescription + " getProcedureColumns() ";
+		boolean isGetProceduresReturnsFunctions = ((ConnectionProperties) testConn).getGetProceduresReturnsFunctions();
+
+		assertTrue(sd + "one row expected.", proceduresMD.next());
+
+		if (isGetProceduresReturnsFunctions) {
+			// function column: testBug69298_func return
+			assertEquals(sd + "-> PROCEDURE_CAT", testConn.getCatalog(), proceduresMD.getString("PROCEDURE_CAT"));
+			assertEquals(sd + "-> PROCEDURE_SCHEM", null, proceduresMD.getString("PROCEDURE_SCHEM"));
+			assertEquals(sd + "-> PROCEDURE_NAME", "testBug69298_func", proceduresMD.getString("PROCEDURE_NAME"));
+			assertEquals(sd + "-> COLUMN_NAME", "", proceduresMD.getString("COLUMN_NAME"));
+			assertEquals(sd + "-> COLUMN_TYPE", DatabaseMetaData.procedureColumnReturn,
+					proceduresMD.getShort("COLUMN_TYPE"));
+			assertEquals(sd + "-> DATA_TYPE", Types.INTEGER, proceduresMD.getInt("DATA_TYPE"));
+			assertEquals(sd + "-> TYPE_NAME", "INT", proceduresMD.getString("TYPE_NAME"));
+			assertEquals(sd + "-> PRECISION", 10, proceduresMD.getInt("PRECISION"));
+			assertEquals(sd + "-> LENGTH", 10, proceduresMD.getInt("LENGTH"));
+			assertEquals(sd + "-> SCALE", 0, proceduresMD.getShort("SCALE"));
+			assertEquals(sd + "-> RADIX", 10, proceduresMD.getShort("RADIX"));
+			assertEquals(sd + "-> NULLABLE", DatabaseMetaData.procedureNullable, proceduresMD.getShort("NULLABLE"));
+			assertEquals(sd + "-> REMARKS", null, proceduresMD.getString("REMARKS"));
+			assertEquals(sd + "-> COLUMN_DEF", null, proceduresMD.getString("COLUMN_DEF"));
+			assertEquals(sd + "-> SQL_DATA_TYPE", 0, proceduresMD.getInt("SQL_DATA_TYPE"));
+			assertEquals(sd + "-> SQL_DATETIME_SUB", 0, proceduresMD.getInt("SQL_DATETIME_SUB"));
+			assertEquals(sd + "-> CHAR_OCTET_LENGTH", 0, proceduresMD.getInt("CHAR_OCTET_LENGTH"));
+			assertEquals(sd + "-> ORDINAL_POSITION", 0, proceduresMD.getInt("ORDINAL_POSITION"));
+			assertEquals(sd + "-> IS_NULLABLE", "YES", proceduresMD.getString("IS_NULLABLE"));
+			assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", proceduresMD.getString("SPECIFIC_NAME"));
+
+			assertTrue(sd + "two rows expected.", proceduresMD.next());
+
+			// function column: testBug69298_func.param_func
+			assertEquals(sd + "-> PROCEDURE_CAT", testConn.getCatalog(), proceduresMD.getString("PROCEDURE_CAT"));
+			assertEquals(sd + "-> PROCEDURE_SCHEM", null, proceduresMD.getString("PROCEDURE_SCHEM"));
+			assertEquals(sd + "-> PROCEDURE_NAME", "testBug69298_func", proceduresMD.getString("PROCEDURE_NAME"));
+			assertEquals(sd + "-> COLUMN_NAME", "param_func", proceduresMD.getString("COLUMN_NAME"));
+			assertEquals(sd + "-> COLUMN_TYPE", DatabaseMetaData.procedureColumnIn,
+					proceduresMD.getShort("COLUMN_TYPE"));
+			assertEquals(sd + "-> DATA_TYPE", Types.INTEGER, proceduresMD.getInt("DATA_TYPE"));
+			assertEquals(sd + "-> TYPE_NAME", "INT", proceduresMD.getString("TYPE_NAME"));
+			assertEquals(sd + "-> PRECISION", 10, proceduresMD.getInt("PRECISION"));
+			assertEquals(sd + "-> LENGTH", 10, proceduresMD.getInt("LENGTH"));
+			assertEquals(sd + "-> SCALE", 0, proceduresMD.getShort("SCALE"));
+			assertEquals(sd + "-> RADIX", 10, proceduresMD.getShort("RADIX"));
+			assertEquals(sd + "-> NULLABLE", DatabaseMetaData.procedureNullable, proceduresMD.getShort("NULLABLE"));
+			assertEquals(sd + "-> REMARKS", null, proceduresMD.getString("REMARKS"));
+			assertEquals(sd + "-> COLUMN_DEF", null, proceduresMD.getString("COLUMN_DEF"));
+			assertEquals(sd + "-> SQL_DATA_TYPE", 0, proceduresMD.getInt("SQL_DATA_TYPE"));
+			assertEquals(sd + "-> SQL_DATETIME_SUB", 0, proceduresMD.getInt("SQL_DATETIME_SUB"));
+			assertEquals(sd + "-> CHAR_OCTET_LENGTH", 0, proceduresMD.getInt("CHAR_OCTET_LENGTH"));
+			assertEquals(sd + "-> ORDINAL_POSITION", 1, proceduresMD.getInt("ORDINAL_POSITION"));
+			assertEquals(sd + "-> IS_NULLABLE", "YES", proceduresMD.getString("IS_NULLABLE"));
+			assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_func", proceduresMD.getString("SPECIFIC_NAME"));
+
+			assertTrue(sd + "three rows expected.", proceduresMD.next());
+		}
+
+		// procedure column: testBug69298_proc.param_proc
+		assertEquals(sd + "-> PROCEDURE_CAT", testConn.getCatalog(), proceduresMD.getString("PROCEDURE_CAT"));
+		assertEquals(sd + "-> PROCEDURE_SCHEM", null, proceduresMD.getString("PROCEDURE_SCHEM"));
+		assertEquals(sd + "-> PROCEDURE_NAME", "testBug69298_proc", proceduresMD.getString("PROCEDURE_NAME"));
+		assertEquals(sd + "-> COLUMN_NAME", "param_proc", proceduresMD.getString("COLUMN_NAME"));
+		assertEquals(sd + "-> COLUMN_TYPE", DatabaseMetaData.procedureColumnIn, proceduresMD.getShort("COLUMN_TYPE"));
+		assertEquals(sd + "-> DATA_TYPE", Types.INTEGER, proceduresMD.getInt("DATA_TYPE"));
+		assertEquals(sd + "-> TYPE_NAME", "INT", proceduresMD.getString("TYPE_NAME"));
+		assertEquals(sd + "-> PRECISION", 10, proceduresMD.getInt("PRECISION"));
+		assertEquals(sd + "-> LENGTH", 10, proceduresMD.getInt("LENGTH"));
+		assertEquals(sd + "-> SCALE", 0, proceduresMD.getShort("SCALE"));
+		assertEquals(sd + "-> RADIX", 10, proceduresMD.getShort("RADIX"));
+		assertEquals(sd + "-> NULLABLE", DatabaseMetaData.procedureNullable, proceduresMD.getShort("NULLABLE"));
+		assertEquals(sd + "-> REMARKS", null, proceduresMD.getString("REMARKS"));
+		assertEquals(sd + "-> COLUMN_DEF", null, proceduresMD.getString("COLUMN_DEF"));
+		assertEquals(sd + "-> SQL_DATA_TYPE", 0, proceduresMD.getInt("SQL_DATA_TYPE"));
+		assertEquals(sd + "-> SQL_DATETIME_SUB", 0, proceduresMD.getInt("SQL_DATETIME_SUB"));
+		assertEquals(sd + "-> CHAR_OCTET_LENGTH", 0, proceduresMD.getInt("CHAR_OCTET_LENGTH"));
+		assertEquals(sd + "-> ORDINAL_POSITION", 1, proceduresMD.getInt("ORDINAL_POSITION"));
+		assertEquals(sd + "-> IS_NULLABLE", "YES", proceduresMD.getString("IS_NULLABLE"));
+		assertEquals(sd + "-> SPECIFIC_NAME", "testBug69298_proc", proceduresMD.getString("SPECIFIC_NAME"));
+
+		assertFalse(sd + "no more rows expected.", proceduresMD.next());
 	}
 }

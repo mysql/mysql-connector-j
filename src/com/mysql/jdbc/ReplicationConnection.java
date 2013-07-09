@@ -2684,6 +2684,14 @@ public class ReplicationConnection implements Connection, PingTarget {
 		return getCurrentConnection().getDisconnectOnExpiredPasswords();
 	}
 
+	public void setGetProceduresReturnsFunctions(boolean getProcedureReturnsFunctions) {
+		getCurrentConnection().setGetProceduresReturnsFunctions(getProcedureReturnsFunctions);
+	}
+
+	public boolean getGetProceduresReturnsFunctions() {
+		return getCurrentConnection().getGetProceduresReturnsFunctions();
+	}
+
 	public void abortInternal() throws SQLException {
 		getCurrentConnection().abortInternal();
 	}

@@ -30,6 +30,8 @@ import java.util.ArrayList;
 
 import java.util.List;
 
+import com.mysql.jdbc.Field;
+
 public class JDBC4DatabaseMetaDataUsingInfoSchema extends DatabaseMetaDataUsingInfoSchema {
 	public JDBC4DatabaseMetaDataUsingInfoSchema(MySQLConnection connToSet, String databaseToSet) throws SQLException {
 		super(connToSet, databaseToSet);
@@ -86,6 +88,75 @@ public class JDBC4DatabaseMetaDataUsingInfoSchema extends DatabaseMetaDataUsingI
     }
 
 	/**
+	 * Redirects to another implementation of #getProcedureColumns. Overrides
+	 * DatabaseMetaDataUsingInfoSchema#getProcedureColumnsNoISParametersView.
+	 * 
+	 * @see DatabaseMetaDataUsingInfoSchema#getProcedureColumns
+	 * @see DatabaseMetaDataUsingInfoSchema#getProcedureColumnsNoISParametersView
+	 */
+	protected ResultSet getProcedureColumnsNoISParametersView(String catalog, String schemaPattern,
+			String procedureNamePattern, String columnNamePattern) throws SQLException {
+		Field[] fields = createProcedureColumnsFields();
+
+		return getProcedureOrFunctionColumns(fields, catalog, schemaPattern, procedureNamePattern, columnNamePattern,
+				true, conn.getGetProceduresReturnsFunctions());
+	}
+    
+	/**
+	 * Returns a condition to be injected in the query that returns metadata for procedures only. Overrides
+	 * DatabaseMetaDataUsingInfoSchema#injectRoutineTypeConditionForGetProcedures. When not empty must end with "AND ".
+	 * 
+	 * @return String with the condition to be injected.
+	 */
+	protected String getRoutineTypeConditionForGetProcedures() {
+		return conn.getGetProceduresReturnsFunctions() ? "" : "ROUTINE_TYPE = 'PROCEDURE' AND ";
+	}
+
+	/**
+	 * Returns a condition to be injected in the query that returns metadata for procedure columns only. Overrides
+	 * DatabaseMetaDataUsingInfoSchema#injectRoutineTypeConditionForGetProcedureColumns. When not empty must end with
+	 * "AND ".
+	 * 
+	 * @return String with the condition to be injected.
+	 */
+	protected String getRoutineTypeConditionForGetProcedureColumns() {
+		return conn.getGetProceduresReturnsFunctions() ? "" : "ROUTINE_TYPE = 'PROCEDURE' AND ";
+	}
+	
+	/**
+	 * Overrides DatabaseMetaDataUsingInfoSchema#getJDBC4FunctionConstant.
+	 * 
+	 * @param constant
+	 *            the constant id from DatabaseMetaData fields to return.
+	 * 
+	 * @return one of the java.sql.DatabaseMetaData#function* fields.
+	 */
+	protected int getJDBC4FunctionConstant(JDBC4FunctionConstant constant) {
+		switch (constant) {
+			case FUNCTION_COLUMN_IN:
+				return functionColumnIn;
+			case FUNCTION_COLUMN_INOUT:
+				return functionColumnInOut;
+			case FUNCTION_COLUMN_OUT:
+				return functionColumnOut;
+			case FUNCTION_COLUMN_RETURN:
+				return functionReturn;
+			case FUNCTION_COLUMN_RESULT:
+				return functionColumnResult;
+			case FUNCTION_COLUMN_UNKNOWN:
+				return functionColumnUnknown;
+			case FUNCTION_NO_NULLS:
+				return functionNoNulls;
+			case FUNCTION_NULLABLE:
+				return functionNullable;
+			case FUNCTION_NULLABLE_UNKNOWN:
+				return functionNullableUnknown;
+			default:
+				return -1;
+		}
+	}
+
+	/**
 	 * Overrides DatabaseMetaDataUsingInfoSchema#getJDBC4FunctionNoTableConstant.
 	 * 
 	 * @return java.sql.DatabaseMetaData#functionNoTable.
@@ -95,7 +166,7 @@ public class JDBC4DatabaseMetaDataUsingInfoSchema extends DatabaseMetaDataUsingI
 	}
 	
 	/**
-	 * This method overrides DatabaseMetaData#getColumnType(boolean, boolean, boolean, boolean).
+	 * Overrides DatabaseMetaData#getColumnType(boolean, boolean, boolean, boolean).
 	 * 
 	 * @see JDBC4DatabaseMetaData#getProcedureOrFunctionColumnType(boolean, boolean, boolean, boolean)
 	 */

@@ -2628,6 +2628,14 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 		return getActiveMySQLConnection().getDisconnectOnExpiredPasswords();
 	}
 
+	public void setGetProceduresReturnsFunctions(boolean getProcedureReturnsFunctions) {
+		getActiveMySQLConnection().setGetProceduresReturnsFunctions(getProcedureReturnsFunctions);
+	}
+
+	public boolean getGetProceduresReturnsFunctions() {
+		return getActiveMySQLConnection().getGetProceduresReturnsFunctions();
+	}
+
 	public Object getConnectionMutex() {
 		return getActiveMySQLConnection().getConnectionMutex();
 	}
