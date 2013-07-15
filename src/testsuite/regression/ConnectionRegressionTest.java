@@ -3229,8 +3229,10 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			newConn.close();
 			((com.mysql.jdbc.Connection) newConn).changeUser(props.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY), props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY));
 			fail("Expected SQL Exception");
-		} catch (MySQLNonTransientException ex) {
+		} catch (SQLException ex) {
 			// expected
+			if (!ex.getClass().getName().endsWith("MySQLNonTransientConnectionException"))
+				throw ex;
 		} finally {
 			newConn.close();
 		}
@@ -4051,7 +4053,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				testSt = testConn.createStatement();
 				testRs = testSt.executeQuery("SELECT * FROM `"+dbname+"`.`ほげほげ`");
 			} catch (SQLException e1) {
-				if (e1 instanceof MySQLSyntaxErrorException) {
+				if (e1.getClass().getName().endsWith("MySQLSyntaxErrorException")) {
 					assertEquals("Table '"+dbname+".ほげほげ' doesn't exist", e1.getMessage());
 				} else if (e1.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
 					// this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
@@ -4067,7 +4069,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					testSt.execute("SET lc_messages = 'ru_RU'");
 					testRs = testSt.executeQuery("SELECT * FROM `"+dbname+"`.`ほげほげ`");
 				} catch (SQLException e2) {
-					if (e2 instanceof MySQLSyntaxErrorException) {
+					if (e2.getClass().getName().endsWith("MySQLSyntaxErrorException")) {
 						assertEquals("\u0422\u0430\u0431\u043b\u0438\u0446\u0430 '"+dbname+".ほげほげ' \u043d\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442", e2.getMessage());
 					} else if (e2.getErrorCode() == MysqlErrorNumbers.ER_FILE_NOT_FOUND) {
 						// this could happen on Windows with 5.5 and 5.6 servers where BUG#14642248 exists
