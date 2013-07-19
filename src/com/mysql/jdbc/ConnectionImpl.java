@@ -1248,8 +1248,15 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			if (newPassword == null) {
 				newPassword = "";
 			}
-	
-			this.io.changeUser(userName, newPassword, this.database);
+
+			try {
+				this.io.changeUser(userName, newPassword, this.database);
+			} catch(SQLException ex) {
+				if (versionMeetsMinimum(5, 6, 13) && "28000".equals(ex.getSQLState())) {
+					cleanup(ex);
+				}
+				throw ex;
+			}
 			this.user = userName;
 			this.password = newPassword;
 	

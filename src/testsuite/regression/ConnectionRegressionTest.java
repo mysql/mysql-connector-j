@@ -3205,20 +3205,28 @@ public class ConnectionRegressionTest extends BaseTestCase {
 	
 	public void testChangeUser() throws Exception {
 		Properties props = getPropertiesFromTestsuiteUrl();
+
+		Connection testConn = getConnectionWithProps(props);
+		Statement testStmt = testConn.createStatement();
 		
 		for (int i = 0; i < 500; i++) {
-			((com.mysql.jdbc.Connection) this.conn).changeUser(props.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY), props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY));
+			((com.mysql.jdbc.Connection) testConn).changeUser(props.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY), props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY));
 			
 			if (i % 10 == 0) {
 				try {
-					((com.mysql.jdbc.Connection) this.conn).changeUser("bubba", props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY));
+					((com.mysql.jdbc.Connection) testConn).changeUser("bubba", props.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY));
 				} catch (SQLException sqlEx) {
-					// expect
+					if (versionMeetsMinimum(5, 6, 13)) {
+						assertTrue(testConn.isClosed());
+						testConn = getConnectionWithProps(props);
+						testStmt = testConn.createStatement();
+					}
 				}
 			}
 			
-			this.stmt.executeQuery("SELECT 1");
+			testStmt.executeQuery("SELECT 1");
 		}
+		testConn.close();
 	}
 	
 	public void testChangeUserClosedConn() throws Exception {
