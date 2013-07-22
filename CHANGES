@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-nn-nn-13 - Version 5.1.26
+08-05-13 - Version 5.1.26
 
   - Fix for Bug#69298 (16845965), Methods DatabaseMetaData.getProcedures() and DatabaseMetaData.getProcedureColumns(), in JDBC4,
     return stored procedure only or both stored procedures and functions metadata information, depending on the value set in the
@@ -12,7 +12,7 @@ nn-nn-13 - Version 5.1.26
 
   - Fix for Bug#68400, useCompression=true and connect to server, zip native method cause out of memory.
     CompressedInputStream now does not keep reference to connection.
-    Thanks Dominic Tootell for his investigation, proposed solution and all the help he provided.
+    Thank Dominic Tootell for his investigation, proposed solution and all the help he provided.
 
   - Fix for Bug#65871, DatabaseMetaData.getColumns() throws an MySQLSyntaxErrorException.
     Delimited names of databases and tables are handled correctly now. The edge case is ANSI quoted
