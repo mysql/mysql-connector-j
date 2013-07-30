@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.27
 
+  - Fix for Bug#50538, DatabaseMetaData.getDriverVersion() contains unexpanded ${bzr.revision-id}
+
 08-05-13 - Version 5.1.26
 
   - Fix for Bug#69298 (16845965), Methods DatabaseMetaData.getProcedures() and DatabaseMetaData.getProcedureColumns(), in JDBC4,

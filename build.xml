@@ -167,17 +167,29 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 		<exec dir="." executable="cmd" osfamily="windows" 
 			output="${buildDir}/bzr.properties" failonerror="false" 
-			failifexecutionfails="false">
+			failifexecutionfails="false"
+			resultproperty="bzrerror">
 			<arg line="/c bzr version-info" />
 		</exec>
 
 		<exec executable="bzr" osfamily="unix" 
 			output="${buildDir}/bzr.properties" failonerror="false" 
-			failifexecutionfails="false">
+			failifexecutionfails="false"
+			resultproperty="bzrerror">
 			<arg value="version-info" />
 		</exec>
 
-		<property prefix="bzr" file="${buildDir}/bzr.properties" />
+		<!-- We need the following workaround for the RE builds environment , which doesn't have access to bzr,
+		so bzr.properties file prepared in project root folder instead -->
+		<if>
+			<isset property="bzrerror"/>
+			<then>
+				<property prefix="bzr" file="./bzr.properties"/>
+			</then>
+			<else>
+				<property prefix="bzr" file="${buildDir}/bzr.properties"/>
+			</else>
+		</if>
 
 		<filterset id="versionFilterset">
 			<filter token="MYSQL_CJ_MAJOR_VERSION" value="${major_version}"/>
