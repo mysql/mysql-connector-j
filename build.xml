@@ -465,7 +465,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<section name="common">
 				<attribute name="Specification-Title" value="JDBC" />
 				<attribute name="Specification-Version" value="4.0" />
-				<attribute name="Specification-Vendor" value="Sun Microsystems Inc." />
+				<attribute name="Specification-Vendor" value="Oracle Corporation" />
 				<attribute name="Implementation-Title" value="${prodDisplayName}" />
 				<attribute name="Implementation-Version" value="${full.version}" />
 				<attribute name="Implementation-Vendor-Id" value="com.mysql" />
@@ -474,10 +474,10 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 			<!-- OSGi -->
 
-			<attribute name="Bundle-Vendor" value="Sun Microsystems Inc." />
+			<attribute name="Bundle-Vendor" value="Oracle Corporation" />
 			<attribute name="Bundle-Classpath" value="." />
 			<attribute name="Bundle-Version" value="${osgid-version}" />
-			<attribute name="Bundle-Name" value="Sun Microsystems' JDBC Driver for MySQL" />
+			<attribute name="Bundle-Name" value="Oracle Corporation' JDBC Driver for MySQL" />
 			<attribute name="Bundle-ManifestVersion" value="2" />
 			<attribute name="Bundle-SymbolicName" value="com.mysql.jdbc" />
 			<attribute name="Export-Package" value="${driver-exports},${jee-exports},${logging-exports},${profiling-exports},${util-exports},${exceptions-exports},${jdbc4-exceptions-exports},${interceptors-exports},${integration-exports},${configs-exports},${legacy-exports}" />

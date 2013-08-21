@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -35,7 +35,7 @@ import com.mysql.jdbc.Driver;
  * Base class to help file bug reports for Connector/J.
  * 
  * <p>
- * MySQL AB, 2008 Sun Microsystems
+ * MySQL AB, 2008 Sun Microsystems, 2009 Oracle Corporation
  
  * <ul>
  * really
