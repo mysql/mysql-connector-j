@@ -1,6 +1,5 @@
 /*
- Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
- 
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -19,9 +18,6 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
-
-
-
  */
 package testsuite.regression;
 
@@ -30,7 +26,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Properties;
 
 import com.mysql.jdbc.StringUtils;
@@ -564,4 +562,38 @@ public class SyntaxRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * WL#1326 - GIS: Precise spatial operations
+	 * 
+	 * GIS functions added in 5.6GA: ST_Intersection(g1 geometry, g2 geometry); ST_Difference(g1 geometry, g2 geometry);
+	 * ST_Union(g1 geometry, g2 geometry); ST_SymDifference(g1 geometry, g2 geometry); ST_Buffer(g1 geometry, d
+	 * numeric).
+	 * 
+	 * @throws SQLException
+	 */
+	public void testGISPreciseSpatialFunctions() throws Exception {
+
+		if (!versionMeetsMinimum(5, 6)) {
+			return;
+		}
+
+		Statement testStatement = conn.createStatement();
+
+		String[] querySamples = new String[] {
+				"SELECT AsText(ST_Intersection(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
+				"SELECT AsText(ST_Difference(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
+				"SELECT AsText(ST_Union(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
+				"SELECT AsText(ST_SymDifference(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
+				"SELECT AsText(ST_Buffer(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), 0.5))",
+				"SELECT ST_Distance(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 10, 8 10, 4 16, 0 10))'))" };
+
+		for (String query : querySamples) {
+			ResultSet testResultSet = testStatement.executeQuery(query);
+			assertTrue("Query should return  at least one row.", testResultSet.next());
+			assertFalse("Query should return only one row.", testResultSet.next());
+			testResultSet.close();
+		}
+
+		testStatement.close();
+	}
 }

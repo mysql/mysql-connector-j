@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.27
 
+  - Added tests for GIS precise spatial operations introduced in 5.6GA.
+
   - Fixed META-INF information
 
   - Fix for Bug#50538, DatabaseMetaData.getDriverVersion() contains unexpanded ${bzr.revision-id}
