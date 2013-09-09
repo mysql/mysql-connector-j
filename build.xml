@@ -87,7 +87,12 @@
 
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
-			<pathelement location="${sourceDir}/lib/ant-contrib.jar"/>
+			<fileset dir="${sourceDir}/lib-nodist" erroronmissingdir="false">
+				<include name="**/*.jar"/>
+			</fileset>
+			<fileset dir="${sourceDir}/lib">
+				<include name="**/*.jar"/>
+			</fileset>
 		</classpath>
 	</taskdef>
 
