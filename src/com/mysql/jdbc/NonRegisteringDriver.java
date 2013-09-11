@@ -34,6 +34,7 @@ import java.net.URLDecoder;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -78,7 +79,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
 	private static final String MXJ_URL_PREFIX = "jdbc:mysql:mxj://";
 
-	private static final String LOADBALANCE_URL_PREFIX = "jdbc:mysql:loadbalance://";
+	public static final String LOADBALANCE_URL_PREFIX = "jdbc:mysql:loadbalance://";
 
 	protected static final ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference> connectionPhantomRefs = new ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference>();
 	
@@ -397,7 +398,7 @@ public class NonRegisteringDriver implements java.sql.Driver {
 
 		return (java.sql.Connection) java.lang.reflect.Proxy.newProxyInstance(this
 				.getClass().getClassLoader(),
-				new Class[] { com.mysql.jdbc.Connection.class }, proxyBal);
+				new Class[] { com.mysql.jdbc.LoadBalancedConnection.class }, proxyBal);
 	}
 	
 	private java.sql.Connection connectFailover(String url, Properties info)
@@ -458,25 +459,62 @@ public class NonRegisteringDriver implements java.sql.Driver {
 							"Must specify at least one slave host to connect to for master/slave replication load-balancing functionality",
 							SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, null);
 		}
+		List<String> slaveHostList = new ArrayList<String>();
+		List<String> masterHostList = new ArrayList<String>();
 		
-		for (int i = 1; i < numHosts; i++) {
+		
+		String firstHost = masterProps.getProperty(HOST_PROPERTY_KEY + ".1") + ":" +
+				 masterProps.getProperty(PORT_PROPERTY_KEY + ".1");
+		
+		boolean usesExplicitServerType = NonRegisteringDriver.isHostPropertiesList(firstHost);
+		
+		for (int i = 0; i < numHosts; i++) {
 			int index = i + 1;
 			
 			masterProps.remove(HOST_PROPERTY_KEY + "." + index);
 			masterProps.remove(PORT_PROPERTY_KEY + "." + index);
+			slavesProps.remove(HOST_PROPERTY_KEY + "." + index);
+			slavesProps.remove(PORT_PROPERTY_KEY + "." + index);
 			
-			slavesProps.setProperty(HOST_PROPERTY_KEY + "." + i, parsedProps.getProperty(HOST_PROPERTY_KEY + "." + index));
-			slavesProps.setProperty(PORT_PROPERTY_KEY + "." + i, parsedProps.getProperty(PORT_PROPERTY_KEY + "." + index));
+			String host = parsedProps.getProperty(HOST_PROPERTY_KEY + "." + index);
+			String port = parsedProps.getProperty(PORT_PROPERTY_KEY + "." + index);
+			if(usesExplicitServerType) {
+				if(isHostMaster(host)) {
+					masterHostList.add(host + ":" + port);
+				} else {
+					slaveHostList.add(host + ":" + port);
+				}
+			} else {
+				if(i == 0) {
+					masterHostList.add(host + ":" + port);
+				} else {
+					slaveHostList.add(host + ":" + port);
+				}
+			}
 		}
 
-		masterProps.setProperty(NUM_HOSTS_PROPERTY_KEY, "1");
-		slavesProps.remove(HOST_PROPERTY_KEY + "." + numHosts);
-		slavesProps.remove(PORT_PROPERTY_KEY + "." + numHosts);
-		slavesProps.setProperty(NUM_HOSTS_PROPERTY_KEY, String.valueOf(numHosts - 1));
-		slavesProps.setProperty(HOST_PROPERTY_KEY, slavesProps.getProperty(HOST_PROPERTY_KEY + ".1"));
-		slavesProps.setProperty(PORT_PROPERTY_KEY, slavesProps.getProperty(PORT_PROPERTY_KEY + ".1"));
+		slavesProps.remove(NUM_HOSTS_PROPERTY_KEY);
+		masterProps.remove(NUM_HOSTS_PROPERTY_KEY);
+		masterProps.remove(HOST_PROPERTY_KEY);
+		masterProps.remove(PORT_PROPERTY_KEY);
+		slavesProps.remove(HOST_PROPERTY_KEY);
+		slavesProps.remove(PORT_PROPERTY_KEY);
+		
 
-		return new ReplicationConnection(masterProps, slavesProps);
+		return new ReplicationConnection(masterProps, slavesProps, masterHostList, slaveHostList);
+	}
+	
+	
+		
+	private boolean isHostMaster(String host) {
+		if (NonRegisteringDriver.isHostPropertiesList(host)) {
+			Properties hostSpecificProps = NonRegisteringDriver.expandHostKeyValues(host);
+			if(hostSpecificProps.containsKey("type") &&
+					"master".equalsIgnoreCase(hostSpecificProps.get("type").toString())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

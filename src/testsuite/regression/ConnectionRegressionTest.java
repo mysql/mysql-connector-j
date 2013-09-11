@@ -79,6 +79,7 @@ import com.mysql.jdbc.MysqlErrorNumbers;
 import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.RandomBalanceStrategy;
 import com.mysql.jdbc.ReplicationConnection;
+import com.mysql.jdbc.ReplicationConnectionGroupManager;
 import com.mysql.jdbc.SQLError;
 import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.StringUtils;
@@ -2350,6 +2351,267 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			assertEquals("08S01", sqlEx.getSQLState());
 		}
 	}
+	
+	public void testReplicationConnectionGroupHostManagement() throws Exception {
+		String replicationGroup1 = "rg1";
+
+		Properties props = new Properties();
+		props.setProperty("replicationConnectionGroup", replicationGroup1);
+		props.setProperty("retriesAllDown", "3");
+		ReplicationConnection conn2 = this.getUnreliableReplicationConnection(
+				new String[] { "first", "second", "third" }, props);
+		assertNotNull("Connection should not be null", conn);
+		conn2.setAutoCommit(false);
+		String port = getPort(props, new NonRegisteringDriver());
+		String firstHost = "first:" + port;
+		String secondHost = "second:" + port;
+		String thirdHost = "third:" + port;
+
+		// "first" should be master, "second" and "third"
+		// should be slaves.
+		assertEquals(1,
+				ReplicationConnectionGroupManager
+						.getConnectionCountWithHostAsMaster(replicationGroup1,
+								firstHost));
+		assertEquals(0,
+				ReplicationConnectionGroupManager
+						.getConnectionCountWithHostAsSlave(replicationGroup1,
+								firstHost));
+
+		// remove "third" from slave pool:
+		conn2.removeSlave(thirdHost);
+
+		assertEquals(0,
+				ReplicationConnectionGroupManager
+						.getConnectionCountWithHostAsMaster(replicationGroup1,
+								thirdHost));
+		assertEquals(0,
+				ReplicationConnectionGroupManager
+						.getConnectionCountWithHostAsSlave(replicationGroup1,
+								thirdHost));
+
+		// add "third" back into slave pool:
+		conn2.addSlaveHost(thirdHost);
+
+		assertEquals(0,
+				ReplicationConnectionGroupManager
+						.getConnectionCountWithHostAsMaster(replicationGroup1,
+								thirdHost));
+		assertEquals(1,
+				ReplicationConnectionGroupManager
+						.getConnectionCountWithHostAsSlave(replicationGroup1,
+								thirdHost));
+
+		conn2.setReadOnly(false);
+
+		assertEquals(
+				0,
+				ReplicationConnectionGroupManager
+						.getNumberOfMasterPromotion(replicationGroup1));
+
+		
+		// failover to "second" as master
+		ReplicationConnectionGroupManager
+			.promoteSlaveToMaster(replicationGroup1, secondHost);
+		assertEquals(
+				1,
+				ReplicationConnectionGroupManager
+						.getNumberOfMasterPromotion(replicationGroup1));
+
+		// "first" is still a master:
+		assertEquals(1,
+				ReplicationConnectionGroupManager
+						.getConnectionCountWithHostAsMaster(replicationGroup1,
+								firstHost));
+		assertEquals(0,
+				ReplicationConnectionGroupManager
+						.getConnectionCountWithHostAsSlave(replicationGroup1,
+								firstHost));
+		assertEquals(1,
+				ReplicationConnectionGroupManager
+						.getConnectionCountWithHostAsMaster(replicationGroup1,
+								secondHost));
+		assertEquals(0,
+				ReplicationConnectionGroupManager
+						.getConnectionCountWithHostAsSlave(replicationGroup1,
+								secondHost));
+		
+		ReplicationConnectionGroupManager.removeMasterHost(replicationGroup1, firstHost);
+
+		conn2.createStatement().execute("SELECT 1");
+		assertFalse(conn2.isClosed());
+
+		conn2.commit();
+
+		// validate that queries are successful:
+		conn2.createStatement().execute("SELECT 1");
+		assertTrue(conn2.isHostMaster(secondHost));
+
+		// master is now offline
+		UnreliableSocketFactory.downHost("second");
+		try {
+			Statement lstmt = conn2.createStatement();
+			lstmt.execute("SELECT 1");
+			fail("Should fail here due to closed connection");
+		} catch (SQLException sqlEx) {
+			assertEquals("08S01", sqlEx.getSQLState());
+		}
+
+
+	}
+	
+
+	public void testReplicationConnectionHostManagement() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("retriesAllDown", "3");
+		
+		ReplicationConnection conn2 = this.getUnreliableReplicationConnection(
+				new String[] { "first", "second", "third" }, props);
+		conn2.setAutoCommit(false);
+		String port = getPort(props, new NonRegisteringDriver());
+		String firstHost = "first:" + port;
+		String secondHost = "second:" + port;
+		String thirdHost = "third:" + port;
+
+		// "first" should be master, "second" and "third"
+		// should be slaves.
+		assertTrue(conn2.isHostMaster(firstHost));
+		assertTrue(conn2.isHostSlave(secondHost));
+		assertTrue(conn2.isHostSlave(thirdHost));
+		assertFalse(conn2.isHostSlave(firstHost));
+		assertFalse(conn2.isHostMaster(secondHost));
+		assertFalse(conn2.isHostMaster(thirdHost));
+
+		// remove "third" from slave pool:
+		conn2.removeSlave(thirdHost);
+		assertFalse(conn2.isHostSlave(thirdHost));
+		assertFalse(conn2.isHostMaster(thirdHost));
+
+		// add "third" back into slave pool:
+		conn2.addSlaveHost(thirdHost);
+		assertTrue(conn2.isHostSlave(thirdHost));
+		assertFalse(conn2.isHostMaster(thirdHost));
+		conn2.setReadOnly(false);
+
+		// failover to "second" as master, "first"
+		// can still be used:
+		conn2.promoteSlaveToMaster(secondHost);
+		assertTrue(conn2.isHostMaster(firstHost));
+		assertFalse(conn2.isHostSlave(firstHost));
+		assertFalse(conn2.isHostSlave(secondHost));
+		assertTrue(conn2.isHostMaster(secondHost));
+		assertTrue(conn2.isHostSlave(thirdHost));
+		assertFalse(conn2.isHostMaster(thirdHost));
+		
+		conn2.removeMasterHost(firstHost);
+
+		// "first" should no longer be used:
+		conn2.promoteSlaveToMaster(secondHost);
+		assertTrue(conn2.isHostMaster(firstHost));
+		assertFalse(conn2.isHostSlave(firstHost));
+		assertFalse(conn2.isHostSlave(secondHost));
+		assertTrue(conn2.isHostMaster(secondHost));
+		assertTrue(conn2.isHostSlave(thirdHost));
+		assertFalse(conn2.isHostMaster(thirdHost));
+
+		conn2.createStatement().execute("SELECT 1");
+		assertFalse(conn2.isClosed());
+
+		// check that we're waiting until transaction
+		// boundary to fail over.
+//		assertTrue(conn2.hasPendingNewMaster());
+		assertFalse(conn2.isClosed());
+		conn2.commit();
+		assertFalse(conn2.isClosed());
+		assertTrue(conn2.isHostMaster(secondHost));
+		assertFalse(conn2.isClosed());
+		assertTrue(conn2.isMasterConnection());
+		assertFalse(conn2.isClosed());
+
+		// validate that queries are successful:
+		conn2.createStatement().execute("SELECT 1");
+		assertTrue(conn2.isHostMaster(secondHost));
+
+		// master is now offline
+		UnreliableSocketFactory.downHost("second");
+		try {
+			Statement lstmt = conn2.createStatement();
+			lstmt.execute("SELECT 1");
+			fail("Should fail here due to closed connection");
+		} catch (SQLException sqlEx) {
+			assertEquals("08S01", sqlEx.getSQLState());
+		}
+
+		UnreliableSocketFactory.dontDownHost("second");
+		try {
+			// won't work now even though master is back up
+			// connection has already been implicitly closed
+			// when a new master host cannot be found:
+			conn2.createStatement().execute("SELECT 1");
+			fail("Will fail because inability to find new master host implicitly closes connection.");
+		} catch (SQLException e) {
+			assertEquals("08003", e.getSQLState());
+		}
+
+	}
+	
+	
+	public void testReplicationConnectWithNoMaster() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("retriesAllDown", "3");
+		props.setProperty("allowMasterDownConnections", "true");
+		
+		Set<String> downedHosts = new HashSet<String>();
+		downedHosts.add("first");
+		
+		ReplicationConnection conn2 = this
+				.getUnreliableReplicationConnection(new String[] { "first",
+						"second", "third" }, props, downedHosts);
+		assertTrue(conn2.isReadOnly());
+		assertFalse(conn2.isMasterConnection());
+		try {
+			conn2.createStatement().execute("SELECT 1");
+		} catch (SQLException e) {
+			fail("Should not fail to execute SELECT statements!");
+		}
+		UnreliableSocketFactory.flushAllHostLists();
+		conn2.setReadOnly(false);
+		assertFalse(conn2.isReadOnly());
+		assertTrue(conn2.isMasterConnection());
+		try {
+			conn2.createStatement().execute("DROP TABLE IF EXISTS testRepTable");
+			conn2.createStatement().execute("CREATE TABLE testRepTable (a INT)");
+			conn2.createStatement().execute("INSERT INTO testRepTable VALUES (1)");
+			conn2.createStatement().execute("DROP TABLE IF EXISTS testRepTable");
+			
+		} catch (SQLException e) {
+			fail("Should not fail to execute CREATE/INSERT/DROP statements.");
+		}		
+	}
+
+	public void testReplicationConnectWithMultipleMasters() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("retriesAllDown", "3");
+		
+		Set<MockConnectionConfiguration> configs = new HashSet<MockConnectionConfiguration>();
+		MockConnectionConfiguration first = new MockConnectionConfiguration("first", "slave", null, false);
+		MockConnectionConfiguration second = new MockConnectionConfiguration("second", "master", null, false);
+		MockConnectionConfiguration third = new MockConnectionConfiguration("third", "master", null, false);
+		
+		configs.add(first);
+		configs.add(second);
+		configs.add(third);
+		
+		ReplicationConnection conn2 = this
+				.getUnreliableReplicationConnection(configs, props);
+		assertFalse(conn2.isReadOnly());
+		assertTrue(conn2.isMasterConnection());
+		assertTrue(conn2.isHostSlave(first.getAddress(true)));
+		assertTrue(conn2.isHostMaster(second.getAddress(true)));
+		assertTrue(conn2.isHostMaster(third.getAddress(true)));
+	
+	}
+
 
 	public void testBug43421() throws Exception {
 
@@ -2358,8 +2620,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 		Connection conn2 = this.getUnreliableLoadBalancedConnection(
 				new String[] { "first", "second" }, props);
-
-		assertNotNull("Connection should not be null", conn2);
 
 		conn2.createStatement().execute("SELECT 1");
 		conn2.createStatement().execute("SELECT 1");
@@ -4664,10 +4924,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		// throw Exception if slave2 gets ping
 		UnreliableSocketFactory.downHost("slave2");
 		
-		Connection conn2 = this.getUnreliableReplicationConnection(
+		ReplicationConnection conn2 = this.getUnreliableReplicationConnection(
 				new String[] { "master", "slave1", "slave2" }, props);
-		((ReplicationConnection) conn2).isMasterConnection();
-		assertTrue("Is not actually on master!", ((ReplicationConnection) conn2).isMasterConnection());
+		assertTrue("Is not actually on master!", conn2.isMasterConnection());
 
 		
 		conn2.setAutoCommit(false);
@@ -4768,7 +5027,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		UnreliableSocketFactory.downHost("slave1");
 		UnreliableSocketFactory.downHost("slave2");
 		
-		
+		assertTrue(conn2.isMasterConnection());
 		// should succeed, as we're still on master:
 		conn2.createStatement().execute("/* ping */ SELECT 1");		
 		

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -48,6 +48,7 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 import com.mysql.jdbc.NonRegisteringDriver;
+import com.mysql.jdbc.ReplicationConnection;
 import com.mysql.jdbc.ReplicationDriver;
 import com.mysql.jdbc.StringUtils;
 
@@ -932,6 +933,14 @@ public abstract class BaseTestCase extends TestCase {
 					}
 				}
 			}
+	protected String getPort(Properties props, NonRegisteringDriver d)
+			throws SQLException {
+				String port =  d.parseURL(BaseTestCase.dbUrl, props).getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+				if (port == null) {
+					port = "3306";
+				}
+				return port;
+	}
 
 	protected String getPortFreeHostname(Properties props, NonRegisteringDriver d)
 			throws SQLException {
@@ -981,12 +990,67 @@ public abstract class BaseTestCase extends TestCase {
 				return getConnectionWithProps("jdbc:mysql:loadbalance://" + hostString.toString() +"/" + db, props);
 				
 			}
-	protected Connection getUnreliableReplicationConnection(String[] hostNames,
+	protected ReplicationConnection getUnreliableReplicationConnection(String[] hostNames,
 			Properties props) throws Exception {
 		return getUnreliableReplicationConnection(hostNames,
 				props, new HashSet<String>());
 	}
-	protected Connection getUnreliableReplicationConnection(String[] hostNames,
+	
+	public static class MockConnectionConfiguration{
+		String hostName;
+		String port;
+		String serverType;
+		boolean isDowned = false;
+		public MockConnectionConfiguration(String hostName, String serverType, String port, boolean isDowned) {
+			this.hostName = hostName;
+			this.serverType = serverType;
+			this.isDowned = isDowned;
+			this.port = port;
+		}
+		
+		public String getAddress(boolean withTrailingPort) {
+			return "address=(protocol=tcp)(host=" + this.hostName +
+					")(port=" + this.port+  ")(type=" +
+					this.serverType + ")"
+					+ (withTrailingPort ? (":" + this.port) : "") ;
+		}
+		public String getAddress() {
+			return getAddress(false);
+		}
+	}
+	
+	protected ReplicationConnection getUnreliableReplicationConnection(
+			Set<MockConnectionConfiguration> configs, Properties props) throws Exception {
+		NonRegisteringDriver d = new NonRegisteringDriver();
+		this.copyBasePropertiesIntoProps(props, d);
+		props.setProperty("socketFactory", "testsuite.UnreliableSocketFactory");
+		Properties parsed = d.parseURL(BaseTestCase.dbUrl, props);
+		String db = parsed.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+		String port = parsed.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		String host = getPortFreeHostname(props, d);
+		UnreliableSocketFactory.flushAllHostLists();
+		StringBuffer hostString = new StringBuffer();
+		String glue = "";
+		for(MockConnectionConfiguration config : configs) {
+			UnreliableSocketFactory.mapHost(config.hostName, host);
+			hostString.append(glue);
+			glue = ",";
+			if(config.port == null) {
+				config.port = (port == null ? "3306" : port);
+			}
+			hostString.append(config.getAddress());
+			if(config.isDowned){
+				UnreliableSocketFactory.downHost(config.hostName);
+			}
+
+		}
+		props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
+			
+		return (ReplicationConnection) getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() +"/" + db, props);
+
+	}
+	
+	protected ReplicationConnection getUnreliableReplicationConnection(String[] hostNames,
 			Properties props, Set<String> downedHosts) throws Exception {
 				if(props == null){
 					props = new Properties();
@@ -1014,7 +1078,7 @@ public abstract class BaseTestCase extends TestCase {
 				
 				props.remove(NonRegisteringDriver.HOST_PROPERTY_KEY);
 					
-				return getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() +"/" + db, props);
+				return (ReplicationConnection) getConnectionWithProps("jdbc:mysql:replication://" + hostString.toString() +"/" + db, props);
 				
 			}
 	

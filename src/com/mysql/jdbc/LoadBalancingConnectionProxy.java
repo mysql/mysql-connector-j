@@ -648,10 +648,10 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 				// in invalidateCurrenctConnection()
 				if (host != null) {
 					synchronized (this.responseTimes) {
-						int hostIndex = (this.hostsToListIndexMap
-								.get(host)).intValue();
+						Integer hostIndex = (this.hostsToListIndexMap
+								.get(host));
 
-						if(hostIndex < this.responseTimes.length){
+						if(hostIndex != null && hostIndex.intValue() < this.responseTimes.length){
 							this.responseTimes[hostIndex] = getLocalTimeBestResolution()
 									- this.transactionStartTime;
 						}

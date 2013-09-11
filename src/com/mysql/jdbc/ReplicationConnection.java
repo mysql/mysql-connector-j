@@ -28,6 +28,8 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
@@ -46,9 +48,9 @@ import com.mysql.jdbc.log.Log;
 public class ReplicationConnection implements Connection, PingTarget {
 	protected Connection currentConnection;
 
-	protected Connection masterConnection;
+	protected LoadBalancedConnection masterConnection;
 
-	protected Connection slavesConnection;
+	protected LoadBalancedConnection slavesConnection;
 	
 	private Properties slaveProperties;
 	
@@ -56,33 +58,97 @@ public class ReplicationConnection implements Connection, PingTarget {
 	
 	private NonRegisteringDriver driver;
 
+	private long connectionGroupID = -1;
+	
+	private ReplicationConnectionGroup connectionGroup;
+
+	private List<String> slaveHosts;
+	
+	private List<String> masterHosts;
+	
+	private boolean allowMasterDownConnections = false;
+	
+	private boolean enableJMX = false;
+
 	protected ReplicationConnection() {}
 	
 	public ReplicationConnection(Properties masterProperties,
-			Properties slaveProperties) throws SQLException {
+			Properties slaveProperties, List<String> masterHostList, List<String> slaveHostList) throws SQLException {
+		String enableJMXAsString = masterProperties.getProperty("replicationEnableJMX",
+				"false");
+		try{
+			enableJMX = Boolean.parseBoolean(enableJMXAsString);
+		} catch (Exception e){
+			throw SQLError.createSQLException(Messages.getString(
+					"LoadBalancingConnectionProxy.badValueForLoadBalanceEnableJMX",
+					new Object[] { enableJMXAsString }),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);			
+		}
+		
+		String allowMasterDownConnectionsAsString = masterProperties.getProperty("allowMasterDownConnections",
+				"false");
+		try{
+			this.allowMasterDownConnections = Boolean.parseBoolean(allowMasterDownConnectionsAsString);
+		} catch (Exception e){
+			throw SQLError.createSQLException(Messages.getString(
+					"LoadBalancingConnectionProxy.badValueForAllowMasterDownConnectionsAsString",
+					new Object[] { enableJMXAsString }),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);			
+		}
+
+		
+		String group = masterProperties.getProperty("replicationConnectionGroup",
+				null);
+		
+		if(group != null){
+			this.connectionGroup = ReplicationConnectionGroupManager.getConnectionGroupInstance(group);
+			if(enableJMX){
+				ConnectionGroupManager.registerJmx();
+			}
+			this.connectionGroupID = this.connectionGroup.registerReplicationConnection(this, masterHosts, slaveHostList);
+			
+			slaveHostList = new ArrayList<String>(this.connectionGroup.getSlaveHosts());
+		}
+
 		this.driver = new NonRegisteringDriver();
 		this.slaveProperties = slaveProperties;
 		this.masterProperties = masterProperties;
-
-        this.initializeMasterConnection();
+		this.slaveHosts = slaveHostList;
+		this.masterHosts = masterHostList;
+		
+        boolean createdMaster = this.initializeMasterConnection();
         this.initializeSlaveConnection();
+        if(!createdMaster) {
+        	this.currentConnection = this.slavesConnection;
+        	return;
+        }
         
 		this.currentConnection = this.masterConnection;
 	}
 	
-	private void initializeMasterConnection() throws SQLException {
-		StringBuffer masterUrl = new StringBuffer("jdbc:mysql://");
+	private boolean initializeMasterConnection() throws SQLException {
+		return this.initializeMasterConnection(this.allowMasterDownConnections);
+	}
+	
+	private boolean initializeMasterConnection(boolean allowMasterDown) throws SQLException {
+		// get this value before we change the masterConnection reference:
+		boolean isMaster = this.isMasterConnection();
+		
+		StringBuffer masterUrl = new StringBuffer(NonRegisteringDriver.LOADBALANCE_URL_PREFIX);
 		 
-        String masterHost = masterProperties
-        	.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY);
-        
-        if (masterHost != null) {
-        	masterUrl.append(masterHost);
-        }
- 
+    
+	    boolean firstHost = true;
+	    for(String host : this.masterHosts) {
+	    	if(!firstHost) {
+	    		masterUrl.append(',');
+	    	}
+	    	masterUrl.append(host);
+	    	firstHost = false;
+	    }
 
         String masterDb = masterProperties
         	.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
+
 
         masterUrl.append("/");
         
@@ -90,29 +156,65 @@ public class ReplicationConnection implements Connection, PingTarget {
         	masterUrl.append(masterDb);
         }
         
-        
-        this.masterConnection = (com.mysql.jdbc.Connection) driver.connect(
+        LoadBalancedConnection newMasterConn = null;
+        try {
+        	newMasterConn  = (com.mysql.jdbc.LoadBalancedConnection) driver.connect(
                 masterUrl.toString(), masterProperties);
+        } catch (SQLException ex) {
+        	if(allowMasterDown){
+        		this.currentConnection = this.slavesConnection;
+        		this.masterConnection = null;
+        		this.setReadOnly(true);
+        		return false;
+        	}
+        	throw ex;
+        }
+        
+	
+		if(isMaster && this.currentConnection != null) {
+			this.swapConnections(newMasterConn, currentConnection, true);
+		}
+		
+		if(this.masterConnection != null) {
+			try {
+				this.masterConnection.close();
+				this.masterConnection = null;
+			} catch (SQLException e) {}
+		}
+
+        
+        this.masterConnection = newMasterConn;
+        return true;
+
+
 	}
 	
 	
 	private void initializeSlaveConnection() throws SQLException {
-	    StringBuffer slaveUrl = new StringBuffer("jdbc:mysql:loadbalance://");
+	    StringBuffer slaveUrl = new StringBuffer(NonRegisteringDriver.LOADBALANCE_URL_PREFIX);
 		
-        int numHosts = Integer.parseInt(slaveProperties.getProperty(
-        		NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY));
-        
-        for(int i = 1; i <= numHosts; i++){
-	        String slaveHost = slaveProperties
-	        	.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + "." + i);
-	        
-	        if (slaveHost != null) {
-	        	if(i > 1){
-	        		slaveUrl.append(',');
-	        	}
-	        	slaveUrl.append(slaveHost);
-	        }
-        }
+//        int numHosts = Integer.parseInt(slaveProperties.getProperty(
+//        		NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY));
+//        
+//        for(int i = 1; i <= numHosts; i++){
+//	        String slaveHost = slaveProperties
+//	        	.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + "." + i);
+//	        
+//	        if (slaveHost != null) {
+//	        	if(i > 1){
+//	        		slaveUrl.append(',');
+//	        	}
+//	        	slaveUrl.append(slaveHost);
+//	        }
+//        }
+	    boolean firstHost = true;
+	    for(String host : this.slaveHosts) {
+	    	if(!firstHost) {
+	    		slaveUrl.append(',');
+	    	}
+	    	slaveUrl.append(host);
+	    	firstHost = false;
+	    }
 
      
         String slaveDb = slaveProperties
@@ -124,9 +226,8 @@ public class ReplicationConnection implements Connection, PingTarget {
         	slaveUrl.append(slaveDb);
         }
         
-        slaveProperties.setProperty("roundRobinLoadBalance", "true");
 
-        this.slavesConnection = (com.mysql.jdbc.Connection) driver.connect(
+        this.slavesConnection = (com.mysql.jdbc.LoadBalancedConnection) driver.connect(
                 slaveUrl.toString(), slaveProperties);
         this.slavesConnection.setReadOnly(true);
 		
@@ -158,6 +259,95 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 */
 	public void commit() throws SQLException {
 		getCurrentConnection().commit();
+	}
+	
+	public boolean isHostMaster(String host) {
+		if(host == null) {
+			return false;
+		}
+		for(String test : this.masterHosts) {
+			if(test.equalsIgnoreCase(host)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+
+	public boolean isHostSlave(String host) {
+		if(host == null) {
+			return false;
+		}
+		for(String test : this.slaveHosts) {
+			if(test.equalsIgnoreCase(host)) {
+				return true;
+			}
+		}
+		return false;
+
+		
+	}
+	
+
+	
+	public synchronized void removeSlave(String host) throws SQLException {
+		removeSlave(host, true);
+	}
+	
+	public synchronized void removeSlave(String host, boolean closeGently) throws SQLException {
+		
+		slaveHosts.remove(host);
+		
+		if(closeGently) {
+			slavesConnection.removeHostWhenNotInUse(host);
+		} else {
+			slavesConnection.removeHost(host);
+		}
+	}
+	
+	public synchronized void addSlaveHost(String host) throws SQLException {
+		if(this.isHostMaster(host) || this.isHostSlave(host)){
+			throw new SQLException("Cannot add existing host!");
+		}
+		this.slaveHosts.add(host);
+		this.slavesConnection.addHost(host);
+	}
+	
+
+	
+	public synchronized void promoteSlaveToMaster(String host) throws SQLException {
+		if(!this.isHostSlave(host)) {
+//			turned this off as one might walk up the replication tree and set master
+//			to the current's master's master.
+//			throw SQLError.createSQLException("Cannot promote host " + host + " to master, as it must first be configured as a slave.", null);
+			
+		}
+		
+		this.masterHosts.add(host);
+		this.removeSlave(host);
+		this.masterConnection.addHost(host);
+		this.slavesConnection.removeHostWhenNotInUse(host);
+		
+	}
+	
+	public synchronized void removeMasterHost(String host) throws SQLException {
+		this.removeMasterHost(host, true);
+	}
+
+	public synchronized void removeMasterHost(String host, boolean waitUntilNotInUse) throws SQLException {
+		this.removeMasterHost(host, waitUntilNotInUse, false);
+	}
+
+	public synchronized void removeMasterHost(String host, boolean waitUntilNotInUse, boolean isNowSlave) throws SQLException {
+		if(isNowSlave) {
+			this.slaveHosts.add(host);
+		}
+		if(waitUntilNotInUse){
+			this.masterConnection.removeHostWhenNotInUse(host);
+		} else {
+			this.masterConnection.removeHost(host);
+		}
+		
 	}
 
 	/*
@@ -530,12 +720,21 @@ public class ReplicationConnection implements Connection, PingTarget {
 	// For testing
 
 	private synchronized void switchToMasterConnection() throws SQLException {
+		if(this.masterConnection == null){
+			this.initializeMasterConnection();
+		}
 		swapConnections(this.masterConnection, this.slavesConnection);
 	}
 
 	private synchronized void switchToSlavesConnection() throws SQLException {
 		swapConnections(this.slavesConnection, this.masterConnection);
 		this.slavesConnection.setReadOnly(true);
+	}
+	
+	private synchronized void swapConnections(Connection switchToConnection, 
+	Connection switchFromConnection) throws SQLException {
+		this.swapConnections(switchToConnection, switchFromConnection, false);
+		
 	}
 	
 	/**
@@ -549,7 +748,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * @throws SQLException if an error occurs
 	 */
 	private synchronized void swapConnections(Connection switchToConnection, 
-			Connection switchFromConnection) throws SQLException {
+			Connection switchFromConnection, boolean skipReconfigure) throws SQLException {
+
 		String switchFromCatalog = switchFromConnection.getCatalog();
 		String switchToCatalog = switchToConnection.getCatalog();
 
@@ -709,6 +909,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public boolean isMasterConnection() {
+		if(this.currentConnection == null) {
+			return true;
+		}
 		return this.currentConnection == this.masterConnection;
 	}
 
@@ -2703,6 +2906,20 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public Object getConnectionMutex() {
 		return getCurrentConnection().getConnectionMutex();
 	}
+	
+	public boolean getAllowMasterDownConnections() {
+		return this.allowMasterDownConnections;
+	}
+
+	public boolean getReplicationEnableJMX() {
+		return this.enableJMX;
+	}
+
+	public void setReplicationEnableJMX(boolean replicationEnableJMX) {
+		this.enableJMX = replicationEnableJMX;
+		
+	}
+
 
 	public String getConnectionAttributes() throws SQLException {
 		return getCurrentConnection().getConnectionAttributes();

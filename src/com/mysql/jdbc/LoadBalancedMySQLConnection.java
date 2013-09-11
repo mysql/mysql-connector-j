@@ -39,7 +39,7 @@ import java.util.concurrent.Executor;
 
 import com.mysql.jdbc.log.Log;
 
-public class LoadBalancedMySQLConnection implements MySQLConnection {
+public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 
 	protected LoadBalancingConnectionProxy proxy;
 	
@@ -2642,5 +2642,31 @@ public class LoadBalancedMySQLConnection implements MySQLConnection {
 
 	public String getConnectionAttributes() throws SQLException {
 		return getActiveMySQLConnection().getConnectionAttributes();
+	}
+
+	public boolean addHost(String host) throws SQLException {
+		return this.proxy.addHost(host);
+	}
+
+	public void removeHost(String host) throws SQLException {
+		this.proxy.removeHost(host);	
+	}
+
+	public void removeHostWhenNotInUse(String host) throws SQLException {
+		this.proxy.removeHostWhenNotInUse(host);
+		
+	}
+
+	public boolean getAllowMasterDownConnections() {
+		return false;
+	}
+
+	public boolean getReplicationEnableJMX() {
+		return false;
+	}
+
+	public void setReplicationEnableJMX(boolean replicationEnableJMX) {
+		// nothing to do here.
+		
 	}
 }

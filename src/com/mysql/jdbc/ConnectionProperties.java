@@ -1706,9 +1706,16 @@ public interface ConnectionProperties {
 
 	public abstract boolean getDisconnectOnExpiredPasswords();
 	
+	public abstract boolean getAllowMasterDownConnections();
+	
+	public abstract boolean getReplicationEnableJMX();
+
+	public abstract void setReplicationEnableJMX(boolean replicationEnableJMX);	
+	
 	public abstract void setGetProceduresReturnsFunctions(boolean getProcedureReturnsFunctions);
 	
 	public abstract boolean getGetProceduresReturnsFunctions();
 
 	String getConnectionAttributes() throws SQLException;
+
 }

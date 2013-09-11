@@ -2842,6 +2842,19 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		return this.mc.getConnectionMutex();
 	}
 
+	public boolean getAllowMasterDownConnections() {
+		return this.mc.getAllowMasterDownConnections();
+	}
+
+	public boolean getReplicationEnableJMX() {
+		return this.mc.getReplicationEnableJMX();
+	}
+
+	public void setReplicationEnableJMX(boolean replicationEnableJMX) {
+		this.mc.setReplicationEnableJMX(replicationEnableJMX);
+		
+	}
+
 	public String getConnectionAttributes() throws SQLException {
 		return this.mc.getConnectionAttributes();
 	}

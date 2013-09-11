@@ -2,6 +2,22 @@
 # $Id$
 nn-nn-13 - Version 5.1.27
 
+  - Added support for multi-master replication topographies in ReplicationDriver.  ReplicationDriver now uses two discrete load-balanced
+    connections, one each for master and slave connections.  The same load-balancing options which apply to load-balanced connections
+    now also apply to ReplicationConnections.  By default, this means that when a ReplicationConnection uses master connections
+    (because the read-only property of the Connection is false), work may be re-balanced between configured master hosts at transaction 
+    boundaries.  As with load-balanced connections, the ReplicationConnection host list may be managed within the JVM (see
+    com.mysql.jdbc.ReplicationConnectionGroupManager) or optionally via JMX (using replicationEnableJMX configuration option; see
+    com.mysql.jdbc.jmx.ReplicationGroupManagerMBean).  To specify multi-master replication topographies, define each host "type"
+    property using the following format:
+ 
+    address=(host=hostname)(port=3306)(type=[master|slave])
+
+    In the absense of explicit type definitions, the driver will assume a single master listed first, with all subsequently-listed
+    hosts configured as slaves.
+
+  - Fix for Bug#63354 (16443992), JDBC cannot make new connections if master is down.
+
   - Fix for Bug#17003626, REGRESSION TEST FAILURE WITH SERVER VERSION 5.7.1
 
   - Removed ant-contrib.jar from C/J distribution.

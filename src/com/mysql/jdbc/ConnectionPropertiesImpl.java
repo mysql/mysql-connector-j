@@ -726,6 +726,16 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			MISC_CATEGORY,
 			Integer.MIN_VALUE);
 	
+	private BooleanConnectionProperty allowMasterDownConnections = new BooleanConnectionProperty(
+			"allowMasterDownConnections",  //$NON-NLS-1$
+			false,
+			Messages.getString("ConnectionProperties.allowMasterDownConnections"), //$NON-NLS-1$
+			"5.1.27", //$NON-NLS-1$
+			HA_CATEGORY,
+			Integer.MAX_VALUE);
+	
+	
+	
 	private BooleanConnectionProperty autoDeserialize = new BooleanConnectionProperty(
 			"autoDeserialize", //$NON-NLS-1$
 			false,
@@ -1413,6 +1423,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Integer.MAX_VALUE,
 			Messages.getString("ConnectionProperties.selfDestructOnPingMaxOperations"),
 			"5.1.6", HA_CATEGORY, Integer.MAX_VALUE);
+	
+	private BooleanConnectionProperty replicationEnableJMX = new BooleanConnectionProperty(
+			"replicationEnableJMX", //$NON-NLS-1$
+			false,
+			Messages.getString("ConnectionProperties.loadBalanceEnableJMX"), //$NON-NLS-1$
+			"5.1.27", HA_CATEGORY, Integer.MAX_VALUE); //$NON-NLS-1$
+	
 			
 	private StringConnectionProperty serverTimezone = new StringConnectionProperty(
 			"serverTimezone", //$NON-NLS-1$
@@ -4740,6 +4757,19 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public boolean getDisconnectOnExpiredPasswords() {
 		return this.disconnectOnExpiredPasswords.getValueAsBoolean();
+	}
+	
+	public boolean getAllowMasterDownConnections() {
+		return this.allowMasterDownConnections.getValueAsBoolean();
+	}
+
+	public boolean getReplicationEnableJMX() {
+		return this.replicationEnableJMX.getValueAsBoolean();
+	}
+
+	public void setReplicationEnableJMX(boolean replicationEnableJMX) {
+		this.replicationEnableJMX.setValue(replicationEnableJMX);
+		
 	}
 
 	public void setGetProceduresReturnsFunctions(boolean getProcedureReturnsFunctions) {
