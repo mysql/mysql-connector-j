@@ -1211,7 +1211,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 
 		createTable("`app tab`",
-				"( C1 int(11) NULL, INDEX NEWINX (C1), INDEX NEWINX2 (C1))",
+				"( C1 int(11) NULL, C2 int(11) NULL, INDEX NEWINX (C1), INDEX NEWINX2 (C1, C2))",
 				"InnoDB");
 
 		this.stmt
@@ -3714,7 +3714,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 					" \"cpd_f\"\"oreign_1_id\" int(8) not null," +
 					" \"`cpd_f\"\"oreign_2_id`\" int(8) not null," +
 					" KEY `NEWINX` (`C\"1`)," +
-					" KEY `NEWINX2` (`C\"1`)," +
+					" KEY `NEWINX2` (`C\"1`, `TS`)," +
 					" foreign key (\"cpd_f\"\"oreign_1_id\", \"`cpd_f\"\"oreign_2_id`\") " +
 					" references "+this.conn.getCatalog()+".testbug65871_foreign(cpd_foreign_1_id, cpd_foreign_2_id), " +
 					" CONSTRAINT `APPFK` FOREIGN KEY (`C\"1`) REFERENCES "+quotedDbName+"."+quotedTableName+" (`C\"1`)" +

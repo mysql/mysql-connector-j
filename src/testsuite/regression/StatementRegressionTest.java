@@ -1151,7 +1151,7 @@ public class StatementRegressionTest extends BaseTestCase {
 					+ " `field5` datetime NULL default '0000-00-00 00:00:00',"
 					+ " PRIMARY KEY  (`field1`),"
 					+ " UNIQUE KEY `unq_id` (`field2`),"
-					+ " UNIQUE KEY  (`field3`)," + " UNIQUE KEY  (`field2`)"
+					+ " UNIQUE KEY  (`field3`)"
 					+ " )  CHARACTER SET utf8", "InnoDB");
 
 			this.stmt

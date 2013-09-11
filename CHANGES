@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.27
 
+  - Fix for Bug#17003626, REGRESSION TEST FAILURE WITH SERVER VERSION 5.7.1
+
   - Removed ant-contrib.jar from C/J distribution.
 
   - Added tests for GIS precise spatial operations introduced in 5.6GA.
