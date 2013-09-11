@@ -5066,21 +5066,21 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			props.setProperty("characterEncoding", "UTF-8");
 			c1 = getConnectionWithProps(props);
 			st1 = c1.createStatement();
-			st1.execute("create database if not exists `テストテスト`");
-			st1.execute("grant all on `テストテスト`.* to 'テストテスト'@'%' identified by 'msandbox'");
+			st1.execute("create database if not exists `\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8`");
+			st1.execute("grant all on `\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8`.* to '\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8'@'%' identified by 'msandbox'");
 
 			props = new Properties();
-			props.setProperty("user", "テストテストテスト");
+			props.setProperty("user", "\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8");
 			props.setProperty("password", "msandbox");
-			c2 = DriverManager.getConnection(url+"/テストテストテスト", props);
+			c2 = DriverManager.getConnection(url+"/\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8", props);
 			c2.createStatement().executeQuery("select 1");
 			c2.close();
 
 		} catch (SQLException e) {
 			assertFalse("e.getCause() instanceof java.lang.ArrayIndexOutOfBoundsException", e.getCause() instanceof java.lang.ArrayIndexOutOfBoundsException); 
 
-			props.setProperty("user", "テストテスト");
-			c2 = DriverManager.getConnection(url+"/テストテスト", props);
+			props.setProperty("user", "\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8");
+			c2 = DriverManager.getConnection(url+"/\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8", props);
 			c2.createStatement().executeQuery("select 1");
 			c2.close();
 		} finally {
@@ -5088,8 +5088,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				c2.close();
 			}
 			if (st1 != null) {
-				st1.executeUpdate("drop user 'テストテスト'@'%'");
-				st1.executeUpdate("drop database if exists `テストテスト`");
+				st1.executeUpdate("drop user '\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8'@'%'");
+				st1.executeUpdate("drop database if exists `\u30C6\u30B9\u30C8\u30C6\u30B9\u30C8`");
 				st1.close();
 			}
 			if (c1 != null) {
