@@ -865,7 +865,7 @@ public class MysqlIO {
         int userLength = (userName != null) ? userName.length() : 0;
         int databaseLength = (database != null) ? database.length() : 0;
 
-        int packLength = ((userLength + passwordLength + databaseLength) * 2) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
+        int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
 
     	if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
 
@@ -1292,7 +1292,7 @@ public class MysqlIO {
         int userLength = (user != null) ? user.length() : 0;
         int databaseLength = (database != null) ? database.length() : 0;
 
-        int packLength = ((userLength + passwordLength + databaseLength) * 2) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
+        int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
 
         Buffer packet = null;
 
@@ -1631,7 +1631,7 @@ public class MysqlIO {
 		int userLength = (user != null) ? user.length() : 0;
 		int databaseLength = (database != null) ? database.length() : 0;
 
-		int packLength = ((userLength + passwordLength + databaseLength) * 2) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
+		int packLength = ((userLength + passwordLength + databaseLength) * 3) + 7 + HEADER_LENGTH + AUTH_411_OVERHEAD;
 
 		AuthenticationPlugin plugin = null;
 		Buffer fromServer = null;
@@ -2642,7 +2642,7 @@ public class MysqlIO {
 	    		// We don't know exactly how many bytes we're going to get
 	    		// from the query. Since we're dealing with Unicode, the
 	    		// max is 2, so pad it (2 * query) + space for headers
-	    		int packLength = HEADER_LENGTH + 1 + (query.length() * 2) + 2;
+	    		int packLength = HEADER_LENGTH + 1 + (query.length() * 3) + 2;
 
 	    		byte[] commentAsBytes = null;
 

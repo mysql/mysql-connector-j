@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -666,14 +666,14 @@ public class Buffer {
 
 	// Write null-terminated string
 	final void writeString(String s) throws SQLException {
-		ensureCapacity((s.length() * 2) + 1);
+		ensureCapacity((s.length() * 3) + 1);
 		writeStringNoNull(s);
 		this.byteBuffer[this.position++] = 0;
 	}
 	
 	//	 Write null-terminated string in the given encoding
 	final void writeString(String s, String encoding, MySQLConnection conn) throws SQLException {
-		ensureCapacity((s.length() * 2) + 1);
+		ensureCapacity((s.length() * 3) + 1);
 		try {
 			writeStringNoNull(s, encoding, encoding, false, conn);
 		} catch (UnsupportedEncodingException ue) {
@@ -686,7 +686,7 @@ public class Buffer {
 	// Write string, with no termination
 	final void writeStringNoNull(String s) throws SQLException {
 		int len = s.length();
-		ensureCapacity(len * 2);
+		ensureCapacity(len * 3);
 		System.arraycopy(StringUtils.getBytes(s), 0, this.byteBuffer, this.position, len);
 		this.position += len;
 

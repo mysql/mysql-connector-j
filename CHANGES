@@ -8,6 +8,8 @@ nn-nn-13 - Version 5.1.27
 
   - Fixed META-INF information
 
+  - Fix for Bug#17251955, ARRAYINDEXOUTOFBOUNDSEXCEPTION ON LONG MULTI-BYTE DB/USER NAMES
+
   - Fix for Bug#50538, DatabaseMetaData.getDriverVersion() contains unexpanded ${bzr.revision-id}
 
 08-05-13 - Version 5.1.26

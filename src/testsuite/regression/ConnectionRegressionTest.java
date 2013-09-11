@@ -84,8 +84,6 @@ import com.mysql.jdbc.StandardSocketFactory;
 import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.exceptions.MySQLNonTransientConnectionException;
-import com.mysql.jdbc.exceptions.MySQLNonTransientException;
-import com.mysql.jdbc.exceptions.MySQLSyntaxErrorException;
 import com.mysql.jdbc.integration.jboss.MysqlValidConnectionChecker;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
@@ -5046,4 +5044,57 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		return connectionNumber;
 	}
 
+	
+	/**
+	 * Tests fix for BUG#17251955, ARRAYINDEXOUTOFBOUNDSEXCEPTION ON LONG MULTI-BYTE DB/USER NAMES
+	 * @throws Exception
+	 */
+	public void testBug17251955() throws Exception {
+		Connection c1 = null;
+		Statement st1 = null;
+		Connection c2 = null;
+		Properties props = new Properties();
+		Properties props1 = new NonRegisteringDriver().parseURL(dbUrl, null);
+		String host = props1.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY, "localhost");
+		String url = "jdbc:mysql://" + host;
+		if (!NonRegisteringDriver.isHostPropertiesList(host)) {
+			String port = props1.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY, "3306");
+			url = url + ":" + port;
+		}
+
+		try {
+			props.setProperty("characterEncoding", "UTF-8");
+			c1 = getConnectionWithProps(props);
+			st1 = c1.createStatement();
+			st1.execute("create database if not exists `テストテスト`");
+			st1.execute("grant all on `テストテスト`.* to 'テストテスト'@'%' identified by 'msandbox'");
+
+			props = new Properties();
+			props.setProperty("user", "テストテストテスト");
+			props.setProperty("password", "msandbox");
+			c2 = DriverManager.getConnection(url+"/テストテストテスト", props);
+			c2.createStatement().executeQuery("select 1");
+			c2.close();
+
+		} catch (SQLException e) {
+			assertFalse("e.getCause() instanceof java.lang.ArrayIndexOutOfBoundsException", e.getCause() instanceof java.lang.ArrayIndexOutOfBoundsException); 
+
+			props.setProperty("user", "テストテスト");
+			c2 = DriverManager.getConnection(url+"/テストテスト", props);
+			c2.createStatement().executeQuery("select 1");
+			c2.close();
+		} finally {
+			if (c2 != null) {
+				c2.close();
+			}
+			if (st1 != null) {
+				st1.executeUpdate("drop user 'テストテスト'@'%'");
+				st1.executeUpdate("drop database if exists `テストテスト`");
+				st1.close();
+			}
+			if (c1 != null) {
+				c1.close();
+			}
+		}
+	}
 }
