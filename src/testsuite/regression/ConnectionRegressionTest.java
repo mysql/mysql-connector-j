@@ -2606,9 +2606,9 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				.getUnreliableReplicationConnection(configs, props);
 		assertFalse(conn2.isReadOnly());
 		assertTrue(conn2.isMasterConnection());
-		assertTrue(conn2.isHostSlave(first.getAddress(true)));
-		assertTrue(conn2.isHostMaster(second.getAddress(true)));
-		assertTrue(conn2.isHostMaster(third.getAddress(true)));
+		assertTrue(conn2.isHostSlave(first.getAddress()));
+		assertTrue(conn2.isHostMaster(second.getAddress()));
+		assertTrue(conn2.isHostMaster(third.getAddress()));
 	
 	}
 
@@ -3095,12 +3095,17 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			forcedFutureServer = host;
 			forceFutureServerTimes = times;
 		}
+		
+		public static void dontForceFutureServer() {
+			forcedFutureServer = null;
+			forceFutureServerTimes = 0;
+		}
 
 		public com.mysql.jdbc.ConnectionImpl pickConnection(
 				LoadBalancingConnectionProxy proxy, List<String> configuredHosts,
 				Map<String, ConnectionImpl> liveConnections, long[] responseTimes, int numRetries)
 				throws SQLException {
-			if (forcedFutureServer == null || forceFutureServerTimes == 0) {
+			if (forcedFutureServer == null || forceFutureServerTimes == 0 || !configuredHosts.contains(forcedFutureServer)) {
 				return super.pickConnection(proxy, configuredHosts,
 						liveConnections, responseTimes, numRetries);
 			}
@@ -4911,6 +4916,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				ForcedLoadBalanceStrategy.class.getName());
 		props.setProperty("loadBalancePingTimeout", "100");
 		props.setProperty("autoReconnect", "true");
+		props.setProperty("retriesAllDown", "1");
 		
 
 		String portNumber = new NonRegisteringDriver().parseURL(dbUrl, null)
@@ -5043,7 +5049,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 		
 		UnreliableSocketFactory.dontDownHost("master");
-		conn2.createStatement().execute("/* ping */ SELECT 1");	
+		conn2.createStatement().execute("SELECT 1");	
 		// continue on slave2:
 		conn2.setReadOnly(true);
 		

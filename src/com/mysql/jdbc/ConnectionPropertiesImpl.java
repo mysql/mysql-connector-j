@@ -4763,6 +4763,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return this.allowMasterDownConnections.getValueAsBoolean();
 	}
 
+	public void setAllowMasterDownConnections(boolean connectIfMasterDown) {
+		this.allowMasterDownConnections.setValue(connectIfMasterDown);
+	}
+
 	public boolean getReplicationEnableJMX() {
 		return this.replicationEnableJMX.getValueAsBoolean();
 	}

@@ -2845,7 +2845,11 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public boolean getAllowMasterDownConnections() {
 		return this.mc.getAllowMasterDownConnections();
 	}
-
+	
+	public void setAllowMasterDownConnections(boolean connectIfMasterDown) {
+		this.mc.setAllowMasterDownConnections(connectIfMasterDown);
+	}
+	
 	public boolean getReplicationEnableJMX() {
 		return this.mc.getReplicationEnableJMX();
 	}

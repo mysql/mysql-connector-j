@@ -480,9 +480,9 @@ public class NonRegisteringDriver implements java.sql.Driver {
 			String port = parsedProps.getProperty(PORT_PROPERTY_KEY + "." + index);
 			if(usesExplicitServerType) {
 				if(isHostMaster(host)) {
-					masterHostList.add(host + ":" + port);
+					masterHostList.add(host);
 				} else {
-					slaveHostList.add(host + ":" + port);
+					slaveHostList.add(host);
 				}
 			} else {
 				if(i == 0) {

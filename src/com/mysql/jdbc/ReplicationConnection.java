@@ -248,8 +248,13 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * @see java.sql.Connection#close()
 	 */
 	public synchronized void close() throws SQLException {
-		this.masterConnection.close();
-		this.slavesConnection.close();
+		if(this.masterConnection != null) {
+			this.masterConnection.close();
+		}
+		if(this.slavesConnection != null) {
+			this.slavesConnection.close();
+		}
+		
 	}
 
 	/*
@@ -720,13 +725,17 @@ public class ReplicationConnection implements Connection, PingTarget {
 	// For testing
 
 	private synchronized void switchToMasterConnection() throws SQLException {
-		if(this.masterConnection == null){
+		if(this.masterConnection == null || this.masterConnection.isClosed()){
 			this.initializeMasterConnection();
 		}
 		swapConnections(this.masterConnection, this.slavesConnection);
+		this.masterConnection.setReadOnly(false);
 	}
 
 	private synchronized void switchToSlavesConnection() throws SQLException {
+		if(this.slavesConnection == null || this.slavesConnection.isClosed()) {
+			this.initializeSlaveConnection();
+		}
 		swapConnections(this.slavesConnection, this.masterConnection);
 		this.slavesConnection.setReadOnly(true);
 	}
@@ -786,24 +795,31 @@ public class ReplicationConnection implements Connection, PingTarget {
 				this.masterConnection.ping();
 			} catch (SQLException e) {
 				if (isMasterConn) {
+										// flip to slave connections:
+					this.currentConnection = this.slavesConnection;
+					this.masterConnection = null;
+					
 					throw e;
 				}
 			}
+		} else {
+			this.initializeMasterConnection();
 		}
 		
 		if (this.slavesConnection != null) {
 			try { 
 				this.slavesConnection.ping();
 			} catch (SQLException e) {
-				try {
-					this.initializeSlaveConnection();
-				} catch (SQLException initE) {
-					// do nothing here, we tried to reconnect.
-				}
 				if (!isMasterConn) {
+					// flip to master connection:
+					this.currentConnection = this.masterConnection;
+					this.slavesConnection = null;
+					
 					throw e;
 				}
 			}
+		} else {
+			this.initializeSlaveConnection();
 		}
 	}
 
@@ -2909,6 +2925,10 @@ public class ReplicationConnection implements Connection, PingTarget {
 	
 	public boolean getAllowMasterDownConnections() {
 		return this.allowMasterDownConnections;
+	}
+	
+	public void setAllowMasterDownConnections(boolean connectIfMasterDown) {
+		this.allowMasterDownConnections = connectIfMasterDown;
 	}
 
 	public boolean getReplicationEnableJMX() {

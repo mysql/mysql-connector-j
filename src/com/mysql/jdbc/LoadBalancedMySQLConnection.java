@@ -2660,6 +2660,10 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 	public boolean getAllowMasterDownConnections() {
 		return false;
 	}
+	
+	public void setAllowMasterDownConnections(boolean connectIfMasterDown) {
+		// don't do anything here
+	}
 
 	public boolean getReplicationEnableJMX() {
 		return false;

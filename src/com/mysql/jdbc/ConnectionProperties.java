@@ -1708,6 +1708,8 @@ public interface ConnectionProperties {
 	
 	public abstract boolean getAllowMasterDownConnections();
 	
+	public abstract void setAllowMasterDownConnections(boolean connectIfMasterDown);
+	
 	public abstract boolean getReplicationEnableJMX();
 
 	public abstract void setReplicationEnableJMX(boolean replicationEnableJMX);	
