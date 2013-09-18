@@ -60,6 +60,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.sql.XAConnection;
+import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
@@ -5309,7 +5310,6 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		return connectionNumber;
 	}
 
-	
 	/**
 	 * Tests fix for BUG#17251955, ARRAYINDEXOUTOFBOUNDSEXCEPTION ON LONG MULTI-BYTE DB/USER NAMES
 	 * @throws Exception
@@ -5360,6 +5360,32 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			if (c1 != null) {
 				c1.close();
 			}
+		}
+	}
+	
+	/**
+	 * Tests fix for BUG#69506 - XAER_DUPID error code is not returned when a duplicate XID is offered in Java.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug69506() throws Exception {
+		MysqlXADataSource dataSource = new MysqlXADataSource();
+
+		dataSource.setUrl(dbUrl);
+		
+		XAConnection testXAConn1 = dataSource.getXAConnection();
+		XAConnection testXAConn2 = dataSource.getXAConnection();
+
+		Xid duplicateXID = new MysqlXid("1".getBytes(), "1".getBytes(), 1);
+
+		testXAConn1.getXAResource().start(duplicateXID, 0);
+
+		try {
+			testXAConn2.getXAResource().start(duplicateXID, 0);
+			fail("XAException was expected.");
+		} catch (XAException e) {
+			assertEquals("Wrong error code retured for duplicated XID.", XAException.XAER_DUPID, e.errorCode);
 		}
 	}
 }
