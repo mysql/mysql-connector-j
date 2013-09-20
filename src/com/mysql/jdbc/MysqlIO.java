@@ -1172,33 +1172,63 @@ public class MysqlIO {
         this.colDecimalNeedsBump = !versionMeetsMinimum(3, 23, 15); // guess? Not noted in changelog
         this.useNewUpdateCounts = versionMeetsMinimum(3, 22, 5);
         	  
+        // read connection id
         threadId = buf.readLong();
-        this.seed = buf.readString("ASCII", getExceptionInterceptor());
+        
+        if (this.protocolVersion > 9) {
+            // read auth-plugin-data-part-1 (string[8])
+            this.seed = buf.readString("ASCII", getExceptionInterceptor(), 8);
+            // read filler ([00])
+            buf.readByte();
+        } else {
+        	// read scramble (string[NUL])
+            this.seed = buf.readString("ASCII", getExceptionInterceptor());
+        }
 
         this.serverCapabilities = 0;
 
+        // read capability flags (lower 2 bytes)
         if (buf.getPosition() < buf.getBufLength()) {
             this.serverCapabilities = buf.readInt();
         }
 
         if ((versionMeetsMinimum(4, 1, 1) || ((this.protocolVersion > 9) && (this.serverCapabilities & CLIENT_PROTOCOL_41) != 0))) {
-            int position = buf.getPosition();
 
             /* New protocol with 16 bytes to describe server characteristics */
+            // read character set (1 byte)
             this.serverCharsetIndex = buf.readByte() & 0xff;
+            // read status flags (2 bytes)
             this.serverStatus = buf.readInt();
             checkTransactionState(0);
             
-           	this.serverCapabilities += 65536 * buf.readInt();
-           	this.authPluginDataLength = buf.readByte() & 0xff;
-            
-            buf.setPosition(position + 16);
+            // read capability flags (upper 2 bytes)
+           	this.serverCapabilities |= buf.readInt() << 16;
+           	
+           	if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH) != 0) {
+               	// read length of auth-plugin-data (1 byte)
+               	this.authPluginDataLength = buf.readByte() & 0xff;
+           	} else {
+           		// read filler ([00])
+           		buf.readByte();
+           	}
+            // next 10 bytes are reserved (all [00])
+           	buf.setPosition(buf.getPosition() + 10);
 
-            String seedPart2 = buf.readString("ASCII", getExceptionInterceptor());
-            StringBuffer newSeed = new StringBuffer(20);
-            newSeed.append(this.seed);
-            newSeed.append(seedPart2);
-            this.seed = newSeed.toString();
+           	if ((this.serverCapabilities & CLIENT_SECURE_CONNECTION) != 0) {
+           		String seedPart2;
+           		StringBuffer newSeed;
+            	// read string[$len] auth-plugin-data-part-2 ($len=MAX(13, length of auth-plugin-data - 8))
+           		if (this.authPluginDataLength > 0) {
+                    seedPart2 = buf.readString("ASCII", getExceptionInterceptor(), this.authPluginDataLength - 8);
+                    newSeed = new StringBuffer(this.authPluginDataLength);
+           		} else {
+           			seedPart2 = buf.readString("ASCII", getExceptionInterceptor());
+                    newSeed = new StringBuffer(20);
+           		}
+                newSeed.append(this.seed);
+                newSeed.append(seedPart2);
+                this.seed = newSeed.toString();
+           	}
         }
 
         if (((this.serverCapabilities & CLIENT_COMPRESS) != 0) &&

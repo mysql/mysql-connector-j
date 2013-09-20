@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.27
 
+  - Fix for Bug#62469, JDBC Authentication Fails with Null Byte in Scramble
+
   - Fix for Bug#69506, XAER_DUPID error code is not returned when a duplicate XID is offered in Java.
 
   - Added support for multi-master replication topographies in ReplicationDriver.  ReplicationDriver now uses two discrete load-balanced

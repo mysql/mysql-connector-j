@@ -435,6 +435,13 @@ public class Buffer {
 		return s;
 	}
 
+	/**
+	 * Read string[NUL]
+	 * @param encoding
+	 * @param exceptionInterceptor
+	 * @return
+	 * @throws SQLException
+	 */
 	final String readString(String encoding, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 		int i = this.position;
 		int len = 0;
@@ -456,30 +463,21 @@ public class Buffer {
 	}
 
 	/**
-	 * Read a fixed length string
+	 * Read string[$len]
 	 */
 	final String readString(String encoding, ExceptionInterceptor exceptionInterceptor, int expectedLength) throws SQLException {
-		int i = this.position;
-		int len = 0;
-		int maxLen = getBufLength();
-
-		while ((i < maxLen) && (len < expectedLength) && (this.byteBuffer[i] != 0)) {
-			len++;
-			i++;
-		}
-		
-		if (len < expectedLength) {
+		if (this.position + expectedLength > getBufLength()) {
 			throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.2"),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
 		}
 
 		try {
-			return StringUtils.toString(this.byteBuffer, this.position, len, encoding);
+			return StringUtils.toString(this.byteBuffer, this.position, expectedLength, encoding);
 		} catch (UnsupportedEncodingException uEE) {
 			throw SQLError.createSQLException(Messages.getString("ByteArrayBuffer.1") //$NON-NLS-1$
 					+ encoding + "'", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor); //$NON-NLS-1$
 		} finally {
-			this.position += len; // update cursor
+			this.position += expectedLength; // update cursor
 		}
 	}
 
