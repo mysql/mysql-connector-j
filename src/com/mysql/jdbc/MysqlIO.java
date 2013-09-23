@@ -1219,11 +1219,12 @@ public class MysqlIO {
            		StringBuffer newSeed;
             	// read string[$len] auth-plugin-data-part-2 ($len=MAX(13, length of auth-plugin-data - 8))
            		if (this.authPluginDataLength > 0) {
-           			if (this.authPluginDataLength < 21) {
-                        forceClose();
-                        throw SQLError.createSQLException(Messages.getString("MysqlIO.103"), //$NON-NLS-1$
-                            SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
-           			}
+// TODO: disabled the following check for further clarification
+//         			if (this.authPluginDataLength < 21) {
+//                      forceClose();
+//                      throw SQLError.createSQLException(Messages.getString("MysqlIO.103"), //$NON-NLS-1$
+//                          SQLError.SQL_STATE_UNABLE_TO_CONNECT_TO_DATASOURCE, getExceptionInterceptor());
+//         			}
                     seedPart2 = buf.readString("ASCII", getExceptionInterceptor(), this.authPluginDataLength - 8);
                     newSeed = new StringBuffer(this.authPluginDataLength);
            		} else {
