@@ -601,13 +601,6 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 			if (this.rowData.size() == 0) {
 				b = false;
 			} else {
-				if (row == 0) {
-					throw SQLError.createSQLException(
-							Messages
-									.getString("ResultSet.Cannot_absolute_position_to_row_0_110"), //$NON-NLS-1$
-							SQLError.SQL_STATE_ILLEGAL_ARGUMENT, getExceptionInterceptor());
-				}
-	
 				if (this.onInsertRow) {
 					this.onInsertRow = false;
 				}
@@ -620,7 +613,10 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 					this.thisRow.closeOpenStreams();
 				}
 				
-				if (row == 1) {
+				if (row == 0) {
+					beforeFirst();
+					b = false;
+				} else if (row == 1) {
 					b = first();
 				} else if (row == -1) {
 					b = last();

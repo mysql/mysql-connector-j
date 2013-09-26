@@ -4905,4 +4905,43 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			assertTrue(sqlEx.getMessage().startsWith("Can not call updateRow() when on insert row."));
 		}
 	}
+	
+	/**
+	 * Tests fix for BUG#38252 - ResultSet.absolute(0) is not behaving according to JDBC specification.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug38252() throws Exception {
+		createTable("testBug38252", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY)");
+
+		stmt = conn.createStatement();
+		stmt.executeUpdate("INSERT INTO testBug38252 VALUES (NULL), (NULL)");
+
+		rs = stmt.executeQuery("SELECT * FROM testBug38252");
+
+		// test ResultSet.absolute(0) before iterating the ResultSet
+		assertFalse("Cursor should be moved to before the first row.", rs.absolute(0));
+		assertTrue("ResultSet's cursor should be at 'before first'.", rs.isBeforeFirst());
+		assertTrue("First row expected from ResultSet.", rs.next());
+		assertTrue("Second row expected from ResultSet.", rs.next());
+		assertFalse("No more rows expected from ResultSet.", rs.next());
+		assertTrue("ResultSet's cursor should be at 'after last'.", rs.isAfterLast());
+
+		// test ResultSet.absolute(0) after iterating the ResultSet
+		assertFalse("Cursor should be moved to before the first row.", rs.absolute(0));
+		assertTrue("ResultSet's cursor should be at 'before first'.", rs.isBeforeFirst());
+		assertTrue("First row expected from ResultSet.", rs.next());
+		assertTrue("Second row expected from ResultSet.", rs.next());
+		assertFalse("No more rows expected from ResultSet.", rs.next());
+		assertTrue("ResultSet's cursor should be at 'after last'.", rs.isAfterLast());
+
+		rs.close();
+		stmt.close();
+
+		// test ResultSet.absolute(0) with an empty ResultSet
+		stmt = conn.createStatement();
+		rs = stmt.executeQuery("SELECT * FROM testBug38252 where 0 = 1");
+		assertFalse("Cursor should be moved to before the first row.", rs.absolute(0));
+	}
 }
