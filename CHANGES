@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.27
 
+  - Added support of authentication data up to 2^64-1 bytes.
+
   - Fix for Bug#38252, ResultSet.absolute(0) is not behaving according to JDBC specification.
 
   - Fix for Bug#62469, JDBC Authentication Fails with Null Byte in Scramble

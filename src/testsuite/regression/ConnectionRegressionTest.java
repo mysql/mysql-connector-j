@@ -5388,4 +5388,82 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			assertEquals("Wrong error code retured for duplicated XID.", XAException.XAER_DUPID, e.errorCode);
 		}
 	}
+
+	/**
+	 * This test requires additional server instance configured with
+	 * default-authentication-plugin=sha256_password, connection to
+	 * this server should establish SSL by default.
+	 * 
+	 * To run this test please add this variable to ant call:
+	 * -Dcom.mysql.jdbc.testsuite.url.sha256default=jdbc:mysql://localhost:3307/test?user=root&password=pwd&useSSL=true&requireSSL=true
+	 *  
+	 * @throws Exception
+	 */
+	public void testLongAuthResponsePayload() throws Exception {
+
+		String sha256defaultDbUrl = System.getProperty("com.mysql.jdbc.testsuite.url.sha256default");
+		if (sha256defaultDbUrl != null && versionMeetsMinimum(5, 6, 6)) {
+			// check that sha256_password plugin is available
+			String trustStorePath = "src/testsuite/ssl-test-certs/test-cert-store";
+			System.setProperty("javax.net.ssl.keyStore", trustStorePath);
+			System.setProperty("javax.net.ssl.keyStorePassword", "password");
+			System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+			System.setProperty("javax.net.ssl.trustStorePassword", "password");
+			Connection c1 = DriverManager.getConnection(sha256defaultDbUrl);
+			Statement s1 = c1.createStatement();
+			ResultSet rs1 = s1.executeQuery("select (PLUGIN_STATUS='ACTIVE') as `TRUE` from INFORMATION_SCHEMA.PLUGINS where PLUGIN_NAME='sha256_password'");
+			boolean plugin_is_active = false;
+			if (rs1.next()) {
+				plugin_is_active = rs1.getBoolean(1);
+			}
+			if (!plugin_is_active) {
+				fail("sha256_password required to run this test");
+			}
+
+			try {
+				// create user with long password and sha256_password auth
+				s1.executeUpdate("SET @current_old_passwords = @@global.old_passwords");
+				s1.executeUpdate("grant usage on *.* to 'wl6134user'@'%' identified WITH sha256_password");
+				s1.executeUpdate("SET GLOBAL old_passwords= 2");
+				s1.executeUpdate("SET SESSION old_passwords= 2");
+				s1.executeUpdate("set password for 'wl6134user'@'%' = PASSWORD('aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee')");
+				s1.executeUpdate("flush privileges");
+				
+				Properties props = new Properties();
+				props.setProperty("user", "wl6134user");
+				props.setProperty("password", "aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeaaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeee");
+				props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.Sha256PasswordPlugin");
+
+				Connection testConn = null;
+				Statement testSt = null;
+				ResultSet testRs = null;
+				try {
+					testConn = DriverManager.getConnection(sha256defaultDbUrl, props);
+					testSt = testConn.createStatement();
+					testRs = testSt.executeQuery("select USER(),CURRENT_USER()");
+					testRs.next();
+					
+					assertEquals("wl6134user", testRs.getString(1).split("@")[0]);
+					assertEquals("wl6134user", testRs.getString(2).split("@")[0]);
+					
+				} finally {
+					if (testRs != null) testRs.close();
+					if (testSt != null) testSt.close();
+					if (testConn != null) testConn.close();
+				}
+
+			} finally {
+				if (c1 != null) {
+					if (s1 != null) {
+						s1.executeUpdate("drop user 'wl6134user'@'%'");
+						s1.executeUpdate("flush privileges");
+						s1.executeUpdate("SET GLOBAL old_passwords = @current_old_passwords");
+						s1.close();
+					}
+					c1.close();
+				}
+			}
+		}
+	}
+
 }

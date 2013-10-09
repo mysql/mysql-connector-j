@@ -86,31 +86,28 @@ public class MysqlIO {
     protected static final int HEADER_LENGTH = 4;
     protected static final int AUTH_411_OVERHEAD = 33;
     private static int maxBufferSize = 65535;
-    private static final int CLIENT_COMPRESS = 32; /* Can use compression
-    protcol */
-    protected static final int CLIENT_CONNECT_WITH_DB = 8;
-    private static final int CLIENT_FOUND_ROWS = 2;
-    private static final int CLIENT_LOCAL_FILES = 128; /* Can use LOAD DATA
-    LOCAL */
 
     private static final String NONE = "none";
     
-    /* Found instead of
-       affected rows */
-    private static final int CLIENT_LONG_FLAG = 4; /* Get all column flags */
-    private static final int CLIENT_LONG_PASSWORD = 1; /* new more secure
-    passwords */
-    private static final int CLIENT_PROTOCOL_41 = 512; // for > 4.1.1
-    private static final int CLIENT_INTERACTIVE = 1024;
-    protected static final int CLIENT_SSL = 2048;
-    private static final int CLIENT_TRANSACTIONS = 8192; // Client knows about transactions
-    protected static final int CLIENT_RESERVED = 16384; // for 4.1.0 only
-    protected static final int CLIENT_SECURE_CONNECTION = 32768;
-    private static final int CLIENT_MULTI_QUERIES = 65536; // Enable/disable multiquery support
-    private static final int CLIENT_MULTI_RESULTS = 131072; // Enable/disable multi-results
-    private static final int CLIENT_PLUGIN_AUTH = 524288;
-    private static final int CLIENT_CAN_HANDLE_EXPIRED_PASSWORD = 4194304;
-    private static final int CLIENT_CONNECT_ATTRS = 1048576;
+    private static final int	CLIENT_LONG_PASSWORD		= 0x00000001; /* new more secure passwords */
+    private static final int	CLIENT_FOUND_ROWS			= 0x00000002;
+    private static final int	CLIENT_LONG_FLAG			= 0x00000004; /* Get all column flags */
+    protected static final int	CLIENT_CONNECT_WITH_DB		= 0x00000008;
+    private static final int	CLIENT_COMPRESS				= 0x00000020; /* Can use compression protcol */
+    private static final int	CLIENT_LOCAL_FILES			= 0x00000080; /* Can use LOAD DATA LOCAL */
+    private static final int	CLIENT_PROTOCOL_41			= 0x00000200; // for > 4.1.1
+    private static final int	CLIENT_INTERACTIVE			= 0x00000400;
+    protected static final int	CLIENT_SSL					= 0x00000800;
+    private static final int	CLIENT_TRANSACTIONS			= 0x00002000; // Client knows about transactions
+    protected static final int	CLIENT_RESERVED				= 0x00004000; // for 4.1.0 only
+    protected static final int	CLIENT_SECURE_CONNECTION	= 0x00008000;
+    private static final int	CLIENT_MULTI_STATEMENTS		= 0x00010000; // Enable/disable multiquery support
+    private static final int	CLIENT_MULTI_RESULTS		= 0x00020000; // Enable/disable multi-results
+    private static final int	CLIENT_PLUGIN_AUTH			= 0x00080000;
+    private static final int	CLIENT_CONNECT_ATTRS		= 0x00100000;
+    private static final int	CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA	= 0x00200000;
+    private static final int	CLIENT_CAN_HANDLE_EXPIRED_PASSWORD		= 0x00400000;
+
 	private static final int SERVER_STATUS_IN_TRANS = 1;
     private static final int SERVER_STATUS_AUTOCOMMIT = 2; // Server in auto_commit mode
     static final int SERVER_MORE_RESULTS_EXISTS = 8; // Multi query - next query exists
@@ -1314,7 +1311,7 @@ public class MysqlIO {
                 // or not they want to support multiple queries
                 // (by default, this is disabled).
                 if (this.connection.getAllowMultiQueries()) {
-                    this.clientParam |= CLIENT_MULTI_QUERIES;
+                    this.clientParam |= CLIENT_MULTI_STATEMENTS;
                 }
             } else {
                 this.clientParam |= CLIENT_RESERVED;
@@ -1699,7 +1696,7 @@ public class MysqlIO {
 					// or not they want to support multiple queries
 					// (by default, this is disabled).
 					if (this.connection.getAllowMultiQueries()) {
-						this.clientParam |= CLIENT_MULTI_QUERIES;
+						this.clientParam |= CLIENT_MULTI_STATEMENTS;
 					}
 
 					if (((this.serverCapabilities & CLIENT_CAN_HANDLE_EXPIRED_PASSWORD) != 0) && !this.connection.getDisconnectOnExpiredPasswords()) {
@@ -1708,6 +1705,9 @@ public class MysqlIO {
 					if (((this.serverCapabilities & CLIENT_CONNECT_ATTRS) != 0 ) && 
 							!NONE.equals(this.connection.getConnectionAttributes())) {
 						this.clientParam |= CLIENT_CONNECT_ATTRS;
+					}
+					if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0 ) {
+						this.clientParam |= CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA;
 					}
 
 					this.has41NewNewProt = true;
@@ -1883,8 +1883,14 @@ public class MysqlIO {
 					// User/Password data
 					last_sent.writeString(user, "utf-8", this.connection);
 
-					last_sent.writeByte((byte) toServer.get(0).getBufLength());
-					last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
+					if ((this.serverCapabilities & CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA) != 0 ) {
+						// send lenenc-int length of auth-response and string[n] auth-response
+						last_sent.writeLenBytes(toServer.get(0).getBytes(toServer.get(0).getBufLength()));
+					} else {
+						// send 1 byte length of auth-response and string[n] auth-response
+						last_sent.writeByte((byte) toServer.get(0).getBufLength());
+						last_sent.writeBytesNoNull(toServer.get(0).getByteBuffer(), 0, toServer.get(0).getBufLength());
+					}
 
 					if (this.useConnectWithDb) {
 						last_sent.writeString(database, "utf-8", this.connection);
