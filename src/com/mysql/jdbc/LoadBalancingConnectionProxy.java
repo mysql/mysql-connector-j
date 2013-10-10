@@ -72,6 +72,8 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	private long transactionCount = 0;
 	private ConnectionGroup connectionGroup = null;
 	protected String closedReason = null;
+	protected boolean closedExplicitly = false;
+	protected boolean autoReconnect = false;
 
 	public static final String BLACKLIST_TIMEOUT_PROPERTY_KEY = "loadBalanceBlacklistTimeout";
 
@@ -209,6 +211,9 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 			this.connectionGroupProxyID = this.connectionGroup.registerConnectionProxy(this, hosts);
 			hosts = new ArrayList<String>(this.connectionGroup.getInitialHosts());
 		}
+		
+		this.autoReconnect = "true".equalsIgnoreCase(props.getProperty("autoReconnect")) ||
+				"true".equalsIgnoreCase(props.getProperty("autoReconnectForPools"));
 		
 		this.hostList = hosts;
 
@@ -580,6 +585,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 			this.isClosed = true;
 			this.closedReason = "Connection explicitly closed.";
+			this.closedExplicitly = true;
 
 			return null;
 		}
@@ -603,6 +609,13 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		}
 
 		if (this.isClosed) {
+			if(this.autoReconnect && !this.closedExplicitly){
+				// try to reconnect first!
+				this.currentConn = null;
+				this.pickNewConnection();
+				this.isClosed = false;
+				this.closedReason = null;
+			} else {
 			String reason = "No operations allowed after connection closed.";
 			if(this.closedReason != null){
 				reason += ("  " + this.closedReason);
@@ -614,6 +627,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 																 * a interceptor
 																 * here...
 																 */);
+			}
 		}
 
 		if (!inTransaction) {
@@ -671,7 +685,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 	 * @throws SQLException
 	 */
 	protected synchronized void pickNewConnection() throws SQLException {
-		if (this.isClosed && "Connection explicitly closed.".equals(this.closedReason)) {
+		if (this.isClosed && this.closedExplicitly) {
 			return;
 		}
 

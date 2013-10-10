@@ -163,7 +163,7 @@ public class FailoverConnectionProxy extends LoadBalancingConnectionProxy {
 	}
 
 	protected synchronized void pickNewConnection() throws SQLException {
-		if (this.isClosed && "Connection explicitly closed.".equals(this.closedReason)) {
+		if (this.isClosed && this.closedExplicitly) {
 			return;
 		}
 
