@@ -2,6 +2,14 @@
 # $Id$
 nn-nn-13 - Version 5.1.27
 
+  - Added support of authentication data up to 2^64-1 bytes.
+
+  - Fix for Bug#38252, ResultSet.absolute(0) is not behaving according to JDBC specification.
+
+  - Fix for Bug#62469, JDBC Authentication Fails with Null Byte in Scramble
+
+  - Fix for Bug#69506, XAER_DUPID error code is not returned when a duplicate XID is offered in Java.
+
   - Added support for multi-master replication topographies in ReplicationDriver.  ReplicationDriver now uses two discrete load-balanced
     connections, one each for master and slave connections.  The same load-balancing options which apply to load-balanced connections
     now also apply to ReplicationConnections.  By default, this means that when a ReplicationConnection uses master connections

@@ -82,6 +82,7 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 		temp.put(Integer.valueOf(1400), Integer.valueOf(XAException.XAER_OUTSIDE));
 		temp.put(Integer.valueOf(1401), Integer.valueOf(XAException.XAER_RMERR));
 		temp.put(Integer.valueOf(1402), Integer.valueOf(XAException.XA_RBROLLBACK));
+		temp.put(Integer.valueOf(1440), Integer.valueOf(XAException.XAER_DUPID));
 
 		MYSQL_ERROR_CODES_TO_XA_ERROR_CODES = Collections.unmodifiableMap(temp);
 	}
