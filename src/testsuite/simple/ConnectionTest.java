@@ -40,6 +40,7 @@ import java.net.NetworkInterface;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -1876,5 +1877,42 @@ public class ConnectionTest extends BaseTestCase {
 				StandardLogger.bufferedLog = null;
 			}
 		}
+	}
+	
+	/**
+	 * IPv6 Connection test.
+	 * 
+	 * @throws SQLException
+	 */
+	public void testIPv6() throws Exception {
+
+		if (!versionMeetsMinimum(5, 6)) {
+			return;
+			// this test could work with MySQL 5.5 but requires specific server configuration, e.g. "--bind-address=::"
+		}
+
+		Properties connProps = getPropertiesFromTestsuiteUrl();
+
+		String host = "::1"; // IPv6 loopback
+		int port = Integer.parseInt(connProps.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY));
+		String username = connProps.getProperty(NonRegisteringDriver.USER_PROPERTY_KEY);
+		String password = connProps.getProperty(NonRegisteringDriver.PASSWORD_PROPERTY_KEY);
+
+		String ipv6Url = String.format("jdbc:mysql://address=(protocol=tcp)(host=%s)(port=%d)", host, port);
+
+		Connection testConn = null;
+		Statement testStmt = null;
+		ResultSet testRS = null;
+		
+		testConn = DriverManager.getConnection(ipv6Url, username, password);
+		testStmt = testConn.createStatement();
+		testRS = testStmt.executeQuery("SELECT USER()");
+
+		assertTrue(testRS.next());
+		assertTrue(testRS.getString(1).startsWith(username));
+		
+		testRS.close();
+		testStmt.close();
+		testConn.close();
 	}
 }

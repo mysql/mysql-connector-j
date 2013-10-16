@@ -26,14 +26,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Properties;
 
-import com.mysql.jdbc.StringUtils;
-
 import testsuite.BaseTestCase;
+
+import com.mysql.jdbc.StringUtils;
 
 /**
  * Regression tests for syntax
@@ -577,8 +575,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
 			return;
 		}
 
-		Statement testStatement = conn.createStatement();
-
 		String[] querySamples = new String[] {
 				"SELECT AsText(ST_Intersection(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
 				"SELECT AsText(ST_Difference(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 3, 8 3, 4 9, 0 3))')))",
@@ -588,12 +584,73 @@ public class SyntaxRegressionTest extends BaseTestCase {
 				"SELECT ST_Distance(GeomFromText('POLYGON((0 0, 8 0, 4 6, 0 0))'), GeomFromText('POLYGON((0 10, 8 10, 4 16, 0 10))'))" };
 
 		for (String query : querySamples) {
-			ResultSet testResultSet = testStatement.executeQuery(query);
-			assertTrue("Query should return  at least one row.", testResultSet.next());
-			assertFalse("Query should return only one row.", testResultSet.next());
-			testResultSet.close();
+			this.rs = this.stmt.executeQuery(query);
+			assertTrue("Query should return  at least one row.", this.rs.next());
+			assertFalse("Query should return only one row.", this.rs.next());
+			this.rs.close();
 		}
 
-		testStatement.close();
+	}
+	
+	/**
+	 * WL#5787 - IPv6-capable INET_ATON and INET_NTOA functions
+	 * 
+	 * IPv6 functions added in 5.6GA: INET6_ATON(ip) and INET6_NTOA(ip).
+	 * 
+	 * @throws SQLException
+	 */
+	public void testIPv6Functions() throws Exception {
+
+		if (!versionMeetsMinimum(5, 6)) {
+			return;
+		}
+
+		String[][] dataSamples = new String[][] {
+				{ "127.0.0.1", "172.0.0.1" },
+				{ "192.168.1.1", "::ffff:192.168.1.1" },
+				{ "10.1", "::ffff:10.1" },
+				{ "172.16.260.4", "172.16.260.4" },
+				{ "::1", "::1" },
+				{ "10AA:10bb:10CC:10dd:10EE:10FF:10aa:10BB", "10aa:10bb:10cc:10dd:10ee:10ff:10aa:10bb" },
+				{ "00af:0000:0000:0000:10af:000a:000b:0001", "00af:0000:0000:0000:10af:000a:000b:0001" },
+				{ "48:4df1::0010:ad3:1100", "48:4df1::0010:ad3:1100" },
+				{ "2000:abcd:1234:0000:efgh:1000:2000:3000", "2000:abcd:1234:0000:efgh:1000:2000:3000" },
+				{ "2000:abcd:1234:0000:1000:2000:3000", "2000:abcd:1234:0000:1000:2000:3000" }
+		};
+		String[][] dataExpected = new String[][] {
+				{ "127.0.0.1", "172.0.0.1" },
+				{ "192.168.1.1", "::ffff:192.168.1.1" },
+				{ "10.0.0.1", null },
+				{ null, null },
+				{ null, "::1" },
+				{ null, "10aa:10bb:10cc:10dd:10ee:10ff:10aa:10bb" },
+				{ null, "af::10af:a:b:1" },
+				{ null, "48:4df1::10:ad3:1100" },
+				{ null, null },
+				{ null, null }
+		};
+
+		createTable("testWL5787", "(id INT AUTO_INCREMENT PRIMARY KEY,ipv4 INT UNSIGNED, ipv6 VARBINARY(16))");
+
+		this.pstmt = this.conn.prepareStatement("INSERT INTO testWL5787 VALUES (NULL, INET_ATON(?), INET6_ATON(?))");
+		
+		for (String[] data : dataSamples) {
+			this.pstmt.setString(1, data[0]);
+			this.pstmt.setString(2, data[1]);
+			this.pstmt.addBatch();
+		}
+		int c = 0;
+		for (int r : this.pstmt.executeBatch()) {
+			c += r;
+		}
+		assertEquals("Failed inserting data samples: wrong number of inserts.", dataSamples.length, c);
+	
+		this.rs = this.stmt.executeQuery("SELECT id, INET_NTOA(ipv4), INET6_NTOA(ipv6) FROM testWL5787");
+		int i = 0;
+		while (this.rs.next()) {
+			i = this.rs.getInt(1);
+			assertEquals("Wrong IPv4 data in row [" + i + "].", dataExpected[i - 1][0], this.rs.getString(2));
+			assertEquals("Wrong IPv6 data in row [" + i + "].", dataExpected[i - 1][1], this.rs.getString(3));
+		}
 	}
 }
