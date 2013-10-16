@@ -132,7 +132,11 @@ public class MysqlIO {
     protected final static String ZERO_DATE_VALUE_MARKER = "0000-00-00";
     protected final static String ZERO_DATETIME_VALUE_MARKER = "0000-00-00 00:00:00";
 
-    static {
+    private static final String EXPLAINABLE_STATEMENT = "SELECT";
+	private static final String[] EXPLAINABLE_STATEMENT_EXTENSION = new String[] { "INSERT", "UPDATE", "REPLACE",
+			"DELETE" };
+
+	static {
         OutputStreamWriter outWriter = null;
 
         //
@@ -992,7 +996,9 @@ public class MysqlIO {
      */
     protected void explainSlowQuery(byte[] querySQL, String truncatedQuery)
         throws SQLException {
-        if (StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, "SELECT")) { //$NON-NLS-1$
+		if (StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery, EXPLAINABLE_STATEMENT)
+				|| (versionMeetsMinimum(5, 6, 3) && StringUtils.startsWithIgnoreCaseAndWs(truncatedQuery,
+						EXPLAINABLE_STATEMENT_EXTENSION) != -1)) {
 
             PreparedStatement stmt = null;
             java.sql.ResultSet rs = null;
@@ -1019,7 +1025,6 @@ public class MysqlIO {
                     stmt.close();
                 }
             }
-        } else {
         }
     }
 

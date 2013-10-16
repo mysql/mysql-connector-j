@@ -6906,4 +6906,108 @@ public class StatementRegressionTest extends BaseTestCase {
 
 	}
 
+	/**
+	 * WL#4897 - Add EXPLAIN INSERT/UPDATE/DELETE
+	 * 
+	 * Added support for EXPLAIN INSERT/REPLACE/UPDATE/DELETE. Connector/J must issue a warning containing the execution
+	 * plan for slow queries when connection properties logSlowQueries=true and explainSlowQueries=true are used.
+	 * 
+	 * @throws SQLException
+	 */
+	public void testExecutionPlanForSlowQueries() throws Exception {
+		// once slow query (with execution plan) warning is sent to System.err, we capture messages sent here to check
+		// proper operation.
+		final class TestHandler {
+			// System.err diversion handling
+			PrintStream systemErrBackup = null;
+			ByteArrayOutputStream systemErrDetour = null;
+
+			// Connection handling
+			Connection testConn = null;
+
+			TestHandler() {
+				systemErrBackup = System.err;
+				systemErrDetour = new ByteArrayOutputStream(8192);
+				System.setErr(new PrintStream(systemErrDetour));
+			}
+
+			boolean containsSlowQueryMsg(String lookFor) {
+				String errMsg = systemErrDetour.toString();
+				boolean found = false;
+
+				if (errMsg.indexOf("Slow query explain results for '" + lookFor + "'") != -1) {
+					found = true;
+				}
+				systemErrDetour.reset();
+				// print message in original OutputStream.
+				systemErrBackup.print(errMsg);
+				return found;
+			}
+
+			void undoSystemErrDiversion() throws IOException {
+				systemErrBackup.print(systemErrDetour.toString());
+				systemErrDetour.close();
+				System.setErr(systemErrBackup);
+				systemErrDetour = null;
+				systemErrBackup = null;
+			}
+
+			@SuppressWarnings("synthetic-access")
+			Connection getNewConnectionForSlowQueries() throws SQLException {
+				releaseConnectionResources();
+				testConn = getConnectionWithProps("logSlowQueries=true,explainSlowQueries=true");
+				Statement st = testConn.createStatement();
+				// execute several fast queries to unlock slow query analysis and lower query execution time mean
+				for (int i = 0; i < 25; i++) {
+					st.executeQuery("SELECT 1");
+				}
+				return testConn;
+			}
+
+			void releaseConnectionResources() throws SQLException {
+				if (testConn != null) {
+					testConn.close();
+					testConn = null;
+				}
+			}
+		}
+
+		TestHandler testHandler = new TestHandler();
+		Statement testStatement = null;
+		
+		try {
+			if (versionMeetsMinimum(5, 6, 3)) {
+				createTable("testWL4897", "(f1 INT NOT NULL PRIMARY KEY, f2 CHAR(50))");
+
+				// when executed in the following sequence, each one of these queries take approximately 1 sec.
+				final String[] slowQueries = {
+						"INSERT INTO testWL4897 VALUES (SLEEP(0.5) + 1, 'MySQL'), (SLEEP(0.5) + 2, 'Connector/J')",
+						"SELECT * FROM testWL4897 WHERE f1 + SLEEP(0.5) = f1",
+						"REPLACE INTO testWL4897 VALUES (SLEEP(0.33) + 2, 'Database'), (SLEEP(0.33) + 3, 'Connector'), (SLEEP(0.33) + 4, 'Java')",
+						"UPDATE testWL4897 SET f1 = f1 * 10 + SLEEP(0.25)",
+						"DELETE FROM testWL4897 WHERE f1 + SLEEP(0.25) = f1" };
+
+				for (String query : slowQueries) {
+					testStatement = testHandler.getNewConnectionForSlowQueries().createStatement();
+					testStatement.execute(query);
+					assertTrue("A slow query explain results warning should have been issued for: '" + query + "'.",
+							testHandler.containsSlowQueryMsg(query));
+					testStatement.close();
+				}
+			} else {
+				// only SELECT is qualified to log slow query explain results warning
+				final String query = "SELECT SLEEP(1)";
+				
+				testStatement = testHandler.getNewConnectionForSlowQueries().createStatement();
+				testStatement.execute(query);
+				assertTrue("A slow query explain results warning should have been issued for: '" + query + "'.",
+						testHandler.containsSlowQueryMsg(query));
+				testStatement.close();
+			}
+
+		} finally {
+			testHandler.releaseConnectionResources();
+			testHandler.undoSystemErrDiversion();
+		}
+	}
 }

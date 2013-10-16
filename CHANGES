@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.27
 
+  - Extended slow query warning with query execution plan for INSERT, REPLACE, UPDATE and DELETE.
+
   - Added tests for IPv6 functions introduced in 5.6GA.
 
   - Added support of authentication data up to 2^64-1 bytes.
