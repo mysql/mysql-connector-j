@@ -601,7 +601,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
 	 */
 	public void testIPv6Functions() throws Exception {
 
-		if (!versionMeetsMinimum(5, 6)) {
+		if (!versionMeetsMinimum(5, 6, 11)) {
+			// MySQL 5.6.11 includes a bug fix (Bug#68454) that is required to run this test successfully.
 			return;
 		}
 
@@ -630,7 +631,7 @@ public class SyntaxRegressionTest extends BaseTestCase {
 				{ null, null }
 		};
 
-		createTable("testWL5787", "(id INT AUTO_INCREMENT PRIMARY KEY,ipv4 INT UNSIGNED, ipv6 VARBINARY(16))");
+		createTable("testWL5787", "(id INT AUTO_INCREMENT PRIMARY KEY, ipv4 INT UNSIGNED, ipv6 VARBINARY(16))");
 
 		this.pstmt = this.conn.prepareStatement("INSERT INTO testWL5787 VALUES (NULL, INET_ATON(?), INET6_ATON(?))");
 		
