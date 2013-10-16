@@ -654,4 +654,48 @@ public class SyntaxRegressionTest extends BaseTestCase {
 			assertEquals("Wrong IPv6 data in row [" + i + "].", dataExpected[i - 1][1], this.rs.getString(3));
 		}
 	}
+
+	/**
+	 * WL#5538 - InnoDB Full-Text Search Support
+	 * 
+	 * CREATE TABLE syntax changed in 5.6GA
+	 * 
+	 * InnoDB engine accepts FULLTEXT indexes.
+	 * CREATE TABLE ... FULLTEXT(...) ... ENGINE=InnoDB
+	 * 
+	 * @throws SQLException
+	 */
+	public void testFULLTEXTSearchInnoDB() throws Exception {
+
+		if (!versionMeetsMinimum(5, 6)) {
+			return;
+		}
+
+		createTable("testFULLTEXTSearchInnoDB", "(id INT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY, "
+				+ "title VARCHAR(200), body TEXT, FULLTEXT (title , body)) ENGINE=InnoDB");
+
+		this.stmt.executeUpdate("INSERT INTO testFULLTEXTSearchInnoDB (title, body) VALUES "
+				+ "('MySQL Tutorial','DBMS stands for DataBase ...'), "
+				+ "('How To Use MySQL Well','After you went through a ...'), "
+				+ "('Optimizing MySQL','In this tutorial we will show ...'), "
+				+ "('1001 MySQL Tricks','1. Never run mysqld as root. 2. ...'), "
+				+ "('MySQL vs. YourSQL','In the following database comparison ...'), "
+				+ "('MySQL Security','When configured properly, MySQL ...')");
+
+		String[] querySamples = new String[] {
+				"SELECT * FROM testFULLTEXTSearchInnoDB WHERE MATCH (title, body) AGAINST ('database' IN NATURAL LANGUAGE MODE)",
+				"SELECT * FROM testFULLTEXTSearchInnoDB WHERE MATCH (title, body) AGAINST ('database' IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)",
+				"SELECT * FROM testFULLTEXTSearchInnoDB WHERE MATCH (title, body) AGAINST ('<MySQL >YourSQL' IN BOOLEAN MODE)",
+				"SELECT * FROM testFULLTEXTSearchInnoDB WHERE MATCH (title, body) AGAINST ('+MySQL -YourSQL' IN BOOLEAN MODE)",
+				"SELECT MATCH (title, body) AGAINST ('database' IN NATURAL LANGUAGE MODE) FROM testFULLTEXTSearchInnoDB",
+				"SELECT MATCH (title, body) AGAINST ('database' IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) FROM testFULLTEXTSearchInnoDB",
+				"SELECT MATCH (title, body) AGAINST ('<MySQL >YourSQL' IN BOOLEAN MODE) FROM testFULLTEXTSearchInnoDB",
+				"SELECT MATCH (title, body) AGAINST ('+MySQL -YourSQL' IN BOOLEAN MODE) FROM testFULLTEXTSearchInnoDB" };
+
+		for (String query : querySamples) {
+			this.rs = this.stmt.executeQuery(query);
+			assertTrue("Query [" + query + "] should return some rows.", this.rs.next());
+			this.rs.close();
+		}
+	}
 }

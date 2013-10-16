@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.27
 
+  - Added tests for InnoDB full-text search support introduced in 5.6GA.
+
   - Extended slow query warning with query execution plan for INSERT, REPLACE, UPDATE and DELETE.
 
   - Added tests for IPv6 functions introduced in 5.6GA.

@@ -529,10 +529,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			JDBC_4_DBMD_SHOW_CTOR = null;
 		}
 		
-		// Current as-of MySQL-5.5.8
 		String[] allMySQLKeywords = new String[] { "ACCESSIBLE", "ADD", "ALL",
 				"ALTER", "ANALYZE", "AND", "AS", "ASC", "ASENSITIVE", "BEFORE",
-				"BETWEEN", "BIGINT", "BINARY", "BLOB", "BOTH", "BY", "CALL",
+				"BETWEEN", "BIGINT", "BINARY", "BLOB", "BOOLEAN", "BOTH", "BY", "CALL",
 				"CASCADE", "CASE", "CHANGE", "CHAR", "CHARACTER", "CHECK",
 				"COLLATE", "COLUMN", "CONDITION", "CONNECTION", "CONSTRAINT",
 				"CONTINUE", "CONVERT", "CREATE", "CROSS", "CURRENT_DATE",
@@ -542,7 +541,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				"DEFAULT", "DELAYED", "DELETE", "DESC", "DESCRIBE",
 				"DETERMINISTIC", "DISTINCT", "DISTINCTROW", "DIV", "DOUBLE",
 				"DROP", "DUAL", "EACH", "ELSE", "ELSEIF", "ENCLOSED",
-				"ESCAPED", "EXISTS", "EXIT", "EXPLAIN", "FALSE", "FETCH",
+				"ESCAPED", "EXISTS", "EXIT", "EXPANSION", "EXPLAIN", "FALSE", "FETCH",
 				"FLOAT", "FLOAT4", "FLOAT8", "FOR", "FORCE", "FOREIGN", "FROM",
 				"FULLTEXT", "GRANT", "GROUP", "HAVING", "HIGH_PRIORITY",
 				"HOUR_MICROSECOND", "HOUR_MINUTE", "HOUR_SECOND", "IF",
@@ -554,10 +553,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				"LOCALTIMESTAMP", "LOCK", "LONG", "LONGBLOB", "LONGTEXT",
 				"LOOP", "LOW_PRIORITY", "MATCH", "MEDIUMBLOB", "MEDIUMINT",
 				"MEDIUMTEXT", "MIDDLEINT", "MINUTE_MICROSECOND",
-				"MINUTE_SECOND", "MOD", "MODIFIES", "NATURAL", "NOT",
+				"MINUTE_SECOND", "MOD", "MODE", "MODIFIES", "NATURAL", "NOT",
 				"NO_WRITE_TO_BINLOG", "NULL", "NUMERIC", "ON", "OPTIMIZE",
 				"OPTION", "OPTIONALLY", "OR", "ORDER", "OUT", "OUTER",
-				"OUTFILE", "PRECISION", "PRIMARY", "PROCEDURE", "PURGE",
+				"OUTFILE", "QUERY", "PRECISION", "PRIMARY", "PROCEDURE", "PURGE",
 				"RANGE", "READ", "READS", "READ_ONLY", "READ_WRITE", "REAL",
 				"REFERENCES", "REGEXP", "RELEASE", "RENAME", "REPEAT",
 				"REPLACE", "REQUIRE", "RESTRICT", "RETURN", "REVOKE", "RIGHT",
