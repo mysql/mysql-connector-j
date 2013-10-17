@@ -5067,7 +5067,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		
 		conn2.close();
 	}
-	
+
 	protected int testServerPrepStmtDeadlockCounter = 0;
 
 	class PollTask implements Runnable {
@@ -5466,4 +5466,62 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * Tests fix for Bug#69452 - Memory size connection property doesn't support large values well
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug69452() throws Exception {
+		String[][] testMemUnits = new String[][] { { "k", "kb", "kB", "K", "Kb", "KB" },
+				{ "m", "mb", "mB", "M", "Mb", "MB" }, { "g", "gb", "gB", "G", "Gb", "GB" } };
+		com.mysql.jdbc.Connection connWithMemProps;
+		long[] memMultiplier = new long[] { 1024, 1024 * 1024, 1024 * 1024 * 1024 };
+
+		// reflection is needed to access protected info from ConnectionPropertiesImpl.largeRowSizeThreshold
+		Field propField = com.mysql.jdbc.ConnectionPropertiesImpl.class.getDeclaredField("largeRowSizeThreshold");
+		propField.setAccessible(true);
+		Class<?> propClass = null;
+		for (Class<?> nestedClass : com.mysql.jdbc.ConnectionPropertiesImpl.class.getDeclaredClasses()) {
+			if (nestedClass.getName().equals("com.mysql.jdbc.ConnectionPropertiesImpl$IntegerConnectionProperty")) {
+				propClass = nestedClass;
+				break;
+			}
+		}
+		Method propMethod = propClass.getDeclaredMethod("getValueAsInt");
+		propMethod.setAccessible(true);
+
+		for (int i = 0; i < testMemUnits.length; i++) {
+			for (int j = 0; j < testMemUnits[i].length; j++) {
+				// testing with memory values under 2GB because higher values aren't supported.
+				connWithMemProps = (com.mysql.jdbc.Connection) getConnectionWithProps(String.format(
+						"blobSendChunkSize=1.2%1$s,largeRowSizeThreshold=1.4%1$s,locatorFetchBufferSize=1.6%1$s",
+						testMemUnits[i][j]));
+
+				// test values of property 'blobSendChunkSize'
+				// 'blobSendChunkSize' is reset if server variable 'max_allowed_packet' is set.
+				// 8203 = ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE + 11 (see also
+				// ConnectionImpl.initializePropsFromServer())
+				int expected = (int) (memMultiplier[i] * 1.2);
+				if (connWithMemProps.getMaxAllowedPacket() != -1) {
+					expected = Math.min(connWithMemProps.getMaxAllowedPacket(), expected) - 8203;
+				}
+				assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'blobSendChunkSize'", expected,
+						connWithMemProps.getBlobSendChunkSize());
+
+				// test values of property 'largeRowSizeThreshold'
+				assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", "1.4"
+						+ testMemUnits[i][j], connWithMemProps.getLargeRowSizeThreshold());
+				assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'",
+						(int) (memMultiplier[i] * 1.4),
+						((Integer) propMethod.invoke(propField.get(connWithMemProps))).intValue());
+
+				// test values of property 'locatorFetchBufferSize'
+				assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'locatorFetchBufferSize'",
+						(int) (memMultiplier[i] * 1.6), connWithMemProps.getLocatorFetchBufferSize());
+
+				connWithMemProps.close();
+			}
+		}
+	}
 }

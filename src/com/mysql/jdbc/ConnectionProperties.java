@@ -733,8 +733,9 @@ public interface ConnectionProperties {
 	 * 
 	 * @param size
 	 *            The callableStatementCacheSize to set.
+	 * @throws SQLException 
 	 */
-	public abstract void setCallableStatementCacheSize(int size);
+	public abstract void setCallableStatementCacheSize(int size) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
@@ -789,8 +790,9 @@ public interface ConnectionProperties {
 	 * DOCUMENT ME!
 	 * 
 	 * @param timeoutMs
+	 * @throws SQLException 
 	 */
-	public abstract void setConnectTimeout(int timeoutMs);
+	public abstract void setConnectTimeout(int timeoutMs) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
@@ -801,7 +803,7 @@ public interface ConnectionProperties {
 
 	public abstract void setCreateDatabaseIfNotExist(boolean flag);
 
-	public abstract void setDefaultFetchSize(int n);
+	public abstract void setDefaultFetchSize(int n) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
@@ -909,8 +911,9 @@ public interface ConnectionProperties {
 	 * DOCUMENT ME!
 	 * 
 	 * @param property
+	 * @throws SQLException 
 	 */
-	public abstract void setInitialTimeout(int property);
+	public abstract void setInitialTimeout(int property) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
@@ -964,22 +967,25 @@ public interface ConnectionProperties {
 	 * 
 	 * @param sizeInBytes
 	 *            The maxQuerySizeToLog to set.
+	 * @throws SQLException 
 	 */
-	public abstract void setMaxQuerySizeToLog(int sizeInBytes);
+	public abstract void setMaxQuerySizeToLog(int sizeInBytes) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
 	 * 
 	 * @param property
+	 * @throws SQLException 
 	 */
-	public abstract void setMaxReconnects(int property);
+	public abstract void setMaxReconnects(int property) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
 	 * 
 	 * @param property
+	 * @throws SQLException 
 	 */
-	public abstract void setMaxRows(int property);
+	public abstract void setMaxRows(int property) throws SQLException;
 
 	/**
 	 * Sets the number of queries that metadata can be cached if caching is
@@ -987,8 +993,9 @@ public interface ConnectionProperties {
 	 * 
 	 * @param value
 	 *            the number of queries to cache metadata for.
+	 * @throws SQLException 
 	 */
-	public abstract void setMetadataCacheSize(int value);
+	public abstract void setMetadataCacheSize(int value) throws SQLException;
 
 	/**
 	 * @param noDatetimeStringSync
@@ -1005,8 +1012,9 @@ public interface ConnectionProperties {
 	 * 
 	 * @param size
 	 *            The packetDebugBufferSize to set.
+	 * @throws SQLException 
 	 */
-	public abstract void setPacketDebugBufferSize(int size);
+	public abstract void setPacketDebugBufferSize(int size) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
@@ -1027,16 +1035,18 @@ public interface ConnectionProperties {
 	 * 
 	 * @param cacheSize
 	 *            The preparedStatementCacheSize to set.
+	 * @throws SQLException 
 	 */
-	public abstract void setPreparedStatementCacheSize(int cacheSize);
+	public abstract void setPreparedStatementCacheSize(int cacheSize) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
 	 * 
 	 * @param cacheSqlLimit
 	 *            The preparedStatementCacheSqlLimit to set.
+	 * @throws SQLException 
 	 */
-	public abstract void setPreparedStatementCacheSqlLimit(int cacheSqlLimit);
+	public abstract void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
@@ -1063,8 +1073,9 @@ public interface ConnectionProperties {
 	 * DOCUMENT ME!
 	 * 
 	 * @param property
+	 * @throws SQLException 
 	 */
-	public abstract void setQueriesBeforeRetryMaster(int property);
+	public abstract void setQueriesBeforeRetryMaster(int property) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
@@ -1085,8 +1096,9 @@ public interface ConnectionProperties {
 	 * 
 	 * @param millis
 	 *            The reportMetricsIntervalMillis to set.
+	 * @throws SQLException 
 	 */
-	public abstract void setReportMetricsIntervalMillis(int millis);
+	public abstract void setReportMetricsIntervalMillis(int millis) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
@@ -1121,8 +1133,9 @@ public interface ConnectionProperties {
 	 * DOCUMENT ME!
 	 * 
 	 * @param property
+	 * @throws SQLException 
 	 */
-	public abstract void setSecondsBeforeRetryMaster(int property);
+	public abstract void setSecondsBeforeRetryMaster(int property) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
@@ -1143,8 +1156,9 @@ public interface ConnectionProperties {
 	 * 
 	 * @param millis
 	 *            The slowQueryThresholdMillis to set.
+	 * @throws SQLException 
 	 */
-	public abstract void setSlowQueryThresholdMillis(int millis);
+	public abstract void setSlowQueryThresholdMillis(int millis) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
@@ -1157,8 +1171,9 @@ public interface ConnectionProperties {
 	 * DOCUMENT ME!
 	 * 
 	 * @param property
+	 * @throws SQLException 
 	 */
-	public abstract void setSocketTimeout(int property);
+	public abstract void setSocketTimeout(int property) throws SQLException;
 
 	/**
 	 * DOCUMENT ME!
@@ -1399,15 +1414,15 @@ public interface ConnectionProperties {
 
 	public abstract boolean getCachePrepStmts();
 
-	public abstract void setCallableStmtCacheSize(int cacheSize);
+	public abstract void setCallableStmtCacheSize(int cacheSize) throws SQLException;
 
 	public abstract int getCallableStmtCacheSize();
 
-	public abstract void setPrepStmtCacheSize(int cacheSize);
+	public abstract void setPrepStmtCacheSize(int cacheSize) throws SQLException;
 
 	public abstract int getPrepStmtCacheSize();
 
-	public abstract void setPrepStmtCacheSqlLimit(int sqlLimit);
+	public abstract void setPrepStmtCacheSqlLimit(int sqlLimit) throws SQLException;
 
 	public abstract int getPrepStmtCacheSqlLimit();
 
@@ -1473,11 +1488,11 @@ public interface ConnectionProperties {
 
 	public abstract int getResultSetSizeThreshold();
 
-	public abstract void setResultSetSizeThreshold(int threshold);
+	public abstract void setResultSetSizeThreshold(int threshold) throws SQLException;
 
 	public abstract int getNetTimeoutForStreamingResults();
 
-	public abstract void setNetTimeoutForStreamingResults(int value);
+	public abstract void setNetTimeoutForStreamingResults(int value) throws SQLException;
 
 	public abstract boolean getEnableQueryTimeouts();
 
@@ -1513,15 +1528,15 @@ public interface ConnectionProperties {
 
 	public abstract int getTcpRcvBuf();
 
-	public abstract void setTcpRcvBuf(int bufSize);
+	public abstract void setTcpRcvBuf(int bufSize) throws SQLException;
 
 	public abstract int getTcpSndBuf();
 	
-	public abstract void setTcpSndBuf(int bufSize);
+	public abstract void setTcpSndBuf(int bufSize) throws SQLException;
 
 	public abstract int getTcpTrafficClass();
 
-	public abstract void setTcpTrafficClass(int classFlags);
+	public abstract void setTcpTrafficClass(int classFlags) throws SQLException;
 	
 	public abstract boolean getUseNanosForElapsedTime();
 
@@ -1529,7 +1544,7 @@ public interface ConnectionProperties {
 
 	public abstract long getSlowQueryThresholdNanos();
 
-	public abstract void setSlowQueryThresholdNanos(long nanos);
+	public abstract void setSlowQueryThresholdNanos(long nanos) throws SQLException;
 	
 	public abstract String getStatementInterceptors();
 
@@ -1541,7 +1556,7 @@ public interface ConnectionProperties {
 	
 	public abstract String getLargeRowSizeThreshold();
 
-	public abstract void setLargeRowSizeThreshold(String value);
+	public abstract void setLargeRowSizeThreshold(String value) throws SQLException;
 	
 	public abstract boolean getUseBlobToStoreUTF8OutsideBMP();
 
@@ -1597,11 +1612,11 @@ public interface ConnectionProperties {
 	
 	public abstract int getSelfDestructOnPingSecondsLifetime();
 
-	public abstract void setSelfDestructOnPingSecondsLifetime(int seconds);
+	public abstract void setSelfDestructOnPingSecondsLifetime(int seconds) throws SQLException;
 
 	public abstract int getSelfDestructOnPingMaxOperations();
 
-	public abstract void setSelfDestructOnPingMaxOperations(int maxOperations);
+	public abstract void setSelfDestructOnPingMaxOperations(int maxOperations) throws SQLException;
 	
 	public abstract boolean getUseColumnNamesInFindColumn();
 
@@ -1625,9 +1640,9 @@ public interface ConnectionProperties {
 	
 	public abstract int getLoadBalanceBlacklistTimeout();
 
-	public abstract void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout);
+	public abstract void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) throws SQLException;
 	
-	public abstract void setRetriesAllDown(int retriesAllDown);
+	public abstract void setRetriesAllDown(int retriesAllDown) throws SQLException;
 	
 	public abstract int getRetriesAllDown();
 
@@ -1648,7 +1663,7 @@ public interface ConnectionProperties {
    
 	public abstract int getLoadBalancePingTimeout();
 
-	public abstract void setLoadBalancePingTimeout(int loadBalancePingTimeout);
+	public abstract void setLoadBalancePingTimeout(int loadBalancePingTimeout) throws SQLException;
 
 	public abstract boolean getLoadBalanceValidateConnectionOnSwapServer();
 	
@@ -1674,7 +1689,7 @@ public interface ConnectionProperties {
 
 	public abstract void setLoadBalanceEnableJMX(boolean loadBalanceEnableJMX);	
 	
-	public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold);
+	public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) throws SQLException;
 	
 	public int getLoadBalanceAutoCommitStatementThreshold();
 

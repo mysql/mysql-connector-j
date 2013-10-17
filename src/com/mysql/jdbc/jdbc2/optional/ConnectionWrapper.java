@@ -1883,11 +1883,11 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setCacheServerConfiguration(flag);
 	}
 
-	public void setCallableStatementCacheSize(int size) {
+	public void setCallableStatementCacheSize(int size) throws SQLException {
 		this.mc.setCallableStatementCacheSize(size);
 	}
 
-	public void setCallableStmtCacheSize(int cacheSize) {
+	public void setCallableStmtCacheSize(int cacheSize) throws SQLException {
 		this.mc.setCallableStmtCacheSize(cacheSize);
 	}
 
@@ -1931,7 +1931,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setClobberStreamingResults(flag);
 	}
 
-	public void setConnectTimeout(int timeoutMs) {
+	public void setConnectTimeout(int timeoutMs) throws SQLException {
 		this.mc.setConnectTimeout(timeoutMs);
 	}
 
@@ -1951,7 +1951,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setCreateDatabaseIfNotExist(flag);
 	}
 
-	public void setDefaultFetchSize(int n) {
+	public void setDefaultFetchSize(int n) throws SQLException {
 		this.mc.setDefaultFetchSize(n);
 	}
 
@@ -2039,7 +2039,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setIncludeInnodbStatusInDeadlockExceptions(flag);
 	}
 
-	public void setInitialTimeout(int property) {
+	public void setInitialTimeout(int property) throws SQLException {
 		this.mc.setInitialTimeout(property);
 	}
 
@@ -2061,7 +2061,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 				.setJdbcCompliantTruncationForReads(jdbcCompliantTruncationForReads);
 	}
 
-	public void setLargeRowSizeThreshold(String value) {
+	public void setLargeRowSizeThreshold(String value) throws SQLException {
 		this.mc.setLargeRowSizeThreshold(value);
 	}
 
@@ -2097,23 +2097,23 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setMaintainTimeStats(flag);
 	}
 
-	public void setMaxQuerySizeToLog(int sizeInBytes) {
+	public void setMaxQuerySizeToLog(int sizeInBytes) throws SQLException {
 		this.mc.setMaxQuerySizeToLog(sizeInBytes);
 	}
 
-	public void setMaxReconnects(int property) {
+	public void setMaxReconnects(int property) throws SQLException {
 		this.mc.setMaxReconnects(property);
 	}
 
-	public void setMaxRows(int property) {
+	public void setMaxRows(int property) throws SQLException {
 		this.mc.setMaxRows(property);
 	}
 
-	public void setMetadataCacheSize(int value) {
+	public void setMetadataCacheSize(int value) throws SQLException {
 		this.mc.setMetadataCacheSize(value);
 	}
 
-	public void setNetTimeoutForStreamingResults(int value) {
+	public void setNetTimeoutForStreamingResults(int value) throws SQLException {
 		this.mc.setNetTimeoutForStreamingResults(value);
 	}
 
@@ -2141,7 +2141,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setOverrideSupportsIntegrityEnhancementFacility(flag);
 	}
 
-	public void setPacketDebugBufferSize(int size) {
+	public void setPacketDebugBufferSize(int size) throws SQLException {
 		this.mc.setPacketDebugBufferSize(size);
 	}
 
@@ -2165,19 +2165,19 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setPopulateInsertRowWithDefaultValues(flag);
 	}
 
-	public void setPrepStmtCacheSize(int cacheSize) {
+	public void setPrepStmtCacheSize(int cacheSize) throws SQLException {
 		this.mc.setPrepStmtCacheSize(cacheSize);
 	}
 
-	public void setPrepStmtCacheSqlLimit(int sqlLimit) {
+	public void setPrepStmtCacheSqlLimit(int sqlLimit) throws SQLException {
 		this.mc.setPrepStmtCacheSqlLimit(sqlLimit);
 	}
 
-	public void setPreparedStatementCacheSize(int cacheSize) {
+	public void setPreparedStatementCacheSize(int cacheSize) throws SQLException {
 		this.mc.setPreparedStatementCacheSize(cacheSize);
 	}
 
-	public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) {
+	public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) throws SQLException {
 		this.mc.setPreparedStatementCacheSqlLimit(cacheSqlLimit);
 	}
 
@@ -2197,7 +2197,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setPropertiesTransform(value);
 	}
 
-	public void setQueriesBeforeRetryMaster(int property) {
+	public void setQueriesBeforeRetryMaster(int property) throws SQLException {
 		this.mc.setQueriesBeforeRetryMaster(property);
 	}
 
@@ -2209,7 +2209,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setRelaxAutoCommit(property);
 	}
 
-	public void setReportMetricsIntervalMillis(int millis) {
+	public void setReportMetricsIntervalMillis(int millis) throws SQLException {
 		this.mc.setReportMetricsIntervalMillis(millis);
 	}
 
@@ -2221,7 +2221,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setResourceId(resourceId);
 	}
 
-	public void setResultSetSizeThreshold(int threshold) {
+	public void setResultSetSizeThreshold(int threshold) throws SQLException {
 		this.mc.setResultSetSizeThreshold(threshold);
 	}
 
@@ -2245,7 +2245,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setRunningCTS13(flag);
 	}
 
-	public void setSecondsBeforeRetryMaster(int property) {
+	public void setSecondsBeforeRetryMaster(int property) throws SQLException {
 		this.mc.setSecondsBeforeRetryMaster(property);
 	}
 
@@ -2257,11 +2257,11 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setSessionVariables(variables);
 	}
 
-	public void setSlowQueryThresholdMillis(int millis) {
+	public void setSlowQueryThresholdMillis(int millis) throws SQLException {
 		this.mc.setSlowQueryThresholdMillis(millis);
 	}
 
-	public void setSlowQueryThresholdNanos(long nanos) {
+	public void setSlowQueryThresholdNanos(long nanos) throws SQLException {
 		this.mc.setSlowQueryThresholdNanos(nanos);
 	}
 
@@ -2273,7 +2273,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setSocketFactoryClassName(property);
 	}
 
-	public void setSocketTimeout(int property) {
+	public void setSocketTimeout(int property) throws SQLException {
 		this.mc.setSocketTimeout(property);
 	}
 
@@ -2297,15 +2297,15 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setTcpNoDelay(flag);
 	}
 
-	public void setTcpRcvBuf(int bufSize) {
+	public void setTcpRcvBuf(int bufSize) throws SQLException {
 		this.mc.setTcpRcvBuf(bufSize);
 	}
 
-	public void setTcpSndBuf(int bufSize) {
+	public void setTcpSndBuf(int bufSize) throws SQLException {
 		this.mc.setTcpSndBuf(bufSize);
 	}
 
-	public void setTcpTrafficClass(int classFlags) {
+	public void setTcpTrafficClass(int classFlags) throws SQLException {
 		this.mc.setTcpTrafficClass(classFlags);
 	}
 
@@ -2517,11 +2517,11 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		return this.mc.getSelfDestructOnPingSecondsLifetime();
 	}
 
-	public void setSelfDestructOnPingMaxOperations(int maxOperations) {
+	public void setSelfDestructOnPingMaxOperations(int maxOperations) throws SQLException {
 		this.mc.setSelfDestructOnPingMaxOperations(maxOperations);
 	}
 
-	public void setSelfDestructOnPingSecondsLifetime(int seconds) {
+	public void setSelfDestructOnPingSecondsLifetime(int seconds) throws SQLException {
 		this.mc.setSelfDestructOnPingSecondsLifetime(seconds);
 	}
 
@@ -2573,14 +2573,14 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		return this.mc.getLoadBalanceBlacklistTimeout();
 	}
 
-	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
+	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) throws SQLException {
 		this.mc.setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
 	}
 	public int getLoadBalancePingTimeout() {
 		return this.mc.getLoadBalancePingTimeout();
 	}
 
-	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) {
+	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) throws SQLException {
 		this.mc.setLoadBalancePingTimeout(loadBalancePingTimeout);
 	}
 	
@@ -2593,7 +2593,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 		this.mc.setLoadBalanceValidateConnectionOnSwapServer(loadBalanceValidateConnectionOnSwapServer);
 	}
 	
-	public void setRetriesAllDown(int retriesAllDown) {
+	public void setRetriesAllDown(int retriesAllDown) throws SQLException {
 		this.mc.setRetriesAllDown(retriesAllDown);
 	}
 	
@@ -2718,7 +2718,7 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	}
 
 	public void setLoadBalanceAutoCommitStatementThreshold(
-			int loadBalanceAutoCommitStatementThreshold) {
+			int loadBalanceAutoCommitStatementThreshold) throws SQLException {
 		this.mc.setLoadBalanceAutoCommitStatementThreshold(loadBalanceAutoCommitStatementThreshold);
 		
 	}

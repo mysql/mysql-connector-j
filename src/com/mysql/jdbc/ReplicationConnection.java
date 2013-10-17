@@ -2652,7 +2652,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 		return getCurrentConnection().getLoadBalanceBlacklistTimeout();
 	}
 
-	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
+	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) throws SQLException {
 		getCurrentConnection().setLoadBalanceBlacklistTimeout(loadBalanceBlacklistTimeout);
 	}
 	
@@ -2660,7 +2660,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 		return getCurrentConnection().getLoadBalancePingTimeout();
 	}
 
-	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) {
+	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) throws SQLException {
 		getCurrentConnection().setLoadBalancePingTimeout(loadBalancePingTimeout);
 	}
 	
@@ -2676,7 +2676,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 		return getCurrentConnection().getRetriesAllDown();
 	}
 
-	public void setRetriesAllDown(int retriesAllDown) {
+	public void setRetriesAllDown(int retriesAllDown) throws SQLException {
 		getCurrentConnection().setRetriesAllDown(retriesAllDown);
 	}
 
@@ -2801,7 +2801,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 
 	public void setLoadBalanceAutoCommitStatementThreshold(
-			int loadBalanceAutoCommitStatementThreshold) {
+			int loadBalanceAutoCommitStatementThreshold) throws SQLException {
 		getCurrentConnection().setLoadBalanceAutoCommitStatementThreshold(loadBalanceAutoCommitStatementThreshold);
 		
 	}

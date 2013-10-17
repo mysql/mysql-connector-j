@@ -6097,8 +6097,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			executor.execute(new Runnable() {
 	
 				public void run() {
-					setSocketTimeout(milliseconds); // for re-connects
 					try {
+						setSocketTimeout(milliseconds); // for re-connects
 						mysqlIo.setSocketTimeout(milliseconds);
 					} catch (SQLException e) {
 						throw new RuntimeException(e);
