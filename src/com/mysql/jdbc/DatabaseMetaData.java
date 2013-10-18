@@ -426,13 +426,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	/**
 	 * Helper class to provide means of comparing indexes by NON_UNIQUE, TYPE, INDEX_NAME, and ORDINAL_POSITION.
 	 */
-	protected class IndexInfoKeyComparable implements Comparable<IndexInfoKeyComparable> {
+	protected class IndexMetaDataKey implements Comparable<IndexMetaDataKey> {
 		Boolean columnNonUnique;
 		Short columnType;
 		String columnIndexName;
 		Short columnOrdinalPosition;
 
-		IndexInfoKeyComparable(boolean columnNonUnique, short columnType, String columnIndexName,
+		IndexMetaDataKey(boolean columnNonUnique, short columnType, String columnIndexName,
 				short columnOrdinalPosition) {
 			this.columnNonUnique = columnNonUnique;
 			this.columnType = columnType;
@@ -440,7 +440,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			this.columnOrdinalPosition = columnOrdinalPosition;
 		}
 
-		public int compareTo(IndexInfoKeyComparable indexInfoKey) {
+		public int compareTo(IndexMetaDataKey indexInfoKey) {
 			int compareResult;
 
 			if ((compareResult = columnNonUnique.compareTo(indexInfoKey.columnNonUnique)) != 0) {
@@ -454,8 +454,138 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 			return columnOrdinalPosition.compareTo(indexInfoKey.columnOrdinalPosition);
 		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == null) {
+				return false;
+			}
+
+			if (obj == this) {
+				return true;
+			}
+
+			if (!(obj instanceof IndexMetaDataKey)) {
+				return false;
+			}
+			return compareTo((IndexMetaDataKey) obj) == 0;
+		}
 	}
 	
+	/**
+	 * Helper class to provide means of comparing tables by TABLE_TYPE, TABLE_CAT, TABLE_SCHEM and TABLE_NAME.
+	 */
+	protected class TableMetaDataKey implements Comparable<TableMetaDataKey> {
+		String tableType;
+		String tableCat;
+		String tableSchem;
+		String tableName;
+
+		TableMetaDataKey(String tableType, String tableCat, String tableSchem, String tableName) {
+			this.tableType = tableType == null ? "" : tableType;
+			this.tableCat = tableCat == null ? "" : tableCat;
+			this.tableSchem = tableSchem == null ? "" : tableSchem;
+			this.tableName = tableName == null ? "" : tableName;
+		}
+
+		public int compareTo(TableMetaDataKey tablesKey) {
+			int compareResult;
+
+			if ((compareResult = tableType.compareTo(tablesKey.tableType)) != 0) {
+				return compareResult;
+			}
+			if ((compareResult = tableCat.compareTo(tablesKey.tableCat)) != 0) {
+				return compareResult;
+			}
+			if ((compareResult = tableSchem.compareTo(tablesKey.tableSchem)) != 0) {
+				return compareResult;
+			}
+			return tableName.compareTo(tablesKey.tableName);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == null) {
+				return false;
+			}
+
+			if (obj == this) {
+				return true;
+			}
+
+			if (!(obj instanceof TableMetaDataKey)) {
+				return false;
+			}
+			return compareTo((TableMetaDataKey) obj) == 0;
+		}
+	}
+
+	/**
+	 * Enumeration for Table Types
+	 */
+	protected enum TableType {
+		LOCAL_TEMPORARY("LOCAL TEMPORARY"), SYSTEM_TABLE("SYSTEM TABLE"), SYSTEM_VIEW("SYSTEM VIEW"), TABLE("TABLE",
+				new String[] { "BASE TABLE" }), VIEW("VIEW"), UNKNOWN("UNKNOWN");
+
+		private String name;
+		private byte[] nameAsBytes;
+		private String[] synonyms;
+
+		TableType(String tableTypeName) {
+			this(tableTypeName, null);
+		}
+
+		TableType(String tableTypeName, String[] tableTypeSynonyms) {
+			name = tableTypeName;
+			nameAsBytes = tableTypeName.getBytes();
+			synonyms = tableTypeSynonyms;
+		}
+
+		String getName() {
+			return name;
+		}
+		
+		byte[] asBytes() {
+			return nameAsBytes;
+		}
+
+		boolean equalsTo(String tableTypeName) {
+			return name.equalsIgnoreCase(tableTypeName);
+		}
+
+		static TableType getTableTypeEqualTo(String tableTypeName) {
+			for (TableType tableType : TableType.values()) {
+				if (tableType.equalsTo(tableTypeName)) {
+					return tableType;
+				}
+			}
+			return UNKNOWN;
+		}
+		
+		boolean compliesWith(String tableTypeName) {
+			if (equalsTo(tableTypeName)) {
+				return true;
+			}
+			if (synonyms != null) {
+				for (String synonym : synonyms) {
+					if (synonym.equalsIgnoreCase(tableTypeName)) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		static TableType getTableTypeCompliantWith(String tableTypeName) {
+			for (TableType tableType : TableType.values()) {
+				if (tableType.compliesWith(tableTypeName)) {
+					return tableType;
+				}
+			}
+			return UNKNOWN;
+		}
+	}
+
 	private static String mysqlKeywordsThatArentSQL92;
 	
 	protected static final int MAX_IDENTIFIER_LENGTH = 64;
@@ -493,14 +623,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	/** The table type for generic tables that support foreign keys. */
 	private static final String SUPPORTS_FK = "SUPPORTS_FK";
 
-	protected static final byte[] TABLE_AS_BYTES = "TABLE".getBytes();
-
-	protected static final byte[] SYSTEM_TABLE_AS_BYTES = "SYSTEM TABLE".getBytes();
-	
 	private static final int UPDATE_RULE = 9;
 
-	protected static final byte[] VIEW_AS_BYTES = "VIEW".getBytes();
-	
 	private static final Constructor<?> JDBC_4_DBMD_SHOW_CTOR;
 	
 	private static final Constructor<?> JDBC_4_DBMD_IS_CTOR;
@@ -3620,7 +3744,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 		Field[] fields = createIndexInfoFields();
 
-		final SortedMap<IndexInfoKeyComparable, ResultSetRow> sortedRows = new TreeMap<IndexInfoKeyComparable, ResultSetRow>();
+		final SortedMap<IndexMetaDataKey, ResultSetRow> sortedRows = new TreeMap<IndexMetaDataKey, ResultSetRow>();
 		final ArrayList<ResultSetRow> rows = new ArrayList<ResultSetRow>();
 		final Statement stmt = this.conn.getMetadataSafeStatement();
 
@@ -3687,7 +3811,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							row[11] = s2b("0");
 							row[12] = null;
 
-							IndexInfoKeyComparable indexInfoKey = new IndexInfoKeyComparable(!indexIsUnique, indexType,
+							IndexMetaDataKey indexInfoKey = new IndexMetaDataKey(!indexIsUnique, indexType,
 									results.getString("Key_name").toLowerCase(), results.getShort("Seq_in_index"));
 							
 							if (unique) {
@@ -5048,6 +5172,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 		}
 
+		final SortedMap<TableMetaDataKey, ResultSetRow> sortedRows = new TreeMap<TableMetaDataKey, ResultSetRow>();
 		final ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
 
 		final Statement stmt = this.conn.getMetadataSafeStatement();
@@ -5072,64 +5197,59 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			tableNamePat = tableNamePattern;
 		}
 
-		final boolean operatingOnInformationSchema = "information_schema".equalsIgnoreCase(catalog);
-		
 		try {
-
 			new IterateBlock<String>(getCatalogIterator(catalog)) {
 				void forEach(String catalogStr) throws SQLException {
+					boolean operatingOnSystemDB = "information_schema".equalsIgnoreCase(catalogStr)
+							|| "mysql".equalsIgnoreCase(catalogStr)
+							|| "performance_schema".equalsIgnoreCase(catalogStr);
+
 					ResultSet results = null;
 
 					try {
 
-						if (!conn.versionMeetsMinimum(5, 0, 2)) {
-							try {
-								results = stmt
-									.executeQuery("SHOW TABLES FROM "
-											+ StringUtils.quoteIdentifier(catalogStr, conn.getPedantic())
-											+ " LIKE '" + tableNamePat + "'");
-							} catch (SQLException sqlEx) {
-								if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
-									throw sqlEx;
-								}
-								
-								return;
+						try {
+							results = stmt.executeQuery((!conn.versionMeetsMinimum(5, 0, 2) ? "SHOW TABLES FROM "
+									: "SHOW FULL TABLES FROM ")
+									+ StringUtils.quoteIdentifier(catalogStr, conn.getPedantic())
+									+ " LIKE '"
+									+ tableNamePat + "'");
+						} catch (SQLException sqlEx) {
+							if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
+								throw sqlEx;
 							}
-						} else {
-							try {
-								results = stmt
-									.executeQuery("SHOW FULL TABLES FROM "
-											+ StringUtils.quoteIdentifier(catalogStr, conn.getPedantic())
-											+ " LIKE '" + tableNamePat + "'");
-							} catch (SQLException sqlEx) {
-								if (SQLError.SQL_STATE_COMMUNICATION_LINK_FAILURE.equals(sqlEx.getSQLState())) {
-									throw sqlEx;
-								}
-								
-								return;
-							}
+
+							return;
 						}
 
 						boolean shouldReportTables = false;
 						boolean shouldReportViews = false;
 						boolean shouldReportSystemTables = false;
+						boolean shouldReportSystemViews = false;
+						boolean shouldReportLocalTemporaries = false;
 						
 						if (types == null || types.length == 0) {
 							shouldReportTables = true;
 							shouldReportViews = true;
 							shouldReportSystemTables = true;
+							shouldReportSystemViews = true;
+							shouldReportLocalTemporaries = true;
 						} else {
 							for (int i = 0; i < types.length; i++) {
-								if ("TABLE".equalsIgnoreCase(types[i])) {
+								if (TableType.TABLE.equalsTo(types[i])) {
 									shouldReportTables = true;
-								}
 
-								if ("VIEW".equalsIgnoreCase(types[i])) {
+								} else if (TableType.VIEW.equalsTo(types[i])) {
 									shouldReportViews = true;
-								}
-								
-								if ("SYSTEM TABLE".equalsIgnoreCase(types[i])) {
+
+								} else if (TableType.SYSTEM_TABLE.equalsTo(types[i])) {
 									shouldReportSystemTables = true;
+
+								} else if (TableType.SYSTEM_VIEW.equalsTo(types[i])) {
+									shouldReportSystemViews = true;
+
+								} else if (TableType.LOCAL_TEMPORARY.equalsTo(types[i])) {
+									shouldReportLocalTemporaries = true;
 								}
 							}
 						}
@@ -5165,9 +5285,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							}
 						}
 
-						TreeMap<String, byte[][]> tablesOrderedByName = null;
-						TreeMap<String, byte[][]> viewsOrderedByName = null;
-
 						while (results.next()) {
 							byte[][] row = new byte[10][];
 							row[0] = (catalogStr == null) ? null
@@ -5185,90 +5302,79 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 								String tableType = results
 										.getString(typeColumnIndex);
 
-								if (("table".equalsIgnoreCase(tableType) || "base table"
-										.equalsIgnoreCase(tableType))
-										&& shouldReportTables) {
-									boolean reportTable = false;
-									
-									if (!operatingOnInformationSchema && shouldReportTables) {
-										row[3] = TABLE_AS_BYTES;
-										reportTable = true;
-									} else if (operatingOnInformationSchema && shouldReportSystemTables) {
-										row[3] = SYSTEM_TABLE_AS_BYTES;
-										reportTable = true;
-									}
-									
-									if (reportTable) {
-										if (tablesOrderedByName == null) {
-											tablesOrderedByName = new TreeMap<String, byte[][]>();
+								switch (TableType.getTableTypeCompliantWith(tableType)) {
+									case TABLE:
+										boolean reportTable = false;
+										TableMetaDataKey tablesKey = null;
+
+										if (operatingOnSystemDB && shouldReportSystemTables) {
+											row[3] = TableType.SYSTEM_TABLE.asBytes();
+											tablesKey = new TableMetaDataKey(TableType.SYSTEM_TABLE.getName(),
+													catalogStr, null, results.getString(1));
+											reportTable = true;
+
+										} else if (!operatingOnSystemDB && shouldReportTables) {
+											row[3] = TableType.TABLE.asBytes();
+											tablesKey = new TableMetaDataKey(TableType.TABLE.getName(), catalogStr,
+													null, results.getString(1));
+											reportTable = true;
 										}
-	
-										tablesOrderedByName.put(results
-												.getString(1), row);
-									}
-								} else if ("system view".equalsIgnoreCase(tableType) && shouldReportSystemTables) {
-									row[3] = SYSTEM_TABLE_AS_BYTES;
 
-									if (tablesOrderedByName == null) {
-										tablesOrderedByName = new TreeMap<String, byte[][]>();
-									}
+										if (reportTable) {
+											sortedRows.put(tablesKey, new ByteArrayRow(row, getExceptionInterceptor()));
+										}
+										break;
 
-									tablesOrderedByName.put(results
-											.getString(1), row);
-								} else if ("view".equalsIgnoreCase(tableType)
-										&& shouldReportViews) {
-									row[3] = VIEW_AS_BYTES;
+									case VIEW:
+										if (shouldReportViews) {
+											row[3] = TableType.VIEW.asBytes();
+											sortedRows.put(new TableMetaDataKey(TableType.VIEW.getName(),
+													catalogStr, null, results.getString(1)), new ByteArrayRow(row,
+													getExceptionInterceptor()));
+										}
+										break;
 
-									if (viewsOrderedByName == null) {
-										viewsOrderedByName = new TreeMap<String, byte[][]>();
-									}
+									case SYSTEM_TABLE:
+										if (shouldReportSystemTables) {
+											row[3] = TableType.SYSTEM_TABLE.asBytes();
+											sortedRows.put(new TableMetaDataKey(TableType.SYSTEM_TABLE.getName(),
+													catalogStr, null, results.getString(1)), new ByteArrayRow(row,
+													getExceptionInterceptor()));
+										}
+										break;
 
-									viewsOrderedByName.put(
-											results.getString(1), row);
-								} else if (!hasTableTypes) {
-									// punt?
-									row[3] = TABLE_AS_BYTES;
-
-									if (tablesOrderedByName == null) {
-										tablesOrderedByName = new TreeMap<String, byte[][]>();
-									}
-
-									tablesOrderedByName.put(results
-											.getString(1), row);
+									case SYSTEM_VIEW:
+										if (shouldReportSystemViews) {
+											row[3] = TableType.SYSTEM_VIEW.asBytes();
+											sortedRows.put(new TableMetaDataKey(TableType.SYSTEM_VIEW.getName(),
+													catalogStr, null, results.getString(1)), new ByteArrayRow(row,
+													getExceptionInterceptor()));
+										}
+										break;
+										
+									case LOCAL_TEMPORARY:
+										if (shouldReportLocalTemporaries) {
+											row[3] = TableType.LOCAL_TEMPORARY.asBytes();
+											sortedRows.put(new TableMetaDataKey(TableType.LOCAL_TEMPORARY.getName(),
+													catalogStr, null, results.getString(1)), new ByteArrayRow(row,
+													getExceptionInterceptor()));
+										}
+										break;
+										
+									default:
+										row[3] = TableType.TABLE.asBytes();
+										sortedRows.put(new TableMetaDataKey(TableType.TABLE.getName(), catalogStr,
+												null, results.getString(1)), new ByteArrayRow(row,
+												getExceptionInterceptor()));
+										break;
 								}
 							} else {
 								if (shouldReportTables) {
 									// Pre-MySQL-5.0.1, tables only
-									row[3] = TABLE_AS_BYTES;
-
-									if (tablesOrderedByName == null) {
-										tablesOrderedByName = new TreeMap<String, byte[][]>();
-									}
-
-									tablesOrderedByName.put(results
-											.getString(1), row);
+									row[3] = TableType.TABLE.asBytes();
+									sortedRows.put(new TableMetaDataKey(TableType.TABLE.getName(), catalogStr, null,
+											results.getString(1)), new ByteArrayRow(row, getExceptionInterceptor()));
 								}
-							}
-						}
-
-						// They are ordered by TABLE_TYPE,
-						// * TABLE_SCHEM and TABLE_NAME.
-
-						if (tablesOrderedByName != null) {
-							Iterator<byte[][]> tablesIter = tablesOrderedByName.values()
-									.iterator();
-
-							while (tablesIter.hasNext()) {
-								tuples.add(new ByteArrayRow(tablesIter.next(), getExceptionInterceptor()));
-							}
-						}
-
-						if (viewsOrderedByName != null) {
-							Iterator<byte[][]> viewsIter = viewsOrderedByName.values()
-									.iterator();
-
-							while (viewsIter.hasNext()) {
-								tuples.add(new ByteArrayRow(viewsIter.next(), getExceptionInterceptor()));
 							}
 						}
 
@@ -5277,12 +5383,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 							try {
 								results.close();
 							} catch (Exception ex) {
-								;
 							}
 
 							results = null;
 						}
-
 					}
 				}
 			}.doForAll();
@@ -5292,6 +5396,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			}
 		}
 
+		tuples.addAll(sortedRows.values());
 		java.sql.ResultSet tables = buildResultSet(createTablesFields(), tuples);
 
 		return tables;
@@ -5331,22 +5436,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 */
 	public java.sql.ResultSet getTableTypes() throws SQLException {
 		ArrayList<ResultSetRow> tuples = new ArrayList<ResultSetRow>();
-		Field[] fields = new Field[1];
-		fields[0] = new Field("", "TABLE_TYPE", Types.VARCHAR, 5);
+		Field[] fields = new Field[] { new Field("", "TABLE_TYPE", Types.VARCHAR, 256) };
 
-		byte[][] tableTypeRow = new byte[1][];
-		tableTypeRow[0] = TABLE_AS_BYTES;
-		tuples.add(new ByteArrayRow(tableTypeRow, getExceptionInterceptor()));
+		boolean minVersion5_0_1 = this.conn.versionMeetsMinimum(5, 0, 1);
 
-		if (this.conn.versionMeetsMinimum(5, 0, 1)) {
-			byte[][] viewTypeRow = new byte[1][];
-			viewTypeRow[0] = VIEW_AS_BYTES;
-			tuples.add(new ByteArrayRow(viewTypeRow, getExceptionInterceptor()));
+		tuples.add(new ByteArrayRow(new byte[][] { TableType.LOCAL_TEMPORARY.asBytes() }, getExceptionInterceptor()));
+		tuples.add(new ByteArrayRow(new byte[][] { TableType.SYSTEM_TABLE.asBytes() }, getExceptionInterceptor()));
+		if (minVersion5_0_1) {
+			tuples.add(new ByteArrayRow(new byte[][] { TableType.SYSTEM_VIEW.asBytes() }, getExceptionInterceptor()));
 		}
-
-		byte[][] tempTypeRow = new byte[1][];
-		tempTypeRow[0] = s2b("LOCAL TEMPORARY");
-		tuples.add(new ByteArrayRow(tempTypeRow, getExceptionInterceptor()));
+		tuples.add(new ByteArrayRow(new byte[][] { TableType.TABLE.asBytes() }, getExceptionInterceptor()));
+		if (minVersion5_0_1) {
+			tuples.add(new ByteArrayRow(new byte[][] { TableType.VIEW.asBytes() }, getExceptionInterceptor()));
+		}
 
 		return buildResultSet(fields, tuples);
 	}

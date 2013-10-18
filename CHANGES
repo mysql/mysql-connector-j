@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.27
 
+  - Fix for Bug#69290 (16879239), JDBC Table type "SYSTEM TABLE" is used inconsistently.
+
   - Fix for Bug#68562, Combination rewriteBatchedStatements and useAffectedRows not working as expected.
 
   - Fix for Bug#69452 (17015673), memory size connection property doesn't support large values well.

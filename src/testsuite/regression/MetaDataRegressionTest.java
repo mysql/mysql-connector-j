@@ -2366,13 +2366,19 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		}
 
 		this.rs = this.conn.getMetaData().getTables("information_schema",
-				"null", "%", new String[] { "SYSTEM TABLE" });
+				"null", "%", new String[] { "SYSTEM VIEW" });
 		assertTrue(this.rs.next());
+		this.rs = this.conn.getMetaData().getTables("information_schema",
+				"null", "%", new String[] { "SYSTEM TABLE" });
+		assertFalse(this.rs.next());
 		this.rs = this.conn.getMetaData().getTables("information_schema",
 				"null", "%", new String[] { "TABLE" });
 		assertFalse(this.rs.next());
 		this.rs = this.conn.getMetaData().getTables("information_schema",
-				"null", "%", new String[] { "TABLE", "SYSTEM TABLE" });
+				"null", "%", new String[] { "VIEW" });
+		assertFalse(this.rs.next());
+		this.rs = this.conn.getMetaData().getTables("information_schema",
+				"null", "%", new String[] { "SYSTEM TABLE", "SYSTEM VIEW", "TABLE", "VIEW" });
 		assertTrue(this.rs.next());
 		this.rs = this.conn.getMetaData().getColumns("information_schema",
 				null, "TABLES", "%");
@@ -3995,5 +4001,130 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		assertEquals(sd + "-> REMARKS", null, proceduresMD.getString("REMARKS"));
 
 		assertFalse(sd + "no more rows expected.", proceduresMD.next());
+	}
+
+	/**
+	 * Tests fix for BUG#69290 - JDBC Table type "SYSTEM TABLE" is used inconsistently.
+	 * 
+	 * Tests DatabaseMetaData.getTableTypes() and DatabaseMetaData.getTables() against schemas: mysql,
+	 * information_schema, performance_schema, test.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug69290() throws Exception {
+		String[] testStepDescription = new String[] { "MySQL MetaData", "I__S MetaData" };
+		Connection connUseIS = getConnectionWithProps("useInformationSchema=true");
+		Connection connNullAll = getConnectionWithProps("nullCatalogMeansCurrent=false");
+		Connection connUseISAndNullAll = getConnectionWithProps("useInformationSchema=true,nullCatalogMeansCurrent=false");
+
+		Connection[] testConnections = new Connection[] { conn, connUseIS };
+
+		// check table types returned in getTableTypes()
+		final List<String> tableTypes = Arrays.asList(new String[] { "LOCAL TEMPORARY", "SYSTEM TABLE", "SYSTEM VIEW",
+				"TABLE", "VIEW" });
+
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+			rs = testDbMetaData.getTableTypes();
+
+			int idx = 0;
+			while (rs.next()) {
+				String message = testStepDescription[i] + ", table type '" + rs.getString("TABLE_TYPE") + "'";
+				if (idx >= tableTypes.size()) {
+					fail(message + " not expected.");
+				}
+				assertEquals(message, tableTypes.get(idx++), rs.getString("TABLE_TYPE"));
+			}
+		}
+
+		// create table and view in 'test' schema
+		createTable("testBug69290_table", "(c1 INT)");
+		createView("testBug69290_view", "AS SELECT * FROM testBug69290_table WHERE c1 > 1");
+
+		int[][] countResults = new int[][] {{0, 0, 0}, {0, 0, 0}};
+		
+		// check table types returned in getTables() for each catalog/schema
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+
+			// check catalog/schema 'information_schema'
+			rs = testDbMetaData.getTables("information_schema", null, "%", null);
+			while (rs.next()) {
+				assertEquals(testStepDescription[i] + ", 'information_schema' catalog/schema, wrong table type for '"
+						+ rs.getString("TABLE_NAME") + "'.", "SYSTEM VIEW", rs.getString("TABLE_TYPE"));
+				countResults[i][0]++;
+			}
+
+			// check catalog/schema 'mysql'
+			rs = testDbMetaData.getTables("mysql", null, "%", null);
+			while (rs.next()) {
+				assertEquals(
+						testStepDescription[i] + ", 'mysql' catalog/schema, wrong table type for '"
+								+ rs.getString("TABLE_NAME") + "'.", "SYSTEM TABLE", rs.getString("TABLE_TYPE"));
+				countResults[i][1]++;
+			}
+
+			// check catalog/schema 'performance_schema'
+			rs = testDbMetaData.getTables("performance_schema", null, "%", null);
+			while (rs.next()) {
+				assertEquals(testStepDescription[i] + ", 'performance_schema' catalog/schema, wrong table type for '"
+						+ rs.getString("TABLE_NAME") + "'.", "SYSTEM TABLE", rs.getString("TABLE_TYPE"));
+				countResults[i][2]++;
+			}
+
+			// check catalog/schema 'test'
+			rs = testDbMetaData.getTables("test", null, "testBug69290_%", null);
+			assertTrue(testStepDescription[i] + ", 'test' catalog/schema, expected row from getTables().", rs.next());
+			assertEquals(
+					testStepDescription[i] + ", 'test' catalog/schema, wrong table type for '"
+							+ rs.getString("TABLE_NAME") + "'.", "TABLE", rs.getString("TABLE_TYPE"));
+			assertTrue(testStepDescription[i] + ", 'test' catalog/schema, expected row from getTables().", rs.next());
+			assertEquals(
+					testStepDescription[i] + ", 'test' catalog/schema, wrong table type for '"
+							+ rs.getString("TABLE_NAME") + "'.", "VIEW", rs.getString("TABLE_TYPE"));
+		}
+		
+		// compare results count
+		assertTrue("The number of results from getTables() MySQl(" + countResults[0][0] + ") and I__S("
+				+ countResults[1][0] + ") should be the same for 'information_schema' catalog/schema.",
+				countResults[0][0] == countResults[1][0]);
+		assertTrue("The number of results from getTables() MySQl(" + countResults[0][1] + ") and I__S("
+				+ countResults[1][1] + ") should be the same for 'mysql' catalog/schema.",
+				countResults[0][1] == countResults[1][1]);
+		assertTrue("The number of results from getTables() MySQl(" + countResults[0][2] + ") and I__S("
+				+ countResults[1][2] + ") should be the same for 'performance_schema' catalog/schema.",
+				countResults[0][2] == countResults[1][2]);
+
+		testConnections = new Connection[] { connNullAll, connUseISAndNullAll };
+		countResults = new int[][] {{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}};
+		
+		// check table types returned in getTables() for all catalogs/schemas and filter by table type (tested with
+		// property nullCatalogMeansCurrent=false)
+		for (int i = 0; i < testStepDescription.length; i++) {
+			DatabaseMetaData testDbMetaData = testConnections[i].getMetaData();
+			int j = 0;
+			
+			// check table type filters
+			for (String tableType : tableTypes) {
+				rs = testDbMetaData.getTables(null, null, "%", new String[] { tableType });
+				while (rs.next()) {
+					assertEquals(testStepDescription[i] + ", table type filter '" + tableType
+							+ "', wrong table type for '" + rs.getString("TABLE_NAME") + "'.", tableType,
+							rs.getString("TABLE_TYPE"));
+					countResults[i][j]++;
+				}
+				j++;
+			}
+		}
+		
+		// compare results count
+		int i = 0;
+		for (String tableType : tableTypes) {
+			assertTrue("The number of results from getTables() MySQl(" + countResults[0][i] + ") and I__S("
+					+ countResults[1][i] + ") should be the same for '" + tableType + "' table type filter.",
+					countResults[0][i] == countResults[1][i]);
+			i++;
+		}
 	}
 }

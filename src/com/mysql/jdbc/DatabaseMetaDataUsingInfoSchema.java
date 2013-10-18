@@ -1345,7 +1345,8 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 
 		String sql = "SELECT TABLE_SCHEMA AS TABLE_CAT, "
 				+ "NULL AS TABLE_SCHEM, TABLE_NAME, "
-				+ "CASE WHEN TABLE_TYPE='BASE TABLE' THEN 'TABLE' WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, "
+				+ "CASE WHEN TABLE_TYPE='BASE TABLE' THEN CASE WHEN TABLE_SCHEMA = 'mysql' OR TABLE_SCHEMA = 'performance_schema' THEN 'SYSTEM TABLE' ELSE 'TABLE' END "
+				+ "WHEN TABLE_TYPE='TEMPORARY' THEN 'LOCAL_TEMPORARY' ELSE TABLE_TYPE END AS TABLE_TYPE, "
 				+ "TABLE_COMMENT AS REMARKS, NULL AS TYPE_CAT, NULL AS TYPE_SCHEM, NULL AS TYPE_NAME, NULL AS SELF_REFERENCING_COL_NAME, NULL AS REF_GENERATION "
 				+ "FROM INFORMATION_SCHEMA.TABLES WHERE ";
 		
@@ -1353,27 +1354,27 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 		if (catalog != null) {
 			if ((operatingOnInformationSchema) || ((StringUtils.indexOfIgnoreCase(0, catalog, "%") == -1) 
 					&& (StringUtils.indexOfIgnoreCase(0, catalog, "_") == -1))) {
-				sql = sql + "TABLE_SCHEMA = ? AND ";
+				sql += "TABLE_SCHEMA = ? ";
 			} else {
-				sql = sql + "TABLE_SCHEMA LIKE ? AND ";
+				sql += "TABLE_SCHEMA LIKE ? ";
 			}
 			
 		} else {
-			sql = sql + "TABLE_SCHEMA LIKE ? AND ";
+			sql += "TABLE_SCHEMA LIKE ? ";
 		}
 
 		if (tableNamePat != null) {
 			if ((StringUtils.indexOfIgnoreCase(0, tableNamePat, "%") == -1) 
 					&& (StringUtils.indexOfIgnoreCase(0, tableNamePat, "_") == -1)) {
-				sql = sql + "TABLE_NAME = ? AND ";
+				sql += "AND TABLE_NAME = ? ";
 			} else {
-				sql = sql + "TABLE_NAME LIKE ? AND ";
+				sql += "AND TABLE_NAME LIKE ? ";
 			}
 			
 		} else {
-			sql = sql + "TABLE_NAME LIKE ? AND ";
+			sql += "AND TABLE_NAME LIKE ? ";
 		}
-		sql = sql + "TABLE_TYPE IN (?,?,?) ";
+		sql = sql + "HAVING TABLE_TYPE IN (?,?,?,?,?) ";
 		sql = sql + "ORDER BY TABLE_TYPE, TABLE_SCHEMA, TABLE_NAME";
 		try {
 			pStmt = prepareMetaDataSafeStatement(sql);
@@ -1389,25 +1390,20 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 			// This overloading of IN (...) allows us to cache this
 			// prepared statement
 			if (types == null || types.length == 0) {
-				pStmt.setString(3, "BASE TABLE");
-				pStmt.setString(4, "VIEW");
-				pStmt.setString(5, "TEMPORARY");
+				TableType[] tableTypes = TableType.values();
+				for (int i = 0; i < 5; i++) {
+					pStmt.setString(3 + i, tableTypes[i].getName());
+				}
 			} else {
-				pStmt.setNull(3, Types.VARCHAR);
-				pStmt.setNull(4, Types.VARCHAR);
-				pStmt.setNull(5, Types.VARCHAR);
+				for (int i = 0; i < 5; i++) {
+					pStmt.setNull(3 + i, Types.VARCHAR);
+				}
 
+				int idx = 3;
 				for (int i = 0; i < types.length; i++) {
-					if ("TABLE".equalsIgnoreCase(types[i])) {
-						pStmt.setString(3, "BASE TABLE");
-					}
-
-					if ("VIEW".equalsIgnoreCase(types[i])) {
-						pStmt.setString(4, "VIEW");
-					}
-
-					if ("LOCAL TEMPORARY".equalsIgnoreCase(types[i])) {
-						pStmt.setString(5, "TEMPORARY");
+					TableType tableType = TableType.getTableTypeEqualTo(types[i]);
+					if (tableType != TableType.UNKNOWN) {
+						pStmt.setString(idx++, tableType.getName());
 					}
 				}
 			}

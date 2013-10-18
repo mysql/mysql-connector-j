@@ -204,7 +204,16 @@ public abstract class BaseTestCase extends TestCase {
 	protected void dropTable(String tableName) throws SQLException {
 		dropSchemaObject("TABLE", tableName);
 	}
+	
+	protected void createView(String viewName, String columnsAndOtherStuff)
+			throws SQLException {
+		createSchemaObject("VIEW", viewName, columnsAndOtherStuff);
+	}
 
+	protected void dropView(String viewName) throws SQLException {
+		dropSchemaObject("VIEW", viewName);
+	}
+	
 	protected void createDatabase(String databaseName) throws SQLException {
 		createSchemaObject("DATABASE", databaseName, "");
 	}
