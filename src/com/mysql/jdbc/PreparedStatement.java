@@ -1739,10 +1739,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			
 			int[] updateCounts = new int[numBatchedArgs];
 	
-			for (int i = 0; i < this.batchedArgs.size(); i++) {
-				updateCounts[i] = 1;
-			}
-			
 			try {
 				try {
 						batchedStatement = /* FIXME -if we ever care about folks proxying our MySQLConnection */
@@ -1789,7 +1785,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					}
 	
 					try {
-						//updateCountRunningTotal += 
+						updateCountRunningTotal += 
 								batchedStatement.executeUpdate();
 					} catch (SQLException ex) {
 						sqlEx = handleExceptionForBatch(batchCounter - 1,
@@ -1841,7 +1837,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						batchUpdateException.initCause(sqlEx);
 						throw batchUpdateException;
 					}
-					
+
+					for (int j = 0; j < this.batchedArgs.size(); j++) {
+						updateCounts[j] = updateCountRunningTotal;
+					}
 					return updateCounts;
 				} finally {
 					if (batchedStatement != null) {

@@ -3901,9 +3901,9 @@ public class StatementRegressionTest extends BaseTestCase {
 			int[] counts = this.pstmt.executeBatch();
 
 			assertEquals(3, counts.length);
-			assertEquals(1, counts[0]);
-			assertEquals(1, counts[1]);
-			assertEquals(1, counts[2]);
+			assertEquals(3, counts[0]);
+			assertEquals(3, counts[1]);
+			assertEquals(3, counts[2]);
 			assertEquals(true,
 					((com.mysql.jdbc.PreparedStatement) this.pstmt)
 							.canRewriteAsMultiValueInsertAtSqlLevel());
@@ -5341,7 +5341,7 @@ public class StatementRegressionTest extends BaseTestCase {
 				this.stmt.executeUpdate(tablePrimeSql);
 				int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
 
-				// TODO: check server bug#13904273, bug#14598395 to find last affected version
+				// behavior changed by fix of Bug#46675, affects servers starting from 5.5.16 and 5.6.3
 				if (versionMeetsMinimum(5, 5, 16)) {
 					expectedUpdateCount = 1;
 				}
@@ -5389,7 +5389,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			stmt1.execute(sql, Statement.RETURN_GENERATED_KEYS);
 			int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
 
-			// TODO: check server bug#13904273, bug#14598395 to find last affected version
+			// behavior changed by fix of Bug#46675, affects servers starting from 5.5.16 and 5.6.3
 			if (versionMeetsMinimum(5, 5, 16)) {
 				expectedUpdateCount = 1;
 			}
@@ -7010,4 +7010,95 @@ public class StatementRegressionTest extends BaseTestCase {
 			testHandler.undoSystemErrDiversion();
 		}
 	}
+
+	/**
+	 * Tests fix for BUG#68562 - Combination rewriteBatchedStatements and useAffectedRows not working as expected
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug68562() throws Exception {
+		int batchSize = 3;
+		createTable("testBug68562_found", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
+		createTable("testBug68562_affected", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
+
+		// insert the records (no update)
+		int[] foundRows = testBug68562ExecuteBatch(batchSize, false, false, false);
+		for(int foundRow : foundRows) {
+			assertEquals(1, foundRow);
+		}
+		int[] affectedRows = testBug68562ExecuteBatch(batchSize, true, false, false);
+		for(int affectedRow : affectedRows) {
+			assertEquals(1, affectedRow);
+		}
+
+		// update the inserted records with same values
+		foundRows = testBug68562ExecuteBatch(batchSize, false, false, false);
+		for(int foundRow : foundRows) {
+			assertEquals(1, foundRow);
+		}
+		affectedRows = testBug68562ExecuteBatch(batchSize, true, false, false);
+		for(int affectedRow : affectedRows) {
+			assertEquals(0, affectedRow);
+		}
+
+		// update the inserted records with same values REWRITING THE BATCHED STATEMENTS
+		foundRows = testBug68562ExecuteBatch(batchSize, false, true, false);
+		for(int foundRow : foundRows) {
+			assertEquals(batchSize, foundRow);
+		}
+		affectedRows = testBug68562ExecuteBatch(batchSize, true, true, false);
+		for(int affectedRow : affectedRows) {
+			assertEquals(0, affectedRow);
+		}
+
+		// update the inserted records with NEW values REWRITING THE BATCHED STATEMENTS
+		foundRows = testBug68562ExecuteBatch(batchSize, false, true, true);
+		for(int foundRow : foundRows) {
+			assertEquals(2 * batchSize, foundRow);
+		}
+		affectedRows = testBug68562ExecuteBatch(batchSize, true, true, true);
+		for(int affectedRow : affectedRows) {
+			assertEquals(2 * batchSize, affectedRow);
+		}
+	}	
+
+	private int[] testBug68562ExecuteBatch(int batchSize, boolean useAffectedRows, boolean rewriteBatchedStatements, boolean realUpdate) throws ClassNotFoundException, SQLException{
+
+		String tableName="testBug68562";
+
+		Properties properties = new Properties();
+		if (useAffectedRows) {
+			properties.put("useAffectedRows", "true");
+			tableName += "_affected";
+		} else {
+			tableName += "_found";
+		}
+		if(rewriteBatchedStatements) {
+			properties.put("rewriteBatchedStatements", "true");
+		}
+		Connection connection = getConnectionWithProps(properties);    	
+
+		PreparedStatement statement = connection.prepareStatement("INSERT INTO " + tableName +
+				"(id, name, version) VALUES(?,?,?) ON DUPLICATE KEY UPDATE version = " +
+				(realUpdate ?
+						"CONCAT(VALUES(version),'updated'), name = CONCAT(VALUES(name),'updated')" :
+						"VALUES(version), name = VALUES(name)"
+				));
+		for(int i = 0; i < batchSize; i++) {
+			statement.setInt(1, i);
+			statement.setString(2, "name" + i);
+			statement.setString(3, "version" + i);
+			statement.addBatch();
+		}
+
+		int[] affectedRows = statement.executeBatch();
+
+		statement.close();
+		connection.close();
+
+		return affectedRows;
+
+	}
+
 }

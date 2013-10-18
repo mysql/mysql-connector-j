@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.27
 
+  - Fix for Bug#68562, Combination rewriteBatchedStatements and useAffectedRows not working as expected.
+
   - Fix for Bug#69452 (17015673), memory size connection property doesn't support large values well.
 
   - Added tests for InnoDB full-text search support introduced in 5.6GA.
