@@ -7018,6 +7018,12 @@ public class StatementRegressionTest extends BaseTestCase {
 	 *             if the test fails.
 	 */
 	public void testBug68562() throws Exception {
+
+		// 5.1 server returns wrong values for found_rows because Bug#46675 was fixed only for 5.5+
+		if (!versionMeetsMinimum(5, 5)) {
+			return;
+		}
+
 		int batchSize = 3;
 		createTable("testBug68562_found", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
 		createTable("testBug68562_affected", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
