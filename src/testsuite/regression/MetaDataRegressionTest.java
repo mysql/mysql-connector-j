@@ -4017,6 +4017,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		Connection connUseIS = getConnectionWithProps("useInformationSchema=true");
 		Connection connNullAll = getConnectionWithProps("nullCatalogMeansCurrent=false");
 		Connection connUseISAndNullAll = getConnectionWithProps("useInformationSchema=true,nullCatalogMeansCurrent=false");
+		final String testCatalog = conn.getCatalog();
 
 		Connection[] testConnections = new Connection[] { conn, connUseIS };
 
@@ -4038,7 +4039,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 			}
 		}
 
-		// create table and view in 'test' schema
+		// create table and view in '(test)' schema
 		createTable("testBug69290_table", "(c1 INT)");
 		createView("testBug69290_view", "AS SELECT * FROM testBug69290_table WHERE c1 > 1");
 
@@ -4073,15 +4074,15 @@ public class MetaDataRegressionTest extends BaseTestCase {
 				countResults[i][2]++;
 			}
 
-			// check catalog/schema 'test'
-			rs = testDbMetaData.getTables("test", null, "testBug69290_%", null);
-			assertTrue(testStepDescription[i] + ", 'test' catalog/schema, expected row from getTables().", rs.next());
+			// check catalog/schema '(test)'
+			rs = testDbMetaData.getTables(testCatalog, null, "testBug69290_%", null);
+			assertTrue(testStepDescription[i] + ", '" + testCatalog +  "' catalog/schema, expected row from getTables().", rs.next());
 			assertEquals(
-					testStepDescription[i] + ", 'test' catalog/schema, wrong table type for '"
+					testStepDescription[i] + ", '" + testCatalog +  "' catalog/schema, wrong table type for '"
 							+ rs.getString("TABLE_NAME") + "'.", "TABLE", rs.getString("TABLE_TYPE"));
-			assertTrue(testStepDescription[i] + ", 'test' catalog/schema, expected row from getTables().", rs.next());
+			assertTrue(testStepDescription[i] + ", '" + testCatalog +  "' catalog/schema, expected row from getTables().", rs.next());
 			assertEquals(
-					testStepDescription[i] + ", 'test' catalog/schema, wrong table type for '"
+					testStepDescription[i] + ", '" + testCatalog +  "' catalog/schema, wrong table type for '"
 							+ rs.getString("TABLE_NAME") + "'.", "VIEW", rs.getString("TABLE_TYPE"));
 		}
 		
