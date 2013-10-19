@@ -1031,7 +1031,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "FROM INFORMATION_SCHEMA.ROUTINES WHERE "
 				+ getRoutineTypeConditionForGetProcedures()
 				+ "ROUTINE_SCHEMA LIKE ? AND ROUTINE_NAME LIKE ? "
-				+ "ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME";
+				+ "ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE";
 
 		java.sql.PreparedStatement pStmt = null;
 
@@ -1220,7 +1220,7 @@ public class DatabaseMetaDataUsingInfoSchema extends DatabaseMetaData {
 				+ "FROM INFORMATION_SCHEMA.PARAMETERS WHERE "
 				+ getRoutineTypeConditionForGetProcedureColumns()
 				+ "SPECIFIC_SCHEMA LIKE ? AND SPECIFIC_NAME LIKE ? AND (PARAMETER_NAME LIKE ? OR PARAMETER_NAME IS NULL) "
-				+ "ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ORDINAL_POSITION");
+				+ "ORDER BY SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_TYPE, ORDINAL_POSITION");
 
 		java.sql.PreparedStatement pStmt = null;
 

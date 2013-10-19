@@ -21,6 +21,9 @@
  */
 package com.mysql.jdbc;
 
+import static com.mysql.jdbc.DatabaseMetaData.ProcedureType.FUNCTION;
+import static com.mysql.jdbc.DatabaseMetaData.ProcedureType.PROCEDURE;
+
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.sql.ResultSet;
@@ -471,7 +474,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			return compareTo((IndexMetaDataKey) obj) == 0;
 		}
 	}
-	
+
 	/**
 	 * Helper class to provide means of comparing tables by TABLE_TYPE, TABLE_CAT, TABLE_SCHEM and TABLE_NAME.
 	 */
@@ -517,6 +520,55 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				return false;
 			}
 			return compareTo((TableMetaDataKey) obj) == 0;
+		}
+	}
+
+	/**
+	 * Helper/box class to provide means of sorting objects by using a sorting key.
+	 */
+	protected class ComparableWrapper<K extends Object & Comparable<? super K>, V> implements
+			Comparable<ComparableWrapper<K, V>> {
+		K key;
+		V value;
+
+		public ComparableWrapper(K key, V value) {
+			this.key = key;
+			this.value = value;
+		}
+
+		public K getKey() {
+			return key;
+		}
+
+		public V getValue() {
+			return value;
+		}
+
+		public int compareTo(ComparableWrapper<K, V> other) {
+			return getKey().compareTo(other.getKey());
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == null) {
+				return false;
+			}
+
+			if (obj == this) {
+				return true;
+			}
+
+			if (!(obj instanceof ComparableWrapper<?, ?>)) {
+				return false;
+			}
+
+			Object otherKey = ((ComparableWrapper<?, ?>) obj).getKey();
+			return key.equals(otherKey);
+		}
+
+		@Override
+		public String toString() {
+			return "{KEY:" + key + "; VALUE:" + value +"}";
 		}
 	}
 
@@ -586,10 +638,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		}
 	}
 
+	/**
+	 * Enumeration for Procedure Types
+	 */
+	protected enum ProcedureType {
+		PROCEDURE, FUNCTION;
+	}
+	
 	private static String mysqlKeywordsThatArentSQL92;
-	
+
 	protected static final int MAX_IDENTIFIER_LENGTH = 64;
-	
+
 	private static final int DEFERRABILITY = 13;
 
 	private static final int DELETE_RULE = 10;
@@ -623,8 +682,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	/** The table type for generic tables that support foreign keys. */
 	private static final String SUPPORTS_FK = "SUPPORTS_FK";
 
+	protected static final byte[] TABLE_AS_BYTES = "TABLE".getBytes();
+
+	protected static final byte[] SYSTEM_TABLE_AS_BYTES = "SYSTEM TABLE".getBytes();
+	
 	private static final int UPDATE_RULE = 9;
 
+	protected static final byte[] VIEW_AS_BYTES = "VIEW".getBytes();
+	
 	private static final Constructor<?> JDBC_4_DBMD_SHOW_CTOR;
 	
 	private static final Constructor<?> JDBC_4_DBMD_IS_CTOR;
@@ -900,7 +965,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 	protected void convertToJdbcFunctionList(String catalog,
 			ResultSet proceduresRs, boolean needsClientFiltering, String db,
-			Map<String, ResultSetRow> procedureRowsOrderedByName, int nameIndex,
+			List<ComparableWrapper<String, ResultSetRow>> procedureRows, int nameIndex,
 			Field[] fields) throws SQLException {
 		while (proceduresRs.next()) {
 			boolean shouldAdd = true;
@@ -946,7 +1011,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					rowData[5] = s2b(functionName);                      // SPECFIC NAME
 				}
 
-				procedureRowsOrderedByName.put(functionName, new ByteArrayRow(rowData, getExceptionInterceptor()));
+				procedureRows.add(new ComparableWrapper<String, ResultSetRow>(functionName, new ByteArrayRow(rowData,
+						getExceptionInterceptor())));
 			}
 		}
 	}
@@ -963,7 +1029,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	
 	protected void convertToJdbcProcedureList(boolean fromSelect, String catalog,
 			ResultSet proceduresRs, boolean needsClientFiltering, String db,
-			Map<String, ResultSetRow> procedureRowsOrderedByName, int nameIndex) throws SQLException {
+			List<ComparableWrapper<String, ResultSetRow>> procedureRows, int nameIndex) throws SQLException {
 		while (proceduresRs.next()) {
 			boolean shouldAdd = true;
 
@@ -999,7 +1065,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
 				rowData[8] = s2b(procedureName);
 				
-				procedureRowsOrderedByName.put(procedureName, new ByteArrayRow(rowData, getExceptionInterceptor()));
+				procedureRows.add(new ComparableWrapper<String, ResultSetRow>(procedureName, new ByteArrayRow(rowData,
+						getExceptionInterceptor())));
 			}
 		}
 	}
@@ -1672,13 +1739,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	 * 
 	 * @see #getSearchStringEscape
 	 */
-	protected void getCallStmtParameterTypes(String catalog, String procName,
+	protected void getCallStmtParameterTypes(String catalog, String procName, ProcedureType procType,
 			String parameterNamePattern, List<ResultSetRow> resultRows) throws SQLException {
-		getCallStmtParameterTypes(catalog, procName, 
+		getCallStmtParameterTypes(catalog, procName, procType,
 				parameterNamePattern, resultRows, false);
 	}
 	
-	private void getCallStmtParameterTypes(String catalog, String procName,
+	private void getCallStmtParameterTypes(String catalog, String procName, ProcedureType procType,
 			String parameterNamePattern, List<ResultSetRow> resultRows, 
 			boolean forGetFunctionColumns) throws SQLException {
 		java.sql.Statement paramRetrievalStmt = null;
@@ -1810,24 +1877,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				procNameBuf.append(quoteChar);
 			}
 
-			boolean parsingFunction = false;
-
-			try {
-				paramRetrievalRs = paramRetrievalStmt
-						.executeQuery("SHOW CREATE PROCEDURE "
-								+ procNameBuf.toString());
-				parsingFunction = false;
-			} catch (SQLException sqlEx) {
-				paramRetrievalRs = paramRetrievalStmt
-						.executeQuery("SHOW CREATE FUNCTION "
-								+ procNameBuf.toString());
-				parsingFunction = true;
+			String fieldName = null;
+			if (procType == PROCEDURE) {
+				paramRetrievalRs = paramRetrievalStmt.executeQuery("SHOW CREATE PROCEDURE " + procNameBuf.toString());
+				fieldName = "Create Procedure";
+			} else {
+				paramRetrievalRs = paramRetrievalStmt.executeQuery("SHOW CREATE FUNCTION " + procNameBuf.toString());
+				fieldName = "Create Function";
 			}
 
 			if (paramRetrievalRs.next()) {
-				String procedureDef = parsingFunction ? paramRetrievalRs
-						.getString("Create Function") : paramRetrievalRs
-						.getString("Create Procedure");
+				String procedureDef = paramRetrievalRs.getString(fieldName);
 						
 				if (!this.conn.getNoAccessToProcedureBodies() &&
 						(procedureDef == null || procedureDef.length() == 0)) {
@@ -1866,7 +1926,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					endOfParamDeclarationIndex = endPositionOfParameterDeclaration(
 							openParenIndex, procedureDef, quoteChar);
 
-					if (parsingFunction) {
+					if (procType == FUNCTION) {
 
 						// Grab the return column since it needs
 						// to go first in the output result set
@@ -4351,9 +4411,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			String columnNamePattern, boolean returnProcedures,
 			boolean returnFunctions) throws SQLException {
 
-		List<String> proceduresToExtractList = new ArrayList<String>();
+		List<ComparableWrapper<String, ProcedureType>> procsOrFuncsToExtractList = new ArrayList<ComparableWrapper<String, ProcedureType>>();
 		//Main container to be passed to getProceduresAndOrFunctions
-		ResultSet procedureNameRs = null;
+		ResultSet procsAndOrFuncsRs = null;
 		
 		if (supportsStoredProcedures()) {
 			try {
@@ -4385,7 +4445,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					}
 				}
 				
-				procedureNameRs = getProceduresAndOrFunctions(
+				procsAndOrFuncsRs = getProceduresAndOrFunctions(
 						createFieldMetadataForGetProcedures(),
 						catalog, schemaPattern,
 						tmpProcedureOrFunctionNamePattern, returnProcedures,
@@ -4401,9 +4461,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				String tmpstrCatNameRs = null;
 
 				boolean hasResults = false;
-				while (procedureNameRs.next()) {
-					tmpstrCatNameRs = procedureNameRs.getString(1);
-					tmpstrPNameRs = procedureNameRs.getString(3);
+				while (procsAndOrFuncsRs.next()) {
+					tmpstrCatNameRs = procsAndOrFuncsRs.getString(1);
+					tmpstrPNameRs = procsAndOrFuncsRs.getString(3);
 					
 					if (!((tmpstrCatNameRs.startsWith(this.quotedId) && tmpstrCatNameRs.endsWith(this.quotedId)) || 
 							(tmpstrCatNameRs.startsWith("\"") && tmpstrCatNameRs.endsWith("\"")))) {
@@ -4414,9 +4474,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						tmpstrPNameRs = this.quotedId + tmpstrPNameRs + this.quotedId;
 					}
 
-					if (proceduresToExtractList.indexOf(tmpstrCatNameRs + "." + tmpstrPNameRs) < 0) {
-						proceduresToExtractList.add(tmpstrCatNameRs + "." + tmpstrPNameRs);
-					}
+					procsOrFuncsToExtractList.add(new ComparableWrapper<String, ProcedureType>(
+							tmpstrCatNameRs + "." + tmpstrPNameRs,
+							procsAndOrFuncsRs.getShort(8) == procedureNoResult ? PROCEDURE
+									: FUNCTION));
 					hasResults = true;
 				}
 
@@ -4428,7 +4489,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 //							"to have driver generate parameters that represent INOUT strings irregardless of actual parameter types.",
 //							SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());		
 				} else {
-					Collections.sort(proceduresToExtractList);					
+					Collections.sort(procsOrFuncsToExtractList);					
 				}
 
 				// Required to be sorted in name-order by JDBC spec,
@@ -4439,9 +4500,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			} finally {
 				SQLException rethrowSqlEx = null;
 
-				if (procedureNameRs != null) {
+				if (procsAndOrFuncsRs != null) {
 					try {
-						procedureNameRs.close();
+						procsAndOrFuncsRs.close();
 					} catch (SQLException sqlEx) {
 						rethrowSqlEx = sqlEx;
 					}
@@ -4457,8 +4518,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		int idx = 0;
 		String procNameToCall = "";
 		
-		for (Iterator<String> iter = proceduresToExtractList.iterator(); iter.hasNext();) {
-			String procName = iter.next();
+		for (ComparableWrapper<String, ProcedureType> procOrFunc : procsOrFuncsToExtractList) {
+			String procName = procOrFunc.getKey();
+			ProcedureType procType = procOrFunc.getValue();
 
 			//Continuing from above (database_name.sp_name)
 			if (!" ".equals(this.quotedId)) {
@@ -4479,8 +4541,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 				//No catalog. Not sure how to handle right now...
 				procNameToCall = procName;
 			}
-			getCallStmtParameterTypes(catalog, procNameToCall, columnNamePattern,
-					resultRows, 
+			getCallStmtParameterTypes(catalog, procNameToCall, procType, columnNamePattern,
+					resultRows,
 					fields.length == 17 /* for getFunctionColumns */);
 		}
 
@@ -4585,7 +4647,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		if (supportsStoredProcedures()) {
 			final String procNamePattern = procedureNamePattern;
 
-			final Map<String, ResultSetRow> procedureRowsOrderedByName = new TreeMap<String, ResultSetRow>();
+			final List<ComparableWrapper<String, ResultSetRow>> procedureRowsToSort = new ArrayList<ComparableWrapper<String, ResultSetRow>>();
 
 			new IterateBlock<String>(getCatalogIterator(catalog)) {
 				void forEach(String catalogStr) throws SQLException {
@@ -4603,7 +4665,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 					} else if (!returnProcedures && returnFunctions) {
 						selectFromMySQLProcSQL.append("type = 'FUNCTION' and ");
 					}
-					selectFromMySQLProcSQL.append("name like ? and db <=> ? ORDER BY name");
+					selectFromMySQLProcSQL.append("name like ? and db <=> ? ORDER BY name, type");
 
 					java.sql.PreparedStatement proceduresStmt = conn.clientPrepareStatement(selectFromMySQLProcSQL
 							.toString());
@@ -4670,7 +4732,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						if (returnProcedures) {
 							convertToJdbcProcedureList(fromSelect, db,
 								proceduresRs, needsClientFiltering, db,
-								procedureRowsOrderedByName, nameIndex);
+								procedureRowsToSort, nameIndex);
 						}
 
 						if (!hasTypeColumn) {
@@ -4695,17 +4757,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 						if (returnFunctions) {
 							convertToJdbcFunctionList(db, proceduresRs,
 								needsClientFiltering, db,
-								procedureRowsOrderedByName, nameIndex,
+								procedureRowsToSort, nameIndex,
 								fields);
 						}
 
 						// Now, sort them
-
-						Iterator<ResultSetRow> proceduresIter = procedureRowsOrderedByName
-								.values().iterator();
-
-						while (proceduresIter.hasNext()) {
-							procedureRows.add(proceduresIter.next());
+						Collections.sort(procedureRowsToSort);
+						for (ComparableWrapper<String, ResultSetRow> procRow : procedureRowsToSort) {
+							procedureRows.add(procRow.getValue());
 						}
 					} finally {
 						SQLException rethrowSqlEx = null;
