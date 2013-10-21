@@ -1,5 +1,7 @@
 # Changelog
 # $Id$
+nn-nn-13 - Version 5.1.28
+
 11-04-13 - Version 5.1.27
 
   - Fix for Bug#17248345, getFunctionColumns() method returns columns of procedure.
