@@ -1226,7 +1226,7 @@ public class StringUtils {
 	}
 
 	/**
-	 * Determines whether or not the sting 'searchIn' contains the string
+	 * Determines whether or not the string 'searchIn' contains the string
 	 * 'searchFor', disregarding case,leading whitespace and non-alphanumeric
 	 * characters.
 	 * 
@@ -1259,7 +1259,7 @@ public class StringUtils {
 	}
 
 	/**
-	 * Determines whether or not the sting 'searchIn' contains the string
+	 * Determines whether or not the string 'searchIn' contains the string
 	 * 'searchFor', disregarding case and leading whitespace
 	 * 
 	 * @param searchIn
@@ -1275,7 +1275,7 @@ public class StringUtils {
 	}
 	
 	/**
-	 * Determines whether or not the sting 'searchIn' contains the string
+	 * Determines whether or not the string 'searchIn' contains the string
 	 * 'searchFor', disregarding case and leading whitespace
 	 * 
 	 * @param searchIn
@@ -1305,6 +1305,26 @@ public class StringUtils {
 		return startsWithIgnoreCase(searchIn, beginPos, searchFor);
 	}
 
+	/**
+	 * Determines whether or not the string 'searchIn' starts with one of the strings in 'searchFor', disregarding case
+	 * and leading whitespace
+	 * 
+	 * @param searchIn
+	 *            the string to search in
+	 * @param searchFor
+	 *            the string array to search for
+	 * 
+	 * @return the 'searchFor' array index that matched or -1 if none matches
+	 */
+	public static int startsWithIgnoreCaseAndWs(String searchIn, String[] searchFor) {
+		for (int i = 0; i < searchFor.length; i++) {
+			if (startsWithIgnoreCaseAndWs(searchIn, searchFor[i], 0)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
 	/**
 	 * @param bytesToStrip
 	 * @param prefix

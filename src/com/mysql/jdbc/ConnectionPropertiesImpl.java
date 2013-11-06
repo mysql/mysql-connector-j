@@ -317,6 +317,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 		private static final long serialVersionUID = -3004305481796850832L;
 
+		int multiplier = 1;
+
 		public IntegerConnectionProperty(String propertyNameToSet,
 				Object defaultValueToSet, String[] allowableValuesToSet,
 				int lowerBoundToSet, int upperBoundToSet,
@@ -326,8 +328,6 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					lowerBoundToSet, upperBoundToSet, descriptionToSet, sinceVersionToSet,
 					category, orderInCategory);
 		}
-
-		int multiplier = 1;
 
 		IntegerConnectionProperty(String propertyNameToSet,
 				int defaultValueToSet, int lowerBoundToSet,
@@ -394,18 +394,9 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			if (extractedValue != null) {
 				try {
 					// Parse decimals, too
-					int intValue = Double.valueOf(extractedValue).intValue();
+					int intValue = (int) (Double.valueOf(extractedValue).doubleValue() * multiplier);
 
-					/*
-					 * if (isRangeBased()) { if ((intValue < getLowerBound()) ||
-					 * (intValue > getUpperBound())) { throw new
-					 * SQLException("The connection property '" +
-					 * getPropertyName() + "' only accepts integer values in the
-					 * range of " + getLowerBound() + " - " + getUpperBound() + ",
-					 * the value '" + extractedValue + "' exceeds this range.",
-					 * SQLError.SQL_STATE_ILLEGAL_ARGUMENT); } }
-					 */
-					this.valueAsObject = Integer.valueOf(intValue * multiplier);
+					setValue(intValue, extractedValue, exceptionInterceptor);
 				} catch (NumberFormatException nfe) {
 					throw SQLError.createSQLException("The connection property '" //$NON-NLS-1$
 							+ getPropertyName()
@@ -426,8 +417,21 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			return getUpperBound() != getLowerBound();
 		}
 
-		void setValue(int valueFlag) {
-			this.valueAsObject = Integer.valueOf(valueFlag);
+		void setValue(int intValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+			setValue(intValue, null, exceptionInterceptor);
+		}
+		
+		void setValue(int intValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+			if (isRangeBased()) {
+				if ((intValue < getLowerBound()) || (intValue > getUpperBound())) {
+					throw SQLError.createSQLException("The connection property '" + getPropertyName()
+							+ "' only accepts integer values in the range of " + getLowerBound() + " - "
+							+ getUpperBound() + ", the value '" + (valueAsString == null ? intValue : valueAsString)
+							+ "' exceeds this range.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+				}
+			}
+
+			this.valueAsObject = Integer.valueOf(intValue);
 		}
 	}
 	
@@ -454,8 +458,20 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				sinceVersionToSet, category, orderInCategory);
 		}
 		
-		void setValue(long value) {
-			this.valueAsObject = Long.valueOf(value);
+		void setValue(long longValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+			setValue(longValue, null, exceptionInterceptor);
+		}
+			
+		void setValue(long longValue, String valueAsString, ExceptionInterceptor exceptionInterceptor) throws SQLException {
+			if (isRangeBased()) {
+				if ((longValue < getLowerBound()) || (longValue > getUpperBound())) {
+					throw SQLError.createSQLException("The connection property '" + getPropertyName()
+							+ "' only accepts long integer values in the range of " + getLowerBound() + " - "
+							+ getUpperBound() + ", the value '" + (valueAsString == null ? longValue : valueAsString)
+							+ "' exceeds this range.", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, exceptionInterceptor);
+				}
+			}
+			this.valueAsObject = Long.valueOf(longValue);
 		}
 		
 		long getValueAsLong() {
@@ -468,7 +484,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 					// Parse decimals, too
 					long longValue = Double.valueOf(extractedValue).longValue();
 
-					this.valueAsObject = Long.valueOf(longValue);
+					setValue(longValue, extractedValue, exceptionInterceptor);
 				} catch (NumberFormatException nfe) {
 					throw SQLError.createSQLException("The connection property '" //$NON-NLS-1$
 							+ getPropertyName()
@@ -500,23 +516,25 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 		void initializeFrom(String extractedValue, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 			valueAsString = extractedValue;
+			multiplier = 1;
 			
 			if (extractedValue != null) {
 				if (extractedValue.endsWith("k") //$NON-NLS-1$
 						|| extractedValue.endsWith("K") //$NON-NLS-1$
 						|| extractedValue.endsWith("kb") //$NON-NLS-1$
 						|| extractedValue.endsWith("Kb") //$NON-NLS-1$
-						|| extractedValue.endsWith("kB")) { //$NON-NLS-1$
+						|| extractedValue.endsWith("kB") //$NON-NLS-1$
+						|| extractedValue.endsWith("KB")) { //$NON-NLS-1$
 					multiplier = 1024;
 					int indexOfK = StringUtils.indexOfIgnoreCase(
 							extractedValue, "k"); //$NON-NLS-1$
 					extractedValue = extractedValue.substring(0, indexOfK);
 				} else if (extractedValue.endsWith("m") //$NON-NLS-1$
 						|| extractedValue.endsWith("M") //$NON-NLS-1$
-						|| extractedValue.endsWith("G") //$NON-NLS-1$
 						|| extractedValue.endsWith("mb") //$NON-NLS-1$
 						|| extractedValue.endsWith("Mb") //$NON-NLS-1$
-						|| extractedValue.endsWith("mB")) { //$NON-NLS-1$
+						|| extractedValue.endsWith("mB") //$NON-NLS-1$
+						|| extractedValue.endsWith("MB")) { //$NON-NLS-1$
 					multiplier = 1024 * 1024;
 					int indexOfM = StringUtils.indexOfIgnoreCase(
 							extractedValue, "m"); //$NON-NLS-1$
@@ -525,7 +543,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 						|| extractedValue.endsWith("G") //$NON-NLS-1$
 						|| extractedValue.endsWith("gb") //$NON-NLS-1$
 						|| extractedValue.endsWith("Gb") //$NON-NLS-1$
-						|| extractedValue.endsWith("gB")) { //$NON-NLS-1$
+						|| extractedValue.endsWith("gB") //$NON-NLS-1$
+						|| extractedValue.endsWith("GB")) { //$NON-NLS-1$
 					multiplier = 1024 * 1024 * 1024;
 					int indexOfG = StringUtils.indexOfIgnoreCase(
 							extractedValue, "g"); //$NON-NLS-1$
@@ -725,7 +744,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			"3.1.12", //$NON-NLS-1$
 			MISC_CATEGORY,
 			Integer.MIN_VALUE);
-	
+
 	private BooleanConnectionProperty allowMasterDownConnections = new BooleanConnectionProperty(
 			"allowMasterDownConnections",  //$NON-NLS-1$
 			false,
@@ -733,9 +752,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			"5.1.27", //$NON-NLS-1$
 			HA_CATEGORY,
 			Integer.MAX_VALUE);
-	
-	
-	
+
 	private BooleanConnectionProperty autoDeserialize = new BooleanConnectionProperty(
 			"autoDeserialize", //$NON-NLS-1$
 			false,
@@ -766,8 +783,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	private MemorySizeConnectionProperty blobSendChunkSize = new MemorySizeConnectionProperty(
 			"blobSendChunkSize", //$NON-NLS-1$
 			1024 * 1024,
-			1,
-			Integer.MAX_VALUE,
+			0,
+			0,
 			Messages.getString("ConnectionProperties.blobSendChunkSize"), //$NON-NLS-1$
 			"3.1.9", PERFORMANCE_CATEGORY, Integer.MIN_VALUE); //$NON-NLS-1$
 	
@@ -1325,7 +1342,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	private IntegerConnectionProperty queriesBeforeRetryMaster = new IntegerConnectionProperty(
 			"queriesBeforeRetryMaster", //$NON-NLS-1$
 			50,
-			1,
+			0,
 			Integer.MAX_VALUE,
 			Messages.getString("ConnectionProperties.queriesBeforeRetryMaster"), //$NON-NLS-1$
 			"3.0.2", HA_CATEGORY, 7); //$NON-NLS-1$
@@ -1423,14 +1440,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Integer.MAX_VALUE,
 			Messages.getString("ConnectionProperties.selfDestructOnPingMaxOperations"),
 			"5.1.6", HA_CATEGORY, Integer.MAX_VALUE);
-	
+
 	private BooleanConnectionProperty replicationEnableJMX = new BooleanConnectionProperty(
 			"replicationEnableJMX", //$NON-NLS-1$
 			false,
 			Messages.getString("ConnectionProperties.loadBalanceEnableJMX"), //$NON-NLS-1$
 			"5.1.27", HA_CATEGORY, Integer.MAX_VALUE); //$NON-NLS-1$
-	
-			
+
 	private StringConnectionProperty serverTimezone = new StringConnectionProperty(
 			"serverTimezone", //$NON-NLS-1$
 			null,
@@ -1838,14 +1854,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			true,
 			Messages.getString("ConnectionProperties.disconnectOnExpiredPasswords"),
 			"5.1.23", CONNECTION_AND_AUTH_CATEGORY, Integer.MIN_VALUE);
-	
+
 	private BooleanConnectionProperty getProceduresReturnsFunctions = new BooleanConnectionProperty(
 			"getProceduresReturnsFunctions", true,
 			Messages.getString("ConnectionProperties.getProceduresReturnsFunctions"),
 			"5.1.26", MISC_CATEGORY, Integer.MIN_VALUE);
-	
-	
-	
+
+
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
 			Properties info, int slotsToReserve) throws SQLException {
 		initializeProperties(info);
@@ -3040,8 +3055,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setCallableStatementCacheSize(int)
 	 */
-	public void setCallableStatementCacheSize(int size) {
-		this.callableStatementCacheSize.setValue(size);
+	public void setCallableStatementCacheSize(int size) throws SQLException {
+		this.callableStatementCacheSize.setValue(size, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3096,8 +3111,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setConnectTimeout(int)
 	 */
-	public void setConnectTimeout(int timeoutMs) {
-		this.connectTimeout.setValue(timeoutMs);
+	public void setConnectTimeout(int timeoutMs) throws SQLException {
+		this.connectTimeout.setValue(timeoutMs, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3117,8 +3132,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setDefaultFetchSize(int)
 	 */
-	public void setDefaultFetchSize(int n) {
-		this.defaultFetchSize.setValue(n);
+	public void setDefaultFetchSize(int n) throws SQLException {
+		this.defaultFetchSize.setValue(n, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3242,8 +3257,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setInitialTimeout(int)
 	 */
-	public void setInitialTimeout(int property) {
-		this.initialTimeout.setValue(property);
+	public void setInitialTimeout(int property) throws SQLException {
+		this.initialTimeout.setValue(property, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3300,30 +3315,30 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setMaxQuerySizeToLog(int)
 	 */
-	public void setMaxQuerySizeToLog(int sizeInBytes) {
-		this.maxQuerySizeToLog.setValue(sizeInBytes);
+	public void setMaxQuerySizeToLog(int sizeInBytes) throws SQLException {
+		this.maxQuerySizeToLog.setValue(sizeInBytes, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setMaxReconnects(int)
 	 */
-	public void setMaxReconnects(int property) {
-		this.maxReconnects.setValue(property);
+	public void setMaxReconnects(int property) throws SQLException {
+		this.maxReconnects.setValue(property, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setMaxRows(int)
 	 */
-	public void setMaxRows(int property) {
-		this.maxRows.setValue(property);
+	public void setMaxRows(int property) throws SQLException {
+		this.maxRows.setValue(property, getExceptionInterceptor());
 		this.maxRowsAsInt = this.maxRows.getValueAsInt();
 	}
 
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setMetadataCacheSize(int)
 	 */
-	public void setMetadataCacheSize(int value) {
-		this.metadataCacheSize.setValue(value);
+	public void setMetadataCacheSize(int value) throws SQLException {
+		this.metadataCacheSize.setValue(value, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3350,8 +3365,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setPacketDebugBufferSize(int)
 	 */
-	public void setPacketDebugBufferSize(int size) {
-		this.packetDebugBufferSize.setValue(size);
+	public void setPacketDebugBufferSize(int size) throws SQLException {
+		this.packetDebugBufferSize.setValue(size, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3371,15 +3386,15 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setPreparedStatementCacheSize(int)
 	 */
-	public void setPreparedStatementCacheSize(int cacheSize) {
-		this.preparedStatementCacheSize.setValue(cacheSize);
+	public void setPreparedStatementCacheSize(int cacheSize) throws SQLException {
+		this.preparedStatementCacheSize.setValue(cacheSize, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setPreparedStatementCacheSqlLimit(int)
 	 */
-	public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) {
-		this.preparedStatementCacheSqlLimit.setValue(cacheSqlLimit);
+	public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) throws SQLException {
+		this.preparedStatementCacheSqlLimit.setValue(cacheSqlLimit, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3407,8 +3422,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setQueriesBeforeRetryMaster(int)
 	 */
-	public void setQueriesBeforeRetryMaster(int property) {
-		this.queriesBeforeRetryMaster.setValue(property);
+	public void setQueriesBeforeRetryMaster(int property) throws SQLException {
+		this.queriesBeforeRetryMaster.setValue(property, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3430,8 +3445,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setReportMetricsIntervalMillis(int)
 	 */
-	public void setReportMetricsIntervalMillis(int millis) {
-		this.reportMetricsIntervalMillis.setValue(millis);
+	public void setReportMetricsIntervalMillis(int millis) throws SQLException {
+		this.reportMetricsIntervalMillis.setValue(millis, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3472,8 +3487,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setSecondsBeforeRetryMaster(int)
 	 */
-	public void setSecondsBeforeRetryMaster(int property) {
-		this.secondsBeforeRetryMaster.setValue(property);
+	public void setSecondsBeforeRetryMaster(int property) throws SQLException {
+		this.secondsBeforeRetryMaster.setValue(property, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3493,8 +3508,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setSlowQueryThresholdMillis(int)
 	 */
-	public void setSlowQueryThresholdMillis(int millis) {
-		this.slowQueryThresholdMillis.setValue(millis);
+	public void setSlowQueryThresholdMillis(int millis) throws SQLException {
+		this.slowQueryThresholdMillis.setValue(millis, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3507,8 +3522,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setSocketTimeout(int)
 	 */
-	public void setSocketTimeout(int property) {
-		this.socketTimeout.setValue(property);
+	public void setSocketTimeout(int property) throws SQLException {
+		this.socketTimeout.setValue(property, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -3993,7 +4008,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setCallableStmtCacheSize(int)
 	 */
-	public void setCallableStmtCacheSize(int cacheSize) {
+	public void setCallableStmtCacheSize(int cacheSize) throws SQLException {
 		setCallableStatementCacheSize(cacheSize);
 	}
 
@@ -4007,7 +4022,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setPrepStmtCacheSize(int)
 	 */
-	public void setPrepStmtCacheSize(int cacheSize) {
+	public void setPrepStmtCacheSize(int cacheSize) throws SQLException {
 		setPreparedStatementCacheSize(cacheSize);
 	}
 
@@ -4021,7 +4036,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setPrepStmtCacheSqlLimit(int)
 	 */
-	public void setPrepStmtCacheSqlLimit(int sqlLimit) {
+	public void setPrepStmtCacheSqlLimit(int sqlLimit) throws SQLException {
 		setPreparedStatementCacheSqlLimit(sqlLimit);
 	}
 
@@ -4259,8 +4274,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setResultSetSizeThreshold(int)
 	 */
-	public void setResultSetSizeThreshold(int threshold) {
-		this.resultSetSizeThreshold.setValue(threshold);
+	public void setResultSetSizeThreshold(int threshold) throws SQLException {
+		this.resultSetSizeThreshold.setValue(threshold, getExceptionInterceptor());
 	}
 
 	/* (non-Javadoc)
@@ -4273,8 +4288,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	/* (non-Javadoc)
 	 * @see com.mysql.jdbc.IConnectionProperties#setNetTimeoutForStreamingResults(int)
 	 */
-	public void setNetTimeoutForStreamingResults(int value) {
-		this.netTimeoutForStreamingResults.setValue(value);
+	public void setNetTimeoutForStreamingResults(int value) throws SQLException {
+		this.netTimeoutForStreamingResults.setValue(value, getExceptionInterceptor());
 	}
 	
 	/* (non-Javadoc)
@@ -4369,24 +4384,24 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return this.tcpRcvBuf.getValueAsInt();
 	}
 
-	public void setTcpRcvBuf(int bufSize) {
-		this.tcpRcvBuf.setValue(bufSize);
+	public void setTcpRcvBuf(int bufSize) throws SQLException {
+		this.tcpRcvBuf.setValue(bufSize, getExceptionInterceptor());
 	}
 
 	public int getTcpSndBuf() {
 		return this.tcpSndBuf.getValueAsInt();
 	}
 
-	public void setTcpSndBuf(int bufSize) {
-		this.tcpSndBuf.setValue(bufSize);
+	public void setTcpSndBuf(int bufSize) throws SQLException {
+		this.tcpSndBuf.setValue(bufSize, getExceptionInterceptor());
 	}
 
 	public int getTcpTrafficClass() {
 		return this.tcpTrafficClass.getValueAsInt();
 	}
 
-	public void setTcpTrafficClass(int classFlags) {
-		this.tcpTrafficClass.setValue(classFlags);
+	public void setTcpTrafficClass(int classFlags) throws SQLException {
+		this.tcpTrafficClass.setValue(classFlags, getExceptionInterceptor());
 	}
 	
 	public boolean getUseNanosForElapsedTime() {
@@ -4401,8 +4416,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return this.slowQueryThresholdNanos.getValueAsLong();
 	}
 
-	public void setSlowQueryThresholdNanos(long nanos) {
-		this.slowQueryThresholdNanos.setValue(nanos);
+	public void setSlowQueryThresholdNanos(long nanos) throws SQLException {
+		this.slowQueryThresholdNanos.setValue(nanos, getExceptionInterceptor());
 	}
 
 	public String getStatementInterceptors() {
@@ -4425,15 +4440,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return this.largeRowSizeThreshold.getValueAsString();
 	}
 
-	public void setLargeRowSizeThreshold(String value) {
-		try {
-			this.largeRowSizeThreshold.setValue(value, getExceptionInterceptor());
-		} catch (SQLException sqlEx) {
-			RuntimeException ex = new RuntimeException(sqlEx.getMessage());
-			ex.initCause(sqlEx);
-			
-			throw ex;
-		}
+	public void setLargeRowSizeThreshold(String value) throws SQLException {
+		this.largeRowSizeThreshold.setValue(value, getExceptionInterceptor());
 	}
 
 	public boolean getUseBlobToStoreUTF8OutsideBMP() {
@@ -4528,16 +4536,16 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return this.selfDestructOnPingSecondsLifetime.getValueAsInt();
 	}
 
-	public void setSelfDestructOnPingSecondsLifetime(int seconds) {
-		this.selfDestructOnPingSecondsLifetime.setValue(seconds);
+	public void setSelfDestructOnPingSecondsLifetime(int seconds) throws SQLException {
+		this.selfDestructOnPingSecondsLifetime.setValue(seconds, getExceptionInterceptor());
 	}
 
 	public int getSelfDestructOnPingMaxOperations() {
 		return this.selfDestructOnPingMaxOperations.getValueAsInt();
 	}
 
-	public void setSelfDestructOnPingMaxOperations(int maxOperations) {
-		this.selfDestructOnPingMaxOperations.setValue(maxOperations);
+	public void setSelfDestructOnPingMaxOperations(int maxOperations) throws SQLException {
+		this.selfDestructOnPingMaxOperations.setValue(maxOperations, getExceptionInterceptor());
 	}
 
 	public boolean getUseColumnNamesInFindColumn() {
@@ -4568,20 +4576,20 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return loadBalanceBlacklistTimeout.getValueAsInt();
 	}
 
-	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
-		this.loadBalanceBlacklistTimeout.setValue(loadBalanceBlacklistTimeout);
+	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) throws SQLException {
+		this.loadBalanceBlacklistTimeout.setValue(loadBalanceBlacklistTimeout, getExceptionInterceptor());
 	}
 
 	public int getLoadBalancePingTimeout() {
 		return loadBalancePingTimeout.getValueAsInt();
 	}
 
-	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) {
-		this.loadBalancePingTimeout.setValue(loadBalancePingTimeout);
+	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) throws SQLException {
+		this.loadBalancePingTimeout.setValue(loadBalancePingTimeout, getExceptionInterceptor());
 	}
 	
-	public void setRetriesAllDown(int retriesAllDown) {
-		this.retriesAllDown.setValue(retriesAllDown);
+	public void setRetriesAllDown(int retriesAllDown) throws SQLException {
+		this.retriesAllDown.setValue(retriesAllDown, getExceptionInterceptor());
 	}
 	
 	public int getRetriesAllDown() {
@@ -4612,8 +4620,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		return this.exceptionInterceptors.getValueAsString();
 	}
 	
-	public void setMaxAllowedPacket(int  max) {
-		this.maxAllowedPacket.setValue(max);
+	public void setMaxAllowedPacket(int  max) throws SQLException {
+		this.maxAllowedPacket.setValue(max, getExceptionInterceptor());
 	}
 	
 	public int getMaxAllowedPacket() {
@@ -4678,8 +4686,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		this.loadBalanceEnableJMX.setValue(loadBalanceEnableJMX);
 	}
 
-	public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) {
-		this.loadBalanceAutoCommitStatementThreshold.setValue(loadBalanceAutoCommitStatementThreshold);
+	public void setLoadBalanceAutoCommitStatementThreshold(int loadBalanceAutoCommitStatementThreshold) throws SQLException {
+		this.loadBalanceAutoCommitStatementThreshold.setValue(loadBalanceAutoCommitStatementThreshold, getExceptionInterceptor());
 	}
 
 	public int getLoadBalanceAutoCommitStatementThreshold() {
@@ -4758,7 +4766,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	public boolean getDisconnectOnExpiredPasswords() {
 		return this.disconnectOnExpiredPasswords.getValueAsBoolean();
 	}
-	
+
 	public boolean getAllowMasterDownConnections() {
 		return this.allowMasterDownConnections.getValueAsBoolean();
 	}

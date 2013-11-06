@@ -986,11 +986,11 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setCacheServerConfiguration(flag);
 	}
 
-	public void setCallableStatementCacheSize(int size) {
+	public void setCallableStatementCacheSize(int size) throws SQLException {
 		getActiveMySQLConnection().setCallableStatementCacheSize(size);
 	}
 
-	public void setCallableStmtCacheSize(int cacheSize) {
+	public void setCallableStmtCacheSize(int cacheSize) throws SQLException {
 		getActiveMySQLConnection().setCallableStmtCacheSize(cacheSize);
 	}
 
@@ -1039,7 +1039,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 				.setCompensateOnDuplicateKeyUpdateCounts(flag);
 	}
 
-	public void setConnectTimeout(int timeoutMs) {
+	public void setConnectTimeout(int timeoutMs) throws SQLException {
 		getActiveMySQLConnection().setConnectTimeout(timeoutMs);
 	}
 
@@ -1060,7 +1060,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setCreateDatabaseIfNotExist(flag);
 	}
 
-	public void setDefaultFetchSize(int n) {
+	public void setDefaultFetchSize(int n) throws SQLException {
 		getActiveMySQLConnection().setDefaultFetchSize(n);
 	}
 
@@ -1154,7 +1154,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 				flag);
 	}
 
-	public void setInitialTimeout(int property) {
+	public void setInitialTimeout(int property) throws SQLException {
 		getActiveMySQLConnection().setInitialTimeout(property);
 	}
 
@@ -1176,16 +1176,16 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 				jdbcCompliantTruncationForReads);
 	}
 
-	public void setLargeRowSizeThreshold(String value) {
+	public void setLargeRowSizeThreshold(String value) throws SQLException {
 		getActiveMySQLConnection().setLargeRowSizeThreshold(value);
 	}
 
-	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) {
+	public void setLoadBalanceBlacklistTimeout(int loadBalanceBlacklistTimeout) throws SQLException {
 		getActiveMySQLConnection().setLoadBalanceBlacklistTimeout(
 				loadBalanceBlacklistTimeout);
 	}
 
-	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) {
+	public void setLoadBalancePingTimeout(int loadBalancePingTimeout) throws SQLException {
 		getActiveMySQLConnection().setLoadBalancePingTimeout(
 				loadBalancePingTimeout);
 	}
@@ -1237,27 +1237,27 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setMaintainTimeStats(flag);
 	}
 
-	public void setMaxQuerySizeToLog(int sizeInBytes) {
+	public void setMaxQuerySizeToLog(int sizeInBytes) throws SQLException {
 
 		getActiveMySQLConnection().setMaxQuerySizeToLog(sizeInBytes);
 	}
 
-	public void setMaxReconnects(int property) {
+	public void setMaxReconnects(int property) throws SQLException {
 
 		getActiveMySQLConnection().setMaxReconnects(property);
 	}
 
-	public void setMaxRows(int property) {
+	public void setMaxRows(int property) throws SQLException {
 
 		getActiveMySQLConnection().setMaxRows(property);
 	}
 
-	public void setMetadataCacheSize(int value) {
+	public void setMetadataCacheSize(int value) throws SQLException {
 
 		getActiveMySQLConnection().setMetadataCacheSize(value);
 	}
 
-	public void setNetTimeoutForStreamingResults(int value) {
+	public void setNetTimeoutForStreamingResults(int value) throws SQLException {
 
 		getActiveMySQLConnection().setNetTimeoutForStreamingResults(value);
 	}
@@ -1293,7 +1293,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 				.setOverrideSupportsIntegrityEnhancementFacility(flag);
 	}
 
-	public void setPacketDebugBufferSize(int size) {
+	public void setPacketDebugBufferSize(int size) throws SQLException {
 
 		getActiveMySQLConnection().setPacketDebugBufferSize(size);
 	}
@@ -1328,22 +1328,22 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setPopulateInsertRowWithDefaultValues(flag);
 	}
 
-	public void setPrepStmtCacheSize(int cacheSize) {
+	public void setPrepStmtCacheSize(int cacheSize) throws SQLException {
 
 		getActiveMySQLConnection().setPrepStmtCacheSize(cacheSize);
 	}
 
-	public void setPrepStmtCacheSqlLimit(int sqlLimit) {
+	public void setPrepStmtCacheSqlLimit(int sqlLimit) throws SQLException {
 
 		getActiveMySQLConnection().setPrepStmtCacheSqlLimit(sqlLimit);
 	}
 
-	public void setPreparedStatementCacheSize(int cacheSize) {
+	public void setPreparedStatementCacheSize(int cacheSize) throws SQLException {
 
 		getActiveMySQLConnection().setPreparedStatementCacheSize(cacheSize);
 	}
 
-	public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) {
+	public void setPreparedStatementCacheSqlLimit(int cacheSqlLimit) throws SQLException {
 
 		getActiveMySQLConnection().setPreparedStatementCacheSqlLimit(
 				cacheSqlLimit);
@@ -1374,7 +1374,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setPropertiesTransform(value);
 	}
 
-	public void setQueriesBeforeRetryMaster(int property) {
+	public void setQueriesBeforeRetryMaster(int property) throws SQLException {
 
 		getActiveMySQLConnection().setQueriesBeforeRetryMaster(property);
 	}
@@ -1396,7 +1396,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setRelaxAutoCommit(property);
 	}
 
-	public void setReportMetricsIntervalMillis(int millis) {
+	public void setReportMetricsIntervalMillis(int millis) throws SQLException {
 
 		getActiveMySQLConnection().setReportMetricsIntervalMillis(millis);
 	}
@@ -1411,7 +1411,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setResourceId(resourceId);
 	}
 
-	public void setResultSetSizeThreshold(int threshold) {
+	public void setResultSetSizeThreshold(int threshold) throws SQLException {
 
 		getActiveMySQLConnection().setResultSetSizeThreshold(threshold);
 	}
@@ -1421,7 +1421,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setRetainStatementAfterResultSetClose(flag);
 	}
 
-	public void setRetriesAllDown(int retriesAllDown) {
+	public void setRetriesAllDown(int retriesAllDown) throws SQLException {
 
 		getActiveMySQLConnection().setRetriesAllDown(retriesAllDown);
 	}
@@ -1446,18 +1446,18 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setRunningCTS13(flag);
 	}
 
-	public void setSecondsBeforeRetryMaster(int property) {
+	public void setSecondsBeforeRetryMaster(int property) throws SQLException {
 
 		getActiveMySQLConnection().setSecondsBeforeRetryMaster(property);
 	}
 
-	public void setSelfDestructOnPingMaxOperations(int maxOperations) {
+	public void setSelfDestructOnPingMaxOperations(int maxOperations) throws SQLException {
 
 		getActiveMySQLConnection().setSelfDestructOnPingMaxOperations(
 				maxOperations);
 	}
 
-	public void setSelfDestructOnPingSecondsLifetime(int seconds) {
+	public void setSelfDestructOnPingSecondsLifetime(int seconds) throws SQLException {
 
 		getActiveMySQLConnection()
 				.setSelfDestructOnPingSecondsLifetime(seconds);
@@ -1473,12 +1473,12 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setSessionVariables(variables);
 	}
 
-	public void setSlowQueryThresholdMillis(int millis) {
+	public void setSlowQueryThresholdMillis(int millis) throws SQLException {
 
 		getActiveMySQLConnection().setSlowQueryThresholdMillis(millis);
 	}
 
-	public void setSlowQueryThresholdNanos(long nanos) {
+	public void setSlowQueryThresholdNanos(long nanos) throws SQLException {
 
 		getActiveMySQLConnection().setSlowQueryThresholdNanos(nanos);
 	}
@@ -1493,7 +1493,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setSocketFactoryClassName(property);
 	}
 
-	public void setSocketTimeout(int property) {
+	public void setSocketTimeout(int property) throws SQLException {
 
 		getActiveMySQLConnection().setSocketTimeout(property);
 	}
@@ -1523,17 +1523,17 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		getActiveMySQLConnection().setTcpNoDelay(flag);
 	}
 
-	public void setTcpRcvBuf(int bufSize) {
+	public void setTcpRcvBuf(int bufSize) throws SQLException {
 
 		getActiveMySQLConnection().setTcpRcvBuf(bufSize);
 	}
 
-	public void setTcpSndBuf(int bufSize) {
+	public void setTcpSndBuf(int bufSize) throws SQLException {
 
 		getActiveMySQLConnection().setTcpSndBuf(bufSize);
 	}
 
-	public void setTcpTrafficClass(int classFlags) {
+	public void setTcpTrafficClass(int classFlags) throws SQLException {
 
 		getActiveMySQLConnection().setTcpTrafficClass(classFlags);
 	}
@@ -2527,7 +2527,7 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 	}
 
 	public void setLoadBalanceAutoCommitStatementThreshold(
-			int loadBalanceAutoCommitStatementThreshold) {
+			int loadBalanceAutoCommitStatementThreshold) throws SQLException {
 		getActiveMySQLConnection()
 			.setLoadBalanceAutoCommitStatementThreshold(loadBalanceAutoCommitStatementThreshold);
 		

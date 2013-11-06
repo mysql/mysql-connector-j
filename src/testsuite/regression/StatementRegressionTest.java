@@ -3901,9 +3901,9 @@ public class StatementRegressionTest extends BaseTestCase {
 			int[] counts = this.pstmt.executeBatch();
 
 			assertEquals(3, counts.length);
-			assertEquals(1, counts[0]);
-			assertEquals(1, counts[1]);
-			assertEquals(1, counts[2]);
+			assertEquals(3, counts[0]);
+			assertEquals(3, counts[1]);
+			assertEquals(3, counts[2]);
 			assertEquals(true,
 					((com.mysql.jdbc.PreparedStatement) this.pstmt)
 							.canRewriteAsMultiValueInsertAtSqlLevel());
@@ -5341,7 +5341,7 @@ public class StatementRegressionTest extends BaseTestCase {
 				this.stmt.executeUpdate(tablePrimeSql);
 				int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
 
-				// TODO: check server bug#13904273, bug#14598395 to find last affected version
+				// behavior changed by fix of Bug#46675, affects servers starting from 5.5.16 and 5.6.3
 				if (versionMeetsMinimum(5, 5, 16)) {
 					expectedUpdateCount = 1;
 				}
@@ -5389,7 +5389,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			stmt1.execute(sql, Statement.RETURN_GENERATED_KEYS);
 			int expectedUpdateCount = versionMeetsMinimum(5, 1, 0) ? 2 : 1;
 
-			// TODO: check server bug#13904273, bug#14598395 to find last affected version
+			// behavior changed by fix of Bug#46675, affects servers starting from 5.5.16 and 5.6.3
 			if (versionMeetsMinimum(5, 5, 16)) {
 				expectedUpdateCount = 1;
 			}
@@ -6903,6 +6903,207 @@ public class StatementRegressionTest extends BaseTestCase {
 				throw e;
 			}
 		}
+
+	}
+
+	/**
+	 * WL#4897 - Add EXPLAIN INSERT/UPDATE/DELETE
+	 * 
+	 * Added support for EXPLAIN INSERT/REPLACE/UPDATE/DELETE. Connector/J must issue a warning containing the execution
+	 * plan for slow queries when connection properties logSlowQueries=true and explainSlowQueries=true are used.
+	 * 
+	 * @throws SQLException
+	 */
+	public void testExecutionPlanForSlowQueries() throws Exception {
+		// once slow query (with execution plan) warning is sent to System.err, we capture messages sent here to check
+		// proper operation.
+		final class TestHandler {
+			// System.err diversion handling
+			PrintStream systemErrBackup = null;
+			ByteArrayOutputStream systemErrDetour = null;
+
+			// Connection handling
+			Connection testConn = null;
+
+			TestHandler() {
+				systemErrBackup = System.err;
+				systemErrDetour = new ByteArrayOutputStream(8192);
+				System.setErr(new PrintStream(systemErrDetour));
+			}
+
+			boolean containsSlowQueryMsg(String lookFor) {
+				String errMsg = systemErrDetour.toString();
+				boolean found = false;
+
+				if (errMsg.indexOf("Slow query explain results for '" + lookFor + "'") != -1) {
+					found = true;
+				}
+				systemErrDetour.reset();
+				// print message in original OutputStream.
+				systemErrBackup.print(errMsg);
+				return found;
+			}
+
+			void undoSystemErrDiversion() throws IOException {
+				systemErrBackup.print(systemErrDetour.toString());
+				systemErrDetour.close();
+				System.setErr(systemErrBackup);
+				systemErrDetour = null;
+				systemErrBackup = null;
+			}
+
+			@SuppressWarnings("synthetic-access")
+			Connection getNewConnectionForSlowQueries() throws SQLException {
+				releaseConnectionResources();
+				testConn = getConnectionWithProps("logSlowQueries=true,explainSlowQueries=true");
+				Statement st = testConn.createStatement();
+				// execute several fast queries to unlock slow query analysis and lower query execution time mean
+				for (int i = 0; i < 25; i++) {
+					st.executeQuery("SELECT 1");
+				}
+				return testConn;
+			}
+
+			void releaseConnectionResources() throws SQLException {
+				if (testConn != null) {
+					testConn.close();
+					testConn = null;
+				}
+			}
+		}
+
+		TestHandler testHandler = new TestHandler();
+		Statement testStatement = null;
+		
+		try {
+			if (versionMeetsMinimum(5, 6, 3)) {
+				createTable("testWL4897", "(f1 INT NOT NULL PRIMARY KEY, f2 CHAR(50))");
+
+				// when executed in the following sequence, each one of these queries take approximately 1 sec.
+				final String[] slowQueries = {
+						"INSERT INTO testWL4897 VALUES (SLEEP(0.5) + 1, 'MySQL'), (SLEEP(0.5) + 2, 'Connector/J')",
+						"SELECT * FROM testWL4897 WHERE f1 + SLEEP(0.5) = f1",
+						"REPLACE INTO testWL4897 VALUES (SLEEP(0.33) + 2, 'Database'), (SLEEP(0.33) + 3, 'Connector'), (SLEEP(0.33) + 4, 'Java')",
+						"UPDATE testWL4897 SET f1 = f1 * 10 + SLEEP(0.25)",
+						"DELETE FROM testWL4897 WHERE f1 + SLEEP(0.25) = f1" };
+
+				for (String query : slowQueries) {
+					testStatement = testHandler.getNewConnectionForSlowQueries().createStatement();
+					testStatement.execute(query);
+					assertTrue("A slow query explain results warning should have been issued for: '" + query + "'.",
+							testHandler.containsSlowQueryMsg(query));
+					testStatement.close();
+				}
+			} else {
+				// only SELECT is qualified to log slow query explain results warning
+				final String query = "SELECT SLEEP(1)";
+				
+				testStatement = testHandler.getNewConnectionForSlowQueries().createStatement();
+				testStatement.execute(query);
+				assertTrue("A slow query explain results warning should have been issued for: '" + query + "'.",
+						testHandler.containsSlowQueryMsg(query));
+				testStatement.close();
+			}
+
+		} finally {
+			testHandler.releaseConnectionResources();
+			testHandler.undoSystemErrDiversion();
+		}
+	}
+
+	/**
+	 * Tests fix for BUG#68562 - Combination rewriteBatchedStatements and useAffectedRows not working as expected
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug68562() throws Exception {
+
+		// 5.1 server returns wrong values for found_rows because Bug#46675 was fixed only for 5.5+
+		if (!versionMeetsMinimum(5, 5)) {
+			return;
+		}
+
+		int batchSize = 3;
+		createTable("testBug68562_found", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
+		createTable("testBug68562_affected", "(id INTEGER NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL, version VARCHAR(255)) ENGINE=InnoDB;");
+
+		// insert the records (no update)
+		int[] foundRows = testBug68562ExecuteBatch(batchSize, false, false, false);
+		for(int foundRow : foundRows) {
+			assertEquals(1, foundRow);
+		}
+		int[] affectedRows = testBug68562ExecuteBatch(batchSize, true, false, false);
+		for(int affectedRow : affectedRows) {
+			assertEquals(1, affectedRow);
+		}
+
+		// update the inserted records with same values
+		foundRows = testBug68562ExecuteBatch(batchSize, false, false, false);
+		for(int foundRow : foundRows) {
+			assertEquals(1, foundRow);
+		}
+		affectedRows = testBug68562ExecuteBatch(batchSize, true, false, false);
+		for(int affectedRow : affectedRows) {
+			assertEquals(0, affectedRow);
+		}
+
+		// update the inserted records with same values REWRITING THE BATCHED STATEMENTS
+		foundRows = testBug68562ExecuteBatch(batchSize, false, true, false);
+		for(int foundRow : foundRows) {
+			assertEquals(batchSize, foundRow);
+		}
+		affectedRows = testBug68562ExecuteBatch(batchSize, true, true, false);
+		for(int affectedRow : affectedRows) {
+			assertEquals(0, affectedRow);
+		}
+
+		// update the inserted records with NEW values REWRITING THE BATCHED STATEMENTS
+		foundRows = testBug68562ExecuteBatch(batchSize, false, true, true);
+		for(int foundRow : foundRows) {
+			assertEquals(2 * batchSize, foundRow);
+		}
+		affectedRows = testBug68562ExecuteBatch(batchSize, true, true, true);
+		for(int affectedRow : affectedRows) {
+			assertEquals(2 * batchSize, affectedRow);
+		}
+	}	
+
+	private int[] testBug68562ExecuteBatch(int batchSize, boolean useAffectedRows, boolean rewriteBatchedStatements, boolean realUpdate) throws ClassNotFoundException, SQLException{
+
+		String tableName="testBug68562";
+
+		Properties properties = new Properties();
+		if (useAffectedRows) {
+			properties.put("useAffectedRows", "true");
+			tableName += "_affected";
+		} else {
+			tableName += "_found";
+		}
+		if(rewriteBatchedStatements) {
+			properties.put("rewriteBatchedStatements", "true");
+		}
+		Connection connection = getConnectionWithProps(properties);    	
+
+		PreparedStatement statement = connection.prepareStatement("INSERT INTO " + tableName +
+				"(id, name, version) VALUES(?,?,?) ON DUPLICATE KEY UPDATE version = " +
+				(realUpdate ?
+						"CONCAT(VALUES(version),'updated'), name = CONCAT(VALUES(name),'updated')" :
+						"VALUES(version), name = VALUES(name)"
+				));
+		for(int i = 0; i < batchSize; i++) {
+			statement.setInt(1, i);
+			statement.setString(2, "name" + i);
+			statement.setString(3, "version" + i);
+			statement.addBatch();
+		}
+
+		int[] affectedRows = statement.executeBatch();
+
+		statement.close();
+		connection.close();
+
+		return affectedRows;
 
 	}
 
