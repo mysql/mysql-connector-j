@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -59,6 +60,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.management.MBeanServer;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
 import javax.sql.XAConnection;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
@@ -91,6 +96,7 @@ import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXid;
 import com.mysql.jdbc.jdbc2.optional.SuspendableXAConnection;
+import com.mysql.jdbc.jmx.ReplicationGroupManagerMBean;
 import com.mysql.jdbc.log.StandardLogger;
 
 /**
@@ -2611,6 +2617,133 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		assertTrue(conn2.isHostMaster(second.getAddress()));
 		assertTrue(conn2.isHostMaster(third.getAddress()));
 	
+	}
+	
+	
+	public void testReplicationConnectionMemory() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("retriesAllDown", "3");
+		String replicationGroup = "memoryGroup";
+		props.setProperty("replicationConnectionGroup", replicationGroup);
+		
+		Set<MockConnectionConfiguration> configs = new HashSet<MockConnectionConfiguration>();
+		MockConnectionConfiguration first = new MockConnectionConfiguration("first", "slave", null, false);
+		MockConnectionConfiguration second = new MockConnectionConfiguration("second", "master", null, false);
+		MockConnectionConfiguration third = new MockConnectionConfiguration("third", "slave", null, false);
+		
+		configs.add(first);
+		configs.add(second);
+		configs.add(third);
+		
+		ReplicationConnection conn2 = this
+				.getUnreliableReplicationConnection(configs, props);
+		
+	
+		ReplicationConnectionGroupManager.promoteSlaveToMaster(replicationGroup, first.getAddress());
+		ReplicationConnectionGroupManager.removeMasterHost(replicationGroup, second.getAddress());
+		ReplicationConnectionGroupManager.addSlaveHost(replicationGroup, second.getAddress());
+		
+		conn2.setReadOnly(false);
+		
+		assertFalse(conn2.isReadOnly());
+		assertTrue(conn2.isMasterConnection());
+		assertTrue(conn2.isHostMaster(first.getAddress()));
+		assertTrue(conn2.isHostSlave(second.getAddress()));
+		assertTrue(conn2.isHostSlave(third.getAddress()));
+		
+		
+		// make sure state changes made are reflected in new connections:
+		
+		ReplicationConnection conn3 = this
+				.getUnreliableReplicationConnection(configs, props);
+		
+		
+		conn3.setReadOnly(false);
+		
+		assertFalse(conn3.isReadOnly());
+		assertTrue(conn3.isMasterConnection());
+		assertTrue(conn3.isHostMaster(first.getAddress()));
+		assertTrue(conn3.isHostSlave(second.getAddress()));
+		assertTrue(conn3.isHostSlave(third.getAddress()));
+			
+		
+	}
+	
+	public void testReplicationJMXInterfaces() throws Exception {
+		Properties props = new Properties();
+		props.setProperty("retriesAllDown", "3");
+		String replicationGroup = "testReplicationJMXInterfaces";
+		props.setProperty("replicationConnectionGroup", replicationGroup);
+		props.setProperty("replicationEnableJMX", "true");
+		
+		
+		Set<MockConnectionConfiguration> configs = new HashSet<MockConnectionConfiguration>();
+		MockConnectionConfiguration first = new MockConnectionConfiguration("first", "slave", null, false);
+		MockConnectionConfiguration second = new MockConnectionConfiguration("second", "master", null, false);
+		MockConnectionConfiguration third = new MockConnectionConfiguration("third", "slave", null, false);
+		
+		configs.add(first);
+		configs.add(second);
+		configs.add(third);
+		
+		ReplicationConnection conn2 = this
+				.getUnreliableReplicationConnection(configs, props);
+		
+		ReplicationGroupManagerMBean bean = getReplicationMBean();
+		
+		assertEquals(1, bean.getActiveLogicalConnectionCount(replicationGroup));
+		assertEquals(1, bean.getTotalLogicalConnectionCount(replicationGroup));
+		assertEquals(0, bean.getSlavePromotionCount(replicationGroup));
+		assertEquals(1, bean.getActiveMasterHostCount(replicationGroup));
+		assertEquals(2, bean.getActiveSlaveHostCount(replicationGroup));
+		bean.removeSlaveHost(replicationGroup, first.getAddress());
+		assertEquals(1, bean.getActiveSlaveHostCount(replicationGroup));
+		conn2.close();
+		assertEquals(0, bean.getActiveLogicalConnectionCount(replicationGroup));
+		conn2 = this.getUnreliableReplicationConnection(configs, props);
+		assertEquals(1, bean.getActiveLogicalConnectionCount(replicationGroup));
+		assertEquals(2, bean.getTotalLogicalConnectionCount(replicationGroup));
+		assertEquals(1, bean.getActiveSlaveHostCount(replicationGroup));
+		assertEquals(1, bean.getActiveMasterHostCount(replicationGroup));
+		bean.promoteSlaveToMaster(replicationGroup, third.getAddress());
+		assertEquals(2, bean.getActiveMasterHostCount(replicationGroup));
+		assertEquals(0, bean.getActiveSlaveHostCount(replicationGroup));
+		// confirm this works when no group filter is specified:
+		bean.addSlaveHost(null, first.getAddress());
+		assertEquals(1, bean.getActiveSlaveHostCount(replicationGroup));
+		assertEquals(2, bean.getActiveMasterHostCount(replicationGroup));
+		bean.removeMasterHost(replicationGroup, second.getAddress());
+		assertEquals(1, bean.getActiveSlaveHostCount(replicationGroup));
+		assertEquals(1, bean.getActiveMasterHostCount(replicationGroup));
+		
+		ReplicationConnection conn3 = this
+				.getUnreliableReplicationConnection(configs, props);
+		
+		assertEquals(2, bean.getActiveLogicalConnectionCount(replicationGroup));
+		assertEquals(3, bean.getTotalLogicalConnectionCount(replicationGroup));
+		
+		assertTrue(bean.getMasterHostsList(replicationGroup).contains(third.getAddress()));
+		assertFalse(bean.getMasterHostsList(replicationGroup).contains(first.getAddress()));
+		assertFalse(bean.getMasterHostsList(replicationGroup).contains(second.getAddress()));
+		
+		assertFalse(bean.getSlaveHostsList(replicationGroup).contains(third.getAddress()));
+		assertTrue(bean.getSlaveHostsList(replicationGroup).contains(first.getAddress()));
+		assertFalse(bean.getSlaveHostsList(replicationGroup).contains(second.getAddress()));
+		
+		assertTrue(bean.getMasterHostsList(replicationGroup).contains(conn3.getMasterConnection().getHost()));
+		assertTrue(bean.getSlaveHostsList(replicationGroup).contains(conn3.getSlavesConnection().getHost()));
+		
+		
+		assertTrue(bean.getRegisteredConnectionGroups().contains(replicationGroup));
+		
+	}
+	
+	private ReplicationGroupManagerMBean getReplicationMBean() throws Exception {
+		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
+		
+		ObjectName mbeanName = new ObjectName("com.mysql.jdbc.jmx:type=ReplicationGroupManager");
+		return (ReplicationGroupManagerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, mbeanName, ReplicationGroupManagerMBean.class, false);
+		
 	}
 
 
