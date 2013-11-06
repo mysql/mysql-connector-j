@@ -77,6 +77,7 @@ public class ReplicationConnectionGroup {
 					conn);
 		}
 		this.activeConnections++;
+		
 
 		return currentConnectionId;
 
@@ -102,9 +103,14 @@ public class ReplicationConnectionGroup {
 		}
 		// add the slave to all connections:
 		for (ReplicationConnection c : this.replicationConnections.values()) {
-			c.promoteSlaveToMaster(host);
+			c.addSlaveHost(host);
 		}
 
+	}
+	
+	public void handleCloseConnection(ReplicationConnection conn) {
+		this.replicationConnections.remove(conn.getConnectionGroupId());
+		this.activeConnections--;
 	}
 
 	public void removeSlaveHost(String host, boolean closeGently) throws SQLException {
@@ -113,14 +119,16 @@ public class ReplicationConnectionGroup {
 		}
 		for (ReplicationConnection c : this.replicationConnections.values()) {
 			c.removeSlave(host, closeGently);
-
 		}
 	}
 	
 	public void promoteSlaveToMaster(String host) throws SQLException {
+		this.slaveHostList.remove(host);
+		this.masterHostList.add(host);
 		for (ReplicationConnection c : this.replicationConnections.values()) {
 			c.promoteSlaveToMaster(host);
 		}
+		
 		this.slavesPromoted++;
 	}
 
@@ -171,6 +179,14 @@ public class ReplicationConnectionGroup {
 	
 	public long getNumberOfSlavePromotions() {
 		return this.slavesPromoted;
+	}
+	
+	public long getTotalConnectionCount() {
+		return this.connections;
+	}
+	
+	public long getActiveConnectionCount() {
+		return this.activeConnections;
 	}
 	
 

@@ -22,6 +22,7 @@
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,6 +47,7 @@ public class ReplicationConnectionGroupManager {
 	}
 
 	public static void registerJmx() throws SQLException {
+
 		if (hasRegisteredJmx) {
 			return;
 		}
@@ -58,7 +60,7 @@ public class ReplicationConnectionGroupManager {
 		return GROUP_MAP.get(groupName);
 	}
 
-	private static Collection<ReplicationConnectionGroup> getGroupsMatching(
+	public static Collection<ReplicationConnectionGroup> getGroupsMatching(
 			String group) {
 		if (group == null || group.equals("")) {
 			Set<ReplicationConnectionGroup> s = new HashSet<ReplicationConnectionGroup>();
@@ -102,6 +104,21 @@ public class ReplicationConnectionGroupManager {
 		}
 		
 	}
+	
+	public static long getSlavePromotionCount(String group) throws SQLException {
+		Collection<ReplicationConnectionGroup> s = getGroupsMatching(group);
+		long promoted = 0;
+		for (ReplicationConnectionGroup cg : s) {
+			long tmp = cg.getNumberOfSlavePromotions();
+			if(tmp > promoted) {
+				promoted = tmp;
+			}
+		}
+		return promoted;
+		
+	}
+	
+	
 	public static void removeMasterHost(String group, String host) throws SQLException {
 		removeMasterHost(group, host, true);
 	}
@@ -156,6 +173,42 @@ public class ReplicationConnectionGroupManager {
 		return total;
 	}
 	
+	public static Collection<String> getSlaveHosts(String groupFilter) {
+		Collection<ReplicationConnectionGroup> s = getGroupsMatching(groupFilter);
+		Collection<String> hosts = new ArrayList<String>();
+		for(ReplicationConnectionGroup cg : s) {
+			hosts.addAll(cg.getSlaveHosts());
+		}
+		return hosts;
+	}
+	
+	public static Collection<String> getMasterHosts(String groupFilter) {
+		Collection<ReplicationConnectionGroup> s = getGroupsMatching(groupFilter);
+		Collection<String> hosts = new ArrayList<String>();
+		for(ReplicationConnectionGroup cg : s) {
+			hosts.addAll(cg.getMasterHosts());
+		}
+		return hosts;
+	}
+
+	public static long getTotalConnectionCount(String group) {
+		long connections = 0;
+		Collection<ReplicationConnectionGroup> s = getGroupsMatching(group);
+		for(ReplicationConnectionGroup cg : s) {
+			connections += cg.getTotalConnectionCount();
+		}
+		return connections;
+	}
+
+	public static long getActiveConnectionCount(String group) {
+		long connections = 0;
+		Collection<ReplicationConnectionGroup> s = getGroupsMatching(group);
+		for(ReplicationConnectionGroup cg : s) {
+			connections += cg.getActiveConnectionCount();
+		}
+		return connections;
+
+	}
 
 
 

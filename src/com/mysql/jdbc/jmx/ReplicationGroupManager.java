@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import com.mysql.jdbc.ReplicationConnectionGroup;
 import com.mysql.jdbc.ReplicationConnectionGroupManager;
 import com.mysql.jdbc.SQLError;
 
@@ -43,7 +44,7 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
 			  mbs.registerMBean(this, name);
 			  this.isJmxRegistered = true;
 		} catch (Exception e) {
-			throw SQLError.createSQLException("Uable to register load-balance management bean with JMX", null, e, null);
+			throw SQLError.createSQLException("Unable to register replication host management bean with JMX", null, e, null);
 		} 
 		
 	}
@@ -58,7 +59,76 @@ public class ReplicationGroupManager implements ReplicationGroupManagerMBean {
 
 	public void promoteSlaveToMaster(String groupFilter, String host) throws SQLException {
 		ReplicationConnectionGroupManager.promoteSlaveToMaster(groupFilter, host);
+
 	}
+
+	public void removeMasterHost(String groupFilter, String host)
+			throws SQLException {
+		ReplicationConnectionGroupManager.removeMasterHost(groupFilter, host);
+		
+	}
+
+	public String getMasterHostsList(String group) {
+		StringBuffer sb = new StringBuffer("");
+		boolean found = false;
+		for(String host : ReplicationConnectionGroupManager.getMasterHosts(group)) {
+			if(found) {
+				sb.append(",");
+			}
+			found = true;
+			sb.append(host);
+		}
+		return sb.toString();
+	}
+
+	public String getSlaveHostsList(String group) {
+		StringBuffer sb = new StringBuffer("");
+		boolean found = false;
+		for(String host : ReplicationConnectionGroupManager.getSlaveHosts(group)) {
+			if(found) {
+				sb.append(",");
+			}
+			found = true;
+			sb.append(host);
+		}
+		return sb.toString();
+
+	}
+
+	public String getRegisteredConnectionGroups() {
+		StringBuffer sb = new StringBuffer("");
+		boolean found = false;
+		for(ReplicationConnectionGroup group : ReplicationConnectionGroupManager.getGroupsMatching(null)) {
+			if(found) {
+				sb.append(",");
+			}
+			found = true;
+			sb.append(group.getGroupName());
+		}
+		return sb.toString();
+	}
+
+	public int getActiveMasterHostCount(String group) {
+		return ReplicationConnectionGroupManager.getMasterHosts(group).size();
+	}
+
+	public int getActiveSlaveHostCount(String group) {
+		return ReplicationConnectionGroupManager.getSlaveHosts(group).size();
+	}
+
+
+	public int getSlavePromotionCount(String group) {
+		return ReplicationConnectionGroupManager.getNumberOfMasterPromotion(group);
+	}
+
+	public long getTotalLogicalConnectionCount(String group) {
+		return ReplicationConnectionGroupManager.getTotalConnectionCount(group);
+	}
+
+	public long getActiveLogicalConnectionCount(String group) {
+		return ReplicationConnectionGroupManager.getActiveConnectionCount(group);
+	}
+
 	
 	
 

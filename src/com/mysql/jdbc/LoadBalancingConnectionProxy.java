@@ -616,11 +616,11 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 				this.isClosed = false;
 				this.closedReason = null;
 			} else {
-			String reason = "No operations allowed after connection closed.";
-			if(this.closedReason != null){
-				reason += ("  " + this.closedReason);
-			}
-			throw SQLError.createSQLException(
+				String reason = "No operations allowed after connection closed.";
+				if(this.closedReason != null){
+					reason += ("  " + this.closedReason);
+				}
+				throw SQLError.createSQLException(
 					reason,
 					SQLError.SQL_STATE_CONNECTION_NOT_OPEN, null /*
 																 * no access to

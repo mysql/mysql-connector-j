@@ -31,5 +31,23 @@ public interface ReplicationGroupManagerMBean {
 	
 	public abstract void promoteSlaveToMaster(String groupFilter, String host) throws SQLException;
 	
+	public abstract void removeMasterHost(String groupFilter, String host) throws SQLException;
+	
+	public abstract String getMasterHostsList(String group);
+	
+	public abstract String getSlaveHostsList(String group);
+	
+	public abstract String getRegisteredConnectionGroups();
+
+	public abstract int getActiveMasterHostCount(String group);
+
+	public abstract int getActiveSlaveHostCount(String group);
+
+	public abstract int getSlavePromotionCount(String group);
+
+	public abstract long getTotalLogicalConnectionCount(String group);
+
+	public abstract long getActiveLogicalConnectionCount(String group);
+
 
 }

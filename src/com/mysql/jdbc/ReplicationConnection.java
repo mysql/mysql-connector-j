@@ -80,7 +80,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 			enableJMX = Boolean.parseBoolean(enableJMXAsString);
 		} catch (Exception e){
 			throw SQLError.createSQLException(Messages.getString(
-					"LoadBalancingConnectionProxy.badValueForLoadBalanceEnableJMX",
+					"ReplicationConnection.badValueForReplicationEnableJMX",
 					new Object[] { enableJMXAsString }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);			
 		}
@@ -91,7 +91,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 			this.allowMasterDownConnections = Boolean.parseBoolean(allowMasterDownConnectionsAsString);
 		} catch (Exception e){
 			throw SQLError.createSQLException(Messages.getString(
-					"LoadBalancingConnectionProxy.badValueForAllowMasterDownConnectionsAsString",
+					"ReplicationConnection.badValueForAllowMasterDownConnections",
 					new Object[] { enableJMXAsString }),
 					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);			
 		}
@@ -103,11 +103,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 		if(group != null){
 			this.connectionGroup = ReplicationConnectionGroupManager.getConnectionGroupInstance(group);
 			if(enableJMX){
-				ConnectionGroupManager.registerJmx();
+				ReplicationConnectionGroupManager.registerJmx();
 			}
-			this.connectionGroupID = this.connectionGroup.registerReplicationConnection(this, masterHosts, slaveHostList);
+			this.connectionGroupID = this.connectionGroup.registerReplicationConnection(this, masterHostList, slaveHostList);
 			
 			slaveHostList = new ArrayList<String>(this.connectionGroup.getSlaveHosts());
+			masterHostList = new ArrayList<String>(this.connectionGroup.getMasterHosts());
 		}
 
 		this.driver = new NonRegisteringDriver();
@@ -128,6 +129,10 @@ public class ReplicationConnection implements Connection, PingTarget {
 	
 	private boolean initializeMasterConnection() throws SQLException {
 		return this.initializeMasterConnection(this.allowMasterDownConnections);
+	}
+	
+	public long getConnectionGroupId() {
+		return this.connectionGroupID;
 	}
 	
 	private boolean initializeMasterConnection(boolean allowMasterDown) throws SQLException {
@@ -255,6 +260,10 @@ public class ReplicationConnection implements Connection, PingTarget {
 			this.slavesConnection.close();
 		}
 		
+		if (this.connectionGroup != null) {
+			this.connectionGroup.handleCloseConnection(this);
+		}
+		
 	}
 
 	/*
@@ -301,7 +310,10 @@ public class ReplicationConnection implements Connection, PingTarget {
 	
 	public synchronized void removeSlave(String host, boolean closeGently) throws SQLException {
 		
-		slaveHosts.remove(host);
+		this.slaveHosts.remove(host);
+		if(this.slavesConnection == null) {
+			return;
+		}
 		
 		if(closeGently) {
 			slavesConnection.removeHostWhenNotInUse(host);
@@ -330,9 +342,10 @@ public class ReplicationConnection implements Connection, PingTarget {
 		
 		this.masterHosts.add(host);
 		this.removeSlave(host);
-		this.masterConnection.addHost(host);
-		this.slavesConnection.removeHostWhenNotInUse(host);
-		
+		if(this.masterConnection != null) {
+			this.masterConnection.addHost(host);
+		}
+	
 	}
 	
 	public synchronized void removeMasterHost(String host) throws SQLException {
@@ -347,6 +360,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 		if(isNowSlave) {
 			this.slaveHosts.add(host);
 		}
+		this.masterHosts.remove(host);
+		
+		if(this.masterConnection == null) {
+			return;
+		}
+		
 		if(waitUntilNotInUse){
 			this.masterConnection.removeHostWhenNotInUse(host);
 		} else {
@@ -2876,6 +2895,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 
 	public void abort(Executor executor) throws SQLException {
 		getCurrentConnection().abort(executor);
+		if(this.connectionGroup != null) {
+			this.connectionGroup.handleCloseConnection(this);
+		}
 	}
 
 	public void setNetworkTimeout(Executor executor, int milliseconds)
@@ -2913,6 +2935,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 
 	public void abortInternal() throws SQLException {
 		getCurrentConnection().abortInternal();
+		if(this.connectionGroup != null) {
+			this.connectionGroup.handleCloseConnection(this);
+		}
 	}
 
 	public void checkClosed() throws SQLException {
