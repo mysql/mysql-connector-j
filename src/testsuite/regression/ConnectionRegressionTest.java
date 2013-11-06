@@ -2514,7 +2514,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 		// "first" should no longer be used:
 		conn2.promoteSlaveToMaster(secondHost);
-		assertTrue(conn2.isHostMaster(firstHost));
+		assertFalse(conn2.isHostMaster(firstHost));
 		assertFalse(conn2.isHostSlave(firstHost));
 		assertFalse(conn2.isHostSlave(secondHost));
 		assertTrue(conn2.isHostMaster(secondHost));
@@ -2697,6 +2697,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		assertEquals(1, bean.getActiveMasterHostCount(replicationGroup));
 		assertEquals(2, bean.getActiveSlaveHostCount(replicationGroup));
 		bean.removeSlaveHost(replicationGroup, first.getAddress());
+		assertFalse(bean.getSlaveHostsList(replicationGroup).contains(first.getAddress()));
 		assertEquals(1, bean.getActiveSlaveHostCount(replicationGroup));
 		conn2.close();
 		assertEquals(0, bean.getActiveLogicalConnectionCount(replicationGroup));

@@ -323,8 +323,9 @@ public class ReplicationConnection implements Connection, PingTarget {
 	}
 	
 	public synchronized void addSlaveHost(String host) throws SQLException {
-		if(this.isHostMaster(host) || this.isHostSlave(host)){
-			throw new SQLException("Cannot add existing host!");
+		if(this.isHostSlave(host)){
+			// throw new SQLException("Cannot add existing host!");
+			return;
 		}
 		this.slaveHosts.add(host);
 		this.slavesConnection.addHost(host);
