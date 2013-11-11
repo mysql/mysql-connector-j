@@ -3830,11 +3830,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("INSTALL PLUGIN test_plugin_server SONAME 'auth_test_plugin"+ext+"'");
 				}
 
-				String dbname = null;
-				this.rs = this.stmt.executeQuery("select database() as dbname");
-				if(this.rs.first()) {
-					dbname = this.rs.getString("dbname");
-				}
+				Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+				String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 				if (dbname == null) assertTrue("No database selected", false);
 				
 				// create proxy users
@@ -3846,7 +3843,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'plug_dest', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 				this.stmt.executeUpdate("flush privileges");
 				
-				Properties props = new Properties();
+				props = new Properties();
 				props.setProperty("user", "wl5851user");
 				props.setProperty("password", "plug_dest");
 				props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
@@ -3899,11 +3896,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("INSTALL PLUGIN two_questions SONAME 'auth"+ext+"'");
 				}
 
-				String dbname = null;
-				this.rs = this.stmt.executeQuery("select database() as dbname");
-				if(this.rs.first()) {
-					dbname = this.rs.getString("dbname");
-				}
+				Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+				String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 				if (dbname == null) assertTrue("No database selected", false);
 				
 				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user2'@'%' identified WITH two_questions AS 'two_questions_password'");
@@ -3912,7 +3906,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 				this.stmt.executeUpdate("flush privileges");
 				
-				Properties props = new Properties();
+				props = new Properties();
 				props.setProperty("user", "wl5851user2");
 				props.setProperty("password", "two_questions_password");
 				props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$TwoQuestionsPlugin");
@@ -3963,11 +3957,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("INSTALL PLUGIN three_attempts SONAME 'auth"+ext+"'");
 				}
 
-				String dbname = null;
-				this.rs = this.stmt.executeQuery("select database() as dbname");
-				if(this.rs.first()) {
-					dbname = this.rs.getString("dbname");
-				}
+				Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+				String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 				if (dbname == null) assertTrue("No database selected", false);
 				
 				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user3'@'%' identified WITH three_attempts AS 'three_attempts_password'");
@@ -3976,7 +3967,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user3', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 				this.stmt.executeUpdate("flush privileges");
 				
-				Properties props = new Properties();
+				props = new Properties();
 				props.setProperty("user", "wl5851user3");
 				props.setProperty("password", "three_attempts_password");
 				props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$ThreeAttemptsPlugin");
@@ -4138,11 +4129,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 		if (versionMeetsMinimum(5, 5, 7) && !secure_auth) {
 
-			String dbname = null;
-			this.rs = this.stmt.executeQuery("select database() as dbname");
-			if(this.rs.first()) {
-				dbname = this.rs.getString("dbname");
-			}
+			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 			if (dbname == null) assertTrue("No database selected", false);
 			
 			Connection adminConn = null;
@@ -4161,7 +4149,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				
 			}
 			
-			Properties props = new Properties();
+			props = new Properties();
 			props.setProperty("user", "bug64983user1");
 			props.setProperty("password", "pwd");
 			props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlOldPasswordPlugin");
@@ -4246,11 +4234,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin"+ext+"'");
 				}
 
-				String dbname = null;
-				this.rs = this.stmt.executeQuery("select database() as dbname");
-				if(this.rs.first()) {
-					dbname = this.rs.getString("dbname");
-				}
+				Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+				String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 				if (dbname == null) assertTrue("No database selected", false);
 				
 				// create proxy users
@@ -4260,7 +4245,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5735user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 				this.stmt.executeUpdate("flush privileges");
 				
-				Properties props = new Properties();
+				props = new Properties();
 				props.setProperty("user", "wl5735user");
 				props.setProperty("password", "");
 
@@ -4316,11 +4301,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 			if (plugin_is_active) {
 				try {
-					String dbname = null;
-					this.rs = this.stmt.executeQuery("select database() as dbname");
-					if(this.rs.first()) {
-						dbname = this.rs.getString("dbname");
-					}
+					Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+					String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 					if (dbname == null) assertTrue("No database selected", false);
 					
 					// create proxy users
@@ -4335,7 +4317,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5602user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 					this.stmt.executeUpdate("flush privileges");
 					
-					Properties props = new Properties();
+					props = new Properties();
 					props.setProperty("user", "wl5602user");
 					props.setProperty("password", "pwd");
 
@@ -4441,14 +4423,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 	public void testBug64205() throws Exception {
 		if (versionMeetsMinimum(5, 5, 0)) {
-			String dbname = null;
-			this.rs = this.stmt.executeQuery("select database() as dbname");
-			if(this.rs.first()) {
-				dbname = this.rs.getString("dbname");
-			}
+			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 			if (dbname == null) assertTrue("No database selected", false);
 
-			Properties props = new Properties();
+			props = new Properties();
 			props.setProperty("characterEncoding", "EUC_JP");
 
 			Connection testConn = null;

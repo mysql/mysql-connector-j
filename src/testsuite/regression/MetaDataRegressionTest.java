@@ -3101,11 +3101,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		CallableStatement cStmt = null;
 
 		try {
-			String dbname = null;
-			this.rs = this.stmt.executeQuery("select database() as dbname");
-			if(this.rs.first()) {
-				dbname = this.rs.getString("dbname");
-			}
+			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 			if (dbname == null) assertTrue("No database selected", false);
 			
 			this.stmt.executeUpdate("grant usage on *.* to 'bug61203user'@'%' identified by 'foo'");
@@ -3219,11 +3216,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	 */
 	public void testBug63800() throws Exception {
 		try {
-			String dbname = null;
-			this.rs = this.stmt.executeQuery("select database() as dbname");
-			if(this.rs.first()) {
-				dbname = this.rs.getString("dbname");
-			}
+			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 			if (dbname == null) assertTrue("No database selected", false);
 
 			testTimestamp(this.conn, this.stmt, dbname);
@@ -3231,7 +3225,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 				testDatetime(this.conn, this.stmt, dbname);
 			}
 			
-			Properties props = new Properties();
+			props = new Properties();
 			props.setProperty("useInformationSchema", "true");
 			Connection conn2 = getConnectionWithProps(props);
 			Statement stmt2 = null;
