@@ -986,7 +986,7 @@ public class SQLError {
 	 */
 	public static SQLException createSQLException(String message,
 			String sqlState, int vendorErrorCode, boolean isTransient, ExceptionInterceptor interceptor) {
-		return createSQLException(message, sqlState, vendorErrorCode, false, interceptor, null);
+		return createSQLException(message, sqlState, vendorErrorCode, isTransient, interceptor, null);
 	}
 	public static SQLException createSQLException(String message,
 			String sqlState, int vendorErrorCode, boolean isTransient, ExceptionInterceptor interceptor, Connection conn) {
@@ -1072,8 +1072,16 @@ public class SQLError {
 											Integer.valueOf(vendorErrorCode) }, interceptor);
 					}
 				} else if (sqlState.startsWith("70100")) {
-					sqlEx = new MySQLQueryInterruptedException(message, sqlState, vendorErrorCode);
-
+					if(!Util.isJdbc4()) {
+						sqlEx = new MySQLQueryInterruptedException(message, sqlState, vendorErrorCode);
+					} else {
+						sqlEx = (SQLException) Util.getInstance(
+								"com.mysql.jdbc.exceptions.jdbc4.MySQLQueryInterruptedException",
+								new Class[] { String.class, String.class,
+										Integer.TYPE  }, new Object[] {
+										message, sqlState,
+										Integer.valueOf(vendorErrorCode) }, interceptor);						
+					}
 				} else {
 					sqlEx = new SQLException(message, sqlState, vendorErrorCode);
 				}
