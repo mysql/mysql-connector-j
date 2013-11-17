@@ -5501,6 +5501,126 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			assertEquals("Wrong error code retured for duplicated XID.", XAException.XAER_DUPID, e.errorCode);
 		}
 	}
+ 
+	/**
+	 * Tests fix for BUG#69746, ResultSet closed after Statement.close() when dontTrackOpenResources=true
+	 * active physical connections to slaves.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug69746() throws Exception {
+		Connection testConnection;
+		Statement testStatement;
+		ResultSet testResultSet;
+
+		/*
+		 * Test explicit closes
+		 */
+		testConnection = getConnectionWithProps("dontTrackOpenResources=true");
+		testStatement = testConnection.createStatement();
+		testResultSet = testStatement.executeQuery("SELECT 1");
+		
+		assertFalse("Connection should not be closed.", testConnection.isClosed());
+		assertFalse("Statement should not be closed.", isStatementClosedForTestBug69746(testStatement));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		testConnection.close();
+
+		assertTrue("Connection should be closed.", testConnection.isClosed());
+		assertFalse("Statement should not be closed.", isStatementClosedForTestBug69746(testStatement));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		testStatement.close();
+
+		assertTrue("Connection should be closed.", testConnection.isClosed());
+		assertTrue("Statement should be closed.", isStatementClosedForTestBug69746(testStatement));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		testResultSet.close();
+
+		assertTrue("Connection should be closed.", testConnection.isClosed());
+		assertTrue("Statement should be closed.", isStatementClosedForTestBug69746(testStatement));
+		assertTrue("ResultSet should be closed.", isResultSetClosedForTestBug69746(testResultSet));
+		
+		/*
+		 *  Test implicit closes
+		 */
+		// Prepare test objects
+		createProcedure("testBug69746_proc", "() BEGIN SELECT 1; SELECT 2; SELECT 3; END");
+		createTable("testBug69746_tbl", "(fld1 INT NOT NULL AUTO_INCREMENT, fld2 INT, PRIMARY KEY(fld1))");
+
+		testConnection = getConnectionWithProps("dontTrackOpenResources=true");
+		testStatement = testConnection.createStatement();
+		testResultSet = testStatement.executeQuery("SELECT 1");
+
+		// 1. Statement.execute() & Statement.getMoreResults()
+		testStatement.executeQuery("CALL testBug69746_proc");
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		ResultSet testResultSet2 = testStatement.getResultSet();
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet2));
+
+		testStatement.getMoreResults();
+		ResultSet testResultSet3 = testStatement.getResultSet();
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet2));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet3));
+
+		testStatement.getMoreResults(Statement.KEEP_CURRENT_RESULT);
+		ResultSet testResultSet4 = testStatement.getResultSet();
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet2));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet3));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet4));
+
+		testStatement.getMoreResults(Statement.CLOSE_ALL_RESULTS);
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet2));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet3));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet4));
+
+		// 2. Statement.executeBatch()
+		testStatement.addBatch("INSERT INTO testBug69746_tbl (fld2) VALUES (1)");
+		testStatement.addBatch("INSERT INTO testBug69746_tbl (fld2) VALUES (2)");
+		testStatement.executeBatch();
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		// 3. Statement.executeQuery()
+		testStatement.executeQuery("SELECT 2");
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		// 4. Statement.executeUpdate()
+		testStatement.executeUpdate("INSERT INTO testBug69746_tbl (fld2) VALUES (3)");
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		testResultSet.close();
+		testResultSet2.close();
+		testResultSet3.close();
+		testResultSet4.close();
+		testStatement.close();
+		testConnection.close();
+	}
+
+	private boolean isStatementClosedForTestBug69746(Statement statement) {
+		try {
+			statement.getResultSet();
+		} catch (SQLException ex) {
+			return ex.getMessage().equalsIgnoreCase(Messages.getString("Statement.49"));
+		}
+		return false;
+	}
+
+	private boolean isResultSetClosedForTestBug69746(ResultSet resultSet) {
+		try {
+			resultSet.first();
+		} catch (SQLException ex) {
+			return ex.getMessage().equalsIgnoreCase(
+					Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"));
+		}
+		return false;
+	}
 
 	/**
 	 * This test requires additional server instance configured with

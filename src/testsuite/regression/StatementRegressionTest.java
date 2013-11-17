@@ -4554,6 +4554,10 @@ public class StatementRegressionTest extends BaseTestCase {
 
 			}
 
+			public boolean isClosed() {
+				return false;
+			}
+
 			public boolean reallyResult() {
 
 				return false;
@@ -6015,7 +6019,7 @@ public class StatementRegressionTest extends BaseTestCase {
 	private void checkOpenResultsFor44056(Statement newStmt)
 			throws SQLException {
 		this.rs = newStmt.getGeneratedKeys();
-		assertEquals(1,
+		assertEquals(0,
 				((com.mysql.jdbc.Statement) newStmt).getOpenResultSetCount());
 		this.rs.close();
 		assertEquals(0,

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -322,10 +322,6 @@ public class JDBC4ResultSet extends ResultSetImpl {
 
 	public SQLXML getSQLXML(String columnLabel) throws SQLException {
 		return getSQLXML(findColumn(columnLabel));
-	}
-
-	public synchronized boolean isClosed() throws SQLException {
-		return this.isClosed;
 	}
 
 	public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {

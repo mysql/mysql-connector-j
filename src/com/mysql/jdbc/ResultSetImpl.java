@@ -7315,7 +7315,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * Closes this ResultSet and releases resources.
 	 * 
 	 * @param calledExplicitly
-	 *            was this called by close()?
+	 *            was realClose called by the standard ResultSet.close() method, or was it closed internally by the
+	 *            driver?
 	 * 
 	 * @throws SQLException
 	 *             if an error occurs
@@ -7503,9 +7504,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				this.thisRow = null;
 				this.fastDateCal = null;
 				this.connection = null;
-	
+
 				this.isClosed = true;
-	
+
 				if (exceptionDuringClose != null) {
 					throw exceptionDuringClose;
 				}
@@ -7513,6 +7514,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 	}
 
+	/**
+	 * Returns true if this ResultSet is closed.
+	 */
+	public synchronized boolean isClosed() throws SQLException {
+		return this.isClosed;
+	}
+	
 	public boolean reallyResult() {
 		if (this.rowData != null) {
 			return true;

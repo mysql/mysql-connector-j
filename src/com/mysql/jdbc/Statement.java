@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of version 2 of the GNU General Public License as
@@ -94,7 +94,7 @@ public interface Statement extends java.sql.Statement {
 	 * tracks them per-statement 
 	 */
 	 
-	public abstract void removeOpenResultSet(ResultSet rs);
+	public abstract void removeOpenResultSet(ResultSetInternalMethods rs);
 	
 	/**
 	 * Returns the number of open result sets for this statement.

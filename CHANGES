@@ -1,6 +1,9 @@
 # Changelog
 # $Id$
 nn-nn-13 - Version 5.1.28
+  - Fix for Bug#68916 (16691047), closeOnCompletion doesn't work.
+
+  - Fix for Bug #69746 (17164058), ResultSet closed after Statement.close() when dontTrackOpenResources=true
 
   - Fix for Bug#70842 (17753369), Adding live management of replication host topographies.
 
