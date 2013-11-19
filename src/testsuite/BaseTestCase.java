@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import junit.framework.TestCase;
 
@@ -754,6 +755,34 @@ public abstract class BaseTestCase extends TestCase {
 				assertTrue("Found " + howMuchMore + " extra rows in result set to be compared: ", howMuchMore == 0);
 			}
 
+	protected void assertThrows(Class<? extends Throwable> throwable, Callable<?> testRoutine) {
+		try {
+			testRoutine.call();
+			fail("Expected exception of type '" + throwable.getName() + "'.");
+		} catch (Throwable t) {
+			if (!throwable.isAssignableFrom(t.getClass())) {
+				fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '"
+						+ t.getClass().getName() + "' was thrown.");
+			}
+		}
+	}
+
+	protected void assertThrows(Class<? extends Throwable> throwable, String msgMatchesRegex, Callable<?> testRoutine) {
+		try {
+			testRoutine.call();
+			fail("Expected exception of type '" + throwable.getName() + "'.");
+		} catch (Throwable t) {
+			if (!throwable.isAssignableFrom(t.getClass())) {
+				fail("Expected exception of type '" + throwable.getName() + "' but instead a exception of type '"
+						+ t.getClass().getName() + "' was thrown.");
+			}
+
+			if (!t.getMessage().matches(msgMatchesRegex)) {
+				fail("The error message «" + t.getMessage() + "» was expected to match «" + msgMatchesRegex + "».");
+			}
+		}
+	}
+	
 	/*
 	 * Set default values for primitives.
 	 * (prevents NPE in Java 1.4 when calling via reflection)

@@ -52,6 +52,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -5756,5 +5757,47 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				connWithMemProps.close();
 			}
 		}
+	}
+
+	/**
+	 * Tests fix for Bug#69777 - Setting maxAllowedPacket below 8203 makes blobSendChunkSize negative.
+	 * 
+	 * @throws Exception
+	 *             if any errors occur
+	 */
+	public void testBug69777() throws Exception {
+		final int maxPacketSizeThreshold = 8203; // ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE + 11
+
+		// test maxAllowedPacket below threshold and useServerPrepStmts=true
+		assertThrows(SQLException.class, "Connection setting too low for 'maxAllowedPacket'.*", new Callable<Void>() {
+			@SuppressWarnings("synthetic-access")
+			public Void call() throws Exception {
+				getConnectionWithProps("useServerPrepStmts=true,maxAllowedPacket=" + (maxPacketSizeThreshold - 1))
+						.close();
+				return null;
+			}
+		});
+
+		assertThrows(SQLException.class, "Connection setting too low for 'maxAllowedPacket'.*", new Callable<Void>() {
+			@SuppressWarnings("synthetic-access")
+			public Void call() throws Exception {
+				getConnectionWithProps("useServerPrepStmts=true,maxAllowedPacket=" + maxPacketSizeThreshold).close();
+				return null;
+			}
+		});
+
+		// the following instructions should execute without any problem
+
+		// test maxAllowedPacket above threshold and useServerPrepStmts=true
+		getConnectionWithProps("useServerPrepStmts=true,maxAllowedPacket=" + (maxPacketSizeThreshold + 1)).close();
+
+		// test maxAllowedPacket below threshold and useServerPrepStmts=false
+		getConnectionWithProps("useServerPrepStmts=false,maxAllowedPacket=" + (maxPacketSizeThreshold - 1)).close();
+
+		// test maxAllowedPacket on threshold and useServerPrepStmts=false
+		getConnectionWithProps("useServerPrepStmts=false,maxAllowedPacket=" + maxPacketSizeThreshold).close();
+
+		// test maxAllowedPacket above threshold and useServerPrepStmts=false
+		getConnectionWithProps("useServerPrepStmts=false,maxAllowedPacket=" + (maxPacketSizeThreshold + 1)).close();
 	}
 }

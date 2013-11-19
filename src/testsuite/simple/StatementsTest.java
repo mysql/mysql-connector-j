@@ -1444,7 +1444,7 @@ public class StatementsTest extends BaseTestCase {
 			createTable("testStatementRewriteBatch", "(pk_field INT PRIMARY KEY NOT NULL AUTO_INCREMENT, field1 INT)");
 			props.setProperty("useServerPrepStmts", j == 0 ? "true" : "false");
 			props.setProperty("rewriteBatchedStatements", "true");
-			props.setProperty("maxAllowedPacket", "1024");
+			props.setProperty("maxAllowedPacket", j == 0 ? "10240" : "1024");
 			multiConn = getConnectionWithProps(props);
 
 			if (!isRunningOnJdk131()) {
@@ -1499,7 +1499,7 @@ public class StatementsTest extends BaseTestCase {
 
 			props.setProperty("useServerPrepStmts", j == 0 ? "true" : "false");
 			props.setProperty("rewriteBatchedStatements", "true");
-			props.setProperty("maxAllowedPacket", "1024");
+			props.setProperty("maxAllowedPacket", j == 0 ? "10240" : "1024");
 			multiConn = getConnectionWithProps(props);
 			pStmt = multiConn.prepareStatement("INSERT INTO rewriteBatchTypes(internalOrder,f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
