@@ -5733,15 +5733,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 						testMemUnits[i][j]));
 
 				// test values of property 'blobSendChunkSize'
-				// 'blobSendChunkSize' is reset if server variable 'max_allowed_packet' is set.
-				// 8203 = ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE + 11 (see also
-				// ConnectionImpl.initializePropsFromServer())
-				int expected = (int) (memMultiplier[i] * 1.2);
-				if (connWithMemProps.getMaxAllowedPacket() != -1) {
-					expected = Math.min(connWithMemProps.getMaxAllowedPacket(), expected) - 8203;
-				}
-				assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'blobSendChunkSize'", expected,
-						connWithMemProps.getBlobSendChunkSize());
+				assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'blobSendChunkSize'",
+						(int) (memMultiplier[i] * 1.2), connWithMemProps.getBlobSendChunkSize());
 
 				// test values of property 'largeRowSizeThreshold'
 				assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", "1.4"
