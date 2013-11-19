@@ -3102,8 +3102,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public java.sql.ResultSetMetaData getMetaData() throws SQLException {
 		checkClosed();
 
-		return new com.mysql.jdbc.ResultSetMetaData(this.fields,
-				this.connection.getUseOldAliasMetadataBehavior(), getExceptionInterceptor());
+		return new com.mysql.jdbc.ResultSetMetaData(fields, connection.getUseOldAliasMetadataBehavior(),
+				connection.getYearIsDateType(), getExceptionInterceptor());
 	}
 
 	/**
@@ -6862,7 +6862,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							fieldInfo.isUnsigned(), 
 							fieldInfo.getMysqlType(), 
 							fieldInfo.isBinary() || fieldInfo.isBlob(),
-							fieldInfo.isOpaqueBinary()),
+							fieldInfo.isOpaqueBinary(),
+							connection.getYearIsDateType()),
 					MysqlDefs.typeToName(fieldInfo.getMysqlType()),
 					convertibleTypesBuf.toString()});
 					

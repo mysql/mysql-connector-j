@@ -1021,12 +1021,12 @@ public class ServerPreparedStatement extends PreparedStatement {
 	public java.sql.ResultSetMetaData getMetaData() throws SQLException {
 		synchronized (checkClosed().getConnectionMutex()) {
 
-			if (this.resultFields == null) {
+			if (resultFields == null) {
 				return null;
 			}
 	
-			return new ResultSetMetaData(this.resultFields, 
-					this.connection.getUseOldAliasMetadataBehavior(), getExceptionInterceptor());
+			return new ResultSetMetaData(resultFields, connection.getUseOldAliasMetadataBehavior(),
+					connection.getYearIsDateType(), getExceptionInterceptor());
 		}
 	}
 

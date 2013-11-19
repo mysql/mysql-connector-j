@@ -2937,9 +2937,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 						this.pstmtResultMetaData = mdRs.getMetaData();
 					} else {
-						this.pstmtResultMetaData = new ResultSetMetaData(
-								new Field[0], 
-								this.connection.getUseOldAliasMetadataBehavior(), getExceptionInterceptor());
+						this.pstmtResultMetaData = new ResultSetMetaData(new Field[0],
+								connection.getUseOldAliasMetadataBehavior(), connection.getYearIsDateType(),
+								getExceptionInterceptor());
 					}
 				} finally {
 					SQLException sqlExRethrow = null;

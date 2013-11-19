@@ -1,7 +1,6 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
-
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
   There are special exceptions to the terms and conditions of the GPLv2 as it is applied to
@@ -19,7 +18,6 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
-
  */
 package com.mysql.jdbc;
 
@@ -75,18 +73,20 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
 	Field[] fields;
 	boolean useOldAliasBehavior = false;
+	boolean treatYearAsDate = true;
 
 	private ExceptionInterceptor exceptionInterceptor;
 	
 	/**
-	 * Initialise for a result with a tuple set and a field descriptor set
+	 * Initialize for a result with a tuple set and a field descriptor set
 	 * 
 	 * @param fields
 	 *            the array of field descriptors
 	 */
-	public ResultSetMetaData(Field[] fields, boolean useOldAliasBehavior, ExceptionInterceptor exceptionInterceptor) {
+	public ResultSetMetaData(Field[] fields, boolean useOldAliasBehavior, boolean treatYearAsDate, ExceptionInterceptor exceptionInterceptor) {
 		this.fields = fields;
 		this.useOldAliasBehavior = useOldAliasBehavior;
+		this.treatYearAsDate = treatYearAsDate;
 		this.exceptionInterceptor = exceptionInterceptor;
 	}
 
@@ -184,7 +184,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 				f.isUnsigned(), 
 				f.getMysqlType(), 
 				f.isBinary() || f.isBlob(),
-				f.isOpaqueBinary()); 
+				f.isOpaqueBinary(), treatYearAsDate); 
 	}
 
 	/**
@@ -725,65 +725,63 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
 		return toStringBuf.toString();
 	}
-	
-	static String getClassNameForJavaType(int javaType, 
-			boolean isUnsigned, int mysqlTypeIfKnown, 
-			boolean isBinaryOrBlob,
-			boolean isOpaqueBinary) {
+
+	static String getClassNameForJavaType(int javaType, boolean isUnsigned, int mysqlTypeIfKnown,
+			boolean isBinaryOrBlob, boolean isOpaqueBinary, boolean treatYearAsDate) {
 		switch (javaType) {
 		case Types.BIT:
 		case Types.BOOLEAN:
-			return "java.lang.Boolean"; //$NON-NLS-1$
+			return "java.lang.Boolean";
 
 		case Types.TINYINT:
 
 			if (isUnsigned) {
-				return "java.lang.Integer"; //$NON-NLS-1$
+				return "java.lang.Integer";
 			}
 
-			return "java.lang.Integer"; //$NON-NLS-1$
+			return "java.lang.Integer";
 
 		case Types.SMALLINT:
 
 			if (isUnsigned) {
-				return "java.lang.Integer"; //$NON-NLS-1$
+				return "java.lang.Integer";
 			}
 
-			return "java.lang.Integer"; //$NON-NLS-1$
+			return "java.lang.Integer";
 
 		case Types.INTEGER:
 
 			if (!isUnsigned || 
 					mysqlTypeIfKnown == MysqlDefs.FIELD_TYPE_INT24) {
-				return "java.lang.Integer"; //$NON-NLS-1$
+				return "java.lang.Integer";
 			}
 
-			return "java.lang.Long"; //$NON-NLS-1$
+			return "java.lang.Long";
 
 		case Types.BIGINT:
 
 			if (!isUnsigned) {
-				return "java.lang.Long"; //$NON-NLS-1$
+				return "java.lang.Long";
 			}
 
-			return "java.math.BigInteger"; //$NON-NLS-1$
+			return "java.math.BigInteger";
 
 		case Types.DECIMAL:
 		case Types.NUMERIC:
-			return "java.math.BigDecimal"; //$NON-NLS-1$
+			return "java.math.BigDecimal";
 
 		case Types.REAL:
-			return "java.lang.Float"; //$NON-NLS-1$
+			return "java.lang.Float";
 
 		case Types.FLOAT:
 		case Types.DOUBLE:
-			return "java.lang.Double"; //$NON-NLS-1$
+			return "java.lang.Double";
 
 		case Types.CHAR:
 		case Types.VARCHAR:
 		case Types.LONGVARCHAR:
 			if (!isOpaqueBinary) {
-				return "java.lang.String"; //$NON-NLS-1$
+				return "java.lang.String";
 			}
 
 			return "[B";
@@ -801,16 +799,17 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 			}
 
 		case Types.DATE:
-			return "java.sql.Date"; //$NON-NLS-1$
+				return (treatYearAsDate || mysqlTypeIfKnown != MysqlDefs.FIELD_TYPE_YEAR) ? "java.sql.Date"
+						: "java.lang.Short";
 
 		case Types.TIME:
-			return "java.sql.Time"; //$NON-NLS-1$
+			return "java.sql.Time";
 
 		case Types.TIMESTAMP:
-			return "java.sql.Timestamp"; //$NON-NLS-1$
+			return "java.sql.Timestamp";
 
 		default:
-			return "java.lang.Object"; //$NON-NLS-1$
+			return "java.lang.Object";
 		}
 	}
 	
