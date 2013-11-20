@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.28
 
+  - Fix for Bug#24344 test case, test fails if it's run with UTC timezone settings. 
+
   - Fix for Bug#69777, Setting maxAllowedPacket below 8203 makes blobSendChunkSize negative.
 
   - Fix for Bug#35115, yearIsDateType=false has no effect on result's column type and class.

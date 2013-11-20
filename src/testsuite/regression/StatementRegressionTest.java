@@ -3695,7 +3695,11 @@ public class StatementRegressionTest extends BaseTestCase {
 
 			assertEquals("Number of rows should be 3.", 3, i);
 			assertEquals(dates[0], dates[1]);
-			assertTrue(!dates[1].equals(dates[2]));
+			if (TimeZone.getDefault().getOffset(c.getTimeInMillis()) != 0) {
+				assertFalse(dates[1].equals(dates[2]));
+			} else {
+				assertTrue(dates[1].equals(dates[2]));
+			}
 		} finally {
 			if (conn2 != null) {
 				conn2.close();
