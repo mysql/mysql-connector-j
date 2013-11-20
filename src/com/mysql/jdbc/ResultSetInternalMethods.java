@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -107,10 +107,16 @@ public interface ResultSetInternalMethods extends java.sql.ResultSet {
 	/**
 	 * Closes this ResultSet and releases resources.
 	 * 
-	 * @param calledExplicitly was realClose called by the standard
-	 * ResultSet.close() method, or was it closed internally by the driver?
+	 * @param calledExplicitly
+	 *            was realClose called by the standard ResultSet.close() method, or was it closed internally by the
+	 *            driver?
 	 */
 	public void realClose(boolean calledExplicitly) throws SQLException;
+
+	/**
+	 * Returns true if this ResultSet is closed
+	 */
+	public boolean isClosed() throws SQLException;
 
 	/**
 	 * Sets the first character of the query that was issued to create

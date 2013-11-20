@@ -3102,8 +3102,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	public java.sql.ResultSetMetaData getMetaData() throws SQLException {
 		checkClosed();
 
-		return new com.mysql.jdbc.ResultSetMetaData(this.fields,
-				this.connection.getUseOldAliasMetadataBehavior(), getExceptionInterceptor());
+		return new com.mysql.jdbc.ResultSetMetaData(fields, connection.getUseOldAliasMetadataBehavior(),
+				connection.getYearIsDateType(), getExceptionInterceptor());
 	}
 
 	/**
@@ -6862,7 +6862,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 							fieldInfo.isUnsigned(), 
 							fieldInfo.getMysqlType(), 
 							fieldInfo.isBinary() || fieldInfo.isBlob(),
-							fieldInfo.isOpaqueBinary()),
+							fieldInfo.isOpaqueBinary(),
+							connection.getYearIsDateType()),
 					MysqlDefs.typeToName(fieldInfo.getMysqlType()),
 					convertibleTypesBuf.toString()});
 					
@@ -7315,7 +7316,8 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 * Closes this ResultSet and releases resources.
 	 * 
 	 * @param calledExplicitly
-	 *            was this called by close()?
+	 *            was realClose called by the standard ResultSet.close() method, or was it closed internally by the
+	 *            driver?
 	 * 
 	 * @throws SQLException
 	 *             if an error occurs
@@ -7503,9 +7505,9 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 				this.thisRow = null;
 				this.fastDateCal = null;
 				this.connection = null;
-	
+
 				this.isClosed = true;
-	
+
 				if (exceptionDuringClose != null) {
 					throw exceptionDuringClose;
 				}
@@ -7513,6 +7515,13 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		}
 	}
 
+	/**
+	 * Returns true if this ResultSet is closed.
+	 */
+	public synchronized boolean isClosed() throws SQLException {
+		return this.isClosed;
+	}
+	
 	public boolean reallyResult() {
 		if (this.rowData != null) {
 			return true;

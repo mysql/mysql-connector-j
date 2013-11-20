@@ -31,6 +31,7 @@ import java.util.Properties;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.NonRegisteringDriver;
 import com.mysql.jdbc.StringUtils;
 
 /**
@@ -216,11 +217,8 @@ public class SyntaxRegressionTest extends BaseTestCase {
 				tmpdir = StringUtils.escapeQuote(tmpdir, File.separator);
 			}
 			
-			String dbname = null;
-			this.rs = this.stmt.executeQuery("select database() as dbname");
-			if(this.rs.first()) {
-				dbname = this.rs.getString("dbname");
-			}
+			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 			if (dbname == null) assertTrue("No database selected", false);
 
 			File checkTableSpaceFile1 = new File(tmpdir + File.separator + dbname + File.separator + "testTransportableTablespaces1.ibd");
@@ -332,9 +330,10 @@ public class SyntaxRegressionTest extends BaseTestCase {
 		if (versionMeetsMinimum(5, 6, 5)) {
 			Connection c = null;
 			String datadir = null;
-			String dbname = null;
+			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 			
-			Properties props = new Properties();
+			props = new Properties();
 			props.setProperty("useServerPrepStmts", "true");
 			try {
 
@@ -409,10 +408,6 @@ public class SyntaxRegressionTest extends BaseTestCase {
 				this.rs.next();
 				datadir = this.rs.getString(2);
 
-				this.rs = this.stmt.executeQuery("select database() as dbname");
-				if(this.rs.first()) {
-					dbname = this.rs.getString("dbname");
-				}
 				if (dbname == null) {
 					fail("No database selected");
 				} else {

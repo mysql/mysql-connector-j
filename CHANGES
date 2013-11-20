@@ -5,6 +5,16 @@ nn-nn-13 - Version 5.1.28
   - Fix for Bug#70835 (17750877), SQLExceptions thrown because of query interruption (KILL QUERY, query timeout, etc.)
     didn't extend java.sql.SQLNonTransientException for JDBC4+ deployments.
 
+  - Fix for Bug#24344 test case, test fails if it's run with UTC timezone settings. 
+
+  - Fix for Bug#69777, Setting maxAllowedPacket below 8203 makes blobSendChunkSize negative.
+
+  - Fix for Bug#35115, yearIsDateType=false has no effect on result's column type and class.
+
+  - Fix for Bug#68916 (16691047), closeOnCompletion doesn't work.
+
+  - Fix for Bug #69746 (17164058), ResultSet closed after Statement.close() when dontTrackOpenResources=true
+
   - Fix for Bug#70842 (17753369), Adding live management of replication host topographies.
 
 11-04-13 - Version 5.1.27

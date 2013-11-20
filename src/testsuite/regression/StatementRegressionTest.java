@@ -3695,7 +3695,11 @@ public class StatementRegressionTest extends BaseTestCase {
 
 			assertEquals("Number of rows should be 3.", 3, i);
 			assertEquals(dates[0], dates[1]);
-			assertTrue(!dates[1].equals(dates[2]));
+			if (TimeZone.getDefault().getOffset(c.getTimeInMillis()) != 0) {
+				assertFalse(dates[1].equals(dates[2]));
+			} else {
+				assertTrue(dates[1].equals(dates[2]));
+			}
 		} finally {
 			if (conn2 != null) {
 				conn2.close();
@@ -4552,6 +4556,10 @@ public class StatementRegressionTest extends BaseTestCase {
 
 			public void realClose(boolean calledExplicitly) throws SQLException {
 
+			}
+
+			public boolean isClosed() {
+				return false;
 			}
 
 			public boolean reallyResult() {
@@ -6015,7 +6023,7 @@ public class StatementRegressionTest extends BaseTestCase {
 	private void checkOpenResultsFor44056(Statement newStmt)
 			throws SQLException {
 		this.rs = newStmt.getGeneratedKeys();
-		assertEquals(1,
+		assertEquals(0,
 				((com.mysql.jdbc.Statement) newStmt).getOpenResultSetCount());
 		this.rs.close();
 		assertEquals(0,

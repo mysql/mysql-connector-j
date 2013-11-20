@@ -1192,11 +1192,12 @@ public class UpdatableResultSet extends ResultSetImpl {
 	}
 
 	/**
-	 * Closes this ResultSet, releasing all resources.
-	 *
+	 * Closes this ResultSet and releases resources.
+	 * 
 	 * @param calledExplicitly
-	 *            was this called from close()?
-	 *
+	 *            was realClose called by the standard ResultSet.close() method, or was it closed internally by the
+	 *            driver?
+	 * 
 	 * @throws SQLException
 	 *             if an error occurs.
 	 */

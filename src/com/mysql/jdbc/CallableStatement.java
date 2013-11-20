@@ -308,8 +308,8 @@ public class CallableStatement extends PreparedStatement implements
 				mysqlTypeIfKnown = MysqlDefs.FIELD_TYPE_INT24;
 			}
 			
-			return ResultSetMetaData.getClassNameForJavaType(getParameterType(arg0), 
-					isUnsigned, mysqlTypeIfKnown, isBinaryOrBlob, false);
+			return ResultSetMetaData.getClassNameForJavaType(getParameterType(arg0), isUnsigned, mysqlTypeIfKnown,
+					isBinaryOrBlob, false, connection.getYearIsDateType());
 		}
 
 		public int getParameterCount() throws SQLException {

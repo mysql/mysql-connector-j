@@ -3621,14 +3621,23 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				else if (serverMaxAllowedPacket == -1 && getMaxAllowedPacket() == -1)
 					setMaxAllowedPacket(65535);
 				
-				int preferredBlobSendChunkSize = getBlobSendChunkSize();
-				
-				int allowedBlobSendChunkSize = Math.min(preferredBlobSendChunkSize, 
-						getMaxAllowedPacket()) - 
-						ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE 
-						- 11 /* LONG_DATA and MySQLIO packet header size */;
-				
-				setBlobSendChunkSize(String.valueOf(allowedBlobSendChunkSize));
+				if (getUseServerPrepStmts()) {
+					int preferredBlobSendChunkSize = getBlobSendChunkSize();
+
+					// LONG_DATA and MySQLIO packet header size
+					int packetHeaderSize = ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE + 11;
+					int allowedBlobSendChunkSize = Math.min(preferredBlobSendChunkSize, getMaxAllowedPacket())
+							- packetHeaderSize;
+
+					if (allowedBlobSendChunkSize <= 0) {
+						throw SQLError.createSQLException("Connection setting too low for 'maxAllowedPacket'. "
+								+ "When 'useServerPrepStmts=true', 'maxAllowedPacket' must be higher than "
+								+ packetHeaderSize + ". Check also 'max_allowed_packet' in MySQL configuration files.",
+								SQLError.SQL_STATE_INVALID_CONNECTION_ATTRIBUTE, getExceptionInterceptor());
+					}
+
+					setBlobSendChunkSize(String.valueOf(allowedBlobSendChunkSize));
+				}
 			}
 
 			if (this.serverVariables.containsKey("net_buffer_length")) {

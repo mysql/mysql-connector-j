@@ -2259,17 +2259,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			
 			Buffer sendPacket = fillSendPacket();
 
-			if (!this.connection.getHoldResultsOpenOverStatementClose()) {
-				if (!this.holdResultsOpenOverClose) {
-					if (this.results != null) {
-						this.results.realClose(false);
-					}
-					if (this.generatedKeysResults != null) {
-						this.generatedKeysResults.realClose(false);
-					}
-					closeAllOpenResults();
-				}
-			}
+			implicitlyCloseAllOpenResults();
 
 			String oldCatalog = null;
 
@@ -2418,15 +2408,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						"01S03", getExceptionInterceptor()); //$NON-NLS-1$
 			}
 	
-			if (!locallyScopedConn.getHoldResultsOpenOverStatementClose()) {
-					if (this.results != null) {
-						this.results.realClose(false);
-					}
-					if (this.generatedKeysResults != null) {
-						this.generatedKeysResults.realClose(false);
-					}
-					closeAllOpenResults();
-			}
+			implicitlyCloseAllOpenResults();
 
 			ResultSetInternalMethods rs = null;
 
@@ -2955,9 +2937,9 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 						this.pstmtResultMetaData = mdRs.getMetaData();
 					} else {
-						this.pstmtResultMetaData = new ResultSetMetaData(
-								new Field[0], 
-								this.connection.getUseOldAliasMetadataBehavior(), getExceptionInterceptor());
+						this.pstmtResultMetaData = new ResultSetMetaData(new Field[0],
+								connection.getUseOldAliasMetadataBehavior(), connection.getYearIsDateType(),
+								getExceptionInterceptor());
 					}
 				} finally {
 					SQLException sqlExRethrow = null;

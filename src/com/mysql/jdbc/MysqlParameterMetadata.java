@@ -38,7 +38,7 @@ public class MysqlParameterMetadata implements ParameterMetaData {
 	private ExceptionInterceptor exceptionInterceptor;
 	
 	MysqlParameterMetadata(Field[] fieldInfo, int parameterCount, ExceptionInterceptor exceptionInterceptor) {
-		this.metadata = new ResultSetMetaData(fieldInfo, false, exceptionInterceptor);
+		this.metadata = new ResultSetMetaData(fieldInfo, false, true, exceptionInterceptor);
 
 		this.parameterCount = parameterCount;
 		this.exceptionInterceptor = exceptionInterceptor;

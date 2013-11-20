@@ -3101,11 +3101,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		CallableStatement cStmt = null;
 
 		try {
-			String dbname = null;
-			this.rs = this.stmt.executeQuery("select database() as dbname");
-			if(this.rs.first()) {
-				dbname = this.rs.getString("dbname");
-			}
+			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 			if (dbname == null) assertTrue("No database selected", false);
 			
 			this.stmt.executeUpdate("grant usage on *.* to 'bug61203user'@'%' identified by 'foo'");
@@ -3219,11 +3216,8 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	 */
 	public void testBug63800() throws Exception {
 		try {
-			String dbname = null;
-			this.rs = this.stmt.executeQuery("select database() as dbname");
-			if(this.rs.first()) {
-				dbname = this.rs.getString("dbname");
-			}
+			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 			if (dbname == null) assertTrue("No database selected", false);
 
 			testTimestamp(this.conn, this.stmt, dbname);
@@ -3231,7 +3225,7 @@ public class MetaDataRegressionTest extends BaseTestCase {
 				testDatetime(this.conn, this.stmt, dbname);
 			}
 			
-			Properties props = new Properties();
+			props = new Properties();
 			props.setProperty("useInformationSchema", "true");
 			Connection conn2 = getConnectionWithProps(props);
 			Statement stmt2 = null;
@@ -4210,5 +4204,53 @@ public class MetaDataRegressionTest extends BaseTestCase {
 					countResults[0][i] == countResults[1][i]);
 			i++;
 		}
+	}
+	
+	/**
+	 * Tests fix for BUG#35115 - yearIsDateType=false has no effect on result's column type and class.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug35115() throws Exception {
+		Connection testConnection = null;
+		ResultSetMetaData rsMetaData = null;
+
+		createTable("testBug35115", "(year YEAR)");
+		
+		stmt = conn.createStatement();
+		stmt.executeUpdate("INSERT INTO testBug35115 VALUES ('2002'), ('2013')");
+		
+		/*
+		 *  test connection with property 'yearIsDateType=false'
+		 */
+		testConnection = getConnectionWithProps("yearIsDateType=false");
+		stmt = testConnection.createStatement();
+		rs = stmt.executeQuery("SELECT * FROM testBug35115");
+		rsMetaData = rs.getMetaData();
+		
+		assertTrue(rs.next());
+		assertEquals("YEAR columns should be treated as java.sql.Types.DATE", Types.DATE, rsMetaData.getColumnType(1));
+		assertEquals("YEAR columns should be identified as 'YEAR'", "YEAR", rsMetaData.getColumnTypeName(1));
+		assertEquals("YEAR columns should be mapped to java.lang.Short", java.lang.Short.class.getName(), rsMetaData.getColumnClassName(1));
+		assertEquals("YEAR columns should be returned as java.lang.Short", java.lang.Short.class.getName(), rs.getObject(1).getClass().getName());
+
+		testConnection.close();
+		
+		/*
+		 *  test connection with property 'yearIsDateType=true'
+		 */
+		testConnection = getConnectionWithProps("yearIsDateType=true");
+		stmt = testConnection.createStatement();
+		rs = stmt.executeQuery("SELECT * FROM testBug35115");
+		rsMetaData = rs.getMetaData();
+		
+		assertTrue(rs.next());
+		assertEquals("YEAR columns should be treated as java.sql.Types.DATE", Types.DATE, rsMetaData.getColumnType(1));
+		assertEquals("YEAR columns should be identified as 'YEAR'", "YEAR", rsMetaData.getColumnTypeName(1));
+		assertEquals("YEAR columns should be mapped to java.sql.Date", java.sql.Date.class.getName(), rsMetaData.getColumnClassName(1));
+		assertEquals("YEAR columns should be returned as java.sql.Date", java.sql.Date.class.getName(), rs.getObject(1).getClass().getName());
+
+		testConnection.close();
 	}
 }

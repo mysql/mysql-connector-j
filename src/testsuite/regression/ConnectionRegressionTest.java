@@ -52,6 +52,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -3830,11 +3831,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("INSTALL PLUGIN test_plugin_server SONAME 'auth_test_plugin"+ext+"'");
 				}
 
-				String dbname = null;
-				this.rs = this.stmt.executeQuery("select database() as dbname");
-				if(this.rs.first()) {
-					dbname = this.rs.getString("dbname");
-				}
+				Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+				String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 				if (dbname == null) assertTrue("No database selected", false);
 				
 				// create proxy users
@@ -3846,7 +3844,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'plug_dest', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 				this.stmt.executeUpdate("flush privileges");
 				
-				Properties props = new Properties();
+				props = new Properties();
 				props.setProperty("user", "wl5851user");
 				props.setProperty("password", "plug_dest");
 				props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$AuthTestPlugin");
@@ -3899,11 +3897,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("INSTALL PLUGIN two_questions SONAME 'auth"+ext+"'");
 				}
 
-				String dbname = null;
-				this.rs = this.stmt.executeQuery("select database() as dbname");
-				if(this.rs.first()) {
-					dbname = this.rs.getString("dbname");
-				}
+				Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+				String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 				if (dbname == null) assertTrue("No database selected", false);
 				
 				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user2'@'%' identified WITH two_questions AS 'two_questions_password'");
@@ -3912,7 +3907,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user2', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 				this.stmt.executeUpdate("flush privileges");
 				
-				Properties props = new Properties();
+				props = new Properties();
 				props.setProperty("user", "wl5851user2");
 				props.setProperty("password", "two_questions_password");
 				props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$TwoQuestionsPlugin");
@@ -3963,11 +3958,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("INSTALL PLUGIN three_attempts SONAME 'auth"+ext+"'");
 				}
 
-				String dbname = null;
-				this.rs = this.stmt.executeQuery("select database() as dbname");
-				if(this.rs.first()) {
-					dbname = this.rs.getString("dbname");
-				}
+				Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+				String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 				if (dbname == null) assertTrue("No database selected", false);
 				
 				this.stmt.executeUpdate("grant usage on *.* to 'wl5851user3'@'%' identified WITH three_attempts AS 'three_attempts_password'");
@@ -3976,7 +3968,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5851user3', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 				this.stmt.executeUpdate("flush privileges");
 				
-				Properties props = new Properties();
+				props = new Properties();
 				props.setProperty("user", "wl5851user3");
 				props.setProperty("password", "three_attempts_password");
 				props.setProperty("authenticationPlugins", "testsuite.regression.ConnectionRegressionTest$ThreeAttemptsPlugin");
@@ -4138,11 +4130,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 		if (versionMeetsMinimum(5, 5, 7) && !secure_auth) {
 
-			String dbname = null;
-			this.rs = this.stmt.executeQuery("select database() as dbname");
-			if(this.rs.first()) {
-				dbname = this.rs.getString("dbname");
-			}
+			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 			if (dbname == null) assertTrue("No database selected", false);
 			
 			Connection adminConn = null;
@@ -4161,7 +4150,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				
 			}
 			
-			Properties props = new Properties();
+			props = new Properties();
 			props.setProperty("user", "bug64983user1");
 			props.setProperty("password", "pwd");
 			props.setProperty("defaultAuthenticationPlugin", "com.mysql.jdbc.authentication.MysqlOldPasswordPlugin");
@@ -4246,11 +4235,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("INSTALL PLUGIN cleartext_plugin_server SONAME 'auth_test_plugin"+ext+"'");
 				}
 
-				String dbname = null;
-				this.rs = this.stmt.executeQuery("select database() as dbname");
-				if(this.rs.first()) {
-					dbname = this.rs.getString("dbname");
-				}
+				Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+				String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 				if (dbname == null) assertTrue("No database selected", false);
 				
 				// create proxy users
@@ -4260,7 +4246,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5735user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 				this.stmt.executeUpdate("flush privileges");
 				
-				Properties props = new Properties();
+				props = new Properties();
 				props.setProperty("user", "wl5735user");
 				props.setProperty("password", "");
 
@@ -4316,11 +4302,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 			if (plugin_is_active) {
 				try {
-					String dbname = null;
-					this.rs = this.stmt.executeQuery("select database() as dbname");
-					if(this.rs.first()) {
-						dbname = this.rs.getString("dbname");
-					}
+					Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+					String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 					if (dbname == null) assertTrue("No database selected", false);
 					
 					// create proxy users
@@ -4335,7 +4318,7 @@ public class ConnectionRegressionTest extends BaseTestCase {
 					this.stmt.executeUpdate("insert into mysql.db (Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv,Drop_priv, Grant_priv, References_priv, Index_priv, Alter_priv, Create_tmp_table_priv, Lock_tables_priv, Create_view_priv,Show_view_priv, Create_routine_priv, Alter_routine_priv, Execute_priv, Event_priv, Trigger_priv) VALUES ('%', 'information\\_schema', 'wl5602user', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'N', 'N')");
 					this.stmt.executeUpdate("flush privileges");
 					
-					Properties props = new Properties();
+					props = new Properties();
 					props.setProperty("user", "wl5602user");
 					props.setProperty("password", "pwd");
 
@@ -4441,14 +4424,11 @@ public class ConnectionRegressionTest extends BaseTestCase {
 
 	public void testBug64205() throws Exception {
 		if (versionMeetsMinimum(5, 5, 0)) {
-			String dbname = null;
-			this.rs = this.stmt.executeQuery("select database() as dbname");
-			if(this.rs.first()) {
-				dbname = this.rs.getString("dbname");
-			}
+			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
+			String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
 			if (dbname == null) assertTrue("No database selected", false);
 
-			Properties props = new Properties();
+			props = new Properties();
 			props.setProperty("characterEncoding", "EUC_JP");
 
 			Connection testConn = null;
@@ -5522,6 +5502,126 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			assertEquals("Wrong error code retured for duplicated XID.", XAException.XAER_DUPID, e.errorCode);
 		}
 	}
+ 
+	/**
+	 * Tests fix for BUG#69746, ResultSet closed after Statement.close() when dontTrackOpenResources=true
+	 * active physical connections to slaves.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug69746() throws Exception {
+		Connection testConnection;
+		Statement testStatement;
+		ResultSet testResultSet;
+
+		/*
+		 * Test explicit closes
+		 */
+		testConnection = getConnectionWithProps("dontTrackOpenResources=true");
+		testStatement = testConnection.createStatement();
+		testResultSet = testStatement.executeQuery("SELECT 1");
+		
+		assertFalse("Connection should not be closed.", testConnection.isClosed());
+		assertFalse("Statement should not be closed.", isStatementClosedForTestBug69746(testStatement));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		testConnection.close();
+
+		assertTrue("Connection should be closed.", testConnection.isClosed());
+		assertFalse("Statement should not be closed.", isStatementClosedForTestBug69746(testStatement));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		testStatement.close();
+
+		assertTrue("Connection should be closed.", testConnection.isClosed());
+		assertTrue("Statement should be closed.", isStatementClosedForTestBug69746(testStatement));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		testResultSet.close();
+
+		assertTrue("Connection should be closed.", testConnection.isClosed());
+		assertTrue("Statement should be closed.", isStatementClosedForTestBug69746(testStatement));
+		assertTrue("ResultSet should be closed.", isResultSetClosedForTestBug69746(testResultSet));
+		
+		/*
+		 *  Test implicit closes
+		 */
+		// Prepare test objects
+		createProcedure("testBug69746_proc", "() BEGIN SELECT 1; SELECT 2; SELECT 3; END");
+		createTable("testBug69746_tbl", "(fld1 INT NOT NULL AUTO_INCREMENT, fld2 INT, PRIMARY KEY(fld1))");
+
+		testConnection = getConnectionWithProps("dontTrackOpenResources=true");
+		testStatement = testConnection.createStatement();
+		testResultSet = testStatement.executeQuery("SELECT 1");
+
+		// 1. Statement.execute() & Statement.getMoreResults()
+		testStatement.executeQuery("CALL testBug69746_proc");
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		ResultSet testResultSet2 = testStatement.getResultSet();
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet2));
+
+		testStatement.getMoreResults();
+		ResultSet testResultSet3 = testStatement.getResultSet();
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet2));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet3));
+
+		testStatement.getMoreResults(Statement.KEEP_CURRENT_RESULT);
+		ResultSet testResultSet4 = testStatement.getResultSet();
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet2));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet3));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet4));
+
+		testStatement.getMoreResults(Statement.CLOSE_ALL_RESULTS);
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet2));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet3));
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet4));
+
+		// 2. Statement.executeBatch()
+		testStatement.addBatch("INSERT INTO testBug69746_tbl (fld2) VALUES (1)");
+		testStatement.addBatch("INSERT INTO testBug69746_tbl (fld2) VALUES (2)");
+		testStatement.executeBatch();
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		// 3. Statement.executeQuery()
+		testStatement.executeQuery("SELECT 2");
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		// 4. Statement.executeUpdate()
+		testStatement.executeUpdate("INSERT INTO testBug69746_tbl (fld2) VALUES (3)");
+		assertFalse("ResultSet should not be closed.", isResultSetClosedForTestBug69746(testResultSet));
+
+		testResultSet.close();
+		testResultSet2.close();
+		testResultSet3.close();
+		testResultSet4.close();
+		testStatement.close();
+		testConnection.close();
+	}
+
+	private boolean isStatementClosedForTestBug69746(Statement statement) {
+		try {
+			statement.getResultSet();
+		} catch (SQLException ex) {
+			return ex.getMessage().equalsIgnoreCase(Messages.getString("Statement.49"));
+		}
+		return false;
+	}
+
+	private boolean isResultSetClosedForTestBug69746(ResultSet resultSet) {
+		try {
+			resultSet.first();
+		} catch (SQLException ex) {
+			return ex.getMessage().equalsIgnoreCase(
+					Messages.getString("ResultSet.Operation_not_allowed_after_ResultSet_closed_144"));
+		}
+		return false;
+	}
 
 	/**
 	 * This test requires additional server instance configured with
@@ -5633,15 +5733,8 @@ public class ConnectionRegressionTest extends BaseTestCase {
 						testMemUnits[i][j]));
 
 				// test values of property 'blobSendChunkSize'
-				// 'blobSendChunkSize' is reset if server variable 'max_allowed_packet' is set.
-				// 8203 = ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE + 11 (see also
-				// ConnectionImpl.initializePropsFromServer())
-				int expected = (int) (memMultiplier[i] * 1.2);
-				if (connWithMemProps.getMaxAllowedPacket() != -1) {
-					expected = Math.min(connWithMemProps.getMaxAllowedPacket(), expected) - 8203;
-				}
-				assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'blobSendChunkSize'", expected,
-						connWithMemProps.getBlobSendChunkSize());
+				assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'blobSendChunkSize'",
+						(int) (memMultiplier[i] * 1.2), connWithMemProps.getBlobSendChunkSize());
 
 				// test values of property 'largeRowSizeThreshold'
 				assertEquals("Memory unit '" + testMemUnits[i][j] + "'; property 'largeRowSizeThreshold'", "1.4"
@@ -5657,5 +5750,47 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				connWithMemProps.close();
 			}
 		}
+	}
+
+	/**
+	 * Tests fix for Bug#69777 - Setting maxAllowedPacket below 8203 makes blobSendChunkSize negative.
+	 * 
+	 * @throws Exception
+	 *             if any errors occur
+	 */
+	public void testBug69777() throws Exception {
+		final int maxPacketSizeThreshold = 8203; // ServerPreparedStatement.BLOB_STREAM_READ_BUF_SIZE + 11
+
+		// test maxAllowedPacket below threshold and useServerPrepStmts=true
+		assertThrows(SQLException.class, "Connection setting too low for 'maxAllowedPacket'.*", new Callable<Void>() {
+			@SuppressWarnings("synthetic-access")
+			public Void call() throws Exception {
+				getConnectionWithProps("useServerPrepStmts=true,maxAllowedPacket=" + (maxPacketSizeThreshold - 1))
+						.close();
+				return null;
+			}
+		});
+
+		assertThrows(SQLException.class, "Connection setting too low for 'maxAllowedPacket'.*", new Callable<Void>() {
+			@SuppressWarnings("synthetic-access")
+			public Void call() throws Exception {
+				getConnectionWithProps("useServerPrepStmts=true,maxAllowedPacket=" + maxPacketSizeThreshold).close();
+				return null;
+			}
+		});
+
+		// the following instructions should execute without any problem
+
+		// test maxAllowedPacket above threshold and useServerPrepStmts=true
+		getConnectionWithProps("useServerPrepStmts=true,maxAllowedPacket=" + (maxPacketSizeThreshold + 1)).close();
+
+		// test maxAllowedPacket below threshold and useServerPrepStmts=false
+		getConnectionWithProps("useServerPrepStmts=false,maxAllowedPacket=" + (maxPacketSizeThreshold - 1)).close();
+
+		// test maxAllowedPacket on threshold and useServerPrepStmts=false
+		getConnectionWithProps("useServerPrepStmts=false,maxAllowedPacket=" + maxPacketSizeThreshold).close();
+
+		// test maxAllowedPacket above threshold and useServerPrepStmts=false
+		getConnectionWithProps("useServerPrepStmts=false,maxAllowedPacket=" + (maxPacketSizeThreshold + 1)).close();
 	}
 }
