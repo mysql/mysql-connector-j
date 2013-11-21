@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.28
 
+  - Fix for Bug#70969, Shadow declaration of OperationNotSupportedException in RowDataDynamic.
+
   - Fix for Bug#70835 (17750877), SQLExceptions thrown because of query interruption (KILL QUERY, query timeout, etc.)
     didn't extend java.sql.SQLNonTransientException for JDBC4+ deployments.
 
