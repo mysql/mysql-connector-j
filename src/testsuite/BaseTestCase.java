@@ -692,7 +692,6 @@ public abstract class BaseTestCase extends TestCase {
 	}
 	
 	protected void assertResultSetLength(ResultSet rset, int len) throws Exception {
-		assertTrue("Result set is scrollable", rset.getType() != ResultSet.TYPE_FORWARD_ONLY);
 		int oldRowPos = rset.getRow();
 		rset.last();
 		assertEquals("Result set length", len, rset.getRow());

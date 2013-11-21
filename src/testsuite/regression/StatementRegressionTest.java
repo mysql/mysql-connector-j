@@ -1,8 +1,6 @@
 /*
- Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  
- 
-
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
   There are special exceptions to the terms and conditions of the GPLv2 as it is applied to
@@ -20,9 +18,6 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
-
-
-
  */
 package testsuite.regression;
 
@@ -7115,4 +7110,49 @@ public class StatementRegressionTest extends BaseTestCase {
 
 	}
 
+	/**
+	 * Tests fix for BUG#55340 - initializeResultsMetadataFromCache fails on second call to stored proc
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug55340() throws Exception {
+		Connection testConnCacheRSMD = getConnectionWithProps("cacheResultSetMetadata=true");
+		ResultSetMetaData rsmd;
+
+		createTable("testBug55340", "(col1 INT, col2 CHAR(10))");
+		createProcedure("testBug55340", "() BEGIN SELECT * FROM testBug55340; END");
+
+		assertEquals(stmt.executeUpdate("INSERT INTO testBug55340 (col1, col2) VALUES "
+				+ "(1, 'one'), (2, 'two'), (3, 'three')"), 3);
+
+		for (Connection testConn : new Connection[] { conn, testConnCacheRSMD }) {
+			String testDesc = testConn == testConnCacheRSMD ? "Conn. with 'cacheResultSetMetadata=true'"
+					: "Default connection";
+
+			// bug occurs in 2nd call only
+			for (int i = 1; i <= 2; i++) {
+				for (PreparedStatement testStmt : new PreparedStatement[] {
+						testConn.prepareStatement("SELECT * FROM testBug55340"),
+						testConn.prepareCall("CALL testBug55340()") }) {
+
+					assertTrue(testStmt.execute());
+					rs = testStmt.getResultSet();
+					assertResultSetLength(rs, 3);
+
+					rsmd = rs.getMetaData();
+					assertEquals("(" + i + ") " + testDesc + " - " + testStmt.getClass().getSimpleName()
+							+ ":RSMetaData - wrong column count.", 2, rsmd.getColumnCount());
+					assertEquals("(" + i + ") " + testDesc + " - " + testStmt.getClass().getSimpleName()
+							+ ":RSMetaData - wrong column(1) type.", Integer.class.getName(), rsmd.getColumnClassName(1));
+					assertEquals("(" + i + ") " + testDesc + " - " + testStmt.getClass().getSimpleName()
+							+ ":RSMetaData - wrong column(2) type.", String.class.getName(), rsmd.getColumnClassName(2));
+
+					testStmt.close();
+				}
+			}
+		}
+
+		testConnCacheRSMD.close();
+	}
 }

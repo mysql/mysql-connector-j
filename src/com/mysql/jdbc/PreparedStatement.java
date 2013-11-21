@@ -1383,7 +1383,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	
 			if (cachedMetadata != null) {
 				locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql,
-						cachedMetadata, this.results);
+						cachedMetadata, rs);
 			} else {
 				if (rs.reallyResult() && locallyScopedConn.getCacheResultSetMetadata()) {
 					locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql,
