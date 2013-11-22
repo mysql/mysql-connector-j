@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.28
 
+  - Fix for Bug#69579, DriverManager.setLoginTimeout not honored.
+
   - Fix for Bug#51313, Escape processing is confused by multiple backslashes.
 
   - Fix for Bug#55340, initializeResultsMetadataFromCache fails on second call to stored proc.
@@ -24,8 +26,6 @@ nn-nn-13 - Version 5.1.28
   - Fix for Bug#70842 (17753369), Adding live management of replication host topographies.
 
 11-04-13 - Version 5.1.27
-
-  - Fix for Bug#69579, DriverManager.setLoginTimeout not honored.
 
   - Fix for Bug#17248345, getFunctionColumns() method returns columns of procedure.
 
