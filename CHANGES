@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-13 - Version 5.1.28
 
+  - Fix for Bug#51313, Escape processing is confused by multiple backslashes.
+
   - Fix for Bug#55340, initializeResultsMetadataFromCache fails on second call to stored proc.
 
   - Fix for Bug#70969, Shadow declaration of OperationNotSupportedException in RowDataDynamic.

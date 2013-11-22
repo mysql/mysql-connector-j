@@ -135,6 +135,41 @@ public class EscapeProcessingTest extends BaseTestCase {
 				tzConn.close();
 			}
 		}
+	}
+
+	/**
+	 * Tests fix for BUG#51313 - Escape processing is confused by multiple backslashes.
+	 * 
+	 * @throws Exception
+	 */
+	public void testBug51313() throws Exception {
+		stmt = conn.createStatement();
 		
+		rs = stmt.executeQuery("SELECT {fn lcase('My{fn UCASE(sql)}} -- DATABASE')}, {fn ucase({fn lcase('SERVER')})}"
+				+ " -- {escape } processing test\n -- this {fn ucase('comment') is in line 2\r\n"
+				+ " -- this in line 3, and previous escape sequence was malformed\n");
+		assertTrue(rs.next());
+		assertEquals("my{fn ucase(sql)}} -- database", rs.getString(1));
+		assertEquals("SERVER", rs.getString(2));
+		rs.close();
+
+		rs = stmt.executeQuery("SELECT 'MySQL \\\\\\' testing {long \\\\\\' escape"
+				+ " -- { \\\\\\' sequences \\\\\\' } } with escape processing '");
+		assertTrue(rs.next());
+		assertEquals("MySQL \\\' testing {long \\\' escape -- { \\\' sequences \\\' } } with escape processing ",
+				rs.getString(1));
+		rs.close();
+
+		rs = stmt.executeQuery("SELECT 'MySQL \\'', '{ testing doubled -- } ''\\\\\\''' quotes '");
+		assertTrue(rs.next());
+		assertEquals("MySQL \'", rs.getString(1));
+		assertEquals("{ testing doubled -- } '\\\'' quotes ", rs.getString(2));
+		rs.close();
+
+		rs = stmt.executeQuery("SELECT 'MySQL \\\\\\'''', '{ testing doubled -- } ''\\''' quotes '");
+		assertTrue(rs.next());
+		assertEquals("MySQL \\\''", rs.getString(1));
+		assertEquals("{ testing doubled -- } '\'' quotes ", rs.getString(2));
+		rs.close();
 	}
 }
