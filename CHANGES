@@ -1,6 +1,6 @@
 # Changelog
 # $Id$
-nn-nn-13 - Version 5.1.28
+12-23-13 - Version 5.1.28
 
   - Fix for Bug#69579, DriverManager.setLoginTimeout not honored.
 
