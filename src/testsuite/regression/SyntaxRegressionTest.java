@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -692,5 +693,43 @@ public class SyntaxRegressionTest extends BaseTestCase {
 			assertTrue("Query [" + query + "] should return some rows.", this.rs.next());
 			this.rs.close();
 		}
+	}
+
+	/**
+	 * WL#6555 - Online rename index
+	 * 
+	 * ALTER TABLE syntax changed in 5.7.1
+	 * 
+	 * Alter table allows to rename indexes. ALTER TABLE ... RENAME INDEX x TO y
+	 * 
+	 * @throws SQLException
+	 */
+	public void testRenameIndex() throws Exception {
+
+		if (!versionMeetsMinimum(5, 7, 1)) {
+			return;
+		}
+
+		createTable("testRenameIndex", "(col1 INT, col2 INT, INDEX (col1)) ENGINE=InnoDB");
+		this.stmt.execute("CREATE INDEX testIdx ON testRenameIndex (col2)");
+
+		DatabaseMetaData dbmd = this.conn.getMetaData();
+
+		this.rs = dbmd.getIndexInfo(null, null, "testRenameIndex", false, true);
+		assertTrue("Expected 1 (of 2) indexes.", this.rs.next());
+		assertEquals("Wrong index name for table 'testRenameIndex'.", "col1", this.rs.getString(6));
+		assertTrue("Expected 2 (of 2) indexes.", this.rs.next());
+		assertEquals("Wrong index name for table 'testRenameIndex'.", "testIdx", this.rs.getString(6));
+		assertFalse("No more indexes expected for table 'testRenameIndex'.", this.rs.next());
+
+		this.stmt.execute("ALTER TABLE testRenameIndex RENAME INDEX col1 TO col1Index");
+		this.stmt.execute("ALTER TABLE testRenameIndex RENAME INDEX testIdx TO testIndex");
+
+		this.rs = dbmd.getIndexInfo(null, null, "testRenameIndex", false, true);
+		assertTrue("Expected 1 (of 2) indexes.", this.rs.next());
+		assertEquals("Wrong index name for table 'testRenameIndex'.", "col1Index", this.rs.getString(6));
+		assertTrue("Expected 2 (of 2) indexes.", this.rs.next());
+		assertEquals("Wrong index name for table 'testRenameIndex'.", "testIndex", this.rs.getString(6));
+		assertFalse("No more indexes expected for table 'testRenameIndex'.", this.rs.next());
 	}
 }

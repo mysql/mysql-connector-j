@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.29
 
+  - Added tests for new index renaming syntax introduced in 5.7.1.
+
 12-23-13 - Version 5.1.28
 
   - Fix for Bug#69579, DriverManager.setLoginTimeout not honored.
