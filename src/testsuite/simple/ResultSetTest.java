@@ -65,7 +65,10 @@ public class ResultSetTest extends BaseTestCase {
 		Iterator<Integer> collationIndexes = ((ConnectionImpl)this.conn).indexToJavaCharset.keySet().iterator();
 		while (collationIndexes.hasNext()) {
 			Integer index = collationIndexes.next();
-			String charsetName = ((ConnectionImpl)this.conn).indexToCustomMysqlCharset.get(index);
+			String charsetName = null;
+			if (((ConnectionImpl)this.conn).indexToCustomMysqlCharset != null) {
+				charsetName = ((ConnectionImpl)this.conn).indexToCustomMysqlCharset.get(index);
+			}
 			if (charsetName == null) charsetName = CharsetMapping.STATIC_INDEX_TO_MYSQL_CHARSET_MAP.get(index);
 			if (charsetName != null) charsetsMap.put(charsetName, index);
 		}

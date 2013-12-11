@@ -2673,4 +2673,12 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 		// nothing to do here.
 		
 	}
+
+	public void setDetectCustomCollations(boolean detectCustomCollations) {
+		getActiveMySQLConnection().setDetectCustomCollations(detectCustomCollations);
+	}
+
+	public boolean getDetectCustomCollations() {
+		return getActiveMySQLConnection().getDetectCustomCollations();
+	}
 }

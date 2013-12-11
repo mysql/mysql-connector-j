@@ -2862,4 +2862,12 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public String getConnectionAttributes() throws SQLException {
 		return this.mc.getConnectionAttributes();
 	}
+
+	public void setDetectCustomCollations(boolean detectCustomCollations) {
+		this.mc.setDetectCustomCollations(detectCustomCollations);
+	}
+
+	public boolean getDetectCustomCollations() {
+		return this.mc.getDetectCustomCollations();
+	}
 }

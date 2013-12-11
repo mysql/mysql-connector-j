@@ -2,6 +2,11 @@
 # $Id$
 nn-nn-14 - Version 5.1.29
 
+  - Fix for Bug#71038, Add an option for custom collations detection.
+    Added new connection property detectCustomCollations=[true|false], with default false.
+    Please be aware that these changed the previous default behavior and if you use custom charsets or collations
+    you need to set detectCustomCollations=true.
+
   - Added tests for new index renaming syntax introduced in 5.7.1.
 
 12-23-13 - Version 5.1.28

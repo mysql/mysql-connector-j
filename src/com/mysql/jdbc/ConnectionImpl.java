@@ -511,9 +511,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public Map<Integer, String> indexToJavaCharset = new HashMap<Integer, String>();
 
-	public Map<Integer, String> indexToCustomMysqlCharset = new HashMap<Integer, String>();
+	public Map<Integer, String> indexToCustomMysqlCharset = null; //new HashMap<Integer, String>();
 
-	private Map<String, Integer> mysqlCharsetToCustomMblen = new HashMap<String, Integer>();
+	private Map<String, Integer> mysqlCharsetToCustomMblen = null; //new HashMap<String, Integer>();
 	
 	/** The I/O abstraction interface (network conn to MySQL server */
 	private transient MysqlIO io = null;
@@ -969,30 +969,30 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	private void buildCollationMapping() throws SQLException {
 
-		HashMap<Integer, String> javaCharset = null;
+		Map<Integer, String> javaCharset = null;
+		Map<Long, String> sortedCollationMap = null;
+		Map<Integer, String> customCharset = null;
+		Map<String, Integer> customMblen = null;
 
-		if (versionMeetsMinimum(4, 1, 0)) {
-
-			TreeMap<Long, String> sortedCollationMap = null;
-			HashMap<Integer, String> customCharset = null;
-			HashMap<String, Integer> customMblen = null;
-
-			if (getCacheServerConfiguration()) {
-				synchronized (serverCollationByUrl) {
-					sortedCollationMap = (TreeMap<Long, String>) serverCollationByUrl.get(getURL());
-					javaCharset = (HashMap<Integer, String>) serverJavaCharsetByUrl.get(getURL());
-					customCharset = (HashMap<Integer, String>) serverCustomCharsetByUrl.get(getURL());
-					customMblen = (HashMap<String, Integer>) serverCustomMblenByUrl.get(getURL());
-				}
+		if (getCacheServerConfiguration()) {
+			synchronized (serverJavaCharsetByUrl) {
+				javaCharset = serverJavaCharsetByUrl.get(getURL());
+				sortedCollationMap = serverCollationByUrl.get(getURL());
+				customCharset = serverCustomCharsetByUrl.get(getURL());
+				customMblen = serverCustomMblenByUrl.get(getURL());
 			}
+		}
+		
+		if (javaCharset == null) {
+			javaCharset = new HashMap<Integer, String>();
+
+		if (versionMeetsMinimum(4, 1, 0) && getDetectCustomCollations()) {
 
 			java.sql.Statement stmt = null;
 			java.sql.ResultSet results = null;
 
 			try {
-				if (sortedCollationMap == null) {
 					sortedCollationMap = new TreeMap<Long, String>();
-					javaCharset = new HashMap<Integer, String>();
 					customCharset = new HashMap<Integer, String>();
 					customMblen = new HashMap<String, Integer>();
 
@@ -1054,19 +1054,14 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 					}
 
 					if (getCacheServerConfiguration()) {
-						synchronized (serverCollationByUrl) {
-							serverCollationByUrl.put(getURL(), sortedCollationMap);
+						synchronized (serverJavaCharsetByUrl) {
 							serverJavaCharsetByUrl.put(getURL(), javaCharset);
+							serverCollationByUrl.put(getURL(), sortedCollationMap);
 							serverCustomCharsetByUrl.put(getURL(), customCharset);
 							serverCustomMblenByUrl.put(getURL(), customMblen);
 						}
 					}
 
-				}
-
-				this.indexToJavaCharset = Collections.unmodifiableMap(javaCharset);
-				this.indexToCustomMysqlCharset = Collections.unmodifiableMap(customCharset);
-				this.mysqlCharsetToCustomMblen = Collections.unmodifiableMap(customMblen);
 				
 			} catch (SQLException ex) {
 				throw ex;
@@ -1092,11 +1087,25 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 				}
 			}
 		} else {
-			javaCharset = new HashMap<Integer, String>();
 			for (int i = 0; i < CharsetMapping.INDEX_TO_CHARSET.length; i++) {
-				javaCharset.put(i, CharsetMapping.INDEX_TO_CHARSET[i]);
+				javaCharset.put(i, getJavaEncodingForMysqlEncoding(CharsetMapping.STATIC_INDEX_TO_MYSQL_CHARSET_MAP.get(i)));
 			}
-			this.indexToJavaCharset = Collections.unmodifiableMap(javaCharset);
+			if (getCacheServerConfiguration()) {
+				synchronized (serverJavaCharsetByUrl) {
+					serverJavaCharsetByUrl.put(getURL(), javaCharset);
+				}
+			}
+		}
+		
+		
+		}
+
+		this.indexToJavaCharset = Collections.unmodifiableMap(javaCharset);
+		if (customCharset != null) {
+			this.indexToCustomMysqlCharset = Collections.unmodifiableMap(customCharset);
+		}
+		if (customMblen != null) {
+			this.mysqlCharsetToCustomMblen = Collections.unmodifiableMap(customMblen);
 		}
 	}
 
@@ -3195,7 +3204,9 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			// getting charset name from dynamic maps in connection;
 			// we do it before checking against static maps because custom charset on server
 			// can be mapped to index from our static map key's diapason 
-			charset = this.indexToCustomMysqlCharset.get(charsetIndex);
+			if (this.indexToCustomMysqlCharset != null) {
+				charset = this.indexToCustomMysqlCharset.get(charsetIndex);
+			}
 			// checking against static maps if no custom charset found
 			if (charset==null) charset = CharsetMapping.STATIC_INDEX_TO_MYSQL_CHARSET_MAP.get(charsetIndex);
 
@@ -3209,7 +3220,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 	
 			// checking against dynamic maps in connection
-			Integer mblen = this.mysqlCharsetToCustomMblen.get(charset);
+			Integer mblen = null;
+			if (this.mysqlCharsetToCustomMblen != null) {
+				mblen = this.mysqlCharsetToCustomMblen.get(charset);
+			}
 
 			// checking against static maps
 			if (mblen == null) mblen = CharsetMapping.STATIC_CHARSET_TO_NUM_BYTES_MAP.get(charset);
@@ -3281,7 +3295,10 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 */
 	public String getServerCharacterEncoding() {
 		if (this.io.versionMeetsMinimum(4, 1, 0)) {
-			String charset = this.indexToCustomMysqlCharset.get(this.io.serverCharsetIndex);
+			String charset = null;
+			if (this.indexToCustomMysqlCharset != null) {
+				charset = this.indexToCustomMysqlCharset.get(this.io.serverCharsetIndex);
+			}
 			if (charset == null) charset = CharsetMapping.STATIC_INDEX_TO_MYSQL_CHARSET_MAP.get(this.io.serverCharsetIndex);
 			return charset != null ? charset : this.serverVariables.get("character_set_server");
 		}

@@ -2970,4 +2970,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public String getConnectionAttributes() throws SQLException {
 		return getCurrentConnection().getConnectionAttributes();
 	}
+
+	public void setDetectCustomCollations(boolean detectCustomCollations) {
+		getCurrentConnection().setDetectCustomCollations(detectCustomCollations);
+	}
+
+	public boolean getDetectCustomCollations() {
+		return getCurrentConnection().getDetectCustomCollations();
+	}
 }

@@ -1733,6 +1733,10 @@ public interface ConnectionProperties {
 	
 	public abstract boolean getGetProceduresReturnsFunctions();
 
+	public abstract void setDetectCustomCollations(boolean detectCustomCollations);
+	
+	public abstract boolean getDetectCustomCollations();
+
 	String getConnectionAttributes() throws SQLException;
 
 }

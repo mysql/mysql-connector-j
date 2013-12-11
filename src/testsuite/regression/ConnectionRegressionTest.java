@@ -5905,4 +5905,27 @@ public class ConnectionRegressionTest extends BaseTestCase {
 			executor.shutdownNow();
 		}
 	}
+
+	/**
+	 * Tests fix for Bug#71038, Add an option for custom collations detection
+	 * @throws Exception
+	 */
+	public void testBug71038() throws Exception {
+		long cnt0 = 0;
+		long cnt1 = 0;
+		for (int i = 0; i < 1000; i++) {
+			cnt0 -= System.currentTimeMillis();
+			Connection c = getConnectionWithProps("detectCustomCollations=false");
+			cnt0 += System.currentTimeMillis();
+			c.close();
+			cnt1 -= System.currentTimeMillis();
+			c = getConnectionWithProps("detectCustomCollations=true");
+			cnt1 += System.currentTimeMillis();
+			c.close();
+		}
+		System.out.println(
+				"detectCustomCollations=false: " + cnt0 +"\n" +
+				"detectCustomCollations=true : " + cnt1);
+		assertTrue(cnt0 < cnt1);
+	}
 }

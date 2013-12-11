@@ -1860,6 +1860,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			Messages.getString("ConnectionProperties.getProceduresReturnsFunctions"),
 			"5.1.26", MISC_CATEGORY, Integer.MIN_VALUE);
 
+	private BooleanConnectionProperty detectCustomCollations = new BooleanConnectionProperty(
+			"detectCustomCollations", false,
+			Messages.getString("ConnectionProperties.detectCustomCollations"),
+			"5.1.29", MISC_CATEGORY, Integer.MIN_VALUE);
 
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
 			Properties info, int slotsToReserve) throws SQLException {
@@ -4791,4 +4795,13 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 	public boolean getGetProceduresReturnsFunctions() {
 		return this.getProceduresReturnsFunctions.getValueAsBoolean();
 	}
+
+	public void setDetectCustomCollations(boolean detectCustomCollations) {
+		this.detectCustomCollations.setValue(detectCustomCollations);
+	}
+
+	public boolean getDetectCustomCollations() {
+		return this.detectCustomCollations.getValueAsBoolean();
+	}
+
 }
