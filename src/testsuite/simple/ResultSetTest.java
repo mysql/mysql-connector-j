@@ -61,17 +61,19 @@ public class ResultSetTest extends BaseTestCase {
 		int numChars = 32;
 
 		// build map of charsets supported by server
+		Connection c = getConnectionWithProps("detectCustomCollations=true");
 		Map<String, Integer> charsetsMap = new HashMap<String, Integer>();
-		Iterator<Integer> collationIndexes = ((ConnectionImpl)this.conn).indexToJavaCharset.keySet().iterator();
+		Iterator<Integer> collationIndexes = ((ConnectionImpl)c).indexToJavaCharset.keySet().iterator();
 		while (collationIndexes.hasNext()) {
 			Integer index = collationIndexes.next();
 			String charsetName = null;
-			if (((ConnectionImpl)this.conn).indexToCustomMysqlCharset != null) {
-				charsetName = ((ConnectionImpl)this.conn).indexToCustomMysqlCharset.get(index);
+			if (((ConnectionImpl)c).indexToCustomMysqlCharset != null) {
+				charsetName = ((ConnectionImpl)c).indexToCustomMysqlCharset.get(index);
 			}
 			if (charsetName == null) charsetName = CharsetMapping.STATIC_INDEX_TO_MYSQL_CHARSET_MAP.get(index);
 			if (charsetName != null) charsetsMap.put(charsetName, index);
 		}
+		c.close();
 		
 		Iterator<String> charsetNames = charsetsMap.keySet().iterator();
 		StringBuffer columns = new StringBuffer();
