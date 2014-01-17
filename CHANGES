@@ -2,6 +2,9 @@
 # $Id$
 nn-nn-14 - Version 5.1.29
 
+  - Fix for Bug#17435879, REMOVE SRC/LIB-NODIST DIRECTORY FROM LAUNCHPAD DISTRIBUTION.
+    Additional "com.mysql.jdbc.extra.libs" parameter must be used for ant build.
+
   - Fix for Bug#71038, Add an option for custom collations detection.
     Added new connection property detectCustomCollations=[true|false], with default false.
     Please be aware that these changed the previous default behavior and if you use custom charsets or collations

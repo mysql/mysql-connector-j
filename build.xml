@@ -85,9 +85,16 @@
 
 	<property name="com.mysql.jdbc.docs.sourceDir" value="/home/mmatthew/work/docs/prebuilt"/>
 
+	<!-- 
+	     The following property allows to point the location of third-party libraries
+	     we don't distribute. Default value points to src/lib so user could either put
+	     these jars there or pass different location via ant -D switch. 
+	-->
+	<property name="com.mysql.jdbc.extra.libs" value="${sourceDir}/lib"/>
+
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
-			<fileset dir="${sourceDir}/lib-nodist" erroronmissingdir="false">
+			<fileset dir="${com.mysql.jdbc.extra.libs}" erroronmissingdir="false">
 				<include name="**/*.jar"/>
 			</fileset>
 			<fileset dir="${sourceDir}/lib">
@@ -101,7 +108,7 @@
 	</path>
 
 	<path id="project.build.classpath">
-		<fileset dir="${buildDir}/${fullProdName}/lib-nodist">
+		<fileset dir="${com.mysql.jdbc.extra.libs}">
 			<include name="**/*.jar"/>
 		</fileset>
 
@@ -145,8 +152,6 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<!-- We need the following for source distributions as there we
              can't dynamically alter the classpath, and not having this
 		     directory present causes the build to fail -->
-
-		<mkdir dir="${buildDir}/${fullProdName}/lib-nodist" />
 
 		<available file="${com.mysql.jdbc.docs.sourceDir}" property="com.mysql.jdbc.docs.sourcesPresent" />
 
@@ -256,7 +261,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 	</target>
 
 	<target name="-init-no-crypto" depends="-init-copy" if="com.mysql.jdbc.noCryptoBuild">
-		<copy file="${sourceDir}/lib-nodist/ExportControlledNoCrypto.notjava"
+		<copy file="${com.mysql.jdbc.extra.libs}/ExportControlledNoCrypto.notjava"
 			toFile="${buildDir}/${fullProdName}/com/mysql/jdbc/ExportControlled.java"
 			overwrite="true"/>
 	</target>
@@ -365,7 +370,6 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<exclude name="**/*.nb*"/>
 			<exclude name="**/*.bak"/>
 			<exclude name="**/*.*~"/>
-			<exclude name="**/lib-nodist/*"/>
 			<exclude name="**/lib-coverage/*"/>
 			<exclude name="**/clover/*"/>
 			<exclude name="**/checkstyle/*"/>
@@ -387,7 +391,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<if>
 			<isset property="com.mysql.jdbc.commercialBuild"/>
 			<then>
-				<copy file="${sourceDir}/lib-nodist/README-commercial" tofile="${packageDest}/README.txt" filtering="true">
+				<copy file="${com.mysql.jdbc.extra.libs}/README-commercial" tofile="${packageDest}/README.txt" filtering="true">
 					<filterset refid="versionFilterset" />
 					<filterset refid="licenseFilterset" />
 				</copy>
@@ -417,7 +421,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<isset property="com.mysql.jdbc.commercialBuild"/>
 			<then>
 				<delete file="${packageDest}/COPYING"/>
-                                <copy file="${sourceDir}/lib-nodist/LICENSE.mysql" toDir="${packageDest}"/>
+                                <copy file="${com.mysql.jdbc.extra.libs}/LICENSE.mysql" toDir="${packageDest}"/>
 
 				<!-- For safety -->
 				<replaceregexp 
@@ -593,7 +597,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url}"/>
 
 			<classpath>
-				<fileset dir="${sourceDir}/lib-nodist">
+				<fileset dir="${com.mysql.jdbc.extra.libs}">
 					<include name="**/*.jar"/>
 				</fileset>
 				<fileset dir="${buildDir}/${fullProdName}/lib">
@@ -628,7 +632,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url}"/>
 
 			<classpath>
-				<fileset dir="${sourceDir}/lib-nodist">
+				<fileset dir="${com.mysql.jdbc.extra.libs}">
 					<include name="**/*.jar"/>
 				</fileset>
 				<fileset dir="${buildDir}/${fullProdName}/lib">
@@ -745,7 +749,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 			<classpath>
 				<pathelement location="${buildDir}/${fullProdName}"/>
-				<fileset dir="${sourceDir}/lib-nodist">
+				<fileset dir="${com.mysql.jdbc.extra.libs}">
 					<include name="**/*.jar"/>
 				</fileset>
 				<fileset dir="${buildDir}/${fullProdName}/lib">
@@ -1040,7 +1044,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<jvmarg value="-Demma.coverage.out.merge=true" />
 			<sysproperty key="com.mysql.jdbc.testsuite.url" value="${com.mysql.jdbc.testsuite.url}"/>
 			<classpath>
-				<fileset dir="${sourceDir}/lib-nodist">
+				<fileset dir="${com.mysql.jdbc.extra.libs}">
 					<include name="**/*.jar"/>
 				</fileset>
 				<fileset dir="${buildDir}/${fullProdName}/lib">
@@ -1092,7 +1096,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<sysproperty key="com.mysql.jdbc.compliance.url" value="${com.mysql.jdbc.compliance.url}"/>
 			<classpath>
 				<pathelement location="${buildDir}/${fullProdName}"/>
-				<fileset dir="${sourceDir}/lib-nodist">
+				<fileset dir="${com.mysql.jdbc.extra.libs}">
 					<include name="**/*.jar"/>
 				</fileset>
 				<fileset dir="${buildDir}/${fullProdName}/lib">
@@ -1153,7 +1157,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				<sysproperty key="com.mysql.jdbc.testsuite.url" value="@{jdbcUrl}" />
 
 				<classpath>
-					<fileset dir="${sourceDir}/lib-nodist">
+					<fileset dir="${com.mysql.jdbc.extra.libs}">
 						<include name="**/*.jar" />
 					</fileset>
 					<fileset dir="${buildDir}/${fullProdName}/lib">
