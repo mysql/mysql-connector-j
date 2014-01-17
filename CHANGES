@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.29
 
+  - Fix for Bug#70701 (17647584), DatabaseMetaData.getSQLKeywords() doesn't match MySQL 5.6 reserved words.
+
   - Fix for Bug#17435879, REMOVE SRC/LIB-NODIST DIRECTORY FROM LAUNCHPAD DISTRIBUTION.
     Additional "com.mysql.jdbc.extra.libs" parameter must be used for ant build.
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -31,15 +31,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * JDBC Interface to Mysql functions
@@ -524,7 +527,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 
 	/**
-	 * Helper/box class to provide means of sorting objects by using a sorting key.
+	 * Helper/wrapper class to provide means of sorting objects by using a sorting key.
 	 */
 	protected class ComparableWrapper<K extends Object & Comparable<? super K>, V> implements
 			Comparable<ComparableWrapper<K, V>> {
@@ -645,8 +648,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 		PROCEDURE, FUNCTION;
 	}
 	
-	private static String mysqlKeywordsThatArentSQL92;
-
 	protected static final int MAX_IDENTIFIER_LENGTH = 64;
 
 	private static final int DEFERRABILITY = 13;
@@ -717,136 +718,92 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 			JDBC_4_DBMD_IS_CTOR = null;
 			JDBC_4_DBMD_SHOW_CTOR = null;
 		}
-		
-		String[] allMySQLKeywords = new String[] { "ACCESSIBLE", "ADD", "ALL",
-				"ALTER", "ANALYZE", "AND", "AS", "ASC", "ASENSITIVE", "BEFORE",
-				"BETWEEN", "BIGINT", "BINARY", "BLOB", "BOOLEAN", "BOTH", "BY", "CALL",
-				"CASCADE", "CASE", "CHANGE", "CHAR", "CHARACTER", "CHECK",
-				"COLLATE", "COLUMN", "CONDITION", "CONNECTION", "CONSTRAINT",
-				"CONTINUE", "CONVERT", "CREATE", "CROSS", "CURRENT_DATE",
-				"CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_USER", "CURSOR",
-				"DATABASE", "DATABASES", "DAY_HOUR", "DAY_MICROSECOND",
-				"DAY_MINUTE", "DAY_SECOND", "DEC", "DECIMAL", "DECLARE",
-				"DEFAULT", "DELAYED", "DELETE", "DESC", "DESCRIBE",
-				"DETERMINISTIC", "DISTINCT", "DISTINCTROW", "DIV", "DOUBLE",
-				"DROP", "DUAL", "EACH", "ELSE", "ELSEIF", "ENCLOSED",
-				"ESCAPED", "EXISTS", "EXIT", "EXPANSION", "EXPLAIN", "FALSE", "FETCH",
-				"FLOAT", "FLOAT4", "FLOAT8", "FOR", "FORCE", "FOREIGN", "FROM",
-				"FULLTEXT", "GRANT", "GROUP", "HAVING", "HIGH_PRIORITY",
-				"HOUR_MICROSECOND", "HOUR_MINUTE", "HOUR_SECOND", "IF",
-				"IGNORE", "IN", "INDEX", "INFILE", "INNER", "INOUT",
-				"INSENSITIVE", "INSERT", "INT", "INT1", "INT2", "INT3", "INT4",
-				"INT8", "INTEGER", "INTERVAL", "INTO", "IS", "ITERATE", "JOIN",
-				"KEY", "KEYS", "KILL", "LEADING", "LEAVE", "LEFT", "LIKE",
-				"LIMIT", "LINEAR", "LINES", "LOAD", "LOCALTIME",
-				"LOCALTIMESTAMP", "LOCK", "LONG", "LONGBLOB", "LONGTEXT",
-				"LOOP", "LOW_PRIORITY", "MATCH", "MEDIUMBLOB", "MEDIUMINT",
-				"MEDIUMTEXT", "MIDDLEINT", "MINUTE_MICROSECOND",
-				"MINUTE_SECOND", "MOD", "MODE", "MODIFIES", "NATURAL", "NOT",
-				"NO_WRITE_TO_BINLOG", "NULL", "NUMERIC", "ON", "OPTIMIZE",
-				"OPTION", "OPTIONALLY", "OR", "ORDER", "OUT", "OUTER",
-				"OUTFILE", "QUERY", "PRECISION", "PRIMARY", "PROCEDURE", "PURGE",
-				"RANGE", "READ", "READS", "READ_ONLY", "READ_WRITE", "REAL",
-				"REFERENCES", "REGEXP", "RELEASE", "RENAME", "REPEAT",
-				"REPLACE", "REQUIRE", "RESTRICT", "RETURN", "REVOKE", "RIGHT",
-				"RLIKE", "SCHEMA", "SCHEMAS", "SECOND_MICROSECOND", "SELECT",
-				"SENSITIVE", "SEPARATOR", "SET", "SHOW", "SMALLINT", "SPATIAL",
-				"SPECIFIC", "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING",
-				"SQL_BIG_RESULT", "SQL_CALC_FOUND_ROWS", "SQL_SMALL_RESULT",
-				"SSL", "STARTING", "STRAIGHT_JOIN", "TABLE", "TERMINATED",
-				"THEN", "TINYBLOB", "TINYINT", "TINYTEXT", "TO", "TRAILING",
-				"TRIGGER", "TRUE", "UNDO", "UNION", "UNIQUE", "UNLOCK",
-				"UNSIGNED", "UPDATE", "USAGE", "USE", "USING", "UTC_DATE",
-				"UTC_TIME", "UTC_TIMESTAMP", "VALUES", "VARBINARY", "VARCHAR",
-				"VARCHARACTER", "VARYING", "WHEN", "WHERE", "WHILE", "WITH",
-				"WRITE", "X509", "XOR", "YEAR_MONTH", "ZEROFILL",
-		// adding for 5.5.8:
-				"GENERAL", "IGNORE_SERVER_IDS", "MASTER_HEARTBEAT_PERIOD",
-				"MAXVALUE", "RESIGNAL", "SIGNAL", "SLOW",
-		// adding for 5.5.x:
-				"PARTITION", "REORGANIZE", "REBUILD", "REPAIR", "REMOVE",
-		// adding for 5.6:
-				"ALGORITHM", "INPLACE", "COPY", "NONE", "SHARED", "EXCLUSIVE",
-				"DATA", "DIRECTORY", "DISCARD", "TABLESPACE",
-				"FLUSH", "TABLES", "EXPORT", "IMPORT", "EXCHANGE"
-		};
-
-		String[] sql92Keywords = new String[] { "ABSOLUTE", "EXEC", "OVERLAPS",
-				"ACTION", "EXECUTE", "PAD", "ADA", "EXISTS", "PARTIAL", "ADD",
-				"EXTERNAL", "PASCAL", "ALL", "EXTRACT", "POSITION", "ALLOCATE",
-				"FALSE", "PRECISION", "ALTER", "FETCH", "PREPARE", "AND",
-				"FIRST", "PRESERVE", "ANY", "FLOAT", "PRIMARY", "ARE", "FOR",
-				"PRIOR", "AS", "FOREIGN", "PRIVILEGES", "ASC", "FORTRAN",
-				"PROCEDURE", "ASSERTION", "FOUND", "PUBLIC", "AT", "FROM",
-				"READ", "AUTHORIZATION", "FULL", "REAL", "AVG", "GET",
-				"REFERENCES", "BEGIN", "GLOBAL", "RELATIVE", "BETWEEN", "GO",
-				"RESTRICT", "BIT", "GOTO", "REVOKE", "BIT_LENGTH", "GRANT",
-				"RIGHT", "BOTH", "GROUP", "ROLLBACK", "BY", "HAVING", "ROWS",
-				"CASCADE", "HOUR", "SCHEMA", "CASCADED", "IDENTITY", "SCROLL",
-				"CASE", "IMMEDIATE", "SECOND", "CAST", "IN", "SECTION",
-				"CATALOG", "INCLUDE", "SELECT", "CHAR", "INDEX", "SESSION",
-				"CHAR_LENGTH", "INDICATOR", "SESSION_USER", "CHARACTER",
-				"INITIALLY", "SET", "CHARACTER_LENGTH", "INNER", "SIZE",
-				"CHECK", "INPUT", "SMALLINT", "CLOSE", "INSENSITIVE", "SOME",
-				"COALESCE", "INSERT", "SPACE", "COLLATE", "INT", "SQL",
-				"COLLATION", "INTEGER", "SQLCA", "COLUMN", "INTERSECT",
-				"SQLCODE", "COMMIT", "INTERVAL", "SQLERROR", "CONNECT", "INTO",
-				"SQLSTATE", "CONNECTION", "IS", "SQLWARNING", "CONSTRAINT",
-				"ISOLATION", "SUBSTRING", "CONSTRAINTS", "JOIN", "SUM",
-				"CONTINUE", "KEY", "SYSTEM_USER", "CONVERT", "LANGUAGE",
-				"TABLE", "CORRESPONDING", "LAST", "TEMPORARY", "COUNT",
-				"LEADING", "THEN", "CREATE", "LEFT", "TIME", "CROSS", "LEVEL",
-				"TIMESTAMP", "CURRENT", "LIKE", "TIMEZONE_HOUR",
-				"CURRENT_DATE", "LOCAL", "TIMEZONE_MINUTE", "CURRENT_TIME",
-				"LOWER", "TO", "CURRENT_TIMESTAMP", "MATCH", "TRAILING",
-				"CURRENT_USER", "MAX", "TRANSACTION", "CURSOR", "MIN",
-				"TRANSLATE", "DATE", "MINUTE", "TRANSLATION", "DAY", "MODULE",
-				"TRIM", "DEALLOCATE", "MONTH", "TRUE", "DEC", "NAMES", "UNION",
-				"DECIMAL", "NATIONAL", "UNIQUE", "DECLARE", "NATURAL",
-				"UNKNOWN", "DEFAULT", "NCHAR", "UPDATE", "DEFERRABLE", "NEXT",
-				"UPPER", "DEFERRED", "NO", "USAGE", "DELETE", "NONE", "USER",
-				"DESC", "NOT", "USING", "DESCRIBE", "NULL", "VALUE",
-				"DESCRIPTOR", "NULLIF", "VALUES", "DIAGNOSTICS", "NUMERIC",
-				"VARCHAR", "DISCONNECT", "OCTET_LENGTH", "VARYING", "DISTINCT",
-				"OF", "VIEW", "DOMAIN", "ON", "WHEN", "DOUBLE", "ONLY",
-				"WHENEVER", "DROP", "OPEN", "WHERE", "ELSE", "OPTION", "WITH",
-				"END", "OR", "WORK", "END-EXEC", "ORDER", "WRITE", "ESCAPE",
-				"OUTER", "YEAR", "EXCEPT", "OUTPUT", "ZONE", "EXCEPTION" };
-		
-		TreeMap<String, String> mySQLKeywordMap = new TreeMap<String, String>();
-		
-		for (int i = 0; i < allMySQLKeywords.length; i++) {
-			mySQLKeywordMap.put(allMySQLKeywords[i], null);
-		}
-		
-		HashMap<String, String> sql92KeywordMap = new HashMap<String, String>(sql92Keywords.length);
-		
-		for (int i = 0; i < sql92Keywords.length; i++) {
-			sql92KeywordMap.put(sql92Keywords[i], null);
-		}
-		
-		Iterator<String> it = sql92KeywordMap.keySet().iterator();
-		
-		while (it.hasNext()) {
-			mySQLKeywordMap.remove(it.next());
-		}
-		
-		StringBuffer keywordBuf = new StringBuffer();
-		
-		it = mySQLKeywordMap.keySet().iterator();
-		
-		if (it.hasNext()) {
-			keywordBuf.append(it.next().toString());
-		}
-		
-		while (it.hasNext()) {
-			keywordBuf.append(",");
-			keywordBuf.append(it.next().toString());
-		}
-	
-		mysqlKeywordsThatArentSQL92 = keywordBuf.toString();
 	}
-	
+
+	// MySQL reserved words (all versions superset)
+	private static final String[] MYSQL_KEYWORDS = new String[] { "ACCESSIBLE", "ADD", "ALL", "ALTER", "ANALYZE",
+			"AND", "AS", "ASC", "ASENSITIVE", "BEFORE", "BETWEEN", "BIGINT", "BINARY", "BLOB", "BOTH", "BY", "CALL",
+			"CASCADE", "CASE", "CHANGE", "CHAR", "CHARACTER", "CHECK", "COLLATE", "COLUMN", "CONDITION", "CONSTRAINT",
+			"CONTINUE", "CONVERT", "CREATE", "CROSS", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP",
+			"CURRENT_USER", "CURSOR", "DATABASE", "DATABASES", "DAY_HOUR", "DAY_MICROSECOND", "DAY_MINUTE",
+			"DAY_SECOND", "DEC", "DECIMAL", "DECLARE", "DEFAULT", "DELAYED", "DELETE", "DESC", "DESCRIBE",
+			"DETERMINISTIC", "DISTINCT", "DISTINCTROW", "DIV", "DOUBLE", "DROP", "DUAL", "EACH", "ELSE", "ELSEIF",
+			"ENCLOSED", "ESCAPED", "EXISTS", "EXIT", "EXPLAIN", "FALSE", "FETCH", "FLOAT", "FLOAT4", "FLOAT8", "FOR",
+			"FORCE", "FOREIGN", "FROM", "FULLTEXT", "GET", "GRANT", "GROUP", "HAVING", "HIGH_PRIORITY",
+			"HOUR_MICROSECOND", "HOUR_MINUTE", "HOUR_SECOND", "IF", "IGNORE", "IN", "INDEX", "INFILE", "INNER",
+			"INOUT", "INSENSITIVE", "INSERT", "INT", "INT1", "INT2", "INT3", "INT4", "INT8", "INTEGER", "INTERVAL",
+			"INTO", "IO_AFTER_GTIDS", "IO_BEFORE_GTIDS", "IS", "ITERATE", "JOIN", "KEY", "KEYS", "KILL", "LEADING",
+			"LEAVE", "LEFT", "LIKE", "LIMIT", "LINEAR", "LINES", "LOAD", "LOCALTIME", "LOCALTIMESTAMP", "LOCK", "LONG",
+			"LONGBLOB", "LONGTEXT", "LOOP", "LOW_PRIORITY", "MASTER_BIND", "MASTER_SSL_VERIFY_SERVER_CERT", "MATCH",
+			"MAXVALUE", "MEDIUMBLOB", "MEDIUMINT", "MEDIUMTEXT", "MIDDLEINT", "MINUTE_MICROSECOND", "MINUTE_SECOND",
+			"MOD", "MODIFIES", "NATURAL", "NONBLOCKING", "NOT", "NO_WRITE_TO_BINLOG", "NULL", "NUMERIC", "ON",
+			"OPTIMIZE", "OPTION", "OPTIONALLY", "OR", "ORDER", "OUT", "OUTER", "OUTFILE", "PARTITION", "PRECISION",
+			"PRIMARY", "PROCEDURE", "PURGE", "RANGE", "READ", "READS", "READ_WRITE", "REAL", "REFERENCES", "REGEXP",
+			"RELEASE", "RENAME", "REPEAT", "REPLACE", "REQUIRE", "RESIGNAL", "RESTRICT", "RETURN", "REVOKE", "RIGHT",
+			"RLIKE", "SCHEMA", "SCHEMAS", "SECOND_MICROSECOND", "SELECT", "SENSITIVE", "SEPARATOR", "SET", "SHOW",
+			"SIGNAL", "SMALLINT", "SPATIAL", "SPECIFIC", "SQL", "SQLEXCEPTION", "SQLSTATE", "SQLWARNING",
+			"SQL_BIG_RESULT", "SQL_CALC_FOUND_ROWS", "SQL_SMALL_RESULT", "SSL", "STARTING", "STRAIGHT_JOIN", "TABLE",
+			"TERMINATED", "THEN", "TINYBLOB", "TINYINT", "TINYTEXT", "TO", "TRAILING", "TRIGGER", "TRUE", "UNDO",
+			"UNION", "UNIQUE", "UNLOCK", "UNSIGNED", "UPDATE", "USAGE", "USE", "USING", "UTC_DATE", "UTC_TIME",
+			"UTC_TIMESTAMP", "VALUES", "VARBINARY", "VARCHAR", "VARCHARACTER", "VARYING", "WHEN", "WHERE", "WHILE",
+			"WITH", "WRITE", "XOR", "YEAR_MONTH", "ZEROFILL" };
+
+	// SQL:92 reserved words from 'sql-92.bnf' v2.4
+	private static final String[] SQL92_KEYWORDS = new String[] { "ABSOLUTE", "ACTION", "ADD", "ALL", "ALLOCATE",
+			"ALTER", "AND", "ANY", "ARE", "AS", "ASC", "ASSERTION", "AT", "AUTHORIZATION", "AVG", "BEGIN", "BETWEEN",
+			"BIT", "BIT_LENGTH", "BOTH", "BY", "CASCADE", "CASCADED", "CASE", "CAST", "CATALOG", "CHAR", "CHARACTER",
+			"CHARACTER_LENGTH", "CHAR_LENGTH", "CHECK", "CLOSE", "COALESCE", "COLLATE", "COLLATION", "COLUMN",
+			"COMMIT", "CONNECT", "CONNECTION", "CONSTRAINT", "CONSTRAINTS", "CONTINUE", "CONVERT", "CORRESPONDING",
+			"CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_USER",
+			"CURSOR", "DATE", "DAY", "DEALLOCATE", "DEC", "DECIMAL", "DECLARE", "DEFAULT", "DEFERRABLE", "DEFERRED",
+			"DELETE", "DESC", "DESCRIBE", "DESCRIPTOR", "DIAGNOSTICS", "DISCONNECT", "DISTINCT", "DOMAIN", "DOUBLE",
+			"DROP", "ELSE", "END", "END-EXEC", "ESCAPE", "EXCEPT", "EXCEPTION", "EXEC", "EXECUTE", "EXISTS",
+			"EXTERNAL", "EXTRACT", "FALSE", "FETCH", "FIRST", "FLOAT", "FOR", "FOREIGN", "FOUND", "FROM", "FULL",
+			"GET", "GLOBAL", "GO", "GOTO", "GRANT", "GROUP", "HAVING", "HOUR", "IDENTITY", "IMMEDIATE", "IN",
+			"INDICATOR", "INITIALLY", "INNER", "INPUT", "INSENSITIVE", "INSERT", "INT", "INTEGER", "INTERSECT",
+			"INTERVAL", "INTO", "IS", "ISOLATION", "JOIN", "KEY", "LANGUAGE", "LAST", "LEADING", "LEFT", "LEVEL",
+			"LIKE", "LOCAL", "LOWER", "MATCH", "MAX", "MIN", "MINUTE", "MODULE", "MONTH", "NAMES", "NATIONAL",
+			"NATURAL", "NCHAR", "NEXT", "NO", "NOT", "NULL", "NULLIF", "NUMERIC", "OCTET_LENGTH", "OF", "ON", "ONLY",
+			"OPEN", "OPTION", "OR", "ORDER", "OUTER", "OUTPUT", "OVERLAPS", "PAD", "PARTIAL", "POSITION", "PRECISION",
+			"PREPARE", "PRESERVE", "PRIMARY", "PRIOR", "PRIVILEGES", "PROCEDURE", "PUBLIC", "READ", "REAL",
+			"REFERENCES", "RELATIVE", "RESTRICT", "REVOKE", "RIGHT", "ROLLBACK", "ROWS", "SCHEMA", "SCROLL", "SECOND",
+			"SECTION", "SELECT", "SESSION", "SESSION_USER", "SET", "SIZE", "SMALLINT", "SOME", "SPACE", "SQL",
+			"SQLCODE", "SQLERROR", "SQLSTATE", "SUBSTRING", "SUM", "SYSTEM_USER", "TABLE", "TEMPORARY", "THEN", "TIME",
+			"TIMESTAMP", "TIMEZONE_HOUR", "TIMEZONE_MINUTE", "TO", "TRAILING", "TRANSACTION", "TRANSLATE",
+			"TRANSLATION", "TRIM", "TRUE", "UNION", "UNIQUE", "UNKNOWN", "UPDATE", "UPPER", "USAGE", "USER", "USING",
+			"VALUE", "VALUES", "VARCHAR", "VARYING", "VIEW", "WHEN", "WHENEVER", "WHERE", "WITH", "WORK", "WRITE",
+			"YEAR", "ZONE" };
+
+	// SQL:2003 reserved words from 'sql-2003-2.bnf' v1.16
+	private static final String[] SQL2003_KEYWORDS = new String[] { "ADD", "ALL", "ALLOCATE", "ALTER", "AND", "ANY",
+			"ARE", "ARRAY", "AS", "ASENSITIVE", "ASYMMETRIC", "AT", "ATOMIC", "AUTHORIZATION", "BEGIN", "BETWEEN",
+			"BIGINT", "BINARY", "BLOB", "BOOLEAN", "BOTH", "BY", "CALL", "CALLED", "CASCADED", "CASE", "CAST", "CHAR",
+			"CHARACTER", "CHECK", "CLOB", "CLOSE", "COLLATE", "COLUMN", "COMMIT", "CONNECT", "CONSTRAINT", "CONTINUE",
+			"CORRESPONDING", "CREATE", "CROSS", "CUBE", "CURRENT", "CURRENT_DATE", "CURRENT_DEFAULT_TRANSFORM_GROUP",
+			"CURRENT_PATH", "CURRENT_ROLE", "CURRENT_TIME", "CURRENT_TIMESTAMP", "CURRENT_TRANSFORM_GROUP_FOR_TYPE",
+			"CURRENT_USER", "CURSOR", "CYCLE", "DATE", "DAY", "DEALLOCATE", "DEC", "DECIMAL", "DECLARE", "DEFAULT",
+			"DELETE", "DEREF", "DESCRIBE", "DETERMINISTIC", "DISCONNECT", "DISTINCT", "DOUBLE", "DROP", "DYNAMIC",
+			"EACH", "ELEMENT", "ELSE", "END", "END-EXEC", "ESCAPE", "EXCEPT", "EXEC", "EXECUTE", "EXISTS", "EXTERNAL",
+			"FALSE", "FETCH", "FILTER", "FLOAT", "FOR", "FOREIGN", "FREE", "FROM", "FULL", "FUNCTION", "GET", "GLOBAL",
+			"GRANT", "GROUP", "GROUPING", "HAVING", "HOLD", "HOUR", "IDENTITY", "IMMEDIATE", "IN", "INDICATOR",
+			"INNER", "INOUT", "INPUT", "INSENSITIVE", "INSERT", "INT", "INTEGER", "INTERSECT", "INTERVAL", "INTO",
+			"IS", "ISOLATION", "JOIN", "LANGUAGE", "LARGE", "LATERAL", "LEADING", "LEFT", "LIKE", "LOCAL", "LOCALTIME",
+			"LOCALTIMESTAMP", "MATCH", "MEMBER", "MERGE", "METHOD", "MINUTE", "MODIFIES", "MODULE", "MONTH",
+			"MULTISET", "NATIONAL", "NATURAL", "NCHAR", "NCLOB", "NEW", "NO", "NONE", "NOT", "NULL", "NUMERIC", "OF",
+			"OLD", "ON", "ONLY", "OPEN", "OR", "ORDER", "OUT", "OUTER", "OUTPUT", "OVER", "OVERLAPS", "PARAMETER",
+			"PARTITION", "PRECISION", "PREPARE", "PRIMARY", "PROCEDURE", "RANGE", "READS", "REAL", "RECURSIVE", "REF",
+			"REFERENCES", "REFERENCING", "REGR_AVGX", "REGR_AVGY", "REGR_COUNT", "REGR_INTERCEPT", "REGR_R2",
+			"REGR_SLOPE", "REGR_SXX", "REGR_SXY", "REGR_SYY", "RELEASE", "RESULT", "RETURN", "RETURNS", "REVOKE",
+			"RIGHT", "ROLLBACK", "ROLLUP", "ROW", "ROWS", "SAVEPOINT", "SCROLL", "SEARCH", "SECOND", "SELECT",
+			"SENSITIVE", "SESSION_USER", "SET", "SIMILAR", "SMALLINT", "SOME", "SPECIFIC", "SPECIFICTYPE", "SQL",
+			"SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "START", "STATIC", "SUBMULTISET", "SYMMETRIC", "SYSTEM",
+			"SYSTEM_USER", "TABLE", "THEN", "TIME", "TIMESTAMP", "TIMEZONE_HOUR", "TIMEZONE_MINUTE", "TO", "TRAILING",
+			"TRANSLATION", "TREAT", "TRIGGER", "TRUE", "UESCAPE", "UNION", "UNIQUE", "UNKNOWN", "UNNEST", "UPDATE",
+			"UPPER", "USER", "USING", "VALUE", "VALUES", "VARCHAR", "VARYING", "VAR_POP", "VAR_SAMP", "WHEN",
+			"WHENEVER", "WHERE", "WIDTH_BUCKET", "WINDOW", "WITH", "WITHIN", "WITHOUT", "YEAR" };
+
+	private static volatile String mysqlKeywords = null;
+
 	/** The connection to the database */
 	protected MySQLConnection conn;
 
@@ -4922,15 +4879,36 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 	}
 
 	/**
-	 * Get a comma separated list of all a database's SQL keywords that are NOT
-	 * also SQL92 keywords.
+	 * Get a comma separated list of all a database's SQL keywords that are NOT also SQL92/SQL2003 keywords.
 	 * 
 	 * @return the list
 	 * @throws SQLException
 	 *             DOCUMENT ME!
 	 */
 	public String getSQLKeywords() throws SQLException {
-		return mysqlKeywordsThatArentSQL92;
+		if (mysqlKeywords != null) {
+			return mysqlKeywords;
+		}
+
+		synchronized (DatabaseMetaData.class) {
+			// double check, maybe it's already set
+			if (mysqlKeywords != null) {
+				return mysqlKeywords;
+			}
+
+			Set<String> mysqlKeywordSet = new TreeSet<String>();
+			StringBuffer mysqlKeywordsBuffer = new StringBuffer();
+
+			Collections.addAll(mysqlKeywordSet, MYSQL_KEYWORDS);
+			mysqlKeywordSet.removeAll(Arrays.asList(Util.isJdbc4() ? SQL2003_KEYWORDS : SQL92_KEYWORDS));
+
+			for (String keyword : mysqlKeywordSet) {
+				mysqlKeywordsBuffer.append(",").append(keyword);
+			}
+
+			mysqlKeywords = mysqlKeywordsBuffer.substring(1);
+			return mysqlKeywords;
+		}
 	}
 
 	/**
