@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.30
 
+  - Reserved words lists updated from latest official SQL:92 and SQL:2003 specifications.
+
 02-10-14 - Version 5.1.29
 
   - Fix for Bug#70701 (17647584), DatabaseMetaData.getSQLKeywords() doesn't match MySQL 5.6 reserved words.
