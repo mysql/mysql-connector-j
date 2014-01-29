@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -28,6 +28,7 @@ package com.mysql.jdbc;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.KeyManagementException;
@@ -150,6 +151,7 @@ public class ExportControlled {
 		}
 
 		if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)) {
+			InputStream ksIS = null;
 			try {
 				if (!StringUtils.isNullOrEmpty(clientCertificateKeyStoreType)) {
 					KeyStore clientKeyStore = KeyStore
@@ -157,7 +159,8 @@ public class ExportControlled {
 					URL ksURL = new URL(clientCertificateKeyStoreUrl);
 					char[] password = (clientCertificateKeyStorePassword == null) ? new char[0]
 							: clientCertificateKeyStorePassword.toCharArray();
-					clientKeyStore.load(ksURL.openStream(), password);
+					ksIS = ksURL.openStream();
+					clientKeyStore.load(ksIS, password);
 					kmf.init(clientKeyStore, password);
 				}
 			} catch (UnrecoverableKeyException uke) {
@@ -188,11 +191,21 @@ public class ExportControlled {
 				sqlEx.initCause(ioe);
 				
 				throw sqlEx;
+			} finally {
+				if (ksIS != null) {
+					try {
+						ksIS.close();
+					} catch (IOException e) {
+						// can't close input stream, but keystore can be properly initialized
+						// so we shouldn't throw this exception
+					}
+				}
 			}
 		}
 
 		if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
 
+			InputStream ksIS = null;
 			try {
 				if (!StringUtils.isNullOrEmpty(trustCertificateKeyStoreType)) {
 					KeyStore trustKeyStore = KeyStore
@@ -201,7 +214,8 @@ public class ExportControlled {
 	
 					char[] password = (trustCertificateKeyStorePassword == null) ? new char[0]
 							: trustCertificateKeyStorePassword.toCharArray();
-					trustKeyStore.load(ksURL.openStream(), password);
+					ksIS = ksURL.openStream();
+					trustKeyStore.load(ksIS, password);
 					tmf.init(trustKeyStore);
 				}
 			} catch (NoSuchAlgorithmException nsae) {
@@ -228,6 +242,15 @@ public class ExportControlled {
 				sqlEx.initCause(ioe);
 				
 				throw sqlEx;
+			} finally {
+				if (ksIS != null) {
+					try {
+						ksIS.close();
+					} catch (IOException e) {
+						// can't close input stream, but keystore can be properly initialized
+						// so we shouldn't throw this exception
+					}
+				}
 			}
 		}
 
