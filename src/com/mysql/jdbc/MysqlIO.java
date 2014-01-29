@@ -1,5 +1,5 @@
 /*
-      Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+      Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
       
 
       This program is free software; you can redistribute it and/or modify
@@ -4690,7 +4690,8 @@ public class MysqlIO {
             packet.writeByte((byte) 0x14);
 
             try {
-                packet.writeBytesNoNull(Security.scramble411(password, this.seed, this.connection));
+                packet.writeBytesNoNull(Security.scramble411(password, this.seed,
+															 this.connection.getPasswordCharacterEncoding()));
             } catch (NoSuchAlgorithmException nse) {
                 throw SQLError.createSQLException(Messages.getString("MysqlIO.95") //$NON-NLS-1$
                      +Messages.getString("MysqlIO.96"), //$NON-NLS-1$

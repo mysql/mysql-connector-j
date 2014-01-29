@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -321,10 +321,9 @@ public class Security {
 	// hash_stage1=xor(reply, sha1(public_seed,hash_stage2))
 	// candidate_hash2=sha1(hash_stage1)
 	// check(candidate_hash2==hash_stage2)
-	public static byte[] scramble411(String password, String seed, Connection conn)
+	public static byte[] scramble411(String password, String seed, String passwordEncoding)
 			throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		MessageDigest md = MessageDigest.getInstance("SHA-1"); //$NON-NLS-1$
-		String passwordEncoding = conn.getPasswordCharacterEncoding();
 		
 		byte[] passwordHashStage1 = md
 				.digest((passwordEncoding == null || passwordEncoding.length() == 0) ? 
