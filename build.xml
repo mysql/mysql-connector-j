@@ -91,6 +91,19 @@
 	     these jars there or pass different location via ant -D switch. 
 	-->
 	<property name="com.mysql.jdbc.extra.libs" value="${sourceDir}/lib"/>
+    <fail message="Valid location for `com.mysql.jdbc.extra.libs' is required for build tasks.">
+      <condition>
+        <not>
+		  <and>
+			<available file="${com.mysql.jdbc.extra.libs}" type="dir"/>
+			<resourcecount count="1">
+              <fileset dir="${com.mysql.jdbc.extra.libs}" includes="ant-contrib.jar"/>
+			</resourcecount>
+		  </and>
+        </not>
+      </condition>
+    </fail>
+
 
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
