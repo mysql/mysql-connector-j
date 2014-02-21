@@ -79,6 +79,7 @@ import com.mysql.jdbc.ServerPreparedStatement;
 import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.StatementInterceptor;
 import com.mysql.jdbc.StatementInterceptorV2;
+import com.mysql.jdbc.TimeUtil;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 
@@ -7585,4 +7586,31 @@ public class StatementRegressionTest extends BaseTestCase {
 		testStmt.close();
 		testConn.close();
 	}
+
+	/**
+	 * Tests fix for 18091639 - STRINGINDEXOUTOFBOUNDSEXCEPTION IN PREPAREDSTATEMENT.SETTIMESTAMP WITH 5.6.15
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug18091639() throws SQLException {
+		String str = TimeUtil.formatNanos(1, true, false);
+		assertEquals("000000001", str);
+
+		str = TimeUtil.formatNanos(1, true, true);
+		assertEquals("0", str);
+
+		str = TimeUtil.formatNanos(1999, true, false);
+		assertEquals("000001999", str);
+
+		str = TimeUtil.formatNanos(1999, true, true);
+		assertEquals("000001", str);
+
+		str = TimeUtil.formatNanos(1000000010, true, false);
+		assertEquals("00000001", str);
+
+		str = TimeUtil.formatNanos(1000000010, true, true);
+		assertEquals("0", str);
+	}
+
 }

@@ -4711,7 +4711,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 								
 								if (nanos != 0) {
 									buf.append('.');
-									buf.append(TimeUtil.formatNanos(nanos, this.serverSupportsFracSecs));
+									buf.append(TimeUtil.formatNanos(nanos, this.serverSupportsFracSecs, true));
 								}
 							}
 
@@ -4750,7 +4750,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			StringBuffer buf = new StringBuffer();
 			buf.append(timestampString);
 			buf.append('.');
-			buf.append(TimeUtil.formatNanos(x.getNanos(), this.serverSupportsFracSecs));
+			buf.append(TimeUtil.formatNanos(x.getNanos(), this.serverSupportsFracSecs, true));
 			buf.append('\'');
 			
 			setInternal(parameterIndex, buf.toString()); 
@@ -4871,7 +4871,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					tsBuf.append(seconds);
 	
 					tsBuf.append('.');
-					tsBuf.append(TimeUtil.formatNanos(x.getNanos(), this.serverSupportsFracSecs));
+					tsBuf.append(TimeUtil.formatNanos(x.getNanos(), this.serverSupportsFracSecs, true));
 					tsBuf.append('\'');
 	
 					setInternal(parameterIndex, tsBuf.toString());

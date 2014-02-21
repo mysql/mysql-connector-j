@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -473,7 +473,7 @@ class EscapeProcessor {
 
 					if (ts.getNanos() > 0 && conn.versionMeetsMinimum(5, 6, 4)) {
 						newSql.append('.');
-						newSql.append(TimeUtil.formatNanos(ts.getNanos(), true));
+						newSql.append(TimeUtil.formatNanos(ts.getNanos(), true, true));
 					}
 
 					newSql.append('\'');
