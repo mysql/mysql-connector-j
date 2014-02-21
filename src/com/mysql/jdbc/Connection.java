@@ -1,6 +1,5 @@
 /*
- Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
- 
+  Copyright (c) 2007, 2014 Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -19,7 +18,6 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
-
 */
 
 package com.mysql.jdbc;
@@ -380,7 +378,8 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 
 	public abstract void initializeExtension(Extension ex) throws SQLException;
 	
-	/** Returns the -session- value of 'auto_increment_increment' from the server if it exists,
+	/**
+	 * Returns the -session- value of 'auto_increment_increment' from the server if it exists,
 	 * or '1' if not.
 	 */
 	public abstract int getAutoIncrementIncrement();
@@ -392,21 +391,26 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	
 	/**
 	 * Returns the parsed and passed in properties for this connection.
+	 * 
 	 * @return
 	 */
 	public Properties getProperties();
 
-   public String getHost();
+	public String getHost();
 
-   public void setProxy(MySQLConnection proxy);
-   
-   /**
-    * Is the server this connection is connected to "local" (i.e. same host)
-    * as the application?
-    * @return
-    */
-   public boolean isServerLocal() throws SQLException;
-   
+	public void setProxy(MySQLConnection proxy);
+
+	/**
+	 * Is the server this connection is connected to "local" (i.e. same host) as the application?
+	 * 
+	 * @return
+	 */
+	public boolean isServerLocal() throws SQLException;
+
+	int getSessionMaxRows();
+
+	void setSessionMaxRows(int max) throws SQLException;
+
 	// JDBC-4.1
 	// until we flip catalog/schema, this is a no-op
 	void setSchema(String schema) throws SQLException;
@@ -430,5 +434,4 @@ public interface Connection extends java.sql.Connection, ConnectionProperties {
 	void checkClosed() throws SQLException;
 
 	Object getConnectionMutex();
-
 }

@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -19,9 +19,6 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
-
-
-
  */
 package com.mysql.jdbc;
 
@@ -388,29 +385,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 		
 		this.useAutoSlowLog = this.connection.getAutoSlowLog();
 		this.useTrueBoolean = this.connection.versionMeetsMinimum(3, 21, 23);
-		int lim_id = StringUtils.indexOfIgnoreCase(sql, "LIMIT");
-		if (lim_id != -1) {
-			boolean hasPreviosIdChar = false;
-			boolean hasFollowingIdChar = false;
-			if (lim_id > 0 && (
-					sql.charAt(lim_id - 1) == '`' ||
-					StringUtils.isValidIdChar(sql.charAt(lim_id - 1))
-					)) {
-				hasPreviosIdChar = true;
-			}
-			if (lim_id + 5 < sql.length() && (
-					sql.charAt(lim_id + 5) == '`' ||
-					StringUtils.isValidIdChar(sql.charAt(lim_id + 5))
-					)) {
-				hasFollowingIdChar = true;
-			}
-			if (!hasPreviosIdChar && !hasFollowingIdChar) {
-				this.hasLimitClause = true;
-			}
-		} else {
-			this.hasLimitClause = false;
-		}
-		
 		
 		String statementComment = this.connection.getStatementComment();
 
@@ -1179,10 +1153,6 @@ public class ServerPreparedStatement extends PreparedStatement {
 				}
 				
 				if (this.connection != null) {
-					if (this.maxRowsChanged) {
-						this.connection.unsetMaxRows(this);
-					}
-	
 					if (!this.connection.getDontTrackOpenResources()) {
 						this.connection.unregisterStatement(this);
 					}

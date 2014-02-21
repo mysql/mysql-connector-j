@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
  
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -7154,5 +7154,435 @@ public class StatementRegressionTest extends BaseTestCase {
 		}
 
 		testConnCacheRSMD.close();
+	}
+
+	/**
+	 * Tests fix for BUG#71396 - setMaxRows (SQL_SELECT_LIMIT) from one query used in later queries (sometimes)
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug71396() throws Exception {
+		final String queryLimitClause = "SELECT * FROM testBug71396 LIMIT 2";
+		final String queryLimitClauseInJoin = "SELECT * FROM testBug71396 A JOIN (SELECT * FROM testBug71396 LIMIT 2) B ON A.c != B.c";
+		final String queryLimitInQuotes = "SELECT * FROM testBug71396 WHERE c != 'Unlimited'";
+		final String queryLimitInComment = "SELECT * FROM testBug71396 -- Unlimited";
+		final String queryNoLimit = "SELECT * FROM testBug71396";
+
+		final String[] queries = new String[] { queryLimitClause, queryLimitClauseInJoin, queryLimitInQuotes,
+				queryLimitInComment, queryNoLimit };
+
+		Connection testConn;
+		Statement testStmt;
+		ResultSet testRS;
+		PreparedStatement testPStmtSet[];
+
+		createTable("testBug71396", "(c VARCHAR(5))");
+		this.stmt.execute("INSERT INTO testBug71396 VALUES ('One'), ('Two'), ('Three')");
+
+		/*
+		 * Case 1: Statement.executeQuery() and Statement.execute() with plain Connection.
+		 */
+		testConn = getConnectionWithProps("");
+
+		// safety check
+		testBug71396StatementMultiCheck(testConn, queries, new int[] { 2, 4, 3, 3, 3 });
+
+		// initialize Statement with a given maxRow value, keep open until end of the case
+		testStmt = testBug71396StatementInit(testConn, 1);
+
+		// check results count using the same Statement[maxRows = 1] for all queries
+		testBug71396StatementMultiCheck(testStmt, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		// check results count using same Connection and one new Statement[default maxRows] per query
+		testBug71396StatementMultiCheck(testConn, queries, new int[] { 2, 4, 3, 3, 3 });
+
+		// recheck results count reusing the first Statement[maxRows = 1] for all queries - confirm maxRows wasn't lost
+		testBug71396StatementMultiCheck(testStmt, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		testStmt.close();
+		testConn.close();
+
+		/*
+		 * Case 2: PreparedStatement.executeQuery() and PreparedStatement.execute() with plain Connection.
+		 */
+		testConn = getConnectionWithProps("");
+
+		// safety check
+		testBug71396PrepStatementMultiCheck(testConn, queries, new int[] { 2, 4, 3, 3, 3 });
+
+		// initialize Statement with a given maxRow value, keep open until end of the case
+		testStmt = testBug71396StatementInit(testConn, 1);
+
+		// initialize a set of PreparedStatements with a given maxRow value, keep open until end of the case
+		testPStmtSet = testBug71396PrepStatementInit(testConn, queries, 1);
+
+		// check results count using same Connection and one PreparedStatement[maxRows = 1] per query
+		testBug71396PrepStatementMultiCheck(testPStmtSet, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		// check results count using same Connection and one new PreparedStatement[default maxRows] per query
+		testBug71396PrepStatementMultiCheck(testConn, queries, new int[] { 2, 4, 3, 3, 3 });
+
+		// check results count reusing the first PreparedStatement[maxRows = 1] per query - confirm maxRows wasn't lost
+		testBug71396PrepStatementMultiCheck(testPStmtSet, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		testBug71396PrepStatementClose(testPStmtSet);
+		testStmt.close();
+		testConn.close();
+
+		/*
+		 * Case 3: PreparedStatement.executeQuery() and PreparedStatement.execute() with
+		 * Connection[useServerPrepStmts=true].
+		 */
+		testConn = getConnectionWithProps("useServerPrepStmts=true");
+
+		// safety check
+		testBug71396PrepStatementMultiCheck(testConn, queries, new int[] { 2, 4, 3, 3, 3 });
+
+		// initialize Statement with a given maxRow value, keep open until end of the case.
+		testStmt = testBug71396StatementInit(testConn, 1);
+
+		// initialize a set of PreparedStatements with a given maxRow value, keep open until end of the case
+		testPStmtSet = testBug71396PrepStatementInit(testConn, queries, 1);
+
+		// check results count using same Connection and one PreparedStatement[maxRows = 1] per query
+		testBug71396PrepStatementMultiCheck(testPStmtSet, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		// check results count using same Connection and one new PreparedStatement[default maxRows] per query
+		testBug71396PrepStatementMultiCheck(testConn, queries, new int[] { 2, 4, 3, 3, 3 });
+
+		// check results count reusing the first PreparedStatement[maxRows = 1] per query - confirm maxRows wasn't lost
+		testBug71396PrepStatementMultiCheck(testPStmtSet, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		testBug71396PrepStatementClose(testPStmtSet);
+		testStmt.close();
+		testConn.close();
+
+		/*
+		 * Case 4: Statement.executeQuery() and Statement.execute() with Connection[maxRows=2].
+		 */
+		testConn = getConnectionWithProps("maxRows=2");
+
+		// safety check
+		testBug71396StatementMultiCheck(testConn, queries, new int[] { 2, 2, 2, 2, 2 });
+
+		// initialize Statement with a given maxRow value, keep open until end of the case
+		testStmt = testBug71396StatementInit(testConn, 1);
+
+		// check results count using the same Statement[maxRows = 1] for all queries
+		testBug71396StatementMultiCheck(testStmt, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		// check results count using same Connection and one new Statement[default maxRows] per query
+		testBug71396StatementMultiCheck(testConn, queries, new int[] { 2, 2, 2, 2, 2 });
+
+		// recheck results count reusing the first Statement[maxRows = 1] for all queries - confirm maxRows wasn't lost
+		testBug71396StatementMultiCheck(testStmt, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		testStmt.close();
+		testConn.close();
+
+		/*
+		 * Case 5: PreparedStatement.executeQuery() and PreparedStatement.execute() with Connection[maxRows=2].
+		 */
+		testConn = getConnectionWithProps("maxRows=2");
+
+		// safety check
+		testBug71396PrepStatementMultiCheck(testConn, queries, new int[] { 2, 2, 2, 2, 2 });
+
+		// initialize Statement with a given maxRow value, keep open until end of the case
+		testStmt = testBug71396StatementInit(testConn, 1);
+
+		// initialize a set of PreparedStatements with a given maxRow value, keep open until end of the case
+		testPStmtSet = testBug71396PrepStatementInit(testConn, queries, 1);
+
+		// check results count using same Connection and one PreparedStatement[maxRows = 1] per query
+		testBug71396PrepStatementMultiCheck(testPStmtSet, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		// check results count using same Connection and one new PreparedStatement[default maxRows] per query
+		testBug71396PrepStatementMultiCheck(testConn, queries, new int[] { 2, 2, 2, 2, 2 });
+
+		// check results count reusing the first PreparedStatement[maxRows = 1] per query - confirm maxRows wasn't lost
+		testBug71396PrepStatementMultiCheck(testPStmtSet, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		testBug71396PrepStatementClose(testPStmtSet);
+		testStmt.close();
+		testConn.close();
+
+		/*
+		 * Case 6: PreparedStatement.executeQuery() and PreparedStatement.execute() with
+		 * Connection[useServerPrepStmts=true;maxRows=2].
+		 */
+		testConn = getConnectionWithProps("maxRows=2,useServerPrepStmts=true");
+
+		// safety check
+		testBug71396PrepStatementMultiCheck(testConn, queries, new int[] { 2, 2, 2, 2, 2 });
+
+		// initialize Statement with a given maxRow value, keep open until end of the case
+		testStmt = testBug71396StatementInit(testConn, 1);
+
+		// initialize a set of PreparedStatements with a given maxRow value, keep open until end of the case
+		testPStmtSet = testBug71396PrepStatementInit(testConn, queries, 1);
+
+		// check results count using same Connection and one PreparedStatement[maxRows = 1] per query
+		testBug71396PrepStatementMultiCheck(testPStmtSet, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		// check results count using same Connection and one new PreparedStatement[default maxRows] per query
+		testBug71396PrepStatementMultiCheck(testConn, queries, new int[] { 2, 2, 2, 2, 2 });
+
+		// check results count reusing the first PreparedStatement[maxRows = 1] per query - confirm maxRows wasn't lost
+		testBug71396PrepStatementMultiCheck(testPStmtSet, queries, new int[] { 1, 1, 1, 1, 1 });
+
+		testBug71396PrepStatementClose(testPStmtSet);
+		testStmt.close();
+		testConn.close();
+
+		/*
+		 * Case 7: Multiple combinations between maxRows connection prop, Statement.setMaxRows() and LIMIT clause.
+		 * Covers some cases not tested previously.
+		 */
+		testBug71396MultiSettingsCheck("", -1, 1, 1);
+		testBug71396MultiSettingsCheck("", -1, 2, 2);
+		testBug71396MultiSettingsCheck("", 1, 1, 1);
+		testBug71396MultiSettingsCheck("", 1, 2, 1);
+		testBug71396MultiSettingsCheck("", 2, 1, 1);
+		testBug71396MultiSettingsCheck("", 2, 2, 2);
+
+		testBug71396MultiSettingsCheck("maxRows=1", -1, 1, 1);
+		testBug71396MultiSettingsCheck("maxRows=1", -1, 2, 1);
+		testBug71396MultiSettingsCheck("maxRows=1", 1, 1, 1);
+		testBug71396MultiSettingsCheck("maxRows=1", 1, 2, 1);
+		testBug71396MultiSettingsCheck("maxRows=1", 2, 1, 1);
+		testBug71396MultiSettingsCheck("maxRows=1", 2, 2, 2);
+
+		testBug71396MultiSettingsCheck("maxRows=2", -1, 1, 1);
+		testBug71396MultiSettingsCheck("maxRows=2", -1, 2, 2);
+		testBug71396MultiSettingsCheck("maxRows=2", 1, 1, 1);
+		testBug71396MultiSettingsCheck("maxRows=2", 1, 2, 1);
+		testBug71396MultiSettingsCheck("maxRows=2", 2, 1, 1);
+		testBug71396MultiSettingsCheck("maxRows=2", 2, 2, 2);
+
+		// Case 8: New session bue to user change
+		try {
+			this.stmt.execute("CREATE USER 'testBug71396User'@'%' IDENTIFIED BY 'testBug71396User'");
+			this.stmt.execute("GRANT SELECT ON *.* TO 'testBug71396User'@'%'");
+
+			testConn = getConnectionWithProps("");
+			testStmt = testBug71396StatementInit(testConn, 5);
+
+			((MySQLConnection) testConn).changeUser("testBug71396User", "testBug71396User");
+
+			Statement testStmtTmp = testConn.createStatement();
+			testRS = testStmtTmp.executeQuery("SELECT CURRENT_USER(), @@SESSION.SQL_SELECT_LIMIT");
+			assertTrue(testRS.next());
+			assertEquals("testBug71396User@%", testRS.getString(1));
+			assertTrue(
+					String.format("expected:higher than<%d> but was:<%s>", Integer.MAX_VALUE, testRS.getBigDecimal(2)),
+					testRS.getBigDecimal(2).compareTo(new BigDecimal(Integer.MAX_VALUE)) == 1);
+			testRS.close();
+			testStmtTmp.close();
+
+			testRS = testStmt.executeQuery("SELECT CURRENT_USER(), @@SESSION.SQL_SELECT_LIMIT");
+			assertTrue(testRS.next());
+			assertEquals("testBug71396User@%", testRS.getString(1));
+			assertEquals(new BigDecimal(5), testRS.getBigDecimal(2));
+			testRS.close();
+
+			testStmt.close();
+			testConn.close();
+		} finally {
+			this.stmt.execute("DROP USER 'testBug71396User'");
+		}
+
+		// Case 9: New session due to reconnection
+		testConn = getConnectionWithProps("");
+		testStmt = testBug71396StatementInit(testConn, 5);
+
+		((MySQLConnection) testConn).createNewIO(true); // true or false argument is irrelevant for this test case
+
+		Statement testStmtTmp = testConn.createStatement();
+		testRS = testStmtTmp.executeQuery("SELECT @@SESSION.SQL_SELECT_LIMIT");
+		assertTrue(testRS.next());
+		assertTrue(String.format("expected:higher than<%d> but was:<%s>", Integer.MAX_VALUE, testRS.getBigDecimal(1)),
+				testRS.getBigDecimal(1).compareTo(new BigDecimal(Integer.MAX_VALUE)) == 1);
+		testRS.close();
+		testStmtTmp.close();
+
+		testRS = testStmt.executeQuery("SELECT @@SESSION.SQL_SELECT_LIMIT");
+		assertTrue(testRS.next());
+		assertEquals(new BigDecimal(5), testRS.getBigDecimal(1));
+		testRS.close();
+
+		testStmt.close();
+		testConn.close();
+	}
+
+	/**
+	 * Initializes and returns a Statement with maxRows defined. Tests the SQL_SELECT_LIMIT defined. Executing this
+	 * query also forces this limit to be defined at session level.
+	 */
+	private Statement testBug71396StatementInit(Connection testConn, int maxRows) throws SQLException {
+		ResultSet testRS;
+		Statement testStmt = testConn.createStatement();
+
+		testStmt.setMaxRows(maxRows);
+		// while consulting SQL_SELECT_LIMIT setting also forces limit to be applied into current session
+		testRS = testStmt.executeQuery("SELECT @@SESSION.SQL_SELECT_LIMIT");
+		testRS.next();
+		assertEquals("Wrong @@SESSION.SQL_SELECT_LIMIT", maxRows, testRS.getInt(1));
+
+		return testStmt;
+	}
+
+	/**
+	 * Executes a set of queries using a Statement (newly created) and tests if the results count is the expected.
+	 */
+	private void testBug71396StatementMultiCheck(Connection testConn, String[] queries, int[] expRowCount)
+			throws SQLException {
+		if (queries.length != expRowCount.length) {
+			fail("Bad arguments!");
+		}
+		Statement testStmt = testConn.createStatement();
+		testBug71396StatementMultiCheck(testStmt, queries, expRowCount);
+		testStmt.close();
+	}
+
+	/**
+	 * Executes a set of queries using a Statement and tests if the results count is the expected.
+	 */
+	private void testBug71396StatementMultiCheck(Statement testStmt, String[] queries, int[] expRowCount)
+			throws SQLException {
+		if (queries.length != expRowCount.length) {
+			fail("Bad arguments!");
+		}
+		for (int i = 0; i < queries.length; i++) {
+			testBug71396StatementCheck(testStmt, queries[i], expRowCount[i]);
+		}
+	}
+
+	/**
+	 * Executes one query using a Statement and tests if the results count is the expected.
+	 */
+	private void testBug71396StatementCheck(Statement testStmt, String query, int expRowCount) throws SQLException {
+		ResultSet testRS;
+
+		testRS = testStmt.executeQuery(query);
+		assertTrue(testRS.last());
+		assertEquals(String.format("Wrong number of rows for query '%s'", query), expRowCount, testRS.getRow());
+		testRS.close();
+
+		testStmt.execute(query);
+		testRS = testStmt.getResultSet();
+		assertTrue(testRS.last());
+		assertEquals(String.format("Wrong number of rows for query '%s'", query), expRowCount, testRS.getRow());
+		testRS.close();
+	}
+
+	/**
+	 * Initializes and returns an array of PreparedStatements, with maxRows defined, for a set of queries.
+	 */
+	private PreparedStatement[] testBug71396PrepStatementInit(Connection testConn, String[] queries, int maxRows)
+			throws SQLException {
+		PreparedStatement[] testPStmt = new PreparedStatement[queries.length];
+
+		for (int i = 0; i < queries.length; i++) {
+			testPStmt[i] = testConn.prepareStatement(queries[i]);
+			if (maxRows > 0) {
+				testPStmt[i].setMaxRows(maxRows);
+			}
+		}
+		return testPStmt;
+	}
+
+	/**
+	 * Closes all PreparedStatements in the array.
+	 */
+	private void testBug71396PrepStatementClose(PreparedStatement[] testPStmt) throws SQLException {
+		for (Statement testStmt : testPStmt) {
+			testStmt.close();
+		}
+	}
+
+	/**
+	 * Executes a set of queries using newly created PreparedStatements and tests if the results count is the expected.
+	 */
+	private void testBug71396PrepStatementMultiCheck(Connection testConn, String[] queries, int[] expRowCount)
+			throws SQLException {
+		if (queries.length != expRowCount.length) {
+			fail("Bad arguments!");
+		}
+		for (int i = 0; i < queries.length; i++) {
+			testBug71396PrepStatementCheck(testConn, queries[i], expRowCount[i], -1);
+		}
+	}
+
+	/**
+	 * Executes a set of queries using the given PreparedStatements and tests if the results count is the expected.
+	 */
+	private void testBug71396PrepStatementMultiCheck(PreparedStatement[] testPStmt, String[] queries, int[] expRowCount)
+			throws SQLException {
+		if (testPStmt.length != queries.length || testPStmt.length != expRowCount.length) {
+			fail("Bad arguments!");
+		}
+		for (int i = 0; i < queries.length; i++) {
+			testBug71396PrepStatementCheck(testPStmt[i], queries[i], expRowCount[i]);
+		}
+	}
+
+	/**
+	 * Executes one query using a newly created PreparedStatement, setting its maxRows limit, and tests if the results
+	 * count is the expected.
+	 */
+	private void testBug71396PrepStatementCheck(Connection testConn, String query, int expRowCount, int maxRows)
+			throws SQLException {
+		PreparedStatement chkPStmt;
+
+		chkPStmt = testConn.prepareStatement(query);
+		if (maxRows > 0) {
+			chkPStmt.setMaxRows(maxRows);
+		}
+		testBug71396PrepStatementCheck(chkPStmt, query, expRowCount);
+		chkPStmt.close();
+	}
+
+	/**
+	 * Executes one query using a PreparedStatement and tests if the results count is the expected.
+	 */
+	private void testBug71396PrepStatementCheck(PreparedStatement testPStmt, String query, int expRowCount)
+			throws SQLException {
+		ResultSet testRS;
+
+		testRS = testPStmt.executeQuery();
+		assertTrue(testRS.last());
+		assertEquals(String.format("Wrong number of rows for query '%s'", query), expRowCount, testRS.getRow());
+		testRS.close();
+
+		testPStmt.execute();
+		testRS = testPStmt.getResultSet();
+		assertTrue(testRS.last());
+		assertEquals(String.format("Wrong number of rows for query '%s'", query), expRowCount, testRS.getRow());
+		testRS.close();
+	}
+
+	/**
+	 * Executes a query containing the clause LIMIT with a Statement and a PreparedStatement, using a combination of
+	 * Connection properties, maxRows value and limit clause value, and tests if the results count is the expected.
+	 */
+	private void testBug71396MultiSettingsCheck(String connProps, int maxRows, int limitClause, int expRowCount)
+			throws SQLException {
+		Connection testConn = getConnectionWithProps(connProps);
+
+		Statement testStmt = testConn.createStatement();
+		if (maxRows > 0) {
+			testStmt.setMaxRows(maxRows);
+		}
+		testStmt.executeQuery("SELECT 1"); // force limit to be applied into current session
+
+		testBug71396StatementCheck(testStmt, String.format("SELECT * FROM testBug71396 LIMIT %d", limitClause),
+				expRowCount);
+		testBug71396PrepStatementCheck(testConn, String.format("SELECT * FROM testBug71396 LIMIT %d", limitClause),
+				expRowCount, maxRows);
+
+		testStmt.close();
+		testConn.close();
 	}
 }

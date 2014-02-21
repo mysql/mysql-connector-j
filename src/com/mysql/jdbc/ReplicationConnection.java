@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2004, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2004, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -177,7 +177,7 @@ public class ReplicationConnection implements Connection, PingTarget {
         
 	
 		if(isMaster && this.currentConnection != null) {
-			this.swapConnections(newMasterConn, currentConnection, true);
+			this.swapConnections(newMasterConn, currentConnection);
 		}
 		
 		if(this.masterConnection != null) {
@@ -760,12 +760,6 @@ public class ReplicationConnection implements Connection, PingTarget {
 		this.slavesConnection.setReadOnly(true);
 	}
 	
-	private synchronized void swapConnections(Connection switchToConnection, 
-	Connection switchFromConnection) throws SQLException {
-		this.swapConnections(switchToConnection, switchFromConnection, false);
-		
-	}
-	
 	/**
 	 * Swaps current context (catalog, autocommit and txn_isolation) from
 	 * sourceConnection to targetConnection, and makes targetConnection
@@ -777,7 +771,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * @throws SQLException if an error occurs
 	 */
 	private synchronized void swapConnections(Connection switchToConnection, 
-			Connection switchFromConnection, boolean skipReconfigure) throws SQLException {
+			Connection switchFromConnection) throws SQLException {
 
 		String switchFromCatalog = switchFromConnection.getCatalog();
 		String switchToCatalog = switchToConnection.getCatalog();
@@ -804,6 +798,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 			switchToConnection
 					.setTransactionIsolation(switchFromIsolation);
 		}
+		
+		switchToConnection.setSessionMaxRows(switchFromConnection.getSessionMaxRows());
 		
 		this.currentConnection = switchToConnection;
 	}
@@ -2977,5 +2973,13 @@ public class ReplicationConnection implements Connection, PingTarget {
 
 	public boolean getDetectCustomCollations() {
 		return getCurrentConnection().getDetectCustomCollations();
+	}
+	
+	public int getSessionMaxRows() {
+		return getCurrentConnection().getSessionMaxRows();
+	}
+
+	public void setSessionMaxRows(int max) throws SQLException {
+		getCurrentConnection().setSessionMaxRows(max);
 	}
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -18,10 +18,8 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
- 
  */
 package com.mysql.jdbc;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -61,6 +59,7 @@ import java.util.TimeZone;
 import com.mysql.jdbc.exceptions.MySQLStatementCancelledException;
 import com.mysql.jdbc.exceptions.MySQLTimeoutException;
 import com.mysql.jdbc.profiler.ProfilerEvent;
+
 
 /**
  * A SQL Statement is pre-compiled and stored in a PreparedStatement object.
@@ -171,8 +170,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	class ParseInfo {
 		char firstStmtChar = 0;
 
-		boolean foundLimitClause = false;
-
 		boolean foundLoadData = false;
 
 		long lastUsed = 0;
@@ -238,10 +235,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				boolean inQuotedId = false;
 				int lastParmEnd = 0;
 				int i;
-
-				int stopLookingForLimitClause = this.statementLength - 5;
-
-				this.foundLimitClause = false;
 
 				boolean noBackslashEscapes = connection.isNoBackslashEscapesSet();
 
@@ -341,39 +334,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 						
 						if (isOnDuplicateKeyUpdate && i > locationOfOnDuplicateKeyUpdate) {
 							parametersInDuplicateKeyClause = true;
-						}
-					}
-
-					if (!inQuotes && !inQuotedId && (i < stopLookingForLimitClause)) {
-						if ((c == 'L') || (c == 'l')) {
-							char posI1 = sql.charAt(i + 1);
-
-							if ((posI1 == 'I') || (posI1 == 'i')) {
-								char posM = sql.charAt(i + 2);
-
-								if ((posM == 'M') || (posM == 'm')) {
-									char posI2 = sql.charAt(i + 3);
-
-									if ((posI2 == 'I') || (posI2 == 'i')) {
-										char posT = sql.charAt(i + 4);
-
-										if ((posT == 'T') || (posT == 't')) {
-
-											boolean hasPreviosIdChar = false;
-											boolean hasFollowingIdChar = false;
-											if (i>statementStartPos && StringUtils.isValidIdChar(sql.charAt(i - 1))) {
-												hasPreviosIdChar = true;
-											}
-											if (i + 5 < this.statementLength && StringUtils.isValidIdChar(sql.charAt(i + 5))) {
-												hasFollowingIdChar = true;
-											}
-											if (!hasPreviosIdChar && !hasFollowingIdChar) {
-												foundLimitClause = true;
-											}
-										}
-									}
-								}
-							}
 						}
 					}
 				}
@@ -549,8 +509,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			buildInfoForBatch(numBatch, apv);
 
 			ParseInfo batchParseInfo = new ParseInfo(apv.getStaticSqlStrings(),
-					this.firstStmtChar, this.foundLimitClause,
-					this.foundLoadData, this.isOnDuplicateKeyUpdate,
+					this.firstStmtChar, this.foundLoadData, this.isOnDuplicateKeyUpdate,
 					this.locationOfOnDuplicateKeyUpdate, this.statementLength,
 					this.statementStartPos);
 
@@ -657,12 +616,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 		}
 
 		private ParseInfo(byte[][] staticSql, char firstStmtChar,
-				boolean foundLimitClause, boolean foundLoadData,
-				boolean isOnDuplicateKeyUpdate,
+				boolean foundLoadData, boolean isOnDuplicateKeyUpdate,
 				int locationOfOnDuplicateKeyUpdate, int statementLength,
 				int statementStartPos) {
 			this.firstStmtChar = firstStmtChar;
-			this.foundLimitClause = foundLimitClause;
 			this.foundLoadData = foundLoadData;
 			this.isOnDuplicateKeyUpdate = isOnDuplicateKeyUpdate;
 			this.locationOfOnDuplicateKeyUpdate = locationOfOnDuplicateKeyUpdate;
@@ -784,9 +741,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected char firstCharOfStmt = 0;
 
-	/** Does the SQL for this statement contain a 'limit' clause? */
-	protected boolean hasLimitClause = false;
-	
 	/** Is this query a LOAD DATA query? */
 	protected boolean isLoadDataQuery = false;
 
@@ -1255,7 +1209,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected boolean checkReadOnlySafeStatement() throws SQLException {
 		synchronized (checkClosed().getConnectionMutex()) {
-			return ((!this.connection.isReadOnly()) || (this.firstCharOfStmt == 'S'));
+			return this.firstCharOfStmt == 'S' || !this.connection.isReadOnly();
 		}
 	}
 
@@ -1341,46 +1295,15 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 				oldInfoMsgState = locallyScopedConn.isReadInfoMsgEnabled();
 				locallyScopedConn.setReadInfoMsgEnabled(true);
 			}
-	
-			// If there isn't a limit clause in the SQL
-			// then limit the number of rows to return in
-			// an efficient manner. Only do this if
-			// setMaxRows() hasn't been used on any Statements
-			// generated from the current Connection (saves
-			// a query, and network traffic).
+
 			//
 			// Only apply max_rows to selects
 			//
-			if (locallyScopedConn.useMaxRows()) {
-				int rowLimit = -1;
-	
-				if (this.firstCharOfStmt == 'S') {
-					if (this.hasLimitClause) {
-						rowLimit = this.maxRows;
-					} else {
-						if (this.maxRows <= 0) {
-							executeSimpleNonQuery(locallyScopedConn,
-									"SET SQL_SELECT_LIMIT=DEFAULT");
-						} else {
-							executeSimpleNonQuery(locallyScopedConn,
-									"SET SQL_SELECT_LIMIT=" + this.maxRows);
-						}
-					}
-				} else {
-					executeSimpleNonQuery(locallyScopedConn,
-							"SET SQL_SELECT_LIMIT=DEFAULT");
-				}
-	
-				// Finally, execute the query
-				rs = executeInternal(rowLimit, sendPacket,
-						doStreaming,
-						(this.firstCharOfStmt == 'S'), metadataFromCache, false);
-			} else {
-				rs = executeInternal(-1, sendPacket,
-						doStreaming,
-						(this.firstCharOfStmt == 'S'), metadataFromCache, false);
-			}
-	
+			locallyScopedConn.setSessionMaxRows(this.firstCharOfStmt == 'S' ? this.maxRows : -1);
+
+			rs = executeInternal(this.maxRows, sendPacket, doStreaming, (this.firstCharOfStmt == 'S'),
+					metadataFromCache, false);
+
 			if (cachedMetadata != null) {
 				locallyScopedConn.initializeResultsMetadataFromCache(this.originalSql,
 						cachedMetadata, rs);
@@ -2280,40 +2203,10 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			if (cachedMetadata != null) {
 				metadataFromCache = cachedMetadata.fields;
 			}
-			
-			if (locallyScopedConn.useMaxRows()) {
-				// If there isn't a limit clause in the SQL
-				// then limit the number of rows to return in
-				// an efficient manner. Only do this if
-				// setMaxRows() hasn't been used on any Statements
-				// generated from the current Connection (saves
-				// a query, and network traffic).
-				if (this.hasLimitClause) {
-					this.results = executeInternal(this.maxRows, sendPacket,
-							createStreamingResultSet(), true,
-							metadataFromCache, false);
-				} else {
-					if (this.maxRows <= 0) {
-						executeSimpleNonQuery(locallyScopedConn,
-								"SET SQL_SELECT_LIMIT=DEFAULT");
-					} else {
-						executeSimpleNonQuery(locallyScopedConn,
-								"SET SQL_SELECT_LIMIT=" + this.maxRows);
-					}
 
-					this.results = executeInternal(-1, sendPacket,
-							doStreaming, true,
-							metadataFromCache, false);
+			locallyScopedConn.setSessionMaxRows(this.maxRows);
 
-					if (oldCatalog != null) {
-						this.connection.setCatalog(oldCatalog);
-					}
-				}
-			} else {
-				this.results = executeInternal(-1, sendPacket,
-						doStreaming, true,
-						metadataFromCache, false);
-			}
+			this.results = executeInternal(this.maxRows, sendPacket, doStreaming, true, metadataFromCache, false);
 
 			if (oldCatalog != null) {
 				locallyScopedConn.setCatalog(oldCatalog);
@@ -2426,10 +2319,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 			//
 			// Only apply max_rows to selects
 			//
-			if (locallyScopedConn.useMaxRows()) {
-				executeSimpleNonQuery(locallyScopedConn,
-						"SET SQL_SELECT_LIMIT=DEFAULT");
-			}
+			locallyScopedConn.setSessionMaxRows(-1);
 
 			boolean oldInfoMsgState = false;
 
@@ -3046,7 +2936,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	private void initializeFromParseInfo() throws SQLException {
 		synchronized (checkClosed().getConnectionMutex()) {
 			this.staticSqlStrings = this.parseInfo.staticSql;
-			this.hasLimitClause = this.parseInfo.foundLimitClause;
 			this.isLoadDataQuery = this.parseInfo.foundLoadData;
 			this.firstCharOfStmt = this.parseInfo.firstStmtChar;
 	
