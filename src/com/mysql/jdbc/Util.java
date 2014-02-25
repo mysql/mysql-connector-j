@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
  
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
@@ -433,7 +433,8 @@ public class Util {
 			}
 
 			throw SQLError.createSQLException(target.toString(),
-					SQLError.SQL_STATE_GENERAL_ERROR, exceptionInterceptor);
+											  SQLError.SQL_STATE_GENERAL_ERROR,
+											  target, exceptionInterceptor);
 		}
 	}
 
