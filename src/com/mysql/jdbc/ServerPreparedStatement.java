@@ -564,25 +564,22 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 * @see java.sql.Statement#close()
 	 */
 	public void close() throws SQLException {
-		try {
-			synchronized (checkClosed().getConnectionMutex()) {
-				if (this.isCached && !this.isClosed) {
-					clearParameters();
-					
-					this.isClosed = true;
-					
-					this.connection.recachePreparedStatement(this);
-					return;
-				}
+		MySQLConnection locallyScopedConn = this.connection;
+		
+		if (locallyScopedConn == null) return; // already closed
+
+		synchronized (locallyScopedConn.getConnectionMutex()) {
+
+			if (this.isCached && !this.isClosed) {
+				clearParameters();
 				
-				realClose(true, true);
-			}
-		} catch (SQLException sqlEx) {
-			if (SQLError.SQL_STATE_CONNECTION_NOT_OPEN.equals(sqlEx.getSQLState())) {
+				this.isClosed = true;
+				
+				this.connection.recachePreparedStatement(this);
 				return;
 			}
 			
-			throw sqlEx;
+			realClose(true, true);
 		}
 	}
 
@@ -1038,14 +1035,10 @@ public class ServerPreparedStatement extends PreparedStatement {
 	 */
 	protected void realClose(boolean calledExplicitly, 
 			boolean closeOpenResults) throws SQLException {
-		MySQLConnection locallyScopedConn;
-		
-		try {
-			locallyScopedConn = checkClosed();
-		} catch (SQLException sqlEx) {
-			return; // already closed
-		}
-		
+		MySQLConnection locallyScopedConn = this.connection;
+
+		if (locallyScopedConn == null) return; // already closed
+
 		synchronized (locallyScopedConn.getConnectionMutex()) {
 
 			if (this.connection != null) {

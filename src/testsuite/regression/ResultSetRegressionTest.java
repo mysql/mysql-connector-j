@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -55,10 +55,12 @@ import javax.sql.rowset.CachedRowSet;
 
 import testsuite.BaseTestCase;
 
+import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MysqlDataTruncation;
 import com.mysql.jdbc.NotUpdatable;
 import com.mysql.jdbc.SQLError;
+import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.StandardLogger;
 
@@ -4944,4 +4946,70 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		rs = stmt.executeQuery("SELECT * FROM testBug38252 where 0 = 1");
 		assertFalse("Cursor should be moved to before the first row.", rs.absolute(0));
 	}
+
+	/**
+	 * Tests fix for Bug#67318 - SQLException thrown on already closed ResultSet
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug67318() throws Exception {
+		testBug67318AlreadyClosedCounter = 0;
+
+		Properties props = new Properties();
+		props.setProperty("useServerPrepStmts", "true");
+		props.setProperty("exceptionInterceptors", "testsuite.regression.ResultSetRegressionTest$TestBug67318ExceptionInterceptor");
+
+		Connection c = null;
+		try {
+			c = getConnectionWithProps(props);
+			Statement st1 = c.createStatement();
+			ResultSet rs1 = st1.executeQuery("select 1");
+			rs1.close();
+			rs1.close();
+			assertEquals("Operation not allowed after ResultSet closed exception shouldn't be thrown second time", 0, testBug67318AlreadyClosedCounter);
+			st1.close();
+			st1.close();
+			((StatementImpl)st1).isClosed();
+			assertEquals("No operations allowed after statement closed exception shouldn't be thrown second time", 0, testBug67318AlreadyClosedCounter);
+			
+			PreparedStatement ps1 = c.prepareStatement("select 1");
+			ps1.close();
+			ps1.close();
+			assertEquals("No operations allowed after statement closed exception shouldn't be thrown second time", 0, testBug67318AlreadyClosedCounter);
+			
+			
+		} finally {
+			if (c != null) {
+				c.close();
+			}
+		}
+		
+	}
+
+	public static int testBug67318AlreadyClosedCounter = 0;
+	
+	public static class TestBug67318ExceptionInterceptor implements ExceptionInterceptor {
+
+		public void init(com.mysql.jdbc.Connection conn, Properties props)
+				throws SQLException {
+		}
+
+		public void destroy() {
+		}
+
+		public SQLException interceptException(SQLException sqlEx,
+				com.mysql.jdbc.Connection conn) {
+			
+			sqlEx.printStackTrace();
+			
+			if ("Operation not allowed after ResultSet closed".equals(sqlEx.getMessage()) ||
+				"No operations allowed after statement closed.".equals(sqlEx.getMessage())) {
+				testBug67318AlreadyClosedCounter++;
+			}
+			return sqlEx;
+		}
+		
+	}
+
 }

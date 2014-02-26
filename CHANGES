@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.30
 
+  - Fix for Bug#67318 (16722637), SQLException thrown on already closed ResultSet. Thanks to Thomas Manville for his contribution.
+
   - Fix for Bug#71396 (18110320), setMaxRows (SQL_SELECT_LIMIT) from one query used in later queries (sometimes).
     Additionally, SQL_SELECT_LIMIT is no longer sent unnecessarily between consecutive queries.
 

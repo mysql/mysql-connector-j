@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
  
 
  This program is free software; you can redistribute it and/or modify
@@ -452,6 +452,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 		this.retainOwningStatement = false;
 		
 		if (this.connection != null) {
+			this.exceptionInterceptor = this.connection.getExceptionInterceptor();
 			this.useStrictFloatingPoint = this.connection
 					.getStrictFloatingPoint();
 			this.setDefaultTimeZone(this.connection.getDefaultTimeZone());
@@ -7323,15 +7324,15 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	 *             if an error occurs
 	 */
 	public void realClose(boolean calledExplicitly) throws SQLException {
-		MySQLConnection locallyScopedConn;
+		MySQLConnection locallyScopedConn = this.connection;
 		
-		try {
-			locallyScopedConn = checkClosed();
-		} catch (SQLException sqlEx) {
-			return; // already closed
-		}
+		if (locallyScopedConn == null) return; // already closed
 		
 		synchronized (locallyScopedConn.getConnectionMutex()) {
+
+			// additional check in case ResultSet was closed
+			// while current thread was waiting for lock
+			if (this.isClosed) return;
 
 			try {
 				if (this.useUsageAdvisor) {
@@ -7518,7 +7519,7 @@ public class ResultSetImpl implements ResultSetInternalMethods {
 	/**
 	 * Returns true if this ResultSet is closed.
 	 */
-	public synchronized boolean isClosed() throws SQLException {
+	public boolean isClosed() throws SQLException {
 		return this.isClosed;
 	}
 	

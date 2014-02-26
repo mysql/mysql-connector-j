@@ -3004,16 +3004,16 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 	 */
 	protected void realClose(boolean calledExplicitly, 
 			boolean closeOpenResults) throws SQLException {
-		MySQLConnection locallyScopedConn;
-		
-		try {
-			locallyScopedConn = checkClosed();
-		} catch (SQLException sqlEx) {
-			return; // already closed
-		}
-		
+		MySQLConnection locallyScopedConn = this.connection;
+
+		if (locallyScopedConn == null) return; // already closed
+
 		synchronized (locallyScopedConn.getConnectionMutex()) {
-		
+
+			// additional check in case Statement was closed
+			// while current thread was waiting for lock
+			if (this.isClosed) return;
+
 			if (this.useUsageAdvisor) {
 				if (this.numberOfExecutions <= 1) {
 					String message = Messages.getString("PreparedStatement.43"); //$NON-NLS-1$

@@ -572,17 +572,7 @@ public class StatementImpl implements Statement {
 	 *                if a database access error occurs
 	 */
 	public void close() throws SQLException {
-		try {
-			synchronized (checkClosed().getConnectionMutex()) {
-				realClose(true, true);
-			}
-		} catch (SQLException sqlEx) {
-			if (SQLError.SQL_STATE_CONNECTION_NOT_OPEN.equals(sqlEx.getSQLState())) {
-				return;
-			}
-			
-			throw sqlEx;
-		}
+		realClose(true, true);
 	}
 
 	/**
@@ -2494,15 +2484,16 @@ public class StatementImpl implements Statement {
 	 */
 	protected void realClose(boolean calledExplicitly, boolean closeOpenResults)
 			throws SQLException {
-		MySQLConnection locallyScopedConn;
+		MySQLConnection locallyScopedConn = this.connection;
 		
-		try {
-			locallyScopedConn = checkClosed();
-		} catch (SQLException sqlEx) {
-			return; // already closed
-		}
+		if (locallyScopedConn == null) return; // already closed
 		
 		synchronized (locallyScopedConn.getConnectionMutex()) {
+
+			// additional check in case Statement was closed
+			// while current thread was waiting for lock
+			if (this.isClosed) return;
+
 	
 			if (this.useUsageAdvisor) {
 				if (!calledExplicitly) {
@@ -2845,16 +2836,12 @@ public class StatementImpl implements Statement {
 	}
 
 	public boolean isClosed() throws SQLException {
-		try {
-			synchronized (checkClosed().getConnectionMutex()) {
-				return this.isClosed;
-			}
-		} catch (SQLException sqlEx) {
-			if (SQLError.SQL_STATE_CONNECTION_NOT_OPEN.equals(sqlEx.getSQLState())) {
-				return true;
-			}
-			
-			throw sqlEx;
+		MySQLConnection locallyScopedConn = this.connection;
+		if (locallyScopedConn == null) {
+			return true;
+		}
+		synchronized (locallyScopedConn.getConnectionMutex()) {
+			return this.isClosed;
 		}
 	}
 
