@@ -579,7 +579,11 @@ public class StatementImpl implements Statement {
 	 * Close any open result sets that have been 'held open'
 	 */
 	protected void closeAllOpenResults() throws SQLException {
-		synchronized (checkClosed().getConnectionMutex()) {
+		MySQLConnection locallyScopedConn = this.connection;
+		
+		if (locallyScopedConn == null) return; // already closed
+		
+		synchronized (locallyScopedConn.getConnectionMutex()) {
 			if (this.openResults != null) {
 				for (ResultSetInternalMethods element : this.openResults) {
 					try {
