@@ -1074,9 +1074,7 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 		
 		long[] newResponseTimes = new long[this.responseTimes.length + 1];
 		
-		for (int i = 0; i < this.responseTimes.length; i++) {
-			newResponseTimes[i] = this.responseTimes[i];
-		}
+		System.arraycopy(this.responseTimes, 0, newResponseTimes, 0, this.responseTimes.length);
 		
 		this.responseTimes = newResponseTimes;
 		this.hostList.add(host);

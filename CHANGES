@@ -2,6 +2,9 @@
 # $Id$
 nn-nn-14 - Version 5.1.30
 
+  - Fix for Bug#71861 (18327245), Avoid manual array copy in MysqlIO and LoadBalancingConnectionProxy.
+    Thanks to Andrej Golovnin for his contribution.
+
   - Fix for Bug#71623 (18228668), Field#getStringFromBytes() creates useless byte array when using JVM converter.
     Thanks to Andrej Golovnin for his contribution.
 

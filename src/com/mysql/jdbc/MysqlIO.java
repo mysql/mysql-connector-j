@@ -1,27 +1,23 @@
 /*
-      Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
-      
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
 
-      This program is free software; you can redistribute it and/or modify
-      it under the terms of version 2 of the GNU General Public License as
-      published by the Free Software Foundation.
+  The MySQL Connector/J is licensed under the terms of the GPLv2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
+  There are special exceptions to the terms and conditions of the GPLv2 as it is applied to
+  this software, see the FLOSS License Exception
+  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 
-      There are special exceptions to the terms and conditions of the GPL
-      as it is applied to this software. View the full text of the
-      exception in file EXCEPTIONS-CONNECTOR-J in the directory of this
-      software distribution.
+  This program is free software; you can redistribute it and/or modify it under the terms
+  of the GNU General Public License as published by the Free Software Foundation; version 2
+  of the License.
 
-      This program is distributed in the hope that it will be useful,
-      but WITHOUT ANY WARRANTY; without even the implied warranty of
-      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-      GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
 
-      You should have received a copy of the GNU General Public License
-      along with this program; if not, write to the Free Software
-      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-
-
+  You should have received a copy of the GNU General Public License along with this
+  program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
+  Floor, Boston, MA 02110-1301  USA
  */
 package com.mysql.jdbc;
 
@@ -5212,12 +5208,10 @@ public class MysqlIO {
 
     		datetimeAsBytes[19] = (byte) '.';
 
-    		int nanosOffset = 20;
+    		final int nanosOffset = 20;
 
-    		for (int j = 0; j < nanosAsBytes.length; j++) {
-    			datetimeAsBytes[nanosOffset + j] = nanosAsBytes[j];
-    		}
-
+			System.arraycopy(nanosAsBytes, 0, datetimeAsBytes, nanosOffset, nanosAsBytes.length);
+    		
     		unpackedRowData[columnIndex] = datetimeAsBytes;
 
 
