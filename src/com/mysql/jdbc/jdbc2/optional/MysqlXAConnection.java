@@ -1,6 +1,5 @@
 /*
- Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
- 
+  Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -19,7 +18,6 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
-
  */
 package com.mysql.jdbc.jdbc2.optional;
 
@@ -40,6 +38,7 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import com.mysql.jdbc.ConnectionImpl;
+import com.mysql.jdbc.StringUtils;
 import com.mysql.jdbc.Util;
 import com.mysql.jdbc.log.Log;
 
@@ -65,6 +64,8 @@ import com.mysql.jdbc.log.Log;
 public class MysqlXAConnection extends MysqlPooledConnection implements
 		XAConnection, XAResource {
 
+	private static final int MAX_COMMAND_LENGTH = 300;
+	
 	private com.mysql.jdbc.ConnectionImpl underlyingConnection;
 
 	private final static Map<Integer, Integer> MYSQL_ERROR_CODES_TO_XA_ERROR_CODES;
@@ -379,9 +380,9 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 	 *             XAER_PROTO.
 	 */
 	public int prepare(Xid xid) throws XAException {
-		StringBuffer commandBuf = new StringBuffer();
+		StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
 		commandBuf.append("XA PREPARE ");
-		commandBuf.append(xidToString(xid));
+		appendXid(commandBuf, xid);
 
 		dispatchCommand(commandBuf.toString());
 
@@ -421,9 +422,9 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 	 * has released all held resources.
 	 */
 	public void rollback(Xid xid) throws XAException {
-		StringBuffer commandBuf = new StringBuffer();
+		StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
 		commandBuf.append("XA ROLLBACK ");
-		commandBuf.append(xidToString(xid));
+		appendXid(commandBuf, xid);
 
 		try {
 			dispatchCommand(commandBuf.toString());
@@ -460,20 +461,20 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 	 *             or XA_RB*.
 	 */
 	public void end(Xid xid, int flags) throws XAException {
-		StringBuffer commandBuf = new StringBuffer();
+		StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
 		commandBuf.append("XA END ");
-		commandBuf.append(xidToString(xid));
+		appendXid(commandBuf, xid);
 
 		switch (flags) {
-		case TMSUCCESS:
-			break; // no-op
-		case TMSUSPEND:
-			commandBuf.append(" SUSPEND");
-			break;
-		case TMFAIL:
-			break; // no-op
-		default:
-			throw new XAException(XAException.XAER_INVAL);
+			case TMSUCCESS:
+				break; // no-op
+			case TMSUSPEND:
+				commandBuf.append(" SUSPEND");
+				break;
+			case TMFAIL:
+				break; // no-op
+			default:
+				throw new XAException(XAException.XAER_INVAL);
 		}
 
 		dispatchCommand(commandBuf.toString());
@@ -503,26 +504,26 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 	 *             XAER_INVAL, or XAER_PROTO.
 	 */
 	public void start(Xid xid, int flags) throws XAException {
-		StringBuffer commandBuf = new StringBuffer();
+		StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
 		commandBuf.append("XA START ");
-		commandBuf.append(xidToString(xid));
+		appendXid(commandBuf, xid);
 
 		switch (flags) {
-		case TMJOIN:
-			commandBuf.append(" JOIN");
-			break;
-		case TMRESUME:
-			commandBuf.append(" RESUME");
-			break;
-		case TMNOFLAGS:
-			// no-op
-			break;
-		default:
-			throw new XAException(XAException.XAER_INVAL);
+			case TMJOIN:
+				commandBuf.append(" JOIN");
+				break;
+			case TMRESUME:
+				commandBuf.append(" RESUME");
+				break;
+			case TMNOFLAGS:
+				// no-op
+				break;
+			default:
+				throw new XAException(XAException.XAER_INVAL);
 		}
 
 		dispatchCommand(commandBuf.toString());
-		
+
 		this.underlyingConnection.setInGlobalTx(true);
 	}
 
@@ -548,9 +549,9 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 	 */
 
 	public void commit(Xid xid, boolean onePhase) throws XAException {
-		StringBuffer commandBuf = new StringBuffer();
+		StringBuilder commandBuf = new StringBuilder(MAX_COMMAND_LENGTH);
 		commandBuf.append("XA COMMIT ");
-		commandBuf.append(xidToString(xid));
+		appendXid(commandBuf, xid);
 
 		if (onePhase) {
 			commandBuf.append(" ONE PHASE");
@@ -605,62 +606,21 @@ public class MysqlXAConnection extends MysqlPooledConnection implements
 		return new MysqlXAException(sqlEx.getMessage(), null);
 	}
 
-	private static String xidToString(Xid xid) {
+	private static void appendXid(StringBuilder builder, Xid xid) {
 		byte[] gtrid = xid.getGlobalTransactionId();
-
 		byte[] btrid = xid.getBranchQualifier();
 
-		int lengthAsString = 6; // for (0x and ,) * 2
-
 		if (gtrid != null) {
-			lengthAsString += (2 * gtrid.length);
+			StringUtils.appendAsHex(builder, gtrid);
 		}
 
+		builder.append(',');
 		if (btrid != null) {
-			lengthAsString += (2 * btrid.length);
+			StringUtils.appendAsHex(builder, btrid);
 		}
 
-		String formatIdInHex = Integer.toHexString(xid.getFormatId());
-
-		lengthAsString += formatIdInHex.length();
-		lengthAsString += 3; // for the '.' after formatId
-
-		StringBuffer asString = new StringBuffer(lengthAsString);
-
-		asString.append("0x");
-
-		if (gtrid != null) {
-			for (int i = 0; i < gtrid.length; i++) {
-				String asHex = Integer.toHexString(gtrid[i] & 0xff);
-
-				if (asHex.length() == 1) {
-					asString.append("0");
-				}
-
-				asString.append(asHex);
-			}
-		}
-
-		asString.append(",");
-
-		if (btrid != null) {
-			asString.append("0x");
-
-			for (int i = 0; i < btrid.length; i++) {
-				String asHex = Integer.toHexString(btrid[i] & 0xff);
-
-				if (asHex.length() == 1) {
-					asString.append("0");
-				}
-
-				asString.append(asHex);
-			}
-		}
-
-		asString.append(",0x");
-		asString.append(formatIdInHex);
-
-		return asString.toString();
+		builder.append(',');
+		StringUtils.appendAsHex(builder, xid.getFormatId());
 	}
 
 	/*

@@ -1,6 +1,5 @@
 /*
- Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
- 
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -19,9 +18,6 @@
   You should have received a copy of the GNU General Public License along with this
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
-
-
-
  */
 package com.mysql.jdbc;
 
@@ -2077,5 +2073,38 @@ public class StringUtils {
 
 	public static final boolean isValidIdChar(char c) {
 		return VALID_ID_CHARS.indexOf(c) != -1;
+	}
+
+	private static final char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
+			'e', 'f' };
+
+	public static void appendAsHex(StringBuilder builder, byte[] bytes) {
+		builder.append("0x");
+		for (byte b : bytes) {
+			builder.append(HEX_DIGITS[(b >>> 4) & 0xF]).append(HEX_DIGITS[b & 0xF]);
+		}
+	}
+
+	public static void appendAsHex(StringBuilder builder, int value) {
+		if (value == 0) {
+			builder.append("0x0");
+			return;
+		}
+
+		int shift = 32;
+		byte nibble;
+		boolean nonZeroFound = false;
+
+		builder.append("0x");
+		do {
+			shift -= 4;
+			nibble = (byte) ((value >>> shift) & 0xF);
+			if (nonZeroFound) {
+				builder.append(HEX_DIGITS[nibble]);
+			} else if (nibble != 0) {
+				builder.append(HEX_DIGITS[nibble]);
+				nonZeroFound = true;
+			}
+		} while (shift != 0);
 	}
 }
