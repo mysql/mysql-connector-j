@@ -2,6 +2,9 @@
 # $Id$
 nn-nn-14 - Version 5.1.30
 
+  - Fix for Bug#71623 (18228668), Field#getStringFromBytes() creates useless byte array when using JVM converter.
+    Thanks to Andrej Golovnin for his contribution.
+
   - Fix for Bug#71621 (18228302), MysqlXAConnection#xidToString(Xid xid) produces too much garbage.
     Thanks to Andrej Golovnin for his contribution.
 

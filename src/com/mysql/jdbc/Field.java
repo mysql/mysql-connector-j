@@ -739,17 +739,8 @@ public class Field {
 								stringStart, stringLength);
 					} else {
 						// we have no converter, use JVM converter
-						byte[] stringBytes = new byte[stringLength];
-
-						int endIndex = stringStart + stringLength;
-						int pos = 0;
-
-						for (int i = stringStart; i < endIndex; i++) {
-							stringBytes[pos++] = this.buffer[i];
-						}
-
 						try {
-							stringVal = StringUtils.toString(stringBytes, encoding);
+							stringVal = StringUtils.toString(buffer, stringStart, stringLength, encoding);
 						} catch (UnsupportedEncodingException ue) {
 							throw new RuntimeException(Messages
 									.getString("Field.12") + encoding //$NON-NLS-1$
