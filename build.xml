@@ -400,6 +400,15 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			</fileset>
 		</copy>
 
+		<if>
+			<isset property="com.mysql.jdbc.noCryptoBuild"/>
+			<then>
+				<copy file="${com.mysql.jdbc.extra.libs}/ExportControlledNoCrypto.notjava"
+					toFile="${packageDest}/src/com/mysql/jdbc/ExportControlled.java"
+					overwrite="true"/>
+			</then>
+		</if>
+
 		<!-- Fix CRLF for various platforms -->
 		<if>
 			<isset property="com.mysql.jdbc.commercialBuild"/>
