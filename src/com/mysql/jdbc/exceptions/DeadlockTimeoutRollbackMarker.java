@@ -1,6 +1,5 @@
 /*
- Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
- 
+  Copyright (c) 2008, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -20,7 +19,7 @@
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
 
-*/
+ */
 
 package com.mysql.jdbc.exceptions;
 

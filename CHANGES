@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.30
 
+  - Fix for Bug#70944 (17831255), community and commercial builds should have the same line number tables
+
   - Fix for Bug#71861 (18327245), Avoid manual array copy in MysqlIO and LoadBalancingConnectionProxy.
     Thanks to Andrej Golovnin for his contribution.
 

@@ -1,6 +1,5 @@
 /*
- Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
- 
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -20,14 +19,8 @@
   program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth
   Floor, Boston, MA 02110-1301  USA
 
-
-
  */
 
-/**
- * EscapeProcessor performs all escape code processing as outlined in the JDBC
- * spec by JavaSoft.
- */
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
@@ -43,6 +36,10 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
+/**
+ * EscapeProcessor performs all escape code processing as outlined in the JDBC
+ * spec by JavaSoft.
+ */
 class EscapeProcessor {
 	private static Map<String, String> JDBC_CONVERT_TO_MYSQL_TYPE_MAP;
 

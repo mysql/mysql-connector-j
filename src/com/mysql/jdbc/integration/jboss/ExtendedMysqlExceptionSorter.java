@@ -1,6 +1,5 @@
 /*
- Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
- 
+  Copyright (c) 2002, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/J is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most MySQL Connectors.
@@ -21,6 +20,7 @@
   Floor, Boston, MA 02110-1301  USA
 
  */
+
 package com.mysql.jdbc.integration.jboss;
 
 import java.sql.SQLException;

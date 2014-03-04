@@ -20,6 +20,7 @@
   Floor, Boston, MA 02110-1301  USA
 
  */
+
 package testsuite.simple;
 
 import java.io.ByteArrayInputStream;

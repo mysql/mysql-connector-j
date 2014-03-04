@@ -265,7 +265,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<then>
 				<replaceregexp 
 					match="The MySQL Connector.*1301.[^replaceregexp]*USA"
-					replace=""
+					replace="${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}"
 					flags="s">
 					<fileset dir="${buildDir}/${fullProdName}" includes="**/*"/>
 				</replaceregexp>
@@ -448,7 +448,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				<!-- For safety -->
 				<replaceregexp 
 					match="The MySQL Connector.*1301.[^replaceregexp]*USA"
-					replace=""
+					replace="${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}${line.separator}"
 					flags="s">
 					<fileset dir="${packageDest}" includes="**/*"/>
 				</replaceregexp>
