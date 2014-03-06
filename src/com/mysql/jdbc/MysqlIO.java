@@ -2985,10 +2985,8 @@ public class MysqlIO {
 			Statement interceptedStatement, boolean forceExecute) throws SQLException {
 		ResultSetInternalMethods previousResultSet = null;
 
-		Iterator<StatementInterceptorV2> interceptors = this.statementInterceptors.iterator();
-
-		while (interceptors.hasNext()) {
-			StatementInterceptorV2 interceptor = interceptors.next();
+		for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
+			StatementInterceptorV2 interceptor = this.statementInterceptors.get(i);
 
 			boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
 			boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute))
@@ -3018,10 +3016,9 @@ public class MysqlIO {
 	ResultSetInternalMethods invokeStatementInterceptorsPost(
 			String sql, Statement interceptedStatement,
 			ResultSetInternalMethods originalResultSet, boolean forceExecute, SQLException statementException) throws SQLException {
-		Iterator<StatementInterceptorV2> interceptors = this.statementInterceptors.iterator();
 
-		while (interceptors.hasNext()) {
-			StatementInterceptorV2 interceptor = interceptors.next();
+		for (int i = 0, s = this.statementInterceptors.size(); i < s; i++) {
+			StatementInterceptorV2 interceptor = this.statementInterceptors.get(i);
 
 			boolean executeTopLevelOnly = interceptor.executeTopLevelOnly();
 			boolean shouldExecute = (executeTopLevelOnly && (this.statementExecutionDepth == 1 || forceExecute))
@@ -5352,7 +5349,7 @@ public class MysqlIO {
 	}
 
 	protected void setStatementInterceptors(List<StatementInterceptorV2> statementInterceptors) {
-		this.statementInterceptors = statementInterceptors;
+		this.statementInterceptors = statementInterceptors.isEmpty() ? null : statementInterceptors;
 	}
 	
 	protected ExceptionInterceptor getExceptionInterceptor() {

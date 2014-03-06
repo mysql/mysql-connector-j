@@ -4031,9 +4031,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 			
 			if (directCompare) {
-				if (!nullSafeCompare(otherOrigDatabase, this.origDatabaseToConnectTo)) {			directCompare = false;
-					directCompare = false;
-				} else if (!nullSafeCompare(otherCurrentCatalog, this.database)) {
+				if (!nullSafeCompare(otherOrigDatabase, this.origDatabaseToConnectTo)
+						|| !nullSafeCompare(otherCurrentCatalog, this.database)) {
 					directCompare = false;
 				}
 			}
