@@ -5980,12 +5980,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		String masterHost = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY) + ":" +
 			props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
 		ReplicationConnection replConn = getTestReplicationConnectionNoSlaves(masterHost);
+		replConn.setAutoCommit(false);
 		Statement s = replConn.createStatement();
-		ResultSet rs = s.executeQuery("select CONNECTION_ID()");
-		assertTrue(rs.next());
-		int masterConnectionId = rs.getInt(1);
+		ResultSet rs1 = s.executeQuery("select CONNECTION_ID()");
+		assertTrue(rs1.next());
+		int masterConnectionId = rs1.getInt(1);
 		assertFalse(replConn.isReadOnly());
-		rs.close();
+		rs1.close();
 		s.close();
 
 		// make sure we are still on the same connection after going
@@ -6007,30 +6008,30 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		} catch(SQLException ex) {
 			assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
 		}
-		rs = s.executeQuery("select CONNECTION_ID()");
-		assertTrue(rs.next());
-		assertEquals(masterConnectionId, rs.getInt(1));
-		rs.close();
+		rs1 = s.executeQuery("select CONNECTION_ID()");
+		assertTrue(rs1.next());
+		assertEquals(masterConnectionId, rs1.getInt(1));
+		rs1.close();
 		s.close();
 
 		// add a slave and make sure we are on a new connection
 		replConn.addSlaveHost(masterHost);
 		s = replConn.createStatement();
-		rs = s.executeQuery("select CONNECTION_ID()");
-		assertTrue(rs.next());
-		assertTrue(rs.getInt(1) != masterConnectionId);
-		rs.close();
+		rs1 = s.executeQuery("select CONNECTION_ID()");
+		assertTrue(rs1.next());
+		assertTrue(rs1.getInt(1) != masterConnectionId);
+		rs1.close();
 		s.close();
 
 		// switch back to master
 		replConn.setReadOnly(false);
 		s = replConn.createStatement();
-		rs = s.executeQuery("select CONNECTION_ID()");
+		rs1 = s.executeQuery("select CONNECTION_ID()");
 		assertFalse(replConn.isReadOnly());
 		assertFalse(replConn.getCurrentConnection().isReadOnly());
-		assertTrue(rs.next());
-		assertEquals(masterConnectionId, rs.getInt(1));
-		rs.close();
+		assertTrue(rs1.next());
+		assertEquals(masterConnectionId, rs1.getInt(1));
+		rs1.close();
 		s.close();
 
 		// removing the slave should switch back to the master
@@ -6038,13 +6039,13 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		replConn.removeSlave(masterHost);
 		replConn.commit();
 		s = replConn.createStatement();
-		rs = s.executeQuery("select CONNECTION_ID()");
+		rs1 = s.executeQuery("select CONNECTION_ID()");
 		// should be maintained even though we're back on the master
 		assertTrue(replConn.isReadOnly()); 
 		assertTrue(replConn.getCurrentConnection().isReadOnly());
-		assertTrue(rs.next());
-		assertEquals(masterConnectionId, rs.getInt(1));
-		rs.close();
+		assertTrue(rs1.next());
+		assertEquals(masterConnectionId, rs1.getInt(1));
+		rs1.close();
 		s.close();
 	}
 }

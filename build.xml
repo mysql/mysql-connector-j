@@ -636,6 +636,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<batchtest unless="test" todir="${junit.unitregress.results}" >
 				<fileset dir="${buildDir}/${fullProdName}">
 					<include name="**/*Test.java" />
+					<exclude name="**/fabric/*.java"/>
 					<exclude name="**/perf/*.java"/>
 					<exclude name="**/jdbc4/*Test.java"/>
 				</fileset>
@@ -1087,6 +1088,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<batchtest fork="yes" todir="${junit.unitregress.results}">
 				<fileset dir="${buildDir}/${fullProdName}">
 					<include name="**/*Test.java" />
+					<exclude name="**/fabric/*.java"/>
 					<exclude name="**/perf/*.java"/>
 				</fileset>
 			</batchtest>
