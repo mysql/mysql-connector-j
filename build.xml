@@ -352,7 +352,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				<jar jarfile="${mavenUploadDir}/${fullProdName}.jar" 
 					basedir="${compiler.output}" 
 					includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**" 
-					excludes="testsuite/**" 
+					excludes="testsuite/**,demo/**" 
 					index="true" 
 					manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF"/>
 
@@ -395,7 +395,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				<patternset refid="non.test.sources"/>
 			</fileset>
 
-			<fileset dir="." includes="src/com/**, src/doc/**, src/lib/*, src/org/**, src/testsuite/**, build.xml, CHANGES, COPYING">
+			<fileset dir="." includes="src/com/**, src/doc/**, src/lib/*, src/org/**, src/testsuite/**, src/demo/**, build.xml, CHANGES, COPYING">
 				<patternset refid="non.test.sources"/>
 			</fileset>
 		</copy>
@@ -468,7 +468,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 		<mkdir dir="${buildDir}/${fullProdName}/META-INF/services/" />
 		<echo file="${buildDir}/${fullProdName}/META-INF/services/java.sql.Driver"
-			message="com.mysql.jdbc.Driver" />
+			message="com.mysql.jdbc.Driver${line.separator}com.mysql.fabric.jdbc.FabricMySQLDriver"/>
 
 		<property name="osgid-version" value="${major_version}.${minor_version}.${subminor_version}"/>
 
@@ -518,7 +518,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 		<jar jarfile="${buildDir}/${fullProdName}/${fullProdName}-bin.jar" 
 			basedir="${compiler.output}" 
 			includes="**/*.class,**/*.properties*,COPYING,README,META-INF/**" 
-			excludes="testsuite/**" 
+			excludes="testsuite/**,demo/**" 
 			index="true" 
 			manifest="${buildDir}/${fullProdName}/META-INF/MANIFEST.MF"/>
 	</target>
@@ -839,6 +839,8 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			<exclude name="com/mysql/jdbc/integration/**" />
 			<exclude name="com/mysql/jdbc/log/Log4JLogger.java" />
 			<exclude name="**/JDBC4*.java" />
+			<exclude name="**/FabricMultiTenantConnectionProvider.java"/>
+			<exclude name="**/HibernateFabric.java"/>
 			<exclude name="com/mysql/jdbc/exceptions/jdbc4/*" />
 
 			<classpath refid="project.build.classpath" />
@@ -855,6 +857,8 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 			compiler="modern"
 			sourcepath="" srcdir="${buildDir}/${fullProdName}"
 			bootclasspath="${com.mysql.jdbc.java6.rtjar}">
+			<include name="**/FabricMultiTenantConnectionProvider.java"/>
+			<include name="**/HibernateFabric.java"/>
 			<include name="**/JDBC4*.java" />
 			<include name="com/mysql/jdbc/exceptions/jdbc4/*" />
 
@@ -1285,6 +1289,126 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 				-DgroupId=mysql -DartifactId=mysql-connector-java -Dversion=${full.version}
 				-Dpackaging=jar -DgeneratePom=true" />
 		</exec>
+	</target>
+
+	<!--
+     ! `test' and `demo' targets for Fabric intentionally don't depend on `build'.
+     ! This allows building and testing code with the environmental JVM.
+     !-->
+
+	<target name="test-fabric-setup">
+		<java fork="on" classname="testsuite.fabric.SetupFabricTestsuite" dir="${buildDir}/${fullProdName}">
+			<sysproperty key="com.mysql.fabric.testsuite.username" value="${com.mysql.fabric.testsuite.username}" />
+			<sysproperty key="com.mysql.fabric.testsuite.password" value="${com.mysql.fabric.testsuite.password}" />
+			<sysproperty key="com.mysql.fabric.testsuite.global.host" value="${com.mysql.fabric.testsuite.global.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.global.port" value="${com.mysql.fabric.testsuite.global.port}" />
+		</java>
+	</target>
+
+	<target name="test-fabric" depends="test-fabric-setup">
+		<junit printSummary="yes" fork="true" forkmode="once">
+
+			<sysproperty key="com.mysql.fabric.testsuite.hostname" value="${com.mysql.fabric.testsuite.hostname}" />
+			<sysproperty key="com.mysql.fabric.testsuite.port" value="${com.mysql.fabric.testsuite.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.fabricUsername" value="${com.mysql.fabric.testsuite.fabricUsername}" />
+			<sysproperty key="com.mysql.fabric.testsuite.fabricPassword" value="${com.mysql.fabric.testsuite.fabricPassword}" />
+			<sysproperty key="com.mysql.fabric.testsuite.username" value="${com.mysql.fabric.testsuite.username}" />
+			<sysproperty key="com.mysql.fabric.testsuite.password" value="${com.mysql.fabric.testsuite.password}" />
+			<sysproperty key="com.mysql.fabric.testsuite.database" value="${com.mysql.fabric.testsuite.database}" />
+			<sysproperty key="com.mysql.fabric.testsuite.global.host" value="${com.mysql.fabric.testsuite.global.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.global.port" value="${com.mysql.fabric.testsuite.global.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard1.host" value="${com.mysql.fabric.testsuite.shard1.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard1.port" value="${com.mysql.fabric.testsuite.shard1.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard2.host" value="${com.mysql.fabric.testsuite.shard2.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard2.port" value="${com.mysql.fabric.testsuite.shard2.port}" />
+
+			<classpath>
+				<fileset dir="${com.mysql.jdbc.extra.libs}/hibernate4">
+					<include name="**/*.jar"/>
+				</fileset>
+				<fileset dir="${buildDir}/${fullProdName}/lib">
+					<include name="**/*.jar"/>
+				</fileset>
+				<pathelement location="${buildDir}/${fullProdName}" />
+				<pathelement path="${java.class.path}" />
+			</classpath>
+
+			<formatter type="brief" />
+
+			<test if="test" name="${test}" />
+			<batchtest unless="test">
+				<fileset dir="${buildDir}/${fullProdName}">
+					<include name="**/fabric/**/Test*.java" />
+					<exclude name="**/fabric/**/TestHashSharding.java"/>
+					<exclude name="**/fabric/**/TestHABasics.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
+	<target name="demo-fabric" depends="demo-fabric-client1, demo-fabric-employees-jdbc" />
+
+	<target name="demo-fabric-client1">
+		<java fork="on" classname="demo.fabric.Client1_Fabric" dir="${buildDir}/${fullProdName}">
+			<sysproperty key="com.mysql.fabric.testsuite.hostname" value="${com.mysql.fabric.testsuite.hostname}" />
+			<sysproperty key="com.mysql.fabric.testsuite.port" value="${com.mysql.fabric.testsuite.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.fabricUsername" value="${com.mysql.fabric.testsuite.fabricUsername}" />
+			<sysproperty key="com.mysql.fabric.testsuite.fabricPassword" value="${com.mysql.fabric.testsuite.fabricPassword}" />
+			<sysproperty key="com.mysql.fabric.testsuite.username" value="${com.mysql.fabric.testsuite.username}" />
+			<sysproperty key="com.mysql.fabric.testsuite.password" value="${com.mysql.fabric.testsuite.password}" />
+			<sysproperty key="com.mysql.fabric.testsuite.database" value="${com.mysql.fabric.testsuite.database}" />
+			<sysproperty key="com.mysql.fabric.testsuite.global.host" value="${com.mysql.fabric.testsuite.global.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.global.port" value="${com.mysql.fabric.testsuite.global.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard1.host" value="${com.mysql.fabric.testsuite.shard1.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard1.port" value="${com.mysql.fabric.testsuite.shard1.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard2.host" value="${com.mysql.fabric.testsuite.shard2.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard2.port" value="${com.mysql.fabric.testsuite.shard2.port}" />
+		</java>
+	</target>
+
+	<target name="demo-fabric-employees-jdbc">
+		<java fork="on" classname="demo.fabric.EmployeesJdbc" dir="${buildDir}/${fullProdName}">
+			<sysproperty key="com.mysql.fabric.testsuite.hostname" value="${com.mysql.fabric.testsuite.hostname}" />
+			<sysproperty key="com.mysql.fabric.testsuite.port" value="${com.mysql.fabric.testsuite.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.fabricUsername" value="${com.mysql.fabric.testsuite.fabricUsername}" />
+			<sysproperty key="com.mysql.fabric.testsuite.fabricPassword" value="${com.mysql.fabric.testsuite.fabricPassword}" />
+			<sysproperty key="com.mysql.fabric.testsuite.username" value="${com.mysql.fabric.testsuite.username}" />
+			<sysproperty key="com.mysql.fabric.testsuite.password" value="${com.mysql.fabric.testsuite.password}" />
+			<sysproperty key="com.mysql.fabric.testsuite.database" value="${com.mysql.fabric.testsuite.database}" />
+			<sysproperty key="com.mysql.fabric.testsuite.global.host" value="${com.mysql.fabric.testsuite.global.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.global.port" value="${com.mysql.fabric.testsuite.global.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard1.host" value="${com.mysql.fabric.testsuite.shard1.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard1.port" value="${com.mysql.fabric.testsuite.shard1.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard2.host" value="${com.mysql.fabric.testsuite.shard2.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard2.port" value="${com.mysql.fabric.testsuite.shard2.port}" />
+		</java>
+	</target>
+
+	<target name="demo-fabric-hibernate">
+		<java fork="on" classname="demo.fabric.HibernateFabric" dir="${buildDir}/${fullProdName}">
+			<sysproperty key="com.mysql.fabric.testsuite.hostname" value="${com.mysql.fabric.testsuite.hostname}" />
+			<sysproperty key="com.mysql.fabric.testsuite.port" value="${com.mysql.fabric.testsuite.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.fabricUsername" value="${com.mysql.fabric.testsuite.fabricUsername}" />
+			<sysproperty key="com.mysql.fabric.testsuite.fabricPassword" value="${com.mysql.fabric.testsuite.fabricPassword}" />
+			<sysproperty key="com.mysql.fabric.testsuite.username" value="${com.mysql.fabric.testsuite.username}" />
+			<sysproperty key="com.mysql.fabric.testsuite.password" value="${com.mysql.fabric.testsuite.password}" />
+			<sysproperty key="com.mysql.fabric.testsuite.database" value="${com.mysql.fabric.testsuite.database}" />
+			<sysproperty key="com.mysql.fabric.testsuite.global.host" value="${com.mysql.fabric.testsuite.global.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.global.port" value="${com.mysql.fabric.testsuite.global.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard1.host" value="${com.mysql.fabric.testsuite.shard1.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard1.port" value="${com.mysql.fabric.testsuite.shard1.port}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard2.host" value="${com.mysql.fabric.testsuite.shard2.host}" />
+			<sysproperty key="com.mysql.fabric.testsuite.shard2.port" value="${com.mysql.fabric.testsuite.shard2.port}" />
+			<classpath>
+				<fileset dir="${com.mysql.jdbc.extra.libs}/hibernate4">
+					<include name="**/*.jar" />
+				</fileset>
+				<fileset dir="src/lib">
+					<include name="**/*.jar" />
+				</fileset>
+				<dirset dir="${buildDir}/${fullProdName}"/>
+			</classpath>
+		</java>
 	</target>
 
 </project>

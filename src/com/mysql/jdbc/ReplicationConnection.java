@@ -72,6 +72,8 @@ public class ReplicationConnection implements Connection, PingTarget {
 	
 	private boolean enableJMX = false;
 
+	private boolean readOnly = false;
+
 	protected ReplicationConnection() {}
 	
 	public ReplicationConnection(Properties masterProperties,
@@ -109,19 +111,21 @@ public class ReplicationConnection implements Connection, PingTarget {
 			}
 			this.connectionGroupID = this.connectionGroup.registerReplicationConnection(this, masterHostList, slaveHostList);
 			
-			slaveHostList = new ArrayList<String>(this.connectionGroup.getSlaveHosts());
-			masterHostList = new ArrayList<String>(this.connectionGroup.getMasterHosts());
+			this.slaveHosts = new ArrayList<String>(this.connectionGroup.getSlaveHosts());
+			this.masterHosts = new ArrayList<String>(this.connectionGroup.getMasterHosts());
+		} else {
+			this.slaveHosts = new ArrayList<String>(slaveHostList);
+			this.masterHosts = new ArrayList<String>(masterHostList);
 		}
 
 		this.driver = new NonRegisteringDriver();
 		this.slaveProperties = slaveProperties;
 		this.masterProperties = masterProperties;
-		this.slaveHosts = slaveHostList;
-		this.masterHosts = masterHostList;
 		
         boolean createdMaster = this.initializeMasterConnection();
         this.initializeSlaveConnection();
         if(!createdMaster) {
+			this.readOnly = true;
         	this.currentConnection = this.slavesConnection;
         	return;
         }
@@ -171,7 +175,7 @@ public class ReplicationConnection implements Connection, PingTarget {
         	if(allowMasterDown){
         		this.currentConnection = this.slavesConnection;
         		this.masterConnection = null;
-        		this.setReadOnly(true);
+				this.readOnly = true;
         		return false;
         	}
         	throw ex;
@@ -198,22 +202,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 	
 	
 	private void initializeSlaveConnection() throws SQLException {
+		if (this.slaveHosts.size() == 0) {
+			return;
+		}
+
 	    StringBuffer slaveUrl = new StringBuffer(NonRegisteringDriver.LOADBALANCE_URL_PREFIX);
 		
-//        int numHosts = Integer.parseInt(slaveProperties.getProperty(
-//        		NonRegisteringDriver.NUM_HOSTS_PROPERTY_KEY));
-//        
-//        for(int i = 1; i <= numHosts; i++){
-//	        String slaveHost = slaveProperties
-//	        	.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY + "." + i);
-//	        
-//	        if (slaveHost != null) {
-//	        	if(i > 1){
-//	        		slaveUrl.append(',');
-//	        	}
-//	        	slaveUrl.append(slaveHost);
-//	        }
-//        }
 	    boolean firstHost = true;
 	    for(String host : this.slaveHosts) {
 	    	if(!firstHost) {
@@ -237,7 +231,15 @@ public class ReplicationConnection implements Connection, PingTarget {
         this.slavesConnection = (com.mysql.jdbc.LoadBalancedConnection) driver.connect(
                 slaveUrl.toString(), slaveProperties);
         this.slavesConnection.setReadOnly(true);
-		
+
+		// switch to slaves connection if we're in read-only mode and
+		// currently on the master. this means we didn't have any
+		// slaves to use until now
+		if (this.currentConnection != null &&
+			this.currentConnection == this.masterConnection &&
+			this.readOnly) {
+			switchToSlavesConnection();
+		}
 	}
 
 	/*
@@ -322,6 +324,14 @@ public class ReplicationConnection implements Connection, PingTarget {
 		} else {
 			slavesConnection.removeHost(host);
 		}
+
+		// close the connection if it's the last slave
+		if (this.slaveHosts.size() == 0) {
+			switchToMasterConnection();
+			this.slavesConnection.close();
+			this.slavesConnection = null;
+			setReadOnly(this.readOnly); // maintain
+		}
 	}
 	
 	public synchronized void addSlaveHost(String host) throws SQLException {
@@ -330,10 +340,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 			return;
 		}
 		this.slaveHosts.add(host);
-		this.slavesConnection.addHost(host);
+		if (this.slavesConnection == null) {
+			initializeSlaveConnection();
+		} else {
+			this.slavesConnection.addHost(host);
+		}
 	}
-	
-
 	
 	public synchronized void promoteSlaveToMaster(String host) throws SQLException {
 		if(!this.isHostSlave(host)) {
@@ -510,7 +522,7 @@ public class ReplicationConnection implements Connection, PingTarget {
 	 * @see java.sql.Connection#isReadOnly()
 	 */
 	public synchronized boolean isReadOnly() throws SQLException {
-		return this.currentConnection == this.slavesConnection;
+		return this.readOnly;
 	}
 
 	/*
@@ -714,6 +726,12 @@ public class ReplicationConnection implements Connection, PingTarget {
 				switchToMasterConnection();
 			}
 		}
+		this.readOnly = readOnly;
+		// allow master connection to be set to/from read-only if
+		// there are no slaves
+		if (this.currentConnection == this.masterConnection) {
+			this.currentConnection.setReadOnly(this.readOnly);
+		}
 	}
 
 	/*
@@ -758,8 +776,10 @@ public class ReplicationConnection implements Connection, PingTarget {
 		if(this.slavesConnection == null || this.slavesConnection.isClosed()) {
 			this.initializeSlaveConnection();
 		}
-		swapConnections(this.slavesConnection, this.masterConnection);
-		this.slavesConnection.setReadOnly(true);
+		if (this.slavesConnection != null) {
+			swapConnections(this.slavesConnection, this.masterConnection);
+			this.slavesConnection.setReadOnly(true);
+		}
 	}
 	
 	/**
