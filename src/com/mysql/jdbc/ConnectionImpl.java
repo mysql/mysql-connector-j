@@ -717,7 +717,7 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 	 * @exception SQLException
 	 *                if a database access error occurs
 	 */
-	protected ConnectionImpl(String hostToConnectTo, int portToConnectTo, Properties info,
+	public ConnectionImpl(String hostToConnectTo, int portToConnectTo, Properties info,
 			String databaseToConnectTo, String url)
 			throws SQLException {
 	

@@ -44,6 +44,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -5928,5 +5929,122 @@ public class ConnectionRegressionTest extends BaseTestCase {
 				"detectCustomCollations=false: " + cnt0 +"\n" +
 				"detectCustomCollations=true : " + cnt1);
 		assertTrue(cnt0 < cnt1);
+	}
+
+	/**
+	 * Internal method for tests to get a replcation connection with a
+	 * single master host to the test URL.
+	 */
+	private ReplicationConnection getTestReplicationConnectionNoSlaves(String masterHost) throws Exception {
+		Properties props = getPropertiesFromTestsuiteUrl();
+		List masterHosts = new ArrayList();
+		masterHosts.add(masterHost);
+		List slaveHosts = new ArrayList(); // empty
+		ReplicationConnection replConn = new ReplicationConnection(props, props, masterHosts, slaveHosts);
+		return replConn;
+	}
+
+	/**
+	 * Test that we remain on the master when:
+	 * - the connection is not in read-only mode
+	 * - no slaves are configured
+	 * - a new slave is added
+	 */
+	public void testReplicationConnectionNoSlavesRemainOnMaster() throws Exception {
+		Properties props = getPropertiesFromTestsuiteUrl();
+		String masterHost = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY) + ":" +
+			props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		ReplicationConnection replConn = getTestReplicationConnectionNoSlaves(masterHost);
+		Statement s = replConn.createStatement();
+		ResultSet rs = s.executeQuery("select CONNECTION_ID()");
+		assertTrue(rs.next());
+		int masterConnectionId = rs.getInt(1);
+		rs.close();
+		s.close();
+
+		// add a slave and make sure we are NOT on a new connection
+		replConn.addSlaveHost(masterHost);
+		s = replConn.createStatement();
+		rs = s.executeQuery("select CONNECTION_ID()");
+		assertTrue(rs.next());
+		assertEquals(masterConnectionId, rs.getInt(1));
+		assertFalse(replConn.isReadOnly());
+		rs.close();
+		s.close();
+	}
+
+	public void testReplicationConnectionNoSlavesBasics() throws Exception {
+		// create a replication connection with only a master, get the
+		// connection id for later use
+		Properties props = getPropertiesFromTestsuiteUrl();
+		String masterHost = props.getProperty(NonRegisteringDriver.HOST_PROPERTY_KEY) + ":" +
+			props.getProperty(NonRegisteringDriver.PORT_PROPERTY_KEY);
+		ReplicationConnection replConn = getTestReplicationConnectionNoSlaves(masterHost);
+		Statement s = replConn.createStatement();
+		ResultSet rs = s.executeQuery("select CONNECTION_ID()");
+		assertTrue(rs.next());
+		int masterConnectionId = rs.getInt(1);
+		assertFalse(replConn.isReadOnly());
+		rs.close();
+		s.close();
+
+		// make sure we are still on the same connection after going
+		// to read-only mode. There are no slaves, so no other
+		// connections are possible
+		replConn.setReadOnly(true);
+		assertTrue(replConn.isReadOnly());
+		assertTrue(replConn.getCurrentConnection().isReadOnly());
+		s = replConn.createStatement();
+		try {
+			s.executeUpdate("truncate non_existing_table");
+			fail("executeUpdate should not be allowed in read-only mode");
+		} catch(SQLException ex) {
+			assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
+		}
+		try {
+			s.execute("truncate non_existing_table");
+			fail("executeUpdate should not be allowed in read-only mode");
+		} catch(SQLException ex) {
+			assertEquals(SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex.getSQLState());
+		}
+		rs = s.executeQuery("select CONNECTION_ID()");
+		assertTrue(rs.next());
+		assertEquals(masterConnectionId, rs.getInt(1));
+		rs.close();
+		s.close();
+
+		// add a slave and make sure we are on a new connection
+		replConn.addSlaveHost(masterHost);
+		s = replConn.createStatement();
+		rs = s.executeQuery("select CONNECTION_ID()");
+		assertTrue(rs.next());
+		assertTrue(rs.getInt(1) != masterConnectionId);
+		rs.close();
+		s.close();
+
+		// switch back to master
+		replConn.setReadOnly(false);
+		s = replConn.createStatement();
+		rs = s.executeQuery("select CONNECTION_ID()");
+		assertFalse(replConn.isReadOnly());
+		assertFalse(replConn.getCurrentConnection().isReadOnly());
+		assertTrue(rs.next());
+		assertEquals(masterConnectionId, rs.getInt(1));
+		rs.close();
+		s.close();
+
+		// removing the slave should switch back to the master
+		replConn.setReadOnly(true);
+		replConn.removeSlave(masterHost);
+		replConn.commit();
+		s = replConn.createStatement();
+		rs = s.executeQuery("select CONNECTION_ID()");
+		// should be maintained even though we're back on the master
+		assertTrue(replConn.isReadOnly()); 
+		assertTrue(replConn.getCurrentConnection().isReadOnly());
+		assertTrue(rs.next());
+		assertEquals(masterConnectionId, rs.getInt(1));
+		rs.close();
+		s.close();
 	}
 }
