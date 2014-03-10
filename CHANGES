@@ -1,5 +1,7 @@
 # Changelog
 # $Id$
+nn-nn-14 - Version 5.1.31
+
 03-28-14 - Version 5.1.30
 
   - Fix for Bug#71679 (18236388), Avoid iterator creation when invoking statement interceptors in MysqlIO.
