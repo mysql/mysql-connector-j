@@ -23,6 +23,9 @@
 
 package testsuite.simple;
 
+import java.nio.charset.Charset;
+import java.util.Map;
+
 import testsuite.BaseTestCase;
 
 import com.mysql.jdbc.StringUtils;
@@ -79,6 +82,68 @@ public class StringUtilsTest extends BaseTestCase {
 			builder = new StringBuilder(1024);
 			StringUtils.appendAsHex(builder, i);
 			assertEquals("Wrong int to HEX convertion", "0x" + Integer.toHexString(i), builder.toString());
+		}
+	}
+
+	/**
+	 * Tests StringUtil.getBytes() methods.
+	 * 
+	 * @throws Exception
+	 */
+	public void testGetBytes() throws Exception {
+		final int offset = 8;
+		final int length = 13;
+		final String text = "MySQL ≈ 𝄞 for my ears";
+		final String textPart = text.substring(offset, offset + length);
+		final String textWrapped = "`MySQL ≈ 𝄞 for my ears`";
+		final char[] textAsCharArray = text.toCharArray();
+
+		byte[] asBytesFromString;
+		byte[] asBytesFromStringUtils;
+
+		asBytesFromString = text.getBytes();
+		asBytesFromStringUtils = StringUtils.getBytes(text);
+		assertByteArrayEquals("Default Charset: " + Charset.defaultCharset().name(), asBytesFromString,
+				asBytesFromStringUtils);
+
+		asBytesFromString = textPart.getBytes();
+		asBytesFromStringUtils = StringUtils.getBytes(text, offset, length);
+		assertByteArrayEquals("Default Charset: " + Charset.defaultCharset().name(), asBytesFromString,
+				asBytesFromStringUtils);
+
+		Map<String, Charset> charsetMap = Charset.availableCharsets();
+		for (Charset cs : charsetMap.values()) {
+			if (cs.canEncode()) {
+				asBytesFromString = text.getBytes(cs.name());
+
+				asBytesFromStringUtils = StringUtils.getBytes(text, cs.name());
+				assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
+				asBytesFromStringUtils = StringUtils.getBytes(textAsCharArray, cs.name());
+				assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
+
+				asBytesFromStringUtils = StringUtils.getBytes(text, null, cs.name(), null, true, null);
+				assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
+				asBytesFromStringUtils = StringUtils.getBytes(textAsCharArray, null, cs.name(), null, true, null);
+				assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
+
+				asBytesFromString = textPart.getBytes(cs.name());
+
+				asBytesFromStringUtils = StringUtils.getBytes(text, offset, length, cs.name());
+				assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
+				asBytesFromStringUtils = StringUtils.getBytes(textAsCharArray, offset, length, cs.name());
+				assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
+
+				asBytesFromStringUtils = StringUtils.getBytes(text, null, cs.name(), null, offset, length, true, null);
+				assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
+				asBytesFromStringUtils = StringUtils.getBytes(textAsCharArray, null, cs.name(), null, offset, length,
+						true, null);
+				assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
+
+				asBytesFromString = textWrapped.getBytes(cs.name());
+
+				asBytesFromStringUtils = StringUtils.getBytesWrapped(text, '`', '`', null, cs.name(), null, true, null);
+				assertByteArrayEquals("Custom Charset: " + cs.name(), asBytesFromString, asBytesFromStringUtils);
+			}
 		}
 	}
 }

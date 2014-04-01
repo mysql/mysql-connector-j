@@ -779,10 +779,16 @@ public abstract class BaseTestCase extends TestCase {
 			}
 		}
 	}
-	
+
+	protected void assertByteArrayEquals(String message, byte[] expected, byte[] actual) {
+		assertEquals(message + " - array lenght", expected.length, actual.length);
+		for (int i = 0, s = expected.length; i < s; i++) {
+			assertEquals(message + " - element at " + i, expected[i], actual[i]);
+		}
+	}
+
 	/*
-	 * Set default values for primitives.
-	 * (prevents NPE in Java 1.4 when calling via reflection)
+	 * Set default values for primitives. (prevents NPE in Java 1.4 when calling via reflection)
 	 */
 	protected void fillPrimitiveDefaults(Class<?> types[], Object vals[], int count) {
 		for (int i = 0; i < count; ++i) {

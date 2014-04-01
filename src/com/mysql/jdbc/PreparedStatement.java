@@ -353,7 +353,6 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 
 				endpointList.add(new int[] { lastParmEnd, this.statementLength });
 				this.staticSql = new byte[endpointList.size()][];
-				char[] asCharArray = sql.toCharArray();
 
 				for (i = 0; i < this.staticSql.length; i++) {
 					int[] ep = endpointList.get(i);
@@ -362,8 +361,7 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 					int len = end - begin;
 
 					if (this.foundLoadData) {
-						String temp = new String(asCharArray, begin, len);
-						this.staticSql[i] = StringUtils.getBytes(temp);
+						this.staticSql[i] = StringUtils.getBytes(sql, begin, len);
 					} else if (encoding == null) {
 						byte[] buf = new byte[len];
 
@@ -379,11 +377,8 @@ public class PreparedStatement extends com.mysql.jdbc.StatementImpl implements
 									.getServerCharacterEncoding(), begin,
 									len, connection.parserKnowsUnicode(), getExceptionInterceptor());
 						} else {
-							String temp = new String(asCharArray, begin, len);
-
-							this.staticSql[i] = StringUtils.getBytes(temp,
-									encoding, connection
-									.getServerCharacterEncoding(),
+							this.staticSql[i] = StringUtils.getBytes(sql, encoding,
+									connection.getServerCharacterEncoding(), begin, len,
 									connection.parserKnowsUnicode(), conn, getExceptionInterceptor());
 						}
 					}

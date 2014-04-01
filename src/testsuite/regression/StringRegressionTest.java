@@ -174,9 +174,7 @@ public class StringRegressionTest extends BaseTestCase {
 
 			byte[] testStringAsBytes = testString.getBytes("SJIS");
 
-			byte[] escapedStringBytes = StringUtils
-					.escapeEasternUnicodeByteStream(testStringAsBytes,
-							testString, 0, testString.length());
+			byte[] escapedStringBytes = StringUtils.escapeEasternUnicodeByteStream(testStringAsBytes, testString);
 
 			String escapedString = new String(escapedStringBytes, "SJIS");
 
@@ -188,8 +186,7 @@ public class StringRegressionTest extends BaseTestCase {
 
 			String origString = "\u955c\u8e96\u5c62\\";
 
-			byte[] newByteStream = StringUtils.escapeEasternUnicodeByteStream(
-					origByteStream, origString, 0, origString.length());
+			byte[] newByteStream = StringUtils.escapeEasternUnicodeByteStream(origByteStream, origString);
 
 			assertTrue((newByteStream.length == (origByteStream.length + 2))
 					&& (newByteStream[1] == 0x5c) && (newByteStream[2] == 0x5c)
