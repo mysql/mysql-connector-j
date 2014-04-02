@@ -325,7 +325,6 @@ public class LoadBalancingConnectionProxy implements InvocationHandler,
 
 		this.exceptionChecker = (LoadBalanceExceptionChecker) Util.loadExtensions(null, props,
 				lbExceptionChecker, "InvalidLoadBalanceExceptionChecker", null).get(0);
-		this.exceptionChecker.init(null, props);
 
 		if(Util.isJdbc4()  || JDBC_4_LB_CONNECTION_CTOR != null){
 			thisAsConnection =  (MySQLConnection) Util.handleNewInstance(JDBC_4_LB_CONNECTION_CTOR,

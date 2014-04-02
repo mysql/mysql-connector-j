@@ -33,7 +33,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -576,21 +575,30 @@ public class Util {
 		return diffMap;
 	}
 	
+	/**
+	 * Returns initialized instances of classes listed in extensionClassNames.
+	 * There is no need to call Extension.init() method after that if you don't change connection or properties.
+	 * 
+	 * @param conn
+	 * @param props
+	 * @param extensionClassNames
+	 * @param errorMessageKey
+	 * @param exceptionInterceptor
+	 * @return
+	 * @throws SQLException
+	 */
 	public static List<Extension> loadExtensions(Connection conn,
 			Properties props, String extensionClassNames,
 			String errorMessageKey, ExceptionInterceptor exceptionInterceptor) throws SQLException {
 		List<Extension> extensionList = new LinkedList<Extension>();
 
-		List<String> interceptorsToCreate = StringUtils.split(extensionClassNames, ",",
-				true);
-
-		Iterator<String> iter = interceptorsToCreate.iterator();
+		List<String> interceptorsToCreate = StringUtils.split(extensionClassNames, ",", true);
 
 		String className = null;
 
 		try {
-			while (iter.hasNext()) {
-				className = iter.next().toString();
+			for (int i = 0, s = interceptorsToCreate.size(); i < s; i++) {
+				className = interceptorsToCreate.get(i);
 				Extension extensionInstance = (Extension) Class.forName(
 						className).newInstance();
 				extensionInstance.init(conn, props);

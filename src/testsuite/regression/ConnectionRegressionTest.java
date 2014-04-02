@@ -84,6 +84,7 @@ import com.mysql.jdbc.Buffer;
 import com.mysql.jdbc.CharsetMapping;
 import com.mysql.jdbc.ConnectionImpl;
 import com.mysql.jdbc.Driver;
+import com.mysql.jdbc.ExceptionInterceptor;
 import com.mysql.jdbc.LoadBalancingConnectionProxy;
 import com.mysql.jdbc.Messages;
 import com.mysql.jdbc.MySQLConnection;
@@ -6047,5 +6048,39 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		assertEquals(masterConnectionId, rs1.getInt(1));
 		rs1.close();
 		s.close();
+	}
+
+	/**
+	 * Tests fix for Bug#71850 - init() is called twice on exception interceptors
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug71850() throws Exception {
+		assertThrows(Exception.class, "ExceptionInterceptor.init\\(\\) called 1 time\\(s\\)", new Callable<Void>() {
+			@SuppressWarnings("synthetic-access")
+			public Void call() throws Exception {
+				getConnectionWithProps("exceptionInterceptors=testsuite.regression.ConnectionRegressionTest$TestBug71850ExceptionInterceptor,user=unexistent_user");
+				return null;
+			}
+		});
+	}
+
+	public static class TestBug71850ExceptionInterceptor implements ExceptionInterceptor {
+
+		private int counter = 0;
+
+		public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+			this.counter++;
+		}
+
+		public void destroy() {
+		}
+
+		public SQLException interceptException(SQLException sqlEx, com.mysql.jdbc.Connection conn) {
+			
+			return new SQLException("ExceptionInterceptor.init() called "+counter+" time(s)");
+		}
+		
 	}
 }

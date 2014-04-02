@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.31
 
+  - Fix for Bug#71850 (18318197), init() is called twice on exception interceptors
+
   - Fix for Bug#72008 (18389973), Avoid useless object creation in StringUtils#getBytes-methods.
     Thanks to Andrej Golovnin for his contribution.
 

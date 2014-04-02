@@ -3524,7 +3524,6 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 		
 		if (exceptionInterceptorClasses != null && !"".equals(exceptionInterceptorClasses)) {
 			this.exceptionInterceptor = new ExceptionInterceptorChain(exceptionInterceptorClasses);
-			this.exceptionInterceptor.init(this, info);
 		}
 		
 		this.usePlatformCharsetConverters = getUseJvmCharsetConverters();
