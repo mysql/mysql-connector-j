@@ -5012,4 +5012,77 @@ public class ResultSetRegressionTest extends BaseTestCase {
 		
 	}
 
+	/**
+	 * Tests fix for BUG#72000 - java.lang.ArrayIndexOutOfBoundsException on java.sql.ResultSet.getInt(String).
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug72000() throws Exception {
+		final ResultSet testRS = this.stmt.executeQuery("SELECT ' '");
+		
+		assertTrue(testRS.next());
+
+		assertThrows(SQLException.class, "Bad format for BigDecimal ' ' in column 1.", new Callable<Void>() {
+			public Void call() throws Exception {
+				testRS.getBigDecimal(1);
+				return null;
+			}
+		});
+		assertFalse(testRS.getBoolean(1));
+		assertThrows(SQLException.class, "Value '' is out of range \\[-127,127\\]", new Callable<Void>() {
+			public Void call() throws Exception {
+				testRS.getByte(1);
+				return null;
+			}
+		});
+		assertThrows(SQLException.class, "Value ' ' can not be represented as java.sql.Date", new Callable<Void>() {
+			public Void call() throws Exception {
+				testRS.getDate(1);
+				return null;
+			}
+		});
+		assertThrows(SQLException.class, "Bad format for number ' ' in column 1.", new Callable<Void>() {
+			public Void call() throws Exception {
+				testRS.getDouble(1);
+				return null;
+			}
+		});
+		assertThrows(SQLException.class, "Invalid value for getFloat\\(\\) - ' ' in column 1", new Callable<Void>() {
+			public Void call() throws Exception {
+				testRS.getFloat(1);
+				return null;
+			}
+		});
+		assertThrows(SQLException.class, "Invalid value for getInt\\(\\) - ' '", new Callable<Void>() {
+			public Void call() throws Exception {
+				testRS.getInt(1);
+				return null;
+			}
+		});
+		assertThrows(SQLException.class, "Invalid value for getLong\\(\\) - ' '", new Callable<Void>() {
+			public Void call() throws Exception {
+				testRS.getLong(1);
+				return null;
+			}
+		});
+		assertThrows(SQLException.class, "Invalid value for getShort\\(\\) - ' '", new Callable<Void>() {
+			public Void call() throws Exception {
+				testRS.getShort(1);
+				return null;
+			}
+		});
+		assertThrows(SQLException.class, "Value ' ' can not be represented as java.sql.Time", new Callable<Void>() {
+			public Void call() throws Exception {
+				testRS.getTime(1);
+				return null;
+			}
+		});
+		assertThrows(SQLException.class, "Value ' ' can not be represented as java.sql.Timestamp", new Callable<Void>() {
+			public Void call() throws Exception {
+				testRS.getTimestamp(1);
+				return null;
+			}
+		});
+	}
 }

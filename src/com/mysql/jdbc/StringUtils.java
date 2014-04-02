@@ -664,13 +664,17 @@ public class StringUtils {
 		}
 	}
 
+	public static int getInt(byte[] buf) throws NumberFormatException {
+		return getInt(buf, 0, buf.length);
+	}
+
 	public static int getInt(byte[] buf, int offset, int endPos) throws NumberFormatException {
 		int base = 10;
 
 		int s = offset;
 
 		/* Skip white space. */
-		while (Character.isWhitespace((char) buf[s]) && (s < endPos)) {
+		while (s < endPos && Character.isWhitespace((char) buf[s])) {
 			++s;
 		}
 
@@ -738,10 +742,6 @@ public class StringUtils {
 		return (negative ? (-i) : i);
 	}
 	
-	public static int getInt(byte[] buf) throws NumberFormatException {
-		return getInt(buf, 0, buf.length);
-	}
-
 	public static long getLong(byte[] buf) throws NumberFormatException {
 		return getLong(buf, 0, buf.length);
 	}
@@ -752,7 +752,7 @@ public class StringUtils {
 		int s = offset;
 
 		/* Skip white space. */
-		while (Character.isWhitespace((char) buf[s]) && (s < endpos)) {
+		while (s < endpos && Character.isWhitespace((char) buf[s])) {
 			++s;
 		}
 
@@ -820,16 +820,20 @@ public class StringUtils {
 	}
 
 	public static short getShort(byte[] buf) throws NumberFormatException {
+		return getShort(buf, 0, buf.length);
+	}
+	
+	public static short getShort(byte[] buf, int offset, int endpos) throws NumberFormatException {
 		short base = 10;
 
-		int s = 0;
+		int s = offset;
 
 		/* Skip white space. */
-		while (Character.isWhitespace((char) buf[s]) && (s < buf.length)) {
+		while (s < endpos && Character.isWhitespace((char) buf[s])) {
 			++s;
 		}
 
-		if (s == buf.length) {
+		if (s == endpos) {
 			throw new NumberFormatException(StringUtils.toString(buf));
 		}
 
@@ -856,7 +860,7 @@ public class StringUtils {
 		boolean overflow = false;
 		short i = 0;
 
-		for (; s < buf.length; s++) {
+		for (; s < endpos; s++) {
 			char c = (char) buf[s];
 
 			if (Character.isDigit(c)) {
