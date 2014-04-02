@@ -5085,4 +5085,45 @@ public class ResultSetRegressionTest extends BaseTestCase {
 			}
 		});
 	}
+
+	/**
+	 * Tests fix for BUG#72023 - Avoid byte array creation in MysqlIO#unpackBinaryResultSetRow.
+	 * 
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug72023() throws Exception {
+		// null bitmask contains 2 reserved bits plus 1 bit per field
+		// boundary cases at 8n - 2 / 8n - 1 field count; e.g. 6/7, 14/15
+		String[] selectList = new String[] { "NULL", "1", "NULL,NULL,NULL,NULL,NULL,NULL", "1,NULL,NULL,1,1,NULL",
+				"1,1,1,1,1,1", "NULL,NULL,NULL,NULL,NULL,NULL,NULL", "1,1,1,NULL,1,NULL,NULL", "1,1,1,1,1,1,1",
+				"NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL",
+				"NULL,NULL,NULL,1,NULL,1,NULL,NULL,1,NULL,1,1,NULL,NULL", "1,1,1,1,1,1,1,1,1,1,1,1,1,1",
+				"NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL",
+				"NULL,1,NULL,1,NULL,NULL,1,NULL,1,NULL,NULL,NULL,NULL,1,1", "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1" };
+
+		Connection testConn = getConnectionWithProps("useServerPrepStmts=true");
+		PreparedStatement testPstmt;
+		ResultSet testRS;
+
+		for (int i = 0, s = selectList.length; i < s; i++) {
+			String sl = selectList[i];
+			testPstmt = testConn.prepareStatement("SELECT " + sl);
+			testRS = testPstmt.executeQuery();
+			assertTrue(testRS.next());
+			int j = 1;
+			for (String fld : sl.split(",")) {
+				if (fld.equals("NULL")) {
+					assertNull("Bad results for query " + i + ", field " + j, testRS.getObject(j));
+				} else {
+					assertEquals("Bad results for query " + i + ", field " + j, 1, testRS.getInt(j));
+				}
+				j++;
+			}
+			assertFalse(testRS.next());
+			testRS.close();
+			testPstmt.close();
+		}
+		testConn.close();
+	}
 }

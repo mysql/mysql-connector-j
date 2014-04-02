@@ -4769,16 +4769,9 @@ public class MysqlIO {
         // Unpack the null bitmask, first
         //
 
-        /* Reserve place for null-marker bytes */
         int nullCount = (numFields + 9) / 8;
-
-        byte[] nullBitMask = new byte[nullCount];
-
-        for (int i = 0; i < nullCount; i++) {
-            nullBitMask[i] = binaryData.readByte();
-        }
-
-        int nullMaskPos = 0;
+        int nullMaskPos = binaryData.getPosition();
+        binaryData.setPosition(nullMaskPos + nullCount);
         int bit = 4; // first two bits are reserved for future use
 
         //
@@ -4787,7 +4780,7 @@ public class MysqlIO {
         //
 
         for (int i = 0; i < numFields; i++) {
-            if ((nullBitMask[nullMaskPos] & bit) != 0) {
+            if ((binaryData.readByte(nullMaskPos) & bit) != 0) {
                 unpackedRowData[i] = null;
             } else {
             	if (resultSetConcurrency != ResultSetInternalMethods.CONCUR_UPDATABLE) {
