@@ -965,6 +965,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 		<java classname="com.mysql.jdbc.util.PropertiesDocGenerator"
 			output="${properties-xml}" classpath="${buildDir}/${fullProdName}"/>
+		<copy file="${properties-xml}" tofile="${buildDir}/${fullProdName}/docs/sources/connPropsToDocbook.xml"/>
 		<tempfile property="docsPropXslTempfile" suffix="xsl"/>
 		<copy file="${buildDir}/${fullProdName}/doc/sources/connPropsToDocbook.xsl" tofile="${docsPropXslTempfile}"/>
 
@@ -979,6 +980,7 @@ and the full path to the rt.jar from Java-6 with the property &quot;com.mysql.jd
 
 		<java classname="com.mysql.jdbc.util.ErrorMappingsDocGenerator"
 				output="${errorsMapping-xml}" classpath="${buildDir}/${fullProdName}"/>
+		<copy file="${errorsMapping-xml}" tofile="${buildDir}/${fullProdName}/docs/sources/errorMapToDocbook.xml"/>
 		<tempfile property="docsErrorXslTempfile" suffix="xsl"/>
 		<copy file="${buildDir}/${fullProdName}/doc/sources/errorMapToDocbook.xsl" tofile="${docsErrorXslTempfile}"/>
 
