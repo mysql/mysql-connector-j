@@ -77,7 +77,7 @@ public class FabricMySQLDriver extends NonRegisteringDriver implements Driver {
 				return (Connection) com.mysql.jdbc.Util.handleNewInstance(jdbc4proxy,
 						new Object[] { parsedProps }, null);
 			} catch (Exception e) {
-				throw new SQLException(e.getMessage());
+				throw (SQLException) new SQLException(e.getMessage()).initCause(e);
 			}
 		}
 

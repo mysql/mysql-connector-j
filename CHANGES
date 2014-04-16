@@ -18,6 +18,8 @@ nn-nn-14 - Version 5.1.31
     Thanks to Andrej Golovnin for his contribution.
     Additionally, unneeded StringBuffer replaced by StringBuilder instances in StringUtils.
 
+  - Fix for Bug#72301 (18549472), Fabric driver swallows exceptions thrown during connection creation using JDBC4
+
 03-28-14 - Version 5.1.30
 
   - Fix for Bug#71679 (18236388), Avoid iterator creation when invoking statement interceptors in MysqlIO.
