@@ -31,6 +31,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 
 import com.mysql.jdbc.log.Log;
+import com.mysql.jdbc.profiler.ProfilerEventHandler;
 
 public interface MySQLConnection extends Connection, ConnectionProperties {
 	
@@ -200,4 +201,8 @@ public interface MySQLConnection extends Connection, ConnectionProperties {
 	String getConnectionAttributes() throws SQLException;
 		
 	MySQLConnection getLoadBalanceSafeProxy();
+	
+	ProfilerEventHandler getProfilerEventHandlerInstance();
+
+	void setProfilerEventHandlerInstance(ProfilerEventHandler h);
 }

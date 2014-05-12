@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.31
 
+  - Fix for Bug#55680 (16737192), MySQL Connector/J memory leak
+
   - Fix for Bug#72326 (18598665), Typo in fullDebug.properties - gatherPerMetrics should be gatherPerfMetrics
 
   - Fix for Bug#72023 (18403456), Avoid byte array creation in MysqlIO#unpackBinaryResultSetRow.

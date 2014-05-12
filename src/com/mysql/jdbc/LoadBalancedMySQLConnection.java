@@ -39,6 +39,7 @@ import java.util.Timer;
 import java.util.concurrent.Executor;
 
 import com.mysql.jdbc.log.Log;
+import com.mysql.jdbc.profiler.ProfilerEventHandler;
 
 public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 
@@ -2676,5 +2677,13 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 
 	public void setSessionMaxRows(int max) throws SQLException {
 		getActiveMySQLConnection().setSessionMaxRows(max);
+	}
+
+	public ProfilerEventHandler getProfilerEventHandlerInstance() {
+		return getActiveMySQLConnection().getProfilerEventHandlerInstance();
+	}
+
+	public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
+		getActiveMySQLConnection().setProfilerEventHandlerInstance(h);
 	}
 }

@@ -68,6 +68,7 @@ import com.mysql.jdbc.SingleByteCharsetConverter;
 import com.mysql.jdbc.StatementImpl;
 import com.mysql.jdbc.StatementInterceptorV2;
 import com.mysql.jdbc.log.Log;
+import com.mysql.jdbc.profiler.ProfilerEventHandler;
 
 /**
  * A proxy to a set of MySQL servers managed by MySQL Fabric.
@@ -2788,5 +2789,12 @@ public class FabricMySQLConnectionProxy extends ConnectionPropertiesImpl
 
 	public String nativeSQL(String sql) {
 		return null;
+	}
+
+	public ProfilerEventHandler getProfilerEventHandlerInstance() {
+		return null;
+	}
+
+	public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
 	}
 }

@@ -6111,4 +6111,12 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			return getSocketTimeout();
 		}
 	}
+
+	public ProfilerEventHandler getProfilerEventHandlerInstance() {
+		return this.eventSink;
+	}
+
+	public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
+		this.eventSink = h;
+	}
 }

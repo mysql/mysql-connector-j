@@ -24,8 +24,6 @@
 package com.mysql.jdbc;
 
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 import com.mysql.jdbc.log.Log;
 import com.mysql.jdbc.profiler.ProfilerEventHandler;
@@ -34,8 +32,6 @@ import com.mysql.jdbc.profiler.ProfilerEventHandler;
  * @author mmatthew
  */
 public class ProfilerEventHandlerFactory {
-
-	private static final Map<MySQLConnection, ProfilerEventHandler> CONNECTIONS_TO_SINKS = new HashMap<MySQLConnection, ProfilerEventHandler>();
 
 	private Connection ownerConnection = null;
 
@@ -50,8 +46,7 @@ public class ProfilerEventHandlerFactory {
 	 * @return the ProfilerEventHandlerFactory that handles profiler events
 	 */
 	public static synchronized ProfilerEventHandler getInstance(MySQLConnection conn) throws SQLException {
-		ProfilerEventHandler handler = CONNECTIONS_TO_SINKS
-				.get(conn);
+		ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
 
 		if (handler == null) {
 			handler = (ProfilerEventHandler)Util.getInstance(conn.getProfilerEventHandler(), new Class[0], new Object[0], conn.getExceptionInterceptor());
@@ -60,15 +55,14 @@ public class ProfilerEventHandlerFactory {
 			// exposing the connection properties 
 			// for all who utilize it
 			conn.initializeExtension(handler);
-			
-			CONNECTIONS_TO_SINKS.put(conn, handler);
+			conn.setProfilerEventHandlerInstance(handler);
 		}
 
 		return handler;
 	}
 
-	public static synchronized void removeInstance(Connection conn) {
-		ProfilerEventHandler handler = CONNECTIONS_TO_SINKS.remove(conn);
+	public static synchronized void removeInstance(MySQLConnection conn) {
+		ProfilerEventHandler handler = conn.getProfilerEventHandlerInstance();
 		
 		if (handler != null) {
 			handler.destroy();
