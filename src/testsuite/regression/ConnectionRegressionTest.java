@@ -6083,4 +6083,40 @@ public class ConnectionRegressionTest extends BaseTestCase {
 		}
 		
 	}
+
+	/**
+	 * Tests fix for BUG#67803 - XA commands sent twice to MySQL server
+	 *
+	 * @throws Exception
+	 *             if the test fails.
+	 */
+	public void testBug67803() throws Exception {
+		MysqlXADataSource dataSource = new MysqlXADataSource();
+		dataSource.setUrl(dbUrl);
+		dataSource.setUseCursorFetch(true);
+		dataSource.setDefaultFetchSize(50);
+		dataSource.setUseServerPrepStmts(true);
+		dataSource.setExceptionInterceptors("testsuite.regression.ConnectionRegressionTest$TestBug67803ExceptionInterceptor");
+
+		XAConnection testXAConn1 = dataSource.getXAConnection();
+		testXAConn1.getXAResource().start(new MysqlXid("1".getBytes(), "1".getBytes(), 1), 0);
+	}
+
+	public static class TestBug67803ExceptionInterceptor implements ExceptionInterceptor {
+
+		public void init(com.mysql.jdbc.Connection conn, Properties props) throws SQLException {
+		}
+
+		public void destroy() {
+		}
+
+		public SQLException interceptException(SQLException sqlEx, com.mysql.jdbc.Connection conn) {
+			if (sqlEx.getErrorCode() == 1295 || sqlEx.getMessage().contains("This command is not supported in the prepared statement protocol yet")) {
+				// SQLException will not be re-thrown if emulateUnsupportedPstmts=true, thus throw RuntimeException to fail the test
+				throw new RuntimeException(sqlEx);
+			}
+			return sqlEx;
+		}
+		
+	}
 }

@@ -1217,6 +1217,8 @@ public class ConnectionImpl extends ConnectionPropertiesImpl implements
 			}
 
 			canHandleAsStatement = !foundLimitWithPlaceholder;
+		} else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "XA ")) {
+			canHandleAsStatement = false;
 		} else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "CREATE TABLE")) {
 			canHandleAsStatement = false;
 		} else if (StringUtils.startsWithIgnoreCaseAndWs(sql, "DO")) {

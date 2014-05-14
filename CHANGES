@@ -2,6 +2,9 @@
 # $Id$
 nn-nn-14 - Version 5.1.31
 
+  - Fix for Bug#67803 (16708231), XA commands sent twice to MySQL server.
+    Thanks to Andrej Golovnin for his contribution.
+
   - Fix for Bug#55680 (16737192), MySQL Connector/J memory leak
 
   - Fix for Bug#72326 (18598665), Typo in fullDebug.properties - gatherPerMetrics should be gatherPerfMetrics
