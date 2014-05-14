@@ -2,6 +2,8 @@
 # $Id$
 nn-nn-14 - Version 5.1.31
 
+  - Added tests for changes in GET DIAGNOSTIC syntax introduced in MySQL 5.7.0.
+
   - Fix for Bug#67803 (16708231), XA commands sent twice to MySQL server.
     Thanks to Andrej Golovnin for his contribution.
 

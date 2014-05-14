@@ -27,10 +27,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Properties;
+import java.util.concurrent.Callable;
 
 import testsuite.BaseTestCase;
 
@@ -733,5 +736,100 @@ public class SyntaxRegressionTest extends BaseTestCase {
 		assertTrue("Expected 2 (of 2) indexes.", this.rs.next());
 		assertEquals("Wrong index name for table 'testRenameIndex'.", "testIndex", this.rs.getString(6));
 		assertFalse("No more indexes expected for table 'testRenameIndex'.", this.rs.next());
+	}
+	
+	/**
+	 * WL#6406 - Stacked diagnostic areas
+	 * 
+	 * "STACKED" in "GET [CURRENT | STACKED] DIAGNOSTICS" syntax was added in 5.7.0. Final behavior was implemented in
+	 * version 5.7.2, by WL#5928 - Most statements should clear the diagnostic area.
+	 * 
+	 * @throws SQLException
+	 */
+	public void testGetStackedDiagnostics() throws Exception {
+
+		if (!versionMeetsMinimum(5, 7, 2)) {
+			return;
+		}
+
+		// test calling GET STACKED DIAGNOSTICS outside an handler
+		final Statement locallyScopedStmt = this.stmt;
+		assertThrows(SQLException.class, "GET STACKED DIAGNOSTICS when handler not active", new Callable<Void>() {
+			public Void call() throws Exception {
+				locallyScopedStmt.executeQuery("GET STACKED DIAGNOSTICS @num = NUMBER");
+				return null;
+			}
+		});
+
+		// test calling GET STACKED DIAGNOSTICS inside an handler
+		// (stored procedure is based on documentation example)
+		createTable("testGetStackedDiagnosticsTbl", "(c VARCHAR(8) NOT NULL)");
+		createProcedure("testGetStackedDiagnosticsSP", "() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN "
+				+ "GET CURRENT DIAGNOSTICS CONDITION 1 @errno = MYSQL_ERRNO, @msg = MESSAGE_TEXT; "
+				+ "SELECT 'current DA before insert in handler' AS op, @errno AS errno, @msg AS msg; " // 1st result
+				+ "GET STACKED DIAGNOSTICS CONDITION 1 @errno = MYSQL_ERRNO, @msg = MESSAGE_TEXT; "
+				+ "SELECT 'stacked DA before insert in handler' AS op, @errno AS errno, @msg AS msg; " // 2nd result
+				+ "INSERT INTO testGetStackedDiagnosticsTbl (c) VALUES('gnitset'); "
+				+ "GET CURRENT DIAGNOSTICS @num = NUMBER; "
+				+ "IF @num = 0 THEN SELECT 'INSERT succeeded, current DA is empty' AS op; " // 3rd result
+				+ "ELSE GET CURRENT DIAGNOSTICS CONDITION 1 @errno = MYSQL_ERRNO, @msg = MESSAGE_TEXT; "
+				+ "SELECT 'current DA after insert in handler' AS op, @errno AS errno, @msg AS msg; END IF; "
+				+ "GET STACKED DIAGNOSTICS CONDITION 1 @errno = MYSQL_ERRNO, @msg = MESSAGE_TEXT; "
+				+ "SELECT 'stacked DA after insert in handler' AS op, @errno AS errno, @msg AS msg; END; " // 4th result
+				+ "INSERT INTO testGetStackedDiagnosticsTbl (c) VALUES ('testing');"
+				+ "INSERT INTO testGetStackedDiagnosticsTbl (c) VALUES (NULL); END");
+
+		CallableStatement cStmt = conn.prepareCall("CALL testGetStackedDiagnosticsSP()");
+		assertTrue(cStmt.execute());
+
+		// test 1st ResultSet
+		this.rs = cStmt.getResultSet();
+		assertTrue(this.rs.next());
+		assertEquals("current DA before insert in handler", this.rs.getString(1));
+		assertEquals(1048, this.rs.getInt(2));
+		assertEquals("Column 'c' cannot be null", this.rs.getString(3));
+		assertFalse(this.rs.next());
+		this.rs.close();
+
+		// test 2nd ResultSet
+		assertTrue(cStmt.getMoreResults());
+		this.rs = cStmt.getResultSet();
+		assertTrue(this.rs.next());
+		assertEquals("stacked DA before insert in handler", this.rs.getString(1));
+		assertEquals(1048, this.rs.getInt(2));
+		assertEquals("Column 'c' cannot be null", this.rs.getString(3));
+		assertFalse(this.rs.next());
+		this.rs.close();
+
+		// test 3rd ResultSet
+		assertTrue(cStmt.getMoreResults());
+		this.rs = cStmt.getResultSet();
+		assertTrue(this.rs.next());
+		assertEquals("INSERT succeeded, current DA is empty", this.rs.getString(1));
+		assertFalse(this.rs.next());
+		this.rs.close();
+
+		// test 4th ResultSet
+		assertTrue(cStmt.getMoreResults());
+		this.rs = cStmt.getResultSet();
+		assertTrue(this.rs.next());
+		assertEquals("stacked DA after insert in handler", this.rs.getString(1));
+		assertEquals(1048, this.rs.getInt(2));
+		assertEquals("Column 'c' cannot be null", this.rs.getString(3));
+		assertFalse(this.rs.next());
+		this.rs.close();
+
+		// no more ResultSets
+		assertFalse(cStmt.getMoreResults());
+		cStmt.close();
+
+		// test table contents
+		this.rs = this.stmt.executeQuery("SELECT * FROM testGetStackedDiagnosticsTbl");
+		assertTrue(this.rs.next());
+		assertEquals("testing", this.rs.getString(1));
+		assertTrue(this.rs.next());
+		assertEquals("gnitset", this.rs.getString(1));
+		assertFalse(this.rs.next());
+		this.rs.close();
 	}
 }
