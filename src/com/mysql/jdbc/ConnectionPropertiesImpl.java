@@ -105,6 +105,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			} else {
 				this.valueAsObject = this.defaultValue;
 			}
+			this.updateCount++;
 		}
 
 		/**
@@ -116,6 +117,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 		void setValue(boolean valueFlag) {
 			this.valueAsObject = Boolean.valueOf(valueFlag);
+			this.updateCount++;
 		}
 	}
 
@@ -144,6 +146,8 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 		boolean required;
 		
 		String description;
+		
+		int updateCount = 0;
 		
 		public ConnectionProperty() {}
 		
@@ -203,6 +207,10 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			return this.valueAsObject;
 		}
 
+		int getUpdateCount() {
+			return this.updateCount;
+		}
+
 		abstract boolean hasValueConstraints();
 
 		void initializeFrom(Properties extractFrom, ExceptionInterceptor exceptionInterceptor) throws SQLException {
@@ -243,6 +251,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 		void setValueAsObject(Object obj) {
 			this.valueAsObject = obj;
+			this.updateCount++;
 		}
 
 		void storeTo(Reference ref) {
@@ -409,6 +418,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			} else {
 				this.valueAsObject = this.defaultValue;
 			}
+			this.updateCount++;
 		}
 
 		/**
@@ -433,6 +443,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			}
 
 			this.valueAsObject = Integer.valueOf(intValue);
+			this.updateCount++;
 		}
 	}
 	
@@ -473,6 +484,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 				}
 			}
 			this.valueAsObject = Long.valueOf(longValue);
+			this.updateCount++;
 		}
 		
 		long getValueAsLong() {
@@ -497,6 +509,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			} else {
 				this.valueAsObject = this.defaultValue;
 			}
+			this.updateCount++;
 		}
 	}
 	
@@ -618,6 +631,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			} else {
 				this.valueAsObject = this.defaultValue;
 			}
+			this.updateCount++;
 		}
 
 		/**
@@ -629,6 +643,7 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 		void setValue(String valueFlag) {
 			this.valueAsObject = valueFlag;
+			this.updateCount++;
 		}
 	}
 
@@ -1865,6 +1880,16 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 			"detectCustomCollations", false,
 			Messages.getString("ConnectionProperties.detectCustomCollations"),
 			"5.1.29", MISC_CATEGORY, Integer.MIN_VALUE);
+
+	private StringConnectionProperty serverRSAPublicKeyFile = new StringConnectionProperty(
+			"serverRSAPublicKeyFile", null, //$NON-NLS-1$
+			Messages.getString("ConnectionProperties.serverRSAPublicKeyFile"), "5.1.31",
+			SECURITY_CATEGORY, Integer.MIN_VALUE);
+
+	private BooleanConnectionProperty allowPublicKeyRetrieval = new BooleanConnectionProperty(
+			"allowPublicKeyRetrieval", false,
+			Messages.getString("ConnectionProperties.allowPublicKeyRetrieval"), "5.1.31",
+			SECURITY_CATEGORY, Integer.MIN_VALUE);
 
 	protected DriverPropertyInfo[] exposeAsDriverPropertyInfoInternal(
 			Properties info, int slotsToReserve) throws SQLException {
@@ -4803,6 +4828,32 @@ public class ConnectionPropertiesImpl implements Serializable, ConnectionPropert
 
 	public boolean getDetectCustomCollations() {
 		return this.detectCustomCollations.getValueAsBoolean();
+	}
+
+	public String getServerRSAPublicKeyFile() {
+		return this.serverRSAPublicKeyFile.getValueAsString();
+	}
+
+	public void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException {
+		if (this.serverRSAPublicKeyFile.getUpdateCount() > 0) {
+			throw SQLError.createSQLException(
+					Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[]{"'serverRSAPublicKeyFile'"}),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+		}
+		this.serverRSAPublicKeyFile.setValue(serverRSAPublicKeyFile);
+	}
+
+	public boolean getAllowPublicKeyRetrieval() {
+		return this.allowPublicKeyRetrieval.getValueAsBoolean();
+	}
+
+	public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
+		if (this.allowPublicKeyRetrieval.getUpdateCount() > 0) {
+			throw SQLError.createSQLException(
+					Messages.getString("ConnectionProperties.dynamicChangeIsNotAllowed", new Object[]{"'allowPublicKeyRetrieval'"}),
+					SQLError.SQL_STATE_ILLEGAL_ARGUMENT, null);
+		}
+		this.allowPublicKeyRetrieval.setValue(allowPublicKeyRetrieval);
 	}
 
 }

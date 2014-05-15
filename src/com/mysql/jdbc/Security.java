@@ -231,17 +231,18 @@ public class Security {
 	 *            IN Data for encryption
 	 * @param to
 	 *            OUT Encrypt data to the buffer (may be the same)
-	 * @param password
-	 *            IN Password used for encryption (same length)
+	 * @param scramble
+	 *            IN Scramble used for encryption
 	 * @param length
 	 *            IN Length of data to encrypt
 	 */
-	static void passwordCrypt(byte[] from, byte[] to, byte[] password,
+	public static void xorString(byte[] from, byte[] to, byte[] scramble,
 			int length) {
 		int pos = 0;
+		int scrambleLength = scramble.length;
 
-		while ((pos < from.length) && (pos < length)) {
-			to[pos] = (byte) (from[pos] ^ password[pos]);
+		while (pos < length) {
+			to[pos] = (byte) (from[pos] ^ scramble[pos % scrambleLength]);
 			pos++;
 		}
 	}

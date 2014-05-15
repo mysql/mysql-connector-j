@@ -2112,4 +2112,22 @@ public class StringUtils {
 			}
 		} while (shift != 0);
 	}
+
+	public static byte[] getBytesNullTerminated(String value) {
+		try {
+			Charset cs = findCharset(platformEncoding);
+			ByteBuffer buf = cs.encode(value);
+			int encodedLen = buf.limit();
+			byte[] asBytes = new byte[encodedLen+1];
+			buf.get(asBytes, 0, encodedLen);
+			asBytes[encodedLen] = 0;
+			
+			return asBytes;
+		} catch (UnsupportedEncodingException e) {
+			// can't happen, emulating new String(byte[])
+		}
+
+		return null;
+	}
+
 }

@@ -2686,4 +2686,20 @@ public class LoadBalancedMySQLConnection implements LoadBalancedConnection {
 	public void setProfilerEventHandlerInstance(ProfilerEventHandler h) {
 		getActiveMySQLConnection().setProfilerEventHandlerInstance(h);
 	}
+
+	public String getServerRSAPublicKeyFile() {
+		return getActiveMySQLConnection().getServerRSAPublicKeyFile();
+	}
+
+	public void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException {
+		getActiveMySQLConnection().setServerRSAPublicKeyFile(serverRSAPublicKeyFile);
+	}
+
+	public boolean getAllowPublicKeyRetrieval() {
+		return getActiveMySQLConnection().getAllowPublicKeyRetrieval();
+	}
+
+	public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
+		getActiveMySQLConnection().setAllowPublicKeyRetrieval(allowPublicKeyRetrieval);
+	}
 }

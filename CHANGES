@@ -2,6 +2,10 @@
 # $Id$
 nn-nn-14 - Version 5.1.31
 
+  - Added support for sha256_password authentication with RSA encryption.
+
+  - Fix for Bug#71753 (18260918), Bad SSL socket transform.
+
   - Added tests for changes in GET DIAGNOSTIC syntax introduced in MySQL 5.7.0.
 
   - Fix for Bug#67803 (16708231), XA commands sent twice to MySQL server.

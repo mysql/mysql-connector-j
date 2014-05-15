@@ -3004,4 +3004,20 @@ public class ReplicationConnection implements Connection, PingTarget {
 	public void setSessionMaxRows(int max) throws SQLException {
 		getCurrentConnection().setSessionMaxRows(max);
 	}
+
+	public String getServerRSAPublicKeyFile() {
+		return getCurrentConnection().getServerRSAPublicKeyFile();
+	}
+
+	public void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException {
+		getCurrentConnection().setServerRSAPublicKeyFile(serverRSAPublicKeyFile);
+	}
+
+	public boolean getAllowPublicKeyRetrieval() {
+		return getCurrentConnection().getAllowPublicKeyRetrieval();
+	}
+
+	public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
+		getCurrentConnection().setAllowPublicKeyRetrieval(allowPublicKeyRetrieval);
+	}
 }

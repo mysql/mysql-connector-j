@@ -28,7 +28,10 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.Socket;
+import java.net.SocketException;
 import java.net.URL;
+import java.security.KeyFactory;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -36,13 +39,20 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.sql.SQLException;
+import java.util.Properties;
 
+import javax.crypto.Cipher;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+
+import com.mysql.jdbc.util.Base64Decoder;
 
 /**
  * Holds functionality that falls under export-control regulations.
@@ -76,35 +86,63 @@ public class ExportControlled {
 	 */
 	protected static void transformSocketToSSLSocket(MysqlIO mysqlIO)
 			throws SQLException {
-		javax.net.ssl.SSLSocketFactory sslFact = getSSLSocketFactoryDefaultOrConfigured(mysqlIO);
+		SocketFactory sslFact = new StandardSSLSocketFactory(getSSLSocketFactoryDefaultOrConfigured(mysqlIO), mysqlIO.socketFactory, mysqlIO.mysqlConnection);
 
 		try {
-			mysqlIO.mysqlConnection = sslFact.createSocket(
-					mysqlIO.mysqlConnection, mysqlIO.host, mysqlIO.port, true);
+			mysqlIO.mysqlConnection = sslFact.connect(mysqlIO.host, mysqlIO.port, null);
 
 			// need to force TLSv1, or else JSSE tries to do a SSLv2 handshake
 			// which MySQL doesn't understand
-			((javax.net.ssl.SSLSocket) mysqlIO.mysqlConnection)
-					.setEnabledProtocols(new String[] { "TLSv1" }); //$NON-NLS-1$
-			((javax.net.ssl.SSLSocket) mysqlIO.mysqlConnection)
-					.startHandshake();
+			((SSLSocket) mysqlIO.mysqlConnection).setEnabledProtocols(new String[] { "TLSv1" });
+			((SSLSocket) mysqlIO.mysqlConnection).startHandshake();
 
 			if (mysqlIO.connection.getUseUnbufferedInput()) {
 				mysqlIO.mysqlInput = mysqlIO.mysqlConnection.getInputStream();
 			} else {
-				mysqlIO.mysqlInput = new BufferedInputStream(
-						mysqlIO.mysqlConnection.getInputStream(), 16384);
+				mysqlIO.mysqlInput = new BufferedInputStream(mysqlIO.mysqlConnection.getInputStream(), 16384);
 			}
 
-			mysqlIO.mysqlOutput = new BufferedOutputStream(
-					mysqlIO.mysqlConnection.getOutputStream(), 16384);
+			mysqlIO.mysqlOutput = new BufferedOutputStream(mysqlIO.mysqlConnection.getOutputStream(), 16384);
 
 			mysqlIO.mysqlOutput.flush();
+
+			mysqlIO.socketFactory = sslFact;
+
 		} catch (IOException ioEx) {
 			throw SQLError.createCommunicationsException(mysqlIO.connection,
 					mysqlIO.getLastPacketSentTimeMs(), mysqlIO.getLastPacketReceivedTimeMs(),
 					ioEx, mysqlIO.getExceptionInterceptor());
 		}
+	}
+
+	/**
+	 * Implementation of internal socket factory to wrap the SSL socket.
+	 */
+	public static class StandardSSLSocketFactory implements SocketFactory {
+		private SSLSocket rawSocket = null;
+		private final SSLSocketFactory sslFact;
+		private final SocketFactory existingSocketFactory;
+		private final Socket existingSocket;
+
+		public StandardSSLSocketFactory(SSLSocketFactory sslFact, SocketFactory existingSocketFactory, Socket existingSocket) {
+			this.sslFact = sslFact;
+			this.existingSocketFactory = existingSocketFactory;
+			this.existingSocket = existingSocket;
+		}
+		public Socket afterHandshake() throws SocketException, IOException {
+			this.existingSocketFactory.afterHandshake();
+			return this.rawSocket;
+		}
+
+		public Socket beforeHandshake() throws SocketException, IOException {
+			return this.rawSocket;
+		}
+
+		public Socket connect(String host, int portNumber, Properties props) throws SocketException, IOException {
+			this.rawSocket = (SSLSocket) sslFact.createSocket(this.existingSocket, host, portNumber, true);
+			return this.rawSocket;
+		}
+		
 	}
 
 	private ExportControlled() { /* prevent instantiation */
@@ -128,7 +166,7 @@ public class ExportControlled {
 		if (StringUtils.isNullOrEmpty(clientCertificateKeyStoreUrl)
 				&& StringUtils.isNullOrEmpty(trustCertificateKeyStoreUrl)) {
 			if (mysqlIO.connection.getVerifyServerCertificate()) {
-				return (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory
+				return (SSLSocketFactory) SSLSocketFactory
 						.getDefault();
 			}
 		}
@@ -284,4 +322,39 @@ public class ExportControlled {
 					+ kme.getMessage(), SQL_STATE_BAD_SSL_PARAMS, 0, false, mysqlIO.getExceptionInterceptor());
 		}
 	}
+	
+	public static boolean isSSLEstablished(MysqlIO mysqlIO) {
+		return SSLSocket.class.isAssignableFrom(mysqlIO.mysqlConnection.getClass());
+	}
+
+	public static RSAPublicKey decodeRSAPublicKey(String key, ExceptionInterceptor interceptor) throws SQLException {
+		
+		try {
+			if (key == null) throw new SQLException("key parameter is null");
+			
+			int offset = key.indexOf("\n")+1;
+			int len = key.indexOf("-----END PUBLIC KEY-----") - offset;
+			
+			// TODO: use standard decoders with Java 6+
+			byte[] certificateData = Base64Decoder.decode(key.getBytes(), offset, len);
+			
+			X509EncodedKeySpec spec = new X509EncodedKeySpec(certificateData);
+			KeyFactory kf = KeyFactory.getInstance("RSA");
+			return (RSAPublicKey) kf.generatePublic(spec);
+		} catch (Exception ex) {
+			throw SQLError.createSQLException("Unable to decode public key", SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+		}
+	}
+	
+	public static byte[] encryptWithRSAPublicKey(byte[] source, RSAPublicKey key, ExceptionInterceptor interceptor) throws SQLException {
+		try {
+			Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+			cipher.init(Cipher.ENCRYPT_MODE, key);
+			return cipher.doFinal(source);					
+		} catch (Exception ex) {
+			throw SQLError.createSQLException(ex.getMessage(), SQLError.SQL_STATE_ILLEGAL_ARGUMENT, ex, interceptor);
+		}
+	}
+
+
 }

@@ -179,7 +179,7 @@ public class MysqlIO {
     private RowData streamingData = null;
 
     /** The connection to the server */
-    protected Socket mysqlConnection = null;
+    public Socket mysqlConnection = null;
     protected SocketFactory socketFactory = null;
 
     //
@@ -1632,7 +1632,7 @@ public class MysqlIO {
 	 * @throws SQLException
 	 */
 	private void checkConfidentiality(AuthenticationPlugin plugin) throws SQLException {
-		if (plugin.requiresConfidentiality() && !(this.connection.getUseSSL() && this.connection.getRequireSSL())) {
+		if (plugin.requiresConfidentiality() && !isSSLEstablished()) {
 			throw SQLError.createSQLException(
 					Messages.getString("Connection.AuthenticationPluginRequiresSSL", new Object[] {plugin.getProtocolPluginName()}), getExceptionInterceptor());
 		}
@@ -4079,17 +4079,12 @@ public class MysqlIO {
                 send(filePacket, filePacket.getPosition());
             }
         } catch (IOException ioEx) {
-            StringBuffer messageBuf = new StringBuffer(Messages.getString(
-                        "MysqlIO.60")); //$NON-NLS-1$
+            StringBuffer messageBuf = new StringBuffer(Messages.getString("MysqlIO.60"));
 
-            if (!this.connection.getParanoid()) {
-                messageBuf.append("'"); //$NON-NLS-1$
-
-                if (fileName != null) {
-                    messageBuf.append(fileName);
-                }
-
-                messageBuf.append("'"); //$NON-NLS-1$
+            if (fileName != null && !this.connection.getParanoid()) {
+                messageBuf.append("'");
+                messageBuf.append(fileName);
+                messageBuf.append("'");
             }
 
             messageBuf.append(Messages.getString("MysqlIO.63")); //$NON-NLS-1$
@@ -4106,9 +4101,8 @@ public class MysqlIO {
                 try {
                     fileIn.close();
                 } catch (Exception ex) {
-                    SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.65"), //$NON-NLS-1$
-                        SQLError.SQL_STATE_GENERAL_ERROR, getExceptionInterceptor());
-                    sqlEx.initCause(ex);
+                    SQLException sqlEx = SQLError.createSQLException(Messages.getString("MysqlIO.65"),
+                        SQLError.SQL_STATE_GENERAL_ERROR, ex, getExceptionInterceptor());
                     
                     throw sqlEx;
                 }
@@ -4565,11 +4559,11 @@ public class MysqlIO {
                         byte[] mysqlScrambleBuff = new byte[20];
 
                         /* Decypt and store scramble 4 = hash for stage2 */
-                        Security.passwordCrypt(packetDataAfterSalt,
+                        Security.xorString(packetDataAfterSalt,
                             mysqlScrambleBuff, passwordHash, 20);
 
                         /* Encode scramble with password. Recycle buffer */
-                        Security.passwordCrypt(mysqlScrambleBuff, buff, buff, 20);
+                        Security.xorString(mysqlScrambleBuff, buff, buff, 20);
 
                         Buffer packet2 = new Buffer(25);
                         packet2.writeBytesNoNull(buff);
@@ -4596,7 +4590,7 @@ public class MysqlIO {
                         byte[] mysqlScrambleBuff = new byte[20];
 
                         /* Decypt and store scramble 4 = hash for stage2 */
-                        Security.passwordCrypt(netReadPos4, mysqlScrambleBuff,
+                        Security.xorString(netReadPos4, mysqlScrambleBuff,
                             passwordHash, 20);
 
                         /* Finally scramble decoded scramble with password */
@@ -5278,6 +5272,10 @@ public class MysqlIO {
         ExportControlled.transformSocketToSSLSocket(this);
     }
 
+    public boolean isSSLEstablished() {
+    	return ExportControlled.enabled() && ExportControlled.isSSLEstablished(this);
+    }
+    
 	protected int getServerStatus() {
 		return this.serverStatus;
 	}

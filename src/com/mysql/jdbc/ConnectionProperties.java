@@ -1739,4 +1739,12 @@ public interface ConnectionProperties {
 
 	String getConnectionAttributes() throws SQLException;
 
+	public abstract String getServerRSAPublicKeyFile();
+
+	public abstract void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException;
+
+	public abstract boolean getAllowPublicKeyRetrieval();
+
+	public abstract void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException;
+
 }

@@ -2876,4 +2876,20 @@ public class ConnectionWrapper extends WrapperBase implements Connection {
 	public void setSessionMaxRows(int max) throws SQLException {
 		this.mc.setSessionMaxRows(max);
 	}
+
+	public String getServerRSAPublicKeyFile() {
+		return this.mc.getServerRSAPublicKeyFile();
+	}
+
+	public void setServerRSAPublicKeyFile(String serverRSAPublicKeyFile) throws SQLException {
+		this.mc.setServerRSAPublicKeyFile(serverRSAPublicKeyFile);
+	}
+
+	public boolean getAllowPublicKeyRetrieval() {
+		return this.mc.getAllowPublicKeyRetrieval();
+	}
+
+	public void setAllowPublicKeyRetrieval(boolean allowPublicKeyRetrieval) throws SQLException {
+		this.mc.setAllowPublicKeyRetrieval(allowPublicKeyRetrieval);
+	}
 }
