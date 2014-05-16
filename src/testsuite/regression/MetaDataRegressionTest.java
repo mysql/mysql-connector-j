@@ -2893,24 +2893,27 @@ public class MetaDataRegressionTest extends BaseTestCase {
 	public void testBug57808() throws Exception {
 		try {
 			createTable("bug57808", "(ID INT(3) NOT NULL PRIMARY KEY, ADate DATE NOT NULL)");
-            Properties props = new Properties();
-            props.put("zeroDateTimeBehavior", "convertToNull");
-            Connection conn1 = null;
+			Properties props = new Properties();
+			if (versionMeetsMinimum(5, 7, 4)) {
+				props.put("jdbcCompliantTruncation", "false");
+			}
+			props.put("zeroDateTimeBehavior", "convertToNull");
+			Connection conn1 = null;
 
-            conn1 = getConnectionWithProps(props);
-            this.stmt = conn1.createStatement();
-            this.stmt.executeUpdate("INSERT INTO bug57808(ID, ADate) VALUES(1, 0000-00-00)");	
-			
-			this.rs = this.stmt.executeQuery( "SELECT ID, ADate FROM bug57808 WHERE ID = 1" );
-			if( this.rs.first() ) {
+			conn1 = getConnectionWithProps(props);
+			this.stmt = conn1.createStatement();
+			this.stmt.executeUpdate("INSERT INTO bug57808(ID, ADate) VALUES(1, 0000-00-00)");
+
+			this.rs = this.stmt.executeQuery("SELECT ID, ADate FROM bug57808 WHERE ID = 1");
+			if (this.rs.first()) {
 				Date theDate = this.rs.getDate("ADate");
-				if( theDate == null ) {
+				if (theDate == null) {
 					assertTrue("wasNull is FALSE", this.rs.wasNull());
 				} else {
 					fail("Original date was not NULL!");
 				}
 			}
-    	} finally {
+		} finally {
 		}
 	}
 	
@@ -3220,34 +3223,35 @@ public class MetaDataRegressionTest extends BaseTestCase {
 		try {
 			Properties props = new NonRegisteringDriver().parseURL(dbUrl, null);
 			String dbname = props.getProperty(NonRegisteringDriver.DBNAME_PROPERTY_KEY);
-			if (dbname == null) assertTrue("No database selected", false);
+			if (dbname == null)
+				fail("No database selected");
 
-			testTimestamp(this.conn, this.stmt, dbname);
-			if (versionMeetsMinimum(5, 6, 5)) {
-				testDatetime(this.conn, this.stmt, dbname);
-			}
-			
-			props = new Properties();
-			props.setProperty("useInformationSchema", "true");
-			Connection conn2 = getConnectionWithProps(props);
-			Statement stmt2 = null;
+			for (String prop : new String[] { "dummyProp", "useInformationSchema" }) {
+				props = new Properties();
+				if (versionMeetsMinimum(5, 7, 4)) {
+					props.put("jdbcCompliantTruncation", "false");
+				}
+				props.setProperty(prop, "true");
+				Connection conn2 = getConnectionWithProps(props);
+				Statement stmt2 = null;
 
-			try {
-				stmt2 = conn2.createStatement();
-				testTimestamp(conn2, stmt2, dbname);
-				if (versionMeetsMinimum(5, 6, 5)) {
-					testDatetime(conn2, stmt2, dbname);
-				}
-			} finally {
-				if (stmt2 != null) {
-					stmt2.close();
-				}
-				if (conn2 != null) {
-					conn2.close();
+				try {
+					stmt2 = conn2.createStatement();
+					testTimestamp(conn2, stmt2, dbname);
+					if (versionMeetsMinimum(5, 6, 5)) {
+						testDatetime(conn2, stmt2, dbname);
+					}
+				} finally {
+					if (stmt2 != null) {
+						stmt2.close();
+					}
+					if (conn2 != null) {
+						conn2.close();
+					}
 				}
 			}
 		} finally {
-			this.stmt.execute("DROP  TABLE IF EXISTS testBug63800");
+			dropTable("testBug63800");
 		}
 	}
 

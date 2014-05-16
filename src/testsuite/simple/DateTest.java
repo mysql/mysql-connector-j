@@ -34,7 +34,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
-import java.util.Properties;
 import java.util.TimeZone;
 
 import testsuite.BaseTestCase;
@@ -216,33 +215,38 @@ public class DateTest extends BaseTestCase {
 	}
 
 	/**
-	 * Tests the configurability of all-zero date/datetime/timestamp handling in
-	 * the driver.
+	 * Tests the configurability of all-zero date/datetime/timestamp handling in the driver.
 	 * 
 	 * @throws Exception
 	 *             if the test fails.
 	 */
 	public void testZeroDateBehavior() throws Exception {
+		Connection testConn = this.conn;
+		Connection roundConn = null;
+		Connection nullConn = null;
+		Connection exceptionConn = null;
 		try {
-			this.stmt
-					.executeUpdate("DROP TABLE IF EXISTS testZeroDateBehavior");
+			if (versionMeetsMinimum(5, 7, 4)) {
+				testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
+				this.stmt = testConn.createStatement();
+			}
+
+			this.stmt.executeUpdate("DROP TABLE IF EXISTS testZeroDateBehavior");
 			this.stmt
 					.executeUpdate("CREATE TABLE testZeroDateBehavior(fieldAsString VARCHAR(32), fieldAsDateTime DATETIME)");
 			this.stmt
 					.executeUpdate("INSERT INTO testZeroDateBehavior VALUES ('0000-00-00 00:00:00', '0000-00-00 00:00:00')");
-			Properties props = new Properties();
-			props.setProperty("zeroDateTimeBehavior", "round");
-			Connection roundConn = getConnectionWithProps(props);
+
+			roundConn = getConnectionWithProps("zeroDateTimeBehavior=round");
 			Statement roundStmt = roundConn.createStatement();
-			this.rs = roundStmt
-					.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
+			this.rs = roundStmt.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
 			this.rs.next();
 
 			assertEquals("0001-01-01", this.rs.getDate(1).toString());
-			assertEquals("0001-01-01 00:00:00.0", 
+			assertEquals("0001-01-01 00:00:00.0",
 					new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0", Locale.US).format(this.rs.getTimestamp(1)));
 			assertEquals("0001-01-01", this.rs.getDate(2).toString());
-			assertEquals("0001-01-01 00:00:00.0", 
+			assertEquals("0001-01-01 00:00:00.0",
 					new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0", Locale.US).format(this.rs.getTimestamp(2)));
 
 			PreparedStatement roundPrepStmt = roundConn
@@ -251,25 +255,22 @@ public class DateTest extends BaseTestCase {
 			this.rs.next();
 
 			assertEquals("0001-01-01", this.rs.getDate(1).toString());
-			assertEquals("0001-01-01 00:00:00.0", 
+			assertEquals("0001-01-01 00:00:00.0",
 					new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0", Locale.US).format(this.rs.getTimestamp(1)));
 			assertEquals("0001-01-01", this.rs.getDate(2).toString());
-			assertEquals("0001-01-01 00:00:00.0", 
+			assertEquals("0001-01-01 00:00:00.0",
 					new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0", Locale.US).format(this.rs.getTimestamp(2)));
 
-			props = new Properties();
-			props.setProperty("zeroDateTimeBehavior", "convertToNull");
-			Connection nullConn = getConnectionWithProps(props);
+			nullConn = getConnectionWithProps("zeroDateTimeBehavior=convertToNull");
 			Statement nullStmt = nullConn.createStatement();
-			this.rs = nullStmt
-					.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
+			this.rs = nullStmt.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
 
 			this.rs.next();
 
-			assertTrue(null == this.rs.getDate(1));
-			assertTrue(null == this.rs.getTimestamp(1));
-			assertTrue(null == this.rs.getDate(2));
-			assertTrue(null == this.rs.getTimestamp(2));
+			assertNull(this.rs.getDate(1));
+			assertNull(this.rs.getTimestamp(1));
+			assertNull(this.rs.getDate(2));
+			assertNull(this.rs.getTimestamp(2));
 
 			PreparedStatement nullPrepStmt = nullConn
 					.prepareStatement("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
@@ -277,18 +278,15 @@ public class DateTest extends BaseTestCase {
 
 			this.rs.next();
 
-			assertTrue(null == this.rs.getDate(1));
-			assertTrue(null == this.rs.getTimestamp(1));
-			assertTrue(null == this.rs.getDate(2));
-			assertTrue(null == this.rs.getTimestamp(2));
-			assertTrue(null == this.rs.getString(2));
+			assertNull(this.rs.getDate(1));
+			assertNull(this.rs.getTimestamp(1));
+			assertNull(this.rs.getDate(2));
+			assertNull(this.rs.getTimestamp(2));
+			assertNull(this.rs.getString(2));
 
-			props = new Properties();
-			props.setProperty("zeroDateTimeBehavior", "exception");
-			Connection exceptionConn = getConnectionWithProps(props);
+			exceptionConn = getConnectionWithProps("zeroDateTimeBehavior=exception");
 			Statement exceptionStmt = exceptionConn.createStatement();
-			this.rs = exceptionStmt
-					.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
+			this.rs = exceptionStmt.executeQuery("SELECT fieldAsString, fieldAsDateTime FROM testZeroDateBehavior");
 
 			this.rs.next();
 
@@ -296,32 +294,28 @@ public class DateTest extends BaseTestCase {
 				this.rs.getDate(1);
 				fail("Exception should have been thrown when trying to retrieve invalid date");
 			} catch (SQLException sqlEx) {
-				assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx
-						.getSQLState()));
+				assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
 			}
 
 			try {
 				this.rs.getTimestamp(1);
 				fail("Exception should have been thrown when trying to retrieve invalid date");
 			} catch (SQLException sqlEx) {
-				assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx
-						.getSQLState()));
+				assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
 			}
 
 			try {
 				this.rs.getDate(2);
 				fail("Exception should have been thrown when trying to retrieve invalid date");
 			} catch (SQLException sqlEx) {
-				assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx
-						.getSQLState()));
+				assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
 			}
 
 			try {
 				this.rs.getTimestamp(2);
 				fail("Exception should have been thrown when trying to retrieve invalid date");
 			} catch (SQLException sqlEx) {
-				assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx
-						.getSQLState()));
+				assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
 			}
 
 			PreparedStatement exceptionPrepStmt = exceptionConn
@@ -333,13 +327,26 @@ public class DateTest extends BaseTestCase {
 				this.rs.getDate(2);
 				fail("Exception should have been thrown when trying to retrieve invalid date");
 			} catch (SQLException sqlEx) {
-				assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx
-						.getSQLState()));
+				assertTrue(SQLError.SQL_STATE_ILLEGAL_ARGUMENT.equals(sqlEx.getSQLState()));
 			}
 
 		} finally {
-			this.stmt
-					.executeUpdate("DROP TABLE IF EXISTS testZeroDateBehavior");
+			this.stmt.executeUpdate("DROP TABLE IF EXISTS testZeroDateBehavior");
+			if (exceptionConn != null) {
+				exceptionConn.close();
+			}
+
+			if (nullConn != null) {
+				nullConn.close();
+			}
+
+			if (roundConn != null) {
+				roundConn.close();
+			}
+
+			if (testConn != this.conn) {
+				testConn.close();
+			}
 		}
 	}
 

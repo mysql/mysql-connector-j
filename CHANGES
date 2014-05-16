@@ -2,6 +2,9 @@
 # $Id$
 nn-nn-14 - Version 5.1.31
 
+  - Test cases updated to comply with MySQL 5.7.4 new STRICT_MODE behavior and no longer supported IGNORE clause in
+    ALTER TABLE statement.
+
   - Added support for sha256_password authentication with RSA encryption.
 
   - Fix for Bug#71753 (18260918), Bad SSL socket transform.

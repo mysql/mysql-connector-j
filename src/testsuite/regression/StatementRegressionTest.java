@@ -1133,34 +1133,23 @@ public class StatementRegressionTest extends BaseTestCase {
 	}
 
 	/**
-	 * Tests the fix for BUG#2671, nulls encoded incorrectly in server-side
-	 * prepared statements.
+	 * Tests the fix for BUG#2671, nulls encoded incorrectly in server-side prepared statements.
 	 * 
 	 * @throws Exception
 	 *             if an error occurs.
 	 */
 	public void testBug2671() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
-			createTable("test3", "("
-					+ " `field1` int(8) NOT NULL auto_increment,"
+			createTable("test3", "(`field1` int(8) NOT NULL auto_increment,"
 					+ " `field2` int(8) unsigned zerofill default NULL,"
 					+ " `field3` varchar(30) binary NOT NULL default '',"
-					+ " `field4` varchar(100) default NULL,"
-					+ " `field5` datetime NULL default '0000-00-00 00:00:00',"
-					+ " PRIMARY KEY  (`field1`),"
-					+ " UNIQUE KEY `unq_id` (`field2`),"
-					+ " UNIQUE KEY  (`field3`)"
-					+ " )  CHARACTER SET utf8", "InnoDB");
+					+ " `field4` varchar(100) default NULL, `field5` datetime NULL default NULL,"
+					+ " PRIMARY KEY  (`field1`), UNIQUE KEY `unq_id` (`field2`), UNIQUE KEY  (`field3`))"
+					+ " CHARACTER SET utf8", "InnoDB");
 
-			this.stmt
-					.executeUpdate("insert into test3 (field1, field3, field4) values (1,'blewis','Bob Lewis')");
+			this.stmt.executeUpdate("insert into test3 (field1, field3, field4) values (1, 'blewis', 'Bob Lewis')");
 
-			String query = "              " + "UPDATE                   "
-					+ "  test3                  " + "SET                      "
-					+ "  field2=?               " + "  ,field3=?          "
-					+ "  ,field4=?           " + "  ,field5=?        "
-					+ "WHERE                    "
-					+ "  field1 = ?                 ";
+			String query = "UPDATE test3 SET field2=?, field3=?, field4=?, field5=? WHERE field1 = ?";
 
 			java.sql.Date mydate = null;
 
@@ -1173,7 +1162,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			this.pstmt.setInt(5, 1);
 
 			int retval = this.pstmt.executeUpdate();
-			assertTrue(retval == 1);
+			assertEquals(1, retval);
 		}
 	}
 
@@ -1841,6 +1830,9 @@ public class StatementRegressionTest extends BaseTestCase {
 	public void testBug5235() throws Exception {
 		Properties props = new Properties();
 		props.setProperty("zeroDateTimeBehavior", "convertToNull");
+		if (versionMeetsMinimum(5, 7, 4)) {
+			props.put("jdbcCompliantTruncation", "false");
+		}
 
 		Connection convertToNullConn = getConnectionWithProps(props);
 		Statement convertToNullStmt = convertToNullConn.createStatement();
@@ -1856,8 +1848,7 @@ public class StatementRegressionTest extends BaseTestCase {
 			this.rs = ps.executeQuery();
 
 			if (this.rs.next()) {
-				Date d = (Date) this.rs.getObject("field1");
-				System.out.println("date: " + d);
+				assertNull(this.rs.getObject("field1"));
 			}
 		} finally {
 			convertToNullStmt.executeUpdate("DROP TABLE IF EXISTS testBug5235");
@@ -2710,7 +2701,13 @@ public class StatementRegressionTest extends BaseTestCase {
 	 *             .equals() test :(
 	 */
 	public void testServerPrepStmtAndDate() throws Exception {
+		Connection testConn = this.conn;
 		try {
+			if (versionMeetsMinimum(5, 7, 4)) {
+				testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
+				this.stmt = testConn.createStatement();
+			}
+			
 			this.stmt
 					.executeUpdate("DROP TABLE IF EXISTS testServerPrepStmtAndDate");
 			this.stmt.executeUpdate("CREATE TABLE testServerPrepStmtAndDate("
@@ -2772,6 +2769,10 @@ public class StatementRegressionTest extends BaseTestCase {
 		} finally {
 			this.stmt
 					.executeUpdate("DROP TABLE IF EXISTS testServerPrepStmtAndDate");
+			
+			if (testConn != this.conn) {
+				testConn.close();
+			}
 		}
 	}
 

@@ -1019,21 +1019,26 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 *             if the test fails.
 	 */
 	public void testBug5235() throws Exception {
+		Connection testConn = this.conn;
+		Connection nullConn = getConnectionWithProps("zeroDateTimeBehavior=convertToNull");
+		try {
+			if (versionMeetsMinimum(5, 7, 4)) {
+				testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
+				this.stmt = testConn.createStatement();
+			}
 
-		createTable("testBug5235", "(field1 DATE)");
-		this.stmt
-				.executeUpdate("INSERT INTO testBug5235 (field1) VALUES ('0000-00-00')");
+			createTable("testBug5235", "(field1 DATE)");
+			this.stmt.executeUpdate("INSERT INTO testBug5235 (field1) VALUES ('0000-00-00')");
 
-		Properties props = new Properties();
-		props.setProperty("zeroDateTimeBehavior", "convertToNull");
-
-		Connection nullConn = getConnectionWithProps(props);
-
-		this.rs = nullConn.createStatement().executeQuery(
-				"SELECT field1 FROM testBug5235");
-		this.rs.next();
-		assertTrue(null == this.rs.getObject(1));
-
+			this.rs = nullConn.createStatement().executeQuery("SELECT field1 FROM testBug5235");
+			this.rs.next();
+			assertNull(this.rs.getObject(1));
+		} finally {
+			nullConn.close();
+			if (testConn != this.conn) {
+				testConn.close();
+			}
+		}
 	}
 
 	/**
@@ -1303,34 +1308,40 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 *             if the test occurs.
 	 */
 	public void testBug6561() throws Exception {
+		Connection testConn = this.conn;
+		Connection zeroConn = getConnectionWithProps("zeroDateTimeBehavior=convertToNull");
+		try {
+			if (versionMeetsMinimum(5, 7, 4)) {
+				testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
+				this.stmt = testConn.createStatement();
+			}
 
-		Properties props = new Properties();
-		props.setProperty("zeroDateTimeBehavior", "convertToNull");
+			createTable("testBug6561", "(ofield int, field1 DATE, field2 integer, field3 integer)");
+			this.stmt.executeUpdate("INSERT INTO testBug6561 (ofield, field1,field2,field3)	VALUES (1, 0,NULL,0)");
+			this.stmt.executeUpdate("INSERT INTO testBug6561 (ofield, field1,field2,field3)"
+					+ " VALUES (2, '2004-11-20',NULL,0)");
 
-		Connection zeroConn = getConnectionWithProps(props);
+			PreparedStatement ps = zeroConn
+					.prepareStatement("SELECT field1,field2,field3 FROM testBug6561 ORDER BY ofield");
+			this.rs = ps.executeQuery();
 
-		createTable("testBug6561",
-				"(ofield int, field1 DATE, field2 integer, field3 integer)");
-		this.stmt
-				.executeUpdate("INSERT INTO testBug6561 (ofield, field1,field2,field3)	VALUES (1, 0,NULL,0)");
-		this.stmt
-				.executeUpdate("INSERT INTO testBug6561 (ofield, field1,field2,field3) VALUES (2, '2004-11-20',NULL,0)");
+			assertTrue(this.rs.next());
+			assertNull(this.rs.getObject("field1"));
+			assertNull(this.rs.getObject("field2"));
+			assertEquals(0, this.rs.getInt("field3"));
 
-		PreparedStatement ps = zeroConn
-				.prepareStatement("SELECT field1,field2,field3 FROM testBug6561 ORDER BY ofield");
-		this.rs = ps.executeQuery();
+			assertTrue(this.rs.next());
+			assertEquals("2004-11-20", this.rs.getString("field1"));
+			assertNull(this.rs.getObject("field2"));
+			assertEquals(0, this.rs.getInt("field3"));
 
-		assertTrue(this.rs.next());
-		assertTrue(null == this.rs.getObject("field1"));
-		assertTrue(null == this.rs.getObject("field2"));
-		assertTrue(0 == this.rs.getInt("field3"));
-
-		assertTrue(this.rs.next());
-		assertEquals("2004-11-20", this.rs.getString("field1"));
-		assertTrue(null == this.rs.getObject("field2"));
-		assertTrue(0 == this.rs.getInt("field3"));
-
-		ps.close();
+			ps.close();
+		} finally {
+			zeroConn.close();
+			if (testConn != this.conn) {
+				testConn.close();
+			}
+		}
 	}
 
 	public void testBug7686() throws SQLException {
@@ -1494,81 +1505,90 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	 */
 	public void testBug9236() throws Exception {
 		if (versionMeetsMinimum(4, 1)) {
-			createTable(
-					"testBug9236",
-					"("
-							+ "field_1 int(18) NOT NULL auto_increment,"
-							+ "field_2 varchar(50) NOT NULL default '',"
-							+ "field_3 varchar(12) default NULL,"
-							+ "field_4 int(18) default NULL,"
-							+ "field_5 int(18) default NULL,"
-							+ "field_6 datetime default NULL,"
-							+ "field_7 varchar(30) default NULL,"
-							+ "field_8 varchar(50) default NULL,"
-							+ "field_9 datetime default NULL,"
-							+ "field_10 int(18) NOT NULL default '0',"
-							+ "field_11 int(18) default NULL,"
-							+ "field_12 datetime NOT NULL default '0000-00-00 00:00:00',"
-							+ "PRIMARY KEY  (field_1)," + "KEY (field_4),"
-							+ "KEY (field_2)," + "KEY (field_3),"
-							+ "KEY (field_7,field_1)," + "KEY (field_5),"
-							+ "KEY (field_6,field_10,field_9),"
-							+ "KEY (field_11,field_10),"
-							+ "KEY (field_12,field_10)"
-							+ ") DEFAULT CHARSET=latin1", "InnoDB");
+			Connection testConn = this.conn;
+			try {
+				if (versionMeetsMinimum(5, 7, 4)) {
+					testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
+					this.stmt = testConn.createStatement();
+				}
 
-			this.stmt
-					.executeUpdate("INSERT INTO testBug9236 VALUES "
-							+ "(1,'0',NULL,-1,0,'0000-00-00 00:00:00','123456789','-1','2004-03-13 14:21:38',0,NULL,'2004-03-13 14:21:38'),"
-							+ "(2,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'1',NULL,0,NULL,'2004-07-13 14:29:52'),"
-							+ "(3,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'2',NULL,0,NULL,'2004-07-16 13:20:51'),"
-							+ "(4,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'3','2004-07-16 13:43:39',0,NULL,'2004-07-16 13:22:01'),"
-							+ "(5,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'4','2004-07-16 13:23:48',0,NULL,'2004-07-16 13:23:01'),"
-							+ "(6,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'5',NULL,0,NULL,'2004-07-16 14:41:07'),"
-							+ "(7,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'6',NULL,0,NULL,'2004-07-16 14:41:34'),"
-							+ "(8,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'7',NULL,0,NULL,'2004-07-16 14:41:54'),"
-							+ "(9,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'8',NULL,0,NULL,'2004-07-16 14:42:42'),"
-							+ "(10,'0','PI',1,0,'0000-00-00 00:00:00',NULL,'9',NULL,0,NULL,'2004-07-18 10:51:30'),"
-							+ "(11,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'10','2004-07-23 17:23:06',0,NULL,'2004-07-23 17:18:19'),"
-							+ "(12,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'11','2004-07-23 17:24:45',0,NULL,'2004-07-23 17:23:57'),"
-							+ "(13,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'12','2004-07-23 17:30:51',0,NULL,'2004-07-23 17:30:15'),"
-							+ "(14,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'13','2004-07-26 17:50:19',0,NULL,'2004-07-26 17:49:38'),"
-							+ "(15,'0','FRL',1,0,'0000-00-00 00:00:00',NULL,'1',NULL,0,NULL,'2004-08-19 18:29:18'),"
-							+ "(16,'0','FRL',1,0,'0000-00-00 00:00:00',NULL,'15',NULL,0,NULL,'2005-03-16 12:08:28')");
+				createTable("testBug9236", "(" 
+						+ "field_1 int(18) NOT NULL auto_increment,"
+						+ "field_2 varchar(50) NOT NULL default '',"
+						+ "field_3 varchar(12) default NULL,"
+						+ "field_4 int(18) default NULL,"
+						+ "field_5 int(18) default NULL,"
+						+ "field_6 datetime default NULL,"
+						+ "field_7 varchar(30) default NULL,"
+						+ "field_8 varchar(50) default NULL,"
+						+ "field_9 datetime default NULL,"
+						+ "field_10 int(18) NOT NULL default '0',"
+						+ "field_11 int(18) default NULL,"
+						+ "field_12 datetime NOT NULL default '0000-00-00 00:00:00',"
+						+ "PRIMARY KEY  (field_1),"
+						+ "KEY (field_4),"
+						+ "KEY (field_2),"
+						+ "KEY (field_3),"
+						+ "KEY (field_7,field_1),"
+						+ "KEY (field_5),"
+						+ "KEY (field_6,field_10,field_9),"
+						+ "KEY (field_11,field_10),"
+						+ "KEY (field_12,field_10)"
+						+ ") DEFAULT CHARSET=latin1", "InnoDB");
 
-			createTable("testBug9236_1",
-					"(field1 CHAR(2) CHARACTER SET BINARY)");
-			this.stmt.executeUpdate("INSERT INTO testBug9236_1 VALUES ('ab')");
-			this.rs = this.stmt
-					.executeQuery("SELECT field1 FROM testBug9236_1");
+				this.stmt
+						.executeUpdate("INSERT INTO testBug9236 VALUES "
+								+ "(1,'0',NULL,-1,0,'0000-00-00 00:00:00','123456789','-1','2004-03-13 14:21:38',0,NULL,'2004-03-13 14:21:38'),"
+								+ "(2,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'1',NULL,0,NULL,'2004-07-13 14:29:52'),"
+								+ "(3,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'2',NULL,0,NULL,'2004-07-16 13:20:51'),"
+								+ "(4,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'3','2004-07-16 13:43:39',0,NULL,'2004-07-16 13:22:01'),"
+								+ "(5,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'4','2004-07-16 13:23:48',0,NULL,'2004-07-16 13:23:01'),"
+								+ "(6,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'5',NULL,0,NULL,'2004-07-16 14:41:07'),"
+								+ "(7,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'6',NULL,0,NULL,'2004-07-16 14:41:34'),"
+								+ "(8,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'7',NULL,0,NULL,'2004-07-16 14:41:54'),"
+								+ "(9,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'8',NULL,0,NULL,'2004-07-16 14:42:42'),"
+								+ "(10,'0','PI',1,0,'0000-00-00 00:00:00',NULL,'9',NULL,0,NULL,'2004-07-18 10:51:30'),"
+								+ "(11,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'10','2004-07-23 17:23:06',0,NULL,'2004-07-23 17:18:19'),"
+								+ "(12,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'11','2004-07-23 17:24:45',0,NULL,'2004-07-23 17:23:57'),"
+								+ "(13,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'12','2004-07-23 17:30:51',0,NULL,'2004-07-23 17:30:15'),"
+								+ "(14,'0',NULL,1,0,'0000-00-00 00:00:00',NULL,'13','2004-07-26 17:50:19',0,NULL,'2004-07-26 17:49:38'),"
+								+ "(15,'0','FRL',1,0,'0000-00-00 00:00:00',NULL,'1',NULL,0,NULL,'2004-08-19 18:29:18'),"
+								+ "(16,'0','FRL',1,0,'0000-00-00 00:00:00',NULL,'15',NULL,0,NULL,'2005-03-16 12:08:28')");
 
-			ResultSetMetaData rsmd = this.rs.getMetaData();
-			assertEquals("[B", rsmd.getColumnClassName(1));
-			assertTrue(this.rs.next());
-			Object asObject = this.rs.getObject(1);
-			assertEquals("[B", asObject.getClass().getName());
+				createTable("testBug9236_1", "(field1 CHAR(2) CHARACTER SET BINARY)");
+				this.stmt.executeUpdate("INSERT INTO testBug9236_1 VALUES ('ab')");
+				this.rs = this.stmt.executeQuery("SELECT field1 FROM testBug9236_1");
 
-			this.rs = this.stmt
-					.executeQuery("select DATE_FORMAT(field_12, '%Y-%m-%d') as date, count(*) as count from testBug9236 where field_10 = 0 and field_3 = 'FRL' and field_12 >= '2005-03-02 00:00:00' and field_12 <= '2005-03-17 00:00:00' group by date");
-			rsmd = this.rs.getMetaData();
-			assertEquals("java.lang.String", rsmd.getColumnClassName(1));
-			this.rs.next();
-			asObject = this.rs.getObject(1);
-			assertEquals("java.lang.String", asObject.getClass().getName());
+				ResultSetMetaData rsmd = this.rs.getMetaData();
+				assertEquals("[B", rsmd.getColumnClassName(1));
+				assertTrue(this.rs.next());
+				Object asObject = this.rs.getObject(1);
+				assertEquals("[B", asObject.getClass().getName());
 
-			this.rs.close();
+				this.rs = this.stmt
+						.executeQuery("select DATE_FORMAT(field_12, '%Y-%m-%d') as date, count(*) as count from testBug9236 where field_10 = 0 and field_3 = 'FRL' and field_12 >= '2005-03-02 00:00:00' and field_12 <= '2005-03-17 00:00:00' group by date");
+				rsmd = this.rs.getMetaData();
+				assertEquals("java.lang.String", rsmd.getColumnClassName(1));
+				this.rs.next();
+				asObject = this.rs.getObject(1);
+				assertEquals("java.lang.String", asObject.getClass().getName());
 
-			createTable("testBug8868_2",
-					"(field1 CHAR(4) CHARACTER SET BINARY)");
-			this.stmt.executeUpdate("INSERT INTO testBug8868_2 VALUES ('abc')");
-			this.rs = this.stmt
-					.executeQuery("SELECT field1 FROM testBug8868_2");
+				this.rs.close();
 
-			rsmd = this.rs.getMetaData();
-			assertEquals("[B", rsmd.getColumnClassName(1));
-			this.rs.next();
-			asObject = this.rs.getObject(1);
-			assertEquals("[B", asObject.getClass().getName());
+				createTable("testBug8868_2", "(field1 CHAR(4) CHARACTER SET BINARY)");
+				this.stmt.executeUpdate("INSERT INTO testBug8868_2 VALUES ('abc')");
+				this.rs = this.stmt.executeQuery("SELECT field1 FROM testBug8868_2");
+
+				rsmd = this.rs.getMetaData();
+				assertEquals("[B", rsmd.getColumnClassName(1));
+				this.rs.next();
+				asObject = this.rs.getObject(1);
+				assertEquals("[B", asObject.getClass().getName());
+			} finally {
+				if (testConn != this.conn) {
+					testConn.close();
+				}
+			}
 		}
 	}
 
@@ -4643,23 +4663,28 @@ public class ResultSetRegressionTest extends BaseTestCase {
 	}
 
 	public void testBug32525() throws Exception {
-		createTable("bug32525", "(field1 date, field2 timestamp)");
-		this.stmt
-				.executeUpdate("INSERT INTO bug32525 VALUES ('0000-00-00', '0000-00-00 00:00:00')");
+		Connection testConn = this.conn;
 		Connection noStringSyncConn = getConnectionWithProps("noDatetimeStringSync=true");
-
 		try {
-			this.rs = ((com.mysql.jdbc.Connection) noStringSyncConn)
-					.serverPrepareStatement(
-							"SELECT field1, field2 FROM bug32525")
-					.executeQuery();
+			if (versionMeetsMinimum(5, 7, 4)) {
+				testConn = getConnectionWithProps("jdbcCompliantTruncation=false");
+				this.stmt = testConn.createStatement();
+			}
+
+			createTable("bug32525", "(field1 date, field2 timestamp)");
+			this.stmt.executeUpdate("INSERT INTO bug32525 VALUES ('0000-00-00', '0000-00-00 00:00:00')");
+
+			this.rs = ((com.mysql.jdbc.Connection) noStringSyncConn).serverPrepareStatement(
+					"SELECT field1, field2 FROM bug32525").executeQuery();
 			this.rs.next();
 			assertEquals("0000-00-00", this.rs.getString(1));
 			assertEquals("0000-00-00 00:00:00", this.rs.getString(2));
 		} finally {
 			noStringSyncConn.close();
+			if (testConn != this.conn) {
+				testConn.close();
+			}
 		}
-
 	}
 
 	public void testBug49797() throws Exception {

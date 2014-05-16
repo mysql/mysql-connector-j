@@ -306,23 +306,49 @@ public class SyntaxRegressionTest extends BaseTestCase {
 	 * @throws SQLException
 	 */
 	public void testExchangePartition() throws Exception {
-
 		if (versionMeetsMinimum(5, 6, 6)) {
-			createTable("testExchangePartition1",
-				"(id int(11) NOT NULL AUTO_INCREMENT," +
-				" year year(2) DEFAULT NULL," +
-				" modified timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'," +
-				" PRIMARY KEY (id))" +
-				" ENGINE=InnoDB ROW_FORMAT=COMPACT" +
-				" PARTITION BY HASH (id)" +
-				" PARTITIONS 2");
+			createTable("testExchangePartition1", "(id int(11) NOT NULL AUTO_INCREMENT, year year(2) DEFAULT NULL,"
+					+ " modified timestamp NOT NULL, PRIMARY KEY (id))"
+					+ " ENGINE=InnoDB ROW_FORMAT=COMPACT PARTITION BY HASH (id) PARTITIONS 2");
 			createTable("testExchangePartition2", "LIKE testExchangePartition1");
-			this.stmt.executeUpdate("ALTER TABLE testExchangePartition2 REMOVE PARTITIONING");
-			this.stmt.executeUpdate("ALTER IGNORE TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
 
-			this.pstmt = this.conn.prepareStatement("ALTER IGNORE TABLE testExchangePartition1 EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
-			assertTrue(this.pstmt instanceof com.mysql.jdbc.PreparedStatement);
-			
+			this.stmt.executeUpdate("ALTER TABLE testExchangePartition2 REMOVE PARTITIONING");
+			if (versionMeetsMinimum(5, 7, 4)) {
+				this.stmt.executeUpdate("ALTER TABLE testExchangePartition1 "
+						+ "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+			} else {
+				this.stmt.executeUpdate("ALTER IGNORE TABLE testExchangePartition1 "
+						+ "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+			}
+
+			if (versionMeetsMinimum(5, 7, 4)) {
+				this.pstmt = this.conn.prepareStatement("ALTER TABLE testExchangePartition1 "
+						+ "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+			} else {
+				this.pstmt = this.conn.prepareStatement("ALTER IGNORE TABLE testExchangePartition1 "
+						+ "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+			}
+			assertEquals(com.mysql.jdbc.PreparedStatement.class, this.pstmt.getClass());
+			this.pstmt.executeUpdate();
+
+			Connection testConn = null;
+			try {
+				testConn = getConnectionWithProps("useServerPrepStmts=true,emulateUnsupportedPstmts=false");
+				if (versionMeetsMinimum(5, 7, 4)) {
+					this.pstmt = testConn.prepareStatement("ALTER TABLE testExchangePartition1 "
+							+ "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+				} else {
+					this.pstmt = testConn.prepareStatement("ALTER IGNORE TABLE testExchangePartition1 "
+							+ "EXCHANGE PARTITION p1 WITH TABLE testExchangePartition2");
+
+				}
+				assertEquals(com.mysql.jdbc.ServerPreparedStatement.class, this.pstmt.getClass());
+				this.pstmt.executeUpdate();
+			} finally {
+				if (testConn != null) {
+					testConn.close();
+				}
+			}
 		}
 	}
 
